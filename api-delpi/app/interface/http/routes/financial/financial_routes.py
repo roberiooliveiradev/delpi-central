@@ -23,13 +23,19 @@ from app.interface.http.kpi_field_labels import (
     FINANCIAL_ROL_FIELD_LABELS,
     kpi_fields,
 )
+from app.interface.http.openapi_agent_metadata import (
+    FINANCIAL_EBITDA,
+    FINANCIAL_FIXED_COST,
+    FINANCIAL_PMR,
+    FINANCIAL_ROL,
+)
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
 
 router = APIRouter(tags=["Financeiro"])
 
 
-@router.get("/rol")
+@router.get("/rol", **FINANCIAL_ROL)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_rol(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
@@ -58,7 +64,7 @@ def get_rol(
         return error_response(str(e))
 
 
-@router.get("/ebitda_pct")
+@router.get("/ebitda_pct", **FINANCIAL_EBITDA)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_ebitda_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
@@ -100,7 +106,7 @@ def get_ebitda_pct(
         )
 
 
-@router.get("/fixed_cost_pct")
+@router.get("/fixed_cost_pct", **FINANCIAL_FIXED_COST)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_fixed_cost_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
@@ -142,7 +148,7 @@ def get_fixed_cost_pct(
         )
 
 
-@router.get("/pmr")
+@router.get("/pmr", **FINANCIAL_PMR)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_pmr(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),

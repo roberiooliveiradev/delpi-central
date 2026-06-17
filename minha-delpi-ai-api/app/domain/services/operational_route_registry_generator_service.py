@@ -1,4 +1,4 @@
-"""Gerador declarativo de rotas tier C — DOCIE Fase 20 (OpenAPI → registry)."""
+"""Gerador declarativo OpenAPI → autoTierCRoutes — DOCIE Fase 20+ (todo GET não manual)."""
 
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ class OperationalRouteRegistryGeneratorService:
         generated: list[dict[str, Any]] = []
 
         for row in rows:
-            if row.method != "GET" or row.tier != "C":
+            if row.method != "GET":
                 continue
 
             if cls.is_operation_covered_by_manual_registry(
@@ -274,6 +274,54 @@ class OperationalRouteRegistryGeneratorService:
         }
 
     @classmethod
+    def validate_get_auto_coverage(
+        cls,
+        *,
+        openapi_baseline_path: Path | None = None,
+    ) -> AutoTierCGenerationReport:
+        """Valida que todo GET não coberto pelo registry manual tem entrada autoTierCRoutes."""
+        rows = ChatPresentationCoverageService.build_matrix(
+            baseline_path=openapi_baseline_path,
+        )
+        gaps: list[str] = []
+        generated_count = 0
+        skipped_manual = 0
+
+        stored_by_operation = {
+            str(route.get("operationId") or "").strip(): route
+            for route in OperationalRouteRegistryService.auto_tier_c_routes()
+            if str(route.get("operationId") or "").strip()
+        }
+
+        for row in rows:
+            if row.method != "GET":
+                continue
+
+            if cls.is_operation_covered_by_manual_registry(
+                operation_id=row.operation_id,
+                path=row.path,
+            ):
+                skipped_manual += 1
+                continue
+
+            generated_count += 1
+            stored = stored_by_operation.get(row.operation_id)
+
+            if stored is None:
+                gaps.append(
+                    f"{row.operation_id} ({row.path}) sem entrada autoTierCRoutes"
+                )
+
+        return AutoTierCGenerationReport(
+            generated_count=generated_count,
+            skipped_manual_count=skipped_manual,
+            skipped_non_tier_c_count=0,
+            uncovered_tier_c_count=len(gaps),
+            ok=not gaps,
+            gaps=tuple(gaps),
+        )
+
+    @classmethod
     def validate_tier_c_coverage(
         cls,
         *,
@@ -295,10 +343,6 @@ class OperationalRouteRegistryGeneratorService:
 
         for row in rows:
             if row.method != "GET":
-                continue
-
-            if row.tier != "C":
-                skipped_non_tier_c += 1
                 continue
 
             if cls.is_operation_covered_by_manual_registry(

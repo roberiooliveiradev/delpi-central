@@ -39,6 +39,7 @@ from app.interface.http.kpi_field_labels import (
     kpi_fields,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
+from app.interface.http.openapi_agent_metadata import COMMERCIAL_PROPOSALS
 
 
 router = APIRouter(prefix="/commercial", tags=["Comercial"])
@@ -165,7 +166,7 @@ def get_commercial_rol_series(
         )
 
 
-@router.get("/proposals")
+@router.get("/proposals", **COMMERCIAL_PROPOSALS)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def list_commercial_proposals(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),

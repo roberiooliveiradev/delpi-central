@@ -64,6 +64,9 @@ def main() -> int:
     coverage = OperationalRouteRegistryGeneratorService.validate_tier_c_coverage(
         openapi_baseline_path=args.baseline,
     )
+    get_coverage = OperationalRouteRegistryGeneratorService.validate_get_auto_coverage(
+        openapi_baseline_path=args.baseline,
+    )
     stored = OperationalRouteRegistryService.auto_tier_c_routes()
     synced, drift_errors = OperationalRouteRegistryGeneratorService.compare_generated_to_stored(
         stored,
@@ -75,6 +78,8 @@ def main() -> int:
         "storedCount": len(stored),
         "coverageOk": coverage.ok,
         "coverageGaps": list(coverage.gaps),
+        "getCoverageOk": get_coverage.ok,
+        "getCoverageGaps": list(get_coverage.gaps),
         "syncedWithGenerator": synced,
         "driftErrors": drift_errors,
     }
@@ -84,12 +89,17 @@ def main() -> int:
             registry_path=args.registry,
             openapi_baseline_path=args.baseline,
         )
+        get_coverage = OperationalRouteRegistryGeneratorService.validate_get_auto_coverage(
+            openapi_baseline_path=args.baseline,
+        )
         stored = OperationalRouteRegistryService.auto_tier_c_routes()
         synced = True
         drift_errors = []
         report["storedCount"] = len(stored)
         report["coverageOk"] = coverage.ok
         report["coverageGaps"] = list(coverage.gaps)
+        report["getCoverageOk"] = get_coverage.ok
+        report["getCoverageGaps"] = list(get_coverage.gaps)
         report["syncedWithGenerator"] = True
         report["driftErrors"] = []
 
@@ -101,16 +111,17 @@ def main() -> int:
             f"  geradas: {report['generatedCount']}\n"
             f"  no registry: {report['storedCount']}\n"
             f"  cobertura tier C: {'OK' if report['coverageOk'] else 'FALHA'}\n"
+            f"  cobertura GET auto: {'OK' if report.get('getCoverageOk') else 'FALHA'}\n"
             f"  sync gerador: {'OK' if report['syncedWithGenerator'] else 'FALHA'}"
         )
 
-        for item in report["coverageGaps"][:10]:
+        for item in report.get("getCoverageGaps") or report["coverageGaps"][:10]:
             print(f"  - gap: {item}")
 
         for item in report["driftErrors"][:10]:
             print(f"  - drift: {item}")
 
-    if args.check and (not coverage.ok or not synced):
+    if args.check and (not get_coverage.ok or not synced):
         return 1
 
     return 0

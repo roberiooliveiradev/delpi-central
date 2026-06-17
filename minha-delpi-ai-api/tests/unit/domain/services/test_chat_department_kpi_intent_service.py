@@ -27,6 +27,13 @@ def test_resolve_commercial_closing_rate():
     assert "closing-rate" in match.path_token
 
 
+def test_resolve_financial_rol():
+    match = ChatDepartmentKpiIntentService.resolve("qual o rol financeiro do mes")
+
+    assert match is not None
+    assert "rol" in match.path_token
+
+
 def test_resolve_quality_kaizen_typo():
     match = ChatDepartmentKpiIntentService.resolve("resumo de kaisen")
 

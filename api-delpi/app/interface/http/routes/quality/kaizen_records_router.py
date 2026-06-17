@@ -15,6 +15,10 @@ from app.composition.kaizen_composer import (
     build_kaizen_repository,
 )
 from app.core.responses import error_response, not_found_response
+from app.interface.http.openapi_agent_metadata import (
+    QUALITY_KAIZEN_RECORD_BY_ID,
+    QUALITY_KAIZEN_RECORDS_LIST,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
@@ -87,7 +91,7 @@ def _body_to_fields(body: BaseModel) -> dict:
     return body.model_dump(exclude_unset=True)
 
 
-@router.get("")
+@router.get("", **QUALITY_KAIZEN_RECORDS_LIST)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
     branch: str | None = Query(default=None, pattern="^(01|02)$"),
@@ -167,7 +171,7 @@ def import_kaizens_from_sheet(body: ImportKaizensFromSheetBody = Body(default_fa
         return error_response("Erro interno ao importar kaizens da planilha.", status_code=500)
 
 
-@router.get("/{record_id}")
+@router.get("/{record_id}", **QUALITY_KAIZEN_RECORD_BY_ID)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_record(record_id: str):
     try:

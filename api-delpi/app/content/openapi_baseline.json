@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 168,
+  "operation_count": 174,
   "operations": [
     {
       "method": "GET",
@@ -68,8 +68,8 @@
     {
       "method": "GET",
       "path": "/commercial/proposals",
-      "operationId": "list_commercial_proposals_commercial_proposals_get",
-      "summary": "List Commercial Proposals",
+      "operationId": "list_commercial_proposals",
+      "summary": "Propostas comerciais (carteira Totvs)",
       "tags": [
         "Comercial"
       ],
@@ -189,6 +189,26 @@
     },
     {
       "method": "GET",
+      "path": "/engineering/lmps/{sale_number}/history/events",
+      "operationId": "get_lmp_history_events",
+      "summary": "Histórico de eventos da OV (AIJ010)",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}/history/flow",
+      "operationId": "get_lmp_history_flow",
+      "summary": "Transições de fluxo da engenharia na OV",
+      "tags": [
+        "Engenharia"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/engineering/mini-applicators/ferramentas",
       "operationId": "list_mini_applicators_ferramentas",
       "summary": "Listar ferramentas mini-aplicadores",
@@ -259,53 +279,9 @@
     },
     {
       "method": "GET",
-      "path": "/finacial/ebitda_pct",
-      "operationId": "get_ebitda_pct_finacial_ebitda_pct_get",
-      "summary": "Get Ebitda Pct",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "GET",
-      "path": "/finacial/fixed_cost_pct",
-      "operationId": "get_fixed_cost_pct_finacial_fixed_cost_pct_get",
-      "summary": "Get Fixed Cost Pct",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "GET",
-      "path": "/finacial/pmr",
-      "operationId": "get_pmr_finacial_pmr_get",
-      "summary": "Get Pmr",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "GET",
-      "path": "/finacial/rol",
-      "operationId": "get_rol_finacial_rol_get",
-      "summary": "Get Rol",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "GET",
       "path": "/financial/ebitda_pct",
-      "operationId": "get_ebitda_pct_financial_ebitda_pct_get",
-      "summary": "Get Ebitda Pct",
+      "operationId": "get_financial_ebitda_pct",
+      "summary": "EBITDA percentual (financeiro)",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -315,8 +291,8 @@
     {
       "method": "GET",
       "path": "/financial/fixed_cost_pct",
-      "operationId": "get_fixed_cost_pct_financial_fixed_cost_pct_get",
-      "summary": "Get Fixed Cost Pct",
+      "operationId": "get_financial_fixed_cost_pct",
+      "summary": "Custo fixo percentual (financeiro)",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -326,8 +302,8 @@
     {
       "method": "GET",
       "path": "/financial/pmr",
-      "operationId": "get_pmr_financial_pmr_get",
-      "summary": "Get Pmr",
+      "operationId": "get_financial_pmr",
+      "summary": "PMR — prazo médio de recebimento",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -337,8 +313,8 @@
     {
       "method": "GET",
       "path": "/financial/rol",
-      "operationId": "get_rol_financial_rol_get",
-      "summary": "Get Rol",
+      "operationId": "get_financial_rol",
+      "summary": "ROL financeiro (receita operacional líquida)",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -682,6 +658,16 @@
       "summary": "Resumo de OPs por centro de trabalho",
       "tags": [
         "Produção operacional"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/directives/{identifier}",
+      "operationId": "get_product_directives",
+      "summary": "Diretivas do produto (referência cliente ou código DELPI)",
+      "tags": [
+        "products"
       ],
       "deprecated": false
     },
@@ -1310,8 +1296,74 @@
     },
     {
       "method": "GET",
+      "path": "/quality/kaizens/records",
+      "operationId": "list_kaizen_records",
+      "summary": "Cadastro operacional de kaizens (PostgreSQL)",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/kaizens/records",
+      "operationId": "create_kaizen_record_quality_kaizens_records_post",
+      "summary": "Create Kaizen Record",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/kaizens/records/import-from-sheet",
+      "operationId": "import_kaizens_from_sheet_quality_kaizens_records_import_from_sheet_post",
+      "summary": "Import Kaizens From Sheet",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/quality/kaizens/records/{record_id}",
+      "operationId": "delete_kaizen_record_quality_kaizens_records__record_id__delete",
+      "summary": "Delete Kaizen Record",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}",
+      "operationId": "get_kaizen_record",
+      "summary": "Detalhe do kaizen cadastrado (PostgreSQL)",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}",
+      "operationId": "update_kaizen_record_quality_kaizens_records__record_id__put",
+      "summary": "Update Kaizen Record",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/quality/kaizens/summary",
-      "operationId": "get_kaizen_summary_quality_kaizens_summary_get",
+      "operationId": "get_kaizen_summary",
       "summary": "Kaizens — resumo e listagem (Google Sheets)",
       "tags": [
         "Qualidade"

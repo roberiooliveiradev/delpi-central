@@ -27,7 +27,14 @@ def test_tier_c_coverage_is_complete_in_registry() -> None:
     report = OperationalRouteRegistryGeneratorService.validate_tier_c_coverage()
 
     assert report.ok, report.gaps
-    assert report.generated_count == len(OperationalRouteRegistryService.auto_tier_c_routes())
+
+
+def test_get_auto_coverage_is_complete_in_registry() -> None:
+    report = OperationalRouteRegistryGeneratorService.validate_get_auto_coverage()
+
+    assert report.ok, report.gaps
+    manual = OperationalRouteRegistryService.manual_routes()
+    assert len(manual) >= 1
 
 
 def test_stored_auto_tier_c_matches_generator() -> None:

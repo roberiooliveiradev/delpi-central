@@ -611,6 +611,16 @@ class OperationalRouteRegistryLintService:
                 f"tier C sem cobertura registry: ... e mais {len(coverage.gaps) - 20}"
             )
 
+        get_coverage = OperationalRouteRegistryGeneratorService.validate_get_auto_coverage()
+
+        for gap in get_coverage.gaps[:20]:
+            report.add_error(f"GET sem cobertura auto registry: {gap}")
+
+        if len(get_coverage.gaps) > 20:
+            report.add_error(
+                f"GET sem cobertura auto registry: ... e mais {len(get_coverage.gaps) - 20}"
+            )
+
         generated = OperationalRouteRegistryGeneratorService.generate_routes()
         stored = OperationalRouteRegistryService.auto_tier_c_routes()
         ok, drift_errors = OperationalRouteRegistryGeneratorService.compare_generated_to_stored(

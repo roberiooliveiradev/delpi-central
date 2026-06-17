@@ -180,7 +180,12 @@ app.add_middleware(
 def root():
     return {"status": "online"}
 
-app.include_router(financial_routes.router, prefix="/finacial", tags=["Financeiro"])
+app.include_router(
+    financial_routes.router,
+    prefix="/finacial",
+    tags=["Financeiro"],
+    include_in_schema=False,
+)
 app.include_router(financial_routes.router, prefix="/financial", tags=["Financeiro"])
 app.include_router(supplies_router.router)  
 app.include_router(commercial_router.router)

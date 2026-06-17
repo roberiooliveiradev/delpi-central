@@ -759,3 +759,71 @@ QUALITY_KAIZEN_BY_ID = agent_route(
     ),
     operation_id="get_kaizen_by_id",
 )
+
+QUALITY_KAIZEN_RECORDS_LIST = agent_route(
+    summary="Cadastro operacional de kaizens (PostgreSQL)",
+    description=(
+        "Lista paginada de kaizens cadastrados no PostgreSQL (cadastro operacional). "
+        "Filtros: filial, status, tipo de economia, título, período. "
+        "Use para «kaizens cadastrados», «registros kaizen», «cadastro kaizen» — "
+        "distinto do resumo agregado da planilha Google (GET /quality/kaizens/summary)."
+    ),
+    operation_id="list_kaizen_records",
+)
+
+QUALITY_KAIZEN_RECORD_BY_ID = agent_route(
+    summary="Detalhe do kaizen cadastrado (PostgreSQL)",
+    description=(
+        "Retorna ficha completa de um kaizen pelo UUID do cadastro operacional. "
+        "Use após list_kaizen_records quando o usuário pedir detalhe de um registro específico."
+    ),
+    operation_id="get_kaizen_record",
+)
+
+FINANCIAL_ROL = agent_route(
+    summary="ROL financeiro (receita operacional líquida)",
+    description=(
+        "Indicador ROL financeiro consolidado por filial e período. "
+        "Use para «rol financeiro», «receita operacional líquida», «qual o rol» no contexto financeiro — "
+        "não confundir com ROL comercial (/commercial/rol/series) ou metas comerciais."
+    ),
+    operation_id="get_financial_rol",
+)
+
+FINANCIAL_EBITDA = agent_route(
+    summary="EBITDA percentual (financeiro)",
+    description=(
+        "Percentual de EBITDA sobre ROL no período e filial informados. "
+        "Use quando o usuário mencionar EBITDA, margem EBITDA ou indicador financeiro de EBITDA."
+    ),
+    operation_id="get_financial_ebitda_pct",
+)
+
+FINANCIAL_FIXED_COST = agent_route(
+    summary="Custo fixo percentual (financeiro)",
+    description=(
+        "Percentual de custos fixos sobre ROL. "
+        "Use para «custo fixo», «custos fixos percentual» ou estrutura de custo fixo da empresa."
+    ),
+    operation_id="get_financial_fixed_cost_pct",
+)
+
+FINANCIAL_PMR = agent_route(
+    summary="PMR — prazo médio de recebimento",
+    description=(
+        "Prazo médio de recebimento (PMR) por filial e período. "
+        "Use para «pmr», «prazo médio de recebimento» ou inadimplência/recebíveis agregados."
+    ),
+    operation_id="get_financial_pmr",
+)
+
+COMMERCIAL_PROPOSALS = agent_route(
+    summary="Propostas comerciais (carteira Totvs)",
+    description=(
+        "Lista paginada de propostas comerciais com filtros de filial, período e status "
+        "(ganhas, abertas ou todas). "
+        "Use para «propostas comerciais», «listar propostas», «propostas ganhas» — "
+        "distinto de propostas internas PDF (/propostas-comerciais/) ou taxa de fechamento (/closing-rate)."
+    ),
+    operation_id="list_commercial_proposals",
+)
