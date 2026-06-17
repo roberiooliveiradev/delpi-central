@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **16/06/2026** após PR-1–38 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **17/06/2026** após PR-1–39 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -14,6 +14,7 @@ src/ui/components/
 ├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, pipeline/, export/, CSS)
 │   ├── pipeline/        # Stack, dedup, labels, chart/tree builders
 │   ├── export/          # CSV/XLSX/PDF/PNG, lousa markdown (PR-38)
+│   ├── presentationMetadataReaders.ts  # get*FromToolCalls (PR-39)
 │   └── segmentBuilders/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
@@ -68,11 +69,9 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
 | Modais finos, sidebar, export buttons | Cross-feature |
 
+**Em `presentation/` (PR-34, PR-39):** `tableCellFormatting.ts`, `presentationMetadataReaders.ts` (readers metadata).
+
 **Em `presentation/export/` (PR-38):** `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv`.
-
-**Em `presentation/pipeline/` (PR-27–30, PR-32):** stack plan, dedup, metadata, labels, telemetry, chart builders, tree utils, normalize, `chartExplain`.
-
-**Em `presentation/` (PR-34):** `tableCellFormatting.ts` (células KPI/tabela).
 
 **Em `message/` (PR-21–23, PR-31–34, PR-37):** segmentos, `ChatMessageList`, prosa, coverage, markdown (`chatMarkdown` + `ChatMarkdown`), sources, decision card, interactivity, mermaid.
 
@@ -88,7 +87,8 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | PR-36 | `workspace/` | ProjectHome, ProjectCard, modais projeto | ✅ |
 | PR-37 | `message/` | InteractivityBlock, Sources, DecisionCard, ChatMarkdown, MermaidBlock | ✅ |
 | PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown, dashboardExportCsv | ✅ |
-| PR-39–41 | fatias do hub | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
+| PR-39 | `presentationMetadataReaders.ts` | readers metadata puros | ✅ |
+| PR-40–41 | fatias do hub (strip markdown, pair resolver) | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
 
 ## Referências
 
