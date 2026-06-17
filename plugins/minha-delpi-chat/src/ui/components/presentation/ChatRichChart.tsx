@@ -64,7 +64,7 @@ import {
   applyCategoryFilter,
   buildCategoryFilterOptions,
 } from "./pipeline/presentationCategoryFilter";
-import { normalizeChartPresentation } from "../chartPresentationNormalize";
+import { normalizeChartPresentation } from "./pipeline/chartPresentationNormalize";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 

@@ -11,7 +11,7 @@ import type {
 
 import { isNativeSingleViewSelection, resolveAssistantContentLayout } from "./message/assistantContentLayout";
 import { isHierarchyDuplicateTable } from "./presentation/pipeline/presentationStructureDedup";
-import { normalizeChartPresentation } from "./chartPresentationNormalize";
+import { normalizeChartPresentation } from "./presentation/pipeline/chartPresentationNormalize";
 
 export type PresentationPair = {
   primary: ChatPresentation | null;

@@ -1,7 +1,7 @@
 import type { ChatPresentation, ChatToolCall } from "../../../../data/api/chatTypes";
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 import { isRenderPlanVisualKindAllowed } from "../../chatPresentation";
-import { normalizeChartPresentation } from "../../chartPresentationNormalize";
+import { normalizeChartPresentation } from "../pipeline/chartPresentationNormalize";
 import {
   dedupeTablePresentations,
   dedupeTableSegments,

@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **16/06/2026** após PR-1–26 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **16/06/2026** após PR-1–30 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -16,7 +16,7 @@ src/ui/components/
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
 ├── admin/               # Painel administrativo (shell + abas modulares)
-└── [legado na raiz]     # ChatSidebar, modais finos, chatPresentation, etc.
+└── [raiz]               # Hub chatPresentation, modais finos, export/chart UX, etc.
 ```
 
 Barrels públicos:
@@ -25,15 +25,22 @@ Barrels públicos:
 |-------|--------|-------------------|
 | `shared/` | `shared/index.ts` | `import { ChatModal } from "./shared"` |
 | `presentation/` | `presentation/index.ts` | `import { ChatRichTable } from "./presentation"` |
+| `presentation/pipeline/` | `presentation/pipeline/index.ts` | stack, labels, chart/tree normalize |
 | `composer/` | `composer/index.ts` | `import { ChatInput } from "./composer"` |
 | `message/` | `message/index.ts` | `import { ChatAssistantContent } from "./message"` |
 | `workspace/` | `workspace/index.ts` | `import { WorkspaceFileDropzone } from "./workspace"` |
 
 ## Re-exports legados
 
-Removidos em **PR-26**. Usar apenas barrels e pastas feature (`message/`, `presentation/`, `composer/`, `workspace/`, `shared/`).
+Removidos em **PR-26**. Usar apenas barrels e pastas feature.
 
-Exceção CSS: `rich-presentation-shared.css` na raiz ainda reexporta `presentation/rich-presentation-shared.css` (consumido por `ChatActionResults.css`).
+**PR-30:** removido stub CSS `components/rich-presentation-shared.css` — importar `presentation/rich-presentation-shared.css` diretamente.
+
+## Hub `chatPresentation.ts` (raiz, intencional)
+
+Orquestra metadata da API → segmentos/UI. **Não mover** o monolito sem fatiar por domínio (evita ciclo `message/` ↔ `presentation/`).
+
+Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md).
 
 ## CSS compartilhado
 
@@ -44,25 +51,27 @@ Exceção CSS: `rich-presentation-shared.css` na raiz ainda reexporta `presentat
 | Barrel styles | `src/ui/styles/index.css` |
 | Apresentação rica | `presentation/rich-presentation-shared.css` — ver [`rich-presentation-css.md`](./rich-presentation-css.md) |
 | Segment builders | `presentation/segmentBuilders/` — stack, renderPlan, visual collector |
-| Pipeline apresentação | `presentation/pipeline/` — stack plan, dedup, metadata, labels, telemetry, chart builders |
+| Pipeline apresentação | `presentation/pipeline/` — stack, dedup, labels, chart/tree builders, normalize |
 | Overlay/modal | `shared/overlay/*`, `modal-layer.css` |
 | Responsivo global | `src/ui/layout/workspace-responsive.css` |
 
-## O que ainda fica na raiz (PR-27+)
+## Raiz — o que permanece e o que saiu
 
-Candidatos futuros a `message/`:
+| Permanece (hub / UX) | Motivo |
+|----------------------|--------|
+| `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
+| `humanizedCoverageNotice.ts` | Chrome do assistente (candidato `message/` futuro) |
+| `chartExplain.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts` | Export/canvas, não pipeline de dados |
+| Modais finos, sidebar, export utils | Cross-feature |
 
-- `chatPresentation.ts` (hub compartilhado — consumido por `presentation/pipeline/` e `message/`)
+**Em `presentation/pipeline/` (PR-27–30):** stack plan, dedup, metadata, labels, telemetry, chart builders, `treePresentationUtils`, `chartPresentationNormalize`.
 
-**Movido para `presentation/pipeline/` (PR-27–29):** stack plan, dedup, metadata, labels, category filter, telemetry, interactivity policy, chart axis/aggregation/build-from-table.
+**Em `message/` (PR-21–23):** segmentos, `ChatMessageList`, `assistantProseRendering`.
 
-**Já em `message/` (PR-21–23):** segmentos, `ChatMessageList`, `assistantProseRendering`.
-
-Candidatos futuros a `workspace/`:
-
-- `ChatProjectHome.tsx`, `ChatAddContextDialog.tsx` (parcial — já consomem `workspace/`)
+**Candidatos `workspace/`:** `ChatProjectHome.tsx`, `ChatAddContextDialog.tsx`.
 
 ## Referências
 
-- Roadmap completo: [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)
-- Quando criar primitivo: roadmap §12 + [`admin/README.md`](../src/ui/components/admin/README.md)
+- Roadmap: [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)
+- Hub apresentação: [`chat-presentation-hub.md`](./chat-presentation-hub.md)
+- Primitivos admin: [`admin/README.md`](../src/ui/components/admin/README.md)

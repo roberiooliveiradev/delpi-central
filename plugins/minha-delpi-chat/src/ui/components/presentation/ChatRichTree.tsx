@@ -8,7 +8,7 @@ import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons"
 import {
   formatTreeNodeMeta,
   treePresentationToClipboardText,
-} from "../treePresentationUtils";
+} from "./pipeline/treePresentationUtils";
 import "./ChatRichTree.css";
 
 function TreeChevronIcon({ expanded }: { expanded: boolean }) {

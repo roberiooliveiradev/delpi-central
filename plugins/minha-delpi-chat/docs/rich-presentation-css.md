@@ -14,7 +14,7 @@ rich-presentation-shared.css     ← canônico (shell + chrome transversal + bot
 └── ChatActionResults.css        ← cards legados de tool result
 ```
 
-Imports legados em `components/ChatRich*.tsx` e `rich-presentation-shared.css` reexportam de `presentation/` (PR-18).
+Imports: `ChatRich*.css` e `ChatActionResults.css` importam `presentation/rich-presentation-shared.css` diretamente (PR-18, PR-30).
 
 `ChatAssistantContent.tsx` importa **somente** `rich-presentation-shared.css` para heading, insight, navegação e coverage — não depende de `ChatRichChart.css`.
 

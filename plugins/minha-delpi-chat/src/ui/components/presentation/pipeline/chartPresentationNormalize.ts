@@ -1,4 +1,4 @@
-import type { ChatPresentation } from "../../data/api/chatTypes";
+import type { ChatPresentation } from "../../../../data/api/chatTypes";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 

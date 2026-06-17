@@ -3,7 +3,7 @@ import { chatAlert } from "../utils/chatNativeDialogs";
 import { formatChartColumnLabel } from "./presentation/pipeline/chartAxisSelection";
 import { rasterizeChartElement } from "./chartPngExport";
 import { buildDashboardCsv } from "./dashboardExportCsv";
-import { exportTreeToCsv, treePresentationToTable } from "./treePresentationUtils";
+import { exportTreeToCsv, treePresentationToTable } from "./presentation/pipeline/treePresentationUtils";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;

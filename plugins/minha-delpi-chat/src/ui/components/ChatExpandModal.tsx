@@ -11,7 +11,7 @@ import "./ChatExpandModal.css";
 import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
 import type { ChartViewState } from "./chartViewState";
 import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
-import { treePresentationToClipboardText } from "./treePresentationUtils";
+import { treePresentationToClipboardText } from "./presentation/pipeline/treePresentationUtils";
 
 function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi" }>) {
   const lines = presentation.cards.map(

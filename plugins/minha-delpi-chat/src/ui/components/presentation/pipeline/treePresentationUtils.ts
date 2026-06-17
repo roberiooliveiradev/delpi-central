@@ -1,6 +1,6 @@
-import type { ChatPresentation, ChatTreeNode } from "../../data/api/chatTypes";
+import type { ChatPresentation, ChatTreeNode } from "../../../../data/api/chatTypes";
 
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 
 export type TreeFlatRow = {
   nivel: number;

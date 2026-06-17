@@ -12,7 +12,7 @@ import {
   renumberStackSectionTitles,
 } from "../presentation/pipeline/presentationStackSections";
 import { isHierarchyDuplicateTable } from "../presentation/pipeline/presentationStructureDedup";
-import { expandTreeSegmentsToBlockTables } from "../treePresentationUtils";
+import { expandTreeSegmentsToBlockTables } from "../presentation/pipeline/treePresentationUtils";
 import {
   getPresentationDecisionFromToolCalls,
   getPreferredFormatFromToolCalls,

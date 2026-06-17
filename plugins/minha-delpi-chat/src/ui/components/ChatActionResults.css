@@ -1,4 +1,4 @@
-@import "./rich-presentation-shared.css";
+@import "./presentation/rich-presentation-shared.css";
 
 .mdc-chat-action-results {
   margin-top: var(--mdc-space-4);

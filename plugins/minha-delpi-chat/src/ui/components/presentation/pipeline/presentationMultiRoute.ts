@@ -1,7 +1,7 @@
 import type { ChatPresentation, ChatToolCall } from "../../../../data/api/chatTypes";
 
 import { orderVisualSegments, resolveVisualOrderFromToolCalls } from "../../message/assistantContentLayout";
-import { normalizeChartPresentation } from "../../chartPresentationNormalize";
+import { normalizeChartPresentation } from "../pipeline/chartPresentationNormalize";
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 import { parseMarkdownAndCodeSegments } from "../../message/assistantContentSegments";
 import type { StackSectionChrome } from "./presentationStackSections";

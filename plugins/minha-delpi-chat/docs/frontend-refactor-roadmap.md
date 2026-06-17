@@ -223,16 +223,17 @@ PR-26 ✅  remoção stubs legados + CI paths + barrel composer
 PR-27 ✅  presentation/pipeline/ — módulos presentation*.ts da raiz
 PR-28 ✅  regressão stack/layout — explicitSessionFormat, presentation.role, decision.layoutMode
 PR-29 ✅  chart builders → presentation/pipeline/ (axis, aggregation, build-from-table)
+PR-30 ✅  tree/chart normalize → pipeline; doc hub; remove stub CSS raiz
 ```
 
 ### Fase concluída (jun/2026)
 
 Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências opcionais:
 
-- **Raiz → message/** — `chatPresentation` (compartilhado com presentation/)
+- **Hub documentado** — [`chat-presentation-hub.md`](./chat-presentation-hub.md) (permanece na raiz; extração futura por fatia)
 - **C3 residual** — fallbacks hex em `var(--token, #hex)` (cosmético; tokens existem em `index.css`)
 - **F4** — checklist visual manual §7
-- **Stubs legados** — removidos PR-26 (ver [`component-structure.md`](./component-structure.md))
+- **`humanizedCoverageNotice`** — candidato a `message/`
 
 ---
 
@@ -264,6 +265,7 @@ Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências o
 | Regra design system | `.cursor/rules/plugins-visual-design-system.mdc` |
 | Build obrigatório | `.cursor/rules/plugins-frontend-build.mdc` |
 | Prosa/markdown assistente | `message/assistantProseRendering.ts` (canônico MFE) |
+| Hub metadata apresentação | [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
 | Apresentação rica API | `chat-assistant-content-presentation.md` (API) |
 | CSS apresentação rica (MFE) | `docs/rich-presentation-css.md` |
 | Estrutura feature folders | `docs/component-structure.md` |
