@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **17/06/2026** após PR-1–39 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **17/06/2026** após PR-1–40 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -15,6 +15,7 @@ src/ui/components/
 │   ├── pipeline/        # Stack, dedup, labels, chart/tree builders
 │   ├── export/          # CSV/XLSX/PDF/PNG, lousa markdown (PR-38)
 │   ├── presentationMetadataReaders.ts  # get*FromToolCalls (PR-39)
+│   ├── presentationMarkdownNormalization.ts  # strip*, table markdown (PR-40)
 │   └── segmentBuilders/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)

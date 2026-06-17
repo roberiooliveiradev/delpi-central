@@ -37,6 +37,7 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Formatação célula KPI/tabela | `presentation/tableCellFormatting.ts` | 34 |
 | Export CSV/XLSX/PDF/PNG e lousa markdown | `presentation/export/exportUtils.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts`, `dashboardExportCsv.ts` | 38 |
 | Readers metadata (`get*FromToolCalls`, render plan, coverage) | `presentation/presentationMetadataReaders.ts` | 39 |
+| Normalização markdown (`strip*`, `tablePresentationToMarkdown`) | `presentation/presentationMarkdownNormalization.ts` | 40 |
 | Segment assembly (stack, render plan, markers) | `presentation/segmentBuilders/` | 25 |
 | Prosa / título / markdown stream | `message/assistantProseRendering.ts`, `message/chatMarkdown.ts` | 23, 33 |
 | Coverage humanizado, ações assistente, fixtures teste | `message/humanizedCoverageNotice.ts`, `chatAssistantMessageActions.ts`, `testFixtures.ts` | 31, 32, 34 |
@@ -64,7 +65,7 @@ segmentBuilders/*  →  ../../chatPresentation
 Ordem sugerida se o hub crescer de novo — **sem** mover o arquivo monolítico de uma vez:
 
 1. ~~`presentationMetadataReaders.ts`~~ — `get*FromToolCalls` puros (sem markdown). ✅ PR-39
-2. `presentationMarkdownNormalization.ts` — funções `strip*` e compactação client-side.
+2. ~~`presentationMarkdownNormalization.ts`~~ — funções `strip*` e `tablePresentationToMarkdown`. ✅ PR-40
 3. `presentationPairResolver.ts` — `getPresentationPairFromToolCalls`, merge de tabelas.
 
 Cada fatia exige: mover + re-export temporário no hub (deprecate) **ou** atualizar todos os consumidores num PR; teste em `chatPresentation.test.ts` ou suite CI P6.
