@@ -10,6 +10,7 @@ export {
 } from "./ChatAttachmentPreviewModal";
 export { ChatWebSearchResearchPanel } from "./ChatWebSearchResearchPanel";
 export { ChatAgentHome } from "./ChatAgentHome";
+export { ChatAgentLanding } from "./ChatAgentLanding";
 export {
   ChatAttachmentCard,
   type ChatAttachmentCardModel,

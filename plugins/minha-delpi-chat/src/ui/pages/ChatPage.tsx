@@ -2623,8 +2623,7 @@ export function ChatPage({
                     placeholder={getComposerPlaceholder()}
                     {...composerAttachmentProps}
                     {...composerPresentationFormatProps}
-                    {...composerPresentationFormatProps}
-                  {...composerResponseModeProps}
+                    {...composerResponseModeProps}
                     {...composerContextProps}
                     {...composerTypingCorrectionProps}
                     plusMenuOpen={tourPlusMenuOpen ?? undefined}

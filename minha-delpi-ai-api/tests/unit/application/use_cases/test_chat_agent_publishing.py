@@ -145,7 +145,41 @@ def test_preview_agent_uses_draft_overlay():
     assert kwargs["skip_enabled_check"] is True
 
 
-def test_publish_agent_increments_version():
+def test_preview_agent_forwards_previous_messages():
+    repository = MagicMock()
+    simulate = MagicMock()
+    simulate.execute.return_value = {"answerPreview": "ok"}
+
+    agent = _agent()
+    user_id = str(uuid4())
+    agent_id = str(agent.id)
+
+    repository.get_for_preview.return_value = agent
+    repository.get_accessible_by_id.return_value = (agent, "owner")
+
+    use_case = PreviewChatAgentUseCase(repository, simulate)
+    use_case.execute(
+        user_id=user_id,
+        agent_id=agent_id,
+        message="E agora?",
+        access_token="token",
+        previous_messages=[{"role": "user", "content": "Olá"}],
+    )
+
+    kwargs = simulate.execute.call_args.kwargs
+    assert kwargs["previous_messages"] == [{"role": "user", "content": "Olá"}]
+
+
+def test_normalize_preview_previous_messages_filters_invalid_entries():
+    from app.application.use_cases.chat_agents_use_cases import normalize_preview_previous_messages
+
+    assert normalize_preview_previous_messages(
+        [
+            {"role": "user", "content": "Olá"},
+            {"role": "system", "content": "ignore"},
+            {"role": "assistant", "content": ""},
+        ]
+    ) == [{"role": "user", "content": "Olá"}]
     repository = MagicMock()
     agent = _agent(published_version=2)
     user_id = str(uuid4())

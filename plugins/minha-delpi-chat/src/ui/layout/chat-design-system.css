@@ -97,12 +97,14 @@
 
 .mdc-chat-empty-composer__scroll > .mdc-chat-empty-state,
 .mdc-chat-empty-composer__scroll > .mdc-chat-agent-home,
+.mdc-chat-empty-composer__scroll > .mdc-chat-agent-landing,
 .mdc-chat-empty-composer__scroll > .mdc-chat-project-home {
   width: 100%;
 }
 
 .mdc-chat-empty-composer .mdc-chat-empty-state,
-.mdc-chat-empty-composer .mdc-chat-agent-home {
+.mdc-chat-empty-composer .mdc-chat-agent-home,
+.mdc-chat-empty-composer .mdc-chat-agent-landing {
   width: 100%;
   max-width: var(--mdc-chat-column-max);
   gap: 0;
@@ -237,7 +239,6 @@
 
 .mdc-chat-empty-composer__column .mdc-chat-input--center .mdc-chat-input__box {
   min-height: 3.8rem;
-  border-radius: 999px;
   border-color: color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
   background: color-mix(in srgb, var(--mdc-card-bg) 48%, transparent);
   padding: 0.35rem 0.45rem 0.35rem 1rem;
@@ -279,7 +280,8 @@
   }
 
   .mdc-chat-empty-composer .mdc-chat-empty-state,
-  .mdc-chat-empty-composer .mdc-chat-agent-home {
+  .mdc-chat-empty-composer .mdc-chat-agent-home,
+  .mdc-chat-empty-composer .mdc-chat-agent-landing {
     gap: var(--mdc-space-3);
     padding-inline: 0;
   }

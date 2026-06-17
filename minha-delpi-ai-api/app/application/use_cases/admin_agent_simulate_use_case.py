@@ -49,6 +49,7 @@ class AdminAgentSimulateUseCase:
         agent_prompt_override: str | None = None,
         agent_metadata_override: dict | None = None,
         skip_enabled_check: bool = False,
+        previous_messages: list[dict] | None = None,
     ) -> dict:
         normalized_question = str(question or "").strip()
 
@@ -85,6 +86,9 @@ class AdminAgentSimulateUseCase:
             )
         )
         history = self._load_session_history(session_id=session_id, user_id=user_id)
+
+        if previous_messages is not None:
+            history = previous_messages
 
         tool_context_payload, planned_tool_calls = self._build_tool_context(
             question=normalized_question,

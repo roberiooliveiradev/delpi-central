@@ -3,12 +3,3 @@
 .mdc-chat-empty-state {
   width: 100%;
 }
-
-.mdc-chat-empty-state__prompt-detail {
-  display: block;
-  margin-top: 0.2rem;
-  color: var(--mdc-text-muted);
-  font-size: 0.8rem;
-  font-weight: 400;
-  line-height: 1.35;
-}

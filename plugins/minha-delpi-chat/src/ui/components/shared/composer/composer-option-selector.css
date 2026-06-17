@@ -17,7 +17,7 @@
   padding: 0 0.65rem 0 0.5rem;
   box-sizing: border-box;
   border: 1px solid var(--mdc-border-subtle);
-  border-radius: 999px;
+  border-radius: var(--mdc-radius-sm, 10px);
   background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
   color: var(--mdc-title);
   font-size: 0.82rem;

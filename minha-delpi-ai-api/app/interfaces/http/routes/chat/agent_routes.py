@@ -465,6 +465,9 @@ def preview_agent_draft():
 
     access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
     use_case = make_preview_chat_agent_use_case()
+    previous_messages = normalize_preview_previous_messages(
+        payload.get("previousMessages") if payload.get("previousMessages") is not None else payload.get("previous_messages"),
+    )
 
     try:
         result = use_case.execute(
@@ -474,6 +477,7 @@ def preview_agent_draft():
             access_token=access_token,
             generate_answer=bool(payload.get("generateAnswer", True)),
             draft=payload.get("draft"),
+            previous_messages=previous_messages,
         )
     except ChatAgentPermissionDeniedError as exc:
         return chat_forbidden(str(exc))
@@ -493,6 +497,11 @@ def preview_agent(agent_id: str):
 
     access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
     use_case = make_preview_chat_agent_use_case()
+    previous_messages = normalize_preview_previous_messages(
+        payload.get("previousMessages")
+        if payload.get("previousMessages") is not None
+        else payload.get("previous_messages"),
+    )
 
     try:
         result = use_case.execute(
@@ -502,6 +511,7 @@ def preview_agent(agent_id: str):
             access_token=access_token,
             generate_answer=bool(payload.get("generateAnswer", True)),
             draft=payload.get("draft"),
+            previous_messages=previous_messages,
         )
     except ChatAgentPermissionDeniedError as exc:
         return chat_forbidden(str(exc))

@@ -1,0 +1,18 @@
+/* Landing do agente — paridade entre home do chat e pré-visualização do builder. */
+
+.mdc-chat-agent-landing {
+  width: 100%;
+}
+
+.mdc-chat-agent-landing__prompts-hint {
+  grid-column: 1 / -1;
+  margin: 0 0 0.15rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.mdc-chat-agent-builder__preview-card.mdc-chat-agent-landing {
+  min-height: 0;
+}

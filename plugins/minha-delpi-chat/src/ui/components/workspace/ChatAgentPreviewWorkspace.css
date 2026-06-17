@@ -1,0 +1,24 @@
+.mdc-chat-agent-preview-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-empty-composer,
+.mdc-chat-agent-preview-workspace .mdc-chat-conversation {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-message-list-wrap {
+  min-height: 0;
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-composer-footer .mdc-chat-input {
+  width: 100%;
+  max-width: var(--mdc-chat-column-max);
+  margin-inline: auto;
+}

@@ -7,6 +7,7 @@ import {
 
 /** Limites de quebra-gelos na home do agente e no builder. */
 export const AGENT_ICEBREAKER_MAX_COUNT = 6;
+export const AGENT_ICEBREAKER_HOME_DISPLAY_COUNT = 3;
 export const AGENT_ICEBREAKER_MAX_CHARS = 72;
 
 export type AgentIcebreakerTemplate = {

@@ -1170,6 +1170,7 @@ export async function previewChatAgent(
     message: string;
     generateAnswer?: boolean;
     draft?: ChatAgentPreviewDraft;
+    previousMessages?: Array<{ role: string; content: string }>;
   },
   options: ChatApiOptions = {},
 ): Promise<ChatAgentPreviewResponse> {
@@ -1187,6 +1188,7 @@ export async function previewChatAgentDraft(
     message: string;
     generateAnswer?: boolean;
     draft: ChatAgentPreviewDraft;
+    previousMessages?: Array<{ role: string; content: string }>;
   },
   options: ChatApiOptions = {},
 ): Promise<ChatAgentPreviewResponse> {

@@ -13,6 +13,7 @@
 .mdc-chat-input__box {
   --mdc-composer-control-h: 2.25rem;
   --mdc-composer-text-max-h: 11.5rem;
+  --mdc-composer-radius: var(--mdc-radius-xl, 24px);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -20,7 +21,7 @@
   gap: 0.3rem;
   min-height: 3.35rem;
   border: 1px solid var(--mdc-card-border);
-  border-radius: 1.6rem;
+  border-radius: var(--mdc-composer-radius);
   background: color-mix(in srgb, var(--mdc-card-bg) 94%, transparent);
   padding: 0.45rem 0.5rem 0.4rem 0.55rem;
 }
@@ -285,7 +286,7 @@
 @media (max-width: 720px) {
   .mdc-chat-input__box {
     --mdc-composer-text-max-h: 10rem;
-    border-radius: 1.35rem;
+    --mdc-composer-radius: var(--mdc-radius-lg, 18px);
   }
 
   .mdc-chat-input__composer-toolbar {
@@ -307,9 +308,9 @@
   .mdc-chat-input__box {
     --mdc-composer-control-h: 2.15rem;
     --mdc-composer-text-max-h: 8.5rem;
+    --mdc-composer-radius: var(--mdc-radius-md, 14px);
     min-height: 3rem;
     padding: 0.4rem 0.38rem 0.35rem 0.42rem;
-    border-radius: 1.2rem;
   }
 
   .mdc-chat-input textarea {
@@ -469,7 +470,7 @@
   }
 
   .mdc-chat-input__box {
-    border-radius: 1.25rem;
+    --mdc-composer-radius: var(--mdc-radius-md, 14px);
     min-height: 3rem;
   }
 

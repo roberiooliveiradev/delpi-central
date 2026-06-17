@@ -76,7 +76,7 @@ export function ChatEmptyState({
               {highlight.description ? (
                 <>
                   {" "}
-                  <span className="mdc-chat-empty-state__prompt-detail">{highlight.description}</span>
+                  <span className="mdc-chat-landing__prompt-detail">{highlight.description}</span>
                 </>
               ) : null}
             </button>

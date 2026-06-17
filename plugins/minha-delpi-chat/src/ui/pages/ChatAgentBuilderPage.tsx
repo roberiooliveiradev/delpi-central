@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useResizablePane } from "../../state/hooks/useResizablePane";
 import { useConfirmDialog } from "../components/shared";
 
 import {
@@ -51,6 +50,7 @@ import type {
   ChatAgentExportBundle,
   ChatAgentShare,
   ChatAgentStats,
+  ChatMessage,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
@@ -65,13 +65,16 @@ import {
   AGENT_ICEBREAKER_MAX_COUNT,
   agentIcebreakersUseDefaults,
   clampIcebreakerDraft,
-  formatIcebreakerForDisplay,
-  getIcebreakerGridDensityClass,
   resolveAgentIcebreakersForEditor,
 } from "../agentIcebreakers";
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
+import {
+  createAgentPreviewChatMessage,
+  toPreviewPreviousMessages,
+} from "../agentPreviewMessages";
 
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
+import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
 import {
   AgentIcebreakersEditor,
   AgentBuilderCheckbox,
@@ -169,6 +172,7 @@ export function ChatAgentBuilderPage({
   const [builderMode, setBuilderMode] = useState<"create" | "configure">(
     agent ? "configure" : "create",
   );
+  const [workspaceTab, setWorkspaceTab] = useState<"configure" | "preview">("configure");
   const [createBrief, setCreateBrief] = useState("");
   const [createInput, setCreateInput] = useState("");
   const [createMessages, setCreateMessages] = useState<
@@ -176,9 +180,7 @@ export function ChatAgentBuilderPage({
   >([]);
   const [isCreateChatLoading, setIsCreateChatLoading] = useState(false);
   const [previewInput, setPreviewInput] = useState("");
-  const [previewMessages, setPreviewMessages] = useState<
-    Array<{ role: "user" | "assistant"; content: string }>
-  >([]);
+  const [previewMessages, setPreviewMessages] = useState<ChatMessage[]>([]);
 
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
@@ -520,16 +522,7 @@ export function ChatAgentBuilderPage({
     [icebreakers],
   );
 
-  const previewIcebreakers = useMemo(
-    () =>
-      normalizedIcebreakers.length > 0 ? normalizedIcebreakers : DEFAULT_AGENT_ICEBREAKERS,
-    [normalizedIcebreakers],
-  );
-
   const usingDefaultPreviewIcebreakers = normalizedIcebreakers.length === 0;
-  const previewIcebreakerDensityClass = getIcebreakerGridDensityClass(
-    previewIcebreakers.length,
-  );
 
   useEffect(() => {
     if (agent?.id) {
@@ -734,8 +727,8 @@ export function ChatAgentBuilderPage({
     };
   }
 
-  async function sendPreviewMessage(content?: string) {
-    const message = (content ?? previewInput).trim();
+  async function sendPreviewMessage(content: string) {
+    const message = content.trim();
 
     if (!message) {
       return;
@@ -750,15 +743,20 @@ export function ChatAgentBuilderPage({
     if (!draft.name.trim()) {
       setPreviewMessages((current) => [
         ...current,
-        {
-          role: "assistant",
-          content: "Informe o nome do agente para testar a pré-visualização.",
-        },
+        createAgentPreviewChatMessage(
+          "assistant",
+          "Informe o nome do agente para testar a pré-visualização.",
+        ),
       ]);
       return;
     }
 
-    setPreviewMessages((current) => [...current, { role: "user", content: message }]);
+    const previousMessages = toPreviewPreviousMessages(previewMessages);
+
+    setPreviewMessages((current) => [
+      ...current,
+      createAgentPreviewChatMessage("user", message),
+    ]);
     setPreviewInput("");
     setIsPreviewLoading(true);
 
@@ -766,11 +764,11 @@ export function ChatAgentBuilderPage({
       const result = agent?.id
         ? await previewChatAgent(
             agent.id,
-            { message, generateAnswer: true, draft },
+            { message, generateAnswer: true, draft, previousMessages },
             { getAccessToken },
           )
         : await previewChatAgentDraft(
-            { message, generateAnswer: true, draft },
+            { message, generateAnswer: true, draft, previousMessages },
             { getAccessToken },
           );
 
@@ -779,14 +777,17 @@ export function ChatAgentBuilderPage({
         (typeof result.answer === "string" && result.answer) ||
         "Sem resposta na pré-visualização.";
 
-      setPreviewMessages((current) => [...current, { role: "assistant", content: answer }]);
+      setPreviewMessages((current) => [
+        ...current,
+        createAgentPreviewChatMessage("assistant", answer),
+      ]);
     } catch {
       setPreviewMessages((current) => [
         ...current,
-        {
-          role: "assistant",
-          content: "Não foi possível gerar a pré-visualização com o rascunho atual.",
-        },
+        createAgentPreviewChatMessage(
+          "assistant",
+          "Não foi possível gerar a pré-visualização com o rascunho atual.",
+        ),
       ]);
     } finally {
       setIsPreviewLoading(false);
@@ -1252,27 +1253,77 @@ export function ChatAgentBuilderPage({
     }
   }
 
-  const {
-    layoutRef,
-    layoutStyle,
-    splitEnabled,
-    isDragging,
-    onSplitterPointerDown,
-  } = useResizablePane({
-    storageKey: "minha-delpi-chat.agent-builder.preview-width",
-    defaultWidth: 380,
-    minWidth: 260,
-    maxWidthRatio: 0.48,
-    minSplitWidth: 900,
-  });
+  const previewAgent = useMemo((): ChatAgent => {
+    const draft = buildPreviewDraft();
+    const now = agent?.updated_at ?? new Date().toISOString();
 
-  const layoutClassName = [
-    "mdc-chat-agent-builder__layout",
-    splitEnabled ? "mdc-chat-agent-builder__layout--split" : "",
-    isDragging ? "mdc-chat-agent-builder__layout--dragging" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+    return {
+      id: agent?.id ?? "agent-builder-preview",
+      name: draft.name,
+      description: draft.description ?? null,
+      enabled: agent?.enabled ?? enabled,
+      metadata: (draft.metadata as Record<string, unknown> | null) ?? null,
+      owner_user_id: agent?.owner_user_id ?? null,
+      visibility: agent?.visibility ?? visibility,
+      category: draft.category ?? null,
+      icon: draft.icon ?? null,
+      response_style: draft.responseStyle ?? null,
+      max_tool_calls: draft.maxToolCalls ?? maxToolCalls,
+      requires_confirmation_for_write:
+        draft.requiresConfirmationForWrite ?? requiresConfirmationForWrite,
+      access_role: agent?.access_role ?? "owner",
+      system_prompt: draft.systemPrompt ?? null,
+      created_at: agent?.created_at ?? now,
+      updated_at: now,
+      published_version: agent?.published_version,
+      published_at: agent?.published_at ?? null,
+      has_unpublished_changes: agent?.has_unpublished_changes,
+    };
+  }, [
+    agent,
+    enabled,
+    maxToolCalls,
+    name,
+    description,
+    systemPrompt,
+    responseStyle,
+    category,
+    icon,
+    visibility,
+    requiresConfirmationForWrite,
+    normalizedIcebreakers,
+    allowedActions,
+    capabilities,
+    capActions,
+    capFiles,
+    capCanvas,
+  ]);
+
+  const previewPanel = (
+    <div className="mdc-chat-agent-builder__preview-pane-inner">
+      <div className="mdc-chat-agent-builder__preview-label">
+        <span>Pré-visualizar</span>
+        <span className="mdc-chat-agent-builder__preview-model">
+          Rascunho local · não afeta usuários
+        </span>
+      </div>
+
+      <ChatAgentPreviewWorkspace
+        agent={previewAgent}
+        messages={previewMessages}
+        draft={previewInput}
+        isSending={isPreviewLoading}
+        defaultIcebreakersHint={
+          usingDefaultPreviewIcebreakers
+            ? "Sugestões padrão — configure em Quebra-gelos ou clique para testar."
+            : null
+        }
+        onDraftChange={setPreviewInput}
+        onSendMessage={sendPreviewMessage}
+        getAccessToken={getAccessToken}
+      />
+    </div>
+  );
 
   return (
     <section className="mdc-chat-agent-builder" aria-label="Configurar agente">
@@ -1305,7 +1356,12 @@ export function ChatAgentBuilderPage({
             <small>Rascunho — salve para testar com fontes e publicar</small>
           )}
         </div>
+      </header>
 
+      <header
+        className="mdc-chat-ws-topbar mdc-chat-agent-builder__actions-bar"
+        aria-label="Ações do agente"
+      >
         <div className="mdc-chat-ws-topbar__actions mdc-chat-agent-builder__topbar-actions">
           {canImportAgent ? (
             <>
@@ -1412,8 +1468,41 @@ export function ChatAgentBuilderPage({
         </div>
       </header>
 
-      <div ref={layoutRef} className={layoutClassName} style={layoutStyle}>
+      <div
+        className="mdc-chat-agent-builder__workspace-tabs"
+        role="tablist"
+        aria-label="Áreas do editor de agente"
+      >
+        <button
+          type="button"
+          role="tab"
+          id="mdc-agent-builder-tab-configure"
+          aria-selected={workspaceTab === "configure"}
+          aria-controls="mdc-agent-builder-panel-configure"
+          className={workspaceTab === "configure" ? "is-active" : ""}
+          onClick={() => setWorkspaceTab("configure")}
+        >
+          Configuração
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="mdc-agent-builder-tab-preview"
+          aria-selected={workspaceTab === "preview"}
+          aria-controls="mdc-agent-builder-panel-preview"
+          className={workspaceTab === "preview" ? "is-active" : ""}
+          onClick={() => setWorkspaceTab("preview")}
+        >
+          Pré-visualizar
+        </button>
+      </div>
+
+      <div className="mdc-chat-agent-builder__body">
+        {workspaceTab === "configure" ? (
         <form
+          id="mdc-agent-builder-panel-configure"
+          role="tabpanel"
+          aria-labelledby="mdc-agent-builder-tab-configure"
           className="mdc-chat-agent-builder__form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -1446,7 +1535,7 @@ export function ChatAgentBuilderPage({
               <h2 className="mdc-chat-ws-section-head">Criar conversando</h2>
               <p className="mdc-chat-ws-section-lead">
                 Descreva o especialista em linguagem natural. O assistente ajuda a montar o
-                rascunho; a pré-visualização à direita usa as mesmas configurações em tempo real.
+                rascunho; use a aba Pré-visualizar para testar as mesmas configurações em tempo real.
               </p>
 
               <div className="mdc-chat-ws-create-chat">
@@ -2162,111 +2251,16 @@ export function ChatAgentBuilderPage({
           ) : null}
           </div>
         </form>
-
-        {splitEnabled ? (
+        ) : (
           <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Ajustar largura da pré-visualização"
-            className={
-              isDragging
-                ? "mdc-chat-agent-builder__splitter is-dragging"
-                : "mdc-chat-agent-builder__splitter"
-            }
-            onPointerDown={onSplitterPointerDown}
-          />
-        ) : null}
-
-        <aside className="mdc-chat-agent-builder__preview">
-          <div className="mdc-chat-agent-builder__preview-label">
-            <span>Pré-visualizar</span>
-            <span className="mdc-chat-agent-builder__preview-model">
-              Rascunho local · não afeta usuários
-            </span>
+            id="mdc-agent-builder-panel-preview"
+            role="tabpanel"
+            aria-labelledby="mdc-agent-builder-tab-preview"
+            className="mdc-chat-agent-builder__preview-pane"
+          >
+            {previewPanel}
           </div>
-
-          <div className="mdc-chat-landing mdc-chat-agent-builder__preview-card">
-            <div className="mdc-chat-landing__avatar" aria-hidden="true">
-              <Bot size={26} />
-            </div>
-
-            <h2 className="mdc-chat-landing__title">{name.trim() || "Novo agente"}</h2>
-
-            <p className="mdc-chat-landing__description">
-              {description.trim() ||
-                "Configure comportamento, instruções e quebra-gelos deste especialista."}
-            </p>
-
-            {previewIcebreakers.length > 0 ? (
-              <div
-                className={[
-                  "mdc-chat-landing__prompts",
-                  "mdc-chat-agent-builder__preview-icebreakers",
-                  previewIcebreakerDensityClass,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                {usingDefaultPreviewIcebreakers ? (
-                  <p className="mdc-chat-agent-builder__preview-icebreakers-hint">
-                    Sugestões padrão — configure em Quebra-gelos ou clique para testar.
-                  </p>
-                ) : null}
-                {previewIcebreakers.slice(0, 3).map((icebreaker) => (
-                  <button
-                    key={icebreaker}
-                    type="button"
-                    className="mdc-chat-landing__prompt"
-                    disabled={isPreviewLoading}
-                    title={icebreaker}
-                    onClick={() => void sendPreviewMessage(icebreaker)}
-                  >
-                    {formatIcebreakerForDisplay(icebreaker)}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
-            {previewMessages.length > 0 ? (
-              <div className="mdc-chat-agent-builder__preview-messages">
-                {previewMessages.map((message, index) => (
-                  <div
-                    key={`${message.role}-${index}`}
-                    className={
-                      message.role === "user"
-                        ? "mdc-chat-agent-builder__preview-message mdc-chat-agent-builder__preview-message--user"
-                        : "mdc-chat-agent-builder__preview-message"
-                    }
-                  >
-                    {message.content}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="mdc-chat-agent-builder__preview-input">
-              <input
-                value={previewInput}
-                onChange={(event) => setPreviewInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    void sendPreviewMessage();
-                  }
-                }}
-                placeholder="Pergunte alguma coisa"
-                disabled={isPreviewLoading}
-              />
-              <button
-                type="button"
-                disabled={isPreviewLoading}
-                onClick={() => void sendPreviewMessage()}
-              >
-                <Send size={16} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        </aside>
+        )}
       </div>
     </section>
   );

@@ -33,6 +33,7 @@ from app.application.dto.upsert_chat_agent_skill_request import UpsertChatAgentS
 from app.application.use_cases.chat_agents_use_cases import (
     ChatAgentKeyConflictError,
     ChatAgentPermissionDeniedError,
+    normalize_preview_previous_messages,
 )
 from app.application.use_cases.get_chat_status_use_case import GetChatStatusUseCase
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionRequest

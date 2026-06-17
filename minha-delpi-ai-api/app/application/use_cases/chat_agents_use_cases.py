@@ -30,6 +30,27 @@ class ChatAgentPermissionDeniedError(Exception):
     pass
 
 
+def normalize_preview_previous_messages(raw: object) -> list[dict] | None:
+    if not isinstance(raw, list):
+        return None
+
+    history: list[dict] = []
+
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+
+        role = str(item.get("role") or "").strip()
+        content = str(item.get("content") or "").strip()
+
+        if role not in {"user", "assistant"} or not content:
+            continue
+
+        history.append({"role": role, "content": content})
+
+    return history or None
+
+
 class ChatAgentKeyConflictError(Exception):
     pass
 
@@ -431,6 +452,7 @@ class PreviewChatAgentUseCase:
         access_token: str | None,
         generate_answer: bool = True,
         draft: dict | None = None,
+        previous_messages: list[dict] | None = None,
     ) -> dict:
         from app.application.services.chat_agent_config_snapshot_service import (
             apply_snapshot_to_agent,
@@ -488,6 +510,7 @@ class PreviewChatAgentUseCase:
             agent_prompt_override=agent_prompt_override,
             agent_metadata_override=agent_metadata_override,
             skip_enabled_check=True,
+            previous_messages=previous_messages,
         )
 
 
