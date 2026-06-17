@@ -54,3 +54,7 @@ Mensagem → ChatIntelligencePipelineService → ChatToolContextService → Prom
 ```
 
 Agentes **adicionam** contexto e restrições; a **inteligência transversal** evolui no chat base.
+
+## Nova rota api-delpi
+
+Checklist completo (HTTP + roteamento + apresentação + CI): **`new-api-route-checklist.mdc`**.

@@ -33,3 +33,7 @@ Intent/heurística → OperationalApiRouteSpec → ExternalActionRouteSelectionS
 ## Metadata
 
 `toolCalls[].metadata.apiRouteDomain` classifica o path executado (`product`, `department_kpi`, `supplies_kpi`, …).
+
+## Apresentação e perfil
+
+Após a rota existir na api-delpi, seguir **`new-api-route-checklist.mdc`** § 3–5 (`entityProfiles`, contratos entitySet, pathRules, gates CI).

@@ -66,3 +66,5 @@ return api_delpi_success(
 ```
 
 Documentação: `api-delpi/docs/api/00-visao-geral.md`, inventário `api-delpi/docs/roadmaps/fase-0-inventario-contrato-respostas.md`.
+
+Após o contrato HTTP: **`new-api-route-checklist.mdc`** (roteamento operacional, apresentação, CI).
