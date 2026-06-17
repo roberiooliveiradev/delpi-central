@@ -42,10 +42,19 @@ class ResponseMetaBuilder:
     def pagination_from_data(data: Any) -> dict[str, Any] | None:
         if not isinstance(data, dict):
             return None
+
+        operational = data.get("pagination")
+        if isinstance(operational, dict) and "returned" in operational:
+            payload: dict[str, Any] = {}
+            for key in ("limit", "offset", "returned", "total", "is_complete"):
+                if key in operational:
+                    payload[key] = operational[key]
+            return payload or None
+
         required = ("page", "page_size", "total")
         if not all(key in data for key in required):
             return None
-        payload: dict[str, Any] = {
+        payload = {
             "page": data.get("page"),
             "page_size": data.get("page_size"),
             "total": data.get("total"),

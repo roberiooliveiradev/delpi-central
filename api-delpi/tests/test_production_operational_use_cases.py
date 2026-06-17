@@ -86,6 +86,29 @@ def test_schedule_today_use_case_uses_reference_date() -> None:
 
     assert result["reference_date"] == "20260611"
     assert result["items"][0]["product_code"] == "90261255"
+    assert result["pagination"]["is_complete"] is True
+    repository.fetch_schedule_today.assert_called_once_with(
+        reference_date="20260611",
+        branch=None,
+        limit=21,
+    )
+
+
+def test_schedule_today_use_case_marks_incomplete_when_over_limit() -> None:
+    repository = MagicMock()
+    repository.fetch_schedule_today.return_value = [
+        {"product_code": f"P{index}"} for index in range(21)
+    ]
+
+    use_case = GetProductionScheduleTodayUseCase(repository)
+    result = use_case.execute(
+        ProductionOperationalRequest(reference_date="2026-06-11", limit=20)
+    )
+
+    assert len(result["items"]) == 20
+    assert result["pagination"]["returned"] == 20
+    assert result["pagination"]["is_complete"] is False
+    assert result["summary"]["is_complete"] is False
 
 
 def test_orders_open_use_case_returns_items() -> None:

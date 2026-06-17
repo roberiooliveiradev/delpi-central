@@ -27,6 +27,27 @@ def test_pagination_from_data_reads_page_fields() -> None:
     }
 
 
+def test_pagination_from_data_reads_operational_playbook_fields() -> None:
+    pagination = ResponseMetaBuilder.pagination_from_data(
+        {
+            "items": [],
+            "summary": {},
+            "pagination": {
+                "limit": 50,
+                "offset": 0,
+                "returned": 50,
+                "is_complete": False,
+            },
+        }
+    )
+    assert pagination == {
+        "limit": 50,
+        "offset": 0,
+        "returned": 50,
+        "is_complete": False,
+    }
+
+
 @pytest.mark.parametrize(
     ("data", "expected_shape"),
     [

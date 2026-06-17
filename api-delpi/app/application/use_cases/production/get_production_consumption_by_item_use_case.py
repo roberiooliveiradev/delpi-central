@@ -3,6 +3,11 @@ from datetime import datetime, timedelta
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
 )
+from app.application.services.production.operational_limit_page_service import (
+    build_operational_pagination,
+    overfetch_limit,
+    trim_overfetched,
+)
 from app.application.services.production.production_operational_summary_service import (
     build_period_summary,
 )
@@ -40,14 +45,18 @@ class GetProductionConsumptionByItemUseCase:
             MAX_PRODUCTION_OPERATIONAL_LIMIT,
         )
 
-        items = self._repository.fetch_consumption_by_item(
+        fetch_limit = overfetch_limit(limit)
+
+        raw_items = self._repository.fetch_consumption_by_item(
             item_code=item_code,
             date_start=date_start,
             date_end_inclusive=end_inclusive,
             branch=request.branch,
             product_group=request.product_group,
-            limit=limit,
+            limit=fetch_limit,
         )
+
+        items, is_complete = trim_overfetched(raw_items, limit)
 
         return {
             "item_code": item_code,
@@ -58,6 +67,12 @@ class GetProductionConsumptionByItemUseCase:
                 branch=request.branch,
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
+                is_complete=is_complete,
             ),
-            "pagination": {"limit": limit, "offset": 0, "returned": len(items)},
+            "pagination": build_operational_pagination(
+                limit=limit,
+                offset=0,
+                returned=len(items),
+                is_complete=is_complete,
+            ),
         }

@@ -1,6 +1,11 @@
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
 )
+from app.application.services.production.operational_limit_page_service import (
+    build_operational_pagination,
+    overfetch_limit,
+    trim_overfetched,
+)
 from app.application.services.production.production_operational_summary_service import (
     build_period_summary,
 )
@@ -31,13 +36,17 @@ class GetProductionLossesTopMaterialsUseCase:
         )
         loss_type = request.loss_type if request.loss_type in {"refugo", "scrap", "both"} else "both"
 
-        items = self._repository.fetch_top_materials(
+        fetch_limit = overfetch_limit(limit)
+
+        raw_items = self._repository.fetch_top_materials(
             date_start=period_start,
             date_end_exclusive=period_end,
             branch=request.branch,
-            limit=limit,
+            limit=fetch_limit,
             loss_type=loss_type,
         )
+
+        items, is_complete = trim_overfetched(raw_items, limit)
 
         return {
             "loss_type": loss_type,
@@ -47,10 +56,12 @@ class GetProductionLossesTopMaterialsUseCase:
                 branch=request.branch,
                 period_start=period_start,
                 period_end_exclusive=period_end,
+                is_complete=is_complete,
             ),
-            "pagination": {
-                "limit": limit,
-                "offset": 0,
-                "returned": len(items),
-            },
+            "pagination": build_operational_pagination(
+                limit=limit,
+                offset=0,
+                returned=len(items),
+                is_complete=is_complete,
+            ),
         }

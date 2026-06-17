@@ -1,6 +1,11 @@
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
 )
+from app.application.services.production.operational_limit_page_service import (
+    build_operational_pagination,
+    overfetch_limit,
+    trim_overfetched,
+)
 from app.application.services.production.production_operational_summary_service import (
     build_reference_date_summary,
 )
@@ -29,12 +34,16 @@ class GetProductionOrdersFinishedWithoutConsumptionUseCase:
             MAX_PRODUCTION_OPERATIONAL_LIMIT,
         )
 
-        items = self._repository.fetch_finished_without_consumption(
+        fetch_limit = overfetch_limit(limit)
+
+        raw_items = self._repository.fetch_finished_without_consumption(
             reference_date=reference_date,
             branch=request.branch,
             work_center=request.work_center,
-            limit=limit,
+            limit=fetch_limit,
         )
+
+        items, is_complete = trim_overfetched(raw_items, limit)
 
         return {
             "reference_date": reference_date,
@@ -43,6 +52,12 @@ class GetProductionOrdersFinishedWithoutConsumptionUseCase:
                 items=items,
                 branch=request.branch,
                 reference_date=reference_date,
+                is_complete=is_complete,
             ),
-            "pagination": {"limit": limit, "offset": 0, "returned": len(items)},
+            "pagination": build_operational_pagination(
+                limit=limit,
+                offset=0,
+                returned=len(items),
+                is_complete=is_complete,
+            ),
         }

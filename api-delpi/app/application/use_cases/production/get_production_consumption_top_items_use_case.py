@@ -1,6 +1,11 @@
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
 )
+from app.application.services.production.operational_limit_page_service import (
+    build_operational_pagination,
+    overfetch_limit,
+    trim_overfetched,
+)
 from app.application.services.production.production_operational_summary_service import (
     build_period_summary,
 )
@@ -31,13 +36,17 @@ class GetProductionConsumptionTopItemsUseCase:
         )
         group_by = request.group_by if request.group_by in {"general", "branch"} else "general"
 
-        items = self._repository.fetch_top_items(
+        fetch_limit = overfetch_limit(limit)
+
+        raw_items = self._repository.fetch_top_items(
             date_start=period_start,
             date_end_exclusive=period_end,
             branch=request.branch,
-            limit=limit,
+            limit=fetch_limit,
             group_by=group_by,
         )
+
+        items, is_complete = trim_overfetched(raw_items, limit)
 
         return {
             "group_by": group_by,
@@ -47,10 +56,12 @@ class GetProductionConsumptionTopItemsUseCase:
                 branch=request.branch,
                 period_start=period_start,
                 period_end_exclusive=period_end,
+                is_complete=is_complete,
             ),
-            "pagination": {
-                "limit": limit,
-                "offset": 0,
-                "returned": len(items),
-            },
+            "pagination": build_operational_pagination(
+                limit=limit,
+                offset=0,
+                returned=len(items),
+                is_complete=is_complete,
+            ),
         }

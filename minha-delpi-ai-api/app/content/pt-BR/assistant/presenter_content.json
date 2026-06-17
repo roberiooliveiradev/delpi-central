@@ -1522,7 +1522,11 @@
     "defaultTextTitle": "Relatório do produto",
     "defaultTableTitle": "Relatório",
     "itemsReturnedLine": "Itens retornados: {count}",
-    "titleWithCode": "{title} — {code}"
+    "titleWithCode": "{title} — {code}",
+    "incompleteResult": "**Resultado incompleto:** exibindo **{returned}** registro(s) (limite da consulta: **{limit}**).",
+    "incompleteResultWithTotal": "**Resultado incompleto:** exibindo **{returned}** de **{total}** registro(s).",
+    "incompleteResultNoBranchFilter": "**Resultado incompleto:** consulta **sem filtro de filial** — podem existir registros de outras filiais fora desta lista (exibindo **{returned}**, limite **{limit}**).",
+    "incompleteResultHint": "Para ver o restante, peça *mais linhas*, informe a *filial* ou aumente o *limite*."
   },
   "compositeVisualSpecs": {
     "production_status": {
