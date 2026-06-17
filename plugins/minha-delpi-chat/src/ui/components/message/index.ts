@@ -20,3 +20,7 @@ export { renderAssistantContentSegment } from "./assistantContentRegistry";
 export { useAssistantContentSegments } from "./useAssistantContentSegments";
 export { AssistantStackSection } from "./AssistantStackSection";
 export { useAssistantContentChrome } from "./useAssistantContentChrome";
+export {
+  resolveHumanizedCoverageNotice,
+  resolveHumanizedCoverageNoticeFromToolCall,
+} from "./humanizedCoverageNotice";

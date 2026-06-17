@@ -1,10 +1,10 @@
-import type { ChatDataCoverageNotice, ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatDataCoverageNotice, ChatToolCall } from "../../../data/api/chatTypes";
 
 import {
   getDataAnswerFromToolCalls,
   getDataCoverageNoticeFromToolCall,
   getDataCoverageNoticeFromToolCalls,
-} from "./chatPresentation";
+} from "../chatPresentation";
 
 function limitationLines(toolCalls?: ChatToolCall[]): string[] {
   const dataAnswer = getDataAnswerFromToolCalls(toolCalls);

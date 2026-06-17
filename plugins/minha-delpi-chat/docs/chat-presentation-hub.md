@@ -23,7 +23,7 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Pair / visuais | `getPresentationPairFromToolCalls`, `hasRichPresentation`, `getChartPresentationFromPair` | segment builders, `ChatRich*` |
 | Markdown preparado API | `getTextMarkdownFromToolCalls`, `stripRichUiRedundantProseFromMarkdown`, `isApiPreparedMarkdown` | prosa, stack, copy |
 | Stack / narrativa | `hasRichStackPresentation`, `resolveStackCommentaryBody`, `resolveCommentaryTextBody` | `stackSegmentBuilder`, interleave |
-| Data answer / coverage | `getDataAnswerFromToolCalls`, `getDataCoverageNoticeFromToolCalls` | chrome, `humanizedCoverageNotice` |
+| Data answer / coverage | `getDataAnswerFromToolCalls`, `getDataCoverageNoticeFromToolCalls` | hub; merge humanizado em `message/humanizedCoverageNotice.ts` |
 | Copy / email | `buildAssistantCopyText`, `buildEmailCopyText` | ações do assistente |
 | Toggle rich UI | `resolveRichFormatToggles`, `shouldShowRichPresentation` | toolbar, modos |
 

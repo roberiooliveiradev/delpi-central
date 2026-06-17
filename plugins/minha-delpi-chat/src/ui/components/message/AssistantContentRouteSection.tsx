@@ -18,7 +18,7 @@ import {
   getDepthStateFromToolCall,
   getPaginationStateFromToolCall,
 } from "../chatPresentation";
-import { resolveHumanizedCoverageNoticeFromToolCall } from "../humanizedCoverageNotice";
+import { resolveHumanizedCoverageNoticeFromToolCall } from "./humanizedCoverageNotice";
 import {
   resolveRouteTextDetailMarkdown,
   routeKeyFromSectionId,

@@ -60,13 +60,12 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | Permanece (hub / UX) | Motivo |
 |----------------------|--------|
 | `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
-| `humanizedCoverageNotice.ts` | Chrome do assistente (candidato `message/` futuro) |
 | `chartExplain.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts` | Export/canvas, não pipeline de dados |
 | Modais finos, sidebar, export utils | Cross-feature |
 
 **Em `presentation/pipeline/` (PR-27–30):** stack plan, dedup, metadata, labels, telemetry, chart builders, `treePresentationUtils`, `chartPresentationNormalize`.
 
-**Em `message/` (PR-21–23):** segmentos, `ChatMessageList`, `assistantProseRendering`.
+**Em `message/` (PR-21–23, PR-31):** segmentos, `ChatMessageList`, `assistantProseRendering`, `humanizedCoverageNotice`.
 
 **Candidatos `workspace/`:** `ChatProjectHome.tsx`, `ChatAddContextDialog.tsx`.
 

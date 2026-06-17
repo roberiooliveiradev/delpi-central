@@ -224,6 +224,7 @@ PR-27 ✅  presentation/pipeline/ — módulos presentation*.ts da raiz
 PR-28 ✅  regressão stack/layout — explicitSessionFormat, presentation.role, decision.layoutMode
 PR-29 ✅  chart builders → presentation/pipeline/ (axis, aggregation, build-from-table)
 PR-30 ✅  tree/chart normalize → pipeline; doc hub; remove stub CSS raiz
+PR-31 ✅  humanizedCoverageNotice → message/
 ```
 
 ### Fase concluída (jun/2026)
@@ -233,7 +234,6 @@ Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências o
 - **Hub documentado** — [`chat-presentation-hub.md`](./chat-presentation-hub.md) (permanece na raiz; extração futura por fatia)
 - **C3 residual** — fallbacks hex em `var(--token, #hex)` (cosmético; tokens existem em `index.css`)
 - **F4** — checklist visual manual §7
-- **`humanizedCoverageNotice`** — candidato a `message/`
 
 ---
 

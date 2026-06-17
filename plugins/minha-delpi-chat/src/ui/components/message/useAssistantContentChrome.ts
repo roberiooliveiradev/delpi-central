@@ -9,7 +9,7 @@ import {
   getPresentationInsightFromToolCalls,
   getPresentationRecommendationsFromToolCalls,
 } from "../chatPresentation";
-import { resolveHumanizedCoverageNotice } from "../humanizedCoverageNotice";
+import { resolveHumanizedCoverageNotice } from "./humanizedCoverageNotice";
 
 type UseAssistantContentChromeArgs = {
   toolCalls: ChatToolCall[];
