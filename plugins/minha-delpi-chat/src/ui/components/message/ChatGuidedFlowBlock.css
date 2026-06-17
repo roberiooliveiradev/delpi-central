@@ -15,8 +15,12 @@
 .mdc-guided-flow-block__intro {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
-  color: var(--mdc-muted, #64748b);
+  color: var(--mdc-text-muted);
   line-height: 1.45;
+}
+
+.mdc-guided-flow-block__intro .mdc-chat-markdown--compact p {
+  margin: 0;
 }
 
 .mdc-guided-flow-block__steps {
@@ -31,20 +35,25 @@
   margin-bottom: 0.45rem;
 }
 
+.mdc-guided-flow-block__step-text .mdc-chat-markdown--compact p {
+  margin: 0;
+  display: inline;
+}
+
 .mdc-guided-flow-block__step-action {
   display: inline-block;
   margin-left: 0.35rem;
   padding: 0.1rem 0.45rem;
-  border: 1px solid var(--mdc-border, #cbd5e1);
+  border: 1px solid var(--mdc-card-border);
   border-radius: 999px;
   background: transparent;
   font-size: 0.72rem;
   cursor: pointer;
-  color: var(--mdc-accent, #0ea5e9);
+  color: var(--mdc-primary);
 }
 
 .mdc-guided-flow-block__step-action:hover {
-  background: var(--mdc-surface-hover, rgba(14, 165, 233, 0.08));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
 }
 
 .mdc-guided-flow-block__cards {
@@ -55,9 +64,9 @@
 
 .mdc-guided-flow-block__card {
   padding: 0.55rem 0.65rem;
-  border: 1px solid var(--mdc-border, #e2e8f0);
+  border: 1px solid var(--mdc-card-border);
   border-radius: 8px;
-  background: var(--mdc-surface-elevated, rgba(255, 255, 255, 0.04));
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
 }
 
 .mdc-guided-flow-block__card h4 {
@@ -65,10 +74,14 @@
   font-size: 0.8rem;
 }
 
-.mdc-guided-flow-block__card p {
+.mdc-guided-flow-block__card-description {
   margin: 0 0 0.4rem;
   font-size: 0.72rem;
-  color: var(--mdc-muted, #64748b);
+  color: var(--mdc-text-muted);
+}
+
+.mdc-guided-flow-block__card-description .mdc-chat-markdown--compact p {
+  margin: 0;
 }
 
 .mdc-guided-flow-block__card-actions {

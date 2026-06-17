@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import {
   applySoftLineBreaks,
   prepareMarkdownContent,
+  resolveCitationBadgeDisplay,
   tableElementToGfmMarkdown,
 } from "./chatMarkdown";
 import { ChatPresentationCopyButton } from "../presentation/ChatPresentationCopyButton";
@@ -134,19 +135,21 @@ const markdownComponents: Components = {
   },
   a({ href, children, ...props }) {
     const label = String(children ?? "").trim();
-    const isExternal = typeof href === "string" && /^https?:\/\//i.test(href);
-    const isCitation = isExternal && label.length > 0 && label.length <= 40;
+    const hrefStr = typeof href === "string" ? href : "";
+    const isExternal = /^https?:\/\//i.test(hrefStr);
+    const { useBadge, displayLabel } = resolveCitationBadgeDisplay(hrefStr, label);
 
-    if (isCitation) {
+    if (useBadge) {
       return (
         <a
           className="mdc-chat-citation-badge"
           href={href}
           rel="noopener noreferrer"
           target="_blank"
+          title={label !== displayLabel ? label : undefined}
           {...props}
         >
-          {children}
+          {displayLabel}
         </a>
       );
     }

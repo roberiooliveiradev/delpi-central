@@ -287,13 +287,22 @@ class ChatWebSearchSourceEvaluationService:
         return "medium"
 
     @classmethod
+    def _is_government_host(cls, host: str) -> bool:
+        normalized = host.lower()
+
+        if normalized in {"gov.br", "leg.br", "jus.br"}:
+            return True
+
+        return any(normalized.endswith(suffix) for suffix in cls._GOVERNMENT_SUFFIXES)
+
+    @classmethod
     def _classify(cls, hostname: str, haystack: str) -> str:
         host = hostname.lower()
 
         if host in cls._OFFICIAL_STANDARDS_HOSTS:
             return "official"
 
-        if any(host.endswith(suffix) for suffix in cls._GOVERNMENT_SUFFIXES):
+        if cls._is_government_host(host):
             return "government"
 
         if host in cls._MANUFACTURER_DOMAINS or any(

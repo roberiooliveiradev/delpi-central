@@ -102,6 +102,32 @@ def test_index_failed_attachment_skipped_when_drawing_analyser_succeeded():
     assert classification is None
 
 
+def test_web_search_empty_uses_web_no_source_not_operational_empty():
+    answer = (
+        "Realizei uma busca na **internet pública** sobre *nr-12*, "
+        "mas não encontrei resultados úteis para montar um resumo."
+    )
+    tool_calls = [
+        {
+            "name": "web_search",
+            "metadata": {
+                "source": "web_search",
+                "count": 0,
+                "searchMode": "deep",
+            },
+        }
+    ]
+
+    classification = ChatErrorHandlingClassifier.classify(
+        message="pesquisa profunda na web sobre NR-12",
+        answer=answer,
+        tool_calls=tool_calls,
+    )
+
+    assert classification is not None
+    assert classification.error_type == "web_no_source"
+
+
 def test_help_error_skipped_when_recovery_present():
     from app.application.services.chat_help_error_follow_up_service import (
         ChatHelpErrorFollowUpService,

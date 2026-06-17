@@ -4,6 +4,7 @@ import {
   applySoftLineBreaks,
   hasMarkdownSyntax,
   prepareMarkdownContent,
+  resolveCitationBadgeDisplay,
   stripPresentationSectionMarkers,
   tableRowsToClipboardText,
   tableRowsToGfmMarkdown,
@@ -48,6 +49,42 @@ describe("chatMarkdown", () => {
       "### Escopo\n\nProduto 10070012.\n\n**Destaques**",
     );
     expect(prepareMarkdownContent(raw)).not.toContain("<!-- section:");
+  });
+});
+
+describe("resolveCitationBadgeDisplay", () => {
+  it("usa badge para todo link http(s) externo", () => {
+    expect(
+      resolveCitationBadgeDisplay(
+        "https://delpi.com.br/delpi-conexoes-eletricas/",
+        "https://delpi.com.br/delpi-conexoes-eletricas/",
+      ),
+    ).toEqual({ useBadge: true, displayLabel: "delpi.com.br" });
+
+    expect(
+      resolveCitationBadgeDisplay("https://delpi.com.br/", "https://delpi.com.br/"),
+    ).toEqual({ useBadge: true, displayLabel: "delpi.com.br" });
+  });
+
+  it("preserva marcadores numéricos de citação", () => {
+    expect(resolveCitationBadgeDisplay("https://example.com/a", "[1]")).toEqual({
+      useBadge: true,
+      displayLabel: "[1]",
+    });
+  });
+
+  it("preserva rótulo curto descritivo", () => {
+    expect(resolveCitationBadgeDisplay("https://delpi.com.br/", "site oficial")).toEqual({
+      useBadge: true,
+      displayLabel: "site oficial",
+    });
+  });
+
+  it("não usa badge em links internos", () => {
+    expect(resolveCitationBadgeDisplay("/docs/guia", "guia")).toEqual({
+      useBadge: false,
+      displayLabel: "guia",
+    });
   });
 });
 

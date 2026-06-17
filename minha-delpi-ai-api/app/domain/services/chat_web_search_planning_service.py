@@ -59,6 +59,7 @@ class ChatWebSearchPlanningService:
         ("abnt", "abnt.org.br"),
         ("nr-10", "gov.br"),
         ("nr 10", "gov.br"),
+        ("nr-", "gov.br"),
         ("norma nr", "gov.br"),
         ("iso ", "iso.org"),
         ("iec ", "iec.ch"),

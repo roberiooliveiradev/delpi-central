@@ -114,3 +114,57 @@ export function tableElementToGfmMarkdown(table: HTMLTableElement): string {
 
   return tableRowsToGfmMarkdown(rows);
 }
+
+const CITATION_BADGE_MAX_LABEL = 40;
+
+/** Links http(s) no markdown do assistente usam pill; rótulo URL longo vira hostname. */
+export function resolveCitationBadgeDisplay(
+  href: string,
+  label: string,
+): { useBadge: boolean; displayLabel: string } {
+  const trimmedLabel = label.trim();
+  const isExternal = /^https?:\/\//i.test(href);
+
+  if (!isExternal || !trimmedLabel) {
+    return { useBadge: false, displayLabel: trimmedLabel };
+  }
+
+  return {
+    useBadge: true,
+    displayLabel: resolveExternalLinkBadgeLabel(href, trimmedLabel),
+  };
+}
+
+function stripWrappingParens(value: string): string {
+  return value.replace(/^\(+|\)+$/g, "").trim();
+}
+
+function formatHostForCitation(url: URL): string {
+  return url.hostname.replace(/^www\./i, "");
+}
+
+function resolveExternalLinkBadgeLabel(href: string, label: string): string {
+  if (/^\[\d+\]$/.test(label) || /^\d+$/.test(label)) {
+    return label;
+  }
+
+  const normalizedLabel = stripWrappingParens(label);
+
+  if (/^https?:\/\//i.test(normalizedLabel)) {
+    try {
+      return formatHostForCitation(new URL(normalizedLabel));
+    } catch {
+      // fall through
+    }
+  }
+
+  if (/^https?:\/\//i.test(label) || label.length > CITATION_BADGE_MAX_LABEL) {
+    try {
+      return formatHostForCitation(new URL(href));
+    } catch {
+      return label.length > 48 ? `${label.slice(0, 45)}…` : label;
+    }
+  }
+
+  return label;
+}

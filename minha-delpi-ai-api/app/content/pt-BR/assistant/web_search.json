@@ -291,6 +291,8 @@
       "web sobre"
     ],
     "stripPatterns": [
+      "pesquisa profunda(?: na web| na internet)?",
+      "busca profunda(?: na web| na internet)?",
       "^(?:por favor[, ]*)?",
       "^(?:me )?",
       "^(?:pode )?",

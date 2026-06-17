@@ -58,6 +58,45 @@ def test_enrich_payload_orders_by_quality_and_adds_summary():
     assert "manufacturer" in summary["sourceTypes"]
 
 
+def test_evaluate_url_government_gov_br_apex():
+    evaluation = ChatWebSearchSourceEvaluationService.evaluate_url(
+        "https://www.gov.br/trabalho-e-emprego/files/NR12atualizada2023.pdf",
+        title="NR 12",
+    )
+
+    assert evaluation.source_type == "government"
+    assert evaluation.is_official is True
+    assert evaluation.quality_score >= 0.9
+
+
+def test_enrich_payload_keeps_gov_br_when_prefer_official():
+    payload = {
+        "searchStatus": "success",
+        "preferOfficial": True,
+        "results": [
+            {
+                "title": "NR 12 atualizada",
+                "url": "https://www.gov.br/trabalho-e-emprego/files/NR12.pdf",
+                "snippet": "norma",
+                "source": "searxng",
+            },
+            {
+                "title": "Opinião",
+                "url": "https://random-opinions.example/thread",
+                "snippet": "guess",
+                "source": "searxng",
+            },
+        ],
+    }
+
+    enriched = ChatWebSearchSourceEvaluationService.enrich_payload(payload)
+
+    assert enriched is not None
+    hostnames = {row["url"] for row in enriched["results"]}
+    assert any("gov.br" in url for url in hostnames)
+    assert enriched["sourceEvaluation"]["confidence"] == "high"
+
+
 def test_enrich_payload_excludes_low_quality_when_prefer_official():
     payload = {
         "searchStatus": "success",

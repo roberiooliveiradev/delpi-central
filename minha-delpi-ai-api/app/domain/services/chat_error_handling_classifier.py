@@ -220,12 +220,18 @@ class ChatErrorHandlingClassifier:
 
     @classmethod
     def _resolve_empty_result_type(cls, message: str, tool_calls: list | None) -> str:
+        from app.application.services.chat_web_search_follow_up_service import (
+            ChatWebSearchFollowUpService,
+        )
         from app.domain.services.chat_sql_inventory_query_service import (
             ChatSqlInventoryQueryService,
         )
         from app.domain.services.external_actions.external_action_sql_capability_service import (
             ExternalActionSqlCapabilityService,
         )
+
+        if ChatWebSearchFollowUpService.is_primary_web_search_turn(tool_calls):
+            return "web_no_source"
 
         if ChatSqlInventoryQueryService.resolve(message):
             return "empty_inventory_minimum"

@@ -4,6 +4,7 @@ import type {
   ChatGuidedFlowCard,
 } from "../../../data/api/chatTypes";
 import { ChatFollowUpChips } from "./ChatFollowUpChips";
+import { ChatMarkdown } from "./ChatMarkdown";
 
 import "./ChatGuidedFlowBlock.css";
 
@@ -29,11 +30,17 @@ export function ChatGuidedFlowBlock({
       {flow ? (
         <section className="mdc-guided-flow-block__flow" aria-label={flow.title}>
           <h4 className="mdc-guided-flow-block__title">{flow.title}</h4>
-          {flow.intro ? <p className="mdc-guided-flow-block__intro">{flow.intro}</p> : null}
+          {flow.intro ? (
+            <div className="mdc-guided-flow-block__intro">
+              <ChatMarkdown content={flow.intro} compact />
+            </div>
+          ) : null}
           <ol className="mdc-guided-flow-block__steps">
             {(flow.steps ?? []).map((step) => (
               <li key={step.order}>
-                <span>{step.text}</span>
+                <span className="mdc-guided-flow-block__step-text">
+                  <ChatMarkdown content={step.text} compact />
+                </span>
                 {step.suggestion && onUseQuery ? (
                   <button
                     type="button"
@@ -54,7 +61,11 @@ export function ChatGuidedFlowBlock({
           {cards.map((card) => (
             <article key={card.title} className="mdc-guided-flow-block__card" role="listitem">
               <h4>{card.title}</h4>
-              {card.description ? <p>{card.description}</p> : null}
+              {card.description ? (
+                <div className="mdc-guided-flow-block__card-description">
+                  <ChatMarkdown content={card.description} compact />
+                </div>
+              ) : null}
               {card.suggestions?.length && onUseQuery ? (
                 <div className="mdc-guided-flow-block__card-actions">
                   {card.suggestions.map((item) => (

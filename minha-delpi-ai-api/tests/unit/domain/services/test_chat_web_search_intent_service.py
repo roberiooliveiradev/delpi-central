@@ -7,6 +7,15 @@ def test_matches_web_search_triggers():
     assert ChatWebSearchIntentService.matches("pesquise na internet sobre python")
 
 
+def test_extract_query_strips_deep_search_phrase():
+    query = ChatWebSearchIntentService.extract_query(
+        "pesquisa profunda na web sobre NR-12"
+    )
+
+    assert "profunda" not in query.lower()
+    assert "nr-12" in query.lower() or "nr 12" in query.lower()
+
+
 def test_extract_query_strips_trigger_phrase():
     query = ChatWebSearchIntentService.extract_query(
         "pesquise na internet sobre inflacao 2026"
