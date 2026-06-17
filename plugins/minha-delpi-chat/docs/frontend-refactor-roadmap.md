@@ -156,14 +156,15 @@ Legenda: **P** prioridade (1 = mais urgente), **Risco** baixo / médio / alto, *
 
 Priorizar arquivos **fora** de `:root` (tokens de marca na raiz são aceitáveis).
 
-| Arquivo | Problema | Token sugerido |
-|---------|----------|----------------|
-| `ChatDecisionCard.css` | `#dcfce7`, `#166534`, etc. | `--mdc-success` + `color-mix` |
-| `workspaceFileIngest.css` | Gradientes `#4f8df7`, `#f06a5b` | `--mdc-primary`, `--mdc-danger`, `--mdc-success` |
-| `ChatAttachmentCard.css` | `#c0392b` | `--mdc-danger` |
-| `ChatRichChart.css` | `#93c5fd`, `#1d4ed8` | `--mdc-chart-series-*` |
-| `shared/IngestProgressIndicator.css` | Fallbacks Google `#1a73e8` | `--mdc-primary` sem fallback estranho |
-| `admin/overview/AdminOverviewTab.css` | `#2563eb`, `#5c6578` | `--mdc-primary`, `--mdc-text-muted` |
+| Arquivo | Problema | Token sugerido | Status |
+|---------|----------|----------------|--------|
+| `ChatDecisionCard.css` | `#dcfce7`, `#166534`, etc. | `--mdc-success` + `color-mix` | ✅ PR-21+ |
+| `workspaceFileIngest.css` | Gradientes `#4f8df7`, `#f06a5b` | `--mdc-primary`, `--mdc-danger`, `--mdc-success` | ✅ PR-19 |
+| `ChatAttachmentCard.css` | `#c0392b` | `--mdc-danger` | ✅ PR-7 |
+| `ChatRichChart.css` / TS heatmap | `#93c5fd`, `#1d4ed8` | `--mdc-chart-series-*` via `resolveChartSeriesColor` | ✅ PR-42 |
+| `ChatRichTree.css` badges | `#2563eb`, `#7c3aed`, `#059669` | `--mdc-chart-series-*` | ✅ PR-42 |
+| `shared/IngestProgressIndicator.css` | Fallbacks Google `#1a73e8` | `--mdc-primary` | ✅ PR-19 |
+| `admin/overview/AdminOverviewTab.css` | `#2563eb`, `#5c6578` | `--mdc-primary`, `--mdc-text-muted` | ✅ PR-18 |
 
 ---
 
@@ -236,6 +237,7 @@ PR-38 ✅  presentation/export/ — exportUtils, chartPngExport, chartCanvasMark
 PR-39 ✅  presentation/presentationMetadataReaders.ts — get*FromToolCalls, render plan, coverage
 PR-40 ✅  presentation/presentationMarkdownNormalization.ts — strip*, tablePresentationToMarkdown
 PR-41 ✅  presentation/presentationPairResolver.ts — pair resolver, merge tabelas/gráficos
+PR-42 ✅  hex bare em apresentação rica + máscaras; fallbacks `var(--token)` residual aceito
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -252,21 +254,17 @@ Meta: reduzir **55 TS/TSX + ~37 CSS** na raiz (jun/2026) para **shell + hub + or
 | PR-39 | `presentationMetadataReaders.ts` — readers metadata puros | ✅ |
 | PR-40 | `presentationMarkdownNormalization.ts` — strip*, table markdown | ✅ |
 | PR-41 | `presentationPairResolver.ts` — pair resolver, merge tabelas | ✅ |
-| PR-42 | C3 hex residual + checklist F4 §7 | pendente |
-| PR-42 | C3 hex residual + checklist F4 §7 | pendente |
+| PR-42 | C3 hex residual + checklist F4 §7 | ✅ |
 
-Definição **100% refactor estrutural**: PR-42 concluído + hub fatiado + raiz só shell/hub/páginas.
+Definição **100% refactor estrutural**: PR-42 concluído ✅ — hub fatiado (PR-39–41) + raiz organizada em feature folders.
 
 Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`chat-presentation-hub.md`](./chat-presentation-hub.md).
 
 ### Fase concluída (jun/2026)
 
-Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) em andamento — ver tabela acima.
+Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) ✅ concluída (jun/2026).
 
-Pendências até 100%:
-
-- **PR-39–41** — fatiar hub [`chat-presentation-hub.md`](./chat-presentation-hub.md)
-- **PR-42** — C3 hex residual + checklist F4 §7
+Pós-Fase G (opcional): reduzir arquivos na raiz `components/` (~55 → meta ≤25) migrando modais/orquestração restantes.
 
 ---
 
@@ -308,7 +306,7 @@ Pendências até 100%:
 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
-| PRs estruturais entregues | 40 / 42 (Fase G) | 42 / 42 |
+| PRs estruturais entregues | 42 / 42 (Fase G) | 42 / 42 ✅ |
 | Arquivos TS/TSX na raiz `components/` | 55 | ≤25 (shell + hub + páginas) |
 | Arquivos CSS na raiz `components/` | 37 | co-localizados com feature ou `ui/styles/` |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
@@ -317,7 +315,8 @@ Pendências até 100%:
 | Componentes em `shared/` (excl. admin) | 21 arquivos | ≥15 (overlay + modal + menus) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
-| Arquivos CSS com hex fora de token (chat) | ~5 (só fallbacks `var(--*, #…)`) | 0 (superfície/texto) — PR-42 |
+| Arquivos CSS com hex bare (superfície/texto, chat) | 0 | 0 ✅ |
+| Arquivos CSS com hex em fallback `var(--*, #…)` | residual em modais legados | aceito (tokens em `index.css`) |
 | Duplicação selector composer | 0 | 0 ✅ |
 | Testes CI apresentação (vitest) | 49 / 49 pass | verde em todo PR pipeline |
 

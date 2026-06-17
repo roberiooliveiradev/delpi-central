@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado em **16/06/2026** — refatoração frontend MFE (PR-1–34, Fase G pendente), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
+> Atualizado em **17/06/2026** — refatoração frontend MFE (PR-1–42, **Fase G concluída**), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
 
 ## Visão geral
 
@@ -45,18 +45,21 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 ### Refatoração frontend (jun/2026)
 
-Fases **A–F** concluídas (PR-1–26). **Fase pipeline + message** (PR-27–34): módulos `presentation/pipeline/`, prosa/markdown/coverage em `message/`, hub `chatPresentation.ts` documentado na raiz.
+Fases **A–G** concluídas (PR-1–42). Hub `chatPresentation.ts` fatiado (PR-39–41); hex bare em apresentação rica eliminado (PR-42).
 
 | Entrega | Status |
 |---------|--------|
 | Primitivos `shared/` (overlay, modal, menus) | ✅ PR-1–16 |
-| Pastas feature (`presentation/`, `composer/`, `message/`, `workspace/`) | ✅ PR-18–20 |
+| Pastas feature (`presentation/`, `composer/`, `message/`, `workspace/`, `shell/`) | ✅ PR-18–20, PR-35–36 |
 | Stubs legados removidos | ✅ PR-26 |
 | Pipeline apresentação (stack, dedup, chart/tree) | ✅ PR-27–30, PR-32 |
 | Prosa, markdown, fixtures, formatação célula | ✅ PR-31–34 |
+| Hub fatiado (readers, markdown, pair resolver) | ✅ PR-39–41 |
+| Export apresentação (CSV/XLSX/PDF/PNG) | ✅ PR-38 |
+| Hex C3 residual (rich tree/chart, máscaras) | ✅ PR-42 |
 | CI build + testes apresentação (49/49) | ✅ |
 
-**Raiz atual:** ~87 TS/TSX + ~55 CSS (meta pós-refactor: shell + hub + páginas).
+**Raiz atual:** ~55 TS/TSX + ~37 CSS na raiz `components/` (meta pós-refactor opcional: ≤25 TS/TSX — modais/orquestração restantes).
 
 | Doc | Conteúdo |
 |-----|----------|
@@ -65,7 +68,7 @@ Fases **A–F** concluídas (PR-1–26). **Fase pipeline + message** (PR-27–34
 | [chat-presentation-hub.md](../../../plugins/minha-delpi-chat/docs/chat-presentation-hub.md) | Contrato hub metadata ↔ UI |
 | [rich-presentation-css.md](../../../plugins/minha-delpi-chat/docs/rich-presentation-css.md) | CSS compartilhado tabela/gráfico/KPI |
 
-**Próximo:** PR-35 (`shell/` — sidebar + context bars). Pendências Fase G: workspace, message residual, export, fatiar hub, hex C3, checklist F4 manual.
+**Próximo (opcional):** reduzir arquivos na raiz `components/` (~55 → ≤25) — modais e orquestração ainda na raiz; fora do escopo estrutural PR-1–42.
 
 ### Painel administrativo
 

@@ -1150,6 +1150,7 @@ function HeatmapGrid({
   tickFill: string;
   onPointClick?: ChartPointClickHandler;
 }) {
+  const isDark = useMdcDarkMode();
   const xLabels = useMemo(
     () => [...new Set(data.map((row) => String(row[xAxis] ?? "")))].filter(Boolean),
     [data, xAxis],
@@ -1185,8 +1186,8 @@ function HeatmapGrid({
     };
   }, [data, xAxis, yAxis, valueKey]);
 
-  const lowColor = colors[0] || "#93c5fd";
-  const highColor = colors[1] || colors[0] || "#1d4ed8";
+  const lowColor = colors[0] || resolveChartSeriesColor(colors, 0, isDark);
+  const highColor = colors[1] || colors[0] || resolveChartSeriesColor(colors, 1, isDark);
 
   return (
     <div className="mdc-heatmap" role="img" aria-label="Mapa de calor">

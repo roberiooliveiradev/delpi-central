@@ -293,7 +293,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     padding-bottom: 0.1rem;
-    mask-image: linear-gradient(90deg, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, black 92%, transparent);
   }
 
   .mdc-chat-context-bar__chip-text {

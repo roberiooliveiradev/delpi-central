@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **17/06/2026** após PR-1–41 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **17/06/2026** após PR-1–42 — **Fase G concluída** ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -16,6 +16,7 @@ src/ui/components/
 │   ├── export/          # CSV/XLSX/PDF/PNG, lousa markdown (PR-38)
 │   ├── presentationMetadataReaders.ts  # get*FromToolCalls (PR-39)
 │   ├── presentationMarkdownNormalization.ts  # strip*, table markdown (PR-40)
+│   ├── presentationPairResolver.ts  # pair, merge tabelas/gráficos (PR-41)
 │   └── segmentBuilders/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
@@ -70,7 +71,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
 | Modais finos, sidebar, export buttons | Cross-feature |
 
-**Em `presentation/` (PR-34, PR-39–40):** `tableCellFormatting.ts`, `presentationMetadataReaders.ts`, `presentationMarkdownNormalization.ts`.
+**Em `presentation/` (PR-34, PR-39–41):** `tableCellFormatting.ts`, metadata readers, markdown normalization, pair resolver.
 
 **Em `presentation/export/` (PR-38):** `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv`.
 
@@ -90,7 +91,8 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown, dashboardExportCsv | ✅ |
 | PR-39 | `presentationMetadataReaders.ts` | readers metadata puros | ✅ |
 | PR-40 | `presentationMarkdownNormalization.ts` | strip*, table markdown | ✅ |
-| PR-41 | fatia pair resolver do hub | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
+| PR-41 | `presentationPairResolver.ts` | pair resolver, merge tabelas | ✅ |
+| PR-42 | C3 hex residual + checklist F4 | ver roadmap §5 | ✅ |
 
 ## Referências
 

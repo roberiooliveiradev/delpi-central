@@ -67,7 +67,7 @@
 }
 
 .mdc-rich-tree__content--interactive:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--mdc-primary, #2563eb) 55%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 55%, transparent);
   outline-offset: 1px;
 }
 
@@ -125,9 +125,9 @@
   align-items: center;
   justify-content: center;
   margin-top: 0.05rem;
-  border: 1px solid var(--mdc-card-border, #d1d5db);
-  background: var(--mdc-card-bg, #fff);
-  color: var(--mdc-text-muted, #64748b);
+  border: 1px solid var(--mdc-card-border);
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text-muted);
   cursor: pointer;
   border-radius: 999px;
   padding: 0;
@@ -143,23 +143,23 @@
 }
 
 .mdc-rich-tree__toggle--expanded {
-  color: var(--mdc-primary, #2563eb);
-  border-color: color-mix(in srgb, var(--mdc-primary, #2563eb) 35%, var(--mdc-card-border, #d1d5db));
-  background: color-mix(in srgb, var(--mdc-primary, #2563eb) 8%, var(--mdc-card-bg, #fff));
+  color: var(--mdc-primary);
+  border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
 }
 
 .mdc-rich-tree__toggle--collapsed {
-  color: var(--mdc-text-muted, #64748b);
+  color: var(--mdc-text-muted);
 }
 
 .mdc-rich-tree__toggle:hover {
-  color: var(--mdc-primary, #2563eb);
-  border-color: color-mix(in srgb, var(--mdc-primary, #2563eb) 45%, var(--mdc-card-border, #d1d5db));
-  background: color-mix(in srgb, var(--mdc-primary, #2563eb) 12%, var(--mdc-card-bg, #fff));
+  color: var(--mdc-primary);
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
 }
 
 .mdc-rich-tree__toggle:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--mdc-primary, #2563eb) 55%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 55%, transparent);
   outline-offset: 1px;
 }
 
@@ -209,18 +209,18 @@
 }
 
 .mdc-rich-tree__badge--pa {
-  background: color-mix(in srgb, #2563eb 14%, transparent);
-  color: #2563eb;
+  background: color-mix(in srgb, var(--mdc-chart-series-7) 14%, transparent);
+  color: var(--mdc-chart-series-7);
 }
 
 .mdc-rich-tree__badge--pi {
-  background: color-mix(in srgb, #7c3aed 14%, transparent);
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--mdc-chart-series-6) 14%, transparent);
+  color: var(--mdc-chart-series-6);
 }
 
 .mdc-rich-tree__badge--mp {
-  background: color-mix(in srgb, #059669 14%, transparent);
-  color: #059669;
+  background: color-mix(in srgb, var(--mdc-chart-series-3) 14%, transparent);
+  color: var(--mdc-chart-series-3);
 }
 
 .mdc-rich-tree__footer {

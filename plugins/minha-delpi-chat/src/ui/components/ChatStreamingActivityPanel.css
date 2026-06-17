@@ -148,8 +148,8 @@
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    #000 18%,
-    #000 88%,
+    black 18%,
+    black 88%,
     transparent 100%
   );
 }
