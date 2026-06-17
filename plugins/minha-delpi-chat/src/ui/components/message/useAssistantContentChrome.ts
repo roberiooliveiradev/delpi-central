@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { ChatToolCall } from "../../../data/api/chatTypes";
 
-import { getChartExplanationFromToolCalls } from "../chartExplain";
+import { getChartExplanationFromToolCalls } from "../presentation/pipeline/chartExplain";
 import {
   getDepthStateFromToolCalls,
   getPaginationStateFromToolCalls,

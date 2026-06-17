@@ -24,3 +24,7 @@ export {
   resolveHumanizedCoverageNotice,
   resolveHumanizedCoverageNoticeFromToolCall,
 } from "./humanizedCoverageNotice";
+export {
+  buildAssistantMessageMenuActions,
+  type AssistantMessageMenuAction,
+} from "./chatAssistantMessageActions";

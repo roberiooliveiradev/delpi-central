@@ -17,3 +17,9 @@ export {
   treePresentationToClipboardText,
   treePresentationToTable,
 } from "./treePresentationUtils";
+export {
+  getChartExplanationFromToolCalls,
+  getDashboardExplanationFromToolCalls,
+  messageHasChartPresentation,
+  messageHasDashboardPresentation,
+} from "./chartExplain";

@@ -4,7 +4,7 @@ import type { ChatToolCall } from "../../data/api/chatTypes";
 import {
   buildAssistantMessageMenuActions,
   type AssistantMessageMenuAction,
-} from "./chatAssistantMessageActions";
+} from "./message/chatAssistantMessageActions";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { menuAnchorRectFromElement } from "./shared/overlay/menuPositionUtils";
 import "./ChatTableRowMenu.css";

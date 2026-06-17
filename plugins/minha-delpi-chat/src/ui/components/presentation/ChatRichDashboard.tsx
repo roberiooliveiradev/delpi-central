@@ -12,7 +12,7 @@ import { ChatMarkdown } from "../ChatMarkdown";
 import { ChatRichChart } from "./ChatRichChart";
 import { ExpandButton } from "../ChatExpandModal";
 import { ChatRichKpi } from "./ChatRichKpi";
-import { getChartExplanationFromToolCalls } from "../chartExplain";
+import { getChartExplanationFromToolCalls } from "./pipeline/chartExplain";
 import "./ChatRichDashboard.css";
 
 type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;

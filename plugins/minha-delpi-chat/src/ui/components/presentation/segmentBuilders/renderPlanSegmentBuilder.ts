@@ -5,7 +5,7 @@ import {
   partitionCommentarySections,
 } from "../../message/assistantContentInterleave";
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
-import { getChartExplanationFromToolCalls } from "../../chartExplain";
+import { getChartExplanationFromToolCalls } from "../pipeline/chartExplain";
 import {
   getRenderPlanFromToolCalls,
   type PresentationRenderPlan,

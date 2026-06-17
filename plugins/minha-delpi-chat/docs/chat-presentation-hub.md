@@ -33,7 +33,7 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 |-----------------|-------|-----|
 | Stack plan, dedup, metadata policy, labels, telemetry | `presentation/pipeline/presentation*.ts` | 27 |
 | Chart axis, agregação, build-from-table | `presentation/pipeline/chart*.ts`, `buildChartPresentationFromTable.ts` | 29 |
-| Tree flatten/export, chart payload normalize | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts` | 30 |
+| Tree flatten/export, chart payload normalize, explain fallback | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts`, `chartExplain.ts` | 30, 32 |
 | Segment assembly (stack, render plan, markers) | `presentation/segmentBuilders/` | 25 |
 | Prosa / título / markdown stream | `message/assistantProseRendering.ts` | 23 |
 | Layout stack vs single, ordem visual | `message/assistantContentLayout.ts` | 20+ |

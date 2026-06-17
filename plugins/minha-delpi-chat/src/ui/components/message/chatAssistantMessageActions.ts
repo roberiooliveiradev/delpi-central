@@ -1,6 +1,6 @@
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../data/api/chatTypes";
 
-import type { FormatSwitchAction } from "./presentation/pipeline/presentationInteractivityPolicy";
+import type { FormatSwitchAction } from "../presentation/pipeline/presentationInteractivityPolicy";
 
 export type AssistantMessageMenuAction = FormatSwitchAction;
 

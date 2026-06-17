@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../data/api/chatTypes";
 
 import { buildAssistantMessageMenuActions } from "./chatAssistantMessageActions";
 

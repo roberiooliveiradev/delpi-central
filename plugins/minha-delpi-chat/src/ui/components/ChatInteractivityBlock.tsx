@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useConfirmDialog } from "./useConfirmDialog";
 
 import type { ChatMessageMetadata } from "../../data/api/chatTypes";
-import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "./chartExplain";
+import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "./presentation/pipeline/chartExplain";
 import { type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
 import type { TableRowMenuAction } from "./chatDrillDown";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";

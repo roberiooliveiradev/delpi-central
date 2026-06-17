@@ -60,12 +60,12 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | Permanece (hub / UX) | Motivo |
 |----------------------|--------|
 | `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
-| `chartExplain.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts` | Export/canvas, não pipeline de dados |
+| `chartPngExport.ts`, `chartCanvasMarkdown.ts` | Export/canvas, não pipeline de dados |
 | Modais finos, sidebar, export utils | Cross-feature |
 
-**Em `presentation/pipeline/` (PR-27–30):** stack plan, dedup, metadata, labels, telemetry, chart builders, `treePresentationUtils`, `chartPresentationNormalize`.
+**Em `presentation/pipeline/` (PR-27–30, PR-32):** stack plan, dedup, metadata, labels, telemetry, chart builders, tree utils, normalize, `chartExplain`.
 
-**Em `message/` (PR-21–23, PR-31):** segmentos, `ChatMessageList`, `assistantProseRendering`, `humanizedCoverageNotice`.
+**Em `message/` (PR-21–23, PR-31–32):** segmentos, `ChatMessageList`, `assistantProseRendering`, `humanizedCoverageNotice`, `chatAssistantMessageActions`.
 
 **Candidatos `workspace/`:** `ChatProjectHome.tsx`, `ChatAddContextDialog.tsx`.
 

@@ -225,6 +225,7 @@ PR-28 ✅  regressão stack/layout — explicitSessionFormat, presentation.role,
 PR-29 ✅  chart builders → presentation/pipeline/ (axis, aggregation, build-from-table)
 PR-30 ✅  tree/chart normalize → pipeline; doc hub; remove stub CSS raiz
 PR-31 ✅  humanizedCoverageNotice → message/
+PR-32 ✅  chatAssistantMessageActions → message/; chartExplain → pipeline/
 ```
 
 ### Fase concluída (jun/2026)

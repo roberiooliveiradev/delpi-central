@@ -1,6 +1,6 @@
-import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
-import { formatChartColumnLabel } from "./presentation/pipeline/chartAxisSelection";
-import { getPresentationDecisionFromToolCalls } from "./chatPresentation";
+import type { ChatPresentation, ChatToolCall } from "../../../../data/api/chatTypes";
+import { formatChartColumnLabel } from "./chartAxisSelection";
+import { getPresentationDecisionFromToolCalls } from "../../chatPresentation";
 
 export const EXPLAIN_CHART_CHIP_LABEL = "Explique esse gráfico";
 export const EXPLAIN_CHART_INLINE_ACTION = "explain_chart";

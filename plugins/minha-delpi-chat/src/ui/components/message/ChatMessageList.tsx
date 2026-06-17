@@ -68,7 +68,7 @@ import { ChatAssistantMessageMenu } from "../ChatAssistantMessageMenu";
 import {
   messageHasChartPresentation,
   messageHasDashboardPresentation,
-} from "../chartExplain";
+} from "../presentation/pipeline/chartExplain";
 import {
   buildAssistantCopyText,
   buildEmailCopyText,
