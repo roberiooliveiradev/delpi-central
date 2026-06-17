@@ -72,6 +72,7 @@ Cenários E2E declarativos: `app/content/pt-BR/assistant/smoke_e2e_scenarios.jso
 | [smoke-system-metadata-homologacao.md](./smoke-system-metadata-homologacao.md) | Metadados `/system` |
 | [homologacao-apresentacao-rag-assertividade-jun2026.md](./homologacao-apresentacao-rag-assertividade-jun2026.md) | RAG + apresentação |
 | [presentation-homologation-jun2026.md](./presentation-homologation-jun2026.md) | Modos de apresentação |
+| [homologacao-docie-produto-pb15-jun2026.md](./homologacao-docie-produto-pb15-jun2026.md) | DOCIE — produto + PB15 |
 
 ---
 

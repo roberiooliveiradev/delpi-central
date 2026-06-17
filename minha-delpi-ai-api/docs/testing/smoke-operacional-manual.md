@@ -20,6 +20,7 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 | **Playbooks produto (data + sessão ativa)** | `python scripts/smoke_playbook_product_routes.py` — ver [`../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md`](../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md) |
 | **Perguntas manuais (playbook MP/PA + apresentação jun/2026)** | [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026.md) — roteiro copiar/colar + registro OK/Falha |
 | **Smoke E2E perguntas jun/2026** | `python scripts/smoke_perguntas_teste_chat_jun2026.py` — 16 single-turn + multi-turn; ver homologação 09/jun no doc acima |
+| **DOCIE produto + PB15 (jun/2026)** | [`homologacao-docie-produto-pb15-jun2026.md`](homologacao-docie-produto-pb15-jun2026.md) — `smoke_playbook_product_routes.py` + `smoke_playbook_production_operational.py` |
 | **Apresentação generalizada (homologação)** | [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md) + `scripts/audit_presentation_coverage.py --check-profiles` |
 | **KPIs empresa (12 perguntas, sem produto)** | `python scripts/smoke_empresa_kpi_e2e.py` — ver [`smoke-operational-intelligence-e2e.md`](smoke-operational-intelligence-e2e.md#smoke-empresa--kpi-sem-produto) |
 | Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |

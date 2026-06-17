@@ -64,7 +64,7 @@ flowchart TD
     G -->|None| H
 ```
 
-**Problema restante:** homologação manual DoD §11 **ao final da refatoração completa**.
+**Problema restante:** homologação UI amostral (modos de apresentação MFE) — opcional; seleção produto + PB15 homologada em [`homologacao-docie-produto-pb15-jun2026.md`](../testing/homologacao-docie-produto-pb15-jun2026.md).
 
 ### 2.3 Estado legado (referência histórica pós `519f3834`)
 
@@ -711,7 +711,7 @@ grep select_production_operational / _phase_production_operational → só wrapp
 | 3 | **Zero** métodos `select_product_*` / wrappers legados no dispatch | ✅ |
 | 4 | Novo provider OpenAPI **sem alterar Python** — registry + import + allowed actions | ✅ rotas registry |
 | 5 | Documentação onda 8 / audit / catalog atualizadas | ✅ |
-| 6 | Homologação manual produto + PB15 | ⬜ pendente |
+| 6 | Homologação manual produto + PB15 | ✅ — [`homologacao-docie-produto-pb15-jun2026.md`](../testing/homologacao-docie-produto-pb15-jun2026.md) (16/06/2026) |
 
 ---
 
