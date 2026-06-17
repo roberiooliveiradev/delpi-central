@@ -2,6 +2,16 @@ export { ChatMessageList } from "./ChatMessageList";
 export { ChatThinkingDots } from "./ChatThinkingDots";
 export { buildChatTimelineItems, formatMessageTime } from "./chatMessageTimeline";
 export { ChatAssistantContent } from "./ChatAssistantContent";
+export {
+  resolveAssistantDisplayContent,
+  resolveAssistantPresentationTitle,
+  resolveAssistantRenderableMarkdown,
+  resolveAssistantStreamingProseState,
+  shouldBypassIncrementalTextReveal,
+  shouldRenderPresentationHeading,
+  stripLeadingMarkdownTitleSafely,
+  toolCallsForDrawingAnalysisDisplay,
+} from "./assistantProseRendering";
 export { AssistantContentChrome } from "./AssistantContentChrome";
 export { AssistantContentFormatToolbar } from "./AssistantContentFormatToolbar";
 export { AssistantContentRouteCoverage } from "./AssistantContentRouteCoverage";

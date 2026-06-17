@@ -413,7 +413,7 @@
       "pathIncludesByModule": {
         "chatPresentation.ts": 7,
         "visualSegmentCollector.ts": 4,
-        "assistantProseRendering.ts": 1
+        "message/assistantProseRendering.ts": 1
       }
     },
     "tableRoleFromTitle": {
@@ -431,7 +431,7 @@
     "allowedPathIncludesModules": [
       "chatPresentation.ts",
       "visualSegmentCollector.ts",
-      "assistantProseRendering.ts"
+      "message/assistantProseRendering.ts"
     ]
   },
   "playbook12Refactor": {

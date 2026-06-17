@@ -8,7 +8,7 @@ import presentationVocabulary from "../../content/presentation_vocabulary.json";
 const componentsDir = dirname(fileURLToPath(import.meta.url));
 
 const PRESENTATION_SCAN_MODULES = [
-  "assistantProseRendering.ts",
+  "message/assistantProseRendering.ts",
   "chatPresentation.ts",
   "presentationCategoryFilter.ts",
   "presentationFieldLabels.ts",

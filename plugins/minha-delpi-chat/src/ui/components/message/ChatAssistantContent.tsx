@@ -7,7 +7,7 @@ import {
   resolveAssistantPresentationTitle,
   shouldRenderPresentationHeading,
   stripLeadingMarkdownTitleSafely,
-} from "../assistantProseRendering";
+} from "./assistantProseRendering";
 import { renderAssistantContentSegment } from "./assistantContentRegistry";
 import {
   shouldShowCompleteStackView,

@@ -53,7 +53,7 @@ import { ChatAssistantContent } from "./ChatAssistantContent";
 import {
   resolveAssistantDisplayContent,
   toolCallsForDrawingAnalysisDisplay,
-} from "../assistantProseRendering";
+} from "./assistantProseRendering";
 import { ChatMarkdown } from "../ChatMarkdown";
 import {
   downloadDrawingAnalysisCsv,
@@ -80,7 +80,7 @@ import {
 import {
   resolveAssistantStreamingProseState,
   shouldBypassIncrementalTextReveal,
-} from "../assistantProseRendering";
+} from "./assistantProseRendering";
 import { ChatSources } from "../ChatSources";
 import { ChatTrustBadges, type ChatTrustSignal } from "../ChatTrustBadges";
 import {

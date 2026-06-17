@@ -5,7 +5,7 @@ import type {
   ChatSource,
   ChatToolCall,
 } from "../../data/api/chatTypes";
-import { shouldBypassIncrementalTextReveal } from "../../ui/components/assistantProseRendering";
+import { shouldBypassIncrementalTextReveal } from "../../ui/components/message/assistantProseRendering";
 import {
   isShortPresentationCaption,
   shouldShowRichPresentation,

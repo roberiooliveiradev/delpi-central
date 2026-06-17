@@ -216,13 +216,14 @@ PR-19 ✅  D3 composer/ + C3 hex + D4 dropzone paridade
 PR-20 ✅  D3 message/workspace + F3 CI build gate
 PR-21 ✅  C3 hex chips · message/ useAssistantContentSegments + AssistantStackSection · docs component-structure
 PR-22 ✅  message/ ChatMessageList + timeline + ChatThinkingDots
+PR-23 ✅  message/ assistantProseRendering (canônico prosa)
 ```
 
 ### Fase concluída (jun/2026)
 
 Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências opcionais:
 
-- **Raiz → message/** — `assistantProseRendering`, `chatPresentation` (lógica compartilhada)
+- **Raiz → message/** — `chatPresentation` (compartilhado com presentation/)
 - **C3 residual** — fallbacks hex em `var(--token, #hex)` (cosmético; tokens existem em `index.css`)
 - **F4** — checklist visual manual §7
 - **Stubs legados** — remover após migrar todos os imports (ver [`component-structure.md`](./component-structure.md))
@@ -256,7 +257,7 @@ Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências o
 | Admin primitivos | `src/ui/components/admin/shared/` |
 | Regra design system | `.cursor/rules/plugins-visual-design-system.mdc` |
 | Build obrigatório | `.cursor/rules/plugins-frontend-build.mdc` |
-| Prosa/markdown assistente | `assistantProseRendering.ts` (canônico MFE) |
+| Prosa/markdown assistente | `message/assistantProseRendering.ts` (canônico MFE) |
 | Apresentação rica API | `chat-assistant-content-presentation.md` (API) |
 | CSS apresentação rica (MFE) | `docs/rich-presentation-css.md` |
 | Estrutura feature folders | `docs/component-structure.md` |

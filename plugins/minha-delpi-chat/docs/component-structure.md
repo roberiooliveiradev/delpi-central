@@ -43,6 +43,7 @@ Arquivos na **raiz** de `components/` que só reexportam — **não** adicionar 
 | `AssistantStackSection.tsx` | `message/` |
 | `ChatMessageList.tsx` | `message/` |
 | `ChatThinkingDots.tsx` | `message/` |
+| `assistantProseRendering.ts` | `message/` |
 | `workspace-files/*` | `workspace/` |
 | `rich-presentation-shared.css` | `presentation/rich-presentation-shared.css` |
 | `menuPositionUtils.ts` | `shared/overlay/menuPositionUtils.ts` |
@@ -64,9 +65,9 @@ Novos imports devem usar o caminho canônico (pasta feature ou barrel).
 
 Candidatos futuros a `message/`:
 
-- `assistantProseRendering.ts`, `chatPresentation.ts` (lógica de apresentação consumida pelo message)
+- `chatPresentation.ts` (compartilhado com `presentation/` e builders na raiz)
 
-**Já em `message/` (PR-21–22):** `useAssistantContentSegments`, `AssistantStackSection`, `ChatMessageList`, `chatMessageTimeline`, `ChatThinkingDots`.
+**Já em `message/` (PR-21–23):** segmentos, `ChatMessageList`, `assistantProseRendering`.
 
 Candidatos futuros a `workspace/`:
 

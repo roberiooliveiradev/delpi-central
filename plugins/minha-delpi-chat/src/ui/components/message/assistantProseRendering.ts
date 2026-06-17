@@ -1,13 +1,13 @@
-import type { ChatMessageMetadata, ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatMessageMetadata, ChatToolCall } from "../../../data/api/chatTypes";
 
-import { hasMarkdownSyntax, stripPresentationSectionMarkers } from "./chatMarkdown";
+import { hasMarkdownSyntax, stripPresentationSectionMarkers } from "../chatMarkdown";
 import { isNativeSingleViewSelection } from "./assistantContentLayout";
 import {
   getPresentationTitle,
   getTextMarkdownFromToolCalls,
   isShortPresentationCaption,
   stripLeadingMarkdownTitle,
-} from "./chatPresentation";
+} from "../chatPresentation";
 
 /**
  * Regras centralizadas de prosa do assistente (chat base).

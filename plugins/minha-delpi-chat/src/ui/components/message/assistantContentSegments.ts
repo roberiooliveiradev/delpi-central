@@ -2,7 +2,7 @@ import type { ChatToolCall } from "../../../data/api/chatTypes";
 import {
   resolveAssistantRenderableMarkdown,
   shouldRenderPresentationHeading,
-} from "../assistantProseRendering";
+} from "./assistantProseRendering";
 import type { AssistantContentSegment } from "./assistantContentTypes";
 
 export type { AssistantContentSegment } from "./assistantContentTypes";
