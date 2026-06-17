@@ -95,4 +95,4 @@ cd minha-delpi-ai-api && PYTHONPATH=. python scripts/audit_presentation_coverage
 
 | Data | Ambiente | Responsável | Preferência OK % | Tier B+ OK % | Observações |
 |------|----------|-------------|------------------|--------------|-------------|
-| | homolog | | | | |
+| 2026-06-16 | local (gateway) | agente CI | gates 100% | tier B+ 60%, A/B perfil 100% | Gates: `audit_presentation_path_ifs` (94 arq, 0 ifs), `--check-profiles` OK após mapear `exclusive_raw_materials_catalog`→`table_list`, `smoke_product_analyser_presentation` OK, `test_presentation_refactor_baseline` 22 passed. E2E `smoke_presentation_format_refinement` 5/5 cenários OK após fix `_is_product_operational_path`→`ChatOperationalResponseProfileService`. Amostra manual MFE (toolbar) pendente. `--check-playbook12` fora do escopo (24 gaps OpenAPI/column_vocab — backlog). |

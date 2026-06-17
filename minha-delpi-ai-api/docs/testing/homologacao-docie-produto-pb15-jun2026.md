@@ -65,7 +65,7 @@ Copiar/colar de [`perguntas-teste-chat-jun2026.md`](perguntas-teste-chat-jun2026
 | F2 | `situação de produção do 90269002 hoje` | `/production-status` |
 | H5 | `status produção` (com produto em contexto) | KPI + dashboard |
 
-Apresentação rica: [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md) (opcional pós-seleção).
+Apresentação rica: [`presentation-homologation-jun2026.md`](presentation-homologation-jun2026.md) — **gates automatizados OK** (16/06/2026); amostra manual MFE (toolbar) opcional.
 
 ---
 

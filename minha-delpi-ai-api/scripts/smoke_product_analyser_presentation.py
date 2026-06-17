@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sys
 
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
@@ -20,6 +21,7 @@ from tests.unit.domain.services.test_external_action_result_presenter_analyser_h
 
 
 def main() -> int:
+    configure_domain_infrastructure_ports()
     presenter = ExternalActionResultPresenter()
     payload = _analyser_payload_with_guide_and_inspection()
     path = "/products/90260140/analyser"

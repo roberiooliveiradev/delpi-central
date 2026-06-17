@@ -49,6 +49,7 @@
     "product_internal_movements": "table_list",
     "product_inbound_invoice_items": "table_list",
     "product_outbound_invoice_items": "table_list",
+    "exclusive_raw_materials_catalog": "table_list",
     "supplies_cpv": "kpi_series",
     "supplies_otd": "kpi_series",
     "supplies_stock_value": "kpi_series",

@@ -396,7 +396,7 @@ class ExternalActionResultPresenter:
 
 
     def _is_product_operational_path(self, path: str) -> bool:
-        return self._operational_response()._is_product_operational_path(path)
+        return ChatOperationalResponseProfileService.is_product_operational_path(path)
 
     def _detect_api_error(self, data, *, path: str = "") -> dict | None:
         return self._operational_response()._detect_api_error(data, path=path)
