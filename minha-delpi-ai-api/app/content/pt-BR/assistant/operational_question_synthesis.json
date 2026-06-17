@@ -11,6 +11,8 @@
   },
   "structureExclusivity": {
     "exclusiveYes": "**Sim** — **{count}** matéria(s)-prima(s) exclusiva(s) na estrutura do **{code}**.",
+    "exclusiveYesSingle": "**Sim** — a MP exclusiva é **{mpCode}** ({description}) na estrutura do **{code}**.",
+    "exclusiveYesNamed": "**Sim** — **{count}** MPs exclusivas na estrutura do **{code}**: {list}.",
     "exclusiveNo": "**Não** — nenhuma MP exclusiva; as **{count}** matérias-primas do **{code}** são compartilhadas com outros PAs.",
     "compositionAsk": "A estrutura do **{code}** tem **{total}** componentes (**{intermediates}** PI · **{rawMaterials}** MP)."
   },

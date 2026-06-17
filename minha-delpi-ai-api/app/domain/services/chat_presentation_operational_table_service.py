@@ -80,6 +80,9 @@ class ChatPresentationOperationalTableService:
             if isinstance(item.get("_detailMeta"), dict):
                 row["_detailMeta"] = dict(item["_detailMeta"])
 
+            if item.get("row_emphasis"):
+                row["row_emphasis"] = item["row_emphasis"]
+
             rows.append(row)
 
         if not rows:

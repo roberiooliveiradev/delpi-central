@@ -74,6 +74,7 @@
     "defaultStructureTitle": "Estrutura",
     "defaultRootLabel": "Raiz",
     "emptyLabel": "—",
+    "exclusiveMpBadgeLabel": "Exclusiva",
     "groupBadgeLabels": {
       "branch": "",
       "warehouse": ""

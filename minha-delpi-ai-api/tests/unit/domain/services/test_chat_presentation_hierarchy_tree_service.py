@@ -105,3 +105,38 @@ def test_build_flat_bom_tree_nests_pa_pi_mp() -> None:
 
     mp_codes = {child["label"].split()[0] for child in pi["children"]}
     assert mp_codes == {"10020053", "10080185"}
+
+
+def test_build_flat_bom_tree_marks_exclusive_mp_emphasis() -> None:
+    items = [
+        {
+            "level": 1,
+            "parent_code": "90269002",
+            "component_code": "50219001",
+            "component_description": "INTERMEDIARIO",
+            "component_type": "PI",
+            "accumulated_quantity": "1",
+        },
+        {
+            "level": 2,
+            "parent_code": "50219001",
+            "product_code": "10019001",
+            "description": "MATERIA PRIMA FICTICIA",
+            "component_type": "MP",
+            "accumulated_quantity": "2",
+            "exclusive_raw_material": "SIM",
+        },
+    ]
+
+    tree = ChatPresentationHierarchyTreeService.build_flat_bom_tree(
+        title="Estrutura 90269002",
+        root_id="90269002",
+        root_label="Produto 90269002",
+        items=items,
+    )
+
+    assert tree is not None
+
+    mp = tree["root"]["children"][0]["children"][0]
+    assert mp["emphasis"] == "exclusive_mp"
+    assert mp["emphasisLabel"] == "Exclusiva"

@@ -80,6 +80,14 @@
   transition: background 0.1s;
 }
 
+.mdc-rich-table__tr--exclusive-mp {
+  background: color-mix(in srgb, var(--mdc-chart-series-3) 10%, transparent);
+}
+
+.mdc-rich-table__tr--exclusive-mp:hover {
+  background: color-mix(in srgb, var(--mdc-chart-series-3) 16%, transparent);
+}
+
 .mdc-rich-table__tr--clickable:hover {
   background: var(--mdc-rich-hover-strong) !important;
 }

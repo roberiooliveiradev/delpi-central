@@ -12,6 +12,7 @@ from app.domain.services.external_actions.operational_route_narrative_service im
 )
 from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
     enrich_structure_rows,
+    is_exclusive_raw_material_item,
 )
 
 if TYPE_CHECKING:
@@ -94,11 +95,30 @@ class ExternalActionProductStructureExclusivityPresenter:
         summary = self._summary(root)
         exclusive_count = int(summary.get("total_exclusive_raw_materials") or 0)
         mp_count = int(summary.get("total_raw_materials") or 0)
+        exclusive_mps = [
+            item
+            for item in self._raw_material_items(root)
+            if self._is_exclusive(item)
+        ]
 
         if exclusive_count > 0:
+            if len(exclusive_mps) == 1:
+                item = exclusive_mps[0]
+
+                return self._route(
+                    "exclusivityVerdictYesSingle",
+                    code=str(item.get("product_code") or item.get("component_code") or "—"),
+                    description=str(
+                        item.get("description") or item.get("component_description") or "—"
+                    ),
+                )
+
+            listing = self._format_exclusive_mp_list(exclusive_mps)
+
             return self._route(
-                "exclusivityVerdictYes",
+                "exclusivityVerdictYesNamed",
                 count=str(exclusive_count),
+                list=listing,
             )
 
         if self._items(root) or mp_count > 0:
@@ -108,6 +128,23 @@ class ExternalActionProductStructureExclusivityPresenter:
             )
 
         return None
+
+    def _format_exclusive_mp_list(self, items: list[dict], *, preview_limit: int = 8) -> str:
+        parts: list[str] = []
+
+        for item in items[:preview_limit]:
+            code = str(item.get("product_code") or item.get("component_code") or "—")
+            description = str(
+                item.get("description") or item.get("component_description") or ""
+            ).strip()
+            parts.append(f"**{code}** ({description})" if description else f"**{code}**")
+
+        remaining = len(items) - preview_limit
+
+        if remaining > 0:
+            parts.append(self._route("exclusiveListMore", count=str(remaining)))
+
+        return "; ".join(parts)
 
     def _format_mp_item_line(self, item: dict) -> str:
         code = str(item.get("component_code") or item.get("product_code") or "—")
@@ -138,7 +175,7 @@ class ExternalActionProductStructureExclusivityPresenter:
         *,
         compact_for_rich_ui: bool = False,
     ) -> list[str]:
-        mp_items = self._raw_material_items(root)
+        mp_items = self._sort_mp_exclusive_first(self._raw_material_items(root))
 
         if not mp_items:
             return []
@@ -159,15 +196,16 @@ class ExternalActionProductStructureExclusivityPresenter:
         return lines
 
     def _is_exclusive(self, item: dict) -> bool:
-        value = item.get("exclusive_raw_material")
+        return is_exclusive_raw_material_item(item)
 
-        if isinstance(value, bool):
-            return value
-
-        return str(value or "").strip().upper() in {"SIM", "S", "TRUE", "1"}
-
-    def _exclusive_items(self, root: dict) -> list[dict]:
-        return [item for item in self._items(root) if isinstance(item, dict) and self._is_exclusive(item)]
+    def _sort_mp_exclusive_first(self, items: list[dict]) -> list[dict]:
+        return sorted(
+            items,
+            key=lambda item: (
+                0 if self._is_exclusive(item) else 1,
+                int(item.get("level") or 0),
+            ),
+        )
 
     def _build_narrative_lines(
         self,
@@ -224,31 +262,10 @@ class ExternalActionProductStructureExclusivityPresenter:
         if mp_section:
             linhas.extend(["", *mp_section])
 
-        exclusive_items = self._exclusive_items(root)
-
-        if exclusive_items and not compact_for_rich_ui:
-            linhas.append(
-                self._route("exclusivePreviewLine", count=str(len(exclusive_items)))
-            )
-
-            for item in exclusive_items[: _Narrative._PREVIEW_MAX]:
-                linhas.append(self._format_exclusive_preview_line(item))
-        elif not self._items(root):
+        if not self._items(root):
             linhas.append(self._route("itemsEmptyLine"))
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
-
-    def _format_exclusive_preview_line(self, item: dict) -> str:
-        return self._route(
-            "exclusiveItemLine",
-            code=str(item.get("product_code") or item.get("component_code") or "—"),
-            quantity=_Narrative.format_quantity(
-                self._host,
-                item.get("accumulated_quantity") or item.get("quantity"),
-                field_key="accumulated_quantity",
-            ),
-            level=str(item.get("level") or "—"),
-        )
 
     def _build_highlights(self, root: dict) -> list[str]:
         highlights: list[str] = []
@@ -428,10 +445,12 @@ class ExternalActionProductStructureExclusivityPresenter:
             overview["role"] = "profile"
             tables.append(overview)
 
-        mp_items = enrich_structure_rows(self._raw_material_items(root))
+        mp_items = enrich_structure_rows(
+            self._sort_mp_exclusive_first(self._raw_material_items(root))
+        )
 
         if mp_items:
-            shown, total = _OpsTable.limit_items(mp_items, sort_key="level", reverse=False)
+            shown, total = _OpsTable.limit_items(mp_items)
             mp_title = (
                 self._route(
                     "rawMaterialsTableTitleTruncated",
@@ -453,11 +472,21 @@ class ExternalActionProductStructureExclusivityPresenter:
                 tables.append(mp_table)
 
         items = enrich_structure_rows(
-            [item for item in self._items(root) if isinstance(item, dict)]
+            [
+                item
+                for item in self._items(root)
+                if isinstance(item, dict)
+            ]
+        )
+        items.sort(
+            key=lambda item: (
+                0 if item.get("row_emphasis") else 1,
+                int(item.get("level") or 0),
+            )
         )
 
         if items and len(items) > len(mp_items):
-            shown, total = _OpsTable.limit_items(items, sort_key="level", reverse=False)
+            shown, total = _OpsTable.limit_items(items)
             title = (
                 self._route(
                     "componentsTableTitleTruncated",

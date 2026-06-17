@@ -331,6 +331,8 @@ class ChatPresentationHierarchyTreeService:
         label: str,
         subtitle: str = "",
         badge: str = "",
+        emphasis: str = "",
+        emphasis_label: str = "",
         children: list[dict[str, Any]] | None = None,
         meta: dict[str, str | float | int] | None = None,
     ) -> dict[str, Any]:
@@ -344,6 +346,12 @@ class ChatPresentationHierarchyTreeService:
 
         if badge:
             node["badge"] = badge
+
+        if emphasis:
+            node["emphasis"] = emphasis
+
+        if emphasis_label:
+            node["emphasisLabel"] = emphasis_label
 
         if meta:
             node["meta"] = meta
@@ -473,11 +481,31 @@ class ChatPresentationHierarchyTreeService:
         *,
         meta_keys: tuple[str, ...],
     ) -> dict[str, Any]:
+        from app.domain.services.chat_presentation_vocabulary_service import (
+            ChatPresentationVocabularyService,
+        )
+        from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+            ROW_EMPHASIS_EXCLUSIVE_MP,
+            is_exclusive_raw_material_item,
+        )
+
         item = row.get("raw") if isinstance(row.get("raw"), dict) else {}
         code = str(row.get("code") or cls._empty_label())
         component_type = str(row.get("component_type") or "").strip()
         label = f"{code} ({component_type})" if component_type else code
         meta: dict[str, str | float | int] = {}
+        emphasis = ""
+        emphasis_label = ""
+
+        if (
+            component_type.upper() == "MP"
+            and is_exclusive_raw_material_item(item)
+        ):
+            emphasis = ROW_EMPHASIS_EXCLUSIVE_MP
+            emphasis_label = ChatPresentationVocabularyService.hierarchy_tree_text(
+                "exclusiveMpBadgeLabel",
+                default="Exclusiva",
+            )
 
         for key in meta_keys:
             value = item.get(key)
@@ -495,5 +523,7 @@ class ChatPresentationHierarchyTreeService:
             label=label,
             subtitle=str(row.get("description") or "").strip(),
             badge=component_type,
+            emphasis=emphasis,
+            emphasis_label=emphasis_label,
             meta=meta or None,
         )

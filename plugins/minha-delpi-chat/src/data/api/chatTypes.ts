@@ -44,6 +44,9 @@ export type ChatTreeNode = {
   label: string;
   subtitle?: string;
   badge?: string;
+  /** Destaque visual emitido pela API (ex.: MP exclusiva). */
+  emphasis?: string;
+  emphasisLabel?: string;
   meta?: Record<string, string | number>;
   /** Legenda humanizada gerada pela API (estoque, etc.). */
   metaCaption?: string;

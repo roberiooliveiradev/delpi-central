@@ -62,6 +62,10 @@ const BADGE_COLORS: Record<string, string> = {
   MP: "mdc-rich-tree__badge--mp",
 };
 
+const EMPHASIS_ROW_CLASS: Record<string, string> = {
+  exclusive_mp: "mdc-rich-tree__row--exclusive-mp",
+};
+
 function countNodes(node: ChatTreeNode): number {
   const children = node.children ?? [];
 
@@ -82,6 +86,8 @@ function TreeNodeRow({
   const hasChildren = Boolean(node.children?.length);
   const [expanded, setExpanded] = useState(defaultExpanded || depth === 0);
   const badgeClass = BADGE_COLORS[String(node.badge || "").toUpperCase()] ?? "";
+  const emphasis = String(node.emphasis || "").trim();
+  const emphasisClass = EMPHASIS_ROW_CLASS[emphasis] ?? "";
   const metaText = String(node.metaCaption ?? "").trim() || formatTreeNodeMeta(node.meta);
   const menuActions = onDrillDown ? buildTreePointMenuActions(node) : [];
   const hasMenu = menuActions.length > 0;
@@ -114,7 +120,12 @@ function TreeNodeRow({
   return (
     <li className="mdc-rich-tree__item">
       <div
-        className="mdc-rich-tree__row"
+        className={[
+          "mdc-rich-tree__row",
+          emphasisClass,
+        ]
+          .filter(Boolean)
+          .join(" ")}
         style={{ paddingLeft: `${depth * 1.1 + 0.35}rem` }}
       >
         {hasChildren ? (
@@ -160,6 +171,11 @@ function TreeNodeRow({
             {node.badge ? (
               <span className={`mdc-rich-tree__badge ${badgeClass}`.trim()}>
                 {node.badge}
+              </span>
+            ) : null}
+            {node.emphasisLabel ? (
+              <span className="mdc-rich-tree__badge mdc-rich-tree__badge--exclusive">
+                {node.emphasisLabel}
               </span>
             ) : null}
             {metaText ? (

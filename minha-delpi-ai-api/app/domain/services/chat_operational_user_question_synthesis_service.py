@@ -190,14 +190,32 @@ class ChatOperationalUserQuestionSynthesisService:
         exclusive_count = int(summary.get("total_exclusive_raw_materials") or 0)
         mp_count = int(summary.get("total_raw_materials") or 0)
         normalized = ChatMessageNormalizationService.normalize_for_matching(user_message)
+        exclusive_mps = cls._exclusive_mp_items(data)
 
         if exclusive_count > 0:
-            primary = _Content.format(
-                "structureExclusivity",
-                "exclusiveYes",
-                count=str(exclusive_count),
-                code=code or "—",
-            )
+            if len(exclusive_mps) == 1:
+                item = exclusive_mps[0]
+                primary = _Content.format(
+                    "structureExclusivity",
+                    "exclusiveYesSingle",
+                    count=str(exclusive_count),
+                    code=code or "—",
+                    mpCode=str(
+                        item.get("product_code") or item.get("component_code") or "—"
+                    ),
+                    description=str(
+                        item.get("description") or item.get("component_description") or "—"
+                    ),
+                )
+            else:
+                listing = cls._format_exclusive_mp_list(exclusive_mps)
+                primary = _Content.format(
+                    "structureExclusivity",
+                    "exclusiveYesNamed",
+                    count=str(exclusive_count),
+                    code=code or "—",
+                    list=listing,
+                )
         else:
             primary = _Content.format(
                 "structureExclusivity",
@@ -411,6 +429,40 @@ class ChatOperationalUserQuestionSynthesisService:
                 "já apontou",
             )
         )
+
+    @staticmethod
+    def _exclusive_mp_items(data: dict[str, Any]) -> list[dict[str, Any]]:
+        from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+            is_exclusive_raw_material_item,
+        )
+
+        items = data.get("items") if isinstance(data.get("items"), list) else []
+
+        return [
+            item
+            for item in items
+            if isinstance(item, dict)
+            and str(item.get("component_type") or "").upper() == "MP"
+            and is_exclusive_raw_material_item(item)
+        ]
+
+    @staticmethod
+    def _format_exclusive_mp_list(items: list[dict[str, Any]], *, preview_limit: int = 6) -> str:
+        parts: list[str] = []
+
+        for item in items[:preview_limit]:
+            code = str(item.get("product_code") or item.get("component_code") or "—")
+            description = str(
+                item.get("description") or item.get("component_description") or ""
+            ).strip()
+            parts.append(f"**{code}** ({description})" if description else f"**{code}**")
+
+        remaining = len(items) - preview_limit
+
+        if remaining > 0:
+            parts.append(f"… e mais **{remaining}**")
+
+        return "; ".join(parts)
 
     @staticmethod
     def _resolve_entity(metadata: dict[str, Any] | None, data: dict[str, Any]) -> str:

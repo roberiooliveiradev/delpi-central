@@ -44,6 +44,19 @@ def normalize_lmp_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+ROW_EMPHASIS_EXCLUSIVE_MP = "exclusive_mp"
+
+
+def is_exclusive_raw_material_item(item: dict[str, Any]) -> bool:
+    raw = item.get("exclusive_raw_material")
+    truthy = ChatPresentationVocabularyService.exclusive_raw_material_truthy()
+
+    if isinstance(raw, bool):
+        return raw
+
+    return str(raw or "").strip().upper() in truthy
+
+
 def enrich_structure_rows(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     enriched: list[dict[str, Any]] = []
 
@@ -53,17 +66,17 @@ def enrich_structure_rows(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
         row = dict(item)
         raw = row.get("exclusive_raw_material")
-
-        truthy = ChatPresentationVocabularyService.exclusive_raw_material_truthy()
+        exclusive = is_exclusive_raw_material_item(row)
 
         if isinstance(raw, bool):
             label = ChatPresentationVocabularyService.boolean_label(yes=raw)
         else:
-            label = ChatPresentationVocabularyService.boolean_label(
-                yes=str(raw or "").strip().upper() in truthy,
-            )
+            label = ChatPresentationVocabularyService.boolean_label(yes=exclusive)
 
         row["exclusive_raw_material_label"] = label
+
+        if exclusive:
+            row["row_emphasis"] = ROW_EMPHASIS_EXCLUSIVE_MP
 
         if not row.get("component_code") and row.get("product_code"):
             row["component_code"] = row.get("product_code")

@@ -41,6 +41,14 @@ def test_structure_exclusivity_table_uses_operational_columns():
     assert "component_code" in _column_keys(detail)
     assert "exclusive_raw_material_label" in _column_keys(detail)
 
+    exclusive_rows = [
+        row
+        for row in (detail.get("rows") or [])
+        if row.get("row_emphasis") == "exclusive_mp"
+    ]
+    assert len(exclusive_rows) == 1
+    assert exclusive_rows[0].get("component_code") == "10019001"
+
 
 def test_structure_exclusivity_tree_nests_flat_bom_items():
     presenter = ExternalActionResultPresenter()
@@ -73,6 +81,20 @@ def test_structure_exclusivity_text_includes_verdict_and_mp_section():
     assert "10020053" in markdown
     assert "10080185" in markdown
     assert "exclusiva" in markdown.lower()
+
+
+def test_structure_exclusivity_text_names_exclusive_mp_in_verdict():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90269002.json")
+    path = "/products/90269002/structure/exclusivity"
+    text = presenter._build_structure_exclusivity_text_presentation(envelope["data"], path)
+
+    assert text is not None
+    markdown = text["markdown"]
+
+    assert "10019001" in markdown
+    assert "MATERIA PRIMA FICTICIA" in markdown
+    assert "matéria-prima exclusiva é **10019001**" in markdown
 
 
 def test_structure_exclusivity_text_includes_shared_mp_conclusion():

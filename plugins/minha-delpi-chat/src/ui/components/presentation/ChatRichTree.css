@@ -223,6 +223,20 @@
   color: var(--mdc-chart-series-3);
 }
 
+.mdc-rich-tree__badge--exclusive {
+  background: color-mix(in srgb, var(--mdc-warning, #f59e0b) 18%, transparent);
+  color: var(--mdc-warning, #f59e0b);
+}
+
+.mdc-rich-tree__row--exclusive-mp {
+  background: color-mix(in srgb, var(--mdc-chart-series-3) 8%, transparent);
+  border-radius: var(--mdc-radius-sm, 8px);
+}
+
+.mdc-rich-tree__row--exclusive-mp:hover {
+  background: color-mix(in srgb, var(--mdc-chart-series-3) 14%, transparent);
+}
+
 .mdc-rich-tree__footer {
   padding: 0.4rem 0.9rem;
   font-size: 0.75rem;

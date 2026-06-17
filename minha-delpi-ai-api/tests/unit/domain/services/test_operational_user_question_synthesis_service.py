@@ -59,6 +59,39 @@ def test_synthesis_structure_exclusivity_no():
     assert "90261805" in result["summary"]
 
 
+def test_synthesis_structure_exclusivity_yes_names_mp():
+    data = {
+        "product": {"product_code": "90269002", "description": "PRODUTO FICTICIO FABRIL"},
+        "summary": {
+            "total_components": 2,
+            "total_intermediates": 1,
+            "total_raw_materials": 1,
+            "total_exclusive_raw_materials": 1,
+        },
+        "items": [
+            {
+                "level": 2,
+                "component_type": "MP",
+                "product_code": "10019001",
+                "description": "MATERIA PRIMA FICTICIA",
+                "exclusive_raw_material": "SIM",
+            }
+        ],
+    }
+
+    result = ChatOperationalUserQuestionSynthesisService.try_synthesize(
+        "Quais MPs compõem a estrutura do 90269002? Tem MP exclusiva?",
+        data,
+        profile_key="structure_exclusivity",
+        entity="product_structure_exclusivity",
+    )
+
+    assert result is not None
+    assert "10019001" in result["summary"]
+    assert "MATERIA PRIMA FICTICIA" in result["summary"]
+    assert "Sim" in result["summary"]
+
+
 def test_synthesis_production_status_situacao():
     data = {
         "product": {"product_code": "90260255"},

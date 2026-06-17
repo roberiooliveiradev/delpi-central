@@ -22,6 +22,16 @@ type SortConfig = {
   direction: "asc" | "desc";
 } | null;
 
+function tableRowEmphasisClass(row: Record<string, unknown>): string {
+  const emphasis = String(row.row_emphasis ?? row.rowEmphasis ?? "").trim();
+
+  if (emphasis === "exclusive_mp") {
+    return "mdc-rich-table__tr--exclusive-mp";
+  }
+
+  return "";
+}
+
 export function ChatRichTable({
   presentation,
   hideTitle = false,
@@ -237,7 +247,12 @@ export function ChatRichTable({
             {sorted.map((row, idx) => (
               <tr
                 key={idx}
-                className={onDrillDown ? "mdc-rich-table__tr--clickable" : ""}
+                className={[
+                  tableRowEmphasisClass(row),
+                  onDrillDown ? "mdc-rich-table__tr--clickable" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 onClick={(event) => {
                   if (!onDrillDown) return;
 
