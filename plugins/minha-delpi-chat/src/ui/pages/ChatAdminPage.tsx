@@ -28,7 +28,7 @@ import {
 } from "../../navigation/adminNavigation";
 import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
-import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
+import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 
 import "./ChatAdminPage.css";
 

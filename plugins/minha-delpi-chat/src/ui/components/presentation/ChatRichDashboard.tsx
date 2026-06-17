@@ -7,7 +7,7 @@ import {
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
 } from "../chatPresentation";
-import { ChatDashboardDataPanel } from "../ChatDashboardDataPanel";
+import { ChatDashboardDataPanel } from "./ChatDashboardDataPanel";
 import { ChatMarkdown } from "../message/ChatMarkdown";
 import { ChatRichChart } from "./ChatRichChart";
 import { ExpandButton } from "../canvas/ChatExpandModal";

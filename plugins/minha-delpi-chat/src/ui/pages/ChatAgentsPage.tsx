@@ -2,7 +2,7 @@ import { ArrowLeft, Bot, ChevronRight, Pencil, Plus, Search, Trash2 } from "luci
 import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
-import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
+import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
 import { useConfirmDialog } from "../components/shared";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";

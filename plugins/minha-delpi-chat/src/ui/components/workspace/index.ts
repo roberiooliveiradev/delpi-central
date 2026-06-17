@@ -9,3 +9,8 @@ export {
   type ChatAttachmentPreviewTarget,
 } from "./ChatAttachmentPreviewModal";
 export { ChatWebSearchResearchPanel } from "./ChatWebSearchResearchPanel";
+export { ChatAgentHome } from "./ChatAgentHome";
+export {
+  ChatAttachmentCard,
+  type ChatAttachmentCardModel,
+} from "./ChatAttachmentCard";

@@ -244,6 +244,7 @@ PR-45 ✅  canvas/ — ChatCanvas, ChatInlineCanvas, chatCanvas utils
 PR-46 ✅  shared/modal MemoryUsed; shell HelpPanel; workspace AttachmentPreview + WebSearch
 PR-47 ✅  shared/menus TableRowMenu; canvas ExpandModal; message edit/streaming/feedback panels
 PR-48 ✅  shell ConversationMenu + OnboardingTour; message empty/follow-up/action panels
+PR-49 ✅  shared layout primitives; shell list item; workspace attachment/agent; message trust/debug
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -270,7 +271,7 @@ Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`
 
 Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) ✅ concluída (jun/2026).
 
-Pós-Fase G (**Fase H**): meta ≤25 TS/TSX atingida (16 após PR-48). PR-49+ opcional: `ChatAttachmentCard`, `ChatAgentHome`, `ChatConversationListItem`, painéis admin/debug.
+Pós-Fase G (**Fase H**): raiz reduzida a **4 TS/TSX** (hub + testes) após PR-49. Restam `chatPresentation.ts`, `chatClipboard.ts` e testes co-localizados.
 
 ---
 
@@ -313,8 +314,8 @@ Pós-Fase G (**Fase H**): meta ≤25 TS/TSX atingida (16 após PR-48). PR-49+ op
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
 | PRs estruturais entregues | 42 / 42 (Fase G) | 42 / 42 ✅ |
-| Arquivos TS/TSX na raiz `components/` | 16 | ≤25 (shell + hub + páginas) ✅ |
-| Arquivos CSS na raiz `components/` | 13 | co-localizados com feature ou `ui/styles/` |
+| Arquivos TS/TSX na raiz `components/` | 4 | hub + testes ✅ |
+| Arquivos CSS na raiz `components/` | 4 | overlay/modal legado + hub CSS residual |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |
 | Módulos em `message/` | 59 arquivos TS/TSX | empty/follow-up/actions + InteractivityBlock, Sources, markdown ✅ |

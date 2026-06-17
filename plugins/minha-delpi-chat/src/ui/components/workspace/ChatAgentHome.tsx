@@ -1,10 +1,10 @@
 import { Bot, Settings } from "lucide-react";
 
-import type { ChatAgent } from "../../data/api/chatTypes";
+import type { ChatAgent } from "../../../data/api/chatTypes";
 import {
   formatIcebreakerForDisplay,
   resolveAgentIcebreakersForDisplay,
-} from "../agentIcebreakers";
+} from "../../agentIcebreakers";
 
 import "./ChatAgentHome.css";
 

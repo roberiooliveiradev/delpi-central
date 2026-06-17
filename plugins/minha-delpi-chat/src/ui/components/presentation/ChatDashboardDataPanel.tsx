@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useState } from "react";
-import type { ChatCanvasOpenPayload, ChatPresentation } from "../../data/api/chatTypes";
-import { buildChartPresentationFromTable } from "./presentation/pipeline/buildChartPresentationFromTable";
+import type { ChatCanvasOpenPayload, ChatPresentation } from "../../../data/api/chatTypes";
+import { buildChartPresentationFromTable } from "./pipeline/buildChartPresentationFromTable";
 import {
   resolveRichFormatToggles,
   tablePresentationToMarkdown,
   type ViewFormat,
-} from "./chatPresentation";
-import { ChatMarkdown } from "./message/ChatMarkdown";
-import { ChatRichChart } from "./presentation/ChatRichChart";
-import { ChatRichTable } from "./presentation/ChatRichTable";
-import { recordPresentationTelemetry } from "./presentation/pipeline/presentationTelemetry";
+} from "../chatPresentation";
+import { ChatMarkdown } from "../message/ChatMarkdown";
+import { ChatRichChart } from "./ChatRichChart";
+import { ChatRichTable } from "./ChatRichTable";
+import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;

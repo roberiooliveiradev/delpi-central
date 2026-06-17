@@ -62,3 +62,7 @@ export {
 } from "./ChatActionConfirmationPanel";
 export { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";
 export { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";
+export { ChatBranchNavigator } from "./ChatBranchNavigator";
+export { ChatMilestoneCelebration } from "./ChatMilestoneCelebration";
+export { ChatTrustBadges, type ChatTrustSignal } from "./ChatTrustBadges";
+export { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";

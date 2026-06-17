@@ -43,7 +43,7 @@ import {
   shareChatAgent,
   uploadAgentSource,
 } from "../../data/api/chatApi";
-import { ChatUserSearchField } from "../components/ChatUserSearchField";
+import { ChatUserSearchField } from "../components/shared/ChatUserSearchField";
 import type {
   ChatAgent,
   ChatAgentActionProvider,
@@ -71,7 +71,7 @@ import {
 } from "../agentIcebreakers";
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
-import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
+import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { AgentIcebreakersEditor } from "../components/agent-builder/AgentIcebreakersEditor";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
 import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";

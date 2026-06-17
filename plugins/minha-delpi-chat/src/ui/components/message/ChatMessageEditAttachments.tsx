@@ -5,9 +5,8 @@ import {
   workspaceFileMessageEditAttachmentsHeader,
   workspaceFileMessageEditLabels,
 } from "../../../content/workspaceFileIngestContent";
-import type { ChatAttachmentCardModel } from "../ChatAttachmentCard";
-import { ChatAttachmentCard } from "../ChatAttachmentCard";
-import "../ChatAttachmentCard.css";
+import type { ChatAttachmentCardModel } from "../workspace/ChatAttachmentCard";
+import { ChatAttachmentCard } from "../workspace/ChatAttachmentCard";
 import "../workspace/workspaceFileIngest.css";
 
 type ChatMessageEditAttachmentsProps = {

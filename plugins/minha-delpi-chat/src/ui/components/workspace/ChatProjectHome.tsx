@@ -26,9 +26,9 @@ import type {
   ChatSession,
   ChatWorkspaceSource,
 } from "../../../data/api/chatTypes";
-import { ChatAnimatedPanel } from "../ChatAnimatedPanel";
+import { ChatAnimatedPanel } from "../shared/ChatAnimatedPanel";
 import { useConfirmDialog, usePromptDialog } from "../shared";
-import { ChatUserSearchField } from "../ChatUserSearchField";
+import { ChatUserSearchField } from "../shared/ChatUserSearchField";
 import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../../navigation/chatNavigation";
 import { ChatConversationMenu } from "../shell/ChatConversationMenu";

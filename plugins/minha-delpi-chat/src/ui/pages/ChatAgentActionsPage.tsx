@@ -49,7 +49,7 @@ import type {
 } from "../../data/api/chatTypes";
 import { useResizablePane } from "../../state/hooks/useResizablePane";
 import { useConfirmDialog } from "../components/shared";
-import { ChatResourceUsageLink } from "../components/ChatResourceUsageLink";
+import { ChatResourceUsageLink } from "../components/shared/ChatResourceUsageLink";
 import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";

@@ -51,3 +51,8 @@ export {
 } from "./menus/ChatTableRowMenu";
 
 export { IngestProgressIndicator } from "./IngestProgressIndicator";
+
+export { ChatAnimatedPanel } from "./ChatAnimatedPanel";
+export { ChatInlineError } from "./ChatInlineError";
+export { ChatUserSearchField } from "./ChatUserSearchField";
+export { ChatResourceUsageLink } from "./ChatResourceUsageLink";

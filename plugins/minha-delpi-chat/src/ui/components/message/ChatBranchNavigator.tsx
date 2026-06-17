@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
-import type { ChatMessageBranch } from "../../data/api/chatTypes";
+import type { ChatMessageBranch } from "../../../data/api/chatTypes";
 
 type ChatBranchNavigatorProps = {
   branch: ChatMessageBranch;

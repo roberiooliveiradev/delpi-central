@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 
 import type { ChatSession } from "../../../data/api/chatTypes";
 import { buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
-import { ChatConversationListItem } from "../ChatConversationListItem";
+import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { type SessionGroup } from "./chatSidebarUtils";
 

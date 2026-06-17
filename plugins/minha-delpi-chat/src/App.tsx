@@ -4,7 +4,7 @@ import "./App.css";
 
 import { buildChatHref, parseChatRoute } from "./navigation/chatRoutes";
 import { navigateChatHref } from "./navigation/chatNavigation";
-import { ChatAnimatedPanel } from "./ui/components/ChatAnimatedPanel";
+import { ChatAnimatedPanel } from "./ui/components/shared/ChatAnimatedPanel";
 import { ChatPage } from "./ui/pages/ChatPage";
 
 const ChatAdminPage = lazy(() =>

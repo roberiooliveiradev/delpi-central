@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react";
 
-import { searchChatUsers } from "../../data/api/chatApi";
-import type { ChatDirectoryUser } from "../../data/api/chatTypes";
+import { searchChatUsers } from "../../../data/api/chatApi";
+import type { ChatDirectoryUser } from "../../../data/api/chatTypes";
 
 import "./ChatUserSearchField.css";
 

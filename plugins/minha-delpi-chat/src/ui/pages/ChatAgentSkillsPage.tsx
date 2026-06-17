@@ -18,7 +18,7 @@ import {
 } from "../../data/api/chatApi";
 import type { ChatAgent, ChatAgentSkillBinding } from "../../data/api/chatTypes";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
-import { ChatResourceUsageLink } from "../components/ChatResourceUsageLink";
+import { ChatResourceUsageLink } from "../components/shared/ChatResourceUsageLink";
 
 import "./ChatAgentSkillsPage.css";
 

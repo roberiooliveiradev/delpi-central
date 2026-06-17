@@ -9,3 +9,4 @@ export {
   ChatOnboardingTour,
   isOnboardingTourCompleted,
 } from "./ChatOnboardingTour";
+export { ChatConversationListItem } from "./ChatConversationListItem";

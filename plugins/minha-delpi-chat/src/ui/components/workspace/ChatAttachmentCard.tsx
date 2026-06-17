@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 
-import { fetchChatAttachmentBlob } from "../../data/api/chatApi";
+import { fetchChatAttachmentBlob } from "../../../data/api/chatApi";
 import {
   formatAttachmentSize,
   resolveAttachmentPreviewKind,
   revokeAttachmentPreviewUrl,
-} from "../chatAttachmentPreview";
+} from "../../chatAttachmentPreview";
 import {
   workspaceFileAttachmentIndexPresentation,
   workspaceFileIconToneForAttachment,
-} from "../../content/workspaceFileIngestContent";
-import { WorkspaceFileCard } from "./workspace/WorkspaceFileCard";
+} from "../../../content/workspaceFileIngestContent";
+import { WorkspaceFileCard } from "./WorkspaceFileCard";
 
 import "./ChatAttachmentCard.css";
-import "./workspace/workspaceFileIngest.css";
+import "./workspaceFileIngest.css";
 
 export type ChatAttachmentCardModel = {
   key: string;

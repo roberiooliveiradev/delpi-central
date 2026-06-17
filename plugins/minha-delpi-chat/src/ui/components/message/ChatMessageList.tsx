@@ -37,12 +37,12 @@ import {
   buildChatTimelineItems,
   formatMessageTime,
 } from "./chatMessageTimeline";
-import { ChatBranchNavigator } from "../ChatBranchNavigator";
+import { ChatBranchNavigator } from "./ChatBranchNavigator";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatFollowUpChips, type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
 import { ChatInteractivityBlock } from "./ChatInteractivityBlock";
 import { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";
-import { ChatMilestoneCelebration } from "../ChatMilestoneCelebration";
+import { ChatMilestoneCelebration } from "./ChatMilestoneCelebration";
 import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../../data/api/chatTypes";
 import { ChatMessageFeedbackPanel } from "./ChatMessageFeedbackPanel";
 import {
@@ -62,7 +62,7 @@ import {
   downloadDrawingAnalysisXlsx,
 } from "../../utils/drawingAnalysisExport";
 import { ChatActionResults } from "./ChatActionResults";
-import { ChatAdminDebugPanel } from "../ChatAdminDebugPanel";
+import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../../state/chatMessageDelivery";
 import { ChatAssistantMessageMenu } from "./ChatAssistantMessageMenu";
 import {
@@ -82,7 +82,7 @@ import {
   shouldBypassIncrementalTextReveal,
 } from "./assistantProseRendering";
 import { ChatSources } from "./ChatSources";
-import { ChatTrustBadges, type ChatTrustSignal } from "../ChatTrustBadges";
+import { ChatTrustBadges, type ChatTrustSignal } from "./ChatTrustBadges";
 import {
   ChatActionConfirmationPanel,
   type ChatActionConfirmation,
@@ -94,12 +94,11 @@ import { ChatMessageEditField } from "./ChatMessageEditField";
 import {
   ChatAttachmentCard,
   type ChatAttachmentCardModel,
-} from "../ChatAttachmentCard";
+} from "../workspace/ChatAttachmentCard";
 import {
   ChatAttachmentPreviewModal,
   type ChatAttachmentPreviewTarget,
 } from "../workspace/ChatAttachmentPreviewModal";
-import "../ChatAttachmentCard.css";
 import "../workspace/ChatAttachmentPreviewModal.css";
 import { ChatUserTurnContextChips } from "./ChatUserTurnContextChips";
 import { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";

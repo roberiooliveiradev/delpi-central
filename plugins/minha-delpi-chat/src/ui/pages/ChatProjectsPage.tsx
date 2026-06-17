@@ -11,7 +11,7 @@ import {
 import { useMemo, useState } from "react";
 
 import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
-import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
+import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatProjectCreateModal } from "../components/workspace";
 import { useConfirmDialog, usePromptDialog } from "../components/shared";
 import "./ChatProjectsPage.css";

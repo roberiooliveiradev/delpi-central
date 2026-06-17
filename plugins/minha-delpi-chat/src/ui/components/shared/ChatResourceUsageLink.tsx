@@ -1,7 +1,7 @@
 import { Copy } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { handleChatNavClick } from "../../navigation/chatNavigation";
+import { handleChatNavClick } from "../../../navigation/chatNavigation";
 
 import "./ChatResourceUsageLink.css";
 
