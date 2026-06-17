@@ -99,8 +99,11 @@ class ChatPresentationFormatRefinementService:
                     continue
 
                 path = str(tool_meta.get("path") or "").lower()
+                entity = str(tool_meta.get("entity") or "").strip()
 
-                if "/system/tables" in path:
+                if entity in {"protheus_table", "protheus_column"} or (
+                    not entity and "tables" in path and "/system/" in path
+                ):
                     continue
 
                 arguments = tool_call.get("arguments") or {}
@@ -186,8 +189,19 @@ class ChatPresentationFormatRefinementService:
             return {"data": root}
 
         payload_root = dict(root)
+        metadata = operation.get("metadata") if isinstance(operation.get("metadata"), dict) else {}
+        entity = str(metadata.get("entity") or "").strip()
 
-        if "/stock" in path:
+        if not entity:
+            from app.domain.services.chat_operational_response_profile_service import (
+                ChatOperationalResponseProfileService,
+            )
+
+            entity = str(
+                ChatOperationalResponseProfileService.resolve_entity(path=path) or ""
+            ).strip()
+
+        if entity == "product_stock":
             return {"data": {"stock": payload_root}}
 
         return {"data": payload_root}

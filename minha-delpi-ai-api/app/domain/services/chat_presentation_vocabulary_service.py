@@ -181,6 +181,45 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return re.compile(pattern)
 
     @classmethod
+    def docie_presentation_audit(cls) -> dict[str, Any]:
+        raw = cls.node("playbook12Refactor", "dociePresentationAudit")
+
+        return dict(raw) if isinstance(raw, dict) else {}
+
+    @classmethod
+    def docie_presentation_audit_globs(cls) -> tuple[str, ...]:
+        globs = cls.docie_presentation_audit().get("auditGlobs") or []
+
+        if not isinstance(globs, list):
+            return ()
+
+        return tuple(str(item).strip() for item in globs if str(item).strip())
+
+    @classmethod
+    def docie_presentation_gate_patterns(cls) -> tuple[str, ...]:
+        patterns = cls.docie_presentation_audit().get("gatePatterns") or []
+
+        if not isinstance(patterns, list):
+            return ("pathLiteralIn", "pathFragmentElif")
+
+        resolved = tuple(str(item).strip() for item in patterns if str(item).strip())
+
+        return resolved or ("pathLiteralIn", "pathFragmentElif")
+
+    @classmethod
+    def docie_presentation_gate_targets(cls) -> dict[str, int]:
+        raw = cls.docie_presentation_audit().get("targets") or {}
+
+        if not isinstance(raw, dict):
+            return {"totalPathConditionalsMax": 0}
+
+        return {
+            str(key): int(value)
+            for key, value in raw.items()
+            if isinstance(value, (int, float))
+        }
+
+    @classmethod
     def playbook12_tier_a_pipeline_cases(cls) -> tuple[dict[str, Any], ...]:
         raw = cls.node("playbook12Refactor", "tierAPipelineCases")
 

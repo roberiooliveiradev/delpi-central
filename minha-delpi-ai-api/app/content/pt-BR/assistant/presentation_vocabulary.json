@@ -496,6 +496,20 @@
       "profileVisualBundleBuilderElifMax": 0,
       "narrativeOrderTemplateMethodMax": 0
     },
+    "dociePresentationAudit": {
+      "auditGlobs": [
+        "app/domain/services/external_actions/presenters/*.py",
+        "app/domain/services/chat_presentation_*.py",
+        "app/domain/services/chat_product_structure_presentation_service.py",
+        "app/domain/services/chat_operational_response_profile_service.py",
+        "app/application/services/chat_presentation_*.py",
+        "app/application/use_cases/execute_external_action_use_case.py"
+      ],
+      "gatePatterns": ["pathLiteralIn", "pathFragmentElif"],
+      "targets": {
+        "totalPathConditionalsMax": 0
+      }
+    },
     "presentationTitlePolicies": [
       {
         "pathFragments": ["eficiencia-fabril", "eficiencia_fabril"],

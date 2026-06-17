@@ -296,16 +296,21 @@ class ChatProductStructurePresentationService:
         path: str = "",
     ) -> dict | None:
         """Monta apresentação em árvore para BOM, parents ou analyser."""
-        lowered = str(path or source_path or "").lower()
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        effective_path = str(path or source_path or "")
+        entity = ChatPresentationProfileService.resolve_entity_from_path(effective_path)
         root_dict = cls._unwrap(data)
 
-        if "/analyser" in lowered and isinstance(root_dict, dict):
+        if entity == "product_analyser" and isinstance(root_dict, dict):
             structure = root_dict.get("structure")
 
             if isinstance(structure, dict):
                 root_dict = structure
 
-        if isinstance(root_dict, dict) and "/parents" in lowered:
+        if entity == "product_parents" and isinstance(root_dict, dict):
             normalized = cls._normalize_parents_payload(root_dict)
 
             if normalized is not None:
@@ -314,8 +319,8 @@ class ChatProductStructurePresentationService:
         if not isinstance(root_dict, dict) or not isinstance(root_dict.get("root"), dict):
             return None
 
-        if "/parents" in lowered:
-            return cls._build_parents_tree(root_dict, source_path=source_path or path)
+        if entity == "product_parents":
+            return cls._build_parents_tree(root_dict, source_path=effective_path)
 
         model = cls.parse_payload(root_dict)
 

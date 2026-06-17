@@ -52,7 +52,24 @@ class ChatPresentationRefactorBaselineService:
         return ChatPresentationVocabularyService.playbook12_tier_a_profile_keys()
 
     @classmethod
-    def scan_file(cls, file_path: Path) -> FileAuditResult:
+    def docie_audit_file_paths(cls) -> tuple[Path, ...]:
+        root = cls.package_root()
+        discovered: set[Path] = set()
+
+        for pattern in ChatPresentationVocabularyService.docie_presentation_audit_globs():
+            for match in root.glob(pattern):
+                if match.is_file() and match.suffix == ".py":
+                    discovered.add(match)
+
+        return tuple(sorted(discovered))
+
+    @classmethod
+    def scan_file_with_patterns(
+        cls,
+        file_path: Path,
+        *,
+        pattern_keys: tuple[str, ...],
+    ) -> FileAuditResult:
         relative = str(file_path.relative_to(cls.package_root()))
         text = file_path.read_text(encoding="utf-8")
         lines = text.splitlines()
@@ -60,10 +77,13 @@ class ChatPresentationRefactorBaselineService:
         enrich_methods: list[str] = []
         profile_flags: list[str] = []
 
-        path_literal_in = ChatPresentationVocabularyService.playbook12_scan_pattern("pathLiteralIn")
-        route_policy_is = ChatPresentationVocabularyService.playbook12_scan_pattern("routePolicyIs")
-        path_fragment_elif = ChatPresentationVocabularyService.playbook12_scan_pattern("pathFragmentElif")
-        dedicated_enrich = ChatPresentationVocabularyService.playbook12_scan_pattern("dedicatedEnrich")
+        patterns = {
+            key: ChatPresentationVocabularyService.playbook12_scan_pattern(key)
+            for key in pattern_keys
+        }
+        dedicated_enrich = ChatPresentationVocabularyService.playbook12_scan_pattern(
+            "dedicatedEnrich"
+        )
         profile_flag = ChatPresentationVocabularyService.playbook12_scan_pattern("profileFlag")
 
         for index, line in enumerate(lines, start=1):
@@ -71,12 +91,25 @@ class ChatPresentationRefactorBaselineService:
             if not stripped or stripped.startswith("#"):
                 continue
 
-            if path_literal_in.search(line):
-                hits.append(PathConditionalHit(index, "path_literal_in", stripped))
-            elif route_policy_is.search(line):
-                hits.append(PathConditionalHit(index, "route_policy_is", stripped))
-            elif path_fragment_elif.search(line):
-                hits.append(PathConditionalHit(index, "path_fragment_elif", stripped))
+            for key in pattern_keys:
+                pattern = patterns.get(key)
+
+                if pattern is None:
+                    continue
+
+                if key == "pathFragmentElif":
+                    matched = bool(pattern.match(line))
+                else:
+                    matched = bool(pattern.search(line))
+
+                if matched:
+                    kind = {
+                        "pathLiteralIn": "path_literal_in",
+                        "routePolicyIs": "route_policy_is",
+                        "pathFragmentElif": "path_fragment_elif",
+                    }.get(key, key)
+                    hits.append(PathConditionalHit(index, kind, stripped))
+                    break
 
             enrich_match = dedicated_enrich.match(line)
             if enrich_match:
@@ -93,6 +126,17 @@ class ChatPresentationRefactorBaselineService:
             path_conditional_hits=tuple(hits),
             dedicated_enrich_methods=tuple(enrich_methods),
             profile_flag_variables=tuple(profile_flags),
+        )
+
+    @classmethod
+    def scan_file(cls, file_path: Path) -> FileAuditResult:
+        return cls.scan_file_with_patterns(
+            file_path,
+            pattern_keys=(
+                "pathLiteralIn",
+                "routePolicyIs",
+                "pathFragmentElif",
+            ),
         )
 
     @classmethod
@@ -243,6 +287,74 @@ class ChatPresentationRefactorBaselineService:
             encoding="utf-8",
         )
         return destination
+
+    @classmethod
+    def build_docie_gate_report(cls) -> dict[str, Any]:
+        pattern_keys = ChatPresentationVocabularyService.docie_presentation_gate_patterns()
+        file_results = [
+            cls.scan_file_with_patterns(path, pattern_keys=pattern_keys)
+            for path in cls.docie_audit_file_paths()
+        ]
+        total_path_conditionals = sum(item.path_conditional_count for item in file_results)
+        targets = ChatPresentationVocabularyService.docie_presentation_gate_targets()
+        max_allowed = int(targets.get("totalPathConditionalsMax", 0))
+        profile_gaps = cls.profile_declaration_gaps()
+
+        return {
+            "generatedAt": datetime.now(tz=UTC).isoformat(),
+            "playbook": "DOCIE-19",
+            "summary": {
+                "auditFileCount": len(file_results),
+                "totalPathConditionals": total_path_conditionals,
+                "totalPathConditionalsMax": max_allowed,
+                "tierAMissingVisualBuildersCount": len(profile_gaps["tierAMissingVisualBuilders"]),
+                "tierAMissingTableAssemblyCount": len(profile_gaps["tierAMissingTableAssembly"]),
+            },
+            "ok": total_path_conditionals <= max_allowed
+            and not profile_gaps["tierAMissingVisualBuilders"]
+            and not profile_gaps["tierAMissingTableAssembly"],
+            "files": [
+                {
+                    "relativePath": item.relative_path,
+                    "pathConditionalCount": item.path_conditional_count,
+                    "pathConditionalHits": [asdict(hit) for hit in item.path_conditional_hits],
+                }
+                for item in file_results
+                if item.path_conditional_count
+            ],
+        }
+
+    @classmethod
+    def run_docie_gate_check(cls) -> tuple[bool, list[str]]:
+        report = cls.build_docie_gate_report()
+        errors: list[str] = []
+        summary = report.get("summary") or {}
+        total = int(summary.get("totalPathConditionals") or 0)
+        max_allowed = int(summary.get("totalPathConditionalsMax") or 0)
+
+        if total > max_allowed:
+            errors.append(
+                f"condicionais por path: {total} (máximo {max_allowed})"
+            )
+
+            for file_item in report.get("files") or []:
+                relative = file_item.get("relativePath")
+                count = file_item.get("pathConditionalCount")
+                errors.append(f"  - {relative}: {count}")
+
+        if summary.get("tierAMissingVisualBuildersCount"):
+            errors.append(
+                "perfis tier A sem visualBuilders: "
+                f"{summary.get('tierAMissingVisualBuildersCount')}"
+            )
+
+        if summary.get("tierAMissingTableAssemblyCount"):
+            errors.append(
+                "perfis tier A sem tableAssembly: "
+                f"{summary.get('tierAMissingTableAssemblyCount')}"
+            )
+
+        return not errors, errors
 
     @classmethod
     def load_stored_baseline(cls, path: Path | None = None) -> dict[str, Any]:

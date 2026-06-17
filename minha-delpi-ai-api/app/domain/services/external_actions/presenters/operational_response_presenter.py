@@ -109,7 +109,6 @@ class ExternalActionOperationalResponsePresenter:
 
         if not (
             ChatOperationalResponseProfileService.is_product_operational_entity(entity)
-            or self._legacy_is_product_operational_path(path)
         ):
             return None
 
@@ -119,7 +118,7 @@ class ExternalActionOperationalResponsePresenter:
         product_code = self._extract_product_code_from_path(path)
         route_key = ChatOperationalResponseProfileService.operational_empty_route_key(
             entity
-        ) or self._legacy_operational_empty_route_key(path)
+        )
 
         if route_key and product_code:
             linha = self._host._presenter_text(
@@ -174,59 +173,6 @@ class ExternalActionOperationalResponsePresenter:
                 return True
 
         return False
-
-    @staticmethod
-    def _legacy_operational_empty_route_key(path: str) -> str | None:
-        lowered_path = str(path or "").lower()
-
-        if "/suppliers" in lowered_path:
-            return "suppliers"
-
-        if "/customers" in lowered_path:
-            return "customers"
-
-        if "/stock" in lowered_path:
-            return "stock"
-
-        if "/structure" in lowered_path:
-            return "structure"
-
-        if "/parents" in lowered_path:
-            return "parents"
-
-        if "/guide" in lowered_path:
-            return "guide"
-
-        if "/inspection" in lowered_path:
-            return "inspection"
-
-        if "/sales" in lowered_path or "/purchases" in lowered_path:
-            return "salesPurchases"
-
-        return None
-
-    @staticmethod
-    def _is_product_operational_path(path: str) -> bool:
-        return ChatOperationalResponseProfileService.is_product_operational_path(path)
-
-    @staticmethod
-    def _legacy_is_product_operational_path(path: str) -> bool:
-        lowered = str(path or "").lower()
-
-        return any(
-            segment in lowered
-            for segment in (
-                "/guide",
-                "/inspection",
-                "/stock",
-                "/structure",
-                "/parents",
-                "/purchases",
-                "/sales",
-                "/suppliers",
-                "/customers",
-            )
-        )
 
     @staticmethod
     def _format_protheus_date(value) -> str | None:

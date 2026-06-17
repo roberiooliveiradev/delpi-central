@@ -69,25 +69,16 @@ class ExternalActionProductListPresenter:
 
         entity = ChatOperationalResponseProfileService.resolve_entity(path=path)
         list_route = ChatOperationalResponseProfileService.list_route_entity(entity)
-        lowered_path = str(path or "").lower()
         title = self._infer_items_title(items, path)
         first_item = items[0] if isinstance(items[0], dict) else {}
 
-        if list_route == "guide" or "/guide" in lowered_path:
+        if list_route == "guide":
             return self._present_product_guide(items, path=path, title=title)
 
-        if (
-            list_route == "inspection"
-            or "/inspection" in lowered_path
-            or self._host._looks_like_inspection_item(first_item)
-        ):
+        if list_route == "inspection" or self._host._looks_like_inspection_item(first_item):
             return self._present_product_inspection(items, path=path, title=title)
 
-        if (
-            list_route == "stock"
-            or "/stock" in lowered_path
-            or self._host._is_stock_data(first_item)
-        ):
+        if list_route == "stock" or self._host._is_stock_data(first_item):
             return self._present_product_stock(items, path=path, title=title, root=root)
 
         return None

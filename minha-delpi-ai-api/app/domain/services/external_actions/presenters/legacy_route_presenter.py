@@ -106,7 +106,6 @@ class ExternalActionLegacyRoutePresenter:
                 ChatOperationalResponseProfileService.matches_entity(
                     entity, "product_structure", "product_parents"
                 )
-                or "/structure" in str(path or "").lower()
             ):
                 structure_result = self._host._present_product_structure(root, path)
 
@@ -143,14 +142,13 @@ class ExternalActionLegacyRoutePresenter:
                 if items and isinstance(items[0], dict) and "sale_number" in items[0]:
                     return self._host._present_lmp_page(root)
 
-                lowered_path = str(path or "").lower()
-
                 if (
                     items
                     and isinstance(items[0], dict)
                     and "order_number" in items[0]
-                    and "/production/" not in lowered_path
-                    and not ChatOperationalResponseProfileService.is_playbook_operational_path(path)
+                    and not ChatOperationalResponseProfileService.is_playbook_operational_entity(
+                        entity
+                    )
                 ):
                     return self._host._present_sale_orders(root, items)
 
@@ -158,11 +156,7 @@ class ExternalActionLegacyRoutePresenter:
                 first_item = items[0] if items and isinstance(items[0], dict) else {}
                 list_route = ChatOperationalResponseProfileService.list_route_entity(entity)
 
-                if (
-                    list_route == "stock"
-                    or "/stock" in lowered_path
-                    or self._host._is_stock_data(first_item)
-                ):
+                if list_route == "stock" or self._host._is_stock_data(first_item):
                     return self._host._present_product_stock(
                         items,
                         path=path,
@@ -170,11 +164,8 @@ class ExternalActionLegacyRoutePresenter:
                         root=root if isinstance(root, dict) else None,
                     )
 
-                if (
-                    ChatOperationalResponseProfileService.list_route_entity(entity)
-                    == "inspection"
-                    or "/inspection" in lowered_path
-                    or self._host._looks_like_inspection_item(first_item)
+                if list_route == "inspection" or self._host._looks_like_inspection_item(
+                    first_item
                 ):
                     return self._host._present_product_inspection(items, path=path, title=title)
 

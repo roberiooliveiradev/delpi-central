@@ -602,6 +602,19 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 **DoD Fase 18:** agente com REST habilitado → nunca SQL na mesma intent operacional; pytest sql fallback + readiness verdes.
 
+### Fase 19 — apresentação 100% entity ✅
+
+| Entrega | Status |
+|---------|--------|
+| Gate `audit_presentation_path_ifs.py --check` (DOCIE Fase 19) | ✅ |
+| Escopo ampliado: presenters + `chat_presentation_*` + use case | ✅ |
+| Fallbacks legacy por path removidos (operational/list/legacy/kpi/structure) | ✅ |
+| `entityPresentationRouting` canônico para empty/list routes | ✅ |
+| Tier A com `visualBuilders` + `tableAssembly` validados no gate | ✅ |
+| CI DOCIE executa `--check` de apresentação | ✅ |
+
+**DoD Fase 19:** zero condicionais por path literal em domain/application de apresentação; tier A só perfil JSON.
+
 ---
 
 ### Roadmap 100% — Fases 16–20

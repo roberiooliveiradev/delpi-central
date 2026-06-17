@@ -53,10 +53,8 @@ def test_refactor_baseline_summary_has_expected_debt() -> None:
 
 
 def test_section_rules_has_no_legacy_narrative_template_methods():
-    from pathlib import Path
-
     service_path = (
-        Path(__file__).resolve().parents[3]
+        ChatPresentationRefactorBaselineService.package_root()
         / "app/domain/services/chat_presentation_section_rules_service.py"
     )
     source = service_path.read_text(encoding="utf-8")
@@ -140,3 +138,18 @@ def test_audit_script_entrypoint_importable() -> None:
     )
 
     assert script.is_file()
+
+
+def test_docie_presentation_gate_is_clean() -> None:
+    ok, errors = ChatPresentationRefactorBaselineService.run_docie_gate_check()
+
+    assert ok, errors
+
+
+def test_docie_presentation_audit_covers_presenters() -> None:
+    paths = ChatPresentationRefactorBaselineService.docie_audit_file_paths()
+    relative = {path.name for path in paths}
+
+    assert "product_list_presenter.py" in relative
+    assert "legacy_route_presenter.py" in relative
+    assert len(paths) >= 20

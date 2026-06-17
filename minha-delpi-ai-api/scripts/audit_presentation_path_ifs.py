@@ -34,6 +34,11 @@ def main() -> int:
         action="store_true",
         help="Falha se o inventário divergir do baseline versionado",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Falha se gate DOCIE Fase 19 (path literals em domain/application) > 0",
+    )
     args = parser.parse_args()
 
     report = ChatPresentationRefactorBaselineService.build_report()
@@ -82,6 +87,24 @@ def main() -> int:
                     f"  - {item['field']}: baseline={item['baseline']} current={item['current']}",
                     file=sys.stderr,
                 )
+
+    if args.check:
+        ok, errors = ChatPresentationRefactorBaselineService.run_docie_gate_check()
+
+        if not ok:
+            exit_code = 1
+            print("DOCIE Fase 19 — apresentação entity-first", file=sys.stderr)
+
+            for item in errors:
+                print(f"  - {item}", file=sys.stderr)
+        elif not args.json and not args.write_baseline and not args.check_baseline:
+            report = ChatPresentationRefactorBaselineService.build_docie_gate_report()
+            summary = report.get("summary") or {}
+            print(
+                "DOCIE Fase 19 OK — "
+                f"{summary.get('auditFileCount', 0)} arquivos, "
+                f"{summary.get('totalPathConditionals', 0)} condicionais por path."
+            )
 
     return exit_code
 

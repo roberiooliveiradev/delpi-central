@@ -373,11 +373,6 @@ class ExternalActionKpiChartPresenter:
         if entity and ChatOperationalResponseProfileService.is_kpi_entity(entity):
             return True
 
-        lowered = str(path or "").lower()
-
-        if "/sales/billing" in lowered:
-            return False
-
         kpi_paths = (
             "cpv",
             "otd",
