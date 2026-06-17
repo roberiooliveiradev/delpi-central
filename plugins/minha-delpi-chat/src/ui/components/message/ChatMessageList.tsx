@@ -88,7 +88,7 @@ import {
   type ChatActionConfirmation,
 } from "../ChatActionConfirmationPanel";
 import { ChatStreamingActivityPanel } from "../ChatStreamingActivityPanel";
-import { ChatInlineCanvas } from "../ChatInlineCanvas";
+import { ChatInlineCanvas } from "../canvas/ChatInlineCanvas";
 import { resolveUserMessageTurnContextChips } from "../../../state/chatComposerContext";
 import { ChatMessageEditField } from "../ChatMessageEditField";
 import {
@@ -103,7 +103,7 @@ import "../ChatAttachmentCard.css";
 import "../ChatAttachmentPreviewModal.css";
 import { ChatUserTurnContextChips } from "../ChatUserTurnContextChips";
 import { ChatErrorHandlingCard } from "../ChatErrorHandlingCard";
-import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "../chatCanvas";
+import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "../canvas/chatCanvas";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";

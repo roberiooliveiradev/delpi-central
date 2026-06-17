@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **17/06/2026** após PR-1–42 — **Fase G concluída** ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **17/06/2026** após PR-1–45 — **Fase G concluída**; Fase H em andamento ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -21,7 +21,8 @@ src/ui/components/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
-├── shell/               # Sidebar, ContextBar, ContextTopbar
+├── shell/               # Sidebar, ContextBar, ContextTopbar (PR-35)
+├── canvas/              # Lousa lateral e preview inline (PR-45)
 ├── admin/               # Painel administrativo (shell + abas modulares)
 └── [raiz]               # Hub chatPresentation, modais finos, orquestração de página
 ```
@@ -38,6 +39,7 @@ Barrels públicos:
 | `message/` | `message/index.ts` | `import { ChatAssistantContent } from "./message"` |
 | `workspace/` | `workspace/index.ts` | `import { WorkspaceFileDropzone } from "./workspace"` |
 | `shell/` | `shell/index.ts` | `import { ChatSidebar } from "./shell"` |
+| `canvas/` | `canvas/index.ts` | `import { ChatCanvas } from "./canvas"` |
 
 ## Re-exports legados
 
@@ -100,6 +102,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 |----|---------|---------------|
 | PR-43 | `presentation/` | export/copy buttons, chart UX, drill-down | ✅ |
 | PR-44 | `shared/modal/` | alert/confirm/prompt + hooks `use*Dialog` | ✅ |
+| PR-45 | `canvas/` | ChatCanvas, ChatInlineCanvas, chatCanvas utils | ✅ |
 
 ## Referências
 

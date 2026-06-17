@@ -1,5 +1,5 @@
 import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
+import { ChatCanvas, type ChatCanvasDocument } from "../components/canvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
 import {

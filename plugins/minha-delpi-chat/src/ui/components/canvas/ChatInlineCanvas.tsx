@@ -1,7 +1,7 @@
 import { Maximize2 } from "lucide-react";
 
-import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
-import { ChatMarkdown } from "./message/ChatMarkdown";
+import type { ChatCanvasOpenPayload } from "../../../data/api/chatTypes";
+import { ChatMarkdown } from "../message/ChatMarkdown";
 
 import "./ChatInlineCanvas.css";
 

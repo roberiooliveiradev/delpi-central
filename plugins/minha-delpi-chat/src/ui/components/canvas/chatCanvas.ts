@@ -1,4 +1,4 @@
-import type { ChatCanvasOpenPayload, ChatMessageMetadata } from "../../data/api/chatTypes";
+import type { ChatCanvasOpenPayload, ChatMessageMetadata } from "../../../data/api/chatTypes";
 
 export function normalizeCanvasOpenPayload(
   raw: unknown,

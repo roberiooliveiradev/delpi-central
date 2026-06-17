@@ -1,8 +1,8 @@
 import { Check, Copy, Download, Edit3, Eye, Maximize2, Minimize2, Save, X } from "lucide-react";
 import { useState } from "react";
-import { ChatMarkdown } from "./message/ChatMarkdown";
+import { ChatMarkdown } from "../message/ChatMarkdown";
 
-import { ChatModal } from "./shared/modal/ChatModal";
+import { ChatModal } from "../shared/modal/ChatModal";
 import "./ChatCanvas.css";
 
 export type ChatCanvasDocument = {
