@@ -1,5 +1,5 @@
 /* Camadas de overlay e modal — portal contido (#mdc-modal-root). */
 
-@import "../components/chat-overlay-layer.css";
-@import "../components/modal-layer.css";
-@import "../components/chat-modal-surface.css";
+@import "./chat-overlay-layer.css";
+@import "./modal-layer.css";
+@import "./chat-modal-surface.css";

@@ -2,7 +2,7 @@ import { useEffect, type MouseEvent, type ReactNode } from "react";
 
 import { ModalPortal } from "../overlay/ModalPortal";
 
-import "../../chat-modal-surface.css";
+import "../../../styles/chat-modal-surface.css";
 import "./chat-modal.css";
 
 export type ChatModalSize = "sm" | "md" | "lg" | "none";

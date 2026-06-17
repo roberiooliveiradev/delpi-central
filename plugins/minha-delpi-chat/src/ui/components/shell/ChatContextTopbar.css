@@ -142,48 +142,6 @@
   position: relative;
 }
 
-.mdc-chat-context-topbar__menu {
-  position: absolute;
-  top: calc(100% + 0.4rem);
-  right: 0;
-  z-index: 30;
-  display: grid;
-  width: 17rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 0.9rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
-  box-shadow: var(--mdc-shadow-lg);
-  padding: 0.35rem;
-}
-
-.mdc-chat-context-topbar__menu button {
-  display: grid;
-  grid-template-columns: 1.25rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.65rem;
-  width: 100%;
-  border: 0;
-  border-radius: 0.62rem;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.62rem 0.65rem;
-  text-align: left;
-}
-
-.mdc-chat-context-topbar__menu button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
-}
-
-.mdc-chat-context-topbar__danger {
-  color: var(--mdc-danger) !important;
-}
-
-.mdc-chat-context-topbar__danger:hover {
-  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
-}
-
 @media (max-width: 720px) {
   .mdc-chat-context-topbar {
     padding-inline: 0.8rem;

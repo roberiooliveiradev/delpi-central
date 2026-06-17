@@ -245,6 +245,7 @@ PR-46 ✅  shared/modal MemoryUsed; shell HelpPanel; workspace AttachmentPreview
 PR-47 ✅  shared/menus TableRowMenu; canvas ExpandModal; message edit/streaming/feedback panels
 PR-48 ✅  shell ConversationMenu + OnboardingTour; message empty/follow-up/action panels
 PR-49 ✅  shared layout primitives; shell list item; workspace attachment/agent; message trust/debug
+PR-50 ✅  overlay CSS → ui/styles/; DropdownMenuTrigger em ContextTopbar + ProjectHome
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -293,7 +294,7 @@ Pós-Fase G (**Fase H**): raiz reduzida a **4 TS/TSX** (hub + testes) após PR-4
 | Tokens plugin | `src/index.css` |
 | Styles barrel | `src/ui/styles/index.css` |
 | Overlay layer | `src/ui/styles/overlay.css` → `chat-overlay-layer.css`, `modal-layer.css` |
-| Modal layer | `src/ui/components/modal-layer.css` |
+| Modal layer | `src/ui/styles/modal-layer.css` |
 | Posicionamento | `src/ui/components/shared/overlay/menuPositionUtils.ts` |
 | Shared barrel | `src/ui/components/shared/index.ts` (+ `DropdownMenuTrigger`) |
 | Portal target | `src/ui/components/shared/overlay/modalPortalTarget.ts` |
@@ -315,7 +316,7 @@ Pós-Fase G (**Fase H**): raiz reduzida a **4 TS/TSX** (hub + testes) após PR-4
 |---------|-----------------|------|
 | PRs estruturais entregues | 42 / 42 (Fase G) | 42 / 42 ✅ |
 | Arquivos TS/TSX na raiz `components/` | 4 | hub + testes ✅ |
-| Arquivos CSS na raiz `components/` | 4 | overlay/modal legado + hub CSS residual |
+| Arquivos CSS na raiz `components/` | 0 | co-localizados com feature ou `ui/styles/` ✅ |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |
 | Módulos em `message/` | 59 arquivos TS/TSX | empty/follow-up/actions + InteractivityBlock, Sources, markdown ✅ |

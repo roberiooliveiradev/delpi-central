@@ -11,7 +11,7 @@ import {
   type AnchoredMenuPlacement,
 } from "./useAnchoredMenuLayout";
 
-import "../../chat-overlay-layer.css";
+import "../../../styles/chat-overlay-layer.css";
 import "./menu-popover.css";
 
 type AnchoredMenuPortalBaseProps = {

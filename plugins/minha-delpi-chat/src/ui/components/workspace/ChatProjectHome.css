@@ -80,7 +80,7 @@
   flex: 0 0 auto;
 }
 
-.mdc-chat-project-home__hero-actions > button {
+.mdc-chat-project-home__hero-menu-trigger {
   display: inline-grid;
   place-items: center;
   width: 2.35rem;
@@ -92,43 +92,10 @@
   cursor: pointer;
 }
 
-.mdc-chat-project-home__hero-actions > button:hover,
-.mdc-chat-project-home__hero-actions > button[aria-expanded="true"] {
+.mdc-chat-project-home__hero-menu-trigger:hover,
+.mdc-chat-project-home__hero-menu-trigger[aria-expanded="true"] {
   background: color-mix(in srgb, var(--mdc-text) 9%, transparent);
   color: var(--mdc-text);
-}
-
-.mdc-chat-project-home__menu {
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  right: 0;
-  z-index: 8;
-  display: grid;
-  width: 17rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 0.9rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
-  box-shadow: var(--mdc-card-shadow);
-  padding: 0.35rem;
-}
-
-.mdc-chat-project-home__menu button {
-  display: grid;
-  grid-template-columns: 1.35rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.7rem;
-  border: 0;
-  border-radius: 0.65rem;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.65rem 0.7rem;
-  text-align: left;
-}
-
-.mdc-chat-project-home__menu button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
 }
 
 .mdc-chat-project-home__danger {

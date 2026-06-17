@@ -8,7 +8,7 @@ import {
 
 import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
 
-import "../chat-overlay-layer.css";
+import "../../styles/chat-overlay-layer.css";
 import "./ChatConversationMenu.css";
 
 type ChatConversationMenuProps = {

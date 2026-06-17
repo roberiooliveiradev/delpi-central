@@ -3,7 +3,6 @@ import {
   CircleHelp,
   Folder,
   MessageSquare,
-  MoreHorizontal,
   PanelLeft,
   Pencil,
   Settings,
@@ -11,7 +10,10 @@ import {
   X,
   Box,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo } from "react";
+
+import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
+import type { ActionMenuItem } from "../shared/menus/ActionMenuPanel";
 
 import "./ChatContextTopbar.css";
 
@@ -46,10 +48,95 @@ export function ChatContextTopbar({
   onOpenSidebar,
   onOpenHelp,
 }: ChatContextTopbarProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const Icon =
     mode === "project" ? Folder : mode === "agent" ? Bot : MessageSquare;
+
+  const contextMenuItems = useMemo((): ActionMenuItem[] => {
+    if (mode === "project") {
+      return [
+        ...(onOpenAdmin
+          ? [
+              {
+                id: "admin",
+                label: "Administração",
+                icon: <Settings size={17} aria-hidden="true" />,
+                onSelect: () => onOpenAdmin(),
+              },
+            ]
+          : []),
+        ...(onManageAgents
+          ? [
+              {
+                id: "agents",
+                label: "Apps e agentes",
+                icon: <Box size={17} aria-hidden="true" />,
+                onSelect: () => onManageAgents(),
+              },
+            ]
+          : []),
+        {
+          id: "rename",
+          label: "Renomear projeto",
+          icon: <Pencil size={17} aria-hidden="true" />,
+          onSelect: () => onRenameProject?.(),
+        },
+        {
+          id: "settings",
+          label: "Configurações do projeto",
+          icon: <Settings size={17} aria-hidden="true" />,
+          onSelect: () => onOpenProjectSettings?.(),
+        },
+        {
+          id: "delete",
+          label: "Excluir projeto",
+          icon: <Trash2 size={17} aria-hidden="true" />,
+          variant: "danger" as const,
+          onSelect: () => onDeleteProject?.(),
+        },
+      ];
+    }
+
+    if (mode === "agent") {
+      return [
+        ...(onOpenAdmin
+          ? [
+              {
+                id: "admin",
+                label: "Administração",
+                icon: <Settings size={17} aria-hidden="true" />,
+                onSelect: () => onOpenAdmin(),
+              },
+            ]
+          : []),
+        ...(onManageAgents
+          ? [
+              {
+                id: "agents",
+                label: "Apps e agentes",
+                icon: <Settings size={17} aria-hidden="true" />,
+                onSelect: () => onManageAgents(),
+              },
+            ]
+          : []),
+        {
+          id: "clear-agent",
+          label: "Sair do agente",
+          icon: <X size={17} aria-hidden="true" />,
+          onSelect: () => onClearAgent?.(),
+        },
+      ];
+    }
+
+    return [];
+  }, [
+    mode,
+    onClearAgent,
+    onDeleteProject,
+    onManageAgents,
+    onOpenAdmin,
+    onOpenProjectSettings,
+    onRenameProject,
+  ]);
 
   return (
     <header className="mdc-chat-context-topbar">
@@ -103,123 +190,15 @@ export function ChatContextTopbar({
           </button>
         ) : null}
 
-        {mode !== "general" ? (
-          <div className="mdc-chat-context-topbar__menu-wrap">
-            <button
-              type="button"
-              className="mdc-chat-context-topbar__menu-trigger"
-              aria-label="Opções do contexto"
-              aria-expanded={isMenuOpen}
-              onClick={() => setIsMenuOpen((current) => !current)}
-            >
-              <MoreHorizontal size={20} aria-hidden="true" />
-            </button>
-
-            {isMenuOpen && mode === "project" ? (
-              <div className="mdc-chat-context-topbar__menu">
-                {onOpenAdmin ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onOpenAdmin();
-                    }}
-                  >
-                    <Settings size={17} aria-hidden="true" />
-                    <span>Administração</span>
-                  </button>
-                ) : null}
-
-                {onManageAgents ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onManageAgents();
-                    }}
-                  >
-                    <Box size={17} aria-hidden="true" />
-                    <span>Apps e agentes</span>
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onRenameProject?.();
-                  }}
-                >
-                  <Pencil size={17} aria-hidden="true" />
-                  <span>Renomear projeto</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onOpenProjectSettings?.();
-                  }}
-                >
-                  <Settings size={17} aria-hidden="true" />
-                  <span>Configurações do projeto</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="mdc-chat-context-topbar__danger"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onDeleteProject?.();
-                  }}
-                >
-                  <Trash2 size={17} aria-hidden="true" />
-                  <span>Excluir projeto</span>
-                </button>
-              </div>
-            ) : null}
-
-            {isMenuOpen && mode === "agent" ? (
-              <div className="mdc-chat-context-topbar__menu">
-                {onOpenAdmin ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onOpenAdmin();
-                    }}
-                  >
-                    <Settings size={17} aria-hidden="true" />
-                    <span>Administração</span>
-                  </button>
-                ) : null}
-
-                {onManageAgents ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onManageAgents();
-                    }}
-                  >
-                    <Settings size={17} aria-hidden="true" />
-                    <span>Apps e agentes</span>
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onClearAgent?.();
-                  }}
-                >
-                  <X size={17} aria-hidden="true" />
-                  <span>Sair do agente</span>
-                </button>
-              </div>
-            ) : null}
-          </div>
+        {mode !== "general" && contextMenuItems.length > 0 ? (
+          <DropdownMenuTrigger
+            items={contextMenuItems}
+            menuLabel="Opções do contexto"
+            ariaLabel="Opções do contexto"
+            iconSize={20}
+            wrapClassName="mdc-chat-context-topbar__menu-wrap"
+            triggerClassName="mdc-chat-context-topbar__menu-trigger"
+          />
         ) : null}
       </div>
     </header>

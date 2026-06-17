@@ -4,7 +4,6 @@ import {
   Copy,
   Folder,
   Loader2,
-  MoreHorizontal,
   Pencil,
   Settings,
   Trash2,
@@ -45,6 +44,7 @@ import {
   useWorkspaceFilePreviewModal,
 } from "../../hooks/useWorkspaceFilePreviewModal";
 import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
+import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
 import { WorkspaceFileCard } from "./WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
 
@@ -157,7 +157,6 @@ export function ChatProjectHome({
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const { prompt, dialog: promptDialog } = usePromptDialog();
   const [activeTab, setActiveTab] = useState<ProjectTab>("chats");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openSessionMenuId, setOpenSessionMenuId] = useState<string | null>(null);
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
@@ -451,6 +450,32 @@ export function ChatProjectHome({
     await onDeleteSession?.(session.id);
   }
 
+  const projectMenuItems = [
+    {
+      id: "settings",
+      label: "Configurações do projeto",
+      icon: <Settings size={18} aria-hidden="true" />,
+      onSelect: () => openSettings(),
+    },
+    {
+      id: "rename",
+      label: "Renomear",
+      icon: <Pencil size={18} aria-hidden="true" />,
+      onSelect: () => {
+        void renameProject();
+      },
+    },
+    {
+      id: "delete",
+      label: "Excluir projeto",
+      icon: <Trash2 size={18} aria-hidden="true" />,
+      variant: "danger" as const,
+      onSelect: () => {
+        void deleteProject();
+      },
+    },
+  ];
+
   return (
     <section
       className={
@@ -485,52 +510,13 @@ export function ChatProjectHome({
         </div>
 
         <div className="mdc-chat-project-home__hero-actions">
-          <button
-            type="button"
-            aria-label="Opções do projeto"
-            aria-expanded={isMenuOpen}
-            onClick={() => setIsMenuOpen((current) => !current)}
-          >
-            <MoreHorizontal size={20} aria-hidden="true" />
-          </button>
-
-          {isMenuOpen ? (
-            <div className="mdc-chat-project-home__menu">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  openSettings();
-                }}
-              >
-                <Settings size={18} aria-hidden="true" />
-                <span>Configurações do projeto</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  void renameProject();
-                }}
-              >
-                <Pencil size={18} aria-hidden="true" />
-                <span>Renomear</span>
-              </button>
-
-              <button
-                type="button"
-                className="mdc-chat-project-home__danger"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  void deleteProject();
-                }}
-              >
-                <Trash2 size={18} aria-hidden="true" />
-                <span>Excluir projeto</span>
-              </button>
-            </div>
-          ) : null}
+          <DropdownMenuTrigger
+            items={projectMenuItems}
+            menuLabel="Opções do projeto"
+            ariaLabel="Opções do projeto"
+            iconSize={20}
+            triggerClassName="mdc-chat-project-home__hero-menu-trigger"
+          />
         </div>
       </header>
 
