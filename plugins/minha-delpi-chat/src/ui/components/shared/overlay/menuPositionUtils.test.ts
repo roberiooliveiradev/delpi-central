@@ -280,4 +280,25 @@ describe("resolveComposerOptionMenuPosition", () => {
     expect(layout.anchorAbove).toBe(true);
     expect(layout.maxHeight).toBeLessThanOrEqual(containerRect.height - 8);
   });
+
+  it("não converte duas vezes rect já relativo ao container", () => {
+    const containerRect = {
+      left: 240,
+      top: 0,
+      right: 1040,
+      bottom: 800,
+      width: 800,
+      height: 800,
+    };
+
+    const layout = resolveComposerOptionMenuPosition({
+      rect: { left: 48, top: 720, right: 168, bottom: 756, width: 120, height: 36 },
+      itemCount: 3,
+      contained: true,
+      containerRect,
+    });
+
+    expect(layout.left).not.toBe(48);
+    expect(layout.left).toBe(8);
+  });
 });

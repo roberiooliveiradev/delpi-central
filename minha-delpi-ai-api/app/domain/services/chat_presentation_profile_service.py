@@ -503,16 +503,23 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             if view not in ordered:
                 ordered.append(view)
 
-        if len(ordered) >= 2 and str(decision.get("layoutMode") or "") != "single":
+        stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
+        force_stack = stack_policy == "always" and len(ordered) >= 2
+
+        if len(ordered) >= 2 and (force_stack or str(decision.get("layoutMode") or "") != "single"):
             from app.domain.services.chat_presentation_text_mode_service import (
                 ChatPresentationTextModeService,
             )
 
             selected = str(decision.get("selected") or "").strip().lower()
 
-            if isinstance(metadata, dict) and ChatPresentationTextModeService.is_user_explicit_text_mode(
-                metadata
+            if (
+                not force_stack
+                and isinstance(metadata, dict)
+                and ChatPresentationTextModeService.is_user_explicit_text_mode(metadata)
             ):
+                decision["visualOrder"] = ordered
+                decision["presentationProfileKey"] = profile.get("profileKey")
                 return
 
             explicit = (
@@ -521,13 +528,15 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
                 else ""
             )
 
-            if explicit and str(decision.get("layoutMode") or "") == "single":
+            if not force_stack and explicit and str(decision.get("layoutMode") or "") == "single":
+                decision["visualOrder"] = ordered
+                decision["presentationProfileKey"] = profile.get("profileKey")
                 return
 
-            if selected == "text" and str(decision.get("layoutMode") or "") == "single":
+            if not force_stack and selected == "text" and str(decision.get("layoutMode") or "") == "single":
+                decision["visualOrder"] = ordered
+                decision["presentationProfileKey"] = profile.get("profileKey")
                 return
-
-            stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
 
             if stack_policy == "always":
                 decision["layoutMode"] = "stack"

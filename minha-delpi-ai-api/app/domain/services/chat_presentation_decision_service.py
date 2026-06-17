@@ -1850,7 +1850,11 @@ class ChatPresentationDecisionService:
         views = list(decision.get("availableViews") or [])
 
         if views:
-            ChatPresentationRoutePolicyService.apply_visual_order(decision, path=path)
+            ChatPresentationRoutePolicyService.apply_visual_order(
+                decision,
+                path=path,
+                metadata=metadata,
+            )
 
         has_tree = bool(
             cls._effective_tree_presentation(

@@ -21,8 +21,29 @@ class ChatPresentationRenderPipelineService:
             return
 
         cls._sync_explicit_session_before_render(metadata)
+        cls._sync_stack_layout_policy_before_render(metadata)
         ChatPresentationPayloadPruningService.prune(metadata)
         ChatPresentationRenderPlanService.build(metadata)
+
+    @classmethod
+    def _sync_stack_layout_policy_before_render(cls, metadata: dict[str, Any]) -> None:
+        decision = metadata.get("presentationDecision")
+
+        if not isinstance(decision, dict):
+            return
+
+        from app.domain.services.chat_presentation_route_policy_service import (
+            ChatPresentationRoutePolicyService,
+        )
+
+        path = str(metadata.get("path") or "")
+
+        if decision.get("availableViews"):
+            ChatPresentationRoutePolicyService.apply_visual_order(
+                decision,
+                path=path,
+                metadata=metadata,
+            )
 
     @classmethod
     def _sync_explicit_session_before_render(cls, metadata: dict[str, Any]) -> None:

@@ -114,6 +114,62 @@ class ChatPresentationVisualUiHintService:
         return token or None
 
     @classmethod
+    def view_will_render_in_contract(
+        cls,
+        *,
+        decision: dict[str, Any],
+        metadata: dict[str, Any] | None,
+        view: str,
+    ) -> bool:
+        token = str(view or "").strip().lower()
+
+        if not token:
+            return False
+
+        available = {
+            str(item or "").strip().lower()
+            for item in (decision.get("availableViews") or [])
+            if str(item or "").strip()
+        }
+
+        if token not in available:
+            return False
+
+        meta = metadata if isinstance(metadata, dict) else {}
+        selected = str(decision.get("selected") or "").strip().lower()
+        layout_mode = str(decision.get("layoutMode") or "").strip().lower()
+
+        if selected == token:
+            return True
+
+        if layout_mode != "stack":
+            return False
+
+        slot_key = {
+            "tree": "treePresentation",
+            "table": "tablePresentation",
+            "chart": "chartPresentation",
+            "kpi": "kpiPresentation",
+            "dashboard": "dashboardPresentation",
+        }.get(token)
+
+        if slot_key and isinstance(meta.get(slot_key), dict):
+            return bool(meta[slot_key].get("type"))
+
+        if token == "table" and isinstance(meta.get("tablePresentations"), list):
+            return any(
+                isinstance(item, dict) and item.get("type") == "table"
+                for item in meta["tablePresentations"]
+            )
+
+        presentation = meta.get("presentation")
+
+        if isinstance(presentation, dict) and str(presentation.get("type") or "").strip().lower() == token:
+            return True
+
+        return False
+
+    @classmethod
     def enrich_recommendations(
         cls,
         recommendations: list[dict[str, str]],
@@ -167,12 +223,20 @@ class ChatPresentationVisualUiHintService:
 
         table_hint = cls.resolve_table_hint(path=path, metadata=metadata)
 
-        if table_hint:
+        if table_hint and cls.view_will_render_in_contract(
+            decision=decision,
+            metadata=metadata,
+            view="table",
+        ):
             append("table", table_hint)
 
         tree_hint = cls.resolve_tree_hint(path=path, metadata=metadata)
 
-        if tree_hint:
+        if tree_hint and cls.view_will_render_in_contract(
+            decision=decision,
+            metadata=metadata,
+            view="tree",
+        ):
             append("tree", tree_hint)
 
         return output[:3]

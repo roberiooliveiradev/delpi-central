@@ -18,7 +18,6 @@ import {
   resolveComposerOptionMenuPosition,
   resolveComposerPanelMenuPosition,
   resolveContextMenuPosition,
-  toContainerRelativeRect,
   type ActionMenuHorizontalAlign,
   type ActionMenuLayout,
   type ComposerOptionMenuLayout,
@@ -145,22 +144,21 @@ export function useAnchoredMenuLayout({
       containerRect != null &&
       isMenuAnchorOutsideContainer(triggerRect, containerRect);
     const useViewportCoords = anchorOutsideContainer;
-    const rect = useViewportCoords
-      ? triggerRect
-      : portalContained && containerRect
-        ? toContainerRelativeRect(triggerRect, containerRect)
-        : triggerRect;
     const actionMenuContained = portalContained && !useViewportCoords;
 
     setUseViewportPositioning(useViewportCoords);
 
+    const layoutScope = useViewportCoords
+      ? { contained: false as const }
+      : containedLayout;
+
     if (placement === "composer-option") {
       commitLayout(
         resolveComposerOptionMenuPosition({
-          rect,
+          rect: triggerRect,
           itemCount,
           menuWidth,
-          ...containedLayout,
+          ...layoutScope,
         }),
       );
       return;
@@ -169,10 +167,10 @@ export function useAnchoredMenuLayout({
     if (placement === "composer-panel") {
       commitLayout(
         resolveComposerPanelMenuPosition({
-          rect,
+          rect: triggerRect,
           itemCount,
           menuWidth,
-          ...containedLayout,
+          ...layoutScope,
         }),
       );
       return;
@@ -184,7 +182,7 @@ export function useAnchoredMenuLayout({
 
     commitLayout(
       resolveActionMenuPosition({
-        rect,
+        rect: triggerRect,
         itemCount,
         menuWidth,
         contained: actionMenuContained,

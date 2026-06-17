@@ -198,6 +198,22 @@ def test_apply_visual_order_uses_profile_priority() -> None:
     assert decision["presentationProfileKey"] == "stock"
 
 
+def test_apply_visual_order_forces_stack_when_policy_always() -> None:
+    decision = {
+        "selected": "text",
+        "layoutMode": "single",
+        "availableViews": ["text", "tree", "table"],
+    }
+
+    ChatPresentationProfileService.apply_visual_order(
+        decision,
+        path="/products/90260609/structure/exclusivity",
+    )
+
+    assert decision["layoutMode"] == "stack"
+    assert decision["visualOrder"][:3] == ["text", "tree", "table"]
+
+
 def test_stack_plan_reads_profile_config() -> None:
     metadata = {
         "path": "/products/90260149/analyser",

@@ -139,16 +139,53 @@ def test_structure_exclusivity_text_first_without_tree():
     )
     decision = meta["presentationDecision"]
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+    render_plan = meta.get("renderPlan") or {}
 
     assert decision["selected"] == "text"
-    assert decision["layoutMode"] in {"single", "stack"}
+    assert decision["layoutMode"] == "stack"
     assert meta.get("treePresentation", {}).get("type") == "tree"
+    assert any(
+        segment.get("kind") == "tree"
+        for segment in (render_plan.get("segments") or [])
+        if isinstance(segment, dict)
+    )
     assert "Resposta" in markdown
     assert "10020053" in markdown
     assert "10080185" in markdown
     assert "Matérias-primas da estrutura" in markdown
     assert "exclusiva" in markdown.lower()
     assert "table" in (decision.get("availableViews") or [])
+
+
+def test_structure_exclusivity_tree_marks_exclusive_mp_nodes():
+    meta = _build(
+        "product_structure_exclusivity_90269002.json",
+        "/products/90269002/structure/exclusivity",
+        user_message="quais MPs compõem a estrutura do 90269002? tem MP exclusiva?",
+    )
+    tree = meta.get("treePresentation") or {}
+    root = tree.get("root") if isinstance(tree, dict) else {}
+
+    def _find_node(nodes: list, code: str) -> dict | None:
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+
+            if code in str(node.get("label") or ""):
+                return node
+
+            found = _find_node(node.get("children") or [], code)
+
+            if found:
+                return found
+
+        return None
+
+    mp = _find_node(root.get("children") or [], "10019001")
+
+    assert mp is not None
+    assert mp.get("emphasis") == "exclusive_mp"
+    assert mp.get("emphasisLabel") == "Exclusiva"
 
 
 def test_structure_exclusivity_integrated_stack_keeps_tree():
