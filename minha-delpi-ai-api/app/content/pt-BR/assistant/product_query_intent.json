@@ -227,7 +227,12 @@
     },
     "genericPricingRoute": {
       "termsFrom": "product_query_intent.router.priceTerms",
-      "noneOf": [{ "customPredicate": "salePricingRoute" }]
+      "noneOf": [
+        { "customPredicate": "salePricingRoute" },
+        { "customPredicate": "purchasePriceHistory" },
+        { "customPredicate": "purchaseBudgetHistory" },
+        { "customPredicate": "lastPurchase" }
+      ]
     },
     "billingRoute": {
       "termsFrom": "product_query_intent.billing.terms",

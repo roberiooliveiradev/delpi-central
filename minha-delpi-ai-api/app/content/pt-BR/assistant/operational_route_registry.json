@@ -548,6 +548,15 @@
         "noneOf": [
           {
             "customPredicate": "salePricingRoute"
+          },
+          {
+            "customPredicate": "purchasePriceHistory"
+          },
+          {
+            "customPredicate": "purchaseBudgetHistory"
+          },
+          {
+            "customPredicate": "lastPurchase"
           }
         ]
       },
@@ -678,7 +687,7 @@
     {
       "id": "productPurchasePriceHistory",
       "domain": "product",
-      "priority": 110,
+      "priority": 122,
       "routeSegment": "purchase-price-history",
       "match": {
         "customPredicate": "purchasePriceHistory"
@@ -702,7 +711,7 @@
     {
       "id": "productPurchaseBudgetHistory",
       "domain": "product",
-      "priority": 110,
+      "priority": 122,
       "routeSegment": "purchase-budget-history",
       "match": {
         "customPredicate": "purchaseBudgetHistory"

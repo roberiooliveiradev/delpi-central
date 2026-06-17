@@ -689,6 +689,9 @@ def test_purchase_price_history_not_raw_material_intelligence():
     assert not ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
         normalized
     )
+    assert not ChatProductQueryIntentService._looks_like_generic_pricing_route_question(
+        normalized
+    )
 
 
 def test_purchases_route_question_excludes_last_purchase_playbook():

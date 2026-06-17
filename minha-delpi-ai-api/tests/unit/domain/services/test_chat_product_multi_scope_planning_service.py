@@ -84,6 +84,28 @@ def test_detect_multi_scope_intent():
     assert intent == ChatProductQueryIntent.MULTI_SCOPE
 
 
+def test_extract_scopes_empty_for_purchase_price_history_playbook():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "Histórico de preço de compra do 10080001",
+    )
+
+    assert scopes == ()
+
+    intent = ChatProductQueryIntentService.detect(
+        "Histórico de preço de compra do 10080001",
+    )
+
+    assert intent != ChatProductQueryIntent.MULTI_SCOPE
+
+
+def test_extract_scopes_empty_for_purchase_budget_history_playbook():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "Histórico de orçamento de compra do produto 10080001",
+    )
+
+    assert scopes == ()
+
+
 def test_detect_analyser_for_integrated_three_scopes():
     intent = ChatProductQueryIntentService.detect(
         "análise integrada do cadastro, roteiro e estrutura do 90260149",

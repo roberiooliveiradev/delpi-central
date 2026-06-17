@@ -68,6 +68,9 @@ class ChatProductMultiScopePlanningService:
         if not normalized:
             return ()
 
+        if cls._is_dedicated_playbook_route_question(normalized):
+            return ()
+
         found: list[str] = []
 
         def add(scope: str) -> None:
@@ -148,6 +151,20 @@ class ChatProductMultiScopePlanningService:
         ordered = [scope for scope in _SCOPE_FETCH_ORDER if scope in found]
 
         return tuple(ordered)
+
+    @classmethod
+    def _is_dedicated_playbook_route_question(cls, normalized: str) -> bool:
+        """Rotas playbook com path próprio não entram em multi-scope genérico."""
+        dedicated_checks = (
+            ChatProductQueryIntentService._looks_like_purchase_price_history_question,
+            ChatProductQueryIntentService._looks_like_purchase_budget_history_question,
+            ChatProductQueryIntentService._looks_like_last_purchase_question,
+            ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question,
+            ChatProductQueryIntentService._looks_like_cost_impact_simulation_question,
+            ChatProductQueryIntentService._looks_like_sale_pricing_question,
+        )
+
+        return any(check(normalized) for check in dedicated_checks)
 
     @classmethod
     def should_use_single_analyser(cls, scopes: tuple[str, ...], message: str | None) -> bool:
