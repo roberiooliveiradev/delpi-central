@@ -105,6 +105,30 @@
     "stockIntent": ["stock"],
     "stockMessage": ["estoque", "saldo"]
   },
+  "automaticScoreMarkers": {
+    "listingMessage": [
+      "quais ",
+      "quais os",
+      "liste",
+      "listar",
+      "listagem",
+      "relacao",
+      "relação",
+      "programad",
+      "cadastro",
+      "itens ",
+      " registros"
+    ],
+    "rankingMessage": [
+      "ranking",
+      "maiores",
+      "top ",
+      "concentração",
+      "concentracao",
+      "participação",
+      "participacao"
+    ]
+  },
   "formatPreferenceMarkers": {
     "chartHints": ["em gráfico", "em grafico", "como gráfico", "como grafico"],
     "tableHints": ["em tabela", "como tabela", "formato tabela"],

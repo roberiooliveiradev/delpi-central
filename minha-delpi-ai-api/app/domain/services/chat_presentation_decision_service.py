@@ -181,24 +181,16 @@ class ChatPresentationDecisionService:
         if any(token in message for token in ("ranking", "maiores", "top ", "concentração", "concentracao")):
             scores["chart"] += 25
 
-        if any(
-            token in message
-            for token in (
-                "quais ",
-                "quais os",
-                "liste",
-                "listar",
-                "listagem",
-                "relacao",
-                "relação",
-                "programad",
-                "cadastro",
-            )
-        ) and not any(
-            token in message for token in ("ranking", "maiores", "top ", "concentração", "concentracao")
-        ):
-            scores["table"] += 35
-            scores["chart"] = max(0, int(scores.get("chart") or 0) - 25)
+        from app.domain.services.chat_presentation_view_intent_service import (
+            ChatPresentationViewIntentService,
+        )
+
+        score_deltas = ChatPresentationViewIntentService.automatic_score_deltas(
+            data_shape=shape,
+            user_message=message,
+        )
+        scores["table"] += int(score_deltas.get("table") or 0)
+        scores["chart"] = max(0, int(scores.get("chart") or 0) + int(score_deltas.get("chart") or 0))
 
         if any(token in message for token in ("relatório", "relatorio", "lousa", "canvas")):
             scores["canvas"] += 35
@@ -312,12 +304,10 @@ class ChatPresentationDecisionService:
         user_message: str | None,
         path: str | None,
         entity: str | None,
+        decision: dict[str, Any] | None = None,
     ) -> bool:
         from app.domain.services.chat_presentation_text_first_policy_service import (
             ChatPresentationTextFirstPolicyService,
-        )
-        from app.domain.services.chat_presentation_operational_decision_service import (
-            ChatPresentationOperationalDecisionService,
         )
 
         if effective_preference:
@@ -341,9 +331,19 @@ class ChatPresentationDecisionService:
 
         entity = cls._entity_from_metadata(metadata)
 
-        if ChatPresentationOperationalDecisionService.should_prefer_table_over_chart(
+        from app.domain.services.chat_presentation_view_intent_service import (
+            ChatPresentationViewIntentService,
+        )
+
+        if ChatPresentationViewIntentService.prefers_table_for_automatic(
             path=path,
             entity=entity,
+            data_shape=(
+                decision.get("dataShape")
+                if isinstance(decision, dict) and isinstance(decision.get("dataShape"), dict)
+                else None
+            ),
+            user_message=user_message,
             has_table=bool(metadata.get("tablePresentation")) or cls._metadata_has_visual(metadata),
         ):
             return True
@@ -367,6 +367,7 @@ class ChatPresentationDecisionService:
             user_message=user_message,
             path=path,
             entity=entity,
+            decision=decision,
         ):
             return
 
@@ -740,13 +741,15 @@ class ChatPresentationDecisionService:
 
         entity = cls._entity_from_metadata(metadata if isinstance(metadata, dict) else None)
 
-        from app.domain.services.chat_presentation_operational_decision_service import (
-            ChatPresentationOperationalDecisionService,
+        from app.domain.services.chat_presentation_view_intent_service import (
+            ChatPresentationViewIntentService,
         )
 
-        prefer_table = ChatPresentationOperationalDecisionService.should_prefer_table_over_chart(
+        prefer_table = ChatPresentationViewIntentService.prefers_table_for_automatic(
             path=path,
             entity=entity,
+            data_shape=shape,
+            user_message=message,
             has_table=bool(table_rows),
         )
 
@@ -1421,6 +1424,9 @@ class ChatPresentationDecisionService:
         from app.domain.services.chat_presentation_operational_decision_service import (
             ChatPresentationOperationalDecisionService,
         )
+        from app.domain.services.chat_presentation_view_intent_service import (
+            ChatPresentationViewIntentService,
+        )
 
         rich_metadata = metadata if isinstance(metadata, dict) else {
             "path": path,
@@ -1605,9 +1611,11 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        if ChatPresentationOperationalDecisionService.should_prefer_table_over_chart(
+        if ChatPresentationViewIntentService.prefers_table_for_automatic(
             path=path,
             entity=entity,
+            data_shape=ChatPresentationDataShapeAnalyzer.analyze(rows=table_rows),
+            user_message=message,
             has_table=bool(table_rows),
         ):
             return cls._build(

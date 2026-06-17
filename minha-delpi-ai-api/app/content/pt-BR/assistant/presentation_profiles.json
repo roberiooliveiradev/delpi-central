@@ -122,6 +122,32 @@
     "production_work_center_order_summary": "playbook_report",
     "purchases_top_products": "playbook_report"
   },
+  "entitySetProfileContracts": {
+    "playbookOperational": {
+      "entitySetKey": "playbookOperational",
+      "profileKey": "playbook_report",
+      "validatePathWithoutEntity": true,
+      "disallowedProfileKeys": [
+        "kpi_series",
+        "kpi_dashboard",
+        "kpi_snapshot",
+        "generic"
+      ]
+    },
+    "productListPresent": {
+      "entitySetKey": "productListPresent",
+      "profileKey": "table_list",
+      "allowedProfileKeys": [
+        "table_list",
+        "purchase_list"
+      ],
+      "disallowedProfileKeys": [
+        "kpi_series",
+        "kpi_dashboard",
+        "generic"
+      ]
+    }
+  },
   "entitySets": {
     "chatCritical": [
       "exclusive_raw_materials_catalog",

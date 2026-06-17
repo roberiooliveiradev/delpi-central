@@ -37,6 +37,52 @@ _HIERARCHY_KEYS = frozenset(
     }
 )
 
+_DESCRIPTOR_KEY_HINTS = (
+    "description",
+    "descricao",
+    "descrição",
+    "name",
+    "nome",
+    "title",
+    "titulo",
+    "título",
+    "product",
+    "produto",
+    "customer",
+    "cliente",
+    "supplier",
+    "fornecedor",
+    "branch",
+    "filial",
+    "warehouse",
+    "armazem",
+    "armazém",
+    "unit",
+    "unidade",
+    "status",
+    "situation",
+    "situacao",
+    "situação",
+)
+
+_IDENTIFIER_KEY_HINTS = (
+    "op",
+    "order",
+    "pedido",
+    "product",
+    "produto",
+    "code",
+    "codigo",
+    "código",
+    "sku",
+    "item",
+    "invoice",
+    "nota",
+    "serial",
+    "lote",
+    "batch",
+)
+
 
 class ChatPresentationDataShapeAnalyzer:
     @classmethod
@@ -59,6 +105,7 @@ class ChatPresentationDataShapeAnalyzer:
                 "numericKeys": [],
                 "labelKey": None,
                 "categoryCardinality": 0,
+                "viewIntent": "unknown",
                 "recommended": "text",
             }
 
@@ -85,6 +132,17 @@ class ChatPresentationDataShapeAnalyzer:
             rows=safe_rows,
             label_key=resolved_label,
             numeric_keys=numeric_keys,
+            string_keys=string_keys,
+            keys=keys,
+            has_date=has_date,
+            category_cardinality=category_cardinality,
+            has_hierarchy=has_hierarchy,
+        )
+        view_intent = cls._classify_view_intent(
+            rows=safe_rows,
+            keys=keys,
+            string_keys=string_keys,
+            numeric_keys=numeric_keys,
             has_date=has_date,
             category_cardinality=category_cardinality,
             has_hierarchy=has_hierarchy,
@@ -100,8 +158,71 @@ class ChatPresentationDataShapeAnalyzer:
             "numericKeys": numeric_keys[:6],
             "labelKey": resolved_label,
             "categoryCardinality": category_cardinality,
+            "viewIntent": view_intent,
             "recommended": recommended,
         }
+
+    @classmethod
+    def _classify_view_intent(
+        cls,
+        *,
+        rows: list[dict[str, Any]],
+        keys: list[str],
+        string_keys: list[str],
+        numeric_keys: list[str],
+        has_date: bool,
+        category_cardinality: int,
+        has_hierarchy: bool,
+    ) -> str:
+        if has_hierarchy:
+            return "hierarchy"
+
+        if len(rows) == 1 and len(numeric_keys) == 1:
+            return "single_metric"
+
+        if not numeric_keys:
+            return "table_only"
+
+        if has_date and numeric_keys:
+            return "temporal_series"
+
+        if cls._looks_like_auditable_list(keys=keys, string_keys=string_keys, row_count=len(rows)):
+            return "auditable_list"
+
+        if (
+            len(string_keys) <= 2
+            and 1 <= len(numeric_keys) <= 3
+            and category_cardinality >= 2
+        ):
+            return "ranking"
+
+        return "unknown"
+
+    @classmethod
+    def _looks_like_auditable_list(
+        cls,
+        *,
+        keys: list[str],
+        string_keys: list[str],
+        row_count: int,
+    ) -> bool:
+        if len(string_keys) >= 3:
+            return True
+
+        if len(keys) >= 5 and len(string_keys) >= 2 and row_count >= 2:
+            return True
+
+        lowered = [str(key or "").lower() for key in keys]
+        has_identifier = any(
+            any(hint in token for hint in _IDENTIFIER_KEY_HINTS)
+            for token in lowered
+        )
+        has_descriptor = any(
+            any(hint in token for hint in _DESCRIPTOR_KEY_HINTS)
+            for token in lowered
+        )
+
+        return has_identifier and has_descriptor and len(string_keys) >= 2
 
     @classmethod
     def _recommend_internal(
@@ -110,6 +231,8 @@ class ChatPresentationDataShapeAnalyzer:
         rows: list[dict[str, Any]],
         label_key: str | None,
         numeric_keys: list[str],
+        string_keys: list[str],
+        keys: list[str],
         has_date: bool,
         category_cardinality: int,
         has_hierarchy: bool,
@@ -121,6 +244,13 @@ class ChatPresentationDataShapeAnalyzer:
             return "kpi"
 
         if not numeric_keys:
+            return "table"
+
+        if cls._looks_like_auditable_list(
+            keys=keys,
+            string_keys=string_keys,
+            row_count=len(rows),
+        ):
             return "table"
 
         if has_date and numeric_keys:

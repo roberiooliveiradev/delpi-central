@@ -108,6 +108,10 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return cls.terms("operationalDecision", group_key)
 
     @classmethod
+    def automatic_score_markers(cls, group_key: str) -> tuple[str, ...]:
+        return cls.terms("automaticScoreMarkers", group_key)
+
+    @classmethod
     def insight_text(cls, key: str, *, default: str = "", **values: str) -> str:
         return cls.text("insights", key, default=default, **values)
 

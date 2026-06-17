@@ -154,12 +154,27 @@ def main() -> int:
 
         if args.check_profiles:
             profile_gaps = validation.get("profileGaps") or []
+            entity_set_gaps = validation.get("entitySetProfileGaps") or []
 
             if profile_gaps:
                 exit_code = 1
                 print(f"\nERRO: {len(profile_gaps)} gap(s) de perfil", file=sys.stderr)
 
                 for gap in profile_gaps[:12]:
+                    print(
+                        f"  - [{gap['kind']}] {gap['operation_id']} "
+                        f"{gap['path']} ({gap['detail']})",
+                        file=sys.stderr,
+                    )
+
+            if entity_set_gaps:
+                exit_code = 1
+                print(
+                    f"\nERRO: {len(entity_set_gaps)} gap(s) de contrato entitySet × perfil",
+                    file=sys.stderr,
+                )
+
+                for gap in entity_set_gaps[:12]:
                     print(
                         f"  - [{gap['kind']}] {gap['operation_id']} "
                         f"{gap['path']} ({gap['detail']})",

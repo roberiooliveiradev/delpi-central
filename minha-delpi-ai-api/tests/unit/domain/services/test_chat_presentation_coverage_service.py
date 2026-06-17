@@ -84,6 +84,13 @@ def test_validate_for_ci_passes_on_current_matrix() -> None:
 
     assert validation["ok"] is True
     assert not validation["profileGaps"]
+    assert not validation["entitySetProfileGaps"]
+
+
+def test_find_entity_set_profile_gaps_is_empty() -> None:
+    gaps = ChatPresentationCoverageService.find_entity_set_profile_gaps()
+
+    assert gaps == []
 
 
 def test_regression_fixture_domains_are_unique_enough() -> None:

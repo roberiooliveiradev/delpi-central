@@ -441,6 +441,75 @@ class ChatPresentationCoverageService:
         return gaps
 
     @classmethod
+    def find_entity_set_profile_gaps(cls) -> list[PresentationCoverageGap]:
+        gaps: list[PresentationCoverageGap] = []
+
+        for contract_key, contract in ChatPresentationProfileService.entity_set_profile_contracts().items():
+            expected = str(contract.get("profileKey") or "").strip()
+            allowed = frozenset(contract.get("allowedProfileKeys") or (expected,))
+            disallowed = frozenset(contract.get("disallowedProfileKeys") or ())
+            entity_set = contract.get("entitySet") or frozenset()
+
+            for entity in sorted(entity_set):
+                path = ChatPresentationProfileService.entity_path_hint(entity) or None
+                resolved = ChatPresentationProfileService.resolve_profile_key(path, entity)
+                operation_id = str(entity)
+                path_label = path or f"entity:{entity}"
+
+                if resolved not in allowed:
+                    gaps.append(
+                        PresentationCoverageGap(
+                            kind="entity_set_profile_mismatch",
+                            operation_id=operation_id,
+                            path=path_label,
+                            entity=entity,
+                            tier="A",
+                            profile_key=resolved,
+                            detail=(
+                                f"contrato «{contract_key}» exige perfil entre {sorted(allowed)}, "
+                                f"resolvido «{resolved}»"
+                            ),
+                        )
+                    )
+
+                if resolved in disallowed:
+                    gaps.append(
+                        PresentationCoverageGap(
+                            kind="entity_set_profile_disallowed",
+                            operation_id=operation_id,
+                            path=path_label,
+                            entity=entity,
+                            tier="A",
+                            profile_key=resolved,
+                            detail=(
+                                f"contrato «{contract_key}» proíbe perfil «{resolved}» "
+                                f"(esperado «{expected}»)"
+                            ),
+                        )
+                    )
+
+                if path and contract.get("validatePathWithoutEntity"):
+                    path_only = ChatPresentationProfileService.resolve_profile_key(path, None)
+
+                    if path_only in disallowed:
+                        gaps.append(
+                            PresentationCoverageGap(
+                                kind="entity_set_path_rule_conflict",
+                                operation_id=operation_id,
+                                path=path,
+                                entity=entity,
+                                tier="A",
+                                profile_key=path_only,
+                                detail=(
+                                    f"path «{path}» sem entity resolve «{path_only}» — "
+                                    f"conflita com contrato «{contract_key}»"
+                                ),
+                            )
+                        )
+
+        return gaps
+
+    @classmethod
     def find_commentary_profile_gaps(
         cls,
         rows: list[PresentationCoverageRow],
@@ -556,6 +625,7 @@ class ChatPresentationCoverageService:
         rows = cls.build_matrix(baseline_path=openapi_baseline_path)
         stored = cls.load_stored_baseline(stored_baseline_path)
         profile_gaps = cls.find_profile_gaps(rows)
+        entity_set_profile_gaps = cls.find_entity_set_profile_gaps()
         new_rows = cls.find_new_operations(rows, stored_baseline=stored)
         new_gaps = cls.validate_new_operations(new_rows)
         summary = cls.summarize(rows)
@@ -563,9 +633,10 @@ class ChatPresentationCoverageService:
         return {
             "summary": summary,
             "profileGaps": [asdict(gap) for gap in profile_gaps],
+            "entitySetProfileGaps": [asdict(gap) for gap in entity_set_profile_gaps],
             "newOperations": [asdict(row) for row in new_rows],
             "newOperationGaps": [asdict(gap) for gap in new_gaps],
-            "ok": not profile_gaps and not new_gaps,
+            "ok": not profile_gaps and not entity_set_profile_gaps and not new_gaps,
         }
 
     @classmethod

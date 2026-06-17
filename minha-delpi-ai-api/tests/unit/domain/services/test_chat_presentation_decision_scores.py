@@ -104,7 +104,8 @@ def test_apply_automatic_score_selection_keeps_table_for_playbook_report():
             "rows": 50,
             "hasCategory": True,
             "hasNumeric": True,
-            "recommended": "horizontal_bar",
+            "viewIntent": "auditable_list",
+            "recommended": "table",
         },
     }
     metadata = {
@@ -169,6 +170,7 @@ def test_apply_automatic_score_selection_picks_chart_for_categorical_rows():
             "rows": 6,
             "hasCategory": True,
             "hasNumeric": True,
+            "viewIntent": "ranking",
             "recommended": "horizontal_bar",
         },
     }
@@ -182,8 +184,8 @@ def test_apply_automatic_score_selection_picks_chart_for_categorical_rows():
         metadata=metadata,
         effective_preference=None,
         user_message="ranking de saldo por filial",
-        path="/products/10070014/guide",
-        entity="product_guide",
+        path="/supplies/stock-value/series",
+        entity="supplies_stock_value",
     )
 
     assert decision["selected"] == "horizontal_bar"
