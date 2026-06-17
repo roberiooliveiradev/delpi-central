@@ -8,7 +8,7 @@ import {
   resolveStreamingHeadline,
 } from "../../state/utils/streamingActivityLog";
 
-import { ChatThinkingDots } from "./ChatThinkingDots";
+import { ChatThinkingDots } from "./message/ChatThinkingDots";
 
 import "./ChatStreamingActivityPanel.css";
 

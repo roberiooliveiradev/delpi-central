@@ -1,4 +1,4 @@
-import type { ChatMessage } from "../../data/api/chatTypes";
+import type { ChatMessage } from "../../../data/api/chatTypes";
 
 export type ChatTimelineItem =
   | { type: "day"; key: string; label: string }

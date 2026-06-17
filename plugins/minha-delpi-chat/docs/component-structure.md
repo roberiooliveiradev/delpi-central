@@ -13,10 +13,10 @@ src/ui/components/
 │   └── menus/           # ActionMenuPanel, DropdownMenuTrigger
 ├── presentation/        # Apresentação rica (tabela, gráfico, KPI, árvore, dashboard)
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
-├── message/             # Conteúdo do assistente (segmentos, registry, chrome)
+├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
 ├── admin/               # Painel administrativo (shell + abas modulares)
-└── [legado na raiz]     # ChatMessageList, ChatSidebar, modais finos, etc.
+└── [legado na raiz]     # ChatSidebar, modais finos, chatPresentation, etc.
 ```
 
 Barrels públicos:
@@ -41,6 +41,8 @@ Arquivos na **raiz** de `components/` que só reexportam — **não** adicionar 
 | `assistantContent*.ts` | `message/` |
 | `useAssistantContentSegments.ts` | `message/` |
 | `AssistantStackSection.tsx` | `message/` |
+| `ChatMessageList.tsx` | `message/` |
+| `ChatThinkingDots.tsx` | `message/` |
 | `workspace-files/*` | `workspace/` |
 | `rich-presentation-shared.css` | `presentation/rich-presentation-shared.css` |
 | `menuPositionUtils.ts` | `shared/overlay/menuPositionUtils.ts` |
@@ -58,14 +60,13 @@ Novos imports devem usar o caminho canônico (pasta feature ou barrel).
 | Overlay/modal | `shared/overlay/*`, `modal-layer.css` |
 | Responsivo global | `src/ui/layout/workspace-responsive.css` |
 
-## O que ainda fica na raiz (PR-21+)
+## O que ainda fica na raiz (PR-22+)
 
 Candidatos futuros a `message/`:
 
-- `ChatMessageList.tsx` (+ CSS) — timeline principal
 - `assistantProseRendering.ts`, `chatPresentation.ts` (lógica de apresentação consumida pelo message)
 
-**Já em `message/` (PR-21):** `useAssistantContentSegments`, `AssistantStackSection`.
+**Já em `message/` (PR-21–22):** `useAssistantContentSegments`, `AssistantStackSection`, `ChatMessageList`, `chatMessageTimeline`, `ChatThinkingDots`.
 
 Candidatos futuros a `workspace/`:
 

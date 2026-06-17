@@ -52,7 +52,7 @@ Fases **A–F** concluídas (PR-1–21): primitivos em `shared/`, apresentação
 | [component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) | Mapa de pastas feature e re-exports |
 | [rich-presentation-css.md](../../../plugins/minha-delpi-chat/docs/rich-presentation-css.md) | CSS compartilhado tabela/gráfico/KPI |
 
-Pendências opcionais: mover `ChatMessageList` para `message/`, remover stubs `@deprecated`, checklist F4 manual.
+Pendências opcionais: mover `assistantProseRendering`/`chatPresentation` para `message/`, remover stubs `@deprecated`, checklist F4 manual.
 
 ### Painel administrativo
 

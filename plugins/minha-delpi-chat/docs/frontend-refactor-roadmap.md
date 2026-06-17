@@ -35,7 +35,7 @@ src/ui/
 │   ├── message/               # ChatAssistantContent, registry, segmentos
 │   ├── workspace/             # WorkspaceFile*, ingest CSS
 │   ├── admin/shared/          # primitivos admin — referência
-│   └── [legado raiz]          # ChatMessageList, Sidebar, … (ver component-structure.md)
+│   └── [legado raiz]          # Sidebar, modais finos, chatPresentation, … (ver component-structure.md)
 ```
 
 Mapa detalhado: [`component-structure.md`](./component-structure.md).
@@ -215,13 +215,14 @@ PR-18 ✅  D3/E5 — pasta presentation/ + admin mobile (AdminDataTable card mod
 PR-19 ✅  D3 composer/ + C3 hex + D4 dropzone paridade
 PR-20 ✅  D3 message/workspace + F3 CI build gate
 PR-21 ✅  C3 hex chips · message/ useAssistantContentSegments + AssistantStackSection · docs component-structure
+PR-22 ✅  message/ ChatMessageList + timeline + ChatThinkingDots
 ```
 
 ### Fase concluída (jun/2026)
 
-Fases **A–F** do backlog principal estão entregues (PR-1–20). Pendências opcionais:
+Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências opcionais:
 
-- **Raiz → message/** — `ChatMessageList`, hooks de segmento restantes na raiz
+- **Raiz → message/** — `assistantProseRendering`, `chatPresentation` (lógica compartilhada)
 - **C3 residual** — fallbacks hex em `var(--token, #hex)` (cosmético; tokens existem em `index.css`)
 - **F4** — checklist visual manual §7
 - **Stubs legados** — remover após migrar todos os imports (ver [`component-structure.md`](./component-structure.md))

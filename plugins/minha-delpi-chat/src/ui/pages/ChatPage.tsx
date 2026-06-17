@@ -17,7 +17,7 @@ import {
   ChatMemoryUsedDialog,
   type MemoryUsageView,
 } from "../components/ChatMemoryUsedDialog";
-import { ChatMessageList } from "../components/ChatMessageList";
+import { ChatMessageList } from "../components/message";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatHelpPanel } from "../components/ChatHelpPanel";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
