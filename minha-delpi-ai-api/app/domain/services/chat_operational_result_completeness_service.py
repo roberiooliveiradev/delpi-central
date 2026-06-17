@@ -43,18 +43,70 @@ class ChatOperationalResultCompletenessService:
 
     @classmethod
     def branch_filter_applied(cls, root: dict[str, Any]) -> bool | None:
-        summary = root.get("summary")
+        from app.domain.services.chat_operational_summary_semantics_service import (
+            ChatOperationalSummarySemanticsService,
+        )
 
-        if isinstance(summary, dict) and "branch_filter_applied" in summary:
-            return bool(summary.get("branch_filter_applied"))
+        return ChatOperationalSummarySemanticsService.branch_filter_applied(root)
 
-        if isinstance(summary, dict):
-            branch = summary.get("branch")
+    @classmethod
+    def consolidated_across_branches(cls, root: dict[str, Any]) -> bool:
+        from app.domain.services.chat_operational_summary_semantics_service import (
+            ChatOperationalSummarySemanticsService,
+        )
 
-            if branch is not None:
-                return bool(str(branch).strip())
+        return ChatOperationalSummarySemanticsService.consolidated_across_branches(root)
 
-        return None
+    @classmethod
+    def build_consolidated_message(
+        cls,
+        root: dict[str, Any],
+        *,
+        response_meta: dict[str, Any] | None = None,
+    ) -> str | None:
+        context = cls.enrich_context(root, response_meta=response_meta)
+
+        if not cls.consolidated_across_branches(context):
+            return None
+
+        pagination = cls.resolve_pagination(context) or {}
+        summary = context.get("summary") if isinstance(context.get("summary"), dict) else {}
+        returned = cls._as_int(pagination.get("returned")) or cls._as_int(
+            summary.get("total_records")
+        ) or 0
+        limit = cls._as_int(pagination.get("limit"))
+        limit_text = str(limit) if limit is not None else "—"
+
+        if cls.is_incomplete(context):
+            return ChatAssistantContentService.format(
+                _BUNDLE,
+                "operationalIncompleteConsolidated",
+                returned=returned,
+                limit=limit_text,
+            ).strip()
+
+        return ChatAssistantContentService.get(
+            _BUNDLE,
+            "operationalConsolidatedAllBranches",
+            default="",
+        ).strip() or None
+
+    @classmethod
+    def build_consolidated_payload(
+        cls,
+        root: dict[str, Any],
+        *,
+        response_meta: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        message = cls.build_consolidated_message(root, response_meta=response_meta)
+
+        if not message:
+            return None
+
+        return {
+            "message": message,
+            "consolidatedAcrossBranches": True,
+        }
 
     @classmethod
     def is_incomplete(
@@ -125,7 +177,14 @@ class ChatOperationalResultCompletenessService:
         limit = cls._as_int(pagination.get("limit"))
         limit_text = str(limit) if limit is not None else "—"
 
-        if cls.branch_filter_applied(context) is False:
+        if cls.consolidated_across_branches(context):
+            message = ChatAssistantContentService.format(
+                _BUNDLE,
+                "operationalIncompleteConsolidated",
+                returned=returned,
+                limit=limit_text,
+            )
+        elif cls.branch_filter_applied(context) is False:
             message = ChatAssistantContentService.format(
                 _BUNDLE,
                 "operationalIncompleteNoBranch",
@@ -176,7 +235,33 @@ class ChatOperationalResultCompletenessService:
 
         response_meta = metadata.get("apiDelpiResponseMeta")
         response_meta = response_meta if isinstance(response_meta, dict) else None
-        message = cls.build_notice_message(data, response_meta=response_meta)
+
+        consolidated_message = cls.build_consolidated_message(
+            data,
+            response_meta=response_meta,
+        )
+        incomplete_message = cls.build_notice_message(data, response_meta=response_meta)
+
+        if consolidated_message and not incomplete_message:
+            existing_highlights = [
+                str(line).strip()
+                for line in (commentary.get("highlights") or [])
+                if str(line or "").strip()
+            ]
+
+            if consolidated_message not in existing_highlights:
+                commentary["highlights"] = [consolidated_message, *existing_highlights][:8]
+
+            summary_lines = [
+                str(line).strip()
+                for line in (commentary.get("summaryLines") or [])
+                if str(line or "").strip()
+            ]
+
+            if consolidated_message not in summary_lines:
+                commentary["summaryLines"] = [consolidated_message, *summary_lines][:6]
+
+        message = incomplete_message
 
         if not message:
             return

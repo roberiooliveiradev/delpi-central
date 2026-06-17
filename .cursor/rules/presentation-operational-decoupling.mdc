@@ -1,0 +1,44 @@
+---
+description: Desacoplamento apresentação × narrativa × cobertura operacional — sempre canônico
+alwaysApply: true
+---
+
+# Apresentação operacional desacoplada
+
+## Princípio
+
+**Sempre** separar: (1) **estrutura visual** do presenter, (2) **semântica/contrato** na API, (3) **interpretação e avisos** no pipeline do chat, (4) **render** no MFE. **Nunca** embutir no markdown/tabela o que o banner ou `dataAnswer` já deve dizer.
+
+## Mapa canônico
+
+| Responsabilidade | api-delpi | minha-delpi-ai-api | MFE |
+|------------------|-----------|-------------------|-----|
+| Agregação / filial / incompletude (flags) | `ProductionOperationalSummarySemanticsService` + `build_period_summary` | `ChatOperationalSummarySemanticsService` | — |
+| Aviso incompleto / consolidado | `summary` + `pagination.is_complete` | `ChatOperationalResultCompletenessService` | banner `dataCoverageNotice` |
+| Cobertura (SQL, paginação, profundidade) | `data.pagination`, `meta.sections` | `ChatDataCoverageNoticeService` | `mdc-rich-presentation__coverage-notice` |
+| Destaques / atenção / limitações | — | `ChatOperationalDataCommentaryService` → `ChatDataInsightEnrichmentService` → `dataAnswer` | lead do `renderPlan` |
+| Dica «use tabela/árvore» | — | `ChatPresentationVisualUiHintService` → `recommendations` | toolbar de formato |
+| Campos técnicos de summary | flags em `summary` | `ChatPresentationOperationalMetadataFieldService.filter_summary` | não exibir |
+| Textos PT | — | `data_coverage.json`, `humanized_data_response.json` | — |
+
+## api-delpi — playbook_report
+
+- `branch_filter_applied`: filial explícita na query.
+- `consolidated_across_branches`: valores **somados** de todas as filiais (ex.: `top-items` + `group_by=general` sem `branch`). Definir via `ProductionOperationalSummarySemanticsService` — **não** `if` solto no use case.
+- `is_complete` / `pagination`: truncamento TOP N — `operational_limit_page_service`.
+
+## Chat — o que NÃO fazer
+
+- `tableVisualizationHint`, `paginatedResult`, `moreDetailRecords`, `incompleteNotice` em `linhas`/markdown de presenter.
+- Seções **Destaques** / **Pontos de atenção** no markdown quando `dataAnswer`/`dataCommentary` existem.
+- Strings PT de cobertura/consolidado em Python — só `assistant/*.json`.
+- Reimplementar «lista extensa» no MFE se `ChatDataInsightService` já cobre.
+
+## Checklist (obrigatório)
+
+1. Regra nova → módulo canônico da tabela + teste (`test_presentation_decoupling.py`, `test_chat_operational_result_completeness_service.py`, `test_production_operational_use_cases.py`).
+2. Flag nova no `summary` → filtrar em `ChatPresentationOperationalMetadataFieldService`.
+3. Texto ao usuário → chave em `data_coverage.json` ou bundle do catálogo.
+4. Pipeline consome o serviço até o fim (`ChatPresentationMetadataPipelineService`).
+
+Doc: `minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md` (§ desacoplamento).

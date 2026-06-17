@@ -18,6 +18,9 @@ from app.domain.constants.production_operational import (
 from app.domain.ports.production.production_consumption_repository_port import (
     ProductionConsumptionRepositoryPort,
 )
+from app.domain.services.production.production_operational_summary_semantics_service import (
+    ProductionOperationalSummarySemanticsService,
+)
 from app.domain.services.production.protheus_date_range_service import (
     ProtheusDateRangeService,
 )
@@ -68,6 +71,9 @@ class GetProductionConsumptionByItemUseCase:
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
                 is_complete=is_complete,
+                consolidated_across_branches=ProductionOperationalSummarySemanticsService.consolidated_for_product_aggregation(
+                    branch=request.branch,
+                ),
             ),
             "pagination": build_operational_pagination(
                 limit=limit,

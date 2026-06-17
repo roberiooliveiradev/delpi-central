@@ -43,11 +43,11 @@ class ExternalActionPlaybookReportPresenter:
             linhas: list[str] = []
 
             if summary:
-                from app.domain.services.chat_presentation_operational_metadata_field_service import (
-                    ChatPresentationOperationalMetadataFieldService,
+                from app.domain.services.chat_operational_summary_semantics_service import (
+                    ChatOperationalSummarySemanticsService,
                 )
 
-                filtered = ChatPresentationOperationalMetadataFieldService.filter_summary(summary)
+                filtered = ChatOperationalSummarySemanticsService.filter_summary(summary)
 
                 for key, value in list(filtered.items())[:8]:
                     linhas.append(
@@ -133,11 +133,16 @@ class ExternalActionPlaybookReportPresenter:
             if not summary:
                 return None
 
+            from app.domain.services.chat_operational_summary_semantics_service import (
+                ChatOperationalSummarySemanticsService,
+            )
+
             columns = self._host._column_labels.kv_table_column_defs()
             rows = [
                 {"campo": self._host._humanize_key(str(key)), "valor": str(value)}
-                for key, value in summary.items()
-                if key not in {"is_complete", "branch_filter_applied"}
+                for key, value in ChatOperationalSummarySemanticsService.filter_summary(
+                    summary,
+                ).items()
             ]
 
             return {

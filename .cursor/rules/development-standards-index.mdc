@@ -10,6 +10,7 @@ alwaysApply: true
 | Regra | Quando consultar |
 |-------|------------------|
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
+| `presentation-operational-decoupling.mdc` | Apresentação operacional — cobertura, consolidado, dataAnswer vs markdown |
 | `clean-code-architecture-guardrails.mdc` | Desvio de camada, patch local, contrato metadata ambíguo |
 | `test-and-commit.mdc` | Ao concluir alteração de código — testes; commit só se pedido |
 
@@ -18,6 +19,7 @@ alwaysApply: true
 | Regra | Escopo |
 |-------|--------|
 | `chat-intelligence-base.mdc` | Pipeline, agentes, contexto, o que não duplicar no use case |
+| `presentation-operational-decoupling.mdc` | Summary playbook, banner, dataAnswer — nunca aviso no presenter |
 | `clean-architecture-chat-api.mdc` | Camadas domain/application/infrastructure/interfaces |
 | `assistant-content-json.mdc` | Textos PT-BR em `assistant/*.json` |
 | `operational-api-routing.mdc` | Seleção de action api-delpi (`OperationalApiRouteSpec`) |
@@ -41,7 +43,7 @@ alwaysApply: true
 
 ```
 Nova rota REST          → api-delpi-response-contract → new-api-route-checklist
-Bug apresentação chat   → centralized-rules-first → ChatPresentation* (API)
+Bug apresentação chat   → presentation-operational-decoupling → centralized-rules-first → ChatPresentation*
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
 Nova intenção operacional → operational-api-routing → api_route_domains.json
 Texto novo ao usuário   → assistant-content-json

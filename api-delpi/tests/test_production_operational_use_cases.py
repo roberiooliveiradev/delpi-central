@@ -40,6 +40,7 @@ def test_consumption_top_items_use_case_returns_summary() -> None:
     assert result["group_by"] == "general"
     assert len(result["items"]) == 1
     assert result["summary"]["total_records"] == 1
+    assert result["summary"]["consolidated_across_branches"] is True
     assert result["summary"]["period"]["start"] == "20260301"
     repository.fetch_top_items.assert_called_once()
 

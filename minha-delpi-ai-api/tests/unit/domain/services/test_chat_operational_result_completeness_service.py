@@ -31,6 +31,42 @@ def test_build_notice_message_for_unfiltered_branch() -> None:
     assert "sem filtro de filial" in message
 
 
+def test_build_notice_message_for_consolidated_incomplete() -> None:
+    root = {
+        "pagination": {"limit": 50, "returned": 50, "is_complete": False},
+        "summary": {
+            "branch_filter_applied": False,
+            "consolidated_across_branches": True,
+            "total_records": 50,
+        },
+    }
+
+    message = ChatOperationalResultCompletenessService.build_notice_message(root)
+
+    assert message
+    assert "consolidados" in message.lower()
+    assert "todas as filiais" in message.lower()
+    assert "sem filtro de filial" not in message
+
+
+def test_build_consolidated_message_when_complete() -> None:
+    root = {
+        "pagination": {"limit": 50, "returned": 12, "is_complete": True},
+        "summary": {
+            "branch_filter_applied": False,
+            "consolidated_across_branches": True,
+            "total_records": 12,
+        },
+    }
+
+    message = ChatOperationalResultCompletenessService.build_consolidated_message(root)
+
+    assert message
+    assert "consolidados" in message.lower()
+    assert "todas as filiais" in message.lower()
+    assert "incompleto" not in message.lower()
+
+
 def test_apply_to_commentary_adds_attention_and_limitations() -> None:
     root = {
         "items": [{"production_order": "1"}],

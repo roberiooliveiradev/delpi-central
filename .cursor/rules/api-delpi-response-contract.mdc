@@ -33,9 +33,10 @@ Toda rota que usa o **envelope** `{ success, message, data }` deve retornar **`m
 4. **Produto com `{code}`:** usar `product_success(..., code=code)` ou `api_delpi_success(..., code=code)` para `meta.relatedRoutes`.
 5. **Erro:** `error_response(msg, status_code=..., code="DOMAIN_CODE", recoverable=...)` — preencher `error.code` quando possível.
 6. **Shape:** um de `paged_list`, `hierarchy`, `product_snapshot`, `composite_analysis`, `playbook_report`, `scalar` (ver `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md` § 4.3).
-7. **Teste:** smoke em `api-delpi/tests/` (meta presente + `operationId` esperado) quando a rota for chat-critical ou KPI exposto ao SI.
-8. **RBAC:** importar permissões de `app.application.security.api_delpi_permissions` — não hardcodar códigos nos routers.
-9. **Doc:** atualizar `api-delpi/docs/api/` se mudar contrato público; após deploy com OpenAPI novo → `12-procedimento-reimport-openapi.md`.
+7. **Playbook `summary`:** `branch_filter_applied`, `consolidated_across_branches`, `is_complete` — definir via `ProductionOperationalSummarySemanticsService` + `build_period_summary`; chat consome flags (ver `presentation-operational-decoupling.mdc`).
+8. **Teste:** smoke em `api-delpi/tests/` (meta presente + `operationId` esperado) quando a rota for chat-critical ou KPI exposto ao SI.
+9. **RBAC:** importar permissões de `app.application.security.api_delpi_permissions` — não hardcodar códigos nos routers.
+10. **Doc:** atualizar `api-delpi/docs/api/` se mudar contrato público; após deploy com OpenAPI novo → `12-procedimento-reimport-openapi.md`.
 
 ## Exceções (fora do envelope + meta)
 

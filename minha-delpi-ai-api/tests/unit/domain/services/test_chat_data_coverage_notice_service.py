@@ -150,6 +150,32 @@ def test_sections_notice_from_response_meta():
     assert notice["details"]["compositeSections"]["sections"][0]["truncated"] is True
 
 
+def test_operational_consolidated_notice_when_complete():
+    notice = ChatDataCoverageNoticeService.build(
+        {
+            "items": [{"item_code": "10080063", "real_consumption_qty": 100}],
+            "summary": {
+                "total_records": 1,
+                "branch_filter_applied": False,
+                "consolidated_across_branches": True,
+                "is_complete": True,
+            },
+            "pagination": {
+                "limit": 50,
+                "offset": 0,
+                "returned": 1,
+                "is_complete": True,
+            },
+        },
+        path="/production/consumption/top-items",
+    )
+
+    assert notice is not None
+    assert "consolidados" in notice["message"].lower()
+    assert "todas as filiais" in notice["message"].lower()
+    assert notice["details"]["operationalConsolidation"]["consolidatedAcrossBranches"] is True
+
+
 def test_operational_limit_notice_when_playbook_pagination_incomplete():
     notice = ChatDataCoverageNoticeService.build(
         {
@@ -181,6 +207,32 @@ def test_operational_limit_notice_when_playbook_pagination_incomplete():
     assert "Resultado incompleto" in notice["message"]
     assert "sem filtro de filial" in notice["message"]
     assert notice["details"]["operationalPagination"]["isComplete"] is False
+
+
+def test_operational_consolidated_incomplete_notice():
+    notice = ChatDataCoverageNoticeService.build(
+        {
+            "items": [{"item_code": "10080063"} for _ in range(50)],
+            "summary": {
+                "total_records": 50,
+                "branch_filter_applied": False,
+                "consolidated_across_branches": True,
+                "is_complete": False,
+            },
+            "pagination": {
+                "limit": 50,
+                "offset": 0,
+                "returned": 50,
+                "is_complete": False,
+            },
+        },
+        path="/production/consumption/top-items",
+    )
+
+    assert notice is not None
+    assert "consolidados" in notice["message"].lower()
+    assert "todas as filiais" in notice["message"].lower()
+    assert "sem filtro de filial" not in notice["message"]
 
 
 def test_append_to_markdown_adds_coverage_block():

@@ -349,7 +349,9 @@ Build MFE: `npm run build` em `plugins/minha-delpi-chat`.
 
 ## Desacoplamento narrativa × visual × cobertura (jun/2026)
 
-Regra: **presenters** montam estrutura visual (`tablePresentation`, `textPresentation` compacto); **interpretação** (destaques, atenção, limitações, incompletude) fica no pipeline base.
+Regra permanente do repositório: **`presentation-operational-decoupling.mdc`** (`alwaysApply: true`).
+
+Regra: **presenters** montam estrutura visual (`tablePresentation`, `textPresentation` compacto); **interpretação** (destaques, atenção, limitações, incompletude, consolidado) fica no pipeline base.
 
 | Sinal | Módulo canônico | Consumidor MFE |
 |-------|-----------------|----------------|
@@ -357,7 +359,7 @@ Regra: **presenters** montam estrutura visual (`tablePresentation`, `textPresent
 | Atenção e limitações na prosa | `ChatDataInsightService` → `dataAnswer` / `dataCommentary` | Lead do `renderPlan` (modo Automático) |
 | Dica «use a tabela/árvore» | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | Toolbar / chips de formato |
 | Insight curto do visual selecionado | `ChatPresentationInsightService.build_with_metadata` (prioriza `dataAnswer`) | Legenda do painel |
-| Campos técnicos (`is_complete`, `branch_filter_applied`) | `ChatPresentationOperationalMetadataFieldService` | **Não** entram em KPI, linhas playbook nem markdown |
+| Campos técnicos (`is_complete`, `branch_filter_applied`, `consolidated_across_branches`) | API: `ProductionOperationalSummarySemanticsService` · Chat: `ChatOperationalSummarySemanticsService` + `ChatPresentationOperationalMetadataFieldService` | **Não** entram em KPI, linhas playbook nem markdown |
 | Insights por rota (fabril, estoque, pricing, analyser) | `ChatOperationalDataCommentaryService` (+ serviços dedicados) | `dataAnswer` via `ChatDataInsightEnrichmentService` |
 
 ### O que os presenters **não** devem mais embutir

@@ -19,6 +19,8 @@ alwaysApply: true
 | Textos PT (status, activity, respostas) | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
 | Prosa/markdown/título/streaming do assistente | `plugins/minha-delpi-chat` → `assistantProseRendering.ts` + `chatMarkdown.ts` | `ChatMessageList`, `ChatAssistantContent`, hooks com `if` próprio |
 | Apresentação rica (tabela/gráfico/stack) | API: `ChatPresentationMetadataPipelineService` → `ExternalActionResultPresenter` → `ChatPresentationDecisionService` · MFE: `chatPresentation.ts` + `assistantContentLayout.ts` (render-only) | `if '/analyser'` no use case, serviço paralelo de normalização, lógica de título/markdown em cada MFE |
+| Cobertura / incompletude / consolidado operacional | API: flags em `summary` + `pagination` · Chat: `ChatOperationalResultCompletenessService`, `ChatDataCoverageNoticeService`, `ChatOperationalSummarySemanticsService` · Textos: `data_coverage.json` | presenters (`linhas`, markdown), `presentation.incompleteNotice`, strings PT em Python |
+| Dicas visuais (tabela/árvore) | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | `tableVisualizationHint` em presenter/markdown |
 | Formato Automático (tabela vs gráfico) | `ChatPresentationDataShapeAnalyzer` (`viewIntent`) + `ChatPresentationViewIntentService` + perfis em `presentation_profiles.json` | Scoring ou default de chart só no MFE; catch-all de path sem `entityProfiles` |
 | Nova rota api-delpi (contrato + perfil + CI) | **`new-api-route-checklist.mdc`** + `operational_route_registry.json` | Endpoint só na api-delpi sem registry, contrato entitySet ou gate `--check-profiles` |
 

@@ -8,6 +8,7 @@ _TECHNICAL_SUMMARY_KEYS = frozenset(
     {
         "is_complete",
         "branch_filter_applied",
+        "consolidated_across_branches",
     }
 )
 

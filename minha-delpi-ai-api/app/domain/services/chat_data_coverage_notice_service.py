@@ -54,6 +54,15 @@ class ChatDataCoverageNoticeService:
             if operational:
                 messages.append(operational["message"])
                 details["operationalPagination"] = operational
+            else:
+                consolidated = cls._operational_consolidated_notice(
+                    root,
+                    response_meta=response_meta,
+                )
+
+                if consolidated:
+                    messages.append(consolidated["message"])
+                    details["operationalConsolidation"] = consolidated
 
             if isinstance(root.get("structure"), dict):
                 structure_notice = cls._pagination_notice(
@@ -177,6 +186,9 @@ class ChatDataCoverageNoticeService:
         if details.get("operationalPagination"):
             return "pagination"
 
+        if details.get("operationalConsolidation"):
+            return "partial"
+
         if details.get("depth"):
             return "depth"
 
@@ -289,6 +301,22 @@ class ChatDataCoverageNoticeService:
         )
 
         return ChatOperationalResultCompletenessService.build_notice_payload(
+            root,
+            response_meta=response_meta,
+        )
+
+    @classmethod
+    def _operational_consolidated_notice(
+        cls,
+        root: dict,
+        *,
+        response_meta: dict | None = None,
+    ) -> dict | None:
+        from app.domain.services.chat_operational_result_completeness_service import (
+            ChatOperationalResultCompletenessService,
+        )
+
+        return ChatOperationalResultCompletenessService.build_consolidated_payload(
             root,
             response_meta=response_meta,
         )
