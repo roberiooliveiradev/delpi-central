@@ -20,6 +20,7 @@ type AnchoredMenuPortalBaseProps = {
   menuLabel: string;
   menuRole?: "menu" | "listbox";
   menuWidth?: number;
+  menuHorizontalAlign?: "start" | "end";
   scrim?: "transparent" | "backdrop" | "none";
   scrimClassName?: string;
   shell?: "popover" | "overlay";
@@ -53,6 +54,7 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
     menuLabel,
     menuRole = "listbox",
     menuWidth,
+    menuHorizontalAlign,
     scrim = "transparent",
     scrimClassName = "",
     shell = "popover",
@@ -68,13 +70,14 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
 
   const menuAnchor = "anchor" in props ? props.anchor : undefined;
 
-  const { canUsePortal, panelStyle } = useAnchoredMenuLayout({
+  const { canUsePortal, panelStyle, useViewportPositioning } = useAnchoredMenuLayout({
     open,
     triggerRef,
     anchor: menuAnchor,
     itemCount,
     placement,
     menuWidth,
+    menuHorizontalAlign,
     onClose,
   });
 
@@ -162,7 +165,8 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
   }
 
   const container = resolveOverlayPortalContainer();
-  const portalContained = isOverlayPortalContained(container);
+  const portalContained =
+    isOverlayPortalContained(container) && !useViewportPositioning;
 
   const popoverVariant =
     shell === "popover"

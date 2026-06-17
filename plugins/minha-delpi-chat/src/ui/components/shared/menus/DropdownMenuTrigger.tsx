@@ -19,6 +19,7 @@ type DropdownMenuTriggerBaseProps = {
   scrim?: "transparent" | "backdrop" | "none";
   stopPropagation?: boolean;
   triggerIcon?: ReactNode;
+  menuHorizontalAlign?: "start" | "end";
 };
 
 type DropdownMenuTriggerControlledProps = DropdownMenuTriggerBaseProps & {
@@ -56,6 +57,7 @@ export function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
     scrim = "transparent",
     stopPropagation = true,
     triggerIcon,
+    menuHorizontalAlign,
   } = props;
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -108,6 +110,7 @@ export function DropdownMenuTrigger(props: DropdownMenuTriggerProps) {
         menuLabel={menuLabel}
         menuRole="menu"
         scrim={scrim}
+        menuHorizontalAlign={menuHorizontalAlign}
         panelClassName={panelClassName}
         onClose={() => setOpen(false)}
       >

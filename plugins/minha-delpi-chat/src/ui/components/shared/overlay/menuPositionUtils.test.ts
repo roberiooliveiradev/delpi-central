@@ -5,6 +5,7 @@ import {
   estimateChatInputPlusMenuItemCount,
   estimateComposerOptionMenuHeight,
   estimateComposerPanelMenuHeight,
+  isMenuAnchorOutsideContainer,
   resolveActionMenuPosition,
   resolveComposerOptionMenuPosition,
   resolveComposerPanelMenuPosition,
@@ -89,7 +90,7 @@ describe("resolveActionMenuPosition", () => {
     });
 
     expect(layout.left).toBe(86);
-    expect(layout.top).toBe(120);
+    expect(layout.top).toBe(154);
   });
 
   it("faz flip horizontal quando não há espaço à direita", () => {
@@ -101,7 +102,53 @@ describe("resolveActionMenuPosition", () => {
     });
 
     expect(layout.left).toBe(470);
-    expect(layout.top).toBe(120);
+    expect(layout.top).toBe(154);
+  });
+
+  it("não usa preferredLeft negativo quando o gatilho está fora do container", () => {
+    const layout = resolveActionMenuPosition({
+      rect: { left: -46, top: 500, right: -18, bottom: 528, width: 28, height: 28 },
+      itemCount: 4,
+      menuWidth: 224,
+      viewport: { width: 800, height: 900 },
+    });
+
+    expect(layout.left).toBeGreaterThanOrEqual(8);
+  });
+
+  it("alinha a borda direita do menu ao gatilho quando horizontalAlign é end", () => {
+    const rect = { left: 210, top: 500, right: 238, bottom: 528, width: 28, height: 28 };
+
+    const layout = resolveActionMenuPosition({
+      rect,
+      itemCount: 4,
+      menuWidth: 224,
+      horizontalAlign: "end",
+      viewport: { width: 800, height: 900 },
+    });
+
+    expect(layout.left).toBe(rect.right - 224);
+    expect(layout.top).toBe(rect.bottom + 6);
+  });
+});
+
+describe("isMenuAnchorOutsideContainer", () => {
+  it("detecta gatilho na sidebar à esquerda do #mdc-modal-root", () => {
+    const containerRect = {
+      left: 276,
+      top: 0,
+      right: 1076,
+      bottom: 900,
+      width: 800,
+      height: 900,
+    };
+
+    expect(
+      isMenuAnchorOutsideContainer(
+        { left: 230, top: 500, right: 258, bottom: 528, width: 28, height: 28 },
+        containerRect,
+      ),
+    ).toBe(true);
   });
 });
 

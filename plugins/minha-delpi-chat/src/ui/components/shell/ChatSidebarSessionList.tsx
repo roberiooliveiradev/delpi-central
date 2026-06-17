@@ -96,11 +96,6 @@ export function ChatSidebarSessionList({
     setEditingTitle("");
   }
 
-  function handleShareSession(session: ChatSession) {
-    const title = session.title || "Conversa sem título";
-    void navigator.clipboard?.writeText(title);
-  }
-
   async function saveEditingSession(session: ChatSession) {
     const normalizedTitle = editingTitle.trim();
     const currentTitle = session.title || "";
@@ -193,7 +188,6 @@ export function ChatSidebarSessionList({
                 onOpenChange={(open) =>
                   setOpenMenuSessionId(open ? session.id : null)
                 }
-                onShare={() => handleShareSession(session)}
                 onRename={() => startEditingSession(session)}
                 pinLabel={session.is_pinned ? "Desafixar chat" : "Fixar chat"}
                 archiveLabel="Arquivar"

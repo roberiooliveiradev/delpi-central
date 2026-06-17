@@ -2,7 +2,6 @@ import {
   Archive,
   Pencil,
   Pin,
-  Share2,
   Trash2,
 } from "lucide-react";
 
@@ -15,7 +14,6 @@ type ChatConversationMenuProps = {
   open: boolean;
   disabled?: boolean;
   onOpenChange: (open: boolean) => void;
-  onShare?: () => void;
   onRename: () => void;
   pinLabel?: string;
   archiveLabel?: string;
@@ -28,7 +26,6 @@ export function ChatConversationMenu({
   open,
   disabled,
   onOpenChange,
-  onShare,
   onRename,
   pinLabel = "Fixar chat",
   archiveLabel = "Arquivar",
@@ -37,16 +34,6 @@ export function ChatConversationMenu({
   onDelete,
 }: ChatConversationMenuProps) {
   const menuItems = [
-    ...(onShare
-      ? [
-          {
-            id: "share",
-            label: "Compartilhar",
-            icon: <Share2 size={18} aria-hidden="true" />,
-            onSelect: () => onShare(),
-          },
-        ]
-      : []),
     {
       id: "rename",
       label: "Renomear",
@@ -86,6 +73,7 @@ export function ChatConversationMenu({
       menuLabel="Opções da conversa"
       ariaLabel="Abrir opções da conversa"
       iconSize={17}
+      menuHorizontalAlign="end"
       wrapClassName="mdc-chat-conversation-menu"
       triggerClassName="mdc-chat-conversation-menu__trigger"
       panelClassName="mdc-chat-conversation-menu__panel"

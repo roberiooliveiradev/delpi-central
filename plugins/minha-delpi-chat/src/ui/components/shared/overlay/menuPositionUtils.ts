@@ -281,6 +281,20 @@ export function resolveContextMenuPosition(options: {
   );
 }
 
+export type ActionMenuHorizontalAlign = "start" | "end";
+
+function clampHorizontalPosition(
+  menuLeft: number,
+  menuWidth: number,
+  viewport: ViewportBounds,
+  margin: number,
+): number {
+  return Math.max(
+    margin,
+    Math.min(menuLeft, viewport.width - menuWidth - margin),
+  );
+}
+
 /** Menu de ações (sidebar, cards) — abre à direita do gatilho com flip horizontal. */
 export function resolveActionMenuPosition(options: {
   rect: MenuAnchorRect;
@@ -289,6 +303,7 @@ export function resolveActionMenuPosition(options: {
   viewport?: ViewportBounds;
   contained?: boolean;
   containerRect?: MenuAnchorRect;
+  horizontalAlign?: ActionMenuHorizontalAlign;
 }): ActionMenuLayout {
   const menuWidth = options.menuWidth ?? ACTION_MENU_WIDTH;
   const menuHeight = estimateMenuHeight(options.itemCount);
@@ -298,21 +313,54 @@ export function resolveActionMenuPosition(options: {
     options.rect,
     options,
   );
-  const { left, top, right } = rect;
+  const { left, top, right, bottom } = rect;
   const viewport = readViewportBounds(containedViewport ?? options.viewport);
 
-  const preferredLeft = right + gap;
-  const fallbackLeft = left - menuWidth - gap;
+  let menuLeft: number;
 
-  const menuLeft =
-    preferredLeft + menuWidth <= viewport.width - margin
+  if (options.horizontalAlign === "end") {
+    menuLeft = clampHorizontalPosition(right - menuWidth, menuWidth, viewport, margin);
+  } else {
+    const preferredLeft = right + gap;
+    const fallbackLeft = left - menuWidth - gap;
+    const fitsRight =
+      preferredLeft >= margin &&
+      preferredLeft + menuWidth <= viewport.width - margin;
+
+    menuLeft = fitsRight
       ? preferredLeft
-      : Math.max(margin, fallbackLeft);
+      : clampHorizontalPosition(fallbackLeft, menuWidth, viewport, margin);
+  }
+
+  let menuTop = bottom + gap;
+
+  if (menuTop + menuHeight > viewport.height - margin) {
+    menuTop = top - menuHeight - gap;
+  }
+
+  if (menuTop < margin) {
+    menuTop = margin;
+  }
 
   const maxTop = viewport.height - menuHeight - margin;
-  const menuTop = Math.max(margin, Math.min(top, maxTop));
+  menuTop = Math.min(menuTop, maxTop);
 
   return { left: menuLeft, top: menuTop };
+}
+
+/** Gatilho fora do portal contido (#mdc-modal-root) — ex.: menu ⋯ na sidebar. */
+export function isMenuAnchorOutsideContainer(
+  rect: MenuAnchorRect,
+  containerRect: MenuAnchorRect,
+): boolean {
+  const relative = toContainerRelativeRect(rect, containerRect);
+
+  return (
+    relative.right <= VIEWPORT_MARGIN ||
+    relative.left >= containerRect.width - VIEWPORT_MARGIN ||
+    relative.bottom <= VIEWPORT_MARGIN ||
+    relative.top >= containerRect.height - VIEWPORT_MARGIN
+  );
 }
 
 export function menuAnchorRectFromElement(element: HTMLElement): MenuAnchorRect {

@@ -12,11 +12,14 @@ import {
   resolveOverlayPortalContainer,
 } from "./modalPortalTarget";
 import {
+  isMenuAnchorOutsideContainer,
   menuAnchorRectFromElement,
   resolveActionMenuPosition,
   resolveComposerOptionMenuPosition,
   resolveComposerPanelMenuPosition,
   resolveContextMenuPosition,
+  toContainerRelativeRect,
+  type ActionMenuHorizontalAlign,
   type ActionMenuLayout,
   type ComposerOptionMenuLayout,
   type ContextMenuAnchor,
@@ -46,6 +49,7 @@ type UseAnchoredMenuLayoutOptions = {
   itemCount: number;
   placement: AnchoredMenuPlacement;
   menuWidth?: number;
+  menuHorizontalAlign?: ActionMenuHorizontalAlign;
   onClose: () => void;
 };
 
@@ -93,10 +97,12 @@ export function useAnchoredMenuLayout({
   itemCount,
   placement,
   menuWidth,
+  menuHorizontalAlign,
   onClose,
 }: UseAnchoredMenuLayoutOptions) {
   const [layout, setLayout] = useState<AnchoredMenuLayout | null>(null);
   const [canUsePortal, setCanUsePortal] = useState(false);
+  const [useViewportPositioning, setUseViewportPositioning] = useState(false);
   const anchorKey = anchorLayoutKey(anchor);
 
   const commitLayout = useCallback((next: AnchoredMenuLayout) => {
@@ -133,7 +139,20 @@ export function useAnchoredMenuLayout({
       return;
     }
 
-    const rect = menuAnchorRectFromElement(trigger);
+    const triggerRect = menuAnchorRectFromElement(trigger);
+    const anchorOutsideContainer =
+      portalContained &&
+      containerRect != null &&
+      isMenuAnchorOutsideContainer(triggerRect, containerRect);
+    const useViewportCoords = anchorOutsideContainer;
+    const rect = useViewportCoords
+      ? triggerRect
+      : portalContained && containerRect
+        ? toContainerRelativeRect(triggerRect, containerRect)
+        : triggerRect;
+    const actionMenuContained = portalContained && !useViewportCoords;
+
+    setUseViewportPositioning(useViewportCoords);
 
     if (placement === "composer-option") {
       commitLayout(
@@ -168,10 +187,20 @@ export function useAnchoredMenuLayout({
         rect,
         itemCount,
         menuWidth,
-        ...containedLayout,
+        contained: actionMenuContained,
+        containerRect: actionMenuContained ? containerRect : undefined,
+        horizontalAlign: menuHorizontalAlign,
       }),
     );
-  }, [anchorKey, commitLayout, itemCount, menuWidth, placement, triggerRef]);
+  }, [
+    anchorKey,
+    commitLayout,
+    itemCount,
+    menuHorizontalAlign,
+    menuWidth,
+    placement,
+    triggerRef,
+  ]);
 
   useEffect(() => {
     setCanUsePortal(true);
@@ -180,6 +209,7 @@ export function useAnchoredMenuLayout({
   useLayoutEffect(() => {
     if (!open) {
       setLayout(null);
+      setUseViewportPositioning(false);
       return;
     }
 
@@ -233,5 +263,6 @@ export function useAnchoredMenuLayout({
     layout,
     panelStyle,
     updateLayout,
+    useViewportPositioning,
   };
 }
