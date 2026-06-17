@@ -59,6 +59,22 @@ def test_structure_exclusivity_tree_nests_flat_bom_items():
     assert len(pi.get("children") or []) == 2
 
 
+def test_structure_exclusivity_text_includes_verdict_and_mp_section():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90261805.json")
+    path = "/products/90261805/structure/exclusivity"
+    text = presenter._build_structure_exclusivity_text_presentation(envelope["data"], path)
+
+    assert text is not None
+    markdown = text["markdown"]
+
+    assert "Resposta" in markdown
+    assert "Matérias-primas da estrutura" in markdown
+    assert "10020053" in markdown
+    assert "10080185" in markdown
+    assert "exclusiva" in markdown.lower()
+
+
 def test_structure_exclusivity_text_includes_shared_mp_conclusion():
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90261805.json")
@@ -73,6 +89,22 @@ def test_structure_exclusivity_text_includes_shared_mp_conclusion():
     assert "10080185" in markdown
     assert "24" in markdown
     assert "exclusiva" in markdown.lower()
+
+
+def test_production_status_text_uses_structured_sections():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_production_status_90269002.json")
+    path = "/products/90269002/production-status"
+    text = presenter._build_production_status_text_presentation(envelope["data"], path)
+
+    assert text is not None
+    markdown = text["markdown"]
+
+    assert "Análise produtiva" in markdown
+    assert "Situação produtiva do PA e intermediários" not in markdown
+    assert "Situação na data" in markdown
+    assert "Produção do PA" in markdown
+    assert markdown.count("Situação produtiva do produto") == 0
 
 
 def test_stock_table_uses_product_position_columns():

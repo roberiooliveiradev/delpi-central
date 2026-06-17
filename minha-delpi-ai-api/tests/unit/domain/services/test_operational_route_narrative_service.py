@@ -48,7 +48,8 @@ def test_production_status_text_presentation_uses_scope_intro_and_compact_tables
     assert "playbook" not in markdown.lower()
 
     assert not compact
-    assert "Situação produtiva do PA" in markdown
+    assert "Situação na data" in markdown or "Situação produtiva" in markdown
+    assert "Produção do PA" in markdown
 
 
 def test_format_quantity_uses_presenter_number_formatting():

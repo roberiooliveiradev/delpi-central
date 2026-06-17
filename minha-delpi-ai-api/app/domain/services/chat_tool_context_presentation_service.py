@@ -117,6 +117,13 @@ class ChatToolContextPresentationService:
             ):
                 return direct_answer
 
+            from app.domain.services.chat_product_query_intent_service import (
+                ChatProductQueryIntentService,
+            )
+
+            if ChatProductQueryIntentService.looks_like_structure_exclusivity_question(message):
+                return direct_answer
+
             from app.domain.services.chat_presentation_format_refinement_service import (
                 ChatPresentationFormatRefinementService,
             )

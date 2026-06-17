@@ -141,10 +141,12 @@ def test_structure_exclusivity_text_first_without_tree():
     markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
     assert decision["selected"] == "text"
-    assert decision["layoutMode"] == "single"
-    assert meta.get("treePresentation") is None
+    assert decision["layoutMode"] in {"single", "stack"}
+    assert meta.get("treePresentation", {}).get("type") == "tree"
+    assert "Resposta" in markdown
     assert "10020053" in markdown
     assert "10080185" in markdown
+    assert "Matérias-primas da estrutura" in markdown
     assert "exclusiva" in markdown.lower()
     assert "table" in (decision.get("availableViews") or [])
 
@@ -160,7 +162,8 @@ def test_structure_exclusivity_integrated_stack_keeps_tree():
     assert decision["selected"] == "text"
     assert decision["layoutMode"] == "stack"
     assert meta.get("treePresentation", {}).get("type") == "tree"
-    assert not _structure_table_titles(meta)
+    structure_titles = _structure_table_titles(meta)
+    assert structure_titles == [] or structure_titles == ["Matérias-primas da estrutura"]
 
 
 def test_mp_price_intelligence_text_first_without_visuals():

@@ -3,6 +3,30 @@ from app.domain.services.chat_operational_data_commentary_service import (
 )
 
 
+def test_structure_exclusivity_commentary_uses_verdict_not_row_count():
+    root = {
+        "product": {"product_code": "90260255", "description": "CHICOTE EPR SINGELO 300MM"},
+        "summary": {
+            "total_components": 12,
+            "total_intermediates": 4,
+            "total_raw_materials": 8,
+            "total_exclusive_raw_materials": 0,
+        },
+        "items": [{"component_type": "MP", "component_code": "10080098"}],
+    }
+
+    commentary = ChatOperationalDataCommentaryService.build("structure_exclusivity", root)
+
+    assert commentary
+    combined = "\n".join(commentary.get("highlights") or [])
+
+    assert "Resposta" in combined
+    assert "Não" in combined or "nenhuma MP exclusiva" in combined.lower()
+    assert "12 componente" in combined or "Composição" in combined
+    assert "4 registros" not in combined
+    assert commentary.get("profileKey") == "structure_exclusivity"
+
+
 def test_factory_commentary_includes_humanized_contract_fields():
     root = {
         "factory_status": "PA FINALIZADO / LIBERADO PARA EXPEDIÇÃO",

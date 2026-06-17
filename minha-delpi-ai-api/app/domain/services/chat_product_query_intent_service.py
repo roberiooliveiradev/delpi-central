@@ -329,6 +329,15 @@ class ChatProductQueryIntentService:
         return any(term in normalized for term in cls._terms("scheduleMembership", "terms"))
 
     @classmethod
+    def looks_like_structure_exclusivity_question(cls, message: str | None) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        return cls._looks_like_structure_exclusivity_question(normalized)
+
+    @classmethod
     def resolve_schedule_product_group_code(
         cls,
         message: str | None,

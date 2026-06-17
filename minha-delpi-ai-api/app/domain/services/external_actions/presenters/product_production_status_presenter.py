@@ -74,6 +74,83 @@ class ExternalActionProductProductionStatusPresenter:
 
         return []
 
+    def _format_level_label(self, item: dict) -> str:
+        level = item.get("level")
+
+        if level is not None and str(level).strip() != "":
+            return str(level).strip()
+
+        product_type = str(item.get("product_type") or "").upper()
+
+        if product_type == "PA":
+            return "PA"
+
+        if product_type == "PI":
+            return "PI"
+
+        return "—"
+
+    def _append_status_section(
+        self,
+        linhas: list[str],
+        root: dict,
+        *,
+        compact_for_rich_ui: bool = False,
+    ) -> None:
+        reference_date = str(root.get("reference_date") or "").strip()
+        summary = self._summary(root)
+
+        if not summary and not reference_date:
+            return
+
+        linhas.append("")
+
+        if reference_date:
+            linhas.append(self._route("statusSectionTitle", date=reference_date))
+        else:
+            linhas.append(self._route("statusSectionTitleGeneric"))
+
+        if summary:
+            linhas.append(
+                self._route(
+                    "statusBulletPaStarted",
+                    value=_Narrative.format_production_flag(summary.get("pa_production_started")),
+                )
+            )
+            linhas.append(
+                self._route(
+                    "statusBulletPiStarted",
+                    value=_Narrative.format_production_flag(summary.get("pi_production_started")),
+                )
+            )
+            linhas.append(
+                self._route(
+                    "statusBulletOrders",
+                    paOrders=str(summary.get("total_pa_orders") or 0),
+                    piOrders=str(summary.get("total_pi_orders") or 0),
+                )
+            )
+            linhas.append(
+                self._route(
+                    "statusBulletReported",
+                    paQty=_Narrative.format_quantity(
+                        self._host,
+                        summary.get("total_pa_reported_quantity"),
+                        field_key="total_pa_reported_quantity",
+                    ),
+                    piQty=_Narrative.format_quantity(
+                        self._host,
+                        summary.get("total_pi_reported_quantity"),
+                        field_key="total_pi_reported_quantity",
+                    ),
+                )
+            )
+
+        if compact_for_rich_ui and self._items(root):
+            linhas.append(
+                self._route("itemsPreviewLine", count=str(len(self._items(root))))
+            )
+
     def _build_narrative_lines(
         self,
         root: dict,
@@ -96,75 +173,42 @@ class ExternalActionProductProductionStatusPresenter:
         elif description:
             linhas.append(
                 self._route(
-                    "introWithDescription",
+                    "productIdentityLine",
                     code=code,
                     description=description,
                 )
             )
         elif code:
-            linhas.append(self._route("introCodeOnly", code=code))
+            linhas.append(self._route("productIdentityCodeOnly", code=code))
 
-        reference_date = str(root.get("reference_date") or "").strip()
-
-        if reference_date:
-            linhas.append(self._route("referenceDateLine", date=reference_date))
-
-        summary = self._summary(root)
-
-        if summary:
-            linhas.append(
-                self._route(
-                    "paStartedLine",
-                    value=_Narrative.format_production_flag(summary.get("pa_production_started")),
-                )
-            )
-            linhas.append(
-                self._route(
-                    "piStartedLine",
-                    value=_Narrative.format_production_flag(summary.get("pi_production_started")),
-                )
-            )
-            linhas.append(
-                self._route(
-                    "ordersLine",
-                    paOrders=str(summary.get("total_pa_orders") or 0),
-                    piOrders=str(summary.get("total_pi_orders") or 0),
-                )
-            )
-            linhas.append(
-                self._route(
-                    "reportedLine",
-                    paQty=_Narrative.format_quantity(
-                        self._host,
-                        summary.get("total_pa_reported_quantity"),
-                        field_key="total_pa_reported_quantity",
-                    ),
-                    piQty=_Narrative.format_quantity(
-                        self._host,
-                        summary.get("total_pi_reported_quantity"),
-                        field_key="total_pi_reported_quantity",
-                    ),
-                )
-            )
+        self._append_status_section(
+            linhas,
+            root,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
 
         items = self._items(root)
 
-        _Narrative.append_item_preview(
-            self._host,
-            linhas,
-            items,
-            compact_for_rich_ui=compact_for_rich_ui,
-            preview_line=self._route("itemsPreviewLine", count=str(len(items))),
-            empty_line=self._route("itemsEmptyLine"),
-            format_item_line=self._format_op_preview_line,
-        )
+        if items and not compact_for_rich_ui:
+            linhas.append("")
+            linhas.append(self._route("ordersSectionTitle"))
+            linhas.append(
+                self._route("itemsPreviewLine", count=str(len(items)))
+            )
+
+            for item in items[: _Narrative._PREVIEW_MAX]:
+                if isinstance(item, dict):
+                    linhas.append(self._format_op_preview_line(item))
+        elif not items:
+            linhas.append("")
+            linhas.append(self._route("itemsEmptyLine"))
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
 
     def _format_op_preview_line(self, item: dict) -> str:
         return self._route(
             "opLine",
-            level=str(item.get("level") or "—"),
+            level=self._format_level_label(item),
             order=str(item.get("production_order") or "—"),
             product=str(item.get("product_code") or item.get("order_product_code") or "—"),
             started=_Narrative.format_production_flag(item.get("production_started")),
@@ -259,9 +303,6 @@ class ExternalActionProductProductionStatusPresenter:
         return _OpsTable.join_markdown_blocks(parts)
 
     def _build_production_status_text_presentation(self, root: dict, path: str) -> dict | None:
-        from app.domain.services.chat_product_operational_content_service import (
-            ChatProductOperationalContentService,
-        )
         from app.domain.services.chat_rich_presentation_text_service import (
             ChatRichPresentationTextService,
         )
@@ -293,17 +334,7 @@ class ExternalActionProductProductionStatusPresenter:
         if not body:
             return None
 
-        markdown_parts = [f"### {title}", ""]
-
-        if not compact_for_rich_ui:
-            scope_line = ChatProductOperationalContentService.get(
-                "presenter",
-                "productionStatus",
-                "scopeIntro",
-            )
-            markdown_parts.extend([scope_line, ""])
-
-        markdown_parts.append(body)
+        markdown_parts = [f"### {title}", "", body]
 
         return {
             "type": "markdown",

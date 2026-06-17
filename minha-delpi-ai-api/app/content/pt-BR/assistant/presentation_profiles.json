@@ -986,6 +986,7 @@
     },
     "structure_exclusivity": {
       "defaultViewPolicy": "tree_when_available",
+      "stackLayoutPolicy": "always",
       "viewOrder": [
         "text",
         "tree",
@@ -1021,8 +1022,8 @@
         "requiresProduct": true
       },
       "compositeVisualSpec": "structure_exclusivity",
-      "commentaryProfileKey": "generic_list",
-      "narrativePolicy": "generic_data_summary"
+      "commentaryProfileKey": "structure_exclusivity",
+      "narrativePolicy": "operational_structure_exclusivity_summary"
     },
     "raw_material_price_intelligence": {
       "defaultViewPolicy": "generic",

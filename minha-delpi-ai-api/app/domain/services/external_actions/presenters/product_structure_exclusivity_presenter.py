@@ -82,6 +82,82 @@ class ExternalActionProductStructureExclusivityPresenter:
 
         return []
 
+    def _raw_material_items(self, root: dict) -> list[dict]:
+        return [
+            item
+            for item in self._items(root)
+            if isinstance(item, dict)
+            and str(item.get("component_type") or "").upper() == "MP"
+        ]
+
+    def _build_verdict_line(self, root: dict) -> str | None:
+        summary = self._summary(root)
+        exclusive_count = int(summary.get("total_exclusive_raw_materials") or 0)
+        mp_count = int(summary.get("total_raw_materials") or 0)
+
+        if exclusive_count > 0:
+            return self._route(
+                "exclusivityVerdictYes",
+                count=str(exclusive_count),
+            )
+
+        if self._items(root) or mp_count > 0:
+            return self._route(
+                "exclusivityVerdictNo",
+                count=str(mp_count),
+            )
+
+        return None
+
+    def _format_mp_item_line(self, item: dict) -> str:
+        code = str(item.get("component_code") or item.get("product_code") or "—")
+        description = str(item.get("component_description") or item.get("description") or "—")
+        unit = str(item.get("component_unit") or item.get("unit") or "").strip()
+        exclusive_suffix = (
+            self._route("mpExclusiveSuffix")
+            if self._is_exclusive(item)
+            else self._route("mpSharedSuffix")
+        )
+
+        return self._route(
+            "mpItemLine",
+            code=code,
+            description=description,
+            quantity=_Narrative.format_quantity(
+                self._host,
+                item.get("accumulated_quantity") or item.get("quantity"),
+                field_key="accumulated_quantity",
+            ),
+            unit=f" {unit}" if unit else "",
+            exclusiveSuffix=exclusive_suffix,
+        )
+
+    def _build_mp_section_lines(
+        self,
+        root: dict,
+        *,
+        compact_for_rich_ui: bool = False,
+    ) -> list[str]:
+        mp_items = self._raw_material_items(root)
+
+        if not mp_items:
+            return []
+
+        preview_limit = 3 if compact_for_rich_ui else _Narrative._PREVIEW_MAX
+        lines = [self._route("mpSectionTitle")]
+
+        for item in mp_items[:preview_limit]:
+            lines.append(self._format_mp_item_line(item))
+
+        remaining = len(mp_items) - preview_limit
+
+        if remaining > 0:
+            lines.append(
+                self._route("mpMoreLine", count=str(remaining))
+            )
+
+        return lines
+
     def _is_exclusive(self, item: dict) -> bool:
         value = item.get("exclusive_raw_material")
 
@@ -102,6 +178,11 @@ class ExternalActionProductStructureExclusivityPresenter:
         compact_for_rich_ui: bool = False,
     ) -> list[str]:
         linhas: list[str] = []
+
+        verdict = self._build_verdict_line(root)
+
+        if verdict:
+            linhas.append(verdict)
 
         if compact_for_rich_ui:
             compact_line = _Narrative.compact_product_line(
@@ -134,26 +215,25 @@ class ExternalActionProductStructureExclusivityPresenter:
                     rawMaterials=str(summary.get("total_raw_materials") or 0),
                 )
             )
-            linhas.append(
-                self._route(
-                    "exclusiveLine",
-                    count=str(summary.get("total_exclusive_raw_materials") or 0),
-                )
-            )
+
+        mp_section = self._build_mp_section_lines(
+            root,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
+
+        if mp_section:
+            linhas.extend(["", *mp_section])
 
         exclusive_items = self._exclusive_items(root)
 
-        if exclusive_items:
+        if exclusive_items and not compact_for_rich_ui:
             linhas.append(
                 self._route("exclusivePreviewLine", count=str(len(exclusive_items)))
             )
 
-            if not compact_for_rich_ui:
-                for item in exclusive_items[: _Narrative._PREVIEW_MAX]:
-                    linhas.append(self._format_exclusive_preview_line(item))
-        elif self._items(root):
-            linhas.append(self._route("noExclusiveLine"))
-        else:
+            for item in exclusive_items[: _Narrative._PREVIEW_MAX]:
+                linhas.append(self._format_exclusive_preview_line(item))
+        elif not self._items(root):
             linhas.append(self._route("itemsEmptyLine"))
 
         return linhas or [self._host._presenter_text("generic", "apiAuthorized")]
@@ -233,9 +313,12 @@ class ExternalActionProductStructureExclusivityPresenter:
         summary = self._summary(root)
         exclusive_count = int(summary.get("total_exclusive_raw_materials") or 0)
         lines: list[str] = []
+        _SHARED_MP_PREVIEW_MAX = 5
 
         if exclusive_count == 0 and self._items(root):
             lines.append(f"**{self._route('sharedMpConclusionLine')}**")
+
+            shared_count = 0
 
             for item in self._items(root):
                 if not isinstance(item, dict):
@@ -249,6 +332,23 @@ class ExternalActionProductStructureExclusivityPresenter:
                 if usage in (None, "", 0):
                     continue
 
+                if shared_count >= _SHARED_MP_PREVIEW_MAX:
+                    remaining = sum(
+                        1
+                        for candidate in self._items(root)
+                        if isinstance(candidate, dict)
+                        and str(candidate.get("component_type") or "").upper() == "MP"
+                        and candidate.get("total_valid_finished_products_using_mp")
+                        not in (None, "", 0)
+                    ) - _SHARED_MP_PREVIEW_MAX
+
+                    if remaining > 0:
+                        lines.append(
+                            self._route("mpMoreLine", count=str(remaining))
+                        )
+
+                    break
+
                 code = str(
                     item.get("component_code")
                     or item.get("product_code")
@@ -261,6 +361,7 @@ class ExternalActionProductStructureExclusivityPresenter:
                         count=str(usage),
                     )
                 )
+                shared_count += 1
 
         return lines
 
@@ -327,11 +428,35 @@ class ExternalActionProductStructureExclusivityPresenter:
             overview["role"] = "profile"
             tables.append(overview)
 
+        mp_items = enrich_structure_rows(self._raw_material_items(root))
+
+        if mp_items:
+            shown, total = _OpsTable.limit_items(mp_items, sort_key="level", reverse=False)
+            mp_title = (
+                self._route(
+                    "rawMaterialsTableTitleTruncated",
+                    shown=str(len(shown)),
+                    total=str(total),
+                )
+                if total > len(shown)
+                else self._route("rawMaterialsTableTitle")
+            )
+            mp_table = _OpsTable.build_items_table(
+                self._host.column_label_context,
+                shown,
+                profile_name="structureExclusivityDetail",
+                title=mp_title,
+                role="structure",
+            )
+
+            if mp_table:
+                tables.append(mp_table)
+
         items = enrich_structure_rows(
             [item for item in self._items(root) if isinstance(item, dict)]
         )
 
-        if items:
+        if items and len(items) > len(mp_items):
             shown, total = _OpsTable.limit_items(items, sort_key="level", reverse=False)
             title = (
                 self._route(

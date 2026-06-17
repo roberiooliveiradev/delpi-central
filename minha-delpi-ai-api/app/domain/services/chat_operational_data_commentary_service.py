@@ -28,6 +28,7 @@ _PROFILE_CONTENT_MAP = {
     "shipping_status": "shippingStatus",
     "stock": "stock",
     "directives": "directives",
+    "structure_exclusivity": "structureExclusivity",
 }
 
 
@@ -91,6 +92,7 @@ class ChatOperationalDataCommentaryService:
             "directives": cls._build_directives_commentary,
             "sale_pricing": cls._build_sale_pricing_commentary,
             "analyser": cls._build_analyser_commentary,
+            "structure_exclusivity": cls._build_structure_exclusivity_commentary,
         }
         builder = builders.get(str(profile_key).strip())
 
@@ -445,7 +447,28 @@ class ChatOperationalDataCommentaryService:
         highlights: list[str] = []
         attention: list[str] = []
 
-        if reference_date:
+        pa_started = _Narrative.format_production_flag(summary.get("pa_production_started"))
+        pi_started = _Narrative.format_production_flag(summary.get("pi_production_started"))
+        pa_started_flag = _Narrative.is_production_started(summary.get("pa_production_started"))
+        pi_started_flag = _Narrative.is_production_started(summary.get("pi_production_started"))
+        total_orders = int(summary.get("total_pa_orders") or 0) + int(
+            summary.get("total_pi_orders") or 0
+        )
+        reported_pa = _OpsTable.parse_quantity(summary.get("total_pa_reported_quantity") or 0)
+        reported_pi = _OpsTable.parse_quantity(summary.get("total_pi_reported_quantity") or 0)
+
+        if reference_date and summary:
+            highlights.append(
+                cls._text(
+                    profile,
+                    "quickSummaryLine",
+                    date=reference_date,
+                    paStarted=pa_started,
+                    piStarted=pi_started,
+                    paQty=str(summary.get("total_pa_reported_quantity") or 0),
+                )
+            )
+        elif reference_date:
             highlights.append(
                 cls._text(profile, "scopeHeadline", date=reference_date)
             )
@@ -461,20 +484,10 @@ class ChatOperationalDataCommentaryService:
                 cls._text(profile, "hasAppointments", count=str(appointment_count))
             )
 
-        pa_started = _Narrative.is_production_started(summary.get("pa_production_started"))
-        pi_started = _Narrative.is_production_started(summary.get("pi_production_started"))
-        total_orders = int(summary.get("total_pa_orders") or 0) + int(
-            summary.get("total_pi_orders") or 0
-        )
-
-        if total_orders > 0 and not pa_started and not pi_started:
-            highlights.append(cls._text(profile, "paNotStarted"))
+        if total_orders > 0 and not pa_started_flag and not pi_started_flag:
             attention.append(cls._text(profile, "attentionStaleOp"))
-        elif pi_started and not pa_started:
-            highlights.append(cls._text(profile, "piWithoutPa"))
-
-        reported_pa = _OpsTable.parse_quantity(summary.get("total_pa_reported_quantity") or 0)
-        reported_pi = _OpsTable.parse_quantity(summary.get("total_pi_reported_quantity") or 0)
+        elif pi_started_flag and not pa_started_flag:
+            attention.append(cls._text(profile, "piWithoutPa"))
 
         if total_orders > 0 and reported_pa + reported_pi <= 0:
             attention.append(cls._text(profile, "attentionLowReport"))
@@ -775,6 +788,95 @@ class ChatOperationalDataCommentaryService:
         )
 
         return ChatProductPricingInsightService.build_commentary(root)
+
+    @classmethod
+    def _build_structure_exclusivity_commentary(
+        cls,
+        root: dict[str, Any],
+        *,
+        format_quantity: Callable[[Any, str | None], str] | None = None,
+    ) -> dict[str, Any] | None:
+        _ = format_quantity
+
+        summary = root.get("summary") if isinstance(root.get("summary"), dict) else {}
+        items = root.get("items") if isinstance(root.get("items"), list) else []
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(product.get("product_code") or product.get("code") or "").strip()
+        description = str(product.get("description") or "").strip()
+
+        exclusive_count = int(summary.get("total_exclusive_raw_materials") or 0)
+        mp_count = int(summary.get("total_raw_materials") or 0)
+        highlights: list[str] = []
+
+        if exclusive_count > 0:
+            highlights.append(
+                cls._presenter_format(
+                    "structureExclusivity",
+                    "exclusivityVerdictYes",
+                    count=str(exclusive_count),
+                )
+            )
+        elif items or mp_count > 0:
+            highlights.append(
+                cls._presenter_format(
+                    "structureExclusivity",
+                    "exclusivityVerdictNo",
+                    count=str(mp_count),
+                )
+            )
+
+        if description and code:
+            highlights.append(
+                cls._presenter_format(
+                    "structureExclusivity",
+                    "introWithDescription",
+                    code=code,
+                    description=description,
+                )
+            )
+        elif code:
+            highlights.append(
+                cls._presenter_format(
+                    "structureExclusivity",
+                    "introCodeOnly",
+                    code=code,
+                )
+            )
+
+        if summary:
+            highlights.append(
+                cls._presenter_format(
+                    "structureExclusivity",
+                    "componentsLine",
+                    total=str(summary.get("total_components") or 0),
+                    intermediates=str(summary.get("total_intermediates") or 0),
+                    rawMaterials=str(mp_count),
+                )
+            )
+
+        if not highlights:
+            return None
+
+        return {
+            "profileKey": "structure_exclusivity",
+            "highlights": highlights,
+            "summaryLines": highlights[:4],
+            "visualHints": ["tree", "table"],
+        }
+
+    @staticmethod
+    def _presenter_format(section: str, key: str, **values: str) -> str:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        return ChatAssistantContentService.format(
+            "presenter_content",
+            "routePresentations",
+            section,
+            key,
+            **values,
+        )
 
     @classmethod
     def _build_analyser_commentary(

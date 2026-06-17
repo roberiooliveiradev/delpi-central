@@ -88,6 +88,9 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         if cls.visual_bundle_policy(path, entity) == "eager":
             return True
 
+        if cls.stack_layout_policy(path, entity) == "always":
+            return True
+
         normalized = cls.normalize_explicit_format(explicit_format)
 
         if normalized and normalized not in {"text"}:
