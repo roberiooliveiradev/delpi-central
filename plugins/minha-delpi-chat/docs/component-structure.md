@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **16/06/2026** após PR-1–34 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **16/06/2026** após PR-1–35 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -15,7 +15,7 @@ src/ui/components/
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
-├── shell/               # (PR-35) Sidebar, ContextBar, ContextTopbar
+├── shell/               # Sidebar, ContextBar, ContextTopbar
 ├── admin/               # Painel administrativo (shell + abas modulares)
 └── [raiz]               # Hub chatPresentation, modais finos, export/chart UX, etc.
 ```
@@ -30,6 +30,7 @@ Barrels públicos:
 | `composer/` | `composer/index.ts` | `import { ChatInput } from "./composer"` |
 | `message/` | `message/index.ts` | `import { ChatAssistantContent } from "./message"` |
 | `workspace/` | `workspace/index.ts` | `import { WorkspaceFileDropzone } from "./workspace"` |
+| `shell/` | `shell/index.ts` | `import { ChatSidebar } from "./shell"` |
 
 ## Re-exports legados
 
@@ -70,13 +71,15 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 
 **Em `message/` (PR-21–23, PR-31–34):** segmentos, `ChatMessageList`, `assistantProseRendering`, `humanizedCoverageNotice`, `chatAssistantMessageActions`, `chatMarkdown`, `testFixtures`.
 
+**Em `shell/` (PR-35):** `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar`, `chatSidebarUtils`, `chatContextChipActions`.
+
 **Candidatos `workspace/`:** `ChatProjectHome.tsx`, `ChatAddContextDialog.tsx` (PR-36).
 
 ## Fase G — limpeza da raiz (pendente)
 
 | PR | Destino | Arquivos-alvo |
 |----|---------|---------------|
-| PR-35 | `shell/` | Sidebar, ContextBar, ContextTopbar |
+| PR-35 | `shell/` | Sidebar, ContextBar, ContextTopbar | ✅ |
 | PR-36 | `workspace/` | ProjectHome, ProjectCard, modais projeto |
 | PR-37 | `message/` | InteractivityBlock, Sources, DecisionCard, ChatMarkdown |
 | PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown |

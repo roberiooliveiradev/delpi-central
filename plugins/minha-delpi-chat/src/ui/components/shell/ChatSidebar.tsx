@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
-import { ChatConfirmDialog } from "./ChatConfirmDialog";
-import { ChatProjectCreateModal } from "./ChatProjectCreateModal";
+import type { ChatAgent, ChatProject, ChatSession } from "../../../data/api/chatTypes";
+import { ChatConfirmDialog } from "../ChatConfirmDialog";
+import { ChatProjectCreateModal } from "../ChatProjectCreateModal";
 import { ChatSidebarAgentsSection } from "./ChatSidebarAgentsSection";
 import { ChatSidebarArchivedDialog } from "./ChatSidebarArchivedDialog";
 import { ChatSidebarBrand } from "./ChatSidebarBrand";

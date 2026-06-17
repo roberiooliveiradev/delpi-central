@@ -34,7 +34,7 @@ src/ui/
 │   ├── composer/              # ChatInput, mention, selectors
 │   ├── message/               # ChatAssistantContent, registry, segmentos
 │   ├── workspace/             # WorkspaceFile*, ingest CSS, ProjectHome (alvo PR-36)
-│   ├── shell/                 # Sidebar, ContextBar, ContextTopbar (alvo PR-35)
+│   ├── shell/                 # Sidebar, ContextBar, ContextTopbar
 │   ├── admin/shared/          # primitivos admin — referência
 │   └── [legado raiz]          # Hub chatPresentation, modais finos, export, … (ver component-structure.md)
 ```
@@ -229,16 +229,17 @@ PR-31 ✅  humanizedCoverageNotice → message/
 PR-32 ✅  chatAssistantMessageActions → message/; chartExplain → pipeline/
 PR-33 ✅  chatMarkdown → message/ (prosa + strip section markers)
 PR-34 ✅  testFixtures → message/; tableCellFormatting → presentation/
+PR-35 ✅  shell/ — ChatSidebar*, ChatContextBar, ChatContextTopbar, chatSidebarUtils
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
 
-Meta: reduzir **87 TS/TSX + 55 CSS** na raiz (jun/2026) para **shell + hub + orquestração de página**.
+Meta: reduzir **75 TS/TSX + ~55 CSS** na raiz (jun/2026) para **shell + hub + orquestração de página**.
 
 | PR | Escopo | Status |
 |----|--------|--------|
 | PR-34 | `testFixtures` → `message/`; `tableCellFormatting` → `presentation/` | ✅ |
-| PR-35 | `shell/` — `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar` | pendente |
+| PR-35 | `shell/` — `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar` | ✅ |
 | PR-36 | `workspace/` — `ChatProjectHome`, `ChatProjectCard`, `ChatAddContextDialog`, modais projeto | pendente |
 | PR-37 | `message/` — `ChatInteractivityBlock`, `ChatSources`, `ChatDecisionCard`, `ChatMarkdown.tsx`, `ChatMermaidBlock` | pendente |
 | PR-38 | `presentation/export/` — `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv` | pendente |
@@ -298,8 +299,8 @@ Pendências até 100%:
 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
-| PRs estruturais entregues | 34 / 42 (Fase G) | 42 / 42 |
-| Arquivos TS/TSX na raiz `components/` | 87 | ≤25 (shell + hub + páginas) |
+| PRs estruturais entregues | 35 / 42 (Fase G) | 42 / 42 |
+| Arquivos TS/TSX na raiz `components/` | 75 | ≤25 (shell + hub + páginas) |
 | Arquivos CSS na raiz `components/` | 55 | co-localizados com feature ou `ui/styles/` |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `message/` | 36 arquivos TS/TSX | +InteractivityBlock, Sources, … (PR-37) |

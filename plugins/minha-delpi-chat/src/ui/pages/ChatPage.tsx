@@ -12,17 +12,17 @@ import { useChatLayout } from "../../state/hooks/useChatLayout";
 import { ChatInput, type ChatInputAttachment } from "../components/composer";
 import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatAddContextDialog } from "../components/ChatAddContextDialog";
-import { ChatContextBar, type ChatContextChip } from "../components/ChatContextBar";
+import { ChatContextBar, type ChatContextChip } from "../components/shell";
 import {
   ChatMemoryUsedDialog,
   type MemoryUsageView,
 } from "../components/ChatMemoryUsedDialog";
 import { ChatMessageList } from "../components/message";
-import { ChatContextTopbar } from "../components/ChatContextTopbar";
+import { ChatContextTopbar } from "../components/shell";
 import { ChatHelpPanel } from "../components/ChatHelpPanel";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
-import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
+import { ChatSidebar, type ChatSidebarView } from "../components/shell";
 import { useConfirmDialog } from "../components/useConfirmDialog";
 import { usePromptDialog } from "../components/usePromptDialog";
 import { useAlertDialog } from "../components/useAlertDialog";

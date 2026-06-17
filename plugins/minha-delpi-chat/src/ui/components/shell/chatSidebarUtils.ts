@@ -1,4 +1,4 @@
-import type { ChatSession } from "../../data/api/chatTypes";
+import type { ChatSession } from "../../../data/api/chatTypes";
 
 export type SessionGroup = {
   label: string;

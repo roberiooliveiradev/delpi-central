@@ -1,10 +1,10 @@
 import { Archive, Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import type { ChatSession } from "../../data/api/chatTypes";
-import { buildChatSessionHrefForSession } from "../../navigation/chatRoutes";
-import { ChatConversationListItem } from "./ChatConversationListItem";
-import { ChatConversationMenu } from "./ChatConversationMenu";
+import type { ChatSession } from "../../../data/api/chatTypes";
+import { buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
+import { ChatConversationListItem } from "../ChatConversationListItem";
+import { ChatConversationMenu } from "../ChatConversationMenu";
 import { type SessionGroup } from "./chatSidebarUtils";
 
 const DEFAULT_VISIBLE_SESSIONS = 20;

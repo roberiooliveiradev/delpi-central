@@ -1,9 +1,9 @@
 import type { ChatContextChip } from "./ChatContextBar";
-import type { TableRowMenuAction } from "./chatDrillDown";
+import type { TableRowMenuAction } from "../chatDrillDown";
 import {
   inferContextChipOperationalRole,
   isPinnableContextKind,
-} from "../chatActiveContext";
+} from "../../chatActiveContext";
 
 const PRODUCT_CODE = "{{productCode}}";
 

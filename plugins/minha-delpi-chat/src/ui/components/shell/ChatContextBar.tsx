@@ -17,13 +17,13 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { contextChipKey, contextChipKindClass } from "../chatActiveContext";
+import { contextChipKey, contextChipKindClass } from "../../chatActiveContext";
 import {
   buildContextChipMenuActions,
   buildContextChipQuery,
 } from "./chatContextChipActions";
-import { ChatTableRowMenu } from "./ChatTableRowMenu";
-import { menuAnchorRectFromElement } from "./shared/overlay/menuPositionUtils";
+import { ChatTableRowMenu } from "../ChatTableRowMenu";
+import { menuAnchorRectFromElement } from "../shared/overlay/menuPositionUtils";
 import "./ChatContextBar.css";
 
 export type ChatContextChip = {

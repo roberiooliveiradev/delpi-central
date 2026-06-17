@@ -1,11 +1,11 @@
 import { MessageSquarePlus, Search, Settings2, X } from "lucide-react";
 import type { RefObject } from "react";
 
-import { buildChatHref } from "../../navigation/chatRoutes";
+import { buildChatHref } from "../../../navigation/chatRoutes";
 import {
   handleChatNavClick,
   shouldOpenChatLinkInNewTab,
-} from "../../navigation/chatNavigation";
+} from "../../../navigation/chatNavigation";
 
 type ChatSidebarNavProps = {
   isSearchOpen: boolean;

@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import { shouldOpenChatLinkInNewTab } from "../../navigation/chatNavigation";
+import { shouldOpenChatLinkInNewTab } from "../../../navigation/chatNavigation";
 
 import "./ChatSidebarWorkspaceItem.css";
 

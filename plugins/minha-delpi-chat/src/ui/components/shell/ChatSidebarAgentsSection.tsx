@@ -1,8 +1,8 @@
 import { Bot, Settings } from "lucide-react";
 
-import type { ChatAgent } from "../../data/api/chatTypes";
-import { buildChatAgentHref, buildChatHref } from "../../navigation/chatRoutes";
-import { handleChatNavClick } from "../../navigation/chatNavigation";
+import type { ChatAgent } from "../../../data/api/chatTypes";
+import { buildChatAgentHref, buildChatHref } from "../../../navigation/chatRoutes";
+import { handleChatNavClick } from "../../../navigation/chatNavigation";
 import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
 
 type ChatSidebarAgentsSectionProps = {

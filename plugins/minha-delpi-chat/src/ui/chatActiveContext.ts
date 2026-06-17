@@ -1,5 +1,5 @@
 import type { ChatPresentationFormatId } from "../data/api/chatTypes";
-import type { ChatContextChip } from "./components/ChatContextBar";
+import type { ChatContextChip } from "./components/shell";
 
 /** Kind genérico na barra — sem product/branch/warehouse na UI. */
 export const CONTEXT_CHIP_KIND = "context";

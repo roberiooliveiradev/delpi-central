@@ -1,8 +1,8 @@
 import { X } from "lucide-react";
 
-import type { ChatSession } from "../../data/api/chatTypes";
+import type { ChatSession } from "../../../data/api/chatTypes";
 import { formatSessionDate } from "./chatSidebarUtils";
-import { ChatModal } from "./shared/modal/ChatModal";
+import { ChatModal } from "../shared/modal/ChatModal";
 
 type ChatSidebarArchivedDialogProps = {
   open: boolean;

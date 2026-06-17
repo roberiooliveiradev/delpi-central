@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
-import { formatSessionDate } from "./chatSidebarUtils";
+import { formatSessionDate } from "./shell/chatSidebarUtils";
 
 import "./ChatConversationListItem.css";
 

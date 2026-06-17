@@ -33,7 +33,7 @@ import { ChatUserSearchField } from "./ChatUserSearchField";
 import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
 import { ChatConversationMenu } from "./ChatConversationMenu";
-import { formatSessionDate } from "./chatSidebarUtils";
+import { formatSessionDate } from "./shell/chatSidebarUtils";
 import { ChatModal } from "./shared/modal/ChatModal";
 import {
   workspaceFileKindLabel,
