@@ -155,30 +155,18 @@ function resolveComposerPopoverLayout(
   }
 
   if (openAbove) {
-    let maxHeight = Math.min(naturalHeight, Math.max(0, spaceAbove - gap));
-    maxHeight = Math.max(maxHeight, Math.min(naturalHeight, options.minHeight));
-
-    if (maxHeight > spaceAbove - gap) {
-      maxHeight = Math.max(0, spaceAbove - gap);
-    }
-
-    let menuTop = top - gap;
-
-    if (menuTop - maxHeight < margin) {
-      maxHeight = Math.max(0, menuTop - margin);
-    }
+    const maxHeight = Math.max(0, spaceAbove - gap);
+    const menuTop = top - gap;
 
     return { left: menuLeft, top: menuTop, maxHeight, anchorAbove: true };
   }
 
-  let maxHeight = Math.min(naturalHeight, Math.max(0, spaceBelow - gap));
-  maxHeight = Math.max(maxHeight, Math.min(naturalHeight, options.minHeight));
-
+  let maxHeight = Math.max(0, spaceBelow - gap);
   let menuTop = bottom + gap;
 
   if (menuTop < margin) {
     menuTop = margin;
-    maxHeight = Math.min(naturalHeight, viewport.height - margin * 2);
+    maxHeight = Math.max(0, viewport.height - margin * 2);
   }
 
   if (menuTop + maxHeight > viewport.height - margin) {

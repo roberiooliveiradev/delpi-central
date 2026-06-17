@@ -119,3 +119,39 @@
   font-size: 0.62rem;
   font-weight: 700;
 }
+
+@media (max-width: 720px) {
+  .mdc-chat-sources-cards {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    margin-inline: calc(-1 * var(--mdc-space-2));
+    padding-inline: var(--mdc-space-2);
+    padding-bottom: 0.2rem;
+  }
+
+  .mdc-chat-sources-cards > li {
+    flex: 0 0 min(11.5rem, 78vw);
+    scroll-snap-align: start;
+    max-width: min(11.5rem, 78vw);
+  }
+
+  .mdc-chat-sources-card {
+    min-height: 4.25rem;
+    height: 100%;
+  }
+
+  .mdc-chat-sources-cards::-webkit-scrollbar {
+    height: 4px;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 960px) {
+  .mdc-chat-sources-cards {
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  }
+}

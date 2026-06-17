@@ -105,7 +105,22 @@
     "protheus_column": "system",
     "protheus_index": "system",
     "protheus_relation": "system",
-    "protheus_table_schema": "system"
+    "protheus_table_schema": "system",
+    "production_allocation_gaps": "playbook_report",
+    "production_consumption_by_item": "playbook_report",
+    "production_consumption_top_items": "playbook_report",
+    "production_consumption_top_items_by_work_center": "playbook_report",
+    "production_consumption_top_items_validated": "playbook_report",
+    "production_losses_records": "playbook_report",
+    "production_losses_top_materials": "playbook_report",
+    "production_orders_finished": "playbook_report",
+    "production_orders_finished_without_consumption": "playbook_report",
+    "production_orders_open": "playbook_report",
+    "production_planned_vs_real_time": "playbook_report",
+    "production_schedule_today": "playbook_report",
+    "production_work_center_average_planned_time": "playbook_report",
+    "production_work_center_order_summary": "playbook_report",
+    "purchases_top_products": "playbook_report"
   },
   "entitySets": {
     "chatCritical": [
@@ -342,7 +357,22 @@
       "product_outbound_invoice_items",
       "product_pricing",
       "product_billing",
-      "product_open_orders"
+      "product_open_orders",
+      "production_allocation_gaps",
+      "production_consumption_by_item",
+      "production_consumption_top_items",
+      "production_consumption_top_items_by_work_center",
+      "production_consumption_top_items_validated",
+      "production_losses_records",
+      "production_losses_top_materials",
+      "production_orders_finished",
+      "production_orders_finished_without_consumption",
+      "production_orders_open",
+      "production_planned_vs_real_time",
+      "production_schedule_today",
+      "production_work_center_average_planned_time",
+      "production_work_center_order_summary",
+      "purchases_top_products"
     ]
   },
   "pathRules": [
@@ -489,6 +519,66 @@
     {
       "contains": "/production/eficiencia-fabril",
       "profile": "kpi_dashboard"
+    },
+    {
+      "contains": "/production/planned-vs-real-time",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/allocation-gaps",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/orders/finished-without-consumption",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/work-centers/average-planned-time",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/consumption/by-item/",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/consumption/top-items-by-work-center",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/consumption/top-items-validated",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/consumption/top-items",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/orders/open",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/orders/finished",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/work-centers/order-summary",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/losses/top-materials",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/losses/records",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/schedule/today",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/purchases/top-products",
+      "profile": "playbook_report"
     },
     {
       "contains": "/production/",
@@ -1164,7 +1254,11 @@
       "stackPlan": "table_list",
       "flags": [
         "table"
-      ]
+      ],
+      "chartPolicy": "skip",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary",
+      "humanizedNarrative": "enrich"
     },
     "sql": {
       "defaultViewPolicy": "generic",

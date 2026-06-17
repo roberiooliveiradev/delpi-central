@@ -74,6 +74,86 @@ def test_attach_scores_and_reading_layers_from_data_answer():
     assert "Saldo confortável" in str(decision.get("message") or "")
 
 
+def test_compute_scores_prefers_table_for_listing_question():
+    scores = ChatPresentationDecisionService.compute_scores(
+        data_shape={
+            "rows": 50,
+            "hasCategory": True,
+            "hasNumeric": True,
+            "recommended": "horizontal_bar",
+        },
+        available_views=["text", "table", "chart"],
+        user_message="quais os produtos programados para produzir hoje",
+    )
+
+    assert scores["table"] > scores["chart"]
+
+
+def test_apply_automatic_score_selection_keeps_table_for_playbook_report():
+    decision = {
+        "selected": "table",
+        "fallback": "text",
+        "layoutMode": "single",
+        "availableViews": ["text", "table", "horizontal_bar", "chart"],
+        "scores": {
+            "text": 25,
+            "table": 35,
+            "chart": 85,
+        },
+        "dataShape": {
+            "rows": 50,
+            "hasCategory": True,
+            "hasNumeric": True,
+            "recommended": "horizontal_bar",
+        },
+    }
+    metadata = {
+        "path": "/production/schedule/today",
+        "apiDelpiResponseMeta": {"entity": "production_schedule_today"},
+        "tablePresentation": {
+            "type": "table",
+            "rows": [{"production_order": "OP-1", "product_code": "70260010"}],
+        },
+        "chartPresentation": {"type": "chart", "chartType": "heatmap", "data": []},
+    }
+
+    ChatPresentationDecisionService._apply_automatic_score_selection(
+        decision,
+        metadata=metadata,
+        effective_preference=None,
+        user_message="quais os produtos programados para produzir hoje",
+        path="/production/schedule/today",
+        entity="production_schedule_today",
+    )
+
+    assert decision["selected"] == "table"
+
+
+def test_decide_prefers_table_for_production_schedule_with_chart_payload():
+    rows = [
+        {
+            "production_order": "000001",
+            "product_code": "70260010",
+            "description": "CHICOTE BUHLER",
+            "planned_quantity": 0,
+        }
+    ] * 50
+
+    decision = ChatPresentationDecisionService.decide(
+        rows=rows,
+        user_message="quais os produtos programados para produzir hoje",
+        table_presentation={"type": "table", "rows": rows},
+        chart_presentation={"type": "chart", "chartType": "heatmap", "data": []},
+        path="/production/schedule/today",
+        metadata={
+            "path": "/production/schedule/today",
+            "apiDelpiResponseMeta": {"entity": "production_schedule_today"},
+        },
+    )
+
+    assert decision["selected"] == "table"
+
+
 def test_apply_automatic_score_selection_picks_chart_for_categorical_rows():
     decision = {
         "selected": "table",

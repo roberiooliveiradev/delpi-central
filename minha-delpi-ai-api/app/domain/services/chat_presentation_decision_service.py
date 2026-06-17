@@ -181,6 +181,25 @@ class ChatPresentationDecisionService:
         if any(token in message for token in ("ranking", "maiores", "top ", "concentração", "concentracao")):
             scores["chart"] += 25
 
+        if any(
+            token in message
+            for token in (
+                "quais ",
+                "quais os",
+                "liste",
+                "listar",
+                "listagem",
+                "relacao",
+                "relação",
+                "programad",
+                "cadastro",
+            )
+        ) and not any(
+            token in message for token in ("ranking", "maiores", "top ", "concentração", "concentracao")
+        ):
+            scores["table"] += 35
+            scores["chart"] = max(0, int(scores.get("chart") or 0) - 25)
+
         if any(token in message for token in ("relatório", "relatorio", "lousa", "canvas")):
             scores["canvas"] += 35
             scores["text"] += 10
@@ -297,6 +316,9 @@ class ChatPresentationDecisionService:
         from app.domain.services.chat_presentation_text_first_policy_service import (
             ChatPresentationTextFirstPolicyService,
         )
+        from app.domain.services.chat_presentation_operational_decision_service import (
+            ChatPresentationOperationalDecisionService,
+        )
 
         if effective_preference:
             return True
@@ -314,6 +336,15 @@ class ChatPresentationDecisionService:
 
         if ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
             user_message,
+        ):
+            return True
+
+        entity = cls._entity_from_metadata(metadata)
+
+        if ChatPresentationOperationalDecisionService.should_prefer_table_over_chart(
+            path=path,
+            entity=entity,
+            has_table=bool(metadata.get("tablePresentation")) or cls._metadata_has_visual(metadata),
         ):
             return True
 
@@ -380,6 +411,26 @@ class ChatPresentationDecisionService:
         decision["reason"] = cls._reason("scoreAutomatic")
         decision["layoutMode"] = "single"
         decision["visualOrder"] = [selected]
+
+    @classmethod
+    def _entity_from_metadata(cls, metadata: dict[str, Any] | None) -> str | None:
+        if not isinstance(metadata, dict):
+            return None
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                return raw_entity.strip()
+
+        raw_entity = metadata.get("entity")
+
+        if isinstance(raw_entity, str) and raw_entity.strip():
+            return raw_entity.strip()
+
+        return None
 
     @classmethod
     def _metadata_has_visual(cls, metadata: dict[str, Any]) -> bool:
@@ -687,9 +738,21 @@ class ChatPresentationDecisionService:
                 data_shape=shape,
             )
 
-        if chart_presentation or (
+        entity = cls._entity_from_metadata(metadata if isinstance(metadata, dict) else None)
+
+        from app.domain.services.chat_presentation_operational_decision_service import (
+            ChatPresentationOperationalDecisionService,
+        )
+
+        prefer_table = ChatPresentationOperationalDecisionService.should_prefer_table_over_chart(
+            path=path,
+            entity=entity,
+            has_table=bool(table_rows),
+        )
+
+        if (chart_presentation or (
             primary_presentation and primary_presentation.get("type") == "chart"
-        ):
+        )) and not prefer_table:
             chart_type = cls._resolve_chart_type(
                 table_rows=table_rows,
                 shape=shape,
@@ -1537,6 +1600,23 @@ class ChatPresentationDecisionService:
                 available_views=cls._merge_views(
                     available_formats,
                     ["table", "text", "chart"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
+        if ChatPresentationOperationalDecisionService.should_prefer_table_over_chart(
+            path=path,
+            entity=entity,
+            has_table=bool(table_rows),
+        ):
+            return cls._build(
+                selected="table",
+                fallback="text",
+                reason=cls._reason("auditableList"),
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["table", "chart", "text"],
                 ),
                 rows=table_rows,
                 intent=intent,

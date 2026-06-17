@@ -164,6 +164,21 @@ describe("resolveComposerPanelMenuPosition", () => {
     expect(layout.maxHeight).toBeLessThanOrEqual(viewportHeight - 8);
   });
 
+  it("não excede o espaço acima do gatilho quando o composer está no rodapé", () => {
+    const rect = { left: 16, top: 780, right: 52, bottom: 816, width: 36, height: 36 };
+    const gap = COMPOSER_PANEL_ANCHOR_GAP;
+    const spaceAbove = rect.top - 8;
+
+    const layout = resolveComposerPanelMenuPosition({
+      rect,
+      itemCount: 12,
+      viewport: { width: 390, height: 844 },
+    });
+
+    expect(layout.anchorAbove).toBe(true);
+    expect(layout.maxHeight).toBe(spaceAbove - gap);
+  });
+
   it("ancora acima do + com gap legado e borda esquerda alinhada", () => {
     const itemCount = 3;
     const rect = { left: 48, top: 460, right: 84, bottom: 496, width: 36, height: 36 };

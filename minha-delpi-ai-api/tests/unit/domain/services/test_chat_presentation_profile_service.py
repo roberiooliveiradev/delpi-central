@@ -93,6 +93,38 @@ def test_production_oee_appointment_entity_maps_to_dashboard() -> None:
     assert key == "kpi_dashboard"
 
 
+def test_production_schedule_today_entity_maps_to_playbook_report() -> None:
+    key = ChatPresentationProfileService.resolve_profile_key(
+        "/production/schedule/today",
+        "production_schedule_today",
+    )
+
+    assert key == "playbook_report"
+
+
+def test_production_schedule_path_without_entity_maps_to_playbook_report() -> None:
+    key = ChatPresentationProfileService.resolve_profile_key(
+        "/production/schedule/today",
+        None,
+    )
+
+    assert key == "playbook_report"
+
+
+def test_playbook_report_profile_skips_chart_policy() -> None:
+    profile = ChatPresentationProfileService.resolve_profile(
+        "/production/schedule/today",
+        "production_schedule_today",
+    )
+
+    assert profile.get("chartPolicy") == "skip"
+    assert profile.get("defaultViewPolicy") == "table_when_available"
+
+
+def test_production_schedule_today_is_no_chart_entity() -> None:
+    assert ChatPresentationProfileService.is_no_chart_entity("production_schedule_today")
+
+
 def test_humanized_narrative_mode_from_profile() -> None:
     assert (
         ChatPresentationProfileService.humanized_narrative_mode(

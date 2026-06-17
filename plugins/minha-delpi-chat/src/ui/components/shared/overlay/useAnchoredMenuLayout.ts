@@ -219,6 +219,7 @@ export function useAnchoredMenuLayout({
         ...(placement === "composer-option" || placement === "composer-panel"
           ? {
               ...("maxHeight" in layout ? { maxHeight: layout.maxHeight } : {}),
+              height: "max-content",
               ...("anchorAbove" in layout && layout.anchorAbove
                 ? { transform: "translateY(-100%)" }
                 : {}),

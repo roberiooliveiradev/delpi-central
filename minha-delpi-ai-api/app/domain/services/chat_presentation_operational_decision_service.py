@@ -128,6 +128,30 @@ class ChatPresentationOperationalDecisionService:
         )
 
     @classmethod
+    def should_prefer_table_over_chart(
+        cls,
+        *,
+        path: str | None,
+        entity: str | None,
+        has_table: bool = True,
+    ) -> bool:
+        if not has_table:
+            return False
+
+        if ChatPresentationProfileService.is_no_chart_entity(entity):
+            return True
+
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        chart_policy = str(profile.get("chartPolicy") or "auto").strip().lower()
+
+        if chart_policy != "skip":
+            return False
+
+        policy = str(profile.get("defaultViewPolicy") or "").strip().lower()
+
+        return policy == "table_when_available"
+
+    @classmethod
     def should_prefer_analyser_text_stack(
         cls,
         *,

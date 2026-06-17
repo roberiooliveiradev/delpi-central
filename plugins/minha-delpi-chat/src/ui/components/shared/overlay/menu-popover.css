@@ -12,6 +12,25 @@
   box-sizing: border-box;
 }
 
+.mdc-menu-popover__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mdc-overlay-z-scrim, 9990);
+  background: transparent;
+  pointer-events: auto;
+}
+
+.mdc-menu-popover__scrim--contained,
+.mdc-chat-overlay-portal--contained .mdc-menu-popover__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--mdc-overlay-z-scrim, 9990) - 1);
+}
+
+.mdc-menu-popover__scrim--backdrop {
+  background: var(--mdc-overlay-backdrop);
+}
+
 .mdc-menu-popover--portal {
   position: fixed;
   z-index: var(--mdc-overlay-z-panel, 9991);
@@ -19,6 +38,11 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+}
+
+.mdc-menu-popover--portal.mdc-menu-popover--composer,
+.mdc-menu-popover--portal.mdc-menu-popover--composer-panel {
+  height: max-content;
 }
 
 .mdc-menu-popover--portal.mdc-menu-popover--contained {
@@ -67,24 +91,6 @@
       100vw - 1rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
     )
   );
-}
-
-.mdc-menu-popover__scrim {
-  position: fixed;
-  inset: 0;
-  z-index: var(--mdc-overlay-z-scrim, 9990);
-  background: transparent;
-  pointer-events: auto;
-}
-
-.mdc-chat-overlay-portal--contained .mdc-menu-popover__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.mdc-menu-popover__scrim--backdrop {
-  background: var(--mdc-overlay-backdrop);
 }
 
 @media (max-width: 480px) {

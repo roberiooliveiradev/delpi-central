@@ -203,7 +203,30 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
   );
 
   if (shell === "popover") {
-    return createPortal(panel, container);
+    const popoverScrim =
+      scrim === "backdrop" ? (
+        <div
+          className={[
+            "mdc-menu-popover__scrim",
+            "mdc-menu-popover__scrim--backdrop",
+            portalContained ? "mdc-menu-popover__scrim--contained" : "",
+            scrimClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          role="presentation"
+          aria-hidden="true"
+          onMouseDown={onClose}
+        />
+      ) : null;
+
+    return createPortal(
+      <>
+        {popoverScrim}
+        {panel}
+      </>,
+      container,
+    );
   }
 
   const theme = document.documentElement.getAttribute("data-theme");
