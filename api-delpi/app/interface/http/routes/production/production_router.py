@@ -14,6 +14,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_OEE_APPOINTMENT,
     PRODUCTION_OTD,
 )
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -61,7 +62,13 @@ from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_da
 router = APIRouter(prefix="/production", tags=["Produção"])
 
 
-@router.get("/direct_labor_cost_pct")
+@router.get(
+    "/direct_labor_cost_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_direct_labor_cost_pct",
+        path="/production/direct_labor_cost_pct",
+    ),
+)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_direct_labor_cost_pct(
     branch: str | None = Query(default=None),
@@ -110,7 +117,13 @@ def get_direct_labor_cost_pct(
         )
 
 
-@router.get("/production_cost_pct")
+@router.get(
+    "/production_cost_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_cost_pct",
+        path="/production/production_cost_pct",
+    ),
+)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_cost_pct(
     branch: str | None = Query(default=None),
@@ -159,7 +172,13 @@ def get_production_cost_pct(
         )
 
 
-@router.get("/depreciation_pct")
+@router.get(
+    "/depreciation_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_depreciation_pct",
+        path="/production/depreciation_pct",
+    ),
+)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_depreciation_pct(
     branch: str | None = Query(default=None),
@@ -208,7 +227,13 @@ def get_depreciation_pct(
         )
     
 
-@router.get("/oee/series")
+@router.get(
+    "/oee/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_oee_series",
+        path="/production/oee/series",
+    ),
+)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_oee_series(
     granularity: str = Query(..., min_length=3, max_length=10),
@@ -245,7 +270,13 @@ def get_production_oee_series(
         )
 
 
-@router.get("/otd/series")
+@router.get(
+    "/otd/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_otd_series",
+        path="/production/otd/series",
+    ),
+)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_otd_series(
     granularity: str = Query(..., min_length=3, max_length=10),
@@ -453,7 +484,13 @@ def get_production_oee_appointment_by_id(
         )
 
 
-@router.get("/overall_equipment_effectiveness_pct")
+@router.get(
+    "/overall_equipment_effectiveness_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_overall_equipment_effectiveness_pct",
+        path="/production/overall_equipment_effectiveness_pct",
+    ),
+)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_overall_equipment_effectiveness_pct(
     branch: str | None = Query(default=None),
@@ -496,7 +533,13 @@ def get_overall_equipment_effectiveness_pct(
         )
     
 
-@router.get("/on_time_delivery_pct")
+@router.get(
+    "/on_time_delivery_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_on_time_delivery_pct",
+        path="/production/on_time_delivery_pct",
+    ),
+)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_on_time_delivery_pct(
     branch: str | None = Query(default=None),

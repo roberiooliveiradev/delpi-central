@@ -40,12 +40,19 @@ from app.interface.http.kpi_field_labels import (
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.interface.http.openapi_agent_metadata import COMMERCIAL_PROPOSALS
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 
 
 router = APIRouter(prefix="/commercial", tags=["Comercial"])
 
 
-@router.get("/head_office_rol_target_pct")
+@router.get(
+    "/head_office_rol_target_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_head_office_rol_target_pct",
+        path="/commercial/head_office_rol_target_pct",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_head_office_rol_target_pct(
     start_date: Optional[str] = Query(None),
@@ -88,7 +95,13 @@ def get_head_office_rol_target_pct(
         )
 
 
-@router.get("/branch_rol_target_pct")
+@router.get(
+    "/branch_rol_target_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_branch_rol_target_pct",
+        path="/commercial/branch_rol_target_pct",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_branch_rol_target_pct(
     start_date: Optional[str] = Query(None),
@@ -131,7 +144,13 @@ def get_branch_rol_target_pct(
         )
     
 
-@router.get("/rol/series")
+@router.get(
+    "/rol/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_commercial_rol_series",
+        path="/commercial/rol/series",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_commercial_rol_series(
     granularity: str = Query(..., min_length=3, max_length=10),
@@ -211,7 +230,13 @@ def list_commercial_proposals(
         )
 
 
-@router.get("/closing-rate")
+@router.get(
+    "/closing-rate",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_conversion_rate",
+        path="/commercial/closing-rate",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_conversion_rate(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
@@ -254,7 +279,13 @@ def get_sales_conversion_rate(
         )
     
 
-@router.get("/new-clients-average")
+@router.get(
+    "/new-clients-average",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_new_clients_average",
+        path="/commercial/new-clients-average",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_clients_average(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
@@ -291,7 +322,13 @@ def get_new_clients_average(
         )
     
 
-@router.get("/sales-order-otd")
+@router.get(
+    "/sales-order-otd",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_order_otd",
+        path="/commercial/sales-order-otd",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_order_otd(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
@@ -334,7 +371,13 @@ def get_sales_order_otd(
         )
 
 
-@router.get("/new-business-rol-pct")
+@router.get(
+    "/new-business-rol-pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_new_business_rol_pct",
+        path="/commercial/new-business-rol-pct",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_business_rol_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
@@ -377,7 +420,13 @@ def get_new_business_rol_pct(
         )
 
 
-@router.get("/new-clients-rol-pct")
+@router.get(
+    "/new-clients-rol-pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_new_clients_rol_pct",
+        path="/commercial/new-clients-rol-pct",
+    ),
+)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_clients_rol_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),

@@ -24,6 +24,7 @@ from app.application.services.strategic_indicators.dashboard_goals_service impor
 )
 from app.interface.http.kpi_field_labels import HR_FIELD_LABELS, kpi_fields
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/hr", tags=["Recursos Humanos"])
@@ -78,7 +79,13 @@ def _hr_query_dates(
     )
 
 
-@router.get("/branches")
+@router.get(
+    "/branches",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_hr_branches",
+        path="/hr/branches",
+    ),
+)
 @require_any_permission(KPI_HR_ACCESS)
 def list_hr_branches():
     try:
@@ -109,7 +116,13 @@ def list_hr_branches():
         )
 
 
-@router.get("/snapshot")
+@router.get(
+    "/snapshot",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_hr_snapshot",
+        path="/hr/snapshot",
+    ),
+)
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_snapshot(
     branch: str | None = Query(default=None),
@@ -157,7 +170,13 @@ def get_hr_snapshot(
         )
 
 
-@router.get("/active-pdi-count")
+@router.get(
+    "/active-pdi-count",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_hr_active_pdi_count",
+        path="/hr/active-pdi-count",
+    ),
+)
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_active_pdi_count(
     branch: str | None = Query(default=None),
@@ -207,7 +226,13 @@ def get_hr_active_pdi_count(
         )
 
 
-@router.get("/performance-reviews-completion")
+@router.get(
+    "/performance-reviews-completion",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_hr_performance_reviews_completion",
+        path="/hr/performance-reviews-completion",
+    ),
+)
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_performance_reviews_completion(
     branch: str | None = Query(default=None),

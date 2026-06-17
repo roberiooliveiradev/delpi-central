@@ -8,8 +8,8 @@
     {
       "method": "GET",
       "path": "/commercial/branch_rol_target_pct",
-      "operationId": "get_branch_rol_target_pct_commercial_branch_rol_target_pct_get",
-      "summary": "Get Branch Rol Target Pct",
+      "operationId": "get_branch_rol_target_pct",
+      "summary": "Indicador — Meta percentual rol comercial",
       "tags": [
         "Comercial"
       ],
@@ -18,8 +18,8 @@
     {
       "method": "GET",
       "path": "/commercial/closing-rate",
-      "operationId": "get_sales_conversion_rate_commercial_closing_rate_get",
-      "summary": "Get Sales Conversion Rate",
+      "operationId": "get_sales_conversion_rate",
+      "summary": "Indicador — Taxa de fechamento comercial",
       "tags": [
         "Comercial"
       ],
@@ -28,8 +28,8 @@
     {
       "method": "GET",
       "path": "/commercial/head_office_rol_target_pct",
-      "operationId": "get_head_office_rol_target_pct_commercial_head_office_rol_target_pct_get",
-      "summary": "Get Head Office Rol Target Pct",
+      "operationId": "get_head_office_rol_target_pct",
+      "summary": "Indicador — Meta percentual rol comercial",
       "tags": [
         "Comercial"
       ],
@@ -38,8 +38,8 @@
     {
       "method": "GET",
       "path": "/commercial/new-business-rol-pct",
-      "operationId": "get_new_business_rol_pct_commercial_new_business_rol_pct_get",
-      "summary": "Get New Business Rol Pct",
+      "operationId": "get_new_business_rol_pct",
+      "summary": "Indicador — Percentual rol de novos negócios",
       "tags": [
         "Comercial"
       ],
@@ -48,8 +48,8 @@
     {
       "method": "GET",
       "path": "/commercial/new-clients-average",
-      "operationId": "get_new_clients_average_commercial_new_clients_average_get",
-      "summary": "Get New Clients Average",
+      "operationId": "get_new_clients_average",
+      "summary": "Indicador — Média de novos clientes",
       "tags": [
         "Comercial"
       ],
@@ -58,8 +58,8 @@
     {
       "method": "GET",
       "path": "/commercial/new-clients-rol-pct",
-      "operationId": "get_new_clients_rol_pct_commercial_new_clients_rol_pct_get",
-      "summary": "Get New Clients Rol Pct",
+      "operationId": "get_new_clients_rol_pct",
+      "summary": "Indicador — Percentual rol de clientes novos",
       "tags": [
         "Comercial"
       ],
@@ -78,8 +78,8 @@
     {
       "method": "GET",
       "path": "/commercial/rol/series",
-      "operationId": "get_commercial_rol_series_commercial_rol_series_get",
-      "summary": "Get Commercial Rol Series",
+      "operationId": "get_commercial_rol_series",
+      "summary": "Indicador — Série temporal de rol comercial",
       "tags": [
         "Comercial"
       ],
@@ -88,8 +88,8 @@
     {
       "method": "GET",
       "path": "/commercial/sales-order-otd",
-      "operationId": "get_sales_order_otd_commercial_sales_order_otd_get",
-      "summary": "Get Sales Order Otd",
+      "operationId": "get_sales_order_otd",
+      "summary": "Indicador — Otd de pedidos de venda",
       "tags": [
         "Comercial"
       ],
@@ -334,8 +334,8 @@
     {
       "method": "GET",
       "path": "/hr/active-pdi-count",
-      "operationId": "get_hr_active_pdi_count_hr_active_pdi_count_get",
-      "summary": "Get Hr Active Pdi Count",
+      "operationId": "get_hr_active_pdi_count",
+      "summary": "Indicador — Pdis ativos",
       "tags": [
         "Recursos Humanos"
       ],
@@ -344,8 +344,8 @@
     {
       "method": "GET",
       "path": "/hr/branches",
-      "operationId": "list_hr_branches_hr_branches_get",
-      "summary": "List Hr Branches",
+      "operationId": "list_hr_branches",
+      "summary": "Indicador — Filiais de rh",
       "tags": [
         "Recursos Humanos"
       ],
@@ -354,8 +354,8 @@
     {
       "method": "GET",
       "path": "/hr/performance-reviews-completion",
-      "operationId": "get_hr_performance_reviews_completion_hr_performance_reviews_completion_get",
-      "summary": "Get Hr Performance Reviews Completion",
+      "operationId": "get_hr_performance_reviews_completion",
+      "summary": "Indicador — Conclusão de avaliações de desempenho",
       "tags": [
         "Recursos Humanos"
       ],
@@ -364,8 +364,8 @@
     {
       "method": "GET",
       "path": "/hr/snapshot",
-      "operationId": "get_hr_snapshot_hr_snapshot_get",
-      "summary": "Get Hr Snapshot",
+      "operationId": "get_hr_snapshot",
+      "summary": "Análise consolidada — Snapshot de rh",
       "tags": [
         "Recursos Humanos"
       ],
@@ -444,8 +444,8 @@
     {
       "method": "GET",
       "path": "/production/depreciation_pct",
-      "operationId": "get_depreciation_pct_production_depreciation_pct_get",
-      "summary": "Get Depreciation Pct",
+      "operationId": "get_depreciation_pct",
+      "summary": "Indicador — Depreciação percentual",
       "tags": [
         "Produção"
       ],
@@ -454,8 +454,8 @@
     {
       "method": "GET",
       "path": "/production/direct_labor_cost_pct",
-      "operationId": "get_direct_labor_cost_pct_production_direct_labor_cost_pct_get",
-      "summary": "Get Direct Labor Cost Pct",
+      "operationId": "get_direct_labor_cost_pct",
+      "summary": "Indicador — Custo direto de mão de obra",
       "tags": [
         "Produção"
       ],
@@ -524,8 +524,8 @@
     {
       "method": "GET",
       "path": "/production/oee/series",
-      "operationId": "get_production_oee_series_production_oee_series_get",
-      "summary": "Get Production Oee Series",
+      "operationId": "get_production_oee_series",
+      "summary": "Indicador — Production oee series",
       "tags": [
         "Produção"
       ],
@@ -534,8 +534,8 @@
     {
       "method": "GET",
       "path": "/production/on_time_delivery_pct",
-      "operationId": "get_on_time_delivery_pct_production_on_time_delivery_pct_get",
-      "summary": "Get On Time Delivery Pct",
+      "operationId": "get_on_time_delivery_pct",
+      "summary": "Indicador — Otd de produção",
       "tags": [
         "Produção"
       ],
@@ -594,8 +594,8 @@
     {
       "method": "GET",
       "path": "/production/otd/series",
-      "operationId": "get_production_otd_series_production_otd_series_get",
-      "summary": "Get Production Otd Series",
+      "operationId": "get_production_otd_series",
+      "summary": "Indicador — Production otd series",
       "tags": [
         "Produção"
       ],
@@ -604,8 +604,8 @@
     {
       "method": "GET",
       "path": "/production/overall_equipment_effectiveness_pct",
-      "operationId": "get_overall_equipment_effectiveness_pct_production_overall_equipment_effectiveness_pct_get",
-      "summary": "Get Overall Equipment Effectiveness Pct",
+      "operationId": "get_overall_equipment_effectiveness_pct",
+      "summary": "Indicador — Oee (eficiência global dos equipamentos)",
       "tags": [
         "Produção"
       ],
@@ -624,8 +624,8 @@
     {
       "method": "GET",
       "path": "/production/production_cost_pct",
-      "operationId": "get_production_cost_pct_production_production_cost_pct_get",
-      "summary": "Get Production Cost Pct",
+      "operationId": "get_production_cost_pct",
+      "summary": "Indicador — Custo de produção percentual",
       "tags": [
         "Produção"
       ],
