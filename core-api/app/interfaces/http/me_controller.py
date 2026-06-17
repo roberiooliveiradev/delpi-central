@@ -224,7 +224,12 @@ def reorder_favorites():
     try:
         with SqlAlchemyUnitOfWork() as uow:
             uc = ReorderFavoriteAppsUseCase(uow)
-            uc.execute(user_id=str(user.id), app_ids=app_ids)
+            uc.execute(
+                user_id=str(user.id),
+                app_ids=app_ids,
+                permissions=user.permissions,
+                is_superadmin=user.is_superadmin,
+            )
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
