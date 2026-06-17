@@ -29,7 +29,7 @@ function sectionStartIndex(markdown: string, pattern: RegExp): number {
 const DESTAQUES_SECTION_RE = /(?:^|\n)\s*\*\*Destaques\*\*/i;
 const PONTOS_SECTION_RE = /(?:^|\n)\s*\*\*Pontos de atenção/i;
 
-import { stripPresentationSectionMarkers } from "../chatMarkdown";
+import { stripPresentationSectionMarkers } from "./chatMarkdown";
 
 export function partitionCommentarySections(markdown: string): CommentarySections {
   const trimmed = stripPresentationSectionMarkers(String(markdown || ""));

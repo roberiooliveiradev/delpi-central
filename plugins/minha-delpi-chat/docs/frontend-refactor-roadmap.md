@@ -226,6 +226,7 @@ PR-29 ✅  chart builders → presentation/pipeline/ (axis, aggregation, build-f
 PR-30 ✅  tree/chart normalize → pipeline; doc hub; remove stub CSS raiz
 PR-31 ✅  humanizedCoverageNotice → message/
 PR-32 ✅  chatAssistantMessageActions → message/; chartExplain → pipeline/
+PR-33 ✅  chatMarkdown → message/ (prosa + strip section markers)
 ```
 
 ### Fase concluída (jun/2026)

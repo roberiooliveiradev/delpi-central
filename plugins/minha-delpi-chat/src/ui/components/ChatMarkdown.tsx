@@ -8,7 +8,7 @@ import {
   applySoftLineBreaks,
   prepareMarkdownContent,
   tableElementToGfmMarkdown,
-} from "./chatMarkdown";
+} from "./message/chatMarkdown";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { ChatMermaidBlock } from "./ChatMermaidBlock";
 

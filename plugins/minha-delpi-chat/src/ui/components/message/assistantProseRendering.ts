@@ -1,6 +1,6 @@
 import type { ChatMessageMetadata, ChatToolCall } from "../../../data/api/chatTypes";
 
-import { hasMarkdownSyntax, stripPresentationSectionMarkers } from "../chatMarkdown";
+import { hasMarkdownSyntax, stripPresentationSectionMarkers } from "./chatMarkdown";
 import { isNativeSingleViewSelection } from "./assistantContentLayout";
 import {
   getPresentationTitle,

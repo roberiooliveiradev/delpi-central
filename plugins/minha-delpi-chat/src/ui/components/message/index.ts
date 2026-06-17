@@ -25,6 +25,11 @@ export {
   resolveHumanizedCoverageNoticeFromToolCall,
 } from "./humanizedCoverageNotice";
 export {
+  hasMarkdownSyntax,
+  prepareMarkdownContent,
+  stripPresentationSectionMarkers,
+} from "./chatMarkdown";
+export {
   buildAssistantMessageMenuActions,
   type AssistantMessageMenuAction,
 } from "./chatAssistantMessageActions";

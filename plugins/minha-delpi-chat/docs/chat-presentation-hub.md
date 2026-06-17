@@ -35,7 +35,7 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Chart axis, agregação, build-from-table | `presentation/pipeline/chart*.ts`, `buildChartPresentationFromTable.ts` | 29 |
 | Tree flatten/export, chart payload normalize, explain fallback | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts`, `chartExplain.ts` | 30, 32 |
 | Segment assembly (stack, render plan, markers) | `presentation/segmentBuilders/` | 25 |
-| Prosa / título / markdown stream | `message/assistantProseRendering.ts` | 23 |
+| Prosa / título / markdown stream | `message/assistantProseRendering.ts`, `message/chatMarkdown.ts` | 23, 33 |
 | Layout stack vs single, ordem visual | `message/assistantContentLayout.ts` | 20+ |
 
 Barrel do pipeline: `presentation/pipeline/index.ts`.

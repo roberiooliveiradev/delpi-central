@@ -65,7 +65,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 
 **Em `presentation/pipeline/` (PR-27–30, PR-32):** stack plan, dedup, metadata, labels, telemetry, chart builders, tree utils, normalize, `chartExplain`.
 
-**Em `message/` (PR-21–23, PR-31–32):** segmentos, `ChatMessageList`, `assistantProseRendering`, `humanizedCoverageNotice`, `chatAssistantMessageActions`.
+**Em `message/` (PR-21–23, PR-31–33):** segmentos, `ChatMessageList`, `assistantProseRendering`, `humanizedCoverageNotice`, `chatAssistantMessageActions`, `chatMarkdown`.
 
 **Candidatos `workspace/`:** `ChatProjectHome.tsx`, `ChatAddContextDialog.tsx`.
 

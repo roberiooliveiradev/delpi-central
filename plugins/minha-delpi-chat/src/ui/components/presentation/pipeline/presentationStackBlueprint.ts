@@ -1,6 +1,6 @@
 import type { ChatToolCall } from "../../../../data/api/chatTypes";
 
-import { stripPresentationSectionMarkers } from "../../chatMarkdown";
+import { stripPresentationSectionMarkers } from "../../message/chatMarkdown";
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 import type { CommentarySections } from "../../message/assistantContentInterleave";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";

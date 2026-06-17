@@ -10,7 +10,7 @@ import {
   getRenderPlanFromToolCalls,
   type PresentationRenderPlan,
 } from "../../chatPresentation";
-import { stripPresentationSectionMarkers } from "../../chatMarkdown";
+import { stripPresentationSectionMarkers } from "../../message/chatMarkdown";
 import { dedupeTableSegments } from "../pipeline/presentationTableDedup";
 import {
   getStackPresentationPlanFromToolCalls,
