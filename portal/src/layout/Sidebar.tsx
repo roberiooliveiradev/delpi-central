@@ -35,7 +35,7 @@ import {
   DELPI_CLOSE_APP_LAUNCHER_EVENT,
   DELPI_OPEN_APP_LAUNCHER_EVENT,
 } from "../utils/appLauncher";
-import { DELPI_SIDEBAR_EXPAND_EVENT } from "../utils/sidebar";
+import { DELPI_SIDEBAR_EXPAND_EVENT, resolvePortalSidebarEdgeWidth } from "../utils/sidebar";
 import {
   DELPI_PORTAL_TOUR_SIDEBAR_PANEL_EVENT,
   type PortalTourSidebarPanel,
@@ -195,7 +195,7 @@ export const Sidebar = () => {
         return;
       }
 
-      const edgeWidth = event.pointerType === "touch" ? 42 : 40;
+      const edgeWidth = resolvePortalSidebarEdgeWidth();
 
       if (event.clientX <= edgeWidth) {
         setShowEdgeExpand(true);
@@ -214,7 +214,7 @@ export const Sidebar = () => {
       const touch = event.touches[0];
       if (!touch) return;
 
-      if (touch.clientX <= 36) {
+      if (touch.clientX <= resolvePortalSidebarEdgeWidth()) {
         setShowEdgeExpand(true);
       }
     },
