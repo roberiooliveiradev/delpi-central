@@ -43,6 +43,9 @@ import {
 import { isLaunchableApp } from "../utils/launchableApps";
 import { isLauncherAppContextActive } from "../components/appLauncherAppearance";
 
+const SIDEBAR_EDGE_LABEL_DESKTOP = "Abrir menu lateral";
+const SIDEBAR_EDGE_LABEL_MOBILE = "Abrir menu";
+
 function sidebarFooterItemClass(options?: { active?: boolean; open?: boolean }) {
   return [
     "sidebar-footer-item",
@@ -90,6 +93,7 @@ export const Sidebar = () => {
   const { theme, setTheme } = useTheme();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const expandControlRef = useRef<HTMLButtonElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
   const notifTriggerRef = useRef<HTMLDivElement>(null);
@@ -111,6 +115,20 @@ export const Sidebar = () => {
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [showEdgeExpand, setShowEdgeExpand] = useState(false);
+  const [isNarrowViewport, setIsNarrowViewport] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1024px)").matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1024px)");
+    const onChange = () => setIsNarrowViewport(mediaQuery.matches);
+
+    onChange();
+    mediaQuery.addEventListener("change", onChange);
+    return () => mediaQuery.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
@@ -200,6 +218,26 @@ export const Sidebar = () => {
       if (event.clientX <= edgeWidth) {
         setShowEdgeExpand(true);
         return;
+      }
+
+      const control = expandControlRef.current;
+      if (control) {
+        const rects = [
+          control.getBoundingClientRect(),
+        ].filter((rect): rect is DOMRect => rect != null);
+
+        const withinControl = rects.some(
+          (rect) =>
+            event.clientX >= rect.left &&
+            event.clientX <= rect.right &&
+            event.clientY >= rect.top &&
+            event.clientY <= rect.bottom,
+        );
+
+        if (withinControl) {
+          setShowEdgeExpand(true);
+          return;
+        }
       }
 
       setShowEdgeExpand(false);
@@ -407,29 +445,26 @@ export const Sidebar = () => {
       ) : null}
 
       {collapsed && (
-        <>
-          <button
-            className={`sidebar-expand-btn ${showEdgeExpand ? "is-visible" : ""}`}
-            onClick={openSidebarFromEdge}
-            onMouseEnter={showEdgeExpandHint}
-            aria-label="Expandir menu lateral"
-            type="button"
-          >
-            <span className="sidebar-expand-btn__icon">
-              <ChevronRight size={18} />
-            </span>
-          </button>
-
-          <button
-            className="sidebar-edge-hotspot"
-            type="button"
-            aria-label="Abrir menu lateral"
-            onMouseEnter={showEdgeExpandHint}
-            onTouchStart={showEdgeExpandHint}
-            onFocus={showEdgeExpandHint}
-            onClick={openSidebarFromEdge}
+        <button
+          ref={expandControlRef}
+          type="button"
+          className={`sidebar-edge-hotspot ${showEdgeExpand ? "is-visible" : ""}`}
+          aria-label="Expandir menu lateral"
+          onClick={openSidebarFromEdge}
+          onMouseEnter={showEdgeExpandHint}
+          onTouchStart={showEdgeExpandHint}
+          onFocus={showEdgeExpandHint}
+        >
+          <ChevronRight
+            className="sidebar-edge-hotspot__icon"
+            size={16}
+            strokeWidth={2.25}
+            aria-hidden="true"
           />
-        </>
+          <span className="sidebar-edge-hotspot__label" aria-hidden="true">
+            {isNarrowViewport ? SIDEBAR_EDGE_LABEL_MOBILE : SIDEBAR_EDGE_LABEL_DESKTOP}
+          </span>
+        </button>
       )}
 
       <div
