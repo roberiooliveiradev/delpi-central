@@ -1,24 +1,24 @@
 {
   "summary": {
-    "operationCount": 130,
+    "operationCount": 174,
     "tierCounts": {
-      "A": 25,
+      "A": 47,
       "B": 53,
-      "C": 50,
+      "C": 72,
       "D": 2
     },
-    "entityRoutedCount": 80,
-    "entityRoutedRatio": 0.6154,
-    "unmappedEntityCount": 50,
-    "distinctEntities": 69,
+    "entityRoutedCount": 102,
+    "entityRoutedRatio": 0.5862,
+    "unmappedEntityCount": 72,
+    "distinctEntities": 93,
     "topTags": [
       [
         "Qualidade",
-        35
+        42
       ],
       [
         "products",
-        24
+        31
       ],
       [
         "Auditoria 5S",
@@ -29,11 +29,19 @@
         19
       ],
       [
-        "Financeiro",
-        16
+        "Engenharia",
+        15
+      ],
+      [
+        "Produção operacional",
+        15
       ],
       [
         "Agendamento",
+        12
+      ],
+      [
+        "Produção",
         12
       ],
       [
@@ -41,11 +49,7 @@
         9
       ],
       [
-        "Produção",
-        9
-      ],
-      [
-        "Engenharia",
+        "Financeiro",
         8
       ],
       [
@@ -53,20 +57,16 @@
         7
       ],
       [
-        "Suprimentos",
-        5
-      ],
-      [
-        "Recursos Humanos",
-        4
+        "Kaizen — cadastro",
+        6
       ]
     ],
     "profileCoverageRatio": 1.0,
-    "entityPathHintCount": 62,
-    "pathEntityFallbackCount": 34,
+    "entityPathHintCount": 82,
+    "pathEntityFallbackCount": 51,
     "metrics": {
-      "tierBPlusCount": 78,
-      "tierBPlusRatio": 0.6,
+      "tierBPlusCount": 100,
+      "tierBPlusRatio": 0.5747,
       "tierABProfileMappedRatio": 1.0,
       "stackLayoutRatio": 0.0,
       "sessionFormatRespectedRatio": null
@@ -84,7 +84,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -97,7 +107,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -110,7 +130,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -123,7 +153,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -136,7 +176,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -149,12 +199,22 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
       "path": "/commercial/proposals",
-      "operation_id": "list_commercial_proposals_commercial_proposals_get",
+      "operation_id": "list_commercial_proposals",
       "tags": [
         "Comercial"
       ],
@@ -162,7 +222,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -175,7 +245,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -188,7 +268,65 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/cultura-delpi/content",
+      "operation_id": "get_cultura_delpi_content_cultura_delpi_content_get",
+      "tags": [
+        "Cultura DELPI",
+        "Cultura DELPI"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "PUT",
+      "path": "/cultura-delpi/content",
+      "operation_id": "update_cultura_delpi_content_cultura_delpi_content_put",
+      "tags": [
+        "Cultura DELPI",
+        "Cultura DELPI"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -201,7 +339,17 @@
       "entity_routed": true,
       "tier": "D",
       "routed_by": "path",
-      "profile_key": "sql"
+      "profile_key": "sql",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -214,7 +362,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -227,7 +385,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_dashboard"
+      "profile_key": "kpi_dashboard",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|dashboard|kpi|chart|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -240,7 +408,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_dashboard"
+      "profile_key": "kpi_dashboard",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|dashboard|kpi|chart|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -253,7 +431,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -266,7 +454,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -279,7 +477,178 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}/history/events",
+      "operation_id": "get_lmp_history_events",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "lmp",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}/history/flow",
+      "operation_id": "get_lmp_history_flow",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": "lmp",
+      "entity_routed": true,
+      "tier": "B",
+      "routed_by": "path",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas",
+      "operation_id": "list_mini_applicators_ferramentas",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}",
+      "operation_id": "get_mini_applicators_ferramenta",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/componentes",
+      "operation_id": "list_mini_applicators_componentes",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/golpes",
+      "operation_id": "get_mini_applicators_golpes",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/pecas",
+      "operation_id": "list_mini_applicators_pecas",
+      "tags": [
+        "Engenharia"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -292,7 +661,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -305,68 +684,22 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
-    },
-    {
-      "method": "GET",
-      "path": "/finacial/ebitda_pct",
-      "operation_id": "get_ebitda_pct_finacial_ebitda_pct_get",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "entity": "financial_ebitda_pct",
-      "entity_routed": true,
-      "tier": "B",
-      "routed_by": "path",
-      "profile_key": "kpi_series"
-    },
-    {
-      "method": "GET",
-      "path": "/finacial/fixed_cost_pct",
-      "operation_id": "get_fixed_cost_pct_finacial_fixed_cost_pct_get",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "entity": "financial_fixed_cost_pct",
-      "entity_routed": true,
-      "tier": "B",
-      "routed_by": "path",
-      "profile_key": "kpi_series"
-    },
-    {
-      "method": "GET",
-      "path": "/finacial/pmr",
-      "operation_id": "get_pmr_finacial_pmr_get",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "entity": "financial_pmr",
-      "entity_routed": true,
-      "tier": "B",
-      "routed_by": "path",
-      "profile_key": "kpi_series"
-    },
-    {
-      "method": "GET",
-      "path": "/finacial/rol",
-      "operation_id": "get_rol_finacial_rol_get",
-      "tags": [
-        "Financeiro",
-        "Financeiro"
-      ],
-      "entity": "financial_rol",
-      "entity_routed": true,
-      "tier": "B",
-      "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
       "path": "/financial/ebitda_pct",
-      "operation_id": "get_ebitda_pct_financial_ebitda_pct_get",
+      "operation_id": "get_financial_ebitda_pct",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -375,12 +708,22 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
       "path": "/financial/fixed_cost_pct",
-      "operation_id": "get_fixed_cost_pct_financial_fixed_cost_pct_get",
+      "operation_id": "get_financial_fixed_cost_pct",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -389,12 +732,22 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
       "path": "/financial/pmr",
-      "operation_id": "get_pmr_financial_pmr_get",
+      "operation_id": "get_financial_pmr",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -403,12 +756,22 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
       "path": "/financial/rol",
-      "operation_id": "get_rol_financial_rol_get",
+      "operation_id": "get_financial_rol",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -417,7 +780,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -430,7 +803,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "generic"
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -443,7 +826,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -456,7 +849,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -469,7 +872,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -482,7 +895,178 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/",
+      "operation_id": "list_pedidos_venda_abertos_route_pedidos_venda_abertos__get",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/ops-abertas",
+      "operation_id": "list_ops_abertas_route_pedidos_venda_abertos_ops_abertas_get",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/production/allocation-gaps",
+      "operation_id": "get_production_allocation_gaps",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_allocation_gaps",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/by-item/{code}",
+      "operation_id": "get_production_consumption_by_item",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_consumption_by_item",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/top-items",
+      "operation_id": "get_production_consumption_top_items",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_consumption_top_items",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/top-items-by-work-center",
+      "operation_id": "get_production_consumption_top_items_by_work_center",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_consumption_top_items_by_work_center",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/consumption/top-items-validated",
+      "operation_id": "get_production_consumption_top_items_validated",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_consumption_top_items_validated",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
     },
     {
       "method": "GET",
@@ -495,7 +1079,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -508,7 +1102,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -521,7 +1125,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -534,7 +1148,63 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_dashboard"
+      "profile_key": "kpi_dashboard",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|dashboard|kpi|chart|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/production/losses/records",
+      "operation_id": "get_production_losses_records",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_losses_records",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/losses/top-materials",
+      "operation_id": "get_production_losses_top_materials",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_losses_top_materials",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
     },
     {
       "method": "GET",
@@ -547,7 +1217,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_dashboard"
+      "profile_key": "kpi_dashboard",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|dashboard|kpi|chart|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -556,11 +1236,21 @@
       "tags": [
         "Produção"
       ],
-      "entity": "production_oee_appointment",
-      "entity_routed": true,
-      "tier": "B",
-      "routed_by": "entity",
-      "profile_key": "kpi_dashboard"
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_dashboard",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|dashboard|kpi|chart|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -573,7 +1263,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -586,7 +1286,109 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/by-op/{production_order}",
+      "operation_id": "get_production_order_by_op",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/finished",
+      "operation_id": "get_production_orders_finished",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_orders_finished",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/finished-without-consumption",
+      "operation_id": "get_production_orders_finished_without_consumption",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_orders_finished_without_consumption",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/open",
+      "operation_id": "get_production_orders_open",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_orders_open",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
     },
     {
       "method": "GET",
@@ -599,7 +1401,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_dashboard"
+      "profile_key": "kpi_dashboard",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|dashboard|kpi|chart|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -612,7 +1424,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -625,7 +1447,40 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/production/planned-vs-real-time",
+      "operation_id": "get_production_planned_vs_real_time",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_planned_vs_real_time",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
     },
     {
       "method": "GET",
@@ -638,7 +1493,132 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/production/schedule/today",
+      "operation_id": "get_production_schedule_today",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_schedule_today",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/work-centers/average-planned-time",
+      "operation_id": "get_production_work_center_average_planned_time",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_work_center_average_planned_time",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/production/work-centers/order-summary",
+      "operation_id": "get_production_work_center_order_summary",
+      "tags": [
+        "Produção operacional"
+      ],
+      "entity": "production_work_center_order_summary",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": "missing_shape_fixture"
+    },
+    {
+      "method": "GET",
+      "path": "/products/directives/{identifier}",
+      "operation_id": "get_product_directives",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_directives",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "directives",
+      "commentary_profile_key": "directives",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "directives",
+      "supported_formats": "text|table|canvas",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": false,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/products/exclusive-raw-materials/catalog",
+      "operation_id": "list_exclusive_raw_materials_catalog",
+      "tags": [
+        "products"
+      ],
+      "entity": "exclusive_raw_materials_catalog",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -651,7 +1631,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -664,7 +1654,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -677,7 +1677,40 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "analyser"
+      "profile_key": "analyser",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/cost-impact-simulation",
+      "operation_id": "get_product_cost_impact_simulation",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_cost_impact_simulation",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "cost_impact_simulation",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": "missing_commentary_profile"
     },
     {
       "method": "GET",
@@ -690,7 +1723,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -703,7 +1746,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "factory_status"
+      "profile_key": "factory_status",
+      "commentary_profile_key": "factory_status",
+      "narrative_policy": "operational_factory_summary",
+      "data_shape": "field_value_profile",
+      "supported_formats": "text|tree|table|chart|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -716,7 +1769,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -729,7 +1792,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -742,7 +1815,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -755,7 +1838,40 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/last-purchase",
+      "operation_id": "get_product_last_purchase",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_last_purchase",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "last_purchase",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": "missing_commentary_profile"
     },
     {
       "method": "GET",
@@ -768,7 +1884,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -781,7 +1907,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "tree_hierarchy"
+      "profile_key": "tree_hierarchy",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|tree|table|chart|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -794,7 +1930,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "sale_pricing"
+      "profile_key": "sale_pricing",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -807,7 +1953,63 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "production_status"
+      "profile_key": "production_status",
+      "commentary_profile_key": "production_status",
+      "narrative_policy": "operational_production_summary",
+      "data_shape": "field_value_profile",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/purchase-budget-history",
+      "operation_id": "get_product_purchase_budget_history",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_purchase_budget_history",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "purchase_budget_history",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": "missing_commentary_profile"
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/purchase-price-history",
+      "operation_id": "get_product_purchase_price_history",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_purchase_price_history",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "purchase_price_history",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": "missing_commentary_profile"
     },
     {
       "method": "GET",
@@ -820,7 +2022,40 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "purchase_list"
+      "profile_key": "purchase_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/raw-material-price-intelligence",
+      "operation_id": "get_product_raw_material_price_intelligence",
+      "tags": [
+        "products"
+      ],
+      "entity": "product_raw_material_price_intelligence",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "raw_material_price_intelligence",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": "missing_commentary_profile"
     },
     {
       "method": "GET",
@@ -833,7 +2068,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -846,7 +2091,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -859,7 +2114,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -872,7 +2137,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "shipping_status"
+      "profile_key": "shipping_status",
+      "commentary_profile_key": "shipping_status",
+      "narrative_policy": "operational_shipping_summary",
+      "data_shape": "field_value_profile",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -885,7 +2160,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "stock"
+      "profile_key": "stock",
+      "commentary_profile_key": "stock",
+      "narrative_policy": "operational_stock_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -898,7 +2183,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "tree_hierarchy"
+      "profile_key": "tree_hierarchy",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|tree|table|chart|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -911,7 +2206,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "tree_hierarchy"
+      "profile_key": "tree_hierarchy",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|tree|table|chart|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -924,7 +2229,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "structure_exclusivity"
+      "profile_key": "structure_exclusivity",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|tree|table|chart|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -937,7 +2252,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -950,7 +2275,132 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/propostas-comerciais/",
+      "operation_id": "list_propostas_comerciais_route_propostas_comerciais__get",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/propostas-comerciais/{proposta_interna}",
+      "operation_id": "get_proposta_comercial_route_propostas_comerciais__proposta_interna__get",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/propostas-comerciais/{proposta_interna}/pdf",
+      "operation_id": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "POST",
+      "path": "/propostas-comerciais/{proposta_interna}/pdf",
+      "operation_id": "export_proposta_comercial_pdf_with_overrides_route_propostas_comerciais__proposta_interna__pdf_post",
+      "tags": [
+        "Propostas Comerciais"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/purchases/top-products",
+      "operation_id": "get_purchases_top_products",
+      "tags": [
+        "Compras operacionais"
+      ],
+      "entity": "purchases_top_products",
+      "entity_routed": true,
+      "tier": "A",
+      "routed_by": "path",
+      "profile_key": "purchase_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -964,7 +2414,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -978,7 +2438,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -992,7 +2462,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1006,7 +2486,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1020,7 +2510,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1034,7 +2534,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1048,7 +2558,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1062,7 +2582,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1076,7 +2606,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1090,7 +2630,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1104,7 +2654,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1118,7 +2678,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1132,7 +2702,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1146,7 +2726,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "PUT",
@@ -1160,7 +2750,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1174,7 +2774,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "PATCH",
@@ -1188,7 +2798,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1202,7 +2822,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1216,7 +2846,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1230,7 +2870,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1244,7 +2894,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1258,7 +2918,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1272,7 +2942,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1285,7 +2965,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1298,12 +2988,166 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records",
+      "operation_id": "list_kaizen_records",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "POST",
+      "path": "/quality/kaizens/records",
+      "operation_id": "create_kaizen_record_quality_kaizens_records_post",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "POST",
+      "path": "/quality/kaizens/records/import-from-sheet",
+      "operation_id": "import_kaizens_from_sheet_quality_kaizens_records_import_from_sheet_post",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/quality/kaizens/records/{record_id}",
+      "operation_id": "delete_kaizen_record_quality_kaizens_records__record_id__delete",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}",
+      "operation_id": "get_kaizen_record",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}",
+      "operation_id": "update_kaizen_record_quality_kaizens_records__record_id__put",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
       "path": "/quality/kaizens/summary",
-      "operation_id": "get_kaizen_summary_quality_kaizens_summary_get",
+      "operation_id": "get_kaizen_summary",
       "tags": [
         "Qualidade"
       ],
@@ -1311,7 +3155,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1320,11 +3174,21 @@
       "tags": [
         "Qualidade"
       ],
-      "entity": "kaizen",
-      "entity_routed": true,
-      "tier": "B",
-      "routed_by": "path",
-      "profile_key": "kpi_dashboard"
+      "entity": null,
+      "entity_routed": false,
+      "tier": "C",
+      "routed_by": "none",
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1337,7 +3201,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1350,7 +3224,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1364,7 +3248,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1378,7 +3272,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1392,7 +3296,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1406,7 +3320,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1420,7 +3344,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1434,7 +3368,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1448,7 +3392,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1461,7 +3415,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1475,7 +3439,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "generic"
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1489,7 +3463,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "generic"
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "PATCH",
@@ -1503,7 +3487,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "generic"
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1517,7 +3511,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "generic"
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1531,7 +3535,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "generic"
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "PATCH",
@@ -1545,7 +3559,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "generic"
+      "profile_key": "generic",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|tree|chart|line_chart|bar_chart|horizontal_bar|donut|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1558,7 +3582,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1571,7 +3605,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1584,7 +3628,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_snapshot"
+      "profile_key": "kpi_snapshot",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|kpi|table|chart|dashboard",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1597,7 +3651,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1610,7 +3674,17 @@
       "entity_routed": true,
       "tier": "B",
       "routed_by": "path",
-      "profile_key": "kpi_series"
+      "profile_key": "kpi_series",
+      "commentary_profile_key": "generic_kpi_series",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_kpi_series",
+      "supported_formats": "text|kpi|line_chart|chart|table|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": false,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1623,7 +3697,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1636,7 +3720,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1649,7 +3743,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1662,7 +3766,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "POST",
@@ -1675,7 +3789,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1688,7 +3812,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1701,7 +3835,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1714,7 +3858,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1727,7 +3881,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1740,7 +3904,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1753,7 +3927,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1766,7 +3950,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1779,7 +3973,17 @@
       "entity_routed": true,
       "tier": "D",
       "routed_by": "path",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1792,7 +3996,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1805,7 +4019,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1818,7 +4042,17 @@
       "entity_routed": true,
       "tier": "A",
       "routed_by": "path",
-      "profile_key": "table_list"
+      "profile_key": "table_list",
+      "commentary_profile_key": "generic_list",
+      "narrative_policy": "generic_data_summary",
+      "data_shape": "generic_list",
+      "supported_formats": "text|table|chart|tree|kpi|dashboard",
+      "default_view": null,
+      "has_narrative": true,
+      "has_limitations": true,
+      "has_recommendations": true,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1831,7 +4065,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1844,7 +4088,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     },
     {
       "method": "GET",
@@ -1857,7 +4111,17 @@
       "entity_routed": false,
       "tier": "C",
       "routed_by": "none",
-      "profile_key": "system"
+      "profile_key": "system",
+      "commentary_profile_key": null,
+      "narrative_policy": null,
+      "data_shape": "generic_list",
+      "supported_formats": "text|table",
+      "default_view": null,
+      "has_narrative": false,
+      "has_limitations": true,
+      "has_recommendations": false,
+      "has_shape_test": true,
+      "humanized_gaps": null
     }
   ]
 }
