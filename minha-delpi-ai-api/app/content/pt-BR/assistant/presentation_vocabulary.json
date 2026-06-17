@@ -459,10 +459,10 @@
       "raw_material_price_intelligence",
       "cost_impact_simulation",
       "sale_pricing",
-      "last_purchase",
-      "purchase_price_history",
-      "purchase_budget_history",
-      "purchase_list"
+      "product_last_purchase",
+      "product_purchase_price_history",
+      "product_purchase_budget_history",
+      "product_purchases"
     ],
     "tableAssemblyPathFragments": [
       "/analyser",
@@ -673,41 +673,41 @@
       },
       {
         "id": "tier_a_last_purchase",
-        "profile_key": "last_purchase",
+        "profile_key": "product_last_purchase",
         "path": "/products/10080001/last-purchase",
         "fixture": "product_last_purchase_10080001.json",
         "user_message": "última compra do produto 10080001",
-        "expected_presentation_profile": "last_purchase",
+        "expected_presentation_profile": "product_last_purchase",
         "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_purchase_price_history",
-        "profile_key": "purchase_price_history",
+        "profile_key": "product_purchase_price_history",
         "path": "/products/10080001/purchase-price-history",
         "fixture": "product_purchase_price_history_10080001.json",
         "user_message": "histórico de preço de compra do produto 10080001",
-        "expected_presentation_profile": "purchase_price_history",
+        "expected_presentation_profile": "product_purchase_price_history",
         "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_purchase_budget_history",
-        "profile_key": "purchase_budget_history",
+        "profile_key": "product_purchase_budget_history",
         "path": "/products/10080001/purchase-budget-history",
         "fixture": "product_purchase_budget_history_10080001.json",
         "user_message": "histórico de orçamento de compra do produto 10080001",
-        "expected_presentation_profile": "purchase_budget_history",
+        "expected_presentation_profile": "product_purchase_budget_history",
         "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       },
       {
         "id": "tier_a_purchase_list",
-        "profile_key": "purchase_list",
+        "profile_key": "product_purchases",
         "path": "/products/10080001/purchases",
         "fixture": "product_purchases_10080001.json",
         "user_message": "compras do produto 10080001",
-        "expected_presentation_profile": "purchase_list",
+        "expected_presentation_profile": "product_purchases",
         "expected_layout_mode": "single",
         "expected_visuals": ["text"]
       }

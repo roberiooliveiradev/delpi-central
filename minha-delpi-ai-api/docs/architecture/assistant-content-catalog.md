@@ -30,7 +30,7 @@ Wrappers especializados (mantêm API estável):
 | Arquivo | Domínio | Serviços principais |
 |---------|---------|-------------------|
 | `external_action_responses.json` | **`domainPredicates`** + **`systemPredicates`** + **`productSearchPredicates`** + `actionSelection` + `selectionReasons` | `ChatProductRoutePredicateService`, `ExternalActionResponseContentService` |
-| `operational_route_registry.json` | Catálogo declarativo DOCIE (`dispatchOrder`, `fallbackPolicies`, **`sqlReadiness`**, ~78 rotas, `match.productionOperationalKind` PB15, predicados, intent binding) | `OperationalRouteRegistryService`, `ExternalActionOperationalRouteSelectionService`, `ExternalActionSqlFallbackPolicyService`, `OperationalRouteRegistryLintService` |
+| `operational_route_registry.json` | Catálogo declarativo DOCIE (`dispatchOrder`, `fallbackPolicies`, **`sqlReadiness`**, ~78 rotas manuais + **`autoTierCRoutes`** geradas do OpenAPI, `match.productionOperationalKind` PB15, predicados, intent binding) | `OperationalRouteRegistryService`, `OperationalRouteRegistryGeneratorService`, `ExternalActionOperationalRouteSelectionService`, `ExternalActionSqlFallbackPolicyService`, `OperationalRouteRegistryLintService` |
 | `product_query_intent.json` | Marcadores de intenção operacional; **`intentProbes`** declarativos + pipeline detect/refine; **`routePredicates`**, **`playbookPredicates`**, **`subIntentPredicates`**, **`intentDetectPipeline`**, **`intentRefinementPipeline`**, **`singleScopeIntentMap`** (DOCIE Fase 11–17) | `ChatProductQueryIntentService`, `ChatProductQueryIntentDetectionService`, `ChatProductRoutePredicateService`, `OperationalRouteMatcherService` |
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
@@ -141,6 +141,16 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Dict fallback, preview de coleção e inspeção plana (características + limites de teste) → `presenter_content.generic`, `routePresentations.inspection`
 - Varredura final do presenter (estoque/fornecedor em `_present_items`, títulos stock/parents/structure, SQL/chart/KPI/erro API) → `presenter_content` + `product_operational_content`; ver [presenter-content-migration-audit.md](./presenter-content-migration-audit.md)
 - **Vocabulário SQL/temporal/sessão/web (jun/2026)** → bundles `*_vocabulary.json`, loaders `ChatAssistantVocabularyService`; ver [vocabulary-centralization-jun2026.md](./vocabulary-centralization-jun2026.md)
+
+## DOCIE — gates CI (jun/2026)
+
+| Script | Gate |
+|--------|------|
+| `scripts/lint_operational_route_registry.py --check` | Registry + vocabulário + cobertura tier C |
+| `scripts/generate_operational_route_registry.py --check` | `autoTierCRoutes` sincronizado com OpenAPI baseline |
+| `scripts/audit_presentation_path_ifs.py --check` | Apresentação entity-first (Fase 19) |
+
+Workflow: `.github/workflows/minha-delpi-ai-api-docie.yml`. Regenerar tier C após reimport OpenAPI: `generate_operational_route_registry.py --write`.
 
 ## Pendente (baixa prioridade)
 

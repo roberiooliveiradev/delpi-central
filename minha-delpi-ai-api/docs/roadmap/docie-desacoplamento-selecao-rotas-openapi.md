@@ -1,9 +1,9 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fases 0–15 concluídas · **Fases 16–20** → meta 100% desacoplamento rotas OpenAPI  
+**Status:** Fases 0–20 concluídas · **100%** desacoplamento rotas OpenAPI (seleção + params tier C)  
 **Data:** jun/2026  
-**Commit de referência:** `e177e603` (playbookPredicates complexos) · `f6167aaa` (routePredicates) · `d598efcc` (routeSegment)  
+**Commit de referência:** `b756a2be` (Fase 20 autoTierCRoutes) · `3a24f31c` (Fase 19 apresentação entity-first)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
 **Regras Cursor:** `chat-intelligence-base.mdc`, `centralized-rules-first.mdc`, `assistant-content-json.mdc`, `clean-architecture-chat-api.mdc`
 
@@ -577,7 +577,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 **DoD Fase 16:** nova rota GET date/branch/limit = só registry + estratégia JSON; pytest builder + lint verdes.
 
-### Fase 17 — probes intent 100% JSON 🟡
+### Fase 17 — probes intent 100% JSON ✅
 
 | Entrega | Status |
 |---------|--------|
@@ -710,7 +710,7 @@ grep select_production_operational / _phase_production_operational → só wrapp
 | 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` zerado (flags matcher + JSON) | ✅ |
 | 3 | **Zero** métodos `select_product_*` / wrappers legados no dispatch | ✅ |
 | 4 | Novo provider OpenAPI **sem alterar Python** — registry + import + allowed actions | ✅ rotas registry |
-| 5 | Documentação onda 8 / audit / catalog atualizadas | 🟡 em curso |
+| 5 | Documentação onda 8 / audit / catalog atualizadas | ✅ |
 | 6 | Homologação manual produto + PB15 | ⬜ pendente |
 
 ---
@@ -738,9 +738,9 @@ grep select_production_operational / _phase_production_operational → só wrapp
 | C — Intent produto | Playbook/rota JSON | sub-intents + `detect()` |
 | D — Serviços paralelos | Consolidados no motor operacional | refinamento + semântico (necessários) |
 | E — JSON duplicado | `productRouteRanking` removido | — |
-| F — Apresentação | Presenters api-delpi | Fase 13 |
-| **DOCIE seleção rotas** | **~92%** | Fase 15 + Fases 16–20 → 100% |
-| **Stack chat provider-agnóstica** | **~72%** | + Fase 13 apresentação |
+| F — Apresentação | Entity-first + gate Fase 19 | — |
+| **DOCIE seleção rotas** | **100%** (Fases 0–20) | — |
+| **Stack chat provider-agnóstica** | **~85%** | Apresentação humanizada Playbook 13 |
 
 ---
 

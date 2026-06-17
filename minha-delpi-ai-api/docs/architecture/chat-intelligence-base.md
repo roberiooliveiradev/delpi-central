@@ -520,17 +520,22 @@ Motor canônico para fast paths operacionais:
 
 | Componente | Papel |
 |------------|-------|
-| `operational_route_registry.json` | Catálogo declarativo (`dispatchOrder`, rotas por `priority`, `intentBinding`, `customPredicate`) |
+| `operational_route_registry.json` | Catálogo declarativo (`dispatchOrder`, rotas manuais, **`autoTierCRoutes`**, `intentBinding`, `customPredicate`) |
+| `OperationalRouteRegistryGeneratorService` | Gera `autoTierCRoutes` a partir do OpenAPI baseline (Fase 20) |
 | `ExternalActionOperationalRouteSelectionService` | Motor registry — produto, PB15, suprimentos KPI, dashboards produção (v2026.06.8+) |
 | `OperationalRouteMatcherService` | Predicados JSON + allowlist `customPredicate` |
 | `product_query_intent.json` | Vocabulário único de intenção produto (substitui `productRouteRanking.*`) |
 | `ExternalActionOperationalRouteSelectionService.select_product_with_code` | Rotas de produto com código via registry (substitui ranking legado) |
 
-Ordem no dispatch: refinamentos de sessão → **registry** (`dispatchOrder`: produção operacional → rotas → domínios → intent-bound → **sqlFallback** → semântico).
+Ordem no dispatch: refinamentos de sessão → **registry** (`dispatchOrder`: operacional → domínios → intent-bound → **sqlFallback** → **autoTierCRoutes** → semântico).
 
 Documentação completa: [`../roadmap/docie-desacoplamento-selecao-rotas-openapi.md`](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md).
 
-Lint CI: `scripts/lint_operational_route_registry.py --check` (workflow `.github/workflows/minha-delpi-ai-api-docie.yml`).
+Gates CI (workflow `.github/workflows/minha-delpi-ai-api-docie.yml`):
+
+- `scripts/lint_operational_route_registry.py --check`
+- `scripts/generate_operational_route_registry.py --check`
+- `scripts/audit_presentation_path_ifs.py --check`
 
 O `ExternalActionSelectionService` resolve a action **antes** do LLM quando o fast path operacional está ativo. Ordem resumida:
 
