@@ -34,11 +34,15 @@ jobs:
       - name: Lint DOCIE Fase 19 — apresentação entity-first
         run: PYTHONPATH=. python scripts/audit_presentation_path_ifs.py --check
 
+      - name: Lint DOCIE Fase 20 — autoTierCRoutes sincronizado
+        run: PYTHONPATH=. python scripts/generate_operational_route_registry.py --check
+
       - name: Testes registry, fallback SQL e seleção operacional
         run: |
           PYTHONPATH=. pytest \
             tests/unit/scripts/test_lint_operational_route_registry.py \
             tests/unit/domain/services/test_operational_route_registry_service.py \
+            tests/unit/domain/services/test_operational_route_registry_generator_service.py \
             tests/unit/application/services/test_external_action_sql_fallback_policy_service.py \
             tests/unit/application/services/test_external_action_registry_dispatch_phase_service.py \
             tests/unit/application/services/test_action_selection_content.py \

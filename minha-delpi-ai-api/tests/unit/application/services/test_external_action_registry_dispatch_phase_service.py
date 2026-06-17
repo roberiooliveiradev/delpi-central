@@ -57,6 +57,7 @@ def test_dispatch_order_matches_registry() -> None:
         "domainRoutes",
         "intentBoundRoutes",
         "sqlFallback",
+        "autoTierCRoutes",
         "semanticFallback",
     ]
 
@@ -128,3 +129,31 @@ def test_intent_bound_routes_run_after_domain_routes() -> None:
     assert selected is not None
     assert selected["arguments"]["actionId"] == "stock-action"
     route_selection.select_intent_bound_route.assert_called_once()
+
+
+def test_auto_tier_c_routes_run_before_semantic_fallback() -> None:
+    route_selection = MagicMock()
+    route_selection.select_operational_registry.return_value = None
+    route_selection.select_department_kpi.return_value = None
+    route_selection.select_lmp.return_value = None
+    route_selection.select_kpi_without_product.return_value = None
+    route_selection.select_intent_bound_route.return_value = None
+    route_selection.select_auto_tier_c.return_value = {
+        "name": "execute_external_action",
+        "arguments": {"actionId": "health", "parameters": {}},
+    }
+
+    service = ExternalActionRegistryDispatchPhaseService(route_selection)
+    selected = service.run(
+        _context(
+            message="status da aplicacao",
+            normalized="status da aplicacao",
+            product_code=None,
+        ),
+        callbacks=_callbacks(),
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "health"
+    route_selection.select_auto_tier_c.assert_called_once()
+    route_selection.select_generic.assert_not_called()

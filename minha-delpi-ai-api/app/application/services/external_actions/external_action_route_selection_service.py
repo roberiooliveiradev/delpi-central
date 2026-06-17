@@ -496,6 +496,25 @@ class ExternalActionRouteSelectionService:
             build_date_branch_parameters=build_date_branch_parameters,
         )
 
+    def select_auto_tier_c(
+        self,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        previous_messages: list | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        rank_candidates: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+    ) -> dict | None:
+        return self._operational_route.select_auto_tier_c(
+            message,
+            allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+            rank_candidates=rank_candidates,
+            build_date_branch_parameters=build_date_branch_parameters,
+        )
+
     @classmethod
     def clamp_max_depth_for_path(cls, value: int, path: str) -> int:
         return ExternalActionProductRouteCatalogService.clamp_max_depth_for_path(

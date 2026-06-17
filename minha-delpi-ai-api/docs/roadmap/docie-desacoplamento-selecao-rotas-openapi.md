@@ -615,6 +615,19 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 **DoD Fase 19:** zero condicionais por path literal em domain/application de apresentação; tier A só perfil JSON.
 
+### Fase 20 — auto-cobertura tier C ✅
+
+| Entrega | Status |
+|---------|--------|
+| `OperationalRouteRegistryGeneratorService` (OpenAPI → `autoTierCRoutes`) | ✅ |
+| `scripts/generate_operational_route_registry.py` (`--write` / `--check`) | ✅ |
+| Fase `autoTierCRoutes` no dispatch (antes de `semanticFallback`) | ✅ |
+| `route_by_operation_id` + parâmetros declarativos por rota tier C | ✅ |
+| Lint DOCIE valida cobertura tier C + sync do gerador | ✅ |
+| CI DOCIE executa `--check` do gerador | ✅ |
+
+**DoD Fase 20:** operação GET tier C coberta em `autoTierCRoutes` após reimport OpenAPI + `generate_operational_route_registry.py --write`; nova rota tier C exige só reimport, agente e regen JSON — sem PR Python.
+
 ---
 
 ### Roadmap 100% — Fases 16–20
@@ -634,6 +647,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 ```text
 lint_operational_route_registry.py --check
+generate_operational_route_registry.py --check
 audit_presentation_path_ifs.py --check
 audit_presentation_coverage.py --check-profiles  → tier A/B 100%
 smokes PB15 + product routes + chat_intelligence_regression

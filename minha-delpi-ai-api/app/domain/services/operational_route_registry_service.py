@@ -32,19 +32,45 @@ class OperationalRouteRegistryService:
         return [str(item).strip() for item in order if str(item).strip()]
 
     @classmethod
-    def routes(cls) -> list[dict[str, Any]]:
+    def manual_routes(cls) -> list[dict[str, Any]]:
         routes = _registry_content().get("routes")
 
         if not isinstance(routes, list):
             return []
 
-        normalized = [route for route in routes if isinstance(route, dict)]
+        return [route for route in routes if isinstance(route, dict)]
+
+    @classmethod
+    def auto_tier_c_routes(cls) -> list[dict[str, Any]]:
+        routes = _registry_content().get("autoTierCRoutes")
+
+        if not isinstance(routes, list):
+            return []
+
+        return [route for route in routes if isinstance(route, dict)]
+
+    @classmethod
+    def routes(cls) -> list[dict[str, Any]]:
+        normalized = cls.manual_routes()
 
         return sorted(
             normalized,
             key=lambda route: int(route.get("priority") or 0),
             reverse=True,
         )
+
+    @classmethod
+    def route_by_operation_id(cls, operation_id: str) -> dict[str, Any] | None:
+        target = str(operation_id or "").strip()
+
+        if not target:
+            return None
+
+        for route in cls.auto_tier_c_routes():
+            if str(route.get("operationId") or "").strip() == target:
+                return route
+
+        return None
 
     @classmethod
     def route_by_production_operational_kind(cls, kind: str) -> dict[str, Any] | None:

@@ -166,6 +166,10 @@ class ExternalActionRegistryDispatchPhaseService:
                 callbacks,
                 state=state,
             ),
+            "autoTierCRoutes": lambda state: self._phase_auto_tier_c_routes(
+                ctx,
+                callbacks,
+            ),
             "semanticFallback": lambda state: self._phase_semantic_fallback(
                 ctx,
                 callbacks,
@@ -430,6 +434,26 @@ class ExternalActionRegistryDispatchPhaseService:
                 return None
 
         return None
+
+    def _phase_auto_tier_c_routes(
+        self,
+        ctx: RegistryDispatchContext,
+        callbacks: RegistryDispatchCallbacks,
+    ) -> dict | None:
+        if ChatOperationalParameterService.should_block_semantic_action_fallback(
+            ctx.message,
+            conversation_context=ctx.conversation_context,
+        ):
+            return None
+
+        return self._route_selection.select_auto_tier_c(
+            ctx.message,
+            ctx.allowed_action_ids,
+            previous_messages=ctx.previous_messages,
+            candidates_loader=callbacks.candidates_loader,
+            rank_candidates=callbacks.rank_candidates,
+            build_date_branch_parameters=callbacks.build_date_branch_parameters,
+        )
 
     def _phase_semantic_fallback(
         self,
