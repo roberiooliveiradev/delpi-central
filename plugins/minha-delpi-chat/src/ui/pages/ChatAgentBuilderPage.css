@@ -5,34 +5,15 @@
 
 .mdc-chat-agent-builder {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   min-height: 100vh;
   height: 100%;
   background: var(--mdc-bg);
   color: var(--mdc-text);
 }
 
-.mdc-chat-agent-builder__topbar {
-  grid-template-columns: auto minmax(0, 1fr);
-  min-height: 3rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-}
-
 .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__title {
   justify-self: center;
-}
-
-.mdc-chat-agent-builder__actions-bar {
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 2.85rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  background: color-mix(in srgb, var(--mdc-bg) 98%, transparent);
-}
-
-.mdc-chat-agent-builder__actions-bar .mdc-chat-ws-topbar__actions {
-  justify-content: flex-end;
-  width: 100%;
-  max-width: none;
 }
 
 .mdc-chat-agent-builder__topbar-actions {
@@ -1599,13 +1580,9 @@
     line-height: 1.35;
   }
 
-  .mdc-chat-agent-builder__actions-bar {
-    padding: 0.35rem 0.65rem;
-  }
-
-  .mdc-chat-agent-builder__actions-bar .mdc-chat-ws-topbar__actions {
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__actions {
     flex-wrap: nowrap;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 0.3rem;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -1614,12 +1591,11 @@
     padding-bottom: 0.05rem;
   }
 
-  .mdc-chat-agent-builder__actions-bar .mdc-chat-ws-topbar__actions::-webkit-scrollbar {
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__actions::-webkit-scrollbar {
     display: none;
   }
 
-  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn,
-  .mdc-chat-agent-builder__actions-bar .mdc-chat-ws-toolbar-btn {
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn {
     flex: 0 0 auto;
     width: 2.25rem;
     min-width: 2.25rem;
@@ -1627,8 +1603,7 @@
     height: 2.25rem;
   }
 
-  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn > span,
-  .mdc-chat-agent-builder__actions-bar .mdc-chat-ws-toolbar-btn > span {
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn > span {
     display: none;
   }
 

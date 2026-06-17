@@ -1356,12 +1356,7 @@ export function ChatAgentBuilderPage({
             <small>Rascunho — salve para testar com fontes e publicar</small>
           )}
         </div>
-      </header>
 
-      <header
-        className="mdc-chat-ws-topbar mdc-chat-agent-builder__actions-bar"
-        aria-label="Ações do agente"
-      >
         <div className="mdc-chat-ws-topbar__actions mdc-chat-agent-builder__topbar-actions">
           {canImportAgent ? (
             <>

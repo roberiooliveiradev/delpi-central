@@ -1,0 +1,142 @@
+.portal-help-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.portal-help-tooltip--wrap {
+  cursor: help;
+}
+
+.portal-help-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: help;
+  opacity: 0.72;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.portal-help-tooltip__trigger:hover,
+.portal-help-tooltip__trigger:focus-visible {
+  opacity: 1;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  outline: none;
+}
+
+.portal-help-tooltip__bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 10060;
+  min-width: 200px;
+  max-width: min(280px, 70vw);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 96%, var(--primary));
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(4px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.portal-help-tooltip:hover .portal-help-tooltip__bubble,
+.portal-help-tooltip:focus-within .portal-help-tooltip__bubble,
+.portal-help-tooltip--open .portal-help-tooltip__bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.portal-help-tooltip--wrap .portal-help-tooltip__bubble {
+  left: 0;
+  transform: translateY(4px);
+}
+
+.portal-help-tooltip--wrap:hover .portal-help-tooltip__bubble,
+.portal-help-tooltip--wrap:focus-within .portal-help-tooltip__bubble,
+.portal-help-tooltip--wrap.portal-help-tooltip--open .portal-help-tooltip__bubble {
+  transform: translateY(0);
+}
+
+.portal-help-tooltip--right .portal-help-tooltip__bubble {
+  top: 50%;
+  bottom: auto;
+  left: calc(100% + 8px);
+  transform: translateY(-50%) translateX(4px);
+}
+
+.portal-help-tooltip--right:hover .portal-help-tooltip__bubble,
+.portal-help-tooltip--right:focus-within .portal-help-tooltip__bubble,
+.portal-help-tooltip--right.portal-help-tooltip--open .portal-help-tooltip__bubble {
+  transform: translateY(-50%) translateX(0);
+}
+
+.portal-help-tooltip--right.portal-help-tooltip--wrap .portal-help-tooltip__bubble {
+  left: calc(100% + 8px);
+  transform: translateY(-50%) translateX(4px);
+}
+
+.portal-help-tooltip--right.portal-help-tooltip--wrap:hover .portal-help-tooltip__bubble,
+.portal-help-tooltip--right.portal-help-tooltip--wrap:focus-within .portal-help-tooltip__bubble,
+.portal-help-tooltip--right.portal-help-tooltip--wrap.portal-help-tooltip--open
+  .portal-help-tooltip__bubble {
+  transform: translateY(-50%) translateX(0);
+}
+
+.portal-help-tooltip--bottom .portal-help-tooltip__bubble {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: 0;
+  transform: translateY(4px);
+}
+
+.portal-help-tooltip--bottom:hover .portal-help-tooltip__bubble,
+.portal-help-tooltip--bottom:focus-within .portal-help-tooltip__bubble,
+.portal-help-tooltip--bottom.portal-help-tooltip--open .portal-help-tooltip__bubble {
+  transform: translateY(0);
+}
+
+.portal-help-tooltip--wrap:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.portal-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (max-width: 1024px) {
+  .portal-help-tooltip__bubble {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface);
+  }
+}
