@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado em **12/06/2026** — sincronização doc↔código: Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial, catálogo OpenAPI (regenerar pós-deploy).
+> Atualizado em **16/06/2026** — refatoração frontend MFE (PR-1–21), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
 
 ## Visão geral
 
@@ -16,6 +16,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Backend README | [minha-delpi-ai-api/README.md](../../../minha-delpi-ai-api/README.md) |
 | Plugin README | [plugins/minha-delpi-chat/README.md](../../../plugins/minha-delpi-chat/README.md) |
 | **Refatoração frontend (plugin)** | [plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) |
+| **Estrutura de componentes (MFE)** | [plugins/minha-delpi-chat/docs/component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) |
 | Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
@@ -40,6 +41,18 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - Inteligência configurável: RAG híbrido, rerank, loop agentic, cache de embeddings (admin)
 - **Pipeline operacional (Ondas 6–7):** fast path (slim prompt), warm-up Ollama, seleção heurística de actions OpenAPI (produto/search/OVs/giro/LMP/SQL), resposta direta sem LLM (produto/search/OVs/LMP/SQL), metadados `intelligence` (timings, action, pipeline)
 - Timeline de mensagens (estilo mensageiro), pin no topo durante stream, primeira pergunta visível ao enviar
+
+### Refatoração frontend (jun/2026)
+
+Fases **A–F** concluídas (PR-1–21): primitivos em `shared/`, apresentação rica em `presentation/`, composer, message, workspace; tokens CSS; CI com `npm run build`; stubs legados na raiz para compatibilidade.
+
+| Doc | Conteúdo |
+|-----|----------|
+| [frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) | Backlog PR-1–21, inventário, checklist visual |
+| [component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) | Mapa de pastas feature e re-exports |
+| [rich-presentation-css.md](../../../plugins/minha-delpi-chat/docs/rich-presentation-css.md) | CSS compartilhado tabela/gráfico/KPI |
+
+Pendências opcionais: mover `ChatMessageList` para `message/`, remover stubs `@deprecated`, checklist F4 manual.
 
 ### Painel administrativo
 

@@ -13,6 +13,7 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 | Skills (API) | [../../minha-delpi-ai-api/docs/api/11-skills.md](../../minha-delpi-ai-api/docs/api/11-skills.md) |
 | Admin (componentes) | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
 | **Refatoração frontend (roadmap)** | [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md) |
+| Estrutura de componentes | [docs/component-structure.md](docs/component-structure.md) |
 | CSS apresentação rica | [docs/rich-presentation-css.md](docs/rich-presentation-css.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
@@ -59,7 +60,7 @@ src/
     components/workspace/     # WorkspaceFileCard, dropzone, ingest CSS
 ```
 
-Ver roadmap de refatoração frontend: [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md).
+Ver roadmap: [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md) · mapa de pastas: [docs/component-structure.md](docs/component-structure.md).
 
 ## Experiência do usuário (chat)
 

@@ -1,24 +1,2 @@
-.mdc-stack-section {
-  margin: 0;
-  padding: 0;
-}
-
-.mdc-stack-section__title {
-  display: flex;
-  align-items: center;
-  gap: var(--mdc-space-2);
-  margin: 0 0 var(--mdc-space-2);
-  font-size: 1.0625rem;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: 0.01em;
-  text-transform: none;
-  color: var(--mdc-chat-prose, var(--mdc-text, #e8eaed));
-}
-
-.mdc-stack-section__rule {
-  flex: 1;
-  height: 1px;
-  background: var(--mdc-border-subtle, rgba(255, 255, 255, 0.14));
-}
-
+/** @deprecated Styles live in `./message/AssistantStackSection.css` */
+@import "./message/AssistantStackSection.css";

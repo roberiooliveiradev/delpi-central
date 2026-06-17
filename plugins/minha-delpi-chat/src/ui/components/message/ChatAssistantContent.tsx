@@ -21,7 +21,7 @@ import {
   planUsesHumanizedSections,
 } from "../presentationStackPlan";
 import { useAssistantContentChrome } from "./useAssistantContentChrome";
-import { useAssistantContentSegments } from "../useAssistantContentSegments";
+import { useAssistantContentSegments } from "./useAssistantContentSegments";
 
 import "./ChatAssistantContent.css";
 import "../presentation/rich-presentation-shared.css";

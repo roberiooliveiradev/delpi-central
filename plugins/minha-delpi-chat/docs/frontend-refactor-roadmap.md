@@ -26,17 +26,19 @@ O chat principal acumula **~160 componentes** na raiz de `src/ui/components/`, c
 
 ```text
 src/ui/
-├── styles/                    # (futuro) tokens + overlay + menu — barrel único
+├── styles/                    # tokens + overlay + menu — barrel ui/styles/index.css
 ├── layout/                    # chat-layout, workspace-responsive, transitions
 ├── components/
-│   ├── shared/                # primitivos cross-feature
-│   │   ├── overlay/           # AnchoredMenuPortal, useAnchoredMenuLayout
-│   │   ├── composer/          # ComposerOptionSelector
-│   │   ├── menus/             # ActionMenuPanel
-│   │   └── modal/             # (futuro) ChatModal
-│   ├── admin/shared/          # já maduro — referência
-│   └── [feature]/             # ChatMessageList, ChatRichChart, …
+│   ├── shared/                # primitivos cross-feature (overlay, modal, menus)
+│   ├── presentation/          # ChatRich* + rich-presentation-shared.css
+│   ├── composer/              # ChatInput, mention, selectors
+│   ├── message/               # ChatAssistantContent, registry, segmentos
+│   ├── workspace/             # WorkspaceFile*, ingest CSS
+│   ├── admin/shared/          # primitivos admin — referência
+│   └── [legado raiz]          # ChatMessageList, Sidebar, … (ver component-structure.md)
 ```
+
+Mapa detalhado: [`component-structure.md`](./component-structure.md).
 
 ### Princípios
 
@@ -212,7 +214,19 @@ PR-17 ✅  C5/D5/E4 — rich-presentation-shared consolidado, doc primitivos, ta
 PR-18 ✅  D3/E5 — pasta presentation/ + admin mobile (AdminDataTable card mode)
 PR-19 ✅  D3 composer/ + C3 hex + D4 dropzone paridade
 PR-20 ✅  D3 message/workspace + F3 CI build gate
+PR-21 ✅  C3 hex chips · message/ useAssistantContentSegments + AssistantStackSection · docs component-structure
 ```
+
+### Fase concluída (jun/2026)
+
+Fases **A–F** do backlog principal estão entregues (PR-1–20). Pendências opcionais:
+
+- **Raiz → message/** — `ChatMessageList`, hooks de segmento restantes na raiz
+- **C3 residual** — fallbacks hex em `var(--token, #hex)` (cosmético; tokens existem em `index.css`)
+- **F4** — checklist visual manual §7
+- **Stubs legados** — remover após migrar todos os imports (ver [`component-structure.md`](./component-structure.md))
+
+---
 
 ---
 
@@ -244,6 +258,7 @@ PR-20 ✅  D3 message/workspace + F3 CI build gate
 | Prosa/markdown assistente | `assistantProseRendering.ts` (canônico MFE) |
 | Apresentação rica API | `chat-assistant-content-presentation.md` (API) |
 | CSS apresentação rica (MFE) | `docs/rich-presentation-css.md` |
+| Estrutura feature folders | `docs/component-structure.md` |
 
 ---
 
@@ -254,7 +269,7 @@ PR-20 ✅  D3 message/workspace + F3 CI build gate
 | Componentes em `shared/` (excl. admin) | 21 arquivos | ≥15 (overlay + modal + menus) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
-| Arquivos CSS com hex fora de token (chat) | ~8 | 0 (superfície/texto) |
+| Arquivos CSS com hex fora de token (chat) | ~5 (só fallbacks `var(--*, #…)`) | 0 (superfície/texto) |
 | Duplicação selector composer | 0 | 0 ✅ |
 
 ---

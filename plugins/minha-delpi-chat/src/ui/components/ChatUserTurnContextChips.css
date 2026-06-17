@@ -15,9 +15,9 @@
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--mdc-color-text-secondary, #9db0d0);
-  background: rgba(148, 163, 184, 0.12);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: var(--mdc-color-text-secondary, var(--mdc-text-muted));
+  background: color-mix(in srgb, var(--mdc-text-muted) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mdc-text-muted) 18%, transparent);
 }
 
 .mdc-chat-user-turn-context__chip span {
@@ -27,13 +27,13 @@
 }
 
 .mdc-chat-user-turn-context__chip--agent {
-  color: #93c5fd;
-  background: rgba(59, 130, 246, 0.14);
-  border-color: rgba(59, 130, 246, 0.28);
+  color: var(--mdc-primary, var(--mdc-chart-series-10));
+  background: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, transparent);
 }
 
 .mdc-chat-user-turn-context__chip--project {
-  color: #cbd5e1;
-  background: rgba(100, 116, 139, 0.18);
-  border-color: rgba(100, 116, 139, 0.28);
+  color: var(--mdc-text-muted);
+  background: color-mix(in srgb, var(--mdc-text-muted) 18%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-text-muted) 28%, transparent);
 }

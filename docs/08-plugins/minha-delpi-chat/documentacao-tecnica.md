@@ -279,7 +279,7 @@ plugins/minha-delpi-chat/src/
 
 Doc apresentação: [`chat-assistant-content-presentation.md`](../../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md).
 
-**Refatoração frontend (componentes compartilhados, CSS, tokens):** [`frontend-refactor-roadmap.md`](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md).
+**Refatoração frontend (componentes compartilhados, CSS, tokens):** [`frontend-refactor-roadmap.md`](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) · mapa de pastas: [`component-structure.md`](../../../plugins/minha-delpi-chat/docs/component-structure.md).
 
 ### 6.4 Painel administrativo
 
@@ -509,6 +509,7 @@ Perfis dev/prod documentados: [`chat-intelligence-settings-profiles.md`](../../.
 | [admin roadmap](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) | Painel admin (concluído) |
 | [agentes roadmap](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) | Gestão de agentes |
 | [frontend refactor roadmap](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) | Componentes shared, CSS, tokens, modais |
+| [component structure](../../../plugins/minha-delpi-chat/docs/component-structure.md) | Pastas feature (shared, presentation, message, …) |
 
 ### Testes e homologação
 

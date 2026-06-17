@@ -8,7 +8,7 @@ import { ChatRichDashboard } from "../presentation/ChatRichDashboard";
 import { ChatRichKpi } from "../presentation/ChatRichKpi";
 import { ChatRichTable } from "../presentation/ChatRichTable";
 import { ChatRichTree } from "../presentation/ChatRichTree";
-import { AssistantStackSection } from "../AssistantStackSection";
+import { AssistantStackSection } from "./AssistantStackSection";
 import { ChatMarkdown } from "../ChatMarkdown";
 import { ChatDecisionCard } from "../ChatDecisionCard";
 
