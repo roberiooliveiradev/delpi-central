@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { ChatPresentation } from "../../../data/api/chatTypes";
-import { buildCategoryFilterOptions } from "../presentationCategoryFilter";
-import { buildFieldLabelsFromTableColumns } from "../presentationFieldLabels";
+import { buildCategoryFilterOptions } from "./pipeline/presentationCategoryFilter";
+import { buildFieldLabelsFromTableColumns } from "./pipeline/presentationFieldLabels";
 
 describe("ChatRichTable filter labels", () => {
   const columns: Extract<ChatPresentation, { type: "table" }>["columns"] = [

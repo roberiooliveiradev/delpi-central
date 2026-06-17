@@ -1,9 +1,9 @@
-import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatPresentation, ChatToolCall } from "../../../../data/api/chatTypes";
 
-import { orderVisualSegments, resolveVisualOrderFromToolCalls } from "./message/assistantContentLayout";
-import { normalizeChartPresentation } from "./chartPresentationNormalize";
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
-import { parseMarkdownAndCodeSegments } from "./message/assistantContentSegments";
+import { orderVisualSegments, resolveVisualOrderFromToolCalls } from "../../message/assistantContentLayout";
+import { normalizeChartPresentation } from "../../chartPresentationNormalize";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
+import { parseMarkdownAndCodeSegments } from "../../message/assistantContentSegments";
 import type { StackSectionChrome } from "./presentationStackSections";
 import type { StackPresentationPlan } from "./presentationStackPlan";
 import {
@@ -11,7 +11,7 @@ import {
   routeFraming,
   routeTitle,
   type ProductRouteKey,
-} from "../../content/operationalPresentationContent";
+} from "../../../../content/operationalPresentationContent";
 import { dedupeTableSegments } from "./presentationTableDedup";
 
 export type { ProductRouteKey };

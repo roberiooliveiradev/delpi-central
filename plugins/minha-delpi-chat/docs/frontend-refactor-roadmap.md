@@ -220,6 +220,7 @@ PR-23 ✅  message/ assistantProseRendering (canônico prosa)
 PR-24 ✅  imports canônicos message/* + shared/overlay; preview builder usa chat-landing
 PR-25 ✅  presentation/segmentBuilders/ (stack, renderPlan, visual collector, …)
 PR-26 ✅  remoção stubs legados + CI paths + barrel composer
+PR-27 ✅  presentation/pipeline/ — módulos presentation*.ts da raiz
 ```
 
 ### Fase concluída (jun/2026)

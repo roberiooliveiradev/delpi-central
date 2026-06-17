@@ -1,5 +1,5 @@
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
-import { isSameTablePresentation } from "../../presentationTableDedup";
+import { isSameTablePresentation } from "../pipeline/presentationTableDedup";
 
 export function normalizeProseChunk(value: string): string {
   return value

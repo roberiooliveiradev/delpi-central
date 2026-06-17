@@ -1,6 +1,6 @@
-import type { ChatPresentation } from "../../data/api/chatTypes";
+import type { ChatPresentation } from "../../../../data/api/chatTypes";
 
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 
 export function tablePresentationSignature(
   presentation: Extract<ChatPresentation, { type: "table" }>,

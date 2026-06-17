@@ -7,10 +7,10 @@ import { formatCellValue, getAlignClass } from "../tableCellFormatting";
 import {
   applyCategoryFilter,
   buildCategoryFilterOptions,
-} from "../presentationCategoryFilter";
+} from "./pipeline/presentationCategoryFilter";
 import { formatChartColumnLabel } from "../chartAxisSelection";
-import { buildFieldLabelsFromTableColumns } from "../presentationFieldLabels";
-import { recordPresentationTelemetry } from "../presentationTelemetry";
+import { buildFieldLabelsFromTableColumns } from "./pipeline/presentationFieldLabels";
+import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import { ChatPresentationCopyButton } from "../ChatPresentationCopyButton";
 import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons";
 import { tablePresentationToMarkdown } from "../chatPresentation";

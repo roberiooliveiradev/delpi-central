@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildCanonicalStackSegments } from "./presentationStackBlueprint";
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 import { getStackPresentationPlanFromToolCalls, planUsesHumanizedSections } from "./presentationStackPlan";
 
 describe("presentationStackPlan humanized gating", () => {

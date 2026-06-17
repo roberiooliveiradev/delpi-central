@@ -23,7 +23,7 @@ import {
   resolveRouteTextDetailMarkdown,
   routeKeyFromSectionId,
   type RouteSectionGroup,
-} from "../presentationMultiRoute";
+} from "../presentation/pipeline/presentationMultiRoute";
 
 type AssistantContentRouteSectionProps = {
   group: RouteSectionGroup;

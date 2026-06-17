@@ -9,11 +9,11 @@ import {
   resolveInitialToolbarKind,
   shouldUsePerSectionFormatToolbar,
 } from "./assistantContentVisualFormats";
-import { renumberStackSectionTitles } from "../presentationStackSections";
+import { renumberStackSectionTitles } from "../presentation/pipeline/presentationStackSections";
 import {
   collectProductRouteBlocks,
   groupSegmentsByRouteSections,
-} from "../presentationMultiRoute";
+} from "../presentation/pipeline/presentationMultiRoute";
 import { isExplicitTextSessionMode } from "../chatPresentation";
 
 type UseAssistantContentSegmentsArgs = {

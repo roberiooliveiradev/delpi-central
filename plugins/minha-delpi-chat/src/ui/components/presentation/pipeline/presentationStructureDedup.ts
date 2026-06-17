@@ -1,11 +1,11 @@
-import type { ChatPresentation } from "../../data/api/chatTypes";
+import type { ChatPresentation } from "../../../../data/api/chatTypes";
 
 import {
   parentsTableTitleMarkers,
   structureTableTitleMarkers,
-} from "../../content/presentationVocabulary";
+} from "../../../../content/presentationVocabulary";
 
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 
 function metadataStructureDedupApplied(
   toolCalls: { metadata?: Record<string, unknown> }[],

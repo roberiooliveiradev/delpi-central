@@ -10,8 +10,8 @@ import type { AssistantContentSegment } from "./assistantContentTypes";
 import {
   isStackSectionVisible,
   renumberStackSectionTitles,
-} from "../presentationStackSections";
-import { isHierarchyDuplicateTable } from "../presentationStructureDedup";
+} from "../presentation/pipeline/presentationStackSections";
+import { isHierarchyDuplicateTable } from "../presentation/pipeline/presentationStructureDedup";
 import { expandTreeSegmentsToBlockTables } from "../treePresentationUtils";
 import {
   getPresentationDecisionFromToolCalls,
@@ -26,11 +26,11 @@ import {
   mapViewTokenToVisualKind,
   resolveInitialContentKindFromDecision,
   resolveVisualKindsFromDecision,
-} from "../presentationMetadataPolicy";
+} from "../presentation/pipeline/presentationMetadataPolicy";
 import {
   isMultiRouteProductPresentation,
   type ProductRouteKey,
-} from "../presentationMultiRoute";
+} from "../presentation/pipeline/presentationMultiRoute";
 import { resolveVisualOrderFromToolCalls } from "./assistantContentLayout";
 
 export type VisualFormatOption = {

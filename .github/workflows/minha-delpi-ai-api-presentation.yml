@@ -40,10 +40,10 @@ jobs:
           npm run test -- --run \
             src/ui/components/presentation/segmentBuilders/renderPlanSegmentBuilder.test.ts \
             src/ui/components/presentation/segmentBuilders/visualSegmentCollector.test.ts \
-            src/ui/components/presentationRenderHints.test.ts \
-            src/ui/components/presentationStructureDedup.test.ts \
+            src/ui/components/presentation/pipeline/presentationRenderHints.test.ts \
+            src/ui/components/presentation/pipeline/presentationStructureDedup.test.ts \
             src/ui/components/message/assistantContentSegments.test.ts \
-            src/ui/components/presentationStackPlan.humanized.test.ts
+            src/ui/components/presentation/pipeline/presentationStackPlan.humanized.test.ts
 
   presentation-coverage:
     runs-on: ubuntu-latest

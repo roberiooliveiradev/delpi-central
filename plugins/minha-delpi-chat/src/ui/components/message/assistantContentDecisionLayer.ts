@@ -4,7 +4,7 @@ import type { AssistantContentSegment } from "./assistantContentTypes";
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesSummaryThenEvidence,
-} from "../presentationStackPlan";
+} from "../presentation/pipeline/presentationStackPlan";
 import {
   getStoryPresentationFromToolCalls,
 } from "../chatPresentation";

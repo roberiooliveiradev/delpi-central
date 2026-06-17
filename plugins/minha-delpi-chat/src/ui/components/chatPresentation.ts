@@ -10,7 +10,7 @@ import type {
 } from "../../data/api/chatTypes";
 
 import { isNativeSingleViewSelection, resolveAssistantContentLayout } from "./message/assistantContentLayout";
-import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
+import { isHierarchyDuplicateTable } from "./presentation/pipeline/presentationStructureDedup";
 import { normalizeChartPresentation } from "./chartPresentationNormalize";
 
 export type PresentationPair = {

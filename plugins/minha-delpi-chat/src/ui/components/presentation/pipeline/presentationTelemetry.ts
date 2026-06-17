@@ -1,4 +1,4 @@
-import { recordAssistantHelpEvent } from "../../data/api/chatApi";
+import { recordAssistantHelpEvent } from "../../../../data/api/chatApi";
 
 /** Telemetria leve Playbook 09 Fase 6 — best-effort, não bloqueia UX. */
 export function recordPresentationTelemetry(

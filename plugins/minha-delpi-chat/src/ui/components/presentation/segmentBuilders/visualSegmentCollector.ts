@@ -5,7 +5,7 @@ import { normalizeChartPresentation } from "../../chartPresentationNormalize";
 import {
   dedupeTablePresentations,
   dedupeTableSegments,
-} from "../../presentationTableDedup";
+} from "../pipeline/presentationTableDedup";
 import { appendVisualSegment } from "./segmentDedupe";
 
 function isSuppressedToolCall(toolCall: ChatToolCall): boolean {

@@ -1,6 +1,6 @@
 import type { ChatPresentation, ChatStoryPresentation } from "../../../data/api/chatTypes";
 
-import type { StackSectionChrome } from "../presentationStackSections";
+import type { StackSectionChrome } from "../presentation/pipeline/presentationStackSections";
 
 export type AssistantContentSegment =
   | { kind: "decision"; presentation: ChatStoryPresentation }

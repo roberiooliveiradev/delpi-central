@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAssistantContentSegments } from "./message/assistantContentSegments";
+import { buildAssistantContentSegments } from "../../message/assistantContentSegments";
 import {
   buildMultiRouteStackSegments,
   collectProductRouteBlocks,
@@ -12,12 +12,12 @@ import {
 import {
   filterSegmentsByVisualKind,
   resolveAvailableVisualFormatOptions,
-} from "./message/assistantContentVisualFormats";
+} from "../../message/assistantContentVisualFormats";
 import {
   getDataCoverageNoticeFromToolCall,
   getDataCoverageNoticeFromToolCalls,
-} from "./chatPresentation";
-import { fixtureToolCalls } from "./testFixtures";
+} from "../../chatPresentation";
+import { fixtureToolCalls } from "../../testFixtures";
 
 describe("presentationMultiRoute", () => {
   it("detecta múltiplas rotas de produto", () => {

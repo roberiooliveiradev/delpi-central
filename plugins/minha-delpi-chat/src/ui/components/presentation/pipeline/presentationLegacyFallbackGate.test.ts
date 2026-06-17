@@ -3,24 +3,27 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import presentationVocabulary from "../../content/presentation_vocabulary.json";
+import presentationVocabulary from "../../../../content/presentation_vocabulary.json";
 
 const componentsDir = dirname(fileURLToPath(import.meta.url));
 
-const PRESENTATION_SCAN_MODULES = [
-  "message/assistantProseRendering.ts",
-  "chatPresentation.ts",
-  "presentationCategoryFilter.ts",
-  "presentationFieldLabels.ts",
-  "presentationInteractivityPolicy.ts",
-  "presentationMetadataPolicy.ts",
-  "presentationMultiRoute.ts",
-  "presentationStackBlueprint.ts",
-  "presentationStackPlan.ts",
-  "presentationStackSections.ts",
-  "presentationStructureDedup.ts",
-  "presentationTableDedup.ts",
-  "presentation/segmentBuilders/visualSegmentCollector.ts",
+const PRESENTATION_SCAN_MODULES: Array<{ path: string; vocabKey: string }> = [
+  { path: "../../message/assistantProseRendering.ts", vocabKey: "message/assistantProseRendering.ts" },
+  { path: "../../chatPresentation.ts", vocabKey: "chatPresentation.ts" },
+  { path: "presentationCategoryFilter.ts", vocabKey: "presentationCategoryFilter.ts" },
+  { path: "presentationFieldLabels.ts", vocabKey: "presentationFieldLabels.ts" },
+  { path: "presentationInteractivityPolicy.ts", vocabKey: "presentationInteractivityPolicy.ts" },
+  { path: "presentationMetadataPolicy.ts", vocabKey: "presentationMetadataPolicy.ts" },
+  { path: "presentationMultiRoute.ts", vocabKey: "presentationMultiRoute.ts" },
+  { path: "presentationStackBlueprint.ts", vocabKey: "presentationStackBlueprint.ts" },
+  { path: "presentationStackPlan.ts", vocabKey: "presentationStackPlan.ts" },
+  { path: "presentationStackSections.ts", vocabKey: "presentationStackSections.ts" },
+  { path: "presentationStructureDedup.ts", vocabKey: "presentationStructureDedup.ts" },
+  { path: "presentationTableDedup.ts", vocabKey: "presentationTableDedup.ts" },
+  {
+    path: "../segmentBuilders/visualSegmentCollector.ts",
+    vocabKey: "presentation/segmentBuilders/visualSegmentCollector.ts",
+  },
 ];
 
 function countPathIncludes(relativePath: string): number {
@@ -51,13 +54,13 @@ describe("presentationLegacyFallbackGate (Playbook 12 R20)", () => {
   });
 
   it("não adiciona path.includes fora dos módulos permitidos", () => {
-    for (const moduleName of PRESENTATION_SCAN_MODULES) {
-      const count = countPathIncludes(moduleName);
+    for (const { path, vocabKey } of PRESENTATION_SCAN_MODULES) {
+      const count = countPathIncludes(path);
 
-      if (allowedModules.has(moduleName)) {
+      if (allowedModules.has(vocabKey)) {
         const maxCount =
           baseline.pathIncludesByModule[
-            moduleName as keyof typeof baseline.pathIncludesByModule
+            vocabKey as keyof typeof baseline.pathIncludesByModule
           ] ?? 0;
 
         expect(count).toBeLessThanOrEqual(maxCount);

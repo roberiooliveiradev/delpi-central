@@ -11,7 +11,7 @@ import {
   type PresentationRenderPlan,
 } from "../../chatPresentation";
 import { stripPresentationSectionMarkers } from "../../chatMarkdown";
-import { dedupeTableSegments } from "../../presentationTableDedup";
+import { dedupeTableSegments } from "../pipeline/presentationTableDedup";
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
@@ -19,12 +19,12 @@ import {
   resolveTableRole,
   type StackPresentationPlan,
   type StackTableRole,
-} from "../../presentationStackPlan";
+} from "../pipeline/presentationStackPlan";
 import {
   buildStackSectionChrome,
   type StackSectionChrome,
   type StackSectionId,
-} from "../../presentationStackSections";
+} from "../pipeline/presentationStackSections";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;

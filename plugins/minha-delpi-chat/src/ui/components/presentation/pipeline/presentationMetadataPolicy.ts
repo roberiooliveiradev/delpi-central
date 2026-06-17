@@ -1,11 +1,11 @@
-import type { ChatPresentationDecision, ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatPresentationDecision, ChatToolCall } from "../../../../data/api/chatTypes";
 
-import type { AssistantVisualKind, ContentFormatKind } from "./message/assistantContentLayout";
+import type { AssistantVisualKind, ContentFormatKind } from "../../message/assistantContentLayout";
 import {
   getPresentationDecisionFromToolCalls,
   mapPresentationDecisionToViewFormat,
   type ViewFormat,
-} from "./chatPresentation";
+} from "../../chatPresentation";
 
 const CHART_VIEW_TOKENS = new Set([
   "chart",

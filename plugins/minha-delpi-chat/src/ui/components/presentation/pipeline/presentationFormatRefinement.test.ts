@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAssistantContentSegments } from "./message/assistantContentSegments";
-import { resolveAssistantContentLayout, shouldShowAllVisualSegments } from "./message/assistantContentLayout";
+import { buildAssistantContentSegments } from "../../message/assistantContentSegments";
+import { resolveAssistantContentLayout, shouldShowAllVisualSegments } from "../../message/assistantContentLayout";
 import {
   hasRichStackPresentation,
   resolveCommentaryTextBody,
-} from "./chatPresentation";
-import { resolveAvailableVisualFormatOptions } from "./message/assistantContentVisualFormats";
-import { fixtureToolCalls } from "./testFixtures";
+} from "../../chatPresentation";
+import { resolveAvailableVisualFormatOptions } from "../../message/assistantContentVisualFormats";
+import { fixtureToolCalls } from "../../testFixtures";
 
 describe("presentationFormatRefinement", () => {
   const stockTableRefinement = fixtureToolCalls([

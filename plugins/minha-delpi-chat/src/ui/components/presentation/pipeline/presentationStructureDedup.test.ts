@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAssistantContentSegments } from "./message/assistantContentSegments";
+import { buildAssistantContentSegments } from "../../message/assistantContentSegments";
 import {
   filterSegmentsWithoutHierarchyTableDuplicates,
   isHierarchyDuplicateTable,
   toolCallsHaveTree,
 } from "./presentationStructureDedup";
-import { fixtureToolCalls } from "./testFixtures";
+import { fixtureToolCalls } from "../../testFixtures";
 
 describe("presentationStructureDedup", () => {
   const structureTable = {

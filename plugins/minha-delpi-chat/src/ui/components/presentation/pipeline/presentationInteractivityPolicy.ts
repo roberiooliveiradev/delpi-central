@@ -1,10 +1,10 @@
-import type { ChatPresentationDecision, ChatToolCall } from "../../data/api/chatTypes";
-import presentationVocabulary from "../../content/presentation_vocabulary.json";
+import type { ChatPresentationDecision, ChatToolCall } from "../../../../data/api/chatTypes";
+import presentationVocabulary from "../../../../content/presentation_vocabulary.json";
 
 import {
   getPresentationDecisionFromToolCalls,
   mapPresentationDecisionToViewFormat,
-} from "./chatPresentation";
+} from "../../chatPresentation";
 
 type PostResponseChipVocabulary = {
   viewLabels: Record<string, string>;

@@ -5,7 +5,7 @@ import {
   dedupeTableSegments,
   isSameTablePresentation,
 } from "./presentationTableDedup";
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 
 const profileTable = {
   type: "table" as const,

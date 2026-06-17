@@ -1,5 +1,5 @@
-import type { ContentFormatKind } from "./message/assistantContentLayout";
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import type { ContentFormatKind } from "../../message/assistantContentLayout";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 
 export type StackSectionId =
   | "scope"

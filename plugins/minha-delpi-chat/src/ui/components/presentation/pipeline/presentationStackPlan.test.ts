@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { bucketTableSegmentsByRole } from "./message/assistantContentInterleave";
+import { bucketTableSegmentsByRole } from "../../message/assistantContentInterleave";
 import {
   getStackPresentationPlanFromToolCalls,
   inferTableRoleFromTitle,
   planUsesSummaryThenEvidence,
   resolveTableRole,
 } from "./presentationStackPlan";
-import { fixtureToolCalls } from "./testFixtures";
+import { fixtureToolCalls } from "../../testFixtures";
 
 describe("presentationStackPlan", () => {
   it("fallback legacy retorna other quando role ausente na API", () => {

@@ -1,4 +1,4 @@
-import type { StackSectionChrome } from "../presentationStackSections";
+import type { StackSectionChrome } from "../presentation/pipeline/presentationStackSections";
 
 import "./AssistantStackSection.css";
 

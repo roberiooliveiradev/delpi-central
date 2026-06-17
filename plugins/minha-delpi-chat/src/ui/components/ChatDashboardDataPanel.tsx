@@ -9,7 +9,7 @@ import {
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatRichChart } from "./presentation/ChatRichChart";
 import { ChatRichTable } from "./presentation/ChatRichTable";
-import { recordPresentationTelemetry } from "./presentationTelemetry";
+import { recordPresentationTelemetry } from "./presentation/pipeline/presentationTelemetry";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;

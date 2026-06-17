@@ -1,8 +1,8 @@
 import type { ChatPresentation } from "../../../data/api/chatTypes";
 
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { buildCanonicalStackSegments } from "../presentationStackBlueprint";
-import { isHierarchyDuplicateTable } from "../presentationStructureDedup";
+import { buildCanonicalStackSegments } from "../presentation/pipeline/presentationStackBlueprint";
+import { isHierarchyDuplicateTable } from "../presentation/pipeline/presentationStructureDedup";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
@@ -58,7 +58,7 @@ export function partitionCommentarySections(markdown: string): CommentarySection
 import {
   resolveTableRole,
   type StackTableRole,
-} from "../presentationStackPlan";
+} from "../presentation/pipeline/presentationStackPlan";
 
 function emptyRoleBuckets(): Record<StackTableRole, AssistantContentSegment[]> {
   return {

@@ -1,4 +1,4 @@
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../../data/api/chatTypes";
 
 import type { StackSectionId } from "./presentationStackSections";
 import {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
-import { buildCanonicalStackSegments } from "../../presentationStackBlueprint";
+import { buildCanonicalStackSegments } from "../pipeline/presentationStackBlueprint";
 import { buildSegmentsFromRenderPlan } from "./renderPlanSegmentBuilder";
 
 function parseMarkdown(prose: string): AssistantContentSegment[] {

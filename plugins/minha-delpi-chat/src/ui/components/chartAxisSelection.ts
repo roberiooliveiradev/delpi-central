@@ -1,7 +1,7 @@
 import {
   resolveFieldLabel,
   type FieldLabels,
-} from "./presentationFieldLabels";
+} from "./presentation/pipeline/presentationFieldLabels";
 
 export type ChartAxisHints = {
   preferY?: string[];

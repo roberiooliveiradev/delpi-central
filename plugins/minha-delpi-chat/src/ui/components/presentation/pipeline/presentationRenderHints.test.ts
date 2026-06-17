@@ -7,8 +7,8 @@ import {
   isApiPreparedMarkdown,
   shouldApplyClientMarkdownCompaction,
   stripRichUiRedundantProseFromMarkdown,
-} from "./chatPresentation";
-import { fixtureToolCalls } from "./testFixtures";
+} from "../../chatPresentation";
+import { fixtureToolCalls } from "../../testFixtures";
 
 describe("presentationRenderHints", () => {
   it("não recompacta markdown quando a API enviou textRenderMode compact", () => {

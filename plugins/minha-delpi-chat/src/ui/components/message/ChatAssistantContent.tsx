@@ -19,7 +19,7 @@ import {
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
-} from "../presentationStackPlan";
+} from "../presentation/pipeline/presentationStackPlan";
 import { useAssistantContentChrome } from "./useAssistantContentChrome";
 import { useAssistantContentSegments } from "./useAssistantContentSegments";
 

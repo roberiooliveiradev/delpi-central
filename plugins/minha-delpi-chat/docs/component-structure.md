@@ -11,7 +11,7 @@ src/ui/components/
 │   ├── modal/           # ChatModal
 │   ├── composer/        # ComposerOptionSelector, ChatInputPlusMenu
 │   └── menus/           # ActionMenuPanel, DropdownMenuTrigger
-├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, CSS)
+├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, pipeline/, CSS)
 ├── composer/            # ChatInput, mention menu, selectors formato/modo
 ├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
 ├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
@@ -44,14 +44,17 @@ Exceção CSS: `rich-presentation-shared.css` na raiz ainda reexporta `presentat
 | Barrel styles | `src/ui/styles/index.css` |
 | Apresentação rica | `presentation/rich-presentation-shared.css` — ver [`rich-presentation-css.md`](./rich-presentation-css.md) |
 | Segment builders | `presentation/segmentBuilders/` — stack, renderPlan, visual collector |
+| Pipeline apresentação | `presentation/pipeline/` — stack plan, dedup, metadata, labels, telemetry |
 | Overlay/modal | `shared/overlay/*`, `modal-layer.css` |
 | Responsivo global | `src/ui/layout/workspace-responsive.css` |
 
-## O que ainda fica na raiz (PR-22+)
+## O que ainda fica na raiz (PR-27+)
 
 Candidatos futuros a `message/`:
 
-- `chatPresentation.ts` (compartilhado com `presentation/` e builders na raiz)
+- `chatPresentation.ts` (hub compartilhado — consumido por `presentation/pipeline/` e `message/`)
+
+**Movido para `presentation/pipeline/` (PR-27):** stack plan, dedup, metadata, labels, category filter, telemetry, interactivity policy.
 
 **Já em `message/` (PR-21–23):** segmentos, `ChatMessageList`, `assistantProseRendering`.
 

@@ -33,7 +33,7 @@ import {
   parseMarkdownAndCodeSegments,
 } from "../presentation/segmentBuilders/sqlMarkdownNormalizer";
 import { collectVisualSegments } from "../presentation/segmentBuilders/visualSegmentCollector";
-import { filterSegmentsWithoutHierarchyTableDuplicates } from "../presentationStructureDedup";
+import { filterSegmentsWithoutHierarchyTableDuplicates } from "../presentation/pipeline/presentationStructureDedup";
 
 export {
   dedupeSqlFencesInMarkdown,

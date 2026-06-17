@@ -1,10 +1,10 @@
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../../data/api/chatTypes";
 
-import { stripPresentationSectionMarkers } from "./chatMarkdown";
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
-import type { CommentarySections } from "./message/assistantContentInterleave";
+import { stripPresentationSectionMarkers } from "../../chatMarkdown";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
+import type { CommentarySections } from "../../message/assistantContentInterleave";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
-import { buildSegmentsFromRenderPlan } from "./presentation/segmentBuilders/renderPlanSegmentBuilder";
+import { buildSegmentsFromRenderPlan } from "../segmentBuilders/renderPlanSegmentBuilder";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;

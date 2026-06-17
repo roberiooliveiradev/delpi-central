@@ -55,15 +55,15 @@ import {
   formatChartAxisValue,
   type FieldFormats,
   type FieldLabels,
-} from "../presentationFieldLabels";
+} from "./pipeline/presentationFieldLabels";
 import { ChatMarkdown } from "../ChatMarkdown";
 import { ExpandButton } from "../ChatExpandModal";
 import type { ChartViewState } from "../chartViewState";
-import { recordPresentationTelemetry } from "../presentationTelemetry";
+import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import {
   applyCategoryFilter,
   buildCategoryFilterOptions,
-} from "../presentationCategoryFilter";
+} from "./pipeline/presentationCategoryFilter";
 import { normalizeChartPresentation } from "../chartPresentationNormalize";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
