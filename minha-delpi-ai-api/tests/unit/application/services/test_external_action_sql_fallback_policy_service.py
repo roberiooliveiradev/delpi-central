@@ -5,6 +5,9 @@ from app.application.services.external_actions.external_action_sql_fallback_poli
     SqlFallbackRunState,
 )
 from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.application.services.chat_production_operational_action_readiness_service import (
+    ChatProductionOperationalActionReadinessService,
+)
 from app.domain.services.operational_route_registry_service import (
     OperationalRouteRegistryService,
 )
@@ -45,6 +48,78 @@ def test_production_sql_preflight_skips_when_rest_route_matches() -> None:
 
     assert selected is None
     select_sql.assert_not_called()
+
+
+def test_production_sql_rest_miss_skips_when_rest_action_ready() -> None:
+    policy = next(
+        policy
+        for policy in OperationalRouteRegistryService.fallback_policies()
+        if policy.get("id") == "productionSqlRestMiss"
+    )
+    repository = MagicMock()
+    repository.list_actions.return_value = [
+        {
+            "actionId": "api_delpi.get_production_schedule_today",
+            "operationId": "get_production_schedule_today",
+            "path": "/production/schedule/today",
+            "method": "GET",
+        }
+    ]
+    select_sql = MagicMock(
+        return_value={
+            "name": "execute_external_action",
+            "arguments": {"actionId": "sql-action", "body": {"sql": "SELECT 1"}},
+        }
+    )
+
+    selected = ExternalActionSqlFallbackPolicyService.try_policy(
+        policy,
+        message="Quais produtos serão produzidos hoje?",
+        sql_source="Quais produtos serão produzidos hoje?",
+        allowed_action_ids=["api_delpi.get_production_schedule_today"],
+        select_sql=select_sql,
+        after_rest_miss=True,
+        action_repository=repository,
+    )
+
+    assert selected is None
+    select_sql.assert_not_called()
+
+
+def test_production_sql_rest_miss_runs_when_rest_not_enabled() -> None:
+    policy = next(
+        policy
+        for policy in OperationalRouteRegistryService.fallback_policies()
+        if policy.get("id") == "productionSqlRestMiss"
+    )
+    repository = MagicMock()
+    repository.list_actions.return_value = [
+        {
+            "actionId": "api_delpi.get_production_schedule_today",
+            "operationId": "get_production_schedule_today",
+            "path": "/production/schedule/today",
+            "method": "GET",
+        }
+    ]
+    select_sql = MagicMock(
+        return_value={
+            "name": "execute_external_action",
+            "arguments": {"actionId": "sql-action", "body": {"sql": "SELECT 1"}},
+        }
+    )
+
+    selected = ExternalActionSqlFallbackPolicyService.try_policy(
+        policy,
+        message="Quais produtos serão produzidos hoje?",
+        sql_source="Quais produtos serão produzidos hoje?",
+        allowed_action_ids=["other-action"],
+        select_sql=select_sql,
+        after_rest_miss=True,
+        action_repository=repository,
+    )
+
+    assert selected is not None
+    select_sql.assert_called_once()
 
 
 def test_inventory_sql_policy_executes_resolver() -> None:

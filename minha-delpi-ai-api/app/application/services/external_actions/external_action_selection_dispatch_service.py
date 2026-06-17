@@ -67,6 +67,7 @@ class ExternalActionSelectionDispatchService:
             sql_source=sql_source,
             allowed_action_ids=allowed_action_ids,
             select_sql=self._select_sql_or_data_action,
+            action_repository=self._support.repository,
         )
 
         if selected:
@@ -103,6 +104,7 @@ class ExternalActionSelectionDispatchService:
                 bound_product_intent=ChatProductQueryIntent.FULL,
                 product_route_segment=None,
                 memory_snapshot=memory_snapshot,
+                action_repository=self._support.repository,
             ),
             callbacks=RegistryDispatchCallbacks(
                 candidates_loader=self._list_allowed_candidates,

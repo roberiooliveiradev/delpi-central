@@ -15,6 +15,28 @@ from app.domain.services.chat_production_operational_intent_service import (
 
 class ChatProductionOperationalActionReadinessService:
     @classmethod
+    def is_rest_action_ready(
+        cls,
+        message: str,
+        *,
+        allowed_action_ids: list[str],
+        repository,
+        provider_key: str = "api-delpi",
+    ) -> bool:
+        if not ChatProductionOperationalIntentService.matches_rest_route(message):
+            return False
+
+        return (
+            cls.resolve_gap_direct_answer(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                repository=repository,
+                provider_key=provider_key,
+            )
+            is None
+        )
+
+    @classmethod
     def resolve_gap_direct_answer(
         cls,
         message: str,

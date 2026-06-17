@@ -18,6 +18,7 @@ def test_operational_route_registry_loads_p0_routes() -> None:
     assert OperationalRouteRegistryService.version() == "2026.06.16"
     assert "sqlFallback" in OperationalRouteRegistryService.dispatch_order()
     assert "productionOperational" not in OperationalRouteRegistryService.dispatch_order()
+    assert len(OperationalRouteRegistryService.sql_readiness_entries()) >= 4
 
     route_ids = OperationalRouteRegistryService.route_ids()
 

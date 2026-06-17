@@ -105,6 +105,7 @@ class OperationalRouteRegistryLintService:
         cls._lint_routes(report)
         cls._lint_parameter_strategies(report)
         cls._lint_intent_probes(report)
+        cls._lint_sql_readiness(report)
         cls._lint_actionable_predicates(report)
         cls._lint_playbook_product_predicates(report)
         cls._lint_playbook_none_of_rules(report)
@@ -373,6 +374,46 @@ class OperationalRouteRegistryLintService:
                         f"product_query_intent.{pipeline_key}[{index}].probe "
                         f"desconhecido: {probe!r}"
                     )
+
+    @classmethod
+    def _lint_sql_readiness(cls, report: OperationalRouteRegistryLintReport) -> None:
+        policy_ids = {
+            str(policy.get("id") or "").strip()
+            for policy in OperationalRouteRegistryService.fallback_policies()
+            if str(policy.get("id") or "").strip()
+        }
+
+        for index, entry in enumerate(OperationalRouteRegistryService.sql_readiness_entries()):
+            context = f"sqlReadiness.productionOperationalKinds[{index}]"
+            kind = str(entry.get("kind") or "").strip()
+            fallback_policy_id = str(entry.get("fallbackPolicyId") or "").strip()
+            rest_path = str(entry.get("restPath") or "").strip()
+
+            if not kind:
+                report.add_error(f"{context}.kind ausente")
+
+            if not rest_path:
+                report.add_error(f"{context}.restPath ausente")
+
+            if fallback_policy_id and fallback_policy_id not in policy_ids:
+                report.add_error(
+                    f"{context}.fallbackPolicyId desconhecido: {fallback_policy_id!r}"
+                )
+
+            when = next(
+                (
+                    policy.get("when")
+                    for policy in OperationalRouteRegistryService.fallback_policies()
+                    if str(policy.get("id") or "").strip() == fallback_policy_id
+                ),
+                None,
+            )
+
+            if isinstance(when, dict) and not when.get("restActionNotReady"):
+                report.add_error(
+                    f"fallbackPolicies.{fallback_policy_id} deve declarar "
+                    "when.restActionNotReady para sqlReadiness"
+                )
 
     @classmethod
     def _lint_actionable_predicates(cls, report: OperationalRouteRegistryLintReport) -> None:

@@ -109,6 +109,7 @@ class ExternalActionSelectionPreflightService:
         sql_source: str,
         allowed_action_ids: list[str],
         select_sql: Callable[..., dict | None],
+        action_repository=None,
     ) -> dict | None:
         for policy in OperationalRouteRegistryService.preflight_sql_fallback_policies():
             selected = ExternalActionSqlFallbackPolicyService.try_policy(
@@ -117,6 +118,7 @@ class ExternalActionSelectionPreflightService:
                 sql_source=sql_source,
                 allowed_action_ids=allowed_action_ids,
                 select_sql=select_sql,
+                action_repository=action_repository,
             )
 
             if selected:

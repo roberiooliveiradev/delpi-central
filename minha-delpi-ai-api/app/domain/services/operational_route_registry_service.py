@@ -219,6 +219,20 @@ class OperationalRouteRegistryService:
         return {}
 
     @classmethod
+    def sql_readiness_entries(cls) -> list[dict[str, Any]]:
+        node = _registry_content().get("sqlReadiness")
+
+        if not isinstance(node, dict):
+            return []
+
+        entries = node.get("productionOperationalKinds")
+
+        if not isinstance(entries, list):
+            return []
+
+        return [entry for entry in entries if isinstance(entry, dict)]
+
+    @classmethod
     def route_path_marker_for_segment(cls, segment: str) -> str | None:
         normalized = str(segment or "").strip().lower()
 

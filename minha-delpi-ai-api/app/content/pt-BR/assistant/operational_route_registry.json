@@ -46,7 +46,8 @@
       "when": {
         "productionRestRoute": true,
         "notAuthoring": true,
-        "afterRestMiss": true
+        "afterRestMiss": true,
+        "restActionNotReady": true
       }
     },
     {
@@ -91,6 +92,35 @@
     "id": "sqlRefinement",
     "policy": "sql_refinement",
     "reasonKey": "sqlRefinement"
+  },
+  "sqlReadiness": {
+    "description": "Templates SQL deprecados rota a rota — SQL só quando REST não está pronto no agente",
+    "productionOperationalKinds": [
+      {
+        "kind": "scheduleToday",
+        "restPath": "/production/schedule/today",
+        "operationId": "get_production_schedule_today",
+        "fallbackPolicyId": "productionSqlRestMiss"
+      },
+      {
+        "kind": "ordersOpen",
+        "restPath": "/production/orders/open",
+        "operationId": "get_production_orders_open",
+        "fallbackPolicyId": "productionSqlRestMiss"
+      },
+      {
+        "kind": "consumption",
+        "restPath": "/production/consumption/top-items",
+        "operationId": "get_production_consumption_top_items",
+        "fallbackPolicyId": "productionSqlRestMiss"
+      },
+      {
+        "kind": "purchasesRanking",
+        "restPath": "/purchases/top-products",
+        "operationId": "get_purchases_top_products",
+        "fallbackPolicyId": "productionSqlRestMiss"
+      }
+    ]
   },
   "actionableProductPredicates": [
     "directives",

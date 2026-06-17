@@ -9,7 +9,6 @@ from app.domain.services.chat_production_operational_intent_service import (
     ChatProductionOperationalIntentService,
 )
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
-from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
 )
@@ -37,8 +36,15 @@ class ExternalActionSqlFallbackPolicyService:
         select_sql: Callable[..., dict | None],
         after_rest_miss: bool = False,
         state: SqlFallbackRunState | None = None,
+        action_repository=None,
     ) -> dict | None:
-        if not cls._matches_when(policy, message, after_rest_miss=after_rest_miss):
+        if not cls._matches_when(
+            policy,
+            message,
+            after_rest_miss=after_rest_miss,
+            allowed_action_ids=allowed_action_ids,
+            action_repository=action_repository,
+        ):
             return None
 
         selected = cls._execute_resolver(
@@ -112,6 +118,8 @@ class ExternalActionSqlFallbackPolicyService:
         message: str,
         *,
         after_rest_miss: bool,
+        allowed_action_ids: list[str] | None = None,
+        action_repository=None,
     ) -> bool:
         when = policy.get("when")
 
@@ -158,6 +166,21 @@ class ExternalActionSqlFallbackPolicyService:
 
         if when.get("afterRestMiss") and not after_rest_miss:
             return False
+
+        if when.get("restActionNotReady"):
+            if action_repository is None:
+                return True
+
+            from app.application.services.chat_production_operational_action_readiness_service import (
+                ChatProductionOperationalActionReadinessService,
+            )
+
+            if ChatProductionOperationalActionReadinessService.is_rest_action_ready(
+                message,
+                allowed_action_ids=list(allowed_action_ids or []),
+                repository=action_repository,
+            ):
+                return False
 
         return True
 

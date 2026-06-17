@@ -589,6 +589,19 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 **DoD Fase 17 (parcial):** novos probes = entrada JSON; pytest intent + lint verdes. Migrar probes `service` restantes quando virarem matcher puro.
 
+### Fase 18 — SQL só sem REST ✅
+
+| Entrega | Status |
+|---------|--------|
+| `when.restActionNotReady` em `ExternalActionSqlFallbackPolicyService` | ✅ |
+| `productionSqlRestMiss` só executa SQL se REST não está pronto no agente | ✅ |
+| `ChatProductionOperationalActionReadinessService.is_rest_action_ready()` | ✅ |
+| `sqlReadiness` declarativo no registry (templates deprecados rota a rota) | ✅ |
+| Repository propagado no dispatch/preflight para gate de readiness | ✅ |
+| Lint valida `sqlReadiness` ↔ `fallbackPolicies` | ✅ |
+
+**DoD Fase 18:** agente com REST habilitado → nunca SQL na mesma intent operacional; pytest sql fallback + readiness verdes.
+
 ---
 
 ### Roadmap 100% — Fases 16–20

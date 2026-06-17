@@ -65,6 +65,7 @@ class RegistryDispatchContext:
     bound_product_intent: str
     product_route_segment: str | None
     memory_snapshot: dict | None = None
+    action_repository: object | None = None
 
 
 class _ProductSelector(Protocol):
@@ -279,6 +280,7 @@ class ExternalActionRegistryDispatchPhaseService:
                 select_sql=callbacks.select_sql,
                 after_rest_miss=True,
                 state=state,
+                action_repository=ctx.action_repository,
             )
 
             if selected:
@@ -418,6 +420,7 @@ class ExternalActionRegistryDispatchPhaseService:
                 allowed_action_ids=ctx.allowed_action_ids,
                 select_sql=callbacks.select_sql,
                 state=state,
+                action_repository=ctx.action_repository,
             )
 
             if selected:
