@@ -7,6 +7,15 @@ from functools import lru_cache
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_operational_session_data_refinement_service import (
+    ChatOperationalSessionDataRefinementService,
+)
+from app.domain.services.chat_presentation_format_refinement_service import (
+    ChatPresentationFormatRefinementService,
+)
+from app.domain.services.chat_tabular_data_aggregation_service import (
+    ChatTabularDataAggregationService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -29,6 +38,8 @@ class OperationalGroupByPlan:
     dimension: str
     dimension_label: str
     parameter_name: str
+    execution_path: str
+    refetch_group_by: str | None = None
 
 
 class ChatOperationalGroupByRefinementService:
@@ -134,6 +145,54 @@ class ChatOperationalGroupByRefinementService:
                 return label
 
         return target
+
+    @classmethod
+    def dimension_entry(cls, route: dict[str, Any], dimension: str) -> dict[str, Any]:
+        return ChatOperationalSessionDataRefinementService.dimension_config(route, dimension)
+
+    @classmethod
+    def resolve_rows_from_session(
+        cls,
+        previous_messages: list[Any] | None,
+        *,
+        recent: OperationalGroupByRecentAction,
+    ) -> list[dict[str, Any]]:
+        operation = {
+            "actionId": recent.action_id,
+            "path": recent.path,
+            "parameters": dict(recent.parameters),
+            "metadata": {},
+        }
+
+        for item in reversed((previous_messages or [])[-14:]):
+            metadata = cls._message_metadata(item)
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata") or {}
+
+                if str(tool_meta.get("path") or "") != recent.path:
+                    continue
+
+                operation["metadata"] = dict(tool_meta)
+                break
+
+        payload = ChatPresentationFormatRefinementService.resolve_payload(
+            previous_messages,
+            operation=operation,
+        )
+
+        if payload is None:
+            return []
+
+        root = payload.get("data") if isinstance(payload, dict) else payload
+
+        return ChatTabularDataAggregationService.extract_items(root)
 
     @classmethod
     def resolve_dimension(cls, normalized: str, route: dict[str, Any]) -> str | None:
@@ -302,6 +361,27 @@ class ChatOperationalGroupByRefinementService:
         if current == dimension:
             return None
 
+        dimension_entry = cls.dimension_entry(route, dimension)
+        rows = cls.resolve_rows_from_session(
+            previous_messages,
+            recent=recent,
+        )
+        execution_path = ChatOperationalSessionDataRefinementService.resolve_execution_path(
+            dimension_entry,
+            rows,
+        )
+
+        if execution_path == "skip":
+            return None
+
+        refetch_group_by = None
+
+        if execution_path == "refetch":
+            refetch_group_by = ChatOperationalSessionDataRefinementService.refetch_group_by_value(
+                dimension_entry,
+                dimension=dimension,
+            )
+
         return OperationalGroupByPlan(
             route_id=str(route.get("id") or "").strip(),
             action_id=recent.action_id,
@@ -310,7 +390,47 @@ class ChatOperationalGroupByRefinementService:
             dimension=dimension,
             dimension_label=cls.dimension_label(route, dimension),
             parameter_name=parameter_name,
+            execution_path=execution_path,
+            refetch_group_by=refetch_group_by,
         )
+
+    @classmethod
+    def plan_refetch_follow_up(
+        cls,
+        message: str,
+        *,
+        conversation_context: str | None = None,
+        previous_messages: list[Any] | None = None,
+    ) -> OperationalGroupByPlan | None:
+        plan = cls.plan_follow_up(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        )
+
+        if not plan or plan.execution_path != "refetch":
+            return None
+
+        return plan
+
+    @classmethod
+    def plan_session_follow_up(
+        cls,
+        message: str,
+        *,
+        conversation_context: str | None = None,
+        previous_messages: list[Any] | None = None,
+    ) -> OperationalGroupByPlan | None:
+        plan = cls.plan_follow_up(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        )
+
+        if not plan or plan.execution_path != "session":
+            return None
+
+        return plan
 
     @classmethod
     def _parameter_str(cls, parameters: dict[str, Any], key: str) -> str | None:

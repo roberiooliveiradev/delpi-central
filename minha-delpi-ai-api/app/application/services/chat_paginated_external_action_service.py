@@ -212,6 +212,36 @@ class ChatPaginatedExternalActionService:
             payload=payload,
         )
 
+    def resolve_group_by_session_refinement_turn(
+        self,
+        *,
+        message: str,
+        previous_messages: list | None,
+    ) -> FormatRefinementShortcutResult:
+        from app.application.services.chat_operational_group_by_session_refinement_service import (
+            ChatOperationalGroupBySessionRefinementService,
+        )
+
+        result = ChatOperationalGroupBySessionRefinementService.resolve_turn(
+            message,
+            previous_messages=previous_messages,
+            external_use_case=self._external_action_use_case(),
+        )
+
+        if result.kind == "skip":
+            return FormatRefinementShortcutResult(kind="skip")
+
+        if result.kind == "failure":
+            return FormatRefinementShortcutResult(
+                kind="failure",
+                direct_answer=result.direct_answer,
+            )
+
+        return FormatRefinementShortcutResult(
+            kind="success",
+            payload=result.payload,
+        )
+
     def fetch_format_refinement_from_history(
         self,
         *,

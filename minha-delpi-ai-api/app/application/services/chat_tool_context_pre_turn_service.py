@@ -452,6 +452,24 @@ class ChatToolContextPreTurnService:
                 reason=ChatToolContextContentService.get("pagination", "formatRefinement"),
             )
 
+        group_by_turn = paginated_service.resolve_group_by_session_refinement_turn(
+            message=raw_message,
+            previous_messages=previous_messages,
+        )
+
+        if group_by_turn.kind == "success" and group_by_turn.payload:
+            merged_data, merged_metadata, arguments, _continue = group_by_turn.payload
+
+            return host._finalize_paginated_consolidation_result(
+                raw_message=raw_message,
+                previous_messages=previous_messages,
+                merged_data=merged_data,
+                merged_metadata=merged_metadata,
+                arguments=arguments,
+                continue_prompt=None,
+                reason=ChatToolContextContentService.get("pagination", "groupBySessionRefinement"),
+            )
+
         shortcuts = (
             (
                 paginated_service.fetch_continue_plan,

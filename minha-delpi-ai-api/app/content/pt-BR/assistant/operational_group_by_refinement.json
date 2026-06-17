@@ -1,5 +1,5 @@
 {
-  "version": "1",
+  "version": "2",
   "aggregatePhrases": [
     "agrupamento por",
     "agrupar por",
@@ -42,6 +42,8 @@
         {
           "value": "product_group",
           "label": "grupo de produto",
+          "strategy": "refetch",
+          "refetchGroupBy": "product_group",
           "terms": [
             "grupo",
             "grupo de produto",
@@ -58,6 +60,10 @@
         {
           "value": "unit",
           "label": "unidade de medida",
+          "strategy": "local",
+          "localCategoryField": "unit",
+          "localMetricFields": ["real_consumption_qty"],
+          "localSortField": "real_consumption_qty",
           "terms": [
             "unidade",
             "unidade de medida",
@@ -70,6 +76,11 @@
         {
           "value": "branch_summary",
           "label": "filial",
+          "strategy": "auto",
+          "localCategoryField": "branch",
+          "localMetricFields": ["real_consumption_qty"],
+          "localSortField": "real_consumption_qty",
+          "refetchGroupBy": "branch_summary",
           "terms": [
             "filial",
             "por filial",
@@ -83,6 +94,8 @@
         {
           "value": "branch",
           "label": "filial e item",
+          "strategy": "refetch",
+          "refetchGroupBy": "branch",
           "terms": [
             "filial e item",
             "item por filial",

@@ -356,6 +356,7 @@ Regra: **presenters** montam estrutura visual (`tablePresentation`, `textPresent
 | Sinal | Módulo canônico | Consumidor MFE |
 |-------|-----------------|----------------|
 | Resultado incompleto / paginação operacional | `ChatOperationalResultCompletenessService` → `ChatDataCoverageNoticeService` | Banner `metadata.dataCoverageNotice` |
+| Refinamento local (agrupamento sobre amostra) | `ChatOperationalGroupBySessionRefinementService` → `sessionDataRefinement` + `sessionAggregateSample` | Ver [session-data-refinement.md](./session-data-refinement.md) |
 | Atenção e limitações na prosa | `ChatDataInsightService` → `dataAnswer` / `dataCommentary` | Lead do `renderPlan` (modo Automático) |
 | Dica «use a tabela/árvore» | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | Toolbar / chips de formato |
 | Insight curto do visual selecionado | `ChatPresentationInsightService.build_with_metadata` (prioriza `dataAnswer`) | Legenda do painel |

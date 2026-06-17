@@ -13,6 +13,7 @@
   "operationalIncompleteConsolidated": "Dados consolidados (todas as filiais). Exibindo {returned} registro(s) (limite {limit}) — o ranking pode estar truncado.",
   "operationalIncompleteNoBranch": "Resultado incompleto: consulta sem filtro de filial (exibindo {returned}, limite {limit}). Cada linha pode referir-se a uma filial distinta.",
   "operationalIncompleteHint": "Para ver o restante, peça mais linhas, informe a filial ou aumente o limite.",
+  "sessionAggregateSample": "Agrupamento sobre a amostra retida ({shown} registro(s) por {dimension}), não sobre o universo completo da consulta. Para ranking global no período, peça reconsultar com o mesmo agrupamento.",
   "contextLabels": {
     "items": "Resultado",
     "structure": "Estrutura",

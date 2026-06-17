@@ -290,7 +290,7 @@ class ChatOperationalRefinementService:
             ChatOperationalGroupByRefinementService,
         )
 
-        plan = ChatOperationalGroupByRefinementService.plan_follow_up(
+        plan = ChatOperationalGroupByRefinementService.plan_refetch_follow_up(
             message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
@@ -305,7 +305,7 @@ class ChatOperationalRefinementService:
                 action_id=plan.action_id or None,
                 previous_parameters=dict(plan.parameters),
                 previous_path=plan.path,
-                group_by=plan.dimension,
+                group_by=plan.refetch_group_by or plan.dimension,
                 operational_route_id=plan.route_id or None,
                 group_by_label=plan.dimension_label or None,
                 reason="",

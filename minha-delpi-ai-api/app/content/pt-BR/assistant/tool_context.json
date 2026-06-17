@@ -16,6 +16,7 @@
     "fullConsolidation": "Consolidação completa da consulta paginada.",
     "errorRecovery": "Recuperação automática da consulta anterior.",
     "formatRefinement": "Reapresentação do último resultado no formato solicitado.",
+    "groupBySessionRefinement": "Agrupamento local sobre os dados já retidos na sessão.",
     "fullFetchTerms": [
       "completo",
       "completa",
