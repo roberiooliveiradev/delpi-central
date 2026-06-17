@@ -1,5 +1,5 @@
-import { readMdcCssVar } from "../theme/mdcCssVars";
-import { chatAlert } from "../utils/chatNativeDialogs";
+import { readMdcCssVar } from "../../../theme/mdcCssVars";
+import { chatAlert } from "../../../utils/chatNativeDialogs";
 
 function sanitizeFilename(name: string): string {
   return name

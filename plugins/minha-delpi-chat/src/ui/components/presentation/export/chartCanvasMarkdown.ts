@@ -1,5 +1,5 @@
-import type { ChatPresentation } from "../../data/api/chatTypes";
-import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
+import type { ChatPresentation } from "../../../../data/api/chatTypes";
+import type { ChatCanvasOpenPayload } from "../../../../data/api/chatTypes";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;

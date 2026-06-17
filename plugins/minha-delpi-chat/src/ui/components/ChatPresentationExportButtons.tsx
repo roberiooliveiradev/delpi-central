@@ -1,5 +1,5 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
-import { exportPresentation } from "./exportUtils";
+import { exportPresentation } from "./presentation/export/exportUtils";
 
 type ExportFormat = "csv" | "xlsx" | "pdf";
 

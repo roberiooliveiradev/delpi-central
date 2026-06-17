@@ -43,8 +43,8 @@ import {
 } from "../chartPresentationUx";
 import { aggregateChartRowsByCategory } from "./pipeline/chartCategoryAggregation";
 import { ChatTableRowMenu } from "../ChatTableRowMenu";
-import { presentationToCanvasPayload } from "../chartCanvasMarkdown";
-import { exportChartElementToPng } from "../chartPngExport";
+import { presentationToCanvasPayload } from "./export/chartCanvasMarkdown";
+import { exportChartElementToPng } from "./export/chartPngExport";
 import { ChatPresentationExportButtons } from "../ChatPresentationExportButtons";
 import {
   formatChartColumnLabel,

@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **16/06/2026** após PR-1–37 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **16/06/2026** após PR-1–38 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -62,8 +62,9 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | Permanece (hub / UX) | Motivo |
 |----------------------|--------|
 | `chatPresentation.ts` | Hub metadata ↔ UI — ver hub doc |
-| `chartPngExport.ts`, `chartCanvasMarkdown.ts` | Export/canvas, não pipeline de dados |
-| Modais finos, sidebar, export utils | Cross-feature |
+| Modais finos, sidebar, export buttons | Cross-feature |
+
+**Em `presentation/export/` (PR-38):** `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv`.
 
 **Em `presentation/pipeline/` (PR-27–30, PR-32):** stack plan, dedup, metadata, labels, telemetry, chart builders, tree utils, normalize, `chartExplain`.
 
@@ -82,7 +83,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | PR-35 | `shell/` | Sidebar, ContextBar, ContextTopbar | ✅ |
 | PR-36 | `workspace/` | ProjectHome, ProjectCard, modais projeto | ✅ |
 | PR-37 | `message/` | InteractivityBlock, Sources, DecisionCard, ChatMarkdown, MermaidBlock | ✅ |
-| PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown |
+| PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown, dashboardExportCsv | ✅ |
 | PR-39–41 | fatias do hub | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
 
 ## Referências

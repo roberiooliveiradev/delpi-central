@@ -13,3 +13,9 @@ export {
 } from "./pipeline";
 export { formatCellValue, getAlignClass, inferColumnTypeFromCampoLabel } from "./tableCellFormatting";
 export type { ColumnType } from "./tableCellFormatting";
+export {
+  exportPresentation,
+  presentationToCanvasPayload,
+  exportChartElementToPng,
+  buildDashboardCsv,
+} from "./export";
