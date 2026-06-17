@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fases 0–14 concluídas (jun/2026) — `_CUSTOM_PREDICATES` **zerado**; homologação manual DoD §11 pendente  
+**Status:** Fases 0–15 concluídas · **Fases 16–20** → meta 100% desacoplamento rotas OpenAPI  
 **Data:** jun/2026  
 **Commit de referência:** `e177e603` (playbookPredicates complexos) · `f6167aaa` (routePredicates) · `d598efcc` (routeSegment)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -129,7 +129,7 @@ Legenda de **severidade**:
 | A2 | `ChatSqlProductionQueryService` + `productionSqlFastPath` | SQL template SC2010 | 🔴* | *Manter até rotas REST 100%; marcar `fallbackPolicy: sql_until_rest` no registry |
 | A3 | `ChatSqlInventoryQueryService` + `inventorySqlFastPath` | SQL template estoque | 🔴* | Idem |
 | A4 | `ChatDrawingIntentService` → `intent=ANALYSER` | Skill desenho | 🟡 | Registry entry `drawingAnalyser` + path `/analyser` |
-| A5 | `select_production_operational` (Playbook 15) | Serviço paralelo | 🟡 | Mesclar pathTokens de `production_operational_intent.json` no registry |
+| A5 | `select_production_operational` (Playbook 15) | Serviço paralelo | ✅ | Absorvido em `operationalRoutes` (Fase 15) |
 | A6 | `select_sale_orders` / `select_transforma` / `select_system_metadata` | Serviço por domínio | 🟡 | Entradas registry `commercial.sales`, `engineering.transforma`, `system.metadata` |
 | A7 | `select_vocabulary_fast_path` | Parcialmente declarativo | 🟢 | Estender schema (§6) |
 | A8 | Blocos `product_intent == PARENTS/STRUCTURE/STOCK/…` (8 intents) | Despacho Python | 🔴 | `intentBinding` no registry |
@@ -539,7 +539,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Matcher: guards `excludeIfSqlConversation`, `excludeIfWebSearch`, `excludeIfSqlOperational`, `excludeIfProductionRestRoute`, `minWordCount`, `hasProductSearchGroupCode`
 - [x] `_CUSTOM_PREDICATES` zerado — `departmentKpiResolved` / `technicalNormasDescriptionBlock` como flags do matcher
 
-### Fase 14 — Apresentação provider-agnóstica (em curso)
+### Fase 14 — Apresentação provider-agnóstica (concluída)
 
 - [x] `entityPathHints` + `pathEntityFallbacks` em `presentation_profiles.json`
 - [x] Resolução de entidade por path via `ChatPresentationProfileService.resolve_entity_from_path`
@@ -549,6 +549,46 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Presenters keyed por `meta.entity` (legacy, product list, operational empty, builder legacy, kpi chart, **product analyser** migrados)
 - [x] `intentDetectPipeline` + `intentRefinementPipeline` — `ChatProductQueryIntentDetectionService`
 - [ ] Homologação manual DoD §11 — **após refatoração completa**
+
+### Fase 15 — Seleção unificada Playbook 15 (concluída — jun/2026)
+
+**Meta:** zero fase `productionOperational` no dispatch; PB15 no mesmo motor que `operationalRoutes`.
+
+| Entrega | Status |
+|---------|--------|
+| Remover `productionOperational` de `dispatchOrder` | ✅ |
+| `production_operational_routes()` + `match.productionOperationalKind` no registry | ✅ |
+| PB15 + vocabulário no `select()` via `select_production_operational` (path lookup) | ✅ |
+| SQL `productionSqlRestMiss` na fase `operationalRoutes` | ✅ |
+| `vocabulary_routes()` exclui `domain=productionOperational` | ✅ |
+| Deprecar fase/handler `_phase_production_operational` | ✅ |
+
+**DoD Fase 15:** smokes PB15 + lint DOCIE + pytest registry/dispatch verdes.
+
+---
+
+### Roadmap 100% — Fases 16–20
+
+**Definição de pronto (100%):** nova rota api-delpi exige apenas reimport OpenAPI + action no agente + JSON (`operational_route_registry`, termos, perfil apresentação). Zero `.py` para seleção, params conhecidos e apresentação tier B/C.
+
+| Fase | Tema | Entregas | DoD mensurável |
+|------|------|----------|----------------|
+| **15** | Seleção unificada PB15 | Dispatch único `operationalRoutes` | Sem fase `productionOperational` no JSON |
+| **16** | Parameter strategies declarativas | `parameterStrategies` em `api_route_domains.json`; builder interpreta JSON | Nova rota GET date/branch/limit = só registry |
+| **17** | Probes intent 100% JSON | `probes` declarativos; `_run_probe` só despacha matcher | Zero `if probe ==` novo em Python |
+| **18** | SQL só sem REST | Fallback checa readiness; templates deprecados rota a rota | Agente com REST → nunca SQL na mesma intent |
+| **19** | Apresentação 100% entity | Lint path em todo `domain`/`application`; tier A = perfil JSON | `audit_presentation_path_ifs --check` = 0 |
+| **20** | Auto-cobertura tier C | Gerador registry a partir do OpenAPI importado | Operação tier C: reimport + agente, sem PR Python |
+
+### Gates CI (100% travado)
+
+```text
+lint_operational_route_registry.py --check
+audit_presentation_path_ifs.py --check
+audit_presentation_coverage.py --check-profiles  → tier A/B 100%
+smokes PB15 + product routes + chat_intelligence_regression
+grep select_production_operational / _phase_production_operational → só wrapper delegado (Fase 15+)
+```
 
 ---
 
@@ -635,7 +675,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | D — Serviços paralelos | Consolidados no motor operacional | refinamento + semântico (necessários) |
 | E — JSON duplicado | `productRouteRanking` removido | — |
 | F — Apresentação | Presenters api-delpi | Fase 13 |
-| **DOCIE seleção rotas** | **~88%** | Fase 12 + homologação |
+| **DOCIE seleção rotas** | **~92%** | Fase 15 + Fases 16–20 → 100% |
 | **Stack chat provider-agnóstica** | **~72%** | + Fase 13 apresentação |
 
 ---

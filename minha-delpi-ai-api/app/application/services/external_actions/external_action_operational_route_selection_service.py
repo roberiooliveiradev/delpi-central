@@ -40,7 +40,20 @@ class ExternalActionOperationalRouteSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
         previous_messages: list | None = None,
+        path_lookup_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
+        selected = self.select_production_operational(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
+            path_lookup_loader=path_lookup_loader,
+        )
+
+        if selected:
+            return selected
+
         for route in OperationalRouteRegistryService.vocabulary_routes():
             selected = self._try_vocabulary_route(
                 route,

@@ -86,6 +86,7 @@ class OperationalRouteRegistryService:
             route
             for route in cls.routes()
             if isinstance(route, dict)
+            and str(route.get("domain") or "").strip() != "productionOperational"
             and (
                 not route.get("intentBinding")
                 or (
@@ -93,6 +94,14 @@ class OperationalRouteRegistryService:
                     and str(route["match"].get("customPredicate") or "").strip()
                 )
             )
+        ]
+
+    @classmethod
+    def production_operational_routes(cls) -> list[dict[str, Any]]:
+        return [
+            route
+            for route in cls.routes()
+            if str(route.get("domain") or "").strip() == "productionOperational"
         ]
 
     @classmethod

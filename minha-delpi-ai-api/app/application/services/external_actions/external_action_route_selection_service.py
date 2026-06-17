@@ -400,6 +400,7 @@ class ExternalActionRouteSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         merge_date_parameters: Callable[..., dict] | None = None,
         previous_messages: list | None = None,
+        path_lookup_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
         return self._operational_route.select(
             message,
@@ -409,6 +410,7 @@ class ExternalActionRouteSelectionService:
             build_date_branch_parameters=build_date_branch_parameters,
             merge_date_parameters=merge_date_parameters,
             previous_messages=previous_messages,
+            path_lookup_loader=path_lookup_loader,
         )
 
     def select_intent_bound_route(

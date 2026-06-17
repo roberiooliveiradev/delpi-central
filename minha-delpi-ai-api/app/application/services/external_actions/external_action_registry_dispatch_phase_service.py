@@ -150,14 +150,10 @@ class ExternalActionRegistryDispatchPhaseService:
         ctx = self._enrich_product_context(ctx)
 
         handlers = {
-            "productionOperational": lambda state: self._phase_production_operational(
-                ctx,
-                callbacks,
-                state=state,
-            ),
             "operationalRoutes": lambda state: self._phase_operational_routes(
                 ctx,
                 callbacks,
+                state=state,
             ),
             "intentBoundRoutes": lambda state: self._phase_intent_bound_routes(
                 ctx,
@@ -248,30 +244,32 @@ class ExternalActionRegistryDispatchPhaseService:
             product_route_segment=product_route_segment,
         )
 
-    def _phase_production_operational(
+    def _phase_operational_routes(
         self,
         ctx: RegistryDispatchContext,
         callbacks: RegistryDispatchCallbacks,
         *,
         state: SqlFallbackRunState,
     ) -> dict | None:
-        if not ChatProductionOperationalIntentService.matches_rest_route(ctx.message):
-            return None
-
-        selected = self._route_selection.select_production_operational(
+        selected = self._route_selection.select_operational_registry(
             ctx.message,
-            allowed_action_ids=ctx.allowed_action_ids,
-            previous_messages=ctx.previous_messages,
+            ctx.normalized,
+            ctx.allowed_action_ids,
             candidates_loader=callbacks.candidates_loader,
             build_date_branch_parameters=callbacks.build_date_branch_parameters,
+            merge_date_parameters=callbacks.merge_date_parameters,
+            previous_messages=ctx.previous_messages,
             path_lookup_loader=callbacks.path_lookup_loader,
         )
 
         if selected:
             return selected
 
+        if not ChatProductionOperationalIntentService.matches_rest_route(ctx.message):
+            return None
+
         for policy in OperationalRouteRegistryService.fallback_policies_for_phase(
-            "productionOperational"
+            "operationalRoutes"
         ):
             selected = ExternalActionSqlFallbackPolicyService.try_policy(
                 policy,
@@ -287,21 +285,6 @@ class ExternalActionRegistryDispatchPhaseService:
                 return selected
 
         return None
-
-    def _phase_operational_routes(
-        self,
-        ctx: RegistryDispatchContext,
-        callbacks: RegistryDispatchCallbacks,
-    ) -> dict | None:
-        return self._route_selection.select_operational_registry(
-            ctx.message,
-            ctx.normalized,
-            ctx.allowed_action_ids,
-            candidates_loader=callbacks.candidates_loader,
-            build_date_branch_parameters=callbacks.build_date_branch_parameters,
-            merge_date_parameters=callbacks.merge_date_parameters,
-            previous_messages=ctx.previous_messages,
-        )
 
     def _phase_intent_bound_routes(
         self,

@@ -47,7 +47,6 @@ _ALLOWED_RESOLVERS = frozenset(
 _KNOWN_DISPATCH_PHASES = frozenset(
     {
         "sessionRefinement",
-        "productionOperational",
         "operationalRoutes",
         "domainRoutes",
         "intentBoundRoutes",

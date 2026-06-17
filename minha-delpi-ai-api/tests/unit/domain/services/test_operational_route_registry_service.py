@@ -15,8 +15,9 @@ def setup_module() -> None:
 
 
 def test_operational_route_registry_loads_p0_routes() -> None:
-    assert OperationalRouteRegistryService.version() == "2026.06.15"
+    assert OperationalRouteRegistryService.version() == "2026.06.16"
     assert "sqlFallback" in OperationalRouteRegistryService.dispatch_order()
+    assert "productionOperational" not in OperationalRouteRegistryService.dispatch_order()
 
     route_ids = OperationalRouteRegistryService.route_ids()
 
@@ -36,6 +37,39 @@ def test_operational_route_registry_production_operational_kind_lookup() -> None
 
     assert route is not None
     assert route["id"] == "productionLossesTopMaterials"
+    assert route["match"]["productionOperationalKind"] == "lossesTop"
+
+
+def test_production_operational_routes_excluded_from_vocabulary_routes() -> None:
+    production_ids = {
+        str(route.get("id") or "")
+        for route in OperationalRouteRegistryService.production_operational_routes()
+    }
+    vocabulary_ids = {
+        str(route.get("id") or "")
+        for route in OperationalRouteRegistryService.vocabulary_routes()
+    }
+
+    assert "productionScheduleToday" in production_ids
+    assert production_ids.isdisjoint(vocabulary_ids)
+
+
+def test_operational_route_matcher_production_operational_kind() -> None:
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Quais produtos serão produzidos hoje?"
+    )
+
+    assert OperationalRouteMatcherService.matches(
+        {"productionOperationalKind": "scheduleToday"},
+        message="Quais produtos serão produzidos hoje?",
+        normalized=normalized,
+    )
+
+    assert not OperationalRouteMatcherService.matches(
+        {"productionOperationalKind": "ordersOpen"},
+        message="Quais produtos serão produzidos hoje?",
+        normalized=normalized,
+    )
 
 
 def test_operational_route_registry_has_intent_bound_routes() -> None:

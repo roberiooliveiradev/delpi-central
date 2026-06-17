@@ -53,7 +53,6 @@ def _callbacks(**overrides) -> RegistryDispatchCallbacks:
 def test_dispatch_order_matches_registry() -> None:
     assert OperationalRouteRegistryService.dispatch_order() == [
         "sessionRefinement",
-        "productionOperational",
         "operationalRoutes",
         "domainRoutes",
         "intentBoundRoutes",

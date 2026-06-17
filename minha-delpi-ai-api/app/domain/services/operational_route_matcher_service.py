@@ -219,6 +219,18 @@ class OperationalRouteMatcherService:
             if not _technical_normas_description_block(normalized):
                 return False
 
+        production_kind = str(spec.get("productionOperationalKind") or "").strip()
+
+        if production_kind:
+            from app.domain.services.chat_production_operational_intent_service import (
+                ChatProductionOperationalIntentService,
+            )
+
+            resolved = ChatProductionOperationalIntentService.resolve(message)
+
+            if not resolved or resolved.value != production_kind:
+                return False
+
         min_word_count = spec.get("minWordCount")
 
         if min_word_count is not None:
@@ -258,6 +270,7 @@ class OperationalRouteMatcherService:
             and not spec.get("hasProductSearchGroupCode")
             and not spec.get("departmentKpiResolved")
             and not spec.get("technicalNormasDescriptionBlock")
+            and not production_kind
             and min_word_count is None
             and not spec.get("excludeIfSqlConversation")
             and not spec.get("excludeIfWebSearch")
