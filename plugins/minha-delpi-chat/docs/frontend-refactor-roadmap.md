@@ -33,9 +33,10 @@ src/ui/
 │   ├── presentation/          # ChatRich* + rich-presentation-shared.css
 │   ├── composer/              # ChatInput, mention, selectors
 │   ├── message/               # ChatAssistantContent, registry, segmentos
-│   ├── workspace/             # WorkspaceFile*, ingest CSS
+│   ├── workspace/             # WorkspaceFile*, ingest CSS, ProjectHome (alvo PR-36)
+│   ├── shell/                 # Sidebar, ContextBar, ContextTopbar (alvo PR-35)
 │   ├── admin/shared/          # primitivos admin — referência
-│   └── [legado raiz]          # Sidebar, modais finos, chatPresentation, … (ver component-structure.md)
+│   └── [legado raiz]          # Hub chatPresentation, modais finos, export, … (ver component-structure.md)
 ```
 
 Mapa detalhado: [`component-structure.md`](./component-structure.md).
@@ -232,7 +233,7 @@ PR-34 ✅  testFixtures → message/; tableCellFormatting → presentation/
 
 ### Fase G — Limpeza da raiz (PR-34+)
 
-Meta: reduzir ~90 TS/TSX na raiz para **shell + hub + orquestração de página**.
+Meta: reduzir **87 TS/TSX + 55 CSS** na raiz (jun/2026) para **shell + hub + orquestração de página**.
 
 | PR | Escopo | Status |
 |----|--------|--------|
@@ -250,13 +251,13 @@ Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`
 
 ### Fase concluída (jun/2026)
 
-Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências opcionais:
+Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) em andamento — ver tabela acima.
 
-- **Hub documentado** — [`chat-presentation-hub.md`](./chat-presentation-hub.md) (permanece na raiz; extração futura por fatia)
-- **C3 residual** — fallbacks hex em `var(--token, #hex)` (cosmético; tokens existem em `index.css`)
-- **F4** — checklist visual manual §7
+Pendências até 100%:
 
----
+- **PR-35–38** — `shell/`, `workspace/`, message residual, `presentation/export/`
+- **PR-39–41** — fatiar hub [`chat-presentation-hub.md`](./chat-presentation-hub.md)
+- **PR-42** — C3 hex residual + checklist F4 §7
 
 ---
 
@@ -297,11 +298,17 @@ Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências o
 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
+| PRs estruturais entregues | 34 / 42 (Fase G) | 42 / 42 |
+| Arquivos TS/TSX na raiz `components/` | 87 | ≤25 (shell + hub + páginas) |
+| Arquivos CSS na raiz `components/` | 55 | co-localizados com feature ou `ui/styles/` |
+| Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
+| Módulos em `message/` | 36 arquivos TS/TSX | +InteractivityBlock, Sources, … (PR-37) |
 | Componentes em `shared/` (excl. admin) | 21 arquivos | ≥15 (overlay + modal + menus) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
-| Arquivos CSS com hex fora de token (chat) | ~5 (só fallbacks `var(--*, #…)`) | 0 (superfície/texto) |
+| Arquivos CSS com hex fora de token (chat) | ~5 (só fallbacks `var(--*, #…)`) | 0 (superfície/texto) — PR-42 |
 | Duplicação selector composer | 0 | 0 ✅ |
+| Testes CI apresentação (vitest) | 49 / 49 pass | verde em todo PR pipeline |
 
 ---
 

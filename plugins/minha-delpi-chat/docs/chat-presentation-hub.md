@@ -1,6 +1,6 @@
 # Hub `chatPresentation.ts` — contrato MFE ↔ metadata da API
 
-> Complementa [`component-structure.md`](./component-structure.md) e [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md) (PR-27–30).
+> Complementa [`component-structure.md`](./component-structure.md) e [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md) (PR-27–34; extração hub PR-39–41).
 
 ## Por que fica na raiz
 
@@ -34,8 +34,10 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Stack plan, dedup, metadata policy, labels, telemetry | `presentation/pipeline/presentation*.ts` | 27 |
 | Chart axis, agregação, build-from-table | `presentation/pipeline/chart*.ts`, `buildChartPresentationFromTable.ts` | 29 |
 | Tree flatten/export, chart payload normalize, explain fallback | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts`, `chartExplain.ts` | 30, 32 |
+| Formatação célula KPI/tabela | `presentation/tableCellFormatting.ts` | 34 |
 | Segment assembly (stack, render plan, markers) | `presentation/segmentBuilders/` | 25 |
 | Prosa / título / markdown stream | `message/assistantProseRendering.ts`, `message/chatMarkdown.ts` | 23, 33 |
+| Coverage humanizado, ações assistente, fixtures teste | `message/humanizedCoverageNotice.ts`, `chatAssistantMessageActions.ts`, `testFixtures.ts` | 31, 32, 34 |
 | Layout stack vs single, ordem visual | `message/assistantContentLayout.ts` | 20+ |
 
 Barrel do pipeline: `presentation/pipeline/index.ts`.

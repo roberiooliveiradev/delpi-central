@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado em **16/06/2026** — refatoração frontend MFE (PR-1–21), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
+> Atualizado em **16/06/2026** — refatoração frontend MFE (PR-1–34, Fase G pendente), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
 
 ## Visão geral
 
@@ -17,6 +17,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Plugin README | [plugins/minha-delpi-chat/README.md](../../../plugins/minha-delpi-chat/README.md) |
 | **Refatoração frontend (plugin)** | [plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) |
 | **Estrutura de componentes (MFE)** | [plugins/minha-delpi-chat/docs/component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) |
+| **Hub apresentação (MFE)** | [plugins/minha-delpi-chat/docs/chat-presentation-hub.md](../../../plugins/minha-delpi-chat/docs/chat-presentation-hub.md) |
 | Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
@@ -44,15 +45,27 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 ### Refatoração frontend (jun/2026)
 
-Fases **A–F** concluídas (PR-1–21): primitivos em `shared/`, apresentação rica em `presentation/`, composer, message, workspace; tokens CSS; CI com `npm run build`; stubs legados na raiz para compatibilidade.
+Fases **A–F** concluídas (PR-1–26). **Fase pipeline + message** (PR-27–34): módulos `presentation/pipeline/`, prosa/markdown/coverage em `message/`, hub `chatPresentation.ts` documentado na raiz.
+
+| Entrega | Status |
+|---------|--------|
+| Primitivos `shared/` (overlay, modal, menus) | ✅ PR-1–16 |
+| Pastas feature (`presentation/`, `composer/`, `message/`, `workspace/`) | ✅ PR-18–20 |
+| Stubs legados removidos | ✅ PR-26 |
+| Pipeline apresentação (stack, dedup, chart/tree) | ✅ PR-27–30, PR-32 |
+| Prosa, markdown, fixtures, formatação célula | ✅ PR-31–34 |
+| CI build + testes apresentação (49/49) | ✅ |
+
+**Raiz atual:** ~87 TS/TSX + ~55 CSS (meta pós-refactor: shell + hub + páginas).
 
 | Doc | Conteúdo |
 |-----|----------|
-| [frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) | Backlog PR-1–21, inventário, checklist visual |
-| [component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) | Mapa de pastas feature e re-exports |
+| [frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) | Backlog PR-1–42, Fase G, métricas |
+| [component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) | Mapa de pastas e matriz pendências |
+| [chat-presentation-hub.md](../../../plugins/minha-delpi-chat/docs/chat-presentation-hub.md) | Contrato hub metadata ↔ UI |
 | [rich-presentation-css.md](../../../plugins/minha-delpi-chat/docs/rich-presentation-css.md) | CSS compartilhado tabela/gráfico/KPI |
 
-Pendências opcionais: mover `assistantProseRendering`/`chatPresentation` para `message/`, remover stubs `@deprecated`, checklist F4 manual.
+**Próximo:** PR-35 (`shell/` — sidebar + context bars). Pendências Fase G: workspace, message residual, export, fatiar hub, hex C3, checklist F4 manual.
 
 ### Painel administrativo
 
