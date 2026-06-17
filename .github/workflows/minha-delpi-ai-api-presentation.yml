@@ -38,8 +38,8 @@ jobs:
       - name: Testes P6 render-only (vitest)
         run: |
           npm run test -- --run \
-            src/ui/components/renderPlanSegmentBuilder.test.ts \
-            src/ui/components/visualSegmentCollector.test.ts \
+            src/ui/components/presentation/segmentBuilders/renderPlanSegmentBuilder.test.ts \
+            src/ui/components/presentation/segmentBuilders/visualSegmentCollector.test.ts \
             src/ui/components/presentationRenderHints.test.ts \
             src/ui/components/presentationStructureDedup.test.ts \
             src/ui/components/message/assistantContentSegments.test.ts \

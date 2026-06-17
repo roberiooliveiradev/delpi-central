@@ -219,6 +219,7 @@ PR-22 ✅  message/ ChatMessageList + timeline + ChatThinkingDots
 PR-23 ✅  message/ assistantProseRendering (canônico prosa)
 PR-24 ✅  imports canônicos message/* + shared/overlay; preview builder usa chat-landing
 PR-25 ✅  presentation/segmentBuilders/ (stack, renderPlan, visual collector, …)
+PR-26 ✅  remoção stubs legados + CI paths + barrel composer
 ```
 
 ### Fase concluída (jun/2026)
@@ -228,7 +229,7 @@ Fases **A–F** do backlog principal estão entregues (PR-1–22). Pendências o
 - **Raiz → message/** — `chatPresentation` (compartilhado com presentation/)
 - **C3 residual** — fallbacks hex em `var(--token, #hex)` (cosmético; tokens existem em `index.css`)
 - **F4** — checklist visual manual §7
-- **Stubs legados** — remover após migrar todos os imports (ver [`component-structure.md`](./component-structure.md))
+- **Stubs legados** — removidos PR-26 (ver [`component-structure.md`](./component-structure.md))
 
 ---
 

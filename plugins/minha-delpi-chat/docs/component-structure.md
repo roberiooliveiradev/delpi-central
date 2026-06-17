@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **16/06/2026** após PR-1–20 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **16/06/2026** após PR-1–26 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -29,26 +29,11 @@ Barrels públicos:
 | `message/` | `message/index.ts` | `import { ChatAssistantContent } from "./message"` |
 | `workspace/` | `workspace/index.ts` | `import { WorkspaceFileDropzone } from "./workspace"` |
 
-## Re-exports legados (compatibilidade)
+## Re-exports legados
 
-Arquivos na **raiz** de `components/` que só reexportam — **não** adicionar lógica nova:
+Removidos em **PR-26**. Usar apenas barrels e pastas feature (`message/`, `presentation/`, `composer/`, `workspace/`, `shared/`).
 
-| Stub | Destino canônico |
-|------|------------------|
-| `ChatRich*.tsx` | `presentation/` |
-| `ChatInput.tsx` | `composer/` |
-| `ChatAssistantContent.tsx` | `message/` |
-| `assistantContent*.ts` | `message/` |
-| `useAssistantContentSegments.ts` | `message/` |
-| `AssistantStackSection.tsx` | `message/` |
-| `ChatMessageList.tsx` | `message/` |
-| `ChatThinkingDots.tsx` | `message/` |
-| `assistantProseRendering.ts` | `message/` |
-| `workspace-files/*` | `workspace/` |
-| `rich-presentation-shared.css` | `presentation/rich-presentation-shared.css` |
-| `menuPositionUtils.ts` | `shared/overlay/menuPositionUtils.ts` |
-
-Novos imports devem usar o caminho canônico (pasta feature ou barrel). Consumidores na raiz de `components/` importam `./message/*` e `./shared/overlay/*` — **não** os stubs legados.
+Exceção CSS: `rich-presentation-shared.css` na raiz ainda reexporta `presentation/rich-presentation-shared.css` (consumido por `ChatActionResults.css`).
 
 ## CSS compartilhado
 

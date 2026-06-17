@@ -1,5 +1,5 @@
 import type { ChatAgentStats } from "../../../../data/api/chatTypes";
-import { ChatRichDashboard } from "../../ChatRichDashboard";
+import { ChatRichDashboard } from "../../presentation/ChatRichDashboard";
 import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
 import {
   agentDashboardKpisFromPresentation,
