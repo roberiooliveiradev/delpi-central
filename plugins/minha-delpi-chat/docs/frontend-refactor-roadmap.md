@@ -247,6 +247,7 @@ PR-48 ✅  shell ConversationMenu + OnboardingTour; message empty/follow-up/acti
 PR-49 ✅  shared layout primitives; shell list item; workspace attachment/agent; message trust/debug
 PR-50 ✅  overlay CSS → ui/styles/; DropdownMenuTrigger em ContextTopbar + ProjectHome
 PR-51 ✅  chatClipboard + testes hub → presentation/; raiz só `chatPresentation.ts`
+PR-52 ✅  barrels presentation/; Fase H encerrada no roadmap
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -265,15 +266,13 @@ Meta: reduzir **55 TS/TSX + ~37 CSS** na raiz (jun/2026) para **shell + hub + or
 | PR-41 | `presentationPairResolver.ts` — pair resolver, merge tabelas | ✅ |
 | PR-42 | C3 hex residual + checklist F4 §7 | ✅ |
 
-Definição **100% refactor estrutural**: PR-42 concluído ✅ — hub fatiado (PR-39–41) + raiz organizada em feature folders.
+Definição **100% refactor estrutural**: Fase G (PR-42) + **Fase H** (PR-46–51) ✅ — hub fatiado, raiz só `chatPresentation.ts`, CSS em `ui/styles/` e feature folders.
 
 Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`chat-presentation-hub.md`](./chat-presentation-hub.md).
 
-### Fase concluída (jun/2026)
+### Fases concluídas (jun/2026)
 
-Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) ✅ concluída (jun/2026).
-
-Pós-Fase G (**Fase H**): raiz com **1 TS** (`chatPresentation.ts` hub) após PR-51.
+Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34). **Fase G** (PR-35–42). **Fase H** (PR-46–51): limpeza da raiz, overlay CSS, `DropdownMenuTrigger`, hub isolado ✅.
 
 ---
 
@@ -315,13 +314,13 @@ Pós-Fase G (**Fase H**): raiz com **1 TS** (`chatPresentation.ts` hub) após PR
 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
-| PRs estruturais entregues | 42 / 42 (Fase G) | 42 / 42 ✅ |
+| PRs estruturais entregues | 52 (Fases A–H) | Fase H ✅ |
 | Arquivos TS/TSX na raiz `components/` | 1 | hub `chatPresentation.ts` ✅ |
 | Arquivos CSS na raiz `components/` | 0 | co-localizados com feature ou `ui/styles/` ✅ |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |
 | Módulos em `message/` | 59 arquivos TS/TSX | empty/follow-up/actions + InteractivityBlock, Sources, markdown ✅ |
-| Componentes em `shared/` (excl. admin) | 24 arquivos | ≥15 (overlay + modal + menus) ✅ |
+| Componentes em `shared/` (excl. admin) | 28 arquivos | ≥15 (overlay + modal + menus + layout) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
 | Arquivos CSS com hex bare (superfície/texto, chat) | 0 | 0 ✅ |

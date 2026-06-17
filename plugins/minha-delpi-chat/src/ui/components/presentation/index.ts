@@ -34,3 +34,5 @@ export {
   exportChartElementToPng,
   buildDashboardCsv,
 } from "./export";
+export { copyTextToClipboard, scheduleCopyFeedback } from "./chatClipboard";
+export { ChatDashboardDataPanel } from "./ChatDashboardDataPanel";
