@@ -103,6 +103,10 @@
   color: var(--mdc-primary);
 }
 
+.mdc-chat-project-card__menu-panel {
+  width: 14rem;
+}
+
 @media (hover: none), (pointer: coarse) {
   .mdc-chat-project-card__options {
     opacity: 1;

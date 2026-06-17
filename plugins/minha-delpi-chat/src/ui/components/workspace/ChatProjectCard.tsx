@@ -105,6 +105,7 @@ export function ChatProjectCard({
         ariaLabel="Opções do projeto"
         iconSize={16}
         triggerClassName="mdc-chat-project-card__options"
+        panelClassName="mdc-chat-project-card__menu-panel mdc-menu-popover--sidebar-action"
       />
     </div>
   );

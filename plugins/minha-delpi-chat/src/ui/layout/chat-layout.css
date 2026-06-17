@@ -48,11 +48,6 @@
   height: 100%;
 }
 
-.mdc-chat-shell > .mdc-chat-sidebar-backdrop {
-  grid-column: 1 / -1;
-  grid-row: 1;
-}
-
 .mdc-chat-main {
   display: flex;
   flex-direction: column;
@@ -99,7 +94,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 90;
+    z-index: 220;
     width: min(var(--mdc-sidebar-width), min(88vw, 20rem));
     min-width: 0;
     max-width: 88vw;
@@ -123,17 +118,21 @@
     transform: translateX(0);
   }
 
-  .mdc-chat-sidebar-backdrop {
+  /* Fecha o drawer ao tocar na coluna principal — não cobre a sidebar. */
+  .minha-delpi-chat > .mdc-chat-sidebar-backdrop {
     display: block;
     position: fixed;
-    inset: 0;
-    z-index: 80;
-    border: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: min(var(--mdc-sidebar-width), min(88vw, 20rem));
+    z-index: 15;
     margin: 0;
     padding: 0;
-    background: var(--mdc-overlay-backdrop);
-    cursor: pointer;
-    animation: mdc-chat-backdrop-in 0.2s ease;
+    border: 0;
+    background: transparent;
+    cursor: default;
+    pointer-events: auto;
   }
 
   .minha-delpi-chat--mobile-nav-open {
@@ -282,15 +281,5 @@
 
   .minha-delpi-chat--narrow .mdc-chat-context-topbar__titles strong {
     font-size: 0.8rem;
-  }
-}
-
-@keyframes mdc-chat-backdrop-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
   }
 }

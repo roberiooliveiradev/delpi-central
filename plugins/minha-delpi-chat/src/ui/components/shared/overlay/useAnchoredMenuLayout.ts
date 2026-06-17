@@ -8,11 +8,10 @@ import {
 } from "react";
 
 import {
-  isOverlayPortalContained,
-  resolveOverlayPortalContainer,
+  isSidebarMenuTrigger,
+  resolveAnchoredMenuPortalTarget,
 } from "./modalPortalTarget";
 import {
-  isMenuAnchorOutsideContainer,
   menuAnchorRectFromElement,
   resolveActionMenuPosition,
   resolveComposerOptionMenuPosition,
@@ -24,6 +23,7 @@ import {
   type ContextMenuAnchor,
   type ContextMenuLayout,
 } from "./menuPositionUtils";
+import type { AnchoredMenuPortalTarget } from "./modalPortalTarget";
 
 export type AnchoredMenuPlacement =
   | "composer-option"
@@ -31,7 +31,7 @@ export type AnchoredMenuPlacement =
   | "action-menu"
   | "context-menu";
 
-export type AnchoredMenuLayout =
+export type AnchoredMenuLayoutUnion =
   | ComposerOptionMenuLayout
   | ActionMenuLayout
   | ContextMenuLayout;
@@ -52,6 +52,11 @@ type UseAnchoredMenuLayoutOptions = {
   onClose: () => void;
 };
 
+type AnchoredMenuLayoutState = {
+  layout: AnchoredMenuLayoutUnion;
+  portalTarget: AnchoredMenuPortalTarget;
+} | null;
+
 function anchorLayoutKey(anchor?: ContextMenuAnchor): string {
   if (!anchor) {
     return "";
@@ -67,8 +72,8 @@ function anchorLayoutKey(anchor?: ContextMenuAnchor): string {
 }
 
 function layoutsEqual(
-  previous: AnchoredMenuLayout | null,
-  next: AnchoredMenuLayout,
+  previous: AnchoredMenuLayoutUnion | null,
+  next: AnchoredMenuLayoutUnion,
 ): boolean {
   if (!previous) {
     return false;
@@ -83,10 +88,46 @@ function layoutsEqual(
       "maxHeight" in previous ? previous.maxHeight : undefined;
     const nextMaxHeight = "maxHeight" in next ? next.maxHeight : undefined;
 
-    return previousMaxHeight === nextMaxHeight;
+    if (previousMaxHeight !== nextMaxHeight) {
+      return false;
+    }
+  }
+
+  if ("anchorAbove" in previous || "anchorAbove" in next) {
+    const previousAnchorAbove =
+      "anchorAbove" in previous ? previous.anchorAbove : undefined;
+    const nextAnchorAbove = "anchorAbove" in next ? next.anchorAbove : undefined;
+
+    return previousAnchorAbove === nextAnchorAbove;
   }
 
   return true;
+}
+
+function portalTargetsEqual(
+  previous: AnchoredMenuPortalTarget | null | undefined,
+  next: AnchoredMenuPortalTarget,
+): boolean {
+  if (!previous) {
+    return false;
+  }
+
+  return previous.container === next.container && previous.contained === next.contained;
+}
+
+function resolveContainedScope(trigger?: HTMLElement | null) {
+  const portalTarget = resolveAnchoredMenuPortalTarget(trigger);
+  const containerRect = portalTarget.contained
+    ? menuAnchorRectFromElement(portalTarget.container)
+    : undefined;
+
+  return {
+    portalTarget,
+    containedLayout: {
+      contained: portalTarget.contained,
+      containerRect,
+    },
+  };
 }
 
 export function useAnchoredMenuLayout({
@@ -99,80 +140,90 @@ export function useAnchoredMenuLayout({
   menuHorizontalAlign,
   onClose,
 }: UseAnchoredMenuLayoutOptions) {
-  const [layout, setLayout] = useState<AnchoredMenuLayout | null>(null);
+  const [layoutState, setLayoutState] = useState<AnchoredMenuLayoutState>(null);
   const [canUsePortal, setCanUsePortal] = useState(false);
-  const [useViewportPositioning, setUseViewportPositioning] = useState(false);
   const anchorKey = anchorLayoutKey(anchor);
 
-  const commitLayout = useCallback((next: AnchoredMenuLayout) => {
-    setLayout((previous) => (layoutsEqual(previous, next) ? previous : next));
+  const commitLayoutState = useCallback((next: AnchoredMenuLayoutState) => {
+    setLayoutState((previous) => {
+      if (!next) {
+        return null;
+      }
+
+      if (
+        previous &&
+        layoutsEqual(previous.layout, next.layout) &&
+        portalTargetsEqual(previous.portalTarget, next.portalTarget)
+      ) {
+        return previous;
+      }
+
+      return next;
+    });
   }, []);
 
   const updateLayout = useCallback(() => {
-    const container = resolveOverlayPortalContainer();
-    const portalContained = isOverlayPortalContained(container);
-    const containerRect = portalContained
-      ? menuAnchorRectFromElement(container)
-      : undefined;
-    const containedLayout = {
-      contained: portalContained,
-      containerRect,
-    };
+    const trigger = triggerRef?.current;
+    const { portalTarget, containedLayout } = resolveContainedScope(trigger ?? null);
 
     if (placement === "context-menu" && anchor) {
-      commitLayout(
-        resolveContextMenuPosition({
+      if ("rect" in anchor) {
+        commitLayoutState({
+          layout: resolveActionMenuPosition({
+            rect: anchor.rect,
+            itemCount,
+            menuWidth,
+            ...containedLayout,
+            horizontalAlign: "end",
+            verticalAlign: "corner",
+          }),
+          portalTarget,
+        });
+        return;
+      }
+
+      commitLayoutState({
+        layout: resolveContextMenuPosition({
           anchor,
           itemCount,
           menuWidth,
-          contained: portalContained,
-          containerRect,
+          contained: containedLayout.contained,
+          containerRect: containedLayout.containerRect,
         }),
-      );
+        portalTarget,
+      });
       return;
     }
-
-    const trigger = triggerRef?.current;
 
     if (!trigger) {
       return;
     }
 
     const triggerRect = menuAnchorRectFromElement(trigger);
-    const anchorOutsideContainer =
-      portalContained &&
-      containerRect != null &&
-      isMenuAnchorOutsideContainer(triggerRect, containerRect);
-    const useViewportCoords = anchorOutsideContainer;
-    const actionMenuContained = portalContained && !useViewportCoords;
-
-    setUseViewportPositioning(useViewportCoords);
-
-    const layoutScope = useViewportCoords
-      ? { contained: false as const }
-      : containedLayout;
 
     if (placement === "composer-option") {
-      commitLayout(
-        resolveComposerOptionMenuPosition({
+      commitLayoutState({
+        layout: resolveComposerOptionMenuPosition({
           rect: triggerRect,
           itemCount,
           menuWidth,
-          ...layoutScope,
+          ...containedLayout,
         }),
-      );
+        portalTarget,
+      });
       return;
     }
 
     if (placement === "composer-panel") {
-      commitLayout(
-        resolveComposerPanelMenuPosition({
+      commitLayoutState({
+        layout: resolveComposerPanelMenuPosition({
           rect: triggerRect,
           itemCount,
           menuWidth,
-          ...layoutScope,
+          ...containedLayout,
         }),
-      );
+        portalTarget,
+      });
       return;
     }
 
@@ -180,19 +231,22 @@ export function useAnchoredMenuLayout({
       return;
     }
 
-    commitLayout(
-      resolveActionMenuPosition({
+    const isSidebarAction = isSidebarMenuTrigger(trigger);
+
+    commitLayoutState({
+      layout: resolveActionMenuPosition({
         rect: triggerRect,
         itemCount,
         menuWidth,
-        contained: actionMenuContained,
-        containerRect: actionMenuContained ? containerRect : undefined,
-        horizontalAlign: menuHorizontalAlign,
+        ...containedLayout,
+        horizontalAlign: isSidebarAction ? "start" : (menuHorizontalAlign ?? "end"),
+        verticalAlign: isSidebarAction ? "beside" : "corner",
       }),
-    );
+      portalTarget,
+    });
   }, [
     anchorKey,
-    commitLayout,
+    commitLayoutState,
     itemCount,
     menuHorizontalAlign,
     menuWidth,
@@ -206,8 +260,7 @@ export function useAnchoredMenuLayout({
 
   useLayoutEffect(() => {
     if (!open) {
-      setLayout(null);
-      setUseViewportPositioning(false);
+      setLayoutState(null);
       return;
     }
 
@@ -240,6 +293,11 @@ export function useAnchoredMenuLayout({
     };
   }, [onClose, open]);
 
+  const layout = layoutState?.layout ?? null;
+  const portalTarget = layoutState?.portalTarget ?? null;
+
+  const anchorAbove = Boolean(layout && "anchorAbove" in layout && layout.anchorAbove);
+
   const panelStyle: CSSProperties | undefined = layout
     ? {
         top: layout.top,
@@ -248,11 +306,16 @@ export function useAnchoredMenuLayout({
           ? {
               ...("maxHeight" in layout ? { maxHeight: layout.maxHeight } : {}),
               height: "max-content",
-              ...("anchorAbove" in layout && layout.anchorAbove
-                ? { transform: "translateY(-100%)" }
-                : {}),
+              ...(anchorAbove ? { transform: "translateY(-100%)" } : {}),
             }
-          : {}),
+          : placement === "action-menu" || placement === "context-menu"
+            ? {
+                ...("maxHeight" in layout && layout.maxHeight != null
+                  ? { maxHeight: layout.maxHeight, overflowY: "auto" as const }
+                  : {}),
+                ...(anchorAbove ? { transform: "translateY(-100%)" } : {}),
+              }
+            : {}),
       }
     : undefined;
 
@@ -260,7 +323,7 @@ export function useAnchoredMenuLayout({
     canUsePortal,
     layout,
     panelStyle,
+    portalTarget,
     updateLayout,
-    useViewportPositioning,
   };
 }

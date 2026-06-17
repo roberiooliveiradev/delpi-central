@@ -10,15 +10,7 @@
 }
 
 .mdc-chat-tour-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: var(--mdc-overlay-z-scrim);
-  background: var(--mdc-overlay-backdrop-contained, var(--mdc-overlay-backdrop));
-  pointer-events: auto;
-}
-
-.mdc-chat-overlay-portal--contained .mdc-chat-tour-backdrop {
-  position: absolute;
+  /* Posicionamento herdado de .mdc-overlay-scrim (chat-overlay-layer.css). */
 }
 
 .mdc-chat-tour-spotlight {

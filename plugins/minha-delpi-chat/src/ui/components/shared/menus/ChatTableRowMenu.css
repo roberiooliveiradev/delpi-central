@@ -1,20 +1,3 @@
-.mdc-table-row-menu__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  background: transparent;
-}
-
-.mdc-table-row-menu__scrim--light {
-  background: transparent;
-}
-
-.mdc-chat-overlay-portal--contained .mdc-table-row-menu__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
 .mdc-table-row-menu {
   min-width: 11rem;
   max-width: min(16rem, calc(100vw - 1rem));

@@ -2198,14 +2198,6 @@ export function ChatPage({
         </div>
       ) : null}
       <section className={shellClassName}>
-        {isMobileSidebarOpen ? (
-          <button
-            type="button"
-            className="mdc-chat-sidebar-backdrop"
-            aria-label="Fechar menu de conversas"
-            onClick={closeMobileSidebar}
-          />
-        ) : null}
         <ChatSidebar
           sessions={sessions}
           archivedSessions={archivedSessions}
@@ -2761,6 +2753,15 @@ export function ChatPage({
           onStartTour={hasOnboardingTourSteps ? startOnboardingTour : undefined}
         />
       </section>
+
+      {isMobileSidebarOpen ? (
+        <div
+          className="mdc-chat-sidebar-backdrop"
+          role="presentation"
+          aria-hidden="true"
+          onMouseDown={closeMobileSidebar}
+        />
+      ) : null}
     </main>
   );
 }

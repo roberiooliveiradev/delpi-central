@@ -81,17 +81,17 @@
   max-width: 100%;
 }
 
-/* Área de overlay só sobre o painel principal do chat (coluna da conversa). */
+/* Overlay contido à coluna principal — não cobre a sidebar. */
 .mdc-modal-root {
   position: absolute;
   inset: 0;
-  z-index: 80;
+  z-index: 20;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   pointer-events: none;
-  overflow: hidden;
-  isolation: isolate;
+  overflow: visible;
+  background: transparent;
 }
 
 .mdc-modal-root > * {

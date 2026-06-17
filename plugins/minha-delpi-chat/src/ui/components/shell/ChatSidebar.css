@@ -1,6 +1,8 @@
 .mdc-chat-sidebar {
   --mdc-sidebar-pad-x: 0.5rem;
 
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   width: var(--mdc-sidebar-width);

@@ -15,6 +15,7 @@ import {
 } from "../../chatTourTooltipPosition";
 import { ChatFollowUpChips } from "../message/ChatFollowUpChips";
 import { ModalPortal } from "../shared/overlay/ModalPortal";
+import { OverlayScrim } from "../shared/overlay/OverlayScrim";
 import {
   isOverlayPortalContained,
   resolveOverlayPortalContainer,
@@ -368,7 +369,7 @@ export function ChatOnboardingTour({
         />
       ) : null}
 
-      <div className="mdc-chat-tour-backdrop" onClick={closeTour} aria-hidden="true" />
+      <OverlayScrim className="mdc-chat-tour-backdrop" onMouseDown={closeTour} />
 
       {showDemoChips ? (
         <div className="mdc-chat-tour-follow-up-anchor" data-tour="follow-up-demo">

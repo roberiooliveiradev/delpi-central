@@ -130,6 +130,57 @@ describe("resolveActionMenuPosition", () => {
     expect(layout.left).toBe(rect.right - 224);
     expect(layout.top).toBe(rect.bottom + 6);
   });
+
+  it("abre no canto inferior direito ou superior direito com flip", () => {
+    const rect = { left: 210, top: 820, right: 238, bottom: 848, width: 28, height: 28 };
+
+    const belowLayout = resolveActionMenuPosition({
+      rect,
+      itemCount: 4,
+      menuWidth: 224,
+      horizontalAlign: "end",
+      verticalAlign: "corner",
+      viewport: { width: 800, height: 900 },
+    });
+
+    expect(belowLayout.left).toBe(rect.right - 224);
+    expect(belowLayout.anchorAbove).toBe(true);
+    expect(belowLayout.top).toBe(rect.top - 6);
+  });
+
+  it("posiciona menu ⋯ da sidebar à direita do gatilho", () => {
+    const sidebarRect = {
+      left: 0,
+      top: 56,
+      right: 272,
+      bottom: 900,
+      width: 272,
+      height: 844,
+    };
+
+    const trigger = {
+      left: 228,
+      top: 420,
+      right: 256,
+      bottom: 448,
+      width: 28,
+      height: 28,
+    };
+
+    const layout = resolveActionMenuPosition({
+      rect: trigger,
+      itemCount: 4,
+      menuWidth: 224,
+      contained: true,
+      containerRect: sidebarRect,
+      horizontalAlign: "start",
+      verticalAlign: "beside",
+    });
+
+    expect(layout.left).toBe(trigger.right - sidebarRect.left + 6);
+    expect(layout.top).toBe(trigger.top - sidebarRect.top);
+    expect(layout.anchorAbove).toBeFalsy();
+  });
 });
 
 describe("isMenuAnchorOutsideContainer", () => {

@@ -3,10 +3,6 @@
   z-index: 5;
 }
 
-.mdc-chat-conversation-menu__scrim {
-  background: var(--mdc-overlay-backdrop);
-}
-
 .mdc-chat-conversation-menu__trigger {
   display: inline-flex;
   align-items: center;

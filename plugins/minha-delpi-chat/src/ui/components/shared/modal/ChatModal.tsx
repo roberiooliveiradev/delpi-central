@@ -85,6 +85,7 @@ export function ChatModal({
     <ModalPortal lockScroll={lockScroll}>
       <div
         className={[
+          "mdc-overlay-scrim",
           "mdc-chat-overlay-scrim",
           scrimLayoutClass,
           mobileLayoutClass,

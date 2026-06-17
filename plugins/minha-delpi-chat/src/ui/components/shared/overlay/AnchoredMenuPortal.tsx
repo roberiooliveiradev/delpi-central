@@ -2,10 +2,8 @@ import { createPortal } from "react-dom";
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 
 import type { ContextMenuAnchor } from "./menuPositionUtils";
-import {
-  isOverlayPortalContained,
-  resolveOverlayPortalContainer,
-} from "./modalPortalTarget";
+import { isSidebarMenuTrigger } from "./modalPortalTarget";
+import { OverlayScrim } from "./OverlayScrim";
 import {
   useAnchoredMenuLayout,
   type AnchoredMenuPlacement,
@@ -70,7 +68,7 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
 
   const menuAnchor = "anchor" in props ? props.anchor : undefined;
 
-  const { canUsePortal, panelStyle, useViewportPositioning } = useAnchoredMenuLayout({
+  const { canUsePortal, panelStyle, portalTarget } = useAnchoredMenuLayout({
     open,
     triggerRef,
     anchor: menuAnchor,
@@ -103,9 +101,9 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
         }
       }
 
-      document.addEventListener("mousedown", handlePointerDown);
+      document.addEventListener("click", handlePointerDown, true);
       removeListeners = () => {
-        document.removeEventListener("mousedown", handlePointerDown);
+        document.removeEventListener("click", handlePointerDown, true);
       };
     }, 0);
 
@@ -147,9 +145,9 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
         onClose();
       }
 
-      document.addEventListener("mousedown", handlePointerDown);
+      document.addEventListener("click", handlePointerDown, true);
       removeListeners = () => {
-        document.removeEventListener("mousedown", handlePointerDown);
+        document.removeEventListener("click", handlePointerDown, true);
       };
     }, 0);
 
@@ -160,13 +158,14 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
     };
   }, [onClose, open, panelRef, shell, triggerRef]);
 
-  if (!open || !canUsePortal || !panelStyle || typeof document === "undefined") {
+  if (!open || !canUsePortal || !panelStyle || !portalTarget || typeof document === "undefined") {
     return null;
   }
 
-  const container = resolveOverlayPortalContainer();
-  const portalContained =
-    isOverlayPortalContained(container) && !useViewportPositioning;
+  const container = portalTarget.container;
+  const portalContained = portalTarget.contained;
+  const isSidebarPortal = isSidebarMenuTrigger(triggerRef?.current);
+  const showScrim = !isSidebarPortal && scrim !== "none";
 
   const popoverVariant =
     shell === "popover"
@@ -189,6 +188,7 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
           "mdc-menu-popover--portal",
           portalContained ? "mdc-menu-popover--contained" : "",
           popoverVariant,
+          isSidebarPortal ? "mdc-menu-popover--sidebar-action" : "",
           panelClassName,
         ];
 
@@ -207,26 +207,11 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
   );
 
   if (shell === "popover") {
-    const popoverScrim =
-      scrim === "backdrop" ? (
-        <div
-          className={[
-            "mdc-menu-popover__scrim",
-            "mdc-menu-popover__scrim--backdrop",
-            portalContained ? "mdc-menu-popover__scrim--contained" : "",
-            scrimClassName,
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          role="presentation"
-          aria-hidden="true"
-          onMouseDown={onClose}
-        />
-      ) : null;
-
     return createPortal(
       <>
-        {popoverScrim}
+        {showScrim ? (
+          <OverlayScrim className={scrimClassName} onMouseDown={onClose} />
+        ) : null}
         {panel}
       </>,
       container,
@@ -234,18 +219,6 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
   }
 
   const theme = document.documentElement.getAttribute("data-theme");
-
-  const scrimClasses =
-    scrim === "none"
-      ? null
-      : [
-          scrim === "backdrop"
-            ? "mdc-chat-overlay-scrim mdc-menu-popover__scrim mdc-menu-popover__scrim--backdrop"
-            : "mdc-table-row-menu__scrim",
-          scrimClassName,
-        ]
-          .filter(Boolean)
-          .join(" ");
 
   return createPortal(
     <div
@@ -258,13 +231,8 @@ export function AnchoredMenuPortal(props: AnchoredMenuPortalProps) {
       data-theme={theme ?? undefined}
       role="presentation"
     >
-      {scrimClasses ? (
-        <div
-          className={scrimClasses}
-          role="presentation"
-          aria-hidden="true"
-          onMouseDown={onClose}
-        />
+      {showScrim ? (
+        <OverlayScrim className={scrimClassName} onMouseDown={onClose} />
       ) : null}
       {panel}
     </div>,

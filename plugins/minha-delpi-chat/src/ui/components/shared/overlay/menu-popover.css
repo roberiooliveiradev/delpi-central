@@ -16,7 +16,6 @@
   position: fixed;
   inset: 0;
   z-index: var(--mdc-overlay-z-scrim, 9990);
-  background: transparent;
   pointer-events: auto;
 }
 
@@ -27,9 +26,7 @@
   z-index: calc(var(--mdc-overlay-z-scrim, 9990) - 1);
 }
 
-.mdc-menu-popover__scrim--backdrop {
-  background: var(--mdc-overlay-backdrop);
-}
+/* Fundo visual: chat-overlay-layer.css (.mdc-overlay-scrim) */
 
 .mdc-menu-popover--portal {
   position: fixed;
@@ -47,6 +44,7 @@
 
 .mdc-menu-popover--portal.mdc-menu-popover--contained {
   position: absolute;
+  z-index: var(--mdc-overlay-z-panel, 9991);
 }
 
 .mdc-menu-popover--contained.mdc-menu-popover--composer,
@@ -62,6 +60,13 @@
 
 .mdc-menu-popover--contained.mdc-menu-popover--action {
   width: min(var(--mdc-popover-width-action, 15rem), calc(100% - 1rem));
+}
+
+.mdc-menu-popover--sidebar-action {
+  background: var(--mdc-sidebar-surface, var(--mdc-card-bg));
+  border-color: color-mix(in srgb, var(--mdc-card-border) 88%, transparent);
+  box-shadow: var(--mdc-shadow-lg, var(--mdc-popover-shadow));
+  z-index: calc(var(--mdc-overlay-z-panel, 9991) + 5);
 }
 
 .mdc-menu-popover--composer {

@@ -227,6 +227,9 @@ export function resolveComposerPanelMenuPosition(options: {
 export type ActionMenuLayout = {
   left: number;
   top: number;
+  maxHeight?: number;
+  /** Ancora a borda inferior do painel em `top` (canto superior direito). */
+  anchorAbove?: boolean;
 };
 
 export type ContextMenuAnchor =
@@ -282,6 +285,7 @@ export function resolveContextMenuPosition(options: {
 }
 
 export type ActionMenuHorizontalAlign = "start" | "end";
+export type ActionMenuVerticalAlign = "auto" | "below" | "corner" | "beside";
 
 function clampHorizontalPosition(
   menuLeft: number,
@@ -304,11 +308,15 @@ export function resolveActionMenuPosition(options: {
   contained?: boolean;
   containerRect?: MenuAnchorRect;
   horizontalAlign?: ActionMenuHorizontalAlign;
+  /** Sidebar ⋯: `beside` abre à direita do gatilho, alinhado ao topo. */
+  verticalAlign?: ActionMenuVerticalAlign;
 }): ActionMenuLayout {
   const menuWidth = options.menuWidth ?? ACTION_MENU_WIDTH;
   const menuHeight = estimateMenuHeight(options.itemCount);
   const margin = VIEWPORT_MARGIN;
   const gap = ANCHOR_GAP;
+  const verticalMode =
+    options.verticalAlign === "corner" ? "auto" : options.verticalAlign;
   const { rect, viewport: containedViewport } = resolveContainedComposerLayout(
     options.rect,
     options,
@@ -316,10 +324,35 @@ export function resolveActionMenuPosition(options: {
   const { left, top, right, bottom } = rect;
   const viewport = readViewportBounds(containedViewport ?? options.viewport);
 
+  if (verticalMode === "beside") {
+    const menuLeft = Math.max(margin, right + gap);
+    let menuTop = Math.max(margin, top);
+
+    if (menuTop + menuHeight > viewport.height - margin) {
+      menuTop = Math.max(margin, viewport.height - menuHeight - margin);
+    }
+
+    const layout: ActionMenuLayout = { left: menuLeft, top: menuTop };
+
+    if (menuTop + menuHeight > viewport.height - margin) {
+      layout.maxHeight = Math.max(0, viewport.height - menuTop - margin);
+    }
+
+    return layout;
+  }
+
   let menuLeft: number;
 
   if (options.horizontalAlign === "end") {
-    menuLeft = clampHorizontalPosition(right - menuWidth, menuWidth, viewport, margin);
+    menuLeft = right - menuWidth;
+
+    if (menuLeft < margin) {
+      menuLeft = margin;
+    }
+
+    if (menuLeft + menuWidth > viewport.width - margin) {
+      menuLeft = Math.max(margin, viewport.width - menuWidth - margin);
+    }
   } else {
     const preferredLeft = right + gap;
     const fallbackLeft = left - menuWidth - gap;
@@ -332,20 +365,55 @@ export function resolveActionMenuPosition(options: {
       : clampHorizontalPosition(fallbackLeft, menuWidth, viewport, margin);
   }
 
-  let menuTop = bottom + gap;
-
-  if (menuTop + menuHeight > viewport.height - margin) {
-    menuTop = top - menuHeight - gap;
-  }
-
-  if (menuTop < margin) {
-    menuTop = margin;
-  }
-
   const maxTop = viewport.height - menuHeight - margin;
-  menuTop = Math.min(menuTop, maxTop);
+  let menuTop = bottom + gap;
+  let maxHeight: number | undefined;
+  let anchorAbove = false;
 
-  return { left: menuLeft, top: menuTop };
+  if (verticalMode === "below") {
+    menuTop = Math.max(menuTop, margin);
+
+    if (menuTop + menuHeight > viewport.height - margin) {
+      maxHeight = Math.max(0, viewport.height - menuTop - margin);
+    }
+  } else {
+    const spaceBelow = viewport.height - bottom - margin;
+    const spaceAbove = top - margin;
+    const openBelow =
+      spaceBelow >= menuHeight + gap || spaceBelow >= spaceAbove;
+
+    if (openBelow) {
+      menuTop = bottom + gap;
+
+      if (menuTop + menuHeight > viewport.height - margin) {
+        maxHeight = Math.max(0, viewport.height - menuTop - margin);
+      }
+    } else {
+      menuTop = top - gap;
+      anchorAbove = true;
+      maxHeight = Math.max(0, spaceAbove - gap);
+    }
+
+    if (!anchorAbove) {
+      if (menuTop < margin) {
+        menuTop = margin;
+      }
+
+      menuTop = Math.min(menuTop, maxTop);
+    }
+  }
+
+  const layout: ActionMenuLayout = { left: menuLeft, top: menuTop };
+
+  if (maxHeight != null) {
+    layout.maxHeight = maxHeight;
+  }
+
+  if (anchorAbove) {
+    layout.anchorAbove = true;
+  }
+
+  return layout;
 }
 
 /** Gatilho fora do portal contido (#mdc-modal-root) — ex.: menu ⋯ na sidebar. */

@@ -73,11 +73,10 @@ export function ChatConversationMenu({
       menuLabel="Opções da conversa"
       ariaLabel="Abrir opções da conversa"
       iconSize={17}
-      menuHorizontalAlign="end"
       wrapClassName="mdc-chat-conversation-menu"
       triggerClassName="mdc-chat-conversation-menu__trigger"
-      panelClassName="mdc-chat-conversation-menu__panel"
-      scrim="backdrop"
+      panelClassName="mdc-chat-conversation-menu__panel mdc-menu-popover--sidebar-action"
+      scrim="transparent"
     />
   );
 }
