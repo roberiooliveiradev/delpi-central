@@ -1,7 +1,7 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fases 0–13 concluídas (jun/2026) — predicados produto + domínio + sistema + busca em JSON; `_CUSTOM_PREDICATES` residual **2 entradas** (KPI departamental, normas técnicas); Fase 14 (apresentação) em curso  
+**Status:** Fases 0–14 concluídas (jun/2026) — `_CUSTOM_PREDICATES` **zerado**; homologação manual DoD §11 pendente  
 **Data:** jun/2026  
 **Commit de referência:** `e177e603` (playbookPredicates complexos) · `f6167aaa` (routePredicates) · `d598efcc` (routeSegment)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
@@ -44,11 +44,11 @@ ExternalActionSelectionDispatchService (~250 linhas — preflight + loop registr
 | `vocabularyFastPaths` | **Removido** — migrado para `operationalRoutes` no registry |
 | `_MATCHERS` Python | **Removido** — `OperationalRouteMatcherService` + `ChatProductRoutePredicateService` |
 | `routePredicates` / `playbookPredicates` | **JSON** em `product_query_intent.json` — rotas operacionais + playbook produto |
-| `_CUSTOM_PREDICATES` residual | **2 entradas** — KPI departamental, normas técnicas |
+| `_CUSTOM_PREDICATES` residual | **0 entradas** — `departmentKpiResolved` e `technicalNormasDescriptionBlock` como flags do matcher |
 | Ranking legado FULL | **Removido** — `ExternalActionProductRouteRankingService` deletado |
 | Provider bias `api_delpi`/`api_externa` | **Removido** — desempate por `allowed_action_ids` |
 | Continuação multi-turno | **`select_by_route_segment`** + `routeSegment` no registry |
-| `chat_product_query_intent_service` | Playbook/rota via JSON; `detect()`/`refine()` ainda orquestram em Python |
+| `chat_product_query_intent_service` | Playbook/rota via JSON; `detect()`/`refine()` via pipeline JSON (`ChatProductQueryIntentDetectionService`) |
 
 ### 2.2 Fluxo de seleção hoje (simplificado)
 
@@ -64,7 +64,7 @@ flowchart TD
     G -->|None| H
 ```
 
-**Problema restante:** `_CUSTOM_PREDICATES` residual (2 entradas); `detect()`/`refine()` em Python; homologação manual DoD §11 **ao final da refatoração completa**.
+**Problema restante:** homologação manual DoD §11 **ao final da refatoração completa**.
 
 ### 2.3 Estado legado (referência histórica pós `519f3834`)
 
@@ -212,7 +212,7 @@ if action_id.startswith("api_externa."): return +95
 | C1 | 25+ métodos `_looks_like_*` | 🟡 | Vocabulário já em `product_query_intent.json`; lógica composta (excludeWhen*, requires code) ainda em Python |
 | C2 | `has_actionable_product_route_intent` lista 14 markers | 🟡 | Derivar do registry (`actionableWhen`) |
 | C3 | `refine_operational_intent_from_full` | 🟢 | Manter para intents clássicos STOCK/STRUCTURE/… |
-| C4 | `detect()` ordem fixa de 20+ checks | 🟡 | Opcional: pipeline declarativo por prioridade JSON |
+| C4 | `detect()` ordem fixa de 20+ checks | ✅ | `intentDetectPipeline` + `intentRefinementPipeline` em JSON |
 | C5 | Import `ExternalActionResponseContentService` em domain | ✅ | summary/purchases/invoices via `product_query_intent.json` |
 
 ---
@@ -537,7 +537,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] `systemPredicates` — systemMetadataQuestion, systemWants*, systemHasTableName (`hasSystemTableName`)
 - [x] `productSearchPredicates` — productSearchQuestion, productSearchWithGroupCode
 - [x] Matcher: guards `excludeIfSqlConversation`, `excludeIfWebSearch`, `excludeIfSqlOperational`, `excludeIfProductionRestRoute`, `minWordCount`, `hasProductSearchGroupCode`
-- [x] `_CUSTOM_PREDICATES` reduzido a KPI departamental + normas técnicas (**2 entradas**)
+- [x] `_CUSTOM_PREDICATES` zerado — `departmentKpiResolved` / `technicalNormasDescriptionBlock` como flags do matcher
 
 ### Fase 14 — Apresentação provider-agnóstica (em curso)
 
@@ -546,7 +546,8 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 - [x] Migrar conjuntos de entidades (`entitySets` em `presentation_profiles.json`)
 - [x] Renomear/generalizar → `ChatOperationalResponseProfileService` (alias legado mantido)
 - [x] `entityPresentationRouting` — empty/list routes por `meta.entity`
-- [ ] Presenters keyed por `meta.entity` (legacy, product list, operational empty, builder legacy, kpi chart migrados; analyser presenter em curso)
+- [x] Presenters keyed por `meta.entity` (legacy, product list, operational empty, builder legacy, kpi chart, **product analyser** migrados)
+- [x] `intentDetectPipeline` + `intentRefinementPipeline` — `ChatProductQueryIntentDetectionService`
 - [ ] Homologação manual DoD §11 — **após refatoração completa**
 
 ---
@@ -602,7 +603,7 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 | # | Critério | Status jun/2026 |
 |---|----------|-----------------|
 | 1 | **Zero** path api-delpi em ranking legado (`ExternalActionProductRouteRankingService` removido) | ✅ |
-| 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` só helpers (KPI dept., normas) | 🟡 2 entradas |
+| 2 | **Zero** `_MATCHERS` Python; `_CUSTOM_PREDICATES` zerado (flags matcher + JSON) | ✅ |
 | 3 | **Zero** métodos `select_product_*` / wrappers legados no dispatch | ✅ |
 | 4 | Novo provider OpenAPI **sem alterar Python** — registry + import + allowed actions | ✅ rotas registry |
 | 5 | Documentação onda 8 / audit / catalog atualizadas | 🟡 em curso |

@@ -95,6 +95,34 @@ def test_shipping_status_matches_expedicao_with_product_scope():
     assert ChatProductRoutePredicateService.matches("shippingStatus", normalized)
 
 
+def test_sub_intent_department_kpi_blocks_sales_question():
+    kpi = ChatMessageNormalizationService.normalize_for_matching(
+        "qual o pmr da empresa"
+    )
+
+    assert not ChatProductRoutePredicateService.matches("salesQuestion", kpi)
+
+
+def test_description_question_excludes_normas_guidance():
+    normas = ChatMessageNormalizationService.normalize_for_matching(
+        "como descrever materia prima segundo normas tecnicas delpi"
+    )
+    product = ChatMessageNormalizationService.normalize_for_matching(
+        "descricao do produto 10080001"
+    )
+
+    assert not ChatProductRoutePredicateService.matches("descriptionQuestion", normas)
+    assert ChatProductRoutePredicateService.matches("descriptionQuestion", product)
+
+
+def test_product_search_excludes_normas_guidance():
+    normas = ChatMessageNormalizationService.normalize_for_matching(
+        "como montar descricao tecnica de cabo conforme normas delpi"
+    )
+
+    assert not ChatProductRoutePredicateService.matches("productSearchQuestion", normas)
+
+
 def test_sub_intent_stock_and_sales_predicates():
     stock = ChatMessageNormalizationService.normalize_for_matching(
         "estoque do produto 10080001"

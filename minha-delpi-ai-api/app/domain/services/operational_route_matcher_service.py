@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 
-from collections.abc import Callable
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
@@ -63,11 +62,6 @@ def _technical_normas_description_block(normalized: str) -> bool:
 
 
 class OperationalRouteMatcherService:
-    _CUSTOM_PREDICATES: dict[str, Callable[[str], bool]] = {
-        "departmentKpiResolved": _department_kpi_resolved,
-        "technicalNormasDescriptionBlock": _technical_normas_description_block,
-    }
-
     @classmethod
     def matches(
         cls,
@@ -217,6 +211,14 @@ class OperationalRouteMatcherService:
             if not _extract_product_search_group_code(message or normalized, normalized):
                 return False
 
+        if spec.get("departmentKpiResolved"):
+            if not _department_kpi_resolved(normalized):
+                return False
+
+        if spec.get("technicalNormasDescriptionBlock"):
+            if not _technical_normas_description_block(normalized):
+                return False
+
         min_word_count = spec.get("minWordCount")
 
         if min_word_count is not None:
@@ -254,6 +256,8 @@ class OperationalRouteMatcherService:
             and not spec.get("lacksLmpSaleNumber")
             and not spec.get("hasSystemTableName")
             and not spec.get("hasProductSearchGroupCode")
+            and not spec.get("departmentKpiResolved")
+            and not spec.get("technicalNormasDescriptionBlock")
             and min_word_count is None
             and not spec.get("excludeIfSqlConversation")
             and not spec.get("excludeIfWebSearch")
@@ -415,9 +419,7 @@ class OperationalRouteMatcherService:
                 message=message or normalized,
             )
 
-        matcher = cls._CUSTOM_PREDICATES.get(key)
-
-        return bool(matcher and matcher(normalized))
+        return False
 
     @classmethod
     def matches_custom_predicate(cls, predicate: str, normalized: str) -> bool:

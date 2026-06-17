@@ -14,6 +14,16 @@ class ExternalActionProductAnalyserPresenter:
     def __init__(self, host: ExternalActionResultPresenter) -> None:
         self._host = host
 
+    def _presentation_path(self, path: str = "") -> str:
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+
+        return ChatOperationalResponseProfileService.presentation_path(
+            path=self._host._effective_presentation_path(path),
+            entity="product_analyser",
+        )
+
     def _normalize_analyser_root(self, root: dict) -> dict:
         normalized = dict(root)
 
@@ -303,7 +313,7 @@ class ExternalActionProductAnalyserPresenter:
                 self._host._markdown_column_pairs_for_items(
                     rows,
                     profile_name="analyserGuide",
-                    path="/analyser",
+                    path=self._presentation_path(),
                 ),
                 rows,
             ),
@@ -329,7 +339,7 @@ class ExternalActionProductAnalyserPresenter:
             profile_name="analyserGuide",
             title=self._analyser_table_title("guide", product_code),
             role="guide",
-            path="/analyser",
+            path=self._presentation_path(),
         )
 
     def _flatten_analyser_inspection_rows(self, inspection_items: list) -> list[dict]:
@@ -447,7 +457,7 @@ class ExternalActionProductAnalyserPresenter:
             profile_name="analyserInspection",
             title=self._analyser_table_title("inspection", product_code),
             role="inspection",
-            path="/analyser",
+            path=self._presentation_path(),
         )
 
     def _build_inspection_items_table(
@@ -474,7 +484,7 @@ class ExternalActionProductAnalyserPresenter:
             profile_name="analyserInspection",
             title=title,
             role="inspection",
-            path=path or "/analyser",
+            path=path or self._presentation_path(),
         )
 
     def _has_protheus_inspection_blocks(self, item: dict) -> bool:
@@ -601,7 +611,7 @@ class ExternalActionProductAnalyserPresenter:
                             self._host._markdown_column_pairs_for_items(
                                 dim_rows,
                                 profile_name="analyserInspectionDimensionalMarkdown",
-                                path="/analyser",
+                                path=self._presentation_path(),
                             ),
                             dim_rows,
                         )
@@ -637,7 +647,7 @@ class ExternalActionProductAnalyserPresenter:
                             self._host._markdown_column_pairs_for_items(
                                 text_rows,
                                 profile_name="analyserInspectionTextualMarkdown",
-                                path="/analyser",
+                                path=self._presentation_path(),
                             ),
                             text_rows,
                         )
@@ -683,7 +693,7 @@ class ExternalActionProductAnalyserPresenter:
                         self._host._markdown_column_pairs_for_items(
                             shallow_rows,
                             profile_name="analyserInspectionShallowMarkdown",
-                            path="/analyser",
+                            path=self._presentation_path(),
                         ),
                         shallow_rows,
                     )
@@ -1138,7 +1148,7 @@ class ExternalActionProductAnalyserPresenter:
             profile_name="analyserStructureComponents",
             title=title,
             role="structure",
-            path="/analyser",
+            path=self._presentation_path(),
         )
 
     def _build_product_analyser_profile_table(
@@ -1146,14 +1156,15 @@ class ExternalActionProductAnalyserPresenter:
         product: dict,
         root: dict,
         *,
-        path: str = "/analyser",
+        path: str = "",
     ) -> dict:
+        effective_path = self._presentation_path(path)
         columns = self._host._column_labels.kv_table_column_defs()
         rows = self._host._column_labels.build_kv_profile_rows(
             product,
             extended=True,
             schema_labels=self._host._active_schema_labels,
-            path=path,
+            path=effective_path,
             profile_name="productProfileExtended",
         )
 

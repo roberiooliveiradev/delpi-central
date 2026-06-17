@@ -1450,7 +1450,7 @@ class ExternalActionResultPresenter:
         product: dict,
         root: dict,
         *,
-        path: str = "/analyser",
+        path: str = "",
     ) -> dict:
         return self._analyser()._build_product_analyser_profile_table(
             product,

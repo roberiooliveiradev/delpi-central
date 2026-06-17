@@ -159,6 +159,41 @@ def test_operational_route_selection_production_losses_top() -> None:
     assert selected["arguments"]["actionId"] == "production-losses-top-materials"
 
 
+def test_operational_route_selection_production_schedule_today() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "production-schedule-today",
+                "method": "GET",
+                "path": "/production/schedule/today",
+                "operationId": "get_production_schedule_today",
+                "parametersSchema": [
+                    {"name": "reference_date"},
+                    {"name": "limit"},
+                ],
+            },
+            {
+                "actionId": "sql-action",
+                "method": "POST",
+                "path": "/data/sql",
+                "operationId": "execute_readonly_sql",
+                "parametersSchema": [{"name": "query"}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select_production_operational(
+        "Quais produtos serão produzidos hoje?",
+        allowed_action_ids=["production-schedule-today", "sql-action"],
+        build_date_branch_parameters=lambda action, message, **kwargs: {"limit": 50},
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-schedule-today"
+
+
 def test_operational_route_selection_sale_orders() -> None:
     repository = _FakeRepository(
         [

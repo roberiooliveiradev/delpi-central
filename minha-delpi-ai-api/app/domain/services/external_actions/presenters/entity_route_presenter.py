@@ -91,10 +91,14 @@ class ExternalActionEntityRoutePresenter:
                 product = root.get("product")
 
                 if isinstance(product, dict):
+                    effective_path = ChatOperationalResponseProfileService.presentation_path(
+                        path=path,
+                        entity=entity,
+                    )
                     return self._host._present_product_analyser(
                         root,
                         self._host._normalize_api_section(product),
-                        path,
+                        effective_path,
                     )
 
             if entity == "product_factory_status" and isinstance(root, dict):

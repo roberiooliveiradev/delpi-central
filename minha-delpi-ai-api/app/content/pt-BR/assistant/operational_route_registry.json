@@ -20,6 +20,7 @@
       "resolver": "production_query",
       "when": {
         "productionQueryExecute": true,
+        "notProductionRestRoute": true,
         "notAuthoring": true
       }
     },

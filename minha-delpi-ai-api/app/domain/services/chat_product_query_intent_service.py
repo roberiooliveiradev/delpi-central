@@ -38,15 +38,6 @@ class ChatProductQueryIntentService:
             default=default,
         )
 
-    _INTENT_BY_REFINEMENT_KEY = {
-        "structure": ChatProductQueryIntent.STRUCTURE,
-        "stock": ChatProductQueryIntent.STOCK,
-        "sales": ChatProductQueryIntent.SALES,
-        "parents": ChatProductQueryIntent.PARENTS,
-        "summary": ChatProductQueryIntent.SUMMARY,
-        "description": ChatProductQueryIntent.DESCRIPTION,
-    }
-
     @classmethod
     def _matches_predicate(cls, predicate: str, normalized: str) -> bool:
         from app.domain.services.operational_route_matcher_service import (
@@ -65,19 +56,6 @@ class ChatProductQueryIntentService:
         normalized: str,
     ) -> bool:
         return any(cls._matches_predicate(predicate, normalized) for predicate in predicates)
-
-    @classmethod
-    def _intent_refinement_predicates(cls) -> dict[str, str]:
-        node = ChatAssistantContentService.get_node(
-            _INTENT_CONTENT_BUNDLE,
-            "intentRefinementPredicates",
-        ) or {}
-
-        return {
-            str(key): str(value).strip()
-            for key, value in node.items()
-            if str(value).strip()
-        }
 
     @classmethod
     def _code_from_history_predicates(cls) -> tuple[str, ...]:
@@ -107,72 +85,20 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def detect(cls, message: str) -> str:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        from app.domain.services.chat_drawing_intent_service import (
-            ChatDrawingIntentService,
+        from app.domain.services.chat_product_query_intent_detection_service import (
+            ChatProductQueryIntentDetectionService,
         )
 
-        if ChatDrawingIntentService.is_drawing_analysis_request(message):
-            return ChatProductQueryIntent.ANALYSER
-
-        if cls._looks_like_mixed_documental_operational(normalized):
-            return ChatProductQueryIntent.FULL
-
-        if cls._looks_like_parents_question(normalized):
-            return ChatProductQueryIntent.PARENTS
-
-        if cls._looks_like_explicit_playbook_product_scope(normalized):
-            return ChatProductQueryIntent.FULL
-
-        from app.domain.services.chat_product_multi_scope_planning_service import (
-            ChatProductMultiScopePlanningService,
-        )
-
-        requested_scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
-
-        if len(requested_scopes) >= 2:
-            if ChatProductMultiScopePlanningService.should_use_single_analyser(
-                requested_scopes,
-                message,
-            ):
-                return ChatProductQueryIntent.ANALYSER
-
-            return ChatProductQueryIntent.MULTI_SCOPE
-
-        if cls._looks_like_full_analyser_question(normalized):
-            return ChatProductQueryIntent.ANALYSER
-
-        if cls._looks_like_structure_question(normalized):
-            return ChatProductQueryIntent.STRUCTURE
-
-        if cls._looks_like_sales_question(normalized):
-            return ChatProductQueryIntent.SALES
-
-        if cls._looks_like_stock_question(normalized):
-            return ChatProductQueryIntent.STOCK
-
-        if cls._looks_like_product_summary_question(normalized):
-            return ChatProductQueryIntent.SUMMARY
-
-        from app.domain.services.chat_product_overview_intent_service import (
-            ChatProductOverviewIntentService,
-        )
-
-        if ChatProductOverviewIntentService.is_product_overview_message(message):
-            return ChatProductQueryIntent.ANALYSER
-
-        if cls._looks_like_description_question(normalized):
-            return ChatProductQueryIntent.DESCRIPTION
-
-        return ChatProductQueryIntent.FULL
+        return ChatProductQueryIntentDetectionService.detect(message)
 
     @classmethod
     def _looks_like_mixed_documental_operational(cls, normalized: str) -> bool:
-        return any(
-            term in normalized for term in cls._terms("mixedDocumental", "documental")
-        ) and any(
-            term in normalized for term in cls._terms("mixedDocumental", "operational")
+        from app.domain.services.chat_product_query_intent_detection_service import (
+            ChatProductQueryIntentDetectionService,
+        )
+
+        return ChatProductQueryIntentDetectionService.looks_like_mixed_documental_operational(
+            normalized
         )
 
     @classmethod
@@ -490,14 +416,12 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_explicit_playbook_product_scope(cls, normalized: str) -> bool:
-        """Playbook fabril/MP/PA — não herdar intent de consulta anterior (ex.: estoque)."""
-        from app.domain.services.operational_route_registry_service import (
-            OperationalRouteRegistryService,
+        from app.domain.services.chat_product_query_intent_detection_service import (
+            ChatProductQueryIntentDetectionService,
         )
 
-        return cls._matches_any_predicates(
-            OperationalRouteRegistryService.playbook_product_predicates(),
-            normalized,
+        return ChatProductQueryIntentDetectionService.looks_like_explicit_playbook_product_scope(
+            normalized
         )
 
     @classmethod
@@ -916,75 +840,35 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_generic_product_analysis_question(cls, normalized: str) -> bool:
-        """«Analise produto …» sem escopo operacional explícito → analyser integrado."""
-        if "produt" not in normalized:
-            return False
+        from app.domain.services.chat_product_query_intent_detection_service import (
+            ChatProductQueryIntentDetectionService,
+        )
 
-        if not re.search(r"\banalis", normalized):
-            return False
-
-        if any(
-            term in normalized
-            for term in cls._terms("analyser", "genericAnalysisExclude")
-        ):
-            return False
-
-        if any(
-            term in normalized for term in cls._terms("operationalAmbiguityScopeTerms")
-        ):
-            return False
-
-        return True
+        return (
+            ChatProductQueryIntentDetectionService.looks_like_generic_product_analysis_question(
+                normalized
+            )
+        )
 
     @classmethod
     def _looks_like_full_analyser_question(cls, message: str) -> bool:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        if any(
-            term in normalized for term in cls._terms("analyser", "fullQuestion")
-        ):
-            return True
-
-        if cls._looks_like_generic_product_analysis_question(normalized):
-            return True
-
-        from app.domain.services.chat_product_multi_scope_planning_service import (
-            ChatProductMultiScopePlanningService,
+        from app.domain.services.chat_product_query_intent_detection_service import (
+            ChatProductQueryIntentDetectionService,
         )
 
-        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
-
-        return ChatProductMultiScopePlanningService.should_use_single_analyser(
-            scopes,
-            message,
+        return ChatProductQueryIntentDetectionService.looks_like_full_analyser_question(
+            message
         )
 
     @classmethod
     def _looks_like_product_summary_question(cls, normalized: str) -> bool:
-        if any(
-            term in normalized for term in cls._terms("analyser", "summaryExclude")
-        ):
-            return False
-
-        if any(
-            term in normalized for term in cls._terms("analyser", "summaryExplicit")
-        ):
-            return True
-
-        if "resumo" not in normalized:
-            return False
-
-        if any(
-            term in normalized
-            for term in cls._terms("analyser", "summaryExcludeWhenResumo")
-        ):
-            return False
-
-        from app.domain.services.chat_product_plural_phrasing_service import (
-            ChatProductPluralPhrasingService,
+        from app.domain.services.chat_product_query_intent_detection_service import (
+            ChatProductQueryIntentDetectionService,
         )
 
-        return ChatProductPluralPhrasingService.has_product_entity_reference(normalized)
+        return ChatProductQueryIntentDetectionService.looks_like_product_summary_question(
+            normalized
+        )
 
     @classmethod
     def _looks_like_description_question(cls, normalized: str) -> bool:
@@ -1111,44 +995,14 @@ class ChatProductQueryIntentService:
         *,
         normalized: str | None = None,
     ) -> str:
-        """Refina intent FULL para escopo operacional explícito na mensagem."""
-        normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
-            message
+        from app.domain.services.chat_product_query_intent_detection_service import (
+            ChatProductQueryIntentDetectionService,
         )
 
-        if cls._looks_like_explicit_playbook_product_scope(normalized_text):
-            return ChatProductQueryIntent.FULL
-
-        for intent_key, predicate in cls._intent_refinement_predicates().items():
-            if cls._matches_predicate(predicate, normalized_text):
-                mapped = cls._INTENT_BY_REFINEMENT_KEY.get(intent_key)
-
-                if mapped:
-                    return mapped
-
-        if cls._looks_like_full_analyser_question(message):
-            return ChatProductQueryIntent.ANALYSER
-
-        from app.domain.services.chat_product_multi_scope_planning_service import (
-            ChatProductMultiScopePlanningService,
+        return ChatProductQueryIntentDetectionService.refine_operational_intent_from_full(
+            message,
+            normalized=normalized,
         )
-
-        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
-
-        if len(scopes) == 1:
-            scope_to_intent = {
-                "structure": ChatProductQueryIntent.STRUCTURE,
-                "stock": ChatProductQueryIntent.STOCK,
-                "parents": ChatProductQueryIntent.PARENTS,
-                "sales": ChatProductQueryIntent.SALES,
-                "profile": ChatProductQueryIntent.DESCRIPTION,
-            }
-            mapped = scope_to_intent.get(scopes[0])
-
-            if mapped:
-                return mapped
-
-        return ChatProductQueryIntent.FULL
 
     @classmethod
     def _looks_like_parents_question(cls, normalized: str) -> bool:

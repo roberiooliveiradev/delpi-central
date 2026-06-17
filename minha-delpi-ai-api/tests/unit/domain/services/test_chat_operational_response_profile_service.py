@@ -2,6 +2,9 @@ from app.domain.services.chat_operational_response_profile_service import (
     CHAT_CRITICAL_ENTITIES,
     ChatOperationalResponseProfileService,
 )
+from app.domain.services.external_actions.external_action_result_presenter import (
+    ExternalActionResultPresenter,
+)
 
 
 def test_resolve_prefers_meta_entity_over_path() -> None:
@@ -113,6 +116,38 @@ def test_resolve_entity_and_product_operational_path() -> None:
         entity,
         "product_stock",
     )
+
+
+def test_entity_path_hint_for_product_analyser() -> None:
+    hint = ChatOperationalResponseProfileService.entity_path_hint("product_analyser")
+
+    assert hint == "/products/0/analyser"
+    assert ChatOperationalResponseProfileService.presentation_path(
+        path="",
+        entity="product_analyser",
+    ) == "/products/0/analyser"
+
+
+def test_present_product_analyser_entity_first_without_http_path() -> None:
+    from tests.fixtures.api_delpi_responses_loader import with_api_delpi_meta
+    from tests.unit.application.use_cases.test_execute_external_action_analyser_presentation import (
+        _raw_analyser_api_payload,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    envelope = with_api_delpi_meta(
+        _raw_analyser_api_payload(),
+        {
+            "entity": "product_analyser",
+            "shape": "composite_analysis",
+            "operationId": "get_product_analyser",
+        },
+    )
+
+    result = presenter.present(envelope, path="")
+
+    assert result.get("titulo")
+    assert isinstance(result.get("linhas"), list)
 
 
 def test_entity_or_path_matches_and_no_chart_route() -> None:

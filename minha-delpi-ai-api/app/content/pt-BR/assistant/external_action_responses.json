@@ -645,7 +645,7 @@
       "noneOf": [
         { "excludeIfSqlConversation": true },
         { "excludeIfWebSearch": true },
-        { "customPredicate": "technicalNormasDescriptionBlock" },
+        { "technicalNormasDescriptionBlock": true },
         { "excludeIfSqlOperational": true },
         { "excludeIfProductionRestRoute": true },
         {

@@ -1941,6 +1941,7 @@
     }
   },
   "entityPathHints": {
+    "product_analyser": "/products/0/analyser",
     "product_pricing": "/products/0/pricing",
     "product_purchases": "/products/0/purchases",
     "product_suppliers": "/products/0/suppliers",

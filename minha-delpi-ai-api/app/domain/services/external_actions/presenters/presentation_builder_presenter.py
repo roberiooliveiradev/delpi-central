@@ -152,7 +152,15 @@ class ExternalActionPresentationBuilderPresenter:
                 if guide_table:
                     return guide_table
 
-                return self._host._build_product_analyser_profile_table(product, root, path=path)
+                effective_path = ChatOperationalResponseProfileService.presentation_path(
+                    path=path,
+                    entity=entity,
+                )
+                return self._host._build_product_analyser_profile_table(
+                    product,
+                    root,
+                    path=effective_path,
+                )
 
             if entity == "product" and isinstance(product, dict):
                 detail_list = self._host._extract_product_detail_list(root)
@@ -386,13 +394,23 @@ class ExternalActionPresentationBuilderPresenter:
                 if detail_list:
                     return self._build_product_detail_table(product, detail_list, root)
 
-                if matches(entity, path, "product_analyser", path_fragments=("/analyser",)):
+                if ChatOperationalResponseProfileService.matches_entity(
+                    entity, "product_analyser"
+                ):
                     guide_table = self._host._build_product_analyser_guide_table(root)
 
                     if guide_table:
                         return guide_table
 
-                    return self._host._build_product_analyser_profile_table(product, root, path=path)
+                    effective_path = ChatOperationalResponseProfileService.presentation_path(
+                        path=path,
+                        entity=entity,
+                    )
+                    return self._host._build_product_analyser_profile_table(
+                        product,
+                        root,
+                        path=effective_path,
+                    )
 
                 return self._build_product_table(product, root, path=path)
 

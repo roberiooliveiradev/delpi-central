@@ -266,9 +266,7 @@ class OperationalRouteRegistryLintService:
             ChatProductRoutePredicateService,
         )
 
-        return frozenset(OperationalRouteMatcherService._CUSTOM_PREDICATES).union(
-            ChatProductRoutePredicateService.registered_predicates()
-        )
+        return frozenset(ChatProductRoutePredicateService.registered_predicates())
 
     @classmethod
     def _lint_presentation(

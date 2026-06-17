@@ -47,9 +47,8 @@ class ExternalActionLegacyRoutePresenter:
                     if playbook:
                         return playbook
 
-            if isinstance(root, dict) and (
-                ChatOperationalResponseProfileService.matches_entity(entity, "product_analyser")
-                or "/analyser" in str(path or "").lower()
+            if isinstance(root, dict) and ChatOperationalResponseProfileService.matches_entity(
+                entity, "product_analyser"
             ):
                 root = self._host._normalize_analyser_root(root)
 
@@ -60,8 +59,12 @@ class ExternalActionLegacyRoutePresenter:
 
                 if ChatOperationalResponseProfileService.matches_entity(
                     entity, "product_analyser"
-                ) or "/analyser" in str(path or "").lower():
-                    return self._host._present_product_analyser(root, product, path)
+                ):
+                    effective_path = ChatOperationalResponseProfileService.presentation_path(
+                        path=path,
+                        entity=entity,
+                    )
+                    return self._host._present_product_analyser(root, product, effective_path)
 
                 return self._host._present_product(root, product)
 

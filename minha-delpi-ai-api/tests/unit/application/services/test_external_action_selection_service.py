@@ -367,6 +367,42 @@ def test_liste_programados_hoje_selects_schedule_not_product_search():
     assert selected["arguments"]["actionId"] == "production-schedule-today"
 
 
+def test_quais_produtos_serao_produzidos_hoje_selects_rest_over_sql():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "production-schedule-today",
+                    "method": "GET",
+                    "path": "/production/schedule/today",
+                    "operationId": "get_production_schedule_today",
+                    "summary": "Programação de produção",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+                {
+                    "actionId": "sql-action",
+                    "method": "POST",
+                    "path": "/data/sql",
+                    "operationId": "execute_readonly_sql",
+                    "summary": "Executar SQL",
+                    "parametersSchema": [{"name": "query"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "Quais produtos serão produzidos hoje?",
+        allowed_action_ids=["production-schedule-today", "sql-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-schedule-today"
+
+
 def test_liste_programados_hoje_ignores_polluted_search_product_code_in_memory():
     class _SemanticMissRepository(FakeRepository):
         def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):

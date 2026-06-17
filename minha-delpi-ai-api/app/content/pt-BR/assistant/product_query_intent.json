@@ -125,6 +125,40 @@
     "summary": "productSummaryRoute",
     "description": "descriptionQuestion"
   },
+  "intentDetectDefault": "full",
+  "intentDetectPipeline": [
+    { "intent": "analyser", "probe": "drawingAnalysis" },
+    { "intent": "full", "probe": "mixedDocumentalOperational" },
+    { "intent": "parents", "predicate": "parentsQuestion" },
+    { "intent": "full", "probe": "explicitPlaybookProductScope" },
+    { "intent": "analyser", "probe": "multiScopeSingleAnalyser" },
+    { "intent": "multi_scope", "probe": "multiScope" },
+    { "intent": "analyser", "probe": "fullAnalyserQuestion" },
+    { "intent": "structure", "predicate": "structureQuestion" },
+    { "intent": "sales", "predicate": "salesQuestion" },
+    { "intent": "stock", "predicate": "stockQuestion" },
+    { "intent": "summary", "probe": "productSummaryQuestion" },
+    { "intent": "analyser", "probe": "productOverviewMessage" },
+    { "intent": "description", "predicate": "descriptionQuestion" }
+  ],
+  "intentRefinementPipeline": [
+    { "intent": "full", "probe": "explicitPlaybookProductScope" },
+    { "intent": "structure", "predicate": "structureQuestion" },
+    { "intent": "stock", "predicate": "stockQuestion" },
+    { "intent": "sales", "predicate": "salesQuestion" },
+    { "intent": "parents", "predicate": "parentsQuestion" },
+    { "intent": "summary", "predicate": "productSummaryRoute" },
+    { "intent": "description", "predicate": "descriptionQuestion" },
+    { "intent": "analyser", "probe": "fullAnalyserQuestion" },
+    { "probe": "singleScopeIntent" }
+  ],
+  "singleScopeIntentMap": {
+    "structure": "structure",
+    "stock": "stock",
+    "parents": "parents",
+    "sales": "sales",
+    "profile": "description"
+  },
   "codeFromHistoryPredicates": [
     "salesQuestion",
     "stockQuestion",
@@ -472,7 +506,7 @@
         { "customPredicate": "salePricingRoute" },
         { "customPredicate": "stockQuestion" },
         { "termsFrom": "product_query_intent.sales.excludeBilling" },
-        { "customPredicate": "departmentKpiResolved" }
+        { "departmentKpiResolved": true }
       ],
       "anyOf": [
         { "termsFrom": "product_query_intent.sales.explicitPhrases" },
@@ -495,7 +529,7 @@
       ]
     },
     "descriptionQuestion": {
-      "noneOf": [{ "customPredicate": "technicalNormasDescriptionBlock" }],
+      "noneOf": [{ "technicalNormasDescriptionBlock": true }],
       "anyOf": [
         { "pluralScopeLinked": "description" },
         { "termsFrom": "product_query_intent.description.terms" }

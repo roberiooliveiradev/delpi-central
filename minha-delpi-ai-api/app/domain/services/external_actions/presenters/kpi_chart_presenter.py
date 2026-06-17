@@ -283,11 +283,9 @@ class ExternalActionKpiChartPresenter:
 
         root = self._host._unwrap_data(data)
 
-        if isinstance(root, dict) and ChatOperationalResponseProfileService.entity_or_path_matches(
+        if isinstance(root, dict) and ChatOperationalResponseProfileService.matches_entity(
             entity,
-            path,
             "product_analyser",
-            path_fragments=("/analyser",),
         ):
             normalized = self._host._normalize_analyser_root(root)
             analyser_chart = self._build_analyser_structure_type_chart(normalized)
