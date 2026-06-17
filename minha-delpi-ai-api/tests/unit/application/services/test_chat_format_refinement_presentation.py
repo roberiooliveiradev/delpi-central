@@ -238,6 +238,91 @@ def test_apply_format_override_text_hides_kpi_primary():
     assert meta["kpiPresentation"] == kpi
 
 
+def _consumption_top_items_metadata(*, primary_type: str, preferred: str) -> dict:
+    rows = [
+        {
+            "item_code": "1001",
+            "description": "Item A",
+            "unit": "PC",
+            "real_consumption_qty": 517604.0,
+        },
+        {
+            "item_code": "1002",
+            "description": "Item B",
+            "unit": "PC",
+            "real_consumption_qty": 483822.0,
+        },
+        {
+            "item_code": "1003",
+            "description": "Item C",
+            "unit": "PC",
+            "real_consumption_qty": 440038.0,
+        },
+    ]
+    table = {
+        "type": "table",
+        "title": "Ranking de consumo",
+        "columns": [
+            {"key": "description", "label": "Descrição"},
+            {"key": "unit", "label": "Unidade"},
+            {"key": "real_consumption_qty", "label": "Consumo real"},
+        ],
+        "rows": rows,
+    }
+
+    return {
+        "ok": True,
+        "path": "/production/consumption/top-items",
+        "actionId": "production-consumption-top-items",
+        "entity": "production_consumption_top_items",
+        "preferredFormat": preferred,
+        "availableFormats": ["text", "table", "chart"],
+        "presentation": table if primary_type == "table" else table,
+        "tablePresentation": table,
+        "presentationDecision": {
+            "selected": primary_type,
+            "availableViews": ["text", "table", "chart"],
+        },
+        "paginationConsolidation": {
+            "consolidatedPayload": {
+                "items": rows,
+                "total": len(rows),
+                "page": 1,
+                "page_size": len(rows),
+                "total_pages": 1,
+            },
+        },
+    }
+
+
+def _consumption_history(primary_type: str, preferred: str) -> list[dict]:
+    return [
+        {
+            "role": "user",
+            "content": "Quais são os top 50 itens de maior consumo na produção?",
+        },
+        {
+            "role": "assistant",
+            "content": "Ranking de consumo",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "production-consumption-top-items",
+                            "parameters": {"limit": 50},
+                        },
+                        "metadata": _consumption_top_items_metadata(
+                            primary_type=primary_type,
+                            preferred=preferred,
+                        ),
+                    }
+                ]
+            },
+        },
+    ]
+
+
 def test_refinement_to_chart_from_table():
     service = _build_service()
     result = service.build_context(
@@ -254,6 +339,21 @@ def test_refinement_to_chart_from_table():
         meta["presentation"]["type"] == "chart"
         or (meta.get("chartPresentation") or {}).get("type") == "chart"
     )
+
+
+def test_refinement_to_chart_from_playbook_consumption_chip_query():
+    service = _build_service()
+    result = service.build_context(
+        user_id="u",
+        access_token="t",
+        message="gere um gráfico com os dados acima",
+        previous_messages=_consumption_history("table", "table"),
+        allowed_action_ids=["production-consumption-top-items"],
+    )
+    meta = result["toolCalls"][0]["metadata"]
+
+    assert meta["preferredFormat"] == "chart"
+    assert meta.get("presentation", {}).get("type") == "chart"
 
 
 def test_refinement_to_tree_from_analyser_history():

@@ -109,6 +109,15 @@ def test_looks_like_format_refinement_tree_and_chart():
     assert ChatPresentationFormatRefinementService.looks_like_format_refinement(
         "coloque em gráfico",
     )
+    assert ChatPresentationFormatRefinementService.looks_like_format_refinement(
+        "gere um gráfico com os dados acima",
+    )
+    assert (
+        ChatPresentationFormatRefinementService.detect_requested_format(
+            "gere um gráfico com os dados acima",
+        )
+        == "chart"
+    )
     assert (
         ChatPresentationFormatRefinementService.detect_requested_format(
             "exiba em gráfico"
