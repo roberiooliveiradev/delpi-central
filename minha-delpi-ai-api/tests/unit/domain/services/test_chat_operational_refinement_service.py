@@ -641,13 +641,13 @@ def test_plan_consumption_group_follow_up_reuses_top_items_action():
         _consumption_top_items_assistant_message(),
     ]
 
-    planned = ChatOperationalRefinementService.plan_consumption_group_follow_ups(
+    planned = ChatOperationalRefinementService.plan_operational_group_by_follow_ups(
         "queria um agrupamento por grupo e saber quais deles mais consome da listagem",
         previous_messages=history,
     )
 
     assert len(planned) == 1
-    assert planned[0].kind == "consumption_group_by_refinement"
+    assert planned[0].kind == "operational_group_by_refinement"
     assert planned[0].action_id == "production-consumption-top-items"
     assert planned[0].group_by == "product_group"
     assert planned[0].previous_parameters["limit"] == 50
@@ -658,7 +658,7 @@ def test_plan_consumption_group_follow_up_skips_when_already_grouped():
         _consumption_top_items_assistant_message(group_by="product_group"),
     ]
 
-    planned = ChatOperationalRefinementService.plan_consumption_group_follow_ups(
+    planned = ChatOperationalRefinementService.plan_operational_group_by_follow_ups(
         "agrupar por grupo",
         previous_messages=history,
     )
@@ -677,5 +677,19 @@ def test_detect_consumption_group_refinement_from_history():
     )
 
     assert refinement is not None
-    assert refinement.kind == "consumption_group_by_refinement"
+    assert refinement.kind == "operational_group_by_refinement"
     assert refinement.group_by == "product_group"
+
+
+def test_plan_operational_group_by_follow_up_for_unit():
+    history = [
+        _consumption_top_items_assistant_message(),
+    ]
+
+    planned = ChatOperationalRefinementService.plan_operational_group_by_follow_ups(
+        "consumo por unidade",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].group_by == "unit"

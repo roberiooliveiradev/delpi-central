@@ -99,15 +99,16 @@ def get_consumption_top_items(
     date_end: Optional[str] = Query(default=None),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    group_by: Literal["general", "branch", "product_group"] = Query(default="general"),
+    group_by: str = Query(default="general"),
 ):
     try:
+        normalized_group_by = ProductionConsumptionTopItemsGroupByService.normalize(group_by)
         dto = ProductionOperationalRequest(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
             limit=limit,
-            group_by=group_by,
+            group_by=normalized_group_by,
         )
         result = build_get_production_consumption_top_items_use_case().execute(dto)
         return api_delpi_success(

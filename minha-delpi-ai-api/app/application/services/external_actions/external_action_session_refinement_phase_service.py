@@ -237,8 +237,8 @@ class ExternalActionSessionRefinementPhaseService:
                 select_product=select_product,
             )
 
-        if refinement.kind == "consumption_group_by_refinement":
-            return self._route_selection.select_consumption_group_by_refinement(
+        if refinement.kind == "operational_group_by_refinement":
+            return self._route_selection.select_operational_group_by_refinement(
                 refinement,
                 allowed_action_ids=allowed_action_ids,
             )

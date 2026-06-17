@@ -1,3 +1,6 @@
+from app.domain.services.production.production_consumption_top_items_group_by_service import (
+    ProductionConsumptionTopItemsGroupByService,
+)
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
 )
@@ -37,11 +40,7 @@ class GetProductionConsumptionTopItemsUseCase:
             request.limit or DEFAULT_PRODUCTION_OPERATIONAL_LIMIT,
             MAX_PRODUCTION_OPERATIONAL_LIMIT,
         )
-        group_by = (
-            request.group_by
-            if request.group_by in {"general", "branch", "product_group"}
-            else "general"
-        )
+        group_by = ProductionConsumptionTopItemsGroupByService.normalize(request.group_by)
 
         fetch_limit = overfetch_limit(limit)
 

@@ -3030,6 +3030,27 @@
         ["real_consumption_qty", "Consumo real"]
       ]
     },
+    "playbookConsumptionTopItemsByUnit": {
+      "detect": {
+        "allKeys": ["unit", "real_consumption_qty"],
+        "pathContains": ["/production/consumption/top-items"]
+      },
+      "preferredColumns": [
+        ["unit", "Unidade"],
+        ["real_consumption_qty", "Consumo real"]
+      ]
+    },
+    "playbookConsumptionTopItemsByBranchSummary": {
+      "detect": {
+        "allKeys": ["branch", "real_consumption_qty"],
+        "excludeIfAnyKeys": ["item_code", "description"],
+        "pathContains": ["/production/consumption/top-items"]
+      },
+      "preferredColumns": [
+        ["branch", "Filial"],
+        ["real_consumption_qty", "Consumo real"]
+      ]
+    },
     "playbookPurchasesTopProducts": {
       "detect": {
         "anyKeys": ["invoice_count", "total_value"],

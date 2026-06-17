@@ -84,7 +84,7 @@ class ExternalActionRefinementRouteSelectionService:
             fallback_reason=selected.get("reason"),
         )
 
-    def select_consumption_group_by(
+    def select_operational_group_by(
         self,
         refinement,
         *,
@@ -110,6 +110,10 @@ class ExternalActionRefinementRouteSelectionService:
         allowed_action_ids: list[str],
         base_parameters: dict | None = None,
     ) -> dict | None:
+        from app.domain.services.chat_operational_group_by_refinement_service import (
+            ChatOperationalGroupByRefinementService,
+        )
+
         candidates = self.repository.find_candidate_actions(
             "",
             limit=80,
@@ -129,7 +133,21 @@ class ExternalActionRefinementRouteSelectionService:
             return None
 
         parameters = dict(base_parameters or refinement.previous_parameters or {})
-        group_by_value = str(refinement.group_by or "product_group").strip()
+        group_by_value = str(refinement.group_by or "").strip()
+        parameter_name = "group_by"
+
+        route_id = str(refinement.operational_route_id or "").strip()
+        route = next(
+            (
+                item
+                for item in ChatOperationalGroupByRefinementService.routes()
+                if str(item.get("id") or "") == route_id
+            ),
+            None,
+        )
+
+        if route:
+            parameter_name = str(route.get("parameterName") or "group_by").strip()
 
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
@@ -139,12 +157,26 @@ class ExternalActionRefinementRouteSelectionService:
 
             lowered = name.lower()
 
-            if lowered in {"group_by", "groupby", "group-by"}:
+            if lowered in {
+                parameter_name.lower(),
+                "group_by",
+                "groupby",
+                "group-by",
+            }:
                 parameters[name] = group_by_value
 
-        reason = ExternalActionResponseContentService.get(
+        dimension_label = str(refinement.group_by_label or group_by_value).strip()
+
+        if route and not refinement.group_by_label:
+            dimension_label = ChatOperationalGroupByRefinementService.dimension_label(
+                route,
+                group_by_value,
+            )
+
+        reason = ExternalActionResponseContentService.format(
             "selectionReasons",
-            "consumptionGroupByRefinement",
+            "operationalGroupByRefinement",
+            dimension_label=dimension_label,
         )
 
         return {

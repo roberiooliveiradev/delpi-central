@@ -1,0 +1,95 @@
+{
+  "version": "1",
+  "aggregatePhrases": [
+    "agrupamento por",
+    "agrupar por",
+    "agrupa por",
+    "agrupado por",
+    "consumo por",
+    "ranking por",
+    "total por",
+    "somar por",
+    "soma por"
+  ],
+  "listContextPhrases": [
+    "da listagem",
+    "dessa listagem",
+    "dos dados acima",
+    "da tabela acima",
+    "da consulta anterior",
+    "mesma consulta"
+  ],
+  "chartAxisFields": [
+    "product_group",
+    "unit",
+    "branch",
+    "description",
+    "item_code"
+  ],
+  "routes": [
+    {
+      "id": "productionConsumptionTopItems",
+      "actionIdDefault": "production-consumption-top-items",
+      "pathContains": "/production/consumption/top-items",
+      "pathExcludeContains": [
+        "by-work-center",
+        "top-items-validated",
+        "by-item/"
+      ],
+      "parameterName": "group_by",
+      "defaultDimension": "general",
+      "dimensions": [
+        {
+          "value": "product_group",
+          "label": "grupo de produto",
+          "terms": [
+            "grupo",
+            "grupo de produto",
+            "grupos mais consomem",
+            "grupos que mais consomem",
+            "qual grupo mais consome",
+            "quais grupos mais consomem",
+            "grupo e consumo",
+            "ranking por grupo",
+            "agrupamento por grupo",
+            "agrupar por grupo"
+          ]
+        },
+        {
+          "value": "unit",
+          "label": "unidade de medida",
+          "terms": [
+            "unidade",
+            "unidade de medida",
+            "por unidade",
+            "consumo por unidade",
+            "ranking por unidade",
+            "agrupar por unidade"
+          ]
+        },
+        {
+          "value": "branch_summary",
+          "label": "filial",
+          "terms": [
+            "filial",
+            "por filial",
+            "filiais mais consomem",
+            "consumo por filial",
+            "ranking por filial",
+            "agrupar por filial",
+            "total por filial"
+          ]
+        },
+        {
+          "value": "branch",
+          "label": "filial e item",
+          "terms": [
+            "filial e item",
+            "item por filial",
+            "detalhe por filial"
+          ]
+        }
+      ]
+    }
+  ]
+}

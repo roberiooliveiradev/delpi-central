@@ -48,6 +48,8 @@ class OperationalRefinement:
     page_size: int | None = None
     max_depth: int | None = None
     group_by: str | None = None
+    operational_route_id: str | None = None
+    group_by_label: str | None = None
 
     @property
     def clears_branch_filter(self) -> bool:
@@ -153,27 +155,6 @@ class ChatOperationalRefinementService:
         ),
     )
     _PAGE_NUMBER_RE = re.compile(r"\bp[aá]gina\s*(\d+)\b", re.IGNORECASE)
-    _CONSUMPTION_TOP_ITEMS_EXCLUDE = (
-        "by-work-center",
-        "top-items-validated",
-        "by-item/",
-    )
-    _CONSUMPTION_GROUP_BY_TERMS = (
-        "agrupamento por grupo",
-        "agrupar por grupo",
-        "agrupa por grupo",
-        "agrupado por grupo",
-        "consumo por grupo",
-        "por grupo de produto",
-        "grupos mais consomem",
-        "grupos que mais consomem",
-        "qual grupo mais consome",
-        "quais grupos mais consomem",
-        "grupo e consumo",
-        "da listagem por grupo",
-        "dessa listagem por grupo",
-        "ranking por grupo",
-    )
     _STOCK_RESET_TERMS = (
         "completo de novo",
         "estoque completo",
@@ -223,7 +204,7 @@ class ChatOperationalRefinementService:
         if planned:
             return planned
 
-        planned = cls.plan_consumption_group_follow_ups(
+        planned = cls.plan_operational_group_by_follow_ups(
             message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
@@ -298,132 +279,35 @@ class ChatOperationalRefinementService:
         ]
 
     @classmethod
-    def looks_like_consumption_group_refinement(cls, normalized: str) -> bool:
-        if ChatMessageNormalizationService.contains_any(
-            normalized,
-            cls._CONSUMPTION_GROUP_BY_TERMS,
-        ):
-            return True
-
-        if "grupo" not in normalized:
-            return False
-
-        return any(
-            token in normalized
-            for token in (
-                "consumo",
-                "consome",
-                "agrup",
-                "listagem",
-                "ranking",
-                "grafico",
-                "gráfico",
-            )
-        )
-
-    @classmethod
-    def _is_consumption_top_items_path(cls, path: str) -> bool:
-        lowered = str(path or "").lower()
-
-        if "/production/consumption/top-items" not in lowered:
-            return False
-
-        return not any(fragment in lowered for fragment in cls._CONSUMPTION_TOP_ITEMS_EXCLUDE)
-
-    @classmethod
-    def collect_recent_consumption_top_items_action(
-        cls,
-        previous_messages: list[Any] | None,
-        *,
-        conversation_context: str | None = None,
-    ) -> RecentPaginatedAction | None:
-        for item in reversed((previous_messages or [])[-14:]):
-            for tool_call in reversed(cls._message_metadata(item).get("toolCalls") or []):
-                if not isinstance(tool_call, dict):
-                    continue
-
-                if str(tool_call.get("name") or "") != "execute_external_action":
-                    continue
-
-                tool_meta = tool_call.get("metadata") or {}
-
-                if not tool_meta.get("ok"):
-                    continue
-
-                path = str(tool_meta.get("path") or "")
-
-                if not cls._is_consumption_top_items_path(path):
-                    continue
-
-                arguments = tool_call.get("arguments") or {}
-                parameters = arguments.get("parameters") or {}
-
-                if not isinstance(parameters, dict):
-                    parameters = {}
-
-                action_id = str(
-                    tool_meta.get("actionId")
-                    or arguments.get("actionId")
-                    or ""
-                ).strip()
-
-                if not action_id:
-                    continue
-
-                return RecentPaginatedAction(
-                    action_id=action_id,
-                    path=path,
-                    parameters=dict(parameters),
-                )
-
-        context = str(conversation_context or "").lower()
-
-        if "/production/consumption/top-items" in context and not any(
-            fragment in context for fragment in cls._CONSUMPTION_TOP_ITEMS_EXCLUDE
-        ):
-            return RecentPaginatedAction(
-                action_id="production-consumption-top-items",
-                path="/production/consumption/top-items",
-                parameters={},
-            )
-
-        return None
-
-    @classmethod
-    def plan_consumption_group_follow_ups(
+    def plan_operational_group_by_follow_ups(
         cls,
         message: str,
         *,
         conversation_context: str | None = None,
         previous_messages: list[Any] | None = None,
     ) -> list[OperationalRefinement]:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        if not cls.looks_like_consumption_group_refinement(normalized):
-            return []
-
-        recent = cls.collect_recent_consumption_top_items_action(
-            previous_messages,
-            conversation_context=conversation_context,
+        from app.domain.services.chat_operational_group_by_refinement_service import (
+            ChatOperationalGroupByRefinementService,
         )
 
-        if not recent:
-            return []
+        plan = ChatOperationalGroupByRefinementService.plan_follow_up(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        )
 
-        current_group_by = (
-            cls._parameter_str(recent.parameters, "group_by") or "general"
-        ).lower()
-
-        if current_group_by == "product_group":
+        if not plan:
             return []
 
         return [
             OperationalRefinement(
-                kind="consumption_group_by_refinement",
-                action_id=recent.action_id or None,
-                previous_parameters=dict(recent.parameters),
-                previous_path=recent.path,
-                group_by="product_group",
+                kind="operational_group_by_refinement",
+                action_id=plan.action_id or None,
+                previous_parameters=dict(plan.parameters),
+                previous_path=plan.path,
+                group_by=plan.dimension,
+                operational_route_id=plan.route_id or None,
+                group_by_label=plan.dimension_label or None,
                 reason="",
             )
         ]

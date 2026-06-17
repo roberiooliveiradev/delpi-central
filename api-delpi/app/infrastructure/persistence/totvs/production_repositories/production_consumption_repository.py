@@ -1,6 +1,9 @@
 from app.domain.services.production.consumption_real_quantity_service import (
     ConsumptionRealQuantityService,
 )
+from app.domain.services.production.production_consumption_top_items_group_by_service import (
+    ProductionConsumptionTopItemsGroupByService,
+)
 from app.domain.ports.production.production_consumption_repository_port import (
     ProductionConsumptionRepositoryPort,
 )
@@ -23,38 +26,15 @@ class ProductionConsumptionRepository(
         consumption_expr = ConsumptionRealQuantityService.SQL_EXPRESSION
         branch_filter = "AND D4.D4_FILIAL = ?" if branch else ""
         params: list = [date_start, date_end_exclusive]
+
         if branch:
             params.append(branch)
 
-        if group_by == "branch":
-            select_branch = "D4.D4_FILIAL AS branch,"
-            group_by_sql = "D4.D4_FILIAL, D4.D4_COD, SB1.B1_DESC, SB1.B1_UM"
-            order_by = "real_consumption_qty DESC, D4.D4_FILIAL ASC, D4.D4_COD ASC"
-        elif group_by == "product_group":
-            select_branch = ""
-            group_by_sql = "SB1.B1_GRUPO"
-            order_by = "real_consumption_qty DESC, SB1.B1_GRUPO ASC"
-        else:
-            select_branch = ""
-            group_by_sql = "D4.D4_COD, SB1.B1_DESC, SB1.B1_UM"
-            order_by = "real_consumption_qty DESC, D4.D4_COD ASC"
-
-        if group_by == "product_group":
-            select_fields = """
-            SB1.B1_GRUPO AS product_group,
-            SUM({consumption_expr}) AS real_consumption_qty
-            """.format(consumption_expr=consumption_expr)
-        else:
-            select_fields = f"""
-            {{select_branch}}
-            D4.D4_COD AS item_code,
-            SB1.B1_DESC AS description,
-            SB1.B1_UM AS unit,
-            SUM({consumption_expr}) AS real_consumption_qty
-            """.format(
-                select_branch=select_branch,
-                consumption_expr=consumption_expr,
-            )
+        spec = ProductionConsumptionTopItemsGroupByService.resolve(group_by)
+        select_fields = ProductionConsumptionTopItemsGroupByService.render_select_fields(
+            spec,
+            consumption_expr=consumption_expr,
+        )
 
         sql = f"""
         SELECT TOP {int(limit)}
@@ -67,8 +47,8 @@ class ProductionConsumptionRepository(
           AND D4.D4_DATA >= ?
           AND D4.D4_DATA < ?
           {branch_filter}
-        GROUP BY {group_by_sql}
-        ORDER BY {order_by}
+        GROUP BY {spec.group_by_sql}
+        ORDER BY {spec.order_by}
         """
 
         with self as repo:

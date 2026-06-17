@@ -1,0 +1,36 @@
+{
+  "version": "1",
+  "default": "general",
+  "dimensions": {
+    "general": {
+      "consolidatedWhenNoBranchFilter": true,
+      "selectFields": "D4.D4_COD AS item_code, SB1.B1_DESC AS description, SB1.B1_UM AS unit, SUM({consumption_expr}) AS real_consumption_qty",
+      "groupBySql": "D4.D4_COD, SB1.B1_DESC, SB1.B1_UM",
+      "orderBy": "real_consumption_qty DESC, D4.D4_COD ASC"
+    },
+    "branch": {
+      "consolidatedWhenNoBranchFilter": false,
+      "selectFields": "D4.D4_FILIAL AS branch, D4.D4_COD AS item_code, SB1.B1_DESC AS description, SB1.B1_UM AS unit, SUM({consumption_expr}) AS real_consumption_qty",
+      "groupBySql": "D4.D4_FILIAL, D4.D4_COD, SB1.B1_DESC, SB1.B1_UM",
+      "orderBy": "real_consumption_qty DESC, D4.D4_FILIAL ASC, D4.D4_COD ASC"
+    },
+    "product_group": {
+      "consolidatedWhenNoBranchFilter": true,
+      "selectFields": "SB1.B1_GRUPO AS product_group, SUM({consumption_expr}) AS real_consumption_qty",
+      "groupBySql": "SB1.B1_GRUPO",
+      "orderBy": "real_consumption_qty DESC, SB1.B1_GRUPO ASC"
+    },
+    "unit": {
+      "consolidatedWhenNoBranchFilter": true,
+      "selectFields": "SB1.B1_UM AS unit, SUM({consumption_expr}) AS real_consumption_qty",
+      "groupBySql": "SB1.B1_UM",
+      "orderBy": "real_consumption_qty DESC, SB1.B1_UM ASC"
+    },
+    "branch_summary": {
+      "consolidatedWhenNoBranchFilter": false,
+      "selectFields": "D4.D4_FILIAL AS branch, SUM({consumption_expr}) AS real_consumption_qty",
+      "groupBySql": "D4.D4_FILIAL",
+      "orderBy": "real_consumption_qty DESC, D4.D4_FILIAL ASC"
+    }
+  }
+}

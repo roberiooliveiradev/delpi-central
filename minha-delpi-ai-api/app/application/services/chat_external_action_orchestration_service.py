@@ -277,7 +277,7 @@ class ChatExternalActionOrchestrationService:
                         raw_message=raw_message,
                         memory_snapshot=memory_snapshot,
                     )
-                elif refinement.kind == "consumption_group_by_refinement":
+                elif refinement.kind == "operational_group_by_refinement":
                     selected = selection_service.select_action(
                         selection_message,
                         allowed_action_ids=allowed_action_ids,

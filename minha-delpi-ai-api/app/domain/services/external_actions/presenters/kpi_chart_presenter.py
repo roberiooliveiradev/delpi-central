@@ -763,10 +763,17 @@ class ExternalActionKpiChartPresenter:
             if not chart_numeric:
                 return None
 
-        label_key = (
-            "product_group"
-            if "product_group" in string_keys
-            else string_keys[0]
+        from app.domain.services.chat_operational_group_by_refinement_service import (
+            ChatOperationalGroupByRefinementService,
+        )
+
+        label_key = next(
+            (
+                key
+                for key in (*ChatOperationalGroupByRefinementService.chart_axis_fields(), *string_keys)
+                if key in string_keys
+            ),
+            string_keys[0],
         )
         labels = [str(row.get(label_key, "")) for row in rows[:12]]
 

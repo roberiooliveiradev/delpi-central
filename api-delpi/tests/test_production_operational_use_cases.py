@@ -71,6 +71,31 @@ def test_consumption_top_items_use_case_groups_by_product_group() -> None:
     assert kwargs["group_by"] == "product_group"
 
 
+def test_consumption_top_items_use_case_groups_by_unit() -> None:
+    repository = MagicMock()
+    repository.fetch_top_items.return_value = [
+        {
+            "unit": "PC",
+            "real_consumption_qty": 1200.0,
+        }
+    ]
+
+    use_case = GetProductionConsumptionTopItemsUseCase(repository)
+    result = use_case.execute(
+        ProductionOperationalRequest(
+            date_start="2026-03-01",
+            date_end="2026-03-31",
+            limit=10,
+            group_by="unit",
+        )
+    )
+
+    assert result["group_by"] == "unit"
+    assert result["items"][0]["unit"] == "PC"
+    _, kwargs = repository.fetch_top_items.call_args
+    assert kwargs["group_by"] == "unit"
+
+
 def test_purchases_top_products_use_case_returns_items() -> None:
     repository = MagicMock()
     repository.fetch_top_products.return_value = [
