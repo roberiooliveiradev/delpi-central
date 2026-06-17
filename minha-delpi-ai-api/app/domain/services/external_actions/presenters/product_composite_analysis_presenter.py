@@ -145,6 +145,10 @@ class ExternalActionProductCompositeAnalysisPresenter:
                     withoutStock=str(stock_summary.get("total_without_stock_for_one_pa") or 0),
                 )
             )
+            capacity_line = self._format_pa_capacity_line(stock_summary)
+
+            if capacity_line:
+                linhas.append(capacity_line)
 
         production_summary = self._section_block(root, "production").get("summary")
 
@@ -387,7 +391,7 @@ class ExternalActionProductCompositeAnalysisPresenter:
         stock_items = self._section_block(root, "raw_material_stock").get("items")
 
         if isinstance(stock_items, list) and stock_items:
-            mp_summary_table = self._build_factory_mp_stock_summary_table(stock_items)
+            mp_summary_table = self._build_factory_mp_stock_summary_table(root, stock_items)
 
             if mp_summary_table:
                 tables.append(mp_summary_table)
@@ -436,6 +440,79 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
         return [table for table in tables if isinstance(table, dict)]
 
+    def _format_pa_capacity_line(self, stock_summary: dict) -> str:
+        max_pa = stock_summary.get("max_pa_producible_from_stock")
+
+        if max_pa in (None, ""):
+            return ""
+
+        code = str(stock_summary.get("limiting_raw_material_code") or "").strip()
+        description = str(stock_summary.get("limiting_raw_material_description") or "").strip()
+
+        try:
+            count = int(float(max_pa))
+        except (TypeError, ValueError):
+            return ""
+
+        if count <= 0:
+            if description:
+                return self._route(
+                    "factoryStatus",
+                    "paCapacitySummaryZero",
+                    code=code or "—",
+                    description=description,
+                )
+
+            return self._route(
+                "factoryStatus",
+                "paCapacitySummaryZeroCodeOnly",
+                code=code or "—",
+            )
+
+        if description:
+            return self._route(
+                "factoryStatus",
+                "paCapacitySummary",
+                count=str(count),
+                code=code or "—",
+                description=description,
+            )
+
+        return self._route(
+            "factoryStatus",
+            "paCapacitySummaryCodeOnly",
+            count=str(count),
+            code=code or "—",
+        )
+
+    def _resolve_factory_mp_stock_rows(self, root: dict) -> list[dict[str, Any]]:
+        stock_block = self._section_block(root, "raw_material_stock")
+        summary = stock_block.get("summary") if isinstance(stock_block, dict) else None
+        materials = summary.get("materials") if isinstance(summary, dict) else None
+
+        if isinstance(materials, list) and materials:
+            rows: list[dict[str, Any]] = []
+
+            for item in materials:
+                if not isinstance(item, dict):
+                    continue
+
+                row = dict(item)
+                available = row.get("available_quantity_total", row.get("available_quantity"))
+                row["available_quantity_total"] = available
+                producible = row.get("pa_producible_from_stock", row.get("pa_coverage_estimate"))
+
+                if producible is not None:
+                    row["pa_producible_from_stock"] = producible
+                    row["pa_coverage_estimate"] = producible
+
+                rows.append(row)
+
+            return rows
+
+        stock_items = stock_block.get("items") if isinstance(stock_block, dict) else []
+        return self._aggregate_mp_stock_rows(stock_items)
+
     def _aggregate_mp_stock_rows(self, stock_items: object) -> list[dict[str, Any]]:
         from app.domain.services.chat_operational_data_commentary_service import (
             ChatOperationalDataCommentaryService,
@@ -443,8 +520,8 @@ class ExternalActionProductCompositeAnalysisPresenter:
 
         return ChatOperationalDataCommentaryService.aggregate_mp_stock_rows(stock_items)
 
-    def _build_factory_mp_stock_summary_table(self, stock_items: list) -> dict | None:
-        rows = self._aggregate_mp_stock_rows(stock_items)
+    def _build_factory_mp_stock_summary_table(self, root: dict, stock_items: list) -> dict | None:
+        rows = self._resolve_factory_mp_stock_rows(root)
 
         return _OpsTable.build_items_table(
             self._host.column_label_context,

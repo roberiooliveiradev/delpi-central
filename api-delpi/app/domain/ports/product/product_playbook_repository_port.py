@@ -21,6 +21,9 @@ class ProductPlaybookRepositoryPort(ABC):
         code: str,
         reference_date: str,
         max_depth: int,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
         branch: str | None = None,
     ) -> list[dict]:
         ...

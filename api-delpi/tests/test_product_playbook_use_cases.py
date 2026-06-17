@@ -98,7 +98,14 @@ def test_production_status_use_case_uses_reference_date() -> None:
 
     assert result["reference_date"] == "20260604"
     assert result["summary"]["pa_production_started"] == "SIM"
-    repository.fetch_production_status.assert_called_once()
+    repository.fetch_production_status.assert_called_once_with(
+        "90261255",
+        "20260604",
+        50,
+        date_start="20260604",
+        date_end_exclusive="20260605",
+        branch=None,
+    )
 
 
 def test_factory_status_use_case_aggregates_sections() -> None:
@@ -108,6 +115,7 @@ def test_factory_status_use_case_aggregates_sections() -> None:
     repository.fetch_raw_material_stock.return_value = [
         {
             "raw_material_code": "10010032",
+            "quantity_required_for_one_pa": "10",
             "available_quantity": "0",
             "has_stock_for_one_pa": "NAO",
         }

@@ -33,6 +33,10 @@ def build_cost_impact_simulation(
     adjustment_percent: float,
     top_n: int | None,
 ) -> dict:
+    from app.domain.services.product.product_pa_bom_reference_service import (
+        ProductPaBomReferenceService,
+    )
+
     if not product:
         return {
             "product": None,
@@ -54,10 +58,14 @@ def build_cost_impact_simulation(
 
     pa_standard_cost = _to_float(product.get("standard_cost"))
     multiplier = 1 + (adjustment_percent / 100.0)
+    product_unit = str(product.get("unit") or "").strip() or None
 
     enriched: list[dict] = []
     for item in items:
-        quantity_per_pa = _to_float(item.get("quantity_per_pa"))
+        quantity_per_pa = ProductPaBomReferenceService.quantity_required_for_one_pa(
+            item.get("quantity_per_pa"),
+            product_unit,
+        )
         unit_cost = resolve_unit_cost(
             standard_cost=item.get("standard_cost"),
             last_purchase_price=item.get("last_purchase_price"),
@@ -156,8 +164,13 @@ def build_cost_impact_simulation(
         "pa_cost_comparable": pa_cost_comparable,
     }
 
+    reference = ProductPaBomReferenceService.resolve_from_product(product)
+    enriched_product = dict(product)
+    enriched_product["pa_reference"] = reference.as_dict()
+
     return {
-        "product": product,
+        "product": enriched_product,
+        "pa_reference": reference.as_dict(),
         "price_source": price_source,
         "adjustment_percent": adjustment_percent,
         "materials": {

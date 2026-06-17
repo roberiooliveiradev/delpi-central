@@ -199,9 +199,12 @@ class ChatOperationalDataCommentaryService:
             available = float(row.get("available_quantity_total") or 0)
 
             if required > 0:
-                row["pa_coverage_estimate"] = round(available / required, 2)
+                producible = round(available / required, 4)
+                row["pa_coverage_estimate"] = producible
+                row["pa_producible_from_stock"] = producible
             else:
                 row["pa_coverage_estimate"] = None
+                row["pa_producible_from_stock"] = None
 
             row["available_quantity_total"] = available
             rows.append(row)
@@ -357,6 +360,34 @@ class ChatOperationalDataCommentaryService:
         stock_summary = cls._section_block(root, "raw_material_stock").get("summary")
 
         if isinstance(stock_summary, dict):
+            max_pa = stock_summary.get("max_pa_producible_from_stock")
+            limiting_code = str(stock_summary.get("limiting_raw_material_code") or "").strip()
+
+            if max_pa not in (None, ""):
+                try:
+                    pa_count = int(float(max_pa))
+                except (TypeError, ValueError):
+                    pa_count = None
+
+                if pa_count is not None and limiting_code:
+                    if pa_count > 0:
+                        highlights.append(
+                            cls._text(
+                                profile,
+                                "paProducibleCapacity",
+                                count=str(pa_count),
+                                code=limiting_code,
+                            )
+                        )
+                    else:
+                        highlights.append(
+                            cls._text(
+                                profile,
+                                "paProducibleCapacityZero",
+                                code=limiting_code,
+                            )
+                        )
+
             without_stock_count = int(stock_summary.get("total_without_stock_for_one_pa") or 0)
 
             if without_stock_count > 0:

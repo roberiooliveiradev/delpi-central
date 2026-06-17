@@ -1,5 +1,8 @@
 from app.application.dto.product.product_playbook_request import ProductPlaybookRequest
 from app.application.services.product.product_playbook_service import (
+    apply_pa_bom_reference_to_production_items,
+    apply_pa_bom_reference_to_stock_items,
+    attach_pa_reference,
     classify_factory_status,
     resolve_exclusive_end_date,
     resolve_protheus_date,
@@ -30,11 +33,19 @@ class GetProductFactoryStatusUseCase:
             max_depth,
         )
         stock_items = self._repository.fetch_raw_material_stock(request.code, max_depth)
+        product_unit = str((header or {}).get("unit") or "").strip() or None
+        stock_items = apply_pa_bom_reference_to_stock_items(stock_items, product_unit)
         production_items = self._repository.fetch_production_status(
             request.code,
             reference_date,
             max_depth,
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
             branch=request.branch,
+        )
+        production_items = apply_pa_bom_reference_to_production_items(
+            production_items,
+            product_unit,
         )
         shipping_items = self._repository.fetch_shipping_status(
             request.code,
@@ -44,7 +55,7 @@ class GetProductFactoryStatusUseCase:
         )
 
         structure_summary = summarize_structure(structure_items)
-        stock_summary = summarize_raw_material_stock(stock_items)
+        stock_summary = summarize_raw_material_stock(stock_items, product_unit=product_unit)
         production_summary = summarize_production(production_items)
         shipping_summary = summarize_shipping(shipping_items)
 
@@ -55,7 +66,8 @@ class GetProductFactoryStatusUseCase:
             shipping_items=shipping_items,
         )
 
-        return {
+        return attach_pa_reference(
+            {
             "product": header,
             "reference_date": reference_date,
             "date_start": date_start,
@@ -84,6 +96,8 @@ class GetProductFactoryStatusUseCase:
                 "total_raw_materials_without_stock_for_one_pa": stock_summary[
                     "total_without_stock_for_one_pa"
                 ],
+                "max_pa_producible_from_stock": stock_summary.get("max_pa_producible_from_stock"),
+                "limiting_raw_material_code": stock_summary.get("limiting_raw_material_code"),
                 "total_pa_orders": production_summary["total_pa_orders"],
                 "total_pi_orders": production_summary["total_pi_orders"],
                 "total_pa_reported_quantity": production_summary["total_pa_reported_quantity"],
@@ -93,4 +107,6 @@ class GetProductFactoryStatusUseCase:
                     "total_inspection_loss_quantity"
                 ],
             },
-        }
+        },
+            header,
+        )

@@ -137,6 +137,9 @@
     "has_stock_for_one_pa_label": "Saldo p/ 1 PA",
     "available_quantity_total": "Saldo disponível (consolidado)",
     "pa_coverage_estimate": "Cobertura estimada (PA)",
+    "pa_producible_from_stock": "PAs possíveis c/ saldo",
+    "max_pa_producible_from_stock": "PAs possíveis c/ saldo MP",
+    "limiting_raw_material_code": "MP gargalo",
     "total_intermediates": "Total de intermediários",
     "total_raw_materials": "Total de MPs",
     "total_exclusive_raw_materials": "MPs exclusivas",
@@ -1827,6 +1830,10 @@
         [
           "total_raw_materials_without_stock_for_one_pa",
           "MPs sem saldo p/ 1 PA"
+        ],
+        [
+          "max_pa_producible_from_stock",
+          "PAs possíveis c/ saldo MP"
         ]
       ]
     },
@@ -2382,6 +2389,10 @@
         [
           "has_stock_for_one_pa_label",
           "Saldo p/ 1 PA"
+        ],
+        [
+          "pa_producible_from_stock",
+          "PAs possíveis c/ saldo"
         ],
         [
           "pa_coverage_estimate",

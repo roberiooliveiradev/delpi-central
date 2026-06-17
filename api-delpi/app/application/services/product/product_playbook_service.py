@@ -50,7 +50,94 @@ def summarize_structure(items: list[dict]) -> dict:
     }
 
 
-def summarize_raw_material_stock(items: list[dict]) -> dict:
+def apply_pa_bom_reference_to_stock_items(
+    items: list[dict],
+    product_unit: str | None,
+) -> list[dict]:
+    from app.domain.services.product.product_pa_bom_reference_service import (
+        ProductPaBomReferenceService,
+    )
+
+    normalized: list[dict] = []
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+
+        row = dict(item)
+        required = ProductPaBomReferenceService.quantity_required_for_one_pa(
+            row.get("quantity_required_for_one_pa"),
+            product_unit,
+        )
+        row["quantity_required_for_one_pa"] = str(required)
+        row["has_stock_for_one_pa"] = ProductPaBomReferenceService.has_stock_for_one_pa(
+            available_quantity=row.get("available_quantity"),
+            required_quantity=required,
+        )
+        normalized.append(row)
+
+    return normalized
+
+
+def apply_pa_bom_reference_to_production_items(
+    items: list[dict],
+    product_unit: str | None,
+) -> list[dict]:
+    from app.domain.services.product.product_pa_bom_reference_service import (
+        ProductPaBomReferenceService,
+    )
+
+    normalized: list[dict] = []
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+
+        row = dict(item)
+        required = ProductPaBomReferenceService.quantity_required_for_one_pa(
+            row.get("quantity_required_for_one_pa"),
+            product_unit,
+        )
+        row["quantity_required_for_one_pa"] = str(required)
+
+        order_quantity = _to_float(row.get("order_quantity"))
+        reported = _to_float(row.get("reported_quantity"))
+        produced_sc2 = _to_float(row.get("produced_quantity_sc2"))
+        produced = reported if reported > 0 else produced_sc2
+
+        if required > 0:
+            equivalent = produced / required
+            row["equivalent_in_pa"] = str(equivalent)
+            row["percent_for_one_pa"] = str(equivalent * 100)
+            if order_quantity > 0:
+                row["order_production_percent"] = str((produced / order_quantity) * 100)
+
+        normalized.append(row)
+
+    return normalized
+
+
+def attach_pa_reference(payload: dict, product: dict | None) -> dict:
+    from app.domain.services.product.product_pa_bom_reference_service import (
+        ProductPaBomReferenceService,
+    )
+
+    reference = ProductPaBomReferenceService.resolve_from_product(product)
+    payload["pa_reference"] = reference.as_dict()
+
+    if isinstance(product, dict):
+        enriched_product = dict(product)
+        enriched_product["pa_reference"] = reference.as_dict()
+        payload["product"] = enriched_product
+
+    return payload
+
+
+def summarize_raw_material_stock(items: list[dict], *, product_unit: str | None = None) -> dict:
+    from app.domain.services.product.product_pa_bom_reference_service import (
+        ProductPaBomReferenceService,
+    )
+
     by_code: dict[str, dict] = {}
 
     for item in items:
@@ -58,19 +145,37 @@ def summarize_raw_material_stock(items: list[dict]) -> dict:
         if not code:
             continue
 
+        required = ProductPaBomReferenceService.quantity_required_for_one_pa(
+            item.get("quantity_required_for_one_pa"),
+            product_unit,
+        )
+
         entry = by_code.setdefault(
             code,
             {
                 "raw_material_code": code,
                 "raw_material_description": item.get("raw_material_description"),
-                "quantity_required_for_one_pa": item.get("quantity_required_for_one_pa"),
+                "unit": item.get("unit"),
+                "quantity_required_for_one_pa": required,
                 "available_quantity": 0.0,
                 "has_stock_for_one_pa": "NAO",
             },
         )
+        if not entry.get("unit") and item.get("unit"):
+            entry["unit"] = item.get("unit")
         entry["available_quantity"] += _to_float(item.get("available_quantity"))
-        if is_protheus_yes(item.get("has_stock_for_one_pa")):
-            entry["has_stock_for_one_pa"] = "SIM"
+
+    materials: list[dict] = []
+
+    for entry in by_code.values():
+        required = _to_float(entry["quantity_required_for_one_pa"])
+        entry["has_stock_for_one_pa"] = ProductPaBomReferenceService.has_stock_for_one_pa(
+            available_quantity=entry["available_quantity"],
+            required_quantity=required,
+        )
+        entry["quantity_required_for_one_pa"] = str(required)
+        entry["available_quantity"] = str(entry["available_quantity"])
+        materials.append(entry)
 
     without_stock = [
         code
@@ -78,10 +183,17 @@ def summarize_raw_material_stock(items: list[dict]) -> dict:
         if not is_protheus_yes(entry["has_stock_for_one_pa"])
     ]
 
+    capacity = ProductPaBomReferenceService.summarize_pa_producible_capacity(materials)
+
     return {
         "total_raw_materials": len(by_code),
         "total_without_stock_for_one_pa": len(without_stock),
         "raw_materials_without_stock_for_one_pa": without_stock,
+        "max_pa_producible_from_stock": capacity.get("max_pa_producible_from_stock"),
+        "max_pa_producible_from_stock_exact": capacity.get("max_pa_producible_from_stock_exact"),
+        "limiting_raw_material_code": capacity.get("limiting_raw_material_code"),
+        "limiting_raw_material_description": capacity.get("limiting_raw_material_description"),
+        "materials": capacity.get("materials") or [],
     }
 
 

@@ -2,6 +2,9 @@
 
 from app.domain.ports.product.product_playbook_repository_port import ProductPlaybookRepositoryPort
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.product_repositories.product_playbook_production_period_sql import (
+    PRODUCT_PLAYBOOK_PRODUCTION_ORDER_PERIOD_FILTER_SQL,
+)
 
 
 class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
@@ -235,19 +238,32 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
         code: str,
         reference_date: str,
         max_depth: int,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
         branch: str | None = None,
     ) -> list[dict]:
         branch_filter = ""
-        params: list = [code, reference_date, max_depth]
+        params: list = [
+            code,
+            reference_date,
+            max_depth,
+            date_start,
+            date_end_exclusive,
+        ]
 
         if branch:
             branch_filter = "AND SC2.C2_FILIAL = ?"
             params.append(branch)
 
+        period_filter = PRODUCT_PLAYBOOK_PRODUCTION_ORDER_PERIOD_FILTER_SQL
+
         sql = f"""
         DECLARE @PRODUTO VARCHAR(30) = ?;
         DECLARE @DATA_REF VARCHAR(8) = ?;
         DECLARE @MAX_DEPTH INT = ?;
+        DECLARE @DATA_INI VARCHAR(8) = ?;
+        DECLARE @DATA_FIM VARCHAR(8) = ?;
 
         WITH ESTRUTURA AS (
             SELECT
@@ -326,6 +342,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
                 ON SC2.C2_PRODUTO = EP.product_code
                AND SC2.D_E_L_E_T_ = ''
                AND SC2.C2_EMISSAO <= @DATA_REF
+               {period_filter}
                {branch_filter}
         ),
 

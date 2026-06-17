@@ -1,0 +1,16 @@
+{
+  "default": {
+    "referenceQuantity": 1,
+    "referenceUnit": "PA",
+    "bomQuantityFactor": 1
+  },
+  "units": {
+    "MI": {
+      "referenceQuantity": 1,
+      "referenceUnit": "PA",
+      "catalogUnit": "MI",
+      "catalogQuantityPerReference": 1,
+      "bomQuantityFactor": 1
+    }
+  }
+}

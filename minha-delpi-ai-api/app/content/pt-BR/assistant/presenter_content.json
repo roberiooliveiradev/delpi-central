@@ -480,6 +480,10 @@
       "introCodeOnly": "Montei a visão fabril integrada do produto **{code}**: estrutura, estoque de MP, produção e expedição.",
       "structureSummary": "Estrutura: **{components}** componente(s), **{intermediates}** intermediário(s), **{rawMaterials}** MP(s), **{exclusive}** exclusiva(s).",
       "stockSummary": "Estoque de MP: **{withoutStock}** material(is) sem saldo para montar 1 PA.",
+      "paCapacitySummary": "Com o estoque de MP de hoje, dá para montar até **{count}** PA(s) — gargalo: **{code}** ({description}).",
+      "paCapacitySummaryCodeOnly": "Com o estoque de MP de hoje, dá para montar até **{count}** PA(s) — gargalo: **{code}**.",
+      "paCapacitySummaryZero": "Com o estoque de MP de hoje, **não há saldo** para montar PA — gargalo: **{code}** ({description}).",
+      "paCapacitySummaryZeroCodeOnly": "Com o estoque de MP de hoje, **não há saldo** para montar PA — gargalo: **{code}**.",
       "productionSummary": "Produção: PA **{paStarted}** · PI **{piStarted}** — **{paOrders}** OP(s) PA e **{piOrders}** OP(s) PI.",
       "shippingSummary": "Expedição no período: **{shipped}** expedido(s) · **{loss}** perda(s) de inspeção.",
       "sectionStructureTitle": "Estrutura (BOM + exclusividade)",
@@ -497,6 +501,7 @@
       "kpiComponents": "Componentes na estrutura",
       "kpiExclusiveRawMaterials": "MPs exclusivas",
       "kpiWithoutStock": "MPs sem saldo p/ 1 PA",
+      "kpiMaxPaProducible": "PAs possíveis c/ saldo MP",
       "kpiProductionOrders": "Ordens de produção",
       "kpiShipped": "Expedido no período",
       "treeTitle": "Estrutura fabril — {code}",
@@ -1339,6 +1344,8 @@
       "mpComfortableCoverage": "MP **{code}** com saldo confortável frente à necessidade de 1 PA.",
       "conclusionReleased": "Produto **liberado para expedição** sem bloqueio de MP para montar 1 PA.",
       "conclusionBlocked": "Há **{count}** MP(s) sem saldo para montar 1 PA — validar compra/reposição.",
+      "paProducibleCapacity": "Com o estoque de MP de hoje, é possível montar até **{count}** PA(s) — gargalo **{code}**.",
+      "paProducibleCapacityZero": "Com o estoque atual, **não há saldo** para montar PA — gargalo **{code}**.",
       "sharedMpWarning": "As MPs não são exclusivas — o saldo pode ser consumido por outros PAs."
     },
     "productionStatus": {
@@ -1860,6 +1867,15 @@
             "color": "#8b5cf6",
             "cast": "int",
             "key": "exclusive_raw_materials"
+          },
+          {
+            "section": "raw_material_stock",
+            "field": "max_pa_producible_from_stock",
+            "labelKey": "kpiMaxPaProducible",
+            "unit": "PA",
+            "color": "#22c55e",
+            "cast": "int",
+            "key": "max_pa_producible"
           },
           {
             "section": "raw_material_stock",
