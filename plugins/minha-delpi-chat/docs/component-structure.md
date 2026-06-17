@@ -8,7 +8,7 @@
 src/ui/components/
 ├── shared/              # Primitivos cross-feature (overlay, modal, menus, composer base)
 │   ├── overlay/         # AnchoredMenuPortal, ModalPortal, menuPositionUtils
-│   ├── modal/           # ChatModal
+│   ├── modal/           # ChatModal, alert/confirm/prompt dialogs + hooks (PR-44)
 │   ├── composer/        # ComposerOptionSelector, ChatInputPlusMenu
 │   └── menus/           # ActionMenuPanel, DropdownMenuTrigger
 ├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, pipeline/, export/, CSS)
@@ -99,6 +99,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | PR | Destino | Arquivos-alvo |
 |----|---------|---------------|
 | PR-43 | `presentation/` | export/copy buttons, chart UX, drill-down | ✅ |
+| PR-44 | `shared/modal/` | alert/confirm/prompt + hooks `use*Dialog` | ✅ |
 
 ## Referências
 

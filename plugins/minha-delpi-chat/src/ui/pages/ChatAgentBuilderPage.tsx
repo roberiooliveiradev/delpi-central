@@ -17,7 +17,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useResizablePane } from "../../state/hooks/useResizablePane";
-import { useConfirmDialog } from "../components/useConfirmDialog";
+import { useConfirmDialog } from "../components/shared";
 
 import {
   createAgentTextSource,

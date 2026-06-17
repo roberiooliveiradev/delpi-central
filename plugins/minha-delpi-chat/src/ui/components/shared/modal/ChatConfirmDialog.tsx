@@ -1,6 +1,6 @@
 import { AlertTriangle, X } from "lucide-react";
 
-import { ChatModal } from "./shared/modal/ChatModal";
+import { ChatModal } from "./ChatModal";
 import "./ChatConfirmDialog.css";
 
 type ChatConfirmDialogProps = {

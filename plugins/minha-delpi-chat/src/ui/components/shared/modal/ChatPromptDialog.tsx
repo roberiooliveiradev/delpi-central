@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
-import { ChatModal } from "./shared/modal/ChatModal";
+import { ChatModal } from "./ChatModal";
 import "./ChatPromptDialog.css";
 
 type ChatPromptDialogProps = {

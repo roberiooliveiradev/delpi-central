@@ -9,7 +9,7 @@ import {
 } from "../../../../data/api/adminApi";
 import type { AdminChatSkill, AdminRbacSummary } from "../../../../data/api/adminTypes";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
-import { useConfirmDialog } from "../../useConfirmDialog";
+import { useConfirmDialog } from "../../shared";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SkillsSummaryStrip } from "./SkillsSummaryStrip";
 import {

@@ -19,6 +19,14 @@ export { ChatInputPlusMenu } from "./composer/ChatInputPlusMenu";
 export { ChatModal } from "./modal/ChatModal";
 export type { ChatModalMobileLayout, ChatModalSize } from "./modal/ChatModal";
 
+export { ChatConfirmDialog } from "./modal/ChatConfirmDialog";
+export { ChatAlertDialog } from "./modal/ChatAlertDialog";
+export { ChatPromptDialog } from "./modal/ChatPromptDialog";
+export { ChatShortcutPromptDialog } from "./modal/ChatShortcutPromptDialog";
+export { useConfirmDialog } from "./modal/useConfirmDialog";
+export { useAlertDialog } from "./modal/useAlertDialog";
+export { usePromptDialog } from "./modal/usePromptDialog";
+
 export {
   COMPOSER_PANEL_ANCHOR_GAP,
   estimateChatInputPlusMenuItemCount,

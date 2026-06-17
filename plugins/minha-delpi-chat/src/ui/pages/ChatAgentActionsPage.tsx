@@ -48,7 +48,7 @@ import type {
   ChatAgentActionProvider,
 } from "../../data/api/chatTypes";
 import { useResizablePane } from "../../state/hooks/useResizablePane";
-import { useConfirmDialog } from "../components/useConfirmDialog";
+import { useConfirmDialog } from "../components/shared";
 import { ChatResourceUsageLink } from "../components/ChatResourceUsageLink";
 import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";

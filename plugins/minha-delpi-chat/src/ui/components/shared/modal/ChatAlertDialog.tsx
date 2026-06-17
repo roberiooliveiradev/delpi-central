@@ -1,4 +1,4 @@
-import { ChatModal } from "./shared/modal/ChatModal";
+import { ChatModal } from "./ChatModal";
 import "./ChatAlertDialog.css";
 
 type ChatAlertDialogProps = {

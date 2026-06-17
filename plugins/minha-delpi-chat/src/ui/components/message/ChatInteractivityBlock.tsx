@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useConfirmDialog } from "../useConfirmDialog";
+import { useConfirmDialog } from "../shared";
 
 import type { ChatMessageMetadata } from "../../../data/api/chatTypes";
 import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "../presentation/pipeline/chartExplain";

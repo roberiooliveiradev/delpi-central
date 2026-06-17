@@ -10,7 +10,7 @@ import type {
   AdminGuidelineVersion,
   AdminGuidelineVersionComparison,
 } from "../../../../data/api/adminTypes";
-import { useConfirmDialog } from "../../useConfirmDialog";
+import { useConfirmDialog } from "../../shared";
 
 import "./GuidelineVersionPanel.css";
 

@@ -8,7 +8,7 @@ import {
   resolveShortcutFields,
   type ShortcutPrefillContext,
 } from "../chatShortcutPrompt";
-import { ChatShortcutPromptDialog } from "../components/ChatShortcutPromptDialog";
+import { ChatShortcutPromptDialog } from "../components/shared";
 
 type PendingShortcutPrompt = {
   template: string;

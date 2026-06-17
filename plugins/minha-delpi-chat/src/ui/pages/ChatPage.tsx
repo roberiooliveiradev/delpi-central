@@ -23,9 +23,7 @@ import { ChatHelpPanel } from "../components/ChatHelpPanel";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/workspace";
 import { ChatSidebar, type ChatSidebarView } from "../components/shell";
-import { useConfirmDialog } from "../components/useConfirmDialog";
-import { usePromptDialog } from "../components/usePromptDialog";
-import { useAlertDialog } from "../components/useAlertDialog";
+import { useConfirmDialog, usePromptDialog, useAlertDialog } from "../components/shared";
 import { setChatAlertHandler } from "../utils/chatNativeDialogs";
 import {
   useChatShortcutPrompt,

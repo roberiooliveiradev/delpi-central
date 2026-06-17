@@ -10,7 +10,7 @@ import {
   formatSourceTypeLabel,
   sourceTypeBadgeClass,
 } from "./knowledgeCuratorialUtils";
-import { useConfirmDialog } from "../../useConfirmDialog";
+import { useConfirmDialog } from "../../shared";
 
 import "./KnowledgeDocumentCard.css";
 

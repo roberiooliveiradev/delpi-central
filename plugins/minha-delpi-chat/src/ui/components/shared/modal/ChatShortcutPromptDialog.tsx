@@ -5,9 +5,9 @@ import {
   fillShortcutTemplate,
   type ShortcutFieldDefinition,
   validateShortcutValues,
-} from "../chatShortcutPrompt";
+} from "../../../chatShortcutPrompt";
 
-import { ChatModal } from "./shared/modal/ChatModal";
+import { ChatModal } from "./ChatModal";
 import "./ChatShortcutPromptDialog.css";
 
 type ChatShortcutPromptDialogProps = {
