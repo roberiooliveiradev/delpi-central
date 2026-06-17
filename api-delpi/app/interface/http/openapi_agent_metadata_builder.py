@@ -18,12 +18,18 @@ _DOMAIN_LABELS: dict[str, str] = {
     "/products/": "Produto",
     "/sales/": "Vendas",
     "/purchases/": "Compras",
+    "/pedidos-venda-abertos/": "Pedidos de venda em aberto",
+    "/propostas-comerciais/": "Propostas comerciais",
     "/system/": "Sistema",
 }
 
 _ENTITY_LABELS: dict[str, str] = {
     "commercial_rol_target": "meta percentual ROL comercial",
     "commercial_rol_series": "série temporal de ROL comercial",
+    "production_order_detail": "detalhe de ordem de produção por OP",
+    "open_sales_order": "pedidos de venda em aberto",
+    "open_production_order": "OPs abertas (pedidos de venda)",
+    "commercial_proposal_document": "proposta comercial interna (PDF/Totvs)",
     "commercial_proposal": "propostas comerciais",
     "sales_conversion_rate": "taxa de fechamento comercial",
     "new_clients_average": "média de novos clientes",

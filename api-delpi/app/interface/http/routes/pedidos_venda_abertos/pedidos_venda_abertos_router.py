@@ -9,6 +9,7 @@ from app.composition.pedidos_venda_abertos_composer import (
 )
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.utils.logger import log_error
 
 router = APIRouter(
@@ -17,7 +18,13 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get(
+    "/",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_pedidos_venda_abertos",
+        path="/pedidos-venda-abertos/",
+    ),
+)
 @require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
 def list_pedidos_venda_abertos_route():
     try:
@@ -42,7 +49,13 @@ def list_pedidos_venda_abertos_route():
         )
 
 
-@router.get("/ops-abertas")
+@router.get(
+    "/ops-abertas",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_ops_abertas_pedidos_venda",
+        path="/pedidos-venda-abertos/ops-abertas",
+    ),
+)
 @require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
 def list_ops_abertas_route():
     try:

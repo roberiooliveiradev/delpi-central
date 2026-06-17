@@ -16,6 +16,7 @@ from app.composition.propostas_comerciais_composer import (
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response, not_found_response
 from app.domain.propostas_comerciais.exceptions import PropostaComercialNotFoundError
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.schemas.proposta_comercial_pdf_schemas import (
     PropostaComercialPdfExportRequest,
@@ -29,7 +30,13 @@ router = APIRouter(
 
 
 @router.get("", include_in_schema=False)
-@router.get("/")
+@router.get(
+    "/",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_propostas_comerciais",
+        path="/propostas-comerciais/",
+    ),
+)
 @require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
 def list_propostas_comerciais_route(
     limit: int = Query(100, ge=1, le=200, description="Quantidade máxima de propostas recentes"),
@@ -113,7 +120,13 @@ def _export_proposta_comercial_pdf(
         )
 
 
-@router.get("/{proposta_interna}")
+@router.get(
+    "/{proposta_interna}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_proposta_comercial",
+        path="/propostas-comerciais/{proposta_interna}",
+    ),
+)
 @require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
 def get_proposta_comercial_route(proposta_interna: str):
     try:

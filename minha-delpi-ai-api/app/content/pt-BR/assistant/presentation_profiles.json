@@ -120,6 +120,10 @@
     "production_schedule_today": "playbook_report",
     "production_work_center_average_planned_time": "playbook_report",
     "production_work_center_order_summary": "playbook_report",
+    "production_order_detail": "playbook_report",
+    "open_sales_order": "playbook_report",
+    "open_production_order": "playbook_report",
+    "commercial_proposal_document": "table_list",
     "purchases_top_products": "playbook_report"
   },
   "entitySetProfileContracts": {
@@ -193,6 +197,10 @@
       "production_schedule_today",
       "production_work_center_average_planned_time",
       "production_work_center_order_summary",
+      "production_order_detail",
+      "open_sales_order",
+      "open_production_order",
+      "commercial_proposal_document",
       "purchases_top_products"
     ],
     "playbookOperational": [
@@ -210,6 +218,9 @@
       "production_schedule_today",
       "production_work_center_average_planned_time",
       "production_work_center_order_summary",
+      "production_order_detail",
+      "open_sales_order",
+      "open_production_order",
       "purchases_top_products"
     ],
     "profilePresent": [
@@ -337,6 +348,10 @@
     ],
     "entityRoutedExtra": [
       "commercial_proposal",
+      "commercial_proposal_document",
+      "open_sales_order",
+      "open_production_order",
+      "production_order_detail",
       "eficiencia_fabril_appointment"
     ]
   },
@@ -398,6 +413,10 @@
       "production_schedule_today",
       "production_work_center_average_planned_time",
       "production_work_center_order_summary",
+      "production_order_detail",
+      "open_sales_order",
+      "open_production_order",
+      "commercial_proposal_document",
       "purchases_top_products"
     ]
   },
@@ -557,6 +576,22 @@
     {
       "contains": "/production/orders/finished-without-consumption",
       "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/orders/by-op/",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/pedidos-venda-abertos/ops-abertas",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/pedidos-venda-abertos",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/propostas-comerciais",
+      "profile": "table_list"
     },
     {
       "contains": "/production/work-centers/average-planned-time",
@@ -1020,7 +1055,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "raw_material_price_intelligence"
+      "compositeVisualSpec": "raw_material_price_intelligence",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "cost_impact_simulation": {
       "defaultViewPolicy": "generic",
@@ -1054,7 +1091,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "cost_impact_simulation"
+      "compositeVisualSpec": "cost_impact_simulation",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "sale_pricing": {
       "defaultViewPolicy": "text_when_available",
@@ -1155,7 +1194,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "last_purchase"
+      "compositeVisualSpec": "last_purchase",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "purchase_price_history": {
       "defaultViewPolicy": "generic",
@@ -1191,7 +1232,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "purchase_price_history"
+      "compositeVisualSpec": "purchase_price_history",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "purchase_budget_history": {
       "defaultViewPolicy": "generic",
@@ -1227,7 +1270,9 @@
       "textBuildOptions": {
         "requiresProduct": true
       },
-      "compositeVisualSpec": "purchase_budget_history"
+      "compositeVisualSpec": "purchase_budget_history",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     },
     "purchase_list": {
       "defaultViewPolicy": "table_when_available",
@@ -2143,6 +2188,10 @@
     "production_work_center_average_planned_time": "/production/work-centers/average-planned-time",
     "production_allocation_gaps": "/production/allocation-gaps",
     "production_planned_vs_real_time": "/production/planned-vs-real-time",
+    "production_order_detail": "/production/orders/by-op/0",
+    "open_sales_order": "/pedidos-venda-abertos/",
+    "open_production_order": "/pedidos-venda-abertos/ops-abertas",
+    "commercial_proposal_document": "/propostas-comerciais/",
     "purchases_top_products": "/purchases/top-products"
   },
   "pathEntityFallbacks": [
@@ -2197,6 +2246,22 @@
     {
       "contains": "/production/orders/open",
       "entity": "production_orders_open"
+    },
+    {
+      "contains": "/production/orders/by-op/",
+      "entity": "production_order_detail"
+    },
+    {
+      "contains": "/pedidos-venda-abertos/ops-abertas",
+      "entity": "open_production_order"
+    },
+    {
+      "contains": "/pedidos-venda-abertos",
+      "entity": "open_sales_order"
+    },
+    {
+      "contains": "/propostas-comerciais",
+      "entity": "commercial_proposal_document"
     },
     {
       "contains": "/production/orders/finished",

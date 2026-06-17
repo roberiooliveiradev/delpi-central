@@ -62,6 +62,18 @@
       "parameterStrategy": "date_branch",
       "method": "GET"
     },
+    "open_sales_orders": {
+      "label": "Pedidos de venda em aberto",
+      "pathMarkers": ["/pedidos-venda-abertos/"],
+      "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "commercial_proposal_documents": {
+      "label": "Propostas comerciais internas",
+      "pathMarkers": ["/propostas-comerciais/"],
+      "parameterStrategy": "semantic",
+      "method": "GET"
+    },
     "department_kpi": {
       "label": "KPI departamental",
       "pathMarkers": [
