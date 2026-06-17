@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from "react";
 
-import { resolveMermaidTheme, useMdcDarkMode } from "../theme/mdcCssVars";
+import { resolveMermaidTheme, useMdcDarkMode } from "../../theme/mdcCssVars";
 
 type ChatMermaidBlockProps = {
   code: string;

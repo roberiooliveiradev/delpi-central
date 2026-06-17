@@ -231,18 +231,19 @@ PR-33 ✅  chatMarkdown → message/ (prosa + strip section markers)
 PR-34 ✅  testFixtures → message/; tableCellFormatting → presentation/
 PR-35 ✅  shell/ — ChatSidebar*, ChatContextBar, ChatContextTopbar, chatSidebarUtils
 PR-36 ✅  workspace/ — ChatProjectHome, ChatProjectCard, ChatProjectCreateModal, ChatAddContextDialog
+PR-37 ✅  message/ — InteractivityBlock, Sources, DecisionCard, ChatMarkdown, MermaidBlock
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
 
-Meta: reduzir **70 TS/TSX + ~55 CSS** na raiz (jun/2026) para **shell + hub + orquestração de página**.
+Meta: reduzir **62 TS/TSX + ~37 CSS** na raiz (jun/2026) para **shell + hub + orquestração de página**.
 
 | PR | Escopo | Status |
 |----|--------|--------|
 | PR-34 | `testFixtures` → `message/`; `tableCellFormatting` → `presentation/` | ✅ |
 | PR-35 | `shell/` — `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar` | ✅ |
 | PR-36 | `workspace/` — `ChatProjectHome`, `ChatProjectCard`, `ChatAddContextDialog`, modais projeto | ✅ |
-| PR-37 | `message/` — `ChatInteractivityBlock`, `ChatSources`, `ChatDecisionCard`, `ChatMarkdown.tsx`, `ChatMermaidBlock` | pendente |
+| PR-37 | `message/` — `ChatInteractivityBlock`, `ChatSources`, `ChatDecisionCard`, `ChatMarkdown.tsx`, `ChatMermaidBlock` | ✅ |
 | PR-38 | `presentation/export/` — `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv` | pendente |
 | PR-39–41 | Fatiar `chatPresentation.ts` (readers → strip markdown → pair resolver) | pendente |
 | PR-42 | C3 hex residual + checklist F4 §7 | pendente |
@@ -257,7 +258,7 @@ Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concl
 
 Pendências até 100%:
 
-- **PR-35–38** — `shell/`, `workspace/`, message residual, `presentation/export/`
+- **PR-38** — `presentation/export/`
 - **PR-39–41** — fatiar hub [`chat-presentation-hub.md`](./chat-presentation-hub.md)
 - **PR-42** — C3 hex residual + checklist F4 §7
 
@@ -300,11 +301,11 @@ Pendências até 100%:
 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
-| PRs estruturais entregues | 36 / 42 (Fase G) | 42 / 42 |
-| Arquivos TS/TSX na raiz `components/` | 70 | ≤25 (shell + hub + páginas) |
-| Arquivos CSS na raiz `components/` | 55 | co-localizados com feature ou `ui/styles/` |
+| PRs estruturais entregues | 37 / 42 (Fase G) | 42 / 42 |
+| Arquivos TS/TSX na raiz `components/` | 62 | ≤25 (shell + hub + páginas) |
+| Arquivos CSS na raiz `components/` | 37 | co-localizados com feature ou `ui/styles/` |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
-| Módulos em `message/` | 36 arquivos TS/TSX | +InteractivityBlock, Sources, … (PR-37) |
+| Módulos em `message/` | 44 arquivos TS/TSX | InteractivityBlock, Sources, markdown, mermaid ✅ |
 | Componentes em `shared/` (excl. admin) | 21 arquivos | ≥15 (overlay + modal + menus) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |

@@ -56,7 +56,7 @@ import {
   type FieldFormats,
   type FieldLabels,
 } from "./pipeline/presentationFieldLabels";
-import { ChatMarkdown } from "../ChatMarkdown";
+import { ChatMarkdown } from "../message/ChatMarkdown";
 import { ExpandButton } from "../ChatExpandModal";
 import type { ChartViewState } from "../chartViewState";
 import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";

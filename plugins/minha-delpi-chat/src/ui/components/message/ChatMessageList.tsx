@@ -40,7 +40,7 @@ import {
 import { ChatBranchNavigator } from "../ChatBranchNavigator";
 import { ChatEmptyState } from "../ChatEmptyState";
 import { ChatFollowUpChips, type ChatFollowUpSuggestion } from "../ChatFollowUpChips";
-import { ChatInteractivityBlock } from "../ChatInteractivityBlock";
+import { ChatInteractivityBlock } from "./ChatInteractivityBlock";
 import { ChatGuidedFlowBlock } from "../ChatGuidedFlowBlock";
 import { ChatMilestoneCelebration } from "../ChatMilestoneCelebration";
 import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../../data/api/chatTypes";
@@ -54,7 +54,7 @@ import {
   resolveAssistantDisplayContent,
   toolCallsForDrawingAnalysisDisplay,
 } from "./assistantProseRendering";
-import { ChatMarkdown } from "../ChatMarkdown";
+import { ChatMarkdown } from "./ChatMarkdown";
 import {
   downloadDrawingAnalysisCsv,
   downloadDrawingAnalysisMarkdown,
@@ -81,7 +81,7 @@ import {
   resolveAssistantStreamingProseState,
   shouldBypassIncrementalTextReveal,
 } from "./assistantProseRendering";
-import { ChatSources } from "../ChatSources";
+import { ChatSources } from "./ChatSources";
 import { ChatTrustBadges, type ChatTrustSignal } from "../ChatTrustBadges";
 import {
   ChatActionConfirmationPanel,
@@ -104,7 +104,7 @@ import "../ChatAttachmentPreviewModal.css";
 import { ChatUserTurnContextChips } from "../ChatUserTurnContextChips";
 import { ChatErrorHandlingCard } from "../ChatErrorHandlingCard";
 import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "../chatCanvas";
-import { filterVisibleChatSources } from "../chatSourcesFilter";
+import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
 import "../presentation/ChatRichTable.css";

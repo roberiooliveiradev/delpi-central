@@ -1,5 +1,5 @@
-@import "../layout/workspace-responsive.css";
-@import "../layout/chat-workspace-shared.css";
+@import "../../layout/workspace-responsive.css";
+@import "../../layout/chat-workspace-shared.css";
 
 /* Página do projeto — layout único (sem blocos do markup antigo) */
 

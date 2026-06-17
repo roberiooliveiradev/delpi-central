@@ -1,16 +1,16 @@
 import { useState } from "react";
 
-import { useConfirmDialog } from "./useConfirmDialog";
+import { useConfirmDialog } from "../useConfirmDialog";
 
-import type { ChatMessageMetadata } from "../../data/api/chatTypes";
-import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "./presentation/pipeline/chartExplain";
-import { type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
-import type { TableRowMenuAction } from "./chatDrillDown";
-import { ChatTableRowMenu } from "./ChatTableRowMenu";
-import { menuAnchorRectFromElement, type MenuAnchorRect } from "./shared/overlay/menuPositionUtils";
+import type { ChatMessageMetadata } from "../../../data/api/chatTypes";
+import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "../presentation/pipeline/chartExplain";
+import { type ChatFollowUpSuggestion } from "../ChatFollowUpChips";
+import type { TableRowMenuAction } from "../chatDrillDown";
+import { ChatTableRowMenu } from "../ChatTableRowMenu";
+import { menuAnchorRectFromElement, type MenuAnchorRect } from "../shared/overlay/menuPositionUtils";
 
 import "./ChatInteractivityBlock.css";
-import "./ChatFollowUpChips.css";
+import "../ChatFollowUpChips.css";
 
 type InteractivityPayload = NonNullable<ChatMessageMetadata["interactivity"]>;
 

@@ -6,7 +6,7 @@ import {
   tablePresentationToMarkdown,
   type ViewFormat,
 } from "./chatPresentation";
-import { ChatMarkdown } from "./ChatMarkdown";
+import { ChatMarkdown } from "./message/ChatMarkdown";
 import { ChatRichChart } from "./presentation/ChatRichChart";
 import { ChatRichTable } from "./presentation/ChatRichTable";
 import { recordPresentationTelemetry } from "./presentation/pipeline/presentationTelemetry";

@@ -1,4 +1,4 @@
-import type { ChatSource } from "../../data/api/chatTypes";
+import type { ChatSource } from "../../../data/api/chatTypes";
 
 const GLOBAL_SOURCE_TYPES = new Set([
   "global",

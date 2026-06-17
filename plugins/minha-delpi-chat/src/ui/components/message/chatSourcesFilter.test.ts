@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ChatSource } from "../../data/api/chatTypes";
+import type { ChatSource } from "../../../data/api/chatTypes";
 
 import { filterVisibleChatSources, isGeneralChatSource } from "./chatSourcesFilter";
 

@@ -33,3 +33,9 @@ export {
   buildAssistantMessageMenuActions,
   type AssistantMessageMenuAction,
 } from "./chatAssistantMessageActions";
+export { ChatMarkdown } from "./ChatMarkdown";
+export { ChatMermaidBlock } from "./ChatMermaidBlock";
+export { ChatSources } from "./ChatSources";
+export { ChatDecisionCard } from "./ChatDecisionCard";
+export { ChatInteractivityBlock } from "./ChatInteractivityBlock";
+export { filterVisibleChatSources, isGeneralChatSource } from "./chatSourcesFilter";

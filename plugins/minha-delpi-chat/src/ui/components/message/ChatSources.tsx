@@ -3,9 +3,9 @@ import { useState } from "react";
 import type {
   ChatSource,
   ChatWebSearchResearch,
-} from "../../data/api/chatTypes";
+} from "../../../data/api/chatTypes";
 
-import { ChatWebSearchResearchPanel } from "./ChatWebSearchResearchPanel";
+import { ChatWebSearchResearchPanel } from "../ChatWebSearchResearchPanel";
 
 import "./ChatSources.css";
 

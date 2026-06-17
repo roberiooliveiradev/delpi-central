@@ -1,6 +1,6 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **16/06/2026** após PR-1–36 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **16/06/2026** após PR-1–37 ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
 
 ## Mapa de pastas feature
 
@@ -69,7 +69,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 
 **Em `presentation/` (PR-34):** `tableCellFormatting.ts` (células KPI/tabela).
 
-**Em `message/` (PR-21–23, PR-31–34):** segmentos, `ChatMessageList`, `assistantProseRendering`, `humanizedCoverageNotice`, `chatAssistantMessageActions`, `chatMarkdown`, `testFixtures`.
+**Em `message/` (PR-21–23, PR-31–34, PR-37):** segmentos, `ChatMessageList`, prosa, coverage, markdown (`chatMarkdown` + `ChatMarkdown`), sources, decision card, interactivity, mermaid.
 
 **Em `shell/` (PR-35):** `ChatSidebar*`, `ChatContextBar`, `ChatContextTopbar`, `chatSidebarUtils`, `chatContextChipActions`.
 
@@ -81,7 +81,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 |----|---------|---------------|
 | PR-35 | `shell/` | Sidebar, ContextBar, ContextTopbar | ✅ |
 | PR-36 | `workspace/` | ProjectHome, ProjectCard, modais projeto | ✅ |
-| PR-37 | `message/` | InteractivityBlock, Sources, DecisionCard, ChatMarkdown |
+| PR-37 | `message/` | InteractivityBlock, Sources, DecisionCard, ChatMarkdown, MermaidBlock | ✅ |
 | PR-38 | `presentation/export/` | exportUtils, chartPngExport, chartCanvasMarkdown |
 | PR-39–41 | fatias do hub | ver [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
 

@@ -1,4 +1,4 @@
-import type { ChatStoryBlock, ChatStoryPresentation } from "../../data/api/chatTypes";
+import type { ChatStoryBlock, ChatStoryPresentation } from "../../../data/api/chatTypes";
 
 import "./ChatDecisionCard.css";
 

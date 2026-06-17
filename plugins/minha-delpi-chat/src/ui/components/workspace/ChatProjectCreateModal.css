@@ -1,4 +1,4 @@
-@import "../layout/chat-workspace-shared.css";
+@import "../../layout/chat-workspace-shared.css";
 
 .mdc-chat-project-create-modal {
   display: grid;
