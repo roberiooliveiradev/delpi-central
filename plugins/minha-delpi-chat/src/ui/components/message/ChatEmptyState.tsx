@@ -1,17 +1,17 @@
 import { Bot } from "lucide-react";
 import { useMemo } from "react";
 
-import type { AssistantContextualHighlight } from "../../data/api/chatTypes";
-import { formatIcebreakerForDisplay } from "../agentIcebreakers";
-import { CHAT_OPERATIONAL_HOME_STARTERS } from "../chatHomeStarters";
+import type { AssistantContextualHighlight } from "../../../data/api/chatTypes";
+import { formatIcebreakerForDisplay } from "../../agentIcebreakers";
+import { CHAT_OPERATIONAL_HOME_STARTERS } from "../../chatHomeStarters";
 import {
   resolveStarterQueryForFeature,
   type StarterInvokeContext,
-} from "../chatShortcutPrompt";
+} from "../../chatShortcutPrompt";
 import {
   pickEmptyStateGreeting,
   pickEmptyStateHint,
-} from "../chatEmptyStateGreeting";
+} from "../../chatEmptyStateGreeting";
 
 import "./ChatEmptyState.css";
 

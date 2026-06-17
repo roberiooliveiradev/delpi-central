@@ -5,14 +5,14 @@ import {
   downloadChatSource,
   fetchChatAttachmentBlob,
   fetchChatSourceBlob,
-} from "../../data/api/chatApi";
+} from "../../../data/api/chatApi";
 import {
   formatAttachmentSize,
   resolveAttachmentPreviewKind,
   revokeAttachmentPreviewUrl,
   type AttachmentPreviewKind,
-} from "../chatAttachmentPreview";
-import { ChatModal } from "./shared/modal/ChatModal";
+} from "../../chatAttachmentPreview";
+import { ChatModal } from "../shared/modal/ChatModal";
 import "./ChatAttachmentPreviewModal.css";
 
 export type ChatAttachmentPreviewTarget = {

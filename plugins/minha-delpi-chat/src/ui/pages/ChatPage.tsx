@@ -1,28 +1,25 @@
 import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/canvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
-import { ChatEmptyState } from "../components/ChatEmptyState";
+import { ChatEmptyState } from "../components/message/ChatEmptyState";
 import {
   ChatOnboardingTour,
   isOnboardingTourCompleted,
-} from "../components/ChatOnboardingTour";
+} from "../components/shell/ChatOnboardingTour";
 import "./ChatPage.css";
 import "../layout/chat-layout.css";
 import { useChatLayout } from "../../state/hooks/useChatLayout";
 import { ChatInput, type ChatInputAttachment } from "../components/composer";
 import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatAddContextDialog } from "../components/workspace";
-import { ChatContextBar, type ChatContextChip } from "../components/shell";
+import { ChatContextBar, ChatContextTopbar, ChatHelpPanel, ChatSidebar, type ChatContextChip, type ChatSidebarView } from "../components/shell";
 import {
   ChatMemoryUsedDialog,
   type MemoryUsageView,
-} from "../components/ChatMemoryUsedDialog";
+} from "../components/shared/modal/ChatMemoryUsedDialog";
 import { ChatMessageList } from "../components/message";
-import { ChatContextTopbar } from "../components/shell";
-import { ChatHelpPanel } from "../components/ChatHelpPanel";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/workspace";
-import { ChatSidebar, type ChatSidebarView } from "../components/shell";
 import { useConfirmDialog, usePromptDialog, useAlertDialog } from "../components/shared";
 import { setChatAlertHandler } from "../utils/chatNativeDialogs";
 import {

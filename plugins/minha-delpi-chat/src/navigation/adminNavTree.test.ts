@@ -13,8 +13,9 @@ describe("adminNavTree", () => {
     const knowledge = tree.find((item) => item.key === "knowledge");
     const learning = knowledge?.nodes.find((node) => node.id === "knowledge/learning");
 
-    expect(learning?.children).toHaveLength(5);
-    expect(learning?.children?.[0]?.label).toBe("Candidatos");
+    expect(learning?.children).toHaveLength(6);
+    expect(learning?.children?.[0]?.label).toBe("Pipeline");
+    expect(learning?.children?.[1]?.label).toBe("Candidatos");
   });
 
   it("filtra por texto da busca em nível profundo", () => {

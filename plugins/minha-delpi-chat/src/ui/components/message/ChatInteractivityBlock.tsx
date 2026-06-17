@@ -4,13 +4,12 @@ import { useConfirmDialog } from "../shared";
 
 import type { ChatMessageMetadata } from "../../../data/api/chatTypes";
 import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "../presentation/pipeline/chartExplain";
-import { type ChatFollowUpSuggestion } from "../ChatFollowUpChips";
+import { type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
 import type { TableRowMenuAction } from "../presentation/chatDrillDown";
-import { ChatTableRowMenu } from "../ChatTableRowMenu";
+import { ChatTableRowMenu } from "../shared/menus/ChatTableRowMenu";
 import { menuAnchorRectFromElement, type MenuAnchorRect } from "../shared/overlay/menuPositionUtils";
 
 import "./ChatInteractivityBlock.css";
-import "../ChatFollowUpChips.css";
 
 type InteractivityPayload = NonNullable<ChatMessageMetadata["interactivity"]>;
 

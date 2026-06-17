@@ -26,6 +26,10 @@ export { ChatShortcutPromptDialog } from "./modal/ChatShortcutPromptDialog";
 export { useConfirmDialog } from "./modal/useConfirmDialog";
 export { useAlertDialog } from "./modal/useAlertDialog";
 export { usePromptDialog } from "./modal/usePromptDialog";
+export {
+  ChatMemoryUsedDialog,
+  type MemoryUsageView,
+} from "./modal/ChatMemoryUsedDialog";
 
 export {
   COMPOSER_PANEL_ANCHOR_GAP,
@@ -39,5 +43,11 @@ export { ActionMenuPanel } from "./menus/ActionMenuPanel";
 export type { ActionMenuItem } from "./menus/ActionMenuPanel";
 
 export { DropdownMenuTrigger } from "./menus/DropdownMenuTrigger";
+
+export {
+  ChatTableRowMenu,
+  estimateMenuHeight,
+  type TableRowMenuAnchor,
+} from "./menus/ChatTableRowMenu";
 
 export { IngestProgressIndicator } from "./IngestProgressIndicator";

@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef } from "react";
 
-import type { TableRowMenuAction } from "./presentation/chatDrillDown";
-import { AnchoredMenuPortal } from "./shared/overlay/AnchoredMenuPortal";
-import type { ContextMenuAnchor } from "./shared/overlay/menuPositionUtils";
-import { estimateMenuHeight } from "./shared/overlay/menuPositionUtils";
+import type { TableRowMenuAction } from "../../presentation/chatDrillDown";
+import { AnchoredMenuPortal } from "../overlay/AnchoredMenuPortal";
+import type { ContextMenuAnchor } from "../overlay/menuPositionUtils";
+import { estimateMenuHeight } from "../overlay/menuPositionUtils";
 import "./ChatTableRowMenu.css";
 
 export type TableRowMenuAnchor = ContextMenuAnchor;

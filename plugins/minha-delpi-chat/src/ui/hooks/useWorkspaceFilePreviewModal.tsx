@@ -4,7 +4,7 @@ import type { ChatWorkspaceSource } from "../../data/api/chatTypes";
 import {
   ChatAttachmentPreviewModal,
   type ChatAttachmentPreviewTarget,
-} from "../components/ChatAttachmentPreviewModal";
+} from "../components/workspace/ChatAttachmentPreviewModal";
 
 type WorkspaceFilePreviewModalOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;

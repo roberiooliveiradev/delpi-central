@@ -31,7 +31,7 @@ import { useConfirmDialog, usePromptDialog } from "../shared";
 import { ChatUserSearchField } from "../ChatUserSearchField";
 import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../../navigation/chatNavigation";
-import { ChatConversationMenu } from "../ChatConversationMenu";
+import { ChatConversationMenu } from "../shell/ChatConversationMenu";
 import { formatSessionDate } from "../shell/chatSidebarUtils";
 import { ChatModal } from "../shared/modal/ChatModal";
 import {

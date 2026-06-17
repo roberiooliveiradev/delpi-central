@@ -42,7 +42,7 @@ import {
   type ChartZoomWindow,
 } from "./chartPresentationUx";
 import { aggregateChartRowsByCategory } from "./pipeline/chartCategoryAggregation";
-import { ChatTableRowMenu } from "../ChatTableRowMenu";
+import { ChatTableRowMenu } from "../shared/menus/ChatTableRowMenu";
 import { presentationToCanvasPayload } from "./export/chartCanvasMarkdown";
 import { exportChartElementToPng } from "./export/chartPngExport";
 import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
@@ -57,7 +57,7 @@ import {
   type FieldLabels,
 } from "./pipeline/presentationFieldLabels";
 import { ChatMarkdown } from "../message/ChatMarkdown";
-import { ExpandButton } from "../ChatExpandModal";
+import { ExpandButton } from "../canvas/ChatExpandModal";
 import type { ChartViewState } from "./chartViewState";
 import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import {

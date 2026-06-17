@@ -6,9 +6,9 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { DropdownMenuTrigger } from "./shared/menus/DropdownMenuTrigger";
+import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
 
-import "./chat-overlay-layer.css";
+import "../chat-overlay-layer.css";
 import "./ChatConversationMenu.css";
 
 type ChatConversationMenuProps = {

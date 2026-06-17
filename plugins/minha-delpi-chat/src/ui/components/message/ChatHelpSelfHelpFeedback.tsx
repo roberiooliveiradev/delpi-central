@@ -1,7 +1,7 @@
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { useState } from "react";
 
-import { HELP_SELF_HELP_FEEDBACK_REASONS } from "../helpSelfHelpFeedbackReasons";
+import { HELP_SELF_HELP_FEEDBACK_REASONS } from "../../helpSelfHelpFeedbackReasons";
 
 import "./ChatHelpSelfHelpFeedback.css";
 

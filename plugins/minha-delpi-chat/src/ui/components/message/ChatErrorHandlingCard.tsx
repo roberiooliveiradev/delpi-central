@@ -1,4 +1,4 @@
-import type { ChatFollowUpSuggestion, ChatMessageMetadata } from "../../data/api/chatTypes";
+import type { ChatFollowUpSuggestion, ChatMessageMetadata } from "../../../data/api/chatTypes";
 import { ChatFollowUpChips } from "./ChatFollowUpChips";
 
 import "./ChatErrorHandlingCard.css";

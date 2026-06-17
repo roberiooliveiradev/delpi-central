@@ -241,6 +241,9 @@ PR-42 ✅  hex bare em apresentação rica + máscaras; fallbacks `var(--token)`
 PR-43 ✅  presentation/ — export/copy buttons, chartPresentationUx, chartViewState, chatDrillDown
 PR-44 ✅  shared/modal/ — alert/confirm/prompt dialogs + hooks use*Dialog
 PR-45 ✅  canvas/ — ChatCanvas, ChatInlineCanvas, chatCanvas utils
+PR-46 ✅  shared/modal MemoryUsed; shell HelpPanel; workspace AttachmentPreview + WebSearch
+PR-47 ✅  shared/menus TableRowMenu; canvas ExpandModal; message edit/streaming/feedback panels
+PR-48 ✅  shell ConversationMenu + OnboardingTour; message empty/follow-up/action panels
 ```
 
 ### Fase G — Limpeza da raiz (PR-34+)
@@ -267,7 +270,7 @@ Ver matriz completa em [`component-structure.md`](./component-structure.md) e [`
 
 Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34) concluídos. **Fase G** (PR-35–42) ✅ concluída (jun/2026).
 
-Pós-Fase G (**Fase H**, opcional): reduzir arquivos na raiz `components/` (~37 → meta ≤25) migrando orquestração restante.
+Pós-Fase G (**Fase H**): meta ≤25 TS/TSX atingida (16 após PR-48). PR-49+ opcional: `ChatAttachmentCard`, `ChatAgentHome`, `ChatConversationListItem`, painéis admin/debug.
 
 ---
 
@@ -310,12 +313,12 @@ Pós-Fase G (**Fase H**, opcional): reduzir arquivos na raiz `components/` (~37 
 | Métrica | Hoje (jun/2026) | Meta |
 |---------|-----------------|------|
 | PRs estruturais entregues | 42 / 42 (Fase G) | 42 / 42 ✅ |
-| Arquivos TS/TSX na raiz `components/` | 37 | ≤25 (shell + hub + páginas) |
-| Arquivos CSS na raiz `components/` | 37 | co-localizados com feature ou `ui/styles/` |
+| Arquivos TS/TSX na raiz `components/` | 16 | ≤25 (shell + hub + páginas) ✅ |
+| Arquivos CSS na raiz `components/` | 13 | co-localizados com feature ou `ui/styles/` |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
 | Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |
-| Módulos em `message/` | 44 arquivos TS/TSX | InteractivityBlock, Sources, markdown, mermaid ✅ |
-| Componentes em `shared/` (excl. admin) | 21 arquivos | ≥15 (overlay + modal + menus) ✅ |
+| Módulos em `message/` | 59 arquivos TS/TSX | empty/follow-up/actions + InteractivityBlock, Sources, markdown ✅ |
+| Componentes em `shared/` (excl. admin) | 24 arquivos | ≥15 (overlay + modal + menus) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
 | Menus com portal canônico | ~8 / ~8 | 8 / 8 ✅ |
 | Arquivos CSS com hex bare (superfície/texto, chat) | 0 | 0 ✅ |

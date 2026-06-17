@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { ChatPresentation } from "../../../data/api/chatTypes";
-import { ExpandButton } from "../ChatExpandModal";
+import { ExpandButton } from "../canvas/ChatExpandModal";
 import { buildTableRowMenuActions } from "./chatDrillDown";
-import { ChatTableRowMenu } from "../ChatTableRowMenu";
+import { ChatTableRowMenu } from "../shared/menus/ChatTableRowMenu";
 import { formatCellValue, getAlignClass } from "./tableCellFormatting";
 import {
   applyCategoryFilter,

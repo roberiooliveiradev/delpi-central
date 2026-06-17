@@ -1,17 +1,16 @@
 import { X, Maximize2, Copy } from "lucide-react";
 import { useRef, useState } from "react";
-import type { ChatPresentation } from "../../data/api/chatTypes";
-import { ChatRichTable } from "./presentation/ChatRichTable";
-import { ChatRichChart } from "./presentation/ChatRichChart";
-import { ChatRichDashboard } from "./presentation/ChatRichDashboard";
-import { ChatRichKpi } from "./presentation/ChatRichKpi";
-import { ChatRichTree } from "./presentation/ChatRichTree";
-import { ChatModal } from "./shared/modal/ChatModal";
+import type { ChatCanvasOpenPayload, ChatPresentation } from "../../../data/api/chatTypes";
+import { ChatRichTable } from "../presentation/ChatRichTable";
+import { ChatRichChart } from "../presentation/ChatRichChart";
+import { ChatRichDashboard } from "../presentation/ChatRichDashboard";
+import { ChatRichKpi } from "../presentation/ChatRichKpi";
+import { ChatRichTree } from "../presentation/ChatRichTree";
+import { ChatModal } from "../shared/modal/ChatModal";
 import "./ChatExpandModal.css";
-import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
-import type { ChartViewState } from "./presentation/chartViewState";
-import { ChatPresentationExportButtons } from "./presentation/ChatPresentationExportButtons";
-import { treePresentationToClipboardText } from "./presentation/pipeline/treePresentationUtils";
+import type { ChartViewState } from "../presentation/chartViewState";
+import { ChatPresentationExportButtons } from "../presentation/ChatPresentationExportButtons";
+import { treePresentationToClipboardText } from "../presentation/pipeline/treePresentationUtils";
 
 function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi" }>) {
   const lines = presentation.cards.map(

@@ -6,6 +6,6 @@ describe("adminNavPages", () => {
   it("resolve slug e chave de páginas de aprendizagem", () => {
     expect(nestedPageSlug("learning", "finetuning")).toBe("ajuste-fino");
     expect(nestedPageFromSlug("learning", "ajuste-fino")).toBe("finetuning");
-    expect(defaultPageForSubTab("learning")).toBe("candidates");
+    expect(defaultPageForSubTab("learning")).toBe("pipeline");
   });
 });

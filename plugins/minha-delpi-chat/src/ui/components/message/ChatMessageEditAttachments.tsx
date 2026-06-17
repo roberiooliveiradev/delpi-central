@@ -4,11 +4,11 @@ import { useId, useRef } from "react";
 import {
   workspaceFileMessageEditAttachmentsHeader,
   workspaceFileMessageEditLabels,
-} from "../../content/workspaceFileIngestContent";
-import type { ChatAttachmentCardModel } from "./ChatAttachmentCard";
-import { ChatAttachmentCard } from "./ChatAttachmentCard";
-import "./ChatAttachmentCard.css";
-import "./workspace/workspaceFileIngest.css";
+} from "../../../content/workspaceFileIngestContent";
+import type { ChatAttachmentCardModel } from "../ChatAttachmentCard";
+import { ChatAttachmentCard } from "../ChatAttachmentCard";
+import "../ChatAttachmentCard.css";
+import "../workspace/workspaceFileIngest.css";
 
 type ChatMessageEditAttachmentsProps = {
   attachments: ChatAttachmentCardModel[];

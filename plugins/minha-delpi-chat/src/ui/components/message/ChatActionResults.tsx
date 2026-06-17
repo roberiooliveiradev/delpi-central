@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../data/api/chatTypes";
 
 import "./ChatActionResults.css";
 

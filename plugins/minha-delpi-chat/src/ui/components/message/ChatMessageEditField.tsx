@@ -1,5 +1,5 @@
-import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
-import type { ChatAttachmentCardModel } from "./ChatAttachmentCard";
+import { useAutoGrowTextarea } from "../../hooks/useAutoGrowTextarea";
+import type { ChatAttachmentCardModel } from "../ChatAttachmentCard";
 import { ChatMessageEditAttachments } from "./ChatMessageEditAttachments";
 
 function resolveEditFieldLayout() {

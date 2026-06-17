@@ -39,3 +39,26 @@ export { ChatSources } from "./ChatSources";
 export { ChatDecisionCard } from "./ChatDecisionCard";
 export { ChatInteractivityBlock } from "./ChatInteractivityBlock";
 export { filterVisibleChatSources, isGeneralChatSource } from "./chatSourcesFilter";
+export { ChatAssistantMessageMenu } from "./ChatAssistantMessageMenu";
+export { ChatMessageEditAttachments } from "./ChatMessageEditAttachments";
+export { ChatMessageEditField } from "./ChatMessageEditField";
+export {
+  ChatMessageFeedbackPanel,
+  type ChatFeedbackCorrectiveAction,
+  type ChatFeedbackReason,
+} from "./ChatMessageFeedbackPanel";
+export { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
+export {
+  ChatHelpSelfHelpFeedback,
+  type HelpSelfHelpFeedbackPayload,
+} from "./ChatHelpSelfHelpFeedback";
+export { ChatUserTurnContextChips } from "./ChatUserTurnContextChips";
+export { ChatEmptyState } from "./ChatEmptyState";
+export { ChatFollowUpChips, type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
+export { ChatActionResults } from "./ChatActionResults";
+export {
+  ChatActionConfirmationPanel,
+  type ChatActionConfirmation,
+} from "./ChatActionConfirmationPanel";
+export { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";
+export { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";

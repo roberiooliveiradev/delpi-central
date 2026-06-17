@@ -22,7 +22,7 @@ import {
   buildContextChipMenuActions,
   buildContextChipQuery,
 } from "./chatContextChipActions";
-import { ChatTableRowMenu } from "../ChatTableRowMenu";
+import { ChatTableRowMenu } from "../shared/menus/ChatTableRowMenu";
 import { menuAnchorRectFromElement } from "../shared/overlay/menuPositionUtils";
 import "./ChatContextBar.css";
 

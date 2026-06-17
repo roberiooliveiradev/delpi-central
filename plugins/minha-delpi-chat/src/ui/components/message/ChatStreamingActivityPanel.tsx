@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
+import type { ChatStreamActivityEntry } from "../../../data/api/chatTypes";
 import {
   activityPhaseKey,
   formatActivityLogLine,
   fullActivityLogForDisplay,
   resolveStreamingHeadline,
-} from "../../state/utils/streamingActivityLog";
+} from "../../../state/utils/streamingActivityLog";
 
-import { ChatThinkingDots } from "./message/ChatThinkingDots";
+import { ChatThinkingDots } from "./ChatThinkingDots";
 
 import "./ChatStreamingActivityPanel.css";
 

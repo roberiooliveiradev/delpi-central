@@ -5,7 +5,7 @@ import type {
   ChatWebSearchResearch,
 } from "../../../data/api/chatTypes";
 
-import { ChatWebSearchResearchPanel } from "../ChatWebSearchResearchPanel";
+import { ChatWebSearchResearchPanel } from "../workspace/ChatWebSearchResearchPanel";
 
 import "./ChatSources.css";
 

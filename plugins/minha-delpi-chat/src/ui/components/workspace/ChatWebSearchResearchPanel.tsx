@@ -5,8 +5,8 @@ import type {
   ChatWebSearchResearch,
   ChatWebSearchResearchSite,
   ChatWebSearchResearchStep,
-} from "../../data/api/chatTypes";
-import { ChatModal } from "./shared/modal/ChatModal";
+} from "../../../data/api/chatTypes";
+import { ChatModal } from "../shared/modal/ChatModal";
 
 import "./ChatWebSearchResearchPanel.css";
 

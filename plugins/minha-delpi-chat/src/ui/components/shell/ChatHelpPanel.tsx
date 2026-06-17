@@ -4,12 +4,12 @@ import { useMemo } from "react";
 import type {
   AssistantCatalogFeature,
   AssistantCatalogResponse,
-} from "../../data/api/chatTypes";
+} from "../../../data/api/chatTypes";
 import {
   resolveStarterQueryForFeature,
   type StarterInvokeContext,
-} from "../chatShortcutPrompt";
-import { ChatModal } from "./shared/modal/ChatModal";
+} from "../../chatShortcutPrompt";
+import { ChatModal } from "../shared/modal/ChatModal";
 
 import "./ChatHelpPanel.css";
 

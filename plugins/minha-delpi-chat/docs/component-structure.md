@@ -103,6 +103,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 | PR-43 | `presentation/` | export/copy buttons, chart UX, drill-down | ✅ |
 | PR-44 | `shared/modal/` | alert/confirm/prompt + hooks `use*Dialog` | ✅ |
 | PR-45 | `canvas/` | ChatCanvas, ChatInlineCanvas, chatCanvas utils | ✅ |
+| PR-46 | `shared/modal/`, `shell/`, `workspace/` | MemoryUsed, HelpPanel, AttachmentPreview, WebSearch | ✅ |
 
 ## Referências
 

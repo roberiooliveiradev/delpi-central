@@ -1,6 +1,6 @@
 import { Bot, Folder } from "lucide-react";
 
-import type { UserTurnContextChip } from "../../state/chatComposerContext";
+import type { UserTurnContextChip } from "../../../state/chatComposerContext";
 
 import "./ChatUserTurnContextChips.css";
 

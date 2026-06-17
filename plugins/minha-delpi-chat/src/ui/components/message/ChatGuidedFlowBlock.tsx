@@ -2,7 +2,7 @@ import type {
   ChatFollowUpSuggestion,
   ChatGuidedFlow,
   ChatGuidedFlowCard,
-} from "../../data/api/chatTypes";
+} from "../../../data/api/chatTypes";
 import { ChatFollowUpChips } from "./ChatFollowUpChips";
 
 import "./ChatGuidedFlowBlock.css";

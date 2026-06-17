@@ -6,3 +6,4 @@ export {
   getCanvasOpenFromMetadata,
   normalizeCanvasOpenPayload,
 } from "./chatCanvas";
+export { ChatExpandModal, ExpandButton } from "./ChatExpandModal";

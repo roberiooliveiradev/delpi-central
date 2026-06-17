@@ -1,24 +1,24 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 
-import type { AssistantOnboardingTourStep } from "../../data/api/chatTypes";
+import type { AssistantOnboardingTourStep } from "../../../data/api/chatTypes";
 import {
   animateTourTyping,
   tourDemoQueryForDisplay,
   resolveTourStepEffect,
   tourTargetSelector,
-} from "../chatTourStepEffects";
+} from "../../chatTourStepEffects";
 import {
   computeTourTooltipLayout,
   type SpotlightRect,
   type TourTooltipLayout,
-} from "../chatTourTooltipPosition";
-import { ChatFollowUpChips } from "./ChatFollowUpChips";
-import { ModalPortal } from "./shared/overlay/ModalPortal";
+} from "../../chatTourTooltipPosition";
+import { ChatFollowUpChips } from "../message/ChatFollowUpChips";
+import { ModalPortal } from "../shared/overlay/ModalPortal";
 import {
   isOverlayPortalContained,
   resolveOverlayPortalContainer,
-} from "./shared/overlay/modalPortalTarget";
+} from "../shared/overlay/modalPortalTarget";
 
 import "./ChatOnboardingTour.css";
 

@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatToolCall } from "../../../data/api/chatTypes";
 import {
   buildAssistantMessageMenuActions,
   type AssistantMessageMenuAction,
-} from "./message/chatAssistantMessageActions";
-import { ChatTableRowMenu } from "./ChatTableRowMenu";
-import { menuAnchorRectFromElement } from "./shared/overlay/menuPositionUtils";
-import "./ChatTableRowMenu.css";
+} from "./chatAssistantMessageActions";
+import { ChatTableRowMenu } from "../shared/menus/ChatTableRowMenu";
+import { menuAnchorRectFromElement } from "../shared/overlay/menuPositionUtils";
 
 type ChatAssistantMessageMenuProps = {
   toolCalls: ChatToolCall[];
