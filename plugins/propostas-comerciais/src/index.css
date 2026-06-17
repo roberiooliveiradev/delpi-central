@@ -234,6 +234,52 @@
   background: color-mix(in srgb, var(--pc-accent) 6%, var(--pc-surface));
 }
 
+.pc-table-input {
+  width: 100%;
+  min-width: 120px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-control-radius);
+  background: var(--pc-surface);
+  color: var(--pc-text);
+  font: inherit;
+}
+
+.pc-table-input--multiline {
+  min-height: 56px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.pc-table-input--compact {
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pc-table--items th {
+  vertical-align: bottom;
+}
+
+.pc-table--items td:has(.pc-table-input) {
+  min-width: 140px;
+}
+
+.pc-summary-label-input {
+  width: 100%;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid var(--pc-border);
+  border-radius: var(--pc-control-radius);
+  background: var(--pc-surface);
+  color: var(--pc-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .pc-badge {
   display: inline-flex;
   align-items: center;
@@ -442,6 +488,10 @@
   font-size: 16px;
 }
 
+.pc-export-section > .pc-form-field {
+  margin-bottom: 12px;
+}
+
 .pc-export-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -460,6 +510,9 @@
 .pc-export-summary dt {
   margin: 0 0 4px;
   font-size: 12px;
+}
+
+.pc-export-summary dt .pc-summary-label-input {
   color: var(--pc-muted);
 }
 

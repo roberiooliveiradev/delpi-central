@@ -173,7 +173,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         story.append(Spacer(1, 2 * mm))
         story.extend(self._build_client_contact_cards(cliente, contato, styles))
         story.append(Spacer(1, 3 * mm))
-        story.extend(self._build_items_section(itens, cabecalho, styles))
+        story.extend(self._build_items_section(itens, cabecalho, styles, detail.get("rotulos") or {}))
         story.append(Spacer(1, 3 * mm))
         story.extend(self._build_conditions_section(cabecalho, condicoes, styles))
         story.append(Spacer(1, 2.5 * mm))
@@ -319,17 +319,18 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         itens: list[dict],
         cabecalho: dict,
         styles: dict[str, ParagraphStyle],
+        rotulos: dict,
     ) -> list[Flowable]:
         headers = [
-            "Item",
-            "Ref. Delpi",
-            "Ref. Cliente",
-            "NCM",
-            "Descrição",
-            "Bruto R$/mil",
-            "Líquido R$/mil",
-            "Prazo",
-            "Lote mín.",
+            _rotulo_coluna_itens(rotulos, "item", "Item"),
+            _rotulo_coluna_itens(rotulos, "produto", "Ref. Delpi"),
+            _rotulo_coluna_itens(rotulos, "referencia_cliente", "Ref. Cliente"),
+            _rotulo_coluna_itens(rotulos, "ncm", "NCM"),
+            _rotulo_coluna_itens(rotulos, "descricao", "Descrição"),
+            _rotulo_coluna_itens(rotulos, "valor_bruto", "Bruto R$/mil"),
+            _rotulo_coluna_itens(rotulos, "valor_liquido", "Líquido R$/mil"),
+            _rotulo_coluna_itens(rotulos, "prazo", "Prazo"),
+            _rotulo_coluna_itens(rotulos, "lote_minimo", "Lote mín."),
         ]
         widths = [10 * mm, 15 * mm, 15 * mm, 18 * mm, 50 * mm, 24 * mm, 24 * mm, 12 * mm, 12 * mm]
 
@@ -366,6 +367,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         total_liquido = cabecalho.get("total_liquido_r_mil_formatado")
         has_total = bool(soma and soma != "—")
         has_total_liquido = bool(total_liquido and total_liquido != "—")
+        total_proposta_label = _rotulo_total_proposta(rotulos)
         if has_total or has_total_liquido:
             rows.append(
                 [
@@ -373,7 +375,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                     "",
                     "",
                     "",
-                    Paragraph("<b>Total da proposta</b>", styles["tableCell"]),
+                    Paragraph(f"<b>{_escape(total_proposta_label)}</b>", styles["tableCell"]),
                     Paragraph(
                         f"<b>{_escape(_display(soma))}</b>" if has_total else "",
                         styles["tableCellMoneyBold"],
@@ -921,6 +923,29 @@ def _format_frete_display(value: str) -> str:
     if upper.startswith("CIF"):
         return "CIF - por conta do vendedor"
     return normalized
+
+
+def _rotulo_coluna_itens(rotulos: dict, key: str, default: str) -> str:
+    if not isinstance(rotulos, dict):
+        return default
+    colunas = rotulos.get("colunas_itens")
+    if not isinstance(colunas, dict):
+        return default
+    value = colunas.get(key)
+    if value is None:
+        return default
+    text = str(value).strip()
+    return text or default
+
+
+def _rotulo_total_proposta(rotulos: dict) -> str:
+    if not isinstance(rotulos, dict):
+        return "Total da proposta"
+    value = rotulos.get("total_proposta")
+    if value is None:
+        return "Total da proposta"
+    text = str(value).strip()
+    return text or "Total da proposta"
 
 
 def _escape(value: str) -> str:

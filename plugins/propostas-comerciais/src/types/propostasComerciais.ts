@@ -129,6 +129,43 @@ export type PropostaComercialDetail = {
   itens: PropostaComercialItem[];
 };
 
+export type PropostaComercialPdfItemTextOverrides = {
+  item: string;
+  descricao?: string;
+  referencia_cliente?: string;
+  ncm?: string;
+};
+
+export type PropostaComercialItemTextDraft = {
+  item: string;
+  descricao: string;
+  referencia_cliente: string;
+  ncm: string;
+};
+
+export type PropostaComercialPdfRotulosOverrides = {
+  colunas_itens?: Partial<
+    Record<
+      | "item"
+      | "produto"
+      | "descricao"
+      | "referencia_cliente"
+      | "ncm"
+      | "quantidade"
+      | "valor_bruto"
+      | "valor_liquido"
+      | "total"
+      | "prazo"
+      | "lote_minimo",
+      string
+    >
+  >;
+  resumo?: Partial<
+    Record<"numero_ov" | "data" | "versao" | "total_r_mil" | "empresa" | "cliente", string>
+  >;
+  total_proposta?: string;
+};
+
 export type PropostaComercialPdfExportOverrides = {
   observacoes?: string;
   contato?: Partial<Pick<PropostaComercialContato, "nome" | "departamento" | "email" | "telefone">>;
@@ -136,4 +173,6 @@ export type PropostaComercialPdfExportOverrides = {
     Pick<PropostaComercialCondicoes, "descricao" | "icms" | "ipi" | "frete" | "embalagem">
   >;
   vendedor?: Partial<Pick<PropostaComercialVendedor, "nome" | "cargo" | "email" | "telefone">>;
+  itens?: PropostaComercialPdfItemTextOverrides[];
+  rotulos?: PropostaComercialPdfRotulosOverrides;
 };

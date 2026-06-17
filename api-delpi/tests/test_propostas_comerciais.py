@@ -720,7 +720,25 @@ def test_pdf_export_overrides_service_merges_editable_fields_only() -> None:
             "condicoes": {"descricao": "30 D.D.L."},
             "contato": {"email": "novo@example.com"},
             "cabecalho": {"numero_ov": "OV999999"},
-            "itens": [{"item": "99"}],
+            "itens": [
+                {
+                    "item": "99",
+                    "descricao": "Descricao ignorada",
+                    "produto": "99999999",
+                },
+                {
+                    "item": "01",
+                    "descricao": " Descricao ajustada ",
+                    "referencia_cliente": " REF-EDIT ",
+                    "ncm": " 1234.56.78 ",
+                    "produto": "99999999",
+                },
+            ],
+            "rotulos": {
+                "colunas_itens": {"valor_bruto": "Bruto customizado"},
+                "resumo": {"total_r_mil": "Total geral"},
+                "total_proposta": "Total editado",
+            },
         },
     )
 
@@ -732,6 +750,32 @@ def test_pdf_export_overrides_service_merges_editable_fields_only() -> None:
     assert merged["contato"]["email"] == "novo@example.com"
     assert merged["cabecalho"]["numero_ov"] == "OV003581"
     assert merged["itens"][0]["item"] == "01"
+    assert merged["itens"][0]["produto"] == "80016332"
+    assert merged["itens"][0]["descricao"] == "Descricao ajustada"
+    assert merged["itens"][0]["referencia_cliente"] == "REF-EDIT"
+    assert merged["itens"][0]["ncm"] == "1234.56.78"
+    assert merged["rotulos"]["colunas_itens"]["valor_bruto"] == "Bruto customizado"
+    assert merged["rotulos"]["resumo"]["total_r_mil"] == "Total geral"
+    assert merged["rotulos"]["total_proposta"] == "Total editado"
+
+
+def test_pdf_export_overrides_service_ignores_unknown_rotulos() -> None:
+    detail = _sample_detail()
+    merged = PropostaComercialPdfExportOverridesService.apply(
+        detail,
+        {
+            "rotulos": {
+                "colunas_itens": {"produto": "Ref. Delpi editada", "campo_invalido": "X"},
+                "resumo": {"numero_ov": "OV customizada"},
+                "total_proposta": " Total no PDF ",
+            }
+        },
+    )
+
+    assert merged["rotulos"]["colunas_itens"]["produto"] == "Ref. Delpi editada"
+    assert "campo_invalido" not in merged["rotulos"]["colunas_itens"]
+    assert merged["rotulos"]["resumo"]["numero_ov"] == "OV customizada"
+    assert merged["rotulos"]["total_proposta"] == "Total no PDF"
 
 
 def test_generate_proposta_comercial_pdf_use_case_applies_overrides() -> None:
@@ -802,6 +846,46 @@ def test_export_proposta_comercial_pdf_with_overrides_route_returns_pdf() -> Non
     assert response.status_code == 200
     assert response.media_type == "application/pdf"
     assert response.body.startswith(b"%PDF")
+
+
+def test_pdf_export_request_sanitizes_item_text_overrides() -> None:
+    from app.interface.http.schemas.proposta_comercial_pdf_schemas import (
+        PropostaComercialPdfExportRequest,
+    )
+
+    payload = PropostaComercialPdfExportRequest(
+        itens=[
+            {"item": "01", "descricao": "Descricao editada", "produto": "99999999"},
+            {"item": "  ", "descricao": "Ignorado"},
+            {"item": "02", "produto": "88888888"},
+        ]
+    )
+
+    assert payload.to_overrides_dict() == {
+        "itens": [{"item": "01", "descricao": "Descricao editada"}],
+    }
+
+
+def test_pdf_export_request_sanitizes_rotulos_overrides() -> None:
+    from app.interface.http.schemas.proposta_comercial_pdf_schemas import (
+        PropostaComercialPdfExportRequest,
+    )
+
+    payload = PropostaComercialPdfExportRequest(
+        rotulos={
+            "colunas_itens": {"produto": "Ref. editada", "descricao": "Descrição"},
+            "resumo": {"total_r_mil": "Total R$/mil"},
+            "total_proposta": " Total custom ",
+        }
+    )
+
+    assert payload.to_overrides_dict() == {
+        "rotulos": {
+            "colunas_itens": {"produto": "Ref. editada", "descricao": "Descrição"},
+            "resumo": {"total_r_mil": "Total R$/mil"},
+            "total_proposta": "Total custom",
+        }
+    }
 
 
 def test_export_proposta_comercial_pdf_route_not_found() -> None:
