@@ -2,6 +2,8 @@
  * Design system do chat — home, composer, tour e topbar (consistência + responsivo).
  */
 
+@import "./chat-landing.css";
+
 /* ——— Home vazia ——— */
 .mdc-chat-content-column {
   width: min(100%, var(--mdc-chat-column-max));
@@ -103,7 +105,7 @@
 .mdc-chat-empty-composer .mdc-chat-agent-home {
   width: 100%;
   max-width: var(--mdc-chat-column-max);
-  gap: var(--mdc-space-4);
+  gap: 0;
   padding-inline: clamp(0.5rem, 2vw, 1rem);
   margin-inline: auto;
 }
@@ -231,6 +233,20 @@
 .mdc-chat-empty-composer {
   padding-inline: clamp(0.75rem, 3vw, 1.5rem);
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.mdc-chat-empty-composer__column .mdc-chat-input--center .mdc-chat-input__box {
+  min-height: 3.8rem;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 48%, transparent);
+  padding: 0.35rem 0.45rem 0.35rem 1rem;
+}
+
+.mdc-chat-empty-composer__column .mdc-chat-input--center .mdc-chat-input__send {
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 999px;
 }
 
 .mdc-chat-empty-composer__column .mdc-chat-input--center {

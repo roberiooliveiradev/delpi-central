@@ -520,21 +520,22 @@ label.mdc-chat-ws-toolbar-btn {
 .mdc-chat-ws-directory__card {
   display: grid;
   gap: 0.55rem;
-  border: 0;
-  border-radius: 1rem;
-  background: var(--mdc-card-bg);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 48%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-text) 5%, transparent);
   padding: 0.85rem 0.9rem;
-  box-shadow: var(--mdc-elevation-2);
+  box-shadow: none;
 }
 
 .mdc-chat-ws-directory__card:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 4%, var(--mdc-card-bg));
-  box-shadow: var(--mdc-elevation-3);
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
 }
 
 .mdc-chat-ws-directory__card--active {
-  background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
-  box-shadow: var(--mdc-elevation-3), 0 0 0 1px color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 38%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  box-shadow: none;
 }
 
 .mdc-chat-ws-directory__card .mdc-chat-ws-directory__card-main {
@@ -566,11 +567,11 @@ label.mdc-chat-ws-toolbar-btn {
 .mdc-chat-ws-directory__card-icon {
   display: inline-grid;
   place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: 0.65rem;
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
-  color: var(--mdc-primary);
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-text) 9%, transparent);
+  color: var(--mdc-text);
 }
 
 .mdc-chat-ws-directory__card-copy {
@@ -588,7 +589,7 @@ label.mdc-chat-ws-toolbar-btn {
 }
 
 .mdc-chat-ws-directory__card-copy strong {
-  color: var(--mdc-title);
+  color: var(--mdc-primary);
   font-size: 0.95rem;
 }
 

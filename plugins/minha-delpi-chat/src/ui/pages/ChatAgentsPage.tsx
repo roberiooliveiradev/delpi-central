@@ -372,7 +372,7 @@ export function ChatAgentsPage({
       <main className="mdc-chat-ws-directory__main">
         <div className="mdc-chat-ws-directory__toolbar">
           <p className="mdc-chat-ws-directory__lead">
-            Especialistas com instruções, conhecimento, quebra-gelos e actions OpenAPI.
+            Escolha um especialista ou crie o seu.
           </p>
 
           <label className="mdc-chat-ws-directory__search">

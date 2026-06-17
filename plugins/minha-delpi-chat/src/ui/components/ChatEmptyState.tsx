@@ -1,6 +1,9 @@
+import { Bot } from "lucide-react";
 import { useMemo } from "react";
 
 import type { AssistantContextualHighlight } from "../../data/api/chatTypes";
+import { formatIcebreakerForDisplay } from "../agentIcebreakers";
+import { CHAT_OPERATIONAL_HOME_STARTERS } from "../chatHomeStarters";
 import {
   resolveStarterQueryForFeature,
   type StarterInvokeContext,
@@ -19,6 +22,8 @@ type ChatEmptyStateProps = {
   onStartTour?: () => void;
 };
 
+const DEFAULT_HOME_STARTERS = CHAT_OPERATIONAL_HOME_STARTERS.slice(0, 3);
+
 export function ChatEmptyState({
   displayName,
   contextualHighlights = [],
@@ -27,39 +32,36 @@ export function ChatEmptyState({
 }: ChatEmptyStateProps) {
   const greeting = useMemo(() => pickEmptyStateGreeting(displayName), [displayName]);
   const hint = useMemo(() => pickEmptyStateHint(displayName), [displayName]);
+  const showHighlights = contextualHighlights.length > 0;
 
   return (
-    <section className="mdc-chat-empty-state" aria-label="Início da conversa">
-      <div className="mdc-chat-empty-state__hero" data-tour="home-greeting">
-        <h2 className="mdc-chat-empty-state__headline">
-          <span className="mdc-chat-empty-state__headline-main">{greeting}</span>
-        </h2>
-        <p className="mdc-chat-empty-state__hint">{hint}</p>
-        {onStartTour ? (
-          <button
-            type="button"
-            className="mdc-chat-empty-state__tour-link"
-            onClick={onStartTour}
-          >
-            Ver tour rápido do chat
-          </button>
-        ) : null}
+    <section className="mdc-chat-landing mdc-chat-empty-state" aria-label="Início da conversa">
+      <div className="mdc-chat-landing__avatar" aria-hidden="true" data-tour="home-greeting">
+        <Bot size={26} />
       </div>
 
-      {contextualHighlights.length > 0 ? (
+      <h2 className="mdc-chat-landing__title">{greeting}</h2>
+      <p className="mdc-chat-landing__description">{hint}</p>
+
+      {onStartTour ? (
+        <button type="button" className="mdc-chat-landing__secondary-link" onClick={onStartTour}>
+          Ver tour rápido do chat
+        </button>
+      ) : null}
+
+      {showHighlights ? (
         <div
-          className="mdc-chat-empty-state__highlights"
+          className="mdc-chat-landing__prompts"
           role="region"
           aria-label="Novidades do chat"
           data-tour="home-highlights"
         >
-          <p className="mdc-chat-empty-state__highlights-label">Novidades</p>
-          {contextualHighlights.slice(0, 2).map((highlight) => (
+          {contextualHighlights.slice(0, 3).map((highlight) => (
             <button
               key={highlight.featureId ?? highlight.title}
               type="button"
-              className="mdc-chat-empty-state__highlight-chip"
-              title={highlight.description}
+              className="mdc-chat-landing__prompt"
+              title={highlight.description ?? highlight.title}
               onClick={() => {
                 const query = resolveStarterQueryForFeature(highlight.exampleQuery, {
                   featureId: highlight.featureId,
@@ -72,12 +74,29 @@ export function ChatEmptyState({
             >
               <strong>{highlight.title}</strong>
               {highlight.description ? (
-                <span>{highlight.description}</span>
+                <>
+                  {" "}
+                  <span className="mdc-chat-empty-state__prompt-detail">{highlight.description}</span>
+                </>
               ) : null}
             </button>
           ))}
         </div>
-      ) : null}
+      ) : (
+        <div className="mdc-chat-landing__prompts" role="region" aria-label="Sugestões para começar">
+          {DEFAULT_HOME_STARTERS.map((starter) => (
+            <button
+              key={starter.query}
+              type="button"
+              className="mdc-chat-landing__prompt"
+              title={starter.query}
+              onClick={() => onUseStarter?.(starter.query, { starterId: starter.label })}
+            >
+              {formatIcebreakerForDisplay(starter.query)}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
