@@ -1,7 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, FileDown, Loader2 } from "lucide-react";
 
-import type { PropostaComercialDetail, PropostaComercialPdfExportOverrides } from "../types/propostasComerciais";
+import {
+  DEFAULT_ITEM_COLUMN_LABELS,
+  DEFAULT_RESUMO_LABELS,
+  DEFAULT_TOTAL_PROPOSTA_LABEL,
+  buildDefaultRotulosDraft,
+  type PropostaComercialItemColumnKey,
+  type PropostaComercialResumoLabelKey,
+  type PropostaComercialRotulosDraft,
+} from "../constants/propostaComercialLabels";
+import type {
+  PropostaComercialDetail,
+  PropostaComercialItem,
+  PropostaComercialItemTextDraft,
+  PropostaComercialPdfExportOverrides,
+  PropostaComercialPdfItemTextOverrides,
+  PropostaComercialPdfRotulosOverrides,
+} from "../types/propostasComerciais";
 import { displayValue } from "../utils/format";
 import { ItensTable } from "./ItensTable";
 import { PropostaComercialModal } from "./PropostaComercialModal";
@@ -33,7 +49,18 @@ type DraftState = {
   vendedorCargo: string;
   vendedorEmail: string;
   vendedorTelefone: string;
+  itemDrafts: PropostaComercialItemTextDraft[];
+  rotulos: PropostaComercialRotulosDraft;
 };
+
+function buildItemDrafts(items: PropostaComercialItem[]): PropostaComercialItemTextDraft[] {
+  return items.map((item) => ({
+    item: item.item,
+    descricao: item.descricao ?? "",
+    referencia_cliente: item.referencia_cliente ?? "",
+    ncm: item.ncm ?? "",
+  }));
+}
 
 function buildDraft(detail: PropostaComercialDetail): DraftState {
   return {
@@ -51,10 +78,86 @@ function buildDraft(detail: PropostaComercialDetail): DraftState {
     vendedorCargo: detail.vendedor.cargo ?? "",
     vendedorEmail: detail.vendedor.email ?? "",
     vendedorTelefone: detail.vendedor.telefone ?? "",
+    itemDrafts: buildItemDrafts(detail.itens),
+    rotulos: buildDefaultRotulosDraft(),
   };
 }
 
-function buildOverrides(draft: DraftState): PropostaComercialPdfExportOverrides {
+function buildChangedStringMap<T extends string>(
+  current: Record<T, string>,
+  defaults: Record<T, string>,
+): Partial<Record<T, string>> | undefined {
+  const changes = {} as Partial<Record<T, string>>;
+
+  for (const key of Object.keys(defaults) as T[]) {
+    if (current[key] !== defaults[key]) {
+      changes[key] = current[key];
+    }
+  }
+
+  return Object.keys(changes).length > 0 ? changes : undefined;
+}
+
+function buildRotulosOverrides(rotulos: PropostaComercialRotulosDraft): PropostaComercialPdfRotulosOverrides | undefined {
+  const colunas_itens = buildChangedStringMap(rotulos.colunas_itens, DEFAULT_ITEM_COLUMN_LABELS);
+  const resumo = buildChangedStringMap(rotulos.resumo, DEFAULT_RESUMO_LABELS);
+  const total_proposta =
+    rotulos.total_proposta !== DEFAULT_TOTAL_PROPOSTA_LABEL ? rotulos.total_proposta : undefined;
+
+  if (!colunas_itens && !resumo && !total_proposta) {
+    return undefined;
+  }
+
+  return {
+    ...(colunas_itens ? { colunas_itens } : {}),
+    ...(resumo ? { resumo } : {}),
+    ...(total_proposta ? { total_proposta } : {}),
+  };
+}
+
+function buildItemOverrides(
+  itemDrafts: PropostaComercialItemTextDraft[],
+  originalItems: PropostaComercialItem[],
+): PropostaComercialPdfItemTextOverrides[] | undefined {
+  const overrides: PropostaComercialPdfItemTextOverrides[] = [];
+
+  itemDrafts.forEach((draft, index) => {
+    const original = originalItems[index];
+    if (!original || original.item !== draft.item) {
+      return;
+    }
+
+    const patch: PropostaComercialPdfItemTextOverrides = { item: draft.item };
+    let hasChange = false;
+
+    if (draft.descricao !== (original.descricao ?? "")) {
+      patch.descricao = draft.descricao;
+      hasChange = true;
+    }
+    if (draft.referencia_cliente !== (original.referencia_cliente ?? "")) {
+      patch.referencia_cliente = draft.referencia_cliente;
+      hasChange = true;
+    }
+    if (draft.ncm !== (original.ncm ?? "")) {
+      patch.ncm = draft.ncm;
+      hasChange = true;
+    }
+
+    if (hasChange) {
+      overrides.push(patch);
+    }
+  });
+
+  return overrides.length > 0 ? overrides : undefined;
+}
+
+function buildOverrides(
+  draft: DraftState,
+  originalItems: PropostaComercialItem[],
+): PropostaComercialPdfExportOverrides {
+  const itemOverrides = buildItemOverrides(draft.itemDrafts, originalItems);
+  const rotulosOverrides = buildRotulosOverrides(draft.rotulos);
+
   return {
     observacoes: draft.observacoes,
     contato: {
@@ -76,6 +179,8 @@ function buildOverrides(draft: DraftState): PropostaComercialPdfExportOverrides 
       email: draft.vendedorEmail,
       telefone: draft.vendedorTelefone || null,
     },
+    ...(itemOverrides ? { itens: itemOverrides } : {}),
+    ...(rotulosOverrides ? { rotulos: rotulosOverrides } : {}),
   };
 }
 
@@ -108,6 +213,39 @@ function Field({
   );
 }
 
+function SummaryLabelInput({
+  value,
+  onChange,
+  "aria-label": ariaLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  "aria-label": string;
+}) {
+  return (
+    <input
+      type="text"
+      className="pc-summary-label-input"
+      value={value}
+      aria-label={ariaLabel}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
+const RESUMO_FIELDS: Array<{
+  key: PropostaComercialResumoLabelKey;
+  wide?: boolean;
+  value: (detail: PropostaComercialDetail) => string;
+}> = [
+  { key: "numero_ov", value: (detail) => displayValue(detail.cabecalho.numero_ov) },
+  { key: "data", value: (detail) => displayValue(detail.cabecalho.data) },
+  { key: "versao", value: (detail) => displayValue(detail.cabecalho.versao) },
+  { key: "total_r_mil", value: (detail) => displayValue(detail.cabecalho.soma_valores_r_mil) },
+  { key: "empresa", wide: true, value: (detail) => displayValue(detail.empresa.nome) },
+  { key: "cliente", wide: true, value: (detail) => displayValue(detail.cliente.nome) },
+];
+
 export function PropostaComercialPdfExportModal({
   open,
   detail,
@@ -128,10 +266,52 @@ export function PropostaComercialPdfExportModal({
     }
   }, [detail, open, onClearPreview]);
 
-  const overrides = useMemo(() => buildOverrides(draft), [draft]);
+  const overrides = useMemo(() => buildOverrides(draft, detail.itens), [draft, detail.itens]);
 
   const updateDraft = (patch: Partial<DraftState>) => {
     setDraft((current) => ({ ...current, ...patch }));
+    onClearPreview();
+  };
+
+  const updateItemField = (
+    itemKey: string,
+    field: keyof Pick<PropostaComercialItemTextDraft, "descricao" | "referencia_cliente" | "ncm">,
+    value: string,
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      itemDrafts: current.itemDrafts.map((itemDraft) =>
+        itemDraft.item === itemKey ? { ...itemDraft, [field]: value } : itemDraft,
+      ),
+    }));
+    onClearPreview();
+  };
+
+  const updateColumnLabel = (field: PropostaComercialItemColumnKey, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      rotulos: {
+        ...current.rotulos,
+        colunas_itens: {
+          ...current.rotulos.colunas_itens,
+          [field]: value,
+        },
+      },
+    }));
+    onClearPreview();
+  };
+
+  const updateResumoLabel = (field: PropostaComercialResumoLabelKey, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      rotulos: {
+        ...current.rotulos,
+        resumo: {
+          ...current.rotulos.resumo,
+          [field]: value,
+        },
+      },
+    }));
     onClearPreview();
   };
 
@@ -179,7 +359,8 @@ export function PropostaComercialPdfExportModal({
     >
       <p className="pc-modal__intro">
         Revise o conteúdo que irá para o PDF. Os ajustes abaixo valem apenas para esta exportação e
-        não alteram a proposta no Protheus.
+        não alteram a proposta no Protheus. É possível editar rótulos do resumo, colunas da tabela e
+        os textos de descrição, referência do cliente e NCM.
       </p>
 
       {error ? (
@@ -191,38 +372,47 @@ export function PropostaComercialPdfExportModal({
       <section className="pc-export-section">
         <h3>Resumo da proposta</h3>
         <dl className="pc-export-summary">
-          <div>
-            <dt>Nº OV</dt>
-            <dd>{displayValue(detail.cabecalho.numero_ov)}</dd>
-          </div>
-          <div>
-            <dt>Data</dt>
-            <dd>{displayValue(detail.cabecalho.data)}</dd>
-          </div>
-          <div>
-            <dt>Versão</dt>
-            <dd>{displayValue(detail.cabecalho.versao)}</dd>
-          </div>
-          <div>
-            <dt>Total R$/mil</dt>
-            <dd>{displayValue(detail.cabecalho.soma_valores_r_mil)}</dd>
-          </div>
-          <div className="pc-export-summary__wide">
-            <dt>Empresa</dt>
-            <dd>{displayValue(detail.empresa.nome)}</dd>
-          </div>
-          <div className="pc-export-summary__wide">
-            <dt>Cliente</dt>
-            <dd>{displayValue(detail.cliente.nome)}</dd>
-          </div>
+          {RESUMO_FIELDS.map((field) => (
+            <div
+              key={field.key}
+              className={field.wide ? "pc-export-summary__wide" : undefined}
+            >
+              <dt>
+                <SummaryLabelInput
+                  aria-label={`Rótulo ${draft.rotulos.resumo[field.key]}`}
+                  value={draft.rotulos.resumo[field.key]}
+                  onChange={(value) => updateResumoLabel(field.key, value)}
+                />
+              </dt>
+              <dd>{field.value(detail)}</dd>
+            </div>
+          ))}
         </dl>
       </section>
 
       <section className="pc-export-section">
         <h3>Itens ({detail.itens.length})</h3>
-        <div className="pc-table-wrap">
-          <ItensTable items={detail.itens} />
-        </div>
+        <Field
+          label="Rótulo da linha de total no PDF"
+          value={draft.rotulos.total_proposta}
+          onChange={(value) =>
+            updateDraft({
+              rotulos: {
+                ...draft.rotulos,
+                total_proposta: value,
+              },
+            })
+          }
+          wide
+        />
+        <ItensTable
+          items={detail.itens}
+          editable
+          itemDrafts={draft.itemDrafts}
+          columnLabels={draft.rotulos.colunas_itens}
+          onItemFieldChange={updateItemField}
+          onColumnLabelChange={updateColumnLabel}
+        />
       </section>
 
       <section className="pc-export-section">
