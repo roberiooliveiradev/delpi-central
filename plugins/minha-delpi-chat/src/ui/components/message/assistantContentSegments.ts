@@ -22,23 +22,23 @@ import {
 import {
   hasPresentationMarkerSyntax,
   splitMarkdownWithPresentationMarkers,
-} from "../markerSegmentBuilder";
-import { buildNativeSingleViewSegments } from "../nativeSingleViewBuilder";
+} from "../presentation/segmentBuilders/markerSegmentBuilder";
+import { buildNativeSingleViewSegments } from "../presentation/segmentBuilders/nativeSingleViewBuilder";
 import {
   appendEmbeddedTablesForExplicitText,
   buildStackedSegments,
-} from "../stackSegmentBuilder";
+} from "../presentation/segmentBuilders/stackSegmentBuilder";
 import {
   filterRedundantSqlIntroSegments,
   parseMarkdownAndCodeSegments,
-} from "../sqlMarkdownNormalizer";
-import { collectVisualSegments } from "../visualSegmentCollector";
+} from "../presentation/segmentBuilders/sqlMarkdownNormalizer";
+import { collectVisualSegments } from "../presentation/segmentBuilders/visualSegmentCollector";
 import { filterSegmentsWithoutHierarchyTableDuplicates } from "../presentationStructureDedup";
 
 export {
   dedupeSqlFencesInMarkdown,
   parseMarkdownAndCodeSegments,
-} from "../sqlMarkdownNormalizer";
+} from "../presentation/segmentBuilders/sqlMarkdownNormalizer";
 
 function finalizePresentationSegments(
   segments: AssistantContentSegment[],

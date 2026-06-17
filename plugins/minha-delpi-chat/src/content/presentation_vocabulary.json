@@ -412,7 +412,7 @@
       "inferTableRoleFromTitleConditionalReturns": 0,
       "pathIncludesByModule": {
         "chatPresentation.ts": 7,
-        "visualSegmentCollector.ts": 4,
+        "presentation/segmentBuilders/visualSegmentCollector.ts": 4,
         "message/assistantProseRendering.ts": 1
       }
     },
@@ -430,7 +430,7 @@
     },
     "allowedPathIncludesModules": [
       "chatPresentation.ts",
-      "visualSegmentCollector.ts",
+      "presentation/segmentBuilders/visualSegmentCollector.ts",
       "message/assistantProseRendering.ts"
     ]
   },

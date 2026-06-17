@@ -218,6 +218,7 @@ PR-21 ✅  C3 hex chips · message/ useAssistantContentSegments + AssistantStack
 PR-22 ✅  message/ ChatMessageList + timeline + ChatThinkingDots
 PR-23 ✅  message/ assistantProseRendering (canônico prosa)
 PR-24 ✅  imports canônicos message/* + shared/overlay; preview builder usa chat-landing
+PR-25 ✅  presentation/segmentBuilders/ (stack, renderPlan, visual collector, …)
 ```
 
 ### Fase concluída (jun/2026)

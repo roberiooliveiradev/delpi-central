@@ -20,7 +20,7 @@ const PRESENTATION_SCAN_MODULES = [
   "presentationStackSections.ts",
   "presentationStructureDedup.ts",
   "presentationTableDedup.ts",
-  "visualSegmentCollector.ts",
+  "presentation/segmentBuilders/visualSegmentCollector.ts",
 ];
 
 function countPathIncludes(relativePath: string): number {

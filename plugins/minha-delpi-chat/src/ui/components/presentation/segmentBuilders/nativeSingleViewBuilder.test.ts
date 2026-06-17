@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildNativeSingleViewSegments } from "./nativeSingleViewBuilder";
-import type { AssistantContentSegment } from "./message/assistantContentTypes";
+import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 
 describe("buildNativeSingleViewSegments", () => {
   it("inclui todas as tabelas quando renderPlan aponta tablePresentations", () => {

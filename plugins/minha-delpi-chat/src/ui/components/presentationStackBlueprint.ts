@@ -4,7 +4,7 @@ import { stripPresentationSectionMarkers } from "./chatMarkdown";
 import type { AssistantContentSegment } from "./message/assistantContentTypes";
 import type { CommentarySections } from "./message/assistantContentInterleave";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
-import { buildSegmentsFromRenderPlan } from "./renderPlanSegmentBuilder";
+import { buildSegmentsFromRenderPlan } from "./presentation/segmentBuilders/renderPlanSegmentBuilder";
 
 const PRESENTATION_MARKER_RE =
   /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
