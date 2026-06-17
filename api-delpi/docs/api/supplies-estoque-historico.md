@@ -23,14 +23,16 @@ A resposta inclui o objeto `estimation` quando o modo histórico está ativo.
 | `location` | Não | Local de estoque. **Somente no modo atual** (SB2). |
 | `start_date` | Condicional | Início do período (inclusivo). Ex.: `2026-04-01`, `20260401`. |
 | `end_date` | Condicional | Fim do período (inclusivo). Ex.: `2026-04-30`, `20260430`. |
-| `top_limit` | Não | Top produtos por valor (default `10`, máx. `50`). **Somente no modo atual**. |
+| `top_limit` | Não | Top produtos por valor (default `10`, máx. `50`). Omitido no `summary_only`. |
+| `summary_only` | Não | Quando `true`, retorna **apenas** `summary` (sem `by_branch`, `by_location`, `top_products`). Default `false`. |
 
 Regras:
 
 - Histórico exige **os dois** parâmetros de data.
 - `start_date` não pode ser maior que `end_date`.
 - Com datas, `location` filtra o fechamento SB9 e as movimentações SD3 por `B9_LOCAL` / `D3_LOCAL`.
-- `by_location` e `top_products` usam agregação estimada por local e por produto (SB9 + SD3).
+- `by_location` e `top_products` usam agregação estimada por local e por produto (SB9 + SD3) — **indisponíveis** com `summary_only=true`.
+- O **Strategic Indicators** e o **IDD** (`/inventory-turnover`) chamam sempre `summary_only=true` para o KPI consolidado.
 
 ---
 
@@ -95,6 +97,11 @@ CASE WHEN D3_TM < '500' THEN D3_CUSTO1 ELSE -D3_CUSTO1 END
 ### Movimento entre fechamento e início do período
 
 Entre `DATA_FECHAMENTO_BASE` e `start_date` (exclusive no início), aplica-se a mesma regra líquida de SD3 para “atualizar” a base até o primeiro dia do período analisado.
+
+Na implementação SQL (jun/2026), **ponte** e **período** são obtidos numa **única varredura** de `SD3010`:
+
+- Filtro indexável: `D3_EMISSAO > closing_base_date` **e** `D3_EMISSAO < end_date_exclusive`.
+- Separação ponte vs. período via `CASE` usando `start_date` como fronteira.
 
 Exemplo validado (abril/2026):
 
@@ -197,3 +204,78 @@ Giro (vezes) = CPV_total ÷ valor_estoque
 ```
 
 O CPV vem de `SD2010` no período (`SUM(D2_CUSTO1)`, `D2_EMISSAO`), com CFOPs Kardex `5101`, `5124`, `6101`, `6124` (`D2_CF`).
+
+---
+
+## Implementação SQL e performance (jun/2026)
+
+### Onde está no código
+
+| Artefato | Caminho |
+|---|---|
+| CTEs e templates SQL | `api-delpi/app/infrastructure/persistence/totvs/supplies_repositories/stock_value_historical_sql.py` |
+| Repositório / cache | `stock_value_query_repository.py`, `stock_value_cache.py` |
+| `operation_id` console | `get_supplies_stock_value` |
+
+### Pipeline histórico (CTE compartilhado)
+
+```text
+ultima_data_sb9     → MAX(B9_DATA) por filial antes de start_date
+fechamento_base     → saldo SB9010 na data de fechamento (por filial/local/produto)
+movimentos_sd3      → uma leitura SD3010; CASE separa ponte e período
+item_keys           → UNION das chaves (fechamento + movimentos)
+estoque_item        → LEFT JOINs; soma base + ponte + período por item
+```
+
+### Caminhos de execução
+
+| Caller | `summary_only` | SQL | Observação |
+|---|---|---|---|
+| SI, IDD | `true` | `HISTORICAL_STOCK_SUMMARY_SQL` | Agregação direta no `estoque_item`; **sem** temp table `#Delpi_StockItems` |
+| Chat / MFE (bundle) | `false` | `HISTORICAL_STOCK_BUNDLE_BATCH_SQL` | Materializa `#Delpi_StockItems` uma vez; 4 SELECTs de breakdown |
+| Estoque atual (sem datas) | qualquer | `SB2010` | Leve; ignora histórico |
+
+Chaves de cache (`stock_value_cache_key`): incluem `branch`, datas, `top_limit` e sufixo `summary` vs `full` (TTL: `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+
+### Observabilidade (console Saúde SQL)
+
+Duas hashes para a mesma operação são **esperadas**:
+
+| Variante | Causa típica | Latência relativa |
+|---|---|---|
+| Com `branch=01/02` | Filtro em SB9/SD3 | Menor |
+| Consolidado (sem `branch`) | Todas as filiais | Maior (~1,5–2×) |
+
+Alertas `slow_sql` (> 2500 ms) no modo histórico consolidado indicam volume TOTVS ou cache frio — validar aba **Cache** e índices abaixo antes de alterar regra de negócio.
+
+### Índices recomendados (DBA / SQL Server)
+
+```sql
+-- Fechamento por filial/data
+CREATE NONCLUSTERED INDEX IX_SB9010_Filial_Data
+ON SB9010 (B9_FILIAL, B9_DATA)
+INCLUDE (B9_LOCAL, B9_COD, B9_QINI, B9_VINI1)
+WHERE D_E_L_E_T_ = '';
+
+-- Movimentações Kardex por filial/emissão
+CREATE NONCLUSTERED INDEX IX_SD3010_Filial_Emissao
+ON SD3010 (D3_FILIAL, D3_EMISSAO)
+INCLUDE (D3_LOCAL, D3_COD, D3_TM, D3_QUANT, D3_CUSTO1)
+WHERE D_E_L_E_T_ = '';
+```
+
+Validar com plano de execução antes/depois; nomes podem variar por ambiente Protheus.
+
+### Histórico de otimizações (jun/2026)
+
+| Commit / tema | Mudança | Efeito |
+|---|---|---|
+| Refatoração CTE único | Unificação `movimentos_sd3`; `UNION`+`LEFT JOIN` no lugar de `FULL OUTER JOIN`; `summary_only` sem temp table | Menos I/O em SD3010; SI/IDD mais leves |
+| Filtro em intervalo | `OR` (ponte \| período) → range `(closing_base_date, end_date_exclusive)` | Melhor chance de index seek em SD3010 |
+
+A **semântica** (`sb9_last_closure_plus_sd3_movements`) e os totais validados (ex.: consolidado abril/2026) permanecem os mesmos.
+
+### Backlog residual
+
+- Turnover ainda invoca stock-value separadamente no mesmo snapshot SI (duplicata HTTP; ver `SI_BOTTLENECK_MAP.md` §5.2).
+- Fast path só para `total_stock_value` / `total_stock_quantity` (sem `COUNT DISTINCT`) se indicadores deixarem de exigir `total_products` no IDD.

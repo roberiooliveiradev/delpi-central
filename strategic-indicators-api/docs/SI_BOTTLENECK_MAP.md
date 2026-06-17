@@ -156,9 +156,10 @@ Multiplicadores atuais (config padrão produção após ajuste):
 
 ### 5.2 `supplies/stock-value` — mesmas datas repetidas
 
-- **Causa:** `_build_snapshot` chama turnover depois de stock-value, mas turnover pode consultar estoque de novo; cache do `SuppliesMetricsSnapshotService` é por processo e é perdido no invalidate global; refresh processa 3 filiais × 3 meses sem compartilhar entre escopos.
+- **Causa:** `_build_snapshot` chama turnover depois de stock-value, mas turnover consulta estoque de novo; cache do `SuppliesMetricsSnapshotService` é por processo e é perdido no invalidate global; refresh processa 3 filiais × 3 meses sem compartilhar entre escopos.
 - **Sintoma:** mesma URL `stock-value?start_date=01-03-2026` aparece minutos depois de novo.
 - **Direção:** cache TTL compartilhado (Redis ou `snapshot_shared_cache`) para respostas api-delpi; turnover reutilizar snapshot de stock-value já carregado.
+- **SQL (jun/2026):** api-delpi passou a usar CTE único + `summary_only` sem `#Delpi_StockItems` e filtro em intervalo em SD3010 — reduz tempo por execução, mas não elimina chamadas duplicadas SI↔turnover. Ver `api-delpi/docs/api/supplies-estoque-historico.md`.
 
 ### 5.3 Três filiais = três passes quase completos
 
@@ -178,7 +179,8 @@ Multiplicadores atuais (config padrão produção após ajuste):
 |---|------|------|------------------|------------|
 | 1 | Operação | `refresh` com `--no-invalidate` após primeira carga | Evita rebuild total | `scripts/refresh_period_scores.py` |
 | 2 | Operação | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` até filial rápida | ÷3 no refresh | `.env` |
-| 3 | api-delpi | Otimizar `/supplies/stock-value` e `/inventory-turnover` (TOTVS/cache) | −minutos no P0 | `api-delpi` supplies |
+| 3 | api-delpi | ~~Otimizar `/supplies/stock-value` (CTE único, summary_only sem temp table, range SD3010)~~ **feito jun/2026** | Ver `api-delpi/docs/api/supplies-estoque-historico.md` § performance | `stock_value_historical_sql.py` |
+| 3b | api-delpi | Turnover reutilizar stock já calculado + índices DBA SB9/SD3 | −duplicata P0 | `api-delpi` supplies, DBA |
 | 4 | SI | ~~Cache TTL medições (7 dept., zero erros)~~ **feito** | Menos duplicata parcial | `measurements_cache_policy.py` |
 | 4b | SI | ~~Versões de snapshot (até 3, serve limpa)~~ **feito** | Não substituir boa coleta por falha | `measurement_snapshot_versions.py`, `versioned_measurements_cache.py` |
 | 5 | SI | ~~Financial: ROL por escopo de filial + cache TTL `get_rol`~~ **feito** | Menos P1 | `financial_indicators_snapshot_provider`, `delpi_financial_gateway` |

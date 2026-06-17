@@ -103,8 +103,15 @@ Parâmetros adicionais:
 |---|---|
 | `/cpv`, `/otd` | `top_limit` (default `5`, máx. `20`) |
 | `/otd` | `details_limit` (default `20`, máx. `100`) |
-| `/stock-value` | `start_date`, `end_date` (histórico estimado SB9+SD3; ambos obrigatórios juntos), `location` (só modo atual), `top_limit` |
+| `/stock-value` | `start_date`, `end_date` (histórico estimado SB9+SD3; ambos obrigatórios juntos), `location` (histórico e atual), `top_limit`, `summary_only` (apenas `summary`; usado pelo SI/IDD) |
 | `/inventory-turnover` | `location`, `strict_idd_period` (bool) |
+
+**Performance (`/supplies/stock-value` histórico):**
+
+- SQL canônico: `supplies_repositories/stock_value_historical_sql.py` (CTE `movimentos_sd3` — uma varredura SD3010).
+- SI/IDD: `summary_only=true` → `HISTORICAL_STOCK_SUMMARY_SQL` (sem temp table).
+- Cache: `query_cache` namespace `stock-value|…` (TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+- Console: `operation_id=get_supplies_stock_value`; detalhes em [supplies-estoque-historico.md](./supplies-estoque-historico.md#implementação-sql-e-performance-jun2026).
 
 ---
 
