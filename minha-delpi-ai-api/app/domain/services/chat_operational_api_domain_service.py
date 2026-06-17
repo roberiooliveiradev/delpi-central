@@ -59,6 +59,36 @@ class ChatOperationalApiDomainService:
         return str(strategy).strip() if isinstance(strategy, str) and strategy.strip() else "semantic"
 
     @classmethod
+    def parameter_strategy_ids(cls) -> frozenset[str]:
+        strategies = _api_route_domains_content().get("parameterStrategies") or {}
+
+        if not isinstance(strategies, dict):
+            return frozenset()
+
+        return frozenset(
+            str(strategy_id).strip()
+            for strategy_id in strategies
+            if str(strategy_id).strip()
+        )
+
+    @classmethod
+    def parameter_strategy_spec(cls, strategy_id: str) -> dict[str, Any]:
+        strategies = _api_route_domains_content().get("parameterStrategies") or {}
+
+        if not isinstance(strategies, dict):
+            return {}
+
+        node = strategies.get(str(strategy_id or "").strip())
+
+        if isinstance(node, dict):
+            return dict(node)
+
+        if isinstance(node, str) and node.strip():
+            return {"description": node.strip()}
+
+        return {}
+
+    @classmethod
     def method_for_domain(cls, domain: str) -> str:
         config = cls.domains().get(str(domain or "").strip())
 

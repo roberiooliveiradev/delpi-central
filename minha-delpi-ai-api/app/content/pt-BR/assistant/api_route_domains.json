@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.04",
+  "version": "2026.06.16",
   "domains": {
     "product": {
       "label": "Produto",
@@ -23,7 +23,7 @@
     "product_exclusive_catalog": {
       "label": "Catálogo MP exclusiva",
       "pathMarkers": ["/products/exclusive-raw-materials/catalog"],
-      "parameterStrategy": "semantic",
+      "parameterStrategy": "exclusive_catalog",
       "method": "GET"
     },
     "production_consumption": {
@@ -92,7 +92,7 @@
     "lmp": {
       "label": "LMP / transformação",
       "pathMarkers": ["/lmp", "/transforma"],
-      "parameterStrategy": "date_branch",
+      "parameterStrategy": "lmp",
       "method": "GET"
     },
     "sql": {
@@ -104,7 +104,7 @@
     "system": {
       "label": "Metadados Protheus",
       "pathMarkers": ["/system/"],
-      "parameterStrategy": "none",
+      "parameterStrategy": "system_metadata",
       "method": "GET"
     },
     "generic": {
@@ -115,12 +115,154 @@
     }
   },
   "parameterStrategies": {
-    "product_code": "Código de produto com paginação, filial e armazém",
-    "date_branch": "Filial e intervalo de datas",
-    "product_search": "Termo ou código de busca",
-    "supplies_stock": "Limite top para valor de estoque",
-    "sql": "Consulta SQL somente leitura",
-    "none": "Sem parâmetros automáticos",
-    "semantic": "Ranking semântico sobre candidatos"
+    "product_code": {
+      "description": "Código de produto com paginação, filial e armazém",
+      "registryOnly": true
+    },
+    "date_branch": {
+      "description": "Filial, intervalo de datas, paginação e granularidade",
+      "patterns": {
+        "branch": "\\bfilial\\s+(\\d{2})\\b",
+        "work_center": "\\bct\\s+(\\S+)",
+        "product_group": "\\bgrupo\\s+(\\d{4})\\b"
+      },
+      "bindings": [
+        {
+          "source": "branch_regex",
+          "matchAliases": ["branch", "filial", "branch_code"]
+        },
+        {
+          "source": "date_range.start",
+          "matchAliases": [
+            "start_date",
+            "startdate",
+            "data_inicio",
+            "data_inicial",
+            "date_start",
+            "datestart"
+          ]
+        },
+        {
+          "source": "date_range.end",
+          "matchAliases": [
+            "end_date",
+            "enddate",
+            "data_fim",
+            "data_final",
+            "date_end",
+            "dateend"
+          ]
+        },
+        {
+          "source": "date_range.start",
+          "matchAliases": ["reference_date", "referencedate"]
+        },
+        {
+          "source": "pagination.page",
+          "matchAliases": ["page"]
+        },
+        {
+          "source": "pagination.page_size",
+          "matchAliases": ["page_size", "pagesize", "limit"]
+        },
+        {
+          "source": "work_center_regex",
+          "matchAliases": ["work_center", "workcenter"]
+        },
+        {
+          "source": "product_group_regex",
+          "matchAliases": ["product_group"]
+        },
+        {
+          "source": "granularity_inferred",
+          "matchAliases": ["granularity"]
+        }
+      ],
+      "granularityTerms": {
+        "day": ["diario", "diaria", "por dia", " ao dia", " diaria"],
+        "week": ["semanal", "por semana", " semana ", "semanas"],
+        "year": ["anual", "por ano", " ano ", " anos "],
+        "month": [
+          "serie",
+          "series",
+          "evolucao",
+          "no tempo",
+          "temporal",
+          "mes",
+          "mensal",
+          "trimestre",
+          "marco",
+          "janeiro",
+          "fevereiro",
+          "abril",
+          "maio",
+          "junho",
+          "julho",
+          "agosto",
+          "setembro",
+          "outubro",
+          "novembro",
+          "dezembro"
+        ]
+      },
+      "granularityDefault": "month",
+      "emptyDefault": {
+        "limit": 10
+      }
+    },
+    "product_search": {
+      "description": "Termo ou código de busca",
+      "registryOnly": true
+    },
+    "exclusive_catalog": {
+      "description": "Catálogo MP exclusiva (PA/MP)",
+      "registryOnly": true
+    },
+    "supplies_stock": {
+      "description": "Limite top para valor de estoque",
+      "bindings": [
+        {
+          "source": "literal",
+          "value": 10,
+          "matchAliases": ["top_limit", "limit"]
+        }
+      ]
+    },
+    "sale_orders": {
+      "description": "Paginação e intervalo de datas para OVs",
+      "bindings": [
+        {
+          "source": "pagination.page",
+          "matchAliases": ["page"]
+        },
+        {
+          "source": "pagination.page_size",
+          "matchAliases": ["page_size", "pagesize", "limit"]
+        }
+      ],
+      "emptyDefault": {
+        "limit": 50
+      }
+    },
+    "lmp": {
+      "description": "Número OV ou paginação LMP",
+      "registryOnly": true
+    },
+    "system_metadata": {
+      "description": "Tabela/coluna Protheus",
+      "registryOnly": true
+    },
+    "sql": {
+      "description": "Consulta SQL somente leitura",
+      "registryOnly": true
+    },
+    "none": {
+      "description": "Sem parâmetros automáticos",
+      "registryOnly": true
+    },
+    "semantic": {
+      "description": "Ranking semântico sobre candidatos",
+      "registryOnly": true
+    }
   }
 }

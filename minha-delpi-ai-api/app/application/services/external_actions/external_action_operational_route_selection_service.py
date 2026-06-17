@@ -943,25 +943,15 @@ class ExternalActionOperationalRouteSelectionService:
             return parameters
 
         if strategy == "sale_orders":
-            parameters = {}
+            from app.domain.services.operational_api_parameter_builder_service import (
+                OperationalApiParameterBuilderService,
+            )
 
-            for parameter in action.get("parametersSchema") or []:
-                name = parameter.get("name")
-
-                if not name:
-                    continue
-
-                lowered = name.lower()
-
-                if lowered in {"page"}:
-                    parameters[name] = 1
-                elif lowered in {"page_size", "pagesize", "limit"}:
-                    parameters[name] = 50
-
-            if not merge_date_parameters:
-                return parameters or {"limit": 50}
-
-            return merge_date_parameters(action, message, parameters)
+            return OperationalApiParameterBuilderService().build_sale_orders(
+                action,
+                message,
+                previous_messages=previous_messages,
+            )
 
         if strategy == "system_metadata":
             from app.domain.services.chat_system_metadata_intent_service import (
@@ -971,19 +961,10 @@ class ExternalActionOperationalRouteSelectionService:
             return ChatSystemMetadataIntentService.build_parameters(message, action)
 
         if strategy == "supplies_stock":
-            parameters: dict = {}
+            from app.domain.services.operational_api_parameter_builder_service import (
+                OperationalApiParameterBuilderService,
+            )
 
-            for parameter in action.get("parametersSchema") or []:
-                name = parameter.get("name")
-
-                if not name:
-                    continue
-
-                lowered = name.lower()
-
-                if lowered in {"top_limit", "limit"}:
-                    parameters[name] = 10
-
-            return parameters
+            return OperationalApiParameterBuilderService.build_supplies_stock(action)
 
         return None

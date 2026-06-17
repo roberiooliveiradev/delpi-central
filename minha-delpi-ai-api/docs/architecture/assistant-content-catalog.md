@@ -35,7 +35,7 @@ Wrappers especializados (mantêm API estável):
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
-| `api_route_domains.json` | Domínios de rota operacional (incl. `product_directives`) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
+| `api_route_domains.json` | Domínios de rota operacional; **`parameterStrategies`** declarativas (bindings, patterns, granularity) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
 | `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
 | `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |
 | Changelog integrado | `docs/changelog/2026-06-product-directives-chat.md` | Roteamento, apresentação, MFE filtros, modos Automático/Tabela/Texto |

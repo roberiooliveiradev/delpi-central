@@ -42,3 +42,19 @@ def test_parameter_strategy_from_domain_config():
         )
         == "date_branch"
     )
+
+
+def test_parameter_strategy_ids_include_declarative_strategies():
+    strategy_ids = ChatOperationalApiDomainService.parameter_strategy_ids()
+
+    assert "date_branch" in strategy_ids
+    assert "sale_orders" in strategy_ids
+    assert "supplies_stock" in strategy_ids
+
+
+def test_parameter_strategy_spec_date_branch_has_bindings():
+    spec = ChatOperationalApiDomainService.parameter_strategy_spec("date_branch")
+
+    assert isinstance(spec.get("bindings"), list)
+    assert spec.get("granularityDefault") == "month"
+    assert isinstance(spec.get("patterns"), dict)

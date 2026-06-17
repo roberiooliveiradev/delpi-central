@@ -565,6 +565,18 @@ Mesclar `ExternalActionProductionOperationalRouteSelectionService` e `ExternalAc
 
 **DoD Fase 15:** smokes PB15 + lint DOCIE + pytest registry/dispatch verdes.
 
+### Fase 16 — parameter strategies declarativas ✅
+
+| Entrega | Status |
+|---------|--------|
+| `parameterStrategies` ricos em `api_route_domains.json` (`bindings`, `patterns`, `granularityTerms`) | ✅ |
+| `ChatOperationalApiDomainService.parameter_strategy_ids()` / `parameter_strategy_spec()` | ✅ |
+| `OperationalApiParameterBuilderService` interpreta JSON (sem aliases hardcoded) | ✅ |
+| Lint: `parameters.strategy` e `domains.*.parameterStrategy` validados contra JSON | ✅ |
+| Testes `test_operational_api_parameter_builder_service.py` | ✅ |
+
+**DoD Fase 16:** nova rota GET date/branch/limit = só registry + estratégia JSON; pytest builder + lint verdes.
+
 ---
 
 ### Roadmap 100% — Fases 16–20

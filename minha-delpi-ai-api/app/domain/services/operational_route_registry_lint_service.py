@@ -103,6 +103,7 @@ class OperationalRouteRegistryLintService:
         cls._lint_dispatch_order(report)
         cls._lint_fallback_policies(report)
         cls._lint_routes(report)
+        cls._lint_parameter_strategies(report)
         cls._lint_actionable_predicates(report)
         cls._lint_playbook_product_predicates(report)
         cls._lint_playbook_none_of_rules(report)
@@ -172,6 +173,7 @@ class OperationalRouteRegistryLintService:
 
             cls._lint_match_spec(route_id, route.get("match"), report)
             cls._lint_presentation(route_id, route.get("presentation") or {}, report)
+            cls._lint_route_parameter_strategy(route_id, route, report)
 
             fallback = route.get("fallbackPolicy")
 
@@ -286,6 +288,54 @@ class OperationalRouteRegistryLintService:
         if format_key and not cls._selection_reason_exists(format_key):
             report.add_error(
                 f"routes.{route_id}.presentation.reasonFormatKey ausente: {format_key!r}"
+            )
+
+    @classmethod
+    def _lint_parameter_strategies(cls, report: OperationalRouteRegistryLintReport) -> None:
+        from app.domain.services.chat_operational_api_domain_service import (
+            ChatOperationalApiDomainService,
+        )
+
+        allowed = ChatOperationalApiDomainService.parameter_strategy_ids()
+
+        for domain_id, config in ChatOperationalApiDomainService.domains().items():
+            if not isinstance(config, dict):
+                continue
+
+            strategy = str(config.get("parameterStrategy") or "").strip()
+
+            if strategy and strategy not in allowed:
+                report.add_error(
+                    f"api_route_domains.domains.{domain_id}.parameterStrategy "
+                    f"desconhecida: {strategy!r}"
+                )
+
+    @classmethod
+    def _lint_route_parameter_strategy(
+        cls,
+        route_id: str,
+        route: dict[str, Any],
+        report: OperationalRouteRegistryLintReport,
+    ) -> None:
+        from app.domain.services.chat_operational_api_domain_service import (
+            ChatOperationalApiDomainService,
+        )
+
+        parameters_spec = route.get("parameters") or {}
+
+        if not isinstance(parameters_spec, dict):
+            return
+
+        strategy = str(parameters_spec.get("strategy") or "").strip()
+
+        if not strategy:
+            return
+
+        allowed = ChatOperationalApiDomainService.parameter_strategy_ids()
+
+        if strategy not in allowed:
+            report.add_error(
+                f"routes.{route_id}.parameters.strategy desconhecida: {strategy!r}"
             )
 
     @classmethod
