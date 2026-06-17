@@ -49,6 +49,7 @@ describe("assistantContentInterleave", () => {
         presentation: {
           type: "table",
           title: "Roteiro de produção — 90260149",
+          role: "guide",
           columns: [{ key: "product_code", label: "Produto" }],
           rows: [{ product_code: "90260149" }],
         },
@@ -58,6 +59,7 @@ describe("assistantContentInterleave", () => {
         presentation: {
           type: "table",
           title: "Produto 90260149",
+          role: "profile",
           columns: [{ key: "campo", label: "Campo" }],
           rows: [{ campo: "Código", valor: "90260149" }],
         },
@@ -72,11 +74,43 @@ describe("assistantContentInterleave", () => {
       },
     ];
 
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/90260149/analyser",
+          stackPresentationPlan: {
+            humanizedSections: true,
+            sectionVisibility: {
+              scope: false,
+              profile: true,
+              highlights: true,
+              guide: true,
+              inspection: false,
+              structure: true,
+              attention: true,
+            },
+            narrativeOrder: [
+              "lead",
+              "profileTables",
+              "highlights",
+              "operationalTables",
+              "tailVisuals",
+              "attention",
+            ],
+            tableRoleOrder: ["profile", "guide", "inspection"],
+            tailVisualOrder: ["tree"],
+          },
+        },
+      },
+    ]);
+
     const segments = buildInterleavedStackSegments(
       "### Informações\n\n**Destaques**\n\n- Destaque.\n\n**Pontos de atenção encontrados na API:**\n\n1. Atenção.",
       visuals,
       (prose) => [{ kind: "markdown", markdown: prose }],
       appendUnique,
+      toolCalls,
     );
 
     const destaqueIndex = segments.findIndex(

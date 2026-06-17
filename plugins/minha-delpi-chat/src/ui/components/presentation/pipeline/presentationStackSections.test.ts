@@ -31,6 +31,7 @@ describe("presentationStackSections", () => {
         presentation: {
           type: "table",
           title: "Produto 90260149",
+          role: "profile",
           columns: [
             { key: "campo", label: "Campo" },
             { key: "valor", label: "Valor" },
@@ -43,6 +44,7 @@ describe("presentationStackSections", () => {
         presentation: {
           type: "table",
           title: "Roteiro de produção — 90260149",
+          role: "guide",
           columns: [{ key: "product_code", label: "Produto" }],
           rows: [{ product_code: "90260149" }],
         },

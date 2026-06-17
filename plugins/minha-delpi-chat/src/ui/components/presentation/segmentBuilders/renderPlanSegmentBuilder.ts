@@ -258,6 +258,16 @@ function resolveVisualSource(metadata: Record<string, unknown>, token: string): 
   return null;
 }
 
+function resolveExplicitSessionVisual(metadata: Record<string, unknown>): string | null {
+  const explicit = String(metadata.explicitSessionFormat || "").trim().toLowerCase();
+
+  if (!explicit || explicit === "text" || explicit === "topics") {
+    return null;
+  }
+
+  return explicit;
+}
+
 function buildSingleViewRenderPlanSegments(
   metadata: Record<string, unknown>,
   plan: StackPresentationPlan,
@@ -266,19 +276,22 @@ function buildSingleViewRenderPlanSegments(
   const segments: NonNullable<PresentationRenderPlan["segments"]> = [];
   const decision = metadata.presentationDecision as Record<string, unknown> | undefined;
   const selected = String(decision?.selected || "").trim().toLowerCase();
+  const explicitVisual = resolveExplicitSessionVisual(metadata);
+  const visualToken =
+    explicitVisual || (selected && selected !== "text" ? selected : null);
 
   if (shouldIncludeDecision(metadata, plan)) {
     segments.push({ kind: "decision", slot: "lead", source: "dataAnswer" });
   }
 
-  if (hasTextPresentation(metadata, commentary) && (!selected || selected === "text")) {
+  if (hasTextPresentation(metadata, commentary) && (!selected || selected === "text") && !explicitVisual) {
     segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
   }
 
-  const visualSource = selected ? resolveVisualSource(metadata, selected) : null;
+  const visualSource = visualToken ? resolveVisualSource(metadata, visualToken) : null;
 
-  if (selected && visualSource) {
-    if (selected === "table") {
+  if (visualToken && visualSource) {
+    if (visualToken === "table") {
       const bulk = metadata.tablePresentations;
       const tableCount = Array.isArray(bulk)
         ? bulk.filter(
@@ -296,10 +309,10 @@ function buildSingleViewRenderPlanSegments(
           source: "tablePresentations",
         });
       } else {
-        segments.push({ kind: selected, slot: "primary", source: visualSource });
+        segments.push({ kind: visualToken, slot: "primary", source: visualSource });
       }
     } else {
-      segments.push({ kind: selected, slot: "primary", source: visualSource });
+      segments.push({ kind: visualToken, slot: "primary", source: visualSource });
     }
   }
 

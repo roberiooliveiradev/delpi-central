@@ -221,6 +221,7 @@ PR-24 ✅  imports canônicos message/* + shared/overlay; preview builder usa ch
 PR-25 ✅  presentation/segmentBuilders/ (stack, renderPlan, visual collector, …)
 PR-26 ✅  remoção stubs legados + CI paths + barrel composer
 PR-27 ✅  presentation/pipeline/ — módulos presentation*.ts da raiz
+PR-28 ✅  regressão stack/layout — explicitSessionFormat, presentation.role, decision.layoutMode
 ```
 
 ### Fase concluída (jun/2026)

@@ -32,12 +32,14 @@ describe("assistantContentStackOrder", () => {
             {
               type: "table",
               title: "Roteiro de produção — 90260149",
+              role: "guide",
               columns: [{ key: "product_code", label: "Produto" }],
               rows: [{ product_code: "90260149" }],
             },
             {
               type: "table",
               title: "Produto 90260149",
+              role: "profile",
               columns: [{ key: "campo", label: "Campo" }],
               rows: [{ campo: "Código", valor: "90260149" }],
             },

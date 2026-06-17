@@ -403,7 +403,8 @@ export function getPresentationDecisionFromToolCalls(
     if (
       decision &&
       typeof decision === "object" &&
-      typeof (decision as ChatPresentationDecision).selected === "string"
+      (typeof (decision as ChatPresentationDecision).selected === "string" ||
+        typeof (decision as ChatPresentationDecision).layoutMode === "string")
     ) {
       return decision as ChatPresentationDecision;
     }
