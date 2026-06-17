@@ -141,7 +141,12 @@ class ProductPaBomReferenceService:
             if producible is None:
                 row["pa_producible_from_stock"] = None
             else:
-                row["pa_producible_from_stock"] = str(round(producible, 4))
+                from app.domain.services.product.product_playbook_numeric_service import (
+                    ProductPlaybookNumericService,
+                )
+
+                formatted = ProductPlaybookNumericService.format_quantity(producible)
+                row["pa_producible_from_stock"] = formatted
                 limits.append((producible, row))
 
             coverage_rows.append(row)
@@ -158,10 +163,16 @@ class ProductPaBomReferenceService:
         limiting_producible, limiting_row = min(limits, key=lambda item: item[0])
         max_exact = max(0.0, limiting_producible)
 
+        from app.domain.services.product.product_playbook_numeric_service import (
+            ProductPlaybookNumericService,
+        )
+
         return {
             "materials": coverage_rows,
             "max_pa_producible_from_stock": str(int(max_exact // 1)),
-            "max_pa_producible_from_stock_exact": str(round(max_exact, 4)),
+            "max_pa_producible_from_stock_exact": ProductPlaybookNumericService.format_quantity(
+                max_exact
+            ),
             "limiting_raw_material_code": limiting_row.get("raw_material_code"),
             "limiting_raw_material_description": limiting_row.get("raw_material_description"),
         }

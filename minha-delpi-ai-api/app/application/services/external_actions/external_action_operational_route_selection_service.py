@@ -989,6 +989,17 @@ class ExternalActionOperationalRouteSelectionService:
                 if product_code:
                     parameters["code"] = product_code
 
+            if production_kind == ProductionOperationalIntentKind.SCHEDULE_TODAY:
+                filter_code = ChatProductQueryIntentService.resolve_schedule_product_filter_code(
+                    message,
+                    product_code=ChatProductQueryIntentService.extract_product_code(message),
+                )
+
+                if filter_code:
+                    parameters["presentationDetailFilter"] = {
+                        "product_code_prefix": filter_code,
+                    }
+
             if not parameters:
                 parameters = {"limit": 10}
 

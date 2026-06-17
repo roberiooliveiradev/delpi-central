@@ -100,6 +100,33 @@
       "codigo"
     ]
   },
+  "scheduleMembership": {
+    "terms": [
+      "programacao de hoje",
+      "programação de hoje",
+      "na programacao",
+      "na programação",
+      "esta na programacao",
+      "está na programação",
+      "está programado",
+      "esta programado",
+      "programado para hoje",
+      "programado hoje",
+      "cronograma de hoje"
+    ]
+  },
+  "productGroupCode": {
+    "patterns": [
+      "\\bprodutos?\\s+(\\d{4})\\b",
+      "\\bitens?\\s+(\\d{4})\\b",
+      "\\bpas?\\s+(\\d{4})\\b",
+      "\\bfam[ií]lia\\s+(\\d{4})\\b",
+      "\\bgrupo\\s+de\\s+produtos?\\s+(\\d{4})\\b",
+      "\\bgrupo\\s+(\\d{4})\\b",
+      "\\bdo\\s+grupo\\s+(\\d{4})\\b",
+      "\\bpelo\\s+grupo\\s+(\\d{4})\\b"
+    ]
+  },
   "scopeReset": {
     "markers": [
       "ranking dos",
@@ -340,6 +367,11 @@
       ]
     },
     "productionStatus": {
+      "noneOf": [
+        {
+          "termsFrom": "product_query_intent.scheduleMembership.terms"
+        }
+      ],
       "anyOf": [
         {
           "termsFrom": "product_query_intent.productionStatus.terms",
@@ -763,7 +795,11 @@
       "pa iniciou",
       "pi iniciou",
       "producao iniciada",
-      "produção iniciada"
+      "produção iniciada",
+      "iniciou producao",
+      "iniciou produção",
+      "ja iniciou producao",
+      "já iniciou produção"
     ],
     "productionMarkers": [
       "apontamento",

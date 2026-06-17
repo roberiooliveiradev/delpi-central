@@ -36,6 +36,19 @@ class ExternalActionPlaybookReportPresenter:
             *,
             entity: str,
         ) -> dict | None:
+            from app.domain.services.chat_production_schedule_membership_presentation_service import (
+                ChatProductionScheduleMembershipPresentationService,
+            )
+
+            membership = ChatProductionScheduleMembershipPresentationService.try_build_playbook_report(
+                root,
+                entity=entity,
+            )
+
+            if membership:
+                membership["sourcePath"] = path
+                return membership
+
             product = root.get("product") if isinstance(root.get("product"), dict) else {}
             code = str(product.get("product_code") or product.get("code") or "").strip()
             summary = root.get("summary") if isinstance(root.get("summary"), dict) else {}

@@ -312,6 +312,23 @@ class ExternalActionSqlPresenter:
             total_count = record_total if record_total is not None and record_total >= shown else shown
 
             if rows and self._looks_like_production_schedule_row(rows[0]):
+                from app.domain.services.chat_production_schedule_membership_presentation_service import (
+                    ChatProductionScheduleMembershipPresentationService,
+                )
+
+                membership_root = dict(root or {})
+                membership_root.setdefault("items", rows)
+                membership = (
+                    ChatProductionScheduleMembershipPresentationService.try_build_membership_answer(
+                        membership_root,
+                    )
+                )
+
+                if membership:
+                    membership["sqlRows"] = rows
+
+                    return membership
+
                 from app.domain.services.chat_sql_production_schedule_presentation_service import (
                     ChatSqlProductionSchedulePresentationService,
                 )

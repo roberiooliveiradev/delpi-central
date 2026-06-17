@@ -1689,3 +1689,198 @@ def test_allocation_gaps_liste_componentes_not_product_search():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "allocation-gaps-action"
+
+
+def test_schedule_today_with_group_prefix_selects_schedule_and_filters():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "search-products",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "summary": "Buscar produtos",
+                    "parametersSchema": [
+                        {"name": "description"},
+                        {"name": "page"},
+                        {"name": "page_size"},
+                    ],
+                },
+                {
+                    "actionId": "production-schedule-today",
+                    "method": "GET",
+                    "path": "/production/schedule/today",
+                    "operationId": "get_production_schedule_today",
+                    "summary": "Programação de produção",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "Quais produtos 9026 estão programados para produzir hoje?",
+        allowed_action_ids=["search-products", "production-schedule-today"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-schedule-today"
+    assert selected["arguments"]["parameters"]["presentationDetailFilter"] == {
+        "product_code_prefix": "9026",
+    }
+
+
+def test_chicote_schedule_membership_selects_schedule_with_pa_filter():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "production-status",
+                    "method": "GET",
+                    "path": "/products/{code}/production-status",
+                    "operationId": "get_product_production_status",
+                    "summary": "Análise produtiva",
+                    "parametersSchema": [{"name": "code"}],
+                },
+                {
+                    "actionId": "production-schedule-today",
+                    "method": "GET",
+                    "path": "/production/schedule/today",
+                    "operationId": "get_production_schedule_today",
+                    "summary": "Programação de produção",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "O chicote 90261486 está programado hoje?",
+        allowed_action_ids=["production-status", "production-schedule-today"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-schedule-today"
+    assert selected["arguments"]["parameters"]["presentationDetailFilter"] == {
+        "product_code_prefix": "90261486",
+    }
+
+
+def test_schedule_membership_question_selects_schedule_with_pa_filter():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "production-status",
+                    "method": "GET",
+                    "path": "/products/{code}/production-status",
+                    "operationId": "get_product_production_status",
+                    "summary": "Análise produtiva",
+                    "parametersSchema": [{"name": "code"}],
+                },
+                {
+                    "actionId": "production-schedule-today",
+                    "method": "GET",
+                    "path": "/production/schedule/today",
+                    "operationId": "get_production_schedule_today",
+                    "summary": "Programação de produção",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "O produto 90260255 está na programação de hoje? Qual OP e quantidade?",
+        allowed_action_ids=["production-status", "production-schedule-today"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-schedule-today"
+    assert selected["arguments"]["parameters"]["presentationDetailFilter"] == {
+        "product_code_prefix": "90260255",
+    }
+
+
+def test_product_open_op_question_selects_production_status_not_global_open_list():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "production-orders-open",
+                    "method": "GET",
+                    "path": "/production/orders/open",
+                    "operationId": "get_production_orders_open",
+                    "summary": "OPs em aberto",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+                {
+                    "actionId": "production-status",
+                    "method": "GET",
+                    "path": "/products/{code}/production-status",
+                    "operationId": "get_product_production_status",
+                    "summary": "Situação produtiva",
+                    "parametersSchema": [{"name": "code"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "O 90260255 tem OP aberta hoje? Já iniciou produção?",
+        allowed_action_ids=["production-orders-open", "production-status"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-status"
+    assert selected["arguments"]["parameters"]["code"] == "90260255"
+
+
+def test_product_open_op_question_selects_production_status_not_global_open_list():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "production-orders-open",
+                    "method": "GET",
+                    "path": "/production/orders/open",
+                    "operationId": "get_production_orders_open",
+                    "summary": "OPs em aberto",
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "limit"},
+                    ],
+                },
+                {
+                    "actionId": "production-status",
+                    "method": "GET",
+                    "path": "/products/{code}/production-status",
+                    "operationId": "get_product_production_status",
+                    "summary": "Situação produtiva",
+                    "parametersSchema": [{"name": "code"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "O 90260255 tem OP aberta hoje? Já iniciou produção?",
+        allowed_action_ids=["production-orders-open", "production-status"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "production-status"
+    assert selected["arguments"]["parameters"]["code"] == "90260255"

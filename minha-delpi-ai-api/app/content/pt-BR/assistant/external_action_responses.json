@@ -46,6 +46,13 @@
       "previewHeader": "Alguns itens programados:",
       "largeSetHint": "Resultado extenso — peça *agrupar por filial*, *filtrar por cod produto* ou refine com *mostre os 10 primeiros*.",
       "truncatedSample": "… e mais **{count}** item(ns) na tabela abaixo."
+    },
+    "membership": {
+      "titleWithCode": "Programação de hoje — {code}",
+      "foundLine": "Sim — o PA **{code}** está na programação de **{reference_date}**.",
+      "notFoundLine": "Não — o PA **{code}** não aparece na programação de **{reference_date}**.",
+      "orderLine": "OP **{production_order}** · quantidade planejada **{planned_qty}{unit_suffix}**",
+      "branchSuffix": " · filial **{branch}**"
     }
   },
   "sqlColumnRefinement": {

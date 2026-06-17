@@ -96,3 +96,17 @@ def test_try_build_not_ambiguous_for_sale_pricing():
         "Qual o preço de venda do produto 10080001?",
         allowed_action_ids=["action-1"],
     ) is None
+
+
+def test_try_build_not_ambiguous_for_schedule_today_with_group_filter():
+    assert ChatIntentDisambiguationService.try_build(
+        "Quais produtos 9026 estão programados para produzir hoje?",
+        allowed_action_ids=["action-1"],
+    ) is None
+
+
+def test_try_build_not_ambiguous_for_schedule_membership_with_pa():
+    assert ChatIntentDisambiguationService.try_build(
+        "O produto 90260255 está na programação de hoje? Qual OP e quantidade?",
+        allowed_action_ids=["action-1"],
+    ) is None

@@ -1,16 +1,18 @@
 from datetime import datetime, timedelta
 
 from app.application.services.product.protheus_field_normalizer import is_protheus_yes
+from app.domain.services.product.product_playbook_numeric_service import (
+    ProductPlaybookNumericService,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 def _to_float(value) -> float:
-    if value in (None, ""):
-        return 0.0
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0
+    return ProductPlaybookNumericService.to_float(value)
+
+
+def _format_quantity(value) -> str:
+    return ProductPlaybookNumericService.format_quantity(value)
 
 
 def resolve_protheus_date(value: str | None) -> str:
@@ -69,7 +71,7 @@ def apply_pa_bom_reference_to_stock_items(
             row.get("quantity_required_for_one_pa"),
             product_unit,
         )
-        row["quantity_required_for_one_pa"] = str(required)
+        row["quantity_required_for_one_pa"] = _format_quantity(required)
         row["has_stock_for_one_pa"] = ProductPaBomReferenceService.has_stock_for_one_pa(
             available_quantity=row.get("available_quantity"),
             required_quantity=required,
@@ -98,7 +100,7 @@ def apply_pa_bom_reference_to_production_items(
             row.get("quantity_required_for_one_pa"),
             product_unit,
         )
-        row["quantity_required_for_one_pa"] = str(required)
+        row["quantity_required_for_one_pa"] = _format_quantity(required)
 
         order_quantity = _to_float(row.get("order_quantity"))
         reported = _to_float(row.get("reported_quantity"))
@@ -107,10 +109,12 @@ def apply_pa_bom_reference_to_production_items(
 
         if required > 0:
             equivalent = produced / required
-            row["equivalent_in_pa"] = str(equivalent)
-            row["percent_for_one_pa"] = str(equivalent * 100)
+            row["equivalent_in_pa"] = _format_quantity(equivalent)
+            row["percent_for_one_pa"] = _format_quantity(equivalent * 100)
             if order_quantity > 0:
-                row["order_production_percent"] = str((produced / order_quantity) * 100)
+                row["order_production_percent"] = _format_quantity(
+                    (produced / order_quantity) * 100
+                )
 
         normalized.append(row)
 
@@ -173,8 +177,8 @@ def summarize_raw_material_stock(items: list[dict], *, product_unit: str | None 
             available_quantity=entry["available_quantity"],
             required_quantity=required,
         )
-        entry["quantity_required_for_one_pa"] = str(required)
-        entry["available_quantity"] = str(entry["available_quantity"])
+        entry["quantity_required_for_one_pa"] = _format_quantity(required)
+        entry["available_quantity"] = _format_quantity(entry["available_quantity"])
         materials.append(entry)
 
     without_stock = [

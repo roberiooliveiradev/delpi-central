@@ -109,6 +109,15 @@ class ChatProductionOperationalIntentService:
             if not ChatProductQueryIntentService.extract_product_code(message):
                 return False
 
+        if kind == ProductionOperationalIntentKind.ORDERS_OPEN:
+            product_code = ChatProductQueryIntentService.extract_product_code(message)
+
+            if product_code and len(str(product_code).strip()) >= 8:
+                if ChatProductQueryIntentService._looks_like_production_status_question(
+                    normalized
+                ):
+                    return False
+
         return True
 
     @classmethod

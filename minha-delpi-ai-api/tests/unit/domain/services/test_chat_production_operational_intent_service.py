@@ -25,6 +25,20 @@ def test_resolve_schedule_today_intent() -> None:
     assert kind == ProductionOperationalIntentKind.SCHEDULE_TODAY
 
 
+def test_resolve_schedule_membership_for_single_pa() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "O produto 90260255 está na programação de hoje? Qual OP e quantidade?"
+    )
+    assert kind == ProductionOperationalIntentKind.SCHEDULE_TODAY
+
+
+def test_resolve_schedule_membership_for_chicote_phrase() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "O chicote 90261486 está programado hoje?"
+    )
+    assert kind == ProductionOperationalIntentKind.SCHEDULE_TODAY
+
+
 def test_consumption_excludes_purchases() -> None:
     kind = ChatProductionOperationalIntentService.resolve(
         "Produtos mais comprados no período"
@@ -100,3 +114,17 @@ def test_resolve_planned_vs_real_time_intent() -> None:
         "Compare tempo planejado e tempo real das OPs hoje filial 01"
     )
     assert kind == ProductionOperationalIntentKind.PLANNED_VS_REAL_TIME
+
+
+def test_orders_open_skipped_when_product_production_status_question() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "O 90260255 tem OP aberta hoje? Já iniciou produção?"
+    )
+    assert kind != ProductionOperationalIntentKind.ORDERS_OPEN
+
+
+def test_orders_open_still_matches_without_product_code() -> None:
+    kind = ChatProductionOperationalIntentService.resolve(
+        "Quais OPs em aberto hoje na filial 01?"
+    )
+    assert kind == ProductionOperationalIntentKind.ORDERS_OPEN

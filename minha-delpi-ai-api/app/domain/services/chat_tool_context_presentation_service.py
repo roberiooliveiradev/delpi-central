@@ -108,6 +108,15 @@ class ChatToolContextPresentationService:
             if ChatProductOverviewIntentService.blocks_presentation_only_shortcut(message):
                 return direct_answer
 
+            from app.domain.services.chat_production_schedule_membership_presentation_service import (
+                ChatProductionScheduleMembershipPresentationService,
+            )
+
+            if ChatProductionScheduleMembershipPresentationService.blocks_presentation_only_shortcut(
+                message
+            ):
+                return direct_answer
+
             from app.domain.services.chat_presentation_format_refinement_service import (
                 ChatPresentationFormatRefinementService,
             )

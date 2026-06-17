@@ -111,7 +111,11 @@ def _normalize_item_row(row: dict[str, Any], *, legacy: bool) -> dict[str, Any]:
     if not isinstance(row, dict):
         return row
 
-    normalized = dict(row)
+    from app.domain.services.product.product_playbook_numeric_service import (
+        ProductPlaybookNumericService,
+    )
+
+    normalized = ProductPlaybookNumericService.normalize_row_quantities(dict(row))
     for field in YES_NO_ITEM_FIELDS:
         _normalize_yes_no_field(normalized, field, legacy=legacy)
     return normalized
@@ -121,9 +125,36 @@ def _normalize_summary(summary: dict[str, Any], *, legacy: bool) -> dict[str, An
     if not isinstance(summary, dict):
         return summary
 
+    from app.domain.services.product.product_playbook_numeric_service import (
+        ProductPlaybookNumericService,
+    )
+
     normalized = dict(summary)
+    materials = normalized.get("materials")
+
+    if isinstance(materials, list):
+        normalized["materials"] = [
+            ProductPlaybookNumericService.normalize_row_quantities(item)
+            if isinstance(item, dict)
+            else item
+            for item in materials
+        ]
+
     for field in YES_NO_SUMMARY_FIELDS:
         _normalize_yes_no_field(normalized, field, legacy=legacy)
+
+    for field in (
+        "max_pa_producible_from_stock_exact",
+        "total_pa_reported_quantity",
+        "total_pi_reported_quantity",
+        "total_shipped_quantity",
+        "total_inspection_loss_quantity",
+    ):
+        if field in normalized:
+            normalized[field] = ProductPlaybookNumericService.format_quantity(
+                normalized[field]
+            )
+
     return normalized
 
 

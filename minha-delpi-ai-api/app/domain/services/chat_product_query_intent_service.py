@@ -299,8 +299,84 @@ class ChatProductQueryIntentService:
         return False
 
     @classmethod
+    def extract_product_group_code(cls, text: str | None) -> str | None:
+        """Extrai código de grupo/família (ex.: «produtos 9026») — não é PA completo."""
+        raw = str(text or "")
+
+        if not raw:
+            return None
+
+        for pattern in cls._terms("productGroupCode", "patterns"):
+            match = re.search(str(pattern), raw, flags=re.IGNORECASE)
+
+            if not match:
+                continue
+
+            digits = re.sub(r"\D", "", str(match.group(1) or ""))
+
+            if len(digits) == 4:
+                return digits
+
+        return None
+
+    @classmethod
+    def looks_like_production_schedule_membership_question(cls, message: str | None) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        return any(term in normalized for term in cls._terms("scheduleMembership", "terms"))
+
+    @classmethod
+    def resolve_schedule_product_group_code(
+        cls,
+        message: str | None,
+        *,
+        product_code: str | None = None,
+    ) -> str | None:
+        """Grupo para filtrar programação do dia (mensagem ou chip de 4 dígitos)."""
+        return cls.resolve_schedule_product_filter_code(
+            message,
+            product_code=product_code,
+        )
+
+    @classmethod
+    def resolve_schedule_product_filter_code(
+        cls,
+        message: str | None,
+        *,
+        product_code: str | None = None,
+    ) -> str | None:
+        """Prefixo de filtro na programação do dia (grupo 4 dígitos ou PA completo)."""
+        group_code = cls.extract_product_group_code(message)
+
+        if group_code:
+            return group_code
+
+        explicit = cls.extract_product_code(message) or str(product_code or "").strip()
+        digits = re.sub(r"\D", "", explicit)
+
+        if not digits:
+            return None
+
+        if cls.looks_like_production_schedule_membership_question(message):
+            return digits
+
+        if len(digits) == 4:
+            return digits
+
+        return None
+
+    @classmethod
     def _is_group_code_numeric_token(cls, text: str, match: re.Match[str]) -> bool:
-        """Evita confundir «grupo 1008» com código de produto 1008."""
+        """Evita confundir «grupo 1008» ou «produtos 9026» com código de produto."""
+        token_digits = re.sub(r"\D", "", str(match.group(0) or ""))
+        group_code = cls.extract_product_group_code(text)
+
+        if group_code and group_code == token_digits:
+            return True
+
         prefix = text[max(0, match.start() - 48) : match.start()].lower()
 
         if re.search(
@@ -311,6 +387,13 @@ class ChatProductQueryIntentService:
             return True
 
         if re.search(r"\bgrupo\s+de\s+produtos?\s*$", prefix, flags=re.IGNORECASE):
+            return True
+
+        if re.search(
+            r"(?:\bprodutos?|\bitens?|\bpas?\b|\bfam[ií]lia)\s*$",
+            prefix,
+            flags=re.IGNORECASE,
+        ) and len(token_digits) == 4:
             return True
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(text)

@@ -9,6 +9,9 @@ from typing import Literal
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntentService,
+)
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
@@ -71,10 +74,14 @@ class ChatSqlProductionQueryService:
         branch = cls._extract_branch_code(normalized)
         include_all_branches = cls.wants_branch_breakdown(normalized) and branch is None
         schedule_date = ChatSqlProductionScheduleDateService.resolve(message)
+        filter_code = ChatProductQueryIntentService.resolve_schedule_product_filter_code(
+            message
+        )
         sql = cls._build_products_scheduled_sql(
             schedule_date,
             branch=branch or "01",
             include_all_branches=include_all_branches,
+            product_code_prefix=filter_code,
         )
         title = schedule_date.title
 
@@ -182,19 +189,31 @@ class ChatSqlProductionQueryService:
         return None
 
     @classmethod
+    def _product_code_sql_filter(cls, product_code_prefix: str | None) -> str:
+        digits = re.sub(r"\D", "", str(product_code_prefix or ""))
+
+        if not digits:
+            return ""
+
+        return f"  AND OP.C2_PRODUTO LIKE '{digits}%'\n"
+
+    @classmethod
     def _build_products_scheduled_sql(
         cls,
         schedule_date: ResolvedProductionScheduleDate,
         *,
         branch: str,
         include_all_branches: bool = False,
+        product_code_prefix: str | None = None,
     ) -> str:
+        product_filter = cls._product_code_sql_filter(product_code_prefix)
         if include_all_branches:
             branches = ", ".join(f"'{code}'" for code in cls._default_branches())
 
             return f"""{schedule_date.sql_date_declaration}
 SELECT
     OP.C2_FILIAL AS FILIAL,
+    OP.C2_OP AS C2_OP,
     OP.C2_PRODUTO AS COD_PRODUTO,
     P.B1_DESC AS DESCRICAO_PRODUTO,
     OP.C2_QUANT AS QTD_PLANEJADA,
@@ -220,8 +239,9 @@ WHERE OP.C2_FILIAL IN ({branches})
   AND CAST(OA.H8_DTINI AS DATE) = @DATA
   AND OP.D_E_L_E_T_ = ''
   AND P.B1_TIPO = 'PA'
-GROUP BY
+{product_filter}GROUP BY
     OP.C2_FILIAL,
+    OP.C2_OP,
     OP.C2_PRODUTO,
     P.B1_DESC,
     OP.C2_QUANT,
@@ -234,6 +254,7 @@ ORDER BY OP.C2_FILIAL ASC, OP.C2_PRODUTO ASC"""
         return f"""DECLARE @FILIAL CHAR(2) = '{branch_code}';
 {schedule_date.sql_date_declaration}
 SELECT
+    OP.C2_OP AS C2_OP,
     OP.C2_PRODUTO AS COD_PRODUTO,
     P.B1_DESC AS DESCRICAO_PRODUTO,
     OP.C2_QUANT AS QTD_PLANEJADA,
@@ -259,7 +280,8 @@ WHERE OP.C2_FILIAL = @FILIAL
   AND CAST(OA.H8_DTINI AS DATE) = @DATA
   AND OP.D_E_L_E_T_ = ''
   AND P.B1_TIPO = 'PA'
-GROUP BY
+{product_filter}GROUP BY
+    OP.C2_OP,
     OP.C2_PRODUTO,
     P.B1_DESC,
     OP.C2_QUANT,

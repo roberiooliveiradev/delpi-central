@@ -186,6 +186,10 @@ def _build_resolved_params(
     from app.domain.services.chat_product_query_intent_service import (
         ChatProductQueryIntentService,
     )
+    from app.domain.services.chat_production_operational_intent_service import (
+        ChatProductionOperationalIntentService,
+        ProductionOperationalIntentKind,
+    )
 
     params: dict[str, str] = dict(_working_memory_entities(workspace_context))
 
@@ -193,8 +197,20 @@ def _build_resolved_params(
         params.update(memory_entities)
 
     code_in_message = ChatProductQueryIntentService.extract_product_code(message)
+    production_kind = ChatProductionOperationalIntentService.resolve(message)
 
-    if code_in_message:
+    if production_kind == ProductionOperationalIntentKind.SCHEDULE_TODAY:
+        group_code = ChatProductQueryIntentService.resolve_schedule_product_filter_code(
+            message,
+            product_code=params.get("productCode") or code_in_message,
+        )
+
+        if group_code:
+            params["productGroup"] = group_code
+            params.pop("productCode", None)
+        elif code_in_message:
+            params["productCode"] = code_in_message
+    elif code_in_message:
         params["productCode"] = code_in_message
 
     return params or None
@@ -1173,6 +1189,17 @@ class ChatIntentRouterService:
 
         lowered = message.lower()
 
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+            ProductionOperationalIntentKind,
+        )
+
+        if (
+            ChatProductionOperationalIntentService.resolve(message)
+            == ProductionOperationalIntentKind.SCHEDULE_TODAY
+        ):
+            return False, ()
+
         sub_intent = ChatIntentRouterService._operational_sub_intent(message)
 
         if sub_intent and sub_intent != "product_lookup":
@@ -1330,6 +1357,17 @@ class ChatIntentRouterService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         lowered = message.lower()
+
+        from app.domain.services.chat_production_operational_intent_service import (
+            ChatProductionOperationalIntentService,
+            ProductionOperationalIntentKind,
+        )
+
+        if (
+            ChatProductionOperationalIntentService.resolve(message)
+            == ProductionOperationalIntentKind.SCHEDULE_TODAY
+        ):
+            return "schedule_today_lookup"
 
         if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
             return "factory_status_lookup"

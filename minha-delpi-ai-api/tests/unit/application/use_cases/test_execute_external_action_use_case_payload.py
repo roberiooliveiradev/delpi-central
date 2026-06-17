@@ -135,6 +135,46 @@ def test_drop_internal_unknown_parameters_keeps_non_internal_unknown_parameter()
     }
 
 
+def test_extract_pipeline_parameters_preserves_internal_keys():
+    use_case = _use_case()
+
+    pipeline = use_case._extract_pipeline_parameters(
+        {
+            "parameters": {
+                "limit": 50,
+                "userMessage": "O chicote 90261486 está programado hoje?",
+                "presentationDetailFilter": {
+                    "product_code_prefix": "90261486",
+                },
+                "message": "ignored duplicate",
+            }
+        }
+    )
+
+    assert pipeline == {
+        "userMessage": "O chicote 90261486 está programado hoje?",
+        "presentationDetailFilter": {"product_code_prefix": "90261486"},
+        "message": "ignored duplicate",
+    }
+
+
+def test_merge_pipeline_parameters_reapplies_internal_keys_after_drop():
+    gateway_parameters = {"limit": 50, "reference_date": "2026-06-16"}
+    pipeline_parameters = {
+        "userMessage": "O chicote 90261486 está programado hoje?",
+        "presentationDetailFilter": {"product_code_prefix": "90261486"},
+    }
+
+    merged = ExecuteExternalActionUseCase._merge_pipeline_parameters(
+        gateway_parameters,
+        pipeline_parameters,
+    )
+
+    assert merged["limit"] == 50
+    assert merged["userMessage"].startswith("O chicote 90261486")
+    assert merged["presentationDetailFilter"]["product_code_prefix"] == "90261486"
+
+
 def test_resolve_action_path_substitutes_path_parameters():
     use_case = _use_case()
 

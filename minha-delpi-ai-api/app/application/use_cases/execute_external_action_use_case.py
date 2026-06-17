@@ -1,3 +1,4 @@
+from typing import Any
 from urllib.parse import quote
 from uuid import UUID
 
@@ -53,19 +54,34 @@ class ExecuteExternalActionUseCase:
         provider = action_bundle["provider"]
         action = action_bundle["action"]
         arguments = self._normalize_arguments_for_method(action, arguments)
+        pipeline_parameters = self._extract_pipeline_parameters(arguments)
         arguments = self._drop_internal_unknown_parameters(action, arguments)
 
         self.policy.validate(provider, action, arguments)
 
-        request_parameters = self._clamp_hierarchical_query_parameters(
+        gateway_parameters = self._clamp_hierarchical_query_parameters(
             action.get("path") or "",
             arguments.get("parameters") or {},
         )
+        request_parameters = self._merge_pipeline_parameters(
+            gateway_parameters,
+            pipeline_parameters,
+        )
+
+        inferred_filter = self._infer_schedule_detail_filter(
+            request_parameters,
+            action_path=action.get("path") or "",
+            body=arguments.get("body"),
+        )
+
+        if inferred_filter:
+            request_parameters = dict(request_parameters)
+            request_parameters["presentationDetailFilter"] = inferred_filter
 
         result = self.gateway.execute(
             provider=provider,
             action=action,
-            parameters=request_parameters,
+            parameters=gateway_parameters,
             body=arguments.get("body"),
             access_token=access_token,
         )
@@ -300,6 +316,36 @@ class ExecuteExternalActionUseCase:
         normalized["parameters"] = cleaned_parameters
         return normalized
 
+    @classmethod
+    def _extract_pipeline_parameters(cls, arguments: dict) -> dict[str, Any]:
+        parameters = dict((arguments or {}).get("parameters") or {})
+        pipeline: dict[str, Any] = {}
+
+        for key in cls.INTERNAL_PARAMETER_NAMES:
+            value = parameters.get(key)
+
+            if value in (None, "", {}, []):
+                continue
+
+            pipeline[key] = value
+
+        return pipeline
+
+    @staticmethod
+    def _merge_pipeline_parameters(
+        gateway_parameters: dict,
+        pipeline_parameters: dict,
+    ) -> dict:
+        merged = dict(gateway_parameters or {})
+
+        for key, value in (pipeline_parameters or {}).items():
+            if value in (None, "", {}, []):
+                continue
+
+            merged[key] = value
+
+        return merged
+
     def _normalize_arguments_for_method(self, action: dict, arguments: dict) -> dict:
         normalized = dict(arguments or {})
         method = str(action.get("method") or "").upper()
@@ -327,3 +373,34 @@ class ExecuteExternalActionUseCase:
         normalized["body"] = None
 
         return normalized
+
+    @staticmethod
+    def _infer_schedule_detail_filter(
+        parameters: dict,
+        *,
+        action_path: str,
+        body,
+    ) -> dict[str, str] | None:
+        existing = (parameters or {}).get("presentationDetailFilter")
+
+        if isinstance(existing, dict) and str(existing.get("product_code_prefix") or "").strip():
+            return None
+
+        user_message = str((parameters or {}).get("userMessage") or "").strip()
+
+        if not user_message and isinstance(body, dict):
+            user_message = str(
+                body.get("message") or body.get("query") or body.get("question") or ""
+            ).strip()
+
+        if not user_message:
+            return None
+
+        from app.domain.services.chat_production_schedule_membership_presentation_service import (
+            ChatProductionScheduleMembershipPresentationService,
+        )
+
+        return ChatProductionScheduleMembershipPresentationService.resolve_detail_filter(
+            user_message,
+            path=action_path,
+        )

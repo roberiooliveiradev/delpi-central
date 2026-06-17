@@ -769,3 +769,32 @@ def test_refine_operational_intent_from_full_uses_json_predicate_map():
         ChatProductQueryIntentService.refine_operational_intent_from_full(message)
         == ChatProductQueryIntent.STOCK
     )
+
+
+def test_extract_product_group_code_from_produtos_prefix():
+    message = "Quais produtos 9026 estão programados para produzir hoje?"
+
+    assert ChatProductQueryIntentService.extract_product_group_code(message) == "9026"
+    assert ChatProductQueryIntentService.extract_product_code(message) is None
+
+
+def test_resolve_schedule_product_group_code_from_context_chip():
+    assert (
+        ChatProductQueryIntentService.resolve_schedule_product_group_code(
+            "quais produtos estão programados para produzir hoje?",
+            product_code="9026",
+        )
+        == "9026"
+    )
+
+
+def test_resolve_schedule_product_filter_code_for_pa_membership_question():
+    message = "O produto 90260255 está na programação de hoje? Qual OP e quantidade?"
+
+    assert (
+        ChatProductQueryIntentService.resolve_schedule_product_filter_code(message)
+        == "90260255"
+    )
+    assert ChatProductQueryIntentService.looks_like_production_schedule_membership_question(
+        message
+    )
