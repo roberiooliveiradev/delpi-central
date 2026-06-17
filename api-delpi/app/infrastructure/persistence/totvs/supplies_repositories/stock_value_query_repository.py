@@ -12,8 +12,9 @@ from app.domain.ports.supplies.stock_value_query_repository_port import (
     StockValueQueryRepositoryPort,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
-    HISTORICAL_STOCK_BUNDLE_BATCH_SQL,
-    HISTORICAL_STOCK_BUNDLE_SUMMARY_ONLY_BATCH_SQL,
+    HistoricalStockFilterClauses,
+    build_historical_stock_params,
+    format_historical_stock_sql,
 )
 
 
@@ -50,11 +51,10 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             return f" AND RTRIM({column}) = ?", (normalized,)
         return "", ()
 
-    def _format_historical_bundle_sql(
+    def _historical_filter_clauses(
         self,
         request: GetStockValueRequest,
-    ) -> tuple[str, tuple]:
-        period_start, period_end_exclusive = self._resolve_historical_period(request)
+    ) -> tuple[HistoricalStockFilterClauses, tuple, tuple, tuple, tuple, tuple]:
         branch = request.branch
         location = (request.location or "").strip() or None
 
@@ -64,31 +64,37 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         d3_filter, d3_params = self._branch_filter_clause("D3.D3_FILIAL", branch)
         d3_loc_filter, d3_loc_params = self._location_filter_clause("D3.D3_LOCAL", location)
 
-        template = (
-            HISTORICAL_STOCK_BUNDLE_SUMMARY_ONLY_BATCH_SQL
-            if request.summary_only
-            else HISTORICAL_STOCK_BUNDLE_BATCH_SQL
-        )
-        sql = template.format(
+        filters = HistoricalStockFilterClauses(
             sb9_branch_filter=sb9_filter,
             sb9_branch_filter_b9=sb9_b9_filter,
             sb9_location_filter=sb9_loc_filter,
             d3_branch_filter=d3_filter,
             d3_location_filter=d3_loc_filter,
-            limit=max(1, int(getattr(request, "top_limit", 10) or 10)),
+        )
+        return filters, sb9_params, sb9_b9_params, sb9_loc_params, d3_params, d3_loc_params
+
+    def _format_historical_bundle_sql(
+        self,
+        request: GetStockValueRequest,
+    ) -> tuple[str, tuple]:
+        period_start, period_end_exclusive = self._resolve_historical_period(request)
+        filters, sb9_params, sb9_b9_params, sb9_loc_params, d3_params, d3_loc_params = (
+            self._historical_filter_clauses(request)
         )
 
-        params = (
-            (period_start,)
-            + sb9_params
-            + sb9_b9_params
-            + sb9_loc_params
-            + (period_start,)
-            + d3_params
-            + d3_loc_params
-            + (period_start, period_end_exclusive)
-            + d3_params
-            + d3_loc_params
+        sql = format_historical_stock_sql(
+            summary_only=request.summary_only,
+            filters=filters,
+            top_limit=max(1, int(getattr(request, "top_limit", 10) or 10)),
+        )
+        params = build_historical_stock_params(
+            period_start=period_start,
+            period_end_exclusive=period_end_exclusive,
+            sb9_params=sb9_params,
+            sb9_b9_params=sb9_b9_params,
+            sb9_loc_params=sb9_loc_params,
+            d3_params=d3_params,
+            d3_loc_params=d3_loc_params,
         )
         return sql, params
 

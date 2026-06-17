@@ -1,6 +1,20 @@
 """SQL compartilhado para estoque histórico estimado (SB9010 + SD3010)."""
 
-HISTORICAL_STOCK_ITEM_CTES = """
+from dataclasses import dataclass
+
+_SD3_NET_QUANT = """
+                    CASE
+                        WHEN D3.D3_TM < '500' THEN D3.D3_QUANT
+                        ELSE -D3.D3_QUANT
+                    END"""
+
+_SD3_NET_VALUE = """
+                    CASE
+                        WHEN D3.D3_TM < '500' THEN D3.D3_CUSTO1
+                        ELSE -D3.D3_CUSTO1
+                    END"""
+
+HISTORICAL_STOCK_ITEM_CTES = f"""
         WITH ultima_data_sb9 AS (
             SELECT
                 B9_FILIAL AS branch,
@@ -9,7 +23,7 @@ HISTORICAL_STOCK_ITEM_CTES = """
             WHERE D_E_L_E_T_ = ''
               AND B9_DATA <> ''
               AND B9_DATA < ?
-              {sb9_branch_filter}
+              {{sb9_branch_filter}}
             GROUP BY B9_FILIAL
         ),
         fechamento_base AS (
@@ -24,93 +38,105 @@ HISTORICAL_STOCK_ITEM_CTES = """
                 ON U.branch = B9.B9_FILIAL
                AND U.closing_base_date = B9.B9_DATA
             WHERE B9.D_E_L_E_T_ = ''
-              {sb9_branch_filter_b9}
-              {sb9_location_filter}
+              {{sb9_branch_filter_b9}}
+              {{sb9_location_filter}}
             GROUP BY
                 B9.B9_FILIAL,
                 RTRIM(B9.B9_LOCAL),
                 RTRIM(B9.B9_COD)
         ),
-        mov_entre_base_e_inicio AS (
+        movimentos_sd3 AS (
             SELECT
                 D3.D3_FILIAL AS branch,
                 RTRIM(D3.D3_LOCAL) AS location,
                 RTRIM(D3.D3_COD) AS product_code,
                 SUM(
                     CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_QUANT
-                        ELSE -D3.D3_QUANT
+                        WHEN D3.D3_EMISSAO > U.closing_base_date
+                         AND D3.D3_EMISSAO < ?
+                        THEN {_SD3_NET_QUANT}
+                        ELSE 0
                     END
                 ) AS bridge_quantity,
                 SUM(
                     CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_CUSTO1
-                        ELSE -D3.D3_CUSTO1
+                        WHEN D3.D3_EMISSAO > U.closing_base_date
+                         AND D3.D3_EMISSAO < ?
+                        THEN {_SD3_NET_VALUE}
+                        ELSE 0
                     END
-                ) AS bridge_value
-            FROM SD3010 D3
-            INNER JOIN ultima_data_sb9 U
-                ON U.branch = D3.D3_FILIAL
-            WHERE D3.D_E_L_E_T_ = ''
-              AND D3.D3_EMISSAO > U.closing_base_date
-              AND D3.D3_EMISSAO < ?
-              {d3_branch_filter}
-              {d3_location_filter}
-            GROUP BY
-                D3.D3_FILIAL,
-                RTRIM(D3.D3_LOCAL),
-                RTRIM(D3.D3_COD)
-        ),
-        mov_periodo AS (
-            SELECT
-                D3.D3_FILIAL AS branch,
-                RTRIM(D3.D3_LOCAL) AS location,
-                RTRIM(D3.D3_COD) AS product_code,
+                ) AS bridge_value,
                 SUM(
                     CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_QUANT
-                        ELSE -D3.D3_QUANT
+                        WHEN D3.D3_EMISSAO >= ?
+                         AND D3.D3_EMISSAO < ?
+                        THEN {_SD3_NET_QUANT}
+                        ELSE 0
                     END
                 ) AS period_net_quantity,
                 SUM(
                     CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_CUSTO1
-                        ELSE -D3.D3_CUSTO1
+                        WHEN D3.D3_EMISSAO >= ?
+                         AND D3.D3_EMISSAO < ?
+                        THEN {_SD3_NET_VALUE}
+                        ELSE 0
                     END
                 ) AS period_net_value
             FROM SD3010 D3
+            INNER JOIN ultima_data_sb9 U
+                ON U.branch = D3.D3_FILIAL
             WHERE D3.D_E_L_E_T_ = ''
-              AND D3.D3_EMISSAO >= ?
-              AND D3.D3_EMISSAO < ?
-              {d3_branch_filter}
-              {d3_location_filter}
+              AND (
+                  (D3.D3_EMISSAO > U.closing_base_date AND D3.D3_EMISSAO < ?)
+                  OR (D3.D3_EMISSAO >= ? AND D3.D3_EMISSAO < ?)
+              )
+              {{d3_branch_filter}}
+              {{d3_location_filter}}
             GROUP BY
                 D3.D3_FILIAL,
                 RTRIM(D3.D3_LOCAL),
                 RTRIM(D3.D3_COD)
         ),
+        item_keys AS (
+            SELECT branch, location, product_code FROM fechamento_base
+            UNION
+            SELECT branch, location, product_code FROM movimentos_sd3
+        ),
         estoque_item AS (
             SELECT
-                COALESCE(FB.branch, MI.branch, MP.branch) AS branch,
-                COALESCE(FB.location, MI.location, MP.location) AS location,
-                COALESCE(FB.product_code, MI.product_code, MP.product_code) AS product_code,
+                K.branch,
+                K.location,
+                K.product_code,
                 COALESCE(FB.closing_base_quantity, 0)
-                    + COALESCE(MI.bridge_quantity, 0)
-                    + COALESCE(MP.period_net_quantity, 0) AS total_stock_quantity,
+                    + COALESCE(M.bridge_quantity, 0)
+                    + COALESCE(M.period_net_quantity, 0) AS total_stock_quantity,
                 COALESCE(FB.closing_base_value, 0)
-                    + COALESCE(MI.bridge_value, 0)
-                    + COALESCE(MP.period_net_value, 0) AS total_stock_value
-            FROM fechamento_base FB
-            FULL OUTER JOIN mov_entre_base_e_inicio MI
-                ON MI.branch = FB.branch
-               AND MI.location = FB.location
-               AND MI.product_code = FB.product_code
-            FULL OUTER JOIN mov_periodo MP
-                ON MP.branch = COALESCE(FB.branch, MI.branch)
-               AND MP.location = COALESCE(FB.location, MI.location)
-               AND MP.product_code = COALESCE(FB.product_code, MI.product_code)
+                    + COALESCE(M.bridge_value, 0)
+                    + COALESCE(M.period_net_value, 0) AS total_stock_value
+            FROM item_keys K
+            LEFT JOIN fechamento_base FB
+                ON FB.branch = K.branch
+               AND FB.location = K.location
+               AND FB.product_code = K.product_code
+            LEFT JOIN movimentos_sd3 M
+                ON M.branch = K.branch
+               AND M.location = K.location
+               AND M.product_code = K.product_code
         )
 """
+
+HISTORICAL_STOCK_SUMMARY_SQL = (
+    HISTORICAL_STOCK_ITEM_CTES
+    + """
+        SELECT
+            SUM(total_stock_value) AS total_stock_value,
+            SUM(total_stock_quantity) AS total_stock_quantity,
+            COUNT(*) AS total_records,
+            COUNT(DISTINCT product_code) AS total_products,
+            COUNT(DISTINCT location) AS total_locations
+        FROM estoque_item
+    """
+)
 
 HISTORICAL_STOCK_BY_BRANCH_SQL = (
     HISTORICAL_STOCK_ITEM_CTES
@@ -125,19 +151,6 @@ HISTORICAL_STOCK_BY_BRANCH_SQL = (
         FROM estoque_item
         GROUP BY branch
         ORDER BY branch
-    """
-)
-
-HISTORICAL_STOCK_SUMMARY_SQL = (
-    HISTORICAL_STOCK_ITEM_CTES
-    + """
-        SELECT
-            SUM(total_stock_value) AS total_stock_value,
-            SUM(total_stock_quantity) AS total_stock_quantity,
-            COUNT(*) AS total_records,
-            COUNT(DISTINCT product_code) AS total_products,
-            COUNT(DISTINCT location) AS total_locations
-        FROM estoque_item
     """
 )
 
@@ -179,133 +192,8 @@ HISTORICAL_STOCK_TOP_PRODUCTS_SQL = (
 
 HISTORICAL_STOCK_TEMP_TABLE = "#Delpi_StockItems"
 
-HISTORICAL_STOCK_BUNDLE_BATCH_SQL = (
+_HISTORICAL_STOCK_BUNDLE_FROM_TEMP = (
     """
-        SET NOCOUNT ON;
-        DROP TABLE IF EXISTS """
-    + HISTORICAL_STOCK_TEMP_TABLE
-    + """;
-        WITH ultima_data_sb9 AS (
-            SELECT
-                B9_FILIAL AS branch,
-                MAX(B9_DATA) AS closing_base_date
-            FROM SB9010
-            WHERE D_E_L_E_T_ = ''
-              AND B9_DATA <> ''
-              AND B9_DATA < ?
-              {sb9_branch_filter}
-            GROUP BY B9_FILIAL
-        ),
-        fechamento_base AS (
-            SELECT
-                B9.B9_FILIAL AS branch,
-                RTRIM(B9.B9_LOCAL) AS location,
-                RTRIM(B9.B9_COD) AS product_code,
-                SUM(B9.B9_QINI) AS closing_base_quantity,
-                SUM(B9.B9_VINI1) AS closing_base_value
-            FROM SB9010 B9
-            INNER JOIN ultima_data_sb9 U
-                ON U.branch = B9.B9_FILIAL
-               AND U.closing_base_date = B9.B9_DATA
-            WHERE B9.D_E_L_E_T_ = ''
-              {sb9_branch_filter_b9}
-              {sb9_location_filter}
-            GROUP BY
-                B9.B9_FILIAL,
-                RTRIM(B9.B9_LOCAL),
-                RTRIM(B9.B9_COD)
-        ),
-        mov_entre_base_e_inicio AS (
-            SELECT
-                D3.D3_FILIAL AS branch,
-                RTRIM(D3.D3_LOCAL) AS location,
-                RTRIM(D3.D3_COD) AS product_code,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_QUANT
-                        ELSE -D3.D3_QUANT
-                    END
-                ) AS bridge_quantity,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_CUSTO1
-                        ELSE -D3.D3_CUSTO1
-                    END
-                ) AS bridge_value
-            FROM SD3010 D3
-            INNER JOIN ultima_data_sb9 U
-                ON U.branch = D3.D3_FILIAL
-            WHERE D3.D_E_L_E_T_ = ''
-              AND D3.D3_EMISSAO > U.closing_base_date
-              AND D3.D3_EMISSAO < ?
-              {d3_branch_filter}
-              {d3_location_filter}
-            GROUP BY
-                D3.D3_FILIAL,
-                RTRIM(D3.D3_LOCAL),
-                RTRIM(D3.D3_COD)
-        ),
-        mov_periodo AS (
-            SELECT
-                D3.D3_FILIAL AS branch,
-                RTRIM(D3.D3_LOCAL) AS location,
-                RTRIM(D3.D3_COD) AS product_code,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_QUANT
-                        ELSE -D3.D3_QUANT
-                    END
-                ) AS period_net_quantity,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_CUSTO1
-                        ELSE -D3.D3_CUSTO1
-                    END
-                ) AS period_net_value
-            FROM SD3010 D3
-            WHERE D3.D_E_L_E_T_ = ''
-              AND D3.D3_EMISSAO >= ?
-              AND D3.D3_EMISSAO < ?
-              {d3_branch_filter}
-              {d3_location_filter}
-            GROUP BY
-                D3.D3_FILIAL,
-                RTRIM(D3.D3_LOCAL),
-                RTRIM(D3.D3_COD)
-        ),
-        estoque_item AS (
-            SELECT
-                COALESCE(FB.branch, MI.branch, MP.branch) AS branch,
-                COALESCE(FB.location, MI.location, MP.location) AS location,
-                COALESCE(FB.product_code, MI.product_code, MP.product_code) AS product_code,
-                COALESCE(FB.closing_base_quantity, 0)
-                    + COALESCE(MI.bridge_quantity, 0)
-                    + COALESCE(MP.period_net_quantity, 0) AS total_stock_quantity,
-                COALESCE(FB.closing_base_value, 0)
-                    + COALESCE(MI.bridge_value, 0)
-                    + COALESCE(MP.period_net_value, 0) AS total_stock_value
-            FROM fechamento_base FB
-            FULL OUTER JOIN mov_entre_base_e_inicio MI
-                ON MI.branch = FB.branch
-               AND MI.location = FB.location
-               AND MI.product_code = FB.product_code
-            FULL OUTER JOIN mov_periodo MP
-                ON MP.branch = COALESCE(FB.branch, MI.branch)
-               AND MP.location = COALESCE(FB.location, MI.location)
-               AND MP.product_code = COALESCE(FB.product_code, MI.product_code)
-        )
-        SELECT
-            branch,
-            location,
-            product_code,
-            total_stock_quantity,
-            total_stock_value
-        INTO """
-    + HISTORICAL_STOCK_TEMP_TABLE
-    + """
-        FROM estoque_item;
-        SET NOCOUNT OFF;
-
         SELECT
             SUM(total_stock_value) AS total_stock_value,
             SUM(total_stock_quantity) AS total_stock_quantity,
@@ -361,121 +249,15 @@ HISTORICAL_STOCK_BUNDLE_BATCH_SQL = (
     """
 )
 
-HISTORICAL_STOCK_BUNDLE_SUMMARY_ONLY_BATCH_SQL = (
+HISTORICAL_STOCK_BUNDLE_BATCH_SQL = (
     """
         SET NOCOUNT ON;
         DROP TABLE IF EXISTS """
     + HISTORICAL_STOCK_TEMP_TABLE
     + """;
-        WITH ultima_data_sb9 AS (
-            SELECT
-                B9_FILIAL AS branch,
-                MAX(B9_DATA) AS closing_base_date
-            FROM SB9010
-            WHERE D_E_L_E_T_ = ''
-              AND B9_DATA <> ''
-              AND B9_DATA < ?
-              {sb9_branch_filter}
-            GROUP BY B9_FILIAL
-        ),
-        fechamento_base AS (
-            SELECT
-                B9.B9_FILIAL AS branch,
-                RTRIM(B9.B9_LOCAL) AS location,
-                RTRIM(B9.B9_COD) AS product_code,
-                SUM(B9.B9_QINI) AS closing_base_quantity,
-                SUM(B9.B9_VINI1) AS closing_base_value
-            FROM SB9010 B9
-            INNER JOIN ultima_data_sb9 U
-                ON U.branch = B9.B9_FILIAL
-               AND U.closing_base_date = B9.B9_DATA
-            WHERE B9.D_E_L_E_T_ = ''
-              {sb9_branch_filter_b9}
-              {sb9_location_filter}
-            GROUP BY
-                B9.B9_FILIAL,
-                RTRIM(B9.B9_LOCAL),
-                RTRIM(B9.B9_COD)
-        ),
-        mov_entre_base_e_inicio AS (
-            SELECT
-                D3.D3_FILIAL AS branch,
-                RTRIM(D3.D3_LOCAL) AS location,
-                RTRIM(D3.D3_COD) AS product_code,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_QUANT
-                        ELSE -D3.D3_QUANT
-                    END
-                ) AS bridge_quantity,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_CUSTO1
-                        ELSE -D3.D3_CUSTO1
-                    END
-                ) AS bridge_value
-            FROM SD3010 D3
-            INNER JOIN ultima_data_sb9 U
-                ON U.branch = D3.D3_FILIAL
-            WHERE D3.D_E_L_E_T_ = ''
-              AND D3.D3_EMISSAO > U.closing_base_date
-              AND D3.D3_EMISSAO < ?
-              {d3_branch_filter}
-              {d3_location_filter}
-            GROUP BY
-                D3.D3_FILIAL,
-                RTRIM(D3.D3_LOCAL),
-                RTRIM(D3.D3_COD)
-        ),
-        mov_periodo AS (
-            SELECT
-                D3.D3_FILIAL AS branch,
-                RTRIM(D3.D3_LOCAL) AS location,
-                RTRIM(D3.D3_COD) AS product_code,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_QUANT
-                        ELSE -D3.D3_QUANT
-                    END
-                ) AS period_net_quantity,
-                SUM(
-                    CASE
-                        WHEN D3.D3_TM < '500' THEN D3.D3_CUSTO1
-                        ELSE -D3.D3_CUSTO1
-                    END
-                ) AS period_net_value
-            FROM SD3010 D3
-            WHERE D3.D_E_L_E_T_ = ''
-              AND D3.D3_EMISSAO >= ?
-              AND D3.D3_EMISSAO < ?
-              {d3_branch_filter}
-              {d3_location_filter}
-            GROUP BY
-                D3.D3_FILIAL,
-                RTRIM(D3.D3_LOCAL),
-                RTRIM(D3.D3_COD)
-        ),
-        estoque_item AS (
-            SELECT
-                COALESCE(FB.branch, MI.branch, MP.branch) AS branch,
-                COALESCE(FB.location, MI.location, MP.location) AS location,
-                COALESCE(FB.product_code, MI.product_code, MP.product_code) AS product_code,
-                COALESCE(FB.closing_base_quantity, 0)
-                    + COALESCE(MI.bridge_quantity, 0)
-                    + COALESCE(MP.period_net_quantity, 0) AS total_stock_quantity,
-                COALESCE(FB.closing_base_value, 0)
-                    + COALESCE(MI.bridge_value, 0)
-                    + COALESCE(MP.period_net_value, 0) AS total_stock_value
-            FROM fechamento_base FB
-            FULL OUTER JOIN mov_entre_base_e_inicio MI
-                ON MI.branch = FB.branch
-               AND MI.location = FB.location
-               AND MI.product_code = FB.product_code
-            FULL OUTER JOIN mov_periodo MP
-                ON MP.branch = COALESCE(FB.branch, MI.branch)
-               AND MP.location = COALESCE(FB.location, MI.location)
-               AND MP.product_code = COALESCE(FB.product_code, MI.product_code)
-        )
+        """
+    + HISTORICAL_STOCK_ITEM_CTES
+    + """
         SELECT
             branch,
             location,
@@ -488,14 +270,70 @@ HISTORICAL_STOCK_BUNDLE_SUMMARY_ONLY_BATCH_SQL = (
         FROM estoque_item;
         SET NOCOUNT OFF;
 
-        SELECT
-            SUM(total_stock_value) AS total_stock_value,
-            SUM(total_stock_quantity) AS total_stock_quantity,
-            COUNT(*) AS total_records,
-            COUNT(DISTINCT product_code) AS total_products,
-            COUNT(DISTINCT location) AS total_locations
-        FROM """
-    + HISTORICAL_STOCK_TEMP_TABLE
-    + """;
-    """
+        """
+    + _HISTORICAL_STOCK_BUNDLE_FROM_TEMP
 )
+
+
+@dataclass(frozen=True)
+class HistoricalStockFilterClauses:
+    sb9_branch_filter: str
+    sb9_branch_filter_b9: str
+    sb9_location_filter: str
+    d3_branch_filter: str
+    d3_location_filter: str
+
+
+def format_historical_stock_sql(
+    *,
+    summary_only: bool,
+    filters: HistoricalStockFilterClauses,
+    top_limit: int = 10,
+) -> str:
+    placeholders = {
+        "sb9_branch_filter": filters.sb9_branch_filter,
+        "sb9_branch_filter_b9": filters.sb9_branch_filter_b9,
+        "sb9_location_filter": filters.sb9_location_filter,
+        "d3_branch_filter": filters.d3_branch_filter,
+        "d3_location_filter": filters.d3_location_filter,
+        "limit": max(1, int(top_limit or 10)),
+    }
+    template = (
+        HISTORICAL_STOCK_SUMMARY_SQL
+        if summary_only
+        else HISTORICAL_STOCK_BUNDLE_BATCH_SQL
+    )
+    return template.format(**placeholders)
+
+
+def build_historical_stock_params(
+    *,
+    period_start: str,
+    period_end_exclusive: str,
+    sb9_params: tuple,
+    sb9_b9_params: tuple,
+    sb9_loc_params: tuple,
+    d3_params: tuple,
+    d3_loc_params: tuple,
+) -> tuple:
+    """Ordem alinhada aos placeholders de `HISTORICAL_STOCK_ITEM_CTES`."""
+    movement_dates = (
+        period_start,
+        period_start,
+        period_start,
+        period_end_exclusive,
+        period_start,
+        period_end_exclusive,
+        period_start,
+        period_start,
+        period_end_exclusive,
+    )
+    return (
+        (period_start,)
+        + sb9_params
+        + sb9_b9_params
+        + sb9_loc_params
+        + movement_dates
+        + d3_params
+        + d3_loc_params
+    )
