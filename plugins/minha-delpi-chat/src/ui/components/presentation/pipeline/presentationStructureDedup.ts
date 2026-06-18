@@ -1,4 +1,4 @@
-import type { ChatPresentation } from "../../../../data/api/chatTypes";
+import type { ChatPresentation, ChatToolCall } from "../../../../data/api/chatTypes";
 
 import {
   parentsTableTitleMarkers,
@@ -7,9 +7,7 @@ import {
 
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 
-function metadataStructureDedupApplied(
-  toolCalls: { metadata?: Record<string, unknown> }[],
-): boolean {
+function metadataStructureDedupApplied(toolCalls: ChatToolCall[]): boolean {
   return toolCalls.some((toolCall) => toolCall.metadata?.structureDedupApplied === true);
 }
 
@@ -69,7 +67,7 @@ export function isHierarchyDuplicateTable(
   return isStructureComponentsTable(presentation) || isParentsUsageTable(presentation);
 }
 
-export function toolCallsHaveTree(toolCalls: { metadata?: Record<string, unknown> }[]): boolean {
+export function toolCallsHaveTree(toolCalls: ChatToolCall[]): boolean {
   for (const toolCall of toolCalls) {
     const metadata = toolCall.metadata;
 
@@ -95,7 +93,7 @@ export function toolCallsHaveTree(toolCalls: { metadata?: Record<string, unknown
 
 export function filterSegmentsWithoutHierarchyTableDuplicates(
   segments: AssistantContentSegment[],
-  toolCalls: { metadata?: Record<string, unknown> }[],
+  toolCalls: ChatToolCall[],
 ): AssistantContentSegment[] {
   if (metadataStructureDedupApplied(toolCalls) || !toolCallsHaveTree(toolCalls)) {
     return segments;

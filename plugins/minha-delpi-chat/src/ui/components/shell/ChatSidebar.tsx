@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject, ChatSession } from "../../../data/api/chatTypes";
 import { ChatConfirmDialog } from "../shared";
-import { ChatProjectCreateModal } from "../workspace";
+import { ChatProjectCreateModal } from "../workspace/ChatProjectCreateModal";
 import { ChatSidebarAgentsSection } from "./ChatSidebarAgentsSection";
 import { ChatSidebarArchivedDialog } from "./ChatSidebarArchivedDialog";
 import { ChatSidebarBrand } from "./ChatSidebarBrand";

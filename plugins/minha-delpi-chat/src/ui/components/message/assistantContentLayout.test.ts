@@ -103,7 +103,7 @@ describe("assistantContentLayout", () => {
   });
 
   it("detecta visão nativa single quando selected=table", () => {
-    const toolCalls = [
+    const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
         metadata: {
@@ -114,7 +114,7 @@ describe("assistantContentLayout", () => {
           },
         },
       },
-    ] as const;
+    ]);
 
     expect(isNativeSingleViewSelection(toolCalls)).toEqual({
       active: true,
@@ -123,7 +123,7 @@ describe("assistantContentLayout", () => {
   });
 
   it("usa explicitSessionFormat=table quando selected=text (text-first stale)", () => {
-    const toolCalls = [
+    const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
         metadata: {
@@ -142,14 +142,14 @@ describe("assistantContentLayout", () => {
           },
         },
       },
-    ] as const;
+    ]);
 
     expect(isNativeSingleViewSelection(toolCalls)).toEqual({
       active: true,
       kind: "table",
     });
 
-    const segments = buildAssistantContentSegments("Estoque do produto", [...toolCalls]);
+    const segments = buildAssistantContentSegments("Estoque do produto", toolCalls);
 
     expect(segments.some((segment) => segment.kind === "table")).toBe(true);
     expect(segments.some((segment) => segment.kind === "markdown" && segment.markdown.includes("Stock:"))).toBe(
@@ -158,7 +158,7 @@ describe("assistantContentLayout", () => {
   });
 
   it("usa explicitSessionFormat=tree quando selected=text (text-first stale)", () => {
-    const toolCalls = [
+    const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
         metadata: {
@@ -176,20 +176,20 @@ describe("assistantContentLayout", () => {
           },
         },
       },
-    ] as const;
+    ]);
 
     expect(isNativeSingleViewSelection(toolCalls)).toEqual({
       active: true,
       kind: "tree",
     });
 
-    const segments = buildAssistantContentSegments("Estoque do produto", [...toolCalls]);
+    const segments = buildAssistantContentSegments("Estoque do produto", toolCalls);
 
     expect(segments.some((segment) => segment.kind === "tree")).toBe(true);
   });
 
   it("usa explicitSessionFormat=dashboard mesmo com layoutMode stack", () => {
-    const toolCalls = [
+    const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
         metadata: {
@@ -216,14 +216,14 @@ describe("assistantContentLayout", () => {
           },
         },
       },
-    ] as const;
+    ]);
 
     expect(isNativeSingleViewSelection(toolCalls)).toEqual({
       active: true,
       kind: "dashboard",
     });
 
-    const segments = buildAssistantContentSegments("Status fabril", [...toolCalls]);
+    const segments = buildAssistantContentSegments("Status fabril", toolCalls);
 
     expect(segments.filter((segment) => segment.kind === "dashboard")).toHaveLength(1);
     expect(segments.some((segment) => segment.kind === "kpi")).toBe(false);

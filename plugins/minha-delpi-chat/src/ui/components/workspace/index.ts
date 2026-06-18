@@ -11,8 +11,6 @@ export {
 export { ChatWebSearchResearchPanel } from "./ChatWebSearchResearchPanel";
 export { ChatAgentHome } from "./ChatAgentHome";
 export { ChatAgentLanding } from "./ChatAgentLanding";
-export { ChatAgentConversationSurface } from "./ChatAgentConversationSurface";
-export { ChatAgentPreviewWorkspace } from "./ChatAgentPreviewWorkspace";
 export {
   ChatAttachmentCard,
   type ChatAttachmentCardModel,
