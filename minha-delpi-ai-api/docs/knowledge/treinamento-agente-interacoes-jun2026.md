@@ -14,10 +14,12 @@ Roteiro **copiar e colar** para sessões de treinamento, demo ou homologação c
 |--------|-----|
 | `10080022` | Estoque / apresentação tabela-gráfico |
 | `10080001` | Matéria-prima — preço de compra, NF, ICMS, orçamento |
-| `90261255` | PA — simulador de impacto de custos (BOM multinível); **preferir também para demo fabril** se `90269002` não existir no Totvs |
-| `90269002` | Playbook fabril — produção, expedição, status integrado (**validar cadastro no ambiente**) |
+| `90261255` | PA — simulador de impacto de custos (BOM multinível); **PA padrão para demo fabril** se `90269002` não existir no Totvs |
+| `90269002` | Playbook fabril — produção, expedição, status integrado (**validar cadastro no ambiente antes da sessão**) |
 
-> **Nota (jun/2026):** follow-ups «desse produto» e «e a expedição?» dependem de contexto da sessão (`operationalFocus`). Ver playbook [`playbook-follow-up-operacional-desacoplado-jun2026.md`](../roadmap/melhorias/playbook-follow-up-operacional-desacoplado-jun2026.md).
+> **Nota (jun/2026):** follow-ups «desse produto» e «e a expedição?» dependem de contexto da sessão (`operationalFocus`). A data do turno playbook anterior é **reutilizada** em «e a expedição?» sem repetir «hoje». O ranker semântico **não** substitui rota playbook quando há herança de produto. Ver playbook [`playbook-follow-up-operacional-desacoplado-jun2026.md`](../roadmap/melhorias/playbook-follow-up-operacional-desacoplado-jun2026.md).
+
+**Antes da sessão:** confirmar no Totvs qual PA existe (`90269002` ou `90261255`) e usar o **mesmo código** nas interações 2 e 5.
 
 ---
 
@@ -40,8 +42,8 @@ Roteiro **copiar e colar** para sessões de treinamento, demo ou homologação c
 
 | Turno | Cole no chat | Rota / efeito esperado |
 |-------|--------------|------------------------|
-| 1 | `status fabril do produto 90269002 hoje` | `GET /products/{code}/factory-status` — visão consolidada |
-| 2 | `quais matérias-primas exclusivas existem na estrutura desse produto?` | `GET /products/{code}/structure/exclusivity` |
+| 1 | `status fabril do produto 90269002 hoje` *(ou `90261255` se o PA não existir no ambiente)* | `GET /products/{code}/factory-status` — visão consolidada |
+| 2 | `quais matérias-primas exclusivas existem na estrutura desse produto?` | `GET /products/{code}/structure/exclusivity` — **não** catálogo global de MPs exclusivas |
 
 **Fala sugerida:** *“Para modificação do produto na fábrica, preferimos a rota integrada; exclusividade é consulta granular.”*
 
@@ -79,8 +81,8 @@ Roteiro **copiar e colar** para sessões de treinamento, demo ou homologação c
 
 | Turno | Cole no chat | Rota / efeito esperado |
 |-------|--------------|------------------------|
-| 1 | `situação de produção do 90269002 hoje` | `GET /products/{code}/production-status` |
-| 2 | `e a expedição?` | `GET /products/{code}/shipping-status` — mesmo produto e **mesma data** do turno anterior |
+| 1 | `situação de produção do 90269002 hoje` *(mesmo PA das interações 2 / 4)* | `GET /products/{code}/production-status` |
+| 2 | `e a expedição?` | `GET /products/{code}/shipping-status` — mesmo produto e **mesma data** do turno anterior (sem repetir «hoje») |
 
 **Fala sugerida:** *“Não é obrigatório repetir o código em todo turno.”*
 
