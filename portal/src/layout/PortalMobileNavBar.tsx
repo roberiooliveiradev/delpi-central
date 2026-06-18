@@ -3,7 +3,7 @@ import "./PortalMobileNavBar.css";
 import { useEffect, useRef, useState } from "react";
 import { CircleDashed, Grid, Menu, Moon, Sun } from "lucide-react";
 
-import { usePortalMobileChrome } from "../hooks/usePortalMobileChrome";
+import { usePortalMobileNavVisible } from "../hooks/usePortalMobileNavVisible";
 import { useTheme, type Theme } from "../hooks/useTheme";
 import { openAppLauncher } from "../utils/appLauncher";
 import { expandPortalSidebar } from "../utils/sidebar";
@@ -21,7 +21,7 @@ function ThemeTriggerIcon({ theme }: { theme: Theme }) {
 }
 
 export function PortalMobileNavBar() {
-  const { showMobileNav } = usePortalMobileChrome();
+  const { showMobileNavBar, isLandscapeLayout } = usePortalMobileNavVisible();
   const { theme, setTheme } = useTheme();
   const [themeOpen, setThemeOpen] = useState(false);
   const themeWrapRef = useRef<HTMLDivElement>(null);
@@ -39,11 +39,16 @@ export function PortalMobileNavBar() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [themeOpen]);
 
-  if (!showMobileNav) return null;
+  if (!showMobileNavBar) return null;
 
   return (
     <nav
-      className="portal-mobile-nav"
+      className={[
+        "portal-mobile-nav",
+        isLandscapeLayout ? "portal-mobile-nav--dock-side" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       aria-label="Navegação rápida do portal"
       data-portal-sidebar-swipe-ignore
     >

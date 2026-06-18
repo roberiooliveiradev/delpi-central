@@ -116,7 +116,22 @@ export const Sidebar = () => {
   =============================== */
 
   const [collapsed, setCollapsed] = useState(() => {
-    return localStorage.getItem("sidebar-collapsed") === "true";
+    const stored = localStorage.getItem("sidebar-collapsed");
+    let value: boolean;
+    if (stored !== null) {
+      value = stored === "true";
+    } else if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1024px)").matches
+    ) {
+      value = true;
+    } else {
+      value = false;
+    }
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.sidebarCollapsed = value ? "true" : "false";
+    }
+    return value;
   });
 
   const [openApps, setOpenApps] = useState<Record<string, boolean>>({});
@@ -125,7 +140,8 @@ export const Sidebar = () => {
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [showEdgeExpand, setShowEdgeExpand] = useState(false);
-  const { isNarrowViewport, isLandscapeMobile } = usePortalMobileChrome();
+  const { isNarrowViewport, isLandscapeMobile, isCompactSidebar } =
+    usePortalMobileChrome();
 
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
@@ -602,6 +618,7 @@ export const Sidebar = () => {
           "sidebar",
           collapsed ? "collapsed" : "",
           isSwipeDragging ? "is-swipe-dragging" : "",
+          isCompactSidebar ? "sidebar--compact" : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -644,24 +661,25 @@ export const Sidebar = () => {
               </button>
             </div>
 
-            <div className="sidebar-content" data-tour="sidebar-favorites">
-              <SidebarFavoritesList
-                entries={pinnedGroupedEntries}
-                favorites={favorites}
-                apps={apps}
-                openApps={openApps}
-                onToggleOpen={(id) =>
-                  setOpenApps((prev) => ({
-                    ...prev,
-                    [id]: !prev[id],
-                  }))
-                }
-                onNavigate={(path) => navigate(path)}
-                onReorder={reorderFavorites}
-              />
-            </div>
+            <div className="sidebar-body">
+              <div className="sidebar-content" data-tour="sidebar-favorites">
+                <SidebarFavoritesList
+                  entries={pinnedGroupedEntries}
+                  favorites={favorites}
+                  apps={apps}
+                  openApps={openApps}
+                  onToggleOpen={(id) =>
+                    setOpenApps((prev) => ({
+                      ...prev,
+                      [id]: !prev[id],
+                    }))
+                  }
+                  onNavigate={(path) => navigate(path)}
+                  onReorder={reorderFavorites}
+                />
+              </div>
 
-            <div className="sidebar-footer">
+              <div className="sidebar-footer">
               {canAccessAdmin && (
                 <NavLink
                   to="/admin"
@@ -878,6 +896,7 @@ export const Sidebar = () => {
               >
                 Política de Privacidade
               </NavLink>
+            </div>
             </div>
           </>
         )}
