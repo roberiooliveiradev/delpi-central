@@ -190,6 +190,27 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_eficiencia_fabril_dashboard": RouteContract(
         "eficiencia_fabril_dashboard", "composite_analysis"
     ),
+    "get_inspecoes_entrada_resumo": RouteContract(
+        "inspecoes_entrada_resumo", "scalar"
+    ),
+    "get_inspecoes_entrada_pendentes": RouteContract(
+        "inspecoes_entrada_pendentes", "paged_list"
+    ),
+    "get_inspecoes_entrada_pendentes_fornecedor": RouteContract(
+        "inspecoes_entrada_pendentes_fornecedor", "list"
+    ),
+    "get_inspecoes_entrada_rejeitadas_ensaiador": RouteContract(
+        "inspecoes_entrada_rejeitadas_ensaiador", "list"
+    ),
+    "get_inspecoes_entrada_rejeitadas_produto": RouteContract(
+        "inspecoes_entrada_rejeitadas_produto", "list"
+    ),
+    "get_inspecoes_entrada_historico": RouteContract(
+        "inspecoes_entrada_historico", "paged_list"
+    ),
+    "get_inspecoes_entrada_historico_detalhe": RouteContract(
+        "inspecoes_entrada_historico_detalhe", "object"
+    ),
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),

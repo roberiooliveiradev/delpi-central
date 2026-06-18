@@ -51,6 +51,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/cadastro-kaizen` | `cadastro-kaizen` | microfrontend | `/apps/cadastro-kaizen` | `delpi-cadastro-kaizen` |
+| `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
@@ -70,6 +71,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | Eficiência Fabril | `/apps/api-delpi/production/eficiencia-fabril/*` |
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (Kaizen/5S: **Google Sheets**; PPM/NC: TOTVS) |
 | Cadastro de Kaizens | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação da planilha via `POST .../import-from-sheet` |
+| Inspeções de Entrada | `/apps/api-delpi/inspecoes-entrada/*` (TOTVS views) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
@@ -116,6 +118,7 @@ Implementado em `plugins/*/src/api/httpClient.ts` (e `dashboard-delpi/src/data/a
 | eficiencia-fabril | `eficiencia-fabril` |
 | central-agendamento | `central-agendamento` |
 | cadastro-kaizen | `cadastro-kaizen` |
+| inspecoes-entrada | `inspecoes-entrada` |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -132,6 +135,7 @@ Declaradas no manifesto e persistidas na Core API:
 | dashboard-quality | `dashboard-quality.view` (+ `api-delpi.quality.access` na API) |
 | minha-delpi-chat | `minha-delpi.chat.access`, `minha-delpi.chat.ask`, … |
 | central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc` |
+| inspecoes-entrada | `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` |
 | cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
@@ -149,6 +153,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |
 | Central de Agendamento | [Plugin README](../../plugins/central-agendamento/README.md) |
 | Cadastro de Kaizens | [Plugin README](../../plugins/cadastro-kaizen/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md) · [Revisões (spec)](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md) · [Doc técnica](../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) |
+| Inspeções de Entrada | [Plugin README](../../plugins/inspecoes-entrada/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/inspecoes-entrada/ROADMAP.md) · [Status](../../docs/12-roadmap-e-volucao/inspecoes-entrada/status-atual.md) · [Doc técnica](../../plugins/inspecoes-entrada/docs/DOCUMENTACAO.md) · [API](../../api-delpi/docs/api/inspecoes-entrada.md) |
 
 ---
 

@@ -445,3 +445,233 @@ def test_ops_abertas_pedidos_venda_returns_meta(mock_build) -> None:
         shape="composite_analysis",
     )
 
+
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_resumo_use_case"
+)
+def test_inspecoes_entrada_resumo_returns_meta(mock_build, _mock_branch) -> None:
+    from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router import (
+        get_inspecoes_entrada_resumo_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "branch": "01",
+        "pending_inspections": 6,
+        "inspected": 731,
+        "approved_inspections": 730,
+        "rejected_inspections": 1,
+        "approval_rate": 99.86,
+        "inspections_with_time": 728,
+        "average_time_hours": 16.46,
+        "average_time_days": 0.69,
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = get_inspecoes_entrada_resumo_route(branch="01")
+    _assert_meta(
+        _body(response),
+        operation_id="get_inspecoes_entrada_resumo",
+        shape="scalar",
+    )
+
+
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_pendentes_use_case"
+)
+def test_inspecoes_entrada_pendentes_returns_meta(mock_build, _mock_branch) -> None:
+    from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router import (
+        get_inspecoes_entrada_pendentes_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "branch": "01",
+        "items": [],
+        "pagination": {"page": 1, "page_size": 50, "total": 0, "total_pages": 1},
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = get_inspecoes_entrada_pendentes_route(branch="01", page=1, page_size=50)
+    _assert_meta(
+        _body(response),
+        operation_id="get_inspecoes_entrada_pendentes",
+        shape="paged_list",
+    )
+
+
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_pendentes_fornecedor_use_case"
+)
+def test_inspecoes_entrada_pendentes_fornecedor_returns_meta(
+    mock_build,
+    _mock_branch,
+) -> None:
+    from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router import (
+        get_inspecoes_entrada_pendentes_fornecedor_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "branch": "01",
+        "items": [],
+        "total_suppliers": 0,
+        "total_pending": 0,
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = get_inspecoes_entrada_pendentes_fornecedor_route(branch="01")
+    _assert_meta(
+        _body(response),
+        operation_id="get_inspecoes_entrada_pendentes_fornecedor",
+        shape="list",
+    )
+
+
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_rejeitadas_ensaiador_use_case"
+)
+def test_inspecoes_entrada_rejeitadas_ensaiador_returns_meta(
+    mock_build,
+    _mock_branch,
+) -> None:
+    from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router import (
+        get_inspecoes_entrada_rejeitadas_ensaiador_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "branch": "01",
+        "items": [],
+        "total_inspectors": 0,
+        "total_rejected": 0,
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = get_inspecoes_entrada_rejeitadas_ensaiador_route(branch="01")
+    _assert_meta(
+        _body(response),
+        operation_id="get_inspecoes_entrada_rejeitadas_ensaiador",
+        shape="list",
+    )
+
+
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_historico_use_case"
+)
+def test_inspecoes_entrada_historico_returns_meta(mock_build, _mock_branch) -> None:
+    from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router import (
+        get_inspecoes_entrada_historico_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "branch": "01",
+        "items": [],
+        "pagination": {
+            "page": 1,
+            "page_size": 50,
+            "total": 731,
+            "total_pages": 15,
+        },
+        "filters": {
+            "result": None,
+            "date_from": None,
+            "date_to": None,
+            "supplier": None,
+            "product_code": None,
+            "inspector": None,
+            "invoice_number": None,
+            "lot": None,
+        },
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = get_inspecoes_entrada_historico_route(
+        branch="01",
+        page=1,
+        page_size=50,
+        result=None,
+        date_from=None,
+        date_to=None,
+        supplier=None,
+        product_code=None,
+        inspector=None,
+        invoice_number=None,
+        lot=None,
+    )
+    _assert_meta(
+        _body(response),
+        operation_id="get_inspecoes_entrada_historico",
+        shape="paged_list",
+    )
+
+
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_historico_detalhe_use_case"
+)
+def test_inspecoes_entrada_historico_detalhe_meta(mock_build, _mock_branch) -> None:
+    from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router import (
+        get_inspecoes_entrada_historico_detalhe_route,
+    )
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "branch": "01",
+        "inspection_id": "01|000042999|2|0002|000532|01|10110388|AUTO000952",
+        "summary": {},
+        "tests": [],
+        "totals": {
+            "tests_count": 0,
+            "approved_tests_count": 0,
+            "failed_tests_count": 0,
+        },
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = get_inspecoes_entrada_historico_detalhe_route(
+        branch="01",
+        inspection_id="01|000042999|2|0002|000532|01|10110388|AUTO000952",
+    )
+    _assert_meta(
+        _body(response),
+        operation_id="get_inspecoes_entrada_historico_detalhe",
+        shape="object",
+    )
+

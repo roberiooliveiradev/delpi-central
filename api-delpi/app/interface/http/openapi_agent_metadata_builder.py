@@ -18,6 +18,7 @@ _DOMAIN_LABELS: dict[str, str] = {
     "/products/": "Produto",
     "/sales/": "Vendas",
     "/purchases/": "Compras",
+    "/inspecoes-entrada/": "Inspeções de entrada",
     "/pedidos-venda-abertos/": "Pedidos de venda em aberto",
     "/propostas-comerciais/": "Propostas comerciais",
     "/system/": "Sistema",

@@ -33,6 +33,7 @@ from app.interface.http.routes.quality import quality_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.scheduling import scheduling_router
 from app.interface.http.routes.cultura_delpi import cultura_delpi_router
+from app.interface.http.routes.inspecoes_entrada import inspecoes_entrada_router
 from app.interface.http.routes.pedidos_venda_abertos import pedidos_venda_abertos_router
 from app.interface.http import propostas_comerciais_controller
 from app.core.responses import error_response, not_found_response
@@ -205,6 +206,7 @@ app.include_router(product_routes.router, prefix="/products", tags=["products"])
 app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
+app.include_router(inspecoes_entrada_router.router)
 app.include_router(pedidos_venda_abertos_router.router)
 app.include_router(propostas_comerciais_controller.router)
 

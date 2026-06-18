@@ -59,3 +59,14 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [pedidos-venda-abertos/ROADMAP.md](./pedidos-venda-abertos/ROADMAP.md) | **Plano de implementação por fases** |
 | [pedidos-venda-abertos/ESPECIFICACAO-VIEW.md](./pedidos-venda-abertos/ESPECIFICACAO-VIEW.md) | Contrato da view TOTVS e campos da API |
 | [pedidos-venda-abertos/FASE0-VALIDACAO-VIEW.md](./pedidos-venda-abertos/FASE0-VALIDACAO-VIEW.md) | Template de validação TOTVS (Fase 0) |
+
+### Inspeções de Entrada
+
+| Arquivo | Conteúdo |
+|---|---|
+| [inspecoes-entrada/README.md](./inspecoes-entrada/README.md) | Índice do módulo |
+| [inspecoes-entrada/ROADMAP.md](./inspecoes-entrada/ROADMAP.md) | Roadmap de implantação do plugin |
+| [inspecoes-entrada/ESPECIFICACAO-PLUGIN.md](./inspecoes-entrada/ESPECIFICACAO-PLUGIN.md) | Funcionalidades implementadas (MVP) |
+| [inspecoes-entrada/ESPECIFICACAO-VIEW.md](./inspecoes-entrada/ESPECIFICACAO-VIEW.md) | Views TOTVS e mapeamento de colunas |
+| [inspecoes-entrada/FASE0-VALIDACAO.md](./inspecoes-entrada/FASE0-VALIDACAO.md) | Validação Fase 0 (TOTVS) |
+| [inspecoes-entrada/status-atual.md](./inspecoes-entrada/status-atual.md) | Snapshot do estado atual |
