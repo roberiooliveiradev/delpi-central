@@ -102,8 +102,8 @@ function createOptimisticUserMessage(
   content: string,
   attachments: { id: string; original_filename: string; size_bytes: number; content_type: string | null; status: string }[] = [],
   turnContext?: {
-    agents?: Array<{ id: string; name: string }>;
-    projects?: Array<{ id: string; name: string }>;
+    agents?: Array<{ id: string; name: string; icon?: string | null }>;
+    projects?: Array<{ id: string; name: string; icon?: string | null }>;
   },
 ): ChatMessage {
   return {
@@ -1472,8 +1472,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     projectIds?: string[];
     chatMode?: "common" | "agent";
     turnContext?: {
-      agents?: Array<{ id: string; name: string }>;
-      projects?: Array<{ id: string; name: string }>;
+      agents?: Array<{ id: string; name: string; icon?: string | null }>;
+      projects?: Array<{ id: string; name: string; icon?: string | null }>;
     };
     typingCorrection?: ChatTypingCorrectionMetadata;
   } = {}) => {

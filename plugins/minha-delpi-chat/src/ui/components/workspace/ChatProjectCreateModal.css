@@ -77,14 +77,13 @@
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
   border-radius: 0.7rem;
   background: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+  color: var(--mdc-text-muted);
   cursor: pointer;
-  font-size: 1.1rem;
-  line-height: 1;
 }
 
-.mdc-chat-project-create-modal__icon-option span {
+.mdc-chat-project-create-modal__icon-option svg {
   display: block;
-  line-height: 1;
+  flex-shrink: 0;
 }
 
 .mdc-chat-project-create-modal__icon-option:hover {
@@ -96,6 +95,7 @@
   border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
   background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+  color: var(--mdc-primary);
 }
 
 .mdc-chat-project-create-modal__input-wrap {

@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  Bot,
   Check,
   Copy,
   Download,
@@ -68,6 +67,14 @@ import {
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
+import { ChatAgentIcon } from "../components/workspace/ChatAgentIcon";
+import {
+  AGENT_ICON_LABELS,
+  AGENT_ICON_OPTIONS,
+  DEFAULT_AGENT_ICON,
+  normalizeAgentIcon,
+} from "../components/workspace/chatAgentIcon";
+import { ChatWorkspaceIconPicker } from "../components/workspace/ChatWorkspaceIconPicker";
 import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
 import {
   AgentIcebreakersEditor,
@@ -186,7 +193,7 @@ export function ChatAgentBuilderPage({
         : "private",
   );
   const [category, setCategory] = useState(agent?.category ?? "");
-  const [icon, setIcon] = useState(agent?.icon ?? "bot");
+  const [icon, setIcon] = useState(agent?.icon ?? DEFAULT_AGENT_ICON);
   const [responseStyle, setResponseStyle] = useState(agent?.response_style ?? "objetivo");
   const [enabled, setEnabled] = useState(agent?.enabled ?? true);
   const [maxToolCalls, setMaxToolCalls] = useState(agent?.max_tool_calls ?? 5);
@@ -293,7 +300,7 @@ export function ChatAgentBuilderPage({
               : "private",
         );
         setCategory(details.category ?? "");
-        setIcon(details.icon ?? "bot");
+        setIcon(details.icon ?? DEFAULT_AGENT_ICON);
         setResponseStyle(details.response_style ?? "objetivo");
         setEnabled(details.enabled);
         setMaxToolCalls(details.max_tool_calls);
@@ -691,7 +698,7 @@ export function ChatAgentBuilderPage({
       systemPrompt: systemPrompt.trim() || null,
       responseStyle,
       category: category.trim() || null,
-      icon: icon.trim() || null,
+      icon: normalizeAgentIcon(icon),
       maxToolCalls,
       requiresConfirmationForWrite,
       metadata: {
@@ -833,7 +840,7 @@ export function ChatAgentBuilderPage({
       systemPrompt: systemPrompt.trim() || null,
       visibility,
       category: category.trim() || null,
-      icon: icon.trim() || null,
+      icon: normalizeAgentIcon(icon),
       responseStyle,
       metadata: {
         ...(agent?.metadata ?? {}),
@@ -1550,7 +1557,7 @@ export function ChatAgentBuilderPage({
             <>
           <header className="mdc-chat-agent-builder__hero">
             <span className="mdc-chat-agent-builder__hero-icon" aria-hidden="true">
-              <Bot size={26} />
+              <ChatAgentIcon icon={icon} size={26} />
             </span>
             <label className="mdc-chat-agent-builder__hero-name-wrap">
               <span className="mdc-chat-agent-builder__sr-only">Nome do agente</span>
@@ -1640,15 +1647,17 @@ export function ChatAgentBuilderPage({
                 />
               </label>
 
-              <label className="mdc-chat-ws-field">
+              <div className="mdc-chat-ws-field">
                 <span>Ícone</span>
-                <input
+                <ChatWorkspaceIconPicker
+                  options={AGENT_ICON_OPTIONS}
+                  labels={AGENT_ICON_LABELS}
                   value={icon}
-                  maxLength={60}
-                  onChange={(event) => setIcon(event.target.value)}
-                  placeholder="bot"
+                  onChange={setIcon}
+                  renderIcon={(option, size) => <ChatAgentIcon icon={option} size={size} />}
+                  ariaLabel="Ícone do agente"
                 />
-              </label>
+              </div>
             </div>
           </section>
 

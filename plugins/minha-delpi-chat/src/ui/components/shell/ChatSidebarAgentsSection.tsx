@@ -1,8 +1,9 @@
-import { Bot, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 
 import type { ChatAgent } from "../../../data/api/chatTypes";
 import { buildChatAgentHref, buildChatHref } from "../../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../../navigation/chatNavigation";
+import { ChatAgentIcon } from "../workspace/ChatAgentIcon";
 import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
 
 type ChatSidebarAgentsSectionProps = {
@@ -42,7 +43,7 @@ export function ChatSidebarAgentsSection({
           agents.map((agent) => (
             <ChatSidebarWorkspaceItem
               key={agent.id}
-              icon={Bot}
+              leadingIcon={<ChatAgentIcon icon={agent.icon} size={15} />}
               title={agent.name}
               subtitle={agent.category || agent.description || agent.visibility}
               active={agent.id === selectedAgentId}

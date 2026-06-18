@@ -6,6 +6,7 @@ export type ComposerMentionCandidate = {
   kind: ComposerMentionKind;
   id: string;
   name: string;
+  icon?: string | null;
 };
 
 export type ActiveComposerMention = {
@@ -20,8 +21,8 @@ function normalizeName(value: string): string {
 }
 
 export function listComposerMentionCandidates(input: {
-  agents?: ReadonlyArray<{ id: string; name: string }>;
-  projects?: ReadonlyArray<{ id: string; name: string }>;
+  agents?: ReadonlyArray<{ id: string; name: string; icon?: string | null }>;
+  projects?: ReadonlyArray<{ id: string; name: string; icon?: string | null }>;
 }): ComposerMentionCandidate[] {
   const candidates: ComposerMentionCandidate[] = [];
 
@@ -32,7 +33,7 @@ export function listComposerMentionCandidates(input: {
       continue;
     }
 
-    candidates.push({ kind: "agent", id: agent.id, name });
+    candidates.push({ kind: "agent", id: agent.id, name, icon: agent.icon ?? null });
   }
 
   for (const project of input.projects ?? []) {
@@ -42,7 +43,7 @@ export function listComposerMentionCandidates(input: {
       continue;
     }
 
-    candidates.push({ kind: "project", id: project.id, name });
+    candidates.push({ kind: "project", id: project.id, name, icon: project.icon ?? null });
   }
 
   return candidates.sort((left, right) => right.name.length - left.name.length);

@@ -165,8 +165,16 @@ export function ChatInput({
   const mentionCandidates = useMemo(
     () =>
       listComposerMentionCandidates({
-        agents: agents.map((agent) => ({ id: agent.id, name: agent.name })),
-        projects: projects.map((project) => ({ id: project.id, name: project.name })),
+        agents: agents.map((agent) => ({
+          id: agent.id,
+          name: agent.name,
+          icon: agent.icon,
+        })),
+        projects: projects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          icon: project.icon,
+        })),
       }),
     [agents, projects],
   );

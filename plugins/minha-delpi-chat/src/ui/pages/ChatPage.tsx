@@ -891,8 +891,16 @@ export function ChatPage({
   const mentionCandidates = useMemo(
     () =>
       listComposerMentionCandidates({
-        agents: agents.map((agent) => ({ id: agent.id, name: agent.name })),
-        projects: projects.map((project) => ({ id: project.id, name: project.name })),
+        agents: agents.map((agent) => ({
+          id: agent.id,
+          name: agent.name,
+          icon: agent.icon,
+        })),
+        projects: projects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          icon: project.icon,
+        })),
       }),
     [agents, projects],
   );
@@ -948,11 +956,19 @@ export function ChatPage({
           agents: mergedContext.agentIds
             .map((id) => agents.find((entry) => entry.id === id))
             .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-            .map((entry) => ({ id: entry.id, name: entry.name })),
+            .map((entry) => ({
+              id: entry.id,
+              name: entry.name,
+              icon: entry.icon,
+            })),
           projects: mergedContext.projectIds
             .map((id) => projects.find((entry) => entry.id === id))
             .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-            .map((entry) => ({ id: entry.id, name: entry.name })),
+            .map((entry) => ({
+              id: entry.id,
+              name: entry.name,
+              icon: entry.icon,
+            })),
         },
       });
     },
@@ -2392,6 +2408,16 @@ export function ChatPage({
             badge={
               chatTopbarPresentation.topbarMode === "project" && selectedProject
                 ? `${selectedProjectSessions.length} chats`
+                : undefined
+            }
+            projectIcon={
+              chatTopbarPresentation.topbarMode === "project"
+                ? selectedProject?.icon
+                : undefined
+            }
+            agentIcon={
+              chatTopbarPresentation.topbarMode === "agent"
+                ? activeAgentPage?.icon
                 : undefined
             }
             onOpenAdmin={openAdmin}

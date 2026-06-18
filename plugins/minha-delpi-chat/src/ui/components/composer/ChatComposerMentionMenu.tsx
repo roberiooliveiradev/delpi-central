@@ -1,6 +1,6 @@
-import { Bot, Folder } from "lucide-react";
-
 import type { ComposerMentionCandidate } from "../../../state/chatComposerMention";
+import { ChatAgentIcon } from "../workspace/ChatAgentIcon";
+import { ChatProjectIcon } from "../workspace/ChatProjectIcon";
 
 import "./ChatComposerMentionMenu.css";
 
@@ -57,7 +57,11 @@ export function ChatComposerMentionMenu({
           onClick={() => onSelect(item)}
         >
           <span className="mdc-chat-composer-mention-menu__icon" aria-hidden="true">
-            {item.kind === "agent" ? <Bot size={13} /> : <Folder size={13} />}
+            {item.kind === "agent" ? (
+              <ChatAgentIcon icon={item.icon} size={13} />
+            ) : (
+              <ChatProjectIcon icon={item.icon} size={13} />
+            )}
           </span>
           <span className="mdc-chat-composer-mention-menu__label">{item.name}</span>
         </button>

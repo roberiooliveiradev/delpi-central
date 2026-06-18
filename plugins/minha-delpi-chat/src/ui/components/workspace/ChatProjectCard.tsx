@@ -1,5 +1,4 @@
 import {
-  Folder,
   Pencil,
   Settings,
   Trash2,
@@ -8,6 +7,7 @@ import {
 import type { ChatProject } from "../../../data/api/chatTypes";
 import { shouldOpenChatLinkInNewTab } from "../../../navigation/chatNavigation";
 import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
+import { ChatProjectIcon } from "./ChatProjectIcon";
 
 import "./ChatProjectCard.css";
 
@@ -75,7 +75,7 @@ export function ChatProjectCard({
           title={project.description || project.name}
         >
           <span className="mdc-chat-project-card__icon">
-            <Folder size={15} aria-hidden="true" />
+            <ChatProjectIcon icon={project.icon} size={15} />
           </span>
 
           <span className="mdc-chat-project-card__content">
@@ -90,7 +90,7 @@ export function ChatProjectCard({
           title={project.description || project.name}
         >
           <span className="mdc-chat-project-card__icon">
-            <Folder size={15} aria-hidden="true" />
+            <ChatProjectIcon icon={project.icon} size={15} />
           </span>
 
           <span className="mdc-chat-project-card__content">

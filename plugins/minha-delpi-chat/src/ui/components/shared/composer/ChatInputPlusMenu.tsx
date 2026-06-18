@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bot, Folder, Plus, Upload } from "lucide-react";
+import { ArrowUpRight, Plus, Upload } from "lucide-react";
 import { useMemo, useRef, type RefObject } from "react";
 
 import {
@@ -11,6 +11,8 @@ import { excludeInUseComposerContextItems } from "../../../../state/chatComposer
 import { workspaceFileComposerLabels } from "../../../../content/workspaceFileIngestContent";
 import { estimateChatInputPlusMenuItemCount } from "../overlay/menuPositionUtils";
 import { AnchoredMenuPortal } from "../overlay/AnchoredMenuPortal";
+import { ChatAgentIcon } from "../../workspace/ChatAgentIcon";
+import { ChatProjectIcon } from "../../workspace/ChatProjectIcon";
 
 import "../../composer/ChatInput.css";
 
@@ -133,7 +135,7 @@ export function ChatInputPlusMenu({
                     onToggleAgent?.(agent.id);
                   }}
                 >
-                  <Bot size={16} aria-hidden="true" />
+                  <ChatAgentIcon icon={agent.icon} size={16} />
                   <span>{agent.name}</span>
                 </button>
 
@@ -182,7 +184,7 @@ export function ChatInputPlusMenu({
                   onToggleProject?.(project.id);
                 }}
               >
-                <Folder size={16} aria-hidden="true" />
+                <ChatProjectIcon icon={project.icon} size={16} />
                 <span>{project.name}</span>
               </button>
             ))

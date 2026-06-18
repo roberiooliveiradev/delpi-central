@@ -1,11 +1,11 @@
-import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { shouldOpenChatLinkInNewTab } from "../../../navigation/chatNavigation";
 
 import "./ChatSidebarWorkspaceItem.css";
 
 type ChatSidebarWorkspaceItemProps = {
-  icon: LucideIcon;
+  leadingIcon: ReactNode;
   title: string;
   subtitle?: string | null;
   active?: boolean;
@@ -15,7 +15,7 @@ type ChatSidebarWorkspaceItemProps = {
 };
 
 export function ChatSidebarWorkspaceItem({
-  icon: Icon,
+  leadingIcon,
   title,
   subtitle,
   active,
@@ -29,9 +29,7 @@ export function ChatSidebarWorkspaceItem({
 
   const content = (
     <>
-      <span className="mdc-sidebar-workspace-item__icon">
-        <Icon size={15} aria-hidden="true" />
-      </span>
+      <span className="mdc-sidebar-workspace-item__icon">{leadingIcon}</span>
 
       <span className="mdc-sidebar-workspace-item__content">
         <strong>{title}</strong>

@@ -194,11 +194,13 @@ export type UserTurnContextChip = {
   kind: "agent" | "project";
   id: string;
   name: string;
+  icon?: string | null;
 };
 
 type TurnContextEntity = {
   id?: string | null;
   name?: string | null;
+  icon?: string | null;
 };
 
 export function buildTurnContextMetadata(input: {
@@ -209,37 +211,53 @@ export function buildTurnContextMetadata(input: {
     .map((item) => ({
       id: normalizeId(item.id),
       name: String(item.name ?? "").trim(),
+      icon: String(item.icon ?? "").trim() || null,
     }))
-    .filter((item): item is { id: string; name: string } => Boolean(item.id && item.name));
+    .filter((item): item is { id: string; name: string; icon: string | null } =>
+      Boolean(item.id && item.name),
+    );
   const projects = (input.projects ?? [])
     .map((item) => ({
       id: normalizeId(item.id),
       name: String(item.name ?? "").trim(),
+      icon: String(item.icon ?? "").trim() || null,
     }))
-    .filter((item): item is { id: string; name: string } => Boolean(item.id && item.name));
+    .filter((item): item is { id: string; name: string; icon: string | null } =>
+      Boolean(item.id && item.name),
+    );
 
   const metadata: Record<string, unknown> = {};
 
   if (agents[0]) {
     metadata.agentId = agents[0].id;
-    metadata.agent = { id: agents[0].id, name: agents[0].name };
+    metadata.agent = {
+      id: agents[0].id,
+      name: agents[0].name,
+      ...(agents[0].icon ? { icon: agents[0].icon } : {}),
+    };
   }
 
   if (agents.length > 1) {
     metadata.supplementalAgents = agents.slice(1).map((item) => ({
       id: item.id,
       name: item.name,
+      ...(item.icon ? { icon: item.icon } : {}),
     }));
   }
 
   if (projects[0]) {
-    metadata.project = { id: projects[0].id, name: projects[0].name };
+    metadata.project = {
+      id: projects[0].id,
+      name: projects[0].name,
+      ...(projects[0].icon ? { icon: projects[0].icon } : {}),
+    };
   }
 
   if (projects.length > 1) {
     metadata.supplementalProjects = projects.slice(1).map((item) => ({
       id: item.id,
       name: item.name,
+      ...(item.icon ? { icon: item.icon } : {}),
     }));
   }
 
@@ -270,7 +288,12 @@ export function resolveUserMessageTurnContextChips(
       return;
     }
 
-    chips.push({ kind, id, name });
+    chips.push({
+      kind,
+      id,
+      name,
+      ...(String(entity?.icon ?? "").trim() ? { icon: String(entity?.icon ?? "").trim() } : {}),
+    });
   };
 
   pushEntity("agent", metadata.agent as TurnContextEntity | undefined);

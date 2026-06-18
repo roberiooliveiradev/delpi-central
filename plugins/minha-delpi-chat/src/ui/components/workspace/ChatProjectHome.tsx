@@ -1,7 +1,5 @@
 import {
   ArrowUpRight,
-  Bot,
-  Folder,
   Loader2,
   Pencil,
   Settings,
@@ -23,6 +21,8 @@ import { buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
 import { ChatConversationMenu } from "../shell/ChatConversationMenu";
 import { formatSessionDate } from "../shell/chatSidebarUtils";
 import { ChatProjectSettingsModal } from "./ChatProjectSettingsModal";
+import { ChatAgentIcon } from "./ChatAgentIcon";
+import { ChatProjectIcon } from "./ChatProjectIcon";
 import {
   workspaceFileKindLabel,
   workspaceFileProjectIngestLabels,
@@ -339,11 +339,7 @@ export function ChatProjectHome({
                 : undefined
             }
           >
-            {project.icon?.trim() && project.icon.trim().length <= 3 ? (
-              project.icon.trim()
-            ) : (
-              <Folder size={22} aria-hidden="true" />
-            )}
+            <ChatProjectIcon icon={project.icon} size={22} />
           </span>
           <h1>{project.name}</h1>
         </div>
@@ -525,7 +521,7 @@ export function ChatProjectHome({
                       }
                     >
                       <span className="mdc-chat-project-agent-card__icon">
-                        <Bot size={18} aria-hidden="true" />
+                        <ChatAgentIcon icon={agent.icon} size={18} />
                       </span>
 
                       <div>

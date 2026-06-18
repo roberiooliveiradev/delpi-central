@@ -1,6 +1,6 @@
-import { Bot, Folder } from "lucide-react";
-
 import type { UserTurnContextChip } from "../../../state/chatComposerContext";
+import { ChatAgentIcon } from "../workspace/ChatAgentIcon";
+import { ChatProjectIcon } from "../workspace/ChatProjectIcon";
 
 import "./ChatUserTurnContextChips.css";
 
@@ -21,9 +21,9 @@ export function ChatUserTurnContextChips({ chips }: ChatUserTurnContextChipsProp
           className={`mdc-chat-user-turn-context__chip mdc-chat-user-turn-context__chip--${chip.kind}`}
         >
           {chip.kind === "agent" ? (
-            <Bot size={13} aria-hidden="true" />
+            <ChatAgentIcon icon={chip.icon} size={13} />
           ) : (
-            <Folder size={13} aria-hidden="true" />
+            <ChatProjectIcon icon={chip.icon} size={13} />
           )}
           <span>{chip.name}</span>
         </span>

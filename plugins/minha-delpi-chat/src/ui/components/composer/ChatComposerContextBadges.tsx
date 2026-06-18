@@ -1,7 +1,9 @@
-import { Bot, Folder, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import type { ComposerContextBarItem } from "../../../state/chatAgentActivation";
 import type { ChatAgent, ChatProject } from "../../../data/api/chatTypes";
+import { ChatAgentIcon } from "../workspace/ChatAgentIcon";
+import { ChatProjectIcon } from "../workspace/ChatProjectIcon";
 
 import "./ChatComposerContextBadges.css";
 
@@ -39,7 +41,7 @@ export function ChatComposerContextBadges({
               key={`agent-${item.id}`}
               className="mdc-chat-composer-context-badges__badge mdc-chat-composer-context-badges__badge--agent"
             >
-              <Bot size={13} aria-hidden="true" />
+              <ChatAgentIcon icon={agent.icon} size={13} />
               <span className="mdc-chat-composer-context-badges__label">{agent.name}</span>
               <button
                 type="button"
@@ -65,7 +67,7 @@ export function ChatComposerContextBadges({
             key={`project-${item.id}`}
             className="mdc-chat-composer-context-badges__badge mdc-chat-composer-context-badges__badge--project"
           >
-            <Folder size={13} aria-hidden="true" />
+            <ChatProjectIcon icon={project.icon} size={13} />
             <span className="mdc-chat-composer-context-badges__label">{project.name}</span>
             <button
               type="button"

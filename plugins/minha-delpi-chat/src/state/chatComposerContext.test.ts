@@ -83,16 +83,16 @@ describe("chatComposerContext", () => {
       resolveUserMessageTurnContextChips(
         buildTurnContextMetadata({
           agents: [
-            { id: "agent-a", name: "Agente Minha DELPI" },
+            { id: "agent-a", name: "Agente Minha DELPI", icon: "sparkles" },
             { id: "agent-b", name: "Agente B" },
           ],
-          projects: [{ id: "project-a", name: "novo" }],
+          projects: [{ id: "project-a", name: "novo", icon: "bar-chart-3" }],
         }),
       ),
     ).toEqual([
-      { kind: "agent", id: "agent-a", name: "Agente Minha DELPI" },
+      { kind: "agent", id: "agent-a", name: "Agente Minha DELPI", icon: "sparkles" },
       { kind: "agent", id: "agent-b", name: "Agente B" },
-      { kind: "project", id: "project-a", name: "novo" },
+      { kind: "project", id: "project-a", name: "novo", icon: "bar-chart-3" },
     ]);
   });
 

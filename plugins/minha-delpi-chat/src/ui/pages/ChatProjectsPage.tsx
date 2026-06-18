@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import type { ChatAgent, ChatProject, ChatSession, CreateChatProjectPayload } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatProjectCreateModal } from "../components/workspace/ChatProjectCreateModal";
+import { ChatProjectIcon } from "../components/workspace/ChatProjectIcon";
 import { useConfirmDialog, usePromptDialog } from "../components/shared";
 import "./ChatProjectsPage.css";
 
@@ -195,7 +196,7 @@ export function ChatProjectsPage({
                       onClick={() => onSelectProject?.(project.id)}
                     >
                       <span className="mdc-chat-ws-directory__card-icon">
-                        <Folder size={18} aria-hidden="true" />
+                        <ChatProjectIcon icon={project.icon} size={18} />
                       </span>
                       <span className="mdc-chat-ws-directory__card-copy">
                         <strong>{project.name}</strong>

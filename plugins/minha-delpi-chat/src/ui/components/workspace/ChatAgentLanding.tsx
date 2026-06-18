@@ -1,15 +1,17 @@
-import { Bot, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
   AGENT_ICEBREAKER_HOME_DISPLAY_COUNT,
   resolveIcebreakerCardPresentation,
 } from "../../agentIcebreakers";
+import { ChatAgentIcon } from "./ChatAgentIcon";
 
 import "./ChatAgentLanding.css";
 
 export type ChatAgentLandingProps = {
   name: string;
+  icon?: string | null;
   description?: string | null;
   icebreakers?: string[];
   onIcebreakerClick?: (template: string) => void;
@@ -23,6 +25,7 @@ export type ChatAgentLandingProps = {
 
 export function ChatAgentLanding({
   name,
+  icon,
   description,
   icebreakers = [],
   onIcebreakerClick,
@@ -41,7 +44,7 @@ export function ChatAgentLanding({
       aria-label={`Agente ${name}`}
     >
       <div className="mdc-chat-landing__avatar" aria-hidden="true">
-        <Bot size={26} />
+        <ChatAgentIcon icon={icon} size={26} />
       </div>
 
       <h2 className="mdc-chat-landing__title">{name}</h2>
