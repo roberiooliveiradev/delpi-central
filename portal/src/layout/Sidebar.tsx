@@ -6,6 +6,7 @@ import {
   useEffect,
   useRef,
   useCallback,
+  type CSSProperties,
 } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
@@ -42,6 +43,7 @@ import {
 } from "../tour/portalTourSidebar";
 import { isLaunchableApp } from "../utils/launchableApps";
 import { isLauncherAppContextActive } from "../components/appLauncherAppearance";
+import { useSidebarMobileSwipeOpen } from "./useSidebarMobileSwipeOpen";
 
 const SIDEBAR_EDGE_LABEL_DESKTOP = "Abrir menu lateral";
 const SIDEBAR_EDGE_LABEL_MOBILE = "Abrir menu";
@@ -224,6 +226,17 @@ export const Sidebar = () => {
     }
     edgeHoldPointerRef.current = null;
   }, []);
+
+  const {
+    swipeOffsetPx,
+    isSwipeDragging,
+    swipeBackdropOpacity,
+  } = useSidebarMobileSwipeOpen({
+    enabled: collapsed && isNarrowViewport,
+    sidebarRef: containerRef,
+    onOpen: openSidebarFromEdge,
+    onSwipeStart: clearEdgeHold,
+  });
 
   useEffect(() => {
     const expandFromPlugin = () => openSidebarFromEdge();
@@ -563,6 +576,14 @@ export const Sidebar = () => {
         />
       ) : null}
 
+      {collapsed && swipeOffsetPx > 0 ? (
+        <div
+          className="sidebar-mobile-backdrop sidebar-mobile-backdrop--swipe-preview"
+          style={{ opacity: swipeBackdropOpacity }}
+          aria-hidden="true"
+        />
+      ) : null}
+
       {collapsed ? (
         <button
           ref={expandControlRef}
@@ -588,8 +609,21 @@ export const Sidebar = () => {
 
       <div
         id="portal-sidebar"
-        className={`sidebar ${collapsed ? "collapsed" : ""}`}
+        className={[
+          "sidebar",
+          collapsed ? "collapsed" : "",
+          isSwipeDragging ? "is-swipe-dragging" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         ref={containerRef}
+        style={
+          swipeOffsetPx > 0
+            ? ({
+                "--portal-sidebar-swipe-offset": `${swipeOffsetPx}px`,
+              } as CSSProperties)
+            : undefined
+        }
       >
         {!collapsed && (
           <>

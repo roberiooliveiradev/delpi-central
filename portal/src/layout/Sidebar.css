@@ -80,6 +80,17 @@
     transform: translateX(-100%);
   }
 
+  .sidebar.collapsed.is-swipe-dragging {
+    transition: none;
+    transform: translateX(calc(-100% + var(--portal-sidebar-swipe-offset, 0px)));
+  }
+
+  .sidebar-mobile-backdrop--swipe-preview {
+    display: block;
+    pointer-events: none;
+    transition: none;
+  }
+
   .collapse-btn {
     left: 240px;
   }
