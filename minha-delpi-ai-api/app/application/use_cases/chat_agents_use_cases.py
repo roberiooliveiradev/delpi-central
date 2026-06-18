@@ -451,6 +451,7 @@ class PreviewChatAgentUseCase:
         message: str,
         access_token: str | None,
         generate_answer: bool = True,
+        execute_tools_in_sandbox: bool = True,
         draft: dict | None = None,
         previous_messages: list[dict] | None = None,
     ) -> dict:
@@ -505,6 +506,7 @@ class PreviewChatAgentUseCase:
             question=normalized,
             agent_id=resolved_agent_id,
             generate_answer=generate_answer,
+            execute_tools_in_sandbox=execute_tools_in_sandbox,
             user_id=user_id,
             access_token=access_token,
             agent_prompt_override=agent_prompt_override,

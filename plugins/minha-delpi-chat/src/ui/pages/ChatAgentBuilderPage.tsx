@@ -32,7 +32,6 @@ import {
   listChatAgentActionProviders,
   listChatAgentSkills,
   listChatAgentShares,
-  previewChatAgent,
   previewChatAgentDraft,
   publishChatAgent,
   listChatAgentVersions,
@@ -50,7 +49,6 @@ import type {
   ChatAgentExportBundle,
   ChatAgentShare,
   ChatAgentStats,
-  ChatMessage,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
@@ -68,10 +66,6 @@ import {
   resolveAgentIcebreakersForEditor,
 } from "../agentIcebreakers";
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
-import {
-  createAgentPreviewChatMessage,
-  toPreviewPreviousMessages,
-} from "../agentPreviewMessages";
 
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
@@ -179,8 +173,6 @@ export function ChatAgentBuilderPage({
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
   const [isCreateChatLoading, setIsCreateChatLoading] = useState(false);
-  const [previewInput, setPreviewInput] = useState("");
-  const [previewMessages, setPreviewMessages] = useState<ChatMessage[]>([]);
 
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
@@ -208,7 +200,6 @@ export function ChatAgentBuilderPage({
   const [agentShares, setAgentShares] = useState<ChatAgentShare[]>([]);
   const [isLoadingShares, setIsLoadingShares] = useState(false);
   const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const [icebreakers, setIcebreakers] = useState<string[]>(() =>
     resolveAgentIcebreakersForEditor(agent?.metadata ?? null),
@@ -727,73 +718,6 @@ export function ChatAgentBuilderPage({
     };
   }
 
-  async function sendPreviewMessage(content: string) {
-    const message = content.trim();
-
-    if (!message) {
-      return;
-    }
-
-    if (!getAccessToken) {
-      return;
-    }
-
-    const draft = buildPreviewDraft();
-
-    if (!draft.name.trim()) {
-      setPreviewMessages((current) => [
-        ...current,
-        createAgentPreviewChatMessage(
-          "assistant",
-          "Informe o nome do agente para testar a pré-visualização.",
-        ),
-      ]);
-      return;
-    }
-
-    const previousMessages = toPreviewPreviousMessages(previewMessages);
-
-    setPreviewMessages((current) => [
-      ...current,
-      createAgentPreviewChatMessage("user", message),
-    ]);
-    setPreviewInput("");
-    setIsPreviewLoading(true);
-
-    try {
-      const result = agent?.id
-        ? await previewChatAgent(
-            agent.id,
-            { message, generateAnswer: true, draft, previousMessages },
-            { getAccessToken },
-          )
-        : await previewChatAgentDraft(
-            { message, generateAnswer: true, draft, previousMessages },
-            { getAccessToken },
-          );
-
-      const answer =
-        (typeof result.answerPreview === "string" && result.answerPreview) ||
-        (typeof result.answer === "string" && result.answer) ||
-        "Sem resposta na pré-visualização.";
-
-      setPreviewMessages((current) => [
-        ...current,
-        createAgentPreviewChatMessage("assistant", answer),
-      ]);
-    } catch {
-      setPreviewMessages((current) => [
-        ...current,
-        createAgentPreviewChatMessage(
-          "assistant",
-          "Não foi possível gerar a pré-visualização com o rascunho atual.",
-        ),
-      ]);
-    } finally {
-      setIsPreviewLoading(false);
-    }
-  }
-
   const loadAgentShares = useCallback(async () => {
     if (!agent?.id || agent.access_role !== "owner" || !getAccessToken) {
       setAgentShares([]);
@@ -1310,17 +1234,18 @@ export function ChatAgentBuilderPage({
 
       <ChatAgentPreviewWorkspace
         agent={previewAgent}
-        messages={previewMessages}
-        draft={previewInput}
-        isSending={isPreviewLoading}
         defaultIcebreakersHint={
           usingDefaultPreviewIcebreakers
             ? "Sugestões padrão — configure em Quebra-gelos ou clique para testar."
             : null
         }
-        onDraftChange={setPreviewInput}
-        onSendMessage={sendPreviewMessage}
         getAccessToken={getAccessToken}
+        buildDraft={buildPreviewDraft}
+        validateDraft={() =>
+          name.trim()
+            ? null
+            : "Informe o nome do agente para testar a pré-visualização."
+        }
       />
     </div>
   );
@@ -1357,7 +1282,10 @@ export function ChatAgentBuilderPage({
           )}
         </div>
 
-        <div className="mdc-chat-ws-topbar__actions mdc-chat-agent-builder__topbar-actions">
+      </header>
+
+      <div className="mdc-chat-agent-builder__actions-bar" aria-label="Ações do agente">
+        <div className="mdc-chat-agent-builder__actions-bar-start">
           {canImportAgent ? (
             <>
               <button
@@ -1425,7 +1353,9 @@ export function ChatAgentBuilderPage({
               </button>
             </>
           ) : null}
+        </div>
 
+        <div className="mdc-chat-agent-builder__actions-bar-end">
           <button
             type="button"
             className="mdc-chat-ws-toolbar-btn"
@@ -1461,7 +1391,7 @@ export function ChatAgentBuilderPage({
             </button>
           )}
         </div>
-      </header>
+      </div>
 
       <div
         className="mdc-chat-agent-builder__workspace-tabs"

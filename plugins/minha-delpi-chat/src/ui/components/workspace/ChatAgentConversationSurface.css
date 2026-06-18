@@ -1,0 +1,38 @@
+.mdc-chat-agent-conversation-surface.mdc-chat-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.mdc-chat-agent-conversation-surface.mdc-chat-main > .mdc-chat-empty-composer {
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.mdc-chat-agent-conversation-surface .mdc-chat-conversation {
+  flex: 1;
+  min-height: 0;
+}
+
+.mdc-chat-agent-conversation-surface .mdc-chat-message-list-wrap {
+  min-height: 0;
+}
+
+.mdc-chat-agent-conversation-surface .mdc-chat-composer-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.mdc-chat-agent-conversation-surface .mdc-chat-composer-footer .mdc-chat-input {
+  width: 100%;
+  max-width: var(--mdc-chat-column-max);
+  margin-inline: auto;
+}

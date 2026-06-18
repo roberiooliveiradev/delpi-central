@@ -1,6 +1,6 @@
 import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/canvas";
-import { ChatAgentHome } from "../components/workspace/ChatAgentHome";
+import { ChatAgentConversationSurface } from "../components/workspace/ChatAgentConversationSurface";
 import { ChatEmptyState } from "../components/message/ChatEmptyState";
 import {
   ChatOnboardingTour,
@@ -2134,6 +2134,29 @@ export function ChatPage({
     onDismissTypingSuggestion: handleDismissTypingSuggestion,
   };
 
+  const agentComposerBindings = useMemo(
+    () => ({
+      placeholder: getComposerPlaceholder(),
+      composerAttachmentProps,
+      composerResponseModeProps,
+      composerPresentationFormatProps,
+      composerTypingCorrectionProps,
+      composerContextProps,
+    }),
+    [
+      composerAttachmentProps,
+      composerContextProps,
+      composerPresentationFormatProps,
+      composerResponseModeProps,
+      composerTypingCorrectionProps,
+      contextAgentIds,
+      contextProjectIds,
+      effectiveComposerAgents,
+      effectiveComposerProjects,
+      isNarrow,
+    ],
+  );
+
   const shellClassName = [
     "mdc-chat-shell",
     isDesktop && isSidebarCollapsed ? "mdc-chat-shell--sidebar-collapsed" : "",
@@ -2451,7 +2474,110 @@ export function ChatPage({
             />
           ) : null}
 
-          {isConversationEmpty ? (
+          {activeAgentPage && !selectedProject ? (
+            <ChatAgentConversationSurface
+              agent={activeAgentPage}
+              messages={messages}
+              draft={draft}
+              isSending={isStreamingActiveSession}
+              isConversationEmpty={isConversationEmpty}
+              composerBindings={agentComposerBindings}
+              onDraftChange={setDraft}
+              onSubmit={handleSubmitMessage}
+              onCancel={cancelStreaming}
+              onIcebreaker={(query) => {
+                void handleAgentIcebreaker(query);
+              }}
+              canManageAgent={canManageAgents}
+              onManageAgent={() => {
+                if (!canManageAgents || !activeAgentPage?.id) {
+                  return;
+                }
+
+                setAgentEditRequest({
+                  id: activeAgentPage.id,
+                  requestKey: Date.now(),
+                });
+                setCurrentView("agents");
+                navigateChatHref(buildChatAgentConfigHref(activeAgentPage.id));
+              }}
+              conversationKey={activeSession?.id ?? null}
+              streamingStatus={streamingStatus}
+              composerFooter={
+                isConversationEmpty ? null : (
+                  <ChatContextBar
+                    chips={activeContextChips}
+                    summary={activeContextSummary}
+                    preferenceHint={activePreferenceHint}
+                    onClearContext={handleClearActiveContext}
+                    onDismissChip={handleDismissContextChip}
+                    onChipAction={handleDrillDown}
+                    onAddContext={() => setAddContextDialogOpen(true)}
+                    onViewMemory={handleViewMemoryUsed}
+                    onPinChip={handlePinContextChip}
+                  />
+                )
+              }
+              messageList={
+                isConversationEmpty ? undefined : (
+                  <ChatMessageList
+                    messages={messages}
+                    conversationKey={activeSession?.id ?? null}
+                    streamingAnswer={streamingAnswer}
+                    streamingSources={streamingSources}
+                    streamingToolCalls={streamingToolCalls}
+                    streamingAdminDebug={streamingAdminDebug}
+                    streamingStatus={streamingStatus}
+                    streamingActivityLog={streamingActivityLog}
+                    streamingShowPresentation={streamingShowPresentation}
+                    streamingCanvasOpen={streamingCanvasOpen}
+                    isStreaming={isStreamingActiveSession}
+                    isPlaybackActive={isPlaybackActive}
+                    isLoading={isLoadingMessages && messages.length === 0}
+                    onEditAndResendMessage={handleEditAndResendMessage}
+                    sessionId={activeSession?.id ?? null}
+                    onSwitchMessageBranch={switchMessageBranch}
+                    branchSwitchingMessageId={branchSwitchingMessageId}
+                    onContinueFromMessage={continueFromMessage}
+                    onReuseMessage={(content) => {
+                      void handleReuseMessage(content);
+                    }}
+                    onDrillDown={handleDrillDown}
+                    onAddMessageToContext={
+                      activeSession?.id ? handleAddMessageToContext : undefined
+                    }
+                    onAddMessageTurnToContext={
+                      activeSession?.id ? handleAddMessageTurnToContext : undefined
+                    }
+                    onRecordHelpEvent={(payload) => {
+                      void recordAssistantHelpEvent(
+                        {
+                          ...payload,
+                          metadata: {
+                            ...(payload.metadata ?? {}),
+                            sessionId:
+                              payload.metadata?.sessionId ??
+                              activeSession?.id ??
+                              null,
+                          },
+                        },
+                        { getAccessToken },
+                      ).catch(() => {
+                        /* telemetria opcional — não bloquear chips/modal */
+                      });
+                    }}
+                    onMessageFeedback={setMessageFeedback}
+                    getAccessToken={getAccessToken}
+                    onDownloadAttachment={async (attachmentId) => {
+                      await downloadChatAttachment(attachmentId, { getAccessToken });
+                    }}
+                    onOpenCanvas={openCanvasPanel}
+                    lastSentUserText={lastSentUserText}
+                  />
+                )
+              }
+            />
+          ) : isConversationEmpty ? (
             <section className="mdc-chat-empty-composer">
               {selectedProject ? (
                 <div className="mdc-chat-empty-composer__column mdc-chat-empty-composer__column--project">
@@ -2552,8 +2678,6 @@ export function ChatPage({
                       placeholder={getComposerPlaceholder()}
                       {...composerAttachmentProps}
                       {...composerPresentationFormatProps}
-                      {...composerPresentationFormatProps}
-                    {...composerPresentationFormatProps}
                       {...composerResponseModeProps}
                       {...composerContextProps}
                       {...composerTypingCorrectionProps}
@@ -2568,51 +2692,27 @@ export function ChatPage({
               ) : (
                 <div className="mdc-chat-empty-composer__column">
                   <div className="mdc-chat-empty-composer__scroll">
-                    {activeAgentPage ? (
-                      <ChatAgentHome
-                        agent={activeAgentPage}
-                        onUseSuggestion={(query) => {
-                          void handleAgentIcebreaker(query);
-                        }}
-                        canManageAgent={canManageAgents}
-                        onManageAgent={() => {
-                          if (!canManageAgents || !activeAgentPage?.id) {
-                            return;
-                          }
+                    <ChatEmptyState
+                      displayName={userDisplayName}
+                      contextualHighlights={homeHighlights}
+                      onUseStarter={handleHomeStarter}
+                      onStartTour={
+                        canOfferOnboardingTour ? startOnboardingTour : undefined
+                      }
+                    />
 
-                          setAgentEditRequest({
-                            id: activeAgentPage.id,
-                            requestKey: Date.now(),
-                          });
-                          setCurrentView("agents");
-                          navigateChatHref(buildChatAgentConfigHref(activeAgentPage.id));
+                    {onboardingTourOpen && homeTourSteps.length > 0 ? (
+                      <ChatOnboardingTour
+                        autoStart
+                        steps={homeTourSteps}
+                        onDemoQuery={setDraft}
+                        onPlusMenuOpen={setTourPlusMenuOpen}
+                        onDismiss={() => {
+                          setOnboardingTourOpen(false);
+                          setTourPlusMenuOpen(null);
                         }}
                       />
-                    ) : (
-                      <>
-                        <ChatEmptyState
-                          displayName={userDisplayName}
-                          contextualHighlights={homeHighlights}
-                          onUseStarter={handleHomeStarter}
-                          onStartTour={
-                            canOfferOnboardingTour ? startOnboardingTour : undefined
-                          }
-                        />
-
-                        {onboardingTourOpen && homeTourSteps.length > 0 ? (
-                          <ChatOnboardingTour
-                            autoStart
-                            steps={homeTourSteps}
-                            onDemoQuery={setDraft}
-                            onPlusMenuOpen={setTourPlusMenuOpen}
-                            onDismiss={() => {
-                              setOnboardingTourOpen(false);
-                              setTourPlusMenuOpen(null);
-                            }}
-                          />
-                        ) : null}
-                      </>
-                    )}
+                    ) : null}
                   </div>
 
                   <ChatInput

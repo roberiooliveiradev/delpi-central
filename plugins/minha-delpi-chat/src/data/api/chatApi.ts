@@ -1169,15 +1169,17 @@ export async function previewChatAgent(
   payload: {
     message: string;
     generateAnswer?: boolean;
+    executeToolsInSandbox?: boolean;
     draft?: ChatAgentPreviewDraft;
     previousMessages?: Array<{ role: string; content: string }>;
   },
-  options: ChatApiOptions = {},
+  options: ChatApiOptions & { signal?: AbortSignal } = {},
 ): Promise<ChatAgentPreviewResponse> {
   const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/preview`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
+    signal: options.signal,
   });
 
   return parseJsonResponse(response);
@@ -1187,15 +1189,17 @@ export async function previewChatAgentDraft(
   payload: {
     message: string;
     generateAnswer?: boolean;
+    executeToolsInSandbox?: boolean;
     draft: ChatAgentPreviewDraft;
     previousMessages?: Array<{ role: string; content: string }>;
   },
-  options: ChatApiOptions = {},
+  options: ChatApiOptions & { signal?: AbortSignal } = {},
 ): Promise<ChatAgentPreviewResponse> {
   const response = await fetch(`${API_BASE_URL}/chat/agents/preview`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
+    signal: options.signal,
   });
 
   return parseJsonResponse(response);
