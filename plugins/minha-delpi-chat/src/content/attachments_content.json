@@ -107,7 +107,8 @@
     "messageEdit": {
       "attachmentsHeader": "{count} arquivo(s) neste reenvio",
       "addMoreLabel": "Anexar mais",
-      "emptyState": "Nenhum arquivo anexado. Você pode adicionar novos antes de reenviar."
+      "emptyState": "Nenhum arquivo anexado. Você pode adicionar novos antes de reenviar.",
+      "uploadingStatus": "Enviando e extraindo texto... PDFs grandes podem levar até um minuto."
     },
     "agent": {
       "ariaAddFiles": "Adicionar arquivos de conhecimento",
@@ -136,6 +137,7 @@
       "fileKindWithDate": "Arquivo · {date}"
     },
     "context": {
+      "readingStatus": "Lendo arquivo...",
       "readError": "Não foi possível ler o arquivo selecionado.",
       "emptySubmitError": "Cole texto, uma tabela ou anexe um arquivo.",
       "binaryFileLine": "Arquivo de contexto: {name} ({type})"

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { buildTurnContextMetadata } from "../chatComposerContext";
+import { ingestProgressPercentLabel } from "../../content/ingestProgress";
 
 import {
   archiveChatSession,
@@ -1667,6 +1668,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             file,
             {
               getAccessToken: options.getAccessToken,
+              onUploadProgress: (percent) => {
+                setStreamingStatus(
+                  `Enviando arquivo ${file.name} — ${ingestProgressPercentLabel(percent)}`,
+                );
+              },
             },
           );
 

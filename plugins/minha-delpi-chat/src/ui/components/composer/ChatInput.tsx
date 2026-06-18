@@ -30,6 +30,7 @@ import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
 import { ChatInputPlusMenu } from "../shared/composer/ChatInputPlusMenu";
 import { formatAttachmentSize } from "../../chatAttachmentPreview";
 import type { ComposerAttachmentStatus } from "../../chatAttachmentStatus";
+import { ingestProgressPercentLabel } from "../../../content/ingestProgress";
 import { useAutoGrowTextarea } from "../../hooks/useAutoGrowTextarea";
 import type { ComposerContextBarItem } from "../../../state/chatAgentActivation";
 import type {
@@ -61,6 +62,7 @@ export type ChatInputAttachment = {
   status?: ComposerAttachmentStatus;
   serverAttachmentId?: string;
   readingStatus?: string;
+  uploadPercent?: number;
 };
 
 type ChatInputProps = {
@@ -373,6 +375,15 @@ export function ChatInput({
                   readingStatus: attachment.readingStatus,
                 });
 
+                const baseStatusLabel = indexPresentation.statusLabel;
+                const statusLabel =
+                  attachment.status === "uploading" &&
+                  typeof attachment.uploadPercent === "number"
+                    ? baseStatusLabel
+                      ? `${baseStatusLabel} · ${ingestProgressPercentLabel(attachment.uploadPercent)}`
+                      : ingestProgressPercentLabel(attachment.uploadPercent)
+                    : baseStatusLabel;
+
                 const previewKind = isImage ? "image" : "file";
                 const sizeLabel = formatAttachmentSize(attachment.size);
 
@@ -382,7 +393,7 @@ export function ChatInput({
                     variant="card"
                     filename={attachment.name}
                     sizeLabel={sizeLabel || undefined}
-                    statusLabel={indexPresentation.statusLabel}
+                    statusLabel={statusLabel}
                     statusTone={indexPresentation.statusTone}
                     iconTone={workspaceFileIconToneForAttachment(
                       attachment.name,

@@ -240,6 +240,7 @@ export function ChatAgentBuilderPage({
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
   const [isSavingSource, setIsSavingSource] = useState(false);
+  const [sourceUploadPercent, setSourceUploadPercent] = useState<number | null>(null);
   const [sourceNotice, setSourceNotice] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -433,13 +434,21 @@ export function ChatAgentBuilderPage({
     }
 
     setIsSavingSource(true);
+    setSourceUploadPercent(null);
     setSourceNotice(null);
 
     const duplicateNames: string[] = [];
     let uploadedCount = 0;
     try {
-      for (const file of files) {
-        const result = await uploadAgentSource(agent.id, file, { getAccessToken });
+      for (const [index, file] of files.entries()) {
+        const result = await uploadAgentSource(agent.id, file, {
+          getAccessToken,
+          onUploadProgress: (filePercent) => {
+            const slice = 100 / files.length;
+            const base = index * slice;
+            setSourceUploadPercent(Math.round(base + (filePercent / 100) * slice));
+          },
+        });
 
         if (result.duplicate) {
           duplicateNames.push(result.original_filename || result.title || file.name);
@@ -464,6 +473,7 @@ export function ChatAgentBuilderPage({
       }
     } finally {
       setIsSavingSource(false);
+      setSourceUploadPercent(null);
     }
   }
 
@@ -1789,6 +1799,7 @@ export function ChatAgentBuilderPage({
                 <AgentKnowledgeSourcesPanel
                   sources={agentSources}
                   isUploading={isSavingSource}
+                  uploadPercent={sourceUploadPercent}
                   notice={sourceNotice}
                   getAccessToken={getAccessToken}
                   onUploadFiles={uploadAgentKnowledgeFiles}

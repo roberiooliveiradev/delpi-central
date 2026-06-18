@@ -1,4 +1,6 @@
 import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { isBootstrapLoadErrorMessage } from "../../data/api/chatApiFetch";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/canvas";
 import { ChatAgentConversationSurface } from "../components/workspace/ChatAgentConversationSurface";
 import { ChatEmptyState } from "../components/message/ChatEmptyState";
@@ -359,6 +361,7 @@ export function ChatPage({
     sendMessage,
     cancelStreaming,
     loadArchivedSessions,
+    loadSessions,
     startSession,
     selectSession,
     deleteSession,
@@ -837,6 +840,7 @@ export function ChatPage({
     editProject,
     removeProject,
     loadAgents,
+    loadProjects,
   } = useChatWorkspace({ getAccessToken });
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
@@ -1064,6 +1068,28 @@ export function ChatPage({
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
+
+  const bootstrapLoadError = useMemo(
+    () =>
+      isBootstrapLoadErrorMessage(error) || isBootstrapLoadErrorMessage(workspaceError),
+    [error, workspaceError],
+  );
+
+  const reloadBootstrapData = useCallback(() => {
+    clearError();
+    clearWorkspaceError();
+    dismissUnansweredTurnRecovery();
+    void loadSessions();
+    void loadAgents();
+    void loadProjects();
+  }, [
+    clearError,
+    clearWorkspaceError,
+    dismissUnansweredTurnRecovery,
+    loadAgents,
+    loadProjects,
+    loadSessions,
+  ]);
 
   const { isDesktop, isLandscape, isNarrow } = useChatLayout();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -1702,12 +1728,21 @@ export function ChatPage({
     async (sessionId: string, localId: string, file: File) => {
       setComposerAttachments((current) =>
         current.map((item) =>
-          item.id === localId ? { ...item, status: "uploading" } : item,
+          item.id === localId ? { ...item, status: "uploading", uploadPercent: 0 } : item,
         ),
       );
 
       try {
-        const uploaded = await uploadChatAttachment(sessionId, file, { getAccessToken });
+        const uploaded = await uploadChatAttachment(sessionId, file, {
+          getAccessToken,
+          onUploadProgress: (percent) => {
+            setComposerAttachments((current) =>
+              current.map((item) =>
+                item.id === localId ? { ...item, uploadPercent: percent } : item,
+              ),
+            );
+          },
+        });
         let resolvedAttachment = uploaded;
 
         if (isAttachmentIndexPending(uploaded.status)) {
@@ -1732,6 +1767,7 @@ export function ChatPage({
                   status: mapApiAttachmentToComposerStatus(resolvedAttachment.status),
                   serverAttachmentId: resolvedAttachment.id,
                   readingStatus,
+                  uploadPercent: undefined,
                 }
               : item,
           ),
@@ -1740,7 +1776,7 @@ export function ChatPage({
         setComposerAttachments((current) =>
           current.map((item) =>
             item.id === localId
-              ? { ...item, status: "failed", readingStatus: "Falha no envio" }
+              ? { ...item, status: "failed", readingStatus: "Falha no envio", uploadPercent: undefined }
               : item,
           ),
         );
@@ -2486,7 +2522,9 @@ export function ChatPage({
                 error?.includes("diálogo dos atalhos") ||
                 error?.includes("{{")
                   ? "Complete os campos antes de enviar"
-                  : unansweredTurnRecovery?.title
+                  : bootstrapLoadError
+                    ? "Não foi possível carregar o chat"
+                    : unansweredTurnRecovery?.title
               }
               message={
                 error ||
@@ -2496,6 +2534,11 @@ export function ChatPage({
               }
               details={error || workspaceError || undefined}
               onRetry={() => {
+                if (bootstrapLoadError) {
+                  reloadBootstrapData();
+                  return;
+                }
+
                 const retryContent =
                   unansweredTurnRecovery?.retryContent ||
                   draft.trim() ||
@@ -2653,8 +2696,11 @@ export function ChatPage({
                   onUnpinSession={unpinSession}
                   sources={projectSources[selectedProject.id] ?? []}
                   isLoadingSources={isLoadingProjectSources}
-                  onUploadSource={async (file) => {
-                    const source = await uploadProjectSource(selectedProject.id, file, { getAccessToken });
+                  onUploadSource={async (file, helpers) => {
+                    const source = await uploadProjectSource(selectedProject.id, file, {
+                      getAccessToken,
+                      onUploadProgress: helpers?.onProgress,
+                    });
                     await loadProjectSources(selectedProject.id);
                     return source;
                   }}

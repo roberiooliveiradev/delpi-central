@@ -21,6 +21,7 @@ import "../workspaceFileIngest.css";
 type AgentKnowledgeSourcesPanelProps = {
   sources: ChatWorkspaceSource[];
   isUploading?: boolean;
+  uploadPercent?: number | null;
   notice?: string | null;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   onUploadFiles: (files: File[]) => Promise<void>;
@@ -59,6 +60,7 @@ function getSourceSize(source: ChatWorkspaceSource): string {
 export function AgentKnowledgeSourcesPanel({
   sources,
   isUploading = false,
+  uploadPercent = null,
   notice,
   getAccessToken,
   onUploadFiles,
@@ -160,6 +162,7 @@ export function AgentKnowledgeSourcesPanel({
         <IngestProgressIndicator
           className="mdc-agent-knowledge__status"
           label={ingestLabels.uploadingStatus}
+          percent={uploadPercent ?? undefined}
         />
       ) : null}
 

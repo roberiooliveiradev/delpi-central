@@ -98,7 +98,10 @@ type ChatProjectHomeProps = {
   onUseAgent?: (agentId: string | null) => void;
   onOpenAgentPage?: (agentId: string) => void;
   onSetDefaultAgent?: (agentId: string | null) => Promise<ChatProject | null>;
-  onUploadSource?: (file: File) => Promise<ChatWorkspaceSource>;
+  onUploadSource?: (
+    file: File,
+    helpers?: { onProgress?: (percent: number) => void },
+  ) => Promise<ChatWorkspaceSource>;
   onCreateTextSource?: (payload: { title: string; content: string; metadata?: Record<string, unknown> | null }) => Promise<ChatWorkspaceSource>;
   onDeleteSource?: (sourceId: string) => Promise<void>;
   onDownloadSource?: (sourceId: string) => Promise<void>;
@@ -148,6 +151,7 @@ export function ChatProjectHome({
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
   const [isSavingSource, setIsSavingSource] = useState(false);
+  const [sourceUploadPercent, setSourceUploadPercent] = useState<number | null>(null);
   const [isSourceDragActive, setIsSourceDragActive] = useState(false);
   const [uploadSourceError, setUploadSourceError] = useState<string | null>(null);
   const projectIngestLabels = workspaceFileProjectIngestLabels();
@@ -177,10 +181,11 @@ export function ChatProjectHome({
     }
 
     setIsSavingSource(true);
+    setSourceUploadPercent(null);
     setUploadSourceError(null);
 
     try {
-      await onUploadSource?.(file);
+      await onUploadSource?.(file, { onProgress: setSourceUploadPercent });
     } catch (error) {
       setUploadSourceError(
         error instanceof Error
@@ -189,6 +194,7 @@ export function ChatProjectHome({
       );
     } finally {
       setIsSavingSource(false);
+      setSourceUploadPercent(null);
     }
   }
 
@@ -520,7 +526,10 @@ export function ChatProjectHome({
             />
 
             {isSavingSource ? (
-              <IngestProgressIndicator label={projectIngestLabels.uploadingStatus} />
+              <IngestProgressIndicator
+                label={projectIngestLabels.uploadingStatus}
+                percent={sourceUploadPercent ?? undefined}
+              />
             ) : null}
 
             {uploadSourceError ? (
