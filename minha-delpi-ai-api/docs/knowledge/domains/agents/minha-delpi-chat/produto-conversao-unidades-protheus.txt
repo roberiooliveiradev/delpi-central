@@ -1,0 +1,862 @@
+TUTORIAL — CONVERSÃO CORRETA DE UNIDADES NO PROTHEUS DELPI
+Versão: jun/2026
+Escopo RAG: agente minha-delpi-chat · api-delpi · SQL operacional · BOM · PA em MI
+
+Documentação técnica api-delpi (Markdown):
+api-delpi/docs/roadmaps/playbook-conversao-unidades-protheus.md
+
+======================================================================
+0. QUANDO USAR ESTE DOCUMENTO
+======================================================================
+
+Use este tutorial antes de interpretar quantidades de produto, estrutura (BOM),
+simulador de custo, estoque «por PA», consumo de OP ou unidade fiscal.
+
+Regra-mãe: separe o OBJETIVO da conversão antes de calcular.
+
+| Objetivo                         | Fonte principal                          |
+|----------------------------------|------------------------------------------|
+| Produção / estrutura / BOM       | SG1010 + SB1010                          |
+| Conversão de cadastro do produto | SB1010 (B1_UM, B1_SEGUM, B1_CONV, …)     |
+| Fiscal / DIPI / NF-e             | SB5010                                   |
+| OP / consumo real                | SC2010 + SD4010 + SB1010                 |
+
+Rotas api-delpi que dependem desta regra (preferir REST em vez de SQL):
+
+- GET /products/{code}/structure              — BOM com quantidades e unidades
+- GET /products/{code}/structure/exclusivity  — BOM + MPs exclusivas
+- GET /products/{code}/cost-impact-simulation — ranking de custo por 1 PA
+- GET /products/{code}/stock                  — saldo e cobertura «por 1 PA»
+- GET /products/{code}/production-status      — OPs e quantidades produzidas
+- GET /products/{code}/factory-status         — visão fabril integrada
+- GET /products/directives/{identifier}       — diretivas com estrutura e compras
+- GET /products/{code}/analyser               — ficha resumida do produto
+
+Para PA em MI (milheiro): 1 MI = 1000 peças (PC ou UN).
+
+======================================================================
+1. OBJETIVO
+======================================================================
+
+Este tutorial explica como usar as principais tabelas e colunas do Protheus DELPI
+para realizar conversão correta de unidades em quatro contextos:
+
+1. Conversão produtiva / estrutura / BOM
+2. Conversão de cadastro do produto
+3. Conversão fiscal / DIPI / NF-e
+4. Conversão em OP e consumo real
+
+A regra mais importante é separar o objetivo da conversão antes de calcular.
+
+Produção        = SG1010 + SB1010
+Cadastro        = SB1010
+Fiscal          = SB5010
+OP / consumo    = SC2010 + SD4010 + SB1010
+
+======================================================================
+2. TABELAS PRINCIPAIS
+======================================================================
+
+----------------------------------------------------------------------
+2.1 SB1010 — CADASTRO DE PRODUTOS
+----------------------------------------------------------------------
+
+A SB1010 é a tabela principal de cadastro do produto.
+
+Use para identificar:
+- Código do produto
+- Descrição
+- Tipo do produto
+- Unidade principal
+- Segunda unidade
+- Fator de conversão
+- Tipo de conversão
+
+Campos principais:
+
+B1_COD      = Código do produto
+B1_DESC     = Descrição do produto
+B1_TIPO     = Tipo do produto: PA, PI, MP etc.
+B1_UM       = Unidade principal
+B1_SEGUM    = Segunda unidade de medida
+B1_CONV     = Fator de conversão entre unidade principal e segunda unidade
+B1_TIPCONV  = Tipo de conversão
+B1_UM3      = Terceira unidade
+B1_CONV3    = Fator da terceira unidade
+B1_CUSTD    = Custo padrão (na unidade principal B1_UM)
+B1_UPRC     = Último preço de compra
+D_E_L_E_T_  = Exclusão lógica
+
+Regra prática:
+
+B1_UM      = unidade principal
+B1_SEGUM   = segunda unidade
+B1_CONV    = fator de conversão
+B1_TIPCONV = define se multiplica ou divide
+
+Interpretação comum:
+
+Se B1_TIPCONV = M:
+    quantidade convertida = quantidade × B1_CONV
+
+Se B1_TIPCONV = D:
+    quantidade convertida = quantidade / B1_CONV
+
+Exemplo:
+
+Produto em MI
+1 MI = 1000 PC
+
+Quantidade = 2 MI
+
+Conversão:
+2 × 1000 = 2000 PC
+
+----------------------------------------------------------------------
+2.2 SG1010 — ESTRUTURA DO PRODUTO / BOM
+----------------------------------------------------------------------
+
+A SG1010 guarda a estrutura do produto, ou seja, os componentes usados
+para fabricar um produto pai.
+
+Use para descobrir quanto de cada componente entra no produto.
+
+Campos principais:
+
+G1_COD      = Produto pai
+G1_COMP     = Componente
+G1_QUANT    = Quantidade do componente na estrutura
+G1_INI      = Início da vigência, quando aplicável
+G1_FIM      = Fim da vigência, quando aplicável
+D_E_L_E_T_  = Exclusão lógica
+
+Regra prática:
+
+A SG1010 diz a quantidade da BOM.
+A SB1010 diz como interpretar a unidade.
+
+Exemplo:
+
+Produto pai = PA
+Unidade do pai = MI
+Componente = 10080626
+Unidade do componente = PC
+Quantidade na SG1010 = 1000
+
+Interpretação:
+
+1000 PC para 1 MI do PA
+Como 1 MI = 1000 peças:
+
+1000 PC / 1000 = 1 PC por peça do PA
+
+----------------------------------------------------------------------
+2.3 SB5010 — COMPLEMENTO FISCAL DO PRODUTO
+----------------------------------------------------------------------
+
+A SB5010 deve ser usada quando a conversão for fiscal, DIPI ou NF-e.
+
+Campos principais:
+
+B5_COD      = Código do produto
+B5_UMDIPI   = Unidade de medida DIPI / fiscal
+B5_CONVDIP  = Fator de conversão DIPI
+B5_UMPRC    = Unidade de medida de preço
+D_E_L_E_T_  = Exclusão lógica
+
+Regra prática:
+
+Quantidade fiscal = quantidade comercial × B5_CONVDIP
+
+Exemplo:
+
+Unidade comercial = MI
+Quantidade comercial = 1
+B5_UMDIPI = UN
+B5_CONVDIP = 1000
+
+Cálculo:
+
+1 MI × 1000 = 1000 UN
+
+Na NF:
+
+Unidade comercial = MI
+Quantidade comercial = 1
+Unidade fiscal = UN
+Quantidade fiscal = 1000
+
+----------------------------------------------------------------------
+2.4 SC2010 — ORDEM DE PRODUÇÃO
+----------------------------------------------------------------------
+
+A SC2010 representa a ordem de produção.
+
+Use para:
+- Identificar a OP
+- Produto produzido
+- Quantidade planejada
+- Quantidade produzida
+- Unidade da OP
+
+Campos principais:
+
+C2_FILIAL   = Filial
+C2_OP       = Ordem de produção
+C2_PRODUTO  = Produto produzido
+C2_QUANT    = Quantidade planejada
+C2_QUJE     = Quantidade produzida
+C2_UM       = Unidade da OP
+C2_PRIOR    = Prioridade da OP
+D_E_L_E_T_  = Exclusão lógica
+
+----------------------------------------------------------------------
+2.5 SD4010 — CONSUMO / EMPENHO / REQUISIÇÃO
+----------------------------------------------------------------------
+
+A SD4010 é a principal tabela para consumo e empenho de componentes.
+
+Use para:
+- Itens consumidos
+- Empenho da OP
+- Consumo por item
+- Consumo por produto pai
+- Consumo por operação
+
+Campos principais:
+
+D4_FILIAL   = Filial
+D4_OP       = Ordem de produção
+D4_OPERAC   = Operação
+D4_COD      = Item consumido
+D4_PRODUTO  = Produto pai
+D4_DATA     = Data
+D4_QTDEORI  = Quantidade original
+D4_QUANT    = Quantidade consumida
+D4_QTNECES  = Quantidade necessária
+D_E_L_E_T_  = Exclusão lógica
+
+======================================================================
+3. RELAÇÕES ENTRE AS TABELAS
+======================================================================
+
+3.1 Produto pai e componentes
+
+SG1010.G1_COD  = SB1010.B1_COD do produto pai
+SG1010.G1_COMP = SB1010.B1_COD do componente
+
+3.2 OP e consumo
+
+SC2010.C2_FILIAL = SD4010.D4_FILIAL
+SC2010.C2_OP     = SD4010.D4_OP
+
+3.3 Consumo e cadastro do item
+
+SD4010.D4_COD = SB1010.B1_COD
+
+3.4 Produto acabado e cadastro
+
+SC2010.C2_PRODUTO = SB1010.B1_COD
+
+3.5 Produto e complemento fiscal
+
+SB1010.B1_COD = SB5010.B5_COD
+
+======================================================================
+4. CONVERSÃO PRODUTIVA — QUANTO PRECISA PARA 1 PEÇA
+======================================================================
+
+Passo 1:
+Consultar a unidade do produto pai na SB1010.
+
+Campo:
+B1_UM
+
+Passo 2:
+Consultar a estrutura do produto na SG1010.
+
+Campos:
+G1_COD, G1_COMP, G1_QUANT
+
+Passo 3:
+Consultar a unidade dos componentes na SB1010.
+
+Campos:
+B1_UM, B1_SEGUM, B1_CONV, B1_TIPCONV
+
+Passo 4:
+Normalizar a quantidade para 1 peça.
+
+Regra:
+
+Se o produto pai está em MI:
+    necessidade para 1 peça = quantidade da estrutura / 1000
+
+Se o produto pai está em PC ou UN:
+    necessidade para 1 peça = quantidade da estrutura
+
+Exemplos:
+
+PA em MI:
+1000 PC na estrutura
+
+Cálculo:
+1000 / 1000 = 1 PC por peça
+
+PA em MI:
+2 MI na estrutura (componente intermediário também em MI)
+
+Cálculo:
+2 MI = 2000 peças
+2000 / 1000 = 2 peças por PA (milheiro)
+
+PA em PC:
+2 PC na estrutura
+
+Cálculo:
+2 / 1 = 2 PC por PA
+
+======================================================================
+5. EXEMPLO REAL — PRODUTO 90260882
+======================================================================
+
+Produto:
+90260882
+
+Descrição:
+PROTETOR TERM CABO 145 C NF 7AM/CD79
+
+Tipo:
+PA
+
+Unidade:
+MI
+
+Estrutura retornada:
+
+Nível 0:
+Código: 90260882
+Descrição: PROTETOR TERM CABO 145 C NF 7AM/CD79
+Unidade: MI
+Quantidade: 1
+
+Nível 1:
+Código: 50250258
+Descrição: CONJUNTO TERMOSTATO 90260882
+Unidade: MI
+Quantidade: 1
+
+Nível 2:
+Código: 10080626
+Descrição: PROTETOR TERMICO 145 C - CADFREE
+Unidade: PC
+Quantidade: 1000
+
+Nível 2:
+Código: 10090482
+Descrição: LUVA TERMO ENCOLHIVEL
+Unidade: PC
+Quantidade: 1000
+
+Nível 2:
+Código: 50213309
+Descrição: CB18PRET-00063/10/03-0000-0000
+Unidade: MI
+Quantidade: 2
+
+Nível 3:
+Código: 10380035
+Descrição: CABO EPR 125/150 C 18AWG PT 600V
+Unidade: MT
+Quantidade: 63
+
+Como o PA está em MI, a estrutura representa 1 milheiro, ou seja, 1000 peças.
+
+Cálculo para 1 peça do 90260882:
+
+Componente 10080626:
+
+1000 PC para 1 MI
+1000 / 1000 = 1 PC por peça
+
+Resultado:
+Para produzir 1 peça do 90260882, precisa de 1 PC do 10080626.
+
+Componente 10090482:
+
+1000 PC para 1 MI
+1000 / 1000 = 1 PC por peça
+
+Resultado:
+Para produzir 1 peça do 90260882, precisa de 1 PC do 10090482.
+
+Intermediário 50213309:
+
+2 MI para 1 MI do PA
+2 MI = 2000 peças do intermediário
+
+2000 / 1000 = 2 peças por PA
+
+Resultado:
+Para produzir 1 peça do 90260882, precisa de 2 peças do 50213309.
+
+Cabo 10380035 dentro do 50213309:
+
+63 MT para 1 MI do 50213309
+
+1 MI = 1000 peças
+
+63 MT / 1000 = 0,063 MT por peça do 50213309
+
+Como o PA usa 2 peças do 50213309:
+
+0,063 MT × 2 = 0,126 MT
+
+Convertendo para milímetros:
+
+0,126 MT × 1000 = 126 mm
+
+Resultado:
+Para produzir 1 peça do 90260882, precisa de 0,126 MT ou 126 mm do cabo 10380035.
+
+Resumo para 1 peça do 90260882:
+
+10080626 = 1 PC
+10090482 = 1 PC
+50213309 = 2 PC
+10380035 = 0,126 MT ou 126 mm
+
+Produto homologado similar (simulador de custo): 90261255 (PA, MI).
+
+======================================================================
+6. CONVERSÃO FISCAL
+======================================================================
+
+A conversão fiscal é usada para NF-e, DIPI ou unidade tributável.
+
+Não confundir com conversão produtiva.
+
+Produção:
+Fonte = SG1010 + SB1010
+
+Fiscal:
+Fonte = SB5010
+
+Fórmula:
+
+Quantidade fiscal = quantidade comercial × B5_CONVDIP
+
+Exemplo:
+
+Produto comercializado em MI
+Unidade fiscal = UN
+Fator fiscal = 1000
+
+Quantidade comercial = 0,5 MI
+
+Cálculo:
+
+0,5 × 1000 = 500 UN
+
+Resultado fiscal:
+
+Unidade comercial = MI
+Quantidade comercial = 0,5
+Unidade fiscal = UN
+Quantidade fiscal = 500
+
+======================================================================
+7. FÓRMULAS PRÁTICAS
+======================================================================
+
+7.1 Converter MI para PC ou UN
+
+Qtd_PC = Qtd_MI × 1000
+
+Exemplos:
+
+1 MI = 1000 PC
+0,5 MI = 500 PC
+0,001 MI = 1 PC
+
+7.2 Converter PC ou UN para MI
+
+Qtd_MI = Qtd_PC / 1000
+
+Exemplos:
+
+1000 PC = 1 MI
+500 PC = 0,5 MI
+1 PC = 0,001 MI
+
+7.3 Converter metro para milímetro
+
+Qtd_MM = Qtd_MT × 1000
+
+Exemplo:
+
+0,126 MT × 1000 = 126 mm
+
+7.4 Converter milímetro para metro
+
+Qtd_MT = Qtd_MM / 1000
+
+Exemplo:
+
+126 mm / 1000 = 0,126 MT
+
+7.5 Relação entre «1 peça» e «1 PA em MI»
+
+1 PA (unidade MI) = 1 MI = 1000 peças
+
+Qtd_por_1_peça = Qtd_por_1_MI / 1000
+Qtd_por_1_MI   = Qtd_por_1_peça × 1000
+
+======================================================================
+8. SQL MODELO — CONSULTAR UNIDADE DO PRODUTO
+======================================================================
+
+SELECT
+    B1_COD,
+    B1_DESC,
+    B1_TIPO,
+    B1_UM,
+    B1_SEGUM,
+    B1_CONV,
+    B1_TIPCONV,
+    B1_UM3,
+    B1_CONV3
+FROM SB1010
+WHERE D_E_L_E_T_ = ''
+  AND B1_COD = '90260882';
+
+======================================================================
+9. SQL MODELO — LISTAR ESTRUTURA COM UNIDADES
+======================================================================
+
+SELECT
+    E.G1_COD        AS PRODUTO_PAI,
+    PAI.B1_DESC     AS DESC_PAI,
+    PAI.B1_UM       AS UM_PAI,
+    E.G1_COMP       AS COMPONENTE,
+    COMP.B1_DESC    AS DESC_COMPONENTE,
+    COMP.B1_UM      AS UM_COMPONENTE,
+    COMP.B1_SEGUM   AS SEGUNDA_UM,
+    COMP.B1_CONV    AS FATOR_CONVERSAO,
+    COMP.B1_TIPCONV AS TIPO_CONVERSAO,
+    E.G1_QUANT      AS QTD_ESTRUTURA
+FROM SG1010 E
+INNER JOIN SB1010 PAI
+    ON PAI.B1_COD = E.G1_COD
+   AND PAI.D_E_L_E_T_ = ''
+INNER JOIN SB1010 COMP
+    ON COMP.B1_COD = E.G1_COMP
+   AND COMP.D_E_L_E_T_ = ''
+WHERE
+    E.D_E_L_E_T_ = ''
+    AND E.G1_COD = '90260882';
+
+Preferir rota: GET /products/90260882/structure
+
+======================================================================
+10. SQL MODELO — NECESSIDADE PARA 1 PEÇA (PA EM MI)
+======================================================================
+
+SELECT
+    E.G1_COD AS PRODUTO_PAI,
+    PAI.B1_DESC AS DESC_PAI,
+    PAI.B1_UM AS UM_PAI,
+    E.G1_COMP AS COMPONENTE,
+    COMP.B1_DESC AS DESC_COMPONENTE,
+    COMP.B1_UM AS UM_COMPONENTE,
+    E.G1_QUANT AS QTD_PARA_1_MI,
+    CASE
+        WHEN PAI.B1_UM = 'MI'
+            THEN E.G1_QUANT / 1000.0
+        ELSE E.G1_QUANT
+    END AS QTD_PARA_1_PECA
+FROM SG1010 E
+INNER JOIN SB1010 PAI
+    ON PAI.B1_COD = E.G1_COD
+   AND PAI.D_E_L_E_T_ = ''
+INNER JOIN SB1010 COMP
+    ON COMP.B1_COD = E.G1_COMP
+   AND COMP.D_E_L_E_T_ = ''
+WHERE
+    E.D_E_L_E_T_ = ''
+    AND E.G1_COD = '90260882';
+
+======================================================================
+11. SQL MODELO — CONVERSÃO FISCAL
+======================================================================
+
+SELECT
+    P.B1_COD,
+    P.B1_DESC,
+    P.B1_UM       AS UM_COMERCIAL,
+    F.B5_UMDIPI   AS UM_FISCAL,
+    F.B5_CONVDIP  AS FATOR_FISCAL,
+    1 AS QTD_COMERCIAL,
+    CASE
+        WHEN ISNULL(F.B5_CONVDIP, 0) > 0
+            THEN 1 * F.B5_CONVDIP
+        ELSE 1
+    END AS QTD_FISCAL
+FROM SB1010 P
+LEFT JOIN SB5010 F
+    ON F.B5_COD = P.B1_COD
+   AND F.D_E_L_E_T_ = ''
+WHERE
+    P.D_E_L_E_T_ = ''
+    AND P.B1_COD = '90260882';
+
+======================================================================
+12. SQL MODELO — OP COM CONSUMO E UNIDADE DO ITEM
+======================================================================
+
+SELECT
+    OP.C2_FILIAL,
+    OP.C2_OP,
+    OP.C2_PRODUTO,
+    PROD.B1_DESC AS DESC_PRODUTO,
+    OP.C2_QUANT AS QTD_PLANEJADA,
+    OP.C2_QUJE AS QTD_PRODUZIDA,
+    OP.C2_UM AS UM_OP,
+    C.D4_COD AS ITEM_CONSUMIDO,
+    ITEM.B1_DESC AS DESC_ITEM,
+    ITEM.B1_UM AS UM_ITEM,
+    C.D4_QUANT AS QTD_CONSUMIDA,
+    C.D4_QTNECES AS QTD_NECESSARIA
+FROM SC2010 OP
+INNER JOIN SD4010 C
+    ON C.D4_FILIAL = OP.C2_FILIAL
+   AND C.D4_OP = OP.C2_OP
+   AND C.D_E_L_E_T_ = ''
+INNER JOIN SB1010 PROD
+    ON PROD.B1_COD = OP.C2_PRODUTO
+   AND PROD.D_E_L_E_T_ = ''
+INNER JOIN SB1010 ITEM
+    ON ITEM.B1_COD = C.D4_COD
+   AND ITEM.D_E_L_E_T_ = ''
+WHERE
+    OP.D_E_L_E_T_ = ''
+    AND OP.C2_OP = 'NUMERO_DA_OP';
+
+Preferir rota: GET /products/{code}/production-status
+
+======================================================================
+13. ERROS COMUNS
+======================================================================
+
+Erro 1:
+Usar somente SG1010 e ignorar a unidade do PA.
+
+Consequência:
+Consumo fica 1000 vezes maior ou menor.
+
+Erro 2:
+Tratar MI como PC.
+
+Consequência:
+Necessidade de material fica errada.
+
+Erro 3:
+Usar B1_CONV para fiscal sem verificar SB5010.
+
+Consequência:
+NF pode sair com unidade tributável incorreta.
+
+Erro 4:
+Usar SB5010 para cálculo de produção.
+
+Consequência:
+Mistura regra fiscal com regra produtiva.
+
+Erro 5:
+Não filtrar D_E_L_E_T_ = ''.
+
+Consequência:
+Consulta pode trazer registros excluídos logicamente.
+
+Erro 6:
+Não verificar unidade do componente.
+
+Consequência:
+Metro, peça e milheiro podem ser convertidos de forma errada.
+
+Erro 7:
+Dividir tudo por 1000 sem verificar a unidade do pai.
+
+Consequência:
+Produtos em PC ou UN ficam errados.
+
+Erro 8:
+Confundir «1 peça» com «1 PA (1 MI)» nas rotas da api-delpi.
+
+Consequência:
+Usuário pede simulação «por milheiro» e o agente divide por 1000 de novo,
+ou pede «por peça» e o agente usa quantity_per_pa sem converter.
+
+======================================================================
+14. REGRA FINAL — ORDEM DE VALIDAÇÃO
+======================================================================
+
+1. Produto existe e está ativo?
+   Consultar SB1010 ou GET /products/{code}/analyser
+
+2. Qual é a unidade do produto pai?
+   Consultar SB1010.B1_UM
+
+3. Qual é a estrutura real?
+   Consultar SG1010 ou GET /products/{code}/structure
+
+4. Qual é a unidade de cada componente?
+   Consultar SB1010.B1_UM
+
+5. Existe segunda unidade ou fator?
+   Consultar SB1010.B1_SEGUM, B1_CONV e B1_TIPCONV
+
+6. A conversão é fiscal?
+   Consultar SB5010.B5_UMDIPI e SB5010.B5_CONVDIP
+
+7. A análise é de consumo real de OP?
+   Consultar SC2010 + SD4010 + SB1010
+   ou GET /products/{code}/production-status
+
+8. A pergunta é sobre impacto de custo ou ranking de MPs?
+   GET /products/{code}/cost-impact-simulation
+   (somente PA; ver seção 16)
+
+======================================================================
+15. RESUMO ABSOLUTO
+======================================================================
+
+Para produção:
+    Use SG1010 + SB1010.
+
+Para conversão de unidade cadastrada:
+    Use SB1010.
+
+Para fiscal / DIPI / NF-e:
+    Use SB5010.
+
+Para OP e consumo real:
+    Use SC2010 + SD4010 + SB1010.
+
+Para MI:
+    1 MI = 1000 peças.
+
+Para MT:
+    1 MT = 1000 mm.
+
+Para calcular 1 peça quando a estrutura está em MI:
+    quantidade_para_1_peça = quantidade_da_estrutura / 1000.
+
+Para calcular unidade fiscal:
+    quantidade_fiscal = quantidade_comercial × B5_CONVDIP.
+
+======================================================================
+16. ROTAS API-DELPI — CONVENÇÃO «POR 1 PA» (NÃO «POR 1 PEÇA»)
+======================================================================
+
+As rotas de playbook de produto na api-delpi usam o serviço canônico
+ProductPaBomReferenceService (perfil em product_pa_bom_reference.json).
+
+Convenção da plataforma para PA com B1_UM = MI:
+
+- reference_unit = PA
+- catalog_unit = MI
+- catalog_quantity_per_reference = 1
+- bomQuantityFactor = 1
+
+Interpretação:
+
+- A BOM (SG1010) já expressa quantidades para montar **1 milheiro** (1 MI).
+- quantity_required_for_one_pa / quantity_per_pa = quantidade acumulada na BOM
+  × bomQuantityFactor (1 para MI — **sem** dividir por 1000).
+- B1_CUSTD do PA está na unidade MI.
+- Custo estendido da MP = quantity_per_pa × custo unitário da MP (na UM da MP).
+
+Conversão entre bases:
+
+    quantity_per_1_peça = quantity_per_pa / 1000     (quando PA em MI)
+    quantity_per_pa     = quantity_per_1_peça × 1000
+
+----------------------------------------------------------------------
+16.1 GET /products/{code}/cost-impact-simulation
+----------------------------------------------------------------------
+
+operationId: get_product_cost_impact_simulation
+
+Quando usar:
+- «Quais materiais mais impactam o custo do PA …?»
+- «Simule aumento de 10% nos materiais desse produto»
+
+Parâmetros:
+- adjustment_percent=10   (simulação +10%)
+- price_source=standard_cost | last_purchase
+- top_n=N                 (limitar ranking)
+- max_depth=50
+
+Restrição: somente produto tipo PA.
+
+Resposta inclui pa_reference explicando a base MI.
+
+Exemplo homologado: PA 90261255 (CHICOTE PA, unidade MI).
+
+Fórmulas na rota:
+
+    extended_cost = quantity_per_pa × unit_cost
+    impacto % materiais = extended_cost / Σ(extended_cost) × 100
+    simulação: unit_cost × (1 + adjustment_percent/100)
+
+----------------------------------------------------------------------
+16.2 GET /products/{code}/structure e /structure/exclusivity
+----------------------------------------------------------------------
+
+Retornam árvore BOM com G1_QUANT acumulado e unidades (B1_UM) de pai e filho.
+
+Quantidades na resposta seguem a mesma base «por 1 PA» (1 MI quando B1_UM=MI).
+
+Para responder «quanto por peça», aplicar ÷1000 **depois** de ler a resposta,
+quando o PA estiver em MI.
+
+----------------------------------------------------------------------
+16.3 GET /products/{code}/stock
+----------------------------------------------------------------------
+
+Campo quantity_required_for_one_pa = necessidade de MP para **1 PA** (1 MI),
+não para 1 peça isolada.
+
+has_stock_for_one_pa compara estoque disponível com essa necessidade por PA.
+
+----------------------------------------------------------------------
+16.4 Perguntas típicas → rota
+----------------------------------------------------------------------
+
+| Pergunta do usuário                              | Rota / params                          |
+|--------------------------------------------------|----------------------------------------|
+| Estrutura / BOM / componentes                    | GET …/structure                        |
+| MPs exclusivas desse PA                          | GET …/structure/exclusivity            |
+| Materiais que mais impactam custo                | GET …/cost-impact-simulation           |
+| Simular +10% no custo dos materiais              | …?adjustment_percent=10                |
+| Quanto de MP X para 1 peça (PA em MI)            | structure → qty / 1000                 |
+| Quanto de MP X para 1 milheiro                   | structure ou cost-impact (qty direta)  |
+| Consumo real da OP                               | production-status ou SQL SC2010+SD4010 |
+| Unidade fiscal na NF                             | SB5010 — não usar rota de estrutura    |
+
+======================================================================
+17. CHECKLIST PARA O AGENTE
+======================================================================
+
+Antes de responder sobre quantidade ou custo:
+
+[ ] Identifiquei se o usuário quer **1 peça**, **1 MI (milheiro)** ou **1 PA**?
+[ ] Verifiquei B1_UM do produto pai (MI vs PC vs UN)?
+[ ] Separei contexto **produtivo** (SG1010) de **fiscal** (SB5010)?
+[ ] Usei rota REST quando existir (structure, cost-impact-simulation)?
+[ ] Se PA em MI e pergunta for «por peça», dividi por 1000 **após** ler a API?
+[ ] Se PA em MI e pergunta for simulador/custo total, **não** dividi por 1000?
+[ ] Filtrei D_E_L_E_T_ = '' e vigência G1_FIM em consultas SQL?
+
+FIM DO TUTORIAL

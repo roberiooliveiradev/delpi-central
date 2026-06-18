@@ -24,6 +24,19 @@ quantidade acumulada da MP na BOM vigente (por 1 PA)
 
 Ranking: ordenar por `extended_cost` decrescente.
 
+### 2.1 PA em MI (milheiro)
+
+Produtos PA com `B1_UM = MI` seguem a convenção DELPI **1 MI = 1000 peças**. Na api-delpi:
+
+- A BOM (`SG1010`) expressa quantidades para **1 milheiro** (1 PA em MI).
+- `quantity_per_pa` = quantidade acumulada na explosão **sem** ÷1000 (`ProductPaBomReferenceService`, `bomQuantityFactor = 1`).
+- A resposta inclui `pa_reference` (`reference_unit: PA`, `catalog_unit: MI`).
+- `B1_CUSTD` do PA está **por MI**.
+
+Para necessidade **por 1 peça** (engenharia manual): `quantity_per_pa / 1000`.
+
+Documentação completa: [`playbook-conversao-unidades-protheus.md`](./playbook-conversao-unidades-protheus.md).
+
 ---
 
 ## 3. Rota implementada
@@ -109,7 +122,7 @@ curl -s ".../cost-impact-simulation?adjustment_percent=10&price_source=last_purc
 
 ---
 
-## 8. Integração chat (futuro)
+## 8. Integração chat
 
 Intenções sugeridas:
 
@@ -117,4 +130,6 @@ Intenções sugeridas:
 - «Simule aumento de 10% nos materiais do produto 90261255»
 - «Ranking Pareto de matérias-primas do PA 90261255»
 
-Rota: `get_product_cost_impact_simulation` · presenter `composite_analysis`.
+Rota: `get_product_cost_impact_simulation` · presenter `composite_analysis` · perfil `product_cost_impact_simulation`.
+
+Knowledge RAG: `produto-conversao-unidades-protheus.txt` + `sql-playbook-simulador-impacto-custos-pa.txt`.
