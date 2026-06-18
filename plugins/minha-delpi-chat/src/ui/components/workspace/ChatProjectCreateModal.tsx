@@ -1,5 +1,5 @@
 import { Folder, Lightbulb, Plus, Settings, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { ChatProject } from "../../../data/api/chatTypes";
 
@@ -13,6 +13,7 @@ type ChatProjectCreateModalProps = {
     name: string;
     description?: string | null;
     instructions?: string | null;
+    shareConversationContext?: boolean;
   }) => Promise<ChatProject | null>;
   onSelectProject?: (projectId: string | null) => void;
 };
@@ -23,12 +24,32 @@ export function ChatProjectCreateModal({
   onCreateProject,
   onSelectProject,
 }: ChatProjectCreateModalProps) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [instructions, setInstructions] = useState("");
+  const [shareConversationContext, setShareConversationContext] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const canSubmit = name.trim().length >= 2 && !isSaving;
+
+  function openMoreOptions() {
+    if (detailsRef.current) {
+      detailsRef.current.open = true;
+      detailsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+
+  function resetForm() {
+    setName("");
+    setDescription("");
+    setInstructions("");
+    setShareConversationContext(false);
+
+    if (detailsRef.current) {
+      detailsRef.current.open = false;
+    }
+  }
 
   async function handleSubmit() {
     if (!canSubmit) {
@@ -42,15 +63,14 @@ export function ChatProjectCreateModal({
         name: name.trim(),
         description: description.trim() || null,
         instructions: instructions.trim() || null,
+        shareConversationContext,
       });
 
       if (project) {
         onSelectProject?.(project.id);
       }
 
-      setName("");
-      setDescription("");
-      setInstructions("");
+      resetForm();
       onClose();
     } finally {
       setIsSaving(false);
@@ -69,7 +89,13 @@ export function ChatProjectCreateModal({
         <h2>Criar projeto</h2>
 
         <div>
-          <button type="button" aria-label="Configurações de memória" title="Em breve">
+          <button
+            type="button"
+            aria-label="Mais opções"
+            title="Mais opções"
+            aria-expanded={detailsRef.current?.open ?? false}
+            onClick={openMoreOptions}
+          >
             <Settings size={19} aria-hidden="true" />
           </button>
 
@@ -98,7 +124,7 @@ export function ChatProjectCreateModal({
         </span>
       </label>
 
-      <details className="mdc-chat-project-create-modal__details">
+      <details ref={detailsRef} className="mdc-chat-project-create-modal__details">
         <summary>Mais opções</summary>
         <div className="mdc-chat-project-create-modal__details-body">
           <label className="mdc-chat-project-create-modal__field">
@@ -118,6 +144,20 @@ export function ChatProjectCreateModal({
               placeholder="Contexto e regras usadas nas conversas deste projeto..."
               rows={4}
             />
+          </label>
+
+          <label className="mdc-chat-ws-checkbox-row mdc-chat-project-create-modal__toggle">
+            <input
+              type="checkbox"
+              checked={shareConversationContext}
+              onChange={(event) => setShareConversationContext(event.target.checked)}
+            />
+            <span>
+              <strong>Compartilhar contexto entre conversas</strong>
+              <small>
+                Resumos de outras conversas deste projeto podem orientar novas mensagens.
+              </small>
+            </span>
           </label>
         </div>
       </details>

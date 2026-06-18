@@ -130,20 +130,35 @@ class UpdateChatProjectUseCase:
                 share_conversation_context=request.share_conversation_context,
             )
 
+        update_fields: dict = {
+            "name": _validate_text(request.name, 120) if request.name is not None else None,
+            "description": _validate_text(request.description, 500)
+            if request.description is not None
+            else None,
+            "instructions": _validate_text(request.instructions, 12000)
+            if request.instructions is not None
+            else None,
+            "visibility": request.visibility,
+            "icon": _validate_text(request.icon, 60) if request.icon is not None else None,
+            "color": _validate_text(request.color, 40) if request.color is not None else None,
+            "project_metadata": project_metadata,
+            "archived": request.archived,
+        }
+
+        apply_null: set[str] = set()
+
+        if request.explicit_default_agent_id:
+            if request.default_agent_id:
+                update_fields["default_agent_id"] = _parse_optional_uuid(request.default_agent_id)
+            else:
+                update_fields["default_agent_id"] = None
+                apply_null.add("default_agent_id")
+
         project = self.repository.update(
             project_id=UUID(request.project_id),
             user_id=UUID(request.user_id),
-            name=_validate_text(request.name, 120) if request.name is not None else None,
-            description=_validate_text(request.description, 500) if request.description is not None else None,
-            instructions=_validate_text(request.instructions, 12000) if request.instructions is not None else None,
-            default_agent_id=_parse_optional_uuid(request.default_agent_id)
-            if request.default_agent_id is not None
-            else None,
-            visibility=request.visibility,
-            icon=_validate_text(request.icon, 60) if request.icon is not None else None,
-            color=_validate_text(request.color, 40) if request.color is not None else None,
-            project_metadata=project_metadata,
-            archived=request.archived,
+            apply_null=frozenset(apply_null),
+            **update_fields,
         )
 
         if not project:

@@ -106,21 +106,54 @@ export function formatComposerMentionToken(name: string): string {
   return `@[${String(name).trim()}] `;
 }
 
+/** Remove a query `@…` ativa sem inserir token — o contexto fica nos badges do composer. */
+export function clearComposerMentionQuery(input: {
+  value: string;
+  cursor: number;
+  mentionStart: number;
+}): { value: string; cursor: number } {
+  const before = input.value.slice(0, input.mentionStart);
+  const after = input.value.slice(input.cursor);
+  const value = `${before}${after}`;
+
+  return {
+    value,
+    cursor: before.length,
+  };
+}
+
 export function applyComposerMentionSelection(input: {
   value: string;
   cursor: number;
   mentionStart: number;
   candidate: ComposerMentionCandidate;
 }): { value: string; cursor: number } {
-  const before = input.value.slice(0, input.mentionStart);
-  const after = input.value.slice(input.cursor);
-  const token = formatComposerMentionToken(input.candidate.name);
-  const value = `${before}${token}${after}`;
+  return clearComposerMentionQuery({
+    value: input.value,
+    cursor: input.cursor,
+    mentionStart: input.mentionStart,
+  });
+}
 
-  return {
-    value,
-    cursor: before.length + token.length,
-  };
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Remove tokens `@[Nome]` legados do rascunho (badges substituem o texto inline). */
+export function stripComposerMentionTokens(value: string): string {
+  return value.replace(MENTION_TOKEN_PATTERN, "");
+}
+
+export function removeComposerMentionTokenForName(value: string, name: string): string {
+  const trimmed = String(name ?? "").trim();
+
+  if (!trimmed) {
+    return value;
+  }
+
+  const pattern = new RegExp(`@\\[${escapeRegExp(trimmed)}\\]\\s*`, "g");
+
+  return value.replace(pattern, "");
 }
 
 function resolveCandidateByName(

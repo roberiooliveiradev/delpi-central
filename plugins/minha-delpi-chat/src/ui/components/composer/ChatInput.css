@@ -480,7 +480,12 @@
   }
 }
 
-/* Indicadores de agente/projeto usados no contexto do composer */
+/* Badges de agente/projeto na área da pergunta */
+.mdc-chat-input__box--with-context-badges .mdc-auto-grow-textarea {
+  padding-top: 0.15rem;
+}
+
+/* Legado — pills no topo (substituídas por badges no composer-field) */
 .mdc-chat-input__box--with-agent {
   padding-top: 0.45rem;
 }

@@ -86,6 +86,8 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
         self,
         project_id: UUID,
         user_id: UUID,
+        *,
+        apply_null: frozenset[str] | None = None,
         **fields,
     ) -> ChatProject | None:
         model = AiChatProjectModel.query.filter(AiChatProjectModel.id == project_id).first()
@@ -93,6 +95,7 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
         if not model or not self._can_edit(model, user_id):
             return None
 
+        nullable_fields = apply_null or frozenset()
         archived = fields.pop("archived", None)
 
         if archived is True:
@@ -101,7 +104,10 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
             model.archived_at = None
 
         for key, value in fields.items():
-            if value is not None and hasattr(model, key):
+            if value is None and key not in nullable_fields:
+                continue
+
+            if hasattr(model, key):
                 setattr(model, key, value)
 
         db.session.flush()

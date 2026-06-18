@@ -20,6 +20,7 @@
   padding-top: clamp(1.25rem, 4vh, 2.75rem);
   padding-bottom: var(--mdc-space-4);
   gap: var(--mdc-space-4);
+  overflow: visible;
 }
 
 .mdc-chat-project-home__tab-panel {
@@ -105,6 +106,8 @@
 .mdc-chat-project-home__composer {
   width: 100%;
   max-width: none;
+  overflow: visible;
+  padding-bottom: clamp(2.25rem, 4vh, 3.25rem);
 }
 
 .mdc-chat-project-home__composer .mdc-chat-input {
@@ -116,6 +119,8 @@
   gap: var(--mdc-space-3);
   width: 100%;
   min-height: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .mdc-chat-project-home__toolbar {
@@ -566,7 +571,7 @@
   font-weight: 700;
 }
 
-.mdc-chat-project-settings input,
+.mdc-chat-project-settings input:not([type="checkbox"]),
 .mdc-chat-project-settings textarea,
 .mdc-chat-project-settings select {
   width: 100%;
@@ -579,12 +584,12 @@
   outline: none;
 }
 
-.mdc-chat-project-settings input::placeholder,
+.mdc-chat-project-settings input:not([type="checkbox"])::placeholder,
 .mdc-chat-project-settings textarea::placeholder {
   color: var(--mdc-control-placeholder);
 }
 
-.mdc-chat-project-settings input:focus,
+.mdc-chat-project-settings input:not([type="checkbox"]):focus,
 .mdc-chat-project-settings textarea:focus,
 .mdc-chat-project-settings select:focus {
   border-color: color-mix(in srgb, var(--mdc-primary) 52%, var(--mdc-control-border));
@@ -602,34 +607,14 @@
 }
 
 .mdc-chat-project-settings__toggle {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
   padding: 0.75rem 0.85rem;
   border-radius: 0.75rem;
   border: 1px solid color-mix(in srgb, var(--mdc-border) 85%, transparent);
   background: color-mix(in srgb, var(--mdc-surface-elevated) 70%, transparent);
-  cursor: pointer;
-}
-
-.mdc-chat-project-settings__toggle input {
-  margin-top: 0.2rem;
-  flex-shrink: 0;
 }
 
 .mdc-chat-project-settings__toggle strong {
-  display: block;
-  color: var(--mdc-text);
-  font-size: 0.88rem;
-  font-weight: 700;
   margin-bottom: 0.25rem;
-}
-
-.mdc-chat-project-settings__toggle small {
-  display: block;
-  color: var(--mdc-text-muted);
-  font-size: 0.78rem;
-  line-height: 1.45;
 }
 
 .mdc-chat-project-settings__link {

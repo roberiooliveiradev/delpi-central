@@ -20,6 +20,7 @@ import {
 import { ChatMessageList } from "../components/message";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/workspace";
+import { ChatProjectSettingsModal } from "../components/workspace/ChatProjectSettingsModal";
 import { useConfirmDialog, usePromptDialog, useAlertDialog } from "../components/shared";
 import { setChatAlertHandler } from "../utils/chatNativeDialogs";
 import {
@@ -2065,6 +2066,20 @@ export function ChatPage({
     setContextAgentIds((current) => toggleContextId(current, agentId, MAX_COMPOSER_AGENTS));
   }
 
+  function handleUseAgentInProject(agentId: string | null) {
+    if (!agentId) {
+      const activeContextAgentId = contextAgentIds[0] ?? activeSession?.agent_id ?? null;
+
+      if (activeContextAgentId) {
+        handleRemoveContextAgent(activeContextAgentId);
+      }
+
+      return;
+    }
+
+    handleToggleContextAgent(agentId);
+  }
+
   function handleToggleContextProject(projectId: string) {
     setRemovedComposerProjectIds((current) => removeContextId(current, projectId));
     setContextProjectIds((current) =>
@@ -2089,9 +2104,9 @@ export function ChatPage({
   const composerContextProps = {
     agents,
     projects,
-    selectedAgentIds: contextAgentIds,
-    selectedProjectIds: contextProjectIds,
-    contextBarItems: composerContextBarItems,
+    selectedAgentIds: effectiveAgentIds,
+    selectedProjectIds: effectiveProjectIds,
+    contextBadgeItems: composerContextBarItems,
     onToggleAgent: handleToggleContextAgent,
     onRemoveContextAgent: handleRemoveContextAgent,
     onOpenAgentPage: (agentId: string) => {
@@ -2629,7 +2644,7 @@ export function ChatPage({
                   }}
                   onUpdateProject={editProject}
                   getAccessToken={getAccessToken}
-                  onUseAgent={handleToggleContextAgent}
+                  onUseAgent={handleUseAgentInProject}
                   onOpenAgentPage={(agentId) => {
                     const agent = agents.find((item) => item.id === agentId);
 
@@ -2853,6 +2868,33 @@ export function ChatPage({
       </section>
 
       <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
+
+      {selectedProject && projectSettingsOpen && !isConversationEmpty ? (
+        <ChatProjectSettingsModal
+          project={selectedProject}
+          open={projectSettingsOpen}
+          onClose={() => closeProjectConfig(selectedProject.id)}
+          onUpdateProject={editProject}
+          onDeleteProject={async (projectId) => {
+            const deleted = await removeProject(projectId);
+
+            if (deleted) {
+              setSelectedProjectId(null);
+              clearComposerOverlayContext();
+              await handleStartSession();
+            }
+
+            return deleted;
+          }}
+          onClearProject={() => {
+            setSelectedProjectId(null);
+            clearComposerOverlayContext();
+            navigateChatHref(buildChatHref({ kind: "home" }));
+            void handleStartSession();
+          }}
+          getAccessToken={getAccessToken}
+        />
+      ) : null}
 
       {isMobileSidebarOpen ? (
         <div

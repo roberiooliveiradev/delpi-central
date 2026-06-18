@@ -224,6 +224,17 @@ def update_project(project_id: str):
 
     use_case = make_update_chat_project_use_case()
 
+    explicit_default_agent_id = (
+        "defaultAgentId" in payload or "default_agent_id" in payload
+    )
+    default_agent_id = (
+        payload.get("defaultAgentId")
+        if "defaultAgentId" in payload
+        else payload.get("default_agent_id")
+        if "default_agent_id" in payload
+        else None
+    )
+
     try:
         result = use_case.execute(
             UpdateChatProjectRequest(
@@ -232,7 +243,8 @@ def update_project(project_id: str):
                 name=payload.get("name"),
                 description=payload.get("description"),
                 instructions=payload.get("instructions"),
-                default_agent_id=payload.get("defaultAgentId") or payload.get("default_agent_id"),
+                default_agent_id=default_agent_id,
+                explicit_default_agent_id=explicit_default_agent_id,
                 visibility=payload.get("visibility"),
                 icon=payload.get("icon"),
                 color=payload.get("color"),

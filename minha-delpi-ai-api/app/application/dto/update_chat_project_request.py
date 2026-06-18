@@ -9,6 +9,7 @@ class UpdateChatProjectRequest:
     description: str | None = None
     instructions: str | None = None
     default_agent_id: str | None = None
+    explicit_default_agent_id: bool = False
     visibility: str | None = None
     icon: str | None = None
     color: str | None = None

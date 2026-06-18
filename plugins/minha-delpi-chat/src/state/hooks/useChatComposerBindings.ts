@@ -5,6 +5,8 @@ import { getTypingCorrectionContent } from "../../content/messageComposerContent
 import {
   formatComposerPlaceholderParts,
   resolveComposerContextBarFromLists,
+  resolveEffectiveAgentIds,
+  resolveEffectiveProjectIds,
 } from "../chatComposerContext";
 import type { ChatInputAttachment } from "../../ui/components/composer/ChatInput";
 import { useChatPresentationFormat } from "./useChatPresentationFormat";
@@ -85,20 +87,42 @@ export function useChatComposerBindings({
     getAccessToken,
   });
 
+  const effectiveAgentIds = useMemo(
+    () =>
+      resolveEffectiveAgentIds({
+        pageAgentId,
+        sessionAgentId,
+        contextAgentIds,
+        excludedAgentIds,
+      }),
+    [contextAgentIds, excludedAgentIds, pageAgentId, sessionAgentId],
+  );
+
+  const effectiveProjectIds = useMemo(
+    () =>
+      resolveEffectiveProjectIds({
+        pageProjectId,
+        sessionProjectId,
+        contextProjectIds,
+        excludedProjectIds,
+      }),
+    [contextProjectIds, excludedProjectIds, pageProjectId, sessionProjectId],
+  );
+
   const effectiveComposerProjects = useMemo(
     () =>
-      contextProjectIds
+      effectiveProjectIds
         .map((id) => projects.find((project) => project.id === id))
         .filter((project): project is ChatProject => Boolean(project)),
-    [contextProjectIds, projects],
+    [effectiveProjectIds, projects],
   );
 
   const effectiveComposerAgents = useMemo(
     () =>
-      contextAgentIds
+      effectiveAgentIds
         .map((id) => agents.find((agent) => agent.id === id))
         .filter((agent): agent is ChatAgent => Boolean(agent)),
-    [agents, contextAgentIds],
+    [agents, effectiveAgentIds],
   );
 
   const placeholder = useMemo(() => {
@@ -211,9 +235,9 @@ export function useChatComposerBindings({
     composerContextProps: {
       agents,
       projects,
-      selectedAgentIds: contextAgentIds,
-      selectedProjectIds: contextProjectIds,
-      contextBarItems: composerContextBarItems,
+      selectedAgentIds: effectiveAgentIds,
+      selectedProjectIds: effectiveProjectIds,
+      contextBadgeItems: composerContextBarItems,
       onToggleAgent,
       onRemoveContextAgent,
       onOpenAgentPage,
