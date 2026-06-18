@@ -1,20 +1,18 @@
-import { Folder, Lightbulb, Plus, Settings, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { Plus, X } from "lucide-react";
+import { useState } from "react";
 
-import type { ChatProject } from "../../../data/api/chatTypes";
+import type { ChatProject, CreateChatProjectPayload } from "../../../data/api/chatTypes";
 
 import { ChatModal } from "../shared/modal/ChatModal";
 import "./ChatProjectCreateModal.css";
 
+const PROJECT_ICON_OPTIONS = ["📁", "📊", "🏭", "🔬", "✅", "🎯", "📦", "💡", "🛠️", "📋"] as const;
+const DEFAULT_PROJECT_ICON = PROJECT_ICON_OPTIONS[0];
+
 type ChatProjectCreateModalProps = {
   open: boolean;
   onClose: () => void;
-  onCreateProject?: (payload: {
-    name: string;
-    description?: string | null;
-    instructions?: string | null;
-    shareConversationContext?: boolean;
-  }) => Promise<ChatProject | null>;
+  onCreateProject?: (payload: CreateChatProjectPayload) => Promise<ChatProject | null>;
   onSelectProject?: (projectId: string | null) => void;
 };
 
@@ -24,31 +22,15 @@ export function ChatProjectCreateModal({
   onCreateProject,
   onSelectProject,
 }: ChatProjectCreateModalProps) {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [shareConversationContext, setShareConversationContext] = useState(false);
+  const [icon, setIcon] = useState<string>(DEFAULT_PROJECT_ICON);
   const [isSaving, setIsSaving] = useState(false);
 
   const canSubmit = name.trim().length >= 2 && !isSaving;
 
-  function openMoreOptions() {
-    if (detailsRef.current) {
-      detailsRef.current.open = true;
-      detailsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }
-
   function resetForm() {
     setName("");
-    setDescription("");
-    setInstructions("");
-    setShareConversationContext(false);
-
-    if (detailsRef.current) {
-      detailsRef.current.open = false;
-    }
+    setIcon(DEFAULT_PROJECT_ICON);
   }
 
   async function handleSubmit() {
@@ -61,9 +43,7 @@ export function ChatProjectCreateModal({
     try {
       const project = await onCreateProject?.({
         name: name.trim(),
-        description: description.trim() || null,
-        instructions: instructions.trim() || null,
-        shareConversationContext,
+        icon: icon.trim() || DEFAULT_PROJECT_ICON,
       });
 
       if (project) {
@@ -88,27 +68,48 @@ export function ChatProjectCreateModal({
       <header>
         <h2>Criar projeto</h2>
 
-        <div>
-          <button
-            type="button"
-            aria-label="Mais opções"
-            title="Mais opções"
-            aria-expanded={detailsRef.current?.open ?? false}
-            onClick={openMoreOptions}
-          >
-            <Settings size={19} aria-hidden="true" />
-          </button>
-
-          <button type="button" onClick={onClose} aria-label="Fechar">
-            <X size={20} aria-hidden="true" />
-          </button>
-        </div>
+        <button type="button" onClick={onClose} aria-label="Fechar">
+          <X size={18} aria-hidden="true" />
+        </button>
       </header>
+
+      <div className="mdc-chat-project-create-modal__field">
+        <span>Ícone</span>
+        <div
+          className="mdc-chat-project-create-modal__icon-grid"
+          role="listbox"
+          aria-label="Ícone do projeto"
+        >
+          {PROJECT_ICON_OPTIONS.map((option) => {
+            const isSelected = icon === option;
+
+            return (
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                className={
+                  isSelected
+                    ? "mdc-chat-project-create-modal__icon-option mdc-chat-project-create-modal__icon-option--active"
+                    : "mdc-chat-project-create-modal__icon-option"
+                }
+                onClick={() => setIcon(option)}
+                title={`Usar ícone ${option}`}
+              >
+                <span aria-hidden="true">{option}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <label className="mdc-chat-project-create-modal__field">
         <span>Nome do projeto</span>
         <span className="mdc-chat-project-create-modal__input-wrap">
-          <Folder size={18} aria-hidden="true" />
+          <span className="mdc-chat-project-create-modal__input-icon" aria-hidden="true">
+            {icon}
+          </span>
           <input
             value={name}
             autoFocus
@@ -124,55 +125,9 @@ export function ChatProjectCreateModal({
         </span>
       </label>
 
-      <details ref={detailsRef} className="mdc-chat-project-create-modal__details">
-        <summary>Mais opções</summary>
-        <div className="mdc-chat-project-create-modal__details-body">
-          <label className="mdc-chat-project-create-modal__field">
-            <span>Descrição</span>
-            <input
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Explique o objetivo deste projeto..."
-            />
-          </label>
-
-          <label className="mdc-chat-project-create-modal__field">
-            <span>Instruções</span>
-            <textarea
-              value={instructions}
-              onChange={(event) => setInstructions(event.target.value)}
-              placeholder="Contexto e regras usadas nas conversas deste projeto..."
-              rows={4}
-            />
-          </label>
-
-          <label className="mdc-chat-ws-checkbox-row mdc-chat-project-create-modal__toggle">
-            <input
-              type="checkbox"
-              checked={shareConversationContext}
-              onChange={(event) => setShareConversationContext(event.target.checked)}
-            />
-            <span>
-              <strong>Compartilhar contexto entre conversas</strong>
-              <small>
-                Resumos de outras conversas deste projeto podem orientar novas mensagens.
-              </small>
-            </span>
-          </label>
-        </div>
-      </details>
-
-      <div className="mdc-chat-project-create-modal__hint">
-        <Lightbulb size={18} aria-hidden="true" />
-        <p>
-          Os projetos mantêm conversas e arquivos em um só lugar. Use-os para colaborar em
-          equipe e manter as coisas organizadas.
-        </p>
-      </div>
-
       <footer>
         <button type="button" className="mdc-chat-ws-toolbar-btn" onClick={onClose}>
-          <span>Cancelar</span>
+          Cancelar
         </button>
         <button
           type="button"

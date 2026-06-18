@@ -353,6 +353,8 @@ label.mdc-chat-ws-toolbar-btn {
   display: block;
   width: 1rem;
   height: 1rem;
+  margin: 0;
+  transform: translateY(0.5px);
 }
 
 .mdc-chat-ws-toolbar-btn:hover:not(:disabled) {

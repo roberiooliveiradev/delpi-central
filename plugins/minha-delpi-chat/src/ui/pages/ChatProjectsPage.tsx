@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
+import type { ChatAgent, ChatProject, ChatSession, CreateChatProjectPayload } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatProjectCreateModal } from "../components/workspace/ChatProjectCreateModal";
 import { useConfirmDialog, usePromptDialog } from "../components/shared";
@@ -24,11 +24,7 @@ type ChatProjectsPageProps = {
   isLoading?: boolean;
   onBack: () => void;
   onSelectProject?: (projectId: string) => void;
-  onCreateProject?: (payload: {
-    name: string;
-    description?: string | null;
-    instructions?: string | null;
-  }) => Promise<ChatProject | null>;
+  onCreateProject?: (payload: CreateChatProjectPayload) => Promise<ChatProject | null>;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onConfigureProject?: (projectId: string) => void;

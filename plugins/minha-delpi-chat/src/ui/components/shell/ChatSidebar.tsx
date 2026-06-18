@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { ChatAgent, ChatProject, ChatSession } from "../../../data/api/chatTypes";
+import type { ChatAgent, ChatProject, ChatSession, CreateChatProjectPayload } from "../../../data/api/chatTypes";
 import { ChatConfirmDialog } from "../shared";
 import { ChatProjectCreateModal } from "../workspace/ChatProjectCreateModal";
 import { ChatSidebarAgentsSection } from "./ChatSidebarAgentsSection";
@@ -61,11 +61,7 @@ type ChatSidebarProps = {
   onArchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
   onUnarchiveSession?: (sessionId: string) => Promise<ChatSession | null>;
   onLoadArchivedSessions?: () => Promise<void>;
-  onCreateProject?: (payload: {
-    name: string;
-    description?: string | null;
-    instructions?: string | null;
-  }) => Promise<ChatProject | null>;
+  onCreateProject?: (payload: CreateChatProjectPayload) => Promise<ChatProject | null>;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
