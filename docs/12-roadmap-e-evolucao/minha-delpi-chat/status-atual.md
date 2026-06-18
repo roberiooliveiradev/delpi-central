@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado em **17/06/2026** — refatoração frontend MFE (PR-1–42, **Fase G concluída**), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
+> Atualizado em **18/06/2026** — workspace projetos/agentes (jun/2026), refatoração frontend MFE (PR-1–42, **Fase G concluída**), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
 
 ## Visão geral
 
@@ -26,6 +26,8 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | Calibração RAG | [rag-context-min-score-calibracao.md](../../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
 | Guia api-delpi para agentes | [api-delpi-rotas-agente.md](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) |
 | Melhorias futuras | [minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias-futuras.md) |
+| **Changelog workspace jun/2026** | [2026-06-workspace-projetos-agentes-ui.md](../../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md) |
+| Projetos colaborativos (futuro) | [projetos-colaborativos-futuro.md](../../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md) |
 
 ## Estado funcional
 
@@ -38,6 +40,9 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 - **Gestão de agentes** (builder, publicar/versões, preview rascunho, shares, stats, duplicate, export/import, transfer) — ondas 1–7 + publicação
 - **Skills** injetadas automaticamente no chat comum (sem atalhos na home); por agente no builder
 - **Feedback** thumbs up/down nas respostas do assistente
+- **Projetos:** criação (nome + ícone), settings dedicado, ícones Lucide, **Gerenciar projeto**, drag-and-drop de conversas soltas para projetos na sidebar (colaboração multiusuário: futuro)
+- **Agentes:** ícones Lucide com catálogo completo no builder (modal + atalhos)
+- **Composer:** badges de contexto; menus `@` e `+` refinados (caret responsivo)
 - Segurança de entrada (sanitização, anti-injection, modo enforce/monitor)
 - Inteligência configurável: RAG híbrido, rerank, loop agentic, cache de embeddings (admin)
 - **Pipeline operacional (Ondas 6–7):** fast path (slim prompt), warm-up Ollama, seleção heurística de actions OpenAPI (produto/search/OVs/giro/LMP/SQL), resposta direta sem LLM (produto/search/OVs/LMP/SQL), metadados `intelligence` (timings, action, pipeline)
@@ -69,6 +74,21 @@ Fases **A–G** concluídas (PR-1–42). Hub `chatPresentation.ts` fatiado (PR-3
 | [rich-presentation-css.md](../../../plugins/minha-delpi-chat/docs/rich-presentation-css.md) | CSS compartilhado tabela/gráfico/KPI |
 
 **Próximo (opcional):** reduzir arquivos na raiz `components/` (~55 → ≤25) — modais e orquestração ainda na raiz; fora do escopo estrutural PR-1–42.
+
+### Workspace, projetos e agentes (jun/2026)
+
+Entregas documentadas em [2026-06-workspace-projetos-agentes-ui.md](../../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md).
+
+| Entrega | Status |
+|---------|--------|
+| Badges de contexto no composer | ✅ |
+| Menus `@` / `+` (caret + responsivo) | ✅ |
+| Projeto: create simplificado, settings modal, ícone | ✅ |
+| Home projeto: «Gerenciar projeto» | ✅ |
+| Drag-and-drop conversa → projeto | ✅ |
+| Ícones Lucide (agentes — catálogo; projetos — atalhos) | ✅ |
+| Modais: botões canônicos `chat-modal.css` | ✅ |
+| Colaboração em projetos desativada (flag + doc futuro) | ✅ |
 
 ### Painel administrativo
 

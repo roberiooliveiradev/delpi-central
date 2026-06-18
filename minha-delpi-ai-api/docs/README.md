@@ -117,6 +117,7 @@ Changelogs recentes:
 - [2026-06-viewintent-apresentacao-automatica.md](./changelog/2026-06-viewintent-apresentacao-automatica.md)
 - [2026-06-playbook-inteligencia.md](./changelog/2026-06-playbook-inteligencia.md)
 - [2026-06-playbook-14-corretor-digitacao-composer.md](./changelog/2026-06-playbook-14-corretor-digitacao-composer.md)
+- [2026-06-workspace-projetos-agentes-ui.md](./changelog/2026-06-workspace-projetos-agentes-ui.md)
 - [2026-05-inteligencia-chat-entregas.md](./changelog/2026-05-inteligencia-chat-entregas.md)
 
 ---

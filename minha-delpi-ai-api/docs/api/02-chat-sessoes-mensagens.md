@@ -487,23 +487,42 @@ Detalhes: [`../architecture/chat-intelligence-base.md`](../architecture/chat-int
 
 ## PATCH `/chat/sessions/{sessionId}`
 
-Renomeia a sessão.
+Atualiza metadados da sessão: **título** e/ou **projeto**.
 
 ### Permissão
 
-`minha-delpi.chat.access`
+`minha-delpi.chat.history.view`
 
 ### Body
 
+Informe pelo menos um campo:
+
 ```json
 {
-  "title": "Novo título"
+  "title": "Novo título",
+  "projectId": "uuid|null"
 }
 ```
+
+| Campo | Descrição |
+|-------|-----------|
+| `title` | Renomeia a conversa |
+| `projectId` | Move a sessão para o projeto (valida ownership/acesso). Use `null` apenas se a API passar a suportar remoção explícita |
+
+Aliases aceitos: `project_id`.
 
 ### Resposta `200`
 
 `ChatSession`
+
+### Erros
+
+| Código | Situação |
+|--------|----------|
+| `400` | Body vazio ou sem `title`/`projectId` |
+| `404` | Sessão ou projeto inexistente / sem acesso |
+
+Use case: `UpdateChatSessionUseCase`.
 
 ---
 
