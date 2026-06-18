@@ -1,6 +1,6 @@
 # Playbook — Follow-up operacional desacoplado (jun/2026)
 
-> **Status:** Em implementação (P0 entregue neste ciclo; P1–P2 backlog).
+> **Status:** P0 implementado (jun/2026); P1–P2 backlog.
 
 Projeto: **Minha DELPI Chat IA** · Pacote: `minha-delpi-ai-api`
 
@@ -68,6 +68,7 @@ Referência: [`chat-intelligence-base.md`](../../architecture/chat-intelligence-
 
 | # | Entrega |
 |---|---------|
+| P1.0 | Herdar `reference_date` do turno playbook anterior («e a expedição?» sem «hoje») | `ChatOperationalDateParameterService` | backlog |
 | P1.1 | `follow_up_type` → `preferred_action_id` declarativo em JSON |
 | P1.2 | Bloquear fallback semântico quando `should_inherit_product_code` e predicate playbook match parcial |
 | P1.3 | Atualizar treinamento: PA com cadastro real (`90261255`) + notas de ambiente |

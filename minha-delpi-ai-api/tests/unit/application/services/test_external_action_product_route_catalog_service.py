@@ -35,4 +35,4 @@ def test_build_exclusive_catalog_parameters_does_not_inject_limit_without_schema
     )
 
     assert "limit" not in parameters
-    assert parameters.get("view") == "by_material"
+    assert parameters.get("view") == "by_finished_product"

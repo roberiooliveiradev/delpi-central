@@ -1030,7 +1030,7 @@ class ExternalActionOperationalRouteSelectionService:
             if not parameters:
                 parameters = {}
 
-            parameters = ExternalActionProductRouteCatalogService.filter_parameters_to_schema(
+            parameters = self._catalog.filter_parameters_to_schema(
                 action,
                 parameters,
             )

@@ -275,6 +275,18 @@ class OperationalRouteMatcherService:
         ):
             return False
 
+        if spec.get("lacksProductScope") and cls._has_product_scope(
+            normalized,
+            message=message,
+        ):
+            return False
+
+        if spec.get("hasSpecificProductScope") and not cls._has_specific_product_scope(
+            normalized,
+            message=message,
+        ):
+            return False
+
         if (
             not custom_predicate
             and not terms_from
@@ -284,6 +296,8 @@ class OperationalRouteMatcherService:
             and not any_custom_predicate_from
             and not spec.get("hasProductIdentifier")
             and not spec.get("hasProductScope")
+            and not spec.get("lacksProductScope")
+            and not spec.get("hasSpecificProductScope")
             and not spec.get("lacksProductIdentifier")
             and not spec.get("hasLmpSaleNumber")
             and not spec.get("lacksLmpSaleNumber")
@@ -419,6 +433,24 @@ class OperationalRouteMatcherService:
         )
 
         follow_type = ChatFollowUpIntentService.follow_up_type(message or normalized)
+
+        return follow_type in {"shipping", "structure_exclusivity"}
+
+    @classmethod
+    def _has_specific_product_scope(cls, normalized: str, *, message: str = "") -> bool:
+        text = str(message or normalized or "")
+
+        if ChatProductQueryIntentService.extract_product_code(text):
+            return True
+
+        if ChatProductQueryIntentService.references_previous_product(text):
+            return True
+
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        follow_type = ChatFollowUpIntentService.follow_up_type(text)
 
         return follow_type in {"shipping", "structure_exclusivity"}
 
