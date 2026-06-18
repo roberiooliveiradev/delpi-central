@@ -1,0 +1,62 @@
+.mdc-chat-composer-context-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem 0.55rem 0.15rem;
+}
+
+.mdc-chat-composer-context-badges__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  max-width: 100%;
+  min-height: 1.55rem;
+  padding: 0.12rem 0.28rem 0.12rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--mdc-color-text-secondary, var(--mdc-text-muted));
+  background: color-mix(in srgb, var(--mdc-text-muted) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mdc-text-muted) 18%, transparent);
+}
+
+.mdc-chat-composer-context-badges__badge--agent {
+  color: var(--mdc-primary, var(--mdc-chart-series-10));
+  background: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, transparent);
+}
+
+.mdc-chat-composer-context-badges__badge--project {
+  color: var(--mdc-text-muted);
+  background: color-mix(in srgb, var(--mdc-text-muted) 18%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-text-muted) 28%, transparent);
+}
+
+.mdc-chat-composer-context-badges__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 14rem;
+}
+
+.mdc-chat-composer-context-badges__remove {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.72;
+  cursor: pointer;
+}
+
+.mdc-chat-composer-context-badges__remove:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--mdc-danger) 14%, transparent);
+  color: var(--mdc-danger);
+}

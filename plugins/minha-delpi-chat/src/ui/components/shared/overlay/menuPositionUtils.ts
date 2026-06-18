@@ -13,11 +13,15 @@ export const COMPOSER_PANEL_ANCHOR_GAP = 9;
 
 export const COMPOSER_OPTION_MENU_WIDTH = 260;
 export const COMPOSER_PANEL_MENU_WIDTH = 352;
+export const COMPOSER_MENTION_MENU_MIN_WIDTH = 168;
+export const COMPOSER_MENTION_MENU_MAX_WIDTH = 280;
 export const ACTION_MENU_WIDTH = 224;
 const COMPOSER_OPTION_ITEM_HEIGHT = 58;
 const COMPOSER_PANEL_ITEM_HEIGHT = 44;
+const COMPOSER_MENTION_ITEM_HEIGHT = 28;
 const COMPOSER_OPTION_MENU_PADDING = 12;
 const COMPOSER_PANEL_MENU_PADDING = 16;
+const COMPOSER_MENTION_MENU_PADDING = 8;
 const COMPOSER_OPTION_MENU_MIN_HEIGHT = 8.5 * 16;
 const COMPOSER_PANEL_MENU_MIN_HEIGHT = 10 * 16;
 const COMPOSER_PANEL_MENU_MAX_HEIGHT = 28 * 16;
@@ -40,14 +44,64 @@ export function estimateComposerPanelMenuHeight(itemCount: number): number {
   return Math.min(COMPOSER_PANEL_MENU_MAX_HEIGHT, natural);
 }
 
-/** Linhas estimadas do menu 「+」 (anexo, agentes, projetos, cabeçalhos). */
+export function estimateComposerMentionMenuHeight(itemCount: number): number {
+  return (
+    Math.max(itemCount, 1) * COMPOSER_MENTION_ITEM_HEIGHT + COMPOSER_MENTION_MENU_PADDING * 2
+  );
+}
+
+export function resolveComposerMentionMenuWidth(options: {
+  anchorLeft: number;
+  viewport?: ViewportBounds;
+  margin?: number;
+}): number {
+  const margin = options.margin ?? VIEWPORT_MARGIN;
+  const viewport = readViewportBounds(options.viewport);
+  const spaceToRight = viewport.width - margin - options.anchorLeft;
+  const spaceInViewport = viewport.width - margin * 2;
+
+  return Math.max(
+    COMPOSER_MENTION_MENU_MIN_WIDTH,
+    Math.min(COMPOSER_MENTION_MENU_MAX_WIDTH, spaceToRight, spaceInViewport),
+  );
+}
+
+/** Menu @ do composer — ancora no caret com largura responsiva ao espaço visível. */
+export function resolveComposerMentionMenuPosition(options: {
+  rect: MenuAnchorRect;
+  itemCount: number;
+  menuWidth?: number;
+  viewport?: ViewportBounds;
+  contained?: boolean;
+  containerRect?: MenuAnchorRect;
+}): ComposerOptionMenuLayout {
+  const { rect, viewport } = resolveContainedComposerLayout(options.rect, options);
+  const resolvedViewport = viewport ?? options.viewport;
+  const menuWidth =
+    options.menuWidth ??
+    resolveComposerMentionMenuWidth({ anchorLeft: rect.left, viewport: resolvedViewport });
+
+  return resolveComposerPopoverLayout({
+    rect,
+    itemCount: options.itemCount,
+    menuWidth,
+    naturalHeight: estimateComposerMentionMenuHeight(options.itemCount),
+    minHeight: COMPOSER_MENTION_ITEM_HEIGHT + COMPOSER_MENTION_MENU_PADDING,
+    viewport: resolvedViewport,
+    anchorGap: ANCHOR_GAP,
+    horizontalAlign: "start",
+  });
+}
+
+/** Linhas estimadas do menu 「+」 (anexo, agentes, projetos, cabeçalhos e hints). */
 export function estimateChatInputPlusMenuItemCount(options: {
   agentCount: number;
   projectCount: number;
 }): number {
-  const projectRows = Math.min(options.projectCount, 8);
+  const projectRows = Math.max(Math.min(options.projectCount, 8), 1);
+  const agentRows = Math.max(options.agentCount, 1);
 
-  return 1 + options.agentCount + projectRows + 3;
+  return 1 + agentRows + projectRows + 5;
 }
 
 export type ComposerOptionMenuLayout = {

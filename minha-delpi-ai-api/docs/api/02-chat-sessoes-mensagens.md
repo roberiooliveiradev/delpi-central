@@ -52,7 +52,9 @@ Montado por `ChatAdminDebugService` em todo envio/stream/resend e salvo em `Chat
 | Usuário comum | Campo **omitido** em `GET /chat/sessions/{id}/messages` e nas respostas de envio |
 | Admin (`minha-delpi.chat.admin` ou superadmin) | Presente em `POST .../messages`, evento SSE `done` e histórico |
 
-Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`, opcional `sourcesNote`), `llm.messages`, `recordedAt`.
+Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`, `retrievedSourceCount`, `visibleSourceCount`, `retrievedChunkCount`, opcional `sourcesNote`), `llm.messages`, `recordedAt`.
+
+Campos de contagem RAG na metadata da mensagem (`intelligence`): `ragRetrievedCount`, `ragVisibleSourceCount`, `ragRetrievedChunkCount`; `ragSourceCount` = visível (retrocompat).
 
 Na resposta HTTP/SSE ao admin, o objeto pode incluir também (mesclado após o turno):
 
@@ -487,23 +489,42 @@ Detalhes: [`../architecture/chat-intelligence-base.md`](../architecture/chat-int
 
 ## PATCH `/chat/sessions/{sessionId}`
 
-Renomeia a sessão.
+Atualiza metadados da sessão: **título** e/ou **projeto**.
 
 ### Permissão
 
-`minha-delpi.chat.access`
+`minha-delpi.chat.history.view`
 
 ### Body
 
+Informe pelo menos um campo:
+
 ```json
 {
-  "title": "Novo título"
+  "title": "Novo título",
+  "projectId": "uuid|null"
 }
 ```
+
+| Campo | Descrição |
+|-------|-----------|
+| `title` | Renomeia a conversa |
+| `projectId` | Move a sessão para o projeto (valida ownership/acesso). Use `null` apenas se a API passar a suportar remoção explícita |
+
+Aliases aceitos: `project_id`.
 
 ### Resposta `200`
 
 `ChatSession`
+
+### Erros
+
+| Código | Situação |
+|--------|----------|
+| `400` | Body vazio ou sem `title`/`projectId` |
+| `404` | Sessão ou projeto inexistente / sem acesso |
+
+Use case: `UpdateChatSessionUseCase`.
 
 ---
 

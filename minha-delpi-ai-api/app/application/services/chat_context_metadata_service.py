@@ -45,6 +45,18 @@ class ChatContextMetadataService:
             answer=answer,
         )
 
+        from app.domain.services.chat_project_sources_inventory_service import (
+            ChatProjectSourcesInventoryService,
+        )
+
+        pending_inventory = workspace.get("pendingProjectSourcesInventory")
+
+        if isinstance(pending_inventory, list) and pending_inventory:
+            snapshot = ChatProjectSourcesInventoryService.apply_to_snapshot(
+                snapshot,
+                pending_inventory,
+            )
+
         assertiveness = ChatContextAssertivenessService.evaluate_turn(
             message=message,
             answer=answer,

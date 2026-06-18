@@ -454,6 +454,7 @@
             {
               "allOf": [
                 { "lacksProductIdentifier": true },
+                { "lacksProductScope": true },
                 {
                   "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.globalMarkers"
                 }
@@ -461,18 +462,19 @@
             }
           ],
           "anyOf": [
-            { "hasProductScope": true },
+            { "hasSpecificProductScope": true },
             { "hasProductIdentifier": true }
           ]
         },
         {
           "allOf": [
-            { "hasProductScope": true },
+            { "hasSpecificProductScope": true },
             {
               "noneOf": [
                 {
                   "allOf": [
                     { "lacksProductIdentifier": true },
+                    { "lacksProductScope": true },
                     {
                       "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.globalMarkers"
                     }

@@ -438,6 +438,17 @@ class ChatCapabilitiesService:
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return True
 
+        from app.domain.services.chat_operational_follow_up_routing_service import (
+            ChatOperationalFollowUpRoutingService,
+        )
+
+        if ChatOperationalFollowUpRoutingService.blocks_capability_inquiry(
+            message,
+            normalized=normalized,
+            operational_data_topics=_operational_data_topics(),
+        ):
+            return True
+
         if any(
             re.search(pattern, normalized) for pattern in _operational_query_patterns()
         ):

@@ -47,9 +47,51 @@ class SearchKnowledgeUseCase:
         else:
             chunks = self._vector_search(query, limit=limit, filters=filters)
 
-        chunks = self._rerank_chunks(query, chunks, limit=limit)
+        chunks = self._rerank_chunks(query, chunks, limit=limit, filters=filters)
 
         return [self._chunk_to_dict(chunk) for chunk in chunks]
+
+    @staticmethod
+    def _scope_priority_boost(chunk, filters: dict | None) -> float:
+        priority = str((filters or {}).get("scope_priority") or "").strip()
+
+        if not priority:
+            return 0.0
+
+        source_type = str(getattr(chunk, "source_type", None) or "").strip()
+
+        if source_type == priority:
+            return Settings.CHAT_RAG_SCOPE_PRIORITY_BOOST
+
+        metadata = getattr(chunk, "metadata", None) or {}
+
+        if isinstance(metadata, dict):
+            scope = str(metadata.get("scope") or "").strip()
+
+            if scope == priority:
+                return Settings.CHAT_RAG_SCOPE_PRIORITY_BOOST
+
+        return 0.0
+
+    def _rerank_chunks(
+        self,
+        query: str,
+        chunks: list,
+        *,
+        limit: int,
+        filters: dict | None = None,
+    ) -> list:
+        if not self._rerank_enabled() or not chunks:
+            return chunks
+
+        boost = Settings.CHAT_RAG_RERANK_KEYWORD_BOOST
+
+        def score_chunk(chunk) -> float:
+            base = float(chunk.score or 0)
+            overlap = keyword_overlap_score(query, chunk.content or "")
+            return base + boost * overlap + self._scope_priority_boost(chunk, filters)
+
+        return sorted(chunks, key=score_chunk, reverse=True)[:limit]
 
     def _hybrid_enabled(self) -> bool:
         return self.intelligence_settings_service.resolve().rag_hybrid_enabled
@@ -59,19 +101,6 @@ class SearchKnowledgeUseCase:
 
     def _fts_enabled(self) -> bool:
         return self.intelligence_settings_service.resolve().rag_fts_enabled
-
-    def _rerank_chunks(self, query: str, chunks: list, *, limit: int) -> list:
-        if not self._rerank_enabled() or not chunks:
-            return chunks
-
-        boost = Settings.CHAT_RAG_RERANK_KEYWORD_BOOST
-
-        def score_chunk(chunk) -> float:
-            base = float(chunk.score or 0)
-            overlap = keyword_overlap_score(query, chunk.content or "")
-            return base + boost * overlap
-
-        return sorted(chunks, key=score_chunk, reverse=True)[:limit]
 
     def _vector_search(self, query: str, *, limit: int, filters: dict | None) -> list:
         candidate_limit = limit

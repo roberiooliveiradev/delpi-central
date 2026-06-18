@@ -791,6 +791,7 @@
       },
       "humanizedNarrative": "skip",
       "textEmbedTreeOutline": true,
+      "textEmbedTablesInMarkdown": true,
       "presentationDecision": {
         "preferTreeOnStructureIntent": true
       },
@@ -1001,6 +1002,8 @@
         "tree"
       ],
       "chartPolicy": "skip",
+      "textEmbedTreeOutline": true,
+      "textEmbedTablesInMarkdown": true,
       "visualBundle": {
         "dashboardListRole": "structure",
         "dashboardIncludeTree": true

@@ -1,6 +1,8 @@
 import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { isBootstrapLoadErrorMessage } from "../../data/api/chatApiFetch";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/canvas";
-import { ChatAgentHome } from "../components/workspace/ChatAgentHome";
+import { ChatAgentConversationSurface } from "../components/workspace/ChatAgentConversationSurface";
 import { ChatEmptyState } from "../components/message/ChatEmptyState";
 import {
   ChatOnboardingTour,
@@ -20,6 +22,7 @@ import {
 import { ChatMessageList } from "../components/message";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/workspace";
+import { ChatProjectSettingsModal } from "../components/workspace/ChatProjectSettingsModal";
 import { useConfirmDialog, usePromptDialog, useAlertDialog } from "../components/shared";
 import { setChatAlertHandler } from "../utils/chatNativeDialogs";
 import {
@@ -358,10 +361,12 @@ export function ChatPage({
     sendMessage,
     cancelStreaming,
     loadArchivedSessions,
+    loadSessions,
     startSession,
     selectSession,
     deleteSession,
     renameSession,
+    moveSessionToProject,
     pinSession,
     unpinSession,
     archiveSession,
@@ -835,6 +840,7 @@ export function ChatPage({
     editProject,
     removeProject,
     loadAgents,
+    loadProjects,
   } = useChatWorkspace({ getAccessToken });
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
@@ -890,8 +896,16 @@ export function ChatPage({
   const mentionCandidates = useMemo(
     () =>
       listComposerMentionCandidates({
-        agents: agents.map((agent) => ({ id: agent.id, name: agent.name })),
-        projects: projects.map((project) => ({ id: project.id, name: project.name })),
+        agents: agents.map((agent) => ({
+          id: agent.id,
+          name: agent.name,
+          icon: agent.icon,
+        })),
+        projects: projects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          icon: project.icon,
+        })),
       }),
     [agents, projects],
   );
@@ -947,11 +961,19 @@ export function ChatPage({
           agents: mergedContext.agentIds
             .map((id) => agents.find((entry) => entry.id === id))
             .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-            .map((entry) => ({ id: entry.id, name: entry.name })),
+            .map((entry) => ({
+              id: entry.id,
+              name: entry.name,
+              icon: entry.icon,
+            })),
           projects: mergedContext.projectIds
             .map((id) => projects.find((entry) => entry.id === id))
             .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-            .map((entry) => ({ id: entry.id, name: entry.name })),
+            .map((entry) => ({
+              id: entry.id,
+              name: entry.name,
+              icon: entry.icon,
+            })),
         },
       });
     },
@@ -1046,6 +1068,28 @@ export function ChatPage({
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
+
+  const bootstrapLoadError = useMemo(
+    () =>
+      isBootstrapLoadErrorMessage(error) || isBootstrapLoadErrorMessage(workspaceError),
+    [error, workspaceError],
+  );
+
+  const reloadBootstrapData = useCallback(() => {
+    clearError();
+    clearWorkspaceError();
+    dismissUnansweredTurnRecovery();
+    void loadSessions();
+    void loadAgents();
+    void loadProjects();
+  }, [
+    clearError,
+    clearWorkspaceError,
+    dismissUnansweredTurnRecovery,
+    loadAgents,
+    loadProjects,
+    loadSessions,
+  ]);
 
   const { isDesktop, isLandscape, isNarrow } = useChatLayout();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -1684,12 +1728,21 @@ export function ChatPage({
     async (sessionId: string, localId: string, file: File) => {
       setComposerAttachments((current) =>
         current.map((item) =>
-          item.id === localId ? { ...item, status: "uploading" } : item,
+          item.id === localId ? { ...item, status: "uploading", uploadPercent: 0 } : item,
         ),
       );
 
       try {
-        const uploaded = await uploadChatAttachment(sessionId, file, { getAccessToken });
+        const uploaded = await uploadChatAttachment(sessionId, file, {
+          getAccessToken,
+          onUploadProgress: (percent) => {
+            setComposerAttachments((current) =>
+              current.map((item) =>
+                item.id === localId ? { ...item, uploadPercent: percent } : item,
+              ),
+            );
+          },
+        });
         let resolvedAttachment = uploaded;
 
         if (isAttachmentIndexPending(uploaded.status)) {
@@ -1714,6 +1767,7 @@ export function ChatPage({
                   status: mapApiAttachmentToComposerStatus(resolvedAttachment.status),
                   serverAttachmentId: resolvedAttachment.id,
                   readingStatus,
+                  uploadPercent: undefined,
                 }
               : item,
           ),
@@ -1722,7 +1776,7 @@ export function ChatPage({
         setComposerAttachments((current) =>
           current.map((item) =>
             item.id === localId
-              ? { ...item, status: "failed", readingStatus: "Falha no envio" }
+              ? { ...item, status: "failed", readingStatus: "Falha no envio", uploadPercent: undefined }
               : item,
           ),
         );
@@ -2065,6 +2119,20 @@ export function ChatPage({
     setContextAgentIds((current) => toggleContextId(current, agentId, MAX_COMPOSER_AGENTS));
   }
 
+  function handleUseAgentInProject(agentId: string | null) {
+    if (!agentId) {
+      const activeContextAgentId = contextAgentIds[0] ?? activeSession?.agent_id ?? null;
+
+      if (activeContextAgentId) {
+        handleRemoveContextAgent(activeContextAgentId);
+      }
+
+      return;
+    }
+
+    handleToggleContextAgent(agentId);
+  }
+
   function handleToggleContextProject(projectId: string) {
     setRemovedComposerProjectIds((current) => removeContextId(current, projectId));
     setContextProjectIds((current) =>
@@ -2089,9 +2157,9 @@ export function ChatPage({
   const composerContextProps = {
     agents,
     projects,
-    selectedAgentIds: contextAgentIds,
-    selectedProjectIds: contextProjectIds,
-    contextBarItems: composerContextBarItems,
+    selectedAgentIds: effectiveAgentIds,
+    selectedProjectIds: effectiveProjectIds,
+    contextBadgeItems: composerContextBarItems,
     onToggleAgent: handleToggleContextAgent,
     onRemoveContextAgent: handleRemoveContextAgent,
     onOpenAgentPage: (agentId: string) => {
@@ -2133,6 +2201,29 @@ export function ChatPage({
     onAcceptTypingSuggestion: handleAcceptTypingSuggestion,
     onDismissTypingSuggestion: handleDismissTypingSuggestion,
   };
+
+  const agentComposerBindings = useMemo(
+    () => ({
+      placeholder: getComposerPlaceholder(),
+      composerAttachmentProps,
+      composerResponseModeProps,
+      composerPresentationFormatProps,
+      composerTypingCorrectionProps,
+      composerContextProps,
+    }),
+    [
+      composerAttachmentProps,
+      composerContextProps,
+      composerPresentationFormatProps,
+      composerResponseModeProps,
+      composerTypingCorrectionProps,
+      contextAgentIds,
+      contextProjectIds,
+      effectiveComposerAgents,
+      effectiveComposerProjects,
+      isNarrow,
+    ],
+  );
 
   const shellClassName = [
     "mdc-chat-shell",
@@ -2216,6 +2307,7 @@ export function ChatPage({
           onNewSession={handleStartGeneralSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
+          onMoveSessionToProject={moveSessionToProject}
           onDeleteSession={handleDeleteSession}
           onPinSession={pinSession}
           onUnpinSession={unpinSession}
@@ -2356,6 +2448,16 @@ export function ChatPage({
                 ? `${selectedProjectSessions.length} chats`
                 : undefined
             }
+            projectIcon={
+              chatTopbarPresentation.topbarMode === "project"
+                ? selectedProject?.icon
+                : undefined
+            }
+            agentIcon={
+              chatTopbarPresentation.topbarMode === "agent"
+                ? activeAgentPage?.icon
+                : undefined
+            }
             onOpenAdmin={openAdmin}
             onOpenHelp={() => setHelpPanelOpen(true)}
             onRenameProject={async () => {
@@ -2420,7 +2522,9 @@ export function ChatPage({
                 error?.includes("diálogo dos atalhos") ||
                 error?.includes("{{")
                   ? "Complete os campos antes de enviar"
-                  : unansweredTurnRecovery?.title
+                  : bootstrapLoadError
+                    ? "Não foi possível carregar o chat"
+                    : unansweredTurnRecovery?.title
               }
               message={
                 error ||
@@ -2430,6 +2534,11 @@ export function ChatPage({
               }
               details={error || workspaceError || undefined}
               onRetry={() => {
+                if (bootstrapLoadError) {
+                  reloadBootstrapData();
+                  return;
+                }
+
                 const retryContent =
                   unansweredTurnRecovery?.retryContent ||
                   draft.trim() ||
@@ -2451,7 +2560,110 @@ export function ChatPage({
             />
           ) : null}
 
-          {isConversationEmpty ? (
+          {activeAgentPage && !selectedProject ? (
+            <ChatAgentConversationSurface
+              agent={activeAgentPage}
+              messages={messages}
+              draft={draft}
+              isSending={isStreamingActiveSession}
+              isConversationEmpty={isConversationEmpty}
+              composerBindings={agentComposerBindings}
+              onDraftChange={setDraft}
+              onSubmit={handleSubmitMessage}
+              onCancel={cancelStreaming}
+              onIcebreaker={(query) => {
+                void handleAgentIcebreaker(query);
+              }}
+              canManageAgent={canManageAgents}
+              onManageAgent={() => {
+                if (!canManageAgents || !activeAgentPage?.id) {
+                  return;
+                }
+
+                setAgentEditRequest({
+                  id: activeAgentPage.id,
+                  requestKey: Date.now(),
+                });
+                setCurrentView("agents");
+                navigateChatHref(buildChatAgentConfigHref(activeAgentPage.id));
+              }}
+              conversationKey={activeSession?.id ?? null}
+              streamingStatus={streamingStatus}
+              composerFooter={
+                isConversationEmpty ? null : (
+                  <ChatContextBar
+                    chips={activeContextChips}
+                    summary={activeContextSummary}
+                    preferenceHint={activePreferenceHint}
+                    onClearContext={handleClearActiveContext}
+                    onDismissChip={handleDismissContextChip}
+                    onChipAction={handleDrillDown}
+                    onAddContext={() => setAddContextDialogOpen(true)}
+                    onViewMemory={handleViewMemoryUsed}
+                    onPinChip={handlePinContextChip}
+                  />
+                )
+              }
+              messageList={
+                isConversationEmpty ? undefined : (
+                  <ChatMessageList
+                    messages={messages}
+                    conversationKey={activeSession?.id ?? null}
+                    streamingAnswer={streamingAnswer}
+                    streamingSources={streamingSources}
+                    streamingToolCalls={streamingToolCalls}
+                    streamingAdminDebug={streamingAdminDebug}
+                    streamingStatus={streamingStatus}
+                    streamingActivityLog={streamingActivityLog}
+                    streamingShowPresentation={streamingShowPresentation}
+                    streamingCanvasOpen={streamingCanvasOpen}
+                    isStreaming={isStreamingActiveSession}
+                    isPlaybackActive={isPlaybackActive}
+                    isLoading={isLoadingMessages && messages.length === 0}
+                    onEditAndResendMessage={handleEditAndResendMessage}
+                    sessionId={activeSession?.id ?? null}
+                    onSwitchMessageBranch={switchMessageBranch}
+                    branchSwitchingMessageId={branchSwitchingMessageId}
+                    onContinueFromMessage={continueFromMessage}
+                    onReuseMessage={(content) => {
+                      void handleReuseMessage(content);
+                    }}
+                    onDrillDown={handleDrillDown}
+                    onAddMessageToContext={
+                      activeSession?.id ? handleAddMessageToContext : undefined
+                    }
+                    onAddMessageTurnToContext={
+                      activeSession?.id ? handleAddMessageTurnToContext : undefined
+                    }
+                    onRecordHelpEvent={(payload) => {
+                      void recordAssistantHelpEvent(
+                        {
+                          ...payload,
+                          metadata: {
+                            ...(payload.metadata ?? {}),
+                            sessionId:
+                              payload.metadata?.sessionId ??
+                              activeSession?.id ??
+                              null,
+                          },
+                        },
+                        { getAccessToken },
+                      ).catch(() => {
+                        /* telemetria opcional — não bloquear chips/modal */
+                      });
+                    }}
+                    onMessageFeedback={setMessageFeedback}
+                    getAccessToken={getAccessToken}
+                    onDownloadAttachment={async (attachmentId) => {
+                      await downloadChatAttachment(attachmentId, { getAccessToken });
+                    }}
+                    onOpenCanvas={openCanvasPanel}
+                    lastSentUserText={lastSentUserText}
+                  />
+                )
+              }
+            />
+          ) : isConversationEmpty ? (
             <section className="mdc-chat-empty-composer">
               {selectedProject ? (
                 <div className="mdc-chat-empty-composer__column mdc-chat-empty-composer__column--project">
@@ -2484,8 +2696,11 @@ export function ChatPage({
                   onUnpinSession={unpinSession}
                   sources={projectSources[selectedProject.id] ?? []}
                   isLoadingSources={isLoadingProjectSources}
-                  onUploadSource={async (file) => {
-                    const source = await uploadProjectSource(selectedProject.id, file, { getAccessToken });
+                  onUploadSource={async (file, helpers) => {
+                    const source = await uploadProjectSource(selectedProject.id, file, {
+                      getAccessToken,
+                      onUploadProgress: helpers?.onProgress,
+                    });
                     await loadProjectSources(selectedProject.id);
                     return source;
                   }}
@@ -2503,7 +2718,7 @@ export function ChatPage({
                   }}
                   onUpdateProject={editProject}
                   getAccessToken={getAccessToken}
-                  onUseAgent={handleToggleContextAgent}
+                  onUseAgent={handleUseAgentInProject}
                   onOpenAgentPage={(agentId) => {
                     const agent = agents.find((item) => item.id === agentId);
 
@@ -2552,8 +2767,6 @@ export function ChatPage({
                       placeholder={getComposerPlaceholder()}
                       {...composerAttachmentProps}
                       {...composerPresentationFormatProps}
-                      {...composerPresentationFormatProps}
-                    {...composerPresentationFormatProps}
                       {...composerResponseModeProps}
                       {...composerContextProps}
                       {...composerTypingCorrectionProps}
@@ -2568,51 +2781,27 @@ export function ChatPage({
               ) : (
                 <div className="mdc-chat-empty-composer__column">
                   <div className="mdc-chat-empty-composer__scroll">
-                    {activeAgentPage ? (
-                      <ChatAgentHome
-                        agent={activeAgentPage}
-                        onUseSuggestion={(query) => {
-                          void handleAgentIcebreaker(query);
-                        }}
-                        canManageAgent={canManageAgents}
-                        onManageAgent={() => {
-                          if (!canManageAgents || !activeAgentPage?.id) {
-                            return;
-                          }
+                    <ChatEmptyState
+                      displayName={userDisplayName}
+                      contextualHighlights={homeHighlights}
+                      onUseStarter={handleHomeStarter}
+                      onStartTour={
+                        canOfferOnboardingTour ? startOnboardingTour : undefined
+                      }
+                    />
 
-                          setAgentEditRequest({
-                            id: activeAgentPage.id,
-                            requestKey: Date.now(),
-                          });
-                          setCurrentView("agents");
-                          navigateChatHref(buildChatAgentConfigHref(activeAgentPage.id));
+                    {onboardingTourOpen && homeTourSteps.length > 0 ? (
+                      <ChatOnboardingTour
+                        autoStart
+                        steps={homeTourSteps}
+                        onDemoQuery={setDraft}
+                        onPlusMenuOpen={setTourPlusMenuOpen}
+                        onDismiss={() => {
+                          setOnboardingTourOpen(false);
+                          setTourPlusMenuOpen(null);
                         }}
                       />
-                    ) : (
-                      <>
-                        <ChatEmptyState
-                          displayName={userDisplayName}
-                          contextualHighlights={homeHighlights}
-                          onUseStarter={handleHomeStarter}
-                          onStartTour={
-                            canOfferOnboardingTour ? startOnboardingTour : undefined
-                          }
-                        />
-
-                        {onboardingTourOpen && homeTourSteps.length > 0 ? (
-                          <ChatOnboardingTour
-                            autoStart
-                            steps={homeTourSteps}
-                            onDemoQuery={setDraft}
-                            onPlusMenuOpen={setTourPlusMenuOpen}
-                            onDismiss={() => {
-                              setOnboardingTourOpen(false);
-                              setTourPlusMenuOpen(null);
-                            }}
-                          />
-                        ) : null}
-                      </>
-                    )}
+                    ) : null}
                   </div>
 
                   <ChatInput
@@ -2753,6 +2942,33 @@ export function ChatPage({
       </section>
 
       <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
+
+      {selectedProject && projectSettingsOpen && !isConversationEmpty ? (
+        <ChatProjectSettingsModal
+          project={selectedProject}
+          open={projectSettingsOpen}
+          onClose={() => closeProjectConfig(selectedProject.id)}
+          onUpdateProject={editProject}
+          onDeleteProject={async (projectId) => {
+            const deleted = await removeProject(projectId);
+
+            if (deleted) {
+              setSelectedProjectId(null);
+              clearComposerOverlayContext();
+              await handleStartSession();
+            }
+
+            return deleted;
+          }}
+          onClearProject={() => {
+            setSelectedProjectId(null);
+            clearComposerOverlayContext();
+            navigateChatHref(buildChatHref({ kind: "home" }));
+            void handleStartSession();
+          }}
+          getAccessToken={getAccessToken}
+        />
+      ) : null}
 
       {isMobileSidebarOpen ? (
         <div

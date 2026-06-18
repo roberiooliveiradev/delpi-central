@@ -4,6 +4,9 @@ from app.application.services.agent_specialization_service import (
     AgentSpecializationService,
 )
 from app.domain.services.chat_project_settings_service import ChatProjectSettingsService
+from app.domain.services.chat_project_sources_intent_service import (
+    ChatProjectSourcesIntentService,
+)
 
 
 class ChatKnowledgeScopeService:
@@ -17,12 +20,22 @@ class ChatKnowledgeScopeService:
         session,
         workspace_context: dict,
         attachment_ids: list[str] | None = None,
+        message: str | None = None,
+        memory_snapshot: dict | None = None,
+        previous_messages: list | None = None,
     ) -> dict:
         project = workspace_context.get("project") or {}
         project_id = project.get("id") or session.project_id
 
         skills = workspace_context.get("skills") or {}
         include_global = bool(skills.get("companyKnowledge", True))
+
+        if message and ChatProjectSourcesIntentService.should_restrict_to_project_sources(
+            message,
+            memory_snapshot=memory_snapshot,
+            previous_messages=previous_messages,
+        ):
+            include_global = False
 
         project_meta = project if isinstance(project, dict) else {}
         share_context = bool(
@@ -59,6 +72,9 @@ class ChatKnowledgeScopeService:
 
         if cleaned_attachment_ids:
             filters["attachment_ids"] = cleaned_attachment_ids
+
+        if project_id:
+            filters["scope_priority"] = "project_source"
 
         specialization = workspace_context.get("specialization")
 

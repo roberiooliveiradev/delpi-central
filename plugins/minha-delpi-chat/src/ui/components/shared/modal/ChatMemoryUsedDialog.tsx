@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { X } from "lucide-react";
 
 import { ChatModal } from "./ChatModal";
 import "./ChatMemoryUsedDialog.css";
@@ -52,8 +53,13 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
         <h2 id={titleId} className="mdc-chat-memory-used__title">
           Memória usada nesta conversa
         </h2>
-        <button type="button" className="mdc-chat-memory-used__close" onClick={onClose}>
-          Fechar
+        <button
+          type="button"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
+          onClick={onClose}
+          aria-label="Fechar"
+        >
+          <X aria-hidden="true" />
         </button>
       </header>
 

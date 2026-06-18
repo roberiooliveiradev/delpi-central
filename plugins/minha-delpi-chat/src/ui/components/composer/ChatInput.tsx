@@ -1,10 +1,7 @@
 import {
   ArrowUp,
-  Bot,
-  Folder,
   Paperclip,
   Trash2,
-  X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -13,8 +10,12 @@ import {
   detectActiveComposerMention,
   filterComposerMentionCandidates,
   listComposerMentionCandidates,
+  removeComposerMentionTokenForName,
+  stripComposerMentionTokens,
 } from "../../../state/chatComposerMention";
+import { ChatComposerContextBadges } from "./ChatComposerContextBadges";
 import { ChatComposerMentionMenu } from "./ChatComposerMentionMenu";
+import { ComposerMentionMenuPortal } from "./ComposerMentionMenuPortal";
 
 import type {
   ChatAgent,
@@ -29,6 +30,7 @@ import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
 import { ChatInputPlusMenu } from "../shared/composer/ChatInputPlusMenu";
 import { formatAttachmentSize } from "../../chatAttachmentPreview";
 import type { ComposerAttachmentStatus } from "../../chatAttachmentStatus";
+import { ingestProgressPercentLabel } from "../../../content/ingestProgress";
 import { useAutoGrowTextarea } from "../../hooks/useAutoGrowTextarea";
 import type { ComposerContextBarItem } from "../../../state/chatAgentActivation";
 import type {
@@ -60,6 +62,7 @@ export type ChatInputAttachment = {
   status?: ComposerAttachmentStatus;
   serverAttachmentId?: string;
   readingStatus?: string;
+  uploadPercent?: number;
 };
 
 type ChatInputProps = {
@@ -94,8 +97,8 @@ type ChatInputProps = {
   presentationFormat?: ChatPresentationFormatId;
   onPresentationFormatChange?: (format: ChatPresentationFormatId) => void;
   showPresentationFormatSelector?: boolean;
-  /** Chips de contexto no composer — regra em resolveComposerContextBar (chatAgentActivation). */
-  contextBarItems?: ComposerContextBarItem[];
+  /** Badges de agente/projeto na área da pergunta — regra em resolveComposerContextBar (chatAgentActivation). */
+  contextBadgeItems?: ComposerContextBarItem[];
   typingSuggestion?: ChatTypingSuggestion | null;
   typingSuggestionLabels?: MessageComposerTypingCorrectionContent;
   onAcceptTypingSuggestion?: () => void;
@@ -135,7 +138,7 @@ export function ChatInput({
   presentationFormat = "auto",
   onPresentationFormatChange,
   showPresentationFormatSelector = true,
-  contextBarItems = [],
+  contextBadgeItems = [],
   typingSuggestion = null,
   typingSuggestionLabels,
   onAcceptTypingSuggestion,
@@ -164,8 +167,16 @@ export function ChatInput({
   const mentionCandidates = useMemo(
     () =>
       listComposerMentionCandidates({
-        agents: agents.map((agent) => ({ id: agent.id, name: agent.name })),
-        projects: projects.map((project) => ({ id: project.id, name: project.name })),
+        agents: agents.map((agent) => ({
+          id: agent.id,
+          name: agent.name,
+          icon: agent.icon,
+        })),
+        projects: projects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          icon: project.icon,
+        })),
       }),
     [agents, projects],
   );
@@ -176,6 +187,8 @@ export function ChatInput({
         ? filterComposerMentionCandidates(mentionCandidates, activeMention.query, {
             selectedAgentIds,
             selectedProjectIds,
+            inUseAgentIds: selectedAgentIds,
+            inUseProjectIds: selectedProjectIds,
           })
         : [],
     [activeMention, mentionCandidates, selectedAgentIds, selectedProjectIds],
@@ -198,8 +211,28 @@ export function ChatInput({
     maxHeightCapPx: 184,
   });
 
-  const hasContextBar = contextBarItems.length > 0;
+  const hasContextBadges = contextBadgeItems.length > 0;
   const hasAttachments = attachments.length > 0;
+  const selectedAgentIdSet = useMemo(() => new Set(selectedAgentIds), [selectedAgentIds]);
+  const selectedProjectIdSet = useMemo(() => new Set(selectedProjectIds), [selectedProjectIds]);
+
+  function handleDraftChange(nextValue: string) {
+    onChange(stripComposerMentionTokens(nextValue));
+  }
+
+  function handleRemoveContextBadge(
+    item: ComposerContextBarItem,
+    entityName: string,
+  ) {
+    onChange(removeComposerMentionTokenForName(value, entityName));
+
+    if (item.kind === "agent") {
+      onRemoveContextAgent?.(item.id);
+      return;
+    }
+
+    onRemoveContextProject?.(item.id);
+  }
 
   function syncMentionCursor() {
     const cursor = textareaRef.current?.selectionStart ?? value.length;
@@ -218,11 +251,13 @@ export function ChatInput({
       candidate,
     });
 
-    onChange(next.value);
+    handleDraftChange(next.value);
 
     if (candidate.kind === "agent") {
-      onToggleAgent?.(candidate.id);
-    } else {
+      if (!selectedAgentIdSet.has(candidate.id)) {
+        onToggleAgent?.(candidate.id);
+      }
+    } else if (!selectedProjectIdSet.has(candidate.id)) {
       onToggleProject?.(candidate.id);
     }
 
@@ -310,71 +345,13 @@ export function ChatInput({
       <div
         className={[
           "mdc-chat-input__box",
-          hasContextBar ? "mdc-chat-input__box--with-agent" : "",
+          hasContextBadges ? "mdc-chat-input__box--with-context-badges" : "",
           hasAttachments ? "mdc-chat-input__box--with-attachments" : "",
           showResponseMode ? "mdc-chat-input__box--with-response-mode" : "",
         ]
           .filter(Boolean)
           .join(" ")}
       >
-        {hasContextBar ? (
-          <div className="mdc-chat-input__context-bar">
-            {contextBarItems.map((item) => {
-              if (item.kind === "agent") {
-                const agent = agents.find((entry) => entry.id === item.id);
-
-                if (!agent) {
-                  return null;
-                }
-
-                return (
-                  <div key={`agent-${item.id}`} className="mdc-chat-input__agent-context">
-                    <span className="mdc-chat-input__agent-avatar">
-                      <Bot size={15} aria-hidden="true" />
-                    </span>
-
-                    <strong>{agent.name}</strong>
-
-                    <button
-                      type="button"
-                      onClick={() => onRemoveContextAgent?.(item.id)}
-                      aria-label={`Remover ${agent.name} do contexto`}
-                      title={`Remover ${agent.name} do contexto`}
-                    >
-                      <X size={16} aria-hidden="true" />
-                    </button>
-                  </div>
-                );
-              }
-
-              const project = projects.find((entry) => entry.id === item.id);
-
-              if (!project) {
-                return null;
-              }
-
-              return (
-                <div key={`project-${item.id}`} className="mdc-chat-input__agent-context">
-                  <span className="mdc-chat-input__agent-avatar">
-                    <Folder size={15} aria-hidden="true" />
-                  </span>
-
-                  <strong>{project.name}</strong>
-
-                  <button
-                    type="button"
-                    onClick={() => onRemoveContextProject?.(item.id)}
-                    aria-label={`Remover ${project.name} do contexto`}
-                    title={`Remover ${project.name} do contexto`}
-                  >
-                    <X size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
         {hasAttachments ? (
           <div className="mdc-chat-input__attachments">
             <div className="mdc-chat-input__attachments-header">
@@ -398,6 +375,15 @@ export function ChatInput({
                   readingStatus: attachment.readingStatus,
                 });
 
+                const baseStatusLabel = indexPresentation.statusLabel;
+                const statusLabel =
+                  attachment.status === "uploading" &&
+                  typeof attachment.uploadPercent === "number"
+                    ? baseStatusLabel
+                      ? `${baseStatusLabel} · ${ingestProgressPercentLabel(attachment.uploadPercent)}`
+                      : ingestProgressPercentLabel(attachment.uploadPercent)
+                    : baseStatusLabel;
+
                 const previewKind = isImage ? "image" : "file";
                 const sizeLabel = formatAttachmentSize(attachment.size);
 
@@ -407,7 +393,7 @@ export function ChatInput({
                     variant="card"
                     filename={attachment.name}
                     sizeLabel={sizeLabel || undefined}
-                    statusLabel={indexPresentation.statusLabel}
+                    statusLabel={statusLabel}
                     statusTone={indexPresentation.statusTone}
                     iconTone={workspaceFileIconToneForAttachment(
                       attachment.name,
@@ -464,12 +450,43 @@ export function ChatInput({
 
         <div className="mdc-chat-input__composer-stack">
           <div className="mdc-chat-input__composer-field">
-            {isMentionMenuOpen ? (
-              <ChatComposerMentionMenu
-                items={mentionItems}
-                activeIndex={Math.min(mentionIndex, Math.max(mentionItems.length - 1, 0))}
-                onHover={setMentionIndex}
-                onSelect={handleMentionSelect}
+            {isMentionMenuOpen && activeMention ? (
+              <ComposerMentionMenuPortal
+                open
+                textareaRef={textareaRef}
+                anchorIndex={activeMention.start}
+                itemCount={Math.max(mentionItems.length, 1)}
+                value={value}
+              >
+                <ChatComposerMentionMenu
+                  items={mentionItems}
+                  activeIndex={Math.min(mentionIndex, Math.max(mentionItems.length - 1, 0))}
+                  onHover={setMentionIndex}
+                  onSelect={handleMentionSelect}
+                  variant="portal"
+                />
+              </ComposerMentionMenuPortal>
+            ) : null}
+
+            {hasContextBadges ? (
+              <ChatComposerContextBadges
+                items={contextBadgeItems}
+                agents={agents}
+                projects={projects}
+                onRemoveAgent={(agentId) => {
+                  const agent = agents.find((entry) => entry.id === agentId);
+
+                  if (agent) {
+                    handleRemoveContextBadge({ kind: "agent", id: agentId }, agent.name);
+                  }
+                }}
+                onRemoveProject={(projectId) => {
+                  const project = projects.find((entry) => entry.id === projectId);
+
+                  if (project) {
+                    handleRemoveContextBadge({ kind: "project", id: projectId }, project.name);
+                  }
+                }}
               />
             ) : null}
 
@@ -482,7 +499,7 @@ export function ChatInput({
               placeholder={placeholder}
               rows={1}
               onChange={(event) => {
-                onChange(event.target.value);
+                handleDraftChange(event.target.value);
                 setMentionCursor(event.target.selectionStart ?? event.target.value.length);
                 requestAnimationFrame(() => syncHeight());
               }}
@@ -577,7 +594,7 @@ export function ChatInput({
       <small>
         {hasAttachments
           ? "Arquivos anexados serão usados como fonte de conhecimento desta conversa."
-          : "Digite @ para citar agente ou projeto na pergunta. A resposta será exibida em tempo real."}
+          : "Digite @ ou use + para combinar agentes e projetos na pergunta. A resposta será exibida em tempo real."}
       </small>
 
       {previewModal}

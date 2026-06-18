@@ -47,6 +47,36 @@ class ChatTurnPreparationRagService:
         )
 
     @classmethod
+    def _resolve_rag_chunk_filter(
+        cls,
+        *,
+        message: str,
+        assistant_identity_question: bool,
+        workspace_context: dict | None = None,
+        previous_messages: list | None = None,
+    ) -> Callable[[dict], bool] | None:
+        if assistant_identity_question:
+            return ChatAssistantIdentityService.identity_chunk_filter()
+
+        from app.domain.services.chat_project_sources_intent_service import (
+            ChatProjectSourcesIntentService,
+        )
+
+        working_memory = (workspace_context or {}).get("workingMemory")
+        memory_snapshot = working_memory if isinstance(working_memory, dict) else None
+
+        project_filter = ChatProjectSourcesIntentService.build_content_chunk_filter(
+            message,
+            memory_snapshot=memory_snapshot,
+            previous_messages=previous_messages,
+        )
+
+        if project_filter is not None:
+            return project_filter
+
+        return None
+
+    @classmethod
     def build(
         cls,
         *,
@@ -64,6 +94,7 @@ class ChatTurnPreparationRagService:
         knowledge_scope_service,
         semantic_memory_service,
         on_stream_activity: Callable[..., None] | None = None,
+        previous_messages: list | None = None,
     ) -> ChatTurnPreparationRagResult:
         assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
             message
@@ -94,7 +125,13 @@ class ChatTurnPreparationRagService:
             )
 
         if skip_rag:
-            rag = {"context": "", "sources": []}
+            rag = {
+                "context": "",
+                "sources": [],
+                "retrievedSourceCount": 0,
+                "visibleSourceCount": 0,
+                "retrievedChunkCount": 0,
+            }
             pipeline_stages.append("skip_rag")
         else:
             pipeline_stages.append("rag")
@@ -120,6 +157,25 @@ class ChatTurnPreparationRagService:
                 if "semantic_memory" not in pipeline_stages:
                     pipeline_stages.append("semantic_memory")
 
+            from app.domain.services.chat_project_sources_intent_service import (
+                ChatProjectSourcesIntentService,
+            )
+
+            if ChatProjectSourcesIntentService.is_content_question(
+                message,
+                memory_snapshot=(
+                    workspace_context.get("workingMemory")
+                    if isinstance(workspace_context.get("workingMemory"), dict)
+                    else None
+                ),
+                previous_messages=previous_messages,
+            ):
+                if "project_sources_content" not in pipeline_stages:
+                    pipeline_stages.append("project_sources_content")
+
+            working_memory = workspace_context.get("workingMemory")
+            memory_snapshot = working_memory if isinstance(working_memory, dict) else None
+
             rag = rag_context_service.build_context(
                 rag_query,
                 filters=knowledge_scope_service.build_filters(
@@ -127,12 +183,16 @@ class ChatTurnPreparationRagService:
                     session=session,
                     workspace_context=workspace_context,
                     attachment_ids=attachment_ids,
+                    message=message,
+                    memory_snapshot=memory_snapshot,
+                    previous_messages=previous_messages,
                 ),
                 min_score=rag_min_score,
-                chunk_filter=(
-                    ChatAssistantIdentityService.identity_chunk_filter()
-                    if assistant_identity_question
-                    else None
+                chunk_filter=cls._resolve_rag_chunk_filter(
+                    message=message,
+                    assistant_identity_question=assistant_identity_question,
+                    workspace_context=workspace_context,
+                    previous_messages=previous_messages,
                 ),
             )
 

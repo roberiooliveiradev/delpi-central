@@ -13,7 +13,7 @@ O **chat** é onde a inteligência transversal evolui. **Agentes** são instânc
 |----------|--------|
 | **Chat (sessão)** | Pipeline de mensagens, histórico, tools, RAG, LLM |
 | **Agente** | `system_prompt`, skills, actions permitidas, especialização de conhecimento |
-| **Projeto** | Prompt de projeto, agente padrão, agrupamento de sessões; opcionalmente `metadata.shareConversationContext` para resumo/memória/RAG entre conversas do mesmo projeto |
+| **Projeto** | Prompt de projeto, agente padrão, agrupamento de sessões; `shareConversationContext` **desabilitado** até [projetos colaborativos](../roadmap/projetos-colaborativos-futuro.md) |
 | **Simulação / admin** | Mesmo pipeline, com rascunho ou sandbox |
 
 Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.
@@ -188,6 +188,10 @@ Mensagem do usuário
 | `ChatInteractivityAdminMetricsService` | Auditoria `interactivityMetrics` + CTR (`GET /admin/metrics/interactivity/summary`) |
 | `ChatTypingCorrectionAdminMetricsService` | Auditoria `typingCorrectionMetrics` + eventos `chat.typing_correction.event` (`GET /admin/metrics/typing-correction/summary`) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
+| `ChatProjectSourcesIntentService` | Inventário, conteúdo por nome de arquivo ou **slot** («primeiro arquivo»); frases em `turn_preparation.json` |
+| `ChatProjectSourcesDirectAnswerService` | Lista fontes via `ListProjectSourcesUseCase` — **sem RAG**; estágio `project_sources_inventory` |
+| `ChatProjectSourcesInventoryService` | Snapshot `lastProjectSourcesInventory` no `contextSnapshot` pós-inventário |
+| `ChatProjectSourceSlotResolverService` | Resolve ordinal/nome parcial → `projectSourceId` para RAG filtrado |
 | `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` e autoajuda (`help-events`: painel, `self_help_*`) |
 | `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |
 | `ChatGuidedFlowService` | Fluxos guiados e cards interativos (`guidedFlow`, `guidedFlowCards`) — interatividade Fase 5 |
@@ -427,6 +431,29 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
 ```
 
 Testes: `test_chat_turn_preparation_identity_rag.py`, `test_chat_assistant_identity_rag_filter.py`, `test_chat_assistant_identity_stream_and_send.py`, `test_chat_admin_debug_service.py`.
+
+### Inventário de fontes do projeto (jun/2026)
+
+Perguntas **meta** sobre o acervo do projeto («o que tem nas suas fontes?», «liste as fontes», «quantas fontes») não são bem atendidas por RAG semântico (embedding busca trechos, não inventário de arquivos). Globais indexadas podiam ocupar o top‑K e gerar `ragSourceCount: 0` na UI (fontes ocultas) mesmo com contexto injetado no prompt.
+
+| Camada | Comportamento |
+|--------|----------------|
+| `ChatProjectSourcesIntentService` | `inventoryPhrases` → resposta direta; conteúdo/slot → `include_global=false` + filtro por `documentId` |
+| `ChatProjectSourcesDirectAnswerService` | `ListProjectSourcesUseCase` — inventário; persiste `pendingProjectSourcesInventory` |
+| `ChatProjectSourcesInventoryService` | `lastProjectSourcesInventory` no `contextSnapshot` (pós-turno via `ChatContextMetadataService`) |
+| `ChatProjectSourceSlotResolverService` | «primeiro arquivo», ordinais, nome parcial → entrada do inventário |
+| `ChatTextTaskIntentService` | Não classifica resumo de arquivo com slot + inventário como `text_task` |
+| `ChatKnowledgeScopeService` | Com `project_id`: `scope_priority: "project_source"`; restrito quando a mensagem pede fontes do projeto |
+| `SearchKnowledgeUseCase` | Boost no rerank (`CHAT_RAG_SCOPE_PRIORITY_BOOST`, default `0.2`) para chunks do escopo prioritário |
+| `RagContextService` | Expõe `retrievedSourceCount`, `visibleSourceCount`, `retrievedChunkCount` (antes/depois de `filter_client_visible_sources`) |
+| Pipeline inventário | `ingress` → `direct_answer` → `project_sources_inventory` → **`skip_rag`** |
+| Pipeline conteúdo slot | Turno 2+: `project_sources_content` → RAG com `chunk_filter` por `documentId` (não `text_task`) |
+
+**Variável:** `CHAT_RAG_SCOPE_PRIORITY_BOOST` (default `0.2`).
+
+**Metadata (inteligência + admin):** `ragRetrievedCount`, `ragVisibleSourceCount`, `ragRetrievedChunkCount`; `ragSourceCount` permanece = visível (retrocompat). Em `adminDebug.rag`, `sourcesNote` explica quando globais foram recuperadas mas ocultas na UI.
+
+**Testes:** `test_chat_project_sources_intent_service.py`, `test_chat_project_source_slot_resolver_service.py`, `test_chat_project_sources_slot_rag.py`, `test_search_knowledge_scope_boost.py`, `test_turn_preparation_tool_routing.py`; casos em `PROJECT_SOURCES_INTENT_CASES` e `TRAINING_AGENT_INTERACTION_INDEX` (interação 6).
 
 ---
 
@@ -842,11 +869,11 @@ Payload típico (campos principais):
 | `workspace` | `agentKey`, `agent`, `project`, `skills`, `specialization`, actions habilitadas |
 | `pipeline` | `operationalOptimize`, `analysisMode`, `fastPath`, **`skipRag`**, `historySummary` |
 | `tooling` | `toolCalls`, `selectedExternalAction`, texto de contexto de tools |
-| `rag` | `sources`, `ragContextText` |
+| `rag` | `sources`, `ragContextText`, `retrievedSourceCount`, `visibleSourceCount`, `retrievedChunkCount`, opcional `sourcesNote` |
 | `llm` | Mensagens enviadas ao modelo (truncadas) |
 | `recordedAt` | ISO UTC do turno |
 
-Para perguntas de identidade, espere `pipeline.skipRag: false`. `rag.sources` pode vir vazio no JSON exposto (fontes globais ocultas) — use `rag.ragContextText` e `rag.sourcesNote`. Se só houver normas técnicas na base, o filtro esvazia o contexto e a resposta vem do fallback canônico (sem LLM).
+Para perguntas de identidade, espere `pipeline.skipRag: false`. `rag.sources` pode vir vazio no JSON exposto (fontes globais ocultas) — use `rag.ragContextText`, `rag.retrievedSourceCount` vs. `rag.visibleSourceCount` e `rag.sourcesNote`. Se só houver normas técnicas na base, o filtro esvazia o contexto e a resposta vem do fallback canônico (sem LLM).
 
 Mensagens antigas não ganham diagnóstico retroativo.
 

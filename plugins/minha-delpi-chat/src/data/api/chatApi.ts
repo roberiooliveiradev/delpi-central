@@ -49,13 +49,22 @@ import type {
   WorkspaceFileIngestPolicyFamily,
   WorkspaceFileIngestPolicyResponse,
 } from "./chatTypes";
+import {
+  fetchChatApi,
+  formatTransientChatApiMessage,
+  isTransientHttpStatus,
+} from "./chatApiFetch";
+import { uploadFormDataWithProgress } from "./uploadFormDataWithProgress";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
 
 type TokenProvider = () => string | undefined | Promise<string | undefined>;
 
+export type { UploadProgressCallback } from "./uploadFormDataWithProgress";
+
 type ChatApiOptions = {
   getAccessToken?: TokenProvider;
+  onUploadProgress?: import("./uploadFormDataWithProgress").UploadProgressCallback;
 };
 
 type StreamCallbacks = {
@@ -136,9 +145,13 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 
   if (!response.ok) {
     if (!payload && raw.trim()) {
-      throw new Error(
-        `Erro ao comunicar com o Minha DELPI Chat. (HTTP ${response.status}: ${raw.trim().slice(0, 180)})`,
-      );
+      const message = isTransientHttpStatus(response.status)
+        ? formatTransientChatApiMessage(response.status)
+        : raw.trim().startsWith("<")
+          ? formatTransientChatApiMessage(response.status)
+          : `Erro ao comunicar com o Minha DELPI Chat. (HTTP ${response.status}: ${raw.trim().slice(0, 180)})`;
+
+      throw new Error(message);
     }
 
     throw new Error(
@@ -153,10 +166,22 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   return payload as T;
 }
 
+async function postFormData<T>(
+  url: string,
+  formData: FormData,
+  options: ChatApiOptions = {},
+): Promise<T> {
+  return uploadFormDataWithProgress(url, formData, {
+    headers: await getAuthOnlyHeaders(options),
+    onUploadProgress: options.onUploadProgress,
+    parseResponse: (response) => parseJsonResponse<T>(response),
+  });
+}
+
 export async function getChatCapabilities(
   options: ChatApiOptions = {},
 ): Promise<ChatCapabilities> {
-  const response = await fetch(`${API_BASE_URL}/chat/capabilities`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/capabilities`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -195,7 +220,7 @@ export async function getAssistantCatalog(
     ? `${API_BASE_URL}/chat/assistant/catalog?${queryString}`
     : `${API_BASE_URL}/chat/assistant/catalog`;
 
-  const response = await fetch(url, {
+  const response = await fetchChatApi(url, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -207,7 +232,7 @@ export async function recordAssistantHelpEvent(
   payload: { event: string; metadata?: Record<string, unknown> | null },
   options: ChatApiOptions = {},
 ): Promise<{ ok: boolean; event: string }> {
-  const response = await fetch(`${API_BASE_URL}/chat/assistant/help-events`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/assistant/help-events`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -221,7 +246,7 @@ export async function createChatSession(
   payload: CreateChatSessionPayload,
   options: ChatApiOptions = {},
 ): Promise<ChatSession> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -233,7 +258,7 @@ export async function createChatSession(
 export async function getChatResponseModes(
   options: ChatApiOptions = {},
 ): Promise<ChatResponseModesResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/response-modes`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/response-modes`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -255,7 +280,7 @@ export async function listChatSessions(
     ? `${API_BASE_URL}/chat/sessions?${queryString}`
     : `${API_BASE_URL}/chat/sessions`;
 
-  const response = await fetch(url, {
+  const response = await fetchChatApi(url, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -267,7 +292,7 @@ export async function listChatMessages(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatMessage[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -279,7 +304,7 @@ export async function cancelChatStream(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<{ cancelled: boolean }> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/sessions/${sessionId}/messages/cancel`,
     {
       method: "POST",
@@ -295,7 +320,7 @@ export async function switchChatBranch(
   anchorUserMessageId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatMessage[]> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/sessions/${sessionId}/active-branch`,
     {
       method: "PATCH",
@@ -329,7 +354,7 @@ export async function upsertChatMessageFeedback(
     body.comment = comment;
   }
 
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/sessions/${sessionId}/messages/${messageId}/feedback`,
     {
       method: "PUT",
@@ -344,7 +369,7 @@ export async function upsertChatMessageFeedback(
 export async function getChatFeedbackReasons(
   options: ChatApiOptions = {},
 ): Promise<ChatFeedbackReasonsPayload> {
-  const response = await fetch(`${API_BASE_URL}/chat/assistant/feedback-reasons`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/assistant/feedback-reasons`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -356,7 +381,7 @@ export async function getTypingSuggestions(
   text: string,
   options: ChatApiOptions = {},
 ): Promise<ChatTypingSuggestionResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/typing-suggestions`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/typing-suggestions`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify({ text, locale: "pt-BR" }),
@@ -370,7 +395,7 @@ export async function sendChatMessage(
   payload: SendChatMessagePayload,
   options: ChatApiOptions = {},
 ): Promise<SendChatMessageResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -575,7 +600,7 @@ async function openChatMessageStream(
   let response: Response;
 
   try {
-    response = await fetch(url, {
+    response = await fetchChatApi(url, {
       method: "POST",
       headers: await getAuthHeaders(options),
       body: JSON.stringify(body),
@@ -663,10 +688,24 @@ export async function renameChatSession(
   title: string,
   options: ChatApiOptions = {},
 ): Promise<ChatSession> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
     body: JSON.stringify({ title }),
+  });
+
+  return parseJsonResponse<ChatSession>(response);
+}
+
+export async function moveChatSessionToProject(
+  sessionId: string,
+  projectId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatSession> {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ projectId }),
   });
 
   return parseJsonResponse<ChatSession>(response);
@@ -676,7 +715,7 @@ export async function deleteChatSession(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
     method: "DELETE",
     headers: await getAuthHeaders(options),
   });
@@ -691,7 +730,7 @@ export async function updateChatMessage(
   content: string,
   options: ChatApiOptions = {},
 ): Promise<ChatMessage> {
-  const response = await fetch(`${API_BASE_URL}/chat/messages/${messageId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/messages/${messageId}`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
     body: JSON.stringify({ content }),
@@ -705,7 +744,7 @@ export async function pinChatSession(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatSession> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/pin`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/pin`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
   });
@@ -717,7 +756,7 @@ export async function unpinChatSession(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatSession> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/unpin`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/unpin`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
   });
@@ -729,7 +768,7 @@ export async function archiveChatSession(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatSession> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/archive`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/archive`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
   });
@@ -741,7 +780,7 @@ export async function unarchiveChatSession(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatSession> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/unarchive`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/unarchive`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
   });
@@ -753,7 +792,7 @@ export async function clearChatSessionMemory(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<{ cleared: number }> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/clear`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/clear`, {
     method: "POST",
     headers: await getAuthHeaders(options),
   });
@@ -784,7 +823,7 @@ export async function getChatSessionMemoryContext(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<SessionMemoryContextResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/context`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/context`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -809,7 +848,7 @@ export async function addChatSessionContextItem(
   payload: ChatSessionContextItemPayload,
   options: ChatApiOptions = {},
 ): Promise<SessionMemoryContextResponse> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/sessions/${sessionId}/memory/context-items`,
     {
       method: "POST",
@@ -826,7 +865,7 @@ export async function removeChatSessionContextItem(
   itemId: string,
   options: ChatApiOptions = {},
 ): Promise<SessionMemoryContextResponse> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/sessions/${sessionId}/memory/context-items/${encodeURIComponent(itemId)}`,
     {
       method: "DELETE",
@@ -842,7 +881,7 @@ export async function addChatSessionMemoryPin(
   payload: { kind: string; value: string },
   options: ChatApiOptions = {},
 ): Promise<SessionMemoryContextResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/pins`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/pins`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -856,7 +895,7 @@ export async function removeChatSessionMemoryPin(
   kind: string,
   options: ChatApiOptions = {},
 ): Promise<SessionMemoryContextResponse> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/sessions/${sessionId}/memory/pins/${encodeURIComponent(kind)}`,
     {
       method: "DELETE",
@@ -872,7 +911,7 @@ export async function setChatSessionResponseFormat(
   responseFormat: string,
   options: ChatApiOptions = {},
 ): Promise<SessionMemoryContextResponse> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/sessions/${sessionId}/memory/response-format`,
     {
       method: "PUT",
@@ -889,7 +928,7 @@ export async function listChatArtifacts(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatArtifact[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/artifacts`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/artifacts`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -902,7 +941,7 @@ export async function createChatArtifact(
   payload: CreateChatArtifactPayload,
   options: ChatApiOptions = {},
 ): Promise<ChatArtifact> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/artifacts`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/artifacts`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -916,7 +955,7 @@ export async function updateChatArtifact(
   payload: UpdateChatArtifactPayload,
   options: ChatApiOptions = {},
 ): Promise<ChatArtifact> {
-  const response = await fetch(`${API_BASE_URL}/chat/artifacts/${artifactId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/artifacts/${artifactId}`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -929,7 +968,7 @@ export async function deleteChatArtifact(
   artifactId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/chat/artifacts/${artifactId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/artifacts/${artifactId}`, {
     method: "DELETE",
     headers: await getAuthHeaders(options),
   });
@@ -959,7 +998,7 @@ export async function listChatAgents(
   }
 
   const query = params.toString() ? `?${params.toString()}` : "";
-  const response = await fetch(`${API_BASE_URL}/chat/agents${query}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents${query}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -971,7 +1010,7 @@ export async function getChatAgent(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgent> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -983,7 +1022,7 @@ export async function createChatAgent(
   payload: CreateChatAgentPayload,
   options: ChatApiOptions = {},
 ): Promise<ChatAgent> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -997,7 +1036,7 @@ export async function updateChatAgent(
   payload: UpdateChatAgentPayload,
   options: ChatApiOptions = {},
 ): Promise<ChatAgent> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1010,7 +1049,7 @@ export async function deleteChatAgent(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}`, {
     method: "DELETE",
     headers: await getAuthHeaders(options),
   });
@@ -1025,7 +1064,7 @@ export async function shareChatAgent(
   payload: ShareChatAgentPayload,
   options: ChatApiOptions = {},
 ): Promise<{ ok: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/share`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/share`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1038,7 +1077,7 @@ export async function listChatAgentShares(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgentShare[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/shares`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/shares`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1051,7 +1090,7 @@ export async function revokeChatAgentShare(
   targetUserId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${agentId}/shares/${targetUserId}`,
     {
       method: "DELETE",
@@ -1072,7 +1111,7 @@ export async function searchChatUsers(
     q: query,
     limit: String(options.limit ?? 10),
   });
-  const response = await fetch(`${API_BASE_URL}/chat/users/search?${params}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/users/search?${params}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1086,7 +1125,7 @@ export async function duplicateChatAgent(
   options: ChatApiOptions & { copyActions?: boolean; copySources?: boolean } = {},
 ): Promise<ChatAgent> {
   const { copyActions = true, copySources = false, ...apiOptions } = options;
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/duplicate`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/duplicate`, {
     method: "POST",
     headers: await getAuthHeaders(apiOptions),
     body: JSON.stringify({ copyActions, copySources }),
@@ -1099,7 +1138,7 @@ export async function exportChatAgent(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgentExportBundle> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/export`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/export`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1117,7 +1156,7 @@ export async function importChatAgent(
   },
   options: ChatApiOptions = {},
 ): Promise<ChatAgent> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/import`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/import`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1131,7 +1170,7 @@ export async function transferChatAgentOwnership(
   newOwnerUserId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/transfer`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/transfer`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify({ newOwnerUserId }),
@@ -1156,7 +1195,7 @@ export async function getChatAgentStats(
   if (options.specialization) {
     params.set("specialization", JSON.stringify(options.specialization));
   }
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/stats?${params}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/stats?${params}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1169,15 +1208,17 @@ export async function previewChatAgent(
   payload: {
     message: string;
     generateAnswer?: boolean;
+    executeToolsInSandbox?: boolean;
     draft?: ChatAgentPreviewDraft;
     previousMessages?: Array<{ role: string; content: string }>;
   },
-  options: ChatApiOptions = {},
+  options: ChatApiOptions & { signal?: AbortSignal } = {},
 ): Promise<ChatAgentPreviewResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/preview`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/preview`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
+    signal: options.signal,
   });
 
   return parseJsonResponse(response);
@@ -1187,15 +1228,17 @@ export async function previewChatAgentDraft(
   payload: {
     message: string;
     generateAnswer?: boolean;
+    executeToolsInSandbox?: boolean;
     draft: ChatAgentPreviewDraft;
     previousMessages?: Array<{ role: string; content: string }>;
   },
-  options: ChatApiOptions = {},
+  options: ChatApiOptions & { signal?: AbortSignal } = {},
 ): Promise<ChatAgentPreviewResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/preview`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/preview`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
+    signal: options.signal,
   });
 
   return parseJsonResponse(response);
@@ -1205,7 +1248,7 @@ export async function publishChatAgent(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgent> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/publish`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/publish`, {
     method: "POST",
     headers: await getAuthHeaders(options),
   });
@@ -1217,7 +1260,7 @@ export async function listChatAgentVersions(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgentVersion[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/versions`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/versions`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1230,7 +1273,7 @@ export async function upsertChatAgentAction(
   payload: UpsertChatAgentActionPayload,
   options: ChatApiOptions = {},
 ): Promise<{ ok: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/actions`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/actions`, {
     method: "PUT",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1242,7 +1285,7 @@ export async function upsertChatAgentAction(
 export async function listChatProjects(
   options: ChatApiOptions = {},
 ): Promise<ChatProject[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1254,7 +1297,7 @@ export async function createChatProject(
   payload: CreateChatProjectPayload,
   options: ChatApiOptions = {},
 ): Promise<ChatProject> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1268,7 +1311,7 @@ export async function updateChatProject(
   payload: UpdateChatProjectPayload,
   options: ChatApiOptions = {},
 ): Promise<ChatProject> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects/${projectId}`, {
     method: "PATCH",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1281,7 +1324,7 @@ export async function deleteChatProject(
   projectId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects/${projectId}`, {
     method: "DELETE",
     headers: await getAuthHeaders(options),
   });
@@ -1292,11 +1335,12 @@ export async function deleteChatProject(
 }
 
 
+/** @deprecated Colaboração de projetos desabilitada — API retorna 501. Ver `projetos-colaborativos-futuro.md`. */
 export async function listChatProjectShares(
   projectId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatProjectShare[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/shares`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects/${projectId}/shares`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1304,12 +1348,13 @@ export async function listChatProjectShares(
   return parseJsonResponse(response);
 }
 
+/** @deprecated Colaboração de projetos desabilitada — API retorna 501. */
 export async function revokeChatProjectShare(
   projectId: string,
   targetUserId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/projects/${projectId}/shares/${targetUserId}`,
     {
       method: "DELETE",
@@ -1322,12 +1367,13 @@ export async function revokeChatProjectShare(
   }
 }
 
+/** @deprecated Colaboração de projetos desabilitada — API retorna 501. */
 export async function shareChatProject(
   projectId: string,
   payload: ShareChatProjectPayload,
   options: ChatApiOptions = {},
 ): Promise<{ ok: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/share`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects/${projectId}/share`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1341,7 +1387,7 @@ export async function fetchChatSessionAttachments(
   sessionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAttachment[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/attachments`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sessions/${sessionId}/attachments`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1357,13 +1403,11 @@ export async function uploadChatAttachment(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/attachments`, {
-    method: "POST",
-    headers: await getAuthOnlyHeaders(options),
-    body: formData,
-  });
-
-  return parseJsonResponse<ChatAttachment>(response);
+  return postFormData<ChatAttachment>(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/attachments`,
+    formData,
+    options,
+  );
 }
 
 export async function uploadChatAttachmentWithSession(
@@ -1390,20 +1434,18 @@ export async function uploadChatAttachmentWithSession(
     formData.append("context", payload.context);
   }
 
-  const response = await fetch(`${API_BASE_URL}/chat/attachments`, {
-    method: "POST",
-    headers: await getAuthOnlyHeaders(options),
-    body: formData,
-  });
-
-  return parseJsonResponse<{ session: ChatSession; attachment: ChatAttachment }>(response);
+  return postFormData<{ session: ChatSession; attachment: ChatAttachment }>(
+    `${API_BASE_URL}/chat/attachments`,
+    formData,
+    options,
+  );
 }
 
 export async function listProjectSources(
   projectId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatWorkspaceSource[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1419,13 +1461,11 @@ export async function uploadProjectSource(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
-    method: "POST",
-    headers: await getAuthOnlyHeaders(options),
-    body: formData,
-  });
-
-  return parseJsonResponse<ChatWorkspaceSource>(response);
+  return postFormData<ChatWorkspaceSource>(
+    `${API_BASE_URL}/chat/projects/${projectId}/sources`,
+    formData,
+    options,
+  );
 }
 
 export async function createProjectTextSource(
@@ -1437,7 +1477,7 @@ export async function createProjectTextSource(
   },
   options: ChatApiOptions = {},
 ): Promise<ChatWorkspaceSource> {
-  const response = await fetch(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects/${projectId}/sources`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1450,7 +1490,7 @@ export async function listAgentSources(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatWorkspaceSource[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1466,13 +1506,11 @@ export async function uploadAgentSource(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
-    method: "POST",
-    headers: await getAuthOnlyHeaders(options),
-    body: formData,
-  });
-
-  return parseJsonResponse<ChatWorkspaceSource>(response);
+  return postFormData<ChatWorkspaceSource>(
+    `${API_BASE_URL}/chat/agents/${agentId}/sources`,
+    formData,
+    options,
+  );
 }
 
 export async function createAgentTextSource(
@@ -1484,7 +1522,7 @@ export async function createAgentTextSource(
   },
   options: ChatApiOptions = {},
 ): Promise<ChatWorkspaceSource> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/sources`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1497,7 +1535,7 @@ export async function deleteChatSource(
   sourceId: string,
   options: ChatApiOptions = {},
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/chat/sources/${sourceId}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sources/${sourceId}`, {
     method: "DELETE",
     headers: await getAuthHeaders(options),
   });
@@ -1515,7 +1553,7 @@ async function downloadBinaryFromChat(
     "../../utils/downloadBlob"
   );
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetchChatApi(`${API_BASE_URL}${path}`, {
     method: "GET",
     headers: await getAuthOnlyHeaders(options),
   });
@@ -1538,7 +1576,7 @@ export async function fetchChatSourceBlob(
 ): Promise<{ blob: Blob; filename: string; contentType: string | null }> {
   const { parseContentDispositionFilename } = await import("../../utils/downloadBlob");
 
-  const response = await fetch(`${API_BASE_URL}/chat/sources/${sourceId}/download`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/sources/${sourceId}/download`, {
     method: "GET",
     headers: await getAuthOnlyHeaders(options),
   });
@@ -1564,7 +1602,7 @@ export async function fetchChatAttachmentBlob(
 ): Promise<{ blob: Blob; filename: string; contentType: string | null }> {
   const { parseContentDispositionFilename } = await import("../../utils/downloadBlob");
 
-  const response = await fetch(`${API_BASE_URL}/chat/attachments/${attachmentId}/download`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/attachments/${attachmentId}/download`, {
     method: "GET",
     headers: await getAuthOnlyHeaders(options),
   });
@@ -1608,7 +1646,7 @@ export async function listChatActions(
   }
 
   const query = params.toString();
-  const response = await fetch(
+  const response = await fetchChatApi(
     query ? `${API_BASE_URL}/chat/actions?${query}` : `${API_BASE_URL}/chat/actions`,
     {
       method: "GET",
@@ -1623,7 +1661,7 @@ export async function listChatAgentActions(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgentAction[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/actions`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/actions`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1634,7 +1672,7 @@ export async function listChatAgentActions(
 export async function listChatSkillCatalog(
   options: ChatApiOptions = {},
 ): Promise<ChatSkillCatalogItem[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/skills`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/skills`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1646,7 +1684,7 @@ export async function listChatAgentSkills(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgentSkillBinding[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/skills`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/skills`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1659,7 +1697,7 @@ export async function upsertChatAgentSkill(
   payload: UpsertChatAgentSkillPayload,
   options: ChatApiOptions = {},
 ): Promise<{ ok: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/skills`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/skills`, {
     method: "PUT",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1671,7 +1709,7 @@ export async function upsertChatAgentSkill(
 export async function listActionProviders(
   options: ChatApiOptions = {},
 ): Promise<ChatActionProvider[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/action-providers`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/action-providers`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1683,7 +1721,7 @@ export async function listChatAgentActionProviders(
   agentId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatAgentActionProvider[]> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/providers`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/providers`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1703,7 +1741,7 @@ export async function saveChatAgentActionProvider(
   },
   options: ChatApiOptions = {},
 ): Promise<{ saved: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/providers`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/providers`, {
     method: "PUT",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1717,7 +1755,7 @@ export async function deleteChatAgentActionProvider(
   providerKey: string,
   options: ChatApiOptions = {},
 ): Promise<{ deleted: boolean }> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${agentId}/providers/${encodeURIComponent(providerKey)}`,
     {
       method: "DELETE",
@@ -1736,7 +1774,7 @@ export async function deleteChatAgentAction(
 ): Promise<{ deleted: boolean }> {
   const encodedProvider = encodeURIComponent(providerKey);
   const encodedAction = encodeURIComponent(actionId);
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${agentId}/providers/${encodedProvider}/actions/${encodedAction}`,
     {
       method: "DELETE",
@@ -1776,7 +1814,7 @@ export async function createChatAgentActionProvider(
   } | null;
   linked: boolean;
 }> {
-  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/providers/create`, {
+  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents/${agentId}/providers/create`, {
     method: "POST",
     headers: await getAuthHeaders(options),
     body: JSON.stringify(payload),
@@ -1795,7 +1833,7 @@ export async function importChatAgentActionProviderSchema(
   actionsImported?: number;
   schemaHash?: string;
 }> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/import`,
     {
       method: "POST",
@@ -1812,7 +1850,7 @@ export async function startChatAgentActionProviderImportJob(
   providerKey: string,
   options: ChatApiOptions = {},
 ): Promise<ChatExternalActionImportJob> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}/import?async=true`,
     {
       method: "POST",
@@ -1829,7 +1867,7 @@ export async function getChatAgentActionProviderImportJob(
   jobId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatExternalActionImportJob> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/providers/${providerKey}/import/jobs/${jobId}`,
     {
       method: "GET",
@@ -1845,7 +1883,7 @@ export async function getLatestChatAgentActionProviderImportJob(
   providerKey: string,
   options: ChatApiOptions = {},
 ): Promise<ChatExternalActionImportJob | null> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/providers/${providerKey}/import/jobs/latest`,
     {
       method: "GET",
@@ -1866,7 +1904,7 @@ export async function getChatAgentActionProvider(
   providerKey: string,
   options: ChatApiOptions = {},
 ): Promise<ChatActionProvider> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}`,
     {
       method: "GET",
@@ -1891,7 +1929,7 @@ export async function updateChatAgentActionProvider(
   },
   options: ChatApiOptions = {},
 ): Promise<ChatActionProvider> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${agentId}/providers/${providerKey}`,
     {
       method: "PATCH",
@@ -1915,7 +1953,7 @@ export async function testChatAgentAction(
   },
   options: ChatApiOptions = {},
 ): Promise<ChatActionTestResult> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${encodeURIComponent(agentId)}/providers/${encodeURIComponent(providerKey)}/actions/${encodeURIComponent(actionId)}/test`,
     {
       method: "POST",
@@ -1954,7 +1992,7 @@ export async function listChatAgentActionTestLogs(
   actionId: string,
   options: ChatApiOptions = {},
 ): Promise<ChatActionTestLog[]> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/agents/${encodeURIComponent(agentId)}/providers/${encodeURIComponent(providerKey)}/actions/${encodeURIComponent(actionId)}/logs`,
     {
       method: "GET",
@@ -1969,7 +2007,7 @@ export async function fetchWorkspaceFileIngestPolicy(
   family: WorkspaceFileIngestPolicyFamily = "session_attachment",
   options: ChatApiOptions = {},
 ): Promise<WorkspaceFileIngestPolicyResponse> {
-  const response = await fetch(
+  const response = await fetchChatApi(
     `${API_BASE_URL}/chat/ingest/policy?family=${encodeURIComponent(family)}`,
     {
       method: "GET",

@@ -157,6 +157,27 @@ def test_structure_exclusivity_text_first_without_tree():
     assert "table" in (decision.get("availableViews") or [])
 
 
+def test_structure_exclusivity_explicit_text_mode_embeds_tree_outline_in_markdown():
+    meta = _build(
+        "product_structure_exclusivity_90261805.json",
+        "/products/90261805/structure/exclusivity",
+        user_message="Quais MPs compõem a estrutura do 90261805? Tem MP exclusiva?",
+        session_format="text",
+    )
+    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+
+    assert meta.get("explicitSessionFormat") == "text"
+    assert meta.get("treePresentation", {}).get("type") == "tree"
+    assert "|" in markdown, "modo Texto deve embutir tabelas GFM no markdown"
+    assert (
+        "└──" in markdown
+        or "├──" in markdown
+        or "```text" in markdown
+    ), "modo Texto deve embutir árvore BOM no markdown"
+    assert "10020053" in markdown
+    assert "10080185" in markdown
+
+
 def test_structure_exclusivity_tree_marks_exclusive_mp_nodes():
     meta = _build(
         "product_structure_exclusivity_90269002.json",
@@ -245,6 +266,10 @@ def test_stock_playbook_keeps_data_answer_without_decision_card():
     assert meta.get("storyPresentation") is None
     assert meta.get("dataAnswer", {}).get("summary", {}).get("answer")
     assert meta.get("textPresentation", {}).get("markdown")
+    assert meta["presentationDecision"].get("insight") == ""
+    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+    assert "Consultei o estoque" not in markdown
+    assert "Saldo disponível total" in markdown
 
 
 def test_stock_playbook_text_first_without_integrated_stack():

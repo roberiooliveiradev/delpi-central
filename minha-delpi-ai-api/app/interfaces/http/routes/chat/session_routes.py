@@ -67,20 +67,33 @@ def list_sessions():
 
 @chat_bp.patch("/sessions/<session_id>")
 @require_permission(CHAT_HISTORY_VIEW_PERMISSION)
-def rename_session(session_id: str):
+def patch_session(session_id: str):
     payload = request.get_json(silent=True) or {}
 
     if not isinstance(payload, dict):
         return bad_request("Request body must be a JSON object")
 
-    use_case = make_rename_chat_session_use_case()
+    has_title = "title" in payload
+    has_project_id = "projectId" in payload or "project_id" in payload
+
+    if not has_title and not has_project_id:
+        return bad_request("Informe title ou projectId.")
+
+    use_case = make_update_chat_session_use_case()
 
     try:
         session = use_case.execute(
-            RenameChatSessionRequest(
+            UpdateChatSessionRequest(
                 user_id=g.current_user.sub,
                 session_id=session_id,
-                title=payload.get("title", ""),
+                title=payload.get("title") if has_title else None,
+                update_title=has_title,
+                project_id=(
+                    payload.get("projectId") if "projectId" in payload else payload.get("project_id")
+                )
+                if has_project_id
+                else None,
+                update_project_id=has_project_id,
             )
         )
 

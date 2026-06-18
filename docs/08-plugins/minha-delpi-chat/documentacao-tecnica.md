@@ -22,7 +22,7 @@ O **Minha DELPI Chat** é um assistente conversacional integrado ao portal corpo
 - consulta a dados operacionais (via **api-delpi**) com apresentação rica (tabela, gráfico, árvore, KPI);
 - base de conhecimento documental (RAG com pgvector);
 - **agentes** configuráveis (prompt, skills, actions OpenAPI);
-- **projetos** com contexto compartilhado;
+- **projetos** com instruções, ícone e conversas agrupadas (sem colaboração multiusuário por enquanto);
 - anexos, lousa (canvas), pesquisa web e painel administrativo.
 
 ### Princípio arquitetural central
@@ -289,6 +289,20 @@ Requer permissão `minha-delpi.chat.admin`. O frontend consulta `GET /chat/capab
 
 Doc: [`08-admin.md`](../../../minha-delpi-ai-api/docs/api/08-admin.md).
 
+### 6.5 Workspace — projetos, agentes e composer (jun/2026)
+
+Entregas da sessão **17–18/06/2026**. Detalhes: [changelog workspace](../../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md).
+
+| Área | Destaques |
+|------|-----------|
+| **Projetos** | Create (nome + ícone), `ChatProjectSettingsModal`, «Gerenciar projeto», drag-and-drop conversa→projeto na sidebar |
+| **Agentes** | `ChatLucideIconPickerModal` (catálogo Lucide); `ChatAgentIcon` + `lucideIconResolver.ts` |
+| **Composer** | `ChatComposerContextBadges`; menus `@`/`+` ancorados no caret |
+| **Modais** | Botões canônicos `mdc-chat-modal-icon-btn` / `mdc-chat-modal-tool-btn` em `chat-modal.css` |
+| **Colaboração** | Desativada (`PROJECT_COLLABORATION_ENABLED`); roadmap em `projetos-colaborativos-futuro.md` |
+
+API correlata: `PATCH /chat/sessions/{id}` com `projectId`; `UpdateChatSessionUseCase`.
+
 ---
 
 ## 7. Modelo conceitual
@@ -508,6 +522,8 @@ Perfis dev/prod documentados: [`chat-intelligence-settings-profiles.md`](../../.
 | [roadmap inteligência](../../../minha-delpi-ai-api/docs/roadmap/README.md) | Ondas 1–14 |
 | [admin roadmap](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) | Painel admin (concluído) |
 | [agentes roadmap](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) | Gestão de agentes |
+| [changelog workspace jun/2026](../../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md) | Projetos, agentes, composer, modais |
+| [projetos colaborativos (futuro)](../../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md) | Share editor/viewer — backlog |
 | [frontend refactor roadmap](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) | Componentes shared, CSS, tokens, modais |
 | [component structure](../../../plugins/minha-delpi-chat/docs/component-structure.md) | Pastas feature (shared, presentation, message, …) |
 

@@ -2142,3 +2142,86 @@ UNCLEAR_REQUEST_CASES = [
     ("coloque isso na lousa", None),
     ("corrija o texto do e-mail", None),
 ]
+
+# Inventário / escopo de fontes do projeto (jun/2026).
+# (mensagem, inventory_esperado, restrict_global_esperado)
+PROJECT_SOURCES_INTENT_CASES = [
+    ("o que tem nas suas fontes?", True, True),
+    ("quais são as fontes do projeto?", True, True),
+    ("liste as fontes", True, True),
+    ("quantas fontes você tem?", True, True),
+    ("resuma suas fontes", False, True),
+    ("use as fontes do projeto para responder", False, True),
+    (
+        "o que esta escrito em 1o TREINAMENTO — FEVEREIRO 2026.docx?",
+        False,
+        True,
+    ),
+    ("estoque do produto 10080001", False, False),
+    ("resuma o conteúdo do primeiro arquivo", False, True),
+]
+
+# Follow-up de inventário (interação 6.2) — exige lastProjectSourcesInventory no histórico.
+PROJECT_SOURCES_SLOT_CASES = [
+    {
+        "message": "resuma o conteúdo do primeiro arquivo",
+        "expected_source_id": "doc-training-1",
+        "inventory": [
+            {
+                "projectSourceId": "doc-training-1",
+                "title": "1º TREINAMENTO — FEVEREIRO 2026.docx",
+                "ordinal": 1,
+                "indexed": True,
+                "chunkCount": 4,
+            },
+            {
+                "projectSourceId": "doc-manual-2",
+                "title": "MANUAL.pdf",
+                "ordinal": 2,
+                "indexed": True,
+                "chunkCount": 2,
+            },
+        ],
+    },
+]
+
+# treinamento-agente-interacoes-jun2026.md — consultas operacionais (não capabilities).
+TRAINING_AGENT_CAPABILITY_GATE_CASES = [
+    "estoque do produto 10080022",
+    "status fabril do produto 90269002 hoje",
+    "quais matérias-primas exclusivas existem na estrutura desse produto?",
+    "análise de preço da matéria-prima 10080001",
+    "qual o preço de venda do produto 10080001?",
+    "quais materiais mais impactam o custo do PA 90261255?",
+    "simule aumento de 10% nos materiais desse produto",
+    "situação de produção do 90269002 hoje",
+    "e a expedição?",
+]
+
+# Índice das 6 interações do roteiro → mensagem canônica (seleção em SELECTION_CASES / FU01–FU02).
+TRAINING_AGENT_INTERACTION_INDEX = [
+    {"id": "TR01", "interaction": 1, "message": "estoque do produto 10080022"},
+    {"id": "TR02", "interaction": 2, "message": "status fabril do produto 90269002 hoje"},
+    {
+        "id": "TR02b",
+        "interaction": 2,
+        "message": "quais matérias-primas exclusivas existem na estrutura desse produto?",
+        "fixture": "OPERATIONAL_FOLLOW_UP_SELECTION_CASES FU02",
+    },
+    {"id": "TR03", "interaction": 3, "message": "análise de preço da matéria-prima 10080001"},
+    {"id": "TR03b", "interaction": 3, "message": "qual o preço de venda do produto 10080001?"},
+    {"id": "TR04", "interaction": 4, "message": "quais materiais mais impactam o custo do PA 90261255?"},
+    {
+        "id": "TR05",
+        "interaction": 5,
+        "message": "e a expedição?",
+        "fixture": "OPERATIONAL_FOLLOW_UP_SELECTION_CASES FU01",
+    },
+    {"id": "TR06", "interaction": 6, "message": "o que tem nas suas fontes?"},
+    {
+        "id": "TR06b",
+        "interaction": 6,
+        "message": "resuma o conteúdo do primeiro arquivo",
+        "fixture": "PROJECT_SOURCES_SLOT_CASES",
+    },
+]

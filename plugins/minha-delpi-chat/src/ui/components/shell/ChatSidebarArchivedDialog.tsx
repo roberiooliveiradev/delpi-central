@@ -33,7 +33,12 @@ export function ChatSidebarArchivedDialog({
           <p>Restaure uma conversa para voltar ao histórico principal.</p>
         </div>
 
-        <button type="button" onClick={onClose} aria-label="Fechar">
+        <button
+          type="button"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
+          onClick={onClose}
+          aria-label="Fechar"
+        >
           <X size={17} aria-hidden="true" />
         </button>
       </header>

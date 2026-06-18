@@ -70,6 +70,7 @@ import type {
   ReviewMemoryItemPayload,
   UpsertVocabularyTermPayload,
 } from "./adminTypes";
+import { uploadFormDataWithProgress } from "./uploadFormDataWithProgress";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
 
@@ -77,6 +78,7 @@ type TokenProvider = () => string | undefined | Promise<string | undefined>;
 
 type AdminApiOptions = {
   getAccessToken?: TokenProvider;
+  onUploadProgress?: import("./uploadFormDataWithProgress").UploadProgressCallback;
 };
 
 export type KnowledgeCuratorialFields = {
@@ -113,6 +115,7 @@ export type PreviewKnowledgeIngestionPayload = {
   sourceRef?: string;
   metadata?: Record<string, unknown>;
   checkSemanticDuplicates?: boolean;
+  onUploadProgress?: import("./uploadFormDataWithProgress").UploadProgressCallback;
 };
 
 export type UploadKnowledgeDocumentFilePayload = {
@@ -121,6 +124,7 @@ export type UploadKnowledgeDocumentFilePayload = {
   sourceType?: string;
   sourceRef?: string;
   metadata?: Record<string, unknown>;
+  onUploadProgress?: import("./uploadFormDataWithProgress").UploadProgressCallback;
 } & KnowledgeCuratorialFields;
 
 function buildCuratorialMetadata(
@@ -199,6 +203,18 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   }
 
   return payload as T;
+}
+
+async function postFormData<T>(
+  url: string,
+  formData: FormData,
+  options: AdminApiOptions = {},
+): Promise<T> {
+  return uploadFormDataWithProgress(url, formData, {
+    headers: await getMultipartAuthHeaders(options),
+    onUploadProgress: options.onUploadProgress,
+    parseResponse: (response) => parseJsonResponse<T>(response),
+  });
 }
 
 
@@ -356,15 +372,14 @@ export async function previewKnowledgeIngestion(
       formData.append("checkSemanticDuplicates", "false");
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/knowledge/ingest/preview`, {
-      method: "POST",
-      headers: {
-        Authorization: (headers as Record<string, string>).Authorization ?? "",
+    return postFormData<AdminKnowledgeIngestionPreviewResponse>(
+      `${API_BASE_URL}/admin/knowledge/ingest/preview`,
+      formData,
+      {
+        ...options,
+        onUploadProgress: payload.onUploadProgress ?? options.onUploadProgress,
       },
-      body: formData,
-    });
-
-    return parseJsonResponse<AdminKnowledgeIngestionPreviewResponse>(response);
+    );
   }
 
   const response = await fetch(`${API_BASE_URL}/admin/knowledge/ingest/preview`, {
@@ -510,13 +525,14 @@ export async function uploadKnowledgeDocumentFile(
     formData.set("metadata", JSON.stringify(metadata));
   }
 
-  const response = await fetch(`${API_BASE_URL}/admin/knowledge/documents/upload`, {
-    method: "POST",
-    headers: await getMultipartAuthHeaders(options),
-    body: formData,
-  });
-
-  return parseJsonResponse<CreateKnowledgeDocumentResponse>(response);
+  return postFormData<CreateKnowledgeDocumentResponse>(
+    `${API_BASE_URL}/admin/knowledge/documents/upload`,
+    formData,
+    {
+      ...options,
+      onUploadProgress: payload.onUploadProgress ?? options.onUploadProgress,
+    },
+  );
 }
 
 export async function updateKnowledgeDocumentMetadata(

@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  Bot,
   Check,
   Copy,
   Download,
@@ -32,7 +31,6 @@ import {
   listChatAgentActionProviders,
   listChatAgentSkills,
   listChatAgentShares,
-  previewChatAgent,
   previewChatAgentDraft,
   publishChatAgent,
   listChatAgentVersions,
@@ -50,7 +48,6 @@ import type {
   ChatAgentExportBundle,
   ChatAgentShare,
   ChatAgentStats,
-  ChatMessage,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
@@ -68,12 +65,17 @@ import {
   resolveAgentIcebreakersForEditor,
 } from "../agentIcebreakers";
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
-import {
-  createAgentPreviewChatMessage,
-  toPreviewPreviousMessages,
-} from "../agentPreviewMessages";
 
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
+import { ChatAgentIcon } from "../components/workspace/ChatAgentIcon";
+import {
+  AGENT_ICON_LABELS,
+  AGENT_ICON_OPTIONS,
+  DEFAULT_AGENT_ICON,
+  normalizeAgentIcon,
+} from "../components/workspace/chatAgentIcon";
+import { ChatLucideIconPickerModal } from "../components/workspace/ChatLucideIconPickerModal";
+import { ChatWorkspaceIconPicker } from "../components/workspace/ChatWorkspaceIconPicker";
 import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
 import {
   AgentIcebreakersEditor,
@@ -179,8 +181,6 @@ export function ChatAgentBuilderPage({
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
   const [isCreateChatLoading, setIsCreateChatLoading] = useState(false);
-  const [previewInput, setPreviewInput] = useState("");
-  const [previewMessages, setPreviewMessages] = useState<ChatMessage[]>([]);
 
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
@@ -194,7 +194,8 @@ export function ChatAgentBuilderPage({
         : "private",
   );
   const [category, setCategory] = useState(agent?.category ?? "");
-  const [icon, setIcon] = useState(agent?.icon ?? "bot");
+  const [icon, setIcon] = useState(agent?.icon ?? DEFAULT_AGENT_ICON);
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [responseStyle, setResponseStyle] = useState(agent?.response_style ?? "objetivo");
   const [enabled, setEnabled] = useState(agent?.enabled ?? true);
   const [maxToolCalls, setMaxToolCalls] = useState(agent?.max_tool_calls ?? 5);
@@ -208,7 +209,6 @@ export function ChatAgentBuilderPage({
   const [agentShares, setAgentShares] = useState<ChatAgentShare[]>([]);
   const [isLoadingShares, setIsLoadingShares] = useState(false);
   const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const [icebreakers, setIcebreakers] = useState<string[]>(() =>
     resolveAgentIcebreakersForEditor(agent?.metadata ?? null),
@@ -240,6 +240,7 @@ export function ChatAgentBuilderPage({
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
   const [isSavingSource, setIsSavingSource] = useState(false);
+  const [sourceUploadPercent, setSourceUploadPercent] = useState<number | null>(null);
   const [sourceNotice, setSourceNotice] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -302,7 +303,7 @@ export function ChatAgentBuilderPage({
               : "private",
         );
         setCategory(details.category ?? "");
-        setIcon(details.icon ?? "bot");
+        setIcon(details.icon ?? DEFAULT_AGENT_ICON);
         setResponseStyle(details.response_style ?? "objetivo");
         setEnabled(details.enabled);
         setMaxToolCalls(details.max_tool_calls);
@@ -433,13 +434,21 @@ export function ChatAgentBuilderPage({
     }
 
     setIsSavingSource(true);
+    setSourceUploadPercent(null);
     setSourceNotice(null);
 
     const duplicateNames: string[] = [];
     let uploadedCount = 0;
     try {
-      for (const file of files) {
-        const result = await uploadAgentSource(agent.id, file, { getAccessToken });
+      for (const [index, file] of files.entries()) {
+        const result = await uploadAgentSource(agent.id, file, {
+          getAccessToken,
+          onUploadProgress: (filePercent) => {
+            const slice = 100 / files.length;
+            const base = index * slice;
+            setSourceUploadPercent(Math.round(base + (filePercent / 100) * slice));
+          },
+        });
 
         if (result.duplicate) {
           duplicateNames.push(result.original_filename || result.title || file.name);
@@ -464,6 +473,7 @@ export function ChatAgentBuilderPage({
       }
     } finally {
       setIsSavingSource(false);
+      setSourceUploadPercent(null);
     }
   }
 
@@ -700,7 +710,7 @@ export function ChatAgentBuilderPage({
       systemPrompt: systemPrompt.trim() || null,
       responseStyle,
       category: category.trim() || null,
-      icon: icon.trim() || null,
+      icon: normalizeAgentIcon(icon),
       maxToolCalls,
       requiresConfirmationForWrite,
       metadata: {
@@ -725,73 +735,6 @@ export function ChatAgentBuilderPage({
         },
       },
     };
-  }
-
-  async function sendPreviewMessage(content: string) {
-    const message = content.trim();
-
-    if (!message) {
-      return;
-    }
-
-    if (!getAccessToken) {
-      return;
-    }
-
-    const draft = buildPreviewDraft();
-
-    if (!draft.name.trim()) {
-      setPreviewMessages((current) => [
-        ...current,
-        createAgentPreviewChatMessage(
-          "assistant",
-          "Informe o nome do agente para testar a pré-visualização.",
-        ),
-      ]);
-      return;
-    }
-
-    const previousMessages = toPreviewPreviousMessages(previewMessages);
-
-    setPreviewMessages((current) => [
-      ...current,
-      createAgentPreviewChatMessage("user", message),
-    ]);
-    setPreviewInput("");
-    setIsPreviewLoading(true);
-
-    try {
-      const result = agent?.id
-        ? await previewChatAgent(
-            agent.id,
-            { message, generateAnswer: true, draft, previousMessages },
-            { getAccessToken },
-          )
-        : await previewChatAgentDraft(
-            { message, generateAnswer: true, draft, previousMessages },
-            { getAccessToken },
-          );
-
-      const answer =
-        (typeof result.answerPreview === "string" && result.answerPreview) ||
-        (typeof result.answer === "string" && result.answer) ||
-        "Sem resposta na pré-visualização.";
-
-      setPreviewMessages((current) => [
-        ...current,
-        createAgentPreviewChatMessage("assistant", answer),
-      ]);
-    } catch {
-      setPreviewMessages((current) => [
-        ...current,
-        createAgentPreviewChatMessage(
-          "assistant",
-          "Não foi possível gerar a pré-visualização com o rascunho atual.",
-        ),
-      ]);
-    } finally {
-      setIsPreviewLoading(false);
-    }
   }
 
   const loadAgentShares = useCallback(async () => {
@@ -909,7 +852,7 @@ export function ChatAgentBuilderPage({
       systemPrompt: systemPrompt.trim() || null,
       visibility,
       category: category.trim() || null,
-      icon: icon.trim() || null,
+      icon: normalizeAgentIcon(icon),
       responseStyle,
       metadata: {
         ...(agent?.metadata ?? {}),
@@ -1310,17 +1253,18 @@ export function ChatAgentBuilderPage({
 
       <ChatAgentPreviewWorkspace
         agent={previewAgent}
-        messages={previewMessages}
-        draft={previewInput}
-        isSending={isPreviewLoading}
         defaultIcebreakersHint={
           usingDefaultPreviewIcebreakers
             ? "Sugestões padrão — configure em Quebra-gelos ou clique para testar."
             : null
         }
-        onDraftChange={setPreviewInput}
-        onSendMessage={sendPreviewMessage}
         getAccessToken={getAccessToken}
+        buildDraft={buildPreviewDraft}
+        validateDraft={() =>
+          name.trim()
+            ? null
+            : "Informe o nome do agente para testar a pré-visualização."
+        }
       />
     </div>
   );
@@ -1328,6 +1272,12 @@ export function ChatAgentBuilderPage({
   return (
     <section className="mdc-chat-agent-builder" aria-label="Configurar agente">
       {confirmDialog}
+      <ChatLucideIconPickerModal
+        open={isIconPickerOpen}
+        value={icon}
+        onClose={() => setIsIconPickerOpen(false)}
+        onPick={(nextIcon) => setIcon(nextIcon ?? DEFAULT_AGENT_ICON)}
+      />
       <header className="mdc-chat-ws-topbar mdc-chat-agent-builder__topbar">
         <div className="mdc-chat-ws-topbar__start">
           <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
@@ -1357,7 +1307,10 @@ export function ChatAgentBuilderPage({
           )}
         </div>
 
-        <div className="mdc-chat-ws-topbar__actions mdc-chat-agent-builder__topbar-actions">
+      </header>
+
+      <div className="mdc-chat-agent-builder__actions-bar" aria-label="Ações do agente">
+        <div className="mdc-chat-agent-builder__actions-bar-start">
           {canImportAgent ? (
             <>
               <button
@@ -1425,7 +1378,9 @@ export function ChatAgentBuilderPage({
               </button>
             </>
           ) : null}
+        </div>
 
+        <div className="mdc-chat-agent-builder__actions-bar-end">
           <button
             type="button"
             className="mdc-chat-ws-toolbar-btn"
@@ -1461,7 +1416,7 @@ export function ChatAgentBuilderPage({
             </button>
           )}
         </div>
-      </header>
+      </div>
 
       <div
         className="mdc-chat-agent-builder__workspace-tabs"
@@ -1620,7 +1575,7 @@ export function ChatAgentBuilderPage({
             <>
           <header className="mdc-chat-agent-builder__hero">
             <span className="mdc-chat-agent-builder__hero-icon" aria-hidden="true">
-              <Bot size={26} />
+              <ChatAgentIcon icon={icon} size={26} />
             </span>
             <label className="mdc-chat-agent-builder__hero-name-wrap">
               <span className="mdc-chat-agent-builder__sr-only">Nome do agente</span>
@@ -1710,15 +1665,32 @@ export function ChatAgentBuilderPage({
                 />
               </label>
 
-              <label className="mdc-chat-ws-field">
+              <div className="mdc-chat-ws-field">
                 <span>Ícone</span>
-                <input
+                <div className="mdc-chat-agent-icon-field">
+                  <button
+                    type="button"
+                    className="mdc-chat-ws-outline-btn"
+                    onClick={() => setIsIconPickerOpen(true)}
+                  >
+                    Selecionar ícone
+                  </button>
+
+                  <div className="mdc-chat-agent-icon-field__preview">
+                    <ChatAgentIcon icon={icon} size={22} />
+                    <code>{icon}</code>
+                  </div>
+                </div>
+
+                <ChatWorkspaceIconPicker
+                  options={AGENT_ICON_OPTIONS}
+                  labels={AGENT_ICON_LABELS}
                   value={icon}
-                  maxLength={60}
-                  onChange={(event) => setIcon(event.target.value)}
-                  placeholder="bot"
+                  onChange={setIcon}
+                  renderIcon={(option, size) => <ChatAgentIcon icon={option} size={size} />}
+                  ariaLabel="Atalhos de ícone do agente"
                 />
-              </label>
+              </div>
             </div>
           </section>
 
@@ -1827,6 +1799,7 @@ export function ChatAgentBuilderPage({
                 <AgentKnowledgeSourcesPanel
                   sources={agentSources}
                   isUploading={isSavingSource}
+                  uploadPercent={sourceUploadPercent}
                   notice={sourceNotice}
                   getAccessToken={getAccessToken}
                   onUploadFiles={uploadAgentKnowledgeFiles}

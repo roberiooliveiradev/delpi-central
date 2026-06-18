@@ -19,7 +19,9 @@ import {
   createLocalAttachmentPreviewUrl,
   revokeAttachmentPreviewUrl,
 } from "../../chatAttachmentPreview";
+import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
 import { uploadChatAttachment } from "../../../data/api/chatApi";
+import { workspaceFileMessageEditLabels } from "../../../content/workspaceFileIngestContent";
 import {
   isAttachmentIndexPending,
   waitForSessionAttachmentIndexed,
@@ -535,6 +537,8 @@ export function ChatMessageList({
   const [editingContent, setEditingContent] = useState("");
   const [editingAttachments, setEditingAttachments] = useState<ChatAttachmentCardModel[]>([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editUploadPercent, setEditUploadPercent] = useState<number | null>(null);
+  const [pendingSaveMessageId, setPendingSaveMessageId] = useState<string | null>(null);
   const [previewTarget, setPreviewTarget] = useState<ChatAttachmentPreviewTarget | null>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [enteringAssistantId, setEnteringAssistantId] = useState<string | null>(null);
@@ -974,6 +978,8 @@ export function ChatMessageList({
     }
 
     setIsSavingEdit(true);
+    setEditUploadPercent(null);
+    setPendingSaveMessageId(messageId);
     setEditingMessageId(null);
     setEditingContent("");
     setEditingAttachments([]);
@@ -993,6 +999,7 @@ export function ChatMessageList({
 
         const uploaded = await uploadChatAttachment(sessionId, attachment.localFile, {
           getAccessToken,
+          onUploadProgress: setEditUploadPercent,
         });
         let resolvedAttachment = uploaded;
 
@@ -1020,6 +1027,8 @@ export function ChatMessageList({
       );
     } finally {
       setIsSavingEdit(false);
+      setEditUploadPercent(null);
+      setPendingSaveMessageId(null);
     }
   }
 
@@ -1270,6 +1279,15 @@ export function ChatMessageList({
                 </>
               )}
             </div>
+
+            {pendingSaveMessageId === message.id && editUploadPercent != null ? (
+              <IngestProgressIndicator
+                compact
+                className="mdc-chat-message-edit-upload-progress"
+                label={workspaceFileMessageEditLabels().uploadingStatus}
+                percent={editUploadPercent}
+              />
+            ) : null}
           </div>
         ) : (
           <div className="mdc-chat-message-card">

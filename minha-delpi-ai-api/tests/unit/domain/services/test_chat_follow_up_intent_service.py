@@ -14,3 +14,14 @@ def test_not_follow_up_with_product_code():
 
 def test_follow_up_type_stock():
     assert ChatFollowUpIntentService.follow_up_type("agora estoque") == "stock"
+
+
+def test_follow_up_expedition_short_message():
+    assert ChatFollowUpIntentService.is_operational_follow_up("e a expedição?") is True
+    assert ChatFollowUpIntentService.follow_up_type("e a expedição?") == "shipping"
+
+
+def test_follow_up_structure_exclusivity():
+    message = "quais matérias-primas exclusivas existem na estrutura desse produto?"
+    assert ChatFollowUpIntentService.is_operational_follow_up(message) is True
+    assert ChatFollowUpIntentService.follow_up_type(message) == "structure_exclusivity"

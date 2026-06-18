@@ -7,7 +7,9 @@ import {
   formatComposerMentionToken,
   listComposerMentionCandidates,
   mergeMentionedContextIds,
+  removeComposerMentionTokenForName,
   resolveMentionedContextIds,
+  stripComposerMentionTokens,
 } from "./chatComposerMention";
 
 const candidates = listComposerMentionCandidates({
@@ -43,7 +45,16 @@ describe("chatComposerMention", () => {
     ]);
   });
 
-  it("insere token @[Nome] ao selecionar", () => {
+  it("oculta agente e projeto já em uso no contexto", () => {
+    expect(
+      filterComposerMentionCandidates(candidates, "", {
+        inUseAgentIds: ["agent-a"],
+        inUseProjectIds: ["project-a"],
+      }).map((item) => item.name),
+    ).toEqual(["outro"]);
+  });
+
+  it("remove menção ativa sem inserir token @[Nome]", () => {
     const result = applyComposerMentionSelection({
       value: "consulta @de",
       cursor: 12,
@@ -51,9 +62,18 @@ describe("chatComposerMention", () => {
       candidate: candidates[0],
     });
 
-    expect(result.value).toBe("consulta @[Agente Minha DELPI] ");
-    expect(result.cursor).toBe(result.value.length);
+    expect(result.value).toBe("consulta ");
+    expect(result.cursor).toBe(9);
     expect(formatComposerMentionToken("Agente Minha DELPI")).toBe("@[Agente Minha DELPI] ");
+  });
+
+  it("remove tokens legados do rascunho", () => {
+    expect(stripComposerMentionTokens("@[Agente Minha DELPI] listar LMPs")).toBe(
+      " listar LMPs",
+    );
+    expect(removeComposerMentionTokenForName("@[Agente Minha DELPI] oi", "Agente Minha DELPI")).toBe(
+      "oi",
+    );
   });
 
   it("resolve ids citados no texto", () => {

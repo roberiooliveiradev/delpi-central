@@ -85,4 +85,5 @@ class ChatTurnPreparationResultService:
             text_correction_subtype=text_correction_subtype,
             intent_route=intent_route,
             routing_disambiguation_suggestions=routing_disambiguation_suggestions,
+            workspace_context=dict(workspace_context),
         )

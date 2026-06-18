@@ -3,6 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
+import { PortalMobileNavBar } from "../layout/PortalMobileNavBar";
 import { ProtectedRoute } from "../routes/ProtectedRoute";
 import { Unauthorized } from "./Unauthorized";
 import { motion } from "framer-motion";
@@ -134,6 +135,7 @@ function AppShell() {
   return (
     <div className="app-shell">
       <Sidebar />
+      <PortalMobileNavBar />
       <PortalTour />
 
       <div className="main-area">

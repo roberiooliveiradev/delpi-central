@@ -24,9 +24,10 @@ from app.application.dto.create_chat_project_request import CreateChatProjectReq
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
 from app.application.dto.share_chat_agent_request import ShareChatAgentRequest
 from app.application.dto.share_chat_project_request import ShareChatProjectRequest
+from app.domain.features.chat_project_collaboration import is_project_collaboration_enabled
 from app.application.dto.switch_chat_branch_request import SwitchChatBranchRequest
 from app.application.dto.update_chat_agent_request import UpdateChatAgentRequest
-from app.application.dto.update_chat_artifact_request import UpdateChatArtifactRequest
+from app.application.dto.update_chat_session_request import UpdateChatSessionRequest
 from app.application.dto.update_chat_project_request import UpdateChatProjectRequest
 from app.application.dto.upsert_chat_agent_action_request import UpsertChatAgentActionRequest
 from app.application.dto.upsert_chat_agent_skill_request import UpsertChatAgentSkillRequest
@@ -96,6 +97,7 @@ from app.composition.chat_composer import (
     make_update_chat_artifact_use_case,
     make_update_chat_message_use_case,
     make_update_chat_project_use_case,
+    make_update_chat_session_use_case,
     make_upsert_chat_agent_action_provider_use_case,
     make_upsert_chat_agent_action_use_case,
     make_upsert_chat_agent_skill_use_case,
@@ -137,7 +139,7 @@ from app.interfaces.http.routes.chat.shared import (
     chat_bp,
     chat_forbidden,
 )
-from app.interfaces.http.utils.errors import bad_request, conflict, forbidden
+from app.interfaces.http.utils.errors import bad_request, conflict, feature_not_enabled, forbidden
 
 # `from deps import *` ignora nomes com `_` salvo se estiverem em `__all__`.
 __all__ = [name for name in globals() if not name.startswith("__")]

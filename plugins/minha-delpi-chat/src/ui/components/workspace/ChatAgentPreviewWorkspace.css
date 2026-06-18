@@ -6,19 +6,50 @@
   width: 100%;
 }
 
-.mdc-chat-agent-preview-workspace .mdc-chat-empty-composer,
-.mdc-chat-agent-preview-workspace .mdc-chat-conversation {
+.mdc-chat-agent-preview-workspace .mdc-chat-agent-conversation-surface {
   flex: 1;
   min-height: 0;
-  width: 100%;
 }
 
-.mdc-chat-agent-preview-workspace .mdc-chat-message-list-wrap {
+/* Pré-visualização usa o mesmo composer da página do agente — sem estilos do formulário do builder. */
+.mdc-chat-agent-preview-workspace .mdc-chat-empty-composer {
+  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
+  width: 100%;
+  padding-inline: clamp(0.75rem, 3vw, 1.5rem);
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-empty-composer__column {
+  flex: 1 1 auto;
+  justify-content: center;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-empty-composer__column > .mdc-chat-input {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-empty-composer__column .mdc-chat-input--center .mdc-chat-input__box {
+  min-height: 3.8rem;
+  border-color: color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 48%, transparent);
+  padding: 0.35rem 0.45rem 0.35rem 1rem;
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-composer-footer {
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .mdc-chat-agent-preview-workspace .mdc-chat-composer-footer .mdc-chat-input {
-  width: 100%;
-  max-width: var(--mdc-chat-column-max);
-  margin-inline: auto;
+  border-top: 0;
+  background: transparent;
+  backdrop-filter: none;
 }

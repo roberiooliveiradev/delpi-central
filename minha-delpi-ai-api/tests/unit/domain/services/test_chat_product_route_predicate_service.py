@@ -95,6 +95,18 @@ def test_shipping_status_matches_expedicao_with_product_scope():
     assert ChatProductRoutePredicateService.matches("shippingStatus", normalized)
 
 
+def test_partially_matches_when_terms_hit_but_scope_missing():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "inspeção final"
+    )
+
+    assert not ChatProductRoutePredicateService.matches("shippingStatus", normalized)
+    assert ChatProductRoutePredicateService.partially_matches(
+        "shippingStatus",
+        normalized,
+    )
+
+
 def test_sub_intent_department_kpi_blocks_sales_question():
     kpi = ChatMessageNormalizationService.normalize_for_matching(
         "qual o pmr da empresa"

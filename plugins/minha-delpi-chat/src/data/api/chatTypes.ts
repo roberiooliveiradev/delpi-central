@@ -1042,6 +1042,9 @@ export type ChatProjectShare = ChatAgentShare;
 export type ChatAgentPreviewResponse = {
   answer?: string | null;
   answerPreview?: string | null;
+  appliedGuidelines?: Array<Record<string, unknown>>;
+  chunks?: Array<Record<string, unknown>>;
+  matchedDocuments?: Array<Record<string, unknown>>;
   rag?: Record<string, unknown>;
   toolCalls?: ChatToolCall[];
   plannedToolCalls?: ChatToolCall[];

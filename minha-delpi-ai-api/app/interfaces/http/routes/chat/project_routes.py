@@ -224,6 +224,17 @@ def update_project(project_id: str):
 
     use_case = make_update_chat_project_use_case()
 
+    explicit_default_agent_id = (
+        "defaultAgentId" in payload or "default_agent_id" in payload
+    )
+    default_agent_id = (
+        payload.get("defaultAgentId")
+        if "defaultAgentId" in payload
+        else payload.get("default_agent_id")
+        if "default_agent_id" in payload
+        else None
+    )
+
     try:
         result = use_case.execute(
             UpdateChatProjectRequest(
@@ -232,7 +243,8 @@ def update_project(project_id: str):
                 name=payload.get("name"),
                 description=payload.get("description"),
                 instructions=payload.get("instructions"),
-                default_agent_id=payload.get("defaultAgentId") or payload.get("default_agent_id"),
+                default_agent_id=default_agent_id,
+                explicit_default_agent_id=explicit_default_agent_id,
                 visibility=payload.get("visibility"),
                 icon=payload.get("icon"),
                 color=payload.get("color"),
@@ -285,6 +297,11 @@ def delete_project(project_id: str):
 @chat_bp.post("/projects/<project_id>/share")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def share_project(project_id: str):
+    if not is_project_collaboration_enabled():
+        return feature_not_enabled(
+            "Compartilhamento colaborativo de projetos ainda não está disponível.",
+        )
+
     payload = request.get_json(silent=True) or {}
 
     if not isinstance(payload, dict):
@@ -317,6 +334,11 @@ def share_project(project_id: str):
 @chat_bp.get("/projects/<project_id>/shares")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_project_shares(project_id: str):
+    if not is_project_collaboration_enabled():
+        return feature_not_enabled(
+            "Compartilhamento colaborativo de projetos ainda não está disponível.",
+        )
+
     access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
     use_case = make_list_chat_project_shares_use_case()
     shares = use_case.execute(
@@ -330,6 +352,11 @@ def list_project_shares(project_id: str):
 @chat_bp.delete("/projects/<project_id>/shares/<target_user_id>")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def revoke_project_share(project_id: str, target_user_id: str):
+    if not is_project_collaboration_enabled():
+        return feature_not_enabled(
+            "Compartilhamento colaborativo de projetos ainda não está disponível.",
+        )
+
     use_case = make_revoke_chat_project_share_use_case()
 
     try:

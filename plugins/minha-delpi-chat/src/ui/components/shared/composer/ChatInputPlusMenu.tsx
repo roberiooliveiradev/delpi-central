@@ -1,10 +1,18 @@
-import { ArrowUpRight, Bot, Folder, Plus, Upload } from "lucide-react";
+import { ArrowUpRight, Plus, Upload } from "lucide-react";
 import { useMemo, useRef, type RefObject } from "react";
 
+import {
+  formatComposerPlusMenuText,
+  getComposerPlusMenuContent,
+} from "../../../../content/messageComposerContent";
 import type { ChatAgent, ChatProject } from "../../../../data/api/chatTypes";
+import { MAX_COMPOSER_AGENTS, MAX_COMPOSER_PROJECTS } from "../../../../state/chatComposerContext";
+import { excludeInUseComposerContextItems } from "../../../../state/chatComposerMention";
 import { workspaceFileComposerLabels } from "../../../../content/workspaceFileIngestContent";
 import { estimateChatInputPlusMenuItemCount } from "../overlay/menuPositionUtils";
 import { AnchoredMenuPortal } from "../overlay/AnchoredMenuPortal";
+import { ChatAgentIcon } from "../../workspace/ChatAgentIcon";
+import { ChatProjectIcon } from "../../workspace/ChatProjectIcon";
 
 import "../../composer/ChatInput.css";
 
@@ -37,16 +45,25 @@ export function ChatInputPlusMenu({
 }: ChatInputPlusMenuProps) {
   const internalTriggerRef = useRef<HTMLButtonElement | null>(null);
   const triggerRef = triggerRefProp ?? internalTriggerRef;
+  const plusMenuLabels = useMemo(() => getComposerPlusMenuContent(), []);
   const selectedAgentIdSet = useMemo(() => new Set(selectedAgentIds), [selectedAgentIds]);
   const selectedProjectIdSet = useMemo(() => new Set(selectedProjectIds), [selectedProjectIds]);
+  const selectableAgents = useMemo(
+    () => excludeInUseComposerContextItems(agents, selectedAgentIds),
+    [agents, selectedAgentIds],
+  );
+  const selectableProjects = useMemo(
+    () => excludeInUseComposerContextItems(projects, selectedProjectIds).slice(0, 8),
+    [projects, selectedProjectIds],
+  );
 
   const menuItemCount = useMemo(
     () =>
       estimateChatInputPlusMenuItemCount({
-        agentCount: agents.length,
-        projectCount: projects.length,
+        agentCount: selectableAgents.length,
+        projectCount: selectableProjects.length,
       }),
-    [agents.length, projects.length],
+    [selectableAgents.length, selectableProjects.length],
   );
 
   return (
@@ -74,7 +91,7 @@ export function ChatInputPlusMenu({
         onClose={() => onOpenChange(false)}
       >
         <div className="mdc-chat-input__menu-section">
-          <strong>Arquivos</strong>
+          <strong>{plusMenuLabels.filesSectionTitle}</strong>
 
           <button
             type="button"
@@ -90,63 +107,88 @@ export function ChatInputPlusMenu({
           </button>
         </div>
 
-        <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
-          <strong>Contexto da conversa</strong>
+        <div
+          className="mdc-chat-input__menu-section mdc-chat-input__menu-section--context"
+          data-tour="composer-plus-menu-agents"
+        >
+          <strong>{plusMenuLabels.agentsSectionTitle}</strong>
           <p className="mdc-chat-input__menu-hint">
-            Selecione até 2 agentes e 3 projetos — o menu permanece aberto para combinar.
+            {formatComposerPlusMenuText(plusMenuLabels.agentsHint, {
+              maxAgents: MAX_COMPOSER_AGENTS,
+            })}
           </p>
 
-          {agents.map((agent) => (
-            <div key={agent.id} className="mdc-chat-input__agent-menu-row">
+          {selectableAgents.length === 0 ? (
+            <p className="mdc-chat-input__menu-empty">{plusMenuLabels.emptyAgents}</p>
+          ) : (
+            selectableAgents.map((agent) => (
+              <div key={agent.id} className="mdc-chat-input__agent-menu-row">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={
+                    selectedAgentIdSet.has(agent.id)
+                      ? "mdc-chat-input__menu-item--active"
+                      : undefined
+                  }
+                  onClick={() => {
+                    onToggleAgent?.(agent.id);
+                  }}
+                >
+                  <ChatAgentIcon icon={agent.icon} size={16} />
+                  <span>{agent.name}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="mdc-chat-input__open-agent"
+                  onClick={() => {
+                    onOpenAgentPage?.(agent.id);
+                    onOpenChange(false);
+                  }}
+                  title={`Abrir página de ${agent.name}`}
+                  aria-label={`Abrir página de ${agent.name}`}
+                >
+                  <ArrowUpRight size={15} aria-hidden="true" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div
+          className="mdc-chat-input__menu-section mdc-chat-input__menu-section--context"
+          data-tour="composer-plus-menu-projects"
+        >
+          <strong>{plusMenuLabels.projectsSectionTitle}</strong>
+          <p className="mdc-chat-input__menu-hint">
+            {formatComposerPlusMenuText(plusMenuLabels.projectsHint, {
+              maxProjects: MAX_COMPOSER_PROJECTS,
+            })}
+          </p>
+
+          {selectableProjects.length === 0 ? (
+            <p className="mdc-chat-input__menu-empty">{plusMenuLabels.emptyProjects}</p>
+          ) : (
+            selectableProjects.map((project) => (
               <button
+                key={project.id}
                 type="button"
                 role="menuitem"
                 className={
-                  selectedAgentIdSet.has(agent.id)
+                  selectedProjectIdSet.has(project.id)
                     ? "mdc-chat-input__menu-item--active"
                     : undefined
                 }
                 onClick={() => {
-                  onToggleAgent?.(agent.id);
+                  onToggleProject?.(project.id);
                 }}
               >
-                <Bot size={16} aria-hidden="true" />
-                <span>{agent.name}</span>
+                <ChatProjectIcon icon={project.icon} size={16} />
+                <span>{project.name}</span>
               </button>
-
-              <button
-                type="button"
-                className="mdc-chat-input__open-agent"
-                onClick={() => {
-                  onOpenAgentPage?.(agent.id);
-                  onOpenChange(false);
-                }}
-                title={`Abrir página de ${agent.name}`}
-                aria-label={`Abrir página de ${agent.name}`}
-              >
-                <ArrowUpRight size={15} aria-hidden="true" />
-              </button>
-            </div>
-          ))}
-
-          {projects.slice(0, 8).map((project) => (
-            <button
-              key={project.id}
-              type="button"
-              role="menuitem"
-              className={
-                selectedProjectIdSet.has(project.id)
-                  ? "mdc-chat-input__menu-item--active"
-                  : undefined
-              }
-              onClick={() => {
-                onToggleProject?.(project.id);
-              }}
-            >
-              <Folder size={16} aria-hidden="true" />
-              <span>{project.name}</span>
-            </button>
-          ))}
+            ))
+          )}
         </div>
       </AnchoredMenuPortal>
     </div>

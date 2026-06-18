@@ -9,6 +9,9 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_operational_follow_up_routing_service import (
+    ChatOperationalFollowUpRoutingService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -44,12 +47,6 @@ _DATE_REFERENCE_KEYS = frozenset(
 
 _ALL_DATE_QUERY_KEYS = _DATE_START_KEYS | _DATE_END_KEYS | _DATE_REFERENCE_KEYS
 
-_PLAYBOOK_PATH_MARKERS = (
-    "/factory-status",
-    "/production-status",
-    "/shipping-status",
-)
-
 _OPTIONAL_DATE_PATH_MARKERS = (
     "/raw-material-price-intelligence",
     "/last-purchase",
@@ -84,7 +81,13 @@ class ChatOperationalDateParameterService:
         ):
             return True
 
-        return ChatTemporalIntentService.has_temporal_reference(message)
+        if ChatTemporalIntentService.has_temporal_reference(message):
+            return True
+
+        if cls._can_inherit_playbook_date(message, previous_messages=previous_messages):
+            return True
+
+        return False
 
     @classmethod
     def resolve_date_range(
@@ -170,19 +173,42 @@ class ChatOperationalDateParameterService:
 
         date_range = cls.resolve_date_range(message, previous_messages=previous_messages)
 
-        if not date_range:
+        if date_range:
+            for parameter in action.get("parametersSchema") or []:
+                name = parameter.get("name")
+
+                if not name:
+                    continue
+
+                lowered = str(name).strip().lower()
+
+                if lowered in _DATE_REFERENCE_KEYS and name not in merged:
+                    merged[name] = date_range.start_date
+
             return merged
 
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
+        if cls._can_inherit_playbook_date(message, previous_messages=previous_messages):
+            inherited = cls.collect_recent_playbook_date_parameters(previous_messages)
 
-            if not name:
-                continue
+            for parameter in action.get("parametersSchema") or []:
+                name = parameter.get("name")
 
-            lowered = str(name).strip().lower()
+                if not name or name in merged:
+                    continue
 
-            if lowered in _DATE_REFERENCE_KEYS and name not in merged:
-                merged[name] = date_range.start_date
+                lowered = str(name).strip().lower()
+
+                if lowered not in _ALL_DATE_QUERY_KEYS:
+                    continue
+
+                for candidate_key, candidate_value in inherited.items():
+                    if str(candidate_key).strip().lower() != lowered:
+                        continue
+
+                    if candidate_value not in (None, ""):
+                        merged[name] = candidate_value
+
+                    break
 
         return merged
 
@@ -287,7 +313,145 @@ class ChatOperationalDateParameterService:
     def is_playbook_date_route(cls, path: str | None) -> bool:
         lowered = str(path or "").strip().lower()
 
-        return any(marker in lowered for marker in _PLAYBOOK_PATH_MARKERS)
+        return any(
+            marker in lowered
+            for marker in ChatOperationalFollowUpRoutingService.playbook_path_markers()
+        )
+
+    @classmethod
+    def collect_recent_playbook_date_parameters(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> dict[str, str]:
+        """Reutiliza parâmetros temporais do último turno playbook bem-sucedido."""
+        if not previous_messages:
+            return {}
+
+        for item in reversed(previous_messages[-14:]):
+            metadata = cls._message_metadata(item)
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata") or {}
+
+                if not tool_meta.get("ok"):
+                    continue
+
+                path = str(tool_meta.get("path") or "")
+
+                if not cls.is_playbook_date_route(path):
+                    continue
+
+                arguments = tool_call.get("arguments") or {}
+                parameters = arguments.get("parameters") or {}
+                extracted = cls._extract_date_parameter_values(parameters)
+
+                if extracted:
+                    return extracted
+
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+
+        for item in reversed(previous_messages[-10:]):
+            if cls._message_role(item) != "user":
+                continue
+
+            content = cls._message_content(item)
+
+            if not content.strip():
+                continue
+
+            date_range = ChatDateRangeIntentService.resolve(content)
+
+            if not date_range:
+                continue
+
+            return cls._parameters_from_date_range(date_range)
+
+        return {}
+
+    @classmethod
+    def _can_inherit_playbook_date(
+        cls,
+        message: str | None,
+        *,
+        previous_messages: list[Any] | None = None,
+    ) -> bool:
+        if not previous_messages:
+            return False
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        if not ChatOperationalFollowUpRoutingService.looks_like_playbook_date_follow_up(
+            message,
+            normalized=normalized,
+        ):
+            return False
+
+        return bool(cls.collect_recent_playbook_date_parameters(previous_messages))
+
+    @staticmethod
+    def _extract_date_parameter_values(parameters: dict | None) -> dict[str, str]:
+        if not isinstance(parameters, dict):
+            return {}
+
+        extracted: dict[str, str] = {}
+
+        for name, value in parameters.items():
+            lowered = str(name or "").strip().lower()
+
+            if lowered not in _ALL_DATE_QUERY_KEYS:
+                continue
+
+            if value in (None, ""):
+                continue
+
+            extracted[str(name)] = str(value)
+
+        return extracted
+
+    @staticmethod
+    def _parameters_from_date_range(date_range) -> dict[str, str]:
+        return {
+            "reference_date": date_range.start_date,
+            "date_start": date_range.start_date,
+            "date_end": date_range.end_date,
+            "start_date": date_range.start_date,
+            "end_date": date_range.end_date,
+        }
+
+    @staticmethod
+    def _message_metadata(message: Any) -> dict:
+        if isinstance(message, dict):
+            metadata = message.get("metadata")
+            return metadata if isinstance(metadata, dict) else {}
+
+        metadata = getattr(message, "metadata", None)
+
+        return metadata if isinstance(metadata, dict) else {}
+
+    @staticmethod
+    def _message_role(message: Any) -> str:
+        if isinstance(message, dict):
+            return str(message.get("role") or "").strip().lower()
+
+        return str(getattr(message, "role", "") or "").strip().lower()
+
+    @staticmethod
+    def _message_content(message: Any) -> str:
+        if isinstance(message, dict):
+            return str(message.get("content") or "")
+
+        return str(getattr(message, "content", "") or "")
 
     @classmethod
     def _missing_date_sub_intent(

@@ -4,5 +4,14 @@
     "acceptLabel": "Enviar corrigido",
     "dismissLabel": "Manter original",
     "previewPrefix": "Enviar:"
+  },
+  "plusMenu": {
+    "filesSectionTitle": "Arquivos",
+    "agentsSectionTitle": "Apps e agentes",
+    "projectsSectionTitle": "Projetos",
+    "agentsHint": "Até {maxAgents} agentes — o menu permanece aberto para combinar.",
+    "projectsHint": "Até {maxProjects} projetos — combine na mesma pergunta.",
+    "emptyAgents": "Nenhum agente disponível",
+    "emptyProjects": "Nenhum projeto disponível"
   }
 }

@@ -88,6 +88,11 @@ class PromptPolicyService:
         "chat_attachment",
     )
 
+    PROJECT_SOURCE_MARKERS = (
+        "escopo: project_source",
+        "scope: project_source",
+    )
+
     def build_system_prompt(self) -> str:
         return self._join_policy_sections(
             self._load_policy("base.md"),
@@ -247,6 +252,9 @@ class PromptPolicyService:
 
         if self._contains_any(normalized_rag_context, self.SESSION_KNOWLEDGE_MARKERS):
             sections.append(self._load_policy("session-knowledge.md"))
+
+        if self._contains_any(normalized_rag_context, self.PROJECT_SOURCE_MARKERS):
+            sections.append(self._load_policy("project-sources-content.md"))
 
         if not resolved_skills.get("sqlAuthoring") and (
             self._contains_any(normalized_rag_context, self.SQL_MARKERS)

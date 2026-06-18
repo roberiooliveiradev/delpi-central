@@ -24,6 +24,7 @@ export function ChatAgentHome({
     <ChatAgentLanding
       className="mdc-chat-agent-home"
       name={agent.name}
+      icon={agent.icon}
       description={agent.description}
       icebreakers={resolveAgentIcebreakersForDisplay(agent.metadata)}
       onIcebreakerClick={onUseSuggestion}

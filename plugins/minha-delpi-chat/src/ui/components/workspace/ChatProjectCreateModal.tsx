@@ -1,19 +1,23 @@
-import { Folder, Lightbulb, Plus, Settings, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useState } from "react";
 
-import type { ChatProject } from "../../../data/api/chatTypes";
+import type { ChatProject, CreateChatProjectPayload } from "../../../data/api/chatTypes";
 
 import { ChatModal } from "../shared/modal/ChatModal";
+import {
+  DEFAULT_PROJECT_ICON,
+  normalizeProjectIcon,
+  PROJECT_ICON_LABELS,
+  PROJECT_ICON_OPTIONS,
+} from "./chatProjectIcon";
+import { ChatProjectIcon } from "./ChatProjectIcon";
+import { ChatWorkspaceIconPicker } from "./ChatWorkspaceIconPicker";
 import "./ChatProjectCreateModal.css";
 
 type ChatProjectCreateModalProps = {
   open: boolean;
   onClose: () => void;
-  onCreateProject?: (payload: {
-    name: string;
-    description?: string | null;
-    instructions?: string | null;
-  }) => Promise<ChatProject | null>;
+  onCreateProject?: (payload: CreateChatProjectPayload) => Promise<ChatProject | null>;
   onSelectProject?: (projectId: string | null) => void;
 };
 
@@ -24,11 +28,15 @@ export function ChatProjectCreateModal({
   onSelectProject,
 }: ChatProjectCreateModalProps) {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [instructions, setInstructions] = useState("");
+  const [icon, setIcon] = useState<string>(DEFAULT_PROJECT_ICON);
   const [isSaving, setIsSaving] = useState(false);
 
   const canSubmit = name.trim().length >= 2 && !isSaving;
+
+  function resetForm() {
+    setName("");
+    setIcon(DEFAULT_PROJECT_ICON);
+  }
 
   async function handleSubmit() {
     if (!canSubmit) {
@@ -40,17 +48,14 @@ export function ChatProjectCreateModal({
     try {
       const project = await onCreateProject?.({
         name: name.trim(),
-        description: description.trim() || null,
-        instructions: instructions.trim() || null,
+        icon: normalizeProjectIcon(icon),
       });
 
       if (project) {
         onSelectProject?.(project.id);
       }
 
-      setName("");
-      setDescription("");
-      setInstructions("");
+      resetForm();
       onClose();
     } finally {
       setIsSaving(false);
@@ -68,21 +73,34 @@ export function ChatProjectCreateModal({
       <header>
         <h2>Criar projeto</h2>
 
-        <div>
-          <button type="button" aria-label="Configurações de memória" title="Em breve">
-            <Settings size={19} aria-hidden="true" />
-          </button>
-
-          <button type="button" onClick={onClose} aria-label="Fechar">
-            <X size={20} aria-hidden="true" />
-          </button>
-        </div>
+        <button
+          type="button"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
+          onClick={onClose}
+          aria-label="Fechar"
+        >
+          <X aria-hidden="true" />
+        </button>
       </header>
+
+      <div className="mdc-chat-project-create-modal__field">
+        <span>Ícone</span>
+        <ChatWorkspaceIconPicker
+          options={PROJECT_ICON_OPTIONS}
+          labels={PROJECT_ICON_LABELS}
+          value={icon}
+          onChange={setIcon}
+          renderIcon={(option, size) => <ChatProjectIcon icon={option} size={size} />}
+          ariaLabel="Ícone do projeto"
+        />
+      </div>
 
       <label className="mdc-chat-project-create-modal__field">
         <span>Nome do projeto</span>
         <span className="mdc-chat-project-create-modal__input-wrap">
-          <Folder size={18} aria-hidden="true" />
+          <span className="mdc-chat-project-create-modal__input-icon" aria-hidden="true">
+            <ChatProjectIcon icon={icon} size={16} />
+          </span>
           <input
             value={name}
             autoFocus
@@ -98,41 +116,9 @@ export function ChatProjectCreateModal({
         </span>
       </label>
 
-      <details className="mdc-chat-project-create-modal__details">
-        <summary>Mais opções</summary>
-        <div className="mdc-chat-project-create-modal__details-body">
-          <label className="mdc-chat-project-create-modal__field">
-            <span>Descrição</span>
-            <input
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Explique o objetivo deste projeto..."
-            />
-          </label>
-
-          <label className="mdc-chat-project-create-modal__field">
-            <span>Instruções</span>
-            <textarea
-              value={instructions}
-              onChange={(event) => setInstructions(event.target.value)}
-              placeholder="Contexto e regras usadas nas conversas deste projeto..."
-              rows={4}
-            />
-          </label>
-        </div>
-      </details>
-
-      <div className="mdc-chat-project-create-modal__hint">
-        <Lightbulb size={18} aria-hidden="true" />
-        <p>
-          Os projetos mantêm conversas e arquivos em um só lugar. Use-os para colaborar em
-          equipe e manter as coisas organizadas.
-        </p>
-      </div>
-
       <footer>
         <button type="button" className="mdc-chat-ws-toolbar-btn" onClick={onClose}>
-          <span>Cancelar</span>
+          Cancelar
         </button>
         <button
           type="button"

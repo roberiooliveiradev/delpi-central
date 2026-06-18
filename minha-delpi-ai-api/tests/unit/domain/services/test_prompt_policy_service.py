@@ -213,3 +213,27 @@ def test_contextual_prompt_includes_humanized_data_policy_when_data_answer_prese
 
     assert "Modo resposta humanizada com dados" in prompt
     assert "dataAnswer" in prompt or "conclusão" in prompt.lower()
+
+
+def test_contextual_prompt_includes_project_sources_policy():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="[Fonte 1]\nEscopo: project_source\nTrecho: conteúdo do treinamento",
+        tool_context="",
+    )
+
+    assert "fontes do projeto" in prompt.lower()
+    assert "nunca" in prompt.lower() and "acessar arquivos" in prompt.lower()
+
+
+def test_contextual_prompt_includes_project_sources_policy():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="[Fonte 1]\nEscopo: project_source\nTrecho: conteúdo do treinamento",
+        tool_context="",
+    )
+
+    assert "fontes do projeto" in prompt.lower()
+    assert "nunca" in prompt.lower() and "acessar arquivos" in prompt.lower()

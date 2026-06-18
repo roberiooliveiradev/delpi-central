@@ -17,6 +17,8 @@ class ChatFollowUpIntentService:
         r"\bnf(?:e)?\s+de\s+sa[ií]da\b",
         r"\broteiro\b",
         r"\bestrutura\b",
+        r"\bexpedi(?:cao|ção)\b",
+        r"\bexclusiv",
         r"\binspe[cç][aã]o\b",
         r"\bdescri[cç][aã]o\b",
         r"\bmais\s+informa",
@@ -60,8 +62,16 @@ class ChatFollowUpIntentService:
         if re.search(r"\bestoque\b", normalized):
             return "stock"
 
+        if re.search(r"\bestrutura\b", normalized) and re.search(
+            r"\bexclusiv", normalized
+        ):
+            return "structure_exclusivity"
+
         if re.search(r"\bestrutura\b", normalized):
             return "structure"
+
+        if re.search(r"\bexpedi(?:cao|ção)\b", normalized):
+            return "shipping"
 
         if re.search(r"\broteiro\b", normalized):
             return "routing"

@@ -4,6 +4,7 @@ import {
   agentIcebreakersUseDefaults,
   buildIcebreakerPlaceholderToken,
   getIcebreakerGridDensityClass,
+  reorderIcebreakers,
   resolveAgentIcebreakersForDisplay,
   resolveAgentIcebreakersForEditor,
 } from "./agentIcebreakers";
@@ -38,5 +39,14 @@ describe("agentIcebreakers", () => {
     expect(getIcebreakerGridDensityClass(4)).toBe(
       "mdc-chat-agent-home__icebreakers--quad",
     );
+  });
+
+  it("reordena quebra-gelos preservando conteúdo", () => {
+    const items = ["a", "b", "c"];
+
+    expect(reorderIcebreakers(items, 0, 2)).toEqual(["b", "c", "a"]);
+    expect(reorderIcebreakers(items, 2, 0)).toEqual(["c", "a", "b"]);
+    expect(reorderIcebreakers(items, 1, 1)).toEqual(["a", "b", "c"]);
+    expect(reorderIcebreakers(items, -1, 0)).toEqual(["a", "b", "c"]);
   });
 });

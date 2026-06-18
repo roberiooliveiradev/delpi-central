@@ -30,6 +30,7 @@ class ChatTurnPreparationSkipToolFlags:
     skip_tools_for_data_interpretation: bool
     skip_tools_for_attachment_document: bool
     skip_tools_for_inactive_agent: bool
+    skip_tools_for_project_sources_content: bool
     request_attachment_ids: list[str]
 
 
@@ -218,12 +219,24 @@ class ChatTurnPreparationToolRoutingService:
                 or ChatWebSearchIntentService.matches(message)
             )
 
+        from app.domain.services.chat_project_sources_intent_service import (
+            ChatProjectSourcesIntentService,
+        )
+
+        working_memory = workspace.get("workingMemory")
+        skip_tools_for_project_sources_content = ChatProjectSourcesIntentService.is_content_question(
+            message,
+            memory_snapshot=working_memory if isinstance(working_memory, dict) else None,
+            previous_messages=history_source,
+        )
+
         return ChatTurnPreparationSkipToolFlags(
             skip_tools_for_user_identity=skip_tools_for_user_identity,
             skip_tools_for_assistant_identity=skip_tools_for_assistant_identity,
             skip_tools_for_data_interpretation=skip_tools_for_data_interpretation,
             skip_tools_for_attachment_document=skip_tools_for_attachment_document,
             skip_tools_for_inactive_agent=skip_tools_for_inactive_agent,
+            skip_tools_for_project_sources_content=skip_tools_for_project_sources_content,
             request_attachment_ids=request_attachment_ids,
         )
 
@@ -245,6 +258,7 @@ class ChatTurnPreparationToolRoutingService:
         small_talk_direct: str | None,
         utility_direct: str | None,
         web_save_sources_direct: str | None,
+        project_sources_direct: str | None,
         web_post_search_direct: str | None,
         attachment_welcome_direct: str | None,
         unclear_direct: str | None,
@@ -266,9 +280,11 @@ class ChatTurnPreparationToolRoutingService:
                 or skip_flags.skip_tools_for_data_interpretation
                 or skip_flags.skip_tools_for_attachment_document
                 or skip_flags.skip_tools_for_inactive_agent
+                or skip_flags.skip_tools_for_project_sources_content
                 or small_talk_direct
                 or utility_direct
                 or web_save_sources_direct
+                or project_sources_direct
                 or web_post_search_direct
                 or attachment_welcome_direct
                 or unclear_direct
@@ -296,6 +312,7 @@ class ChatTurnPreparationToolRoutingService:
         small_talk_direct: str | None,
         utility_direct: str | None,
         web_save_sources_direct: str | None,
+        project_sources_direct: str | None,
         web_post_search_direct: str | None,
         attachment_welcome_direct: str | None,
         unclear_direct: str | None,
@@ -338,6 +355,10 @@ class ChatTurnPreparationToolRoutingService:
             pipeline_stages.append("utility_direct")
         elif web_save_sources_direct:
             pipeline_stages.append("web_save_sources")
+        elif project_sources_direct:
+            pipeline_stages.append("project_sources_inventory")
+        elif skip_flags.skip_tools_for_project_sources_content:
+            pipeline_stages.append("project_sources_content")
         elif web_post_search_direct:
             pipeline_stages.append("web_post_search_follow_up")
         elif attachment_welcome_direct:
@@ -373,6 +394,7 @@ class ChatTurnPreparationToolRoutingService:
         small_talk_direct: str | None,
         utility_direct: str | None,
         web_save_sources_direct: str | None,
+        project_sources_direct: str | None,
         web_post_search_direct: str | None,
         attachment_welcome_direct: str | None,
         unclear_direct: str | None,
@@ -404,6 +426,7 @@ class ChatTurnPreparationToolRoutingService:
             small_talk_direct=small_talk_direct,
             utility_direct=utility_direct,
             web_save_sources_direct=web_save_sources_direct,
+            project_sources_direct=project_sources_direct,
             web_post_search_direct=web_post_search_direct,
             attachment_welcome_direct=attachment_welcome_direct,
             unclear_direct=unclear_direct,
@@ -425,6 +448,7 @@ class ChatTurnPreparationToolRoutingService:
                 small_talk_direct=small_talk_direct,
                 utility_direct=utility_direct,
                 web_save_sources_direct=web_save_sources_direct,
+                project_sources_direct=project_sources_direct,
                 web_post_search_direct=web_post_search_direct,
                 attachment_welcome_direct=attachment_welcome_direct,
                 unclear_direct=unclear_direct,

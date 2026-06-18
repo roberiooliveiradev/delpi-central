@@ -476,6 +476,7 @@ def preview_agent_draft():
             message=payload.get("message") or payload.get("question") or "",
             access_token=access_token,
             generate_answer=bool(payload.get("generateAnswer", True)),
+            execute_tools_in_sandbox=bool(payload.get("executeToolsInSandbox", True)),
             draft=payload.get("draft"),
             previous_messages=previous_messages,
         )
@@ -510,6 +511,7 @@ def preview_agent(agent_id: str):
             message=payload.get("message") or payload.get("question") or "",
             access_token=access_token,
             generate_answer=bool(payload.get("generateAnswer", True)),
+            execute_tools_in_sandbox=bool(payload.get("executeToolsInSandbox", True)),
             draft=payload.get("draft"),
             previous_messages=previous_messages,
         )

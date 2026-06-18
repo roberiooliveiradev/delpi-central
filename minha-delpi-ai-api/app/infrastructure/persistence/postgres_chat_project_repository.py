@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import or_
 
 from app.domain.entities.chat_project import ChatProject
+from app.domain.features.chat_project_collaboration import is_project_collaboration_enabled
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.chat_project_model import AiChatProjectModel
@@ -16,20 +17,25 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
         user_id: UUID,
         archived: bool = False,
     ) -> list[tuple[ChatProject, str]]:
-        shared_project_ids = (
-            db.session.query(AiChatProjectShareModel.project_id)
-            .filter(AiChatProjectShareModel.target_user_id == user_id)
-        )
+        shared_project_ids = None
+
+        if is_project_collaboration_enabled():
+            shared_project_ids = (
+                db.session.query(AiChatProjectShareModel.project_id)
+                .filter(AiChatProjectShareModel.target_user_id == user_id)
+            )
+
+        access_filters = [
+            AiChatProjectModel.visibility == "public",
+            AiChatProjectModel.user_id == user_id,
+        ]
+
+        if shared_project_ids is not None:
+            access_filters.append(AiChatProjectModel.id.in_(shared_project_ids))
 
         query = (
             AiChatProjectModel.query
-            .filter(
-                or_(
-                    AiChatProjectModel.visibility == "public",
-                    AiChatProjectModel.user_id == user_id,
-                    AiChatProjectModel.id.in_(shared_project_ids),
-                )
-            )
+            .filter(or_(*access_filters))
         )
 
         if archived:
@@ -86,6 +92,8 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
         self,
         project_id: UUID,
         user_id: UUID,
+        *,
+        apply_null: frozenset[str] | None = None,
         **fields,
     ) -> ChatProject | None:
         model = AiChatProjectModel.query.filter(AiChatProjectModel.id == project_id).first()
@@ -93,6 +101,7 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
         if not model or not self._can_edit(model, user_id):
             return None
 
+        nullable_fields = apply_null or frozenset()
         archived = fields.pop("archived", None)
 
         if archived is True:
@@ -101,7 +110,10 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
             model.archived_at = None
 
         for key, value in fields.items():
-            if value is not None and hasattr(model, key):
+            if value is None and key not in nullable_fields:
+                continue
+
+            if hasattr(model, key):
                 setattr(model, key, value)
 
         db.session.flush()
@@ -200,6 +212,9 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
         if model.user_id == user_id:
             return True
 
+        if not is_project_collaboration_enabled():
+            return False
+
         return (
             AiChatProjectShareModel.query
             .filter(AiChatProjectShareModel.project_id == model.id)
@@ -211,6 +226,9 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
     def _can_edit(self, model: AiChatProjectModel, user_id: UUID) -> bool:
         if model.user_id == user_id:
             return True
+
+        if not is_project_collaboration_enabled():
+            return False
 
         share = (
             AiChatProjectShareModel.query
@@ -224,6 +242,9 @@ class PostgresChatProjectRepository(ChatProjectRepositoryPort):
     def _access_role(self, model: AiChatProjectModel, user_id: UUID) -> str:
         if model.user_id == user_id:
             return "owner"
+
+        if not is_project_collaboration_enabled():
+            return "viewer"
 
         share = (
             AiChatProjectShareModel.query

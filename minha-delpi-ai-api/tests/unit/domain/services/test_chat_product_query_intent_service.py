@@ -16,6 +16,18 @@ def test_extract_product_code_ignores_date_tokens():
     ) is None
 
 
+def test_extract_product_code_ignores_file_size_from_inventory_line():
+    text = "- **1º TREINAMENTO — FEVEREIRO 2026.docx** · 24.0 KB · 4 chunk(s) · Indexado"
+
+    assert ChatProductQueryIntentService.extract_last_product_code(text) is None
+    assert (
+        ChatProductQueryIntentService.should_inherit_product_code(
+            "o que esta escrito em treinamento.docx?"
+        )
+        is False
+    )
+
+
 def test_detect_description_intent():
     assert (
         ChatProductQueryIntentService.detect("descrição do produto 10080047")

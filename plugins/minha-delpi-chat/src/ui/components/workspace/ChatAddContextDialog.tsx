@@ -9,6 +9,7 @@ import {
 } from "../../../content/workspaceFileIngestContent";
 import { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
 import { ChatModal } from "../shared/modal/ChatModal";
+import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
 
 import "./ChatAddContextDialog.css";
 import "./workspaceFileIngest.css";
@@ -26,12 +27,25 @@ type ChatAddContextDialogProps = {
 const MAX_CHARS = 12_000;
 const TEXT_EXTENSIONS = /\.(txt|md|csv|tsv|json)$/i;
 
-async function readFileAsText(file: File): Promise<string> {
+async function readFileAsText(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
-    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onprogress = (event) => {
+      if (onProgress && event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    reader.onload = () => {
+      onProgress?.(100);
+      resolve(String(reader.result ?? ""));
+    };
     reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+    onProgress?.(0);
     reader.readAsText(file);
   });
 }
@@ -49,6 +63,7 @@ export function ChatAddContextDialog({
   const [filename, setFilename] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const [readFilePercent, setReadFilePercent] = useState<number | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [pendingPickId, setPendingPickId] = useState<string | null>(null);
 
@@ -61,6 +76,7 @@ export function ChatAddContextDialog({
     setFilename(null);
     setError(null);
     setIsReadingFile(false);
+    setReadFilePercent(null);
     setIsDragActive(false);
     setPendingPickId(null);
   }, [open]);
@@ -74,11 +90,12 @@ export function ChatAddContextDialog({
 
     const file = list[0];
     setIsReadingFile(true);
+    setReadFilePercent(null);
     setError(null);
 
     try {
       if (TEXT_EXTENSIONS.test(file.name)) {
-        const text = await readFileAsText(file);
+        const text = await readFileAsText(file, setReadFilePercent);
         setContent((current) => (current ? `${current}\n\n${text}` : text).slice(0, MAX_CHARS));
         setFilename(file.name);
       } else {
@@ -95,6 +112,7 @@ export function ChatAddContextDialog({
       setError(contextLabels.readError);
     } finally {
       setIsReadingFile(false);
+      setReadFilePercent(null);
     }
   }
 
@@ -206,6 +224,14 @@ export function ChatAddContextDialog({
             void ingestFiles(files);
           }}
         />
+
+        {isReadingFile && readFilePercent != null ? (
+          <IngestProgressIndicator
+            compact
+            label={contextLabels.readingStatus}
+            percent={readFilePercent}
+          />
+        ) : null}
 
         {error ? <p className="mdc-chat-add-context__error">{error}</p> : null}
 

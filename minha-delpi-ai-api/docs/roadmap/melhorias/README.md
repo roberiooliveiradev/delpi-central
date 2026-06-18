@@ -10,6 +10,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 |-----------------|-----------|--------|
 | Memória de sessão e preferências (01) | [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Fases **1–5** (`ChatConversationMemoryService`) |
 | Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + memória persistida |
+| **Follow-up operacional desacoplado (jun/2026)** | [playbook-follow-up-operacional-desacoplado-jun2026.md](./playbook-follow-up-operacional-desacoplado-jun2026.md) | **P0–P2 ✅** — follow-up fabril, roteamento declarativo, fontes de projeto (slot + RAG) |
 | Memória avançada (playbook grande) | [playbook-memoria-e-contexto.md](../playbook-memoria-e-contexto.md) | Fases **1–9** + contexto livre e Q&A (**concluído**) |
 | Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–5** + menus contextuais (tabela, árvore, gráfico, chip) |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |

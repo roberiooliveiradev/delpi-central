@@ -83,6 +83,8 @@ Resposta: `204 No Content`
 
 ### POST `/chat/projects/{projectId}/share`
 
+> **Desabilitado (jun/2026):** retorna `501 feature_not_enabled`. Ver [projetos-colaborativos-futuro.md](../roadmap/projetos-colaborativos-futuro.md).
+
 Compartilha projeto.
 
 Permissão: `minha-delpi.chat.access`
@@ -104,6 +106,8 @@ Resposta:
 
 ### GET `/chat/projects/{projectId}/shares`
 
+> **Desabilitado (jun/2026):** retorna `501 feature_not_enabled`.
+
 Lista compartilhamentos do projeto (somente `owner`).
 
 Permissão: `minha-delpi.chat.access`
@@ -111,6 +115,8 @@ Permissão: `minha-delpi.chat.access`
 Resposta: array com `target_user_id`, `target_user_name`, `target_user_email` (quando disponível), `role`, `created_at`.
 
 ### DELETE `/chat/projects/{projectId}/shares/{targetUserId}`
+
+> **Desabilitado (jun/2026):** retorna `501 feature_not_enabled`.
 
 Revoga compartilhamento (somente `owner`).
 

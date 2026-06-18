@@ -1,5 +1,17 @@
 # CHANGELOG — api-delpi
 
+## 2026-06 — Conversão de unidades Protheus (MI / BOM / fiscal)
+
+Playbook transversal para interpretação de `B1_UM`, BOM (`SG1010`), fiscal (`SB5010`) e convenção **1 MI = 1000 peças** nas rotas de produto.
+
+Documentação: [playbook-conversao-unidades-protheus.md](./roadmaps/playbook-conversao-unidades-protheus.md).
+
+**Módulo canônico:** `ProductPaBomReferenceService` + `app/content/product_pa_bom_reference.json`.
+
+**Rotas afetadas:** `/structure`, `/structure/exclusivity`, `/cost-impact-simulation`, `/stock` (playbook), `/directives`, `/factory-status`.
+
+---
+
 ## 2026-06 — Compras válidas de MP (NF de frete)
 
 Última compra, diretivas e ranking de compras passam a excluir linhas de `SD1010` com `D1_QUANT = 0` (notas de frete alocadas no código da MP), além do filtro existente de transportadoras por nome.

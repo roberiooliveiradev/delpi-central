@@ -17,6 +17,8 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 | CSS apresentação rica | [docs/rich-presentation-css.md](docs/rich-presentation-css.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
+| Projetos colaborativos (futuro) | [../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md](../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md) |
+| Changelog workspace (jun/2026) | [../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md](../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md) |
 | Status da plataforma | [../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
 
 ## Identificação
@@ -74,6 +76,10 @@ Ver roadmap: [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.
 - **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor
 - **Feedback** (thumbs up/down) em respostas do assistente
 - Agentes, projetos, fontes e anexos por contexto
+- **Projetos:** criar (nome + ícone), settings modal, «Gerenciar projeto», arrastar conversas soltas para projetos na sidebar
+- **Agentes:** ícones Lucide (modal com busca + atalhos) no builder
+- **Composer:** badges de contexto (`ChatComposerContextBadges`); menus `@` e `+` ancorados no caret
+- **Modais:** botões de fechar/ação padronizados (`chat-modal.css`)
 - **Corretor de digitação (Playbook 14):** chip pré-envio para typos operacionais (`estouque` → `estoque`); aceitar ou manter original; textos em `message_composer.json` (sync: `npm run sync:message-composer-content`)
 - Notificações (sino) quando habilitado na Core API
 
@@ -102,6 +108,7 @@ Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao
 |--------|------|
 | Arquitetura API + MFE | [`chat-assistant-content-presentation.md`](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md) |
 | Corretor de digitação (composer) | [Playbook 14](../../minha-delpi-ai-api/docs/roadmap/playbook-14-corretor-digitacao-chat.md) · [changelog](../../minha-delpi-ai-api/docs/changelog/2026-06-playbook-14-corretor-digitacao-composer.md) |
+| Workspace projetos/agentes (jun/2026) | [changelog](../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md) |
 | Playbook 09 (decisão de formato) | [`playbook-09-apresentacao-rica.md`](../../minha-delpi-ai-api/docs/roadmap/playbook-09-apresentacao-rica.md) |
 | Novo componente visual | `registerAssistantSegmentRenderer` em `src/ui/components/assistantContentRegistry.tsx` |
 | Segmentos / layout | `assistantContentSegments.ts`, `assistantContentLayout.ts`, `assistantContentVisualFormats.ts` |

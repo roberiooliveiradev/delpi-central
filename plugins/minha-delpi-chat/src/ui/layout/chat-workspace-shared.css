@@ -43,6 +43,47 @@
   cursor: pointer;
 }
 
+.mdc-chat-ws-checkbox-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.mdc-chat-ws-checkbox-row input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  min-width: 1.05rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--mdc-primary);
+  cursor: pointer;
+}
+
+.mdc-chat-ws-checkbox-row > span {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mdc-chat-ws-checkbox-row strong {
+  display: block;
+  color: var(--mdc-text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.mdc-chat-ws-checkbox-row small {
+  display: block;
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .mdc-chat-ws-outline-btn {
   display: inline-flex;
   align-items: center;
@@ -312,6 +353,8 @@ label.mdc-chat-ws-toolbar-btn {
   display: block;
   width: 1rem;
   height: 1rem;
+  margin: 0;
+  transform: translateY(0.5px);
 }
 
 .mdc-chat-ws-toolbar-btn:hover:not(:disabled) {

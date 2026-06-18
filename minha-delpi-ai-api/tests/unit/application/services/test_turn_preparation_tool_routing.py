@@ -1,10 +1,21 @@
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
+
+import pytest
 
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_turn.chat_turn_preparation_tool_routing_service import (
     ChatTurnPreparationToolRoutingService,
 )
+
+
+@pytest.fixture(autouse=True)
+def _patch_intelligence_runtime(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
+        lambda: SimpleNamespace(assistant_identity_direct_enabled=True),
+    )
 
 
 def test_resolve_skip_tool_flags_for_assistant_identity_question():
@@ -40,6 +51,7 @@ def test_should_skip_tools_for_small_talk():
         small_talk_direct="Olá! Como posso ajudar?",
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,
@@ -74,10 +86,11 @@ def test_run_tool_phase_skips_tools_for_text_task():
         routing_disambiguation_answer=None,
         learning_term_confirmation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,
@@ -127,10 +140,11 @@ def test_run_tool_phase_invokes_build_tool_context_with_request_once():
         routing_disambiguation_answer=None,
         learning_term_confirmation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,
@@ -174,10 +188,11 @@ def test_run_tool_phase_skips_tools_for_assistant_identity_question():
         routing_disambiguation_answer=None,
         learning_term_confirmation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, True, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, True, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,
@@ -225,3 +240,28 @@ def test_resolve_skip_tool_flags_allows_web_augment_in_common_chat(_web_enabled)
     )
 
     assert flags.skip_tools_for_inactive_agent is False
+
+
+def test_resolve_skip_tool_flags_for_project_sources_content_follow_up():
+    inventory = [
+        {
+            "projectSourceId": "doc-1",
+            "title": "Manual homologação DELPI",
+            "ordinal": 1,
+        }
+    ]
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="resuma o conteúdo do primeiro arquivo",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[
+            {
+                "role": "assistant",
+                "metadata": {
+                    "contextSnapshot": {"lastProjectSourcesInventory": inventory},
+                },
+            }
+        ],
+        workspace_context={},
+    )
+
+    assert flags.skip_tools_for_project_sources_content is True

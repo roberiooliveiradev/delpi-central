@@ -8,6 +8,8 @@ Formato de resposta: envelope `{ success, message, data }`.
 
 > **Agentes (chat):** mapa de qual rota usar por intenção — [11-guia-agente-chat.md](./11-guia-agente-chat.md). Metadados OpenAPI (`summary`, `description`, `operationId`) em `app/interface/http/openapi_agent_metadata.py`.
 
+> **Unidades de medida (MI, BOM, fiscal):** convenção produtiva e impacto nas rotas de estrutura, estoque e simulador — [playbook-conversao-unidades-protheus.md](../roadmaps/playbook-conversao-unidades-protheus.md).
+
 ## GET /products/search
 
 Busca paginada de produtos no Protheus.
@@ -61,6 +63,8 @@ Estrutura (BOM) do produto.
 |---|---|
 | `max_depth` | Profundidade máxima da árvore. |
 | `page`, `page_size` | Paginação de itens da estrutura. |
+
+Quantidades retornadas (`accumulated_quantity`, `G1_QUANT`) estão na base **por 1 PA**. Para PA com `B1_UM = MI` (milheiro), isso equivale a **1 MI = 1000 peças** — a API não divide por 1000; ver [`playbook-conversao-unidades-protheus.md`](../roadmaps/playbook-conversao-unidades-protheus.md).
 
 ---
 
@@ -282,3 +286,30 @@ Preços comerciais (tabelas de preço).
 Visão consolidada (“analisador”) com múltiplas dimensões do produto em uma única chamada.
 
 **Uso típico:** tela de detalhe do plugin Dashboard DELPI.
+
+---
+
+## GET /products/{code}/cost-impact-simulation
+
+Simulador de impacto de custos do **PA** — ranking Pareto das MPs na BOM vigente e simulação percentual de reajuste (playbook [`playbook-simulador-impacto-custos-pa.md`](../roadmaps/playbook-simulador-impacto-custos-pa.md)).
+
+| Query | Default | Descrição |
+|---|---|---|
+| `price_source` | `standard_cost` | `standard_cost` → `B1_CUSTD`; `last_purchase` → `B1_UPRC` |
+| `adjustment_percent` | `0` | Reajuste simulado em todas as MPs (ex.: `10` = +10%) |
+| `top_n` | todas | Limita ranking às N MPs de maior impacto |
+| `max_depth` | `50` | Profundidade máxima da BOM |
+
+**Restrição:** disponível apenas para produto tipo **PA** (MP retorna erro).
+
+**Unidade:** `quantity_per_pa` e custos de materiais referem-se a **1 PA**; para PA em **MI**, 1 PA = 1 milheiro. Campo `pa_reference` documenta a base. Ver [`playbook-conversao-unidades-protheus.md`](../roadmaps/playbook-conversao-unidades-protheus.md).
+
+**operationId:** `get_product_cost_impact_simulation` · **shape:** `composite_analysis`
+
+**Exemplo:**
+
+```http
+GET /apps/api-delpi/products/90261255/cost-impact-simulation?adjustment_percent=10&price_source=standard_cost
+```
+
+**Uso no chat:** «quais materiais mais impactam o custo do PA …?», «simule aumento de 10% nos materiais».

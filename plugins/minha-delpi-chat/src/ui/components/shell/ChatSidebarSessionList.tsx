@@ -1,8 +1,9 @@
 import { Archive, Check, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { ChatSession } from "../../../data/api/chatTypes";
 import { buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
+import { setChatSessionDragData } from "../../chatSessionDragDrop";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { type SessionGroup } from "./chatSidebarUtils";
@@ -24,6 +25,7 @@ type ChatSidebarSessionListProps = {
   onOpenArchived?: () => void;
   hideTitle?: boolean;
   isSessionProcessing?: (sessionId: string) => boolean;
+  enableSessionDrag?: boolean;
 };
 
 export function ChatSidebarSessionList({
@@ -41,11 +43,22 @@ export function ChatSidebarSessionList({
   onOpenArchived,
   hideTitle,
   isSessionProcessing,
+  enableSessionDrag = false,
 }: ChatSidebarSessionListProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [openMenuSessionId, setOpenMenuSessionId] = useState<string | null>(null);
   const [showAllSessions, setShowAllSessions] = useState(false);
+  const [draggingSessionId, setDraggingSessionId] = useState<string | null>(null);
+
+  const handleDragStart = useCallback((sessionId: string, event: React.DragEvent<HTMLElement>) => {
+    setChatSessionDragData(event.dataTransfer, sessionId);
+    setDraggingSessionId(sessionId);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingSessionId(null);
+  }, []);
 
   const totalSessions = useMemo(
     () => groupedSessions.reduce((total, group) => total + group.sessions.length, 0),
@@ -119,9 +132,13 @@ export function ChatSidebarSessionList({
       <div
         key={session.id}
         className={
-          session.id === activeSessionId
-            ? "mdc-chat-session-row mdc-chat-session-row--active"
-            : "mdc-chat-session-row"
+          [
+            "mdc-chat-session-row",
+            session.id === activeSessionId ? "mdc-chat-session-row--active" : "",
+            draggingSessionId === session.id ? "mdc-chat-session-row--dragging" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
         }
       >
         {isEditing ? (
@@ -180,6 +197,13 @@ export function ChatSidebarSessionList({
               active={session.id === activeSessionId}
               isProcessing={isSessionProcessing?.(session.id) ?? false}
               href={buildChatSessionHrefForSession(session)}
+              draggable={enableSessionDrag && !isEditing}
+              onDragStart={
+                enableSessionDrag && !isEditing
+                  ? (event) => handleDragStart(session.id, event)
+                  : undefined
+              }
+              onDragEnd={enableSessionDrag && !isEditing ? handleDragEnd : undefined}
             />
 
             <div className="mdc-chat-session-actions">

@@ -1,6 +1,8 @@
 import { useState } from "react";
 
+import { workspaceFileProjectIngestLabels } from "../../../../content/workspaceFileIngestContent";
 import { AdminFileDropzone } from "../shared/AdminFileDropzone";
+import { IngestProgressIndicator } from "../../shared/IngestProgressIndicator";
 import { KnowledgeCuratorialFields } from "./KnowledgeCuratorialFields";
 import type {
   KnowledgeIngestionActions,
@@ -49,6 +51,8 @@ export function KnowledgeIngestionPanel({
   const [priority, setPriority] = useState("");
   const [qualityScore, setQualityScore] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  const [previewPercent, setPreviewPercent] = useState<number | null>(null);
 
   const canSubmitDocument =
     title.trim().length > 0 &&
@@ -65,12 +69,20 @@ export function KnowledgeIngestionPanel({
     }
 
     if (ingestMode === "file" && selectedFile) {
-      await previewIngestion({
-        file: selectedFile,
-        title: title.trim() || selectedFile.name,
-        sourceType: sourceType.trim() || "admin_preview_upload",
-        sourceRef: sourceRef.trim() || undefined,
-      });
+      setPreviewPercent(0);
+
+      try {
+        await previewIngestion({
+          file: selectedFile,
+          title: title.trim() || selectedFile.name,
+          sourceType: sourceType.trim() || "admin_preview_upload",
+          sourceRef: sourceRef.trim() || undefined,
+          onUploadProgress: setPreviewPercent,
+        });
+      } finally {
+        setPreviewPercent(null);
+      }
+
       return;
     }
 
@@ -121,22 +133,29 @@ export function KnowledgeIngestionPanel({
         return;
       }
 
-      await uploadDocumentFile({
-        file: selectedFile,
-        title: title.trim() || selectedFile.name,
-        sourceType: sourceType.trim() || "admin_upload",
-        sourceRef: sourceRef.trim() || undefined,
-        category: category.trim() || undefined,
-        tags: tags.trim() || undefined,
-        namespace: namespace.trim() || undefined,
-        domain: domain.trim() || undefined,
-        priority: priority ? Number(priority) : undefined,
-        qualityScore: qualityScore ? Number(qualityScore) : undefined,
-        metadata: {
-          origin: "admin_upload",
-          adminContext: "knowledge_base",
-        },
-      });
+      setUploadPercent(0);
+
+      try {
+        await uploadDocumentFile({
+          file: selectedFile,
+          title: title.trim() || selectedFile.name,
+          sourceType: sourceType.trim() || "admin_upload",
+          sourceRef: sourceRef.trim() || undefined,
+          category: category.trim() || undefined,
+          tags: tags.trim() || undefined,
+          namespace: namespace.trim() || undefined,
+          domain: domain.trim() || undefined,
+          priority: priority ? Number(priority) : undefined,
+          qualityScore: qualityScore ? Number(qualityScore) : undefined,
+          metadata: {
+            origin: "admin_upload",
+            adminContext: "knowledge_base",
+          },
+          onUploadProgress: setUploadPercent,
+        });
+      } finally {
+        setUploadPercent(null);
+      }
     } else {
       await createDocument({
         title: title.trim(),
@@ -238,6 +257,14 @@ export function KnowledgeIngestionPanel({
             />
           </label>
         )}
+
+        {uploadPercent != null || previewPercent != null ? (
+          <IngestProgressIndicator
+            className="mdc-knowledge-ingestion__progress"
+            label={workspaceFileProjectIngestLabels().uploadingStatus}
+            percent={uploadPercent ?? previewPercent ?? undefined}
+          />
+        ) : null}
 
         <label className="mdc-admin-field">
           <span>Título</span>

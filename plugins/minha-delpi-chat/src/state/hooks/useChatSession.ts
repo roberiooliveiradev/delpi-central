@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { buildTurnContextMetadata } from "../chatComposerContext";
+import { ingestProgressPercentLabel } from "../../content/ingestProgress";
 
 import {
   archiveChatSession,
@@ -13,6 +14,7 @@ import {
   upsertChatMessageFeedback,
   pinChatSession,
   renameChatSession,
+  moveChatSessionToProject,
   switchChatBranch,
   unarchiveChatSession,
   unpinChatSession,
@@ -102,8 +104,8 @@ function createOptimisticUserMessage(
   content: string,
   attachments: { id: string; original_filename: string; size_bytes: number; content_type: string | null; status: string }[] = [],
   turnContext?: {
-    agents?: Array<{ id: string; name: string }>;
-    projects?: Array<{ id: string; name: string }>;
+    agents?: Array<{ id: string; name: string; icon?: string | null }>;
+    projects?: Array<{ id: string; name: string; icon?: string | null }>;
   },
 ): ChatMessage {
   return {
@@ -825,6 +827,36 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [options.getAccessToken],
   );
 
+  const moveSessionToProject = useCallback(
+    async (sessionId: string, projectId: string) => {
+      setError(null);
+
+      try {
+        const updatedSession = await moveChatSessionToProject(sessionId, projectId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSessions((current) =>
+          current.map((session) =>
+            session.id === sessionId ? updatedSession : session,
+          ),
+        );
+
+        setActiveSession((current) =>
+          current?.id === sessionId ? updatedSession : current,
+        );
+
+        return updatedSession;
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao mover conversa para o projeto.",
+        );
+        return null;
+      }
+    },
+    [options.getAccessToken],
+  );
+
   const pinSession = useCallback(
     async (sessionId: string) => {
       setError(null);
@@ -1472,8 +1504,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     projectIds?: string[];
     chatMode?: "common" | "agent";
     turnContext?: {
-      agents?: Array<{ id: string; name: string }>;
-      projects?: Array<{ id: string; name: string }>;
+      agents?: Array<{ id: string; name: string; icon?: string | null }>;
+      projects?: Array<{ id: string; name: string; icon?: string | null }>;
     };
     typingCorrection?: ChatTypingCorrectionMetadata;
   } = {}) => {
@@ -1636,6 +1668,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             file,
             {
               getAccessToken: options.getAccessToken,
+              onUploadProgress: (percent) => {
+                setStreamingStatus(
+                  `Enviando arquivo ${file.name} — ${ingestProgressPercentLabel(percent)}`,
+                );
+              },
             },
           );
 
@@ -2300,6 +2337,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     selectSession,
     deleteSession,
     renameSession,
+    moveSessionToProject,
     pinSession,
     unpinSession,
     archiveSession,

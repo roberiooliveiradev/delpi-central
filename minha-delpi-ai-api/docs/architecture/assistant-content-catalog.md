@@ -58,8 +58,9 @@ Wrappers especializados (mantêm API estável):
 | `humanized_data_response.json` | Templates de resumo, alertLevel, limitações, próximas ações e camadas de leitura (Playbook 13) | `ChatHumanizedDataResponseContentService`, `ChatHumanizedDataResponseService` |
 | `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
 | `tool_context.json` | Roteador, paginação, drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
-| `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService` |
+| `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados; **`directAnswers.projectSources`** — inventário de fontes do projeto) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService`, `ChatProjectSourcesIntentService` |
 | `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
+| `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
 | `interactivity.json` | Chips, refinamentos | Vários serviços de interatividade |
 | `identity.json` | Quem é você, perfil | `ChatAssistantIdentityService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |

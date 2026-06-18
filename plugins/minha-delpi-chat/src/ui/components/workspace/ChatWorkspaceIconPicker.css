@@ -1,0 +1,36 @@
+.mdc-chat-workspace-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mdc-chat-workspace-icon-picker__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+}
+
+.mdc-chat-workspace-icon-picker__option svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.mdc-chat-workspace-icon-picker__option:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+}
+
+.mdc-chat-workspace-icon-picker__option--active {
+  border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+  color: var(--mdc-primary);
+}

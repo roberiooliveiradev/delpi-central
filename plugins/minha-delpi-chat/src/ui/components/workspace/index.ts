@@ -3,6 +3,10 @@ export { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
 export { ChatProjectHome } from "./ChatProjectHome";
 export { ChatProjectCard } from "./ChatProjectCard";
 export { ChatProjectCreateModal } from "./ChatProjectCreateModal";
+export { ChatProjectIcon } from "./ChatProjectIcon";
+export { ChatAgentIcon } from "./ChatAgentIcon";
+export { ChatLucideIconPickerModal } from "./ChatLucideIconPickerModal";
+export { ChatWorkspaceIconPicker } from "./ChatWorkspaceIconPicker";
 export { ChatAddContextDialog } from "./ChatAddContextDialog";
 export {
   ChatAttachmentPreviewModal,

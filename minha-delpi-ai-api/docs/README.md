@@ -117,6 +117,7 @@ Changelogs recentes:
 - [2026-06-viewintent-apresentacao-automatica.md](./changelog/2026-06-viewintent-apresentacao-automatica.md)
 - [2026-06-playbook-inteligencia.md](./changelog/2026-06-playbook-inteligencia.md)
 - [2026-06-playbook-14-corretor-digitacao-composer.md](./changelog/2026-06-playbook-14-corretor-digitacao-composer.md)
+- [2026-06-workspace-projetos-agentes-ui.md](./changelog/2026-06-workspace-projetos-agentes-ui.md)
 - [2026-05-inteligencia-chat-entregas.md](./changelog/2026-05-inteligencia-chat-entregas.md)
 
 ---
@@ -128,6 +129,7 @@ Changelogs recentes:
 | [README.md](./testing/README.md) | Índice de testes e smokes |
 | [smoke-operacional-manual.md](./testing/smoke-operacional-manual.md) | Checklist manual (U1–U9, G1–G3, #70–79…) |
 | [perguntas-teste-chat-jun2026.md](./testing/perguntas-teste-chat-jun2026.md) | Perguntas de regressão |
+| [knowledge/treinamento-agente-interacoes-jun2026.md](./knowledge/treinamento-agente-interacoes-jun2026.md) | Roteiro de treinamento (6 interações) |
 | [smoke-operational-intelligence-e2e.md](./testing/smoke-operational-intelligence-e2e.md) | E2E operacional |
 
 Suíte automatizada: `tests/unit/` (pytest). Fixtures: `tests/fixtures/chat_intelligence_regression_cases.py`.

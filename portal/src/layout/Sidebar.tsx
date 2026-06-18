@@ -6,12 +6,14 @@ import {
   useEffect,
   useRef,
   useCallback,
+  type CSSProperties,
 } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
 import { SidebarFavoritesList } from "./SidebarFavoritesList";
+import { usePortalMobileChrome } from "../hooks/usePortalMobileChrome";
 
 import {
   Bell,
@@ -35,13 +37,14 @@ import {
   DELPI_CLOSE_APP_LAUNCHER_EVENT,
   DELPI_OPEN_APP_LAUNCHER_EVENT,
 } from "../utils/appLauncher";
-import { DELPI_SIDEBAR_EXPAND_EVENT, resolvePortalSidebarEdgeWidth } from "../utils/sidebar";
+import { DELPI_SIDEBAR_EXPAND_EVENT, isPortalSidebarEdgeHoldPoint, PORTAL_SIDEBAR_EDGE_AUTO_HIDE_MS, PORTAL_SIDEBAR_EDGE_HOLD_MS, resolvePortalSidebarEdgeHoldWidth, resolvePortalSidebarEdgeWidth } from "../utils/sidebar";
 import {
   DELPI_PORTAL_TOUR_SIDEBAR_PANEL_EVENT,
   type PortalTourSidebarPanel,
 } from "../tour/portalTourSidebar";
 import { isLaunchableApp } from "../utils/launchableApps";
 import { isLauncherAppContextActive } from "../components/appLauncherAppearance";
+import { useSidebarMobileSwipeOpen } from "./useSidebarMobileSwipeOpen";
 
 const SIDEBAR_EDGE_LABEL_DESKTOP = "Abrir menu lateral";
 const SIDEBAR_EDGE_LABEL_MOBILE = "Abrir menu";
@@ -100,13 +103,35 @@ export const Sidebar = () => {
   const themeDropdownRef = useRef<HTMLDivElement>(null);
   const themeTriggerRef = useRef<HTMLDivElement>(null);
   const userTriggerRef = useRef<HTMLDivElement>(null);
+  const edgeAutoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const edgeHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const edgeHoldPointerRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+  } | null>(null);
 
   /* ===============================
      ESTADOS
   =============================== */
 
   const [collapsed, setCollapsed] = useState(() => {
-    return localStorage.getItem("sidebar-collapsed") === "true";
+    const stored = localStorage.getItem("sidebar-collapsed");
+    let value: boolean;
+    if (stored !== null) {
+      value = stored === "true";
+    } else if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1024px)").matches
+    ) {
+      value = true;
+    } else {
+      value = false;
+    }
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.sidebarCollapsed = value ? "true" : "false";
+    }
+    return value;
   });
 
   const [openApps, setOpenApps] = useState<Record<string, boolean>>({});
@@ -115,20 +140,8 @@ export const Sidebar = () => {
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [showEdgeExpand, setShowEdgeExpand] = useState(false);
-  const [isNarrowViewport, setIsNarrowViewport] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 1024px)").matches,
-  );
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 1024px)");
-    const onChange = () => setIsNarrowViewport(mediaQuery.matches);
-
-    onChange();
-    mediaQuery.addEventListener("change", onChange);
-    return () => mediaQuery.removeEventListener("change", onChange);
-  }, []);
+  const { isNarrowViewport, isLandscapeMobile, isCompactSidebar } =
+    usePortalMobileChrome();
 
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
@@ -187,9 +200,47 @@ export const Sidebar = () => {
   }, []);
 
   const openSidebarFromEdge = useCallback(() => {
+    if (edgeAutoHideTimerRef.current) {
+      clearTimeout(edgeAutoHideTimerRef.current);
+      edgeAutoHideTimerRef.current = null;
+    }
     setCollapsed(false);
     setShowEdgeExpand(false);
   }, []);
+
+  const clearEdgeAutoHideTimer = useCallback(() => {
+    if (edgeAutoHideTimerRef.current) {
+      clearTimeout(edgeAutoHideTimerRef.current);
+      edgeAutoHideTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleEdgeAutoHide = useCallback(() => {
+    clearEdgeAutoHideTimer();
+    edgeAutoHideTimerRef.current = setTimeout(() => {
+      setShowEdgeExpand(false);
+      edgeAutoHideTimerRef.current = null;
+    }, PORTAL_SIDEBAR_EDGE_AUTO_HIDE_MS);
+  }, [clearEdgeAutoHideTimer]);
+
+  const clearEdgeHold = useCallback(() => {
+    if (edgeHoldTimerRef.current) {
+      clearTimeout(edgeHoldTimerRef.current);
+      edgeHoldTimerRef.current = null;
+    }
+    edgeHoldPointerRef.current = null;
+  }, []);
+
+  const {
+    swipeOffsetPx,
+    isSwipeDragging,
+    swipeBackdropOpacity,
+  } = useSidebarMobileSwipeOpen({
+    enabled: collapsed && isNarrowViewport && !isLandscapeMobile,
+    sidebarRef: containerRef,
+    onOpen: openSidebarFromEdge,
+    onSwipeStart: clearEdgeHold,
+  });
 
   useEffect(() => {
     const expandFromPlugin = () => openSidebarFromEdge();
@@ -198,18 +249,24 @@ export const Sidebar = () => {
   }, [openSidebarFromEdge]);
 
   const hideEdgeExpand = useCallback(() => {
+    clearEdgeAutoHideTimer();
     setShowEdgeExpand(false);
-  }, []);
+  }, [clearEdgeAutoHideTimer]);
 
   const showEdgeExpandHint = useCallback(() => {
     if (!collapsed) return;
     setShowEdgeExpand(true);
-  }, [collapsed]);
+    if (isNarrowViewport) {
+      scheduleEdgeAutoHide();
+    }
+  }, [collapsed, isNarrowViewport, scheduleEdgeAutoHide]);
 
   const handleEdgePointerMove = useCallback(
     (event: PointerEvent) => {
-      if (!collapsed) {
-        setShowEdgeExpand(false);
+      if (!collapsed || isNarrowViewport) {
+        if (!collapsed) {
+          setShowEdgeExpand(false);
+        }
         return;
       }
 
@@ -242,21 +299,21 @@ export const Sidebar = () => {
 
       setShowEdgeExpand(false);
     },
-    [collapsed],
+    [collapsed, isNarrowViewport],
   );
 
   const handleEdgeTouchStart = useCallback(
     (event: TouchEvent) => {
-      if (!collapsed) return;
+      if (!collapsed || isNarrowViewport) return;
 
       const touch = event.touches[0];
       if (!touch) return;
 
       if (touch.clientX <= resolvePortalSidebarEdgeWidth()) {
-        setShowEdgeExpand(true);
+        showEdgeExpandHint();
       }
     },
-    [collapsed],
+    [collapsed, showEdgeExpandHint, isNarrowViewport],
   );
 
   useEffect(() => {
@@ -294,6 +351,86 @@ export const Sidebar = () => {
       setShowEdgeExpand(false);
     }
   }, [collapsed]);
+
+  useEffect(() => {
+    if (!collapsed || !isNarrowViewport || isLandscapeMobile) {
+      clearEdgeHold();
+      return;
+    }
+
+    const EDGE_HOLD_MOVE_CANCEL_PX = 12;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      if (!isPortalSidebarEdgeHoldPoint(event.clientX, event.clientY)) return;
+
+      clearEdgeHold();
+      edgeHoldPointerRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+      };
+
+      edgeHoldTimerRef.current = setTimeout(() => {
+        edgeHoldTimerRef.current = null;
+        setShowEdgeExpand(true);
+        scheduleEdgeAutoHide();
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate(12);
+        }
+      }, PORTAL_SIDEBAR_EDGE_HOLD_MS);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const hold = edgeHoldPointerRef.current;
+      if (!hold || hold.pointerId !== event.pointerId) return;
+
+      const edgeWidth = resolvePortalSidebarEdgeHoldWidth();
+      if (event.clientX > edgeWidth + EDGE_HOLD_MOVE_CANCEL_PX) {
+        clearEdgeHold();
+      }
+    };
+
+    const onPointerEnd = (event: PointerEvent) => {
+      const hold = edgeHoldPointerRef.current;
+      if (!hold || hold.pointerId !== event.pointerId) return;
+      clearEdgeHold();
+    };
+
+    const onContextMenu = (event: MouseEvent) => {
+      if (isPortalSidebarEdgeHoldPoint(event.clientX, event.clientY)) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("pointerdown", onPointerDown, { passive: true });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", onPointerEnd, { passive: true });
+    window.addEventListener("pointercancel", onPointerEnd, { passive: true });
+    window.addEventListener("contextmenu", onContextMenu);
+
+    return () => {
+      clearEdgeHold();
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
+      window.removeEventListener("contextmenu", onContextMenu);
+    };
+  }, [
+    collapsed,
+    isNarrowViewport,
+    isLandscapeMobile,
+    clearEdgeHold,
+    scheduleEdgeAutoHide,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      clearEdgeAutoHideTimer();
+      clearEdgeHold();
+    };
+  }, [clearEdgeAutoHideTimer, clearEdgeHold]);
 
   // Fecha dropdown ao clicar fora (mantém aberto ao clicar no gatilho — o toggle trata)
   useEffect(() => {
@@ -444,15 +581,23 @@ export const Sidebar = () => {
         />
       ) : null}
 
-      {collapsed && (
+      {collapsed && swipeOffsetPx > 0 ? (
+        <div
+          className="sidebar-mobile-backdrop sidebar-mobile-backdrop--swipe-preview"
+          style={{ opacity: swipeBackdropOpacity }}
+          aria-hidden="true"
+        />
+      ) : null}
+
+      {collapsed ? (
         <button
           ref={expandControlRef}
           type="button"
           className={`sidebar-edge-hotspot ${showEdgeExpand ? "is-visible" : ""}`}
           aria-label="Expandir menu lateral"
           onClick={openSidebarFromEdge}
-          onMouseEnter={showEdgeExpandHint}
-          onTouchStart={showEdgeExpandHint}
+          onMouseEnter={isNarrowViewport ? undefined : showEdgeExpandHint}
+          onTouchStart={isNarrowViewport ? undefined : showEdgeExpandHint}
           onFocus={showEdgeExpandHint}
         >
           <ChevronRight
@@ -465,11 +610,26 @@ export const Sidebar = () => {
             {isNarrowViewport ? SIDEBAR_EDGE_LABEL_MOBILE : SIDEBAR_EDGE_LABEL_DESKTOP}
           </span>
         </button>
-      )}
+      ) : null}
 
       <div
-        className={`sidebar ${collapsed ? "collapsed" : ""}`}
+        id="portal-sidebar"
+        className={[
+          "sidebar",
+          collapsed ? "collapsed" : "",
+          isSwipeDragging ? "is-swipe-dragging" : "",
+          isCompactSidebar ? "sidebar--compact" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         ref={containerRef}
+        style={
+          swipeOffsetPx > 0
+            ? ({
+                "--portal-sidebar-swipe-offset": `${swipeOffsetPx}px`,
+              } as CSSProperties)
+            : undefined
+        }
       >
         {!collapsed && (
           <>
@@ -501,24 +661,25 @@ export const Sidebar = () => {
               </button>
             </div>
 
-            <div className="sidebar-content" data-tour="sidebar-favorites">
-              <SidebarFavoritesList
-                entries={pinnedGroupedEntries}
-                favorites={favorites}
-                apps={apps}
-                openApps={openApps}
-                onToggleOpen={(id) =>
-                  setOpenApps((prev) => ({
-                    ...prev,
-                    [id]: !prev[id],
-                  }))
-                }
-                onNavigate={(path) => navigate(path)}
-                onReorder={reorderFavorites}
-              />
-            </div>
+            <div className="sidebar-body">
+              <div className="sidebar-content" data-tour="sidebar-favorites">
+                <SidebarFavoritesList
+                  entries={pinnedGroupedEntries}
+                  favorites={favorites}
+                  apps={apps}
+                  openApps={openApps}
+                  onToggleOpen={(id) =>
+                    setOpenApps((prev) => ({
+                      ...prev,
+                      [id]: !prev[id],
+                    }))
+                  }
+                  onNavigate={(path) => navigate(path)}
+                  onReorder={reorderFavorites}
+                />
+              </div>
 
-            <div className="sidebar-footer">
+              <div className="sidebar-footer">
               {canAccessAdmin && (
                 <NavLink
                   to="/admin"
@@ -735,6 +896,7 @@ export const Sidebar = () => {
               >
                 Política de Privacidade
               </NavLink>
+            </div>
             </div>
           </>
         )}

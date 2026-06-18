@@ -99,6 +99,7 @@ class ChatPresentationEvidenceFirstLayoutService:
 
         metadata.pop("storyPresentation", None)
         ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+        cls._clear_redundant_insight(metadata)
 
         decision = metadata.get("presentationDecision")
 
@@ -145,6 +146,18 @@ class ChatPresentationEvidenceFirstLayoutService:
             return
 
         ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+        cls._clear_redundant_insight(metadata)
+
+    @classmethod
+    def _clear_redundant_insight(cls, metadata: dict[str, Any]) -> None:
+        """Interpretação já está no markdown — não duplicar no chrome do MFE."""
+        if not cls.is_active(metadata):
+            return
+
+        decision = metadata.get("presentationDecision")
+
+        if isinstance(decision, dict):
+            decision["insight"] = ""
 
     @classmethod
     def _resolve_evidence_first_tail_visual_order(cls, metadata: dict[str, Any]) -> list[str]:

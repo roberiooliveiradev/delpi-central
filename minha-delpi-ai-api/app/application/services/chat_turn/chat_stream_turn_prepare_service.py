@@ -232,6 +232,10 @@ class ChatStreamTurnPrepareService:
                     on_stream_activity=_on_stream_activity,
                 ),
             )
+            prepared = state.prepared_box["value"]
+
+            if isinstance(getattr(prepared, "workspace_context", None), dict):
+                box["workspace_context"] = prepared.workspace_context
 
         def _prepare_worker() -> None:
             try:

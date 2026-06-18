@@ -17,8 +17,9 @@ pytest tests/unit/domain/services/test_chat_intelligence_regression.py -q
 # Seleção de actions
 pytest tests/unit/application/services/test_external_action_selection_service.py -q
 
-# Gate CI strings PT
-pytest tests/unit/infrastructure/test_no_hardcoded_pt_strings.py -q
+# Inventário / escopo de fontes do projeto (jun/2026)
+pytest tests/unit/domain/services/test_chat_project_sources_intent_service.py \
+  tests/unit/application/use_cases/test_search_knowledge_scope_boost.py -q
 
 # Clean architecture
 python scripts/audit_clean_architecture.py
@@ -28,7 +29,7 @@ python scripts/audit_clean_architecture.py
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `chat_intelligence_regression_cases.py` | Casos SIMPLE_TURN, UNCLEAR, DATA_INTERPRETATION, DATE_RANGE… |
+| `chat_intelligence_regression_cases.py` | Casos SIMPLE_TURN, UNCLEAR, DATA_INTERPRETATION, DATE_RANGE, **PROJECT_SOURCES_INTENT**… |
 | `rich_presentation_cases.py` | Apresentação rica P1–P16 |
 | `api_delpi_responses/` | Payloads mock de rotas api-delpi |
 
@@ -67,6 +68,7 @@ Cenários E2E declarativos: `app/content/pt-BR/assistant/smoke_e2e_scenarios.jso
 |-----------|----------|
 | [smoke-operacional-manual.md](./smoke-operacional-manual.md) | **Principal** — U1–U9, G1–G3, N1–N4, #70–79, persistência stream |
 | [perguntas-teste-chat-jun2026.md](./perguntas-teste-chat-jun2026.md) | Perguntas por categoria |
+| [../knowledge/treinamento-agente-interacoes-jun2026.md](../knowledge/treinamento-agente-interacoes-jun2026.md) | Treinamento ao vivo — 6 interações |
 | [smoke-operational-intelligence-e2e.md](./smoke-operational-intelligence-e2e.md) | E2E operacional |
 | [smoke-api-delpi-domain-routing.md](./smoke-api-delpi-domain-routing.md) | Domínios de rota |
 | [smoke-system-metadata-homologacao.md](./smoke-system-metadata-homologacao.md) | Metadados `/system` |

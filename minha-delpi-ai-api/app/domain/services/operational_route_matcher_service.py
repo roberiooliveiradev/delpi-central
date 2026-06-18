@@ -269,7 +269,22 @@ class OperationalRouteMatcherService:
             if not identifier:
                 return False
 
-        if spec.get("hasProductScope") and not cls._has_product_scope(normalized):
+        if spec.get("hasProductScope") and not cls._has_product_scope(
+            normalized,
+            message=message,
+        ):
+            return False
+
+        if spec.get("lacksProductScope") and cls._has_product_scope(
+            normalized,
+            message=message,
+        ):
+            return False
+
+        if spec.get("hasSpecificProductScope") and not cls._has_specific_product_scope(
+            normalized,
+            message=message,
+        ):
             return False
 
         if (
@@ -281,6 +296,8 @@ class OperationalRouteMatcherService:
             and not any_custom_predicate_from
             and not spec.get("hasProductIdentifier")
             and not spec.get("hasProductScope")
+            and not spec.get("lacksProductScope")
+            and not spec.get("hasSpecificProductScope")
             and not spec.get("lacksProductIdentifier")
             and not spec.get("hasLmpSaleNumber")
             and not spec.get("lacksLmpSaleNumber")
@@ -407,8 +424,43 @@ class OperationalRouteMatcherService:
         return ChatAssistantContentService.list(bundle, *parts[1:])
 
     @classmethod
-    def _has_product_scope(cls, normalized: str) -> bool:
-        return ChatProductQueryIntentService._has_product_scope_reference(normalized)
+    def _has_product_scope(cls, normalized: str, *, message: str = "") -> bool:
+        if ChatProductQueryIntentService._has_product_scope_reference(normalized):
+            return True
+
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+        from app.domain.services.chat_operational_follow_up_routing_service import (
+            ChatOperationalFollowUpRoutingService,
+        )
+
+        follow_type = ChatFollowUpIntentService.follow_up_type(message or normalized)
+
+        return ChatOperationalFollowUpRoutingService.grants_product_scope(follow_type)
+
+    @classmethod
+    def _has_specific_product_scope(cls, normalized: str, *, message: str = "") -> bool:
+        text = str(message or normalized or "")
+
+        if ChatProductQueryIntentService.extract_product_code(text):
+            return True
+
+        if ChatProductQueryIntentService.references_previous_product(text):
+            return True
+
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+        from app.domain.services.chat_operational_follow_up_routing_service import (
+            ChatOperationalFollowUpRoutingService,
+        )
+
+        follow_type = ChatFollowUpIntentService.follow_up_type(text)
+
+        return ChatOperationalFollowUpRoutingService.grants_specific_product_scope(
+            follow_type
+        )
 
     @classmethod
     def looks_like_sale_orders_list_question(cls, normalized: str) -> bool:

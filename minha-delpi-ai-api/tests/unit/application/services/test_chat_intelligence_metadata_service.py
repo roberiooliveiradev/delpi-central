@@ -33,3 +33,20 @@ def test_build_includes_selected_external_action_and_pipeline():
         "direct_answer",
         "skip_rag",
     ]
+
+
+def test_build_includes_rag_retrieved_and_visible_counts():
+    metadata = ChatIntelligenceMetadataService.build(
+        sources=[{"score": 0.9}],
+        tool_context={"toolCalls": []},
+        rag_stats={
+            "retrievedSourceCount": 4,
+            "visibleSourceCount": 1,
+            "retrievedChunkCount": 4,
+        },
+    )
+
+    assert metadata["ragSourceCount"] == 1
+    assert metadata["ragVisibleSourceCount"] == 1
+    assert metadata["ragRetrievedCount"] == 4
+    assert metadata["ragRetrievedChunkCount"] == 4

@@ -69,12 +69,21 @@
   margin-top: var(--mdc-space-3);
 }
 
-.mdc-chat-inline-error__actions button,
-.mdc-chat-inline-error__close {
+.mdc-chat-inline-error__actions button {
   appearance: none;
   border: 0;
   font: inherit;
   cursor: pointer;
+}
+
+.mdc-chat-inline-error__header .mdc-chat-modal-icon-btn {
+  flex: 0 0 auto;
+  background: var(--mdc-card-bg);
+  color: inherit;
+}
+
+.mdc-chat-inline-error__header .mdc-chat-modal-icon-btn:hover:not(:disabled) {
+  background: var(--mdc-bg-soft);
 }
 
 .mdc-chat-inline-error__actions button {
@@ -97,22 +106,6 @@
 
 .mdc-chat-inline-error__actions .is-open {
   transform: rotate(180deg);
-}
-
-.mdc-chat-inline-error__close {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--mdc-radius-sm);
-  background: var(--mdc-card-bg);
-  color: inherit;
-}
-
-.mdc-chat-inline-error__close:hover {
-  background: var(--mdc-bg-soft);
 }
 
 .mdc-chat-inline-error__details {
@@ -145,13 +138,13 @@
 }
 
 :root[data-theme="dark"] .mdc-chat-inline-error__actions button,
-:root[data-theme="dark"] .mdc-chat-inline-error__close {
+:root[data-theme="dark"] .mdc-chat-inline-error__header .mdc-chat-modal-icon-btn {
   background: color-mix(in srgb, var(--mdc-on-primary) 10%, transparent);
   color: color-mix(in srgb, var(--mdc-primary) 65%, var(--mdc-on-primary));
 }
 
 :root[data-theme="dark"] .mdc-chat-inline-error__actions button:hover,
-:root[data-theme="dark"] .mdc-chat-inline-error__close:hover {
+:root[data-theme="dark"] .mdc-chat-inline-error__header .mdc-chat-modal-icon-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--mdc-on-primary) 16%, transparent);
 }
 

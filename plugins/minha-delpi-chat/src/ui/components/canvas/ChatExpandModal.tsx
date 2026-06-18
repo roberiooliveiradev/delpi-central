@@ -51,7 +51,7 @@ export function ChatExpandModal({
         <div className="mdc-expand-modal__toolbar">
           {presentation.type === "tree" ? (
             <button
-              className="mdc-expand-modal__tool-btn"
+              className="mdc-expand-modal__tool-btn mdc-chat-modal-tool-btn"
               onClick={() =>
                 navigator.clipboard?.writeText(
                   treePresentationToClipboardText(presentation),
@@ -64,7 +64,7 @@ export function ChatExpandModal({
           ) : null}
           {presentation.type === "kpi" ? (
             <button
-              className="mdc-expand-modal__tool-btn"
+              className="mdc-expand-modal__tool-btn mdc-chat-modal-tool-btn"
               onClick={() => copyKpiToClipboard(presentation)}
               title="Copiar dados"
             >
@@ -83,7 +83,7 @@ export function ChatExpandModal({
             />
           ) : null}
           <button
-            className="mdc-expand-modal__close"
+            className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--sm"
             onClick={onClose}
             aria-label="Fechar"
           >

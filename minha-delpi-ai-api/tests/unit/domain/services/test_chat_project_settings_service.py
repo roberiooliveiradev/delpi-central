@@ -6,11 +6,11 @@ def test_share_flag_defaults_false():
     assert ChatProjectSettingsService.share_conversation_context_enabled({}) is False
 
 
-def test_merge_metadata_sets_share_flag():
+def test_merge_metadata_ignores_share_flag_when_collaboration_disabled():
     merged = ChatProjectSettingsService.merge_metadata(
         {"other": True},
         share_conversation_context=True,
     )
 
-    assert merged["shareConversationContext"] is True
+    assert "shareConversationContext" not in merged
     assert merged["other"] is True

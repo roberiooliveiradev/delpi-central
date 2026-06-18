@@ -6,6 +6,7 @@ export type ComposerMentionCandidate = {
   kind: ComposerMentionKind;
   id: string;
   name: string;
+  icon?: string | null;
 };
 
 export type ActiveComposerMention = {
@@ -20,8 +21,8 @@ function normalizeName(value: string): string {
 }
 
 export function listComposerMentionCandidates(input: {
-  agents?: ReadonlyArray<{ id: string; name: string }>;
-  projects?: ReadonlyArray<{ id: string; name: string }>;
+  agents?: ReadonlyArray<{ id: string; name: string; icon?: string | null }>;
+  projects?: ReadonlyArray<{ id: string; name: string; icon?: string | null }>;
 }): ComposerMentionCandidate[] {
   const candidates: ComposerMentionCandidate[] = [];
 
@@ -32,7 +33,7 @@ export function listComposerMentionCandidates(input: {
       continue;
     }
 
-    candidates.push({ kind: "agent", id: agent.id, name });
+    candidates.push({ kind: "agent", id: agent.id, name, icon: agent.icon ?? null });
   }
 
   for (const project of input.projects ?? []) {
@@ -42,7 +43,7 @@ export function listComposerMentionCandidates(input: {
       continue;
     }
 
-    candidates.push({ kind: "project", id: project.id, name });
+    candidates.push({ kind: "project", id: project.id, name, icon: project.icon ?? null });
   }
 
   return candidates.sort((left, right) => right.name.length - left.name.length);
@@ -81,13 +82,25 @@ export function filterComposerMentionCandidates(
   limits?: {
     selectedAgentIds?: readonly string[];
     selectedProjectIds?: readonly string[];
+    inUseAgentIds?: readonly string[];
+    inUseProjectIds?: readonly string[];
   },
 ): ComposerMentionCandidate[] {
   const normalizedQuery = normalizeName(query);
   const selectedAgents = new Set(normalizeContextIdList(limits?.selectedAgentIds));
   const selectedProjects = new Set(normalizeContextIdList(limits?.selectedProjectIds));
+  const inUseAgents = new Set(normalizeContextIdList(limits?.inUseAgentIds));
+  const inUseProjects = new Set(normalizeContextIdList(limits?.inUseProjectIds));
 
   return candidates.filter((candidate) => {
+    if (candidate.kind === "agent" && inUseAgents.has(candidate.id)) {
+      return false;
+    }
+
+    if (candidate.kind === "project" && inUseProjects.has(candidate.id)) {
+      return false;
+    }
+
     const normalizedName = normalizeName(candidate.name);
 
     if (normalizedQuery && !normalizedName.includes(normalizedQuery)) {
@@ -102,8 +115,33 @@ export function filterComposerMentionCandidates(
   });
 }
 
+export function excludeInUseComposerContextItems<T extends { id: string }>(
+  items: readonly T[],
+  inUseIds?: readonly string[],
+): T[] {
+  const hidden = new Set(normalizeContextIdList(inUseIds));
+
+  return items.filter((item) => !hidden.has(item.id));
+}
+
 export function formatComposerMentionToken(name: string): string {
   return `@[${String(name).trim()}] `;
+}
+
+/** Remove a query `@…` ativa sem inserir token — o contexto fica nos badges do composer. */
+export function clearComposerMentionQuery(input: {
+  value: string;
+  cursor: number;
+  mentionStart: number;
+}): { value: string; cursor: number } {
+  const before = input.value.slice(0, input.mentionStart);
+  const after = input.value.slice(input.cursor);
+  const value = `${before}${after}`;
+
+  return {
+    value,
+    cursor: before.length,
+  };
 }
 
 export function applyComposerMentionSelection(input: {
@@ -112,15 +150,32 @@ export function applyComposerMentionSelection(input: {
   mentionStart: number;
   candidate: ComposerMentionCandidate;
 }): { value: string; cursor: number } {
-  const before = input.value.slice(0, input.mentionStart);
-  const after = input.value.slice(input.cursor);
-  const token = formatComposerMentionToken(input.candidate.name);
-  const value = `${before}${token}${after}`;
+  return clearComposerMentionQuery({
+    value: input.value,
+    cursor: input.cursor,
+    mentionStart: input.mentionStart,
+  });
+}
 
-  return {
-    value,
-    cursor: before.length + token.length,
-  };
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Remove tokens `@[Nome]` legados do rascunho (badges substituem o texto inline). */
+export function stripComposerMentionTokens(value: string): string {
+  return value.replace(MENTION_TOKEN_PATTERN, "");
+}
+
+export function removeComposerMentionTokenForName(value: string, name: string): string {
+  const trimmed = String(name ?? "").trim();
+
+  if (!trimmed) {
+    return value;
+  }
+
+  const pattern = new RegExp(`@\\[${escapeRegExp(trimmed)}\\]\\s*`, "g");
+
+  return value.replace(pattern, "");
 }
 
 function resolveCandidateByName(

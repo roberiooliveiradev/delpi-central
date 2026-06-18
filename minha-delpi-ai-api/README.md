@@ -80,7 +80,7 @@ Detalhes: [docs/development/guia-desenvolvimento.md](docs/development/guia-desen
 - Respostas diretas (identidade, small talk, utilidades, operacional) sem LLM quando aplicável
 - Diagnóstico **`adminDebug`** persistido em todo turno; visível na API/UI só para admin
 - **Agentes** com rascunho/publicação, preview, skills, fontes e actions OpenAPI
-- **Projetos** com instruções, agente padrão e contexto compartilhado
+- **Projetos** com instruções, agente padrão e ícone (colaboração multiusuário: implementação futura)
 - Base global de conhecimento com pipeline de ingestão
 - Painel admin: diretrizes, métricas, auditoria, simulação, avaliações
 - Apresentação rica: tabelas, gráficos, árvore, KPI, multi-rota produto

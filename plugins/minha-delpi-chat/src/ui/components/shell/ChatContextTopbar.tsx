@@ -1,7 +1,6 @@
 import {
   Bot,
   CircleHelp,
-  Folder,
   MessageSquare,
   PanelLeft,
   Pencil,
@@ -14,6 +13,8 @@ import { useMemo } from "react";
 
 import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
 import type { ActionMenuItem } from "../shared/menus/ActionMenuPanel";
+import { ChatAgentIcon } from "../workspace/ChatAgentIcon";
+import { ChatProjectIcon } from "../workspace/ChatProjectIcon";
 
 import "./ChatContextTopbar.css";
 
@@ -24,6 +25,8 @@ type ChatContextTopbarProps = {
   title: string;
   subtitle?: string;
   badge?: string;
+  projectIcon?: string | null;
+  agentIcon?: string | null;
   onOpenAdmin?: () => void;
   onRenameProject?: () => void;
   onOpenProjectSettings?: () => void;
@@ -39,6 +42,8 @@ export function ChatContextTopbar({
   title,
   subtitle,
   badge,
+  projectIcon,
+  agentIcon,
   onOpenAdmin,
   onRenameProject,
   onOpenProjectSettings,
@@ -48,8 +53,7 @@ export function ChatContextTopbar({
   onOpenSidebar,
   onOpenHelp,
 }: ChatContextTopbarProps) {
-  const Icon =
-    mode === "project" ? Folder : mode === "agent" ? Bot : MessageSquare;
+  const Icon = mode === "agent" ? Bot : MessageSquare;
 
   const contextMenuItems = useMemo((): ActionMenuItem[] => {
     if (mode === "project") {
@@ -155,7 +159,13 @@ export function ChatContextTopbar({
 
       <div className="mdc-chat-context-topbar__center">
         <span className="mdc-chat-context-topbar__icon">
-          <Icon size={18} aria-hidden="true" />
+          {mode === "project" ? (
+            <ChatProjectIcon icon={projectIcon} size={18} />
+          ) : mode === "agent" ? (
+            <ChatAgentIcon icon={agentIcon} size={18} />
+          ) : (
+            <Icon size={18} aria-hidden="true" />
+          )}
         </span>
 
         <div className="mdc-chat-context-topbar__titles">

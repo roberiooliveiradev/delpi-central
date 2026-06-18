@@ -7,6 +7,8 @@ import {
   estimateComposerPanelMenuHeight,
   isMenuAnchorOutsideContainer,
   resolveActionMenuPosition,
+  resolveComposerMentionMenuPosition,
+  resolveComposerMentionMenuWidth,
   resolveComposerOptionMenuPosition,
   resolveComposerPanelMenuPosition,
   resolveContextMenuPosition,
@@ -235,10 +237,10 @@ describe("composer mobile viewports", () => {
 });
 
 describe("estimateChatInputPlusMenuItemCount", () => {
-  it("conta anexo, agentes, projetos e cabeçalhos", () => {
+  it("conta anexo, agentes, projetos, cabeçalhos e hints", () => {
     expect(
       estimateChatInputPlusMenuItemCount({ agentCount: 4, projectCount: 10 }),
-    ).toBe(1 + 4 + 8 + 3);
+    ).toBe(1 + 4 + 8 + 5);
   });
 });
 
@@ -351,5 +353,74 @@ describe("resolveComposerOptionMenuPosition", () => {
 
     expect(layout.left).not.toBe(48);
     expect(layout.left).toBe(8);
+  });
+});
+
+describe("resolveComposerMentionMenuPosition", () => {
+  it("ancora no @ com largura limitada ao espaço à direita", () => {
+    const width = resolveComposerMentionMenuWidth({
+      anchorLeft: 720,
+      viewport: { width: 800, height: 600 },
+    });
+
+    expect(width).toBe(168);
+
+    const layout = resolveComposerMentionMenuPosition({
+      rect: { left: 720, top: 420, right: 720, bottom: 440, width: 0, height: 20 },
+      itemCount: 3,
+      menuWidth: width,
+      viewport: { width: 800, height: 600 },
+    });
+
+    expect(layout.left).toBe(624);
+    expect(layout.anchorAbove).toBe(true);
+    expect(layout.maxHeight).toBeGreaterThan(0);
+  });
+
+  it("ajusta a borda esquerda quando o menu ultrapassa a viewport", () => {
+    const width = resolveComposerMentionMenuWidth({
+      anchorLeft: 40,
+      viewport: { width: 320, height: 640 },
+    });
+
+    const layout = resolveComposerMentionMenuPosition({
+      rect: { left: 40, top: 500, right: 40, bottom: 520, width: 0, height: 20 },
+      itemCount: 2,
+      menuWidth: width,
+      viewport: { width: 320, height: 640 },
+    });
+
+    expect(layout.left).toBe(40);
+    expect(width).toBeLessThanOrEqual(280);
+  });
+
+  it("converte coordenadas do caret apenas uma vez no portal contido", () => {
+    const containerRect = {
+      left: 240,
+      top: 64,
+      right: 1040,
+      bottom: 864,
+      width: 800,
+      height: 800,
+    };
+    const caretRect = {
+      left: 320,
+      top: 720,
+      right: 320,
+      bottom: 740,
+      width: 0,
+      height: 20,
+    };
+
+    const layout = resolveComposerMentionMenuPosition({
+      rect: caretRect,
+      itemCount: 3,
+      contained: true,
+      containerRect,
+    });
+
+    expect(layout.left).toBe(80);
+    expect(layout.top).toBeLessThan(656);
+    expect(layout.anchorAbove).toBe(true);
   });
 });

@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
+import type { ChatAgent, ChatProject, ChatSession, CreateChatProjectPayload } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
-import { ChatProjectCreateModal } from "../components/workspace";
+import { ChatProjectCreateModal } from "../components/workspace/ChatProjectCreateModal";
+import { ChatProjectIcon } from "../components/workspace/ChatProjectIcon";
 import { useConfirmDialog, usePromptDialog } from "../components/shared";
 import "./ChatProjectsPage.css";
 
@@ -24,11 +25,7 @@ type ChatProjectsPageProps = {
   isLoading?: boolean;
   onBack: () => void;
   onSelectProject?: (projectId: string) => void;
-  onCreateProject?: (payload: {
-    name: string;
-    description?: string | null;
-    instructions?: string | null;
-  }) => Promise<ChatProject | null>;
+  onCreateProject?: (payload: CreateChatProjectPayload) => Promise<ChatProject | null>;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onConfigureProject?: (projectId: string) => void;
@@ -38,21 +35,16 @@ function getSessionCount(projectId: string, sessions: ChatSession[]): number {
   return sessions.filter((session) => session.project_id === projectId).length;
 }
 
-function formatAccessRole(role: string | null | undefined): string {
-  switch (role) {
-    case "owner":
-      return "Proprietário";
-    case "editor":
-      return "Editor";
-    case "viewer":
-      return "Visualizador";
-    default:
-      return role?.trim() || "Membro";
+function formatAccessRole(role: string | null | undefined): string | null {
+  if (role === "owner") {
+    return "Proprietário";
   }
+
+  return null;
 }
 
 function canEditProject(role: string | null | undefined): boolean {
-  return role === "owner" || role === "editor";
+  return role === "owner";
 }
 
 export function ChatProjectsPage({
@@ -199,7 +191,7 @@ export function ChatProjectsPage({
                       onClick={() => onSelectProject?.(project.id)}
                     >
                       <span className="mdc-chat-ws-directory__card-icon">
-                        <Folder size={18} aria-hidden="true" />
+                        <ChatProjectIcon icon={project.icon} size={18} />
                       </span>
                       <span className="mdc-chat-ws-directory__card-copy">
                         <strong>{project.name}</strong>
@@ -213,9 +205,11 @@ export function ChatProjectsPage({
 
                     <div className="mdc-chat-ws-directory__card-meta">
                       <span>{chatCount} chat(s)</span>
-                      <span className="mdc-chat-projects-page__role">
-                        {formatAccessRole(project.access_role)}
-                      </span>
+                      {formatAccessRole(project.access_role) ? (
+                        <span className="mdc-chat-projects-page__role">
+                          {formatAccessRole(project.access_role)}
+                        </span>
+                      ) : null}
                       {project.default_agent_id ? (
                         <span>
                           Agente:{" "}

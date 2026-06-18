@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/workspace/agentBuilder";
+import { ChatAgentIcon } from "../components/workspace/ChatAgentIcon";
 import { useConfirmDialog } from "../components/shared";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
@@ -438,7 +439,7 @@ export function ChatAgentsPage({
                       onClick={() => onSelectAgent?.(agent.id)}
                     >
                       <span className="mdc-chat-ws-directory__card-icon">
-                        <Bot size={18} aria-hidden="true" />
+                        <ChatAgentIcon icon={agent.icon} size={18} />
                       </span>
                       <span className="mdc-chat-ws-directory__card-copy">
                         <strong>{agent.name}</strong>

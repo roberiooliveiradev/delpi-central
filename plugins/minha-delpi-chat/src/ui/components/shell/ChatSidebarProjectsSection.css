@@ -90,6 +90,13 @@
   gap: 0.04rem;
 }
 
+.mdc-chat-sidebar-project-node--drop-target {
+  border-radius: 0.62rem;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  outline: 1px dashed color-mix(in srgb, var(--mdc-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
 .mdc-chat-sidebar-project-node + .mdc-chat-sidebar-project-node {
   margin-top: 0.02rem;
 }

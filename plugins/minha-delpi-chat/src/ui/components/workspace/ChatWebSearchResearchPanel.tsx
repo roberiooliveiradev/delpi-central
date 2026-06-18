@@ -127,7 +127,7 @@ export function ChatWebSearchResearchPanel({
 
         <button
           type="button"
-          className="mdc-chat-web-research-panel__close"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
           aria-label="Fechar atividade de pesquisa"
           onClick={onClose}
         >

@@ -142,6 +142,9 @@ def test_build_context_returns_empty_sources_when_no_chunks():
     assert result == {
         "context": "",
         "sources": [],
+        "retrievedSourceCount": 0,
+        "visibleSourceCount": 0,
+        "retrievedChunkCount": 0,
     }
 
 

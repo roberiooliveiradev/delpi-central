@@ -49,16 +49,20 @@
   min-height: 0;
   overflow: hidden;
   margin-block: 0;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .mdc-chat-empty-composer__column--project .mdc-chat-empty-composer__scroll {
   flex: 1 1 auto;
   min-height: 0;
+  --mdc-composer-shadow-bleed: clamp(1.75rem, 4vw, 3rem);
+  padding-inline: var(--mdc-composer-shadow-bleed);
+  padding-top: clamp(0.75rem, 2vh, 1.25rem);
+  padding-bottom: clamp(0.75rem, 2vh, 1.25rem);
 }
 
 .mdc-chat-empty-composer:has(.mdc-chat-empty-composer__column--project) {
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .mdc-chat-empty-composer__scroll {
@@ -79,19 +83,9 @@
   scrollbar-gutter: stable;
 }
 
-.mdc-chat-empty-composer__column--project .mdc-chat-empty-composer__scroll {
-  justify-content: flex-start;
-  padding-top: clamp(0.5rem, 1.5vh, 1rem);
-  padding-bottom: var(--mdc-space-2);
-}
-
 @supports (justify-content: safe center) {
   .mdc-chat-empty-composer__scroll {
     justify-content: safe center;
-  }
-
-  .mdc-chat-empty-composer__column--project .mdc-chat-empty-composer__scroll {
-    justify-content: flex-start;
   }
 }
 
@@ -100,6 +94,14 @@
 .mdc-chat-empty-composer__scroll > .mdc-chat-agent-landing,
 .mdc-chat-empty-composer__scroll > .mdc-chat-project-home {
   width: 100%;
+}
+
+.mdc-chat-empty-composer__scroll > .mdc-chat-project-home--compact {
+  flex: 0 0 auto;
+  margin-block: auto;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: visible;
 }
 
 .mdc-chat-empty-composer .mdc-chat-empty-state,
@@ -244,6 +246,11 @@
   padding: 0.35rem 0.45rem 0.35rem 1rem;
 }
 
+.mdc-chat-empty-composer__column--project .mdc-chat-project-home__composer .mdc-chat-input__box:focus-within {
+  position: relative;
+  z-index: 2;
+}
+
 .mdc-chat-empty-composer__column .mdc-chat-input--center .mdc-chat-input__send {
   width: 2.55rem;
   height: 2.55rem;
@@ -272,11 +279,6 @@
   .mdc-chat-empty-composer__scroll {
     gap: var(--mdc-space-3);
     padding-block: clamp(0.5rem, 1.25vh, 0.85rem);
-  }
-
-  .mdc-chat-empty-composer__column--project .mdc-chat-empty-composer__scroll {
-    padding-top: clamp(0.35rem, 1vh, 0.65rem);
-    padding-bottom: var(--mdc-space-2);
   }
 
   .mdc-chat-empty-composer .mdc-chat-empty-state,

@@ -177,7 +177,7 @@ export function ChatAttachmentPreviewModal({
           {target.serverSourceId || (target.serverAttachmentId && onDownload) ? (
             <button
               type="button"
-              className="mdc-attachment-preview-modal__tool-btn"
+              className="mdc-attachment-preview-modal__tool-btn mdc-chat-modal-tool-btn"
               onClick={() => {
                 if (target.serverSourceId) {
                   void downloadChatSource(target.serverSourceId, { getAccessToken });
@@ -196,7 +196,7 @@ export function ChatAttachmentPreviewModal({
 
           <button
             type="button"
-            className="mdc-attachment-preview-modal__close"
+            className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
             onClick={onClose}
             aria-label="Fechar pré-visualização"
           >

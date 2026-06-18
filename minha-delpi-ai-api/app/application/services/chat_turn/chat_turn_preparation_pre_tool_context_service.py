@@ -25,6 +25,7 @@ class ChatTurnPreparationPreToolContextResult:
     utility_direct: str | None
     unclear_direct: str | None
     web_save_sources_direct: str | None
+    project_sources_direct: str | None
     web_post_search_direct: str | None
     attachment_welcome_direct: str | None
     routing_disambiguation: Any
@@ -133,6 +134,7 @@ class ChatTurnPreparationPreToolContextService:
             utility_direct=direct_answer_bundle.utility_direct,
             unclear_direct=direct_answer_bundle.unclear_direct,
             web_save_sources_direct=direct_answer_bundle.web_save_sources_direct,
+            project_sources_direct=direct_answer_bundle.project_sources_direct,
             web_post_search_direct=direct_answer_bundle.web_post_search_direct,
             attachment_welcome_direct=direct_answer_bundle.attachment_welcome_direct,
             routing_disambiguation=direct_answer_bundle.routing_disambiguation,

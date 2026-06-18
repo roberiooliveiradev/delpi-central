@@ -14,6 +14,8 @@ Ele cobre:
 - Identificação de matérias-primas exclusivas;
 - Exclusão de produtos de teste/amostra iniciados por `8000` e `8001`.
 
+**Unidades de medida (MI, quantidade por PA vs por peça):** ver [`playbook-conversao-unidades-protheus.md`](./playbook-conversao-unidades-protheus.md).
+
 ---
 
 ## 2. Tabelas principais
