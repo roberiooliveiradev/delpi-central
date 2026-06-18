@@ -15,6 +15,7 @@ import {
 } from "../../../state/chatComposerMention";
 import { ChatComposerContextBadges } from "./ChatComposerContextBadges";
 import { ChatComposerMentionMenu } from "./ChatComposerMentionMenu";
+import { ComposerMentionMenuPortal } from "./ComposerMentionMenuPortal";
 
 import type {
   ChatAgent,
@@ -428,13 +429,22 @@ export function ChatInput({
 
         <div className="mdc-chat-input__composer-stack">
           <div className="mdc-chat-input__composer-field">
-            {isMentionMenuOpen ? (
-              <ChatComposerMentionMenu
-                items={mentionItems}
-                activeIndex={Math.min(mentionIndex, Math.max(mentionItems.length - 1, 0))}
-                onHover={setMentionIndex}
-                onSelect={handleMentionSelect}
-              />
+            {isMentionMenuOpen && activeMention ? (
+              <ComposerMentionMenuPortal
+                open
+                textareaRef={textareaRef}
+                anchorIndex={activeMention.start}
+                itemCount={Math.max(mentionItems.length, 1)}
+                value={value}
+              >
+                <ChatComposerMentionMenu
+                  items={mentionItems}
+                  activeIndex={Math.min(mentionIndex, Math.max(mentionItems.length - 1, 0))}
+                  onHover={setMentionIndex}
+                  onSelect={handleMentionSelect}
+                  variant="portal"
+                />
+              </ComposerMentionMenuPortal>
             ) : null}
 
             {hasContextBadges ? (
