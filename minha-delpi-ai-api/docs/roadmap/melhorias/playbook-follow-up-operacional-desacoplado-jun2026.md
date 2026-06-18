@@ -116,13 +116,25 @@ sequenceDiagram
 
 ## 5. Testes e gates
 
+**Offline (sem stack):**
+
+```bash
+cd minha-delpi-ai-api
+.venv/bin/python scripts/smoke_follow_up_operacional_gates.py
+```
+
+**Unitários (referência):**
+
 ```bash
 cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_follow_up_intent_service.py -q
 .venv/bin/python -m pytest tests/unit/application/services/test_chat_capabilities_service.py -q
-.venv/bin/python -m pytest tests/unit/domain/services/test_chat_intelligence_regression.py -q -k "follow_up or selection"
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_intelligence_regression.py::test_action_selection_regression -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_project_sources_slot_rag.py -q
 .venv/bin/python scripts/generate_operational_route_registry.py --check
 ```
+
+**E2E (stack no ar):** roteiro [`treinamento-agente-interacoes-jun2026.md`](../../knowledge/treinamento-agente-interacoes-jun2026.md) + `smoke-operacional-manual.md` (G8c/G8d, interações 2/5/6).
 
 ---
 

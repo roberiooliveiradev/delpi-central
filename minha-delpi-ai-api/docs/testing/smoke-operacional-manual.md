@@ -544,6 +544,7 @@ cd minha-delpi-ai-api && pytest \
 | G8 | Faça G1 ou G7 com admin logado; veja badges de fontes na mensagem | Contexto RAG usa docs do agente internamente; **badges visíveis só** para anexos de **sessão** e **projeto** — **não** exibir `agent_source` |
 | G8b | Anexe um PDF/txt na conversa e pergunte sobre o anexo | Badge de fonte **session** aparece; docs internos do agente continuam ocultos |
 | G8c | Projeto com arquivo em **Fontes do projeto** → «o que tem nas suas fontes?» | Resposta **direta** listando arquivos (nome, tamanho, chunks); `pipeline.skipRag: true`, stage `project_sources_inventory`; **não** «não tenho acesso» |
+| G8d | Após G8c → «resuma o conteúdo do primeiro arquivo» | Stage `project_sources_content`; RAG filtrado ao 1º arquivo (`lastProjectSourcesInventory`); **não** `text_task` nem «não tenho acesso» |
 
 ### Perguntas extras úteis (manual / homologação)
 
