@@ -45,6 +45,11 @@
 ========================================= */
 
 @media (max-width: 1024px) {
+  :root {
+    --portal-sidebar-edge-band-width: clamp(2.025rem, 2.85vw, 2.4rem);
+    --portal-sidebar-edge-hotspot-width: clamp(0.75rem, 1.125vw, 1.125rem);
+  }
+
   .sidebar {
     position: fixed;
     top: 0;
@@ -108,7 +113,7 @@
 
 @media (max-width: 400px) {
   .sidebar-edge-hotspot {
-    width: clamp(1.2rem, 6vw, 1.4rem);
+    width: clamp(1.8rem, 9vw, 2.1rem);
   }
 
   .sidebar-edge-hotspot__label {
