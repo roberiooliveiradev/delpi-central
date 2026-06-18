@@ -30,6 +30,14 @@
   background: color-mix(in srgb, var(--mdc-primary) 12%, transparent) !important;
 }
 
+.mdc-chat-conversation-item--draggable {
+  cursor: grab;
+}
+
+.mdc-chat-conversation-item--draggable:active {
+  cursor: grabbing;
+}
+
 .mdc-chat-conversation-item--project {
   grid-template-columns: minmax(0, 1fr) auto;
   min-height: 2.12rem;

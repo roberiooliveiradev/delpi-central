@@ -40,7 +40,7 @@ Referência de API: [`../api/03-agentes.md`](../api/03-agentes.md) · Endpoints 
 |---|---------|--------|
 | 4.1 | Lookup de usuários (`POST /me/directory/users/lookup`) e nomes na lista de shares | Concluído |
 | 4.2 | `GET/DELETE /chat/projects/{id}/shares` | Concluído |
-| 4.3 | Compartilhamento de projeto nas configurações + busca de usuário | Concluído |
+| 4.3 | Compartilhamento de projeto nas configurações + busca de usuário | **Adiado** — ver [projetos-colaborativos-futuro.md](./projetos-colaborativos-futuro.md) |
 | 4.4 | Aba Actions: feedback de sucesso e navegação mais clara | Concluído |
 
 ## Onda 5 — uso e duplicação avançada

@@ -3,10 +3,11 @@ import {
   ChevronRight,
   Plus,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { ChatProject, ChatSession } from "../../../data/api/chatTypes";
 import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../../navigation/chatRoutes";
+import { isChatSessionDragEvent, readChatSessionDragId } from "../../chatSessionDragDrop";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatProjectCard } from "../workspace/ChatProjectCard";
 import { useConfirmDialog, usePromptDialog } from "../shared";
@@ -26,6 +27,7 @@ type ChatSidebarProjectsSectionProps = {
   onNewProject: () => void;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
+  onMoveSessionToProject?: (sessionId: string, projectId: string) => Promise<ChatSession | null>;
   isSessionProcessing?: (sessionId: string) => boolean;
 };
 
@@ -41,6 +43,7 @@ export function ChatSidebarProjectsSection({
   onNewProject,
   onRenameProject,
   onDeleteProject,
+  onMoveSessionToProject,
   isSessionProcessing,
 }: ChatSidebarProjectsSectionProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -48,6 +51,7 @@ export function ChatSidebarProjectsSection({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllByProject, setShowAllByProject] = useState<Record<string, boolean>>({});
+  const [dropTargetProjectId, setDropTargetProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedProjectId) {
@@ -105,6 +109,52 @@ export function ChatSidebarProjectsSection({
       [projectId]: !current[projectId],
     }));
   }
+
+  const handleProjectDragOver = useCallback(
+    (projectId: string, event: React.DragEvent<HTMLDivElement>) => {
+      if (!onMoveSessionToProject || !isChatSessionDragEvent(event.dataTransfer)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      setDropTargetProjectId(projectId);
+    },
+    [onMoveSessionToProject],
+  );
+
+  const handleProjectDragLeave = useCallback(
+    (projectId: string, event: React.DragEvent<HTMLDivElement>) => {
+      const relatedTarget = event.relatedTarget as Node | null;
+
+      if (relatedTarget && event.currentTarget.contains(relatedTarget)) {
+        return;
+      }
+
+      setDropTargetProjectId((current) => (current === projectId ? null : current));
+    },
+    [],
+  );
+
+  const handleProjectDrop = useCallback(
+    (projectId: string, event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setDropTargetProjectId(null);
+
+      if (!onMoveSessionToProject) {
+        return;
+      }
+
+      const sessionId = readChatSessionDragId(event.dataTransfer);
+
+      if (!sessionId) {
+        return;
+      }
+
+      void onMoveSessionToProject(sessionId, projectId);
+    },
+    [onMoveSessionToProject],
+  );
 
   return (
     <>
@@ -166,7 +216,20 @@ export function ChatSidebarProjectsSection({
                   );
 
                   return (
-                    <div key={project.id} className="mdc-chat-sidebar-project-node">
+                    <div
+                      key={project.id}
+                      className={[
+                        "mdc-chat-sidebar-project-node",
+                        dropTargetProjectId === project.id
+                          ? "mdc-chat-sidebar-project-node--drop-target"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      onDragOver={(event) => handleProjectDragOver(project.id, event)}
+                      onDragLeave={(event) => handleProjectDragLeave(project.id, event)}
+                      onDrop={(event) => handleProjectDrop(project.id, event)}
+                    >
                       <ChatProjectCard
                         project={project}
                         active={isProjectActive}

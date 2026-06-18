@@ -71,7 +71,7 @@ export function ChatPromptDialog({
 
         <button
           type="button"
-          className="mdc-chat-prompt__close"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
           onClick={onCancel}
           aria-label="Fechar"
         >

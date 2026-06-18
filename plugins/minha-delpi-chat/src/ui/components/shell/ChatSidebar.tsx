@@ -66,6 +66,7 @@ type ChatSidebarProps = {
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
   onSelectAgent?: (agentId: string | null) => void;
+  onMoveSessionToProject?: (sessionId: string, projectId: string) => Promise<ChatSession | null>;
   isSessionProcessing?: (sessionId: string) => boolean;
 };
 
@@ -104,6 +105,7 @@ export function ChatSidebar({
   onDeleteProject,
   onSelectProject,
   onSelectAgent,
+  onMoveSessionToProject,
   isSessionProcessing,
 }: ChatSidebarProps) {
   const [deleteTargetSession, setDeleteTargetSession] = useState<ChatSession | null>(null);
@@ -403,6 +405,7 @@ export function ChatSidebar({
           onNewProject={() => setIsProjectsModalOpen(true)}
           onRenameProject={onRenameProject}
           onDeleteProject={onDeleteProject}
+          onMoveSessionToProject={onMoveSessionToProject}
         />
       </div>
 
@@ -454,6 +457,7 @@ export function ChatSidebar({
             onPinSession={onPinSession}
             onUnpinSession={onUnpinSession}
             onArchiveSession={onArchiveSession}
+            enableSessionDrag={Boolean(onMoveSessionToProject)}
           />
         ) : null}
       </div>

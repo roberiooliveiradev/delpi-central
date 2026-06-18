@@ -36,24 +36,6 @@
   font-size: 0.78rem;
 }
 
-.mdc-chat-web-research-panel__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-}
-
-.mdc-chat-web-research-panel__close:hover {
-  color: var(--mdc-text);
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
-}
-
 .mdc-chat-web-research-panel__body {
   flex: 1;
   overflow: auto;

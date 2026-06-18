@@ -25,31 +25,6 @@
   letter-spacing: -0.02em;
 }
 
-.mdc-chat-project-create-modal header button {
-  display: inline-grid;
-  place-items: center;
-  width: 2.3rem;
-  height: 2.3rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  box-shadow: none;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-}
-
-.mdc-chat-project-create-modal header button svg {
-  display: block;
-  flex: 0 0 auto;
-  margin: 0;
-}
-
-.mdc-chat-project-create-modal header button:hover {
-  background: color-mix(in srgb, var(--mdc-text) 10%, transparent);
-  color: var(--mdc-text);
-}
-
 .mdc-chat-project-create-modal__field {
   display: grid;
   gap: 0.4rem;

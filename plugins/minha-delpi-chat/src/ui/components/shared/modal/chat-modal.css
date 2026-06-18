@@ -1,5 +1,86 @@
 /* Shell compartilhado de modais centrados. Conteúdo específico via panelClassName (ex.: mdc-chat-confirm). */
 
+/* Botão icônico — fechar e ações compactas (centralização Lucide) */
+.mdc-chat-modal-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 2.3rem;
+  height: 2.3rem;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  line-height: 0;
+  font: inherit;
+}
+
+.mdc-chat-modal-icon-btn svg {
+  display: block;
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+}
+
+.mdc-chat-modal-icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-text) 10%, transparent);
+  color: var(--mdc-text);
+}
+
+.mdc-chat-modal-icon-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.mdc-chat-modal-icon-btn--sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+.mdc-chat-modal-icon-btn--sm svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.mdc-chat-modal-icon-btn--outlined {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: var(--mdc-bg);
+}
+
+.mdc-chat-modal-icon-btn--outlined:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mdc-primary) 25%, var(--mdc-card-border));
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+}
+
+.mdc-chat-modal-icon-btn--square {
+  border-radius: 0.7rem;
+}
+
+/* Toolbar de modal — ícone + texto */
+.mdc-chat-modal-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1.2;
+}
+
+.mdc-chat-modal-tool-btn svg {
+  display: block;
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+
 .mdc-chat-modal {
   color: var(--mdc-text);
   box-sizing: border-box;

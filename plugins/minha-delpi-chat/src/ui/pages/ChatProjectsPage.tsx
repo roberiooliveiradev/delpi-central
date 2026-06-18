@@ -35,21 +35,16 @@ function getSessionCount(projectId: string, sessions: ChatSession[]): number {
   return sessions.filter((session) => session.project_id === projectId).length;
 }
 
-function formatAccessRole(role: string | null | undefined): string {
-  switch (role) {
-    case "owner":
-      return "Proprietário";
-    case "editor":
-      return "Editor";
-    case "viewer":
-      return "Visualizador";
-    default:
-      return role?.trim() || "Membro";
+function formatAccessRole(role: string | null | undefined): string | null {
+  if (role === "owner") {
+    return "Proprietário";
   }
+
+  return null;
 }
 
 function canEditProject(role: string | null | undefined): boolean {
-  return role === "owner" || role === "editor";
+  return role === "owner";
 }
 
 export function ChatProjectsPage({
@@ -210,9 +205,11 @@ export function ChatProjectsPage({
 
                     <div className="mdc-chat-ws-directory__card-meta">
                       <span>{chatCount} chat(s)</span>
-                      <span className="mdc-chat-projects-page__role">
-                        {formatAccessRole(project.access_role)}
-                      </span>
+                      {formatAccessRole(project.access_role) ? (
+                        <span className="mdc-chat-projects-page__role">
+                          {formatAccessRole(project.access_role)}
+                        </span>
+                      ) : null}
                       {project.default_agent_id ? (
                         <span>
                           Agente:{" "}

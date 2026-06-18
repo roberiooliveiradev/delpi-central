@@ -39,24 +39,6 @@
   border-color: var(--mdc-primary);
 }
 
-.mdc-expand-modal__close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--mdc-radius-sm);
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.mdc-expand-modal__close:hover {
-  background: var(--mdc-rich-control-hover);
-}
-
 .mdc-expand-modal__body {
   flex: 1;
   min-height: 0;

@@ -33,3 +33,7 @@ def conflict(message: str = "Conflict"):
 
 def server_error(message: str = "Internal server error"):
     return error_response(500, "internal_error", message)
+
+
+def feature_not_enabled(message: str = "Feature not enabled"):
+    return error_response(501, "feature_not_enabled", message)

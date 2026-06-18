@@ -42,8 +42,7 @@
   gap: 0.4rem;
 }
 
-.mdc-attachment-preview-modal__tool-btn,
-.mdc-attachment-preview-modal__close {
+.mdc-attachment-preview-modal__tool-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -55,10 +54,6 @@
   font-size: 0.8rem;
   font-weight: 650;
   padding: 0.35rem 0.7rem;
-}
-
-.mdc-attachment-preview-modal__close {
-  padding: 0.35rem;
 }
 
 .mdc-attachment-preview-modal__body {

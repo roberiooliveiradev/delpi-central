@@ -73,8 +73,13 @@ export function ChatProjectCreateModal({
       <header>
         <h2>Criar projeto</h2>
 
-        <button type="button" onClick={onClose} aria-label="Fechar">
-          <X size={18} aria-hidden="true" />
+        <button
+          type="button"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
+          onClick={onClose}
+          aria-label="Fechar"
+        >
+          <X aria-hidden="true" />
         </button>
       </header>
 

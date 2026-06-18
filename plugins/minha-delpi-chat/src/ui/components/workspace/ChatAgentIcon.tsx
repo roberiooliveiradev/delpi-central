@@ -1,37 +1,9 @@
-import {
-  Bot,
-  Box,
-  Brain,
-  ChartLine,
-  MessageSquare,
-  Search,
-  Shield,
-  Sparkles,
-  Users,
-  Zap,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Bot } from "lucide-react";
 
-import {
-  DEFAULT_AGENT_ICON,
-  normalizeAgentIcon,
-  type AgentIconName,
-} from "./chatAgentIcon";
+import { DEFAULT_AGENT_ICON, normalizeAgentIcon } from "./chatAgentIcon";
+import { resolveLucideIcon } from "../../utils/lucideIconResolver";
 
 import "./ChatAgentIcon.css";
-
-const AGENT_ICON_COMPONENTS: Record<AgentIconName, LucideIcon> = {
-  bot: Bot,
-  sparkles: Sparkles,
-  brain: Brain,
-  "message-square": MessageSquare,
-  search: Search,
-  "chart-line": ChartLine,
-  shield: Shield,
-  zap: Zap,
-  box: Box,
-  users: Users,
-};
 
 type ChatAgentIconProps = {
   icon?: string | null;
@@ -45,7 +17,7 @@ export function ChatAgentIcon({
   className,
 }: ChatAgentIconProps) {
   const iconName = normalizeAgentIcon(icon);
-  const Icon = AGENT_ICON_COMPONENTS[iconName] ?? AGENT_ICON_COMPONENTS[DEFAULT_AGENT_ICON];
+  const Icon = resolveLucideIcon(iconName) ?? resolveLucideIcon(DEFAULT_AGENT_ICON) ?? Bot;
 
   return <Icon size={size} className={className} aria-hidden="true" />;
 }

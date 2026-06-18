@@ -75,6 +75,7 @@ from app.application.use_cases.get_chat_history_use_case import GetChatHistoryUs
 from app.application.use_cases.list_chat_sessions_use_case import ListChatSessionsUseCase
 from app.application.use_cases.switch_chat_branch_use_case import SwitchChatBranchUseCase
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionUseCase
+from app.application.use_cases.update_chat_session_use_case import UpdateChatSessionUseCase
 from app.application.use_cases.set_chat_session_state_use_case import (
     SetChatSessionArchivedUseCase,
     SetChatSessionPinnedUseCase,
@@ -341,6 +342,14 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:
     return RenameChatSessionUseCase(PostgresChatSessionRepository())
+
+
+def make_update_chat_session_use_case() -> UpdateChatSessionUseCase:
+    return UpdateChatSessionUseCase(
+        PostgresChatSessionRepository(),
+        PostgresChatProjectRepository(),
+    )
+
 
 def make_delete_chat_session_use_case() -> DeleteChatSessionUseCase:
     return DeleteChatSessionUseCase(PostgresChatSessionRepository())

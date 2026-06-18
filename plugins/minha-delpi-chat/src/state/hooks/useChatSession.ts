@@ -13,6 +13,7 @@ import {
   upsertChatMessageFeedback,
   pinChatSession,
   renameChatSession,
+  moveChatSessionToProject,
   switchChatBranch,
   unarchiveChatSession,
   unpinChatSession,
@@ -819,6 +820,36 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         return updatedSession;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao renomear conversa.");
+        return null;
+      }
+    },
+    [options.getAccessToken],
+  );
+
+  const moveSessionToProject = useCallback(
+    async (sessionId: string, projectId: string) => {
+      setError(null);
+
+      try {
+        const updatedSession = await moveChatSessionToProject(sessionId, projectId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        setSessions((current) =>
+          current.map((session) =>
+            session.id === sessionId ? updatedSession : session,
+          ),
+        );
+
+        setActiveSession((current) =>
+          current?.id === sessionId ? updatedSession : current,
+        );
+
+        return updatedSession;
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao mover conversa para o projeto.",
+        );
         return null;
       }
     },
@@ -2300,6 +2331,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     selectSession,
     deleteSession,
     renameSession,
+    moveSessionToProject,
     pinSession,
     unpinSession,
     archiveSession,

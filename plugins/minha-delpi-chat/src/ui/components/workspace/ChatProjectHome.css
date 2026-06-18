@@ -28,10 +28,9 @@
 }
 
 .mdc-chat-project-home__hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
 }
 
 .mdc-chat-project-home__hero-title {
@@ -76,27 +75,9 @@
   font-size: clamp(1.5rem, 2.8vw, 2rem);
 }
 
-.mdc-chat-project-home__hero-actions {
-  position: relative;
+.mdc-chat-project-home__manage svg {
+  display: block;
   flex: 0 0 auto;
-}
-
-.mdc-chat-project-home__hero-menu-trigger {
-  display: inline-grid;
-  place-items: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-}
-
-.mdc-chat-project-home__hero-menu-trigger:hover,
-.mdc-chat-project-home__hero-menu-trigger[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--mdc-text) 9%, transparent);
-  color: var(--mdc-text);
 }
 
 .mdc-chat-project-home__danger {
@@ -531,6 +512,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 .mdc-chat-project-settings h3,
@@ -542,22 +524,6 @@
 
 .mdc-chat-project-settings__share h4 {
   font-size: 1rem;
-}
-
-.mdc-chat-project-settings header button {
-  display: inline-grid;
-  place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  border: 0;
-  border-radius: 0.7rem;
-  background: transparent;
-  color: var(--mdc-text);
-  cursor: pointer;
-}
-
-.mdc-chat-project-settings header button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
 }
 
 .mdc-chat-project-settings__field {

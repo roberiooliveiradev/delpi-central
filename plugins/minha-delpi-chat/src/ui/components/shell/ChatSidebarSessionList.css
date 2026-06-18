@@ -50,6 +50,10 @@
   background: color-mix(in srgb, var(--mdc-primary) 13%, transparent);
 }
 
+.mdc-chat-session-row--dragging {
+  opacity: 0.55;
+}
+
 .mdc-chat-session-actions {
   display: inline-flex;
   justify-content: flex-end;

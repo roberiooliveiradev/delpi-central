@@ -40,9 +40,8 @@
   line-height: 1.35;
 }
 
-.mdc-action-test-panel__header > button,
+.mdc-action-test-panel__header > button:not(.mdc-chat-modal-icon-btn),
 .mdc-action-test-panel__group-title button,
-.mdc-action-test-panel__query-row button,
 .mdc-action-test-panel__footer button {
   display: inline-flex;
   align-items: center;
@@ -59,11 +58,8 @@
   padding: 0.4rem 0.68rem;
 }
 
-.mdc-action-test-panel__header > button,
-.mdc-action-test-panel__query-row button {
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
+.mdc-action-test-panel__header > .mdc-chat-modal-icon-btn {
+  flex-shrink: 0;
 }
 
 .mdc-action-test-panel__footer button {
@@ -178,7 +174,7 @@
     grid-template-columns: 1fr;
   }
 
-  .mdc-action-test-panel__query-row button {
+  .mdc-action-test-panel__query-row button:not(.mdc-chat-modal-icon-btn) {
     width: auto;
     justify-self: start;
     padding: 0.4rem 0.68rem;

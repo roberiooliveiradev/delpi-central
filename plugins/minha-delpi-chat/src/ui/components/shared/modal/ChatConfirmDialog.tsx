@@ -51,7 +51,7 @@ export function ChatConfirmDialog({
 
         <button
           type="button"
-          className="mdc-chat-confirm__close"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
           onClick={onCancel}
           aria-label="Fechar"
         >

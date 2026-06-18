@@ -363,6 +363,7 @@ export function ChatPage({
     selectSession,
     deleteSession,
     renameSession,
+    moveSessionToProject,
     pinSession,
     unpinSession,
     archiveSession,
@@ -2270,6 +2271,7 @@ export function ChatPage({
           onNewSession={handleStartGeneralSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
+          onMoveSessionToProject={moveSessionToProject}
           onDeleteSession={handleDeleteSession}
           onPinSession={pinSession}
           onUnpinSession={unpinSession}

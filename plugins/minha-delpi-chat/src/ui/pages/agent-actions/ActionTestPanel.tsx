@@ -101,8 +101,13 @@ export function ActionTestPanel({
           <span>{routeLabel}</span>
         </div>
 
-        <button type="button" onClick={onClose} aria-label="Fechar teste">
-          <X size={16} aria-hidden="true" />
+        <button
+          type="button"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--sm"
+          onClick={onClose}
+          aria-label="Fechar teste"
+        >
+          <X aria-hidden="true" />
         </button>
       </header>
 
@@ -176,6 +181,7 @@ export function ActionTestPanel({
 
             <button
               type="button"
+              className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--sm"
               onClick={() =>
                 setQueryFields((current) =>
                   current.filter((_, fieldIndex) => fieldIndex !== index),
@@ -184,7 +190,7 @@ export function ActionTestPanel({
               aria-label="Remover query param"
               disabled={Boolean(field.required)}
             >
-              <Trash2 size={15} aria-hidden="true" />
+              <Trash2 aria-hidden="true" />
             </button>
 
             {field.description ? (

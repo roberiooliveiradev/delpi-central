@@ -13,7 +13,7 @@ O **chat** é onde a inteligência transversal evolui. **Agentes** são instânc
 |----------|--------|
 | **Chat (sessão)** | Pipeline de mensagens, histórico, tools, RAG, LLM |
 | **Agente** | `system_prompt`, skills, actions permitidas, especialização de conhecimento |
-| **Projeto** | Prompt de projeto, agente padrão, agrupamento de sessões; opcionalmente `metadata.shareConversationContext` para resumo/memória/RAG entre conversas do mesmo projeto |
+| **Projeto** | Prompt de projeto, agente padrão, agrupamento de sessões; `shareConversationContext` **desabilitado** até [projetos colaborativos](../roadmap/projetos-colaborativos-futuro.md) |
 | **Simulação / admin** | Mesmo pipeline, com rascunho ou sandbox |
 
 Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.

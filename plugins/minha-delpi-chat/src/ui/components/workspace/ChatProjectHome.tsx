@@ -1,9 +1,7 @@
 import {
   ArrowUpRight,
   Loader2,
-  Pencil,
   Settings,
-  Trash2,
   ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -34,7 +32,6 @@ import {
   useWorkspaceFilePreviewModal,
 } from "../../hooks/useWorkspaceFilePreviewModal";
 import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
-import { DropdownMenuTrigger } from "../shared/menus/DropdownMenuTrigger";
 import { WorkspaceFileCard } from "./WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
 
@@ -92,9 +89,9 @@ type ChatProjectHomeProps = {
       name?: string;
       description?: string | null;
       instructions?: string | null;
+      icon?: string | null;
       defaultAgentId?: string | null;
       visibility?: string;
-      shareConversationContext?: boolean;
       archived?: boolean;
     },
   ) => Promise<ChatProject | null>;
@@ -221,43 +218,6 @@ export function ChatProjectHome({
     }
   }
 
-  async function renameProject() {
-    const nextName = await prompt({
-      title: "Renomear projeto",
-      label: "Nome do projeto",
-      defaultValue: project.name,
-      confirmLabel: "Salvar",
-    });
-
-    if (!nextName || nextName === project.name) {
-      return;
-    }
-
-    await onUpdateProject?.(project.id, {
-      name: nextName,
-    });
-  }
-
-  async function deleteProject() {
-    const confirmed = await confirm({
-      title: "Excluir projeto",
-      description: `Excluir o projeto "${project.name}"?`,
-      confirmLabel: "Excluir",
-      cancelLabel: "Cancelar",
-      danger: true,
-    });
-
-    if (!confirmed) {
-      return;
-    }
-
-    const deleted = await onDeleteProject?.(project.id);
-
-    if (deleted) {
-      onClearProject?.();
-    }
-  }
-
   async function renameSession(session: ChatSession) {
     const nextTitle = await prompt({
       title: "Renomear conversa",
@@ -289,31 +249,7 @@ export function ChatProjectHome({
     await onDeleteSession?.(session.id);
   }
 
-  const projectMenuItems = [
-    {
-      id: "settings",
-      label: "Configurações do projeto",
-      icon: <Settings size={18} aria-hidden="true" />,
-      onSelect: () => openSettings(),
-    },
-    {
-      id: "rename",
-      label: "Renomear",
-      icon: <Pencil size={18} aria-hidden="true" />,
-      onSelect: () => {
-        void renameProject();
-      },
-    },
-    {
-      id: "delete",
-      label: "Excluir projeto",
-      icon: <Trash2 size={18} aria-hidden="true" />,
-      variant: "danger" as const,
-      onSelect: () => {
-        void deleteProject();
-      },
-    },
-  ];
+  const canManageProject = project.access_role === "owner";
 
   return (
     <section
@@ -344,15 +280,16 @@ export function ChatProjectHome({
           <h1>{project.name}</h1>
         </div>
 
-        <div className="mdc-chat-project-home__hero-actions">
-          <DropdownMenuTrigger
-            items={projectMenuItems}
-            menuLabel="Opções do projeto"
-            ariaLabel="Opções do projeto"
-            iconSize={20}
-            triggerClassName="mdc-chat-project-home__hero-menu-trigger"
-          />
-        </div>
+        {canManageProject ? (
+          <button
+            type="button"
+            className="mdc-chat-landing__manage mdc-chat-project-home__manage"
+            onClick={openSettings}
+          >
+            <Settings size={15} aria-hidden="true" />
+            <span>Gerenciar projeto</span>
+          </button>
+        ) : null}
       </header>
 
       {composer ? (

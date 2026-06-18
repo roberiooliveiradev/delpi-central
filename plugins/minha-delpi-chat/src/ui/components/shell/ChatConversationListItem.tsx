@@ -18,6 +18,9 @@ type ChatConversationListItemProps = {
   isProcessing?: boolean;
   href?: string;
   onClick?: () => void;
+  draggable?: boolean;
+  onDragStart?: (event: React.DragEvent<HTMLElement>) => void;
+  onDragEnd?: (event: React.DragEvent<HTMLElement>) => void;
 };
 
 export function ChatConversationListItem({
@@ -29,12 +32,16 @@ export function ChatConversationListItem({
   isProcessing = false,
   href,
   onClick,
+  draggable = false,
+  onDragStart,
+  onDragEnd,
 }: ChatConversationListItemProps) {
   const date = formatSessionDate(session.updated_at);
   const className = [
     "mdc-chat-conversation-item",
     `mdc-chat-conversation-item--${variant}`,
     active ? "mdc-chat-conversation-item--active" : "",
+    draggable ? "mdc-chat-conversation-item--draggable" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -70,6 +77,9 @@ export function ChatConversationListItem({
       <a
         href={href}
         className={className}
+        draggable={draggable}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
         onClick={(event) => {
           handleChatNavClick(event, href);
           onClick?.();
@@ -86,6 +96,9 @@ export function ChatConversationListItem({
     <button
       type="button"
       className={className}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onClick}
       aria-busy={isProcessing || undefined}
       title={isProcessing ? "Gerando resposta..." : undefined}

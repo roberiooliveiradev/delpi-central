@@ -37,7 +37,7 @@ export function ChatInlineError({
           {onDismiss ? (
             <button
               type="button"
-              className="mdc-chat-inline-error__close"
+              className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--sm"
               onClick={onDismiss}
               aria-label="Fechar erro"
             >

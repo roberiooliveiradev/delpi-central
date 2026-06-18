@@ -166,7 +166,7 @@ export function ChatHelpPanel({
         </div>
         <button
           type="button"
-          className="mdc-chat-help-panel__close"
+          className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
           aria-label="Fechar ajuda"
           onClick={onClose}
         >

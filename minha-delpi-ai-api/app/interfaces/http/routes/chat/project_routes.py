@@ -297,6 +297,11 @@ def delete_project(project_id: str):
 @chat_bp.post("/projects/<project_id>/share")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def share_project(project_id: str):
+    if not is_project_collaboration_enabled():
+        return feature_not_enabled(
+            "Compartilhamento colaborativo de projetos ainda não está disponível.",
+        )
+
     payload = request.get_json(silent=True) or {}
 
     if not isinstance(payload, dict):
@@ -329,6 +334,11 @@ def share_project(project_id: str):
 @chat_bp.get("/projects/<project_id>/shares")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_project_shares(project_id: str):
+    if not is_project_collaboration_enabled():
+        return feature_not_enabled(
+            "Compartilhamento colaborativo de projetos ainda não está disponível.",
+        )
+
     access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
     use_case = make_list_chat_project_shares_use_case()
     shares = use_case.execute(
@@ -342,6 +352,11 @@ def list_project_shares(project_id: str):
 @chat_bp.delete("/projects/<project_id>/shares/<target_user_id>")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def revoke_project_share(project_id: str, target_user_id: str):
+    if not is_project_collaboration_enabled():
+        return feature_not_enabled(
+            "Compartilhamento colaborativo de projetos ainda não está disponível.",
+        )
+
     use_case = make_revoke_chat_project_share_use_case()
 
     try:

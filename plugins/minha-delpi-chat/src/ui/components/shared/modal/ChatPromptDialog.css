@@ -27,25 +27,6 @@
   line-height: 1.45;
 }
 
-.mdc-chat-prompt__close {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-}
-
-.mdc-chat-prompt__close:hover {
-  color: var(--mdc-text);
-  border-color: color-mix(in srgb, var(--mdc-primary) 25%, var(--mdc-card-border));
-}
-
 .mdc-chat-prompt__form {
   display: grid;
   gap: var(--mdc-space-4);

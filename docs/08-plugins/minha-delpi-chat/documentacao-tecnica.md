@@ -22,7 +22,7 @@ O **Minha DELPI Chat** é um assistente conversacional integrado ao portal corpo
 - consulta a dados operacionais (via **api-delpi**) com apresentação rica (tabela, gráfico, árvore, KPI);
 - base de conhecimento documental (RAG com pgvector);
 - **agentes** configuráveis (prompt, skills, actions OpenAPI);
-- **projetos** com contexto compartilhado;
+- **projetos** com instruções, ícone e conversas agrupadas (sem colaboração multiusuário por enquanto);
 - anexos, lousa (canvas), pesquisa web e painel administrativo.
 
 ### Princípio arquitetural central

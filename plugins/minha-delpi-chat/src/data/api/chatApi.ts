@@ -672,6 +672,20 @@ export async function renameChatSession(
   return parseJsonResponse<ChatSession>(response);
 }
 
+export async function moveChatSessionToProject(
+  sessionId: string,
+  projectId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatSession> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ projectId }),
+  });
+
+  return parseJsonResponse<ChatSession>(response);
+}
+
 export async function deleteChatSession(
   sessionId: string,
   options: ChatApiOptions = {},
@@ -1296,6 +1310,7 @@ export async function deleteChatProject(
 }
 
 
+/** @deprecated Colaboração de projetos desabilitada — API retorna 501. Ver `projetos-colaborativos-futuro.md`. */
 export async function listChatProjectShares(
   projectId: string,
   options: ChatApiOptions = {},
@@ -1308,6 +1323,7 @@ export async function listChatProjectShares(
   return parseJsonResponse(response);
 }
 
+/** @deprecated Colaboração de projetos desabilitada — API retorna 501. */
 export async function revokeChatProjectShare(
   projectId: string,
   targetUserId: string,
@@ -1326,6 +1342,7 @@ export async function revokeChatProjectShare(
   }
 }
 
+/** @deprecated Colaboração de projetos desabilitada — API retorna 501. */
 export async function shareChatProject(
   projectId: string,
   payload: ShareChatProjectPayload,

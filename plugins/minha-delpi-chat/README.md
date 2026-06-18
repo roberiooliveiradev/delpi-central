@@ -17,6 +17,7 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 | CSS apresentação rica | [docs/rich-presentation-css.md](docs/rich-presentation-css.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
+| Projetos colaborativos (futuro) | [../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md](../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md) |
 | Status da plataforma | [../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
 
 ## Identificação

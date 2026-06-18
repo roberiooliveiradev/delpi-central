@@ -421,7 +421,7 @@ export function ChatOnboardingTour({
 
           <button
             type="button"
-            className="mdc-chat-onboarding-tour__close"
+            className="mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--sm"
             onClick={closeTour}
             aria-label="Fechar tour"
           >

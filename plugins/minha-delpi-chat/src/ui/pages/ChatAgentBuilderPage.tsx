@@ -74,6 +74,7 @@ import {
   DEFAULT_AGENT_ICON,
   normalizeAgentIcon,
 } from "../components/workspace/chatAgentIcon";
+import { ChatLucideIconPickerModal } from "../components/workspace/ChatLucideIconPickerModal";
 import { ChatWorkspaceIconPicker } from "../components/workspace/ChatWorkspaceIconPicker";
 import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
 import {
@@ -194,6 +195,7 @@ export function ChatAgentBuilderPage({
   );
   const [category, setCategory] = useState(agent?.category ?? "");
   const [icon, setIcon] = useState(agent?.icon ?? DEFAULT_AGENT_ICON);
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [responseStyle, setResponseStyle] = useState(agent?.response_style ?? "objetivo");
   const [enabled, setEnabled] = useState(agent?.enabled ?? true);
   const [maxToolCalls, setMaxToolCalls] = useState(agent?.max_tool_calls ?? 5);
@@ -1260,6 +1262,12 @@ export function ChatAgentBuilderPage({
   return (
     <section className="mdc-chat-agent-builder" aria-label="Configurar agente">
       {confirmDialog}
+      <ChatLucideIconPickerModal
+        open={isIconPickerOpen}
+        value={icon}
+        onClose={() => setIsIconPickerOpen(false)}
+        onPick={(nextIcon) => setIcon(nextIcon ?? DEFAULT_AGENT_ICON)}
+      />
       <header className="mdc-chat-ws-topbar mdc-chat-agent-builder__topbar">
         <div className="mdc-chat-ws-topbar__start">
           <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
@@ -1649,13 +1657,28 @@ export function ChatAgentBuilderPage({
 
               <div className="mdc-chat-ws-field">
                 <span>Ícone</span>
+                <div className="mdc-chat-agent-icon-field">
+                  <button
+                    type="button"
+                    className="mdc-chat-ws-outline-btn"
+                    onClick={() => setIsIconPickerOpen(true)}
+                  >
+                    Selecionar ícone
+                  </button>
+
+                  <div className="mdc-chat-agent-icon-field__preview">
+                    <ChatAgentIcon icon={icon} size={22} />
+                    <code>{icon}</code>
+                  </div>
+                </div>
+
                 <ChatWorkspaceIconPicker
                   options={AGENT_ICON_OPTIONS}
                   labels={AGENT_ICON_LABELS}
                   value={icon}
                   onChange={setIcon}
                   renderIcon={(option, size) => <ChatAgentIcon icon={option} size={size} />}
-                  ariaLabel="Ícone do agente"
+                  ariaLabel="Atalhos de ícone do agente"
                 />
               </div>
             </div>

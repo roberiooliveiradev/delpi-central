@@ -20,7 +20,7 @@ export function ChatSidebarBrand({
         {onCloseMobile ? (
           <button
             type="button"
-            className="mdc-chat-sidebar__close-mobile"
+            className="mdc-chat-sidebar__close-mobile mdc-chat-modal-icon-btn mdc-chat-modal-icon-btn--outlined mdc-chat-modal-icon-btn--sm"
             onClick={onCloseMobile}
             aria-label="Fechar menu"
             title="Fechar"

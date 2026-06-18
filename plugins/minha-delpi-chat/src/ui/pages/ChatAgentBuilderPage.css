@@ -1228,6 +1228,22 @@
   width: 100%;
 }
 
+.mdc-chat-agent-icon-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.55rem;
+}
+
+.mdc-chat-agent-icon-field__preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+}
+
 .mdc-chat-agent-builder__agent-link {
   display: grid;
   gap: 0.45rem;
