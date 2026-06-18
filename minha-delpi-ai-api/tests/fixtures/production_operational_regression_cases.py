@@ -197,7 +197,7 @@ PRODUCTION_OPERATIONAL_SELECTION_CASES: list[dict[str, Any]] = [
 _PLAYBOOK_PRODUCT_HISTORY = [
     {
         "role": "user",
-        "content": "O produto 90269002 já começou a produzir?",
+        "content": "O produto 90269002 já começou a produzir hoje?",
     },
     {
         "role": "assistant",
@@ -205,6 +205,15 @@ _PLAYBOOK_PRODUCT_HISTORY = [
             "toolCalls": [
                 {
                     "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": "production-status",
+                        "parameters": {
+                            "code": "90269002",
+                            "reference_date": "18-06-2026",
+                            "date_start": "18-06-2026",
+                            "date_end": "18-06-2026",
+                        },
+                    },
                     "metadata": {
                         "ok": True,
                         "path": "/products/90269002/production-status",
@@ -219,7 +228,7 @@ _PLAYBOOK_PRODUCT_HISTORY = [
 OPERATIONAL_FOLLOW_UP_SELECTION_CASES: list[dict[str, Any]] = [
     {
         "id": "FU01",
-        "message": "e a expedição hoje?",
+        "message": "e a expedição?",
         "previous_messages": _PLAYBOOK_PRODUCT_HISTORY,
         "actions": [
             {
@@ -251,7 +260,10 @@ OPERATIONAL_FOLLOW_UP_SELECTION_CASES: list[dict[str, Any]] = [
             },
         ],
         "expected_action_id": "shipping-status",
-        "expected_parameters": {"code": "90269002"},
+        "expected_parameters": {
+            "code": "90269002",
+            "reference_date": "18-06-2026",
+        },
     },
     {
         "id": "FU02",

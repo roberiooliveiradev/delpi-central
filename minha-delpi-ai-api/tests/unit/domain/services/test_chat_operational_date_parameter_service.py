@@ -259,3 +259,116 @@ def test_product_selection_includes_reference_date_for_factory_status_essa_seman
     assert params["reference_date"] == "08-06-2026"
     assert params["date_start"] == "08-06-2026"
     assert params["date_end"] == "14-06-2026"
+
+
+def test_missing_date_not_requested_for_shipping_follow_up_with_inherited_playbook_date():
+    history = [
+        {
+            "role": "user",
+            "content": "status fabril do produto 90269002 hoje",
+        },
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "factory-status",
+                            "parameters": {
+                                "code": "90269002",
+                                "reference_date": "18-06-2026",
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90269002/factory-status",
+                            "actionId": "factory-status",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    answer = ChatOperationalParameterService.resolve_missing_date_answer(
+        "e a expedição?",
+        previous_messages=history,
+    )
+
+    assert answer is None
+
+
+def test_merge_into_parameters_inherits_playbook_date_on_shipping_follow_up():
+    action = {
+        "path": "/products/{code}/shipping-status",
+        "parametersSchema": [
+            {"name": "code"},
+            {"name": "reference_date"},
+            {"name": "date_start"},
+            {"name": "date_end"},
+        ],
+    }
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "parameters": {
+                                "reference_date": "18-06-2026",
+                                "date_start": "18-06-2026",
+                                "date_end": "18-06-2026",
+                            }
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90269002/production-status",
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    parameters = ChatOperationalDateParameterService.merge_into_parameters(
+        action,
+        "e a expedição?",
+        {"code": "90269002"},
+        previous_messages=history,
+    )
+
+    assert parameters["reference_date"] == "18-06-2026"
+    assert parameters["date_start"] == "18-06-2026"
+    assert parameters["date_end"] == "18-06-2026"
+
+
+def test_collect_recent_playbook_date_from_user_message_when_tool_has_no_params():
+    history = [
+        {"role": "user", "content": "status fabril do produto 90269002 hoje"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90269002/factory-status",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    with patch("app.domain.services.chat_date_range_intent_service.date") as mock_date:
+        mock_date.today.return_value = date(2026, 6, 18)
+
+        inherited = ChatOperationalDateParameterService.collect_recent_playbook_date_parameters(
+            history
+        )
+
+    assert inherited.get("reference_date") == "18-06-2026"

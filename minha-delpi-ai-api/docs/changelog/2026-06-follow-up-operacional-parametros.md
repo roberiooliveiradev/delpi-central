@@ -4,16 +4,17 @@
 
 Homologação do roteiro de treinamento expôs follow-ups («e a expedição?», exclusividade «desse produto») que falhavam por classificação capabilities ou parâmetros HTTP fora do schema OpenAPI.
 
-## Entregas (P0)
+## Entregas (P0 + P1.0)
 
 | Área | Mudança |
 |------|---------|
 | Follow-up | `ChatFollowUpIntentService` — padrões expedição/exclusividade |
 | Contexto | `resolve_product_code` herda código em follow-up operacional |
-| Matcher | `_has_product_scope` reconhece follow-up como escopo de produto |
+| Matcher | `_has_product_scope` / `hasSpecificProductScope` no matcher + `product_query_intent.json` |
 | Capabilities | Gate operacional antes de self_help (referência anafórica + tópicos) |
-| Parâmetros | `filter_parameters_to_schema` — remove `limit` e outros fora do schema |
+| Parámetros | `filter_parameters_to_schema` — remove `limit` e outros fora do schema |
 | Rotas | Segmentos playbook em `ChatRouteContextService` |
+| **Data (P1.0)** | `collect_recent_playbook_date_parameters` — herda data do tool call ou turno anterior |
 
 ## Playbook
 
@@ -25,3 +26,4 @@ Homologação do roteiro de treinamento expôs follow-ups («e a expedição?»,
 - `test_chat_capabilities_service.py`
 - `test_external_action_product_route_catalog_service.py`
 - `OPERATIONAL_FOLLOW_UP_SELECTION_CASES` em `production_operational_regression_cases.py`
+- `test_chat_operational_date_parameter_service.py` (herança de data P1.0)

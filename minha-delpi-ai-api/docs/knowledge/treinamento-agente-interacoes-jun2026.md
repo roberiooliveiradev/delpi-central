@@ -80,7 +80,7 @@ Roteiro **copiar e colar** para sessões de treinamento, demo ou homologação c
 | Turno | Cole no chat | Rota / efeito esperado |
 |-------|--------------|------------------------|
 | 1 | `situação de produção do 90269002 hoje` | `GET /products/{code}/production-status` |
-| 2 | `e a expedição?` | `GET /products/{code}/shipping-status` — mesmo produto implícito |
+| 2 | `e a expedição?` | `GET /products/{code}/shipping-status` — mesmo produto e **mesma data** do turno anterior |
 
 **Fala sugerida:** *“Não é obrigatório repetir o código em todo turno.”*
 
