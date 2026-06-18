@@ -288,6 +288,15 @@ class ChatRouteContextService:
 
     @classmethod
     def segment_from_message(cls, message: str) -> str | None:
+        from app.domain.services.chat_operational_follow_up_routing_service import (
+            ChatOperationalFollowUpRoutingService,
+        )
+
+        routed = ChatOperationalFollowUpRoutingService.segment_from_message(message)
+
+        if routed:
+            return routed
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:

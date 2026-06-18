@@ -1,0 +1,88 @@
+{
+  "playbookPathMarkers": [
+    "/factory-status",
+    "/production-status",
+    "/shipping-status"
+  ],
+  "followUpTypes": {
+    "shipping": {
+      "routeSegment": "shipping-status",
+      "preferredRouteId": "productShippingStatus",
+      "inheritsPlaybookDate": true,
+      "grantsProductScope": true,
+      "grantsSpecificProductScope": true,
+      "messageSegmentTerms": [
+        "expedicao",
+        "expedição",
+        "shipping-status",
+        "inspecao final",
+        "inspeção final",
+        "liberado para exped",
+        "e a expedicao",
+        "e a expedição"
+      ]
+    },
+    "structure_exclusivity": {
+      "routeSegment": "structure/exclusivity",
+      "preferredRouteId": "productStructureExclusivity",
+      "inheritsPlaybookDate": false,
+      "grantsProductScope": true,
+      "grantsSpecificProductScope": true,
+      "messageSegmentTerms": [
+        "structure/exclusivity",
+        "estrutura exclusiv",
+        "mp exclusiva",
+        "materia prima exclusiva",
+        "matéria-prima exclusiva"
+      ]
+    },
+    "structure": {
+      "grantsProductScope": false,
+      "grantsSpecificProductScope": false
+    },
+    "stock": {
+      "grantsProductScope": false,
+      "grantsSpecificProductScope": false
+    },
+    "supplier": {
+      "grantsProductScope": false,
+      "grantsSpecificProductScope": false
+    },
+    "routing": {
+      "grantsProductScope": false,
+      "grantsSpecificProductScope": false
+    },
+    "entity_reuse": {
+      "grantsProductScope": false,
+      "grantsSpecificProductScope": false
+    },
+    "format_change": {
+      "grantsProductScope": false,
+      "grantsSpecificProductScope": false
+    },
+    "outbound_invoice": {
+      "grantsProductScope": false,
+      "grantsSpecificProductScope": false
+    }
+  },
+  "dateInheritance": {
+    "followUpTypes": [
+      "shipping"
+    ],
+    "routeSegments": [
+      "factory-status",
+      "production-status",
+      "shipping-status"
+    ],
+    "productPredicatesWhenReferencingPrevious": [
+      "shippingStatus",
+      "productionStatus",
+      "factoryStatus"
+    ]
+  },
+  "capabilitiesGate": {
+    "blockOnOperationalFollowUp": true,
+    "blockOnReferencesPreviousWithOperationalTopics": true,
+    "blockOnStructureExclusivityQuestion": true
+  }
+}

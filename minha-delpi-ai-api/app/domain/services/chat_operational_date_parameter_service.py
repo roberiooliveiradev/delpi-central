@@ -9,6 +9,9 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_operational_follow_up_routing_service import (
+    ChatOperationalFollowUpRoutingService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -43,12 +46,6 @@ _DATE_REFERENCE_KEYS = frozenset(
 )
 
 _ALL_DATE_QUERY_KEYS = _DATE_START_KEYS | _DATE_END_KEYS | _DATE_REFERENCE_KEYS
-
-_PLAYBOOK_PATH_MARKERS = (
-    "/factory-status",
-    "/production-status",
-    "/shipping-status",
-)
 
 _OPTIONAL_DATE_PATH_MARKERS = (
     "/raw-material-price-intelligence",
@@ -316,7 +313,10 @@ class ChatOperationalDateParameterService:
     def is_playbook_date_route(cls, path: str | None) -> bool:
         lowered = str(path or "").strip().lower()
 
-        return any(marker in lowered for marker in _PLAYBOOK_PATH_MARKERS)
+        return any(
+            marker in lowered
+            for marker in ChatOperationalFollowUpRoutingService.playbook_path_markers()
+        )
 
     @classmethod
     def collect_recent_playbook_date_parameters(
@@ -391,60 +391,13 @@ class ChatOperationalDateParameterService:
         if not normalized:
             return False
 
-        if not cls._looks_like_playbook_date_follow_up(message, normalized=normalized):
+        if not ChatOperationalFollowUpRoutingService.looks_like_playbook_date_follow_up(
+            message,
+            normalized=normalized,
+        ):
             return False
 
         return bool(cls.collect_recent_playbook_date_parameters(previous_messages))
-
-    @classmethod
-    def _looks_like_playbook_date_follow_up(
-        cls,
-        message: str | None,
-        *,
-        normalized: str | None = None,
-    ) -> bool:
-        from app.domain.services.chat_follow_up_intent_service import (
-            ChatFollowUpIntentService,
-        )
-        from app.domain.services.chat_route_context_service import (
-            ChatRouteContextService,
-        )
-
-        normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
-            message
-        )
-
-        if not normalized_text:
-            return False
-
-        if ChatFollowUpIntentService.is_operational_follow_up(message):
-            follow_type = ChatFollowUpIntentService.follow_up_type(message)
-
-            if follow_type in {"shipping", "structure", "structure_exclusivity"}:
-                return True
-
-            segment = ChatRouteContextService.segment_from_message(message or "")
-
-            if segment in {"factory-status", "production-status", "shipping-status"}:
-                return True
-
-        if ChatProductQueryIntentService.references_previous_product(message or ""):
-            if ChatProductQueryIntentService._looks_like_shipping_status_question(
-                normalized_text
-            ):
-                return True
-
-            if ChatProductQueryIntentService._looks_like_production_status_question(
-                normalized_text
-            ):
-                return True
-
-            if ChatProductQueryIntentService._looks_like_factory_status_question(
-                normalized_text
-            ):
-                return True
-
-        return False
 
     @staticmethod
     def _extract_date_parameter_values(parameters: dict | None) -> dict[str, str]:

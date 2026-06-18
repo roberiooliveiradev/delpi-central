@@ -431,10 +431,13 @@ class OperationalRouteMatcherService:
         from app.domain.services.chat_follow_up_intent_service import (
             ChatFollowUpIntentService,
         )
+        from app.domain.services.chat_operational_follow_up_routing_service import (
+            ChatOperationalFollowUpRoutingService,
+        )
 
         follow_type = ChatFollowUpIntentService.follow_up_type(message or normalized)
 
-        return follow_type in {"shipping", "structure_exclusivity"}
+        return ChatOperationalFollowUpRoutingService.grants_product_scope(follow_type)
 
     @classmethod
     def _has_specific_product_scope(cls, normalized: str, *, message: str = "") -> bool:
@@ -449,10 +452,15 @@ class OperationalRouteMatcherService:
         from app.domain.services.chat_follow_up_intent_service import (
             ChatFollowUpIntentService,
         )
+        from app.domain.services.chat_operational_follow_up_routing_service import (
+            ChatOperationalFollowUpRoutingService,
+        )
 
         follow_type = ChatFollowUpIntentService.follow_up_type(text)
 
-        return follow_type in {"shipping", "structure_exclusivity"}
+        return ChatOperationalFollowUpRoutingService.grants_specific_product_scope(
+            follow_type
+        )
 
     @classmethod
     def looks_like_sale_orders_list_question(cls, normalized: str) -> bool:

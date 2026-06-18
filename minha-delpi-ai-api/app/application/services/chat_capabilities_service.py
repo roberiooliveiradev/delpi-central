@@ -438,24 +438,14 @@ class ChatCapabilitiesService:
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return True
 
-        from app.domain.services.chat_follow_up_intent_service import (
-            ChatFollowUpIntentService,
+        from app.domain.services.chat_operational_follow_up_routing_service import (
+            ChatOperationalFollowUpRoutingService,
         )
 
-        if ChatFollowUpIntentService.is_operational_follow_up(message):
-            return True
-
-        if ChatProductQueryIntentService.references_previous_product(message):
-            if any(topic in normalized for topic in _operational_data_topics()):
-                return True
-
-            if ChatProductQueryIntentService.looks_like_structure_exclusivity_question(
-                message
-            ):
-                return True
-
-        if ChatProductQueryIntentService.looks_like_structure_exclusivity_question(
-            message
+        if ChatOperationalFollowUpRoutingService.blocks_capability_inquiry(
+            message,
+            normalized=normalized,
+            operational_data_topics=_operational_data_topics(),
         ):
             return True
 
