@@ -628,6 +628,25 @@ class ExternalActionOperationalRouteSelectionService:
             if not resolved_identifier:
                 return None
 
+        parameters_spec = route.get("parameters")
+
+        if (
+            not resolved_identifier
+            and isinstance(parameters_spec, dict)
+            and str(parameters_spec.get("strategy") or "").strip().lower() == "product_code"
+        ):
+            resolved_identifier = str(
+                ChatProductQueryIntentService.resolve_product_code(
+                    message,
+                    conversation_context,
+                    previous_messages=previous_messages,
+                )
+                or ""
+            ).strip()
+
+            if not resolved_identifier:
+                return None
+
         return self._resolve_route_action(
             route,
             message,
@@ -945,12 +964,20 @@ class ExternalActionOperationalRouteSelectionService:
                 identifier = ChatProductQueryIntentService.extract_product_code(message or "")
 
             if not identifier:
+                identifier = ChatProductQueryIntentService.resolve_product_code(
+                    message or "",
+                    conversation_context,
+                    previous_messages=previous_messages,
+                )
+
+            if not identifier:
                 return None
 
             return self._catalog.build_product_parameters(
                 action,
                 identifier,
                 message=message,
+                previous_messages=previous_messages,
             )
 
         if strategy == "exclusive_catalog":
@@ -1001,7 +1028,12 @@ class ExternalActionOperationalRouteSelectionService:
                     }
 
             if not parameters:
-                parameters = {"limit": 10}
+                parameters = {}
+
+            parameters = ExternalActionProductRouteCatalogService.filter_parameters_to_schema(
+                action,
+                parameters,
+            )
 
             return parameters
 

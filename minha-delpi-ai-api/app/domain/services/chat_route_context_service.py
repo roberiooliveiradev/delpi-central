@@ -63,6 +63,10 @@ class ChatRouteContextService:
             "last-purchase",
             "purchase-price-history",
             "purchase-budget-history",
+            "factory-status",
+            "production-status",
+            "shipping-status",
+            "structure/exclusivity",
         }
     )
 
@@ -164,6 +168,51 @@ class ChatRouteContextService:
                 "purchase-budget-history",
             ),
         ),
+        (
+            "factory-status",
+            (
+                "status fabril",
+                "playbook fabril",
+                "factory-status",
+                "sem estrutura vigente",
+            ),
+        ),
+        (
+            "production-status",
+            (
+                "status de producao",
+                "status de produção",
+                "production-status",
+                "apontamento",
+                "ordem de producao",
+                "ordem de produção",
+                " comecou a produzir",
+                " começou a produzir",
+            ),
+        ),
+        (
+            "shipping-status",
+            (
+                "expedicao",
+                "expedição",
+                "shipping-status",
+                "inspecao final",
+                "inspeção final",
+                "liberado para exped",
+                "e a expedicao",
+                "e a expedição",
+            ),
+        ),
+        (
+            "structure/exclusivity",
+            (
+                "structure/exclusivity",
+                "estrutura exclusiv",
+                "mp exclusiva",
+                "materia prima exclusiva",
+                "matéria-prima exclusiva",
+            ),
+        ),
     )
 
     _DEPARTMENT_DOMAIN_MARKERS: tuple[str, ...] = (
@@ -215,6 +264,10 @@ class ChatRouteContextService:
         "e as compras",
         "e as vendas",
         "e os fornecedores",
+        "e a expedicao",
+        "e a expedição",
+        "e a producao",
+        "e a produção",
     )
 
     @classmethod

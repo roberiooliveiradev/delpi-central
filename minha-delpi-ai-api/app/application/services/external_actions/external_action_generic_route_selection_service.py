@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Callable
 
+from app.application.services.external_actions.external_action_product_route_catalog_service import (
+    ExternalActionProductRouteCatalogService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -54,6 +57,11 @@ class ExternalActionGenericRouteSelectionService:
                 message,
                 previous_messages=previous_messages,
             )
+
+        parameters = ExternalActionProductRouteCatalogService.filter_parameters_to_schema(
+            action,
+            parameters,
+        )
 
         arguments: dict = {
             "actionId": action["actionId"],

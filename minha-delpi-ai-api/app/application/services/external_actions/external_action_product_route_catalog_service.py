@@ -23,6 +23,24 @@ class ExternalActionProductRouteCatalogService:
     HIERARCHICAL_PRODUCT_MAX_DEPTH = 15
 
     @staticmethod
+    def filter_parameters_to_schema(action: dict, parameters: dict | None) -> dict:
+        """Mantém só chaves declaradas no OpenAPI da action."""
+        allowed = {
+            str(parameter.get("name"))
+            for parameter in (action.get("parametersSchema") or [])
+            if parameter.get("name")
+        }
+
+        if not allowed:
+            return {}
+
+        return {
+            key: value
+            for key, value in (parameters or {}).items()
+            if key in allowed
+        }
+
+    @staticmethod
     def is_product_sales_summary_path(path: str) -> bool:
         lowered = str(path or "").lower().rstrip("/")
 
@@ -393,10 +411,7 @@ class ExternalActionProductRouteCatalogService:
         if "view" not in {key.lower() for key in parameters}:
             parameters["view"] = default_view
 
-        if "limit" not in {key.lower() for key in parameters}:
-            parameters["limit"] = requested_page_size or 50
-
-        return parameters
+        return self.filter_parameters_to_schema(action, parameters)
 
 
     @staticmethod

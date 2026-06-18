@@ -14,8 +14,10 @@ Roteiro **copiar e colar** para sessões de treinamento, demo ou homologação c
 |--------|-----|
 | `10080022` | Estoque / apresentação tabela-gráfico |
 | `10080001` | Matéria-prima — preço de compra, NF, ICMS, orçamento |
-| `90261255` | PA — simulador de impacto de custos (BOM multinível) |
-| `90269002` | Playbook fabril — produção, expedição, status integrado |
+| `90261255` | PA — simulador de impacto de custos (BOM multinível); **preferir também para demo fabril** se `90269002` não existir no Totvs |
+| `90269002` | Playbook fabril — produção, expedição, status integrado (**validar cadastro no ambiente**) |
+
+> **Nota (jun/2026):** follow-ups «desse produto» e «e a expedição?» dependem de contexto da sessão (`operationalFocus`). Ver playbook [`playbook-follow-up-operacional-desacoplado-jun2026.md`](../roadmap/melhorias/playbook-follow-up-operacional-desacoplado-jun2026.md).
 
 ---
 

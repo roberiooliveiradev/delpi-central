@@ -193,3 +193,94 @@ PRODUCTION_OPERATIONAL_SELECTION_CASES: list[dict[str, Any]] = [
         extra_actions=[_PRODUCT_PURCHASES_DECOY],
     ),
 ]
+
+_PLAYBOOK_PRODUCT_HISTORY = [
+    {
+        "role": "user",
+        "content": "O produto 90269002 já começou a produzir?",
+    },
+    {
+        "role": "assistant",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90269002/production-status",
+                        "actionId": "production-status",
+                    },
+                }
+            ]
+        },
+    },
+]
+
+OPERATIONAL_FOLLOW_UP_SELECTION_CASES: list[dict[str, Any]] = [
+    {
+        "id": "FU01",
+        "message": "e a expedição hoje?",
+        "previous_messages": _PLAYBOOK_PRODUCT_HISTORY,
+        "actions": [
+            {
+                "actionId": "shipping-status",
+                "method": "GET",
+                "path": "/products/{code}/shipping-status",
+                "operationId": "get_product_shipping_status",
+                "summary": "Expedição do PA",
+                "parametersSchema": [
+                    {"name": "code"},
+                    {"name": "reference_date"},
+                ],
+            },
+            {
+                "actionId": "production-status",
+                "method": "GET",
+                "path": "/products/{code}/production-status",
+                "operationId": "get_product_production_status",
+                "summary": "Status de produção",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "inspection",
+                "method": "GET",
+                "path": "/products/{code}/inspection",
+                "operationId": "get_product_inspection",
+                "summary": "Inspeção",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "shipping-status",
+        "expected_parameters": {"code": "90269002"},
+    },
+    {
+        "id": "FU02",
+        "message": "quais matérias-primas exclusivas existem na estrutura desse produto?",
+        "previous_messages": _PLAYBOOK_PRODUCT_HISTORY,
+        "actions": [
+            {
+                "actionId": "structure-exclusivity",
+                "method": "GET",
+                "path": "/products/{code}/structure/exclusivity",
+                "operationId": "get_product_structure_exclusivity",
+                "summary": "Estrutura com exclusividade",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "exclusive-raw-materials-catalog",
+                "method": "GET",
+                "path": "/products/exclusive-raw-materials/catalog",
+                "operationId": "list_exclusive_raw_materials_catalog",
+                "summary": "Catálogo global de MPs exclusivas",
+                "parametersSchema": [
+                    {"name": "view"},
+                    {"name": "limit"},
+                ],
+            },
+        ],
+        "expected_action_id": "structure-exclusivity",
+        "expected_parameters": {"code": "90269002"},
+    },
+]
+
+PRODUCTION_OPERATIONAL_SELECTION_CASES.extend(OPERATIONAL_FOLLOW_UP_SELECTION_CASES)

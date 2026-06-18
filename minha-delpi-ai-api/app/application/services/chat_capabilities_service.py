@@ -438,6 +438,27 @@ class ChatCapabilitiesService:
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return True
 
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        if ChatFollowUpIntentService.is_operational_follow_up(message):
+            return True
+
+        if ChatProductQueryIntentService.references_previous_product(message):
+            if any(topic in normalized for topic in _operational_data_topics()):
+                return True
+
+            if ChatProductQueryIntentService.looks_like_structure_exclusivity_question(
+                message
+            ):
+                return True
+
+        if ChatProductQueryIntentService.looks_like_structure_exclusivity_question(
+            message
+        ):
+            return True
+
         if any(
             re.search(pattern, normalized) for pattern in _operational_query_patterns()
         ):

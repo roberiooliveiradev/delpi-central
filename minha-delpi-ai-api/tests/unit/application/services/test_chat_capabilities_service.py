@@ -183,6 +183,44 @@ def test_ruptura_stock_question_is_operational_not_capability_inquiry():
     ) is None
 
 
+def test_structure_exclusivity_follow_up_with_previous_product_not_capability():
+    message = "quais matérias-primas exclusivas existem na estrutura desse produto?"
+
+    assert not ChatCapabilitiesService.is_capability_inquiry(message)
+    assert ChatCapabilitiesService.resolve_capability_answer(
+        message=message,
+        workspace_context={"agent": {"name": "Agente Minha DELPI"}, "agentId": "x"},
+        allowed_action_ids=["structure-exclusivity"],
+        action_catalog=[
+            {
+                "actionId": "structure-exclusivity",
+                "method": "GET",
+                "path": "/products/{code}/structure/exclusivity",
+                "summary": "Estrutura com exclusividade",
+            }
+        ],
+    ) is None
+
+
+def test_expedition_follow_up_is_operational_not_capability():
+    message = "e a expedição?"
+
+    assert not ChatCapabilitiesService.is_capability_inquiry(message)
+    assert ChatCapabilitiesService.resolve_capability_answer(
+        message=message,
+        workspace_context={"agent": {"name": "Agente Minha DELPI"}, "agentId": "x"},
+        allowed_action_ids=["shipping-status"],
+        action_catalog=[
+            {
+                "actionId": "shipping-status",
+                "method": "GET",
+                "path": "/products/{code}/shipping-status",
+                "summary": "Expedição",
+            }
+        ],
+    ) is None
+
+
 def test_capability_inquiry_without_agent_explains_common_chat():
     answer = ChatCapabilitiesService.build_feature_answer(
         message="você consegue buscar produto por grupo?",

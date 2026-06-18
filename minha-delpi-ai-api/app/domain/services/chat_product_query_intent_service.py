@@ -709,7 +709,12 @@ class ChatProductQueryIntentService:
                 previous_messages=previous_messages,
             )
         ):
-            return None
+            from app.domain.services.chat_follow_up_intent_service import (
+                ChatFollowUpIntentService,
+            )
+
+            if not ChatFollowUpIntentService.is_operational_follow_up(message):
+                return None
 
         from app.domain.services.chat_user_context_item_service import (
             ChatUserContextItemService,

@@ -269,7 +269,10 @@ class OperationalRouteMatcherService:
             if not identifier:
                 return False
 
-        if spec.get("hasProductScope") and not cls._has_product_scope(normalized):
+        if spec.get("hasProductScope") and not cls._has_product_scope(
+            normalized,
+            message=message,
+        ):
             return False
 
         if (
@@ -407,8 +410,17 @@ class OperationalRouteMatcherService:
         return ChatAssistantContentService.list(bundle, *parts[1:])
 
     @classmethod
-    def _has_product_scope(cls, normalized: str) -> bool:
-        return ChatProductQueryIntentService._has_product_scope_reference(normalized)
+    def _has_product_scope(cls, normalized: str, *, message: str = "") -> bool:
+        if ChatProductQueryIntentService._has_product_scope_reference(normalized):
+            return True
+
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        follow_type = ChatFollowUpIntentService.follow_up_type(message or normalized)
+
+        return follow_type in {"shipping", "structure_exclusivity"}
 
     @classmethod
     def looks_like_sale_orders_list_question(cls, normalized: str) -> bool:
