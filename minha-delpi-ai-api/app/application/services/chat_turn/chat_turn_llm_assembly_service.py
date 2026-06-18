@@ -104,6 +104,7 @@ class ChatTurnLlmAssemblyService:
             tool_context=tool_context,
             embedding_cache_stats=embedding_cache_stats(),
             pipeline_timings=pipeline_timings.to_dict(),
+            rag_stats=rag if isinstance(rag, dict) else None,
             pipeline=ChatIntelligenceMetadataService.build_pipeline_flags(
                 fast_path=fast_path,
                 operational_optimize=operational_optimize,

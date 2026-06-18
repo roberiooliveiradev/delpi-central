@@ -344,6 +344,9 @@ class Settings:
     CHAT_RAG_RERANK_KEYWORD_BOOST = float(
         os.getenv("CHAT_RAG_RERANK_KEYWORD_BOOST", "0.15")
     )
+    CHAT_RAG_SCOPE_PRIORITY_BOOST = float(
+        os.getenv("CHAT_RAG_SCOPE_PRIORITY_BOOST", "0.2")
+    )
     CHAT_RAG_FTS_ENABLED = (
         os.getenv("CHAT_RAG_FTS_ENABLED", "true").lower() == "true"
     )

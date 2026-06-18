@@ -52,7 +52,9 @@ Montado por `ChatAdminDebugService` em todo envio/stream/resend e salvo em `Chat
 | Usuário comum | Campo **omitido** em `GET /chat/sessions/{id}/messages` e nas respostas de envio |
 | Admin (`minha-delpi.chat.admin` ou superadmin) | Presente em `POST .../messages`, evento SSE `done` e histórico |
 
-Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`, opcional `sourcesNote`), `llm.messages`, `recordedAt`.
+Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`, `retrievedSourceCount`, `visibleSourceCount`, `retrievedChunkCount`, opcional `sourcesNote`), `llm.messages`, `recordedAt`.
+
+Campos de contagem RAG na metadata da mensagem (`intelligence`): `ragRetrievedCount`, `ragVisibleSourceCount`, `ragRetrievedChunkCount`; `ragSourceCount` = visível (retrocompat).
 
 Na resposta HTTP/SSE ao admin, o objeto pode incluir também (mesclado após o turno):
 

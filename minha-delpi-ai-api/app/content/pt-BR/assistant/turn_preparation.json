@@ -18,6 +18,46 @@
       "actionMissingFromCatalog": "A rota operacional **{pathLabel}** ainda não está no catálogo do provider **{providerKey}**. No builder do agente, use **Atualizar rotas** (ou rode o script de reimport pós-deploy) e habilite a action neste agente.",
       "actionNotEnabledOnAgent": "A rota **{pathLabel}** já existe no catálogo (`{actionId}`), mas não está **habilitada** neste agente. No builder → Rotas OpenAPI, marque a action como ativa."
     },
+    "projectSources": {
+      "inventoryPhrases": [
+        "o que tem nas suas fontes",
+        "o que tem nas fontes",
+        "o que tem na suas fontes",
+        "quais sao as fontes",
+        "quais são as fontes",
+        "quais fontes voce tem",
+        "quais fontes você tem",
+        "liste as fontes",
+        "listar as fontes",
+        "mostre as fontes",
+        "mostrar as fontes",
+        "quantos arquivos",
+        "quantas fontes",
+        "o que ha nas fontes",
+        "o que há nas fontes",
+        "o que tem nas fontes do projeto",
+        "quais arquivos estao nas fontes",
+        "quais arquivos estão nas fontes"
+      ],
+      "scopedPhrases": [
+        "fontes do projeto",
+        "fontes deste projeto",
+        "fontes desse projeto",
+        "suas fontes",
+        "minhas fontes do projeto",
+        "arquivos do projeto",
+        "documentos do projeto"
+      ],
+      "noProject": "Para ver **fontes**, selecione ou abra um **projeto** nesta conversa e repita a pergunta.",
+      "loadError": "Não foi possível carregar as fontes do projeto: {error}",
+      "empty": "O projeto **{projectName}** ainda não tem fontes adicionadas. Use a aba **Fontes** para enviar arquivos ou notas de texto.",
+      "header": "Fontes do projeto **{projectName}**:",
+      "lineFile": "- **{title}** · {size} · {chunks} chunk(s) · {status}",
+      "lineText": "- **{title}** · {chunks} chunk(s) · {status}",
+      "statusIndexed": "Indexado",
+      "statusPending": "Aguardando indexação",
+      "footer": "Posso resumir ou responder perguntas sobre o conteúdo de qualquer arquivo listado."
+    },
     "formatRefinement": {
       "noPriorResult": "Não encontrei uma consulta anterior nesta conversa para reapresentar. Faça primeiro uma pergunta operacional (ex.: ranking de consumo, estoque ou indicadores) e depois peça **tabela**, **gráfico**, **texto** ou **árvore**.",
       "unrecognizedFormat": "Entendi que você quer mudar a visualização do último resultado, mas não ficou claro **qual formato** prefere. Tente, por exemplo: «mostre em gráfico», «coloque em tabela», «só texto» ou «ver em árvore».",

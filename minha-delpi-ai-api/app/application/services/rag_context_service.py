@@ -47,6 +47,9 @@ class RagContextService:
             return {
                 "context": "",
                 "sources": [],
+                "retrievedSourceCount": 0,
+                "visibleSourceCount": 0,
+                "retrievedChunkCount": 0,
             }
 
         if min_score is None:
@@ -69,6 +72,9 @@ class RagContextService:
             return {
                 "context": "",
                 "sources": [],
+                "retrievedSourceCount": 0,
+                "visibleSourceCount": 0,
+                "retrievedChunkCount": 0,
             }
 
         if chunk_filter is not None:
@@ -85,6 +91,9 @@ class RagContextService:
             return {
                 "context": "",
                 "sources": [],
+                "retrievedSourceCount": 0,
+                "visibleSourceCount": 0,
+                "retrievedChunkCount": 0,
             }
 
         chunks = filtered_chunks
@@ -122,6 +131,7 @@ class RagContextService:
             label = f"[Fonte {source_index}]"
 
             metadata = chunk.get("metadata") or {}
+            scope = metadata.get("scope") or chunk.get("sourceType")
 
             context_parts.append(
                 "\n".join(
@@ -129,7 +139,7 @@ class RagContextService:
                         label,
                         f"Título: {chunk.get('title') or 'Documento sem título'}",
                         f"Origem: {chunk.get('sourceRef') or chunk.get('sourceType') or 'desconhecida'}",
-                        f"Escopo: {metadata.get('scope') or 'desconhecido'}",
+                        f"Escopo: {scope or 'desconhecido'}",
                         f"Arquivo: {metadata.get('originalFilename') or chunk.get('title') or 'não informado'}",
                         f"Trecho: {clipped_content}",
                     ]
@@ -155,20 +165,32 @@ class RagContextService:
         return {
             "context": "\n\n".join(context_parts),
             "sources": sources,
+            "retrievedSourceCount": len(sources_by_document),
+            "visibleSourceCount": len(sources),
+            "retrievedChunkCount": source_index,
         }
 
     def _source_from_chunk(self, chunk: dict) -> dict:
         metadata = chunk.get("metadata") or {}
+        source_type = chunk.get("sourceType")
+        scope = metadata.get("scope")
+
+        if not scope and source_type in {
+            "project_source",
+            "agent_source",
+            "chat_attachment",
+        }:
+            scope = source_type if source_type != "chat_attachment" else "session_source"
 
         return {
             "id": chunk.get("id"),
             "documentId": chunk.get("documentId"),
             "title": chunk.get("title"),
-            "sourceType": chunk.get("sourceType"),
+            "sourceType": source_type,
             "sourceRef": chunk.get("sourceRef"),
             "chunkIndex": chunk.get("chunkIndex"),
             "score": chunk.get("score"),
-            "scope": metadata.get("scope"),
+            "scope": scope,
             "userId": metadata.get("userId"),
             "sessionId": metadata.get("sessionId"),
             "projectId": metadata.get("projectId"),

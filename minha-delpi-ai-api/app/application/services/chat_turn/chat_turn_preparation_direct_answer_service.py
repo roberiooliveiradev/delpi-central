@@ -12,6 +12,9 @@ from app.application.services.chat_capabilities_service import ChatCapabilitiesS
 from app.application.services.chat_meta_direct_answer_service import (
     ChatMetaDirectAnswerService,
 )
+from app.application.services.chat_project_sources_direct_answer_service import (
+    ChatProjectSourcesDirectAnswerService,
+)
 from app.application.services.chat_session_memory_direct_answer_service import (
     ChatSessionMemoryDirectAnswerService,
 )
@@ -49,6 +52,7 @@ class ChatTurnPreparationDirectAnswerBundle:
     utility_direct: str | None
     unclear_direct: str | None
     web_save_sources_direct: str | None
+    project_sources_direct: str | None
     web_post_search_direct: str | None
     attachment_welcome_direct: str | None
     routing_disambiguation: dict | None
@@ -136,6 +140,13 @@ class ChatTurnPreparationDirectAnswerService:
             user_id=str(user_id),
             session=session,
             previous_messages=history_source,
+        )
+
+        project_sources_direct = ChatProjectSourcesDirectAnswerService.build_direct_answer(
+            message=message,
+            user_id=str(user_id),
+            session=session,
+            workspace_context=workspace_context,
         )
 
         web_post_search_direct = (
@@ -252,6 +263,9 @@ class ChatTurnPreparationDirectAnswerService:
         if session_memory_direct and "session_memory" not in pipeline_stage_additions:
             pipeline_stage_additions.append("session_memory")
 
+        if project_sources_direct and "project_sources_inventory" not in pipeline_stage_additions:
+            pipeline_stage_additions.append("project_sources_inventory")
+
         if text_correction_mode:
             workspace_context_patches["textCorrectionMode"] = True
             workspace_context_patches["textCorrectionSubtype"] = text_correction_subtype
@@ -265,6 +279,7 @@ class ChatTurnPreparationDirectAnswerService:
             utility_direct=utility_direct,
             unclear_direct=unclear_direct,
             web_save_sources_direct=web_save_sources_direct,
+            project_sources_direct=project_sources_direct,
             web_post_search_direct=web_post_search_direct,
             attachment_welcome_direct=attachment_welcome_direct,
             routing_disambiguation=routing_disambiguation,

@@ -52,6 +52,7 @@ class ChatTurnPreparationPostToolResolutionService:
         utility_direct: str | None,
         web_post_search_direct: str | None,
         web_save_sources_direct: str | None,
+        project_sources_direct: str | None,
         attachment_welcome_direct: str | None,
         session_memory_direct: str | None,
         interpretation_without_data_answer: str | None,
@@ -104,6 +105,7 @@ class ChatTurnPreparationPostToolResolutionService:
             or bool(small_talk_direct)
             or bool(utility_direct)
             or bool(web_save_sources_direct)
+            or bool(project_sources_direct)
             or bool(web_post_search_direct)
             or bool(attachment_welcome_direct)
             or bool(text_task_pure)
@@ -133,6 +135,8 @@ class ChatTurnPreparationPostToolResolutionService:
             direct_answer = web_post_search_direct
         elif web_save_sources_direct:
             direct_answer = web_save_sources_direct
+        elif project_sources_direct:
+            direct_answer = project_sources_direct
         elif (
             isinstance(tool_context, dict)
             and str(tool_context.get("directAnswer") or "").strip()
@@ -176,6 +180,8 @@ class ChatTurnPreparationPostToolResolutionService:
             web_post_search_direct
         ) or (
             web_save_sources_direct
+        ) or (
+            project_sources_direct
         ) or (
             session_memory_direct
         ) or (

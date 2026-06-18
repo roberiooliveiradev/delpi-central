@@ -182,6 +182,7 @@ class ChatTurnPreparationService:
         utility_direct = pre_tool.utility_direct
         unclear_direct = pre_tool.unclear_direct
         web_save_sources_direct = pre_tool.web_save_sources_direct
+        project_sources_direct = pre_tool.project_sources_direct
         web_post_search_direct = pre_tool.web_post_search_direct
         attachment_welcome_direct = pre_tool.attachment_welcome_direct
         routing_disambiguation = pre_tool.routing_disambiguation
@@ -244,6 +245,7 @@ class ChatTurnPreparationService:
             small_talk_direct=small_talk_direct,
             utility_direct=utility_direct,
             web_save_sources_direct=web_save_sources_direct,
+            project_sources_direct=project_sources_direct,
             web_post_search_direct=web_post_search_direct,
             attachment_welcome_direct=attachment_welcome_direct,
             unclear_direct=unclear_direct,
@@ -300,6 +302,7 @@ class ChatTurnPreparationService:
             utility_direct=utility_direct,
             web_post_search_direct=web_post_search_direct,
             web_save_sources_direct=web_save_sources_direct,
+            project_sources_direct=project_sources_direct,
             attachment_welcome_direct=attachment_welcome_direct,
             session_memory_direct=session_memory_direct,
             interpretation_without_data_answer=interpretation_without_data_answer,

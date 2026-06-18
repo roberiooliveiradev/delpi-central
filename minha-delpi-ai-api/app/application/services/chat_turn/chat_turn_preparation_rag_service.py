@@ -94,7 +94,13 @@ class ChatTurnPreparationRagService:
             )
 
         if skip_rag:
-            rag = {"context": "", "sources": []}
+            rag = {
+                "context": "",
+                "sources": [],
+                "retrievedSourceCount": 0,
+                "visibleSourceCount": 0,
+                "retrievedChunkCount": 0,
+            }
             pipeline_stages.append("skip_rag")
         else:
             pipeline_stages.append("rag")
@@ -127,6 +133,7 @@ class ChatTurnPreparationRagService:
                     session=session,
                     workspace_context=workspace_context,
                     attachment_ids=attachment_ids,
+                    message=message,
                 ),
                 min_score=rag_min_score,
                 chunk_filter=(

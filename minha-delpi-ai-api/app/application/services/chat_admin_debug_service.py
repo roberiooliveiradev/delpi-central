@@ -184,6 +184,9 @@ class ChatAdminDebugService:
             "agentic",
             "toolCount",
             "ragSourceCount",
+            "ragVisibleSourceCount",
+            "ragRetrievedCount",
+            "ragRetrievedChunkCount",
             "topRagScore",
         ):
             value = intelligence_metadata.get(key)
@@ -228,14 +231,26 @@ class ChatAdminDebugService:
 
         rag_sources = rag.get("sources") or []
         rag_context_raw = str(rag.get("context") or "")
+        retrieved_count = int(rag.get("retrievedSourceCount") or 0)
+        visible_count = int(rag.get("visibleSourceCount") or len(rag_sources))
+        retrieved_chunks = int(rag.get("retrievedChunkCount") or 0)
         rag_debug: dict[str, Any] = {
             "sources": rag_sources,
             "ragContextText": rag_context_text,
+            "retrievedSourceCount": retrieved_count,
+            "visibleSourceCount": visible_count,
+            "retrievedChunkCount": retrieved_chunks,
         }
-        if rag_context_raw.strip() and not rag_sources:
+        if rag_context_raw.strip() and visible_count == 0 and retrieved_count > 0:
             rag_debug["sourcesNote"] = (
-                "Fontes globais/admin não são expostas ao cliente; o texto do RAG "
-                "ainda foi injetado no prompt."
+                "Recuperadas "
+                f"{retrieved_count} fonte(s) ({retrieved_chunks} trecho(s)) para o prompt; "
+                f"{visible_count} visível(is) ao cliente (globais/admin ficam ocultas)."
+            )
+        elif rag_context_raw.strip() and visible_count < retrieved_count:
+            rag_debug["sourcesNote"] = (
+                f"Recuperadas {retrieved_count} fonte(s); "
+                f"{visible_count} citável(is) na UI."
             )
 
         memory_block = None

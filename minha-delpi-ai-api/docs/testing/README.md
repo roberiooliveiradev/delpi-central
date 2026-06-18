@@ -17,8 +17,9 @@ pytest tests/unit/domain/services/test_chat_intelligence_regression.py -q
 # Seleção de actions
 pytest tests/unit/application/services/test_external_action_selection_service.py -q
 
-# Gate CI strings PT
-pytest tests/unit/infrastructure/test_no_hardcoded_pt_strings.py -q
+# Inventário / escopo de fontes do projeto (jun/2026)
+pytest tests/unit/domain/services/test_chat_project_sources_intent_service.py \
+  tests/unit/application/use_cases/test_search_knowledge_scope_boost.py -q
 
 # Clean architecture
 python scripts/audit_clean_architecture.py
@@ -28,7 +29,7 @@ python scripts/audit_clean_architecture.py
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `chat_intelligence_regression_cases.py` | Casos SIMPLE_TURN, UNCLEAR, DATA_INTERPRETATION, DATE_RANGE… |
+| `chat_intelligence_regression_cases.py` | Casos SIMPLE_TURN, UNCLEAR, DATA_INTERPRETATION, DATE_RANGE, **PROJECT_SOURCES_INTENT**… |
 | `rich_presentation_cases.py` | Apresentação rica P1–P16 |
 | `api_delpi_responses/` | Payloads mock de rotas api-delpi |
 

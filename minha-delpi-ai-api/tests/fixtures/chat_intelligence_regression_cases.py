@@ -2142,3 +2142,15 @@ UNCLEAR_REQUEST_CASES = [
     ("coloque isso na lousa", None),
     ("corrija o texto do e-mail", None),
 ]
+
+# Inventário / escopo de fontes do projeto (jun/2026).
+# (mensagem, inventory_esperado, restrict_global_esperado)
+PROJECT_SOURCES_INTENT_CASES = [
+    ("o que tem nas suas fontes?", True, True),
+    ("quais são as fontes do projeto?", True, True),
+    ("liste as fontes", True, True),
+    ("quantas fontes você tem?", True, True),
+    ("resuma suas fontes", False, True),
+    ("use as fontes do projeto para responder", False, True),
+    ("estoque do produto 10080001", False, False),
+]

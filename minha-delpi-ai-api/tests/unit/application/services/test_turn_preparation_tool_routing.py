@@ -1,10 +1,21 @@
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
+
+import pytest
 
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_turn.chat_turn_preparation_tool_routing_service import (
     ChatTurnPreparationToolRoutingService,
 )
+
+
+@pytest.fixture(autouse=True)
+def _patch_intelligence_runtime(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
+        lambda: SimpleNamespace(assistant_identity_direct_enabled=True),
+    )
 
 
 def test_resolve_skip_tool_flags_for_assistant_identity_question():
@@ -40,6 +51,7 @@ def test_should_skip_tools_for_small_talk():
         small_talk_direct="Olá! Como posso ajudar?",
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,
@@ -78,6 +90,7 @@ def test_run_tool_phase_skips_tools_for_text_task():
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,
@@ -131,6 +144,7 @@ def test_run_tool_phase_invokes_build_tool_context_with_request_once():
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,
@@ -178,6 +192,7 @@ def test_run_tool_phase_skips_tools_for_assistant_identity_question():
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
+        project_sources_direct=None,
         web_post_search_direct=None,
         attachment_welcome_direct=None,
         unclear_direct=None,

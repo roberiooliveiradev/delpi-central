@@ -326,6 +326,7 @@ class ChatTurnCompletionService:
             tool_context=turn.tool_context,
             embedding_cache_stats=self._embedding_cache_stats(),
             pipeline_timings=turn.pipeline_timings.to_dict(),
+            rag_stats=turn.rag if isinstance(turn.rag, dict) else None,
             pipeline=ChatIntelligenceMetadataService.build_pipeline_flags(
                 fast_path=turn.fast_path,
                 operational_optimize=turn.operational_optimize,

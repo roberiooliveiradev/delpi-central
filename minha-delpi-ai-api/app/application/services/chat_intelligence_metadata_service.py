@@ -37,6 +37,7 @@ class ChatIntelligenceMetadataService:
         embedding_cache_stats: dict | None = None,
         pipeline_timings: dict | None = None,
         pipeline: dict | None = None,
+        rag_stats: dict | None = None,
     ) -> dict:
         scores = [
             float(item.get("score"))
@@ -44,8 +45,16 @@ class ChatIntelligenceMetadataService:
             if item.get("score") is not None
         ]
 
+        stats = rag_stats if isinstance(rag_stats, dict) else {}
+        visible_count = int(stats.get("visibleSourceCount", len(sources)))
+        retrieved_count = int(stats.get("retrievedSourceCount", visible_count))
+        retrieved_chunks = int(stats.get("retrievedChunkCount", 0))
+
         metadata = {
-            "ragSourceCount": len(sources),
+            "ragSourceCount": visible_count,
+            "ragVisibleSourceCount": visible_count,
+            "ragRetrievedCount": retrieved_count,
+            "ragRetrievedChunkCount": retrieved_chunks,
             "topRagScore": max(scores) if scores else None,
             "toolCount": len(tool_context.get("toolCalls") or []),
             "agentic": tool_context.get("agentic"),

@@ -22,13 +22,18 @@ def test_sources_note_when_rag_text_without_client_visible_sources():
         rag={
             "context": "[Fonte 1]\nTítulo: Normas\nTrecho: texto",
             "sources": [],
+            "retrievedSourceCount": 3,
+            "visibleSourceCount": 0,
+            "retrievedChunkCount": 3,
         }
     )
 
     assert payload["rag"]["ragContextText"]
     assert payload["rag"]["sources"] == []
+    assert payload["rag"]["retrievedSourceCount"] == 3
+    assert payload["rag"]["visibleSourceCount"] == 0
     assert "sourcesNote" in payload["rag"]
-    assert "globais" in payload["rag"]["sourcesNote"].lower()
+    assert "Recuperadas 3 fonte(s)" in payload["rag"]["sourcesNote"]
 
 
 def test_no_sources_note_when_rag_empty():
