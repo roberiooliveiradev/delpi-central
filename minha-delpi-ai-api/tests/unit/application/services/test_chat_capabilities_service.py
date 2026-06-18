@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+import pytest
+
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
@@ -247,3 +249,25 @@ def test_web_search_help_feature_answer(_enabled):
     assert answer is not None
     assert "Pesquisa na internet" in answer or "pesquisa na internet" in answer.lower()
     assert "pesquise na web" in answer.lower()
+
+
+import pytest
+
+from tests.fixtures.chat_intelligence_regression_cases import (
+    TRAINING_AGENT_CAPABILITY_GATE_CASES,
+    TRAINING_AGENT_INTERACTION_INDEX,
+)
+
+
+@pytest.mark.parametrize("message", TRAINING_AGENT_CAPABILITY_GATE_CASES)
+def test_training_agent_messages_are_operational_not_capabilities(message: str):
+    assert not ChatCapabilitiesService.is_capability_inquiry(message)
+    assert ChatCapabilitiesService.looks_like_operational_data_request(message)
+
+
+def test_training_agent_interaction_index_covers_six_interactions():
+    interactions = {item["interaction"] for item in TRAINING_AGENT_INTERACTION_INDEX}
+
+    assert interactions == {1, 2, 3, 4, 5, 6}
+    assert len(TRAINING_AGENT_INTERACTION_INDEX) >= 8
+

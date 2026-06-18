@@ -2159,3 +2159,38 @@ PROJECT_SOURCES_INTENT_CASES = [
     ),
     ("estoque do produto 10080001", False, False),
 ]
+
+# treinamento-agente-interacoes-jun2026.md — consultas operacionais (não capabilities).
+TRAINING_AGENT_CAPABILITY_GATE_CASES = [
+    "estoque do produto 10080022",
+    "status fabril do produto 90269002 hoje",
+    "quais matérias-primas exclusivas existem na estrutura desse produto?",
+    "análise de preço da matéria-prima 10080001",
+    "qual o preço de venda do produto 10080001?",
+    "quais materiais mais impactam o custo do PA 90261255?",
+    "simule aumento de 10% nos materiais desse produto",
+    "situação de produção do 90269002 hoje",
+    "e a expedição?",
+]
+
+# Índice das 6 interações do roteiro → mensagem canônica (seleção em SELECTION_CASES / FU01–FU02).
+TRAINING_AGENT_INTERACTION_INDEX = [
+    {"id": "TR01", "interaction": 1, "message": "estoque do produto 10080022"},
+    {"id": "TR02", "interaction": 2, "message": "status fabril do produto 90269002 hoje"},
+    {
+        "id": "TR02b",
+        "interaction": 2,
+        "message": "quais matérias-primas exclusivas existem na estrutura desse produto?",
+        "fixture": "OPERATIONAL_FOLLOW_UP_SELECTION_CASES FU02",
+    },
+    {"id": "TR03", "interaction": 3, "message": "análise de preço da matéria-prima 10080001"},
+    {"id": "TR03b", "interaction": 3, "message": "qual o preço de venda do produto 10080001?"},
+    {"id": "TR04", "interaction": 4, "message": "quais materiais mais impactam o custo do PA 90261255?"},
+    {
+        "id": "TR05",
+        "interaction": 5,
+        "message": "e a expedição?",
+        "fixture": "OPERATIONAL_FOLLOW_UP_SELECTION_CASES FU01",
+    },
+    {"id": "TR06", "interaction": 6, "message": "o que tem nas suas fontes?"},
+]
