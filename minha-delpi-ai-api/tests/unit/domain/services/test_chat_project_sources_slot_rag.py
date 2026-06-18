@@ -2,6 +2,9 @@ from app.domain.services.chat_project_sources_intent_service import (
     ChatProjectSourcesIntentService,
 )
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
+from tests.fixtures.chat_intelligence_regression_cases import PROJECT_SOURCES_SLOT_CASES
+
+import pytest
 
 
 def test_slotted_content_question_builds_document_filter():
@@ -65,5 +68,43 @@ def test_first_file_summary_is_not_pure_text_task_when_inventory_exists():
 
     assert not ChatTextTaskIntentService.is_pure_text_task(
         "resuma o conteúdo do primeiro arquivo",
+        previous_messages=previous_messages,
+    )
+
+
+@pytest.mark.parametrize("case", PROJECT_SOURCES_SLOT_CASES)
+def test_project_sources_slot_fixture_regression(case):
+    previous_messages = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "contextSnapshot": {
+                    "lastProjectSourcesInventory": case["inventory"],
+                }
+            },
+        }
+    ]
+    chunk_filter = ChatProjectSourcesIntentService.build_content_chunk_filter(
+        case["message"],
+        previous_messages=previous_messages,
+    )
+
+    assert chunk_filter is not None
+    assert chunk_filter(
+        {
+            "documentId": case["expected_source_id"],
+            "sourceType": "project_source",
+            "metadata": {"scope": "project_source"},
+        }
+    )
+    assert not chunk_filter(
+        {
+            "documentId": "other-doc",
+            "sourceType": "project_source",
+            "metadata": {"scope": "project_source"},
+        }
+    )
+    assert not ChatTextTaskIntentService.is_pure_text_task(
+        case["message"],
         previous_messages=previous_messages,
     )

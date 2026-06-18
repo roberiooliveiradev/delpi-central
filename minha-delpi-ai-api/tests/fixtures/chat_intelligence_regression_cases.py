@@ -2158,6 +2158,31 @@ PROJECT_SOURCES_INTENT_CASES = [
         True,
     ),
     ("estoque do produto 10080001", False, False),
+    ("resuma o conteúdo do primeiro arquivo", False, True),
+]
+
+# Follow-up de inventário (interação 6.2) — exige lastProjectSourcesInventory no histórico.
+PROJECT_SOURCES_SLOT_CASES = [
+    {
+        "message": "resuma o conteúdo do primeiro arquivo",
+        "expected_source_id": "doc-training-1",
+        "inventory": [
+            {
+                "projectSourceId": "doc-training-1",
+                "title": "1º TREINAMENTO — FEVEREIRO 2026.docx",
+                "ordinal": 1,
+                "indexed": True,
+                "chunkCount": 4,
+            },
+            {
+                "projectSourceId": "doc-manual-2",
+                "title": "MANUAL.pdf",
+                "ordinal": 2,
+                "indexed": True,
+                "chunkCount": 2,
+            },
+        ],
+    },
 ]
 
 # treinamento-agente-interacoes-jun2026.md — consultas operacionais (não capabilities).
@@ -2193,4 +2218,10 @@ TRAINING_AGENT_INTERACTION_INDEX = [
         "fixture": "OPERATIONAL_FOLLOW_UP_SELECTION_CASES FU01",
     },
     {"id": "TR06", "interaction": 6, "message": "o que tem nas suas fontes?"},
+    {
+        "id": "TR06b",
+        "interaction": 6,
+        "message": "resuma o conteúdo do primeiro arquivo",
+        "fixture": "PROJECT_SOURCES_SLOT_CASES",
+    },
 ]

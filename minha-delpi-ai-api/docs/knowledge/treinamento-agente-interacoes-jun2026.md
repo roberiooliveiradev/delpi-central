@@ -97,7 +97,7 @@ Roteiro **copiar e colar** para sessões de treinamento, demo ou homologação c
 | Turno | Cole no chat | Rota / efeito esperado |
 |-------|--------------|------------------------|
 | 1 | `o que tem nas suas fontes?` | Resposta direta (lista nome, tamanho, chunks); stage `project_sources_inventory`; **skip RAG** |
-| 2 | `resuma o conteúdo do primeiro arquivo` | RAG/`project_source` se indexado; aviso se pendente de indexação |
+| 2 | `resuma o conteúdo do primeiro arquivo` | RAG/`project_source` filtrado por `documentId` se indexado; usa `lastProjectSourcesInventory` do turno 1; **não** `text_task` |
 
 **Fala sugerida:** *“Listar arquivos do projeto é diferente de buscar semanticamente no texto.”*
 

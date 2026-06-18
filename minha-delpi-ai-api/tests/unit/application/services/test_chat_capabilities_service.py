@@ -267,5 +267,5 @@ def test_training_agent_interaction_index_covers_six_interactions():
     interactions = {item["interaction"] for item in TRAINING_AGENT_INTERACTION_INDEX}
 
     assert interactions == {1, 2, 3, 4, 5, 6}
-    assert len(TRAINING_AGENT_INTERACTION_INDEX) >= 8
+    assert len(TRAINING_AGENT_INTERACTION_INDEX) >= 9
 
