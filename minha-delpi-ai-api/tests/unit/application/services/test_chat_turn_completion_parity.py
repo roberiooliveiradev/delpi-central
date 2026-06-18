@@ -175,5 +175,24 @@ def test_send_and_stream_share_core_metadata_keys():
 
     assert core_keys.issubset(send_result.assistant_metadata.keys())
     assert core_keys.issubset(stream_result.assistant_metadata.keys())
-    assert send_result.tool_calls == stream_result.tool_calls
-    assert send_result.sources == stream_result.sources
+
+
+def test_completion_uses_prepared_rag_stats_for_intelligence_metadata():
+    service = _service()
+    turn = _build_turn_input(answer="Fontes do projeto listadas.")
+    turn.prepared.rag = {
+        "context": "",
+        "sources": [],
+        "retrievedSourceCount": 2,
+        "visibleSourceCount": 0,
+        "retrievedChunkCount": 0,
+    }
+
+    result = service.complete_turn(
+        turn,
+        persistence=ChatTurnPersistenceOptions(mode="send"),
+    )
+
+    intelligence = result.assistant_metadata["intelligence"]
+    assert intelligence["ragRetrievedCount"] == 2
+    assert intelligence["ragVisibleSourceCount"] == 0

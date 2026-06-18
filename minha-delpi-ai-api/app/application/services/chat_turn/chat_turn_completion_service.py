@@ -321,12 +321,14 @@ class ChatTurnCompletionService:
         answer: str,
         tool_calls: list,
     ) -> tuple[dict, int, dict]:
+        prepared_rag = getattr(turn.prepared, "rag", None)
+
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=turn.sources,
             tool_context=turn.tool_context,
             embedding_cache_stats=self._embedding_cache_stats(),
             pipeline_timings=turn.pipeline_timings.to_dict(),
-            rag_stats=turn.rag if isinstance(turn.rag, dict) else None,
+            rag_stats=prepared_rag if isinstance(prepared_rag, dict) else None,
             pipeline=ChatIntelligenceMetadataService.build_pipeline_flags(
                 fast_path=turn.fast_path,
                 operational_optimize=turn.operational_optimize,
