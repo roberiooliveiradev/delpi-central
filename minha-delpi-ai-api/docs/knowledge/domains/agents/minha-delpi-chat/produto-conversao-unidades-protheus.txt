@@ -16,6 +16,7 @@ Regra-mãe: separe o OBJETIVO da conversão antes de calcular.
 
 | Objetivo                         | Fonte principal                          |
 |----------------------------------|------------------------------------------|
+| Existe / descrição da unidade    | SAH010 (cadastro mestre — **não calcula**) |
 | Produção / estrutura / BOM       | SG1010 + SB1010                          |
 | Conversão de cadastro do produto | SB1010 (B1_UM, B1_SEGUM, B1_CONV, …)     |
 | Fiscal / DIPI / NF-e             | SB5010                                   |
@@ -50,12 +51,136 @@ A regra mais importante é separar o objetivo da conversão antes de calcular.
 
 Produção        = SG1010 + SB1010
 Cadastro        = SB1010
+Referência UM   = SAH010 (somente cadastro/descrição)
 Fiscal          = SB5010
 OP / consumo    = SC2010 + SD4010 + SB1010
 
 ======================================================================
 2. TABELAS PRINCIPAIS
 ======================================================================
+
+----------------------------------------------------------------------
+2.0 SAH010 — CADASTRO DE UNIDADES DE MEDIDA
+----------------------------------------------------------------------
+
+A SAH010 é a tabela do Protheus responsável pelo cadastro mestre das unidades
+de medida utilizadas em produtos, estruturas, notas, compras, estoque e produção.
+
+Ela **não calcula conversão**.
+Ela apenas registra que uma unidade existe e qual é a sua descrição.
+
+Exemplos de unidades cadastradas:
+
+UN = Unidade
+PC = Peça
+MI = Milheiro
+MT = Metro
+KG = Quilograma
+CX = Caixa
+RL = Rolo
+
+Função da SAH010:
+
+Validar e descrever unidades usadas em outras tabelas.
+
+| Tabela  | Campo              | Usa unidade cadastrada na SAH010 |
+|---------|--------------------|----------------------------------|
+| SB1010  | B1_UM              | Unidade principal do produto     |
+| SB1010  | B1_SEGUM           | Segunda unidade do produto       |
+| SB1010  | B1_UM3             | Terceira unidade                 |
+| SC2010  | C2_UM              | Unidade da OP                    |
+| SD4010  | D4_UM (quando existir) | Unidade do consumo/empenho   |
+| SD1010  | D1_UM (quando existir) | Unidade da NF de entrada     |
+| SB5010  | B5_UMDIPI          | Unidade fiscal/DIPI              |
+
+Campos principais:
+
+AH_FILIAL   = Filial do cadastro
+AH_UNIMED   = Código da unidade de medida
+AH_DESCPO   = Descrição da unidade em português
+D_E_L_E_T_  = Exclusão lógica
+R_E_C_N_O_  = Número interno do registro
+R_E_C_D_E_L_ = Controle interno de exclusão
+
+Exemplo de conteúdo:
+
+AH_UNIMED = MI   → AH_DESCPO = MILHEIRO
+AH_UNIMED = PC   → AH_DESCPO = PECA
+AH_UNIMED = MT   → AH_DESCPO = METRO
+
+O que a SAH010 **não** faz:
+
+Não guarda fator de conversão. Não diz, por exemplo:
+
+- 1 MI = 1000 PC
+- 1 MT = 1000 MM
+- 1 CX = 50 PC
+
+| Necessidade                              | Fonte correta        |
+|------------------------------------------|----------------------|
+| Fator entre unidade principal e segunda  | SB1010.B1_CONV       |
+| Tipo da conversão (multiplica/divide)    | SB1010.B1_TIPCONV    |
+| Unidade principal do produto             | SB1010.B1_UM         |
+| Segunda unidade do produto               | SB1010.B1_SEGUM      |
+| Conversão fiscal/DIPI                    | SB5010.B5_CONVDIP    |
+| Quantidade de componente na estrutura     | SG1010.G1_QUANT      |
+
+Como usar corretamente:
+
+- A unidade MI existe?
+- Qual a descrição da unidade MI?
+- Quais unidades estão cadastradas?
+- Existe produto usando unidade não cadastrada?
+
+SQL — listar unidades cadastradas:
+
+SELECT
+    AH_FILIAL,
+    AH_UNIMED AS UNIDADE,
+    AH_DESCPO AS DESCRICAO
+FROM SAH010
+WHERE D_E_L_E_T_ = ''
+ORDER BY AH_UNIMED;
+
+SQL — validar a unidade de um produto:
+
+SELECT
+    P.B1_COD,
+    P.B1_DESC,
+    P.B1_UM,
+    U.AH_DESCPO AS DESCRICAO_UNIDADE
+FROM SB1010 P
+LEFT JOIN SAH010 U
+    ON U.AH_UNIMED = P.B1_UM
+   AND U.D_E_L_E_T_ = ''
+WHERE
+    P.D_E_L_E_T_ = ''
+    AND P.B1_COD = '90260882';
+
+SQL — produtos com unidade inválida (sem cadastro na SAH010):
+
+SELECT
+    P.B1_COD,
+    P.B1_DESC,
+    P.B1_UM
+FROM SB1010 P
+LEFT JOIN SAH010 U
+    ON U.AH_UNIMED = P.B1_UM
+   AND U.D_E_L_E_T_ = ''
+WHERE
+    P.D_E_L_E_T_ = ''
+    AND ISNULL(P.B1_UM, '') <> ''
+    AND U.AH_UNIMED IS NULL;
+
+Resumo direto:
+
+SAH010          = cadastro das unidades de medida (referência)
+SB1010          = unidade e conversão do produto
+SB5010          = conversão fiscal
+SG1010          = quantidade da estrutura
+SC2010/SD4010   = produção e consumo
+
+Conclusão: SAH010 é tabela de **referência** das unidades, **não** de cálculo.
 
 ----------------------------------------------------------------------
 2.1 SB1010 — CADASTRO DE PRODUTOS
@@ -697,6 +822,13 @@ Consequência:
 Usuário pede simulação «por milheiro» e o agente divide por 1000 de novo,
 ou pede «por peça» e o agente usa quantity_per_pa sem converter.
 
+Erro 9:
+Usar SAH010 para obter fator de conversão (MI → PC, MT → MM).
+
+Consequência:
+A tabela não tem B1_CONV nem fator fiscal — conversão fica errada ou nula.
+Use SB1010 / SB5010 / SG1010 conforme o contexto.
+
 ======================================================================
 14. REGRA FINAL — ORDEM DE VALIDAÇÃO
 ======================================================================
@@ -704,32 +836,38 @@ ou pede «por peça» e o agente usa quantity_per_pa sem converter.
 1. Produto existe e está ativo?
    Consultar SB1010 ou GET /products/{code}/analyser
 
-2. Qual é a unidade do produto pai?
+2. A unidade (ex.: MI) está cadastrada?
+   Consultar SAH010.AH_UNIMED / AH_DESCPO (descrição apenas)
+
+3. Qual é a unidade do produto pai?
    Consultar SB1010.B1_UM
 
-3. Qual é a estrutura real?
+4. Qual é a estrutura real?
    Consultar SG1010 ou GET /products/{code}/structure
 
-4. Qual é a unidade de cada componente?
+5. Qual é a unidade de cada componente?
    Consultar SB1010.B1_UM
 
-5. Existe segunda unidade ou fator?
+6. Existe segunda unidade ou fator?
    Consultar SB1010.B1_SEGUM, B1_CONV e B1_TIPCONV
 
-6. A conversão é fiscal?
+7. A conversão é fiscal?
    Consultar SB5010.B5_UMDIPI e SB5010.B5_CONVDIP
 
-7. A análise é de consumo real de OP?
+8. A análise é de consumo real de OP?
    Consultar SC2010 + SD4010 + SB1010
    ou GET /products/{code}/production-status
 
-8. A pergunta é sobre impacto de custo ou ranking de MPs?
+9. A pergunta é sobre impacto de custo ou ranking de MPs?
    GET /products/{code}/cost-impact-simulation
    (somente PA; ver seção 16)
 
 ======================================================================
 15. RESUMO ABSOLUTO
 ======================================================================
+
+Para cadastro/descrição de unidade (MI, PC, MT…):
+    Use SAH010 — não calcule conversão nela.
 
 Para produção:
     Use SG1010 + SB1010.
@@ -852,6 +990,7 @@ has_stock_for_one_pa compara estoque disponível com essa necessidade por PA.
 Antes de responder sobre quantidade ou custo:
 
 [ ] Identifiquei se o usuário quer **1 peça**, **1 MI (milheiro)** ou **1 PA**?
+[ ] Se a dúvida for «o que é MI?», usei **SAH010** (descrição) e não inventei fator?
 [ ] Verifiquei B1_UM do produto pai (MI vs PC vs UN)?
 [ ] Separei contexto **produtivo** (SG1010) de **fiscal** (SB5010)?
 [ ] Usei rota REST quando existir (structure, cost-impact-simulation)?

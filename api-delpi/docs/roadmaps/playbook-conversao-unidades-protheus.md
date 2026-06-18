@@ -11,6 +11,7 @@ Este playbook explica como interpretar e converter unidades de medida no Protheu
 
 | Contexto | Fonte Protheus | Uso típico |
 |----------|----------------|-------------|
+| Existe / descrição da unidade | `SAH010` | Validar código UM; **não calcula conversão** |
 | Produção / estrutura / BOM | `SG1010` + `SB1010` | Rotas `/structure`, `/cost-impact-simulation`, `/stock` |
 | Cadastro do produto | `SB1010` (`B1_UM`, `B1_CONV`, …) | `GET /products/{code}` |
 | Fiscal / DIPI / NF-e | `SB5010` | Integrações fiscais (fora das rotas de BOM) |
@@ -97,6 +98,69 @@ simulação +N%       = unit_cost × (1 + N/100)
 ---
 
 ## 4. Tabelas Protheus
+
+### 4.0 SAH010 — Cadastro de unidades de medida
+
+A **SAH010** é o cadastro mestre das unidades de medida (produtos, estruturas, NF, compras, estoque, produção).
+
+**Não calcula conversão** — apenas registra que a unidade existe e sua descrição.
+
+Exemplos: `UN` = Unidade · `PC` = Peça · `MI` = Milheiro · `MT` = Metro · `KG` = Quilograma · `CX` = Caixa · `RL` = Rolo
+
+| Tabela | Campo | Uso da SAH010 |
+|--------|-------|---------------|
+| `SB1010` | `B1_UM` | Unidade principal |
+| `SB1010` | `B1_SEGUM` | Segunda unidade |
+| `SB1010` | `B1_UM3` | Terceira unidade |
+| `SC2010` | `C2_UM` | Unidade da OP |
+| `SD4010` | `D4_UM` (quando existir) | Consumo/empenho |
+| `SD1010` | `D1_UM` (quando existir) | NF de entrada |
+| `SB5010` | `B5_UMDIPI` | Unidade fiscal/DIPI |
+
+| Campo | Descrição |
+|-------|-----------|
+| `AH_FILIAL` | Filial |
+| `AH_UNIMED` | Código da unidade |
+| `AH_DESCPO` | Descrição (ex.: `MI` → MILHEIRO) |
+| `D_E_L_E_T_` | Exclusão lógica |
+
+**O que a SAH010 não guarda:** fatores como `1 MI = 1000 PC` ou `1 MT = 1000 mm`.
+
+| Necessidade | Fonte correta |
+|-------------|---------------|
+| Fator principal ↔ segunda unidade | `SB1010.B1_CONV` + `B1_TIPCONV` |
+| Unidade principal / segunda | `SB1010.B1_UM` / `B1_SEGUM` |
+| Conversão fiscal/DIPI | `SB5010.B5_CONVDIP` |
+| Quantidade na BOM | `SG1010.G1_QUANT` |
+
+**SQL — listar unidades:**
+
+```sql
+SELECT AH_FILIAL, AH_UNIMED AS UNIDADE, AH_DESCPO AS DESCRICAO
+FROM SAH010
+WHERE D_E_L_E_T_ = ''
+ORDER BY AH_UNIMED;
+```
+
+**SQL — validar unidade do produto:**
+
+```sql
+SELECT P.B1_COD, P.B1_DESC, P.B1_UM, U.AH_DESCPO AS DESCRICAO_UNIDADE
+FROM SB1010 P
+LEFT JOIN SAH010 U ON U.AH_UNIMED = P.B1_UM AND U.D_E_L_E_T_ = ''
+WHERE P.D_E_L_E_T_ = '' AND P.B1_COD = '90260882';
+```
+
+**SQL — produtos com unidade não cadastrada:**
+
+```sql
+SELECT P.B1_COD, P.B1_DESC, P.B1_UM
+FROM SB1010 P
+LEFT JOIN SAH010 U ON U.AH_UNIMED = P.B1_UM AND U.D_E_L_E_T_ = ''
+WHERE P.D_E_L_E_T_ = '' AND ISNULL(P.B1_UM, '') <> '' AND U.AH_UNIMED IS NULL;
+```
+
+> **Conclusão:** `SAH010` = referência de unidades · `SB1010` = unidade e conversão do produto · `SB5010` = fiscal · `SG1010` = quantidade da estrutura.
 
 ### 4.1 SB1010 — Cadastro de produtos
 
@@ -354,19 +418,21 @@ Preferir: `GET /products/{code}/production-status`.
 | Omitir `D_E_L_E_T_ = ''` | Registros excluídos na consulta |
 | Dividir tudo por 1000 sem checar UM do pai | PA em PC/UN fica errado |
 | Confundir «1 peça» com «1 PA/MI» na api-delpi | Simulador ou estrutura com escala errada |
+| Usar `SAH010` para fator de conversão | Fator inexistente — usar `SB1010` / `SB5010` / `SG1010` |
 
 ---
 
 ## 15. Ordem de validação
 
 1. Produto ativo? → `SB1010` ou `GET /products/{code}`
-2. Unidade do pai? → `B1_UM`
-3. Estrutura vigente? → `SG1010` ou `/structure`
-4. Unidade de cada componente? → `SB1010.B1_UM`
-5. Segunda UM / fator? → `B1_SEGUM`, `B1_CONV`, `B1_TIPCONV`
-6. Contexto fiscal? → `SB5010`
-7. Consumo real OP? → `SC2010` + `SD4010` ou `/production-status`
-8. Impacto de custo / ranking MPs? → `/cost-impact-simulation` (somente PA)
+2. Unidade cadastrada (descrição)? → `SAH010` (`AH_UNIMED`, `AH_DESCPO`)
+3. Unidade do pai? → `B1_UM`
+4. Estrutura vigente? → `SG1010` ou `/structure`
+5. Unidade de cada componente? → `SB1010.B1_UM`
+6. Segunda UM / fator? → `B1_SEGUM`, `B1_CONV`, `B1_TIPCONV`
+7. Contexto fiscal? → `SB5010`
+8. Consumo real OP? → `SC2010` + `SD4010` ou `/production-status`
+9. Impacto de custo / ranking MPs? → `/cost-impact-simulation` (somente PA)
 
 ---
 
@@ -388,6 +454,7 @@ Preferir: `GET /products/{code}/production-status`.
 ## 17. Resumo
 
 ```text
+Referência UM      → SAH010 (cadastro/descrição — sem fator)
 Produção / BOM     → SG1010 + SB1010  → rotas /structure, /cost-impact-simulation
 Cadastro           → SB1010
 Fiscal / NF-e      → SB5010
