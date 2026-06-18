@@ -19,6 +19,7 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Arquivo | Uso |
 |---------|-----|
 | [api-delpi-rotas-agente.md](./api-delpi-rotas-agente.md) | Agente com provider OpenAPI **api-delpi** — mapa intenção → rota, permissões, sinônimos e exemplos (maio/2026) |
+| [treinamento-agente-interacoes-jun2026.md](./treinamento-agente-interacoes-jun2026.md) | **Treinamento ao vivo** — 6 interações copiar/colar (fabril, preço MP, simulador, fontes do projeto) |
 | [gpt-instructions-coverage-map.md](./gpt-instructions-coverage-map.md) | Mapa documento a documento: GPT_instructions (api-delpi-py) × agente `minha-delpi-chat` |
 | [chat-intelligence-settings-profiles.md](./chat-intelligence-settings-profiles.md) | Perfis **dev** e **produção** — toggles do Admin → Inteligência do chat |
 | [sources/gpt-instructions/](./sources/gpt-instructions/) | **Cópia verbatim** da pasta GPT_instructions (14 .md + PDF) — fonte para sync e implementações |

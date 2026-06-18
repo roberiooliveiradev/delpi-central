@@ -129,6 +129,7 @@ Changelogs recentes:
 | [README.md](./testing/README.md) | Índice de testes e smokes |
 | [smoke-operacional-manual.md](./testing/smoke-operacional-manual.md) | Checklist manual (U1–U9, G1–G3, #70–79…) |
 | [perguntas-teste-chat-jun2026.md](./testing/perguntas-teste-chat-jun2026.md) | Perguntas de regressão |
+| [knowledge/treinamento-agente-interacoes-jun2026.md](./knowledge/treinamento-agente-interacoes-jun2026.md) | Roteiro de treinamento (6 interações) |
 | [smoke-operational-intelligence-e2e.md](./testing/smoke-operational-intelligence-e2e.md) | E2E operacional |
 
 Suíte automatizada: `tests/unit/` (pytest). Fixtures: `tests/fixtures/chat_intelligence_regression_cases.py`.

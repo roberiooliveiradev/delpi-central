@@ -68,6 +68,7 @@ Cenários E2E declarativos: `app/content/pt-BR/assistant/smoke_e2e_scenarios.jso
 |-----------|----------|
 | [smoke-operacional-manual.md](./smoke-operacional-manual.md) | **Principal** — U1–U9, G1–G3, N1–N4, #70–79, persistência stream |
 | [perguntas-teste-chat-jun2026.md](./perguntas-teste-chat-jun2026.md) | Perguntas por categoria |
+| [../knowledge/treinamento-agente-interacoes-jun2026.md](../knowledge/treinamento-agente-interacoes-jun2026.md) | Treinamento ao vivo — 6 interações |
 | [smoke-operational-intelligence-e2e.md](./smoke-operational-intelligence-e2e.md) | E2E operacional |
 | [smoke-api-delpi-domain-routing.md](./smoke-api-delpi-domain-routing.md) | Domínios de rota |
 | [smoke-system-metadata-homologacao.md](./smoke-system-metadata-homologacao.md) | Metadados `/system` |
