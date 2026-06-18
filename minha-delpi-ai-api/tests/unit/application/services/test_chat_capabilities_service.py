@@ -251,8 +251,6 @@ def test_web_search_help_feature_answer(_enabled):
     assert "pesquise na web" in answer.lower()
 
 
-import pytest
-
 from tests.fixtures.chat_intelligence_regression_cases import (
     TRAINING_AGENT_CAPABILITY_GATE_CASES,
     TRAINING_AGENT_INTERACTION_INDEX,
