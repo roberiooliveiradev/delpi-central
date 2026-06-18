@@ -37,6 +37,18 @@ def test_missing_intent_is_stock():
     assert intent == ChatProductQueryIntent.STOCK
 
 
+def test_should_block_semantic_action_fallback_for_operational_follow_up():
+    assert ChatOperationalParameterService.should_block_semantic_action_fallback(
+        "e a expedição?",
+    )
+
+
+def test_should_not_block_semantic_action_fallback_for_global_catalog():
+    assert not ChatOperationalParameterService.should_block_semantic_action_fallback(
+        "quais produtos têm matéria-prima exclusiva?",
+    )
+
+
 def test_should_skip_agentic_for_stock_branch_refinement():
     history = [
         {"role": "user", "content": "estoque do produto 10080022"},

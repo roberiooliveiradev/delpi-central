@@ -58,3 +58,30 @@ def test_playbook_path_markers_include_factory_and_shipping():
 
     assert "/factory-status" in markers
     assert "/shipping-status" in markers
+
+
+def test_should_block_semantic_fallback_for_shipping_follow_up():
+    assert (
+        ChatOperationalFollowUpRoutingService.should_block_semantic_fallback(
+            "e a expedição?"
+        )
+        is True
+    )
+
+
+def test_should_block_semantic_fallback_for_structure_exclusivity_follow_up():
+    assert (
+        ChatOperationalFollowUpRoutingService.should_block_semantic_fallback(
+            "quais matérias-primas exclusivas existem na estrutura desse produto?"
+        )
+        is True
+    )
+
+
+def test_should_not_block_semantic_fallback_for_global_exclusive_catalog():
+    assert (
+        ChatOperationalFollowUpRoutingService.should_block_semantic_fallback(
+            "quais produtos têm matéria-prima exclusiva?"
+        )
+        is False
+    )

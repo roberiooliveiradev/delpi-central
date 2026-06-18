@@ -212,3 +212,45 @@ class ChatOperationalFollowUpRoutingService:
                 return True
 
         return False
+
+    @classmethod
+    def should_block_semantic_fallback(cls, message: str | None) -> bool:
+        """Evita ranker semântico quando o turno exige herança de produto e há sinal playbook."""
+        block = _routing_content().get("semanticFallbackBlock") or {}
+
+        if not isinstance(block, dict) or not block.get("whenShouldInheritProductCode"):
+            return False
+
+        if not ChatProductQueryIntentService.should_inherit_product_code(message):
+            return False
+
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        follow_type = ChatFollowUpIntentService.follow_up_type(message)
+
+        if follow_type and cls.preferred_route_id(follow_type):
+            return True
+
+        if cls.segment_from_message(message):
+            return True
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        for predicate in block.get("partialMatchPredicates") or []:
+            if ChatProductRoutePredicateService.partially_matches(
+                str(predicate),
+                normalized,
+                message=message or "",
+            ):
+                return True
+
+        return False

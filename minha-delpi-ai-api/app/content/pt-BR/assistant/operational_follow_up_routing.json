@@ -84,5 +84,14 @@
     "blockOnOperationalFollowUp": true,
     "blockOnReferencesPreviousWithOperationalTopics": true,
     "blockOnStructureExclusivityQuestion": true
+  },
+  "semanticFallbackBlock": {
+    "whenShouldInheritProductCode": true,
+    "partialMatchPredicates": [
+      "shippingStatus",
+      "productionStatus",
+      "factoryStatus",
+      "structureExclusivity"
+    ]
   }
 }
