@@ -12,6 +12,7 @@ import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
 import { SidebarFavoritesList } from "./SidebarFavoritesList";
+import { SidebarMobileMenuButton } from "./SidebarMobileMenuButton";
 
 import {
   Bell,
@@ -444,7 +445,11 @@ export const Sidebar = () => {
         />
       ) : null}
 
-      {collapsed && (
+      {collapsed && isNarrowViewport ? (
+        <SidebarMobileMenuButton onOpen={openSidebarFromEdge} />
+      ) : null}
+
+      {collapsed ? (
         <button
           ref={expandControlRef}
           type="button"
@@ -465,9 +470,10 @@ export const Sidebar = () => {
             {isNarrowViewport ? SIDEBAR_EDGE_LABEL_MOBILE : SIDEBAR_EDGE_LABEL_DESKTOP}
           </span>
         </button>
-      )}
+      ) : null}
 
       <div
+        id="portal-sidebar"
         className={`sidebar ${collapsed ? "collapsed" : ""}`}
         ref={containerRef}
       >
