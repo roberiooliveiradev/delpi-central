@@ -19,6 +19,7 @@ import {
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
+  planUsesSummaryThenEvidence,
 } from "../presentation/pipeline/presentationStackPlan";
 import { useAssistantContentChrome } from "./useAssistantContentChrome";
 import { useAssistantContentSegments } from "./useAssistantContentSegments";
@@ -136,8 +137,10 @@ export function ChatAssistantContent({
     () => getTextMarkdownFromToolCalls(toolCalls),
     [toolCalls],
   );
+  const evidenceFirstLayout = planUsesSummaryThenEvidence(stackPlan);
   const suppressPresentationChrome =
     hasDecisionCard ||
+    evidenceFirstLayout ||
     (showCompleteStackView &&
       Boolean(narrativeMarkdown.trim()) &&
       (planUsesHumanizedSections(stackPlan) ||
@@ -147,6 +150,8 @@ export function ChatAssistantContent({
             segment.kind === "tree" ||
             segment.kind === "stackSection",
         )));
+  const showTailRecommendations =
+    evidenceFirstLayout && presentationRecommendations.length > 0;
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
@@ -190,6 +195,13 @@ export function ChatAssistantContent({
           )
         )}
       </div>
+
+      {showTailRecommendations ? (
+        <AssistantContentChrome
+          recommendations={presentationRecommendations}
+          onNavigate={onDrillDown}
+        />
+      ) : null}
     </div>
   );
 }

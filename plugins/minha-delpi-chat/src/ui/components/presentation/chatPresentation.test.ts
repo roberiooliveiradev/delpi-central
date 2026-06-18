@@ -380,6 +380,22 @@ describe("presentationDecision (Playbook 09)", () => {
       "dados temporais com valor numérico",
     );
   });
+
+  it("não expõe insight separado em summary_then_evidence", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        metadata: {
+          presentationDecision: {
+            presentationMode: "summary_then_evidence",
+            selected: "text",
+            insight: "Saldo disponível total: **150** un.",
+          },
+        },
+      },
+    ]);
+
+    expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
+  });
 });
 
 describe("resolveDefaultRichViewMode", () => {

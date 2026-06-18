@@ -317,7 +317,103 @@ class ChatRichPresentationTextService:
         if explicit_format == "dashboard":
             body = cls._compact_native_view_lead(body)
 
+        body = cls._align_narrative_with_data_answer(body, metadata)
+
         text_presentation["markdown"] = re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def _resolve_data_answer_lead(cls, data_answer: dict[str, Any]) -> str:
+        summary = data_answer.get("summary")
+
+        if not isinstance(summary, dict):
+            return ""
+
+        answer = str(summary.get("answer") or "").strip()
+        meaning = str(summary.get("meaning") or "").strip()
+
+        if answer and meaning and meaning not in answer:
+            return f"{answer} {meaning}".strip()
+
+        return answer
+
+    @classmethod
+    def _strip_operational_presenter_summary_paragraphs(cls, markdown: str) -> str:
+        paragraphs = re.split(r"\n{2,}", str(markdown or "").strip())
+        kept: list[str] = []
+
+        for paragraph in paragraphs:
+            trimmed = paragraph.strip()
+
+            if not trimmed:
+                continue
+
+            if trimmed.startswith("<!--") or trimmed.startswith("#"):
+                kept.append(trimmed)
+                continue
+
+            if re.match(r"(?i)^Consultei o estoque\b", trimmed):
+                continue
+
+            if re.match(r"(?i)^Encontrei \*\*", trimmed):
+                continue
+
+            kept.append(trimmed)
+
+        return "\n\n".join(kept).strip()
+
+    @classmethod
+    def _inject_data_answer_lead_in_scope(cls, markdown: str, lead: str) -> str:
+        if not lead or lead in markdown:
+            return markdown
+
+        marker = "<!-- section:scope -->"
+
+        if marker in markdown:
+            head, tail = markdown.split(marker, 1)
+            tail_chunks = [part.strip() for part in tail.strip().split("\n\n") if part.strip()]
+            framing = tail_chunks[0] if tail_chunks else ""
+            rest = "\n\n".join(tail_chunks[1:]).strip() if len(tail_chunks) > 1 else ""
+            scope_parts = [marker, ""]
+
+            if framing:
+                scope_parts.extend([framing, ""])
+
+            scope_parts.append(lead)
+
+            if rest:
+                scope_parts.extend(["", rest])
+
+            rebuilt = "\n".join(scope_parts).strip()
+            return f"{head.rstrip()}\n\n{rebuilt}".strip()
+
+        title_match = re.match(r"(^(?:#{1,3} .+\n+))", markdown, flags=re.MULTILINE)
+
+        if title_match:
+            title_block = title_match.group(1)
+            remainder = markdown[title_match.end() :].strip()
+            return f"{title_block}\n{lead}\n\n{remainder}".strip()
+
+        return f"{lead}\n\n{markdown}".strip()
+
+    @classmethod
+    def _align_narrative_with_data_answer(
+        cls,
+        markdown: str,
+        metadata: dict[str, Any],
+    ) -> str:
+        data_answer = metadata.get("dataAnswer")
+
+        if not isinstance(data_answer, dict):
+            return markdown
+
+        lead = cls._resolve_data_answer_lead(data_answer)
+
+        if not lead:
+            return markdown
+
+        body = cls._strip_operational_presenter_summary_paragraphs(markdown)
+
+        return cls._inject_data_answer_lead_in_scope(body, lead)
 
     @classmethod
     def _strip_embedded_visual_sections_for_stack(cls, markdown: str) -> str:

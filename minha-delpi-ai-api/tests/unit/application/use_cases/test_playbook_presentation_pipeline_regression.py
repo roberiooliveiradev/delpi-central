@@ -266,6 +266,10 @@ def test_stock_playbook_keeps_data_answer_without_decision_card():
     assert meta.get("storyPresentation") is None
     assert meta.get("dataAnswer", {}).get("summary", {}).get("answer")
     assert meta.get("textPresentation", {}).get("markdown")
+    assert meta["presentationDecision"].get("insight") == ""
+    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
+    assert "Consultei o estoque" not in markdown
+    assert "Saldo disponível total" in markdown
 
 
 def test_stock_playbook_text_first_without_integrated_stack():

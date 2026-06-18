@@ -49,6 +49,33 @@ def test_stack_plan_uses_summary_then_evidence_profile_when_mode_active():
     assert "operationalTables" in plan["narrativeOrder"]
 
 
+def test_compose_clears_redundant_insight_when_active():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "single",
+            "insight": "Saldo disponível total: **150** un.",
+        },
+        "dataAnswer": {
+            "profileKey": "stock",
+            "summary": {
+                "answer": "Saldo disponível total: **150** un.",
+                "riskLevel": "ok",
+            },
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+        },
+        "textPresentation": {
+            "markdown": "### Estoque\n\nSituação consolidada.",
+        },
+    }
+
+    ChatPresentationEvidenceFirstLayoutService.compose(metadata)
+
+    assert metadata["presentationDecision"]["insight"] == ""
+
+
 def test_compose_keeps_natural_chat_narrative_without_story_card():
     metadata = {
         "presentationDecision": {

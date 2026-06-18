@@ -112,6 +112,12 @@ export function getPresentationInsightFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): string {
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const presentationMode = String(decision?.presentationMode ?? "").trim();
+
+  if (presentationMode === "summary_then_evidence") {
+    return "";
+  }
+
   const insight = String(decision?.insight ?? "").trim();
 
   if (insight) {

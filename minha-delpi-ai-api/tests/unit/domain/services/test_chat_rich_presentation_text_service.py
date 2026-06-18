@@ -405,6 +405,44 @@ def test_prepare_evidence_first_chat_narrative_strips_embedded_visuals_in_single
     assert "| --- |" not in markdown
 
 
+def test_prepare_evidence_first_chat_narrative_aligns_stock_with_data_answer():
+    metadata = {
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "single",
+        },
+        "dataAnswer": {
+            "profileKey": "stock",
+            "summary": {
+                "answer": "Saldo disponível total: **150** un. em **2** posição(ões).",
+                "meaning": "Maior concentração na filial **01** (105 un. disponíveis).",
+                "riskLevel": "ok",
+            },
+        },
+        "textPresentation": {
+            "markdown": (
+                "### Estoque do produto — 90269001\n\n"
+                "<!-- section:scope -->\n\n"
+                "Posições de estoque por filial e armazém — saldo atual, disponível e empenhado.\n\n"
+                "Consultei o estoque do produto **90269001**: **2** posição(ões) em **2** filial(is) "
+                "(01, 02) e **1** armazém(ns) (01). No total, há **150** unidade(s) disponível(is) "
+                "nesta consulta.\n\n"
+                "**Detalhamento por filial e armazém**\n"
+                "- Filial 01, armazém 01: atual 120, disponível 105."
+            ),
+        },
+    }
+
+    ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "Consultei o estoque" not in markdown
+    assert "Saldo disponível total: **150** un." in markdown
+    assert "Maior concentração na filial **01**" in markdown
+    assert "**Detalhamento por filial e armazém**" in markdown
+
+
 def test_prepare_evidence_first_chat_narrative_keeps_prose_strips_duplicates():
     metadata = {
         "presentationDecision": {
