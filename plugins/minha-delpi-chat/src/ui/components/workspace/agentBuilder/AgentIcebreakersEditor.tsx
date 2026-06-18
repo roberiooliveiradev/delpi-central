@@ -1,5 +1,5 @@
-import { Plus, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { ChevronDown, ChevronUp, GripVertical, Plus, X } from "lucide-react";
+import { useRef, useState, type DragEvent } from "react";
 
 import {
   AGENT_ICEBREAKER_MAX_CHARS,
@@ -10,6 +10,7 @@ import {
   clampIcebreakerDraft,
   formatIcebreakerForDisplay,
   hasShortcutPlaceholders,
+  reorderIcebreakers,
 } from "../../../agentIcebreakers";
 
 import "./AgentIcebreakersEditor.css";
@@ -26,7 +27,11 @@ export function AgentIcebreakersEditor({
   onChange,
 }: AgentIcebreakersEditorProps) {
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
+
+  const canReorder = icebreakers.length > 1;
 
   function updateIcebreaker(index: number, value: string) {
     onChange(
@@ -48,6 +53,53 @@ export function AgentIcebreakersEditor({
 
     onChange([...icebreakers, ""]);
     setFocusedIndex(icebreakers.length);
+  }
+
+  function moveIcebreaker(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) {
+      return;
+    }
+
+    onChange(reorderIcebreakers(icebreakers, fromIndex, toIndex));
+    setFocusedIndex(toIndex);
+  }
+
+  function moveIcebreakerByStep(index: number, direction: -1 | 1) {
+    moveIcebreaker(index, index + direction);
+  }
+
+  function handleDragStart(index: number, event: DragEvent) {
+    setDragIndex(index);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(index));
+  }
+
+  function handleDragOver(index: number, event: DragEvent) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    if (dropIndex !== index) {
+      setDropIndex(index);
+    }
+  }
+
+  function handleDrop(index: number, event: DragEvent) {
+    event.preventDefault();
+
+    const rawFrom = dragIndex ?? Number(event.dataTransfer.getData("text/plain"));
+    const fromIndex = Number.isFinite(rawFrom) ? rawFrom : -1;
+
+    if (fromIndex >= 0 && fromIndex !== index) {
+      moveIcebreaker(fromIndex, index);
+    }
+
+    setDragIndex(null);
+    setDropIndex(null);
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null);
+    setDropIndex(null);
   }
 
   function insertPlaceholder(fieldId: string, index = focusedIndex) {
@@ -127,6 +179,9 @@ export function AgentIcebreakersEditor({
         <code>{buildIcebreakerPlaceholderToken("productCode")}</code> — na home, o clique envia
         a pergunta (com diálogo para placeholders). Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões,{" "}
         {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada.
+        {canReorder ? (
+          <> Arraste pela alça à esquerda ou use as setas para definir a ordem na home.</>
+        ) : null}
       </p>
 
       <div className="mdc-agent-icebreakers-editor__templates" aria-label="Modelos de quebra-gelo">
@@ -163,10 +218,49 @@ export function AgentIcebreakersEditor({
         </div>
       </div>
 
-      <div className="mdc-chat-agent-builder__icebreakers">
+      <div
+        className="mdc-chat-agent-builder__icebreakers"
+        aria-label="Lista de quebra-gelos"
+      >
         {icebreakers.map((icebreaker, index) => (
-          <div key={`${index}-${icebreakers.length}`} className="mdc-agent-icebreakers-editor__row">
+          <div
+            key={`icebreaker-${index}`}
+            className={[
+              "mdc-agent-icebreakers-editor__row",
+              dragIndex === index ? "mdc-agent-icebreakers-editor__row--dragging" : "",
+              dropIndex === index && dragIndex !== index
+                ? "mdc-agent-icebreakers-editor__row--drop-target"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onDragOver={canReorder ? (event) => handleDragOver(index, event) : undefined}
+            onDrop={canReorder ? (event) => handleDrop(index, event) : undefined}
+            onDragLeave={
+              canReorder
+                ? () => {
+                    if (dropIndex === index) {
+                      setDropIndex(null);
+                    }
+                  }
+                : undefined
+            }
+          >
             <div className="mdc-chat-agent-builder__icebreaker-row">
+              {canReorder ? (
+                <button
+                  type="button"
+                  className="mdc-agent-icebreakers-editor__drag-handle"
+                  draggable
+                  onDragStart={(event) => handleDragStart(index, event)}
+                  onDragEnd={handleDragEnd}
+                  aria-label={`Reordenar quebra-gelo ${index + 1}`}
+                  title="Arrastar para reordenar"
+                >
+                  <GripVertical size={16} aria-hidden="true" />
+                </button>
+              ) : null}
+
               <textarea
                 ref={(element) => {
                   inputRefs.current[index] = element;
@@ -188,8 +282,38 @@ export function AgentIcebreakersEditor({
                 {icebreaker.length}/{AGENT_ICEBREAKER_MAX_CHARS}
               </span>
 
+              {canReorder ? (
+                <div
+                  className="mdc-agent-icebreakers-editor__reorder-actions"
+                  role="group"
+                  aria-label={`Mover quebra-gelo ${index + 1}`}
+                >
+                  <button
+                    type="button"
+                    className="mdc-agent-icebreakers-editor__reorder-btn"
+                    onClick={() => moveIcebreakerByStep(index, -1)}
+                    disabled={index === 0}
+                    aria-label={`Subir quebra-gelo ${index + 1}`}
+                    title="Subir"
+                  >
+                    <ChevronUp size={15} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="mdc-agent-icebreakers-editor__reorder-btn"
+                    onClick={() => moveIcebreakerByStep(index, 1)}
+                    disabled={index === icebreakers.length - 1}
+                    aria-label={`Descer quebra-gelo ${index + 1}`}
+                    title="Descer"
+                  >
+                    <ChevronDown size={15} aria-hidden="true" />
+                  </button>
+                </div>
+              ) : null}
+
               <button
                 type="button"
+                className="mdc-agent-icebreakers-editor__remove-btn"
                 onClick={() => removeIcebreaker(index)}
                 aria-label="Remover quebra-gelo"
               >

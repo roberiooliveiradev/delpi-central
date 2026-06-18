@@ -106,6 +106,29 @@ export function clampIcebreakerDraft(value: string): string {
   return value.slice(0, AGENT_ICEBREAKER_MAX_CHARS);
 }
 
+/** Reordena quebra-gelos no builder (ordem persistida em `metadata.icebreakers`). */
+export function reorderIcebreakers(
+  items: readonly string[],
+  fromIndex: number,
+  toIndex: number,
+): string[] {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length
+  ) {
+    return [...items];
+  }
+
+  const next = [...items];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+
+  return next;
+}
+
 /** Texto exibido no card (pode truncar; o clique envia o template com `{{campo}}`). */
 export function formatIcebreakerForDisplay(
   text: string,
