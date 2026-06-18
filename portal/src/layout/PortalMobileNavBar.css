@@ -1,0 +1,171 @@
+:root {
+  --portal-mobile-nav-size: 3.25rem;
+}
+
+@media (max-width: 1024px) {
+  .app-shell > .main-area {
+    box-sizing: border-box;
+  }
+
+  @media (orientation: portrait) {
+    .app-shell > .main-area {
+      padding-bottom: calc(
+        var(--portal-mobile-nav-size) + env(safe-area-inset-bottom, 0px)
+      );
+    }
+  }
+
+  @media (orientation: landscape) {
+    .app-shell > .main-area {
+      padding-left: calc(
+        var(--portal-mobile-nav-size) + env(safe-area-inset-left, 0px)
+      );
+    }
+  }
+}
+
+.portal-mobile-nav {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .portal-mobile-nav {
+    position: fixed;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 0.35rem;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .portal-mobile-nav__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      background 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .portal-mobile-nav__button:hover,
+  .portal-mobile-nav__button:focus-visible {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    outline: none;
+    transform: scale(1.04);
+  }
+
+  .portal-mobile-nav__button.is-active {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+  }
+
+  .portal-mobile-nav__theme-wrap {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .portal-mobile-nav__theme-wrap > .portal-mobile-nav__button {
+    width: 100%;
+  }
+
+  .portal-mobile-nav__theme-menu {
+    position: absolute;
+    display: grid;
+    gap: 0.25rem;
+    min-width: 9.5rem;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    z-index: 1;
+  }
+
+  .portal-mobile-nav__theme-menu button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.6rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.84rem;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .portal-mobile-nav__theme-menu button:hover,
+  .portal-mobile-nav__theme-menu button:focus-visible {
+    background: var(--surface-3);
+    outline: none;
+  }
+
+  .portal-mobile-nav__theme-menu button.is-active {
+    color: var(--primary);
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+  }
+
+  @media (orientation: portrait) {
+    .portal-mobile-nav {
+      right: 0;
+      bottom: 0;
+      left: 0;
+      flex-direction: row;
+      min-height: var(--portal-mobile-nav-size);
+      padding: 0.35rem 0.65rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .portal-mobile-nav__theme-menu {
+      right: 0;
+      bottom: calc(100% + 0.45rem);
+    }
+  }
+
+  @media (orientation: landscape) {
+    .portal-mobile-nav {
+      top: 0;
+      bottom: 0;
+      left: 0;
+      flex-direction: column;
+      justify-content: flex-start;
+      width: var(--portal-mobile-nav-size);
+      min-width: var(--portal-mobile-nav-size);
+      padding: calc(0.45rem + env(safe-area-inset-top, 0px)) 0.35rem 0.45rem
+        calc(0.35rem + env(safe-area-inset-left, 0px));
+    }
+
+    .portal-mobile-nav__button,
+    .portal-mobile-nav__theme-wrap {
+      flex: 0 0 auto;
+      width: 100%;
+    }
+
+    .portal-mobile-nav__theme-menu {
+      top: 0;
+      left: calc(100% + 0.45rem);
+    }
+  }
+}

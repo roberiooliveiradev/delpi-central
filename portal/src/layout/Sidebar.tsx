@@ -13,6 +13,7 @@ import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
 import { SidebarFavoritesList } from "./SidebarFavoritesList";
+import { usePortalMobileChrome } from "../hooks/usePortalMobileChrome";
 
 import {
   Bell,
@@ -124,20 +125,7 @@ export const Sidebar = () => {
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [showEdgeExpand, setShowEdgeExpand] = useState(false);
-  const [isNarrowViewport, setIsNarrowViewport] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 1024px)").matches,
-  );
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 1024px)");
-    const onChange = () => setIsNarrowViewport(mediaQuery.matches);
-
-    onChange();
-    mediaQuery.addEventListener("change", onChange);
-    return () => mediaQuery.removeEventListener("change", onChange);
-  }, []);
+  const { isNarrowViewport, isLandscapeMobile } = usePortalMobileChrome();
 
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
@@ -232,7 +220,7 @@ export const Sidebar = () => {
     isSwipeDragging,
     swipeBackdropOpacity,
   } = useSidebarMobileSwipeOpen({
-    enabled: collapsed && isNarrowViewport,
+    enabled: collapsed && isNarrowViewport && !isLandscapeMobile,
     sidebarRef: containerRef,
     onOpen: openSidebarFromEdge,
     onSwipeStart: clearEdgeHold,
@@ -349,7 +337,7 @@ export const Sidebar = () => {
   }, [collapsed]);
 
   useEffect(() => {
-    if (!collapsed || !isNarrowViewport) {
+    if (!collapsed || !isNarrowViewport || isLandscapeMobile) {
       clearEdgeHold();
       return;
     }
@@ -416,6 +404,7 @@ export const Sidebar = () => {
   }, [
     collapsed,
     isNarrowViewport,
+    isLandscapeMobile,
     clearEdgeHold,
     scheduleEdgeAutoHide,
   ]);
