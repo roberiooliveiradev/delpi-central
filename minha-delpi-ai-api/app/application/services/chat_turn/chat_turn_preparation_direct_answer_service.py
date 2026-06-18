@@ -266,6 +266,21 @@ class ChatTurnPreparationDirectAnswerService:
         if project_sources_direct and "project_sources_inventory" not in pipeline_stage_additions:
             pipeline_stage_additions.append("project_sources_inventory")
 
+            from app.domain.services.chat_project_sources_inventory_service import (
+                ChatProjectSourcesInventoryService,
+            )
+
+            sources = ChatProjectSourcesDirectAnswerService.list_project_sources(
+                user_id=str(user_id),
+                session=session,
+                workspace_context=workspace_context,
+            )
+
+            if sources:
+                workspace_context_patches["pendingProjectSourcesInventory"] = (
+                    ChatProjectSourcesInventoryService.serialize_sources(sources)
+                )
+
         if text_correction_mode:
             workspace_context_patches["textCorrectionMode"] = True
             workspace_context_patches["textCorrectionSubtype"] = text_correction_subtype

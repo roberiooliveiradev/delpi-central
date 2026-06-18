@@ -54,11 +54,61 @@ class ChatProjectSourcesIntentService:
         return cls._matches_any(message, "inventoryPhrases")
 
     @classmethod
-    def is_content_question(cls, message: str) -> bool:
+    def is_content_question(
+        cls,
+        message: str,
+        *,
+        memory_snapshot: dict | None = None,
+        previous_messages: list | None = None,
+    ) -> bool:
         if cls._matches_any(message, "contentQuestionPhrases"):
             return True
 
-        return bool(cls.extract_document_reference(message))
+        if cls.extract_document_reference(message):
+            return True
+
+        from app.domain.services.chat_project_source_slot_resolver_service import (
+            ChatProjectSourceSlotResolverService,
+        )
+        from app.domain.services.chat_project_sources_inventory_service import (
+            ChatProjectSourcesInventoryService,
+        )
+
+        if ChatProjectSourceSlotResolverService.looks_like_slot_reference(message):
+            inventory = ChatProjectSourcesInventoryService.read_inventory(
+                memory_snapshot,
+                previous_messages=previous_messages,
+            )
+
+            if inventory:
+                return True
+
+        return False
+
+    @classmethod
+    def resolve_slotted_source(
+        cls,
+        message: str,
+        *,
+        memory_snapshot: dict | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        from app.domain.services.chat_project_source_slot_resolver_service import (
+            ChatProjectSourceSlotResolverService,
+        )
+        from app.domain.services.chat_project_sources_inventory_service import (
+            ChatProjectSourcesInventoryService,
+        )
+
+        inventory = ChatProjectSourcesInventoryService.read_inventory(
+            memory_snapshot,
+            previous_messages=previous_messages,
+        )
+
+        if not inventory:
+            return None
+
+        return ChatProjectSourceSlotResolverService.resolve(message, inventory)
 
     @classmethod
     def extract_document_reference(cls, message: str) -> str | None:
@@ -75,11 +125,21 @@ class ChatProjectSourcesIntentService:
         return match.group(1).strip(" \"'`")
 
     @classmethod
-    def should_restrict_to_project_sources(cls, message: str) -> bool:
+    def should_restrict_to_project_sources(
+        cls,
+        message: str,
+        *,
+        memory_snapshot: dict | None = None,
+        previous_messages: list | None = None,
+    ) -> bool:
         if cls.is_inventory_question(message):
             return True
 
-        if cls.is_content_question(message):
+        if cls.is_content_question(
+            message,
+            memory_snapshot=memory_snapshot,
+            previous_messages=previous_messages,
+        ):
             return True
 
         return cls._matches_any(message, "scopedPhrases")
@@ -117,17 +177,40 @@ class ChatProjectSourcesIntentService:
         return reference_key in title_key or title_key in reference_key
 
     @classmethod
-    def build_content_chunk_filter(cls, message: str) -> Callable[[dict], bool] | None:
-        if not cls.is_content_question(message):
+    def build_content_chunk_filter(
+        cls,
+        message: str,
+        *,
+        memory_snapshot: dict | None = None,
+        previous_messages: list | None = None,
+    ) -> Callable[[dict], bool] | None:
+        if not cls.is_content_question(
+            message,
+            memory_snapshot=memory_snapshot,
+            previous_messages=previous_messages,
+        ):
             return None
 
         reference = cls.extract_document_reference(message)
+        slotted = cls.resolve_slotted_source(
+            message,
+            memory_snapshot=memory_snapshot,
+            previous_messages=previous_messages,
+        )
+        slotted_source_id = str((slotted or {}).get("projectSourceId") or "").strip()
 
         def _filter(chunk: dict) -> bool:
             scope = cls._chunk_scope(chunk)
 
             if scope != "project_source" and chunk.get("sourceType") != "project_source":
                 return False
+
+            if slotted_source_id:
+                document_id = str(chunk.get("documentId") or "").strip()
+                metadata = chunk.get("metadata") if isinstance(chunk.get("metadata"), dict) else {}
+                metadata_document_id = str(metadata.get("documentId") or "").strip()
+
+                return document_id == slotted_source_id or metadata_document_id == slotted_source_id
 
             if reference:
                 return cls.chunk_matches_document_reference(chunk, reference)

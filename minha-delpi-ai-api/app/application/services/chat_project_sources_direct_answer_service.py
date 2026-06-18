@@ -14,6 +14,30 @@ from app.domain.services.chat_project_sources_intent_service import (
 
 class ChatProjectSourcesDirectAnswerService:
     @classmethod
+    def list_project_sources(
+        cls,
+        *,
+        user_id: str,
+        session,
+        workspace_context: dict,
+    ) -> list[Any]:
+        project = workspace_context.get("project") if isinstance(workspace_context, dict) else None
+        project_id = (
+            str((project or {}).get("id") or "").strip()
+            or str(getattr(session, "project_id", "") or "").strip()
+        )
+
+        if not project_id:
+            return []
+
+        from app.composition.chat_composer import make_list_project_sources_use_case
+
+        return make_list_project_sources_use_case().execute(
+            user_id=str(user_id),
+            project_id=project_id,
+        )
+
+    @classmethod
     def build_direct_answer(
         cls,
         *,
@@ -40,11 +64,10 @@ class ChatProjectSourcesDirectAnswerService:
             )
 
         try:
-            from app.composition.chat_composer import make_list_project_sources_use_case
-
-            sources = make_list_project_sources_use_case().execute(
+            sources = cls.list_project_sources(
                 user_id=str(user_id),
-                project_id=project_id,
+                session=session,
+                workspace_context=workspace_context,
             )
         except ValueError as exc:
             return ChatTurnPreparationContentService.format(

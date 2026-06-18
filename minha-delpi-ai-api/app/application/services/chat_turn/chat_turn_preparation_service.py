@@ -337,6 +337,7 @@ class ChatTurnPreparationService:
             knowledge_scope_service=self.knowledge_scope_service,
             semantic_memory_service=self.semantic_memory_service,
             on_stream_activity=on_stream_activity,
+            previous_messages=history_source,
         )
         rag = rag_phase.rag
         sources = rag_phase.sources

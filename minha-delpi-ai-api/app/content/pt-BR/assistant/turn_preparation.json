@@ -78,8 +78,29 @@
         "o que diz o arquivo",
         "o que diz este arquivo",
         "transcreva o arquivo",
-        "me mostre o conteudo",
+        "resuma o conteúdo do primeiro arquivo",
+        "resumir o conteúdo do primeiro arquivo",
+        "resuma o conteudo do primeiro arquivo",
+        "resumir o primeiro arquivo",
+        "resuma o primeiro arquivo",
         "me mostre o conteúdo"
+      ],
+      "slotReferencePhrases": [
+        "primeiro arquivo",
+        "primeira fonte",
+        "primeiro documento",
+        "segundo arquivo",
+        "terceiro arquivo",
+        "ultimo arquivo",
+        "último arquivo",
+        "ultima fonte",
+        "última fonte",
+        "desse arquivo",
+        "deste arquivo",
+        "desse documento",
+        "deste documento",
+        "conteudo do primeiro",
+        "conteúdo do primeiro"
       ]
     },
     "formatRefinement": {

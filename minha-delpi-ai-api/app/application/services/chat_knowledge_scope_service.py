@@ -21,6 +21,8 @@ class ChatKnowledgeScopeService:
         workspace_context: dict,
         attachment_ids: list[str] | None = None,
         message: str | None = None,
+        memory_snapshot: dict | None = None,
+        previous_messages: list | None = None,
     ) -> dict:
         project = workspace_context.get("project") or {}
         project_id = project.get("id") or session.project_id
@@ -29,7 +31,9 @@ class ChatKnowledgeScopeService:
         include_global = bool(skills.get("companyKnowledge", True))
 
         if message and ChatProjectSourcesIntentService.should_restrict_to_project_sources(
-            message
+            message,
+            memory_snapshot=memory_snapshot,
+            previous_messages=previous_messages,
         ):
             include_global = False
 

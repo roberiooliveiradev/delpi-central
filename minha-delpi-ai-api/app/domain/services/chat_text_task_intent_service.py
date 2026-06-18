@@ -259,6 +259,21 @@ class ChatTextTaskIntentService:
         if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
             return False
 
+        from app.domain.services.chat_project_source_slot_resolver_service import (
+            ChatProjectSourceSlotResolverService,
+        )
+        from app.domain.services.chat_project_sources_inventory_service import (
+            ChatProjectSourcesInventoryService,
+        )
+
+        if ChatProjectSourceSlotResolverService.looks_like_slot_reference(message):
+            inventory = ChatProjectSourcesInventoryService.read_from_previous_messages(
+                previous_messages,
+            )
+
+            if inventory:
+                return False
+
         category = cls.classify(message)
 
         if cls._is_session_preference_declaration(message):

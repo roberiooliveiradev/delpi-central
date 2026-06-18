@@ -1,6 +1,6 @@
 # Playbook — Follow-up operacional desacoplado (jun/2026)
 
-> **Status:** P0 + P1.0–P1.4 implementados (jun/2026); P2 backlog.
+> **Status:** P0 + P1 + P2 implementados (jun/2026).
 
 Projeto: **Minha DELPI Chat IA** · Pacote: `minha-delpi-ai-api`
 
@@ -82,9 +82,9 @@ Referência: [`chat-intelligence-base.md`](../../architecture/chat-intelligence-
 
 | # | Entrega |
 |---|---------|
-| P2.1 | Snapshot `lastProjectSourcesInventory` pós-`project_sources_inventory` |
-| P2.2 | `ChatProjectSourceSlotResolverService` (ordinal, nome parcial) |
-| P2.3 | RAG filtrado por `project_source_id` — não `text_task` genérico |
+| P2.1 | Snapshot `lastProjectSourcesInventory` pós-`project_sources_inventory` | `ChatProjectSourcesInventoryService` | ✅ |
+| P2.2 | `ChatProjectSourceSlotResolverService` (ordinal, nome parcial) | domain | ✅ |
+| P2.3 | RAG filtrado por `project_source_id` — não `text_task` genérico | intent + RAG chunk filter | ✅ |
 
 ---
 
