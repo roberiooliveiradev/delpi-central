@@ -12,7 +12,6 @@ import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
 import { SidebarFavoritesList } from "./SidebarFavoritesList";
-import { SidebarMobileMenuButton } from "./SidebarMobileMenuButton";
 
 import {
   Bell,
@@ -443,10 +442,6 @@ export const Sidebar = () => {
           aria-label="Fechar menu lateral"
           onClick={() => setCollapsed(true)}
         />
-      ) : null}
-
-      {collapsed && isNarrowViewport ? (
-        <SidebarMobileMenuButton onOpen={openSidebarFromEdge} />
       ) : null}
 
       {collapsed ? (

@@ -40,10 +40,6 @@
   display: none;
 }
 
-.sidebar-mobile-menu-btn {
-  display: none;
-}
-
 /* =========================================
    MOBILE DRAWER MODE
 ========================================= */
@@ -52,60 +48,6 @@
   :root {
     --portal-sidebar-edge-band-width: clamp(2.025rem, 2.85vw, 2.4rem);
     --portal-sidebar-edge-hotspot-width: clamp(0.75rem, 1.125vw, 1.125rem);
-  }
-
-  .sidebar-mobile-menu-btn {
-    display: inline-flex;
-    position: fixed;
-    top: max(0.5rem, env(safe-area-inset-top, 0px));
-    left: max(0.5rem, env(safe-area-inset-left, 0px));
-    z-index: 50;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    padding: 0;
-    border: none;
-    border-radius: 10px;
-    background: transparent;
-    color: color-mix(in srgb, var(--text-muted) 55%, transparent);
-    opacity: 0.24;
-    box-shadow: none;
-    cursor: grab;
-    pointer-events: auto;
-    touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
-    transition:
-      opacity 0.2s ease,
-      color 0.2s ease,
-      background 0.2s ease,
-      transform 0.2s ease;
-  }
-
-  .sidebar-mobile-menu-btn--positioned {
-    top: auto;
-    left: auto;
-  }
-
-  .sidebar-mobile-menu-btn:hover,
-  .sidebar-mobile-menu-btn:focus-visible,
-  .sidebar-mobile-menu-btn.is-revealed {
-    opacity: 1;
-    color: var(--primary);
-    background: color-mix(in srgb, var(--surface) 72%, transparent);
-    box-shadow: var(--shadow);
-    outline: none;
-    transform: scale(1.03);
-  }
-
-  .sidebar-mobile-menu-btn.is-dragging {
-    opacity: 1;
-    color: var(--primary);
-    background: color-mix(in srgb, var(--surface) 80%, transparent);
-    box-shadow: var(--shadow);
-    cursor: grabbing;
-    transform: scale(1.05);
   }
 
   .sidebar {
