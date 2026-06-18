@@ -643,6 +643,21 @@ services:
     networks:
       - delpi-network
 
+  inspecoes-entrada:
+    build:
+      context: ../plugins/inspecoes-entrada
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-inspecoes-entrada
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   central-agendamento:
     build:
       context: ../plugins/central-agendamento
@@ -1054,6 +1069,7 @@ services:
       - propostas-comerciais
       - auditoria-5s
       - cadastro-kaizen
+      - inspecoes-entrada
       - central-agendamento
       - dashboard-supplies
       - dashboard-financial
