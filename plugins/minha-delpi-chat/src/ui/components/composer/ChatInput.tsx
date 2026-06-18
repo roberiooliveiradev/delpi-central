@@ -177,6 +177,8 @@ export function ChatInput({
         ? filterComposerMentionCandidates(mentionCandidates, activeMention.query, {
             selectedAgentIds,
             selectedProjectIds,
+            inUseAgentIds: selectedAgentIds,
+            inUseProjectIds: selectedProjectIds,
           })
         : [],
     [activeMention, mentionCandidates, selectedAgentIds, selectedProjectIds],

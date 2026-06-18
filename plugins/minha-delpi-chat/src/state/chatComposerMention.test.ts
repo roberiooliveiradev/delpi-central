@@ -45,6 +45,15 @@ describe("chatComposerMention", () => {
     ]);
   });
 
+  it("oculta agente e projeto já em uso no contexto", () => {
+    expect(
+      filterComposerMentionCandidates(candidates, "", {
+        inUseAgentIds: ["agent-a"],
+        inUseProjectIds: ["project-a"],
+      }).map((item) => item.name),
+    ).toEqual(["outro"]);
+  });
+
   it("remove menção ativa sem inserir token @[Nome]", () => {
     const result = applyComposerMentionSelection({
       value: "consulta @de",

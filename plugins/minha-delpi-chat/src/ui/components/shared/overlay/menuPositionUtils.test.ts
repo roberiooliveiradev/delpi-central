@@ -237,10 +237,10 @@ describe("composer mobile viewports", () => {
 });
 
 describe("estimateChatInputPlusMenuItemCount", () => {
-  it("conta anexo, agentes, projetos e cabeçalhos", () => {
+  it("conta anexo, agentes, projetos, cabeçalhos e hints", () => {
     expect(
       estimateChatInputPlusMenuItemCount({ agentCount: 4, projectCount: 10 }),
-    ).toBe(1 + 4 + 8 + 3);
+    ).toBe(1 + 4 + 8 + 5);
   });
 });
 
@@ -392,5 +392,35 @@ describe("resolveComposerMentionMenuPosition", () => {
 
     expect(layout.left).toBe(40);
     expect(width).toBeLessThanOrEqual(280);
+  });
+
+  it("converte coordenadas do caret apenas uma vez no portal contido", () => {
+    const containerRect = {
+      left: 240,
+      top: 64,
+      right: 1040,
+      bottom: 864,
+      width: 800,
+      height: 800,
+    };
+    const caretRect = {
+      left: 320,
+      top: 720,
+      right: 320,
+      bottom: 740,
+      width: 0,
+      height: 20,
+    };
+
+    const layout = resolveComposerMentionMenuPosition({
+      rect: caretRect,
+      itemCount: 3,
+      contained: true,
+      containerRect,
+    });
+
+    expect(layout.left).toBe(80);
+    expect(layout.top).toBeLessThan(656);
+    expect(layout.anchorAbove).toBe(true);
   });
 });

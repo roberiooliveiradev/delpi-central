@@ -81,13 +81,25 @@ export function filterComposerMentionCandidates(
   limits?: {
     selectedAgentIds?: readonly string[];
     selectedProjectIds?: readonly string[];
+    inUseAgentIds?: readonly string[];
+    inUseProjectIds?: readonly string[];
   },
 ): ComposerMentionCandidate[] {
   const normalizedQuery = normalizeName(query);
   const selectedAgents = new Set(normalizeContextIdList(limits?.selectedAgentIds));
   const selectedProjects = new Set(normalizeContextIdList(limits?.selectedProjectIds));
+  const inUseAgents = new Set(normalizeContextIdList(limits?.inUseAgentIds));
+  const inUseProjects = new Set(normalizeContextIdList(limits?.inUseProjectIds));
 
   return candidates.filter((candidate) => {
+    if (candidate.kind === "agent" && inUseAgents.has(candidate.id)) {
+      return false;
+    }
+
+    if (candidate.kind === "project" && inUseProjects.has(candidate.id)) {
+      return false;
+    }
+
     const normalizedName = normalizeName(candidate.name);
 
     if (normalizedQuery && !normalizedName.includes(normalizedQuery)) {
@@ -100,6 +112,15 @@ export function filterComposerMentionCandidates(
 
     return selectedProjects.size < MAX_COMPOSER_PROJECTS || selectedProjects.has(candidate.id);
   });
+}
+
+export function excludeInUseComposerContextItems<T extends { id: string }>(
+  items: readonly T[],
+  inUseIds?: readonly string[],
+): T[] {
+  const hidden = new Set(normalizeContextIdList(inUseIds));
+
+  return items.filter((item) => !hidden.has(item.id));
 }
 
 export function formatComposerMentionToken(name: string): string {

@@ -2,8 +2,6 @@ import type { MenuAnchorRect } from "../components/shared/overlay/menuPositionUt
 
 const MIRROR_STYLE_PROPERTIES = [
   "boxSizing",
-  "width",
-  "height",
   "overflowX",
   "overflowY",
   "borderTopWidth",
@@ -49,25 +47,30 @@ export function measureTextareaCaretRect(
   const doc = textarea.ownerDocument;
   const win = doc.defaultView ?? window;
   const computed = win.getComputedStyle(textarea);
+  const textareaRect = textarea.getBoundingClientRect();
   const mirror = doc.createElement("div");
 
   mirror.setAttribute("aria-hidden", "true");
-  mirror.style.position = "absolute";
-  mirror.style.top = "0";
-  mirror.style.left = "-9999px";
+  mirror.style.position = "fixed";
+  mirror.style.top = `${textareaRect.top}px`;
+  mirror.style.left = `${textareaRect.left}px`;
+  mirror.style.width = `${textareaRect.width}px`;
+  mirror.style.height = `${textareaRect.height}px`;
   mirror.style.visibility = "hidden";
   mirror.style.pointerEvents = "none";
   mirror.style.overflow = "hidden";
+  mirror.style.zIndex = "-1";
 
   for (const property of MIRROR_STYLE_PROPERTIES) {
     mirror.style.setProperty(property, computed.getPropertyValue(property));
   }
 
-  mirror.style.width = `${textarea.clientWidth}px`;
+  mirror.style.whiteSpace = "pre-wrap";
+  mirror.style.wordWrap = "break-word";
 
   const safeIndex = Math.max(0, Math.min(caretIndex, textarea.value.length));
   const textBefore = textarea.value.slice(0, safeIndex);
-  const textAfter = textarea.value.slice(safeIndex) || ".";
+  const textAfter = textarea.value.slice(safeIndex) || "\u200b";
 
   mirror.textContent = textBefore;
 
@@ -76,28 +79,19 @@ export function measureTextareaCaretRect(
   mirror.appendChild(marker);
 
   doc.body.appendChild(mirror);
+  mirror.scrollTop = textarea.scrollTop;
+  mirror.scrollLeft = textarea.scrollLeft;
 
-  const markerTop = marker.offsetTop;
-  const markerLeft = marker.offsetLeft;
-  const lineHeight = marker.offsetHeight || parsePixel(computed.lineHeight) || 20;
-  const textareaRect = textarea.getBoundingClientRect();
-  const borderTop = parsePixel(computed.borderTopWidth);
-  const borderLeft = parsePixel(computed.borderLeftWidth);
-  const paddingTop = parsePixel(computed.paddingTop);
-  const paddingLeft = parsePixel(computed.paddingLeft);
+  const markerRect = marker.getBoundingClientRect();
+  const lineHeight = markerRect.height || parsePixel(computed.lineHeight) || 20;
 
   doc.body.removeChild(mirror);
 
-  const left =
-    textareaRect.left + borderLeft + paddingLeft + markerLeft - textarea.scrollLeft;
-  const top =
-    textareaRect.top + borderTop + paddingTop + markerTop - textarea.scrollTop;
-
   return {
-    left,
-    top,
-    right: left,
-    bottom: top + lineHeight,
+    left: markerRect.left,
+    top: markerRect.top,
+    right: markerRect.left,
+    bottom: markerRect.top + lineHeight,
     width: 0,
     height: lineHeight,
   };

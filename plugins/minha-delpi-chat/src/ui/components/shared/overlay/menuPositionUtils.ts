@@ -93,14 +93,15 @@ export function resolveComposerMentionMenuPosition(options: {
   });
 }
 
-/** Linhas estimadas do menu 「+」 (anexo, agentes, projetos, cabeçalhos). */
+/** Linhas estimadas do menu 「+」 (anexo, agentes, projetos, cabeçalhos e hints). */
 export function estimateChatInputPlusMenuItemCount(options: {
   agentCount: number;
   projectCount: number;
 }): number {
-  const projectRows = Math.min(options.projectCount, 8);
+  const projectRows = Math.max(Math.min(options.projectCount, 8), 1);
+  const agentRows = Math.max(options.agentCount, 1);
 
-  return 1 + options.agentCount + projectRows + 3;
+  return 1 + agentRows + projectRows + 5;
 }
 
 export type ComposerOptionMenuLayout = {

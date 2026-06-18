@@ -66,7 +66,7 @@ export function useComposerMentionMenuLayout({
 
     const caretRect = measureTextareaCaretRect(textarea, anchorIndex);
     const { portalTarget, contained, containerRect } = resolveContainedScope(textarea);
-    const rect =
+    const anchorRect =
       contained && containerRect
         ? toContainerRelativeRect(caretRect, containerRect)
         : caretRect;
@@ -75,16 +75,15 @@ export function useComposerMentionMenuLayout({
         ? { width: containerRect.width, height: containerRect.height }
         : undefined;
     const menuWidth = resolveComposerMentionMenuWidth({
-      anchorLeft: rect.left,
+      anchorLeft: anchorRect.left,
       viewport,
     });
 
     setLayoutState({
       layout: resolveComposerMentionMenuPosition({
-        rect,
+        rect: caretRect,
         itemCount,
         menuWidth,
-        viewport,
         contained,
         containerRect,
       }),
