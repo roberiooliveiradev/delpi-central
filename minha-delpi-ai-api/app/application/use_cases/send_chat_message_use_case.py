@@ -243,6 +243,9 @@ class SendChatMessageUseCase:
             ),
         )
 
+        if isinstance(getattr(prepared, "workspace_context", None), dict):
+            workspace_context = prepared.workspace_context
+
         assembly = ChatTurnLlmAssemblyService.assemble(
             request=request,
             message=message,

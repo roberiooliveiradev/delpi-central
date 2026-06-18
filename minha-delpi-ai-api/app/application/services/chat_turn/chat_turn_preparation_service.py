@@ -70,6 +70,7 @@ class ChatTurnPreparationResult:
     text_correction_subtype: str | None = None
     intent_route: dict | None = None
     routing_disambiguation_suggestions: list[dict[str, str]] | None = None
+    workspace_context: dict | None = None
 
 
 class ChatTurnPreparationService:

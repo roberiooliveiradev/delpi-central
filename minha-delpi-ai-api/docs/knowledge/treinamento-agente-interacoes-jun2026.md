@@ -142,7 +142,10 @@ cd minha-delpi-ai-api
 # Gates offline (P0–P2, sem HTTP)
 .venv/bin/python scripts/smoke_follow_up_operacional_gates.py
 
-# Rotas playbook (stack no ar)
+# Roteiro 6 interações (stack no ar — usuário real via REST)
+SMOKE_BASE_URL=http://localhost PYTHONPATH=. python scripts/smoke_treinamento_agente_interacoes_jun2026.py
+
+# Rotas playbook isoladas (opcional)
 SMOKE_MP_CODE=10080001 SMOKE_PA_CODE=90261255 SMOKE_PRODUCT_CODE=90269002 \
   SMOKE_BASE_URL=http://localhost PYTHONPATH=. python scripts/smoke_playbook_product_routes.py
 ```

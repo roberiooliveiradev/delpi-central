@@ -108,3 +108,33 @@ def test_project_sources_slot_fixture_regression(case):
         case["message"],
         previous_messages=previous_messages,
     )
+
+
+def test_context_metadata_persists_pending_project_sources_inventory():
+    from app.application.services.chat_context_metadata_service import (
+        ChatContextMetadataService,
+    )
+
+    metadata: dict = {}
+    inventory = [
+        {
+            "projectSourceId": "doc-1",
+            "title": "Manual homologação DELPI",
+            "ordinal": 1,
+            "indexed": True,
+            "chunkCount": 1,
+        }
+    ]
+
+    ChatContextMetadataService.attach_to_assistant_metadata(
+        metadata,
+        message="o que tem nas suas fontes?",
+        answer="Fontes listadas.",
+        tool_calls=[],
+        previous_messages=[],
+        workspace_context={"pendingProjectSourcesInventory": inventory},
+    )
+
+    snapshot = metadata.get("contextSnapshot") or {}
+
+    assert snapshot.get("lastProjectSourcesInventory") == inventory
