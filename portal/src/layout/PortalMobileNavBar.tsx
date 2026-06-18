@@ -1,7 +1,7 @@
 import "./PortalMobileNavBar.css";
 
 import { useEffect, useRef, useState } from "react";
-import { LayoutGrid, Menu, Monitor, Moon, Sun } from "lucide-react";
+import { CircleDashed, Grid, Menu, Moon, Sun } from "lucide-react";
 
 import { usePortalMobileChrome } from "../hooks/usePortalMobileChrome";
 import { useTheme, type Theme } from "../hooks/useTheme";
@@ -11,13 +11,13 @@ import { expandPortalSidebar } from "../utils/sidebar";
 const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
   { value: "light", label: "Claro", icon: Sun },
   { value: "dark", label: "Escuro", icon: Moon },
-  { value: "system", label: "Sistema", icon: Monitor },
+  { value: "system", label: "Sistema", icon: CircleDashed },
 ];
 
 function ThemeTriggerIcon({ theme }: { theme: Theme }) {
   if (theme === "dark") return <Moon size={20} strokeWidth={2.1} aria-hidden="true" />;
   if (theme === "light") return <Sun size={20} strokeWidth={2.1} aria-hidden="true" />;
-  return <Monitor size={20} strokeWidth={2.1} aria-hidden="true" />;
+  return <CircleDashed size={20} strokeWidth={2.1} aria-hidden="true" />;
 }
 
 export function PortalMobileNavBar() {
@@ -64,7 +64,7 @@ export function PortalMobileNavBar() {
         data-tour="portal-mobile-nav-apps"
         onClick={() => openAppLauncher()}
       >
-        <LayoutGrid size={20} strokeWidth={2.1} aria-hidden="true" />
+        <Grid size={20} strokeWidth={2.1} aria-hidden="true" />
       </button>
 
       <div className="portal-mobile-nav__theme-wrap" ref={themeWrapRef}>
