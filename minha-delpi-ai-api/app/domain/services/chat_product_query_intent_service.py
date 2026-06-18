@@ -156,6 +156,9 @@ class ChatProductQueryIntentService:
 
         digits = re.sub(r"\D", "", normalized)
 
+        if "." in normalized and len(digits) < 5:
+            return False
+
         if len(digits) >= 4:
             return True
 
@@ -180,6 +183,31 @@ class ChatProductQueryIntentService:
         return False
 
     @classmethod
+    def _is_file_size_token(cls, text: str, match: re.Match[str]) -> bool:
+        token = str(match.group(0) or "").strip()
+
+        if not re.fullmatch(r"\d+\.\d+", token):
+            return False
+
+        suffix = text[match.end() : min(len(text), match.end() + 20)].casefold()
+
+        return bool(
+            re.match(r"\s*(kb|mb|gb|bytes?|b|chunk)\b", suffix)
+            or "chunk(s)" in suffix
+        )
+
+    @classmethod
+    def _is_document_year_token(cls, text: str, match: re.Match[str]) -> bool:
+        token = str(match.group(0) or "").strip()
+
+        if not cls._CALENDAR_YEAR_RE.match(token):
+            return False
+
+        suffix = text[match.end() : min(len(text), match.end() + 12)]
+
+        return bool(re.match(r"\s*\.(?:docx|xlsx|pdf|txt|md|csv|pptx)\b", suffix, re.IGNORECASE))
+
+    @classmethod
     def extract_product_code(cls, text: str | None) -> str | None:
         if cls._looks_like_lmp_context(text):
             return None
@@ -198,6 +226,9 @@ class ChatProductQueryIntentService:
             if cls._is_calendar_year_token(raw, match):
                 continue
 
+            if cls._is_document_year_token(raw, match):
+                continue
+
             if cls._is_specification_numeric_token(token):
                 continue
 
@@ -205,6 +236,9 @@ class ChatProductQueryIntentService:
                 continue
 
             if cls._is_phone_contact_token(raw, match):
+                continue
+
+            if cls._is_file_size_token(raw, match):
                 continue
 
             code = cls.normalize_product_code(token)
@@ -262,6 +296,13 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def should_inherit_product_code(cls, message: str | None) -> bool:
+        from app.domain.services.chat_project_sources_intent_service import (
+            ChatProjectSourcesIntentService,
+        )
+
+        if ChatProjectSourcesIntentService.is_content_question(message):
+            return False
+
         if cls.looks_like_scope_reset_operational_query(message):
             return False
 
@@ -433,6 +474,12 @@ class ChatProductQueryIntentService:
             if cls._is_date_numeric_token(match.group(0)):
                 continue
 
+            if cls._is_calendar_year_token(raw, match):
+                continue
+
+            if cls._is_document_year_token(raw, match):
+                continue
+
             if cls._is_specification_numeric_token(match.group(0)):
                 continue
 
@@ -440,6 +487,9 @@ class ChatProductQueryIntentService:
                 continue
 
             if cls._is_phone_contact_token(raw, match):
+                continue
+
+            if cls._is_file_size_token(raw, match):
                 continue
 
             code = cls.normalize_product_code(match.group(0))

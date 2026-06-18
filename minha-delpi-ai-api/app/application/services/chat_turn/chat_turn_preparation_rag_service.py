@@ -47,6 +47,27 @@ class ChatTurnPreparationRagService:
         )
 
     @classmethod
+    def _resolve_rag_chunk_filter(
+        cls,
+        *,
+        message: str,
+        assistant_identity_question: bool,
+    ) -> Callable[[dict], bool] | None:
+        if assistant_identity_question:
+            return ChatAssistantIdentityService.identity_chunk_filter()
+
+        from app.domain.services.chat_project_sources_intent_service import (
+            ChatProjectSourcesIntentService,
+        )
+
+        project_filter = ChatProjectSourcesIntentService.build_content_chunk_filter(message)
+
+        if project_filter is not None:
+            return project_filter
+
+        return None
+
+    @classmethod
     def build(
         cls,
         *,
@@ -126,6 +147,14 @@ class ChatTurnPreparationRagService:
                 if "semantic_memory" not in pipeline_stages:
                     pipeline_stages.append("semantic_memory")
 
+            from app.domain.services.chat_project_sources_intent_service import (
+                ChatProjectSourcesIntentService,
+            )
+
+            if ChatProjectSourcesIntentService.is_content_question(message):
+                if "project_sources_content" not in pipeline_stages:
+                    pipeline_stages.append("project_sources_content")
+
             rag = rag_context_service.build_context(
                 rag_query,
                 filters=knowledge_scope_service.build_filters(
@@ -136,10 +165,9 @@ class ChatTurnPreparationRagService:
                     message=message,
                 ),
                 min_score=rag_min_score,
-                chunk_filter=(
-                    ChatAssistantIdentityService.identity_chunk_filter()
-                    if assistant_identity_question
-                    else None
+                chunk_filter=cls._resolve_rag_chunk_filter(
+                    message=message,
+                    assistant_identity_question=assistant_identity_question,
                 ),
             )
 

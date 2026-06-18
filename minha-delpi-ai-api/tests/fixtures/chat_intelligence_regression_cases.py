@@ -2152,5 +2152,10 @@ PROJECT_SOURCES_INTENT_CASES = [
     ("quantas fontes você tem?", True, True),
     ("resuma suas fontes", False, True),
     ("use as fontes do projeto para responder", False, True),
+    (
+        "o que esta escrito em 1o TREINAMENTO — FEVEREIRO 2026.docx?",
+        False,
+        True,
+    ),
     ("estoque do produto 10080001", False, False),
 ]
