@@ -36,7 +36,8 @@
     "stock": "Conferir posições com disponível negativo ou empenho acima do saldo e pedir a próxima página se a lista estiver truncada.",
     "production_status": "Confirmar no Protheus se a OP aberta já iniciou apontamento e comparar quantidade apontada com a ordem.",
     "shipping_status": "Revisar perdas de inspeção frente ao expedido e validar CT/recurso dos registros com divergência.",
-    "directives": "Conferir part numbers e última NF na tabela; pedir detalhe de fornecedor ou estrutura completa se precisar aprofundar."
+    "directives": "Conferir part numbers e última NF na tabela; pedir detalhe de fornecedor ou estrutura completa se precisar aprofundar.",
+    "structure_exclusivity": "Validar MPs marcadas como exclusivas na árvore e comparar com o catálogo de exclusividade quando houver dúvida."
   },
   "recommendations": {
     "factory_status": [
@@ -63,6 +64,11 @@
       "Ver estrutura completa do produto",
       "Detalhar fornecedores de uma MP",
       "Ver última compra de uma matéria-prima"
+    ],
+    "structure_exclusivity": [
+      "Ver estrutura completa do produto",
+      "Listar MPs exclusivas do catálogo",
+      "Comparar estrutura com exclusividade em outro PA"
     ],
     "generic_list": [
       "Filtrar os registros por critério relevante",
@@ -142,6 +148,23 @@
         "label": "Ver status fabril do mesmo produto",
         "query": "Ver status fabril do mesmo produto",
         "reason": "Relacionar expedição com produção e estoque"
+      }
+    ],
+    "structure_exclusivity": [
+      {
+        "label": "Ver estrutura completa do produto",
+        "query": "Mostrar estrutura completa do produto",
+        "reason": "Comparar BOM integral com o recorte de exclusividade"
+      },
+      {
+        "label": "Listar MPs exclusivas do catálogo",
+        "query": "Listar matérias-primas exclusivas do catálogo",
+        "reason": "Validar MPs marcadas como exclusivas na árvore"
+      },
+      {
+        "label": "Comparar estrutura com exclusividade em outro PA",
+        "query": "Comparar estrutura com exclusividade de MPs em outro produto",
+        "reason": "Entender padrão de exclusividade entre produtos similares"
       }
     ],
     "generic_list": [

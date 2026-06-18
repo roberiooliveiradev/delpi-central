@@ -1980,8 +1980,8 @@
     }
   ],
   "autoTierCRoutesMeta": {
-    "generatedAt": "2026-06-17T13:39:06Z",
-    "sourceBaseline": "/home/analistaptd/projetos/delpi-central/api-delpi/app/content/openapi_baseline.json",
+    "generatedAt": "2026-06-18T19:57:33Z",
+    "sourceBaseline": "/repo/api-delpi/app/content/openapi_baseline.json",
     "operationCount": 66
   },
   "autoTierCRoutes": [

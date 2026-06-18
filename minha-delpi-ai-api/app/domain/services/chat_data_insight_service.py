@@ -269,10 +269,16 @@ class ChatDataInsightService:
         else:
             rows = cls._resolve_rows(metadata, data)
 
-            if rows is not None and ChatDataAnomalyDetectionService._is_paginated(
-                metadata, len(rows)
-            ):
-                commentary["paginated"] = True
+            if rows is not None:
+                paginated = (
+                    ChatDataAnomalyDetectionService._is_paginated(metadata, len(rows))
+                    or ChatDataAnomalyDetectionService._is_paginated(data, len(rows))
+                )
+
+                if paginated:
+                    commentary["paginated"] = True
+                elif len(rows) > 25:
+                    commentary["paginated"] = True
             elif cls._composite_sections_truncated(metadata, data):
                 commentary["paginated"] = True
 

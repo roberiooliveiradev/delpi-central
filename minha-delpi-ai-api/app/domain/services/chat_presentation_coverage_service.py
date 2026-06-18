@@ -741,6 +741,9 @@ class ChatPresentationCoverageService:
         if commentary == "stock":
             return "generic_list"
 
+        if commentary == "structure_exclusivity":
+            return "hierarchy"
+
         return commentary or "generic_list"
 
     @classmethod
