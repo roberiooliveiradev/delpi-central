@@ -97,7 +97,7 @@ def test_shipping_status_matches_expedicao_with_product_scope():
 
 def test_partially_matches_when_terms_hit_but_scope_missing():
     normalized = ChatMessageNormalizationService.normalize_for_matching(
-        "status de expedição"
+        "inspeção final"
     )
 
     assert not ChatProductRoutePredicateService.matches("shippingStatus", normalized)

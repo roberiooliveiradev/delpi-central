@@ -233,8 +233,14 @@ class ChatOperationalFollowUpRoutingService:
         if follow_type and cls.preferred_route_id(follow_type):
             return True
 
-        if cls.segment_from_message(message):
-            return True
+        has_product_context = bool(
+            ChatProductQueryIntentService.extract_product_code(message)
+            or ChatProductQueryIntentService.references_previous_product(message or "")
+            or cls.grants_specific_product_scope(follow_type)
+        )
+
+        if not has_product_context:
+            return False
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
