@@ -35,7 +35,7 @@ import {
   DELPI_CLOSE_APP_LAUNCHER_EVENT,
   DELPI_OPEN_APP_LAUNCHER_EVENT,
 } from "../utils/appLauncher";
-import { DELPI_SIDEBAR_EXPAND_EVENT, resolvePortalSidebarEdgeWidth } from "../utils/sidebar";
+import { DELPI_SIDEBAR_EXPAND_EVENT, isPortalSidebarEdgeHoldPoint, PORTAL_SIDEBAR_EDGE_AUTO_HIDE_MS, PORTAL_SIDEBAR_EDGE_HOLD_MS, resolvePortalSidebarEdgeHoldWidth, resolvePortalSidebarEdgeWidth } from "../utils/sidebar";
 import {
   DELPI_PORTAL_TOUR_SIDEBAR_PANEL_EVENT,
   type PortalTourSidebarPanel,
@@ -100,6 +100,13 @@ export const Sidebar = () => {
   const themeDropdownRef = useRef<HTMLDivElement>(null);
   const themeTriggerRef = useRef<HTMLDivElement>(null);
   const userTriggerRef = useRef<HTMLDivElement>(null);
+  const edgeAutoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const edgeHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const edgeHoldPointerRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+  } | null>(null);
 
   /* ===============================
      ESTADOS
@@ -187,8 +194,35 @@ export const Sidebar = () => {
   }, []);
 
   const openSidebarFromEdge = useCallback(() => {
+    if (edgeAutoHideTimerRef.current) {
+      clearTimeout(edgeAutoHideTimerRef.current);
+      edgeAutoHideTimerRef.current = null;
+    }
     setCollapsed(false);
     setShowEdgeExpand(false);
+  }, []);
+
+  const clearEdgeAutoHideTimer = useCallback(() => {
+    if (edgeAutoHideTimerRef.current) {
+      clearTimeout(edgeAutoHideTimerRef.current);
+      edgeAutoHideTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleEdgeAutoHide = useCallback(() => {
+    clearEdgeAutoHideTimer();
+    edgeAutoHideTimerRef.current = setTimeout(() => {
+      setShowEdgeExpand(false);
+      edgeAutoHideTimerRef.current = null;
+    }, PORTAL_SIDEBAR_EDGE_AUTO_HIDE_MS);
+  }, [clearEdgeAutoHideTimer]);
+
+  const clearEdgeHold = useCallback(() => {
+    if (edgeHoldTimerRef.current) {
+      clearTimeout(edgeHoldTimerRef.current);
+      edgeHoldTimerRef.current = null;
+    }
+    edgeHoldPointerRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -198,18 +232,24 @@ export const Sidebar = () => {
   }, [openSidebarFromEdge]);
 
   const hideEdgeExpand = useCallback(() => {
+    clearEdgeAutoHideTimer();
     setShowEdgeExpand(false);
-  }, []);
+  }, [clearEdgeAutoHideTimer]);
 
   const showEdgeExpandHint = useCallback(() => {
     if (!collapsed) return;
     setShowEdgeExpand(true);
-  }, [collapsed]);
+    if (isNarrowViewport) {
+      scheduleEdgeAutoHide();
+    }
+  }, [collapsed, isNarrowViewport, scheduleEdgeAutoHide]);
 
   const handleEdgePointerMove = useCallback(
     (event: PointerEvent) => {
-      if (!collapsed) {
-        setShowEdgeExpand(false);
+      if (!collapsed || isNarrowViewport) {
+        if (!collapsed) {
+          setShowEdgeExpand(false);
+        }
         return;
       }
 
@@ -242,21 +282,21 @@ export const Sidebar = () => {
 
       setShowEdgeExpand(false);
     },
-    [collapsed],
+    [collapsed, isNarrowViewport],
   );
 
   const handleEdgeTouchStart = useCallback(
     (event: TouchEvent) => {
-      if (!collapsed) return;
+      if (!collapsed || isNarrowViewport) return;
 
       const touch = event.touches[0];
       if (!touch) return;
 
       if (touch.clientX <= resolvePortalSidebarEdgeWidth()) {
-        setShowEdgeExpand(true);
+        showEdgeExpandHint();
       }
     },
-    [collapsed],
+    [collapsed, showEdgeExpandHint, isNarrowViewport],
   );
 
   useEffect(() => {
@@ -294,6 +334,85 @@ export const Sidebar = () => {
       setShowEdgeExpand(false);
     }
   }, [collapsed]);
+
+  useEffect(() => {
+    if (!collapsed || !isNarrowViewport) {
+      clearEdgeHold();
+      return;
+    }
+
+    const EDGE_HOLD_MOVE_CANCEL_PX = 12;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      if (!isPortalSidebarEdgeHoldPoint(event.clientX, event.clientY)) return;
+
+      clearEdgeHold();
+      edgeHoldPointerRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+      };
+
+      edgeHoldTimerRef.current = setTimeout(() => {
+        edgeHoldTimerRef.current = null;
+        setShowEdgeExpand(true);
+        scheduleEdgeAutoHide();
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate(12);
+        }
+      }, PORTAL_SIDEBAR_EDGE_HOLD_MS);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const hold = edgeHoldPointerRef.current;
+      if (!hold || hold.pointerId !== event.pointerId) return;
+
+      const edgeWidth = resolvePortalSidebarEdgeHoldWidth();
+      if (event.clientX > edgeWidth + EDGE_HOLD_MOVE_CANCEL_PX) {
+        clearEdgeHold();
+      }
+    };
+
+    const onPointerEnd = (event: PointerEvent) => {
+      const hold = edgeHoldPointerRef.current;
+      if (!hold || hold.pointerId !== event.pointerId) return;
+      clearEdgeHold();
+    };
+
+    const onContextMenu = (event: MouseEvent) => {
+      if (isPortalSidebarEdgeHoldPoint(event.clientX, event.clientY)) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("pointerdown", onPointerDown, { passive: true });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", onPointerEnd, { passive: true });
+    window.addEventListener("pointercancel", onPointerEnd, { passive: true });
+    window.addEventListener("contextmenu", onContextMenu);
+
+    return () => {
+      clearEdgeHold();
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
+      window.removeEventListener("contextmenu", onContextMenu);
+    };
+  }, [
+    collapsed,
+    isNarrowViewport,
+    clearEdgeHold,
+    scheduleEdgeAutoHide,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      clearEdgeAutoHideTimer();
+      clearEdgeHold();
+    };
+  }, [clearEdgeAutoHideTimer, clearEdgeHold]);
 
   // Fecha dropdown ao clicar fora (mantém aberto ao clicar no gatilho — o toggle trata)
   useEffect(() => {
@@ -451,8 +570,8 @@ export const Sidebar = () => {
           className={`sidebar-edge-hotspot ${showEdgeExpand ? "is-visible" : ""}`}
           aria-label="Expandir menu lateral"
           onClick={openSidebarFromEdge}
-          onMouseEnter={showEdgeExpandHint}
-          onTouchStart={showEdgeExpandHint}
+          onMouseEnter={isNarrowViewport ? undefined : showEdgeExpandHint}
+          onTouchStart={isNarrowViewport ? undefined : showEdgeExpandHint}
           onFocus={showEdgeExpandHint}
         >
           <ChevronRight
