@@ -12,6 +12,7 @@ Legenda de permissões:
 | **D** | `api-delpi.data` |
 | **Q** | `api-delpi.quality.access` |
 | **L** | `dashboard-lmps.view` |
+| **IE** | `inspecoes-entrada.view*` ou `api-delpi.access` |
 ---
 
 ## Health
@@ -216,6 +217,20 @@ Legenda de permissões:
 | GET | `/quality/ppm/external/series` | Q |
 | GET | `/quality/ppm/internal` | Q |
 | GET | `/quality/ppm/external` | Q |
+
+---
+
+## Inspeções de entrada (`/inspecoes-entrada`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/inspecoes-entrada/resumo` | IE |
+| GET | `/inspecoes-entrada/pendentes` | IE |
+| GET | `/inspecoes-entrada/pendentes-fornecedor` | IE |
+| GET | `/inspecoes-entrada/rejeitadas-ensaiador` | IE |
+| GET | `/inspecoes-entrada/rejeitadas-produto` | IE |
+| GET | `/inspecoes-entrada/historico` | IE |
+| GET | `/inspecoes-entrada/historico/detalhe` | IE |
 
 ---
 

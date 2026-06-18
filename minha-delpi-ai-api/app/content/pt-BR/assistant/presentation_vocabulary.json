@@ -643,7 +643,7 @@
         "fixture": "product_production_status_90269002.json",
         "user_message": "status de produção do produto 90269002",
         "expected_presentation_profile": "product_production_status",
-        "expected_layout_mode": "single",
+        "expected_layout_mode": "stack",
         "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
@@ -673,7 +673,7 @@
         "fixture": "product_shipping_status_90269002.json",
         "user_message": "status de expedição do produto 90269002",
         "expected_presentation_profile": "product_shipping_status",
-        "expected_layout_mode": "single",
+        "expected_layout_mode": "stack",
         "expected_visuals": ["text", "kpi", "tree", "chart"]
       },
       {
@@ -683,8 +683,8 @@
         "fixture": "product_structure_exclusivity_90261805.json",
         "user_message": "matérias-primas exclusivas na estrutura do produto 90261805",
         "expected_presentation_profile": "product_structure",
-        "expected_layout_mode": "single",
-        "expected_visuals": ["text"]
+        "expected_layout_mode": "stack",
+        "expected_visuals": ["text", "tree"]
       },
       {
         "id": "tier_a_cost_impact_simulation",

@@ -585,6 +585,21 @@ services:
     networks:
       - delpi-network
 
+  inspecoes-entrada:
+    build:
+      context: ../plugins/inspecoes-entrada
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-inspecoes-entrada
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   cadastro-kaizen:
     build:
       context: ../plugins/cadastro-kaizen

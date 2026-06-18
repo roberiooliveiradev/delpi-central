@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "inspecoes-entrada",
+  "name": "Inspeções de Entrada",
+  "description": "Painel operacional de inspeções de entrada — resumo, pendências e histórico por filial",
+  "icon": "clipboard-check-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/inspecoes-entrada",
+  "entry": "/apps/inspecoes-entrada/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "inspecoes-entrada.view.filial-01",
+      "name": "Visualizar Inspeções de Entrada — Filial 01",
+      "description": "Acesso ao painel de inspeções de entrada da filial 01 (SC)",
+      "module": "inspecoes-entrada"
+    },
+    {
+      "code": "inspecoes-entrada.view.filial-02",
+      "name": "Visualizar Inspeções de Entrada — Filial 02",
+      "description": "Acesso ao painel de inspeções de entrada da filial 02 (ES)",
+      "module": "inspecoes-entrada"
+    },
+    {
+      "code": "inspecoes-entrada.view",
+      "name": "Visualizar Inspeções de Entrada",
+      "description": "Acesso amplo ao painel de inspeções de entrada (ambas filiais)",
+      "module": "inspecoes-entrada"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/inspecoes-entrada/filial-01",
+      "label": "Inspeções de Entrada — Filial 01",
+      "permission": "inspecoes-entrada.view.filial-01",
+      "icon": "clipboard-check-icon",
+      "order": 22,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/inspecoes-entrada/filial-02",
+      "label": "Inspeções de Entrada — Filial 02",
+      "permission": "inspecoes-entrada.view.filial-02",
+      "icon": "clipboard-check-icon",
+      "order": 23,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

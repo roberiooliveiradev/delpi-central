@@ -45,6 +45,11 @@ PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 # --- pedidos de venda em aberto ---
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 
+# --- inspeções de entrada ---
+INSPECOES_ENTRADA_VIEW = "inspecoes-entrada.view"
+INSPECOES_ENTRADA_VIEW_FILIAL_01 = "inspecoes-entrada.view.filial-01"
+INSPECOES_ENTRADA_VIEW_FILIAL_02 = "inspecoes-entrada.view.filial-02"
+
 # --- eficiência fabril ---
 EFICIENCIA_FABRIL_VIEW = "eficiencia-fabril.view"
 EFICIENCIA_FABRIL_VIEW_FILIAL_SC = "eficiencia-fabril.view.filial-sc"
@@ -128,6 +133,18 @@ PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
     API_DELPI_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ACCESS,
 ]
+
+INSPECOES_ENTRADA_READ_PERMISSIONS = [
+    API_DELPI_ACCESS,
+    INSPECOES_ENTRADA_VIEW,
+    INSPECOES_ENTRADA_VIEW_FILIAL_01,
+    INSPECOES_ENTRADA_VIEW_FILIAL_02,
+]
+
+INSPECOES_ENTRADA_BRANCH_VIEW_PERMS = {
+    "01": INSPECOES_ENTRADA_VIEW_FILIAL_01,
+    "02": INSPECOES_ENTRADA_VIEW_FILIAL_02,
+}
 
 CULTURA_DELPI_READ_PERMISSIONS = [
     CULTURA_DELPI_VIEW,

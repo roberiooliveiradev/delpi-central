@@ -222,6 +222,28 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/ppm/internal` | PPM interno (detalhado). |
 | GET | `/quality/ppm/external` | PPM externo (detalhado). |
 
+---
+
+## Inspeções de entrada — `/inspecoes-entrada`
+
+**Permissão:** `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` ou `api-delpi.access`
+
+Painel operacional de inspeção de recebimento (views TOTVS). Plugin: `inspecoes-entrada`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/inspecoes-entrada/resumo` | KPIs por filial (pendentes, taxa aprovação, tempo médio). |
+| GET | `/inspecoes-entrada/pendentes` | Listagem paginada aguardando laudo. |
+| GET | `/inspecoes-entrada/pendentes-fornecedor` | Ranking fornecedor × pendências. |
+| GET | `/inspecoes-entrada/rejeitadas-ensaiador` | Rejeições agrupadas por ensaiador. |
+| GET | `/inspecoes-entrada/rejeitadas-produto` | Rejeições recentes por produto. |
+| GET | `/inspecoes-entrada/historico` | Histórico laudado com filtros. |
+| GET | `/inspecoes-entrada/historico/detalhe` | Cabeçalho + ensaios (QER). |
+
+Parâmetro comum: `branch` (`01` \| `02`). Escopo por filial validado no router.
+
+Documentação completa: [inspecoes-entrada.md](./inspecoes-entrada.md) · views: [ESPECIFICACAO-VIEW.md](../../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ESPECIFICACAO-VIEW.md).
+
 ### GET /quality/nonconformities
 
 | Query | Descrição |
