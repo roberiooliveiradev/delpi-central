@@ -183,12 +183,20 @@ class ChatToolContextSelectionService:
             )
 
             if not planned_external_actions and host.external_action_repository:
+                from app.application.services.chat_playbook_product_action_readiness_service import (
+                    ChatPlaybookProductActionReadinessService,
+                )
                 from app.application.services.chat_production_operational_action_readiness_service import (
                     ChatProductionOperationalActionReadinessService,
                 )
 
                 gap_answer = (
                     ChatProductionOperationalActionReadinessService.resolve_gap_direct_answer(
+                        message,
+                        allowed_action_ids=allowed_action_ids or [],
+                        repository=host.external_action_repository,
+                    )
+                    or ChatPlaybookProductActionReadinessService.resolve_gap_direct_answer(
                         message,
                         allowed_action_ids=allowed_action_ids or [],
                         repository=host.external_action_repository,

@@ -212,6 +212,15 @@ class ChatOperationalParameterService:
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             return True
 
+        from app.application.services.chat_playbook_product_action_readiness_service import (
+            ChatPlaybookProductActionReadinessService,
+        )
+
+        if ChatPlaybookProductActionReadinessService.matches_playbook_product_intent(
+            message
+        ):
+            return True
+
         return cls.should_skip_tools(message, conversation_context=conversation_context)
 
     @classmethod
