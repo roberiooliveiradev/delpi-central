@@ -63,6 +63,7 @@
     "multipageMatchedCodes": "{matched}/{apiCount} códigos SG1010 no PDF",
     "bomQuantityPdf": "qtd {quantity} (PDF)",
     "bomQuantityPdfMilheiro": "qtd {quantity} × {scale} = {normalized} (PDF/peça → MI)",
+    "extractionConfidenceScore": "{score}% (limiar {threshold}%)",
     "bomQuantityPdfCableLength": "qtd {quantity} × {lengthMm} mm = {normalized} MT (PDF → MI)",
     "bomQuantityApi": "qtd {quantity} (SG1010)",
     "guideComponentPair": "PI {product} × MP {component}",
@@ -185,6 +186,13 @@
       "item": "Código DELPI",
       "rule": "Código PDF × API",
       "recommendation": "—"
+    },
+    "extraction_confidence": {
+      "section": "PDF",
+      "item": "Confiança da leitura do PDF",
+      "rule": "Divergências PDF × SG1010 só são críticas com confiança ≥ 95%",
+      "recommendationOk": "Leitura apta para cruzamento automático",
+      "recommendationPending": "Conferir manualmente BOM/cotas antes de reprovar por leitura OCR"
     },
     "revision_cross_ok": {
       "section": "Cabeçalho",
@@ -452,6 +460,54 @@
       "milheiroBatchUnits": ["MI"],
       "piecesPerMilheiro": 1000,
       "pendingStatus": "pending"
+    }
+  },
+  "validationLayers": {
+    "minConfidenceForPdfCritical": 0.95,
+    "demotedStatus": "pending",
+    "demotableStatuses": ["error", "critical_error"],
+    "demotedRecommendation": "Conferir manualmente no PDF — confiança da leitura ({score}%) abaixo de {threshold}%",
+    "pdfDependentTemplateKeys": [
+      "bom_extra",
+      "bom_extra_item",
+      "bom_missing",
+      "bom_missing_item",
+      "bom_quantity_mismatch",
+      "intermediate_extra",
+      "intermediate_extra_item",
+      "intermediate_missing",
+      "intermediate_missing_item",
+      "intermediate_length",
+      "decape_mismatch",
+      "segment_length_pending",
+      "segment_lengths_consolidated",
+      "balloon_missing_codes",
+      "dimension_note_ambiguous",
+      "revision_pdf"
+    ],
+    "pdfConflictTemplateKeys": [
+      "bom_extra",
+      "bom_extra_item",
+      "bom_quantity_mismatch",
+      "intermediate_extra",
+      "intermediate_extra_item",
+      "decape_mismatch"
+    ],
+    "extractionConfidence": {
+      "stampCapWithoutTitleBlock": 0.88,
+      "codeOnlyStamp": 0.75,
+      "missingProductCode": 0.4,
+      "bomScopeOk": 1.0,
+      "bomScopePartial": 0.8,
+      "bomScopeMissing": 0.5,
+      "regionOcr": 1.0,
+      "pageOcrOnly": 0.85,
+      "embeddedOnly": 0.7,
+      "segmentPending": 0.55,
+      "decapeConflict": 0.6,
+      "dimensionAmbiguous": 0.75,
+      "balloonPending": 0.6,
+      "pdfConflict": 0.5
     }
   },
   "patterns": {

@@ -881,3 +881,115 @@ class ChatDrawingPatternsService:
                 default="CHICOTE DE LIGACAO",
             )
         )
+
+    @classmethod
+    def validation_layer(cls, key: str, default: Any = None) -> Any:
+        node = ChatAssistantContentService.get_node(
+            _VALIDATION_BUNDLE,
+            "validationLayers",
+        ) or {}
+
+        return node.get(key, default) if isinstance(node, dict) else default
+
+    @classmethod
+    def extraction_confidence_node(cls, key: str, default: float) -> float:
+        node = cls.validation_layer("extractionConfidence", {})
+
+        if not isinstance(node, dict):
+            node = {}
+
+        return cls.validation_rule_float_from_node(node.get(key), default)
+
+    @classmethod
+    def extraction_confidence_threshold(cls) -> float:
+        return cls.validation_rule_float_from_node(
+            cls.validation_layer("minConfidenceForPdfCritical", 0.95),
+            0.95,
+        )
+
+    @classmethod
+    def validation_pdf_dependent_template_keys(cls) -> frozenset[str]:
+        items = cls.validation_layer("pdfDependentTemplateKeys", [])
+
+        if isinstance(items, list):
+            return frozenset(str(item).strip() for item in items if str(item).strip())
+
+        return frozenset()
+
+    @classmethod
+    def extraction_confidence_pdf_conflict_keys(cls) -> frozenset[str]:
+        items = cls.validation_layer("pdfConflictTemplateKeys", [])
+
+        if isinstance(items, list):
+            return frozenset(str(item).strip() for item in items if str(item).strip())
+
+        return frozenset()
+
+    @classmethod
+    def validation_confidence_demoted_status(cls) -> str:
+        return str(cls.validation_layer("demotedStatus", "pending"))
+
+    @classmethod
+    def validation_confidence_demotable_statuses(cls) -> frozenset[str]:
+        items = cls.validation_layer("demotableStatuses", ["error", "critical_error"])
+
+        if isinstance(items, list):
+            return frozenset(str(item).strip() for item in items if str(item).strip())
+
+        return frozenset({"error", "critical_error"})
+
+    @classmethod
+    def extraction_confidence_stamp_cap(cls) -> float:
+        return cls.extraction_confidence_node("stampCapWithoutTitleBlock", 0.88)
+
+    @classmethod
+    def extraction_confidence_code_only_stamp(cls) -> float:
+        return cls.extraction_confidence_node("codeOnlyStamp", 0.75)
+
+    @classmethod
+    def extraction_confidence_missing_code(cls) -> float:
+        return cls.extraction_confidence_node("missingProductCode", 0.4)
+
+    @classmethod
+    def extraction_confidence_bom_scope_ok(cls) -> float:
+        return cls.extraction_confidence_node("bomScopeOk", 0.95)
+
+    @classmethod
+    def extraction_confidence_bom_scope_partial(cls) -> float:
+        return cls.extraction_confidence_node("bomScopePartial", 0.8)
+
+    @classmethod
+    def extraction_confidence_bom_scope_missing(cls) -> float:
+        return cls.extraction_confidence_node("bomScopeMissing", 0.5)
+
+    @classmethod
+    def extraction_confidence_region_ocr(cls) -> float:
+        return cls.extraction_confidence_node("regionOcr", 0.92)
+
+    @classmethod
+    def extraction_confidence_page_ocr_only(cls) -> float:
+        return cls.extraction_confidence_node("pageOcrOnly", 0.85)
+
+    @classmethod
+    def extraction_confidence_embedded_only(cls) -> float:
+        return cls.extraction_confidence_node("embeddedOnly", 0.7)
+
+    @classmethod
+    def extraction_confidence_segment_pending(cls) -> float:
+        return cls.extraction_confidence_node("segmentPending", 0.55)
+
+    @classmethod
+    def extraction_confidence_decape_conflict(cls) -> float:
+        return cls.extraction_confidence_node("decapeConflict", 0.6)
+
+    @classmethod
+    def extraction_confidence_dimension_ambiguous(cls) -> float:
+        return cls.extraction_confidence_node("dimensionAmbiguous", 0.75)
+
+    @classmethod
+    def extraction_confidence_balloon_pending(cls) -> float:
+        return cls.extraction_confidence_node("balloonPending", 0.6)
+
+    @classmethod
+    def extraction_confidence_pdf_conflict(cls) -> float:
+        return cls.extraction_confidence_node("pdfConflict", 0.5)

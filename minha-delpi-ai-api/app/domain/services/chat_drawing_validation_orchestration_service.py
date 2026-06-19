@@ -87,6 +87,10 @@ class ChatDrawingValidationOrchestrationService:
                     api_evidence=cls._evidence("notFound"),
                 )
             )
+            items, extraction_confidence = cls._apply_validation_layers(
+                items,
+                pdf_extract=pdf_extract,
+            )
             return cls._package(
                 product_code=code,
                 items=items,
@@ -94,6 +98,7 @@ class ChatDrawingValidationOrchestrationService:
                 product=product,
                 pdf_extract=pdf_extract,
                 analyser_root=root,
+                extraction_confidence=extraction_confidence,
             )
 
         items.append(
@@ -253,6 +258,10 @@ class ChatDrawingValidationOrchestrationService:
                 )
             )
 
+        items, extraction_confidence = cls._apply_validation_layers(
+            items,
+            pdf_extract=pdf_extract,
+        )
         return cls._package(
             product_code=code,
             items=items,
@@ -260,7 +269,26 @@ class ChatDrawingValidationOrchestrationService:
             product=product,
             pdf_extract=pdf_extract,
             analyser_root=root,
+            extraction_confidence=extraction_confidence,
         )
+
+    @classmethod
+    def _apply_validation_layers(
+        cls,
+        items: list[dict[str, Any]],
+        *,
+        pdf_extract: dict[str, Any] | None,
+    ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+        from app.domain.services.chat_drawing_validation_assertion_service import (
+            ChatDrawingValidationAssertionService,
+        )
+
+        adjusted, confidence = ChatDrawingValidationAssertionService.apply(
+            items=items,
+            pdf_extract=pdf_extract,
+        )
+
+        return adjusted, confidence.to_metadata() if confidence else None
 
     @classmethod
     def format_report_markdown(cls, package: dict[str, Any]) -> str:
@@ -667,6 +695,7 @@ class ChatDrawingValidationOrchestrationService:
         product: dict,
         pdf_extract: dict[str, Any] | None = None,
         analyser_root: dict | None = None,
+        extraction_confidence: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         critical = sum(1 for i in items if i.get("status") == cls._STATUS_CRITICAL)
         errors = sum(1 for i in items if i.get("status") == cls._STATUS_ERROR)
@@ -726,6 +755,11 @@ class ChatDrawingValidationOrchestrationService:
                 **(
                     {"multipageCoverage": multipage_coverage}
                     if multipage_coverage
+                    else {}
+                ),
+                **(
+                    {"validationLayers": {"extractionConfidence": extraction_confidence}}
+                    if extraction_confidence
                     else {}
                 ),
             },

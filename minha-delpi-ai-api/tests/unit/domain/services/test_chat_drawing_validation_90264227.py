@@ -122,3 +122,69 @@ def test_90264227_revision_client_vs_internal_ok():
 
     assert revision_items
     assert revision_items[0]["status"] == "ok"
+
+
+def _pdf_extract_low_confidence() -> dict:
+    return {
+        **_pdf_extract_ocr(),
+        "documentVision": {
+            "legibilityScore": 1.0,
+            "hasTitleBlock": False,
+            "stages": ["fitz_embedded", "pypdf", "region_ocr"],
+        },
+        "validationScopes": {"bom": {"available": True}},
+    }
+
+
+def test_90264227_low_confidence_demotes_pdf_bom_but_keeps_guide_critical():
+    payload = {
+        "product": {
+            "code": "90264227",
+            "description": "CHICOTE TRR-ITCC-0039",
+            "current_revision": "002",
+            "last_revision_date": "20260617",
+        },
+        **_payload_90264227(),
+    }
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90264227",
+        payload=payload,
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract=_pdf_extract_low_confidence(),
+    )
+
+    analysis = package["drawingAnalysis"]
+    layers = analysis.get("validationLayers") or {}
+    confidence = layers.get("extractionConfidence") or {}
+
+    assert confidence.get("meetsThreshold") is False
+    assert confidence.get("thresholdPercent") == 95
+    assert confidence.get("scorePercent", 100) < 95
+
+    assert any(
+        item.get("templateKey") == "extraction_confidence"
+        and item.get("status") == "pending"
+        for item in analysis["items"]
+    )
+
+    assert any(
+        item.get("item") == "Produto no roteiro fora da estrutura"
+        and item.get("status") == "critical_error"
+        for item in analysis["items"]
+    )
+
+    bom_critical = [
+        item
+        for item in analysis["items"]
+        if item.get("templateKey") in {"bom_extra", "bom_extra_item", "bom_quantity_mismatch"}
+        and item.get("status") == "critical_error"
+    ]
+    assert not bom_critical
+
+    assert analysis["status"] != "rejected" or analysis["criticalErrors"] == sum(
+        1
+        for item in analysis["items"]
+        if item.get("status") == "critical_error"
+    )
