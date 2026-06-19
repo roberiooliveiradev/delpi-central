@@ -8,6 +8,9 @@ from app.domain.services.chat_drawing_patterns_service import ChatDrawingPattern
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
+from app.domain.services.chat_drawing_validation_presentation_service import (
+    ChatDrawingValidationPresentationService,
+)
 
 
 class ChatDrawingValidationOrchestrationService:
@@ -255,6 +258,19 @@ class ChatDrawingValidationOrchestrationService:
     def format_report_markdown(cls, package: dict[str, Any]) -> str:
         analysis = package.get("drawingAnalysis") or {}
         product = package.get("productSummary") or {}
+        raw_items = analysis.get("items") or []
+        display_items = ChatDrawingValidationPresentationService.consolidate_items(
+            raw_items if isinstance(raw_items, list) else []
+        )
+        pdf_fields = ChatDrawingValidationContentService.get_node("reportFields", "pdf") or {}
+        api_fields = ChatDrawingValidationContentService.get_node("reportFields", "api") or {}
+        table_header = cls._content("reportFields", "tableHeader", default="| Campo | Valor |")
+        table_separator = cls._content(
+            "reportFields",
+            "tableSeparator",
+            default="|---|---|",
+        )
+
         lines = [
             cls._content("report", "title"),
             "",
@@ -262,18 +278,18 @@ class ChatDrawingValidationOrchestrationService:
             str(analysis.get("overallLabel") or cls._evidence("dash")),
             "",
             cls._content("report", "sections", "pdfData"),
-            "| Campo | Valor |",
-            "|---|---|",
-            f"| Código | {analysis.get('pdfProductCode') or '—'} |",
-            f"| Revisão (PDF) | {analysis.get('revisionPdf') or '—'} |",
-            f"| PDF anexado | {'Sim' if analysis.get('hasPdfAttachment') else 'Não'} |",
+            table_header,
+            table_separator,
+            f"| {pdf_fields.get('code', 'Código')} | {analysis.get('pdfProductCode') or cls._evidence('dash')} |",
+            f"| {pdf_fields.get('revision', 'Revisão (PDF)')} | {analysis.get('revisionPdf') or cls._evidence('dash')} |",
+            f"| {pdf_fields.get('attached', 'PDF anexado')} | {pdf_fields.get('attachedYes', 'Sim') if analysis.get('hasPdfAttachment') else pdf_fields.get('attachedNo', 'Não')} |",
             "",
             cls._content("report", "sections", "apiData"),
-            "| Campo | Valor |",
-            "|---|---|",
-            f"| Código | {product.get('code') or analysis.get('productCode') or '—'} |",
-            f"| Descrição | {product.get('description') or '—'} |",
-            f"| Revisão (API) | {product.get('last_revision_date') or '—'} |",
+            table_header,
+            table_separator,
+            f"| {api_fields.get('code', 'Código')} | {product.get('code') or analysis.get('productCode') or cls._evidence('dash')} |",
+            f"| {api_fields.get('description', 'Descrição')} | {product.get('description') or cls._evidence('dash')} |",
+            f"| {api_fields.get('revision', 'Revisão (API)')} | {product.get('last_revision_date') or cls._evidence('dash')} |",
         ]
 
         lines.extend(cls._format_analyser_detail_sections(package.get("analyserRoot")))
@@ -287,21 +303,22 @@ class ChatDrawingValidationOrchestrationService:
             ]
         )
 
-        critical = [
-            item
-            for item in (analysis.get("items") or [])
-            if str(item.get("status") or "") == cls._STATUS_CRITICAL
-        ]
+        divergences = ChatDrawingValidationPresentationService.divergence_items(
+            raw_items if isinstance(raw_items, list) else []
+        )
 
-        if not critical:
+        if not divergences:
             lines.append(cls._content("report", "noCriticalRow"))
         else:
             row_tpl = cls._content("report", "criticalRow")
-            for item in critical:
+            for item in divergences:
                 lines.append(
                     row_tpl.format(
                         section=item.get("section") or cls._evidence("dash"),
                         item=item.get("item") or cls._evidence("dash"),
+                        status=ChatDrawingValidationPresentationService.status_display(
+                            str(item.get("status") or "")
+                        ),
                         pdf=item.get("pdfEvidence") or cls._evidence("dash"),
                         api=item.get("apiEvidence") or cls._evidence("dash"),
                         rec=item.get("recommendation") or cls._evidence("dash"),
@@ -318,12 +335,14 @@ class ChatDrawingValidationOrchestrationService:
         )
 
         checklist_tpl = cls._content("report", "checklistRow")
-        for item in analysis.get("items") or []:
+        for item in display_items:
             lines.append(
                 checklist_tpl.format(
                     section=item.get("section") or cls._evidence("dash"),
                     item=item.get("item") or cls._evidence("dash"),
-                    status=cls._status_label(str(item.get("status") or "")),
+                    status=ChatDrawingValidationPresentationService.status_display(
+                        str(item.get("status") or "")
+                    ),
                     rec=item.get("recommendation") or cls._evidence("dash"),
                 )
             )
@@ -355,17 +374,20 @@ class ChatDrawingValidationOrchestrationService:
             "|---|---|---|---|---|",
         ]
 
-        critical = [
+        critical = ChatDrawingValidationPresentationService.divergence_items(
+            analysis.get("items") if isinstance(analysis.get("items"), list) else []
+        )
+        critical_only = [
             item
-            for item in (analysis.get("items") or [])
+            for item in critical
             if str(item.get("status") or "") == cls._STATUS_CRITICAL
         ]
 
-        if not critical:
+        if not critical_only:
             lines.append(cls._content("criticalReport", "noCriticalRow"))
         else:
             row_tpl = cls._content("criticalReport", "criticalRow")
-            for item in critical:
+            for item in critical_only:
                 lines.append(
                     row_tpl.format(
                         section=item.get("section") or cls._evidence("dash"),
@@ -416,7 +438,9 @@ class ChatDrawingValidationOrchestrationService:
                     "| {section} | {item} | {status} | {rec} |".format(
                         section=item.get("section") or "—",
                         item=item.get("item") or "—",
-                        status=cls._status_label(str(item.get("status") or "")),
+                        status=ChatDrawingValidationPresentationService.status_display(
+                            str(item.get("status") or "")
+                        ),
                         rec=item.get("recommendation") or "—",
                     )
                 )
@@ -807,23 +831,8 @@ class ChatDrawingValidationOrchestrationService:
 
     @classmethod
     def _status_label(cls, status: str) -> str:
-        symbol = cls._status_symbol(status)
-        label = {
-            cls._STATUS_OK: "OK",
-            cls._STATUS_PENDING: "Pendente",
-            cls._STATUS_ERROR: "Erro",
-            cls._STATUS_CRITICAL: "Erro crítico",
-            cls._STATUS_NA: "Não aplicável",
-        }.get(status, status)
-
-        return f"{symbol} {label}"
+        return ChatDrawingValidationPresentationService.status_display(status)
 
     @classmethod
     def _status_symbol(cls, status: str) -> str:
-        return {
-            cls._STATUS_OK: "✅",
-            cls._STATUS_PENDING: "⚠️",
-            cls._STATUS_ERROR: "❌",
-            cls._STATUS_CRITICAL: "❌",
-            cls._STATUS_NA: "—",
-        }.get(status, "—")
+        return ChatDrawingValidationPresentationService.status_symbol(status)

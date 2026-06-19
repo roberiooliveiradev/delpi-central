@@ -640,6 +640,14 @@ export type ChatMessageMetadata = {
     markdown: string;
     csv?: string;
     csvFilename?: string;
+    statusLabels?: Record<string, string>;
+    exportLabels?: {
+      pdfTitle?: string;
+      nonconformitiesTitle?: string;
+      checklistTitle?: string;
+      criticalCountLabel?: string;
+      spreadsheetShortHeaders?: string[];
+    };
     spreadsheetRows?: {
       section: string;
       item: string;

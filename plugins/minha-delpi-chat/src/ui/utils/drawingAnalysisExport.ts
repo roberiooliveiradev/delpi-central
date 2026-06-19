@@ -14,13 +14,23 @@ type DrawingCheckItem = {
   recommendation?: string;
 };
 
-const STATUS_LABELS: Record<string, string> = {
+const DEFAULT_STATUS_LABELS: Record<string, string> = {
   ok: "OK",
   pending: "Pendente",
   error: "Erro",
   critical_error: "Erro crítico",
   incomplete: "Incompleto",
 };
+
+function resolveStatusLabels(
+  exportPayload: DrawingAnalysisExportPayload,
+): Record<string, string> {
+  return exportPayload.statusLabels ?? DEFAULT_STATUS_LABELS;
+}
+
+function resolveExportLabels(exportPayload: DrawingAnalysisExportPayload) {
+  return exportPayload.exportLabels ?? {};
+}
 
 function triggerDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
@@ -145,16 +155,20 @@ export async function downloadDrawingAnalysisPdf(
     const code = resolveProductCode(exportPayload, drawingAnalysis);
     const overall = String(drawingAnalysis?.overallLabel ?? "—");
     const critical = drawingAnalysis?.criticalErrors;
+    const exportLabels = resolveExportLabels(exportPayload);
+    const statusLabels = resolveStatusLabels(exportPayload);
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     doc.setFontSize(14);
-    doc.text("Relatório de Análise de Desenho DELPI", 14, 16);
+    doc.text(exportLabels.pdfTitle || "Relatório de Análise de Desenho DELPI", 14, 16);
     doc.setFontSize(10);
     doc.text(`Produto: ${code}`, 14, 24);
     doc.text(`Status: ${overall}`, 14, 30);
 
     if (critical != null) {
-      doc.text(`Erros críticos: ${String(critical)}`, 14, 36);
+      const criticalLabel = (exportLabels.criticalCountLabel || "Erros críticos: {count}")
+        .replace("{count}", String(critical));
+      doc.text(criticalLabel, 14, 36);
     }
 
     let startY = 44;
@@ -163,11 +177,16 @@ export async function downloadDrawingAnalysisPdf(
 
     if (nonConformityRows.length) {
       doc.setFontSize(11);
-      doc.text("Não conformidades", 14, startY);
+      doc.text(exportLabels.nonconformitiesTitle || "Não conformidades", 14, startY);
       startY += 4;
 
+      const shortHeaders = exportLabels.spreadsheetShortHeaders;
       autoTable(doc, {
-        head: [["Seção", "Item", "Status", "PDF", "API", "Ação"]],
+        head: [
+          shortHeaders && shortHeaders.length >= 6
+            ? shortHeaders
+            : ["Seção", "Item", "Status", "PDF", "API", "Ação"],
+        ],
         body: nonConformityRows.map((row) => [
           row.section,
           row.item,
@@ -195,7 +214,7 @@ export async function downloadDrawingAnalysisPdf(
       }
 
       doc.setFontSize(11);
-      doc.text("Checklist completo", 14, startY);
+      doc.text(exportLabels.checklistTitle || "Checklist completo", 14, startY);
       startY += 4;
 
       autoTable(doc, {
@@ -203,7 +222,7 @@ export async function downloadDrawingAnalysisPdf(
         body: items.map((item) => [
           String(item.section ?? "—"),
           String(item.item ?? "—"),
-          STATUS_LABELS[String(item.status ?? "")] ?? String(item.status ?? "—"),
+          statusLabels[String(item.status ?? "")] ?? String(item.status ?? "—"),
           String(item.recommendation ?? "—"),
         ]),
         startY,

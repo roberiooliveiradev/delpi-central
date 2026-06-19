@@ -5,13 +5,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-_STATUS_LABELS = {
-    "ok": "OK",
-    "pending": "Pendente",
-    "error": "Erro",
-    "critical_error": "Erro crítico",
-    "incomplete": "Incompleto",
-}
+from app.domain.services.chat_drawing_validation_content_service import (
+    ChatDrawingValidationContentService,
+)
+from app.domain.services.chat_drawing_validation_presentation_service import (
+    ChatDrawingValidationPresentationService,
+)
 
 
 class ChatDrawingReportExportService:
@@ -33,6 +32,29 @@ class ChatDrawingReportExportService:
             "pdfFilename": f"relatorio-desenho-{safe_code}-{stamp}.pdf",
             "mimeType": "text/markdown; charset=utf-8",
             "markdown": str(report_markdown or "").strip(),
+            "statusLabels": ChatDrawingValidationPresentationService.status_labels_map(),
+            "exportLabels": {
+                "pdfTitle": ChatDrawingValidationContentService.get(
+                    "export",
+                    "pdfTitle",
+                ),
+                "nonconformitiesTitle": ChatDrawingValidationContentService.get(
+                    "export",
+                    "nonconformitiesTitle",
+                ),
+                "checklistTitle": ChatDrawingValidationContentService.get(
+                    "export",
+                    "checklistTitle",
+                ),
+                "criticalCountLabel": ChatDrawingValidationContentService.get(
+                    "export",
+                    "criticalCountLabel",
+                ),
+                "spreadsheetShortHeaders": ChatDrawingValidationContentService.list_values(
+                    "export",
+                    "spreadsheetShortHeaders",
+                ),
+            },
         }
 
         if csv_content.strip():
@@ -45,21 +67,17 @@ class ChatDrawingReportExportService:
     @classmethod
     def build_nonconformity_rows(cls, analysis: dict[str, Any]) -> list[dict[str, str]]:
         rows: list[dict[str, str]] = []
+        raw_items = analysis.get("items") if isinstance(analysis.get("items"), list) else []
+        items = ChatDrawingValidationPresentationService.consolidate_items(raw_items)
 
-        for item in analysis.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-
+        for item in ChatDrawingValidationPresentationService.nonconformity_items(items):
             status = str(item.get("status") or "")
-
-            if status == "ok":
-                continue
 
             rows.append(
                 {
                     "section": str(item.get("section") or ""),
                     "item": str(item.get("item") or ""),
-                    "status": _STATUS_LABELS.get(status, status),
+                    "status": ChatDrawingValidationPresentationService.status_label(status),
                     "pdfEvidence": str(item.get("pdfEvidence") or ""),
                     "apiEvidence": str(item.get("apiEvidence") or ""),
                     "recommendation": str(item.get("recommendation") or ""),
@@ -75,7 +93,20 @@ class ChatDrawingReportExportService:
         if not rows:
             return ""
 
-        header = ["Seção", "Item", "Status", "Evidência PDF", "Evidência API", "Recomendação"]
+        header = [
+            str(cell)
+            for cell in ChatDrawingValidationContentService.list_values(
+                "export",
+                "spreadsheetHeaders",
+            )
+        ] or [
+            "Seção",
+            "Item",
+            "Status",
+            "Evidência PDF",
+            "Evidência API",
+            "Recomendação",
+        ]
         lines = ["\ufeff" + cls._csv_row(header)]
 
         for row in rows:

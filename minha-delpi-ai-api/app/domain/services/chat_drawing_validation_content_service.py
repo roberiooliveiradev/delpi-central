@@ -36,6 +36,14 @@ class ChatDrawingValidationContentService:
         return cls.get("decapeSides", side, default=side)
 
     @classmethod
+    def get_node(cls, *path: str) -> Any:
+        return ChatAssistantContentService.get_node(_BUNDLE, *path)
+
+    @classmethod
+    def list_values(cls, *path: str) -> list[Any]:
+        return ChatAssistantContentService.list(_BUNDLE, *path)
+
+    @classmethod
     def item_from_template(
         cls,
         template_key: str,
@@ -82,4 +90,5 @@ class ChatDrawingValidationContentService:
             "apiEvidence": api_evidence,
             "rule": str(template.get("rule") or cls.evidence("dash")),
             "recommendation": recommendation,
+            "templateKey": template_key,
         }

@@ -49,7 +49,7 @@ Wrappers especializados (mantêm API estável):
 | `structure_comparison.json` | Comparação BOM/ficha | `ChatStructureComparisonService` |
 | `memory_ux.json` | Memória de sessão (barra + introspecção) | `ChatMemoryUxService` |
 | `web_search.json` | Resposta direta e follow-up pós-pesquisa | `ChatWebSearchDirectAnswerService`, `ChatWebSearchSourceFollowUpService` |
-| `drawing_validation.json` | Relatório e checklist de análise de desenho | `ChatDrawingValidationOrchestrationService` |
+| `drawing_validation.json` | Relatório, checklist, rótulos de status (`statusPresentation`), campos do markdown (`reportFields`), export CSV/PDF/XLSX (`export`) e regras de consolidação de seção (`presentation`) | `ChatDrawingValidationContentService`, `ChatDrawingValidationPresentationService`, `ChatDrawingValidationOrchestrationService`, `ChatDrawingReportExportService` |
 | `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
 | `drawing_stamp.json` | Rótulos de carimbo, regiões, exclusões cliente/BOM, clarificações e gate nativo (Onda 14) | `ChatDrawingStampExtractionService` (fase 14.3+), testes de conteúdo |
 | `document_vision.json` | Padrões de intent (OCR e descrição visual); prompts VLM; rótulos de contexto; modos de ativação da skill | `ChatDocumentVisionContentService`, `ChatAttachmentDocumentIntentService`, `ChatDocumentVisionSkillService`, `ChatDocumentVisionContextService` |
@@ -120,6 +120,7 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Web search direct answer → `web_search.json` (antes em `product_operational_content.webSearch`)
 - Web search follow-up (links, resumo, parâmetros, comparação) → `web_search.followUp`
 - Validação de desenho (relatório, templates de checklist, conclusões) → `drawing_validation.json`
+- Apresentação do relatório de desenho (rótulos de status, consolidação de itens repetidos, seções divergência/não conformidade, labels de export) → `drawing_validation.json` (`statusPresentation`, `reportFields`, `export`, `presentation`) + `ChatDrawingValidationPresentationService`; MFE render-only consome `drawingAnalysisExport.statusLabels` / `exportLabels`
 - Intent de análise de desenho (gatilhos, vocabulário com anexo, PDF obrigatório, direct answers) → `drawing_query_intent.json`
 - Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
 - Interpretação de dados (marcadores genéricos) → `data_interpretation.json`

@@ -270,6 +270,7 @@ class ChatDrawingStructureValidationService:
                 for row in intermediate_rows
                 if row.get("lengthMm") is not None
             ]
+            failing_segments: list[float] = []
 
             for segment in segment_lengths[
                 : ChatDrawingPatternsService.max_segment_length_checks()
@@ -284,17 +285,24 @@ class ChatDrawingStructureValidationService:
                 )
 
                 if matched is False:
-                    items.append(
-                        content.item_from_template(
-                            "segment_length_pending",
-                            status="pending",
-                            pdf_evidence=content.evidence_format(
-                                "segmentLength",
-                                value=str(segment),
-                            ),
-                            api_evidence=", ".join(str(v) for v in api_lengths[:4]),
-                        )
+                    failing_segments.append(segment)
+
+            if failing_segments:
+                pdf_evidence = content.evidence_format(
+                    "segmentLengthsList",
+                    values="; ".join(
+                        content.evidence_format("segmentLength", value=str(value))
+                        for value in failing_segments
+                    ),
+                )
+                items.append(
+                    content.item_from_template(
+                        "segment_length_pending",
+                        status="pending",
+                        pdf_evidence=pdf_evidence,
+                        api_evidence=", ".join(str(v) for v in api_lengths[:4]),
                     )
+                )
 
         api_quantity = cls._root_structure_quantity(root)
 
@@ -319,7 +327,7 @@ class ChatDrawingStructureValidationService:
                     "total_length",
                     status=status,
                     pdf_evidence=content.evidence_format(
-                        "segmentLength",
+                        "totalLengthPdf",
                         value=str(total_length),
                     ),
                     api_evidence=str(api_quantity),

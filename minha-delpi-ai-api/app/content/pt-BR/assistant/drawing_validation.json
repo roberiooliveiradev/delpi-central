@@ -9,13 +9,13 @@
       "structure": "### Estrutura (SG1010)",
       "guide": "### Roteiro (SG2010)",
       "inspection": "### Inspeções (QP6 / QP7 / QP8)",
-      "critical": "## 4. Divergências críticas",
+      "critical": "## 4. Divergências (críticas e erros)",
       "checklist": "## 5. Checklist completo",
       "conclusion": "## 6. Conclusão"
     },
     "truncatedRows": "_… e mais {count} item(ns)._",
-    "noCriticalRow": "| — | Nenhuma divergência crítica automática | OK | — | — | — |",
-    "criticalRow": "| {section} | {item} | Erro crítico | {pdf} | {api} | {rec} |",
+    "noCriticalRow": "| — | Nenhuma divergência automática nesta seção | — | — | — |",
+    "criticalRow": "| {section} | {item} | {status} | {pdf} | {api} | {rec} |",
     "checklistRow": "| {section} | {item} | {status} | {rec} |",
     "productLine": "**Produto:** {code}",
     "statusLine": "**Status:** {label}"
@@ -53,6 +53,8 @@
     "decapePdf": "{value} mm",
     "decapeFromIntermediate": "{value} mm (código 50xx)",
     "segmentLength": "{value} mm",
+    "totalLengthPdf": "{value} mm (PDF)",
+    "segmentLengthsList": "{values}",
     "decapesPair": "E={left} mm; D={right} mm",
     "guideOperationCount": "{count} operação(ões)",
     "structureItemCount": "{count} item(ns) na estrutura",
@@ -217,6 +219,12 @@
       "rule": "Cota de trecho × comprimento 50xx (±5%)",
       "recommendation": "Conferir cotas do desenho com intermediários"
     },
+    "segment_lengths_consolidated": {
+      "section": "Cotas",
+      "item": "Comprimentos de trecho (cotas)",
+      "rule": "Cotas de trecho × comprimentos 50xx (±5%)",
+      "recommendation": "Conferir cotas do desenho com intermediários"
+    },
     "total_length": {
       "section": "Cotas",
       "item": "Comprimento total",
@@ -248,5 +256,50 @@
     "maxSegmentLengthChecks": 6,
     "finalInspectionWorkCenterPrefix": "CT-99",
     "unitSuffixes": ["mm", "mi", "m"]
+  },
+  "statusPresentation": {
+    "ok": { "label": "OK", "symbol": "✅" },
+    "pending": { "label": "Pendente", "symbol": "⚠️" },
+    "error": { "label": "Erro", "symbol": "❌" },
+    "critical_error": { "label": "Erro crítico", "symbol": "❌" },
+    "not_applicable": { "label": "Não aplicável", "symbol": "—" },
+    "incomplete": { "label": "Incompleto", "symbol": "⚠️" }
+  },
+  "reportFields": {
+    "tableHeader": "| Campo | Valor |",
+    "tableSeparator": "|---|---|",
+    "pdf": {
+      "code": "Código",
+      "revision": "Revisão (PDF)",
+      "attached": "PDF anexado",
+      "attachedYes": "Sim",
+      "attachedNo": "Não"
+    },
+    "api": {
+      "code": "Código",
+      "description": "Descrição",
+      "revision": "Revisão (API)"
+    }
+  },
+  "export": {
+    "spreadsheetHeaders": [
+      "Seção",
+      "Item",
+      "Status",
+      "Evidência PDF",
+      "Evidência API",
+      "Recomendação"
+    ],
+    "spreadsheetShortHeaders": ["Seção", "Item", "Status", "PDF", "API", "Ação"],
+    "pdfTitle": "Relatório de Análise de Desenho DELPI",
+    "nonconformitiesTitle": "Não conformidades",
+    "checklistTitle": "Checklist completo",
+    "criticalCountLabel": "Erros críticos: {count}"
+  },
+  "presentation": {
+    "divergenceStatuses": ["critical_error", "error"],
+    "consolidateTemplateKeys": ["segment_length_pending"],
+    "consolidatedTemplateKey": "segment_lengths_consolidated",
+    "evidenceJoiner": "; "
   }
 }
