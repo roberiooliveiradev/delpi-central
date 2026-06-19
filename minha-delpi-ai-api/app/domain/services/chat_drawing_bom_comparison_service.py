@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from app.domain.services.chat_drawing_component_code_normalization_service import (
@@ -11,6 +12,13 @@ from app.domain.services.chat_drawing_patterns_service import ChatDrawingPattern
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+
+_PI_COLOR_OCR_MARKERS: dict[str, tuple[str, ...]] = {
+    "AZUL": ("CB20AZUL", "20AWGAL"),
+    "BRAN": ("CB20BRAN", "20AWGBN"),
+    "AMAR": ("CB20AMAR", "20AWGAR"),
+    "LARA": ("CB20LARA", "20AWGLA"),
+}
 
 
 @dataclass(frozen=True)
@@ -89,28 +97,67 @@ class ChatDrawingBomComparisonService:
 
             if signature and signature in haystack:
                 matched.add(code)
+                continue
+
+            for marker in cls._intermediate_color_markers(signature or ""):
+                if marker in haystack:
+                    matched.add(code)
+                    break
 
         return matched
+
+    @classmethod
+    def _intermediate_color_markers(cls, signature: str) -> tuple[str, ...]:
+        match = re.match(r"^CB\d{2}([A-Z]{4})", str(signature or "").upper())
+
+        if not match:
+            return ()
+
+        color = match.group(1)
+        markers = _PI_COLOR_OCR_MARKERS.get(color, (f"CB20{color}",))
+
+        return tuple(marker.upper().replace(" ", "") for marker in markers)
 
     @classmethod
     def _pdf_description_haystack(cls, pdf_extract: dict) -> str:
         parts: list[str] = []
 
-        full_text = str(pdf_extract.get("fullText") or "").strip()
+        def add_text(raw: object) -> None:
+            text = str(raw or "").strip()
 
-        if full_text:
-            parts.append(full_text.upper().replace(" ", ""))
+            if text:
+                parts.append(text.upper().replace(" ", ""))
+
+        add_text(pdf_extract.get("fullText"))
+
+        source_metadata = pdf_extract.get("sourceMetadata")
+
+        if isinstance(source_metadata, dict):
+            for key in (
+                "stampText",
+                "cadReferenceText",
+                "annotationText",
+                "dimensionsText",
+            ):
+                add_text(source_metadata.get(key))
+
+            region_texts = source_metadata.get("regionTexts")
+
+            if isinstance(region_texts, dict):
+                for value in region_texts.values():
+                    add_text(value)
+
+        title_block = pdf_extract.get("titleBlock")
+
+        if isinstance(title_block, dict):
+            add_text(title_block.get("rawText"))
 
         for row in pdf_extract.get("bomRows") or []:
             if not isinstance(row, dict):
                 continue
 
-            for key in ("description", "desc", "text"):
-                raw = row.get(key)
-
-                if raw:
-                    parts.append(str(raw).upper().replace(" ", ""))
-                    break
+            for key in ("description", "desc", "text", "quantity"):
+                add_text(row.get(key))
 
         return "".join(parts)
 

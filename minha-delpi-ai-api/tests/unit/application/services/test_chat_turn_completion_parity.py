@@ -213,6 +213,12 @@ def test_library_only_attachments_skip_user_message_snapshot_patch():
                 },
             }
         ],
+        tool_context={
+            "context": "",
+            "toolCalls": [],
+            "drawingAnalysisMode": True,
+            "drawingLibraryFetch": {"productCode": "90263396"},
+        },
     )
 
     service.complete_turn(

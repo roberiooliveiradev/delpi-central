@@ -141,3 +141,20 @@ def test_attachments_are_library_only_detects_library_source() -> None:
         ]
     )
     assert not ChatDrawingLibraryAttachmentService.attachments_are_library_only([])
+
+
+def test_is_library_only_drawing_turn_without_user_attachments() -> None:
+    assert ChatDrawingLibraryAttachmentService.is_library_only_drawing_turn(
+        tool_context={
+            "drawingAnalysisMode": True,
+            "drawingLibraryFetch": {"productCode": "90263396"},
+        },
+        request_attachment_ids=None,
+    )
+    assert not ChatDrawingLibraryAttachmentService.is_library_only_drawing_turn(
+        tool_context={
+            "drawingAnalysisMode": True,
+            "drawingLibraryFetch": {"productCode": "90263396"},
+        },
+        request_attachment_ids=["att-1"],
+    )

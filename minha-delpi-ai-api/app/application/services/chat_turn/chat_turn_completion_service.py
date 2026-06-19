@@ -175,8 +175,14 @@ class ChatTurnCompletionService:
                 ChatDrawingLibraryAttachmentService,
             )
 
-            if ChatDrawingLibraryAttachmentService.attachments_are_library_only(
-                turn.attachments
+            if (
+                ChatDrawingLibraryAttachmentService.attachments_are_library_only(
+                    turn.attachments
+                )
+                or ChatDrawingLibraryAttachmentService.is_library_only_drawing_turn(
+                    tool_context=turn.tool_context,
+                    request_attachment_ids=getattr(turn.request, "attachment_ids", None),
+                )
             ):
                 return
 

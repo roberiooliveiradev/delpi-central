@@ -32,6 +32,24 @@ class ChatDrawingLibraryAttachmentService:
         return True
 
     @classmethod
+    def is_library_only_drawing_turn(
+        cls,
+        *,
+        tool_context: dict | None,
+        request_attachment_ids: list | None,
+    ) -> bool:
+        if request_attachment_ids:
+            return False
+
+        if not isinstance(tool_context, dict):
+            return False
+
+        return bool(
+            tool_context.get("drawingAnalysisMode")
+            and tool_context.get("drawingLibraryFetch")
+        )
+
+    @classmethod
     def merge_into_turn_attachments(
         cls,
         attachments: list[dict] | None,

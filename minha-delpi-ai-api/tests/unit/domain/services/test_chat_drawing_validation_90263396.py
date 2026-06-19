@@ -63,12 +63,16 @@ def _pdf_extract_90263396() -> dict:
             "10090014",
         ],
         "intermediateCodes": ["50233301"],
-        "fullText": (
-            "CB20AZUL-00240/11/06 "
-            "CB20BRAN-00240/11/06 "
-            "CB20AMAR-00240/11/06 "
-            "CB20LARA-00238/11/06"
-        ),
+        "sourceMetadata": {
+            "dimensionsText": (
+                "50233301 | CB20AZUL-00240/11/06-0000-6314 | A2 | 1 10090014"
+            ),
+            "stampText": (
+                "EPR 125/150°C 20AWG BN 600V "
+                "EPR 125/150°C 20AWG AR 600V "
+                "EPR 125/150°C 20AWG LA 600V"
+            ),
+        },
         "dimensions": {},
     }
 
