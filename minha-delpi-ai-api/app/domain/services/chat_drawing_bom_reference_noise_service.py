@@ -41,6 +41,16 @@ class ChatDrawingBomReferenceNoiseService:
         for code in cls._codes_from_reference_haystack(pdf_extract):
             codes.add(code)
 
+        product_code = ChatProductQueryIntentService.normalize_product_code(
+            str(pdf_extract.get("productCode") or "")
+        )
+
+        for code in cls._codes_from_client_reference_block(
+            cls._text_haystack(pdf_extract),
+            product_code=product_code,
+        ):
+            codes.add(code)
+
         return codes
 
     @classmethod
@@ -85,8 +95,13 @@ class ChatDrawingBomReferenceNoiseService:
         return len(normalized) <= 4
 
     @classmethod
-    def _codes_from_reference_haystack(cls, pdf_extract: dict) -> set[str]:
+    def _text_haystack(cls, pdf_extract: dict) -> str:
         parts: list[str] = []
+        full_text = str(pdf_extract.get("fullText") or "").strip()
+
+        if full_text:
+            parts.append(full_text)
+
         source_metadata = pdf_extract.get("sourceMetadata")
 
         if isinstance(source_metadata, dict):
@@ -104,7 +119,11 @@ class ChatDrawingBomReferenceNoiseService:
             if text:
                 parts.append(text)
 
-        haystack = "\n".join(parts)
+        return "\n".join(parts)
+
+    @classmethod
+    def _codes_from_reference_haystack(cls, pdf_extract: dict) -> set[str]:
+        haystack = cls._text_haystack(pdf_extract)
         codes: set[str] = set()
 
         for pattern in ChatDrawingPatternsService.client_reference_code_patterns():
@@ -114,6 +133,65 @@ class ChatDrawingBomReferenceNoiseService:
                 )
 
                 if code:
+                    codes.add(code)
+
+        return codes
+
+    @classmethod
+    def _codes_from_client_reference_block(
+        cls,
+        text: str,
+        *,
+        product_code: str,
+    ) -> set[str]:
+        lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
+
+        if not lines:
+            return set()
+
+        codes: set[str] = set()
+        ref_context = False
+        bom_header = ChatDrawingPatternsService.bom_table_header()
+        component_pattern = ChatDrawingPatternsService.component_code()
+        ref_markers = ChatDrawingPatternsService.bom_client_reference_noise_patterns()
+
+        for line in lines:
+            upper = line.upper()
+
+            if bom_header.search(upper) or ("QTD" in upper and "COD" in upper):
+                ref_context = False
+                continue
+
+            if any(pattern.search(upper) for pattern in ref_markers):
+                ref_context = True
+                continue
+
+            line_digits = "".join(char for char in line if char.isdigit())
+
+            if product_code and line_digits == product_code:
+                ref_context = False
+                continue
+
+            if not ref_context:
+                continue
+
+            matches = list(component_pattern.finditer(line))
+
+            if not matches:
+                continue
+
+            for match in matches:
+                code = ChatProductQueryIntentService.normalize_product_code(
+                    str(match.group(1) or "")
+                )
+
+                if not code or code == product_code:
+                    continue
+
+                if ChatDrawingPatternsService.is_intermediate_family(str(code)):
+                    continue
+
+                if line_digits == code or (len(line) <= 24 and len(matches) == 1):
                     codes.add(code)
 
         return codes

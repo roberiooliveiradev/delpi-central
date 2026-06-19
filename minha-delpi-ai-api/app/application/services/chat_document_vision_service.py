@@ -739,11 +739,26 @@ class ChatDocumentVisionService:
             if not isinstance(incoming, list):
                 incoming = []
 
-            for code in incoming:
-                if code and code not in existing:
-                    existing.append(code)
+            if cls._vision_has_authoritative_bom(doc):
+                merged[key] = list(incoming)
+            else:
+                for code in incoming:
+                    if code and code not in existing:
+                        existing.append(code)
 
-            merged[key] = existing
+                merged[key] = existing
+
+        from app.domain.services.chat_drawing_bom_reference_noise_service import (
+            ChatDrawingBomReferenceNoiseService,
+        )
+
+        noise = ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(merged)
+
+        merged["componentCodes"] = [
+            code
+            for code in (merged.get("componentCodes") or [])
+            if code not in noise
+        ]
 
         dimensions = dict(merged.get("dimensions") or {})
 
@@ -777,6 +792,20 @@ class ChatDocumentVisionService:
             merged["bomRows"] = bom_rows
             merged["bomHints"] = cls._bom_rows_to_hints(bom_rows)
 
+        if doc.get("bomSource"):
+            merged["bomSource"] = doc["bomSource"]
+
+        if isinstance(doc.get("validationScopes"), dict):
+            merged["validationScopes"] = doc["validationScopes"]
+
+        if isinstance(doc.get("sourceMetadata"), dict):
+            base_meta = (
+                merged.get("sourceMetadata")
+                if isinstance(merged.get("sourceMetadata"), dict)
+                else {}
+            )
+            merged["sourceMetadata"] = {**base_meta, **doc["sourceMetadata"]}
+
         if title_block:
             merged["titleBlock"] = title_block
 
@@ -789,6 +818,34 @@ class ChatDocumentVisionService:
                 merged["revision"] = fields["rev"]
 
         return merged
+
+    @classmethod
+    def _vision_has_authoritative_bom(cls, doc: dict[str, Any]) -> bool:
+        bom_rows = doc.get("bomRows")
+
+        if isinstance(bom_rows, list) and bom_rows:
+            return True
+
+        scopes = doc.get("validationScopes")
+
+        if isinstance(scopes, dict):
+            bom = scopes.get("bom")
+
+            if isinstance(bom, dict) and bom.get("available"):
+                return True
+
+        bom_source = str(doc.get("bomSource") or "").strip()
+
+        if bom_source in {
+            "bom_region",
+            "stamp_bom_table",
+            "annotation_table",
+            "pdf_annotations_bom",
+            "full_text_section",
+        }:
+            return True
+
+        return False
 
     @classmethod
     def _bom_rows_to_hints(cls, bom_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -38,6 +38,27 @@ def test_collect_reference_noise_codes_from_pdf_extract():
     assert "10056570" in codes
 
 
+def test_client_reference_block_ref_z_weg_pattern():
+    text = """
+REF:
+Z-0555 REV:73
+WEG INDUSTRIAS S.A.-MOTORES
+10056551
+90261656
+"""
+    pdf_extract = {
+        "productCode": "90261656",
+        "fullText": text,
+        "componentCodes": ["10056551", "10080110", "10420256"],
+    }
+
+    codes = ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(pdf_extract)
+
+    assert "10056551" in codes
+    assert "10080110" not in codes
+    assert "10420256" not in codes
+
+
 def test_total_length_uses_cable_child_not_pi_piece_count():
     root = {
         "structure": {

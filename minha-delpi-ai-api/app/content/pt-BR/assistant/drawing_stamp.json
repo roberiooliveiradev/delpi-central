@@ -214,7 +214,10 @@
     "bomClientReferenceNoise": [
       "DC\\s*:?\\s*Z",
       "DC:Z-",
-      "REFER[EÊ]NCIA\\s*:"
+      "REFER[EÊ]NCIA\\s*:",
+      "\\bREF\\s*:",
+      "Z-\\d+",
+      "WEG\\s+INDUSTRIAS"
     ],
     "clientReferenceCodeCapture": [
       "(\\d{8})\\s+DC\\s*:?\\s*Z",

@@ -102,6 +102,8 @@ class ChatDrawingPdfBomExtractionService:
             revision_only_codes=revision_only_codes,
             intermediate_codes=intermediate_codes,
             pdf_context={
+                "productCode": product_code,
+                "fullText": normalized,
                 "bomRows": bom_rows,
                 "sourceMetadata": metadata,
             },
