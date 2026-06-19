@@ -29,13 +29,13 @@ case "$TARGET" in
     ;;
 esac
 
-echo "== Build com extras de visão ($TARGET) — EasyOCR/Docling; pode levar vários minutos =="
-docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" build minha-delpi-ai-api
+echo "== Build com extras de visão ($TARGET) — EasyOCR/Docling + modelos; pode levar vários minutos =="
+docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" build --no-cache minha-delpi-ai-api
 
 echo "== Recreate minha-delpi-ai-api =="
 docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" up -d --force-recreate minha-delpi-ai-api
 
 docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" exec -T minha-delpi-ai-api \
-  python3 scripts/check_vision_profile_deps.py
+  python3 scripts/check_vision_profile_deps.py --require-easyocr --require-easyocr-models
 
 echo "Profile vision ($TARGET): build concluído."

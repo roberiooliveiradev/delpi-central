@@ -34,7 +34,7 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 | Código | Volume montado (`../minha-delpi-ai-api:/app`) | Copiado na imagem (imutável) |
 | **Tesseract (OCR)** | `apt` + `por`/`eng` | `apt` + `por`/`eng` (alinhado) |
 | **Python deps** | `requirements.txt` | `requirements.txt` (mesmo arquivo) |
-| **EasyOCR / Docling** | `requirements-vision.txt` no build + `install_vision_extras.sh` na subida | Só se `INSTALL_VISION_EXTRAS=true` no build (`Dockerfile.prod`) |
+| **EasyOCR / Docling** | Build via `docker_install_vision_extras.sh` + modelos em `/opt/delpi-vision/easyocr` | Só se `INSTALL_VISION_EXTRAS=true` no build (`Dockerfile.prod`) |
 | **PaddleOCR** | Opcional — descomente em `requirements-vision.txt` + rebuild | Idem |
 | Compose injeta `CHAT_DOCUMENT_VISION_*` | Sim (default `ENABLED=true`) | Sim (via `.env`; ver `.env.prod.example`) |
 | Ollama / SearXNG | Dev: profile `chat` | Prod: Ollama; SearXNG opcional por env |
@@ -44,7 +44,7 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 1. **Git** traz código + exemplos de env; **não** traz `.env` nem imagens Docker.
 2. Em cada máquina: `cp .env.*.example .env`, ajustar secrets, `docker compose build`.
 3. Dados (Postgres, anexos, `metadata.documentVision`) vivem nos **volumes/DB**, não na imagem.
-4. **EasyOCR/Docling** vêm no `Dockerfile.dev` (build); o entrypoint **não** roda `pip install` na subida. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
+4. **EasyOCR/Docling** e **pesos EasyOCR** vêm no build (`Dockerfile.dev`); entrypoint não roda `pip install`. Rebuild: `./minha-delpi-ai-api/scripts/build_vision_profile.sh dev`. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 

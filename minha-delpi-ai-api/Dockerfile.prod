@@ -4,11 +4,17 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV CHAT_VISION_EXTRAS_WARN=true
+ENV CHAT_EASYOCR_MODEL_DIR=/opt/delpi-vision/easyocr
 
-# INSTALL_VISION_EXTRAS=true instala requirements-vision.txt (Docling — imagem maior).
+# INSTALL_VISION_EXTRAS=true instala requirements-vision.txt + modelos EasyOCR na imagem.
 ARG INSTALL_VISION_EXTRAS=false
 
 COPY minha-delpi-ai-api/requirements.txt minha-delpi-ai-api/requirements-vision.txt ./
+COPY minha-delpi-ai-api/scripts/docker_install_vision_extras.sh \
+     minha-delpi-ai-api/scripts/prefetch_vision_models.py \
+     minha-delpi-ai-api/scripts/check_vision_profile_deps.py \
+     ./scripts/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -23,19 +29,16 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir -r requirements.txt \
-    && if [ "$INSTALL_VISION_EXTRAS" = "true" ] \
-        && grep -qv '^#' requirements-vision.txt | grep -q '[a-zA-Z0-9]'; then \
-        pip install --no-cache-dir -r requirements-vision.txt; \
-    fi
+    && chmod +x scripts/docker_install_vision_extras.sh \
+    && INSTALL_VISION_EXTRAS="${INSTALL_VISION_EXTRAS}" APP_ROOT=/app bash scripts/docker_install_vision_extras.sh
 
 COPY minha-delpi-ai-api/ .
 COPY shared/delpi_auth /app/delpi_auth
 
 COPY minha-delpi-ai-api/docker-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh /app/scripts/install_vision_extras.sh
 
 ENV FLASK_APP=app.main:app
-ENV CHAT_VISION_EXTRAS_WARN=true
 
 EXPOSE 8000
 

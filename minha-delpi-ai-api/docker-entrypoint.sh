@@ -28,8 +28,10 @@ fi
 if [ "${CHAT_VISION_EXTRAS_WARN:-true}" = "true" ]; then
   if ! python3 -c "import easyocr" >/dev/null 2>&1; then
     echo "⚠️  EasyOCR ausente — OCR regional usará só Tesseract até rebuild da imagem."
-    echo "    Dev:  docker compose -f infra/docker-compose.dev.yml --profile chat build minha-delpi-ai-api"
+    echo "    Dev:  ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev"
     echo "    Prod: INSTALL_VISION_EXTRAS=true docker compose -f infra/docker-compose.yml build minha-delpi-ai-api"
+  elif [ -n "${CHAT_EASYOCR_MODEL_DIR:-}" ] && [ ! -d "${CHAT_EASYOCR_MODEL_DIR}" ]; then
+    echo "⚠️  Modelos EasyOCR ausentes em ${CHAT_EASYOCR_MODEL_DIR} — rebuild com prefetch no Dockerfile."
   fi
 fi
 

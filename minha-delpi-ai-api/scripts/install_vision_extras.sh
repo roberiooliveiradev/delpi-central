@@ -54,6 +54,7 @@ if [ "$need_install" = "true" ]; then
   fi
 
   pip install --no-cache-dir -r "$REQ_FILE"
+  python3 "${APP_ROOT}/scripts/prefetch_vision_models.py" || true
 else
   echo "✅ Extras de visão já disponíveis (easyocr)."
 fi

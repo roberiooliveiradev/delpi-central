@@ -14,6 +14,8 @@ from app.domain.services.chat_pdf_region_ocr_fusion_service import (
 
 
 class ChatPdfRegionOcrEngineService:
+    _easyocr_readers: dict[tuple[str, ...], Any] = {}
+
     @classmethod
     def enabled_engines(cls) -> tuple[str, ...]:
         configured = ChatDocumentVisionContentService.pdf_region_ocr_engines()
@@ -222,16 +224,47 @@ class ChatPdfRegionOcrEngineService:
             return {"text": "", "codeTokens": []}
 
     @classmethod
+    def _easyocr_model_dir(cls) -> str | None:
+        import os
+
+        raw = os.environ.get("CHAT_EASYOCR_MODEL_DIR", "").strip()
+        return raw or None
+
+    @classmethod
+    def _easyocr_reader(cls, languages: list[str]) -> Any:
+        import easyocr
+
+        key = tuple(languages)
+        cached = cls._easyocr_readers.get(key)
+
+        if cached is not None:
+            return cached
+
+        kwargs: dict[str, Any] = {"gpu": False, "verbose": False}
+        model_dir = cls._easyocr_model_dir()
+
+        if model_dir:
+            kwargs["model_storage_directory"] = model_dir
+
+        reader = easyocr.Reader(list(key), **kwargs)
+        cls._easyocr_readers[key] = reader
+        return reader
+
+    @classmethod
     def _easyocr_detailed(cls, image: Any, *, lang: str) -> dict[str, Any]:
         try:
-            import easyocr
             import numpy as np
         except ImportError:
             return {"text": "", "codeTokens": []}
 
         try:
+            import easyocr  # noqa: F401
+        except ImportError:
+            return {"text": "", "codeTokens": []}
+
+        try:
             languages = cls._easyocr_languages(lang)
-            reader = easyocr.Reader(languages, gpu=False, verbose=False)
+            reader = cls._easyocr_reader(languages)
             array = np.array(image.convert("RGB"))
             chunks = reader.readtext(array, detail=1, paragraph=False)
             lines: list[str] = []

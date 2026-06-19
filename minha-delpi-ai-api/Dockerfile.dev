@@ -1,4 +1,4 @@
-# Dev — Tesseract + extras de visão (EasyOCR, Docling) para OCR regional multi-motor.
+# Dev — Tesseract + extras de visão (EasyOCR, Docling) + modelos EasyOCR na imagem.
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -8,8 +8,15 @@ ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.main:app
 ENV FLASK_ENV=development
 ENV CHAT_VISION_EXTRAS_WARN=true
+ENV CHAT_EASYOCR_MODEL_DIR=/opt/delpi-vision/easyocr
+
+ARG INSTALL_VISION_EXTRAS=true
 
 COPY requirements.txt requirements-vision.txt ./
+COPY scripts/docker_install_vision_extras.sh \
+     scripts/prefetch_vision_models.py \
+     scripts/check_vision_profile_deps.py \
+     ./scripts/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -24,9 +31,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir -r requirements.txt \
-    && if grep -qv '^#' requirements-vision.txt | grep -q '[a-zA-Z0-9]'; then \
-        pip install --no-cache-dir -r requirements-vision.txt; \
-    fi
+    && chmod +x scripts/docker_install_vision_extras.sh \
+    && INSTALL_VISION_EXTRAS="${INSTALL_VISION_EXTRAS}" APP_ROOT=/app bash scripts/docker_install_vision_extras.sh
 
 COPY . .
 COPY docker-entrypoint.sh /entrypoint.sh
