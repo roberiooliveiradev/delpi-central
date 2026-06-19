@@ -116,6 +116,36 @@ class ChatTurnUseCaseSupportService:
 
         return ChatAttachmentPreviewService.enrich_message_attachment_snapshots(merged)
 
+    def resolve_turn_attachments(
+        self,
+        attachments: list[dict] | None,
+        *,
+        user_id: UUID,
+        session_id: UUID,
+        tool_context: dict | None,
+        session,
+    ) -> list[dict]:
+        from app.application.services.chat_drawing_library_attachment_service import (
+            ChatDrawingLibraryAttachmentService,
+        )
+
+        merged = ChatDrawingLibraryAttachmentService.merge_into_turn_attachments(
+            attachments,
+            user_id=user_id,
+            session_id=session_id,
+            tool_context=tool_context,
+            attachment_repository=self.attachment_repository,
+            session=session,
+        )
+
+        if not merged:
+            return list(attachments or [])
+
+        return self.enrich_attachments_for_message_metadata(
+            merged,
+            tool_context=tool_context,
+        )
+
     def attach_files_to_message(
         self,
         *,

@@ -268,6 +268,14 @@ class SendChatMessageUseCase:
         started_at = time.perf_counter()
         answer = assembly.direct_answer or self.llm_gateway.generate(assembly.llm_messages)
 
+        attachments = self.turn_support.resolve_turn_attachments(
+            attachments,
+            user_id=user_id,
+            session_id=session_id,
+            tool_context=prepared.tool_context,
+            session=session,
+        )
+
         completion = self.turn_completion_service.complete_turn(
             ChatTurnCompletionInput(
                 request=request,
