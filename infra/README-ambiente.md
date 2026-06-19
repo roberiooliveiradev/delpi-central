@@ -44,7 +44,7 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 1. **Git** traz código + exemplos de env; **não** traz `.env` nem imagens Docker.
 2. Em cada máquina: `cp .env.*.example .env`, ajustar secrets, `docker compose build`.
 3. Dados (Postgres, anexos, `metadata.documentVision`) vivem nos **volumes/DB**, não na imagem.
-4. **EasyOCR/Docling** vêm no `Dockerfile.dev`; na primeira subida após pull, o entrypoint roda `install_vision_extras.sh` se faltar pacote. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
+4. **EasyOCR/Docling** vêm no `Dockerfile.dev` (build); o entrypoint **não** roda `pip install` na subida. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 
@@ -97,7 +97,7 @@ Procedimento completo: `api-delpi/docs/api/12-procedimento-reimport-openapi.md`.
 
 | Variável | Dev (compose default) | Prod (recomendado no `.env`) |
 |----------|----------------------|------------------------------|
-| `CHAT_VISION_EXTRAS_ENABLED` | `true` | `true` (prod com `INSTALL_VISION_EXTRAS`) |
+| `CHAT_VISION_EXTRAS_WARN` | `true` | `true` — aviso se extras não estiverem na imagem |
 | `CHAT_DOCUMENT_VISION_ENABLED` | `true` | `true` se usar OCR/anexos/desenhos |
 | `CHAT_DOCUMENT_VISION_BACKEND` | `auto` | `auto` (ou `tesseract` / `docling` com extras na imagem) |
 | `CHAT_DOCUMENT_VISION_OLLAMA_MODEL` | `qwen2.5vl:7b` | `qwen2.5vl:7b` com `ollama_vlm` ou fallback em `auto` (`CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK=true`) |

@@ -10,4 +10,4 @@ services:
     build:
       dockerfile: Dockerfile.vision.dev
     environment:
-      CHAT_VISION_EXTRAS_ENABLED: ${CHAT_VISION_EXTRAS_ENABLED:-true}
+      CHAT_VISION_EXTRAS_WARN: ${CHAT_VISION_EXTRAS_WARN:-true}

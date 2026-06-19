@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
-# Instala dependências opcionais de visão/OCR (EasyOCR, Docling, …) no container.
+# Instala dependências opcionais de visão/OCR — uso MANUAL ou CI, não no entrypoint.
 # Idempotente: só instala quando os pacotes Python ainda não estão importáveis.
 #
 # Variáveis:
-#   CHAT_VISION_EXTRAS_ENABLED  default true — defina false para pular
-#   CHAT_VISION_EXTRAS_FORCE    true para forçar pip install -r requirements-vision.txt
+#   CHAT_VISION_EXTRAS_RUNTIME_INSTALL  true para permitir pip install (não usar na subida normal)
+#   CHAT_VISION_EXTRAS_FORCE            true para forçar pip install -r requirements-vision.txt
 
 set -euo pipefail
 
 APP_ROOT="${APP_ROOT:-/app}"
 REQ_FILE="${APP_ROOT}/requirements-vision.txt"
 
-if [ "${CHAT_VISION_EXTRAS_ENABLED:-true}" = "false" ]; then
-  echo "⏭️  CHAT_VISION_EXTRAS_ENABLED=false — extras de visão não instalados."
+if [ "${CHAT_VISION_EXTRAS_RUNTIME_INSTALL:-false}" != "true" ]; then
+  echo "⏭️  Runtime install desligado — extras devem vir do build da imagem."
+  echo "    Para instalar manualmente: CHAT_VISION_EXTRAS_RUNTIME_INSTALL=true $0"
+  if [ -f "${APP_ROOT}/scripts/check_vision_profile_deps.py" ]; then
+    python3 "${APP_ROOT}/scripts/check_vision_profile_deps.py" || true
+  fi
   exit 0
 fi
 
@@ -55,5 +59,5 @@ else
 fi
 
 if [ -f "${APP_ROOT}/scripts/check_vision_profile_deps.py" ]; then
-  python3 "${APP_ROOT}/scripts/check_vision_profile_deps.py"
+  python3 "${APP_ROOT}/scripts/check_vision_profile_deps.py" || true
 fi

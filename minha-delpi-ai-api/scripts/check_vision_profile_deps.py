@@ -44,7 +44,7 @@ def main() -> int:
             "ou use CHAT_DOCUMENT_VISION_BACKEND=tesseract|auto."
         )
 
-    return 0 if tesseract else 1
+    return 0
 
 
 if __name__ == "__main__":

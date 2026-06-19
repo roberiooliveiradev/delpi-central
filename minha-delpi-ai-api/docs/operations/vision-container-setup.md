@@ -10,7 +10,11 @@ A imagem `Dockerfile.dev` instala:
 | Python base | `requirements.txt` (PyMuPDF, pytesseract, …) |
 | Python visão | `requirements-vision.txt` — **EasyOCR**, **Docling** |
 
-Na subida do container, `docker-entrypoint.sh` chama `scripts/install_vision_extras.sh` (idempotente) para garantir EasyOCR/Docling se a imagem estiver desatualizada.
+Na subida do container, o entrypoint **não** instala pacotes — apenas avisa se EasyOCR faltar. Instalação manual:
+
+```bash
+docker exec -e CHAT_VISION_EXTRAS_RUNTIME_INSTALL=true delpi-minha-delpi-ai-api sh /app/scripts/install_vision_extras.sh
+```
 
 ## Motores OCR regional (desenho DELPI)
 
@@ -33,8 +37,8 @@ Fusão multi-motor: `ChatPdfRegionOcrFusionService` (linhas com mais códigos de
 
 | Variável | Default dev | Descrição |
 |----------|-------------|-----------|
-| `CHAT_VISION_EXTRAS_ENABLED` | `true` | `false` pula `install_vision_extras.sh` |
-| `CHAT_VISION_EXTRAS_FORCE` | `false` | `true` força `pip install -r requirements-vision.txt` |
+| `CHAT_VISION_EXTRAS_WARN` | `true` | Aviso no log se EasyOCR não estiver na imagem |
+| `CHAT_VISION_EXTRAS_RUNTIME_INSTALL` | `false` | `true` só no script manual `install_vision_extras.sh` |
 | `CHAT_DOCUMENT_VISION_ENABLED` | `true` | Master switch visão |
 | `CHAT_DOCUMENT_VISION_BACKEND` | `auto` | `native`, `tesseract`, `docling`, `ollama_vlm`, … |
 | `CHAT_DOCUMENT_VISION_TESSERACT_LANG` | `por+eng` | Idiomas Tesseract |

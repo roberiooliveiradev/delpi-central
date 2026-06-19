@@ -17,6 +17,8 @@ RUN apt-get update \
         tesseract-ocr-eng \
         poppler-utils \
         libgl1 \
+        libglib2.0-0 \
+        libgomp1 \
         netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
@@ -33,6 +35,7 @@ COPY minha-delpi-ai-api/docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENV FLASK_APP=app.main:app
+ENV CHAT_VISION_EXTRAS_WARN=true
 
 EXPOSE 8000
 

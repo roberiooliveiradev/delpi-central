@@ -23,9 +23,14 @@ if [ "${SKIP_CHAT_INTELLIGENCE_SYNC:-false}" != "true" ]; then
   flask --app "$FLASK_APP" seed-chat-platform-settings
 fi
 
-if [ -f /app/scripts/install_vision_extras.sh ]; then
-  echo "👁️  Verificando extras de visão/OCR..."
-  sh /app/scripts/install_vision_extras.sh
+# Extras de visão (EasyOCR/Docling) só no BUILD da imagem — nunca pip install aqui
+# (bloqueava o Flask 10–20 min e gerava 502 no gateway).
+if [ "${CHAT_VISION_EXTRAS_WARN:-true}" = "true" ]; then
+  if ! python3 -c "import easyocr" >/dev/null 2>&1; then
+    echo "⚠️  EasyOCR ausente — OCR regional usará só Tesseract até rebuild da imagem."
+    echo "    Dev:  docker compose -f infra/docker-compose.dev.yml --profile chat build minha-delpi-ai-api"
+    echo "    Prod: INSTALL_VISION_EXTRAS=true docker compose -f infra/docker-compose.yml build minha-delpi-ai-api"
+  fi
 fi
 
 echo "🔥 Iniciando aplicação..."
