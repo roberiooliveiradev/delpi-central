@@ -1,0 +1,50 @@
+{
+  "familyResolution": {
+    "defaultFamily": "default",
+    "prefixLength": 4
+  },
+  "families": {
+    "default": {
+      "enabledRules": [
+        "bom_quantity",
+        "guide_component",
+        "balloon_presence",
+        "multipage_coverage"
+      ]
+    },
+    "9026": {
+      "enabledRules": [
+        "bom_quantity",
+        "guide_component",
+        "balloon_presence",
+        "multipage_coverage"
+      ]
+    },
+    "7026": {
+      "enabledRules": [
+        "bom_quantity",
+        "guide_component",
+        "multipage_coverage"
+      ],
+      "disabledRules": ["balloon_presence"]
+    }
+  },
+  "rules": {
+    "bom_quantity": {
+      "section": "BOM",
+      "description": "Quantidade PDF × SG1010 (nível 1)"
+    },
+    "guide_component": {
+      "section": "Roteiro",
+      "description": "component_code SG2010 × filhos do PI na SG1010"
+    },
+    "balloon_presence": {
+      "section": "BOM",
+      "description": "Presença de códigos BOM nas anotações/balões (fase 1)"
+    },
+    "multipage_coverage": {
+      "section": "PDF",
+      "description": "Cobertura BOM em PDF multipágina"
+    }
+  }
+}

@@ -159,6 +159,27 @@ class ChatDrawingValidationOrchestrationService:
                 )
             )
 
+            from app.domain.services.chat_drawing_guide_component_consistency_service import (
+                ChatDrawingGuideComponentConsistencyService,
+            )
+            from app.domain.services.chat_drawing_validation_rule_registry_service import (
+                ChatDrawingValidationRuleRegistryService,
+            )
+
+            product = root.get("product") if isinstance(root.get("product"), dict) else {}
+
+            if ChatDrawingValidationRuleRegistryService.is_enabled(
+                "guide_component",
+                code,
+                group_code=str(product.get("group_code") or "") or None,
+            ):
+                items.extend(
+                    ChatDrawingGuideComponentConsistencyService.build_check_items(
+                        root=root,
+                        product_code=code,
+                    )
+                )
+
         inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
         has_qp = ChatDrawingInspectionValidationService.has_inspection_plan(inspection)
 

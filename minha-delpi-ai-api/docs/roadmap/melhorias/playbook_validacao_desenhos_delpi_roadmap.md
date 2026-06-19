@@ -1,6 +1,6 @@
 # Playbook — Validação normativa de desenhos DELPI (roadmap)
 
-> **Status (19/06/2026):** Parcial — Fases **15.0–15.5** entregues; **15.6** em backlog.  
+> **Status (19/06/2026):** Onda **15.0–15.6** entregue.  
 > **Projeto:** Minha DELPI Chat IA  
 > **Arquitetura:** inteligência transversal no [chat base](../../architecture/chat-intelligence-base.md); agente só habilita skill `drawing-analysis-delpi`.
 
@@ -99,7 +99,7 @@ Fase 15.2 — Roteiro × estrutura com profundidade real        [entregue — vi
 Fase 15.3 — Inspeção alinhada ao contrato api-delpi           [entregue]
 Fase 15.4 — Cobertura multipágina (PDF parcial × API grande)  [entregue]
 Fase 15.5 — Classificação de notas dimensionais             [entregue]
-Fase 15.6 — Quantidades BOM, balões, registro declarativo     [backlog]
+Fase 15.6 — Quantidades BOM, balões, registro declarativo     [entregue]
 ```
 
 ---

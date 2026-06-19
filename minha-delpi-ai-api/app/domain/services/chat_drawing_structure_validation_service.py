@@ -21,6 +21,9 @@ from app.domain.services.chat_drawing_total_length_reference_service import (
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
+from app.domain.services.chat_drawing_validation_rule_registry_service import (
+    ChatDrawingValidationRuleRegistryService,
+)
 
 
 class ChatDrawingStructureValidationService:
@@ -114,10 +117,47 @@ class ChatDrawingStructureValidationService:
                 ChatDrawingMultipageCoverageService,
             )
 
+            if ChatDrawingValidationRuleRegistryService.is_enabled(
+                "multipage_coverage",
+                product_code,
+                group_code=cls._product_group_code(root),
+            ):
+                items.extend(
+                    ChatDrawingMultipageCoverageService.build_check_items(
+                        pdf_extract=pdf_extract,
+                        comparison=comparison,
+                    )
+                )
+
+            if ChatDrawingValidationRuleRegistryService.is_enabled(
+                "bom_quantity",
+                product_code,
+                group_code=cls._product_group_code(root),
+            ):
+                from app.domain.services.chat_drawing_bom_quantity_validation_service import (
+                    ChatDrawingBomQuantityValidationService,
+                )
+
+                items.extend(
+                    ChatDrawingBomQuantityValidationService.build_check_items(
+                        root=root,
+                        pdf_extract=pdf_extract,
+                        product_code=product_code,
+                    )
+                )
+
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "balloon_presence",
+            product_code,
+            group_code=cls._product_group_code(root),
+        ):
+            from app.domain.services.chat_drawing_balloon_validation_service import (
+                ChatDrawingBalloonValidationService,
+            )
+
             items.extend(
-                ChatDrawingMultipageCoverageService.build_check_items(
+                ChatDrawingBalloonValidationService.build_check_items(
                     pdf_extract=pdf_extract,
-                    comparison=comparison,
                 )
             )
 
@@ -147,6 +187,13 @@ class ChatDrawingStructureValidationService:
         bom = resolved.get("bom")
 
         return bom if isinstance(bom, dict) else {}
+
+    @classmethod
+    def _product_group_code(cls, root: dict) -> str | None:
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        group_code = str(product.get("group_code") or "").strip()
+
+        return group_code or None
 
     @classmethod
     def _intermediate_code_items(

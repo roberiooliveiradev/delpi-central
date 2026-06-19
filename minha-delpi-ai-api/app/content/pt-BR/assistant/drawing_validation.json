@@ -61,6 +61,9 @@
     "guideBomLevelExpected": "esperado nível {level}",
     "multipageCoverageRatio": "{ratio} ({pdfCount}/{apiCount} códigos, {pageCount} pág.)",
     "multipageMatchedCodes": "{matched}/{apiCount} códigos SG1010 no PDF",
+    "bomQuantityPdf": "qtd {quantity} (PDF)",
+    "bomQuantityApi": "qtd {quantity} (SG1010)",
+    "guideComponentPair": "PI {product} × MP {component}",
     "structureItemCount": "{count} item(ns) na estrutura",
     "checkIntermediate50xx": "Conferir intermediário 50xx",
     "missingDash": "—",
@@ -332,6 +335,48 @@
       "item": "Nota dimensional ambígua",
       "rule": "Medidas de termoretração/ensaio não devem ser tratadas como decape de cabo",
       "recommendation": "Conferir manualmente cotas de decape versus notas de termoencolhível"
+    },
+    "bom_quantity_mismatch": {
+      "section": "BOM",
+      "item": "Quantidade {code} (PDF × SG1010)",
+      "rule": "Quantidade na BOM do PDF deve estar dentro da tolerância da SG1010",
+      "recommendation": "Corrigir quantidade no desenho ou na estrutura Protheus"
+    },
+    "bom_quantity_ok": {
+      "section": "BOM",
+      "item": "Quantidades (PDF × SG1010)",
+      "rule": "Quantidades comparáveis dentro da tolerância",
+      "recommendation": "—"
+    },
+    "guide_component_mismatch": {
+      "section": "Roteiro",
+      "item": "Componente do roteiro fora da estrutura do PI",
+      "rule": "component_code do SG2010 deve existir como filho do PI na SG1010",
+      "recommendation": "Corrigir roteiro ou estrutura do produto intermediário"
+    },
+    "guide_component_ok": {
+      "section": "Roteiro",
+      "item": "Componentes do roteiro × estrutura",
+      "rule": "component_code do SG2010 alinhado à SG1010",
+      "recommendation": "—"
+    },
+    "balloon_coverage_unavailable": {
+      "section": "BOM",
+      "item": "Balões / anotações do PDF",
+      "rule": "Anotações devem estar disponíveis para cruzamento com BOM (fase 1)",
+      "recommendation": "Conferir extração de anotações ou PDF legível"
+    },
+    "balloon_missing_codes": {
+      "section": "BOM",
+      "item": "Códigos BOM sem balão/anotação",
+      "rule": "Códigos da BOM devem aparecer nas anotações quando disponíveis",
+      "recommendation": "Conferir balões ou revisar extração OCR"
+    },
+    "balloon_presence_ok": {
+      "section": "BOM",
+      "item": "Balões × BOM",
+      "rule": "Códigos da BOM presentes nas anotações",
+      "recommendation": "—"
     }
   },
   "evidence": {
@@ -390,7 +435,8 @@
     "dimensionNoteValidation": {
       "ambiguousTemplateKey": "dimension_note_ambiguous",
       "ambiguousStatus": "pending"
-    }
+    },
+    "quantityToleranceRatio": 0.1
   },
   "patterns": {
     "intermediateColorSignature": "^CB\\d{2}([A-Z]{4})"

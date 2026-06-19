@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -97,7 +98,7 @@ def _fetch_token() -> str:
     return str(token)
 
 
-def _local_extract(code: str, pdf_path: Path, *, token: str) -> dict:
+def _local_extract(code: str, pdf_path: Path, *, token: str, validate_report: bool = False) -> dict:
     chat_root = Path(__file__).resolve().parents[2] / "minha-delpi-ai-api"
     if str(chat_root) not in sys.path:
         sys.path.insert(0, str(chat_root))
@@ -108,6 +109,9 @@ def _local_extract(code: str, pdf_path: Path, *, token: str) -> dict:
     )
     from app.domain.services.chat_drawing_structure_validation_service import (
         ChatDrawingStructureValidationService,
+    )
+    from app.domain.services.chat_drawing_validation_orchestration_service import (
+        ChatDrawingValidationOrchestrationService,
     )
 
     configure_domain_infrastructure_ports()
@@ -128,6 +132,7 @@ def _local_extract(code: str, pdf_path: Path, *, token: str) -> dict:
         "bomAvailable": bool(bom_scope.get("available")),
         "bomSourceKey": bom_scope.get("sourceKey"),
         "criticalBomItems": [],
+        "validationReport": None,
         "apiStructureOk": False,
     }
 
@@ -142,25 +147,61 @@ def _local_extract(code: str, pdf_path: Path, *, token: str) -> dict:
             root = analyser.get("data") if isinstance(analyser.get("data"), dict) else {}
             if root.get("structure"):
                 result["apiStructureOk"] = True
-                items = ChatDrawingStructureValidationService.build_check_items(
-                    root=root,
-                    pdf_extract=extracted,
-                    product_code=code,
-                )
-                result["criticalBomItems"] = [
-                    {
-                        "item": row.get("item"),
-                        "status": row.get("status"),
-                        "pdfEvidence": row.get("pdfEvidence"),
+
+                if validate_report:
+                    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+                        product_code=code,
+                        payload=root,
+                        has_pdf_attachment=True,
+                        api_ok=True,
+                        pdf_extract=extracted,
+                    )
+                    analysis = package.get("drawingAnalysis") or {}
+                    result["validationReport"] = {
+                        "status": analysis.get("status"),
+                        "criticalErrors": analysis.get("criticalErrors"),
+                        "warnings": analysis.get("warnings"),
+                        "multipageCoverage": analysis.get("multipageCoverage"),
+                        "items": analysis.get("items"),
                     }
-                    for row in items
-                    if row.get("section") == "BOM" and row.get("status") == "critical_error"
-                ]
+                    result["criticalBomItems"] = [
+                        {
+                            "item": row.get("item"),
+                            "status": row.get("status"),
+                            "section": row.get("section"),
+                            "pdfEvidence": row.get("pdfEvidence"),
+                        }
+                        for row in analysis.get("items") or []
+                        if row.get("status") == "critical_error"
+                    ]
+                else:
+                    items = ChatDrawingStructureValidationService.build_check_items(
+                        root=root,
+                        pdf_extract=extracted,
+                        product_code=code,
+                    )
+                    result["criticalBomItems"] = [
+                        {
+                            "item": row.get("item"),
+                            "status": row.get("status"),
+                            "pdfEvidence": row.get("pdfEvidence"),
+                        }
+                        for row in items
+                        if row.get("section") == "BOM" and row.get("status") == "critical_error"
+                    ]
 
     return result
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Valida biblioteca de desenhos DELPI")
+    parser.add_argument(
+        "--validate-report",
+        action="store_true",
+        help="Gera relatório completo via ChatDrawingValidationOrchestrationService",
+    )
+    args = parser.parse_args()
+
     print(f"Base URL: {_BASE_URL}{_API_PREFIX}")
     print(f"Biblioteca local: {_DRAWINGS_DIR}\n")
 
@@ -217,7 +258,12 @@ def main() -> int:
         local_pdf = _DRAWINGS_DIR / f"{code}.pdf"
         if local_pdf.is_file():
             try:
-                local = _local_extract(code, local_pdf, token=token)
+                local = _local_extract(
+                    code,
+                    local_pdf,
+                    token=token,
+                    validate_report=args.validate_report,
+                )
                 row["localExtract"] = local
                 row["localPdf"] = local_pdf.name
                 if local.get("criticalBomItems"):

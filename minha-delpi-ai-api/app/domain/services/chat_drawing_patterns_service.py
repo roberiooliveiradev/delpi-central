@@ -610,6 +610,10 @@ class ChatDrawingPatternsService:
         )
 
     @classmethod
+    def quantity_tolerance_ratio(cls) -> float:
+        return cls.validation_rule_float("quantityToleranceRatio", 0.1)
+
+    @classmethod
     def intermediate_description_signature(cls, description: str) -> str | None:
         match = cls.intermediate_segment().search(str(description or ""))
 
