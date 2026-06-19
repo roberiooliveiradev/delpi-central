@@ -13,7 +13,9 @@ _BOM_SECTION_RE = re.compile(
     r"(?:LISTA\s+DE\s+MATERIAIS|LISTA\s+MATERIAL|BOM\b|COMPONENTES|MAT[ÉE]RIA[\s-]*PRIMA)",
     re.IGNORECASE,
 )
-_COMPONENT_CODE_RE = re.compile(r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5})\b")
+_COMPONENT_CODE_RE = re.compile(
+    r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5}|40\d{6}|101\d{4,5})\b"
+)
 _QTY_RE = re.compile(r"\b(\d+[,.]?\d*)\s*(?:UN|PCS|PÇ|PC|PEÇAS?)?\b", re.IGNORECASE)
 _BOM_CANDIDATE_CONFIDENCE_CAP = 0.5
 

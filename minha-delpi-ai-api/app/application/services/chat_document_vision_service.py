@@ -673,6 +673,7 @@ class ChatDocumentVisionService:
         for key in (
             "productCode",
             "revision",
+            "internalRevision",
             "customerReference",
             "description",
         ):
@@ -1411,6 +1412,7 @@ class ChatDocumentVisionService:
             "productCodeCandidates": payload.get("productCodeCandidates") or [],
             "conflicts": payload.get("conflicts") or [],
             "revision": payload.get("revision"),
+            "internalRevision": payload.get("internalRevision"),
             "customerReference": payload.get("customerReference"),
             "description": payload.get("description"),
             "componentCodes": payload.get("componentCodes") or [],

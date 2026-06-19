@@ -15,7 +15,12 @@ _REV_PATTERN = re.compile(
     r"(?:REV(?:IS[AÃ]O)?\.?|REVISION)\s*[:.]?\s*(\d{1,3})",
     re.IGNORECASE,
 )
-_COMPONENT_CODE_RE = re.compile(r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5})\b")
+_INTERNAL_REVISION_TABLE_RE = re.compile(
+    r"(\d{2})\s*\[\s*\d{2}/\d{2}/\d{2}\s*\]",
+)
+_COMPONENT_CODE_RE = re.compile(
+    r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5}|40\d{6}|101\d{4,5})\b"
+)
 _INTERMEDIATE_CODE_RE = re.compile(r"\b(50\d{6})\b")
 _LENGTH_RE = re.compile(
     r"(?:COMPR(?:IMENTO)?\s*(?:TOTAL)?|LENGTH)\s*[:.]?\s*(\d+[,.]?\d*)\s*mm?",
@@ -114,6 +119,7 @@ class ChatDrawingPdfExtractionService:
             product_code = cls._extract_fallback_product_code(normalized)
 
         revision = cls._extract_revision(normalized)
+        internal_revision = cls._extract_internal_revision(normalized)
         customer_reference = cls._extract_labeled_value(
             normalized,
             labels=("COD. CLIENTE", "COD CLIENTE", "CÓD. CLIENTE", "REFERENCIA CLIENTE"),
@@ -166,6 +172,7 @@ class ChatDrawingPdfExtractionService:
             "productCode": product_code,
             "productCodeSource": stamp_source,
             "revision": revision,
+            "internalRevision": internal_revision,
             "customerReference": customer_reference,
             "description": description,
             "componentCodes": component_codes,
@@ -248,6 +255,15 @@ class ChatDrawingPdfExtractionService:
         return None
 
     @classmethod
+    def _extract_internal_revision(cls, text: str) -> str | None:
+        matches = _INTERNAL_REVISION_TABLE_RE.findall(str(text or ""))
+
+        if not matches:
+            return None
+
+        return str(matches[-1]).zfill(2)
+
+    @classmethod
     def _extract_labeled_value(cls, text: str, *, labels: tuple[str, ...]) -> str | None:
         upper = text.upper()
 
@@ -281,7 +297,9 @@ class ChatDrawingPdfExtractionService:
         found: list[str] = []
 
         for match in _COMPONENT_CODE_RE.finditer(text):
-            code = ChatProductQueryIntentService.normalize_product_code(match.group(1))
+            code = cls._normalize_extracted_component_code(
+                ChatProductQueryIntentService.normalize_product_code(match.group(1))
+            )
 
             if not code or code == exclude_norm:
                 continue
@@ -290,6 +308,19 @@ class ChatDrawingPdfExtractionService:
                 found.append(code)
 
         return found
+
+    @classmethod
+    def _normalize_extracted_component_code(cls, code: str) -> str | None:
+        if not code:
+            return None
+
+        if re.fullmatch(r"40\d{6}", code):
+            return f"10{code[2:]}"
+
+        if len(code) == 7 and code.isdigit() and code.startswith("101"):
+            return f"{code[:5]}0{code[5:]}"
+
+        return code
 
     @classmethod
     def _extract_dimensions(cls, text: str) -> dict[str, float | None]:

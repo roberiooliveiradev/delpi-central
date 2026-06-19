@@ -73,6 +73,13 @@
       "recommendationMissing": "Cadastrar plano de inspeção",
       "recommendationOk": "—"
     },
+    "guide_ct99": {
+      "section": "Roteiro",
+      "item": "Operação CT-99",
+      "rule": "Roteiro deve incluir operação CT-99 quando aplicável",
+      "recommendationMissing": "Cadastrar operação CT-99 no roteiro",
+      "recommendationOk": "—"
+    },
     "pdf_missing": {
       "section": "PDF",
       "item": "Documento anexado",

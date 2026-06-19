@@ -153,6 +153,22 @@ class ChatDrawingValidationOrchestrationService:
             )
         )
 
+        has_ct99 = cls._root_guide_has_ct99(root, code)
+
+        items.append(
+            cls._item_from_template(
+                "guide_ct99",
+                status=cls._STATUS_OK if has_ct99 else cls._STATUS_ERROR,
+                pdf_evidence=cls._evidence("dash"),
+                api_evidence=(
+                    cls._evidence("linked") if has_ct99 else cls._evidence("absent")
+                ),
+                recommendation_field=(
+                    "recommendationOk" if has_ct99 else "recommendationMissing"
+                ),
+            )
+        )
+
         inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
         inspection_items = (
             inspection.get("items") if isinstance(inspection.get("items"), list) else []
@@ -489,39 +505,155 @@ class ChatDrawingValidationOrchestrationService:
             )
 
         pdf_revision = str(pdf_extract.get("revision") or "").strip()
-        api_revision = str(
+        pdf_internal_revision = str(pdf_extract.get("internalRevision") or "").strip()
+        api_current_revision = str(product.get("current_revision") or "").strip()
+        api_revision_date = str(
             product.get("last_revision_date") or product.get("revision") or ""
         ).strip()
 
-        if pdf_revision and api_revision:
-            api_short = api_revision[-2:] if len(api_revision) >= 8 else api_revision
+        revision_item = cls._build_revision_cross_check_item(
+            pdf_revision=pdf_revision,
+            pdf_internal_revision=pdf_internal_revision,
+            api_current_revision=api_current_revision,
+            api_revision_date=api_revision_date,
+        )
 
-            if len(api_revision) <= 4 and pdf_revision != api_short.zfill(2):
-                items.append(
-                    cls._item(
-                        section="Cabeçalho",
-                        item="Revisão",
-                        status=cls._STATUS_CRITICAL,
-                        pdf_evidence=f"REV.{pdf_revision}",
-                        api_evidence=api_revision,
-                        rule="Revisão do carimbo × cadastro",
-                        recommendation="Atualizar revisão do PDF ou cadastro Protheus",
-                    )
-                )
-            elif len(api_revision) > 4:
-                items.append(
-                    cls._item(
-                        section="Cabeçalho",
-                        item="Revisão",
-                        status=cls._STATUS_PENDING,
-                        pdf_evidence=f"REV.{pdf_revision}",
-                        api_evidence=api_revision,
-                        rule="Conferência manual (API em data, PDF em REV.)",
-                        recommendation="Validar revisão no carimbo com SB1010",
-                    )
-                )
+        if revision_item:
+            items.append(revision_item)
 
         return items
+
+    @classmethod
+    def _build_revision_cross_check_item(
+        cls,
+        *,
+        pdf_revision: str,
+        pdf_internal_revision: str,
+        api_current_revision: str,
+        api_revision_date: str,
+    ) -> dict[str, Any] | None:
+        api_compare = cls._resolve_api_revision_for_compare(
+            api_current_revision,
+            api_revision_date,
+        )
+        pdf_compare = cls._normalize_revision_number(
+            pdf_internal_revision or pdf_revision
+        )
+
+        if not pdf_compare or not api_compare:
+            return None
+
+        pdf_evidence = (
+            f"REV.{pdf_internal_revision} (tabela)"
+            if pdf_internal_revision
+            else f"REV.{pdf_revision}"
+        )
+
+        if pdf_compare == api_compare:
+            return cls._item(
+                section="Cabeçalho",
+                item="Revisão",
+                status=cls._STATUS_OK,
+                pdf_evidence=pdf_evidence,
+                api_evidence=api_current_revision or api_revision_date,
+                rule="Revisão interna DELPI × current_revision",
+                recommendation="—",
+            )
+
+        client_revision = cls._normalize_revision_number(pdf_revision)
+
+        if (
+            pdf_internal_revision
+            and client_revision
+            and client_revision != pdf_compare
+            and pdf_compare == api_compare
+        ):
+            return cls._item(
+                section="Cabeçalho",
+                item="Revisão",
+                status=cls._STATUS_OK,
+                pdf_evidence=(
+                    f"REV.{pdf_internal_revision} (interna); "
+                    f"REV.{client_revision} (cliente)"
+                ),
+                api_evidence=api_current_revision or api_revision_date,
+                rule="Revisão interna alinhada; revisão do cliente separada",
+                recommendation="—",
+            )
+
+        if len(api_revision_date) > 4 and not pdf_internal_revision:
+            return cls._item(
+                section="Cabeçalho",
+                item="Revisão",
+                status=cls._STATUS_PENDING,
+                pdf_evidence=f"REV.{pdf_revision}",
+                api_evidence=api_revision_date,
+                rule="Conferência manual (API em data, PDF em REV.)",
+                recommendation="Validar revisão no carimbo com SB1010",
+            )
+
+        return cls._item(
+            section="Cabeçalho",
+            item="Revisão",
+            status=cls._STATUS_CRITICAL,
+            pdf_evidence=pdf_evidence,
+            api_evidence=api_current_revision or api_revision_date,
+            rule="Revisão do carimbo × cadastro",
+            recommendation="Atualizar revisão do PDF ou cadastro Protheus",
+        )
+
+    @classmethod
+    def _resolve_api_revision_for_compare(
+        cls,
+        current_revision: str,
+        revision_date: str,
+    ) -> str:
+        if current_revision:
+            return cls._normalize_revision_number(current_revision)
+
+        date_value = str(revision_date or "").strip()
+
+        if date_value.isdigit() and len(date_value) == 8:
+            return ""
+
+        return cls._normalize_revision_number(date_value)
+
+    @classmethod
+    def _normalize_revision_number(cls, raw: str) -> str:
+        value = str(raw or "").strip()
+
+        if not value:
+            return ""
+
+        digits = "".join(char for char in value if char.isdigit())
+
+        if not digits:
+            return ""
+
+        try:
+            return str(int(digits)).zfill(2)
+        except ValueError:
+            return digits[-2:].zfill(2)
+
+    @classmethod
+    def _root_guide_has_ct99(cls, root: dict, product_code: str) -> bool:
+        guide = root.get("guide") if isinstance(root.get("guide"), dict) else {}
+        root_code = str(product_code or "").strip()
+
+        for row in guide.get("items") or []:
+            if not isinstance(row, dict):
+                continue
+
+            if str(row.get("product_code") or "").strip() != root_code:
+                continue
+
+            for field in ("work_center", "resource_code"):
+                marker = str(row.get(field) or "").strip().upper()
+
+                if marker.startswith("CT-99"):
+                    return True
+
+        return False
 
     @classmethod
     def _format_analyser_detail_sections(cls, root: Any) -> list[str]:

@@ -27,3 +27,15 @@ def test_merge_dimensions_prefers_region_text():
     assert merged["totalLengthMm"] == 100.0
     assert merged["leftDecapeMm"] == 8.0
     assert merged["rightDecapeMm"] == 9.0
+
+
+def test_extract_dimensions_cota_deape_length_pattern():
+    text = "MEDIDAS EM MILÍMETROS\n6±140±1\n6±150±1\nDECAPE DE 6MM"
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] == 6.0
+    assert dims["rightDecapeMm"] == 6.0
+    assert dims["totalLengthMm"] == 150.0
+    assert 140.0 in dims["segmentLengthsMm"]
+    assert 150.0 in dims["segmentLengthsMm"]

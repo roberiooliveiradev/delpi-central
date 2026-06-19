@@ -48,6 +48,13 @@ _GENERIC_DECAPE_RE = re.compile(
     r"DEC[A4@]PE?\s*[:.]?\s*(\d[\d\s,.]*)\s*M{0,2}",
     re.IGNORECASE,
 )
+_DECAPE_NOTE_RE = re.compile(
+    r"DECAPE\s+DE\s+(\d[\d\s,.]*)\s*M{0,2}",
+    re.IGNORECASE,
+)
+_COTA_DECAPE_LENGTH_RE = re.compile(
+    r"\b(\d+)\s*±\s*(\d+)\s*±\s*(\d+)\b",
+)
 
 
 class ChatDrawingDimensionsExtractionService:
@@ -59,6 +66,7 @@ class ChatDrawingDimensionsExtractionService:
             "leftDecapeMm": None,
             "rightDecapeMm": None,
         }
+        segment_lengths: list[float] = []
 
         if not normalized:
             return dimensions
@@ -87,6 +95,34 @@ class ChatDrawingDimensionsExtractionService:
             if generic is not None:
                 dimensions["leftDecapeMm"] = generic
 
+        note_decape = cls._first_number(normalized, patterns=(_DECAPE_NOTE_RE,))
+
+        if note_decape is not None:
+            if dimensions["leftDecapeMm"] is None:
+                dimensions["leftDecapeMm"] = note_decape
+
+            if dimensions["rightDecapeMm"] is None:
+                dimensions["rightDecapeMm"] = note_decape
+
+        for match in _COTA_DECAPE_LENGTH_RE.finditer(normalized):
+            decape = cls._parse_number(match.group(1))
+            length = cls._parse_number(match.group(2))
+
+            if decape is not None and dimensions["leftDecapeMm"] is None:
+                dimensions["leftDecapeMm"] = decape
+
+            if decape is not None and dimensions["rightDecapeMm"] is None:
+                dimensions["rightDecapeMm"] = decape
+
+            if length is not None:
+                segment_lengths.append(length)
+
+        if segment_lengths and dimensions["totalLengthMm"] is None:
+            dimensions["totalLengthMm"] = max(segment_lengths)
+
+        if segment_lengths:
+            dimensions["segmentLengthsMm"] = segment_lengths
+
         return dimensions
 
     @classmethod
@@ -105,18 +141,27 @@ class ChatDrawingDimensionsExtractionService:
             else {}
         )
 
-        resolved: dict[str, float | None] = {
+        resolved: dict[str, float | None | list[float]] = {
             "totalLengthMm": merged.get("totalLengthMm"),
             "leftDecapeMm": merged.get("leftDecapeMm"),
             "rightDecapeMm": merged.get("rightDecapeMm"),
+            "segmentLengthsMm": merged.get("segmentLengthsMm") or [],
         }
 
-        for key in resolved:
+        for key in ("totalLengthMm", "leftDecapeMm", "rightDecapeMm"):
             if resolved[key] is None and region_dims.get(key) is not None:
                 resolved[key] = region_dims[key]
 
             if resolved[key] is None and fallback_dims.get(key) is not None:
                 resolved[key] = fallback_dims[key]
+
+        if not resolved["segmentLengthsMm"]:
+            for source in (region_dims, fallback_dims):
+                segments = source.get("segmentLengthsMm") if isinstance(source, dict) else None
+
+                if segments:
+                    resolved["segmentLengthsMm"] = segments
+                    break
 
         return resolved
 
