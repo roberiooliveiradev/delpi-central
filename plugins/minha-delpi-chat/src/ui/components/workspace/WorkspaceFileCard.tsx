@@ -1,8 +1,6 @@
 import {
   Download,
   Eye,
-  FileText,
-  Image as ImageIcon,
   Loader2,
   Trash2,
   X,
@@ -18,6 +16,7 @@ import type {
   WorkspaceFileIngestProgress,
   WorkspaceFileStatusTone,
 } from "../../../content/workspaceFileIngestContent";
+import { workspaceFileKindLabel } from "../../../content/workspaceFileIngestContent";
 
 import "./workspaceFileIngest.css";
 
@@ -98,17 +97,21 @@ function FileCardDetails({
 }
 
 function FileCardIcon({
-  previewKind,
+  filename,
   thumb,
   iconTone = "brand",
   compact = false,
 }: {
-  previewKind: "image" | "file";
+  filename: string;
   thumb?: ReactNode;
   iconTone?: WorkspaceFileIconTone;
   compact?: boolean;
 }) {
   const iconSize = compact ? 16 : 18;
+  const typeBadge = workspaceFileKindLabel(filename);
+  const badgeClassName = compact
+    ? "mdc-workspace-file-card__type-badge mdc-workspace-file-card__type-badge--compact"
+    : "mdc-workspace-file-card__type-badge";
 
   return (
     <span
@@ -119,10 +122,8 @@ function FileCardIcon({
         <Loader2 size={iconSize} className="mdc-workspace-file-card__icon-spinner" />
       ) : thumb ? (
         thumb
-      ) : previewKind === "image" ? (
-        <ImageIcon size={iconSize} />
       ) : (
-        <FileText size={iconSize} />
+        <span className={badgeClassName}>{typeBadge}</span>
       )}
     </span>
   );
@@ -291,7 +292,6 @@ export function WorkspaceFileCard({
   statusTone = "default",
   iconTone = "brand",
   thumb,
-  previewKind = "file",
   editable = false,
   showInlineActions = true,
   dismissRemove = false,
@@ -331,7 +331,7 @@ export function WorkspaceFileCard({
   if (variant === "chip") {
     return (
       <span className="mdc-workspace-file-card mdc-workspace-file-card--chip">
-        <FileCardIcon previewKind={previewKind} iconTone={iconTone} compact thumb={thumb} />
+        <FileCardIcon filename={filename} iconTone={iconTone} compact thumb={thumb} />
         <strong title={filename}>{filename}</strong>
         <FileCardSubtitle
           subtitleLabel={subtitleLabel}
@@ -383,7 +383,7 @@ export function WorkspaceFileCard({
     <>
       <div className="mdc-workspace-file-card__lead">
         <FileCardIcon
-          previewKind={previewKind}
+          filename={filename}
           thumb={thumb}
           iconTone={iconTone}
           compact={variant === "row"}

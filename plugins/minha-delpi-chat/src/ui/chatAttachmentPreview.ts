@@ -1,4 +1,32 @@
-export type AttachmentPreviewKind = "image" | "pdf" | "text" | "unsupported";
+export type AttachmentPreviewKind =
+  | "image"
+  | "pdf"
+  | "text"
+  | "spreadsheet"
+  | "docx"
+  | "unsupported";
+
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"];
+
+const SPREADSHEET_MIMES = new Set([
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+]);
+
+const DOCX_MIMES = new Set([
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
+function extensionFromFilename(filename: string): string {
+  const name = String(filename || "").trim().toLowerCase();
+  const dot = name.lastIndexOf(".");
+
+  if (dot < 0) {
+    return "";
+  }
+
+  return name.slice(dot);
+}
 
 export function formatAttachmentSize(size?: number): string {
   if (!size || size < 0) {
@@ -22,24 +50,34 @@ export function resolveAttachmentPreviewKind(
 ): AttachmentPreviewKind {
   const mime = String(contentType || "").trim().toLowerCase();
   const name = String(filename || "").trim().toLowerCase();
+  const extension = extensionFromFilename(name);
 
-  if (mime.startsWith("image/")) {
+  if (mime.startsWith("image/") || IMAGE_EXTENSIONS.includes(extension)) {
     return "image";
   }
 
-  if (mime === "application/pdf" || name.endsWith(".pdf")) {
+  if (mime === "application/pdf" || extension === ".pdf") {
     return "pdf";
+  }
+
+  if (SPREADSHEET_MIMES.has(mime) || extension === ".xlsx" || extension === ".xls") {
+    return "spreadsheet";
+  }
+
+  if (DOCX_MIMES.has(mime) || extension === ".docx") {
+    return "docx";
   }
 
   if (
     mime.startsWith("text/") ||
     mime === "application/json" ||
     mime === "application/markdown" ||
-    name.endsWith(".txt") ||
-    name.endsWith(".md") ||
-    name.endsWith(".markdown") ||
-    name.endsWith(".csv") ||
-    name.endsWith(".json")
+    extension === ".txt" ||
+    extension === ".md" ||
+    extension === ".markdown" ||
+    extension === ".csv" ||
+    extension === ".tsv" ||
+    extension === ".json"
   ) {
     return "text";
   }

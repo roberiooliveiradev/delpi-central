@@ -12,7 +12,41 @@ type ReadingStatusKey = keyof typeof attachmentsContent.preview.readingStatus;
 
 export type WorkspaceFileStatusTone = "default" | "pending" | "success" | "error";
 
-export type WorkspaceFileIconTone = "brand" | "pdf" | "image" | "pending" | "error";
+export type WorkspaceFileIconTone =
+  | "brand"
+  | "pdf"
+  | "xlsx"
+  | "xls"
+  | "csv"
+  | "doc"
+  | "docx"
+  | "json"
+  | "md"
+  | "txt"
+  | "png"
+  | "jpg"
+  | "jpeg"
+  | "webp"
+  | "image"
+  | "pending"
+  | "error";
+
+const EXTENSION_ICON_TONES: Record<string, WorkspaceFileIconTone> = {
+  pdf: "pdf",
+  xlsx: "xlsx",
+  xls: "xls",
+  csv: "csv",
+  doc: "doc",
+  docx: "docx",
+  json: "json",
+  md: "md",
+  markdown: "md",
+  txt: "txt",
+  png: "png",
+  jpg: "jpg",
+  jpeg: "jpeg",
+  webp: "webp",
+};
 
 export type WorkspaceFileIngestProgress = {
   active: boolean;
@@ -68,9 +102,17 @@ export function workspaceFileReadingStatusLabel(
   return readingStatusFromKey("default");
 }
 
-export function workspaceFileKindLabel(filename: string): string {
+export function workspaceFileExtension(filename: string): string {
   const normalized = String(filename || "").trim().toLowerCase();
-  const extension = normalized.includes(".") ? normalized.split(".").pop() : "";
+  if (!normalized.includes(".")) {
+    return "";
+  }
+
+  return normalized.split(".").pop() || "";
+}
+
+export function workspaceFileKindLabel(filename: string): string {
+  const extension = workspaceFileExtension(filename);
 
   if (!extension) {
     return INGEST_UI.project.fileKindLabel;
@@ -84,8 +126,16 @@ export function workspaceFileKindLabel(filename: string): string {
     return "MD";
   }
 
+  if (extension === "doc") {
+    return "DOC";
+  }
+
   if (extension === "docx") {
     return "DOCX";
+  }
+
+  if (extension === "xls") {
+    return "XLS";
   }
 
   if (extension === "xlsx") {
@@ -104,23 +154,45 @@ export function workspaceFileKindLabel(filename: string): string {
     return "JSON";
   }
 
+  if (extension === "png") {
+    return "PNG";
+  }
+
+  if (extension === "jpg") {
+    return "JPG";
+  }
+
+  if (extension === "jpeg") {
+    return "JPEG";
+  }
+
+  if (extension === "webp") {
+    return "WEBP";
+  }
+
   return extension.toUpperCase();
 }
 
+export function workspaceFileIconToneFromFilename(filename: string): WorkspaceFileIconTone {
+  const extension = workspaceFileExtension(filename);
+  return EXTENSION_ICON_TONES[extension] || "brand";
+}
+
 export function workspaceFileIconToneForAttachment(
-  _filename: string,
-  previewKind: "image" | "file",
+  filename: string,
+  _previewKind: "image" | "file",
   statusTone: WorkspaceFileStatusTone,
+  ingestActive = false,
 ): WorkspaceFileIconTone {
   if (statusTone === "error") {
     return "error";
   }
 
-  if (previewKind === "image") {
-    return "image";
+  if (statusTone === "pending" && ingestActive) {
+    return "pending";
   }
 
-  return "brand";
+  return workspaceFileIconToneFromFilename(filename);
 }
 
 export function workspaceFileComposerAttachmentStatusLabel(input: {

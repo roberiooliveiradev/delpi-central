@@ -26,14 +26,17 @@ describe("workspaceFileIngestContent", () => {
   it("resolve rótulo curto do tipo de arquivo", () => {
     expect(workspaceFileKindLabel("menu-dinamico.md")).toBe("MD");
     expect(workspaceFileKindLabel("90261040.pdf")).toBe("PDF");
+    expect(workspaceFileKindLabel("foto.png")).toBe("PNG");
+    expect(workspaceFileKindLabel("planilha.xlsx")).toBe("XLSX");
   });
 
   it("resolve tom do ícone por status e extensão", () => {
     expect(
-      workspaceFileIconToneForAttachment("doc.pdf", "file", "pending"),
-    ).toBe("brand");
-    expect(workspaceFileIconToneForAttachment("doc.pdf", "file", "success")).toBe("brand");
-    expect(workspaceFileIconToneForAttachment("foto.png", "image", "success")).toBe("image");
+      workspaceFileIconToneForAttachment("doc.pdf", "file", "pending", true),
+    ).toBe("pending");
+    expect(workspaceFileIconToneForAttachment("doc.pdf", "file", "success")).toBe("pdf");
+    expect(workspaceFileIconToneForAttachment("foto.png", "image", "success")).toBe("png");
+    expect(workspaceFileIconToneForAttachment("dados.xlsx", "file", "success")).toBe("xlsx");
     expect(workspaceFileIconToneForAttachment("doc.pdf", "file", "error")).toBe("error");
   });
 

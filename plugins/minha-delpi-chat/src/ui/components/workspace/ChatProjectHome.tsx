@@ -22,6 +22,7 @@ import { ChatProjectSettingsModal } from "./ChatProjectSettingsModal";
 import { ChatAgentIcon } from "./ChatAgentIcon";
 import { ChatProjectIcon } from "./ChatProjectIcon";
 import {
+  workspaceFileIconToneForAttachment,
   workspaceFileKindLabel,
   workspaceFileProjectIngestLabels,
   workspaceFileSourceIndexPresentation,
@@ -558,7 +559,11 @@ export function ChatProjectHome({
                       key={source.id}
                       variant="row"
                       filename={label}
-                      iconTone="brand"
+                      iconTone={workspaceFileIconToneForAttachment(
+                        label,
+                        "file",
+                        indexStatus.statusTone,
+                      )}
                       kindLabel={workspaceFileKindLabel(label)}
                       sizeLabel={sizeLabel}
                       statusLabel={indexStatus.statusLabel}

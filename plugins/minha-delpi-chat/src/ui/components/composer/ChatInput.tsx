@@ -388,6 +388,11 @@ export function ChatInput({
                 });
                 const previewKind = isImage ? "image" : "file";
                 const sizeLabel = formatAttachmentSize(attachment.size);
+                const ingestProgress = workspaceFileIngestProgressState({
+                  status: attachmentStatus,
+                  uploadPercent: attachment.uploadPercent,
+                  label: composerIngestLabels.uploadingStatus,
+                });
 
                 return (
                   <WorkspaceFileCard
@@ -401,16 +406,13 @@ export function ChatInput({
                       attachment.name,
                       previewKind,
                       indexPresentation.statusTone,
+                      ingestProgress?.active,
                     )}
                     previewKind={previewKind}
                     editable
                     showInlineActions={false}
                     dismissRemove
-                    ingestProgress={workspaceFileIngestProgressState({
-                      status: attachmentStatus,
-                      uploadPercent: attachment.uploadPercent,
-                      label: composerIngestLabels.uploadingStatus,
-                    })}
+                    ingestProgress={ingestProgress}
                     onPreview={() => {
                       openPreview(buildWorkspaceLocalFilePreviewTarget(attachment.file));
                     }}

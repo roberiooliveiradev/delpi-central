@@ -253,12 +253,75 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mdc-primary) 22%, transparent);
 }
 
+.mdc-workspace-file-card__type-badge {
+  display: block;
+  max-width: 100%;
+  padding: 0 0.1rem;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-workspace-file-card__type-badge--compact {
+  font-size: 0.5rem;
+}
+
 .mdc-workspace-file-card__icon--pdf {
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--mdc-danger) 78%, white) 0%,
-    var(--mdc-danger) 100%
-  );
+  background: linear-gradient(145deg, #f87171 0%, #dc2626 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--xlsx,
+.mdc-workspace-file-card__icon--xls {
+  background: linear-gradient(145deg, #34d399 0%, #059669 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--csv {
+  background: linear-gradient(145deg, #2dd4bf 0%, #0d9488 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--doc,
+.mdc-workspace-file-card__icon--docx {
+  background: linear-gradient(145deg, #60a5fa 0%, #2563eb 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--json {
+  background: linear-gradient(145deg, #fbbf24 0%, #d97706 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--md {
+  background: linear-gradient(145deg, #a78bfa 0%, #7c3aed 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--txt {
+  background: linear-gradient(145deg, #94a3b8 0%, #64748b 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--png {
+  background: linear-gradient(145deg, #c084fc 0%, #9333ea 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--jpg,
+.mdc-workspace-file-card__icon--jpeg {
+  background: linear-gradient(145deg, #f472b6 0%, #db2777 100%);
+  color: #fff;
+}
+
+.mdc-workspace-file-card__icon--webp {
+  background: linear-gradient(145deg, #38bdf8 0%, #0284c7 100%);
+  color: #fff;
 }
 
 .mdc-workspace-file-card__icon--pending {

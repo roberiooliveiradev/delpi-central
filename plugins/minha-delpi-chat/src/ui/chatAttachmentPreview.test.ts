@@ -6,10 +6,22 @@ import {
 } from "./chatAttachmentPreview";
 
 describe("chatAttachmentPreview", () => {
-  it("resolveAttachmentPreviewKind classifica imagem, pdf e texto", () => {
+  it("resolveAttachmentPreviewKind classifica imagem, pdf, texto, planilha e docx", () => {
     expect(resolveAttachmentPreviewKind("image/png", "foto.png")).toBe("image");
     expect(resolveAttachmentPreviewKind("application/pdf", "relatorio.pdf")).toBe("pdf");
     expect(resolveAttachmentPreviewKind("text/plain", "notas.txt")).toBe("text");
+    expect(
+      resolveAttachmentPreviewKind(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "dados.xlsx",
+      ),
+    ).toBe("spreadsheet");
+    expect(
+      resolveAttachmentPreviewKind(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "relatorio.docx",
+      ),
+    ).toBe("docx");
     expect(resolveAttachmentPreviewKind("application/octet-stream", "arquivo.bin")).toBe(
       "unsupported",
     );

@@ -62,10 +62,17 @@ export function ChatAttachmentCard({
     attachment.sizeBytes ?? attachment.localFile?.size,
   );
   const resolvedPreviewKind = previewKind === "image" ? "image" : "file";
+  const messageEditLabels = workspaceFileMessageEditLabels();
+  const ingestProgress = workspaceFileIngestProgressState({
+    status: attachment.status,
+    uploadPercent: attachment.uploadPercent,
+    label: messageEditLabels.uploadingStatus,
+  });
   const iconTone = workspaceFileIconToneForAttachment(
     attachment.filename,
     resolvedPreviewKind,
     indexPresentation.statusTone,
+    ingestProgress?.active,
   );
 
   useEffect(() => {
@@ -120,7 +127,6 @@ export function ChatAttachmentCard({
 
   const thumb =
     thumbUrl && previewKind === "image" ? <img src={thumbUrl} alt="" /> : undefined;
-  const messageEditLabels = workspaceFileMessageEditLabels();
 
   return (
     <WorkspaceFileCard
@@ -135,11 +141,7 @@ export function ChatAttachmentCard({
       editable={editable}
       showInlineActions={editable}
       dismissRemove={editable}
-      ingestProgress={workspaceFileIngestProgressState({
-        status: attachment.status,
-        uploadPercent: attachment.uploadPercent,
-        label: messageEditLabels.uploadingStatus,
-      })}
+      ingestProgress={ingestProgress}
       onPreview={onPreview ? () => onPreview(attachment) : undefined}
       onRemove={onRemove ? () => onRemove(attachment.key) : undefined}
     />

@@ -1,4 +1,4 @@
-import { Download, FileText, Image as ImageIcon, Loader2, X } from "lucide-react";
+import { Download, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -12,6 +12,11 @@ import {
   revokeAttachmentPreviewUrl,
   type AttachmentPreviewKind,
 } from "../../chatAttachmentPreview";
+import {
+  renderDocxPreviewHtml,
+  renderSpreadsheetPreviewHtml,
+} from "../../chatAttachmentPreviewRender";
+import { workspaceFileKindLabel } from "../../../content/workspaceFileIngestContent";
 import { ChatModal } from "../shared/modal/ChatModal";
 import "./ChatAttachmentPreviewModal.css";
 
@@ -32,6 +37,65 @@ type ChatAttachmentPreviewModalProps = {
   onClose: () => void;
 };
 
+type PreviewPayload = {
+  kind: AttachmentPreviewKind;
+  previewUrl: string | null;
+  textPreview: string | null;
+  htmlPreview: string | null;
+  ownedUrl: string | null;
+};
+
+async function buildPreviewPayload(
+  blob: Blob,
+  contentType: string | null | undefined,
+  filename: string,
+): Promise<PreviewPayload> {
+  const kind = resolveAttachmentPreviewKind(contentType, filename);
+
+  if (kind === "text") {
+    const text = await blob.text();
+    return {
+      kind,
+      previewUrl: null,
+      textPreview: text.slice(0, 120_000),
+      htmlPreview: null,
+      ownedUrl: null,
+    };
+  }
+
+  if (kind === "spreadsheet") {
+    const html = await renderSpreadsheetPreviewHtml(blob);
+    return {
+      kind,
+      previewUrl: null,
+      textPreview: null,
+      htmlPreview: html,
+      ownedUrl: null,
+    };
+  }
+
+  if (kind === "docx") {
+    const html = await renderDocxPreviewHtml(blob);
+    return {
+      kind,
+      previewUrl: null,
+      textPreview: null,
+      htmlPreview: html,
+      ownedUrl: null,
+    };
+  }
+
+  const ownedUrl = URL.createObjectURL(blob);
+
+  return {
+    kind,
+    previewUrl: ownedUrl,
+    textPreview: null,
+    htmlPreview: null,
+    ownedUrl,
+  };
+}
+
 export function ChatAttachmentPreviewModal({
   target,
   getAccessToken,
@@ -41,6 +105,7 @@ export function ChatAttachmentPreviewModal({
   const [previewKind, setPreviewKind] = useState<AttachmentPreviewKind>("unsupported");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textPreview, setTextPreview] = useState<string | null>(null);
+  const [htmlPreview, setHtmlPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,26 +117,30 @@ export function ChatAttachmentPreviewModal({
       setLoading(true);
       setError(null);
       setTextPreview(null);
+      setHtmlPreview(null);
+      setPreviewUrl(null);
 
-      const kind = resolveAttachmentPreviewKind(target.contentType, target.filename);
-      setPreviewKind(kind);
+      const initialKind = resolveAttachmentPreviewKind(target.contentType, target.filename);
+      setPreviewKind(initialKind);
 
       try {
         if (target.localFile) {
-          if (kind === "text") {
-            const text = await target.localFile.text();
-            if (active) {
-              setTextPreview(text.slice(0, 120_000));
-            }
+          const payload = await buildPreviewPayload(
+            target.localFile,
+            target.contentType || target.localFile.type,
+            target.filename,
+          );
+
+          if (!active) {
+            revokeAttachmentPreviewUrl(payload.ownedUrl);
             return;
           }
 
-          const url = target.localPreviewUrl || URL.createObjectURL(target.localFile);
-          ownedUrl = url.startsWith("blob:") && !target.localPreviewUrl ? url : null;
-
-          if (active) {
-            setPreviewUrl(url);
-          }
+          ownedUrl = payload.ownedUrl;
+          setPreviewKind(payload.kind);
+          setPreviewUrl(payload.previewUrl || target.localPreviewUrl || null);
+          setTextPreview(payload.textPreview);
+          setHtmlPreview(payload.htmlPreview);
           return;
         }
 
@@ -79,25 +148,22 @@ export function ChatAttachmentPreviewModal({
           const fetched = await fetchChatSourceBlob(target.serverSourceId, {
             getAccessToken,
           });
-          const resolvedKind = resolveAttachmentPreviewKind(
+          const payload = await buildPreviewPayload(
+            fetched.blob,
             fetched.contentType || target.contentType,
             fetched.filename || target.filename,
           );
-          setPreviewKind(resolvedKind);
 
-          if (resolvedKind === "text") {
-            const text = await fetched.blob.text();
-            if (active) {
-              setTextPreview(text.slice(0, 120_000));
-            }
+          if (!active) {
+            revokeAttachmentPreviewUrl(payload.ownedUrl);
             return;
           }
 
-          ownedUrl = URL.createObjectURL(fetched.blob);
-
-          if (active) {
-            setPreviewUrl(ownedUrl);
-          }
+          ownedUrl = payload.ownedUrl;
+          setPreviewKind(payload.kind);
+          setPreviewUrl(payload.previewUrl);
+          setTextPreview(payload.textPreview);
+          setHtmlPreview(payload.htmlPreview);
           return;
         }
 
@@ -108,25 +174,22 @@ export function ChatAttachmentPreviewModal({
         const fetched = await fetchChatAttachmentBlob(target.serverAttachmentId, {
           getAccessToken,
         });
-        const resolvedKind = resolveAttachmentPreviewKind(
+        const payload = await buildPreviewPayload(
+          fetched.blob,
           fetched.contentType || target.contentType,
           fetched.filename || target.filename,
         );
-        setPreviewKind(resolvedKind);
 
-        if (resolvedKind === "text") {
-          const text = await fetched.blob.text();
-          if (active) {
-            setTextPreview(text.slice(0, 120_000));
-          }
+        if (!active) {
+          revokeAttachmentPreviewUrl(payload.ownedUrl);
           return;
         }
 
-        ownedUrl = URL.createObjectURL(fetched.blob);
-
-        if (active) {
-          setPreviewUrl(ownedUrl);
-        }
+        ownedUrl = payload.ownedUrl;
+        setPreviewKind(payload.kind);
+        setPreviewUrl(payload.previewUrl);
+        setTextPreview(payload.textPreview);
+        setHtmlPreview(payload.htmlPreview);
       } catch (loadError) {
         if (active) {
           setError(
@@ -151,6 +214,7 @@ export function ChatAttachmentPreviewModal({
   }, [getAccessToken, target]);
 
   const sizeLabel = formatAttachmentSize(target.sizeBytes);
+  const typeBadge = workspaceFileKindLabel(target.filename);
 
   return (
     <ChatModal
@@ -162,11 +226,9 @@ export function ChatAttachmentPreviewModal({
     >
       <header className="mdc-attachment-preview-modal__header">
         <div className="mdc-attachment-preview-modal__title-wrap">
-          {previewKind === "image" ? (
-            <ImageIcon size={18} aria-hidden="true" />
-          ) : (
-            <FileText size={18} aria-hidden="true" />
-          )}
+          <span className="mdc-attachment-preview-modal__type-badge" aria-hidden="true">
+            {typeBadge}
+          </span>
           <div>
             <strong>{target.filename}</strong>
             {sizeLabel ? <small>{sizeLabel}</small> : null}
@@ -235,6 +297,16 @@ export function ChatAttachmentPreviewModal({
 
         {!loading && !error && previewKind === "text" && textPreview !== null ? (
           <pre className="mdc-attachment-preview-modal__text">{textPreview}</pre>
+        ) : null}
+
+        {!loading &&
+        !error &&
+        (previewKind === "spreadsheet" || previewKind === "docx") &&
+        htmlPreview ? (
+          <div
+            className="mdc-attachment-preview-modal__rich-html"
+            dangerouslySetInnerHTML={{ __html: htmlPreview }}
+          />
         ) : null}
 
         {!loading && !error && previewKind === "unsupported" ? (

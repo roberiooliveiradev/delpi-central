@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import type { ChatWorkspaceSource } from "../../../../data/api/chatTypes";
 import {
   workspaceFileAgentIngestLabels,
+  workspaceFileIconToneForAttachment,
   workspaceFileKindLabel,
   workspaceFileSourceIndexPresentation,
 } from "../../../../content/workspaceFileIngestContent";
@@ -178,7 +179,11 @@ export function AgentKnowledgeSourcesPanel({
                 <WorkspaceFileCard
                   variant="row"
                   filename={label}
-                  iconTone="brand"
+                  iconTone={workspaceFileIconToneForAttachment(
+                    label,
+                    "file",
+                    indexStatus.statusTone,
+                  )}
                   kindLabel={workspaceFileKindLabel(label)}
                   sizeLabel={getSourceSize(source) || undefined}
                   statusLabel={indexStatus.statusLabel}
