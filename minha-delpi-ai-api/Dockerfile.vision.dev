@@ -29,8 +29,9 @@ RUN pip install --no-cache-dir -r requirements.txt \
     fi
 
 COPY . .
+COPY docker-entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh /app/scripts/install_vision_extras.sh 2>/dev/null || chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh /app/scripts/install_vision_extras.sh
 
 EXPOSE 8000
 
