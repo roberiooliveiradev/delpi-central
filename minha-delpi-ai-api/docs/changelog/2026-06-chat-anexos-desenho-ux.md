@@ -101,3 +101,22 @@ cd plugins/minha-delpi-chat && npm run test -- chatAttachmentPreview
 ```
 
 **Cenário manual sugerido:** anexar PDF de desenho com indexação falha → pedir análise DELPI → card deve mostrar «Legível por visão» após o turno; resposta do assistente deve ser o relatório markdown, não árvore de produto nem «Arquivo ilegível».
+
+---
+
+## 4 — `/analyser` com visão completa em turnos de desenho
+
+**Problema:** turnos de análise de desenho chamavam `GET /products/{code}/analyser` com `view=summary` (ex.: `page_size=3`), gerando `meta.sections[].truncated=true`, banner «Parcial • Estrutura parcial» e falsos positivos na validação (BOM/50xx truncados).
+
+**Correção:**
+
+| Camada | Entrega |
+|--------|---------|
+| Domain | `ChatDrawingAnalyserParameterService` — `requires_full_view` + `apply_to_parameters` / `apply_to_tool_call` |
+| Application | `ExternalActionProductRouteCatalogService.build_product_parameters` — threading de `drawing_analysis_mode` |
+| Application | `ChatExternalActionOrchestrationService` — `forced_drawing_analysis_mode` + `_apply_drawing_analyser_full_view` |
+| Application | `ChatToolContextSelectionService` — pós-patch dos `planned_external_actions` em turno de desenho |
+
+**Testes:** `test_chat_drawing_analyser_parameter_service.py`, `test_build_product_parameters_sets_analyser_view_full_for_drawing_analysis`.
+
+**Cenário manual:** anexar PDF + código no contexto (sem gatilho textual explícito) → análise DELPI → estrutura/roteiro completos, sem banner de cobertura parcial.

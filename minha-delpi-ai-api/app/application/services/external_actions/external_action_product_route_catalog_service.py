@@ -160,15 +160,26 @@ class ExternalActionProductRouteCatalogService:
 
 
     @classmethod
-    def is_drawing_analyser_request(cls, message: str | None, path: str) -> bool:
+    def is_drawing_analyser_request(
+        cls,
+        message: str | None,
+        path: str,
+        *,
+        attachment_ids: list | None = None,
+        drawing_analysis_mode: bool = False,
+    ) -> bool:
         if "/analyser" not in str(path or "").lower():
             return False
 
-        from app.domain.services.chat_drawing_intent_service import (
-            ChatDrawingIntentService,
+        from app.domain.services.chat_drawing_analyser_parameter_service import (
+            ChatDrawingAnalyserParameterService,
         )
 
-        return ChatDrawingIntentService.is_drawing_analysis_request(message or "")
+        return ChatDrawingAnalyserParameterService.requires_full_view(
+            drawing_analysis_mode=drawing_analysis_mode,
+            message=message,
+            attachment_ids=attachment_ids,
+        )
 
 
     def build_product_parameters(
@@ -178,6 +189,8 @@ class ExternalActionProductRouteCatalogService:
         *,
         message: str | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict:
         parameters = {}
         path = (action.get("path") or "").lower()
@@ -250,13 +263,23 @@ class ExternalActionProductRouteCatalogService:
             elif lowered in {"page_size", "pagesize", "limit"}:
                 if requested_page_size is not None:
                     parameters[name] = requested_page_size
-                elif self.is_drawing_analyser_request(message, path):
+                elif self.is_drawing_analyser_request(
+                    message,
+                    path,
+                    attachment_ids=attachment_ids,
+                    drawing_analysis_mode=drawing_analysis_mode,
+                ):
                     parameters[name] = 50
                 else:
                     parameters[name] = 200 if is_full_listing else 50
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
-                if self.is_drawing_analyser_request(message, path):
+                if self.is_drawing_analyser_request(
+                    message,
+                    path,
+                    attachment_ids=attachment_ids,
+                    drawing_analysis_mode=drawing_analysis_mode,
+                ):
                     parameters[name] = 10
                 else:
                     parameters[name] = (
@@ -285,7 +308,12 @@ class ExternalActionProductRouteCatalogService:
                     ChatProductQueryIntentService,
                 )
 
-                if self.is_drawing_analyser_request(message, path):
+                if self.is_drawing_analyser_request(
+                    message,
+                    path,
+                    attachment_ids=attachment_ids,
+                    drawing_analysis_mode=drawing_analysis_mode,
+                ):
                     parameters[name] = "full"
                     continue
 
@@ -331,12 +359,23 @@ class ExternalActionProductRouteCatalogService:
         from app.domain.services.chat_operational_date_parameter_service import (
             ChatOperationalDateParameterService,
         )
+        from app.domain.services.chat_drawing_analyser_parameter_service import (
+            ChatDrawingAnalyserParameterService,
+        )
 
-        return ChatOperationalDateParameterService.merge_into_parameters(
+        parameters = ChatOperationalDateParameterService.merge_into_parameters(
             action,
             message,
             parameters,
             previous_messages=previous_messages,
+        )
+
+        return ChatDrawingAnalyserParameterService.apply_to_parameters(
+            parameters,
+            action=action,
+            drawing_analysis_mode=drawing_analysis_mode,
+            message=message,
+            attachment_ids=attachment_ids,
         )
 
 

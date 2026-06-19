@@ -1639,6 +1639,7 @@ def test_build_product_parameters_sets_analyser_view_full_for_drawing_analysis()
         },
         "90264227",
         message="analise o desenho",
+        drawing_analysis_mode=True,
     )
 
     assert parameters["view"] == "full"

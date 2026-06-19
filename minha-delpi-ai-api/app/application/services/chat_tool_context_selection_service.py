@@ -180,7 +180,19 @@ class ChatToolContextSelectionService:
                     if drawing_action_required
                     else None
                 ),
+                forced_drawing_analysis_mode=drawing_action_required,
             )
+
+            if drawing_action_required and planned_external_actions:
+                planned_external_actions = [
+                    ChatExternalActionOrchestrationService._apply_drawing_analyser_full_view(
+                        host.external_action_selection_service,
+                        tool_call,
+                        message=raw_message,
+                    )
+                    or tool_call
+                    for tool_call in planned_external_actions
+                ]
 
             if not planned_external_actions and host.external_action_repository:
                 from app.application.services.chat_playbook_product_action_readiness_service import (

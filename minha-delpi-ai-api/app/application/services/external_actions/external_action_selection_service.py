@@ -43,6 +43,8 @@ class ExternalActionSelectionService:
         intent: str | None = None,
         route_segment: str | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict | None:
         code = ChatProductQueryIntentService.normalize_product_code(product_code)
 
@@ -77,6 +79,8 @@ class ExternalActionSelectionService:
             route_segment=resolved_segment,
             preferred_action_id=preferred_action_id,
             previous_messages=previous_messages,
+            drawing_analysis_mode=drawing_analysis_mode,
+            attachment_ids=attachment_ids,
         )
 
     def select_action(
@@ -126,6 +130,8 @@ class ExternalActionSelectionService:
         route_segment: str | None = None,
         preferred_action_id: str | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict | None:
         return self._route_selection.select_product(
             message,
@@ -136,6 +142,8 @@ class ExternalActionSelectionService:
             preferred_action_id=preferred_action_id,
             candidates_loader=self._list_allowed_candidates,
             previous_messages=previous_messages,
+            drawing_analysis_mode=drawing_analysis_mode,
+            attachment_ids=attachment_ids,
         )
 
     def _build_product_parameters(
@@ -145,12 +153,16 @@ class ExternalActionSelectionService:
         *,
         message: str | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict:
         return self._route_selection.build_product_parameters(
             action,
             code,
             message=message,
             previous_messages=previous_messages,
+            drawing_analysis_mode=drawing_analysis_mode,
+            attachment_ids=attachment_ids,
         )
 
     def _list_allowed_candidates(

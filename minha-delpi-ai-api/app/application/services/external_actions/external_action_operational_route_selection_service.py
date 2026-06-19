@@ -432,6 +432,8 @@ class ExternalActionOperationalRouteSelectionService:
         route_segment: str | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict | None:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")
         route_segment_value = str(route_segment or "").strip().lower()

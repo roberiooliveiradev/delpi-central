@@ -96,6 +96,8 @@ Mensagem do usuário
 | `ChatDocumentVisionTurnService` | Orquestração de OCR por turno (application); consumido por tool context |
 | `ChatDocumentVisionService` | Motor OCR PDF/imagem (native + Tesseract); anexos (`documentVision`) e `drawing-analysis-delpi` |
 | OCR hierárquico desenhos (Onda 14) | Roadmap: [playbook](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) — `ChatDrawingStampExtractionService`, regiões carimbo/BOM/cotas |
+| `ChatDrawingAnalyserParameterService` | Força `view=full` em `GET /products/{code}/analyser` em turnos de análise de desenho (`drawing_analysis_mode` ou intent `drawing-analysis-delpi`); evita `meta.sections[].truncated` e banner de cobertura parcial |
+| `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |
 | `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, estágio `bom_heuristic`) em texto OCR — Onda 13.3.2 |
 | `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
 | `ChatDocumentVisionTablesService` | Tabelas `tables[]` (markdown/TSV heurístico, estágio `table_heuristic`) — Onda 13 |
@@ -515,6 +517,7 @@ Changelog: [`../changelog/2026-06-chat-anexos-desenho-ux.md`](../changelog/2026-
 |---------|---------|
 | Reenvio | MFE permite editar anexos ao reenviar pergunta (card + modal de preview) |
 | Desenho | Relatório `drawingAnalysisExport` substitui resposta direta e persiste como `answer` quando `/analyser` OK |
+| Analyser em desenho | `ChatDrawingAnalyserParameterService` garante `view=full` (estrutura/roteiro/inspeção completos; sem aviso «Visão composta parcial») |
 | Status | `index_failed` + `documentVision.legible` → «Legível por visão» via `ChatAttachmentPreviewService` + `attachments.json` |
 | Timeline | Patch de `metadata.attachments` ao concluir turno; MFE recarrega mensagens após stream |
 

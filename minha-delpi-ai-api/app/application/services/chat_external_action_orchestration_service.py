@@ -45,6 +45,7 @@ class ChatExternalActionOrchestrationService:
         forced_intent: str | None = None,
         forced_reason: str | None = None,
         forced_route_segment: str | None = None,
+        forced_drawing_analysis_mode: bool = False,
     ) -> list[dict]:
         if not selection_service or not allowed_action_ids:
             return []
@@ -107,10 +108,18 @@ class ChatExternalActionOrchestrationService:
                 intent=forced_intent,
                 route_segment=forced_route_segment,
                 previous_messages=previous_messages,
+                drawing_analysis_mode=forced_drawing_analysis_mode,
             )
 
             if selected and forced_reason:
                 selected["reason"] = forced_reason
+
+            if selected and forced_drawing_analysis_mode:
+                selected = cls._apply_drawing_analyser_full_view(
+                    selection_service,
+                    selected,
+                    message=message,
+                )
 
             return _return_planned([selected] if selected else [])
 
@@ -416,6 +425,38 @@ class ChatExternalActionOrchestrationService:
         )
 
         return _return_planned([selected] if selected else [])
+
+    @classmethod
+    def _apply_drawing_analyser_full_view(
+        cls,
+        selection_service,
+        selected: dict | None,
+        *,
+        message: str,
+    ) -> dict | None:
+        if not isinstance(selected, dict):
+            return selected
+
+        from app.domain.services.chat_drawing_analyser_parameter_service import (
+            ChatDrawingAnalyserParameterService,
+        )
+
+        arguments = selected.get("arguments") or {}
+        action_id = str(arguments.get("actionId") or "").strip()
+        action: dict = {"path": "/products/{code}/analyser"}
+
+        if action_id and getattr(selection_service, "repository", None):
+            bundle = selection_service.repository.get_action_for_execution(action_id)
+
+            if isinstance(bundle, dict) and isinstance(bundle.get("action"), dict):
+                action = bundle["action"]
+
+        return ChatDrawingAnalyserParameterService.apply_to_tool_call(
+            selected,
+            action=action,
+            drawing_analysis_mode=True,
+            message=message,
+        )
 
     @classmethod
     def _resolve_max_calls(cls, max_calls: int | None) -> int:

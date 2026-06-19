@@ -131,6 +131,8 @@ class ExternalActionRouteSelectionService:
         preferred_action_id: str | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict | None:
         if preferred_action_id:
             preferred = self._select_preferred_product_action(
@@ -140,6 +142,8 @@ class ExternalActionRouteSelectionService:
                 preferred_action_id=preferred_action_id,
                 candidates_loader=candidates_loader,
                 previous_messages=previous_messages,
+                drawing_analysis_mode=drawing_analysis_mode,
+                attachment_ids=attachment_ids,
             )
 
             if preferred:
@@ -153,6 +157,8 @@ class ExternalActionRouteSelectionService:
             route_segment=route_segment,
             candidates_loader=candidates_loader,
             previous_messages=previous_messages,
+            drawing_analysis_mode=drawing_analysis_mode,
+            attachment_ids=attachment_ids,
         )
 
         if not selected:
@@ -167,12 +173,16 @@ class ExternalActionRouteSelectionService:
         *,
         message: str | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict:
         return self._product_catalog.build_product_parameters(
             action,
             code,
             message=message,
             previous_messages=previous_messages,
+            drawing_analysis_mode=drawing_analysis_mode,
+            attachment_ids=attachment_ids,
         )
 
     def select_lmp(
@@ -542,6 +552,8 @@ class ExternalActionRouteSelectionService:
         preferred_action_id: str,
         candidates_loader: Callable | None = None,
         previous_messages: list | None = None,
+        drawing_analysis_mode: bool = False,
+        attachment_ids: list | None = None,
     ) -> dict | None:
         candidates = self._product_catalog.load_candidates(
             message,
@@ -565,6 +577,8 @@ class ExternalActionRouteSelectionService:
             product_code,
             message=message,
             previous_messages=previous_messages,
+            drawing_analysis_mode=drawing_analysis_mode,
+            attachment_ids=attachment_ids,
         )
 
         if not parameters:
