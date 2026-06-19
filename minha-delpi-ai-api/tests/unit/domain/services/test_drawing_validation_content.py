@@ -49,11 +49,21 @@ def test_intermediate_length_item_uses_code_placeholder():
         "intermediate_length",
         status="critical_error",
         pdf_evidence="36 mm (descrição)",
-        api_evidence="36 mm (SG1010)",
+        api_evidence="36 MT (SG1010)",
         item_values={"code": "50215425"},
     )
 
     assert "50215425" in item["item"]
+
+
+def test_length_from_structure_evidence_includes_unit():
+    text = ChatDrawingValidationContentService.evidence_format(
+        "lengthFromStructure",
+        length="240",
+        unit="MT",
+    )
+
+    assert text == "240 MT (SG1010)"
 
 
 def test_drawing_validation_rules_section_exists():

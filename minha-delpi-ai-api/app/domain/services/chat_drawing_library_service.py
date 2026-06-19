@@ -46,9 +46,23 @@ class ChatDrawingLibraryService:
         if not code or not re.fullmatch(r"[\dA-Z]+(?:-\d+)?", code):
             return None
 
-        base_url = cls.resolve_base_url()
-        headers = cls._build_headers(access_token)
+        result = cls._fetch_pdf_with_headers(code, cls._build_headers(access_token))
 
+        if result is not None:
+            return result
+
+        if access_token:
+            return cls._fetch_pdf_with_headers(code, cls._build_headers(None))
+
+        return None
+
+    @classmethod
+    def _fetch_pdf_with_headers(
+        cls,
+        code: str,
+        headers: dict[str, str],
+    ) -> DrawingLibraryFetchResult | None:
+        base_url = cls.resolve_base_url()
         metadata_url = f"{base_url}/products/{quote(code, safe='')}/drawing"
 
         try:
@@ -61,6 +75,9 @@ class ChatDrawingLibraryService:
             return None
 
         if metadata_response.status_code == 404:
+            return None
+
+        if metadata_response.status_code in {401, 403}:
             return None
 
         if metadata_response.status_code >= 400:
@@ -83,6 +100,9 @@ class ChatDrawingLibraryService:
                 timeout=float(os.getenv("DELPI_API_TIMEOUT", "60")),
             )
         except requests.RequestException:
+            return None
+
+        if pdf_response.status_code in {401, 403, 404}:
             return None
 
         if pdf_response.status_code != 200:

@@ -305,6 +305,27 @@ class ChatDrawingPatternsService:
         return tuple(str(item).strip().lower() for item in items if str(item).strip())
 
     @classmethod
+    def cable_length_units(cls) -> frozenset[str]:
+        items = ChatAssistantContentService.list(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            "cableLengthUnits",
+        )
+        return frozenset(str(item).strip().upper() for item in items if str(item).strip())
+
+    @classmethod
+    def intermediate_description_signature(cls, description: str) -> str | None:
+        match = cls.intermediate_segment().search(str(description or ""))
+
+        if not match:
+            return None
+
+        token = str(match.group(0) or "").split("/", 1)[0]
+        normalized = token.replace(" ", "").upper()
+
+        return normalized or None
+
+    @classmethod
     def compile_stamp_anchor(cls, key: str) -> re.Pattern[str]:
         cache_key = f"stamp_anchor:{key}"
 

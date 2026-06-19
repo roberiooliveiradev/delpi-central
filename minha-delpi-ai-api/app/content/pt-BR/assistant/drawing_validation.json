@@ -49,7 +49,7 @@
     "revisionClientPair": "REV.{internal} (interna); REV.{client} (cliente)",
     "codeCount": "{count} código(s)",
     "lengthFromDescription": "{length} mm (descrição)",
-    "lengthFromStructure": "{length} mm (SG1010)",
+    "lengthFromStructure": "{length} {unit} (SG1010)",
     "decapePdf": "{value} mm",
     "decapeFromIntermediate": "{value} mm (código 50xx)",
     "segmentLength": "{value} mm",
@@ -309,7 +309,8 @@
     "decapeToleranceMm": 1.0,
     "maxRootStructureQuantityMm": 1000,
     "maxSegmentLengthChecks": 6,
-    "unitSuffixes": ["mm", "mi", "m"]
+    "unitSuffixes": ["mm", "mi", "m"],
+    "cableLengthUnits": ["MT", "MI", "MM", "M"]
   },
   "statusPresentation": {
     "ok": { "label": "OK", "symbol": "✅" },

@@ -170,6 +170,16 @@ class ChatTurnCompletionService:
         if not turn.user_message or not turn.attachments:
             return
 
+        if not getattr(turn.request, "attachment_ids", None):
+            from app.application.services.chat_drawing_library_attachment_service import (
+                ChatDrawingLibraryAttachmentService,
+            )
+
+            if ChatDrawingLibraryAttachmentService.attachments_are_library_only(
+                turn.attachments
+            ):
+                return
+
         from app.application.services.chat_attachment_preview_service import (
             ChatAttachmentPreviewService,
         )

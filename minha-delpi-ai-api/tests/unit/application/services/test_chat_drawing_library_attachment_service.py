@@ -128,3 +128,16 @@ def test_merge_into_turn_attachments_skips_without_library_fetch() -> None:
     )
 
     assert result == []
+
+
+def test_attachments_are_library_only_detects_library_source() -> None:
+    assert ChatDrawingLibraryAttachmentService.attachments_are_library_only(
+        [{"metadata": {"source": "api_delpi_library", "productCode": "90263396"}}]
+    )
+    assert not ChatDrawingLibraryAttachmentService.attachments_are_library_only(
+        [
+            {"metadata": {"source": "api_delpi_library"}},
+            {"metadata": {"source": "upload"}},
+        ]
+    )
+    assert not ChatDrawingLibraryAttachmentService.attachments_are_library_only([])

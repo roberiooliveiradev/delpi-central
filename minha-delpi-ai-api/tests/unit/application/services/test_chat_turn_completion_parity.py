@@ -1,5 +1,6 @@
 """Paridade pós-LLM — ChatTurnCompletionService (send vs stream)."""
 
+from dataclasses import replace
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -196,3 +197,27 @@ def test_completion_uses_prepared_rag_stats_for_intelligence_metadata():
     intelligence = result.assistant_metadata["intelligence"]
     assert intelligence["ragRetrievedCount"] == 2
     assert intelligence["ragVisibleSourceCount"] == 0
+
+
+def test_library_only_attachments_skip_user_message_snapshot_patch():
+    service = _service()
+    turn = replace(
+        _build_turn_input(answer="Relatório de análise."),
+        attachments=[
+            {
+                "id": "att-lib",
+                "original_filename": "90263396.pdf",
+                "metadata": {
+                    "source": "api_delpi_library",
+                    "productCode": "90263396",
+                },
+            }
+        ],
+    )
+
+    service.complete_turn(
+        turn,
+        persistence=ChatTurnPersistenceOptions(mode="send"),
+    )
+
+    service.chat_repository.patch_message_metadata.assert_not_called()

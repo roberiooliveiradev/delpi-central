@@ -97,6 +97,10 @@ class ChatDrawingStructureValidationService:
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
         pdf_intermediate = set(pdf_extract.get("intermediateCodes") or [])
+        pdf_intermediate |= ChatDrawingBomComparisonService.intermediate_codes_matched_by_description(
+            root=root,
+            pdf_extract=pdf_extract,
+        )
         api_intermediate = cls._collect_api_intermediate_codes(root, product_code)
 
         malformed = [
@@ -184,6 +188,7 @@ class ChatDrawingStructureValidationService:
             code = str(row.get("code") or "")
             length = row.get("lengthMm")
             cable_qty = row.get("cableQuantityMm")
+            cable_unit = str(row.get("cableUnit") or "mm")
 
             if length is None or cable_qty is None:
                 continue
@@ -202,6 +207,7 @@ class ChatDrawingStructureValidationService:
                         api_evidence=content.evidence_format(
                             "lengthFromStructure",
                             length=str(cable_qty),
+                            unit=cable_unit,
                         ),
                         item_values={"code": code},
                     )

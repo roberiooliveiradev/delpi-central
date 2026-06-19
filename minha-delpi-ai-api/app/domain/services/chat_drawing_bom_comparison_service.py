@@ -38,6 +38,10 @@ class ChatDrawingBomComparisonService:
             raw_pdf_codes,
             child_cable_parents=cls.collect_child_cable_parents(root),
         )
+        pdf_bom_codes |= cls.intermediate_codes_matched_by_description(
+            root=root,
+            pdf_extract=pdf_extract,
+        )
 
         missing = sorted(api_codes - pdf_bom_codes)
         extra = sorted(
@@ -52,6 +56,63 @@ class ChatDrawingBomComparisonService:
             pdf_bom_codes=tuple(sorted(pdf_bom_codes)),
             api_codes=tuple(sorted(api_codes)),
         )
+
+    @classmethod
+    def intermediate_codes_matched_by_description(
+        cls,
+        *,
+        root: dict,
+        pdf_extract: dict,
+    ) -> set[str]:
+        haystack = cls._pdf_description_haystack(pdf_extract)
+
+        if not haystack:
+            return set()
+
+        matched: set[str] = set()
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+
+        for item in structure.get("items") or []:
+            if not isinstance(item, dict):
+                continue
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(item.get("code") or "")
+            )
+
+            if not code or not ChatDrawingPatternsService.is_intermediate_family(code):
+                continue
+
+            signature = ChatDrawingPatternsService.intermediate_description_signature(
+                str(item.get("description") or "")
+            )
+
+            if signature and signature in haystack:
+                matched.add(code)
+
+        return matched
+
+    @classmethod
+    def _pdf_description_haystack(cls, pdf_extract: dict) -> str:
+        parts: list[str] = []
+
+        full_text = str(pdf_extract.get("fullText") or "").strip()
+
+        if full_text:
+            parts.append(full_text.upper().replace(" ", ""))
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            for key in ("description", "desc", "text"):
+                raw = row.get(key)
+
+                if raw:
+                    parts.append(str(raw).upper().replace(" ", ""))
+                    break
+
+        return "".join(parts)
 
     @classmethod
     def collect_structure_bom_codes(cls, root: dict, product_code: str) -> set[str]:

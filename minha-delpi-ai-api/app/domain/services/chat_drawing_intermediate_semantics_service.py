@@ -46,24 +46,29 @@ class ChatDrawingIntermediateSemanticsService:
                 continue
 
             parsed = cls.parse_description(str(item.get("description") or ""))
-            child_qty = cls._first_child_quantity(item)
+            cable_code, cable_qty, cable_unit = cls._resolve_cable_child(item)
 
             rows.append(
                 {
                     "code": code,
                     "description": str(item.get("description") or ""),
-                    "lengthMm": parsed.get("lengthMm") if parsed.get("lengthMm") is not None else child_qty,
+                    "lengthMm": parsed.get("lengthMm") if parsed.get("lengthMm") is not None else cable_qty,
                     "leftDecapeMm": parsed.get("leftDecapeMm"),
                     "rightDecapeMm": parsed.get("rightDecapeMm"),
-                    "cableCode": cls._first_child_code(item),
-                    "cableQuantityMm": child_qty,
+                    "cableCode": cable_code,
+                    "cableQuantityMm": cable_qty,
+                    "cableUnit": cable_unit,
                 }
             )
 
         return rows
 
     @classmethod
-    def _first_child_code(cls, item: dict) -> str | None:
+    def _resolve_cable_child(cls, item: dict) -> tuple[str | None, float | None, str | None]:
+        cable_units = ChatDrawingPatternsService.cable_length_units()
+        cable_child: dict | None = None
+        fallback_child: dict | None = None
+
         for child in item.get("components") or []:
             if not isinstance(child, dict):
                 continue
@@ -72,23 +77,50 @@ class ChatDrawingIntermediateSemanticsService:
                 str(child.get("code") or "")
             )
 
-            if code:
-                return code
-
-        return None
-
-    @classmethod
-    def _first_child_quantity(cls, item: dict) -> float | None:
-        for child in item.get("components") or []:
-            if not isinstance(child, dict):
+            if not code:
                 continue
 
-            quantity = child.get("quantity")
+            unit = cls._child_unit(child)
 
-            if quantity is not None:
-                try:
-                    return float(quantity)
-                except (TypeError, ValueError):
-                    return None
+            if unit in cable_units:
+                cable_child = child
+                break
+
+            if fallback_child is None:
+                fallback_child = child
+
+        selected = cable_child or fallback_child
+
+        if not selected:
+            return None, None, None
+
+        quantity = selected.get("quantity")
+
+        try:
+            qty = float(quantity) if quantity is not None else None
+        except (TypeError, ValueError):
+            qty = None
+
+        return (
+            ChatProductQueryIntentService.normalize_product_code(
+                str(selected.get("code") or "")
+            )
+            or None,
+            qty,
+            cls._child_unit(selected),
+        )
+
+    @classmethod
+    def _child_unit(cls, child: dict) -> str | None:
+        for key in ("unit", "component_unit", "unidade"):
+            raw = child.get(key)
+
+            if raw is None:
+                continue
+
+            value = str(raw).strip().upper()
+
+            if value:
+                return value
 
         return None

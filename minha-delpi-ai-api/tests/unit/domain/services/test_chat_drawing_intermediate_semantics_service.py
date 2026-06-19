@@ -32,3 +32,27 @@ def test_collect_structure_intermediates_uses_child_quantity():
     assert rows[0]["code"] == "50215433"
     assert rows[0]["lengthMm"] == 50.0
     assert rows[0]["cableQuantityMm"] == 50.0
+
+
+def test_collect_structure_intermediates_prefers_cable_child_over_terminal_pc():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50233301",
+                    "description": "CB20AZUL-00240/11/06",
+                    "components": [
+                        {"code": "10080063", "quantity": 1000.0, "unit": "PC"},
+                        {"code": "10380013", "quantity": 240.0, "unit": "MT"},
+                    ],
+                }
+            ]
+        }
+    }
+
+    rows = ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+
+    assert len(rows) == 1
+    assert rows[0]["cableCode"] == "10380013"
+    assert rows[0]["cableQuantityMm"] == 240.0
+    assert rows[0]["cableUnit"] == "MT"

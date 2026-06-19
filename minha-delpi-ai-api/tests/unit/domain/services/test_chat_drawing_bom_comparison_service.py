@@ -81,3 +81,36 @@ def test_child_cable_codes_not_counted_as_extra_when_parent_present():
     assert "10091640" in result.missing_in_pdf
     assert "1013091" in result.extra_in_pdf
     assert "10130091" in result.missing_in_pdf
+
+
+def test_intermediate_codes_matched_by_description_fill_missing_ocr():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50233301",
+                    "description": "CB20AZUL-00240/11/06",
+                    "components": [],
+                },
+                {
+                    "code": "50233302",
+                    "description": "CB20BRAN-00240/11/06",
+                    "components": [],
+                },
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["50233301"],
+        "intermediateCodes": ["50233301"],
+        "fullText": "BOM CB20BRAN-00240/11/06 e CB20AZUL-00240/11/06",
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263396",
+    )
+
+    assert "50233302" not in result.missing_in_pdf
+    assert "50233301" not in result.missing_in_pdf

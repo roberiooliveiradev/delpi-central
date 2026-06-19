@@ -16,6 +16,22 @@ from app.infrastructure.config.settings import Settings
 
 class ChatDrawingLibraryAttachmentService:
     @classmethod
+    def attachments_are_library_only(cls, attachments: list | None) -> bool:
+        if not attachments:
+            return False
+
+        for item in attachments:
+            if not isinstance(item, dict):
+                return False
+
+            meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+
+            if meta.get("source") != "api_delpi_library":
+                return False
+
+        return True
+
+    @classmethod
     def merge_into_turn_attachments(
         cls,
         attachments: list[dict] | None,

@@ -59,3 +59,40 @@ def test_fetch_pdf_returns_none_when_metadata_missing(library_env) -> None:
         result = ChatDrawingLibraryService.fetch_pdf(product_code="99999999")
 
     assert result is None
+
+
+def test_fetch_pdf_falls_back_to_service_token_on_user_auth_failure(
+    library_env, tmp_path: Path
+) -> None:
+    pdf_bytes = b"%PDF-1.4 library-fallback"
+
+    denied = MagicMock()
+    denied.status_code = 403
+
+    metadata_response = MagicMock()
+    metadata_response.status_code = 200
+    metadata_response.headers = {"content-type": "application/json"}
+    metadata_response.json.return_value = {
+        "data": {
+            "product_code": "90263396",
+            "filename": "90263396.pdf",
+            "found": True,
+        }
+    }
+
+    pdf_response = MagicMock()
+    pdf_response.status_code = 200
+    pdf_response.content = pdf_bytes
+
+    with patch(
+        "app.domain.services.chat_drawing_library_service.requests.get",
+        side_effect=[denied, metadata_response, pdf_response],
+    ) as get_mock:
+        result = ChatDrawingLibraryService.fetch_pdf(
+            product_code="90263396",
+            access_token="user-token-denied",
+        )
+
+    assert result is not None
+    assert result.product_code == "90263396"
+    assert get_mock.call_count == 3
