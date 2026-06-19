@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
-from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_learning_content_service import ChatLearningContentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -14,15 +13,18 @@ from app.domain.services.chat_vocabulary_learning_service import (
     ChatVocabularyLearningService,
 )
 
-_BUNDLE = "learning_content"
-_CONFIRMATION_THRESHOLD = 0.5
-_PENDING_KEY = "learningTermConfirmation"
-
 
 class ChatLearningTermAmbiguityService:
     @staticmethod
     def confirmation_threshold() -> float:
-        return _CONFIRMATION_THRESHOLD
+        return ChatLearningContentService.setting_float("confirmationThreshold", 0.5)
+
+    @classmethod
+    def pending_memory_key(cls) -> str:
+        return ChatLearningContentService.setting_str(
+            "pendingMemoryKey",
+            "learningTermConfirmation",
+        )
 
     @classmethod
     def needs_confirmation(cls, confidence: float | None) -> bool:
@@ -36,7 +38,7 @@ class ChatLearningTermAmbiguityService:
         if not isinstance(working_memory, dict):
             return None
 
-        pending = working_memory.get(_PENDING_KEY)
+        pending = working_memory.get(cls.pending_memory_key())
 
         if not isinstance(pending, dict):
             return None
@@ -57,27 +59,29 @@ class ChatLearningTermAmbiguityService:
         confidence: float,
         sources: list[str] | None = None,
     ) -> dict[str, Any]:
+        max_sources = ChatLearningContentService.limit_int("maxPendingSources", 3)
+
         return {
-            _PENDING_KEY: {
+            cls.pending_memory_key(): {
                 "term": str(term).strip(),
                 "proposedMeaning": str(proposed_meaning or "").strip() or None,
                 "confidence": float(confidence),
-                "sources": list(sources or [])[:3],
+                "sources": list(sources or [])[:max_sources],
             }
         }
 
     @classmethod
     def clear_pending_patch(cls) -> dict[str, Any]:
-        return {_PENDING_KEY: None}
+        return {cls.pending_memory_key(): None}
 
     @classmethod
     def format_known_definition(cls, *, term: str, meaning: str) -> str:
-        template = ChatAssistantContentService.get(
-            _BUNDLE,
+        return ChatLearningContentService.format(
             "termConfirmation",
             "knownDefinition",
+            term=term,
+            meaning=meaning,
         )
-        return template.format(term=term, meaning=meaning)
 
     @classmethod
     def format_proposed_meaning_prompt(
@@ -86,36 +90,30 @@ class ChatLearningTermAmbiguityService:
         term: str,
         meaning: str,
     ) -> str:
-        template = ChatAssistantContentService.get(
-            _BUNDLE,
+        return ChatLearningContentService.format(
             "termConfirmation",
             "proposedMeaning",
+            term=term,
+            meaning=meaning,
         )
-        return template.format(term=term, meaning=meaning)
 
     @classmethod
     def format_unknown_term_prompt(cls, *, term: str) -> str:
-        template = ChatAssistantContentService.get(
-            _BUNDLE,
+        return ChatLearningContentService.format(
             "termConfirmation",
             "unknownTerm",
+            term=term,
         )
-        return template.format(term=term)
 
     @classmethod
     def format_confirmation_ack(cls, *, kind: str, term: str) -> str:
-        key = {
-            "confirmed": "confirmed",
-            "corrected": "corrected",
-            "rejected": "rejected",
-        }.get(kind, "confirmed")
+        key = ChatLearningContentService.ack_kind_key(kind)
 
-        template = ChatAssistantContentService.get(
-            _BUNDLE,
+        return ChatLearningContentService.format(
             "termConfirmation",
             key,
+            term=term,
         )
-        return template.format(term=term)
 
     @classmethod
     def parse_confirmation_reply(cls, message: str) -> str | None:
@@ -124,13 +122,11 @@ class ChatLearningTermAmbiguityService:
         if not normalized:
             return None
 
-        affirmative = ChatAssistantContentService.get_node(
-            _BUNDLE,
+        affirmative = ChatLearningContentService.get_node(
             "confirmationReplies",
             "affirmative",
         )
-        negative = ChatAssistantContentService.get_node(
-            _BUNDLE,
+        negative = ChatLearningContentService.get_node(
             "confirmationReplies",
             "negative",
         )
@@ -145,11 +141,19 @@ class ChatLearningTermAmbiguityService:
                 if normalized == str(token).strip().lower():
                     return "reject"
 
-        if normalized.startswith(("sim", "confirmo")):
-            return "confirm"
+        for prefix in ChatLearningContentService.list(
+            "confirmationReplyPrefixes",
+            "affirmative",
+        ):
+            if normalized.startswith(str(prefix).strip().lower()):
+                return "confirm"
 
-        if normalized.startswith(("nao", "não")):
-            return "reject"
+        for prefix in ChatLearningContentService.list(
+            "confirmationReplyPrefixes",
+            "negative",
+        ):
+            if normalized.startswith(str(prefix).strip().lower()):
+                return "reject"
 
         return None
 
@@ -164,7 +168,7 @@ class ChatLearningTermAmbiguityService:
 
         if definition:
             defined_term = str(definition.get("term") or "").strip()
-            meaning = str(definition.get("meaning") or "").strip()
+            meaning = str(definition.get("meaning") or definition.get("proposedMeaning") or "").strip()
 
             if (
                 defined_term
@@ -175,16 +179,9 @@ class ChatLearningTermAmbiguityService:
                 return meaning
 
         patterns = (
-            re.compile(
-                rf"^(?:{re.escape(term)})\s+(?:significa|quer dizer|e|é)\s+(?P<meaning>.+)$",
-                re.IGNORECASE,
-            ),
-            re.compile(
-                r"^(?:significa|quer dizer)\s+(?P<meaning>.+)$",
-                re.IGNORECASE,
-            ),
+            ChatLearningContentService.compile_term_meaning_pattern(term),
+            ChatLearningContentService.compile_pattern("explicitMeaningBare"),
         )
-
         raw = (message or "").strip()
 
         for pattern in patterns:

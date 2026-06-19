@@ -10,5 +10,84 @@
   "confirmationReplies": {
     "affirmative": ["sim", "isso", "correto", "exato", "confirmo", "pode ser", "eh isso", "e isso", "ta certo", "está certo"],
     "negative": ["nao", "não", "errado", "incorreto", "nao e isso", "não é isso", "negativo"]
+  },
+  "confirmationReplyPrefixes": {
+    "affirmative": ["sim", "confirmo"],
+    "negative": ["nao", "não"]
+  },
+  "settings": {
+    "confirmationThreshold": 0.5,
+    "pendingMemoryKey": "learningTermConfirmation",
+    "ackKindKeys": {
+      "confirmed": "confirmed",
+      "corrected": "corrected",
+      "rejected": "rejected"
+    }
+  },
+  "patterns": {
+    "explicitMeaningForTerm": "^(?:{term})\\s+(?:significa|quer dizer|e|é)\\s+(?P<meaning>.+)$",
+    "explicitMeaningBare": "^(?:significa|quer dizer)\\s+(?P<meaning>.+)$",
+    "explicitWhen": "(?i)\\bquando\\s+eu\\s+(?:falar|disser|dizer|digo|mencionar|menciono|usar|uso)\\s+(?P<term>.+?)\\s*[:,]?\\s*(?:e|eh|é|estou\\s+falando\\s+d[eoa]s?|quero\\s+dizer|significa|me\\s+refiro\\s+a|\\bsao\\b|\\bsão\\b)\\s+(?P<meaning>.+?)[\\.\\!]?$",
+    "explicitMeans": "(?i)^\\s*[\"'“]?(?P<term>[^=,\\.\"']{1,60}?)[\"'”]?\\s+(?:significa|quer\\s+dizer|é\\s+o\\s+mesmo\\s+que|e\\s+o\\s+mesmo\\s+que)\\s+(?P<meaning>.+?)[\\.\\!]?$",
+    "explicitEquals": "(?i)^\\s*[\"'“]?(?P<term>[^=\\\"']{1,60}?)[\"'”]?\\s*=\\s*(?P<meaning>.+?)[\\.\\!]?$",
+    "termHasVowel": "[aeiouáéíóúâêô]",
+    "longDigitRun": "\\d{5,}"
+  },
+  "patternLists": {
+    "explicitDefinitionOrder": ["explicitWhen", "explicitMeans", "explicitEquals"],
+    "quoteChars": ["\"", "'", "“", "”", "‘", "’", "`"],
+    "secretPatterns": [
+      "(?i)\\b(senha|password|passwd|secret|api[_-]?key|token|bearer)\\b",
+      "(?i)\\bsk-[a-z0-9]{12,}\\b",
+      "(?i)\\bghp_[a-z0-9]{20,}\\b",
+      "(?i)\\beyj[a-z0-9_\\-]{10,}\\.",
+      "\\b[a-f0-9]{32,}\\b"
+    ],
+    "piiPatterns": [
+      "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b",
+      "\\b\\d{2}\\.?\\d{3}\\.?\\d{3}/?\\d{4}-?\\d{2}\\b",
+      "(?i)\\b[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}\\b",
+      "(?<!\\d)(?:\\+?55\\s?)?\\(?\\d{2}\\)?\\s?9?\\d{4}-?\\d{4}(?!\\d)"
+    ],
+    "operationalSensitivePatterns": [
+      "(?i)\\b(pre[cç]o|custo|margem|fatur)\\w*\\b",
+      "(?i)\\b(cliente|fornecedor|pedido)\\b",
+      "r\\$\\s?\\d"
+    ],
+    "safetyDigitCheckCandidateTypes": ["vocabulary", "normalization_rule", "typo"]
+  },
+  "limits": {
+    "maxTermLength": 80,
+    "maxMeaningLength": 240,
+    "maxTermWords": 6,
+    "storedTermLength": 160,
+    "storedMeaningLength": 240,
+    "evidenceSnippetLength": 400,
+    "normalizationMessageMaxLength": 240,
+    "storedNormalizationLength": 160,
+    "abbreviationMaxLength": 6,
+    "consonantAbbreviationMaxLength": 5,
+    "explicitDefinitionConfidence": 0.9,
+    "normalizationBaseConfidence": 0.4,
+    "normalizationMaxConfidence": 0.95,
+    "maxPendingSources": 3
+  },
+  "classification": {
+    "defaultKind": "term",
+    "phraseKind": "phrase",
+    "abbreviationKind": "abbreviation",
+    "typoKind": "typo"
+  },
+  "safetyReasons": {
+    "empty": "empty",
+    "secret_detected": "secret_detected",
+    "pii_detected": "pii_detected",
+    "operational_code": "operational_code",
+    "operational_sensitive": "operational_sensitive"
+  },
+  "riskLevels": {
+    "high": "high",
+    "medium": "medium",
+    "low": "low"
   }
 }

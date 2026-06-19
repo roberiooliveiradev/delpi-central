@@ -1,40 +1,19 @@
 import re
 
+from app.domain.services.chat_learning_content_service import ChatLearningContentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-
-# Playbook §10, §17: detecção de vocabulário/typos/definições explícitas.
-
-# "quando eu falar X, é/quero dizer/significa Y"
-_EXPLICIT_WHEN_RE = re.compile(
-    r"(?i)\bquando\s+eu\s+(?:falar|disser|dizer|digo|mencionar|menciono|usar|uso)\s+"
-    r"(?P<term>.+?)\s*[,:]?\s*"
-    r"(?:e|eh|é|estou\s+falando\s+d[eoa]s?|quero\s+dizer|significa|me\s+refiro\s+a|"
-    r"\bsao\b|\bsão\b)\s+"
-    r"(?P<meaning>.+?)[\.\!]?$"
-)
-
-# "X significa Y" / "X quer dizer Y" / "X = Y"
-_EXPLICIT_MEANS_RE = re.compile(
-    r"(?i)^\s*[\"'“]?(?P<term>[^=,\.\"']{1,60}?)[\"'”]?\s+"
-    r"(?:significa|quer\s+dizer|é\s+o\s+mesmo\s+que|e\s+o\s+mesmo\s+que)\s+"
-    r"(?P<meaning>.+?)[\.\!]?$"
-)
-
-_EXPLICIT_EQUALS_RE = re.compile(
-    r"(?i)^\s*[\"'“]?(?P<term>[^=\"']{1,60}?)[\"'”]?\s*=\s*(?P<meaning>.+?)[\.\!]?$"
-)
-
-_QUOTE_CHARS = "\"'“”‘’`"
 
 
 class ChatVocabularyLearningService:
     """Detecta termos novos, definições explícitas e candidatos de normalização."""
 
-    @staticmethod
-    def _clean(value: str) -> str:
-        return re.sub(r"\s+", " ", str(value or "")).strip().strip(_QUOTE_CHARS).strip()
+    @classmethod
+    def _clean(cls, value: str) -> str:
+        quote_chars = ChatLearningContentService.quote_chars()
+
+        return re.sub(r"\s+", " ", str(value or "")).strip().strip(quote_chars).strip()
 
     @classmethod
     def detect_explicit_definition(cls, message: str) -> dict | None:
@@ -44,7 +23,14 @@ class ChatVocabularyLearningService:
         if not text:
             return None
 
-        for pattern in (_EXPLICIT_WHEN_RE, _EXPLICIT_MEANS_RE, _EXPLICIT_EQUALS_RE):
+        max_term_length = ChatLearningContentService.limit_int("maxTermLength", 80)
+        max_meaning_length = ChatLearningContentService.limit_int("maxMeaningLength", 240)
+        max_term_words = ChatLearningContentService.limit_int("maxTermWords", 6)
+        stored_term_length = ChatLearningContentService.limit_int("storedTermLength", 160)
+        evidence_length = ChatLearningContentService.limit_int("evidenceSnippetLength", 400)
+        confidence = ChatLearningContentService.limit_float("explicitDefinitionConfidence", 0.9)
+
+        for pattern in ChatLearningContentService.explicit_definition_patterns():
             match = pattern.search(text)
 
             if not match:
@@ -56,22 +42,23 @@ class ChatVocabularyLearningService:
             if not term or not meaning:
                 continue
 
-            if len(term) > 80 or len(meaning) > 240:
+            if len(term) > max_term_length or len(meaning) > max_meaning_length:
                 continue
 
-            # Termo não pode ser uma frase inteira; deve ser curto e específico.
-            if len(term.split()) > 6:
+            if len(term.split()) > max_term_words:
                 continue
 
             return {
                 "candidateType": "term_definition",
-                "term": term[:160],
-                "normalizedTerm": ChatMessageNormalizationService.strip_accents(term)[:160],
+                "term": term[:stored_term_length],
+                "normalizedTerm": ChatMessageNormalizationService.strip_accents(term)[
+                    :stored_term_length
+                ],
                 "proposedMeaning": meaning,
-                "confidence": 0.9,
+                "confidence": confidence,
                 "source": "user_explicit_definition",
                 "scope": "project",
-                "evidence": {"examples": [text[:400]]},
+                "evidence": {"examples": [text[:evidence_length]]},
             }
 
         return None
@@ -82,16 +69,30 @@ class ChatVocabularyLearningService:
         raw_message: str,
         *,
         source: str = "recurring_typo",
-        base_confidence: float = 0.4,
+        base_confidence: float | None = None,
     ) -> dict | None:
         """Candidato de normalização a partir de uma mensagem que confundiu o chat."""
         text = cls._clean(raw_message)
+        max_message_length = ChatLearningContentService.limit_int(
+            "normalizationMessageMaxLength",
+            240,
+        )
+        stored_length = ChatLearningContentService.limit_int("storedNormalizationLength", 160)
+        default_confidence = ChatLearningContentService.limit_float(
+            "normalizationBaseConfidence",
+            0.4,
+        )
+        max_confidence = ChatLearningContentService.limit_float(
+            "normalizationMaxConfidence",
+            0.95,
+        )
+        resolved_confidence = (
+            default_confidence if base_confidence is None else float(base_confidence)
+        )
 
-        if not text or len(text) > 240:
+        if not text or len(text) > max_message_length:
             return None
 
-        # Forma crua (sem acento, minúscula) que confundiu o chat. A correção
-        # fica em aberto: o admin define o `normalizedTerm` ao revisar/promover.
         matchable = ChatMessageNormalizationService.strip_accents(text)
 
         if not matchable:
@@ -99,31 +100,43 @@ class ChatVocabularyLearningService:
 
         return {
             "candidateType": "normalization_rule",
-            "term": matchable[:160],
-            "normalizedTerm": matchable[:160],
+            "term": matchable[:stored_length],
+            "normalizedTerm": matchable[:stored_length],
             "inputText": text,
             "proposedRule": None,
-            "confidence": max(0.0, min(base_confidence, 0.95)),
+            "confidence": max(0.0, min(resolved_confidence, max_confidence)),
             "source": source,
             "scope": "global",
             "evidence": {"examples": [text]},
         }
 
-    @staticmethod
-    def classify_term(term: str) -> str:
+    @classmethod
+    def classify_term(cls, term: str) -> str:
         """Classificação leve do termo (playbook §13)."""
         token = str(term or "").strip()
+        abbreviation_max = ChatLearningContentService.limit_int("abbreviationMaxLength", 6)
+        consonant_max = ChatLearningContentService.limit_int(
+            "consonantAbbreviationMaxLength",
+            5,
+        )
+        vowel_pattern = ChatLearningContentService.compile_pattern("termHasVowel")
 
         if not token:
-            return "term"
+            return ChatLearningContentService.classification_kind("defaultKind", "term")
 
         if " " in token:
-            return "phrase"
+            return ChatLearningContentService.classification_kind("phraseKind", "phrase")
 
-        if token.isupper() and len(token) <= 6:
-            return "abbreviation"
+        if token.isupper() and len(token) <= abbreviation_max:
+            return ChatLearningContentService.classification_kind(
+                "abbreviationKind",
+                "abbreviation",
+            )
 
-        if not re.search(r"[aeiouáéíóúâêô]", token, re.IGNORECASE) and len(token) <= 5:
-            return "abbreviation"
+        if not vowel_pattern.search(token) and len(token) <= consonant_max:
+            return ChatLearningContentService.classification_kind(
+                "abbreviationKind",
+                "abbreviation",
+            )
 
-        return "typo"
+        return ChatLearningContentService.classification_kind("typoKind", "typo")
