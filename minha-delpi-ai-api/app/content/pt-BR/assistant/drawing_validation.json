@@ -339,7 +339,7 @@
     },
     "columnLabels": {
       "keyValue": ["Campo", "Valor"],
-      "structure": ["Código", "Descrição", "Qtd", "Tipo", "Nível"],
+      "structure": ["Código", "Descrição", "Qtd", "Unid.", "Tipo", "Nível"],
       "guide": ["Produto", "Nível", "Operação", "Centro", "Descrição"],
       "inspection": ["Produto", "Nível", "QP6", "QP7", "QP8"]
     },

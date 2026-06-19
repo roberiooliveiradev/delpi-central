@@ -120,7 +120,7 @@ class ChatDrawingReportExportService:
         if not tables:
             return ""
 
-        lines: list[str] = ["\ufeff"]
+        lines: list[str] = []
 
         for index, table in enumerate(tables):
             if index > 0:
@@ -156,7 +156,8 @@ class ChatDrawingReportExportService:
                     )
                 )
 
-        return "\n".join(lines)
+        body = "\r\n".join(lines)
+        return f"sep=;\r\n{body}"
 
     @classmethod
     def build_nonconformity_csv(cls, analysis: dict[str, Any]) -> str:

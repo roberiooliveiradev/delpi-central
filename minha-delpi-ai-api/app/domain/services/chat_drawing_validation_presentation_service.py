@@ -318,8 +318,8 @@ class ChatDrawingValidationPresentationService:
     @classmethod
     def _format_structure_fallback_table(cls, structure_items: list[Any]) -> list[str]:
         lines = [
-            "| Código | Descrição | Qtd | Tipo |",
-            "|---|---|---:|---|",
+            "| Código | Descrição | Qtd | Unid. | Tipo |",
+            "|---|---|---:|---:|---|",
         ]
         dash = ChatDrawingValidationContentService.evidence("dash")
 
@@ -329,10 +329,11 @@ class ChatDrawingValidationPresentationService:
 
             code = cls.format_code(row.get("code") or dash)
             lines.append(
-                "| {code} | {description} | {quantity} | {type} |".format(
+                "| {code} | {description} | {quantity} | {unit} | {type} |".format(
                     code=code,
                     description=str(row.get("description") or dash)[:48],
                     quantity=row.get("quantity") if row.get("quantity") is not None else dash,
+                    unit=cls._resolve_structure_unit(row),
                     type=row.get("type") or dash,
                 )
             )
@@ -605,7 +606,7 @@ class ChatDrawingValidationPresentationService:
             tables.append(
                 cls._build_export_table(
                     "structure",
-                    column_keys=["code", "description", "quantity", "type", "level"],
+                    column_keys=["code", "description", "quantity", "unit", "type", "level"],
                     column_labels=cls._export_column_labels("structure"),
                     rows=structure_rows,
                 )
@@ -747,6 +748,18 @@ class ChatDrawingValidationPresentationService:
         }
 
     @classmethod
+    def _resolve_structure_unit(cls, row: dict[str, Any]) -> str:
+        dash = ChatDrawingValidationContentService.evidence("dash")
+
+        for key in ("unit", "component_unit", "parent_unit", "unidade"):
+            value = row.get(key)
+
+            if value is not None and str(value).strip():
+                return str(value).strip()
+
+        return dash
+
+    @classmethod
     def _export_structure_rows(cls, root: dict[str, Any]) -> list[dict[str, str]]:
         structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
         structure_items = (
@@ -771,6 +784,7 @@ class ChatDrawingValidationPresentationService:
                         "quantity": str(
                             row.get("quantity") if row.get("quantity") is not None else dash
                         ),
+                        "unit": cls._resolve_structure_unit(row),
                         "type": str(row.get("type") or dash),
                         "level": str(level),
                     }

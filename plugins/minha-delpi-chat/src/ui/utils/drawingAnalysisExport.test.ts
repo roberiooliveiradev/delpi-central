@@ -41,7 +41,7 @@ const samplePayload: DrawingAnalysisExportPayload = {
 };
 
 describe("drawingAnalysisPrint", () => {
-  it("inclui logo, cabeçalho e todas as tabelas no HTML", () => {
+  it("inclui logo, cabeçalho repetível e todas as tabelas no HTML", () => {
     const html = buildDrawingAnalysisReportHtml(
       samplePayload,
       {
@@ -54,10 +54,12 @@ describe("drawingAnalysisPrint", () => {
     );
 
     expect(html).toContain("logoDelpi.svg");
+    expect(html).toContain("cert-print-running-header");
     expect(html).toContain("Relatório de Análise de Desenho DELPI");
     expect(html).toContain("Dados identificados no PDF");
     expect(html).toContain("Checklist completo");
     expect(html).toContain("cert-seal--rejected");
+    expect(html).toContain("cert-section__title");
     expect(html).toContain("90264227");
   });
 });

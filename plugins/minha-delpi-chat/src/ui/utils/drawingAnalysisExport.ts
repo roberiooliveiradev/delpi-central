@@ -1,5 +1,6 @@
 import type { ChatMessageMetadata } from "../../data/api/chatTypes";
 import { chatAlert } from "./chatNativeDialogs";
+import { buildExcelCsvBlob } from "./drawingAnalysisCsvEncoding";
 import { printDrawingAnalysisReport } from "./drawingAnalysisPrint";
 
 export type DrawingExportTable = {
@@ -151,27 +152,8 @@ export function downloadDrawingAnalysisMarkdown(
   );
 }
 
-export function downloadDrawingAnalysisCsv(
-  exportPayload: DrawingAnalysisExportPayload,
-  drawingAnalysis?: Record<string, unknown>,
-): void {
-  const csv = String(exportPayload.csv || "").trim();
-
-  if (csv) {
-    triggerDownload(
-      new Blob([csv], { type: "text/csv;charset=utf-8" }),
-      exportPayload.csvFilename || "relatorio-desenho.csv",
-    );
-    return;
-  }
-
-  const tables = resolveExportTables(exportPayload, drawingAnalysis);
-
-  if (!tables.length) {
-    return;
-  }
-
-  const lines: string[] = ["\ufeff"];
+function buildClientCsvContent(tables: DrawingExportTable[]): string {
+  const lines: string[] = [];
 
   for (let index = 0; index < tables.length; index += 1) {
     const table = tables[index];
@@ -181,9 +163,7 @@ export function downloadDrawingAnalysisCsv(
     }
 
     lines.push(table.title);
-
-    const header = table.columns.map((column) => column.label);
-    lines.push(header.join(";"));
+    lines.push(table.columns.map((column) => column.label).join(";"));
 
     for (const row of table.rows) {
       lines.push(
@@ -199,11 +179,30 @@ export function downloadDrawingAnalysisCsv(
     }
   }
 
+  return lines.join("\r\n");
+}
+
+export function downloadDrawingAnalysisCsv(
+  exportPayload: DrawingAnalysisExportPayload,
+  drawingAnalysis?: Record<string, unknown>,
+): void {
+  const csv = String(exportPayload.csv || "").trim();
   const code = resolveProductCode(exportPayload, drawingAnalysis);
-  triggerDownload(
-    new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" }),
-    exportPayload.csvFilename || `relatorio-desenho-${sanitizeFilename(code)}.csv`,
-  );
+  const filename =
+    exportPayload.csvFilename || `relatorio-desenho-${sanitizeFilename(code)}.csv`;
+
+  if (csv) {
+    triggerDownload(buildExcelCsvBlob(csv), filename);
+    return;
+  }
+
+  const tables = resolveExportTables(exportPayload, drawingAnalysis);
+
+  if (!tables.length) {
+    return;
+  }
+
+  triggerDownload(buildExcelCsvBlob(buildClientCsvContent(tables)), filename);
 }
 
 export async function downloadDrawingAnalysisXlsx(

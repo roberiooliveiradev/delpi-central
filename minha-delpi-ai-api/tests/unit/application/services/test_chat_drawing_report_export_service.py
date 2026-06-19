@@ -61,7 +61,15 @@ def test_build_export_tables_include_operational_sections():
                             "description": "CT26",
                             "quantity": 1,
                             "type": "INT",
-                            "components": [{"code": "10440133", "quantity": 36}],
+                            "unit": "PC",
+                            "components": [
+                                {
+                                    "code": "10440133",
+                                    "quantity": 36,
+                                    "type": "MP",
+                                    "unit": "MT",
+                                }
+                            ],
                         }
                     ]
                 },
@@ -103,6 +111,17 @@ def test_build_export_tables_include_operational_sections():
         "nonconformities",
         "checklist",
     }
-    assert "Dados identificados no PDF" in (payload.get("csv") or "")
-    assert "Estrutura (SG1010)" in (payload.get("csv") or "")
+    csv = payload.get("csv") or ""
+    assert csv.startswith("sep=;")
+    assert "Dados identificados no PDF" in csv
+    assert "Estrutura (SG1010)" in csv
+    assert "Inspeção" in csv or "Inspe" in csv
     assert payload.get("xlsxFilename", "").endswith(".xlsx")
+
+    structure_table = next(
+        table for table in payload.get("tables") or [] if table.get("key") == "structure"
+    )
+    structure_rows = structure_table.get("rows") or []
+
+    assert structure_rows[0]["unit"] == "PC"
+    assert structure_rows[1]["unit"] == "MT"
