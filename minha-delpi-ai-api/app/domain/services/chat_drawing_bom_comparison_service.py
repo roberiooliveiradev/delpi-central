@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
-from typing import Any
 
+from app.domain.services.chat_drawing_component_code_normalization_service import (
+    ChatDrawingComponentCodeNormalizationService,
+)
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -132,10 +134,17 @@ class ChatDrawingBomComparisonService:
         child_cable_parents: dict[str, set[str]],
     ) -> set[str]:
         reconciled: set[str] = set()
-        parents_50xx = {code for code in pdf_codes if str(code).startswith("50")}
+        parents_50xx = {
+            code
+            for code in pdf_codes
+            if ChatDrawingPatternsService.is_intermediate_family(str(code))
+        }
 
         for raw_code in pdf_codes:
-            code = cls.reconcile_pdf_code(raw_code, known_codes)
+            code = ChatDrawingComponentCodeNormalizationService.reconcile_with_known(
+                raw_code,
+                known_codes,
+            )
 
             if not code:
                 continue
@@ -148,36 +157,3 @@ class ChatDrawingBomComparisonService:
             reconciled.add(code)
 
         return reconciled
-
-    @classmethod
-    def reconcile_pdf_code(cls, raw_code: str, known_codes: set[str]) -> str | None:
-        code = ChatProductQueryIntentService.normalize_product_code(str(raw_code or ""))
-
-        if not code:
-            return None
-
-        if code in known_codes:
-            return code
-
-        if re.fullmatch(r"40\d{6}", code):
-            alt = f"10{code[2:]}"
-
-            if alt in known_codes:
-                return alt
-
-        if len(code) == 7 and code.isdigit():
-            prefix_matches = sorted(
-                candidate
-                for candidate in known_codes
-                if len(candidate) == 8 and candidate.startswith(code[:5])
-            )
-
-            if len(prefix_matches) == 1:
-                return prefix_matches[0]
-
-            padded = f"{code[:5]}0{code[5:]}"
-
-            if padded in known_codes:
-                return padded
-
-        return code

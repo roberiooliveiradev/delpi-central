@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "comment": "OCR hierárquico de desenhos DELPI — rótulos, regiões e mensagens (Onda 14). Regex/heurísticas no código; textos PT aqui.",
+  "comment": "OCR hierárquico de desenhos DELPI — rótulos, regiões, padrões regex e limites de extração.",
   "regionBboxes": {
     "stamp": [0.5, 0.62, 1.0, 1.0],
     "title": [0.2, 0.0, 0.8, 0.12],
@@ -110,5 +110,61 @@
     "titleOcr": "Lendo título do desenho…",
     "bomOcr": "Lendo lista de materiais…",
     "dimensionsOcr": "Lendo cotas e decapes…"
+  },
+  "patterns": {
+    "componentCode": "\\b(90\\d{6}|50\\d{6}|10\\d{6}|100\\d{5}|40\\d{6}|101\\d{4,5})\\b",
+    "intermediateCode": "\\b(50\\d{6})\\b",
+    "finishedProductCode": "\\b(90\\d{6})\\b",
+    "finishedProductCodeAnchor": "^90\\d{6}$",
+    "revision": "(?:REV(?:IS[AÃ]O)?\\.?|REVISION)\\s*[:.]?\\s*(\\d{1,3})",
+    "internalRevisionTable": "(\\d{2})\\s*\\[\\s*\\d{2}/\\d{2}/\\d{2}\\s*\\]",
+    "lengthSimple": "(?:COMPR(?:IMENTO)?\\s*(?:TOTAL)?|LENGTH)\\s*[:.]?\\s*(\\d+[,.]?\\d*)\\s*mm?",
+    "pdfDecapeLeft": "DECAPE\\s*E(?:SQUERDO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)",
+    "pdfDecapeRight": "DECAPE\\s*D(?:IREITO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)",
+    "bomSection": "(?:LISTA\\s+DE\\s+MATERIAIS|LISTA\\s+MATERIAL|BOM\\b|COMPONENTES|MAT[ÉE]RIA[\\s-]*PRIMA)",
+    "bomQuantity": "\\b(\\d+[,.]?\\d*)\\s*(?:UN|PCS|PÇ|PC|PEÇAS?)?\\b",
+    "intermediateSegment": "(?:CT|CB|CA|CF|CV)\\s*[\\d,.]+[A-Z]{4}\\s*-?\\s*(\\d+)\\s*/\\s*([\\d,.]+)\\s*/\\s*([\\d,.]+)",
+    "cotaDecapeLength": "\\b(\\d+)\\s*±\\s*(\\d+)\\s*±\\s*(\\d+)\\b",
+    "genericDecape": "DEC[A4@]PE?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
+    "decapeNote": "DECAPE\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
+    "hintNumberTail": "(\\d[\\d\\s,.]*)\\s*M{0,2}"
+  },
+  "patternLists": {
+    "length": [
+      "COMPR(?:IMENTO)?\\s*(?:TOTAL)?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
+      "C\\s*O\\s*M\\s*P\\s*R(?:\\s*I\\s*M\\s*E\\s*N\\s*T\\s*O)?\\s*(?:TOTAL)?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
+      "LENGTH\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}"
+    ],
+    "decapeLeft": [
+      "DEC[A4@]PE?\\s*E(?:SQUERD[OA])?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)",
+      "D\\s*E\\s*C\\s*A\\s*P\\s*E\\s*E(?:SQUERD[OA])?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)"
+    ],
+    "decapeRight": [
+      "DEC[A4@]PE?\\s*D(?:IREIT[OA])?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)",
+      "D\\s*E\\s*C\\s*A\\s*P\\s*E\\s*D(?:IREIT[OA])?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)"
+    ],
+    "pdfLength": [
+      "(?:COMPR(?:IMENTO)?\\s*(?:TOTAL)?|LENGTH)\\s*[:.]?\\s*(\\d+[,.]?\\d*)\\s*mm?"
+    ],
+    "pdfDecapeLeft": [
+      "DECAPE\\s*E(?:SQUERDO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)"
+    ],
+    "pdfDecapeRight": [
+      "DECAPE\\s*D(?:IREITO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)"
+    ]
+  },
+  "ocrNormalization": {
+    "connectorTypoPattern": "^40\\d{6}$",
+    "connectorReplacementPrefix": "10",
+    "shortTermoLength": 7,
+    "shortTermoPrefix": "101",
+    "fullTermoLength": 8
+  },
+  "codeFamilies": {
+    "intermediatePrefix": "50"
+  },
+  "extractionLimits": {
+    "bomMaxRows": 40,
+    "bomCandidateConfidenceCap": 0.5
   }
 }

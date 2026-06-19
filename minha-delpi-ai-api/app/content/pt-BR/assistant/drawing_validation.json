@@ -39,6 +39,26 @@
     "approvedWithNotes": "Aprovado com ressalvas",
     "approved": "Aprovado"
   },
+  "decapeSides": {
+    "left": "esquerdo",
+    "right": "direito"
+  },
+  "evidenceFormats": {
+    "revisionInternalTable": "REV.{revision} (tabela)",
+    "revisionTitle": "REV.{revision}",
+    "revisionClientPair": "REV.{internal} (interna); REV.{client} (cliente)",
+    "codeCount": "{count} código(s)",
+    "lengthFromDescription": "{length} mm (descrição)",
+    "lengthFromStructure": "{length} mm (SG1010)",
+    "decapePdf": "{value} mm",
+    "decapeFromIntermediate": "{value} mm (código 50xx)",
+    "segmentLength": "{value} mm",
+    "decapesPair": "E={left} mm; D={right} mm",
+    "guideOperationCount": "{count} operação(ões)",
+    "structureItemCount": "{count} item(ns) na estrutura",
+    "checkIntermediate50xx": "Conferir intermediário 50xx",
+    "missingDash": "—"
+  },
   "itemTemplates": {
     "product_not_found": {
       "section": "API DELPI",
@@ -91,6 +111,126 @@
       "item": "Tabela de materiais (PDF × SG1010)",
       "rule": "Comparar PDF com SG1010",
       "recommendation": "Anexe o PDF para conferência completa"
+    },
+    "pdf_attached": {
+      "section": "PDF",
+      "item": "Documento anexado",
+      "rule": "Extrair carimho, BOM e cotas do anexo",
+      "pdfEvidenceLegible": "PDF na sessão",
+      "pdfEvidenceIllegible": "Texto insuficiente/ilegível",
+      "recommendationLegible": "Conferir divergências item a item no relatório",
+      "recommendationIllegible": "Regerar PDF com melhor qualidade ou informar código na mensagem"
+    },
+    "product_code_mismatch": {
+      "section": "Cabeçalho",
+      "item": "Código DELPI",
+      "rule": "Código do PDF deve bater com SB1010",
+      "recommendation": "Corrigir código no desenho ou no cadastro"
+    },
+    "product_code_ok": {
+      "section": "Cabeçalho",
+      "item": "Código DELPI",
+      "rule": "Código PDF × API",
+      "recommendation": "—"
+    },
+    "revision_cross_ok": {
+      "section": "Cabeçalho",
+      "item": "Revisão",
+      "rule": "Revisão interna DELPI × current_revision",
+      "recommendation": "—"
+    },
+    "revision_client_ok": {
+      "section": "Cabeçalho",
+      "item": "Revisão",
+      "rule": "Revisão interna alinhada; revisão do cliente separada",
+      "recommendation": "—"
+    },
+    "revision_manual_pending": {
+      "section": "Cabeçalho",
+      "item": "Revisão",
+      "rule": "Conferência manual (API em data, PDF em REV.)",
+      "recommendation": "Validar revisão no carimbo com SB1010"
+    },
+    "revision_critical": {
+      "section": "Cabeçalho",
+      "item": "Revisão",
+      "rule": "Revisão do carimbo × cadastro",
+      "recommendation": "Atualizar revisão do PDF ou cadastro Protheus"
+    },
+    "bom_missing": {
+      "section": "BOM",
+      "item": "Componente ausente no PDF",
+      "rule": "Todo item de 1º nível da SG1010 deve constar na BOM do desenho",
+      "recommendation": "Incluir componente na tabela de materiais"
+    },
+    "bom_extra": {
+      "section": "BOM",
+      "item": "Componente extra no PDF",
+      "rule": "Item do PDF deve existir na estrutura de 1º nível",
+      "recommendation": "Remover item extra ou atualizar estrutura Protheus"
+    },
+    "bom_match_ok": {
+      "section": "BOM",
+      "item": "Conjunto de componentes",
+      "rule": "PDF × SG1010 (1º nível)",
+      "recommendation": "—"
+    },
+    "intermediate_malformed": {
+      "section": "Código 50xx",
+      "item": "Formato intermediário",
+      "rule": "Família 50xx",
+      "recommendation": "Corrigir código intermediário no desenho"
+    },
+    "intermediate_missing": {
+      "section": "Código 50xx",
+      "item": "Intermediário ausente no PDF",
+      "rule": "Intermediários cadastrados na SG1010",
+      "recommendation": "Incluir códigos 50xx na BOM do desenho"
+    },
+    "intermediate_extra": {
+      "section": "Código 50xx",
+      "item": "Intermediário extra no PDF",
+      "rule": "Intermediário do PDF deve existir na SG1010",
+      "recommendation": "Remover intermediário obsoleto ou atualizar estrutura"
+    },
+    "intermediate_match_ok": {
+      "section": "Código 50xx",
+      "item": "Intermediários",
+      "rule": "PDF × SG1010",
+      "recommendation": "—"
+    },
+    "intermediate_length": {
+      "section": "Código 50xx",
+      "item": "Comprimento {code}",
+      "rule": "Comprimento do intermediário × quantidade do cabo filho",
+      "recommendation": "Alinhar descrição 50xx com estrutura SG1010"
+    },
+    "decape_mismatch": {
+      "section": "Cotas",
+      "item": "Decape {side} × {code}",
+      "rule": "Decape ±1 mm (intermediário)",
+      "recommendation": "Conferir decape no desenho e na descrição 50xx"
+    },
+    "segment_length_pending": {
+      "section": "Cotas",
+      "item": "Comprimento de trecho",
+      "rule": "Cota de trecho × comprimento 50xx (±5%)",
+      "recommendation": "Conferir cotas do desenho com intermediários"
+    },
+    "total_length": {
+      "section": "Cotas",
+      "item": "Comprimento total",
+      "rule": "Tolerância ±5% (validation_rules)",
+      "recommendationOk": "—",
+      "recommendationCritical": "Corrigir cota principal ou quantidade na estrutura",
+      "recommendationPending": "Conferir unidade e cota manualmente"
+    },
+    "decapes_ed": {
+      "section": "Cotas",
+      "item": "Decapes E/D",
+      "rule": "Decape ±1 mm quando referência disponível",
+      "recommendationOk": "—",
+      "recommendationPending": "Informar decapes no PDF ou validar código 50xx"
     }
   },
   "evidence": {
@@ -100,5 +240,13 @@
     "absent": "Ausente",
     "linked": "Vinculado",
     "dash": "—"
+  },
+  "validationRules": {
+    "lengthToleranceRatio": 0.05,
+    "decapeToleranceMm": 1.0,
+    "maxRootStructureQuantityMm": 1000,
+    "maxSegmentLengthChecks": 6,
+    "finalInspectionWorkCenterPrefix": "CT-99",
+    "unitSuffixes": ["mm", "mi", "m"]
   }
 }

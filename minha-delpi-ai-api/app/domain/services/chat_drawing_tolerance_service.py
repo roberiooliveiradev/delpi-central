@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+
 
 class ChatDrawingToleranceService:
-    LENGTH_TOLERANCE_RATIO = 0.05
-    DECAPE_TOLERANCE_MM = 1.0
+    @classmethod
+    def length_tolerance_ratio(cls) -> float:
+        return ChatDrawingPatternsService.length_tolerance_ratio()
+
+    @classmethod
+    def decape_tolerance_mm(cls) -> float:
+        return ChatDrawingPatternsService.decape_tolerance_mm()
 
     @classmethod
     def parse_mm(cls, value: str | float | int | None) -> float | None:
@@ -20,7 +27,7 @@ class ChatDrawingToleranceService:
         if not normalized:
             return None
 
-        for suffix in ("mm", "mi", "m"):
+        for suffix in ChatDrawingPatternsService.unit_suffixes():
             if normalized.endswith(suffix):
                 normalized = normalized[: -len(suffix)].strip()
 
@@ -43,7 +50,7 @@ class ChatDrawingToleranceService:
         if pdf_value is None or ref_value is None or ref_value <= 0:
             return None
 
-        tolerance = ratio if ratio is not None else cls.LENGTH_TOLERANCE_RATIO
+        tolerance = ratio if ratio is not None else cls.length_tolerance_ratio()
         delta = abs(pdf_value - ref_value) / ref_value
 
         return delta <= tolerance
@@ -62,6 +69,6 @@ class ChatDrawingToleranceService:
         if pdf_value is None or ref_value is None:
             return None
 
-        limit = tolerance_mm if tolerance_mm is not None else cls.DECAPE_TOLERANCE_MM
+        limit = tolerance_mm if tolerance_mm is not None else cls.decape_tolerance_mm()
 
         return abs(pdf_value - ref_value) <= limit

@@ -10,30 +10,10 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
-
-_REV_PATTERN = re.compile(
-    r"(?:REV(?:IS[AÃ]O)?\.?|REVISION)\s*[:.]?\s*(\d{1,3})",
-    re.IGNORECASE,
+from app.domain.services.chat_drawing_component_code_normalization_service import (
+    ChatDrawingComponentCodeNormalizationService,
 )
-_INTERNAL_REVISION_TABLE_RE = re.compile(
-    r"(\d{2})\s*\[\s*\d{2}/\d{2}/\d{2}\s*\]",
-)
-_COMPONENT_CODE_RE = re.compile(
-    r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5}|40\d{6}|101\d{4,5})\b"
-)
-_INTERMEDIATE_CODE_RE = re.compile(r"\b(50\d{6})\b")
-_LENGTH_RE = re.compile(
-    r"(?:COMPR(?:IMENTO)?\s*(?:TOTAL)?|LENGTH)\s*[:.]?\s*(\d+[,.]?\d*)\s*mm?",
-    re.IGNORECASE,
-)
-_DECAPE_LEFT_RE = re.compile(
-    r"DECAPE\s*E(?:SQUERDO)?\s*[:.]?\s*(\d+[,.]?\d*)",
-    re.IGNORECASE,
-)
-_DECAPE_RIGHT_RE = re.compile(
-    r"DECAPE\s*D(?:IREITO)?\s*[:.]?\s*(\d+[,.]?\d*)",
-    re.IGNORECASE,
-)
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 
 
 class ChatDrawingPdfExtractionService:
@@ -136,7 +116,9 @@ class ChatDrawingPdfExtractionService:
 
         if not bom_text:
             component_codes = cls._extract_component_codes(normalized, exclude=product_code)
-        intermediate_codes = sorted(_INTERMEDIATE_CODE_RE.findall(normalized))
+        intermediate_codes = sorted(
+            ChatDrawingPatternsService.intermediate_code().findall(normalized)
+        )
 
         if bom_text:
             from app.domain.services.chat_document_vision_bom_service import (
@@ -228,17 +210,19 @@ class ChatDrawingPdfExtractionService:
 
     @classmethod
     def _extract_fallback_product_code(cls, text: str) -> str | None:
-        codes_90 = re.findall(r"\b(90\d{6})\b", text)
+        codes_90 = ChatDrawingPatternsService.finished_product_code().findall(text)
 
         if codes_90:
             return ChatProductQueryIntentService.normalize_product_code(codes_90[0])
 
         product_code = ChatProductQueryIntentService.extract_product_code(text)
 
-        if product_code and re.match(r"^90\d{6}$", product_code):
+        if product_code and ChatDrawingPatternsService.finished_product_code_anchor().match(
+            product_code
+        ):
             return product_code
 
-        codes_50 = re.findall(r"\b(50\d{6})\b", text)
+        codes_50 = ChatDrawingPatternsService.intermediate_code().findall(text)
 
         if codes_50:
             return ChatProductQueryIntentService.normalize_product_code(codes_50[0])
@@ -247,7 +231,7 @@ class ChatDrawingPdfExtractionService:
 
     @classmethod
     def _extract_revision(cls, text: str) -> str | None:
-        match = _REV_PATTERN.search(text)
+        match = ChatDrawingPatternsService.revision().search(text)
 
         if match:
             return match.group(1).zfill(2)
@@ -256,7 +240,7 @@ class ChatDrawingPdfExtractionService:
 
     @classmethod
     def _extract_internal_revision(cls, text: str) -> str | None:
-        matches = _INTERNAL_REVISION_TABLE_RE.findall(str(text or ""))
+        matches = ChatDrawingPatternsService.internal_revision_table().findall(str(text or ""))
 
         if not matches:
             return None
@@ -296,8 +280,8 @@ class ChatDrawingPdfExtractionService:
         exclude_norm = ChatProductQueryIntentService.normalize_product_code(exclude or "")
         found: list[str] = []
 
-        for match in _COMPONENT_CODE_RE.finditer(text):
-            code = cls._normalize_extracted_component_code(
+        for match in ChatDrawingPatternsService.component_code().finditer(text):
+            code = ChatDrawingComponentCodeNormalizationService.normalize_extracted(
                 ChatProductQueryIntentService.normalize_product_code(match.group(1))
             )
 
@@ -310,19 +294,6 @@ class ChatDrawingPdfExtractionService:
         return found
 
     @classmethod
-    def _normalize_extracted_component_code(cls, code: str) -> str | None:
-        if not code:
-            return None
-
-        if re.fullmatch(r"40\d{6}", code):
-            return f"10{code[2:]}"
-
-        if len(code) == 7 and code.isdigit() and code.startswith("101"):
-            return f"{code[:5]}0{code[5:]}"
-
-        return code
-
-    @classmethod
     def _extract_dimensions(cls, text: str) -> dict[str, float | None]:
         dimensions: dict[str, float | None] = {
             "totalLengthMm": None,
@@ -330,17 +301,17 @@ class ChatDrawingPdfExtractionService:
             "rightDecapeMm": None,
         }
 
-        length_match = _LENGTH_RE.search(text)
+        length_match = ChatDrawingPatternsService.pdf_length_pattern().search(text)
 
         if length_match:
             dimensions["totalLengthMm"] = cls._parse_number(length_match.group(1))
 
-        left_match = _DECAPE_LEFT_RE.search(text)
+        left_match = ChatDrawingPatternsService.pdf_decape_left_pattern().search(text)
 
         if left_match:
             dimensions["leftDecapeMm"] = cls._parse_number(left_match.group(1))
 
-        right_match = _DECAPE_RIGHT_RE.search(text)
+        right_match = ChatDrawingPatternsService.pdf_decape_right_pattern().search(text)
 
         if right_match:
             dimensions["rightDecapeMm"] = cls._parse_number(right_match.group(1))

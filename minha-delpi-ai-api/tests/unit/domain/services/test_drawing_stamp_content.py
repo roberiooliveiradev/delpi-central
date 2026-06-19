@@ -34,3 +34,10 @@ def test_drawing_stamp_native_gate_markers():
 
     assert "CÓDIGO DELPI" in markers or "CODIGO DELPI" in markers
     assert int(gate.get("minMarkerHits") or 0) >= 1
+
+
+def test_drawing_stamp_patterns_section_exists():
+    patterns = ChatAssistantContentService.get_node("drawing_stamp", "patterns") or {}
+
+    assert patterns.get("componentCode")
+    assert ChatAssistantContentService.list("drawing_stamp", "patternLists", "length")

@@ -1,6 +1,9 @@
 from app.domain.services.chat_drawing_bom_comparison_service import (
     ChatDrawingBomComparisonService,
 )
+from app.domain.services.chat_drawing_component_code_normalization_service import (
+    ChatDrawingComponentCodeNormalizationService,
+)
 
 
 def _payload_90264227() -> dict:
@@ -53,11 +56,15 @@ def test_reconcile_ocr_component_codes():
     known = {"10091640", "10130091"}
 
     assert (
-        ChatDrawingBomComparisonService.reconcile_pdf_code("40091640", known)
+        ChatDrawingComponentCodeNormalizationService.reconcile_with_known(
+            "40091640", known
+        )
         == "10091640"
     )
     assert (
-        ChatDrawingBomComparisonService.reconcile_pdf_code("1013091", known)
+        ChatDrawingComponentCodeNormalizationService.reconcile_with_known(
+            "1013091", known
+        )
         == "10130091"
     )
 

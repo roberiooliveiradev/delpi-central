@@ -2,22 +2,15 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
-
-_BOM_SECTION_RE = re.compile(
-    r"(?:LISTA\s+DE\s+MATERIAIS|LISTA\s+MATERIAL|BOM\b|COMPONENTES|MAT[ÉE]RIA[\s-]*PRIMA)",
-    re.IGNORECASE,
+from app.domain.services.chat_drawing_component_code_normalization_service import (
+    ChatDrawingComponentCodeNormalizationService,
 )
-_COMPONENT_CODE_RE = re.compile(
-    r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5}|40\d{6}|101\d{4,5})\b"
-)
-_QTY_RE = re.compile(r"\b(\d+[,.]?\d*)\s*(?:UN|PCS|PÇ|PC|PEÇAS?)?\b", re.IGNORECASE)
-_BOM_CANDIDATE_CONFIDENCE_CAP = 0.5
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 
 
 class ChatDocumentVisionBomService:
@@ -46,7 +39,7 @@ class ChatDocumentVisionBomService:
                 max_rows=max_rows,
             )
 
-        if not _BOM_SECTION_RE.search(normalized):
+        if not ChatDrawingPatternsService.bom_section().search(normalized):
             return []
 
         section_start = cls._bom_section_offset(normalized)
@@ -97,12 +90,17 @@ class ChatDocumentVisionBomService:
             )
             confidence = float(candidate.get("confidence") or 0)
 
-            if code in bom_set and confidence > _BOM_CANDIDATE_CONFIDENCE_CAP:
+            cap = ChatDrawingPatternsService.extraction_limit_float(
+                "bomCandidateConfidenceCap",
+                0.5,
+            )
+
+            if code in bom_set and confidence > cap:
                 demoted.append(
                     {
                         **candidate,
                         "code": code,
-                        "confidence": _BOM_CANDIDATE_CONFIDENCE_CAP,
+                        "confidence": cap,
                         "source": f"{candidate.get('source') or 'unknown'}_bom_demoted",
                     }
                 )
@@ -137,7 +135,7 @@ class ChatDocumentVisionBomService:
 
     @classmethod
     def _bom_section_offset(cls, text: str) -> int:
-        match = _BOM_SECTION_RE.search(text)
+        match = ChatDrawingPatternsService.bom_section().search(text)
 
         if not match:
             return 0
@@ -157,7 +155,7 @@ class ChatDocumentVisionBomService:
         if len(stripped) < 6:
             return None
 
-        code_match = _COMPONENT_CODE_RE.search(stripped)
+        code_match = ChatDrawingPatternsService.component_code().search(stripped)
 
         if not code_match:
             return None
@@ -171,7 +169,7 @@ class ChatDocumentVisionBomService:
         qty = None
         description = remainder
 
-        qty_match = _QTY_RE.search(remainder)
+        qty_match = ChatDrawingPatternsService.bom_quantity().search(remainder)
 
         if qty_match:
             qty = qty_match.group(1).replace(",", ".")

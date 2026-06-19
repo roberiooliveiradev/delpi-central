@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.domain.services.chat_assistant_content_service import (
-    ChatAssistantContentService,
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_validation_content_service import (
+    ChatDrawingValidationContentService,
 )
-
-_DRAWING_CONTENT = "drawing_validation"
 
 
 class ChatDrawingValidationOrchestrationService:
@@ -23,17 +22,17 @@ class ChatDrawingValidationOrchestrationService:
     @classmethod
     def _content(cls, *path: str, default: str = "", **values: str) -> str:
         if values:
-            return ChatAssistantContentService.format(
-                _DRAWING_CONTENT, *path, default=default, **values
+            return ChatDrawingValidationContentService.format(
+                *path,
+                default=default,
+                **values,
             )
 
-        return ChatAssistantContentService.get(
-            _DRAWING_CONTENT, *path, default=default
-        )
+        return ChatDrawingValidationContentService.get(*path, default=default)
 
     @classmethod
     def _evidence(cls, key: str) -> str:
-        return cls._content("evidence", key)
+        return ChatDrawingValidationContentService.evidence(key)
 
     @classmethod
     def _item_from_template(
@@ -45,29 +44,16 @@ class ChatDrawingValidationOrchestrationService:
         api_evidence: str,
         recommendation: str | None = None,
         recommendation_field: str = "recommendation",
+        item_values: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        template = (
-            ChatAssistantContentService.get_node(
-                _DRAWING_CONTENT, "itemTemplates", template_key
-            )
-            or {}
-        )
-
-        if recommendation is None:
-            recommendation = str(
-                template.get(recommendation_field)
-                or template.get("recommendation")
-                or cls._evidence("dash")
-            )
-
-        return cls._item(
-            section=str(template.get("section") or "—"),
-            item=str(template.get("item") or "—"),
+        return ChatDrawingValidationContentService.item_from_template(
+            template_key,
             status=status,
             pdf_evidence=pdf_evidence,
             api_evidence=api_evidence,
-            rule=str(template.get("rule") or "—"),
             recommendation=recommendation,
+            recommendation_field=recommendation_field,
+            item_values=item_values,
         )
 
     @classmethod
@@ -143,7 +129,10 @@ class ChatDrawingValidationOrchestrationService:
                 status=cls._STATUS_OK if has_guide else cls._STATUS_CRITICAL,
                 pdf_evidence=cls._evidence("dash"),
                 api_evidence=(
-                    f"{len(guide_items)} operação(ões)"
+                    ChatDrawingValidationContentService.evidence_format(
+                        "guideOperationCount",
+                        count=str(len(guide_items)),
+                    )
                     if has_guide
                     else cls._evidence("absent")
                 ),
@@ -211,8 +200,9 @@ class ChatDrawingValidationOrchestrationService:
                     "bom_pending",
                     status=cls._STATUS_PENDING,
                     pdf_evidence=cls._evidence("dash"),
-                    api_evidence=(
-                        f"{guide.get('total', len(guide_items))} item(ns) na estrutura"
+                    api_evidence=ChatDrawingValidationContentService.evidence_format(
+                        "structureItemCount",
+                        count=str(guide.get("total", len(guide_items))),
                     ),
                 )
             )
@@ -221,17 +211,19 @@ class ChatDrawingValidationOrchestrationService:
             legible = bool(pdf_meta.get("legible"))
 
             items.append(
-                cls._item(
-                    section="PDF",
-                    item="Documento anexado",
+                cls._item_from_template(
+                    "pdf_attached",
                     status=cls._STATUS_OK if legible else cls._STATUS_PENDING,
-                    pdf_evidence="PDF na sessão" if legible else "Texto insuficiente/ilegível",
-                    api_evidence="—",
-                    rule="Extrair carimho, BOM e cotas do anexo",
-                    recommendation=(
-                        "Conferir divergências item a item no relatório"
+                    pdf_evidence=ChatDrawingValidationContentService.get(
+                        "itemTemplates",
+                        "pdf_attached",
+                        "pdfEvidenceLegible" if legible else "pdfEvidenceIllegible",
+                    ),
+                    api_evidence=cls._evidence("dash"),
+                    recommendation_field=(
+                        "recommendationLegible"
                         if legible
-                        else "Regerar PDF com melhor qualidade ou informar código na mensagem"
+                        else "recommendationIllegible"
                     ),
                 )
             )
@@ -481,26 +473,20 @@ class ChatDrawingValidationOrchestrationService:
 
         if pdf_code and api_product_code and pdf_code != api_product_code:
             items.append(
-                cls._item(
-                    section="Cabeçalho",
-                    item="Código DELPI",
+                cls._item_from_template(
+                    "product_code_mismatch",
                     status=cls._STATUS_CRITICAL,
                     pdf_evidence=pdf_code,
                     api_evidence=api_product_code,
-                    rule="Código do PDF deve bater com SB1010",
-                    recommendation="Corrigir código no desenho ou no cadastro",
                 )
             )
         elif pdf_code and api_product_code:
             items.append(
-                cls._item(
-                    section="Cabeçalho",
-                    item="Código DELPI",
+                cls._item_from_template(
+                    "product_code_ok",
                     status=cls._STATUS_OK,
                     pdf_evidence=pdf_code,
                     api_evidence=api_product_code,
-                    rule="Código PDF × API",
-                    recommendation="—",
                 )
             )
 
@@ -543,21 +529,19 @@ class ChatDrawingValidationOrchestrationService:
         if not pdf_compare or not api_compare:
             return None
 
+        content = ChatDrawingValidationContentService
         pdf_evidence = (
-            f"REV.{pdf_internal_revision} (tabela)"
+            content.evidence_format("revisionInternalTable", revision=pdf_internal_revision)
             if pdf_internal_revision
-            else f"REV.{pdf_revision}"
+            else content.evidence_format("revisionTitle", revision=pdf_revision)
         )
 
         if pdf_compare == api_compare:
-            return cls._item(
-                section="Cabeçalho",
-                item="Revisão",
+            return cls._item_from_template(
+                "revision_cross_ok",
                 status=cls._STATUS_OK,
                 pdf_evidence=pdf_evidence,
                 api_evidence=api_current_revision or api_revision_date,
-                rule="Revisão interna DELPI × current_revision",
-                recommendation="—",
             )
 
         client_revision = cls._normalize_revision_number(pdf_revision)
@@ -568,38 +552,33 @@ class ChatDrawingValidationOrchestrationService:
             and client_revision != pdf_compare
             and pdf_compare == api_compare
         ):
-            return cls._item(
-                section="Cabeçalho",
-                item="Revisão",
+            return cls._item_from_template(
+                "revision_client_ok",
                 status=cls._STATUS_OK,
-                pdf_evidence=(
-                    f"REV.{pdf_internal_revision} (interna); "
-                    f"REV.{client_revision} (cliente)"
+                pdf_evidence=content.evidence_format(
+                    "revisionClientPair",
+                    internal=pdf_internal_revision,
+                    client=client_revision,
                 ),
                 api_evidence=api_current_revision or api_revision_date,
-                rule="Revisão interna alinhada; revisão do cliente separada",
-                recommendation="—",
             )
 
         if len(api_revision_date) > 4 and not pdf_internal_revision:
-            return cls._item(
-                section="Cabeçalho",
-                item="Revisão",
+            return cls._item_from_template(
+                "revision_manual_pending",
                 status=cls._STATUS_PENDING,
-                pdf_evidence=f"REV.{pdf_revision}",
+                pdf_evidence=content.evidence_format(
+                    "revisionTitle",
+                    revision=pdf_revision,
+                ),
                 api_evidence=api_revision_date,
-                rule="Conferência manual (API em data, PDF em REV.)",
-                recommendation="Validar revisão no carimbo com SB1010",
             )
 
-        return cls._item(
-            section="Cabeçalho",
-            item="Revisão",
+        return cls._item_from_template(
+            "revision_critical",
             status=cls._STATUS_CRITICAL,
             pdf_evidence=pdf_evidence,
             api_evidence=api_current_revision or api_revision_date,
-            rule="Revisão do carimbo × cadastro",
-            recommendation="Atualizar revisão do PDF ou cadastro Protheus",
         )
 
     @classmethod
@@ -650,7 +629,9 @@ class ChatDrawingValidationOrchestrationService:
             for field in ("work_center", "resource_code"):
                 marker = str(row.get(field) or "").strip().upper()
 
-                if marker.startswith("CT-99"):
+                prefix = ChatDrawingPatternsService.final_inspection_work_center_prefix().upper()
+
+                if marker.startswith(prefix):
                     return True
 
         return False

@@ -2,26 +2,19 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_tolerance_service import ChatDrawingToleranceService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 
-# CT26VERM-00036/04/06-0000-0000 | CB1,50VERD-00255/06/06-6314-0111
-_INTERMEDIATE_SEGMENT_RE = re.compile(
-    r"(?:CT|CB|CA|CF|CV)\s*[\d,.]+[A-Z]{4}\s*-?\s*(\d+)\s*/\s*([\d,.]+)\s*/\s*([\d,.]+)",
-    re.IGNORECASE,
-)
-_INTERMEDIATE_CODE_RE = re.compile(r"\b(50\d{6})\b")
-
 
 class ChatDrawingIntermediateSemanticsService:
     @classmethod
     def parse_description(cls, description: str) -> dict[str, float | None]:
-        match = _INTERMEDIATE_SEGMENT_RE.search(str(description or ""))
+        match = ChatDrawingPatternsService.intermediate_segment().search(str(description or ""))
 
         if not match:
             return {
@@ -49,7 +42,7 @@ class ChatDrawingIntermediateSemanticsService:
                 str(item.get("code") or "")
             )
 
-            if not code or not code.startswith("50"):
+            if not code or not ChatDrawingPatternsService.is_intermediate_family(code):
                 continue
 
             parsed = cls.parse_description(str(item.get("description") or ""))
@@ -68,18 +61,6 @@ class ChatDrawingIntermediateSemanticsService:
             )
 
         return rows
-
-    @classmethod
-    def find_intermediate_codes_in_text(cls, text: str) -> list[str]:
-        found: list[str] = []
-
-        for match in _INTERMEDIATE_CODE_RE.finditer(str(text or "")):
-            code = ChatProductQueryIntentService.normalize_product_code(match.group(1))
-
-            if code and code not in found:
-                found.append(code)
-
-        return found
 
     @classmethod
     def _first_child_code(cls, item: dict) -> str | None:

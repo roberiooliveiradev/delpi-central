@@ -6,55 +6,10 @@ import re
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_tolerance_service import ChatDrawingToleranceService
 
 _BUNDLE = "drawing_stamp"
-
-_LENGTH_PATTERNS = (
-    re.compile(
-        r"COMPR(?:IMENTO)?\s*(?:TOTAL)?\s*[:.]?\s*(\d[\d\s,.]*)\s*M{0,2}",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"C\s*O\s*M\s*P\s*R(?:\s*I\s*M\s*E\s*N\s*T\s*O)?\s*(?:TOTAL)?\s*[:.]?\s*(\d[\d\s,.]*)\s*M{0,2}",
-        re.IGNORECASE,
-    ),
-    re.compile(r"LENGTH\s*[:.]?\s*(\d[\d\s,.]*)\s*M{0,2}", re.IGNORECASE),
-)
-
-_DECAPE_LEFT_PATTERNS = (
-    re.compile(
-        r"DEC[A4@]PE?\s*E(?:SQUERD[OA])?\s*[:.]?\s*(\d[\d\s,.]*)",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"D\s*E\s*C\s*A\s*P\s*E\s*E(?:SQUERD[OA])?\s*[:.]?\s*(\d[\d\s,.]*)",
-        re.IGNORECASE,
-    ),
-)
-
-_DECAPE_RIGHT_PATTERNS = (
-    re.compile(
-        r"DEC[A4@]PE?\s*D(?:IREIT[OA])?\s*[:.]?\s*(\d[\d\s,.]*)",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"D\s*E\s*C\s*A\s*P\s*E\s*D(?:IREIT[OA])?\s*[:.]?\s*(\d[\d\s,.]*)",
-        re.IGNORECASE,
-    ),
-)
-
-_GENERIC_DECAPE_RE = re.compile(
-    r"DEC[A4@]PE?\s*[:.]?\s*(\d[\d\s,.]*)\s*M{0,2}",
-    re.IGNORECASE,
-)
-_DECAPE_NOTE_RE = re.compile(
-    r"DECAPE\s+DE\s+(\d[\d\s,.]*)\s*M{0,2}",
-    re.IGNORECASE,
-)
-_COTA_DECAPE_LENGTH_RE = re.compile(
-    r"\b(\d+)\s*±\s*(\d+)\s*±\s*(\d+)\b",
-)
 
 
 class ChatDrawingDimensionsExtractionService:
@@ -73,7 +28,7 @@ class ChatDrawingDimensionsExtractionService:
 
         dimensions["totalLengthMm"] = cls._first_number(
             normalized,
-            patterns=_LENGTH_PATTERNS,
+            patterns=ChatDrawingPatternsService.length_patterns(),
             label_hints=ChatAssistantContentService.list(
                 _BUNDLE,
                 "dimensionLabels",
@@ -82,20 +37,26 @@ class ChatDrawingDimensionsExtractionService:
         )
         dimensions["leftDecapeMm"] = cls._first_number(
             normalized,
-            patterns=_DECAPE_LEFT_PATTERNS,
+            patterns=ChatDrawingPatternsService.decape_left_patterns(),
         )
         dimensions["rightDecapeMm"] = cls._first_number(
             normalized,
-            patterns=_DECAPE_RIGHT_PATTERNS,
+            patterns=ChatDrawingPatternsService.decape_right_patterns(),
         )
 
         if dimensions["leftDecapeMm"] is None and dimensions["rightDecapeMm"] is None:
-            generic = cls._first_number(normalized, patterns=(_GENERIC_DECAPE_RE,))
+            generic = cls._first_number(
+                normalized,
+                patterns=(ChatDrawingPatternsService.generic_decape(),),
+            )
 
             if generic is not None:
                 dimensions["leftDecapeMm"] = generic
 
-        note_decape = cls._first_number(normalized, patterns=(_DECAPE_NOTE_RE,))
+        note_decape = cls._first_number(
+            normalized,
+            patterns=(ChatDrawingPatternsService.decape_note(),),
+        )
 
         if note_decape is not None:
             if dimensions["leftDecapeMm"] is None:
@@ -104,7 +65,9 @@ class ChatDrawingDimensionsExtractionService:
             if dimensions["rightDecapeMm"] is None:
                 dimensions["rightDecapeMm"] = note_decape
 
-        for match in _COTA_DECAPE_LENGTH_RE.finditer(normalized):
+        cota_pattern = ChatDrawingPatternsService.cota_decape_length()
+
+        for match in cota_pattern.finditer(normalized):
             decape = cls._parse_number(match.group(1))
             length = cls._parse_number(match.group(2))
 
@@ -189,6 +152,7 @@ class ChatDrawingDimensionsExtractionService:
 
         if label_hints:
             upper = text.upper()
+            tail_pattern = ChatDrawingPatternsService.hint_number_tail()
 
             for label in label_hints:
                 idx = upper.find(label.upper())
@@ -197,7 +161,7 @@ class ChatDrawingDimensionsExtractionService:
                     continue
 
                 tail = text[idx : idx + 80]
-                number_match = re.search(r"(\d[\d\s,.]*)\s*M{0,2}", tail, re.IGNORECASE)
+                number_match = tail_pattern.search(tail)
 
                 if number_match:
                     parsed = cls._parse_number(number_match.group(1))

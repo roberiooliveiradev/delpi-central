@@ -10,9 +10,10 @@ from app.domain.services.chat_drawing_bom_comparison_service import (
 from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_tolerance_service import ChatDrawingToleranceService
-from app.domain.services.chat_product_query_intent_service import (
-    ChatProductQueryIntentService,
+from app.domain.services.chat_drawing_validation_content_service import (
+    ChatDrawingValidationContentService,
 )
 
 
@@ -29,6 +30,7 @@ class ChatDrawingStructureValidationService:
             return []
 
         items: list[dict[str, Any]] = []
+        content = ChatDrawingValidationContentService
         comparison = ChatDrawingBomComparisonService.compare(
             root=root,
             pdf_extract=pdf_extract,
@@ -37,27 +39,21 @@ class ChatDrawingStructureValidationService:
 
         if comparison.missing_in_pdf:
             items.append(
-                cls._item(
-                    section="BOM",
-                    item="Componente ausente no PDF",
+                content.item_from_template(
+                    "bom_missing",
                     status="critical_error",
-                    pdf_evidence="—",
+                    pdf_evidence=content.evidence("dash"),
                     api_evidence=", ".join(comparison.missing_in_pdf[:5]),
-                    rule="Todo item de 1º nível da SG1010 deve constar na BOM do desenho",
-                    recommendation="Incluir componente na tabela de materiais",
                 )
             )
 
         if comparison.extra_in_pdf:
             items.append(
-                cls._item(
-                    section="BOM",
-                    item="Componente extra no PDF",
+                content.item_from_template(
+                    "bom_extra",
                     status="critical_error",
                     pdf_evidence=", ".join(comparison.extra_in_pdf[:5]),
-                    api_evidence="—",
-                    rule="Item do PDF deve existir na estrutura de 1º nível",
-                    recommendation="Remover item extra ou atualizar estrutura Protheus",
+                    api_evidence=content.evidence("dash"),
                 )
             )
 
@@ -65,14 +61,17 @@ class ChatDrawingStructureValidationService:
             comparison.missing_in_pdf or comparison.extra_in_pdf
         ):
             items.append(
-                cls._item(
-                    section="BOM",
-                    item="Conjunto de componentes",
+                content.item_from_template(
+                    "bom_match_ok",
                     status="ok",
-                    pdf_evidence=f"{len(comparison.reconciled_pdf_codes)} código(s)",
-                    api_evidence=f"{len(comparison.api_codes)} código(s)",
-                    rule="PDF × SG1010 (1º nível)",
-                    recommendation="—",
+                    pdf_evidence=content.evidence_format(
+                        "codeCount",
+                        count=str(len(comparison.reconciled_pdf_codes)),
+                    ),
+                    api_evidence=content.evidence_format(
+                        "codeCount",
+                        count=str(len(comparison.api_codes)),
+                    ),
                 )
             )
 
@@ -90,25 +89,23 @@ class ChatDrawingStructureValidationService:
         product_code: str,
     ) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
+        content = ChatDrawingValidationContentService
         pdf_intermediate = set(pdf_extract.get("intermediateCodes") or [])
         api_intermediate = cls._collect_api_intermediate_codes(root, product_code)
 
         malformed = [
             code
             for code in pdf_intermediate
-            if code and not str(code).startswith("50")
+            if code and not ChatDrawingPatternsService.is_intermediate_family(str(code))
         ]
 
         if malformed:
             items.append(
-                cls._item(
-                    section="Código 50xx",
-                    item="Formato intermediário",
+                content.item_from_template(
+                    "intermediate_malformed",
                     status="critical_error",
                     pdf_evidence=", ".join(malformed[:3]),
-                    api_evidence="—",
-                    rule="Família 50xx",
-                    recommendation="Corrigir código intermediário no desenho",
+                    api_evidence=content.evidence("dash"),
                 )
             )
 
@@ -116,44 +113,37 @@ class ChatDrawingStructureValidationService:
 
         if missing:
             items.append(
-                cls._item(
-                    section="Código 50xx",
-                    item="Intermediário ausente no PDF",
+                content.item_from_template(
+                    "intermediate_missing",
                     status="error" if pdf_intermediate else "critical_error",
-                    pdf_evidence="—",
+                    pdf_evidence=content.evidence("dash"),
                     api_evidence=", ".join(missing[:5]),
-                    rule="Intermediários cadastrados na SG1010",
-                    recommendation="Incluir códigos 50xx na BOM do desenho",
                 )
             )
 
         extra_intermediate = sorted(
-            code for code in (pdf_intermediate - api_intermediate) if code.startswith("50")
+            code
+            for code in (pdf_intermediate - api_intermediate)
+            if ChatDrawingPatternsService.is_intermediate_family(code)
         )
 
         if extra_intermediate:
             items.append(
-                cls._item(
-                    section="Código 50xx",
-                    item="Intermediário extra no PDF",
+                content.item_from_template(
+                    "intermediate_extra",
                     status="critical_error",
                     pdf_evidence=", ".join(extra_intermediate[:5]),
-                    api_evidence="—",
-                    rule="Intermediário do PDF deve existir na SG1010",
-                    recommendation="Remover intermediário obsoleto ou atualizar estrutura",
+                    api_evidence=content.evidence("dash"),
                 )
             )
 
         if pdf_intermediate and api_intermediate and not missing and not extra_intermediate:
             items.append(
-                cls._item(
-                    section="Código 50xx",
-                    item="Intermediários",
+                content.item_from_template(
+                    "intermediate_match_ok",
                     status="ok",
                     pdf_evidence=", ".join(sorted(pdf_intermediate)[:5]),
                     api_evidence=", ".join(sorted(api_intermediate)[:5]),
-                    rule="PDF × SG1010",
-                    recommendation="—",
                 )
             )
 
@@ -167,7 +157,7 @@ class ChatDrawingStructureValidationService:
             root,
             product_code,
         ):
-            if str(code).startswith("50"):
+            if ChatDrawingPatternsService.is_intermediate_family(str(code)):
                 codes.add(code)
 
         return codes
@@ -179,8 +169,12 @@ class ChatDrawingStructureValidationService:
         pdf_extract: dict,
     ) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
+        content = ChatDrawingValidationContentService
+        intermediate_rows = (
+            ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+        )
 
-        for row in ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root):
+        for row in intermediate_rows:
             code = str(row.get("code") or "")
             length = row.get("lengthMm")
             cable_qty = row.get("cableQuantityMm")
@@ -192,14 +186,18 @@ class ChatDrawingStructureValidationService:
 
             if within is False:
                 items.append(
-                    cls._item(
-                        section="Código 50xx",
-                        item=f"Comprimento {code}",
+                    content.item_from_template(
+                        "intermediate_length",
                         status="critical_error",
-                        pdf_evidence=f"{length} mm (descrição)",
-                        api_evidence=f"{cable_qty} mm (SG1010)",
-                        rule="Comprimento do intermediário × quantidade do cabo filho",
-                        recommendation="Alinhar descrição 50xx com estrutura SG1010",
+                        pdf_evidence=content.evidence_format(
+                            "lengthFromDescription",
+                            length=str(length),
+                        ),
+                        api_evidence=content.evidence_format(
+                            "lengthFromStructure",
+                            length=str(cable_qty),
+                        ),
+                        item_values={"code": code},
                     )
                 )
 
@@ -211,7 +209,7 @@ class ChatDrawingStructureValidationService:
         if pdf_decape is None:
             return items
 
-        for row in ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root):
+        for row in intermediate_rows:
             left = row.get("leftDecapeMm")
             right = row.get("rightDecapeMm")
             code = str(row.get("code") or "")
@@ -219,7 +217,7 @@ class ChatDrawingStructureValidationService:
             if left is None and right is None:
                 continue
 
-            for label, expected in (("esquerdo", left), ("direito", right)):
+            for side_key, expected in (("left", left), ("right", right)):
                 if expected is None:
                     continue
 
@@ -230,14 +228,21 @@ class ChatDrawingStructureValidationService:
 
                 if within is False:
                     items.append(
-                        cls._item(
-                            section="Cotas",
-                            item=f"Decape {label} × {code}",
+                        content.item_from_template(
+                            "decape_mismatch",
                             status="error",
-                            pdf_evidence=f"{pdf_decape} mm",
-                            api_evidence=f"{expected} mm (código 50xx)",
-                            rule="Decape ±1 mm (intermediário)",
-                            recommendation="Conferir decape no desenho e na descrição 50xx",
+                            pdf_evidence=content.evidence_format(
+                                "decapePdf",
+                                value=str(pdf_decape),
+                            ),
+                            api_evidence=content.evidence_format(
+                                "decapeFromIntermediate",
+                                value=str(expected),
+                            ),
+                            item_values={
+                                "side": content.decape_side(side_key),
+                                "code": code,
+                            },
                         )
                     )
 
@@ -246,6 +251,7 @@ class ChatDrawingStructureValidationService:
     @classmethod
     def _dimension_items(cls, root: dict, pdf_extract: dict) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
+        content = ChatDrawingValidationContentService
         dimensions = pdf_extract.get("dimensions") if isinstance(
             pdf_extract.get("dimensions"), dict
         ) else {}
@@ -254,17 +260,20 @@ class ChatDrawingStructureValidationService:
         left_decape = dimensions.get("leftDecapeMm")
         right_decape = dimensions.get("rightDecapeMm")
         segment_lengths = dimensions.get("segmentLengthsMm") or []
+        intermediate_rows = (
+            ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+        )
 
         if segment_lengths:
             api_lengths = [
                 row.get("lengthMm")
-                for row in ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(
-                    root
-                )
+                for row in intermediate_rows
                 if row.get("lengthMm") is not None
             ]
 
-            for segment in segment_lengths[:6]:
+            for segment in segment_lengths[
+                : ChatDrawingPatternsService.max_segment_length_checks()
+            ]:
                 if not api_lengths:
                     break
 
@@ -276,14 +285,14 @@ class ChatDrawingStructureValidationService:
 
                 if matched is False:
                     items.append(
-                        cls._item(
-                            section="Cotas",
-                            item="Comprimento de trecho",
+                        content.item_from_template(
+                            "segment_length_pending",
                             status="pending",
-                            pdf_evidence=f"{segment} mm",
+                            pdf_evidence=content.evidence_format(
+                                "segmentLength",
+                                value=str(segment),
+                            ),
                             api_evidence=", ".join(str(v) for v in api_lengths[:4]),
-                            rule="Cota de trecho × comprimento 50xx (±5%)",
-                            recommendation="Conferir cotas do desenho com intermediários",
                         )
                     )
 
@@ -296,24 +305,25 @@ class ChatDrawingStructureValidationService:
             )
 
             if within is True:
+                recommendation_field = "recommendationOk"
                 status = "ok"
-                recommendation = "—"
             elif within is False:
+                recommendation_field = "recommendationCritical"
                 status = "critical_error"
-                recommendation = "Corrigir cota principal ou quantidade na estrutura"
             else:
+                recommendation_field = "recommendationPending"
                 status = "pending"
-                recommendation = "Conferir unidade e cota manualmente"
 
             items.append(
-                cls._item(
-                    section="Cotas",
-                    item="Comprimento total",
+                content.item_from_template(
+                    "total_length",
                     status=status,
-                    pdf_evidence=f"{total_length} mm",
-                    api_evidence=f"{api_quantity}",
-                    rule="Tolerância ±5% (validation_rules)",
-                    recommendation=recommendation,
+                    pdf_evidence=content.evidence_format(
+                        "segmentLength",
+                        value=str(total_length),
+                    ),
+                    api_evidence=str(api_quantity),
+                    recommendation_field=recommendation_field,
                 )
             )
 
@@ -322,19 +332,19 @@ class ChatDrawingStructureValidationService:
                 "ok" if left_decape is not None and right_decape is not None else "pending"
             )
             items.append(
-                cls._item(
-                    section="Cotas",
-                    item="Decapes E/D",
+                content.item_from_template(
+                    "decapes_ed",
                     status=decape_status,
-                    pdf_evidence=(
-                        f"E={left_decape or '—'} mm; D={right_decape or '—'} mm"
+                    pdf_evidence=content.evidence_format(
+                        "decapesPair",
+                        left=str(left_decape or content.evidence("dash")),
+                        right=str(right_decape or content.evidence("dash")),
                     ),
-                    api_evidence="Conferir intermediário 50xx",
-                    rule="Decape ±1 mm quando referência disponível",
-                    recommendation=(
-                        "—"
+                    api_evidence=content.evidence_format("checkIntermediate50xx"),
+                    recommendation_field=(
+                        "recommendationOk"
                         if decape_status == "ok"
-                        else "Informar decapes no PDF ou validar código 50xx"
+                        else "recommendationPending"
                     ),
                 )
             )
@@ -364,29 +374,7 @@ class ChatDrawingStructureValidationService:
         except (TypeError, ValueError):
             return None
 
-        if value <= 0 or value > 1000:
+        if value <= 0 or value > ChatDrawingPatternsService.max_root_structure_quantity_mm():
             return None
 
         return value
-
-    @classmethod
-    def _item(
-        cls,
-        *,
-        section: str,
-        item: str,
-        status: str,
-        pdf_evidence: str,
-        api_evidence: str,
-        rule: str,
-        recommendation: str,
-    ) -> dict[str, Any]:
-        return {
-            "section": section,
-            "item": item,
-            "status": status,
-            "pdfEvidence": pdf_evidence,
-            "apiEvidence": api_evidence,
-            "rule": rule,
-            "recommendation": recommendation,
-        }
