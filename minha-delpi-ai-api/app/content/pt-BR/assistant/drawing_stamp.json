@@ -107,9 +107,46 @@
   },
   "streamStages": {
     "stampOcr": "Lendo carimbo do desenho…",
+    "stampOcrDetail": "Ampliando e relendo carimbo…",
     "titleOcr": "Lendo título do desenho…",
     "bomOcr": "Lendo lista de materiais…",
+    "bomOcrDetail": "Ampliando e relendo lista de materiais…",
     "dimensionsOcr": "Lendo cotas e decapes…"
+  },
+  "detailOcr": {
+    "enabledRegions": ["stamp", "bom"],
+    "zoomMultiplier": 2.5,
+    "preprocess": {
+      "grayscale": true,
+      "autocontrast": true,
+      "sharpen": true
+    },
+    "tesseractConfig": {
+      "stamp": "--psm 6 -c preserve_interword_spaces=1",
+      "bom": "--psm 6 -c preserve_interword_spaces=1"
+    },
+    "subRegions": {
+      "stamp": [
+        {
+          "id": "stamp_fields",
+          "bbox": [0.52, 0.62, 1.0, 0.8]
+        },
+        {
+          "id": "stamp_revision",
+          "bbox": [0.52, 0.8, 1.0, 1.0]
+        }
+      ],
+      "bom": [
+        {
+          "id": "bom_header",
+          "bbox": [0.0, 0.0, 0.55, 0.12]
+        },
+        {
+          "id": "bom_body",
+          "bbox": [0.0, 0.12, 0.55, 0.35]
+        }
+      ]
+    }
   },
   "patterns": {
     "componentCode": "\\b(90\\d{6}|50\\d{6}|10\\d{6}|100\\d{5}|40\\d{6}|101\\d{4,5})\\b",

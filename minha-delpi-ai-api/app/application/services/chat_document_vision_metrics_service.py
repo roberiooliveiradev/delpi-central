@@ -14,6 +14,7 @@ class ChatDocumentVisionMetricsService:
         "tesseract",
         "tesseract_pdf",
         "tesseract_stamp_crop",
+        "tesseract_region_detail",
         "tesseract_image",
         "bom_heuristic",
         "table_heuristic",

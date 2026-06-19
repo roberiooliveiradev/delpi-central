@@ -621,6 +621,9 @@ class ChatDocumentVisionService:
             if ocr.get("stampCrop"):
                 stages.append("tesseract_stamp_crop")
 
+            if ocr.get("detailOcrApplied"):
+                stages.append("tesseract_region_detail")
+
             if ocr.get("fullText"):
                 merged_text = f"{full_text}\n\n{ocr['fullText']}".strip()
                 native = cls._build_from_text(
@@ -631,6 +634,14 @@ class ChatDocumentVisionService:
                     warnings=warnings + list(ocr.get("warnings") or []),
                     source_metadata={
                         "stampText": str(ocr.get("stampText") or ""),
+                        "regionTexts": (
+                            ocr.get("regionTexts")
+                            if isinstance(ocr.get("regionTexts"), dict)
+                            else {}
+                        ),
+                        "bomText": str(ocr.get("bomText") or ""),
+                        "dimensionsText": str(ocr.get("dimensionsText") or ""),
+                        "titleText": str(ocr.get("titleText") or ""),
                         "regions": ocr.get("regions") if isinstance(ocr.get("regions"), dict) else {},
                         "filename": filename,
                     },
@@ -902,6 +913,7 @@ class ChatDocumentVisionService:
             stamp_text = ""
             regions: dict[str, Any] = {}
             region_texts: dict[str, str] = {}
+            detail_ocr_applied = False
 
             for index in range(page_count):
                 page = document.load_page(index)
@@ -932,11 +944,24 @@ class ChatDocumentVisionService:
                     elif cropped:
                         stamp_text = cropped
                         stamp_crop_used = True
+
+                    bom_text = str(region_texts.get("bom") or "").strip()
+
+                    if bom_text and bom_text not in chunk:
+                        texts.append(bom_text)
+
+                    detail_ocr_applied = any(
+                        isinstance(meta, dict) and meta.get("detailPass")
+                        for meta in regions.values()
+                    )
         finally:
             document.close()
 
         if stamp_crop_used:
             warnings.append("stamp_crop_applied")
+
+        if detail_ocr_applied:
+            warnings.append("region_detail_ocr_applied")
 
         return {
             "fullText": "\n\n".join(texts).strip(),
@@ -945,6 +970,7 @@ class ChatDocumentVisionService:
             "warnings": warnings,
             "stampCrop": stamp_crop_used,
             "stampText": stamp_text if stamp_crop_used else "",
+            "detailOcrApplied": detail_ocr_applied,
             "regionTexts": region_texts,
             "bomText": region_texts.get("bom", ""),
             "dimensionsText": region_texts.get("dimensions", ""),

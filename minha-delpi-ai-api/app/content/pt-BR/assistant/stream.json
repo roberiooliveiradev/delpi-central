@@ -89,8 +89,10 @@
     },
     "drawingRegionStages": {
       "stamp_ocr": "Lendo carimbo do desenho…",
+      "stamp_ocr_detail": "Ampliando e relendo carimbo…",
       "title_ocr": "Lendo título do desenho…",
       "bom_ocr": "Lendo lista de materiais…",
+      "bom_ocr_detail": "Ampliando e relendo lista de materiais…",
       "dimensions_ocr": "Lendo cotas e decapes…"
     },
     "verbs": {

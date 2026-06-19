@@ -44,3 +44,14 @@ def test_drawing_stamp_patterns_section_exists():
     assert patterns.get("primaryDrawingCode")
     assert ChatAssistantContentService.list("drawing_stamp", "patternLists", "length")
     assert ChatAssistantContentService.get_node("drawing_stamp", "productCodeResolution")
+
+
+def test_drawing_stamp_detail_ocr_config():
+    detail = ChatAssistantContentService.get_node("drawing_stamp", "detailOcr") or {}
+
+    assert "stamp" in (detail.get("enabledRegions") or [])
+    assert "bom" in (detail.get("enabledRegions") or [])
+    assert float(detail.get("zoomMultiplier") or 0) >= 2.0
+    assert isinstance(detail.get("subRegions"), dict)
+    assert detail.get("subRegions", {}).get("stamp")
+    assert detail.get("subRegions", {}).get("bom")
