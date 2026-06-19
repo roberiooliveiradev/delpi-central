@@ -24,8 +24,8 @@ Implementação: `SalesConversionRateRepository` → tabela `AD1010`.
 |----------|------------------|
 | Base | `AD1010` (cabeçalho da oportunidade / OV no CRM) |
 | Período | `AD1_DATA` entre `start_date` e `end_date` |
-| Total (`qtd_proposals`) | Contagem de linhas distintas (filial + nº + revisão + …) |
-| Ganha (`qtd_won`) | `AD1_STATUS = '9'` |
+| Total (`qtd_proposals`) | Revisões com `AD1_DATA` no período (cada revisão conta; não colapsa na última da proposta) |
+| Ganha (`qtd_won`) | Revisões do período com `AD1_STATUS = '9'` (Ganha) — **não** exige estágio `000013` |
 | Taxa | `qtd_won / qtd_proposals × 100` |
 
 Constante de domínio: `WON_STATUS_CODE = "9"` em `commercial_proposal_status.py`.
@@ -122,9 +122,9 @@ Todas com **`AD1_STATUS = 1` (Aberta)** no cabeçalho. Na maioria **não há** e
 **Resposta direta:** no período filtrado, **só 1 proposta tem `AD1_STATUS = 9` no cabeçalho** — e **nenhuma** tem status `9` no histórico `AIJ010`. Por isso o KPI mostra 1 ganha.
 
 
-### 3.1 Números do período (última revisão por proposta)
+### 3.1 Números do período (revisões com `AD1_DATA` no filtro)
 
-Consulta equivalente à regra de negócio, com **uma linha por proposta** (última revisão):
+Consulta equivalente à regra da API: **cada revisão** cuja `AD1_DATA` cai entre `start_date` e `end_date` (sem colapsar na última revisão global da proposta).
 
 | Métrica | Valor |
 |---------|------:|
@@ -333,17 +333,14 @@ Alterar para «estágio 13» isolado **multiplicaria por ~10** o numerador sem g
 3. **Contagem do período** — exemplo para maio/2026:
 
 ```sql
-WITH latest AS (
-    SELECT
+WITH ovs_base AS (
+    SELECT DISTINCT
         AD1.AD1_FILIAL,
         AD1.AD1_NROPOR,
+        AD1.AD1_REVISA,
         AD1.AD1_STATUS,
         AD1.AD1_STAGE,
-        AD1.AD1_PROVEN,
-        ROW_NUMBER() OVER (
-            PARTITION BY AD1.AD1_FILIAL, AD1.AD1_NROPOR
-            ORDER BY AD1.AD1_REVISA DESC
-        ) AS rn
+        AD1.AD1_PROVEN
     FROM AD1010 AD1
     WHERE AD1.D_E_L_E_T_ <> '*'
       AND AD1.AD1_DATA >= '20260501'
@@ -353,8 +350,7 @@ SELECT
     COUNT(*) AS total,
     SUM(CASE WHEN AD1_STATUS = '9' THEN 1 ELSE 0 END) AS ganhas_status_9,
     SUM(CASE WHEN AD1_STAGE = '000013' THEN 1 ELSE 0 END) AS estagio_13
-FROM latest
-WHERE rn = 1;
+FROM ovs_base;
 ```
 
 Permissão: `api-delpi.data` ou `api-delpi.access.full`. Tabelas na whitelist: `allowed_tables.json`.
@@ -374,10 +370,10 @@ Permissão: `api-delpi.data` ou `api-delpi.access.full`. Tabelas na whitelist: `
 
 ---
 
-## 11. Recomendações (documentação, não alteração de código)
+## 11. Regra acordada (jun/2026)
 
-1. Manter **conversão = `AD1_STATUS = '9'`** alinhado ao flag TOTVS de oportunidade ganha.
-2. Exibir no dashboard/funil que «ganha» é **status 9**, não estágio 13 — evita leitura errada de ENCERRADO.
-3. Se o negócio exigir métrica de «chegou ao fim do funil», criar **indicador separado** (ex.: contagem em `000013`), não misturar com taxa de conversão.
-4. Para processo **COMPONENTES**, qualquer regra por estágio deve usar `000011` (fechamento), não `000013`.
-5. Alinhar contagem do `closing-rate` à **última revisão** por proposta (como `/commercial/proposals`) — hoje o repositório conta revisões distintas no denominador; no período de referência o total permanece 41.
+1. **Conversão = `AD1_STATUS = '9'`** (Ganha) nas revisões com `AD1_DATA` no período — alinhado ao flag TOTVS.
+2. **Não** usar estágio `000013` (ENCERRADO) como critério de ganha; estágio 13 pode existir com status Aberta.
+3. Dashboard/funil: «ganha» = **status 9**, não estágio 13.
+4. Métrica de «chegou ao fim do funil» (`000013`) deve ser **indicador separado**, se necessário.
+5. `closing-rate` conta **revisões do período** (`AD1_DATA` entre `start_date` e `end_date`), não a última revisão global da proposta.

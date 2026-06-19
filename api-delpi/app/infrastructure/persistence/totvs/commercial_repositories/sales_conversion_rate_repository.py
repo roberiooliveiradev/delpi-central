@@ -1,8 +1,9 @@
-from app.infrastructure.persistence.totvs.base_repository import BaseRepository
-from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
 from app.domain.entities.commercial.sales_conversion_rate import SalesConversionRate
 from app.domain.ports.commercial.sales_conversion_rate_repository_port import SalesConversionRateRepositoryPort
+from app.domain.services.commercial_proposal_status import WON_STATUS_CODE
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositoryPort):
@@ -36,11 +37,11 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
             )
             SELECT
                 COUNT(*) AS qtd_proposals,
-                SUM(CASE WHEN AD1_STATUS = '9' THEN 1 ELSE 0 END) AS qtd_won,
+                SUM(CASE WHEN AD1_STATUS = '{WON_STATUS_CODE}' THEN 1 ELSE 0 END) AS qtd_won,
                 CAST(
                     CASE
                         WHEN COUNT(*) = 0 THEN 0
-                        ELSE SUM(CASE WHEN AD1_STATUS = '9' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
+                        ELSE SUM(CASE WHEN AD1_STATUS = '{WON_STATUS_CODE}' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
                     END
                 AS DECIMAL(10, 2)) AS sales_conversion_rate_pct
             FROM ovs_base
