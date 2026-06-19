@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_drawing_bom_reference_noise_service import (
+    ChatDrawingBomReferenceNoiseService,
+)
 from app.domain.services.chat_drawing_component_code_normalization_service import (
     ChatDrawingComponentCodeNormalizationService,
 )
@@ -41,6 +44,9 @@ class ChatDrawingBomRowSanitizationService:
                 continue
 
             if product_norm and code == product_norm:
+                continue
+
+            if ChatDrawingBomReferenceNoiseService.is_client_reference_row(row):
                 continue
 
             sanitized.append(row)

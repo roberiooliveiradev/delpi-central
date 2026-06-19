@@ -83,6 +83,10 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("bomSection")
 
     @classmethod
+    def bom_table_header(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("bomTableHeader")
+
+    @classmethod
     def bom_quantity(cls) -> re.Pattern[str]:
         return cls.compile_stamp("bomQuantity")
 
@@ -167,6 +171,28 @@ class ChatDrawingPatternsService:
     @classmethod
     def bom_revision_noise_patterns(cls) -> tuple[re.Pattern[str], ...]:
         return cls.compile_stamp_list("bomRevisionNoise")
+
+    @classmethod
+    def bom_client_reference_noise_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("bomClientReferenceNoise")
+
+    @classmethod
+    def client_reference_code_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        cache_key = "stamp_list:clientReferenceCodeCapture"
+
+        if cache_key not in _COMPILED_LISTS:
+            patterns = ChatAssistantContentService.list(
+                _STAMP_BUNDLE,
+                "patternLists",
+                "clientReferenceCodeCapture",
+            )
+            _COMPILED_LISTS[cache_key] = tuple(
+                re.compile(str(item), _DEFAULT_FLAGS)
+                for item in patterns
+                if str(item).strip()
+            )
+
+        return _COMPILED_LISTS[cache_key]
 
     @classmethod
     def length_patterns(cls) -> tuple[re.Pattern[str], ...]:
@@ -312,6 +338,19 @@ class ChatDrawingPatternsService:
             "cableLengthUnits",
         )
         return frozenset(str(item).strip().upper() for item in items if str(item).strip())
+
+    @classmethod
+    def piece_count_units(cls) -> frozenset[str]:
+        items = ChatAssistantContentService.list(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            "pieceCountUnits",
+        )
+        return frozenset(str(item).strip().upper() for item in items if str(item).strip())
+
+    @classmethod
+    def max_piece_count_quantity(cls) -> float:
+        return cls.validation_rule_float("maxPieceCountQuantity", 10.0)
 
     @classmethod
     def intermediate_description_signature(cls, description: str) -> str | None:

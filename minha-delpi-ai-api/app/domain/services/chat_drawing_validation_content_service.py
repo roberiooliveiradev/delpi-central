@@ -54,6 +54,7 @@ class ChatDrawingValidationContentService:
         recommendation: str | None = None,
         recommendation_field: str = "recommendation",
         item_values: dict[str, str] | None = None,
+        pdf_scope: str | None = None,
     ) -> dict[str, Any]:
         template = (
             ChatAssistantContentService.get_node(
@@ -91,4 +92,5 @@ class ChatDrawingValidationContentService:
             "rule": str(template.get("rule") or cls.evidence("dash")),
             "recommendation": recommendation,
             "templateKey": template_key,
+            **({"pdfScope": pdf_scope} if pdf_scope else {}),
         }

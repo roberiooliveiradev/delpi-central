@@ -12,6 +12,9 @@ from app.domain.services.chat_pdf_annotation_table_service import (
     ChatPdfAnnotationTableService,
 )
 from app.domain.services.chat_pdf_embedded_text_service import ChatPdfEmbeddedTextService
+from app.domain.services.chat_drawing_regional_scope_service import (
+    ChatDrawingRegionalScopeService,
+)
 from app.domain.services.chat_pdf_text_fusion_service import ChatPdfTextFusionService
 from app.infrastructure.config.settings import Settings
 
@@ -151,9 +154,6 @@ class ChatPdfDocumentExtractionService:
         if region_texts.get("stamp"):
             parse_metadata["stampText"] = region_texts["stamp"]
 
-        if region_texts.get("bom"):
-            parse_metadata["bomText"] = region_texts["bom"]
-
         if region_texts.get("dimensions"):
             parse_metadata["dimensionsText"] = region_texts["dimensions"]
 
@@ -165,6 +165,21 @@ class ChatPdfDocumentExtractionService:
 
         if cad_reference_text:
             parse_metadata["cadReferenceText"] = cad_reference_text
+
+        validation_scopes = ChatDrawingRegionalScopeService.resolve(
+            metadata=parse_metadata,
+            full_text=full_text,
+        )
+        bom_scope = validation_scopes.get("bom")
+
+        if isinstance(bom_scope, dict) and bom_scope.get("text"):
+            parse_metadata["bomText"] = bom_scope["text"]
+            region_texts["bom"] = str(bom_scope["text"])
+
+        parse_metadata["regionTexts"] = region_texts
+        parse_metadata["validationScopes"] = ChatDrawingRegionalScopeService.serialize(
+            validation_scopes
+        )
 
         parse_metadata["stages"] = list(stages)
 

@@ -61,7 +61,19 @@
     "guideBomLevelExpected": "esperado nível {level}",
     "structureItemCount": "{count} item(ns) na estrutura",
     "checkIntermediate50xx": "Conferir intermediário 50xx",
-    "missingDash": "—"
+    "missingDash": "—",
+    "pdfScopePrefix": " [{scope}]"
+  },
+  "regionalScopeSources": {
+    "bom_region": "BOM — região superior",
+    "stamp_bom_table": "BOM — tabela no carimbo",
+    "annotation_table": "BOM — tabela PDF",
+    "pdf_annotations_bom": "BOM — anotações",
+    "full_text_section": "BOM — fallback texto",
+    "dimensions_region": "Cotas — região central",
+    "cad_reference": "Cotas — fallback CAD",
+    "stamp_region": "Carimbo",
+    "unavailable": "Região não lida"
   },
   "itemTemplates": {
     "product_not_found": {
@@ -220,6 +232,12 @@
       "rule": "PDF × SG1010 (1º nível)",
       "recommendation": "—"
     },
+    "bom_scope_unavailable": {
+      "section": "BOM",
+      "item": "Leitura regional da BOM",
+      "rule": "BOM do PDF deve ser lida na região de materiais (não no carimho/revisão)",
+      "recommendationPending": "Conferir OCR da região BOM ou anexar PDF legível"
+    },
     "intermediate_malformed": {
       "section": "Código 50xx",
       "item": "Formato intermediário",
@@ -310,7 +328,9 @@
     "maxRootStructureQuantityMm": 1000,
     "maxSegmentLengthChecks": 6,
     "unitSuffixes": ["mm", "mi", "m"],
-    "cableLengthUnits": ["MT", "MI", "MM", "M"]
+    "cableLengthUnits": ["MT", "MI", "MM", "M"],
+    "pieceCountUnits": ["PC", "UN", "PE", "PÇ", "PCT"],
+    "maxPieceCountQuantity": 10
   },
   "statusPresentation": {
     "ok": { "label": "OK", "symbol": "✅" },

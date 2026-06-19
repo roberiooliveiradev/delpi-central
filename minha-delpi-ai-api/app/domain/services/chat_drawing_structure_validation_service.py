@@ -11,7 +11,13 @@ from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_regional_scope_service import (
+    ChatDrawingRegionalScopeService,
+)
 from app.domain.services.chat_drawing_tolerance_service import ChatDrawingToleranceService
+from app.domain.services.chat_drawing_total_length_reference_service import (
+    ChatDrawingTotalLengthReferenceService,
+)
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
@@ -31,61 +37,103 @@ class ChatDrawingStructureValidationService:
 
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
-        comparison = ChatDrawingBomComparisonService.compare(
-            root=root,
-            pdf_extract=pdf_extract,
-            product_code=product_code,
+        bom_scope = cls._bom_scope(pdf_extract)
+        bom_scope_label = ChatDrawingRegionalScopeService.scope_label(
+            bom_scope.get("sourceKey")
         )
+        bom_available = bool(bom_scope.get("available"))
 
-        if comparison.missing_in_pdf:
+        if not bom_available and not pdf_extract.get("componentCodes"):
             items.append(
                 content.item_from_template(
-                    "bom_missing",
-                    status="critical_error",
-                    pdf_evidence=content.evidence("dash"),
-                    api_evidence=", ".join(comparison.missing_in_pdf[:5]),
-                )
-            )
-
-        bom_only_extra = sorted(
-            code
-            for code in comparison.extra_in_pdf
-            if not ChatDrawingPatternsService.is_intermediate_family(str(code))
-        )
-
-        if bom_only_extra:
-            items.append(
-                content.item_from_template(
-                    "bom_extra",
-                    status="critical_error",
-                    pdf_evidence=", ".join(bom_only_extra[:8]),
+                    "bom_scope_unavailable",
+                    status="pending",
+                    pdf_evidence=content.evidence("pendingPdf"),
                     api_evidence=content.evidence("dash"),
+                    recommendation_field="recommendationPending",
+                    pdf_scope=bom_scope_label,
                 )
+            )
+        else:
+            comparison = ChatDrawingBomComparisonService.compare(
+                root=root,
+                pdf_extract=pdf_extract,
+                product_code=product_code,
             )
 
-        if comparison.api_codes and comparison.pdf_bom_codes and not (
-            comparison.missing_in_pdf or comparison.extra_in_pdf
-        ):
-            items.append(
-                content.item_from_template(
-                    "bom_match_ok",
-                    status="ok",
-                    pdf_evidence=content.evidence_format(
-                        "codeCount",
-                        count=str(len(comparison.pdf_bom_codes)),
-                    ),
-                    api_evidence=content.evidence_format(
-                        "codeCount",
-                        count=str(len(comparison.api_codes)),
-                    ),
+            if comparison.missing_in_pdf:
+                items.append(
+                    content.item_from_template(
+                        "bom_missing",
+                        status="critical_error",
+                        pdf_evidence=content.evidence("dash"),
+                        api_evidence=", ".join(comparison.missing_in_pdf[:5]),
+                        pdf_scope=bom_scope_label,
+                    )
                 )
+
+            bom_only_extra = sorted(
+                code
+                for code in comparison.extra_in_pdf
+                if not ChatDrawingPatternsService.is_intermediate_family(str(code))
             )
+
+            if bom_only_extra:
+                items.append(
+                    content.item_from_template(
+                        "bom_extra",
+                        status="critical_error",
+                        pdf_evidence=", ".join(bom_only_extra[:8]),
+                        api_evidence=content.evidence("dash"),
+                        pdf_scope=bom_scope_label,
+                    )
+                )
+
+            if comparison.api_codes and comparison.pdf_bom_codes and not (
+                comparison.missing_in_pdf or comparison.extra_in_pdf
+            ):
+                items.append(
+                    content.item_from_template(
+                        "bom_match_ok",
+                        status="ok",
+                        pdf_evidence=content.evidence_format(
+                            "codeCount",
+                            count=str(len(comparison.pdf_bom_codes)),
+                        ),
+                        api_evidence=content.evidence_format(
+                            "codeCount",
+                            count=str(len(comparison.api_codes)),
+                        ),
+                        pdf_scope=bom_scope_label,
+                    )
+                )
 
         items.extend(cls._intermediate_code_items(root, pdf_extract, product_code))
         items.extend(cls._intermediate_dimension_items(root, pdf_extract))
-        items.extend(cls._dimension_items(root, pdf_extract))
+        items.extend(cls._dimension_items(root, pdf_extract, bom_scope_label))
 
         return items
+
+    @classmethod
+    def _bom_scope(cls, pdf_extract: dict) -> dict[str, Any]:
+        scopes = pdf_extract.get("validationScopes")
+
+        if isinstance(scopes, dict):
+            bom = scopes.get("bom")
+
+            if isinstance(bom, dict):
+                return bom
+
+        source_metadata = pdf_extract.get("sourceMetadata")
+
+        resolved = ChatDrawingRegionalScopeService.resolve(
+            metadata=source_metadata if isinstance(source_metadata, dict) else {},
+            full_text="",
+        )
+
+        bom = resolved.get("bom")
+
+        return bom if isinstance(bom, dict) else {}
 
     @classmethod
     def _intermediate_code_items(
@@ -339,7 +387,12 @@ class ChatDrawingStructureValidationService:
         return best
 
     @classmethod
-    def _dimension_items(cls, root: dict, pdf_extract: dict) -> list[dict[str, Any]]:
+    def _dimension_items(
+        cls,
+        root: dict,
+        pdf_extract: dict,
+        bom_scope_label: str = "",
+    ) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
         dimensions = pdf_extract.get("dimensions") if isinstance(
@@ -394,12 +447,18 @@ class ChatDrawingStructureValidationService:
                     )
                 )
 
-        api_quantity = cls._root_structure_quantity(root)
+        api_reference = ChatDrawingTotalLengthReferenceService.resolve(root)
+        dimensions_scope = (pdf_extract.get("validationScopes") or {}).get("dimensions")
+        dimensions_scope_label = ChatDrawingRegionalScopeService.scope_label(
+            dimensions_scope.get("sourceKey")
+            if isinstance(dimensions_scope, dict)
+            else None
+        )
 
-        if total_length is not None and api_quantity is not None:
+        if total_length is not None and api_reference is not None:
             within = ChatDrawingToleranceService.lengths_within_tolerance(
                 total_length,
-                api_quantity,
+                api_reference.length_mm,
             )
 
             if within is True:
@@ -412,6 +471,16 @@ class ChatDrawingStructureValidationService:
                 recommendation_field = "recommendationPending"
                 status = "pending"
 
+            api_evidence = (
+                content.evidence_format(
+                    "lengthFromStructure",
+                    length=str(api_reference.length_mm),
+                    unit=str(api_reference.unit_label or "mm"),
+                )
+                if api_reference.unit_label
+                else str(api_reference.length_mm)
+            )
+
             items.append(
                 content.item_from_template(
                     "total_length",
@@ -420,8 +489,9 @@ class ChatDrawingStructureValidationService:
                         "totalLengthPdf",
                         value=str(total_length),
                     ),
-                    api_evidence=str(api_quantity),
+                    api_evidence=api_evidence,
                     recommendation_field=recommendation_field,
+                    pdf_scope=dimensions_scope_label or bom_scope_label,
                 )
             )
 
@@ -458,31 +528,3 @@ class ChatDrawingStructureValidationService:
             )
 
         return items
-
-    @classmethod
-    def _root_structure_quantity(cls, root: dict) -> float | None:
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-        items = structure.get("items") or []
-
-        if len(items) != 1:
-            return None
-
-        item = items[0]
-
-        if not isinstance(item, dict):
-            return None
-
-        quantity = item.get("quantity")
-
-        if quantity is None:
-            return None
-
-        try:
-            value = float(quantity)
-        except (TypeError, ValueError):
-            return None
-
-        if value <= 0 or value > ChatDrawingPatternsService.max_root_structure_quantity_mm():
-            return None
-
-        return value

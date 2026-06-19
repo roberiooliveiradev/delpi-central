@@ -62,4 +62,4 @@ REV.: 10
 
     assert parsed["productCode"] is None or parsed["productCode"] == "90262019"
     assert parsed["componentCodes"] == ["10080591", "10090481"]
-    assert parsed.get("bomSource") in {"stamp_region", "full_text"}
+    assert parsed.get("bomSource") == "stamp_bom_table"

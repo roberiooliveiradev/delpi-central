@@ -5,10 +5,16 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from app.domain.services.chat_drawing_bom_reference_noise_service import (
+    ChatDrawingBomReferenceNoiseService,
+)
 from app.domain.services.chat_drawing_component_code_normalization_service import (
     ChatDrawingComponentCodeNormalizationService,
 )
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_regional_scope_service import (
+    ChatDrawingRegionalScopeService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -49,6 +55,9 @@ class ChatDrawingBomComparisonService:
         pdf_bom_codes |= cls.intermediate_codes_matched_by_description(
             root=root,
             pdf_extract=pdf_extract,
+        )
+        pdf_bom_codes -= ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(
+            pdf_extract
         )
 
         missing = sorted(api_codes - pdf_bom_codes)
@@ -120,6 +129,14 @@ class ChatDrawingBomComparisonService:
 
     @classmethod
     def _pdf_description_haystack(cls, pdf_extract: dict) -> str:
+        scoped = ChatDrawingRegionalScopeService.scoped_haystack(
+            pdf_extract,
+            domains=("bom", "dimensions", "stamp"),
+        )
+
+        if scoped:
+            return scoped
+
         parts: list[str] = []
 
         def add_text(raw: object) -> None:

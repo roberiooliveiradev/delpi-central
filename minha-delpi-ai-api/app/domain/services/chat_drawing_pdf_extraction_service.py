@@ -96,6 +96,16 @@ class ChatDrawingPdfExtractionService:
         meta = metadata if isinstance(metadata, dict) else {}
         cad_text = cls._cad_reference_text(meta)
         scope_text = cls._merge_scope_text(normalized, cad_text)
+
+        from app.domain.services.chat_drawing_regional_scope_service import (
+            ChatDrawingRegionalScopeService,
+        )
+
+        validation_scopes = ChatDrawingRegionalScopeService.resolve(
+            metadata=meta,
+            full_text=scope_text,
+        )
+        meta = {**meta, "validationScopes": validation_scopes}
         char_count = len(scope_text)
 
         from app.domain.services.chat_drawing_stamp_extraction_service import (
@@ -128,13 +138,24 @@ class ChatDrawingPdfExtractionService:
             ChatDrawingDimensionsExtractionService,
         )
 
-        dimensions_text = str(meta.get("dimensionsText") or "").strip()
+        dimensions_scope = validation_scopes.get("dimensions")
+        dimensions_region_text = ""
+
+        if isinstance(dimensions_scope, dict):
+            dimensions_region_text = str(dimensions_scope.get("text") or "").strip()
+            dimensions_fallback = str(dimensions_scope.get("fallbackText") or "").strip()
+        else:
+            dimensions_fallback = cad_text or normalized
+
+        if not dimensions_region_text:
+            dimensions_region_text = str(meta.get("dimensionsText") or "").strip()
+
         dimensions = ChatDrawingDimensionsExtractionService.merge_dimensions(
             ChatDrawingDimensionsExtractionService.extract_dimensions(
                 normalized or cad_text
             ),
-            region_text=dimensions_text,
-            fallback_text=cad_text or normalized,
+            region_text=dimensions_region_text,
+            fallback_text=dimensions_fallback or cad_text or normalized,
         )
 
         component_codes = list(bom_payload.get("componentCodes") or [])
@@ -193,6 +214,10 @@ class ChatDrawingPdfExtractionService:
 
         if bom_payload.get("bomSource"):
             payload["bomSource"] = bom_payload["bomSource"]
+
+        payload["validationScopes"] = ChatDrawingRegionalScopeService.serialize(
+            validation_scopes
+        )
 
         return payload
 

@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_drawing_regional_scope_service import (
+    ChatDrawingRegionalScopeService,
+)
 from app.domain.services.chat_pdf_annotation_table_service import (
     ChatPdfAnnotationTableService,
 )
@@ -18,39 +21,20 @@ class ChatPdfBomSourceService:
         metadata: dict[str, Any] | None,
     ) -> list[tuple[str, str]]:
         meta = metadata if isinstance(metadata, dict) else {}
-        sources: list[tuple[str, str]] = []
+        scopes = meta.get("validationScopes")
 
-        bom_text = str(meta.get("bomText") or "").strip()
+        if not isinstance(scopes, dict) or not ChatDrawingRegionalScopeService._scopes_include_text(
+            scopes
+        ):
+            scopes = ChatDrawingRegionalScopeService.resolve(
+                metadata=meta,
+                full_text=full_text,
+            )
 
-        if bom_text:
-            sources.append(("bom_region", bom_text))
-
-        annotation_tables = meta.get("annotationTables")
-
-        if not isinstance(annotation_tables, list):
-            annotation_tables = []
-
-        annotation_table_text = ChatPdfAnnotationTableService.table_text(annotation_tables)
-
-        if annotation_table_text:
-            sources.append(("annotation_table", annotation_table_text))
-
-        annotation_text = str(meta.get("annotationText") or "").strip()
-
-        if annotation_text:
-            sources.append(("pdf_annotations", annotation_text))
-
-        stamp_text = str(meta.get("stampText") or "").strip()
-
-        if stamp_text:
-            sources.append(("stamp_region", stamp_text))
-
-        normalized = str(full_text or "").strip()
-
-        if normalized:
-            sources.append(("full_text", normalized))
-
-        return sources
+        return ChatDrawingRegionalScopeService.build_bom_sources(
+            scopes,
+            full_text=full_text,
+        )
 
     @classmethod
     def structured_source_blob(
@@ -62,7 +46,7 @@ class ChatPdfBomSourceService:
         chunks: list[str] = []
 
         for source_name, source_text in sources:
-            if exclude_full_text and source_name == "full_text":
+            if exclude_full_text and source_name == "full_text_section":
                 continue
 
             normalized = str(source_text or "").strip()

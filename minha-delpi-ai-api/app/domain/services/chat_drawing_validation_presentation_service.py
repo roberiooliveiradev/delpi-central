@@ -153,7 +153,31 @@ class ChatDrawingValidationPresentationService:
 
     @classmethod
     def prepare_display_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return cls.consolidate_items(cls.expand_items(items))
+        enriched: list[dict[str, Any]] = []
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            copy = dict(item)
+            scope = str(copy.get("pdfScope") or "").strip()
+
+            if scope:
+                evidence = str(copy.get("pdfEvidence") or "").strip()
+                scope_suffix = ChatDrawingValidationContentService.format(
+                    "evidenceFormats",
+                    "pdfScopePrefix",
+                    scope=scope,
+                )
+
+                if evidence and evidence != ChatDrawingValidationContentService.evidence("dash"):
+                    copy["pdfEvidence"] = f"{evidence}{scope_suffix}"
+                else:
+                    copy["pdfEvidence"] = scope
+
+            enriched.append(copy)
+
+        return cls.consolidate_items(cls.expand_items(enriched))
 
     @classmethod
     def expand_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:

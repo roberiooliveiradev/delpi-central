@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_document_vision_bom_service import (
     ChatDocumentVisionBomService,
 )
+from app.domain.services.chat_drawing_bom_reference_noise_service import (
+    ChatDrawingBomReferenceNoiseService,
+)
 from app.domain.services.chat_drawing_bom_row_sanitization_service import (
     ChatDrawingBomRowSanitizationService,
 )
@@ -44,35 +47,47 @@ class ChatDrawingPdfBomExtractionService:
         )
 
         if bom_rows:
+            raw_bom_rows = list(bom_rows)
             bom_rows = ChatDrawingBomRowSanitizationService.sanitize_rows(
                 bom_rows,
                 product_code=product_code,
             )
 
-        revision_only_codes = ChatDocumentVisionBomService.codes_only_in_revision_lines(
-            normalized
-        )
-
-        if bom_rows:
-            revision_only_codes -= set(
-                ChatDocumentVisionBomService.bom_component_codes(bom_rows)
+            revision_only_codes = ChatDocumentVisionBomService.codes_only_in_revision_lines(
+                normalized
             )
 
-        intermediate_codes = ChatDrawingIntermediateCodeService.collect_codes(
-            full_text=normalized,
-            bom_rows=bom_rows,
-            bom_sources=bom_sources,
-            product_code=product_code,
-            revision_only_codes=revision_only_codes,
-        )
+            if bom_rows:
+                revision_only_codes -= set(
+                    ChatDocumentVisionBomService.bom_component_codes(bom_rows)
+                )
 
-        if bom_rows:
+            intermediate_codes = ChatDrawingIntermediateCodeService.collect_codes(
+                full_text=normalized,
+                bom_rows=bom_rows,
+                bom_sources=bom_sources,
+                product_code=product_code,
+                revision_only_codes=revision_only_codes,
+            )
+
             component_codes = ChatDocumentVisionBomService.merge_component_codes_from_rows(
                 list(component_codes or []),
                 bom_rows,
             )
             component_codes.extend(
-                ChatDrawingBomRowSanitizationService.nested_component_codes(bom_rows)
+                ChatDrawingBomRowSanitizationService.nested_component_codes(raw_bom_rows)
+            )
+        else:
+            revision_only_codes = ChatDocumentVisionBomService.codes_only_in_revision_lines(
+                normalized
+            )
+
+            intermediate_codes = ChatDrawingIntermediateCodeService.collect_codes(
+                full_text=normalized,
+                bom_rows=bom_rows,
+                bom_sources=bom_sources,
+                product_code=product_code,
+                revision_only_codes=revision_only_codes,
             )
 
         if not bom_rows and not component_codes:
@@ -86,6 +101,10 @@ class ChatDrawingPdfBomExtractionService:
             product_code=product_code,
             revision_only_codes=revision_only_codes,
             intermediate_codes=intermediate_codes,
+            pdf_context={
+                "bomRows": bom_rows,
+                "sourceMetadata": metadata,
+            },
         )
 
         component_codes = ChatDrawingBomRowSanitizationService.dedupe_component_codes(
@@ -103,6 +122,14 @@ class ChatDrawingPdfBomExtractionService:
         if bom_source:
             payload["bomSource"] = bom_source
 
+        scopes = metadata.get("validationScopes") if isinstance(metadata, dict) else None
+
+        if isinstance(scopes, dict):
+            bom_scope = scopes.get("bom")
+
+            if isinstance(bom_scope, dict) and bom_scope.get("sourceKey"):
+                payload["bomSource"] = str(bom_scope["sourceKey"])
+
         return payload
 
     @classmethod
@@ -113,6 +140,7 @@ class ChatDrawingPdfBomExtractionService:
         product_code: str | None,
         revision_only_codes: set[str],
         intermediate_codes: list[str],
+        pdf_context: dict | None = None,
     ) -> list[str]:
         product_norm = ChatProductQueryIntentService.normalize_product_code(
             product_code or ""
@@ -130,12 +158,18 @@ class ChatDrawingPdfBomExtractionService:
             )
         ]
         intermediate_set = set(intermediate_codes)
+        reference_noise = ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(
+            pdf_context or {}
+        )
 
         return [
             code
             for code in filtered
-            if not ChatDrawingPatternsService.is_intermediate_family(str(code))
-            or code in intermediate_set
+            if code not in reference_noise
+            and (
+                not ChatDrawingPatternsService.is_intermediate_family(str(code))
+                or code in intermediate_set
+            )
         ]
 
     @classmethod

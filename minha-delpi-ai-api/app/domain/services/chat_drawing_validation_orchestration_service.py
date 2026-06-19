@@ -660,6 +660,10 @@ class ChatDrawingValidationOrchestrationService:
         pending = sum(1 for i in items if i.get("status") == cls._STATUS_PENDING)
 
         pdf_meta = pdf_extract if isinstance(pdf_extract, dict) else {}
+        validation_scopes = pdf_meta.get("validationScopes")
+
+        if not isinstance(validation_scopes, dict):
+            validation_scopes = {}
 
         if critical:
             overall = "rejected"
@@ -697,6 +701,7 @@ class ChatDrawingValidationOrchestrationService:
                 "warnings": pending,
                 "items": items,
                 "conclusion": conclusion,
+                "validationScopes": validation_scopes,
             },
             "productSummary": {
                 "code": product.get("code"),

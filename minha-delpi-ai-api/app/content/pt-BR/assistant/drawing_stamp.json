@@ -180,6 +180,7 @@
     "pdfDecapeLeft": "DECAPE\\s*E(?:SQUERDO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)",
     "pdfDecapeRight": "DECAPE\\s*D(?:IREITO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)",
     "bomSection": "(?:LISTA\\s+DE\\s+MATERIAIS|LISTA\\s+MATERIAL|BOM\\b|COMPONENTES|MAT[ÉE]RIA[\\s-]*PRIMA)",
+    "bomTableHeader": "QTD\\.?\\s*\\|\\s*C[ÓO]DIGO",
     "bomQuantity": "\\b(\\d+[,.]?\\d*)\\s*(?:UN|PCS|PÇ|PC|PEÇAS?)?\\b",
     "intermediateSegment": "(?:CT|CB|CA|CF|CV)\\s*[\\d,.]+[A-Z]{4}\\s*-?\\s*(\\d+)\\s*/\\s*([\\d,.]+)\\s*/\\s*([\\d,.]+)",
     "cotaDecapeLength": "\\b(\\d+)\\s*±\\s*(\\d+)\\s*±\\s*(\\d+)\\b",
@@ -209,6 +210,15 @@
       "EXECUTADO",
       "LIBERADO",
       "CRIA[ÇC][ÃA]O\\s+DO\\s+DESENHO"
+    ],
+    "bomClientReferenceNoise": [
+      "DC\\s*:?\\s*Z",
+      "DC:Z-",
+      "REFER[EÊ]NCIA\\s*:"
+    ],
+    "clientReferenceCodeCapture": [
+      "(\\d{8})\\s+DC\\s*:?\\s*Z",
+      "(\\d{8})\\s+DC:Z-"
     ],
     "length": [
       "COMPR(?:IMENTO)?\\s*(?:TOTAL)?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",

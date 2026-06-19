@@ -253,8 +253,48 @@ class ChatDocumentVisionBomService:
             if row:
                 rows.append(row)
                 seen_codes.add(str(row["code"]))
+                continue
+
+            cls._append_secondary_codes_from_line(
+                line,
+                exclude=exclude,
+                seen=seen_codes,
+                rows=rows,
+                max_rows=max_rows,
+            )
 
         return rows
+
+    @classmethod
+    def _append_secondary_codes_from_line(
+        cls,
+        line: str,
+        *,
+        exclude: str,
+        seen: set[str],
+        rows: list[dict[str, Any]],
+        max_rows: int,
+    ) -> None:
+        for match in ChatDrawingPatternsService.component_code().finditer(str(line or "")):
+            if len(rows) >= max_rows:
+                return
+
+            code = ChatProductQueryIntentService.normalize_product_code(match.group(1))
+
+            if not code or code == exclude or code in seen:
+                continue
+
+            if ChatDrawingPatternsService.is_finished_product(code):
+                continue
+
+            rows.append(
+                {
+                    "code": code,
+                    "quantity": None,
+                    "description": None,
+                }
+            )
+            seen.add(code)
 
     @classmethod
     def _bom_section_offset(cls, text: str) -> int:
