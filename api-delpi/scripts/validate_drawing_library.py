@@ -18,8 +18,11 @@ _USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
 _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _DRAWINGS_DIR = Path(
     os.environ.get(
-        "DRAWING_PDF_LIBRARY_DIR",
-        "/home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/desenhos",
+        "DRAWING_PDF_FILESERVER_HOST_PATH",
+        os.environ.get(
+            "DRAWING_PDF_LIBRARY_DIR",
+            "/mnt/x/DESENHOS DELPI EM PDF",
+        ),
     )
 )
 

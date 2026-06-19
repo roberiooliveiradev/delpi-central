@@ -11,9 +11,35 @@ A api-delpi expõe os PDFs técnicos DELPI armazenados em pasta configurável no
 
 ### Homologação / dev (Docker)
 
-No `infra/docker-compose.dev.yml`, a pasta local `minha-delpi-ai-api/desenhos` é montada em `/drawing-pdfs` (read-only).
+No `infra/docker-compose.dev.yml`, o **FILESERVER corporativo** é montado em `/drawing-pdfs` (read-only) no container `api-delpi`:
 
-Em produção, monte o compartilhamento do FILESERVER (ex.: `X:\DESENHOS DELPI EM PDF`) no mesmo path do container ou ajuste `DRAWING_PDF_LIBRARY_DIR`.
+| Variável (host) | Container | Default |
+|-----------------|-----------|---------|
+| `DRAWING_PDF_FILESERVER_HOST_PATH` | `/drawing-pdfs` | `/mnt/x/DESENHOS DELPI EM PDF` |
+
+Configure em `infra/.env` ou `infra/.env.local` (copie de `env.local.example`):
+
+```bash
+DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/x/DESENHOS DELPI EM PDF
+```
+
+**WSL:** o drive `X:` precisa estar visível em `/mnt/x`. Se não estiver:
+
+```bash
+sudo mkdir -p /mnt/x
+sudo mount -t drvfs X: /mnt/x
+ls "/mnt/x/DESENHOS DELPI EM PDF" | head
+```
+
+Recrie o serviço após alterar o path:
+
+```bash
+docker compose -f infra/docker-compose.dev.yml up -d --force-recreate api-delpi
+```
+
+A pasta `minha-delpi-ai-api/desenhos/` permanece para testes locais/OCR offline (gitignored), mas **não** é mais o mount padrão do compose dev.
+
+Em produção, monte o compartilhamento do FILESERVER no path do container ou ajuste `DRAWING_PDF_LIBRARY_DIR`.
 
 Exemplo WSL (quando `/mnt/x` estiver disponível):
 

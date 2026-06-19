@@ -109,6 +109,38 @@ Guia completo: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 
+## Biblioteca PDF de desenhos (FILESERVER dev)
+
+O `api-delpi` em dev lê PDFs do **FILESERVER** (`X:\DESENHOS DELPI EM PDF`), não da pasta gitignored `minha-delpi-ai-api/desenhos/`.
+
+| Variável | Onde | Default dev |
+|----------|------|-------------|
+| `DRAWING_PDF_FILESERVER_HOST_PATH` | `infra/.env` / `.env.local` | `/mnt/x/DESENHOS DELPI EM PDF` |
+| `DRAWING_PDF_LIBRARY_DIR` | container api-delpi | `/drawing-pdfs` |
+
+**Montar X: no WSL** (se `/mnt/x` estiver vazio):
+
+```bash
+sudo mkdir -p /mnt/x && sudo mount -t drvfs X: /mnt/x
+ls "/mnt/x/DESENHOS DELPI EM PDF" | wc -l
+```
+
+**Aplicar no Docker:**
+
+```bash
+# infra/.env.local — ver env.local.example
+DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/x/DESENHOS DELPI EM PDF
+
+docker compose -f infra/docker-compose.dev.yml up -d --force-recreate api-delpi
+docker exec delpi-api-delpi ls /drawing-pdfs | wc -l
+```
+
+Catálogo: `GET /apps/api-delpi/products/drawings?page_size=5` (via gateway).
+
+Doc: `api-delpi/docs/api/14-desenhos-pdf.md`.
+
+---
+
 ## Ferramentas do chat (default ligadas)
 
 Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferramentas do pipeline. Valores abaixo são os defaults do Compose quando a variável **não** está no `.env`:

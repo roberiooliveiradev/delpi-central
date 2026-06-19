@@ -799,7 +799,8 @@ services:
     volumes:
       - ../api-delpi:/app
       - ../shared:/shared
-      - ../minha-delpi-ai-api/desenhos:/drawing-pdfs:ro
+      # FILESERVER corporativo (X:\DESENHOS DELPI EM PDF) — ver infra/env.local.example
+      - ${DRAWING_PDF_FILESERVER_HOST_PATH:-/mnt/x/DESENHOS DELPI EM PDF}:/drawing-pdfs:ro
 
     depends_on:
       keycloak:
