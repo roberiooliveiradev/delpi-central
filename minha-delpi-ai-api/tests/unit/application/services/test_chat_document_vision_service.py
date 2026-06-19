@@ -252,3 +252,115 @@ def test_skill_registry_document_vision_with_drawing(monkeypatch):
 
     assert flags["drawingAnalysis"] is True
     assert flags["documentVision"] is True
+
+
+def test_enrich_drawing_extract_uses_delpi_pdf_pipeline(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = True
+
+    attachment = MagicMock()
+    attachment.storage_path = "/tmp/90263489.pdf"
+    attachment.original_filename = "90263489.pdf"
+    attachment.content_type = "application/pdf"
+
+    drawing_vision = {
+        "productCode": "90263489",
+        "componentCodes": ["10080627", "10090482", "10091062", "10210754"],
+        "intermediateCodes": ["50225215", "50225216", "50225217"],
+        "bomRows": [{"code": "10080627"}],
+        "bomSource": "bom_region",
+        "legible": True,
+        "charCount": 2000,
+        "extractor": "fitz_embedded",
+        "sourceMetadata": {
+            "stages": ["fitz_embedded", "region_ocr"],
+            "extractor": "fitz_embedded",
+        },
+        "engine": "fitz_embedded",
+        "stages": ["fitz_embedded", "region_ocr"],
+        "schemaVersion": "1.0",
+        "durationMs": 10.0,
+        "legibilityScore": 1.0,
+        "bomRowCount": 1,
+    }
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "_resolve_first_document_attachment",
+        return_value=attachment,
+    ), patch.object(
+        ChatDocumentVisionService,
+        "_extract_drawing_pdf",
+        return_value=drawing_vision,
+    ) as drawing_extract, patch.object(
+        ChatDocumentVisionService,
+        "extract_from_storage_path",
+    ) as generic_extract, patch.object(
+        ChatDocumentVisionService,
+        "persist_attachment_vision_metadata",
+    ), patch.object(
+        ChatDocumentVisionService,
+        "to_document_vision_metadata",
+        return_value={},
+    ):
+        merged = ChatDocumentVisionService.enrich_drawing_extract(
+            {"productCode": "90263489"},
+            user_id=str(uuid4()),
+            session_id=str(uuid4()),
+            attachment_ids=[str(uuid4())],
+            skills={"drawingAnalysis": True},
+        )
+
+    drawing_extract.assert_called_once_with(
+        attachment.storage_path,
+        filename="90263489.pdf",
+    )
+    generic_extract.assert_not_called()
+    assert "10080627" in merged["componentCodes"]
+    assert merged["intermediateCodes"] == ["50225215", "50225216", "50225217"]
+    assert merged["documentVision"]["bomRowCount"] == 1
+    assert "region_ocr" in (merged.get("documentVision", {}).get("stages") or drawing_vision["stages"])
+
+
+def test_enrich_drawing_extract_live_90263489_bom_from_region_ocr(monkeypatch):
+    from tests.support.drawing_pdf_fixtures import require_drawing_pdf_with_tesseract
+
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = True
+
+    pdf = require_drawing_pdf_with_tesseract("90263489.pdf")
+    attachment = MagicMock()
+    attachment.storage_path = str(pdf)
+    attachment.original_filename = "90263489.pdf"
+    attachment.content_type = "application/pdf"
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "_resolve_first_document_attachment",
+        return_value=attachment,
+    ), patch.object(
+        ChatDocumentVisionService,
+        "persist_attachment_vision_metadata",
+    ), patch.object(
+        ChatDocumentVisionService,
+        "to_document_vision_metadata",
+        return_value={},
+    ):
+        merged = ChatDocumentVisionService.enrich_drawing_extract(
+            {},
+            user_id=str(uuid4()),
+            session_id=str(uuid4()),
+            attachment_ids=[str(uuid4())],
+            skills={"drawingAnalysis": True},
+        )
+
+    assert merged.get("productCode") == "90263489"
+    assert len(merged.get("componentCodes") or []) >= 4
+    assert merged.get("intermediateCodes") == ["50225215", "50225216", "50225217"]
+    assert "10081042" not in (merged.get("componentCodes") or [])
+    stages = merged.get("documentVision", {}).get("stages") or []
+    assert "region_ocr" in stages

@@ -157,6 +157,8 @@ class ChatPdfDocumentExtractionService:
         if region_texts.get("dimensions"):
             parse_metadata["dimensionsText"] = region_texts["dimensions"]
 
+        parse_metadata["stages"] = list(stages)
+
         return {
             "supported": True,
             "fullText": full_text,

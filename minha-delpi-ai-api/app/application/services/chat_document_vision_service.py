@@ -199,11 +199,9 @@ class ChatDocumentVisionService:
         if not attachment:
             return base
 
-        vision = cls.extract_from_storage_path(
+        vision = cls._extract_drawing_pdf(
             attachment.storage_path,
-            filename=attachment.original_filename,
-            content_type=attachment.content_type
-            or cls._default_content_type(attachment.original_filename),
+            filename=attachment.original_filename or "",
         )
 
         merged = cls.merge_into_drawing_parse(base, vision)
@@ -215,6 +213,49 @@ class ChatDocumentVisionService:
             )
 
         return merged
+
+    @classmethod
+    def _extract_drawing_pdf(
+        cls,
+        storage_path: str,
+        *,
+        filename: str,
+    ) -> dict[str, Any]:
+        """Extração DELPI canônica (perfil drawing_delpi + OCR regional) para análise de desenho."""
+        from app.domain.services.chat_drawing_pdf_extraction_service import (
+            ChatDrawingPdfExtractionService,
+        )
+
+        started = time.perf_counter()
+        drawing = ChatDrawingPdfExtractionService.extract_from_storage_path(
+            storage_path,
+            filename=filename,
+        )
+        source = (
+            drawing.get("sourceMetadata")
+            if isinstance(drawing.get("sourceMetadata"), dict)
+            else {}
+        )
+        stages = list(source.get("stages") or [])
+        engine = str(drawing.get("extractor") or source.get("extractor") or "drawing_delpi")
+        bom_rows = drawing.get("bomRows") if isinstance(drawing.get("bomRows"), list) else []
+        char_count = int(drawing.get("charCount") or 0)
+        min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
+        legibility_score = (
+            min(1.0, char_count / float(min_legible * 2)) if char_count else 0.0
+        )
+
+        return {
+            **drawing,
+            "engine": engine,
+            "stages": stages,
+            "schemaVersion": cls.SCHEMA_VERSION,
+            "durationMs": round((time.perf_counter() - started) * 1000, 2),
+            "legibilityScore": legibility_score,
+            "bomRowCount": len(bom_rows),
+            "warnings": [],
+            "filename": filename,
+        }
 
     @classmethod
     def to_document_vision_metadata(cls, vision: dict[str, Any]) -> dict[str, Any]:

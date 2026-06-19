@@ -44,6 +44,8 @@ class ChatDrawingPdfExtractionService:
 
         if not isinstance(metadata, dict):
             metadata = {}
+        elif extracted.get("stages"):
+            metadata = {**metadata, "stages": list(extracted.get("stages") or [])}
 
         return cls.parse_from_text(
             str(extracted.get("fullText") or "").strip(),

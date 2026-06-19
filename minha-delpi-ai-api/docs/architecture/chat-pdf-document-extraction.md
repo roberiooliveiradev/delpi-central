@@ -81,6 +81,8 @@ Consumidores:
 
 `ChatDrawingPdfExtractionService` **não** abre o PDF com pypdf isolado — delega a `ChatPdfDocumentExtractionService` e aplica parse DELPI sobre `fullText` + `parseMetadata`.
 
+Na análise de desenho no chat, `ChatDocumentVisionService.enrich_drawing_extract` **deve** chamar `_extract_drawing_pdf` → `ChatDrawingPdfExtractionService` (perfil `drawing_delpi` + OCR regional). O pipeline genérico `extract_from_storage_path` (`LAYOUT_GENERIC`, sem `region_ocr`) é só para anexos/documentos comuns.
+
 ---
 
 ## Configuração (`document_vision.json`)
