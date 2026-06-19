@@ -1,7 +1,7 @@
 /* Layout editor de agentes — abas Configuração / Pré-visualizar */
 
 .mdc-chat-agent-builder__body,
-.mdc-chat-agent-actions-page__layout {
+.mdc-chat-agent-actions-page__body {
   container-type: inline-size;
   container-name: agent-workspace;
 }
@@ -11,7 +11,8 @@
   min-width: 0;
 }
 
-.mdc-chat-agent-builder__preview-pane {
+.mdc-chat-agent-builder__preview-pane,
+.mdc-chat-agent-actions-page__preview-pane {
   width: 100%;
 }
 

@@ -8,12 +8,7 @@ import {
   Trash2,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-
-import {
-  formatIcebreakerForDisplay,
-  normalizeAgentIcebreakers,
-} from "../agentIcebreakers";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createChatAgentActionProvider,
@@ -46,11 +41,12 @@ import type {
   ChatAgent,
   ChatAgentAction,
   ChatAgentActionProvider,
+  ChatAgentPreviewDraft,
 } from "../../data/api/chatTypes";
-import { useResizablePane } from "../../state/hooks/useResizablePane";
 import { useConfirmDialog } from "../components/shared";
 import { ChatResourceUsageLink } from "../components/shared/ChatResourceUsageLink";
 import { AgentBuilderSwitch } from "../components/workspace/agentBuilder";
+import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
 import type { ActionTestPayload } from "./agent-actions/types";
@@ -88,8 +84,18 @@ function createKeyFromName(value: string): string {
     .slice(0, 80);
 }
 
-function getAgentIcebreakers(agent: ChatAgent): string[] {
-  return normalizeAgentIcebreakers(agent.metadata?.icebreakers).slice(0, 3);
+function buildAgentPreviewDraft(agent: ChatAgent): ChatAgentPreviewDraft {
+  return {
+    name: agent.name,
+    description: agent.description,
+    systemPrompt: agent.system_prompt,
+    responseStyle: agent.response_style,
+    category: agent.category,
+    icon: agent.icon,
+    maxToolCalls: agent.max_tool_calls,
+    requiresConfirmationForWrite: agent.requires_confirmation_for_write,
+    metadata: agent.metadata,
+  };
 }
 
 function shouldConfirmAction(action: ChatActionCatalogItem): boolean {
@@ -196,29 +202,7 @@ export function ChatAgentActionsPage({
   const [testLogs, setTestLogs] = useState<ChatActionTestLog[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const {
-    layoutRef,
-    layoutStyle,
-    splitEnabled,
-    isDragging,
-    onSplitterPointerDown,
-  } = useResizablePane({
-    storageKey: "minha-delpi-chat.agent-actions.preview-width",
-    defaultWidth: 380,
-    minWidth: 280,
-    maxWidthRatio: 0.5,
-    minSplitWidth: 900,
-  });
-  const isPreviewVisible = splitEnabled || showPreview;
-
-  const layoutClassName = [
-    "mdc-chat-agent-actions-page__layout",
-    splitEnabled ? "mdc-chat-agent-actions-page__layout--split" : "",
-    isDragging ? "mdc-chat-agent-actions-page__layout--dragging" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const [workspaceTab, setWorkspaceTab] = useState<"configure" | "preview">("configure");
 
   const [newProviderName, setNewProviderName] = useState("");
   const [newProviderBaseUrl, setNewProviderBaseUrl] = useState("");
@@ -259,8 +243,12 @@ export function ChatAgentActionsPage({
     [configuredProviders, selectedProviderKey],
   );
 
-  const icebreakers = getAgentIcebreakers(agent);
   const isCreatingNewAction = !selectedProviderKey;
+
+  const buildPreviewDraft = useCallback(
+    () => buildAgentPreviewDraft(agent),
+    [agent],
+  );
 
   async function reloadProviders() {
     const [providers, agentProviders] = await Promise.all([
@@ -841,18 +829,43 @@ export function ChatAgentActionsPage({
         </div>
       </header>
 
-      {!splitEnabled ? (
+      <div
+        className="mdc-chat-agent-actions-page__workspace-tabs"
+        role="tablist"
+        aria-label="Áreas da configuração de action"
+      >
         <button
           type="button"
-          className="mdc-chat-agent-actions-page__preview-toggle"
-          onClick={() => setShowPreview((current) => !current)}
+          role="tab"
+          id="mdc-agent-actions-tab-configure"
+          aria-selected={workspaceTab === "configure"}
+          aria-controls="mdc-agent-actions-panel-configure"
+          className={workspaceTab === "configure" ? "is-active" : ""}
+          onClick={() => setWorkspaceTab("configure")}
         >
-          {showPreview ? "Ocultar pré-visualização" : "Mostrar pré-visualização"}
+          Configuração
         </button>
-      ) : null}
+        <button
+          type="button"
+          role="tab"
+          id="mdc-agent-actions-tab-preview"
+          aria-selected={workspaceTab === "preview"}
+          aria-controls="mdc-agent-actions-panel-preview"
+          className={workspaceTab === "preview" ? "is-active" : ""}
+          onClick={() => setWorkspaceTab("preview")}
+        >
+          Pré-visualizar
+        </button>
+      </div>
 
-      <div ref={layoutRef} className={layoutClassName} style={layoutStyle}>
-        <main className="mdc-chat-agent-actions-page__editor">
+      <div className="mdc-chat-agent-actions-page__body">
+        {workspaceTab === "configure" ? (
+        <main
+          id="mdc-agent-actions-panel-configure"
+          role="tabpanel"
+          aria-labelledby="mdc-agent-actions-tab-configure"
+          className="mdc-chat-agent-actions-page__editor"
+        >
           <div className="mdc-chat-agent-actions-page__panel">
           <header className="mdc-chat-agent-actions-page__headline">
             <h1>{isCreatingNewAction ? "Criar nova ação" : "Editar ação"}</h1>
@@ -1311,59 +1324,31 @@ export function ChatAgentActionsPage({
           )}
           </div>
         </main>
-        {confirmDialog}
-
-        {splitEnabled ? (
+        ) : (
           <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Ajustar largura da pré-visualização"
-            className={
-              isDragging
-                ? "mdc-chat-agent-actions-page__splitter is-dragging"
-                : "mdc-chat-agent-actions-page__splitter"
-            }
-            onPointerDown={onSplitterPointerDown}
-          />
-        ) : null}
-
-        {isPreviewVisible ? (
-        <aside className="mdc-chat-agent-actions-page__preview mdc-chat-agent-actions-page__preview--visible">
-          <div className="mdc-chat-agent-actions-page__preview-top">
-            <strong>Pré-visualizar</strong>
-            <button type="button">Modelo</button>
-          </div>
-
-          <div className="mdc-chat-agent-actions-page__preview-card">
-            <div className="mdc-chat-agent-actions-page__avatar">
-              <Zap size={26} aria-hidden="true" />
-            </div>
-
-            <h2>{agent.name}</h2>
-
-            <p>
-              {agent.description ||
-                "Agente configurado com instruções, conhecimento e actions OpenAPI."}
-            </p>
-
-            {icebreakers.length > 0 ? (
-              <div className="mdc-chat-agent-actions-page__icebreakers">
-                {icebreakers.map((icebreaker) => (
-                  <button key={icebreaker} type="button" title={icebreaker}>
-                    {formatIcebreakerForDisplay(icebreaker)}
-                  </button>
-                ))}
+            id="mdc-agent-actions-panel-preview"
+            role="tabpanel"
+            aria-labelledby="mdc-agent-actions-tab-preview"
+            className="mdc-chat-agent-actions-page__preview-pane"
+          >
+            <div className="mdc-chat-agent-actions-page__preview-pane-inner">
+              <div className="mdc-chat-agent-actions-page__preview-label">
+                <span>Pré-visualizar</span>
+                <span className="mdc-chat-agent-actions-page__preview-model">
+                  Agente publicado · teste com as actions configuradas
+                </span>
               </div>
-            ) : null}
-          </div>
 
-          <div className="mdc-chat-agent-actions-page__preview-composer">
-            <Plus size={18} aria-hidden="true" />
-            <span>Pergunte alguma coisa</span>
+              <ChatAgentPreviewWorkspace
+                agent={agent}
+                getAccessToken={getAccessToken}
+                buildDraft={buildPreviewDraft}
+              />
+            </div>
           </div>
-        </aside>
-        ) : null}
+        )}
       </div>
+      {confirmDialog}
     </section>
   );
 }

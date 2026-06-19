@@ -236,7 +236,7 @@
 }
 
 /* Painel de pré-visualização */
-.mdc-chat-agent-actions-page__preview--visible,
+.mdc-chat-agent-actions-page__preview-pane,
 .mdc-chat-agent-builder__preview {
   animation: mdc-motion-fade-in var(--mdc-motion-duration) var(--mdc-motion-ease-out) both;
 }
@@ -301,7 +301,7 @@
   .mdc-chat-confirm,
   .mdc-chat-archived-dialog,
   .mdc-expand-modal,
-  .mdc-chat-agent-actions-page__preview--visible,
+  .mdc-chat-agent-actions-page__preview-pane,
   .mdc-chat-agent-builder__preview,
   .minha-delpi-chat__loading-page {
     animation: none !important;

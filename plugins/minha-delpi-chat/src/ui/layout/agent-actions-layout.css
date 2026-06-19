@@ -1,76 +1,8 @@
-/* Aba Actions — formulário + pré-visualização redimensionável */
-
-.mdc-chat-agent-actions-page__layout {
-  display: grid;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.mdc-chat-agent-actions-page__layout--split {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-}
-
-.mdc-chat-agent-actions-page__layout--split .mdc-chat-agent-actions-page__editor {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: none;
-  width: auto;
-}
-
-@container agent-workspace (min-width: 1024px) {
-  .mdc-chat-agent-actions-page__layout--split .mdc-chat-agent-actions-page__preview {
-    flex: 0 0 var(--builder-preview-width, 24rem);
-    width: var(--builder-preview-width, 24rem);
-    max-width: none;
-    position: static;
-    top: auto;
-    height: auto;
-    align-self: stretch;
-    min-height: 0;
-    overflow: hidden;
-  }
-}
-
-.mdc-chat-agent-actions-page__splitter {
-  flex: 0 0 0.45rem;
-  width: 0.45rem;
-  margin: 0 -0.1rem;
-  position: relative;
-  touch-action: none;
-  cursor: col-resize;
-  user-select: none;
-  z-index: 2;
-}
-
-.mdc-chat-agent-actions-page__splitter::before {
-  content: "";
-  position: absolute;
-  inset: 0.75rem 0;
-  left: 50%;
-  width: 0.2rem;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
-  transition: background 0.15s ease, width 0.15s ease;
-}
-
-.mdc-chat-agent-actions-page__splitter:hover::before,
-.mdc-chat-agent-actions-page__splitter.is-dragging::before,
-.mdc-chat-agent-actions-page__layout--dragging .mdc-chat-agent-actions-page__splitter::before {
-  width: 0.28rem;
-  background: color-mix(in srgb, var(--mdc-primary) 72%, var(--mdc-card-border));
-}
-
-.mdc-chat-agent-actions-page__layout--dragging {
-  cursor: col-resize;
-}
+/* Aba Actions — formulário em tela cheia; pré-visualização em aba separada */
 
 .mdc-chat-agent-actions-page__editor {
   width: 100%;
-  max-width: 52rem;
+  max-width: none;
 }
 
 .mdc-chat-agent-actions-page__section,
@@ -94,69 +26,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--mdc-space-2);
-}
-
-.mdc-chat-agent-actions-page__preview-toggle {
-  display: none;
-  flex: 0 0 auto;
-  margin: 0 clamp(0.9rem, 2vw, 1.35rem) var(--mdc-space-3);
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-  min-height: 2.25rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
-  color: var(--mdc-primary);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 800;
-  padding: 0.45rem 0.9rem;
-}
-
-.mdc-chat-agent-actions-page__preview-toggle:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
-}
-
-@container agent-workspace (max-width: 1023px) {
-  .mdc-chat-agent-actions-page__preview-toggle {
-    display: inline-flex;
-    margin-bottom: var(--mdc-space-3);
-  }
-
-  .mdc-chat-agent-actions-page__layout--split {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .mdc-chat-agent-actions-page__splitter {
-    display: none;
-  }
-
-  .mdc-chat-agent-actions-page__layout--split .mdc-chat-agent-actions-page__preview {
-    flex: none;
-    align-self: stretch;
-    width: 100%;
-    max-width: none;
-  }
-
-  .mdc-chat-agent-actions-page__preview:not(.mdc-chat-agent-actions-page__preview--visible) {
-    display: none;
-  }
-
-  .mdc-chat-agent-actions-page__preview--visible {
-    display: flex;
-    flex-direction: column;
-    order: 2;
-    position: static;
-    width: 100%;
-    max-width: none;
-    height: auto;
-    max-height: min(48vh, 24rem);
-    overflow: hidden;
-    border-left: 0;
-    border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
-  }
 }
 
 @media (max-width: 1023px) {
