@@ -53,6 +53,7 @@ Legenda de permissões:
 | GET | `/products/{code}/sales/billing` | A |
 | GET | `/products/{code}/pricing` | A |
 | GET | `/products/{code}/analyser` | A |
+| GET | `/products/drawings` | A |
 | GET | `/products/{code}/drawing` | A |
 | GET | `/products/{code}/drawing/pdf` | A (binário PDF) |
 

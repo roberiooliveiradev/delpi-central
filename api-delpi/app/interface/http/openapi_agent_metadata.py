@@ -266,6 +266,16 @@ PRODUCT_ANALYSER = agent_route(
     operation_id="get_product_analyser",
 )
 
+LIST_PRODUCT_DRAWINGS = agent_route(
+    summary="Catálogo de desenhos PDF da biblioteca",
+    description=(
+        "Lista paginada dos PDFs técnicos DELPI disponíveis na biblioteca corporativa. "
+        "Permite filtrar por código, filename, revisão, variante, tamanho e data de modificação. "
+        "Use para auditar a biblioteca, localizar desenhos para análise ou validar cobertura por prefixo."
+    ),
+    operation_id="list_product_drawings",
+)
+
 PRODUCT_DRAWING_METADATA = agent_route(
     summary="Metadados do desenho PDF do produto",
     description=(

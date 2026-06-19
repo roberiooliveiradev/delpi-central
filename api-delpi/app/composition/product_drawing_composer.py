@@ -5,6 +5,9 @@ from app.application.use_cases.product.get_product_drawing_metadata_use_case imp
 from app.application.use_cases.product.get_product_drawing_pdf_use_case import (
     GetProductDrawingPdfUseCase,
 )
+from app.application.use_cases.product.list_product_drawings_use_case import (
+    ListProductDrawingsUseCase,
+)
 
 
 def build_get_product_drawing_metadata_use_case() -> GetProductDrawingMetadataUseCase:
@@ -13,3 +16,7 @@ def build_get_product_drawing_metadata_use_case() -> GetProductDrawingMetadataUs
 
 def build_get_product_drawing_pdf_use_case() -> GetProductDrawingPdfUseCase:
     return GetProductDrawingPdfUseCase(DrawingPdfLibraryStorage())
+
+
+def build_list_product_drawings_use_case() -> ListProductDrawingsUseCase:
+    return ListProductDrawingsUseCase(DrawingPdfLibraryStorage())

@@ -69,3 +69,59 @@ def test_resolve_pdf_path_returns_file(library_dir: Path) -> None:
     path = storage.resolve_pdf_path("90262957")
     assert path.is_file()
     assert path.name == "90262957.pdf"
+
+
+def test_list_catalog_returns_all_files(library_dir: Path) -> None:
+    storage = DrawingPdfLibraryStorage(library_dir)
+    result = storage.list_catalog(page=1, page_size=50)
+
+    assert result["total"] == 5
+    assert len(result["items"]) == 5
+    assert result["summary"]["library_available"] is True
+    assert result["summary"]["scanned_files"] == 5
+
+
+def test_list_catalog_filters_by_code_prefix(library_dir: Path) -> None:
+    storage = DrawingPdfLibraryStorage(library_dir)
+    result = storage.list_catalog(code="902642", page=1, page_size=50)
+
+    codes = {item["product_code"] for item in result["items"]}
+    assert codes == {"90264227", "90264227-1"}
+
+
+def test_list_catalog_filters_revision_files(library_dir: Path) -> None:
+    storage = DrawingPdfLibraryStorage(library_dir)
+    result = storage.list_catalog(has_revision=True, page=1, page_size=50)
+
+    assert result["total"] == 2
+    assert all(item["file_kind"] == "revision" for item in result["items"])
+    assert any(item["revision"] == "10" for item in result["items"])
+
+
+def test_list_catalog_filters_variant_files(library_dir: Path) -> None:
+    storage = DrawingPdfLibraryStorage(library_dir)
+    result = storage.list_catalog(file_kind="variant", page=1, page_size=50)
+
+    assert result["total"] == 1
+    assert result["items"][0]["filename"] == "90264227-1.pdf"
+    assert result["items"][0]["variant_suffix"] == "1"
+
+
+def test_list_catalog_pagination(library_dir: Path) -> None:
+    storage = DrawingPdfLibraryStorage(library_dir)
+    result = storage.list_catalog(page=2, page_size=2, sort="filename", direction="asc")
+
+    assert result["page"] == 2
+    assert result["page_size"] == 2
+    assert result["total"] == 5
+    assert result["total_pages"] == 3
+    assert len(result["items"]) == 2
+
+
+def test_list_catalog_empty_library(tmp_path: Path) -> None:
+    storage = DrawingPdfLibraryStorage(tmp_path / "missing")
+    result = storage.list_catalog(page=1, page_size=50)
+
+    assert result["items"] == []
+    assert result["total"] == 0
+    assert result["summary"]["library_available"] is False

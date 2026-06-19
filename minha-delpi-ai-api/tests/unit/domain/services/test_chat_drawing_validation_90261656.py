@@ -88,7 +88,7 @@ def test_90261656_merge_drops_attachment_client_reference():
     )
 
     assert "10056551" not in (merged.get("componentCodes") or [])
-    assert set(merged.get("componentCodes") or []) == {"10420256", "10080110"}
+    assert {"10420256", "10080110"}.issubset(set(merged.get("componentCodes") or []))
     assert merged["validationScopes"]["bom"]["available"] is True
     assert merged["validationScopes"]["bom"]["sourceKey"] == "bom_region"
 

@@ -740,7 +740,11 @@ class ChatDocumentVisionService:
                 incoming = []
 
             if cls._vision_has_authoritative_bom(doc):
-                merged[key] = list(incoming)
+                merged[key] = cls._merge_authoritative_code_lists(
+                    existing=existing,
+                    incoming=incoming,
+                    pdf_extract=cls._merge_reference_context(base, doc),
+                )
             else:
                 for code in incoming:
                     if code and code not in existing:
@@ -820,11 +824,63 @@ class ChatDocumentVisionService:
         return merged
 
     @classmethod
+    def _merge_reference_context(
+        cls,
+        base: dict[str, Any],
+        doc: dict[str, Any],
+    ) -> dict[str, Any]:
+        context = dict(base)
+
+        for key in ("productCode", "fullText", "titleBlock", "sourceMetadata"):
+            if not context.get(key) and doc.get(key):
+                context[key] = doc[key]
+
+        return context
+
+    @classmethod
+    def _merge_authoritative_code_lists(
+        cls,
+        *,
+        existing: list[Any],
+        incoming: list[Any],
+        pdf_extract: dict[str, Any],
+    ) -> list[Any]:
+        from app.domain.services.chat_drawing_bom_reference_noise_service import (
+            ChatDrawingBomReferenceNoiseService,
+        )
+
+        noise = ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(
+            pdf_extract
+        )
+        merged = list(incoming)
+        seen = {str(code).strip() for code in merged if str(code or "").strip()}
+
+        for code in existing:
+            normalized = str(code or "").strip()
+
+            if not normalized or normalized in seen or normalized in noise:
+                continue
+
+            merged.append(code)
+            seen.add(normalized)
+
+        return merged
+
+    @classmethod
     def _vision_has_authoritative_bom(cls, doc: dict[str, Any]) -> bool:
         bom_rows = doc.get("bomRows")
 
         if isinstance(bom_rows, list) and bom_rows:
             return True
+
+        incoming_codes = [
+            str(code).strip()
+            for code in (doc.get("componentCodes") or [])
+            if str(code or "").strip()
+        ]
+
+        if not incoming_codes:
+            return False
 
         scopes = doc.get("validationScopes")
 

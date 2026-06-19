@@ -12,6 +12,7 @@ from app.application.services.drawings.drawing_pdf_library_storage import (
 from app.interface.http.routes.product_drawing_routes import (
     get_product_drawing_metadata,
     get_product_drawing_pdf,
+    list_product_drawings,
 )
 
 
@@ -87,3 +88,45 @@ def test_get_product_drawing_pdf_not_found(mock_build_use_case) -> None:
 
     response = get_product_drawing_pdf("99999999")
     assert response.status_code == 404
+
+
+@patch("app.interface.http.routes.product_drawing_routes.build_list_product_drawings_use_case")
+def test_list_product_drawings_returns_meta(mock_build_use_case) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [
+            {
+                "product_code": "90262957",
+                "filename": "90262957.pdf",
+                "file_kind": "exact",
+                "revision": None,
+                "variant_suffix": None,
+                "size_bytes": 100,
+                "modified_at": "2026-01-01T00:00:00+00:00",
+                "media_type": "application/pdf",
+                "drawing_metadata_path": "/products/90262957/drawing",
+                "drawing_pdf_path": "/products/90262957/drawing/pdf",
+            }
+        ],
+        "page": 1,
+        "page_size": 50,
+        "total": 1,
+        "total_pages": 1,
+        "summary": {
+            "library_available": True,
+            "library_dir": "/drawing-pdfs",
+            "scanned_files": 1,
+            "matched_files": 1,
+            "filters_applied": {},
+        },
+    }
+    mock_build_use_case.return_value = use_case
+
+    response = list_product_drawings()
+    body = json.loads(response.body.decode())
+
+    assert body["meta"]["operationId"] == "list_product_drawings"
+    assert body["meta"]["entity"] == "product_drawing_catalog"
+    assert body["meta"]["shape"] == "paged_list"
+    assert body["meta"]["pagination"]["total"] == 1
+    assert body["data"]["items"][0]["product_code"] == "90262957"

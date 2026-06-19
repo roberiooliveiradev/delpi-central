@@ -25,10 +25,28 @@ export DRAWING_PDF_LIBRARY_DIR="/mnt/x/DESENHOS DELPI EM PDF"
 
 | Método | Path | Descrição |
 |--------|------|-----------|
+| `GET` | `/products/drawings` | Catálogo paginado da biblioteca (filtros por código, filename, revisão, etc.) |
 | `GET` | `/products/{code}/drawing` | Metadados (filename, revisão, tamanho) |
 | `GET` | `/products/{code}/drawing/pdf` | Download inline do PDF |
 
 Permissão: `api-delpi.access` (`API_DELPI_ACCESS`).
+
+### Catálogo — filtros (`GET /products/drawings`)
+
+| Parâmetro | Descrição |
+|-----------|-----------|
+| `code` | Prefixo do código DELPI (ex.: `902616`) |
+| `code_exact` | Match exato do código |
+| `filename` | Substring do nome do arquivo |
+| `revision` | Revisão extraída de `_R{NN}` |
+| `file_kind` | `exact`, `revision`, `variant`, `other` |
+| `has_variant` / `has_revision` | Filtros booleanos |
+| `modified_from` / `modified_to` | ISO datetime |
+| `min_size_bytes` / `max_size_bytes` | Tamanho do arquivo |
+| `page`, `page_size` | Paginação (máx. 500) |
+| `sort`, `direction` | Ordenação |
+
+Cada item inclui links relativos `drawing_metadata_path` e `drawing_pdf_path` para o produto.
 
 ## Convenção de arquivos
 
@@ -43,6 +61,7 @@ Exemplos: `90262957.pdf`, `90261040_R10.pdf`, `90264227-1.pdf`.
 
 ## operationId
 
+- `list_product_drawings` — envelope JSON (`product_drawing_catalog`, `paged_list`)
 - `get_product_drawing` — envelope JSON (`product_drawing`, `scalar`)
 - `get_product_drawing_pdf` — binário PDF (`product_drawing`, `document_export`)
 

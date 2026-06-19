@@ -202,8 +202,8 @@ app.include_router(
     prefix="/cultura-delpi",
     tags=["Cultura DELPI"],
 )
-app.include_router(product_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
+app.include_router(product_routes.router, prefix="/products", tags=["products"])
 app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
