@@ -8,7 +8,6 @@ import { IndicatorAnalyticsTable } from "../components/IndicatorAnalyticsTable";
 import { IndicatorDepartmentOverview } from "../components/IndicatorDepartmentOverview";
 import { IndicatorFiltersBar } from "../components/IndicatorFiltersBar";
 import { IndicatorPriorityList } from "../components/IndicatorPriorityList";
-import { IndicatorQuickDetail } from "../components/IndicatorQuickDetail";
 import { InfoState } from "../components/InfoState";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
 import { PageHeader } from "../components/PageHeader";
@@ -114,10 +113,6 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
     endDate,
     effectiveBranch,
   } = useStrategicIndicatorsFilters();
-  const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(
-    null,
-  );
-
   const {
     items,
     fetchErrors,
@@ -231,22 +226,6 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
       return matchesDepartment && matchesSearch && matchesStatus;
     });
   }, [analyticsItems, department, search, status]);
-
-  const resolvedSelectedIndicator = useMemo(() => {
-    if (!filteredIndicators.length) return null;
-
-    if (
-      selectedIndicatorId &&
-      filteredIndicators.some((item) => item.id === selectedIndicatorId)
-    ) {
-      return (
-        filteredIndicators.find((item) => item.id === selectedIndicatorId) ??
-        null
-      );
-    }
-
-    return filteredIndicators[0];
-  }, [filteredIndicators, selectedIndicatorId]);
 
   const referenceFilters = (
     <StrategicIndicatorsReferenceFilters
@@ -376,28 +355,15 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
           </SectionBlock>
 
           <SectionBlock
-            title="Tabela e detalhe rápido"
-            description="Selecione um indicador para visualizar seu contexto analítico resumido."
+            title="Listagem de indicadores"
+            description="Todos os indicadores com meta, realizado, gap e leitura estratégica em uma única visão."
           >
-            <div className="si-indicator-analytics-layout">
-              <IndicatorAnalyticsTable
-                indicators={filteredIndicators}
-                selectedIndicatorId={resolvedSelectedIndicator?.id}
-                competence={referenceMonth}
-                viewMode={viewMode}
-                branch={branch}
-                onSelectIndicator={(indicator) =>
-                  setSelectedIndicatorId(indicator.id)
-                }
-              />
-
-              <IndicatorQuickDetail
-                indicator={resolvedSelectedIndicator}
-                competence={referenceMonth}
-                viewMode={viewMode}
-                branch={branch}
-              />
-            </div>
+            <IndicatorAnalyticsTable
+              indicators={filteredIndicators}
+              competence={referenceMonth}
+              viewMode={viewMode}
+              branch={branch}
+            />
           </SectionBlock>
         </>
       )}

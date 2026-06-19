@@ -100,7 +100,7 @@
 .si-scope-badges--compact,
 .si-indicator-card__goal-value .si-scope-badges,
 .si-indicator-table__metrics .si-scope-badges,
-.si-indicator-quick-detail__meta-item strong .si-scope-badges,
+.si-indicator-table__meta-item strong .si-scope-badges,
 .si-tree-indicator-card__goals .si-scope-badges,
 .si-critical-item__metrics .si-scope-badges,
 .si-indicator-priority-item__meta .si-scope-badges {
@@ -114,7 +114,7 @@
 .si-scope-badges--compact .si-scope-badge,
 .si-indicator-card__goal-value .si-scope-badge,
 .si-indicator-table__metrics .si-scope-badge,
-.si-indicator-quick-detail__meta-item strong .si-scope-badge,
+.si-indicator-table__meta-item strong .si-scope-badge,
 .si-tree-indicator-card__goals .si-scope-badge,
 .si-critical-item__metrics .si-scope-badge,
 .si-indicator-priority-item__meta .si-scope-badge {
@@ -127,7 +127,7 @@
 .si-scope-badges--compact .si-scope-badge__value,
 .si-indicator-card__goal-value .si-scope-badge__value,
 .si-indicator-table__metrics .si-scope-badge__value,
-.si-indicator-quick-detail__meta-item strong .si-scope-badge__value,
+.si-indicator-table__meta-item strong .si-scope-badge__value,
 .si-tree-indicator-card__goals .si-scope-badge__value,
 .si-critical-item__metrics .si-scope-badge__value,
 .si-indicator-priority-item__meta .si-scope-badge__value {

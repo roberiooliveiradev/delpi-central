@@ -1,12 +1,18 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
 import { StatusBadge } from "./StatusBadge";
 import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+  getPerformanceDirectionLabel,
+} from "../presentation/labels";
+import {
+  formatIndicatorGapDisplay,
   formatIndicatorGoalValue,
+  formatIndicatorRealizedDisplay,
   formatIndicatorScore,
   type IndicatorDisplayContext,
 } from "../shared/indicatorValueFormatter";
 import {
-  getFilterViewScopeLabel,
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
@@ -15,11 +21,9 @@ import "./IndicatorAnalyticsTable.css";
 
 type IndicatorAnalyticsTableProps = {
   indicators: IndicatorAnalyticsViewItem[];
-  selectedIndicatorId?: string;
   competence?: string | null;
   viewMode?: StrategicIndicatorsViewMode;
   branch?: string;
-  onSelectIndicator: (indicator: IndicatorAnalyticsViewItem) => void;
 };
 
 function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
@@ -29,18 +33,23 @@ function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
   return "Crítico";
 }
 
+function buildDisplayContext(
+  indicator: IndicatorAnalyticsViewItem,
+  viewMode: StrategicIndicatorsViewMode,
+  branch: string,
+): IndicatorDisplayContext {
+  return {
+    filterViewScopeLabel: indicator.viewScopeLabel,
+    activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+  };
+}
+
 export function IndicatorAnalyticsTable({
   indicators,
-  selectedIndicatorId,
   competence,
   viewMode = "consolidated",
   branch = "01",
-  onSelectIndicator,
 }: IndicatorAnalyticsTableProps) {
-  const displayContext: IndicatorDisplayContext = {
-    filterViewScopeLabel: getFilterViewScopeLabel(viewMode, branch),
-    activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
-  };
   if (!indicators.length) {
     return (
       <div className="si-indicator-table__empty">
@@ -50,70 +59,147 @@ export function IndicatorAnalyticsTable({
   }
 
   return (
-    <div className="si-indicator-table__scroll">
-      <div className="si-indicator-table">
-        <div className="si-indicator-table__row si-indicator-table__row--head">
-          <span>Indicador</span>
-          <span>Departamento</span>
-          <span>Escopo</span>
-          <span>Peso</span>
-          <span>Meta</span>
-          <span>Nota</span>
-          <span>Status</span>
-        </div>
-
+    <div className="si-indicator-table__list">
       {indicators.map((indicator) => {
-        const isSelected = indicator.id === selectedIndicatorId;
+        const displayContext = buildDisplayContext(indicator, viewMode, branch);
+        const valueFormat = {
+          valueUnit: indicator.valueUnit,
+          valuePrefix: indicator.valuePrefix,
+          valueSuffix: indicator.valueSuffix,
+          valueDecimals: indicator.valueDecimals,
+        };
 
         return (
-          <button
-            key={indicator.id}
-            type="button"
-            className={`si-indicator-table__row si-indicator-table__row--interactive ${
-              isSelected ? "si-indicator-table__row--selected" : ""
-            }`}
-            onClick={() => onSelectIndicator(indicator)}
-          >
-            <div className="si-indicator-table__indicator">
-              <strong>{indicator.indicatorName}</strong>
-              <span>{indicator.strategicDescription}</span>
-            </div>
-
-            <span>{indicator.departmentName}</span>
-            <span>{indicator.viewScopeLabel}</span>
-            <span>{indicator.weightPct}%</span>
-            <span className="si-indicator-table__metrics">
-              <ScopeMetricBadges
-                values={indicator.goals}
-                format={{
-                  valueUnit: indicator.valueUnit,
-                  valuePrefix: indicator.valuePrefix,
-                  valueSuffix: indicator.valueSuffix,
-                  valueDecimals: indicator.valueDecimals,
-                }}
-                displayContext={displayContext}
-                layout="compact"
-                maxVisible={2}
-                emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
-              />
-            </span>
-            <strong
-              className={`si-indicator-table__score${
-                !indicator.hasValue ? " si-indicator-table__score--missing" : ""
-              }`}
-            >
-              {formatIndicatorScore(indicator.score)}
-            </strong>
-            <span className="si-indicator-table__status">
+          <article key={indicator.id} className="si-indicator-table__card">
+            <div className="si-indicator-table__card-header">
+              <h3 className="si-indicator-table__card-title">
+                {indicator.indicatorName}
+              </h3>
               <StatusBadge
                 label={getStatusLabel(indicator.status)}
                 variant={indicator.status}
               />
-            </span>
-          </button>
+            </div>
+
+            <div className="si-indicator-table__card-meta">
+              <div className="si-indicator-table__meta-item">
+                <span>Departamento</span>
+                <strong>{indicator.departmentName}</strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item">
+                <span>Escopo</span>
+                <strong>{indicator.viewScopeLabel}</strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item">
+                <span>Peso interno</span>
+                <strong>{indicator.weightPct}%</strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item si-indicator-table__meta-item--wide">
+                <span>Meta</span>
+                <strong>
+                  <ScopeMetricBadges
+                    values={indicator.goals}
+                    format={valueFormat}
+                    displayContext={displayContext}
+                    layout="compact"
+                    maxVisible={3}
+                    emptyLabel={formatIndicatorGoalValue(
+                      indicator,
+                      competence,
+                      displayContext,
+                    )}
+                  />
+                </strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item">
+                <span>Periodicidade</span>
+                <strong>
+                  {getGoalPeriodicityLabel(indicator.goalPeriodicity)}
+                </strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item">
+                <span>Modo da meta</span>
+                <strong>{getGoalModeLabel(indicator.goalMode)}</strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item">
+                <span>Direção</span>
+                <strong>
+                  {getPerformanceDirectionLabel(indicator.performanceDirection)}
+                </strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item">
+                <span>Nota atual</span>
+                <strong
+                  className={
+                    !indicator.hasValue
+                      ? "si-indicator-table__score--missing"
+                      : undefined
+                  }
+                >
+                  {formatIndicatorScore(indicator.score)}
+                </strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item si-indicator-table__meta-item--wide">
+                <span>Valor atual</span>
+                <strong>
+                  <ScopeMetricBadges
+                    values={indicator.realized}
+                    format={valueFormat}
+                    displayContext={displayContext}
+                    layout="compact"
+                    maxVisible={3}
+                    emptyLabel={formatIndicatorRealizedDisplay(
+                      indicator,
+                      valueFormat,
+                      displayContext,
+                    )}
+                  />
+                </strong>
+              </div>
+
+              <div className="si-indicator-table__meta-item si-indicator-table__meta-item--wide">
+                <span>Gap</span>
+                <strong>
+                  <ScopeMetricBadges
+                    values={indicator.gaps}
+                    format={valueFormat}
+                    displayContext={displayContext}
+                    layout="compact"
+                    maxVisible={3}
+                    emptyLabel={formatIndicatorGapDisplay(
+                      indicator,
+                      valueFormat,
+                      displayContext,
+                    )}
+                  />
+                </strong>
+              </div>
+
+              {indicator.goalMode === "monthly_curve" ? (
+                <div className="si-indicator-table__meta-item">
+                  <span>Curva mensal</span>
+                  <strong>
+                    {indicator.monthlyTargets.length} meses parametrizados
+                  </strong>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="si-indicator-table__card-reading">
+              <span>Leitura estratégica</span>
+              <p>{indicator.strategicDescription}</p>
+            </div>
+          </article>
         );
       })}
-      </div>
     </div>
   );
 }
