@@ -1,0 +1,154 @@
+# Arquitetura — Extração de PDF no chat base
+
+**Status:** vigente (jun/2026)  
+**Público:** desenvolvimento `minha-delpi-ai-api`  
+**Relacionado:** [chat-intelligence-base.md](./chat-intelligence-base.md) · [playbook visão/OCR](../roadmap/melhorias/playbook_skill_visao_documentos_ocr_delpi.md) · [playbook OCR hierárquico desenhos](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)
+
+---
+
+## Princípio
+
+**Leitura de PDF é transversal ao chat base.** Qualquer anexo PDF (boleto, contrato, desenho CAD, scan) passa pelo mesmo pipeline de extração multi-fonte. A skill **`drawing-analysis-delpi`** aplica **somente** regras DELPI (carimbo, BOM, cotas, validação API) sobre o texto já extraído — não reimplementa OCR nem leitura de anotações.
+
+| Camada | Responsabilidade | Módulos |
+|--------|------------------|---------|
+| **Chat base** | Texto embutido, anotações ODA/CAD, fusão, tabelas por bbox, OCR regional condicional | `ChatPdf*` (domain) · `ChatDocumentVisionService` (application) |
+| **Skill desenho** | Parse DELPI, resolução de código, BOM, 50xx, cotas, validação | `ChatDrawingPdfExtractionService` · `ChatDrawingPdfBomExtractionService` · `ChatDrawingIntermediateCodeService` · `ChatDrawingStampExtractionService` |
+| **Config** | Perfis de layout, fusão, tolerância de linhas | `document_vision.json` (`pdfExtraction`) · `drawing_stamp.json` (regiões DELPI) |
+
+---
+
+## Pipeline
+
+```text
+PDF (storage_path)
+  → ChatPdfEmbeddedTextService
+        · page.get_text() (nativo)
+        · page.annots() (conteúdo ODA/CAD + bbox)
+        · metadados PDF (producer, title, …)
+  → pypdf (fallback estágio 0)
+  → [opcional] ChatDrawingRegionService.ocr_drawing_regions
+        · perfil drawing_delpi + texto insuficiente (< pdfExtraction.regionOcr.minChars)
+        · carimbo, BOM, cotas (config em drawing_stamp.json)
+  → ChatPdfTextFusionService
+        · prioriza fitz_embedded / anotações
+        · complementa com pypdf e regiões não sobrepostas
+  → ChatPdfAnnotationTableService
+        · agrupa anotações por Y (tolerância em pdfExtraction.annotationTable)
+        · linhas tabulares genéricas (qualquer PDF com anotações posicionadas)
+  → ChatPdfDocumentExtractionService.extract_from_storage_path
+        · retorna fullText, stages, parseMetadata, annotationTables
+
+Consumidores:
+  · ChatAttachmentTextExtractor — indexação de qualquer PDF (perfil generic)
+  · ChatDocumentVisionService._stage_native — visão de documentos (perfil generic)
+  · ChatDrawingPdfExtractionService.extract_from_storage_path — perfil drawing_delpi + parse DELPI
+  · ChatDocumentVisionService (auto) — Tesseract/VLM quando legibilidade insuficiente
+```
+
+---
+
+## Serviços (domain)
+
+| Serviço | Função |
+|---------|--------|
+| `ChatPdfEmbeddedTextService` | PyMuPDF: texto nativo + anotações com `{page, content, bbox, type}` |
+| `ChatPdfTextFusionService` | Fusão multi-fonte com score (embedded > anotações > regiões > pypdf) |
+| `ChatPdfAnnotationTableService` | Tabelas a partir de bbox de anotações (cluster por linha Y) |
+| `ChatPdfDocumentExtractionService` | Orquestrador; perfis `generic` e `drawing_delpi` |
+| `ChatDrawingPdfEmbeddedTextService` | Alias de compatibilidade → delega para `ChatPdfEmbeddedTextService` |
+
+### Perfis de layout (`layoutProfile`)
+
+| Perfil | Uso | OCR regional |
+|--------|-----|--------------|
+| `generic` | Indexação, intent «ler PDF», boletos, contratos | Desligado por padrão |
+| `drawing_delpi` | `ChatDrawingPdfExtractionService`, análise de desenho | Ligado quando texto embutido &lt; limiar (`document_vision.json` → `pdfExtraction.layoutProfiles.drawing_delpi`) |
+
+---
+
+## Skill de desenho (camada DELPI)
+
+| Serviço | Função |
+|---------|--------|
+| `ChatDrawingPdfExtractionService` | Fachada: carimbo, revisão, cotas, legibilidade |
+| `ChatDrawingPdfBomExtractionService` | BOM + componentes + `bomSource` |
+| `ChatDrawingIntermediateCodeService` | Códigos `50xx` e deduplicação OCR |
+| `ChatDrawingPdfProductContextService` | `productCode` (carimbo / filename / BOM) |
+| `ChatDrawingStampExtractionService` | Parse de carimbo e candidatos |
+| `ChatDocumentVisionBomService` | Linhas BOM, score de fonte, ruído de revisão |
+| `ChatDrawingValidationOrchestrationService` | Validação normativa e comparação API |
+
+`ChatDrawingPdfExtractionService` **não** abre o PDF com pypdf isolado — delega a `ChatPdfDocumentExtractionService` e aplica parse DELPI sobre `fullText` + `parseMetadata`.
+
+---
+
+## Configuração (`document_vision.json`)
+
+Seção **`pdfExtraction`**:
+
+| Chave | Descrição |
+|-------|-----------|
+| `fusion.minEmbeddedChars` | Mínimo de caracteres embedded para confiar sem OCR regional |
+| `annotationTable.rowClusterTolerancePt` | Tolerância vertical (pt) para agrupar células na mesma linha |
+| `regionOcr.minChars` | Abaixo disso, perfil `drawing_delpi` pode acionar OCR por região |
+| `layoutProfiles.generic.enableRegionOcr` | `false` — chat base genérico não corta regiões DELPI |
+| `layoutProfiles.drawing_delpi.enableRegionOcr` | `true` — permite fallback regional na skill desenho |
+
+Regiões gráficas (bbox carimbo/BOM/cotas) continuam em **`drawing_stamp.json`**.
+
+---
+
+## Caso de referência: PDF ODA (`90262019.pdf`)
+
+Desenhos exportados pelo **ODA** expõem códigos e quantidades como **anotações Square** com `content` textual — não como texto selecionável na página.
+
+| Fonte | Resultado típico |
+|-------|------------------|
+| pypdf / `get_text()` | ~55 caracteres (insuficiente) |
+| `ChatPdfEmbeddedTextService` | 100+ anotações; códigos `90262019`, `10080591`, `10090481`, `10250032` |
+| Pipeline completo | `engine: fitz_embedded`, estágio `native` apenas (~850 ms), sem Tesseract |
+
+Testes: `test_chat_pdf_document_extraction_service.py`, `test_chat_drawing_pdf_embedded_text_service.py`.
+
+---
+
+## Integração com `ChatDocumentVisionService`
+
+Estágios após extração base (`native`):
+
+1. Gate de legibilidade (`CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS`, `ChatDrawingNativeTextGateService` em desenhos)
+2. `tesseract_pdf` — página inteira + regiões DELPI quando habilitado
+3. `docling` / `paddleocr` / `ollama_vlm` — backends opcionais (`CHAT_DOCUMENT_VISION_BACKEND`)
+
+`_build_from_text` ainda enriquece com campos de desenho quando o consumidor é visão/análise DELPI; o **texto** vem do pipeline base.
+
+---
+
+## Testes e smoke
+
+| Artefato | Escopo |
+|----------|--------|
+| `tests/unit/domain/services/test_chat_pdf_*.py` | Fusão, tabelas por anotação, fixture `90262019` |
+| `tests/unit/domain/services/test_chat_drawing_pdf_extraction_bom_fallback.py` | BOM quando região OCR é ruído |
+| `tests/unit/application/services/test_chat_attachment_text_extractor.py` | Indexação via pipeline base |
+| `scripts/smoke_document_vision.py` | Offline + live opcional |
+| `desenhos/*.pdf` | Fixtures manuais (não versionar PDFs grandes em CI se política mudar) |
+
+---
+
+## Anti-padrões
+
+1. **OCR ou parse de anotações só na skill desenho** — usar `ChatPdfDocumentExtractionService`.
+2. **pypdf como única fonte** — perde anotações ODA/CAD.
+3. **OCR regional sempre ativo** — só `drawing_delpi` + texto insuficiente.
+4. **Strings PT de status OCR** em Python — `document_vision.json` / `assistant-content-json.mdc`.
+5. **Duplicar fusão** em `ChatAttachmentTextExtractor` e `ChatDocumentVisionService` — um orquestrador.
+
+---
+
+## Histórico
+
+| Data | Entrega |
+|------|---------|
+| jun/2026 | `ChatPdf*` no chat base; skill desenho consome fusão; anotações ODA; BOM fallback multi-fonte |

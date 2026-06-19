@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 13: Skill de visão e OCR de documentos (chat base)
 
-**Status:** MVP fechado (13.1–13.6 + intent `attachment_document`); refinamentos: profile `vision` em homologação, **OCR hierárquico desenhos** → [Onda 14](./inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) (jun/2026)  
+**Status:** MVP fechado (13.1–13.6 + intent `attachment_document`); **extração PDF no chat base** (`ChatPdf*`, jun/2026); refinamentos: profile `vision` em homologação, **OCR hierárquico desenhos** → [Onda 14](./inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) (jun/2026)  
 **Criado:** 2026-05-31  
 **Playbook:** [playbook_skill_visao_documentos_ocr_delpi.md](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md) (`document-vision-delpi`) · regiões carimbo/BOM: [playbook OCR hierárquico](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [arquitetura chat base](../architecture/chat-intelligence-base.md)
@@ -15,13 +15,15 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 
 ## Situação atual vs alvo
 
-| Aspecto | Hoje | Alvo (Onda 13) |
-|---------|------|----------------|
-| PDF anexo | Texto via pypdf + regex (`ChatDrawingPdfExtractionService`) | Pipeline em estágios com OCR/layout/VLM |
+| Aspecto | Antes (pré-jun/2026) | Hoje |
+|---------|----------------------|------|
+| PDF anexo | Texto via pypdf + regex em `ChatDrawingPdfExtractionService` | **`ChatPdfDocumentExtractionService`** (embedded + anotações ODA + fusão + pypdf); parse DELPI só na skill desenho |
 | Imagem | Tesseract via `ChatDocumentVisionService` (PNG/JPG/WebP) | OCR no contexto de anexo e no fluxo de desenho |
-| Desenho técnico | Código/REV + BOM heurístico + `titleBlock` | Cotas/decapes com confidence (backlog fino) |
+| Desenho técnico | Código/REV + BOM heurístico + `titleBlock` | + anotações CAD; BOM multi-fonte; OCR regional condicional |
 | Skill plataforma | `document-vision-delpi` no catálogo | Policy + registry + métricas admin |
 | Operação | Métricas + intent `attachment_document` | adminDebug + painel admin + audit por engine |
+
+Doc canônica extração PDF: [`../architecture/chat-pdf-document-extraction.md`](../architecture/chat-pdf-document-extraction.md).
 
 ---
 

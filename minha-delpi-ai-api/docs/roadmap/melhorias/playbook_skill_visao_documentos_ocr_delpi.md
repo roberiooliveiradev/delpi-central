@@ -1,6 +1,6 @@
 # Playbook — Skill de Visão e OCR de Documentos DELPI (chat base)
 
-> **Status (31/05/2026):** Backlog — playbook aprovado para implementação; código ainda não iniciado.  
+> **Status (jun/2026):** MVP entregue (Onda 13) + **extração PDF no chat base** (`ChatPdf*`, jun/2026). Refinamentos: profile `vision` em homologação, OCR hierárquico desenhos na [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md).  
 > **Projeto:** Minha DELPI Chat IA  
 > **Arquitetura:** serviço transversal no [chat base](../../architecture/chat-intelligence-base.md); **não** duplicar OCR no `system_prompt` de agentes.  
 > **Consumidor principal:** [skill `drawing-analysis-delpi`](./playbook_skill_analise_desenhos_delpi.md) (Onda 12, Fase 3 — cotas e carimbo).  
@@ -13,8 +13,11 @@
 | Nome amigável | Visão e OCR de documentos DELPI |
 | `policyFile` (proposto) | `document-vision-delpi-skill.md` |
 | `metadataFlag` | `documentVision` |
-| Serviço central (proposto) | `ChatDocumentVisionService` |
-| Extração legada (hoje) | `ChatDrawingPdfExtractionService` + `ChatAttachmentTextExtractor` (pypdf) + `ChatAttachmentImageOcrService` (Tesseract opcional em imagens) |
+| Serviço central | `ChatDocumentVisionService` + **`ChatPdfDocumentExtractionService`** (chat base) |
+| Extração PDF (chat base) | `ChatPdfEmbeddedTextService` → fusão (`ChatPdfTextFusionService`) → `ChatPdfAnnotationTableService`; ver [chat-pdf-document-extraction.md](../../architecture/chat-pdf-document-extraction.md) |
+| Parse DELPI (skill desenho) | `ChatDrawingPdfExtractionService` consome `fullText` do pipeline base + `ChatDrawingStampExtractionService` / BOM |
+| Indexação anexo | `ChatAttachmentTextExtractor` → `ChatPdfDocumentExtractionService` (perfil `generic`) |
+| OCR imagem | `ChatAttachmentImageOcrService` / `ChatDocumentVisionService._stage_tesseract_image` |
 
 ---
 
@@ -73,10 +76,13 @@ Síntese de benchmarks e documentação pública (CodeSOTA, Unstract, Modal, IBM
 
 ```text
 Entrada: storage_path | bytes | página(s) PDF
-  → Estágio 0: texto programático (pypdf/pdfplumber) — rápido, zero GPU
-  → Estágio 1: rasterizar páginas (PyMuPDF ou pdf2image + Poppler)
+  → Estágio 0a: ChatPdfEmbeddedTextService (PyMuPDF — texto nativo + anotações ODA/CAD)
+  → Estágio 0b: pypdf (fallback)
+  → ChatPdfTextFusionService + ChatPdfAnnotationTableService
+  → [drawing_delpi + texto insuficiente] OCR regional (ChatDrawingRegionService)
+  → Estágio 1: rasterizar páginas (PyMuPDF) quando backend ≠ native
   → Estágio 2: OCR clássico (Tesseract por página ou região de carimbo)
-  → Estágio 3: OCR neural + layout (PaddleOCR PP-OCR + PP-Structure OU Docling)
+  → Estágio 3: OCR neural + layout (PaddleOCR OU Docling)
   → Estágio 4 (opcional): VLM local Ollama (qwen2.5vl:7b) com schema JSON fixo
   → Saída: DocumentVisionResult (schema §5)
 ```
@@ -108,8 +114,10 @@ Entrada: storage_path | bytes | página(s) PDF
 | Componente existente | Papel após a skill |
 |---------------------|-------------------|
 | `delpi-ollama` + `qwen2.5:3b` | LLM texto; **não** substitui OCR — considerar imagem `qwen2.5vl` separado |
-| `ChatAttachmentImageOcrService` | Absorvido/evoluído para `ChatDocumentVisionService.extract_image` |
-| `ChatDrawingPdfExtractionService` | Passa a **consumir** `DocumentVisionResult` em vez de só regex em texto pypdf |
+| **`ChatPdfDocumentExtractionService`** | **Orquestrador estágio 0** — embedded, anotações, fusão, tabelas; qualquer PDF |
+| `ChatAttachmentTextExtractor` | Delega PDF para `ChatPdfDocumentExtractionService` (perfil `generic`) |
+| `ChatAttachmentImageOcrService` | Evoluído em `ChatDocumentVisionService.extract_image` |
+| `ChatDrawingPdfExtractionService` | **Só regras DELPI** sobre `fullText` do pipeline base — não pypdf isolado |
 | `CHAT_DRAWING_PDF_MAX_PAGES` | Reutilizar como limite global de páginas vision |
 
 ---
@@ -206,16 +214,17 @@ Persistência sugerida: `metadata.documentVision` na mensagem ou no attachment; 
 
 ```text
 Upload anexo
-  → ChatAttachmentTextExtractor (estágio 0 — mantém)
-  → [NOVO] ChatDocumentVisionService.enrich(attachment)
-        · respeita skill document-vision-delpi + settings
+  → ChatPdfDocumentExtractionService (perfil generic — embedded + fusão + pypdf)
+  → ChatAttachmentTextExtractor / indexação session_source
+  → [skill document-vision-delpi] ChatDocumentVisionService.enrich(attachment)
+        · estágios adicionais: Tesseract / Docling / VLM conforme backend
         · grava DocumentVisionResult no metadata do attachment / session_source
   → RAG session_source (texto + markdown resumido)
 
 Turno com desenho
   → ChatDrawingAnalysisTurnService
-  → ChatDocumentVisionService.get_for_session_attachment(...)
-  → ChatDrawingPdfExtractionService.merge(vision_result)  # deprecar regex-only
+  → ChatPdfDocumentExtractionService (perfil drawing_delpi) + ChatDrawingPdfExtractionService.parse
+  → ChatDocumentVisionService.enrich_drawing_extract (merge vision OCR quando skill ativa)
   → ChatToolContextService → analyser
   → ChatDrawingValidationOrchestrationService
 ```
@@ -243,7 +252,7 @@ Turno com desenho
 | `CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL` | `$OLLAMA_BASE_URL` | Endpoint Ollama |
 | `CHAT_DOCUMENT_VISION_ALLOW_CLOUD` | `false` | Futuro: Azure/Google — fora do MVP |
 
-Documentar em `README.md` da API e em `docs/architecture/chat-intelligence-base.md` (tabela de serviços).
+Documentar em `README.md` da API e em [`docs/architecture/chat-pdf-document-extraction.md`](../../architecture/chat-pdf-document-extraction.md) + [`chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md) (tabela de serviços).
 
 ---
 

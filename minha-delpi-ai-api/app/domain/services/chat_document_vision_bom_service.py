@@ -188,6 +188,49 @@ class ChatDocumentVisionBomService:
         return demoted
 
     @classmethod
+    def is_revision_noise_line(cls, line: str) -> bool:
+        stripped = str(line or "").strip()
+
+        if not stripped:
+            return False
+
+        for pattern in ChatDrawingPatternsService.bom_revision_noise_patterns():
+            if pattern.search(stripped):
+                return True
+
+        return False
+
+    @classmethod
+    def codes_only_in_revision_lines(cls, text: str) -> set[str]:
+        revision_codes: set[str] = set()
+        clean_codes: set[str] = set()
+
+        for line in str(text or "").splitlines():
+            stripped = line.strip()
+
+            if not stripped:
+                continue
+
+            matches = ChatDrawingPatternsService.component_code().findall(stripped)
+
+            if not matches:
+                continue
+
+            normalized = {
+                ChatProductQueryIntentService.normalize_product_code(match)
+                for match in matches
+            }
+            normalized = {code for code in normalized if code}
+
+            if cls.is_revision_noise_line(stripped):
+                revision_codes.update(normalized)
+                continue
+
+            clean_codes.update(normalized)
+
+        return {code for code in revision_codes if code not in clean_codes}
+
+    @classmethod
     def _parse_bom_lines(
         cls,
         section_text: str,
@@ -201,6 +244,9 @@ class ChatDocumentVisionBomService:
         for line in section_text.splitlines():
             if len(rows) >= max_rows:
                 break
+
+            if cls.is_revision_noise_line(line):
+                continue
 
             row = cls._parse_bom_line(line, exclude=exclude, seen=seen_codes)
 

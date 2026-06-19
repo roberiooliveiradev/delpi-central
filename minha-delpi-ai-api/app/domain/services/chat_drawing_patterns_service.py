@@ -107,6 +107,10 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("hintNumberTail")
 
     @classmethod
+    def bom_revision_noise_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("bomRevisionNoise")
+
+    @classmethod
     def length_patterns(cls) -> tuple[re.Pattern[str], ...]:
         return cls.compile_stamp_list("length")
 

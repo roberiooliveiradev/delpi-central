@@ -198,6 +198,14 @@
     "titleSeparatorStrip": "^[/|·\\-]+\\s*"
   },
   "patternLists": {
+    "bomRevisionNoise": [
+      "RESUMO\\s+DAS\\s+MODIFIC",
+      "\\bALT\\.?",
+      "\\bP/\\s*\\d",
+      "EXECUTADO",
+      "LIBERADO",
+      "CRIA[ÇC][ÃA]O\\s+DO\\s+DESENHO"
+    ],
     "length": [
       "COMPR(?:IMENTO)?\\s*(?:TOTAL)?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
       "C\\s*O\\s*M\\s*P\\s*R(?:\\s*I\\s*M\\s*E\\s*N\\s*T\\s*O)?\\s*(?:TOTAL)?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",

@@ -224,7 +224,7 @@ A skill deve verificar:
 
 > Para analisar o desenho, preciso que você anexe o PDF.
 
-**Serviço previsto:** `ChatDrawingPdfExtractionService` (Onda 12.2). Evolução **OCR hierárquico** (carimbo base-direita, BOM/cotas por região, resolução de código sem prefixo `902`): [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) · [playbook](./playbook_ocr_hierarquico_desenhos_delpi.md).
+**Serviço previsto:** `ChatDrawingPdfExtractionService` (Onda 12.2) — **consome** `ChatPdfDocumentExtractionService` (chat base, jun/2026). Evolução **OCR hierárquico** (carimbo base-direita, BOM/cotas por região, anotações ODA): [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) · [playbook](./playbook_ocr_hierarquico_desenhos_delpi.md) · [extração PDF](../../architecture/chat-pdf-document-extraction.md).
 
 ---
 
@@ -709,13 +709,17 @@ Alinhado à [Onda 12](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md
 Anexo PDF + mensagem
   → ChatDrawingIntentService
   → ChatIntelligencePipelineService (modo drawing)
-  → ChatDrawingPdfExtractionService
+  → ChatPdfDocumentExtractionService (perfil drawing_delpi)
+  → ChatDrawingPdfExtractionService (parse DELPI: carimbo, BOM, cotas)
+  → [opcional] ChatDocumentVisionService.enrich_drawing_extract (OCR/VLM)
   → ChatToolContextService → get_product_analyser
   → ChatDrawingValidationOrchestrationService
   → RAG (drawing_* + normas)
   → PromptPolicyService → drawing-analysis-delpi-skill.md
   → LLM + ExternalActionResultPresenter + relatório
 ```
+
+Doc extração PDF (chat base): [`../../architecture/chat-pdf-document-extraction.md`](../../architecture/chat-pdf-document-extraction.md).
 
 ---
 

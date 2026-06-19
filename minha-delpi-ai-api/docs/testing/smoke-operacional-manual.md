@@ -35,7 +35,7 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 | Rebuild MFE após fix frontend | `cd infra && docker compose -f docker-compose.dev.yml build minha-delpi-chat && docker compose -f docker-compose.dev.yml --profile chat up -d minha-delpi-chat` |
 | Assertividade multi-turno | `python scripts/smoke_context_assertiveness_multiturn.py` |
 | Onda 11 + Fase 5 (pytest + smokes) | `./scripts/run_onda11_validation.sh` |
-| Visão/OCR documentos (Onda 13) | `python scripts/smoke_document_vision.py` (+ pytest `test_chat_document_vision_service.py`, `test_chat_attachment_context_service.py`) |
+| Visão/OCR documentos (Onda 13) | `python scripts/smoke_document_vision.py` (+ pytest `test_chat_document_vision_service.py`, `test_chat_pdf_document_extraction_service.py`, `test_chat_attachment_context_service.py`) |
 | Análise de desenho (Onda 12) | `python scripts/smoke_drawing_analyser.py` |
 | Pacote Onda 13 (visão/OCR) | `./scripts/run_onda13_validation.sh` |
 

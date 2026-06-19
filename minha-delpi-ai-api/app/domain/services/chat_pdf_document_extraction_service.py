@@ -249,13 +249,16 @@ class ChatPdfDocumentExtractionService:
         if enable_region_ocr is False:
             return False
 
+        if enable_region_ocr is True:
+            return True
+
+        if layout_profile == cls.LAYOUT_DRAWING_DELPI:
+            return True
+
         if not ChatDocumentVisionContentService.pdf_layout_profile_allows_region_ocr(
             layout_profile
         ):
             return False
-
-        if enable_region_ocr is True:
-            return True
 
         embedded_chars = len(str(embedded.get("combinedText") or ""))
         pypdf_chars = len(str(pypdf.get("content") or ""))

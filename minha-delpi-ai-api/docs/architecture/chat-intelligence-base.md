@@ -38,7 +38,7 @@ Mapa de navegação — não substitui a tabela completa em [§ Serviços centra
 | **Presenter & UI de dados** | `humanizedSummary`, tabelas, gráficos | `external_action_result_presenter.py` · `presenters/*_presenter.py` | [ADR 003](./adr/003-assistant-content-json.md) · [`presenter-content-migration-audit.md`](./presenter-content-migration-audit.md) |
 | **Conteúdo JSON** | Bundles PT-BR editáveis | `app/content/pt-BR/assistant/*.json` · `*ContentService` | [`assistant-content-catalog.md`](./assistant-content-catalog.md) · [vocabulário jun/2026](./vocabulary-centralization-jun2026.md) · [ADR 006](./adr/006-hardcoded-pt-strings-baseline-gate.md) |
 | **SQL avançado** | Authoring, schema, execução (com agente) | `ChatAdvancedSqlSpecialistService` · `ChatSql*Service` | Skill `sql-assistant` · policies `sql-*.md` |
-| **Anexos & lousa** | Welcome, OCR, canvas | `ChatAttachment*Service` · `ChatCanvas*Service` · `ChatDocumentVisionService` | [`playbook-05-anexos-lousa.md`](../roadmap/playbook-05-anexos-lousa.md) |
+| **Anexos & lousa** | Welcome, OCR, canvas | `ChatAttachment*Service` · `ChatCanvas*Service` · `ChatDocumentVisionService` · **`ChatPdfDocumentExtractionService`** | [`playbook-05-anexos-lousa.md`](../roadmap/playbook-05-anexos-lousa.md) · [**extração PDF**](./chat-pdf-document-extraction.md) |
 | **Memória & contexto** | Snapshot, assertividade, projeto | `ChatConversationMemoryService` · `ChatWorkingMemoryService` · `ChatUserContextItemService` | [`session-memory.md`](./session-memory.md) |
 | **Intent & respostas diretas** | Identidade, small talk, gate simples | `ChatIntentRouterService` · `ChatSimpleTurnGateService` · `ChatAssistantIdentityService` | [`intent-routing.md`](./intent-routing.md) |
 | **HTTP & composição** | Rotas finas, DI | `interfaces/http/routes/chat/` · `composition/*_composer.py` | [ADR 004](./adr/004-repository-ports-composition-root.md) · [ADR 005](./adr/005-http-routes-modular-facade.md) |
@@ -92,10 +92,19 @@ Mensagem do usuário
 | `ChatAttachmentPreviewService` | Preview de leitura, `readingStatus` com `documentVision`, snapshots em `metadata.attachments` (Playbook 07) |
 | `ChatAttachmentResponseService` | Enriquece upload/listagem com `readingStatus` e `preview` consistente (Playbook 07) |
 | `ChatAttachmentImageOcrService` | OCR opcional em imagens (`CHAT_ATTACHMENT_IMAGE_OCR_ENABLED`) |
+| **`ChatPdfDocumentExtractionService`** | **Orquestrador genérico de PDF** (embedded + pypdf + fusão + tabelas por anotação); perfis `generic` / `drawing_delpi` — ver [chat-pdf-document-extraction.md](./chat-pdf-document-extraction.md) |
+| `ChatPdfEmbeddedTextService` | PyMuPDF: texto nativo + anotações ODA/CAD com bbox |
+| `ChatPdfTextFusionService` | Fusão multi-fonte (prioriza embedded/anotações sobre pypdf) |
+| `ChatPdfAnnotationTableService` | Linhas tabulares a partir de bbox de anotações |
+| `ChatPdfBomSourceService` | Monta fontes de texto para parsing de BOM (`bom_region`, anotações, carimbo, `full_text`) |
 | `ChatDocumentVisionSkillService` | Ativação canônica da skill `document-vision-delpi` (anexo, intent `attachment_document`, enriquecimento de desenho) |
 | `ChatDocumentVisionTurnService` | Orquestração de OCR por turno (application); consumido por tool context |
-| `ChatDocumentVisionService` | Motor OCR PDF/imagem (native + Tesseract); anexos (`documentVision`) e `drawing-analysis-delpi` |
-| OCR hierárquico desenhos (Onda 14) | Roadmap: [playbook](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) — `ChatDrawingStampExtractionService`, regiões carimbo/BOM/cotas |
+| `ChatDocumentVisionService` | Motor visão PDF/imagem (estágio native via `ChatPdf*` + Tesseract/VLM); anexos (`documentVision`) e `drawing-analysis-delpi` |
+| OCR hierárquico desenhos (Onda 14) | `ChatDrawingRegionService` (regiões carimbo/BOM/cotas) + `ChatDrawingStampExtractionService` — [playbook](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) |
+| `ChatDrawingPdfBomExtractionService` | Orquestra BOM DELPI: `ChatDocumentVisionBomService` + filtro de revisão + códigos 50xx |
+| `ChatDrawingIntermediateCodeService` | Coleta e deduplicação OCR de códigos intermediários `50xx` |
+| `ChatDrawingPdfProductContextService` | Resolve `productCode` (carimbo → arquivo → BOM) |
+| `ChatDrawingPdfExtractionService` | **Fachada DELPI** — carimbo, BOM, cotas, metadados; delega leitura a `ChatPdf*` |
 | `ChatDrawingAnalyserParameterService` | Força `view=full` em `GET /products/{code}/analyser` em turnos de análise de desenho (`drawing_analysis_mode` ou intent `drawing-analysis-delpi`); evita `meta.sections[].truncated` e banner de cobertura parcial |
 | `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |
 | `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, estágio `bom_heuristic`) em texto OCR — Onda 13.3.2 |
@@ -513,6 +522,8 @@ Checklist: **G1–G3** em [`../testing/smoke-operacional-manual.md`](../testing/
 
 Changelog: [`../changelog/2026-06-chat-anexos-desenho-ux.md`](../changelog/2026-06-chat-anexos-desenho-ux.md).
 
+**Extração de PDF (chat base, jun/2026):** qualquer anexo PDF usa `ChatPdfDocumentExtractionService` (embedded PyMuPDF + anotações ODA + fusão + pypdf). A skill de desenho aplica parse DELPI em cima do `fullText`. Doc: [`chat-pdf-document-extraction.md`](./chat-pdf-document-extraction.md).
+
 | Entrega | Detalhe |
 |---------|---------|
 | Reenvio | MFE permite editar anexos ao reenviar pergunta (card + modal de preview) |
@@ -794,7 +805,8 @@ Pesquisa e plano de produto (28/mai/2026): decisão de rota **antes** do LLM, ca
 | Conhecimento global (Normas) | [`../knowledge/domains/global/`](../knowledge/domains/global/) |
 | Bundle agente exportável | [`../knowledge/domains/agents/minha-delpi-chat/`](../knowledge/domains/agents/minha-delpi-chat/) |
 | Auditoria rota a rota + status | [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) |
-| Casos de regressão | `tests/fixtures/chat_intelligence_regression_cases.py` |
+| Changelog jun/2026 (extração PDF chat base) | [`../changelog/2026-06-chat-pdf-extraction-base.md`](../changelog/2026-06-chat-pdf-extraction-base.md) |
+| Extração PDF (arquitetura) | [`chat-pdf-document-extraction.md`](./chat-pdf-document-extraction.md) |
 | Limite upload conhecimento | `KNOWLEDGE_DOCUMENT_MAX_CHARS` (default 2M) |
 
 ```bash

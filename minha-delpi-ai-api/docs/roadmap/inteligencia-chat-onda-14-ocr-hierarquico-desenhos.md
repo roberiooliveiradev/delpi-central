@@ -3,6 +3,7 @@
 **Status:** parcial — Fases 14.1–14.7 ✅; **14.5–14.6** (BOM/cotas por região) ✅ em código; **14.8** homologação `desenhos/` + CI ⬜ parcial (CI unit ✅)  
 **Criado:** 2026-06-08 · **Última revisão doc:** jun/2026  
 **Playbook:** [playbook_ocr_hierarquico_desenhos_delpi.md](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)  
+**Extração PDF (chat base):** [chat-pdf-document-extraction.md](../architecture/chat-pdf-document-extraction.md)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [Onda 13](./inteligencia-chat-onda-13-skill-visao-documentos-ocr.md) MVP
 
 ---
@@ -95,7 +96,7 @@ Fechar o gap entre o **pipeline atual de visão/OCR** e o fluxo normativo DELPI 
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 14.8.1 | Refatorar `ChatDrawingPdfExtractionService` | ✅ |
+| 14.8.1 | Refatorar `ChatDrawingPdfExtractionService` — delega extração a `ChatPdfDocumentExtractionService` | ✅ |
 | 14.8.2 | Merge vision → drawing | ✅ |
 | 14.8.3 | Meta **≥ 10/13** em `desenhos/` | ✅ (13/13 jun/2026) |
 | 14.8.4 | CI regressão | ✅ (unit `run_onda14`) |

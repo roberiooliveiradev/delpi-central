@@ -153,18 +153,19 @@ Extensão do payload já consumido por `ChatDrawingPdfExtractionService` / `Docu
 
 ## 6. Mapa canônico de módulos
 
-| Responsabilidade | Módulo (proposto / existente) | Não duplicar em |
-|------------------|-------------------------------|-----------------|
+| Responsabilidade | Módulo | Não duplicar em |
+|------------------|--------|-----------------|
+| **Extração PDF genérica** (embedded, fusão, anotações) | **`ChatPdfDocumentExtractionService`** + `ChatPdfEmbeddedTextService` | skill desenho, use case |
 | **Ativação da skill** (anexo, desenho, intent) | `ChatDocumentVisionSkillService` (domain) | `should_run_*` inline em use case |
 | **Orquestração por turno** | `ChatDocumentVisionTurnService` (application) | `ChatToolContextPreTurnService`, result assembly |
 | Vocabulário PT / padrões intent | `document_vision.json` + `ChatDocumentVisionContentService` | regex em `ChatAttachmentDocumentIntentService` |
-| Raster + OCR por região | `ChatDocumentVisionService` (estender) | use case, tool context inline |
-| Parse carimbo/título por rótulos | **`ChatDrawingStampExtractionService`** (domain, **novo**) | `ChatProductQueryIntentService.extract_product_code` no texto bruto |
-| Resolução de candidatos | **`ChatDrawingProductCodeResolutionService`** (domain, **novo**) | presenter, prompt agente |
-| Parse BOM tabular | `ChatDocumentVisionBomService` (estender) | regex no PDF inteiro |
-| Parse cotas/decape | `ChatDrawingPdfExtractionService._extract_dimensions` (estender) + região cotas | componentes MFE |
-| Vocabulário PT (rótulos, padrões) | **`drawing_stamp.json`** + loader via `ChatAssistantContentService` | strings em Python |
-| Orquestração merge vision → drawing | `ChatDrawingPdfExtractionService` (refatorar) | `enrich_drawing_extract` ad hoc |
+| Raster + OCR por região DELPI | `ChatDrawingRegionService` + `ChatDocumentVisionService` | use case, tool context inline |
+| Parse carimbo/título por rótulos | `ChatDrawingStampExtractionService` (domain) | `extract_product_code` no texto bruto |
+| Resolução de candidatos | `ChatDrawingProductCodeResolutionService` (domain) | presenter, prompt agente |
+| Parse BOM tabular | `ChatDocumentVisionBomService` (`resolve_from_sources`) | regex no PDF inteiro |
+| Parse cotas/decape | `ChatDrawingPdfExtractionService` + `ChatDrawingDimensionsExtractionService` + região cotas | componentes MFE |
+| Vocabulário PT (rótulos, regiões) | `drawing_stamp.json` + `document_vision.json` (`pdfExtraction`) | strings em Python |
+| Parse DELPI sobre texto base | `ChatDrawingPdfExtractionService` | OCR/embedded duplicado |
 | Validação PDF × API | `ChatDrawingValidationOrchestrationService` (consumir) | — |
 
 **Regra Cursor:** alterações neste escopo atualizam `.cursor/rules/centralized-rules-first.mdc` somente se surgir nova linha na tabela canônica.
