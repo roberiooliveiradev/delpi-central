@@ -36,6 +36,10 @@ def _drawing_stage_message(step_key: str) -> str | None:
 
 class ChatStreamActivityService:
     @classmethod
+    def drawing_stage_message(cls, step_key: str) -> str | None:
+        return _drawing_stage_message(step_key)
+
+    @classmethod
     def entry(
         cls,
         *,

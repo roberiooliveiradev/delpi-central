@@ -192,7 +192,7 @@ class ChatToolContextPreTurnService:
                 on_stream_activity(
                     ChatStreamActivityService.drawing_analysis_step(
                         step_key="fetch_library_pdf",
-                        message=ChatStreamActivityService._drawing_stage_message(
+                        message=ChatStreamActivityService.drawing_stage_message(
                             "fetch_library_pdf"
                         )
                         or "Buscando desenho na biblioteca corporativa…",
