@@ -1,98 +1,98 @@
-.si-indicator-table__list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.si-indicator-table__scroll {
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
-.si-indicator-table__card {
+.si-indicator-table {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px 20px;
-  border-radius: 22px;
+  gap: 10px;
+  min-width: min(100%, 1480px);
+}
+
+.si-indicator-table__row {
+  display: grid;
+  grid-template-columns:
+    minmax(200px, 2.2fr)
+    minmax(92px, 1fr)
+    minmax(76px, 0.75fr)
+    52px
+    minmax(132px, 1.15fr)
+    minmax(88px, 0.8fr)
+    minmax(72px, 0.7fr)
+    minmax(108px, 1fr)
+    60px
+    minmax(132px, 1.15fr)
+    minmax(120px, 1fr)
+    minmax(112px, max-content);
+  gap: 12px 16px;
+  align-items: start;
+  padding: 16px 18px;
+  border-radius: 18px;
   background: var(--si-card-bg);
   border: 1px solid var(--si-card-border);
-  box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
 }
 
-.si-indicator-table__card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+.si-indicator-table__row > * {
+  min-width: 0;
 }
 
-.si-indicator-table__card-title {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.35;
-  color: var(--si-title);
+.si-indicator-table__row--head {
+  background: transparent;
+  border: none;
+  padding: 0 18px 6px;
+  color: var(--si-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  align-items: center;
 }
 
-.si-indicator-table__card-meta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.si-indicator-table__meta-item {
+.si-indicator-table__indicator {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 0;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: var(--surface-2, #f7f7f7);
-  border: 1px solid var(--si-card-border);
 }
 
-.si-indicator-table__meta-item span {
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--si-text-muted);
-}
-
-.si-indicator-table__meta-item strong {
-  display: block;
-  min-width: 0;
+.si-indicator-table__indicator strong {
   font-size: 15px;
   color: var(--si-title);
 }
 
-.si-indicator-table__meta-item--wide {
-  grid-column: 1 / -1;
+.si-indicator-table__indicator span {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--si-text-muted);
+}
+
+.si-indicator-table__metrics {
+  display: block;
+}
+
+.si-indicator-table__direction {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.si-indicator-table__score {
+  font-size: 16px;
+  color: var(--si-title);
+  align-self: center;
 }
 
 .si-indicator-table__score--missing {
   color: var(--si-text-muted);
 }
 
-.si-indicator-table__card-reading {
+.si-indicator-table__status {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--primary, #089bdb) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 18%, transparent);
-}
-
-.si-indicator-table__card-reading span {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--si-text-muted);
-}
-
-.si-indicator-table__card-reading p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--si-title);
+  justify-content: flex-end;
+  align-self: start;
+  flex-shrink: 0;
+  min-width: max-content;
 }
 
 .si-indicator-table__empty {
@@ -103,31 +103,83 @@
   color: var(--si-text-muted);
 }
 
-@media (min-width: 900px) {
-  .si-indicator-table__card-meta {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+@media (max-width: 1280px) {
+  .si-indicator-table {
+    min-width: 0;
   }
 
-  .si-indicator-table__meta-item--wide {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 768px) {
-  .si-indicator-table__card {
-    padding: 16px;
-  }
-
-  .si-indicator-table__card-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .si-indicator-table__card-meta {
+  .si-indicator-table__row {
     grid-template-columns: 1fr;
   }
 
-  .si-indicator-table__meta-item--wide {
-    grid-column: auto;
+  .si-indicator-table__row--head {
+    display: none;
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > * {
+    display: grid;
+    grid-template-columns: minmax(108px, 34%) 1fr;
+    gap: 8px 12px;
+    align-items: start;
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > *::before {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--si-text-muted);
+  }
+
+  .si-indicator-table__indicator::before {
+    content: "Indicador";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(2)::before {
+    content: "Departamento";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(3)::before {
+    content: "Escopo";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(4)::before {
+    content: "Peso";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(5)::before {
+    content: "Meta";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(6)::before {
+    content: "Periodicidade";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(7)::before {
+    content: "Modo";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(8)::before {
+    content: "Direção";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(9)::before {
+    content: "Nota";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(10)::before {
+    content: "Valor atual";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(11)::before {
+    content: "Gap";
+  }
+
+  .si-indicator-table__row:not(.si-indicator-table__row--head) > :nth-child(12)::before {
+    content: "Status";
+  }
+
+  .si-indicator-table__status {
+    justify-content: flex-start;
   }
 }

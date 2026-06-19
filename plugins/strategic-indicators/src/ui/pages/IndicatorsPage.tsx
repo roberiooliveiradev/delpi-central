@@ -355,8 +355,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
           </SectionBlock>
 
           <SectionBlock
-            title="Listagem de indicadores"
-            description="Todos os indicadores com meta, realizado, gap e leitura estratégica em uma única visão."
+            title="Tabela de indicadores"
+            description="Listagem completa com meta, realizado, gap e demais atributos analíticos por indicador."
           >
             <IndicatorAnalyticsTable
               indicators={filteredIndicators}
