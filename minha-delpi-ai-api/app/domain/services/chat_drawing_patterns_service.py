@@ -260,3 +260,153 @@ class ChatDrawingPatternsService:
             "unitSuffixes",
         )
         return tuple(str(item).strip().lower() for item in items if str(item).strip())
+
+    @classmethod
+    def compile_stamp_anchor(cls, key: str) -> re.Pattern[str]:
+        cache_key = f"stamp_anchor:{key}"
+
+        if cache_key not in _COMPILED:
+            raw = ChatAssistantContentService.get(_STAMP_BUNDLE, "patterns", key, default="")
+            _COMPILED[cache_key] = re.compile(str(raw))
+
+        return _COMPILED[cache_key]
+
+    @classmethod
+    def code_token(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("codeToken")
+
+    @classmethod
+    def ocr_spaced_code(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("ocrSpacedCode")
+
+    @classmethod
+    def stamp_revision(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("stampRevision")
+
+    @classmethod
+    def primary_drawing_code(cls) -> re.Pattern[str]:
+        return cls.compile_stamp_anchor("primaryDrawingCode")
+
+    @classmethod
+    def labeled_product_code_capture(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _STAMP_BUNDLE,
+                "patterns",
+                "labeledProductCodeCapture",
+                default="",
+            )
+        )
+
+    @classmethod
+    def filename_code(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("filenameCode")
+
+    @classmethod
+    def customer_code_labeled(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("customerCodeLabeled")
+
+    @classmethod
+    def customer_code_inline(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("customerCodeInline")
+
+    @classmethod
+    def customer_description_labeled(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("customerDescriptionLabeled")
+
+    @classmethod
+    def title_separator_strip(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("titleSeparatorStrip")
+
+    @classmethod
+    def code_family_prefix(cls, key: str, default: str = "") -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _STAMP_BUNDLE,
+                "codeFamilies",
+                key,
+                default=default,
+            )
+        )
+
+    @classmethod
+    def code_family_prefixes(cls, key: str) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(_STAMP_BUNDLE, "codeFamilies", key)
+        return tuple(str(item) for item in items if str(item))
+
+    @classmethod
+    def is_bom_component(cls, code: str | None) -> bool:
+        normalized = str(code or "").strip()
+
+        if not normalized:
+            return False
+
+        prefixes = cls.code_family_prefixes("bomComponentPrefixes")
+
+        return any(normalized.startswith(prefix) for prefix in prefixes)
+
+    @classmethod
+    def is_finished_product(cls, code: str | None) -> bool:
+        normalized = str(code or "").strip()
+        prefix = cls.code_family_prefix("finishedProductPrefix", "90")
+
+        return bool(normalized and normalized.startswith(prefix))
+
+    @classmethod
+    def is_primary_drawing_code(cls, code: str | None) -> bool:
+        normalized = str(code or "").strip()
+
+        return bool(normalized and cls.primary_drawing_code().match(normalized))
+
+    @classmethod
+    def candidate_confidence(cls, key: str, default: float) -> float:
+        raw = ChatAssistantContentService.get(
+            _STAMP_BUNDLE,
+            "candidateConfidence",
+            key,
+            default=str(default),
+        )
+
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def high_confidence_threshold(cls) -> float:
+        return cls.candidate_confidence("highConfidenceThreshold", 0.85)
+
+    @classmethod
+    def product_code_source_rank(cls, source: str | None) -> int:
+        node = ChatAssistantContentService.get_node(
+            _STAMP_BUNDLE,
+            "productCodeResolution",
+            "sourceRanking",
+        ) or {}
+
+        return int(node.get(str(source or "").strip(), 0))
+
+    @classmethod
+    def product_code_ocr_drift_difference_count(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _STAMP_BUNDLE,
+            "productCodeResolution",
+            "ocrDriftDifferenceCount",
+            default="1",
+        )
+
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return 1
+
+    @classmethod
+    def default_chicote_description(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _STAMP_BUNDLE,
+                "defaults",
+                "chicoteDescription",
+                default="CHICOTE DE LIGACAO",
+            )
+        )

@@ -6,24 +6,13 @@ import re
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_region_service import ChatDrawingRegionService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 
 _BUNDLE = "drawing_stamp"
-_CODE_TOKEN_RE = re.compile(
-    r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5})\b",
-    re.IGNORECASE,
-)
-_OCR_SPACED_CODE_RE = re.compile(
-    r"(90|50|10)\s*(\d{3})\s*(\d{3})",
-    re.IGNORECASE,
-)
-_REV_RE = re.compile(
-    r"REV(?:\.|IS[ÃA]O)?\s*[:.]?\s*(\d{1,3})",
-    re.IGNORECASE,
-)
 
 
 class ChatDrawingStampExtractionService:
@@ -47,26 +36,42 @@ class ChatDrawingStampExtractionService:
 
         if labeled_code:
             candidates.append(
-                cls._candidate(labeled_code, labeled_source, 0.92),
+                cls._candidate(
+                    labeled_code,
+                    labeled_source,
+                    ChatDrawingPatternsService.candidate_confidence("labeledStamp", 0.92),
+                ),
             )
 
         title_code = cls._extract_title_pattern_code(combined)
 
         if title_code:
-            candidates.append(cls._candidate(title_code, "title_pattern", 0.88))
+            candidates.append(
+                cls._candidate(
+                    title_code,
+                    "title_pattern",
+                    ChatDrawingPatternsService.candidate_confidence("titlePattern", 0.88),
+                )
+            )
 
         if stamp:
             for code in cls._scan_codes_excluding_customer_fields(stamp):
                 if cls._candidate_exists(candidates, code):
                     continue
 
-                candidates.append(cls._candidate(code, "stamp_context", 0.55))
+                candidates.append(
+                    cls._candidate(
+                        code,
+                        "stamp_context",
+                        ChatDrawingPatternsService.candidate_confidence("stampContext", 0.55),
+                    )
+                )
 
         intermediate_codes = sorted(
             {
                 ChatProductQueryIntentService.normalize_product_code(match)
-                for match in _CODE_TOKEN_RE.findall(combined)
-                if match.startswith("50")
+                for match in ChatDrawingPatternsService.code_token().findall(combined)
+                if ChatDrawingPatternsService.is_intermediate_family(match)
             }
         )
 
@@ -154,13 +159,10 @@ class ChatDrawingStampExtractionService:
     def _extract_labeled_product_code(cls, text: str) -> tuple[str | None, str | None]:
         masked = cls._mask_customer_fields(text)
         labels = ChatAssistantContentService.list(_BUNDLE, "stampFieldLabels", "productCode")
+        capture = ChatDrawingPatternsService.labeled_product_code_capture()
 
         for label in labels:
-            pattern = (
-                rf"{re.escape(label)}\s*[:.]?\s*"
-                rf"((?:90|50|10)\s*\d{{3}}\s*\d{{3}}|(?:90|50|10)\d{{6}}|100\d{{5}})"
-            )
-
+            pattern = rf"{re.escape(label)}\s*[:.]?\s*{capture}"
             match = re.search(pattern, masked, re.IGNORECASE)
 
             if not match:
@@ -177,6 +179,7 @@ class ChatDrawingStampExtractionService:
     def _extract_title_pattern_code(cls, text: str) -> str | None:
         masked = cls._mask_customer_fields(text)
         prefixes = ChatAssistantContentService.list(_BUNDLE, "titlePatterns", "chicotePrefixes")
+        bom_prefixes = ChatDrawingPatternsService.code_family_prefixes("bomComponentPrefixes")
 
         for prefix in prefixes:
             normalized_prefix = cls._normalize_token(prefix)
@@ -186,13 +189,18 @@ class ChatDrawingStampExtractionService:
                 continue
 
             tail = masked[idx + len(normalized_prefix) :].lstrip()
-            chunk = re.sub(r"^[/|·\-]+\s*", "", tail).split("\n", 1)[0].strip()
+            chunk = ChatDrawingPatternsService.title_separator_strip().sub("", tail).split(
+                "\n", 1
+            )[0].strip()
+
             if not chunk:
                 continue
 
             code = cls._normalize_ocr_code(chunk)
 
-            if code and cls._is_drawing_product_code(code) and not code.startswith("10"):
+            if code and cls._is_drawing_product_code(code) and not any(
+                code.startswith(prefix) for prefix in bom_prefixes
+            ):
                 return code
 
         return None
@@ -201,23 +209,26 @@ class ChatDrawingStampExtractionService:
     def _scan_codes_excluding_customer_fields(cls, text: str) -> list[str]:
         masked = cls._mask_customer_fields(text)
         found: list[str] = []
+        exclude_prefixes = ChatDrawingPatternsService.code_family_prefixes(
+            "excludeFromStampScanPrefixes"
+        )
 
-        for match in _CODE_TOKEN_RE.finditer(masked):
+        for match in ChatDrawingPatternsService.code_token().finditer(masked):
             code = ChatProductQueryIntentService.normalize_product_code(match.group(1))
 
             if not code or not cls._is_drawing_product_code(code):
                 continue
 
-            if code.startswith(("10", "50")):
+            if any(code.startswith(prefix) for prefix in exclude_prefixes):
                 continue
 
             if code not in found:
                 found.append(code)
 
-        for match in _OCR_SPACED_CODE_RE.finditer(masked):
+        for match in ChatDrawingPatternsService.ocr_spaced_code().finditer(masked):
             code = cls._normalize_ocr_code("".join(match.groups()))
 
-            if not code or code.startswith("50"):
+            if not code or ChatDrawingPatternsService.is_intermediate_family(code):
                 continue
 
             if code not in found:
@@ -239,7 +250,9 @@ class ChatDrawingStampExtractionService:
                 idx = upper.find(prefix.upper())
 
                 if idx >= 0:
-                    masked_line = line[: idx + len(prefix)] + " " * max(0, len(line) - idx - len(prefix))
+                    masked_line = line[: idx + len(prefix)] + " " * max(
+                        0, len(line) - idx - len(prefix)
+                    )
                     break
 
             masked_lines.append(masked_line)
@@ -248,7 +261,7 @@ class ChatDrawingStampExtractionService:
 
     @classmethod
     def _extract_revision(cls, text: str) -> str | None:
-        match = _REV_RE.search(text)
+        match = ChatDrawingPatternsService.stamp_revision().search(text)
 
         if match:
             return match.group(1).zfill(2)
@@ -260,27 +273,15 @@ class ChatDrawingStampExtractionService:
         customer_code = None
         customer_description = None
 
-        code_match = re.search(
-            r"(?:COD\.?\s*CLIENTE|C[ÓO]D\.?\s*CLIENTE)\s*[:.]?\s*(\d{4,12})",
-            text,
-            re.IGNORECASE,
-        )
+        code_match = ChatDrawingPatternsService.customer_code_labeled().search(text)
 
         if not code_match:
-            code_match = re.search(
-                r"(?:^|\n)\s*COD\s*:\s*(\d{4,12})",
-                text,
-                re.IGNORECASE,
-            )
+            code_match = ChatDrawingPatternsService.customer_code_inline().search(text)
 
         if code_match:
             customer_code = code_match.group(1).strip()
 
-        des_match = re.search(
-            r"(?:DES\.?\s*CLIENTE|DES\.?)\s*[:.]?\s*(\d{4,14})",
-            text,
-            re.IGNORECASE,
-        )
+        des_match = ChatDrawingPatternsService.customer_description_labeled().search(text)
 
         if des_match:
             customer_description = des_match.group(1).strip()
@@ -292,7 +293,7 @@ class ChatDrawingStampExtractionService:
         title_code = cls._extract_title_pattern_code(text)
 
         if title_code:
-            return "CHICOTE DE LIGACAO"
+            return ChatDrawingPatternsService.default_chicote_description()
 
         for prefix in ChatAssistantContentService.list(_BUNDLE, "titlePatterns", "chicotePrefixes"):
             if cls._normalize_token(prefix) in cls._normalize_token(text):
@@ -319,10 +320,11 @@ class ChatDrawingStampExtractionService:
         if not code:
             return None, None
 
+        threshold = ChatDrawingPatternsService.high_confidence_threshold()
         high_conf = [
             item
             for item in ranked
-            if float(item.get("confidence") or 0) >= 0.85
+            if float(item.get("confidence") or 0) >= threshold
             and str(item.get("code")) != code
         ]
 
@@ -375,7 +377,9 @@ class ChatDrawingStampExtractionService:
 
     @classmethod
     def _looks_unresolvable(cls, text: str) -> bool:
-        return not bool(_CODE_TOKEN_RE.search(cls._mask_customer_fields(text)))
+        return not bool(
+            ChatDrawingPatternsService.code_token().search(cls._mask_customer_fields(text))
+        )
 
     @classmethod
     def _is_drawing_product_code(cls, code: str | None) -> bool:
@@ -384,4 +388,4 @@ class ChatDrawingStampExtractionService:
         if not normalized or not ChatProductQueryIntentService.is_plausible_product_code(normalized):
             return False
 
-        return bool(re.match(r"^(90\d{6}|50\d{6})$", normalized))
+        return ChatDrawingPatternsService.is_primary_drawing_code(normalized)

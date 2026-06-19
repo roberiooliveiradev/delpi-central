@@ -2,23 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Any
 
-from app.domain.services.chat_drawing_pdf_extraction_service import (
-    ChatDrawingPdfExtractionService,
-)
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
-
-_FILENAME_CODE_RE = re.compile(
-    r"^(?:delpi[_-]?)?(90\d{6}|10\d{6}|100\d{5})(?:[_-].*)?$",
-    re.IGNORECASE,
-)
-_PRIMARY_CODE_RE = re.compile(r"^(90\d{6}|50\d{6})$")
-_HIGH_CONFIDENCE = 0.85
 
 
 class ChatDrawingProductCodeResolutionService:
@@ -89,7 +79,7 @@ class ChatDrawingProductCodeResolutionService:
         if not stem:
             return None
 
-        match = _FILENAME_CODE_RE.match(stem)
+        match = ChatDrawingPatternsService.filename_code().match(stem)
 
         if not match:
             return None
@@ -137,6 +127,7 @@ class ChatDrawingProductCodeResolutionService:
         top = ranked[0]
         code = ChatProductQueryIntentService.normalize_product_code(str(top.get("code") or ""))
         source = str(top.get("source") or "stamp_labeled")
+        threshold = ChatDrawingPatternsService.high_confidence_threshold()
 
         if not code:
             return None, None
@@ -144,7 +135,7 @@ class ChatDrawingProductCodeResolutionService:
         high_conf = [
             item
             for item in ranked
-            if float(item.get("confidence") or 0) >= _HIGH_CONFIDENCE
+            if float(item.get("confidence") or 0) >= threshold
             and str(item.get("code")) != code
         ]
 
@@ -152,8 +143,8 @@ class ChatDrawingProductCodeResolutionService:
             return None, "unresolved"
 
         if filename_code and code != filename_code:
-            if cls._filename_looks_like_primary_product(filename_code):
-                if float(top.get("confidence") or 0) < _HIGH_CONFIDENCE:
+            if ChatDrawingPatternsService.is_finished_product(filename_code):
+                if float(top.get("confidence") or 0) < threshold:
                     return filename_code, "filename_crosscheck"
 
         return code, source
@@ -166,7 +157,10 @@ class ChatDrawingProductCodeResolutionService:
         if not extracted or not filename:
             return False
 
-        if not (extracted.startswith("90") and filename.startswith("90")):
+        if not (
+            ChatDrawingPatternsService.is_finished_product(extracted)
+            and ChatDrawingPatternsService.is_finished_product(filename)
+        ):
             return False
 
         if len(extracted) != len(filename):
@@ -174,7 +168,7 @@ class ChatDrawingProductCodeResolutionService:
 
         differences = sum(left != right for left, right in zip(extracted, filename))
 
-        return differences == 1
+        return differences == ChatDrawingPatternsService.product_code_ocr_drift_difference_count()
 
     @classmethod
     def enrich_pdf_extract_conflicts(
@@ -191,9 +185,9 @@ class ChatDrawingProductCodeResolutionService:
         )
 
         if pdf_code and filename_code and pdf_code != filename_code:
-            if cls._looks_like_bom_component(pdf_code) and cls._filename_looks_like_primary_product(
-                filename_code
-            ):
+            if ChatDrawingPatternsService.is_bom_component(
+                pdf_code
+            ) and ChatDrawingPatternsService.is_finished_product(filename_code):
                 conflicts.append(
                     {
                         "type": "bom_code_promoted",
@@ -228,9 +222,10 @@ class ChatDrawingProductCodeResolutionService:
             or ("document_vision" if pdf_meta.get("documentVision") else pdf_meta.get("extractor"))
             or "pdf_extract"
         )
+        threshold = ChatDrawingPatternsService.high_confidence_threshold()
 
-        if pdf_code and cls._looks_like_bom_component(pdf_code):
-            if filename_code and cls._filename_looks_like_primary_product(filename_code):
+        if pdf_code and ChatDrawingPatternsService.is_bom_component(pdf_code):
+            if filename_code and ChatDrawingPatternsService.is_finished_product(filename_code):
                 return filename_code, "filename"
 
         candidate_code, candidate_source = cls.pick_from_candidates(
@@ -242,8 +237,8 @@ class ChatDrawingProductCodeResolutionService:
             return candidate_code, candidate_source
 
         if filename_code and pdf_code and filename_code != pdf_code:
-            if cls._filename_looks_like_primary_product(filename_code):
-                if cls._looks_like_bom_component(pdf_code):
+            if ChatDrawingPatternsService.is_finished_product(filename_code):
+                if ChatDrawingPatternsService.is_bom_component(pdf_code):
                     return filename_code, "filename"
 
                 if candidate_code and candidate_code != pdf_code:
@@ -256,7 +251,7 @@ class ChatDrawingProductCodeResolutionService:
                             ),
                             0,
                         )
-                    ) >= _HIGH_CONFIDENCE:
+                    ) >= threshold:
                         return candidate_code, candidate_source
 
                 return filename_code, "filename"
@@ -285,7 +280,7 @@ class ChatDrawingProductCodeResolutionService:
 
             code = ChatProductQueryIntentService.normalize_product_code(str(item.get("code") or ""))
 
-            if not code or cls._looks_like_bom_component(code):
+            if not code or ChatDrawingPatternsService.is_bom_component(code):
                 continue
 
             ranked.append({**item, "code": code})
@@ -297,41 +292,5 @@ class ChatDrawingProductCodeResolutionService:
         )
 
     @classmethod
-    def _filename_looks_like_primary_product(cls, code: str) -> bool:
-        normalized = ChatProductQueryIntentService.normalize_product_code(code)
-
-        return bool(normalized and normalized.startswith("90"))
-
-    @classmethod
-    def _looks_like_bom_component(cls, code: str | None) -> bool:
-        normalized = ChatProductQueryIntentService.normalize_product_code(code or "")
-
-        if not normalized:
-            return False
-
-        return normalized.startswith(("10", "100"))
-
-    @classmethod
-    def _looks_like_primary_drawing(cls, code: str | None) -> bool:
-        normalized = ChatProductQueryIntentService.normalize_product_code(code or "")
-
-        return bool(normalized and _PRIMARY_CODE_RE.match(normalized))
-
-    @classmethod
     def _source_rank(cls, source: str | None) -> int:
-        ranking = {
-            "message": 50,
-            "filename": 40,
-            "filename_crosscheck": 39,
-            "stamp_labeled": 38,
-            "title_pattern": 37,
-            "document_vision": 35,
-            "title_block": 34,
-            "pdf_extract": 30,
-            "attachment_context": 28,
-            "turn": 20,
-            "context": 10,
-            "unresolved": 0,
-        }
-
-        return ranking.get(str(source or "").strip(), 0)
+        return ChatDrawingPatternsService.product_code_source_rank(source)

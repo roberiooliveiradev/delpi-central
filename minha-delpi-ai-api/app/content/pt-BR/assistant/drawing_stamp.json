@@ -127,7 +127,17 @@
     "cotaDecapeLength": "\\b(\\d+)\\s*±\\s*(\\d+)\\s*±\\s*(\\d+)\\b",
     "genericDecape": "DEC[A4@]PE?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "decapeNote": "DECAPE\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
-    "hintNumberTail": "(\\d[\\d\\s,.]*)\\s*M{0,2}"
+    "hintNumberTail": "(\\d[\\d\\s,.]*)\\s*M{0,2}",
+    "codeToken": "\\b(90\\d{6}|50\\d{6}|10\\d{6}|100\\d{5})\\b",
+    "ocrSpacedCode": "(90|50|10)\\s*(\\d{3})\\s*(\\d{3})",
+    "stampRevision": "REV(?:\\.|IS[ÃA]O)?\\s*[:.]?\\s*(\\d{1,3})",
+    "primaryDrawingCode": "^(90\\d{6}|50\\d{6})$",
+    "labeledProductCodeCapture": "((?:90|50|10)\\s*\\d{3}\\s*\\d{3}|(?:90|50|10)\\d{6}|100\\d{5})",
+    "filenameCode": "^(?:delpi[_-]?)?(90\\d{6}|10\\d{6}|100\\d{5})(?:[_-].*)?$",
+    "customerCodeLabeled": "(?:COD\\.?\\s*CLIENTE|C[ÓO]D\\.?\\s*CLIENTE)\\s*[:.]?\\s*(\\d{4,12})",
+    "customerCodeInline": "(?:^|\\n)\\s*COD\\s*:\\s*(\\d{4,12})",
+    "customerDescriptionLabeled": "(?:DES\\.?\\s*CLIENTE|DES\\.?)\\s*[:.]?\\s*(\\d{4,14})",
+    "titleSeparatorStrip": "^[/|·\\-]+\\s*"
   },
   "patternLists": {
     "length": [
@@ -161,7 +171,36 @@
     "fullTermoLength": 8
   },
   "codeFamilies": {
-    "intermediatePrefix": "50"
+    "intermediatePrefix": "50",
+    "finishedProductPrefix": "90",
+    "bomComponentPrefixes": ["10", "100"],
+    "excludeFromStampScanPrefixes": ["10", "50"]
+  },
+  "candidateConfidence": {
+    "labeledStamp": 0.92,
+    "titlePattern": 0.88,
+    "stampContext": 0.55,
+    "highConfidenceThreshold": 0.85
+  },
+  "productCodeResolution": {
+    "ocrDriftDifferenceCount": 1,
+    "sourceRanking": {
+      "message": 50,
+      "filename": 40,
+      "filename_crosscheck": 39,
+      "stamp_labeled": 38,
+      "title_pattern": 37,
+      "document_vision": 35,
+      "title_block": 34,
+      "pdf_extract": 30,
+      "attachment_context": 28,
+      "turn": 20,
+      "context": 10,
+      "unresolved": 0
+    }
+  },
+  "defaults": {
+    "chicoteDescription": "CHICOTE DE LIGACAO"
   },
   "extractionLimits": {
     "bomMaxRows": 40,

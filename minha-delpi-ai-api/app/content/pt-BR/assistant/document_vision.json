@@ -57,5 +57,16 @@
   "supported": {
     "imageExtensions": [".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff"],
     "documentMimePrefixes": ["application/pdf", "image/"]
+  },
+  "titleBlock": {
+    "stampLinePattern": "(?:PRODUTO|C[ÓO]DIGO|DESENHO|REV(?:\\.|IS[ÃA]O)?|CLIENTE|MATERIAL|CHICOTE)\\b",
+    "minLineLength": 4,
+    "maxStampLines": 12
+  },
+  "tables": {
+    "pipeRow": "^\\|?.+\\|.+\\|?\\s*$",
+    "pipeSeparator": "^\\|[\\s\\-:|]+\\|\\s*$",
+    "maxTables": 3,
+    "maxRows": 40
   }
 }

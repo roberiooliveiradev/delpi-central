@@ -36,3 +36,11 @@ def test_attachment_intent_uses_bundle_patterns():
         "ler a imagem anexada"
     )
     assert not ChatAttachmentDocumentIntentService.is_document_content_question("oi")
+
+
+def test_title_block_and_table_patterns_from_bundle():
+    stamp_line = ChatDocumentVisionContentService.title_block_stamp_line_pattern()
+
+    assert stamp_line.search("CÓDIGO DELPI 90260140")
+    assert ChatDocumentVisionContentService.table_pipe_row_pattern().match("| A | B |")
+    assert ChatDocumentVisionContentService.tables_max_tables() >= 1

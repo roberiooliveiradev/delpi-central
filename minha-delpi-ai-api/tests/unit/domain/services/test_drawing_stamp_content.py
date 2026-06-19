@@ -40,4 +40,7 @@ def test_drawing_stamp_patterns_section_exists():
     patterns = ChatAssistantContentService.get_node("drawing_stamp", "patterns") or {}
 
     assert patterns.get("componentCode")
+    assert patterns.get("codeToken")
+    assert patterns.get("primaryDrawingCode")
     assert ChatAssistantContentService.list("drawing_stamp", "patternLists", "length")
+    assert ChatAssistantContentService.get_node("drawing_stamp", "productCodeResolution")

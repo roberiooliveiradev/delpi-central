@@ -9,6 +9,7 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 _BUNDLE = "document_vision"
 _COMPILED_PATTERNS: list[re.Pattern[str]] | None = None
 _COMPILED_DESCRIBE_PATTERNS: list[re.Pattern[str]] | None = None
+_COMPILED_CONFIG_PATTERNS: dict[str, re.Pattern[str]] = {}
 
 
 class ChatDocumentVisionContentService:
@@ -132,3 +133,84 @@ class ChatDocumentVisionContentService:
             key,
             default=key,
         )
+
+    @classmethod
+    def _compile_config_pattern(cls, *path: str) -> re.Pattern[str]:
+        cache_key = f"config:{'/'.join(path)}"
+
+        if cache_key not in _COMPILED_CONFIG_PATTERNS:
+            raw = ChatAssistantContentService.get(_BUNDLE, *path, default="")
+            _COMPILED_CONFIG_PATTERNS[cache_key] = re.compile(
+                str(raw),
+                re.IGNORECASE,
+            )
+
+        return _COMPILED_CONFIG_PATTERNS[cache_key]
+
+    @classmethod
+    def title_block_stamp_line_pattern(cls) -> re.Pattern[str]:
+        return cls._compile_config_pattern("titleBlock", "stampLinePattern")
+
+    @classmethod
+    def title_block_min_line_length(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "titleBlock",
+            "minLineLength",
+            default="4",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 4
+
+    @classmethod
+    def title_block_max_stamp_lines(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "titleBlock",
+            "maxStampLines",
+            default="12",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 12
+
+    @classmethod
+    def table_pipe_row_pattern(cls) -> re.Pattern[str]:
+        return cls._compile_config_pattern("tables", "pipeRow")
+
+    @classmethod
+    def table_pipe_separator_pattern(cls) -> re.Pattern[str]:
+        return cls._compile_config_pattern("tables", "pipeSeparator")
+
+    @classmethod
+    def tables_max_tables(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "tables",
+            "maxTables",
+            default="3",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 3
+
+    @classmethod
+    def tables_max_rows(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "tables",
+            "maxRows",
+            default="40",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 40

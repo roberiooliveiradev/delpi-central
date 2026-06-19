@@ -29,3 +29,10 @@ def test_intermediate_segment_pattern_parses_description():
     assert match.group(1) == "00036"
     assert match.group(2) == "04"
     assert match.group(3) == "06"
+
+
+def test_stamp_extraction_patterns_from_json():
+    assert ChatDrawingPatternsService.code_token().search("90260140")
+    assert ChatDrawingPatternsService.primary_drawing_code().match("90260140")
+    assert ChatDrawingPatternsService.filename_code().match("90260140-1")
+    assert ChatDrawingPatternsService.high_confidence_threshold() == 0.85
