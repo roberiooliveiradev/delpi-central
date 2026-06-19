@@ -12,6 +12,30 @@ def test_bom_region_uses_tesseract_and_easyocr_only():
     assert engines == ("tesseract", "easyocr")
 
 
+def test_region_override_limits_bom_to_tesseract_only(monkeypatch):
+    calls: list[str] = []
+
+    def fake_detailed(engine, image, *, lang, tesseract_config):
+        del image, lang, tesseract_config
+        calls.append(engine)
+        return {"text": "90264227", "codeTokens": []}
+
+    monkeypatch.setattr(
+        ChatPdfRegionOcrEngineService,
+        "_run_engine_detailed",
+        staticmethod(fake_detailed),
+    )
+
+    with ChatPdfRegionOcrEngineService.region_ocr_engines_override(["tesseract"]):
+        ChatPdfRegionOcrEngineService.recognize(
+            object(),
+            lang="por+eng",
+            region="bom",
+        )
+
+    assert calls == ["tesseract"]
+
+
 def test_recognize_bom_uses_weighted_fusion(monkeypatch):
     calls: list[str] = []
 

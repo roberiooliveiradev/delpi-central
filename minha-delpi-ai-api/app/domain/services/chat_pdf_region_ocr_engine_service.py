@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from contextlib import contextmanager
+from typing import Any, Iterator
 
 from app.domain.services.chat_document_vision_content_service import (
     ChatDocumentVisionContentService,
@@ -15,9 +16,51 @@ from app.domain.services.chat_pdf_region_ocr_fusion_service import (
 
 class ChatPdfRegionOcrEngineService:
     _easyocr_readers: dict[tuple[str, ...], Any] = {}
+    _runtime_engines_override: tuple[str, ...] | None = None
+
+    @classmethod
+    def release_cached_readers(cls) -> None:
+        """Libera readers EasyOCR em cache — usar entre retentativas de extração."""
+        cls._easyocr_readers.clear()
+
+    @classmethod
+    @contextmanager
+    def region_ocr_engines_override(
+        cls,
+        engines: list[str] | tuple[str, ...] | None,
+    ) -> Iterator[None]:
+        previous = cls._runtime_engines_override
+
+        if engines:
+            cls._runtime_engines_override = cls._normalize_engine_tokens(engines)
+        else:
+            cls._runtime_engines_override = None
+
+        try:
+            yield
+        finally:
+            cls._runtime_engines_override = previous
+
+    @classmethod
+    def _normalize_engine_tokens(
+        cls,
+        engines: list[str] | tuple[str, ...],
+    ) -> tuple[str, ...]:
+        resolved: list[str] = []
+
+        for engine in engines:
+            token = str(engine or "").strip().lower()
+
+            if token and token not in resolved:
+                resolved.append(token)
+
+        return tuple(resolved or ("tesseract",))
 
     @classmethod
     def enabled_engines(cls) -> tuple[str, ...]:
+        if cls._runtime_engines_override is not None:
+            return cls._runtime_engines_override
+
         configured = ChatDocumentVisionContentService.pdf_region_ocr_engines()
         resolved: list[str] = []
 
@@ -80,6 +123,9 @@ class ChatPdfRegionOcrEngineService:
 
     @classmethod
     def _engines_for_region(cls, region: str) -> tuple[str, ...]:
+        if cls._runtime_engines_override is not None:
+            return cls._runtime_engines_override
+
         if region == "bom":
             return ChatDocumentVisionContentService.pdf_bom_region_ocr_engines()
 

@@ -118,16 +118,20 @@ Itens **autoritativos da API** (roteiro, inspeção) não são rebaixados.
 
 ### Retentativas de extração (qualidade ≥ 95%)
 
-Antes da validação, `ChatDrawingExtractionQualityRetryService` repete a leitura do PDF com perfis escalonados até `targetConfidence` (default **95%**), esgotar `maxAttempts` ou detectar **estagnação** (score e `componentCodes` não melhoram entre tentativas consecutivas):
+Antes da validação, `ChatDrawingExtractionQualityRetryService` repete a leitura do PDF com perfis escalonados até `targetConfidence` (default **95%**), esgotar `maxAttempts` ou detectar **estagnação**.
+
+**Por que era lento e pesado:** cada região (carimbo, BOM, cotas) rasteriza a página e, no default global, rodava **Tesseract + EasyOCR**. EasyOCR carrega modelos PyTorch (~1–1.5 GB RAM) e executa por recorte; com 2–3 passagens e DPI alto, o WSL estourava memória (exit 137).
+
+**Política atual:** o **loop de retry usa só Tesseract** (`extractionQualityRetry.regionOcrEngines: ["tesseract"]`). EasyOCR permanece disponível fora do loop (visão de documento / enriquecimento opcional), mas não entra nas retentativas de validação de desenho.
 
 ```text
 ChatDrawingPdfExtractionService.extract_from_storage_path
   → ChatDrawingExtractionQualityRetryService.extract_until_confident
-       tentativa 1: standard (OCR regional automático para desenho DELPI)
-       tentativa 2: high_dpi_regions (OCR forçado, DPI × 1.75)
-       tentativa 3: high_dpi_static_layout (DPI × 2.0, layoutAnalysisEnabled: false)
-  → ChatDrawingExtractionConfidenceService.evaluate_for_extraction (score só da extração)
-  → melhor tentativa em pdf_extract + metadata extractionQualityRetry
+       motores: Tesseract only (override em ChatPdfRegionOcrEngineService)
+       tentativa 1: standard (OCR regional automático)
+       tentativa 2: high_dpi_tesseract (DPI × 1.5) — só se score < 95%
+  → gc.collect() + libera cache EasyOCR entre tentativas (caso tenha sido usado antes)
+  → ChatDrawingExtractionConfidenceService.evaluate_for_extraction
 ```
 
 | `stoppedReason` | Significado |
@@ -144,12 +148,14 @@ Config (`drawing_stamp.json` → `extractionQualityRetry`):
 |-------|---------|-------------|
 | `enabled` | `true` | Master switch |
 | `targetConfidence` | `0.95` | Limiar para parar com sucesso |
-| `maxAttempts` | `3` | Máximo de perfis executados |
+| `maxAttempts` | `2` | Máximo de perfis (standard + DPI alto) |
+| `regionOcrEngines` | `["tesseract"]` | **Só Tesseract** em todo o loop — sem EasyOCR |
+| `releaseMemoryBetweenAttempts` | `true` | `gc` + libera readers EasyOCR entre passagens |
 | `attempts[]` | ver JSON | `enableRegionOcr`, `regionOcrDpiMultiplier`, `layoutAnalysisEnabled` |
 
 Metadata em `pdf_extract.extractionQualityRetry`: `attemptCount`, `selectedAttemptId`, `selectedScorePercent`, `meetsTarget`, histórico `attempts[]`.
 
-**Operação:** retentativas com OCR regional + EasyOCR consomem RAM; em ambientes limitados (ex.: WSL) preferir `maxAttempts: 2` ou desabilitar retry temporariamente — o gate de validação continua demovendo BOM/cotas quando a confiança final < 95%.
+**Operação:** retentativas com OCR regional + EasyOCR consomem RAM; default **2 passagens** com liberação de cache entre elas. Em WSL, parar serviços pesados (ex.: Ollama) antes de batch OCR; aumentar swap se necessário.
 
 Doc relacionada: [playbook validação desenhos](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) § Fase 15.7.
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from dataclasses import dataclass
 from typing import Any
 
@@ -95,6 +96,22 @@ class ChatDrawingExtractionQualityRetryService:
                     stopped_reason="no_improvement",
                 )
 
+            remaining = len(attempts[:max_attempts]) - index - 1
+
+            if remaining > 0:
+                if not cls._should_schedule_next_attempt(history=history):
+                    selected = best or result
+
+                    return cls._attach_retry_metadata(
+                        selected.pdf_extract,
+                        history=history,
+                        selected=selected,
+                        target=target,
+                        stopped_reason="no_improvement",
+                    )
+
+                cls._release_extraction_memory()
+
         assert best is not None
 
         return cls._attach_retry_metadata(
@@ -122,12 +139,19 @@ class ChatDrawingExtractionQualityRetryService:
         if isinstance(attempt, dict) and "layoutAnalysisEnabled" in attempt:
             layout_enabled = bool(attempt.get("layoutAnalysisEnabled"))
 
-        with ChatDrawingPageLayoutAnalysisService.layout_analysis_override(layout_enabled):
-            return ChatDrawingPdfExtractionService._extract_single_pass(
-                storage_path,
-                filename=filename,
-                extraction_options=cls._build_extraction_options(attempt),
-            )
+        engines_override = cls._resolve_region_ocr_engines(attempt)
+
+        from app.domain.services.chat_pdf_region_ocr_engine_service import (
+            ChatPdfRegionOcrEngineService,
+        )
+
+        with ChatPdfRegionOcrEngineService.region_ocr_engines_override(engines_override):
+            with ChatDrawingPageLayoutAnalysisService.layout_analysis_override(layout_enabled):
+                return ChatDrawingPdfExtractionService._extract_single_pass(
+                    storage_path,
+                    filename=filename,
+                    extraction_options=cls._build_extraction_options(attempt),
+                )
 
     @classmethod
     def _build_extraction_options(cls, attempt: dict[str, Any] | None) -> dict[str, Any]:
@@ -149,6 +173,80 @@ class ChatDrawingExtractionQualityRetryService:
                 pass
 
         return options
+
+    @classmethod
+    def _resolve_region_ocr_engines(
+        cls,
+        attempt: dict[str, Any] | None,
+    ) -> list[str] | None:
+        """Motores OCR do loop de retry — default Tesseract-only (sem EasyOCR/PyTorch)."""
+        if isinstance(attempt, dict):
+            per_attempt = attempt.get("regionOcrEngines")
+
+            if isinstance(per_attempt, list) and per_attempt:
+                return [
+                    str(item).strip().lower()
+                    for item in per_attempt
+                    if str(item).strip()
+                ]
+
+        loop_default = cls._loop_region_ocr_engines()
+
+        return list(loop_default) if loop_default else None
+
+    @classmethod
+    def _loop_region_ocr_engines(cls) -> tuple[str, ...] | None:
+        raw = cls._retry_config().get("regionOcrEngines")
+
+        if not isinstance(raw, list) or not raw:
+            return ("tesseract",)
+
+        resolved = [
+            str(item).strip().lower()
+            for item in raw
+            if str(item).strip()
+        ]
+
+        return tuple(resolved) if resolved else ("tesseract",)
+
+    @classmethod
+    def _should_schedule_next_attempt(
+        cls,
+        *,
+        history: list[ExtractionQualityAttemptResult],
+    ) -> bool:
+        if not history:
+            return False
+
+        latest = history[-1]
+
+        if latest.confidence.meets_threshold:
+            return False
+
+        if len(history) >= 2 and cls._attempt_stalled(history[-2], latest):
+            return False
+
+        return latest.confidence.score < cls._target_confidence()
+
+    @classmethod
+    def _release_extraction_memory(cls) -> None:
+        if not cls._release_memory_between_attempts():
+            return
+
+        from app.domain.services.chat_pdf_region_ocr_engine_service import (
+            ChatPdfRegionOcrEngineService,
+        )
+
+        ChatPdfRegionOcrEngineService.release_cached_readers()
+        gc.collect()
+
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:
+            pass
 
     @classmethod
     def _attempt_stalled(
@@ -205,6 +303,7 @@ class ChatDrawingExtractionQualityRetryService:
         payload["extractionQualityRetry"] = {
             "targetConfidence": round(target, 4),
             "targetConfidencePercent": int(round(target * 100)),
+            "regionOcrEngines": list(cls._loop_region_ocr_engines() or ("tesseract",)),
             "stoppedReason": stopped_reason,
             "attemptCount": len(history),
             "selectedAttemptId": selected.attempt_id,
@@ -240,9 +339,13 @@ class ChatDrawingExtractionQualityRetryService:
         raw = cls._retry_config().get("maxAttempts")
 
         try:
-            return max(1, int(raw if raw is not None else 5))
+            return max(1, int(raw if raw is not None else 2))
         except (TypeError, ValueError):
-            return 5
+            return 2
+
+    @classmethod
+    def _release_memory_between_attempts(cls) -> bool:
+        return bool(cls._retry_config().get("releaseMemoryBetweenAttempts", True))
 
     @classmethod
     def _attempt_profiles(cls) -> list[dict[str, Any]]:
@@ -253,17 +356,9 @@ class ChatDrawingExtractionQualityRetryService:
 
         return [
             {"id": "standard", "enableRegionOcr": None},
-            {"id": "forced_region_ocr", "enableRegionOcr": True},
-            {"id": "high_dpi_regions", "enableRegionOcr": True, "regionOcrDpiMultiplier": 1.75},
             {
-                "id": "static_layout_regions",
+                "id": "high_dpi_tesseract",
                 "enableRegionOcr": True,
-                "layoutAnalysisEnabled": False,
-            },
-            {
-                "id": "high_dpi_static_layout",
-                "enableRegionOcr": True,
-                "regionOcrDpiMultiplier": 2.0,
-                "layoutAnalysisEnabled": False,
+                "regionOcrDpiMultiplier": 1.5,
             },
         ]
