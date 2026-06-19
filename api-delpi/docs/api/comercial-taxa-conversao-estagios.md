@@ -73,9 +73,9 @@ Filtro do dashboard: `AD1_DATA` entre `2026-05-01` e `2026-05-31`.
 
 | Critério | Quantidade |
 |----------|----------:|
-| Última revisão com `AD1_STATUS = '9'` | **1** |
-| Qualquer revisão no período com `AD1_STATUS = '9'` | **1** |
-| Última revisão ganha com `AD1_DTFIM` no período | **1** |
+| Revisões no período com `AD1_STATUS = '9'` | **1** |
+| Revisões no período com `AD1_STAGE = '000009'` (Relatório Qualidade) | **0** |
+| Revisões ganhas com `AD1_DTFIM` no período (qualquer data de abertura) | **5** (fora do denominador se `AD1_DATA` não estiver no mês) |
 
 **Única proposta:**
 
@@ -121,6 +121,29 @@ Todas com **`AD1_STATUS = 1` (Aberta)** no cabeçalho. Na maioria **não há** e
 
 **Resposta direta:** no período filtrado, **só 1 proposta tem `AD1_STATUS = 9` no cabeçalho** — e **nenhuma** tem status `9` no histórico `AIJ010`. Por isso o KPI mostra 1 ganha.
 
+### 2.3 Por que o indicador «não pega o 9» nas outras propostas em estágio 13
+
+Três confusões recorrentes na leitura do KPI:
+
+| O que se imagina | O que o sistema usa | Entra na taxa? |
+|------------------|---------------------|:--------------:|
+| «Está no estágio **13** (Encerrado)» | `AD1_STAGE = '000013'` | Não |
+| «Passou pelo estágio **9** do funil» (Relatório de Qualidade) | `AD1_STAGE = '000009'` em algum evento | Não |
+| «Status **Ganha** no cabeçalho» | `AD1_STATUS = '9'` | **Sim** |
+
+No período de referência:
+
+- **0** revisões com `AD1_STAGE = '000009'` (nenhuma proposta *parada* nesse estágio na data de abertura filtrada).
+- **10** revisões com `AD1_STAGE = '000013'`, mas **9** mantêm `AD1_STATUS = '1'` (Aberta).
+- O Protheus **não preenche automaticamente** `AD1_STATUS = '9'` ao mover para ENCERRADO — o flag Ganha é independente do estágio.
+
+**Caso ilustrativo:** `02/000120` tem `AD1_DTFIM = 20260527` (data de encerramento preenchida) e estágio `000013`, porém `AD1_STATUS` continua `1` (Aberta). Por isso **não entra** no numerador, embora visualmente pareça «encerrada».
+
+**Decisão de negócio (jun/2026):** manter conversão = `AD1_STATUS = '9'`; não usar estágio 13 como proxy de vitória.
+
+---
+
+## 3. Análise do período de referência (mai/2026)
 
 ### 3.1 Números do período (revisões com `AD1_DATA` no filtro)
 
@@ -155,6 +178,76 @@ Taxa com regra atual: **1 ÷ 41 = 2,44%**.
 | **Total não convertido pela regra atual** | **40** | Nenhuma tem `AD1_STATUS = '9'` |
 
 As **9** em ENCERRADO com status Aberta são o principal motivo de confusão: visualmente estão no «estágio 13», mas o TOTVS **não** as classifica como ganhas.
+
+### 3.4 Cadastro detalhado — as 10 propostas em estágio `000013` (ENCERRADO)
+
+Dados do cabeçalho `AD1010` (revisão com `AD1_DATA` no período). Útil para alinhamento com o time comercial.
+
+| # | Filial | OV | Rev. | Descrição (`AD1_DESCRI`) | Processo | Abertura (`AD1_DATA`) | Fim (`AD1_DTFIM`) | `AD1_STATUS` | Conta na taxa? |
+|---|--------|-----|------|--------------------------|----------|----------------------|-------------------|--------------|:--------------:|
+| 1 | `01` | `003567` | `05` | BUHLER - 1 ITEM | OPORTUNIDADE | 2026-05-08 | — | `1` Aberta | Não |
+| 2 | `01` | `003568` | `03` | WEG MOTORES | MODIFICACAO | 2026-05-08 | — | `1` Aberta | Não |
+| 3 | `01` | `003571` | `03` | WEG MOTORES | MODIFICACAO | 2026-05-14 | — | `1` Aberta | Não |
+| 4 | `01` | `003572` | `06` | WEG ENERGIA | MODIFICACAO | 2026-05-14 | — | `1` Aberta | Não |
+| 5 | `01` | `003573` | `04` | WEG ENERGIA | MODIFICACAO | 2026-05-14 | — | `1` Aberta | Não |
+| 6 | `01` | `003574` | `05` | WEG ENERGIA | MODIFICACAO | 2026-05-15 | — | `1` Aberta | Não |
+| 7 | `01` | `003578` | `14` | BUHLER - 1 ITEM | MODIFICACAO | 2026-05-08 | — | `1` Aberta | Não |
+| 8 | `02` | `000102` | `04` | REV. DES. WANKE-SECADORA | MODIFICACAO | 2026-05-07 | 2026-05-08 | **`9` Ganha** | **Sim** |
+| 9 | `02` | `000111` | `03` | WEG LINHARES | MODIFICACAO | 2026-05-12 | — | `1` Aberta | Não |
+| 10 | `02` | `000120` | `07` | WEG LINHARES | MODIFICACAO | 2026-05-27 | 2026-05-27 | `1` Aberta | Não |
+
+**Resumo:** 9 propostas precisariam de **revisão de cadastro no Protheus** (marcar Ganha ou Perdida conforme o desfecho real) se a expectativa operacional for que ENCERRADO implique conversão.
+
+### 3.5 Trilhas do funil (histórico `AIJ010`) até o estágio 13
+
+Consulta por **revisão atual** da proposta (`AIJ_REVISA` = revisão do período). Estágios resolvidos via `AC2010`.
+
+**Padrão dominante (9 de 10):** percurso completo `000001` → `000012` → `000013`, com estágio imediatamente anterior ao 13 = **`000012` (LANÇAMENTO / HOMOLOGAÇÃO)**.
+
+| Filial / OV | Rev. | Status cabeçalho | Trilha até o 13 (estágios distintos, em ordem) | Antes do 13 |
+|-------------|------|------------------|--------------------------------------------------|-------------|
+| `01/003567` | `05` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `01/003568` | `03` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `01/003571` | `03` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `01/003572` | `06` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `01/003573` | `04` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `01/003574` | `05` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `01/003578` | `14` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `02/000102` | `04` | **Ganha** | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+| `02/000111` | `03` | Aberta | Histórico atípico: primeiro evento já em `000013`; demais estágios registrados depois, sem sequência clara 1→12→13 | — |
+| `02/000120` | `07` | Aberta | 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 | 12 |
+
+Legenda dos códigos (processos OPORTUNIDADE / MODIFICACAO):
+
+| Código | Descrição (AC2010) |
+|--------|-------------------|
+| `000001` | ANÁLISE CRÍTICA |
+| `000002` | COTAÇÃO |
+| `000003` | ENGENHARIA |
+| `000004` | FINALIZAÇÃO DE COTAÇÃO |
+| `000005` | PROPOSTA CONCLUÍDA |
+| `000006` | PROPOSTA ENVIADA / AGUARD. RETORNO |
+| `000007` | AMOSTRA PCP |
+| `000008` | AMOSTRA ENGENHARIA |
+| `000009` | RELATÓRIO QUALIDADE |
+| `000010` | AMOSTRA ENVIADA A VENDAS |
+| `000011` | HOMOLOGAÇÃO DE PRODUTO |
+| `000012` | LANÇAMENTO / HOMOLOGAÇÃO |
+| `000013` | ENCERRADO |
+
+**Leitura:** as propostas **passaram pelo estágio 9 do funil** (Relatório de Qualidade) no histórico — isso **não** equivale ao **status 9 (Ganha)** do cabeçalho.
+
+Query de reprodução (exemplo `02/000102`, revisão `04`):
+
+```sql
+SELECT AIJ_REVISA, AIJ_STAGE, AIJ_PROVEN, AIJ_STATUS, AIJ_DTINIC, AIJ_DTENCE
+FROM AIJ010
+WHERE D_E_L_E_T_ <> '*'
+  AND AIJ_FILIAL = '02'
+  AND AIJ_NROPOR = '000102'
+  AND AIJ_REVISA = '04'
+ORDER BY AIJ_DTINIC, AIJ_DTENCE;
+```
 
 ---
 
@@ -367,6 +460,7 @@ Permissão: `api-delpi.data` ou `api-delpi.access.full`. Tabelas na whitelist: `
 | Rota HTTP | `app/interface/http/routes/commercial/commercial_router.py` (`/closing-rate`) |
 | Funil LMP (processo + estágio) | `documentos/Routes/documentacao_completa_da_rota_lmp.md` § AC2010 |
 | Dashboard consumidor | `plugins/dashboard-commercial` → `ConversionFunnelChart.tsx` |
+| Teste regressão SQL | `api-delpi/tests/test_sales_conversion_rate_repository.py` |
 
 ---
 
@@ -377,3 +471,43 @@ Permissão: `api-delpi.data` ou `api-delpi.access.full`. Tabelas na whitelist: `
 3. Dashboard/funil: «ganha» = **status 9**, não estágio 13.
 4. Métrica de «chegou ao fim do funil» (`000013`) deve ser **indicador separado**, se necessário.
 5. `closing-rate` conta **revisões do período** (`AD1_DATA` entre `start_date` e `end_date`), não a última revisão global da proposta.
+
+---
+
+## 12. Alinhamento comercial e próximos passos
+
+### 12.1 Mensagem para o time comercial (resumo)
+
+Pontos comunicados à liderança comercial (jun/2026):
+
+1. O dashboard de maio/2026 mostra **2,44%** porque só **1 de 41** propostas tem **status Ganha (`9`)** no TOTVS.
+2. **10 propostas** estão em **estágio Encerrado (13)**, mas **9** seguem com **status Aberta** — o funil terminou sem marcar vitória comercial.
+3. Se a regra de negócio for «estágio 13 = convertida», o cadastro atual **não reflete** isso; a taxa subiria para ~**24%** só em maio/2026, sem garantir que o negócio foi ganho.
+4. Ações possíveis: (a) corrigir status no Protheus ao encerrar com vitória; (b) criar indicador separado de «chegou ao fim do funil»; (c) redefinir a regra do KPI (decisão explícita de negócio).
+
+### 12.2 Propostas candidatas a revisão de status no Protheus
+
+As OVs abaixo estão em `000013` com `AD1_STATUS = 1` — validar desfecho real (Ganha `9` ou Perdida `8`) com o responsável comercial:
+
+- `01/003567` — BUHLER - 1 ITEM  
+- `01/003568` — WEG MOTORES  
+- `01/003571` — WEG MOTORES  
+- `01/003572` — WEG ENERGIA  
+- `01/003573` — WEG ENERGIA  
+- `01/003574` — WEG ENERGIA  
+- `01/003578` — BUHLER - 1 ITEM  
+- `02/000111` — WEG LINHARES  
+- `02/000120` — WEG LINHARES (tem `AD1_DTFIM` preenchido, mas status ainda Aberta)
+
+---
+
+## 13. Histórico da investigação
+
+| Data | Descoberta |
+|------|------------|
+| jun/2026 | KPI usa `AD1_STATUS = '9'`, não estágio `000013`. |
+| jun/2026 | `AIJ_STATUS = '9'` (histórico) ≠ `AD1_STATUS = '9'` (Ganha). |
+| jun/2026 | 10 em estágio 13 em mai/2026; 9 com status Aberta no cabeçalho. |
+| jun/2026 | Trilha típica até o 13: estágios 1–12 completos; antecessor imediato = 12. |
+| jun/2026 | Regra do `closing-rate` ajustada: revisões do período (`AD1_DATA`), não última revisão global. |
+| jun/2026 | Constante `WON_STATUS_CODE` centralizada; teste `test_sales_conversion_rate_repository.py`. |
