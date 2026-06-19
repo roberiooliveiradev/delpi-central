@@ -33,6 +33,22 @@ class ChatDrawingRegionService:
         return resolved or dict(_DEFAULT_BBOXES)
 
     @classmethod
+    def resolve_region_bboxes_for_page(
+        cls,
+        page: Any,
+        *,
+        matrix: Any,
+    ) -> tuple[dict[str, list[float]], dict[str, Any]]:
+        from app.domain.services.chat_drawing_page_layout_analysis_service import (
+            ChatDrawingPageLayoutAnalysisService,
+        )
+
+        return ChatDrawingPageLayoutAnalysisService.resolve_semantic_bboxes(
+            page,
+            matrix=matrix,
+        )
+
+    @classmethod
     def detail_ocr_config(cls) -> dict[str, Any]:
         node = ChatAssistantContentService.get_node("drawing_stamp", "detailOcr")
 
@@ -438,22 +454,32 @@ class ChatDrawingRegionService:
         *,
         matrix: Any,
         lang: str,
+        region_bboxes: dict[str, list[float]] | None = None,
     ) -> tuple[str, list[float], dict[str, Any]]:
         from app.domain.services.chat_document_vision_bom_service import (
             ChatDocumentVisionBomService,
         )
 
+        resolved_bboxes = region_bboxes if isinstance(region_bboxes, dict) else cls.region_bboxes()
         best_text = ""
-        best_bbox = list(cls.region_bboxes().get("bom") or _DEFAULT_BBOXES["bom"])
+        best_bbox = list(resolved_bboxes.get("bom") or _DEFAULT_BBOXES["bom"])
         best_meta: dict[str, Any] = {}
         best_score = -1
+        candidates = [{"id": "layout_bom", "bbox": best_bbox}, *cls.bom_candidate_bboxes()]
+        seen: set[tuple[float, float, float, float]] = set()
 
-        for candidate in cls.bom_candidate_bboxes():
+        for candidate in candidates:
             bbox = candidate.get("bbox")
 
             if not isinstance(bbox, list) or len(bbox) != 4:
                 continue
 
+            bbox_key = tuple(float(value) for value in bbox)
+
+            if bbox_key in seen:
+                continue
+
+            seen.add(bbox_key)
             merged_text, metadata = cls._ocr_region_bundle(
                 page,
                 region="bom",
@@ -496,6 +522,10 @@ class ChatDrawingRegionService:
     ) -> tuple[dict[str, str], dict[str, dict[str, Any]]]:
         texts: dict[str, str] = {}
         metadata: dict[str, dict[str, Any]] = {}
+        region_bboxes, layout_meta = cls.resolve_region_bboxes_for_page(
+            page,
+            matrix=matrix,
+        )
 
         for region in _DRAWING_REGION_ORDER:
             if region == "bom":
@@ -503,6 +533,7 @@ class ChatDrawingRegionService:
                     page,
                     matrix=matrix,
                     lang=lang,
+                    region_bboxes=region_bboxes,
                 )
 
                 if not merged_text:
@@ -512,7 +543,7 @@ class ChatDrawingRegionService:
                 metadata[region] = region_meta
                 continue
 
-            bbox = cls.region_bboxes().get(region)
+            bbox = region_bboxes.get(region)
 
             if not bbox:
                 continue
@@ -530,6 +561,9 @@ class ChatDrawingRegionService:
 
             texts[region] = merged_text
             metadata[region] = region_meta
+
+        if layout_meta:
+            metadata["_layoutAnalysis"] = layout_meta.get("layoutAnalysis") or layout_meta
 
         return texts, metadata
 

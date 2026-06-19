@@ -7,6 +7,18 @@
     "bom": [0.0, 0.0, 0.55, 0.35],
     "dimensions": [0.0, 0.12, 1.0, 0.62]
   },
+  "layoutAnalysis": {
+    "enabled": true,
+    "algorithm": "xy_cut_semantic_v1",
+    "comment": "DLA em 2 estágios (XY-Cut + classificação) — padrão MinerU/Azure prebuilt-layout.",
+    "thumbnailMaxEdgePx": 1200,
+    "binarizeThreshold": 210,
+    "xyCutMinGapRatio": 0.018,
+    "xyCutMinBlockAreaRatio": 0.003,
+    "xyCutMaxDepth": 5,
+    "minConfidenceForAdaptiveBboxes": 0.65,
+    "staticFallbackConfidence": 0.55
+  },
   "bomCandidateBboxes": [
     {
       "id": "bom_top_left",
