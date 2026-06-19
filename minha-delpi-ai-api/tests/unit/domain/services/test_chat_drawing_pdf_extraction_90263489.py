@@ -1,6 +1,9 @@
 """Regressão — desenho 90263489 (BOM multinível WEG; revisão vs tabela)."""
 
-from pathlib import Path
+from tests.support.drawing_pdf_fixtures import (
+    assert_component_codes,
+    require_drawing_pdf_with_tesseract,
+)
 
 from app.domain.services.chat_document_vision_bom_service import ChatDocumentVisionBomService
 from app.domain.services.chat_drawing_pdf_extraction_service import (
@@ -129,17 +132,7 @@ def test_90263489_structure_validation_without_false_bom_divergence():
 
 
 def test_live_extraction_90263489_when_tesseract_available():
-    pdf = Path(__file__).resolve().parents[3] / "desenhos" / "90263489.pdf"
-
-    if not pdf.is_file():
-        return
-
-    try:
-        import pytesseract
-
-        pytesseract.get_tesseract_version()
-    except Exception:
-        return
+    pdf = require_drawing_pdf_with_tesseract("90263489.pdf")
 
     parsed = ChatDrawingPdfExtractionService.extract_from_storage_path(
         str(pdf),
@@ -147,6 +140,26 @@ def test_live_extraction_90263489_when_tesseract_available():
     )
 
     assert parsed["productCode"] == "90263489"
-    assert "10081042" not in parsed["componentCodes"]
-    assert "10080627" in parsed["componentCodes"]
+    assert parsed.get("bomSource") == "bom_region"
+    assert_component_codes(
+        parsed,
+        required={"10080627", "10090482", "10091062", "10210754"},
+        forbidden={"10081042"},
+    )
     assert parsed["intermediateCodes"] == ["50225215", "50225216", "50225217"]
+
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=_payload_90263489(),
+        pdf_extract=parsed,
+        product_code="90263489",
+    )
+
+    bom_divergences = [
+        item
+        for item in items
+        if any(
+            marker in str(item.get("item", ""))
+            for marker in ("ausente no PDF", "extra no PDF")
+        )
+    ]
+    assert bom_divergences == [], bom_divergences

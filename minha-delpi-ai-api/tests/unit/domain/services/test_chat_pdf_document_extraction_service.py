@@ -1,4 +1,4 @@
-from pathlib import Path
+from tests.support.drawing_pdf_fixtures import require_drawing_pdf
 
 from app.domain.services.chat_drawing_pdf_extraction_service import (
     ChatDrawingPdfExtractionService,
@@ -10,10 +10,7 @@ from app.domain.services.chat_pdf_embedded_text_service import ChatPdfEmbeddedTe
 
 
 def test_embedded_text_reads_oda_annotations_from_90262019():
-    pdf = Path(__file__).resolve().parents[3] / "desenhos" / "90262019.pdf"
-
-    if not pdf.is_file():
-        return
+    pdf = require_drawing_pdf("90262019.pdf")
 
     embedded = ChatPdfEmbeddedTextService.extract(str(pdf))
 
@@ -28,10 +25,7 @@ def test_embedded_text_reads_oda_annotations_from_90262019():
 
 
 def test_document_extraction_fuses_90262019_without_region_ocr():
-    pdf = Path(__file__).resolve().parents[3] / "desenhos" / "90262019.pdf"
-
-    if not pdf.is_file():
-        return
+    pdf = require_drawing_pdf("90262019.pdf")
 
     extracted = ChatPdfDocumentExtractionService.extract_from_storage_path(
         str(pdf),
@@ -49,10 +43,7 @@ def test_document_extraction_fuses_90262019_without_region_ocr():
 
 
 def test_drawing_extraction_builds_bom_for_90262019():
-    pdf = Path(__file__).resolve().parents[3] / "desenhos" / "90262019.pdf"
-
-    if not pdf.is_file():
-        return
+    pdf = require_drawing_pdf("90262019.pdf")
 
     parsed = ChatDrawingPdfExtractionService.extract_from_storage_path(
         str(pdf),
@@ -60,5 +51,10 @@ def test_drawing_extraction_builds_bom_for_90262019():
     )
 
     assert parsed["productCode"] == "90262019"
-    assert parsed["componentCodes"] == ["10250032", "10080591", "10090481"]
+    assert set(parsed["componentCodes"]) == {
+        "10250032",
+        "10080591",
+        "10090481",
+        "10084053",
+    }
     assert len(parsed.get("bomRows") or []) >= 3

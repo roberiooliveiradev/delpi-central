@@ -19,6 +19,13 @@ Executar o que couber ao escopo antes de considerar a tarefa concluída:
 
 Corrigir falhas antes de entregar. Resumir no fim: testes executados (pass/fail).
 
+### PDFs de desenho (`desenhos/*.pdf`)
+
+- Caminho canônico: `tests/support/drawing_pdf_fixtures.py` (`require_drawing_pdf`, `require_drawing_pdf_with_tesseract`).
+- **Nunca** usar `return` silencioso quando o PDF ou Tesseract faltam — `pytest.skip` com motivo.
+- Testes live com OCR: validar **extração + checklist** (ausente/extra no PDF), não só `productCode`.
+- Sem Tesseract local: rodar live no container `delpi-minha-delpi-ai-api` antes de afirmar sucesso.
+
 ## Commit
 
 - **Criar commit somente quando o usuário pedir explicitamente** («commit», «commit e push», etc.).
