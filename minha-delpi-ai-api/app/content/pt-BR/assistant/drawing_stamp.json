@@ -185,6 +185,7 @@
     "cotaDecapeLength": "\\b(\\d+)\\s*±\\s*(\\d+)\\s*±\\s*(\\d+)\\b",
     "genericDecape": "DEC[A4@]PE?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "decapeNote": "DECAPE\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
+    "decapeMachineSide": "DECAPAR\\s+O\\s+LADO\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "hintNumberTail": "(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "codeToken": "\\b(90\\d{6}|50\\d{6}|10\\d{6}|100\\d{5})\\b",
     "ocrSpacedCode": "(90|50|10)\\s*(\\d{3})\\s*(\\d{3})",

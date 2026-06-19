@@ -22,6 +22,7 @@ class ChatDrawingDimensionsExtractionService:
             "rightDecapeMm": None,
         }
         segment_lengths: list[float] = []
+        cota_decape_values: list[float] = []
 
         if not normalized:
             return dimensions
@@ -65,11 +66,22 @@ class ChatDrawingDimensionsExtractionService:
             if dimensions["rightDecapeMm"] is None:
                 dimensions["rightDecapeMm"] = note_decape
 
+        machine_decape = cls._first_number(
+            normalized,
+            patterns=(ChatDrawingPatternsService.decape_machine_side(),),
+        )
+
+        if machine_decape is not None:
+            dimensions["leftDecapeMm"] = machine_decape
+
         cota_pattern = ChatDrawingPatternsService.cota_decape_length()
 
         for match in cota_pattern.finditer(normalized):
             decape = cls._parse_number(match.group(1))
             length = cls._parse_number(match.group(2))
+
+            if decape is not None:
+                cota_decape_values.append(decape)
 
             if decape is not None and dimensions["leftDecapeMm"] is None:
                 dimensions["leftDecapeMm"] = decape
@@ -79,6 +91,9 @@ class ChatDrawingDimensionsExtractionService:
 
             if length is not None:
                 segment_lengths.append(length)
+
+        if cota_decape_values:
+            dimensions["cotaDecapeValuesMm"] = list(dict.fromkeys(cota_decape_values))
 
         if segment_lengths and dimensions["totalLengthMm"] is None:
             dimensions["totalLengthMm"] = max(segment_lengths)
@@ -109,6 +124,7 @@ class ChatDrawingDimensionsExtractionService:
             "leftDecapeMm": merged.get("leftDecapeMm"),
             "rightDecapeMm": merged.get("rightDecapeMm"),
             "segmentLengthsMm": merged.get("segmentLengthsMm") or [],
+            "cotaDecapeValuesMm": merged.get("cotaDecapeValuesMm") or [],
         }
 
         for key in ("totalLengthMm", "leftDecapeMm", "rightDecapeMm"):
@@ -124,6 +140,16 @@ class ChatDrawingDimensionsExtractionService:
 
                 if segments:
                     resolved["segmentLengthsMm"] = segments
+                    break
+
+        if not resolved["cotaDecapeValuesMm"]:
+            for source in (region_dims, fallback_dims):
+                cota_values = (
+                    source.get("cotaDecapeValuesMm") if isinstance(source, dict) else None
+                )
+
+                if cota_values:
+                    resolved["cotaDecapeValuesMm"] = cota_values
                     break
 
         return resolved

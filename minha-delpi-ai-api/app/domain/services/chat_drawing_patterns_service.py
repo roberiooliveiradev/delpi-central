@@ -103,6 +103,10 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("decapeNote")
 
     @classmethod
+    def decape_machine_side(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("decapeMachineSide")
+
+    @classmethod
     def hint_number_tail(cls) -> re.Pattern[str]:
         return cls.compile_stamp("hintNumberTail")
 

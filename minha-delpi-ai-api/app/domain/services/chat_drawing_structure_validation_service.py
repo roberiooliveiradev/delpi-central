@@ -210,9 +210,11 @@ class ChatDrawingStructureValidationService:
         dimensions = pdf_extract.get("dimensions") if isinstance(
             pdf_extract.get("dimensions"), dict
         ) else {}
-        pdf_decape = dimensions.get("leftDecapeMm")
+        pdf_left = dimensions.get("leftDecapeMm")
+        pdf_right = dimensions.get("rightDecapeMm")
+        decape_candidates = cls._pdf_decape_candidates(dimensions)
 
-        if pdf_decape is None:
+        if pdf_left is None and pdf_right is None and not decape_candidates:
             return items
 
         for row in intermediate_rows:
@@ -223,23 +225,31 @@ class ChatDrawingStructureValidationService:
             if left is None and right is None:
                 continue
 
-            for side_key, expected in (("left", left), ("right", right)):
+            for side_key, expected, pdf_ref in (
+                ("left", left, pdf_left),
+                ("right", right, pdf_right),
+            ):
                 if expected is None:
                     continue
 
-                within = ChatDrawingToleranceService.decape_within_tolerance(
-                    pdf_decape,
+                within = cls._decape_matches_pdf(
                     expected,
+                    pdf_ref=pdf_ref,
+                    candidates=decape_candidates,
                 )
 
                 if within is False:
+                    pdf_value = pdf_ref if pdf_ref is not None else cls._best_candidate(
+                        expected,
+                        decape_candidates,
+                    )
                     items.append(
                         content.item_from_template(
                             "decape_mismatch",
                             status="error",
                             pdf_evidence=content.evidence_format(
                                 "decapePdf",
-                                value=str(pdf_decape),
+                                value=str(pdf_value if pdf_value is not None else "—"),
                             ),
                             api_evidence=content.evidence_format(
                                 "decapeFromIntermediate",
@@ -253,6 +263,61 @@ class ChatDrawingStructureValidationService:
                     )
 
         return items
+
+    @classmethod
+    def _pdf_decape_candidates(cls, dimensions: dict[str, Any]) -> list[float]:
+        values: list[float] = []
+
+        for key in ("leftDecapeMm", "rightDecapeMm"):
+            parsed = ChatDrawingToleranceService.parse_mm(dimensions.get(key))
+
+            if parsed is not None:
+                values.append(parsed)
+
+        for raw in dimensions.get("cotaDecapeValuesMm") or []:
+            parsed = ChatDrawingToleranceService.parse_mm(raw)
+
+            if parsed is not None:
+                values.append(parsed)
+
+        return list(dict.fromkeys(values))
+
+    @classmethod
+    def _decape_matches_pdf(
+        cls,
+        expected: float,
+        *,
+        pdf_ref: float | None,
+        candidates: list[float],
+    ) -> bool | None:
+        if pdf_ref is not None:
+            result = ChatDrawingToleranceService.decape_within_tolerance(pdf_ref, expected)
+
+            if result is not None:
+                return result
+
+        for candidate in candidates:
+            if ChatDrawingToleranceService.decape_within_tolerance(candidate, expected) is True:
+                return True
+
+        if pdf_ref is None and not candidates:
+            return None
+
+        return False
+
+    @classmethod
+    def _best_candidate(cls, expected: float, candidates: list[float]) -> float | None:
+        best: float | None = None
+        best_delta = float("inf")
+
+        for candidate in candidates:
+            delta = abs(candidate - expected)
+
+            if delta < best_delta:
+                best_delta = delta
+                best = candidate
+
+        return best
 
     @classmethod
     def _dimension_items(cls, root: dict, pdf_extract: dict) -> list[dict[str, Any]]:

@@ -37,5 +37,15 @@ def test_extract_dimensions_cota_deape_length_pattern():
     assert dims["leftDecapeMm"] == 6.0
     assert dims["rightDecapeMm"] == 6.0
     assert dims["totalLengthMm"] == 150.0
+    assert dims["cotaDecapeValuesMm"] == [6.0]
     assert 140.0 in dims["segmentLengthsMm"]
     assert 150.0 in dims["segmentLengthsMm"]
+
+
+def test_extract_dimensions_machine_side_note_sets_left_decape():
+    text = "DECAPE DE 6MM\nDECAPAR O LADO DE 4MM NA MÁQUINA"
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] == 4.0
+    assert dims["rightDecapeMm"] == 6.0
