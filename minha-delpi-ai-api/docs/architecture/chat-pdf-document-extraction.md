@@ -112,7 +112,8 @@ Rotas api-delpi: [14-desenhos-pdf.md](../../../api-delpi/docs/api/14-desenhos-pd
 | `ChatPdfRegionOcrFusionService` | Fusão de linhas multi-motor (prevalece linha com mais códigos) |
 | `ChatDrawingPdfProductContextService` | `productCode` (carimbo / filename / BOM) |
 | `ChatDrawingStampExtractionService` | Parse de carimbo e candidatos |
-| `ChatDocumentVisionBomService` | Linhas BOM, score de fonte, ruído de revisão |
+| `ChatDocumentVisionBomService` | Linhas BOM, score de fonte, ruído de revisão/carimbo, ruído PTC/°C |
+| `ChatDrawingRegionalScopeService` | Escopo por domínio (`bom`, `dimensions`, `stamp`); rejeita carimbo OCR como BOM |
 | `ChatDrawingValidationOrchestrationService` | Validação normativa e comparação API |
 | `ChatDrawingDimensionsExtractionService` | Cotas, decapes E/D, cotas `6±140±1`, notas de processo |
 | `ChatDrawingIntermediateSemanticsService` | Parse `comprimento/decapeE/decapeD` na descrição 50xx |
@@ -140,7 +141,19 @@ Seção **`pdfExtraction`**:
 | `layoutProfiles.generic.enableRegionOcr` | `false` — chat base genérico não corta regiões DELPI |
 | `layoutProfiles.drawing_delpi.enableRegionOcr` | `true` — permite fallback regional na skill desenho |
 
-Regiões gráficas (bbox carimbo/BOM/cotas) e **padrões regex de cotas/decape** continuam em **`drawing_stamp.json`** (seção `patterns` / `patternLists`).
+Regiões gráficas (bbox carimbo/BOM/cotas) e **padrões regex de cotas/decape** continuam em **`drawing_stamp.json`** (seção `patterns` / `patternLists` / `codeFamilies`).
+
+### Famílias de PA e escopo BOM (jun/2026)
+
+| Família | Prefixos | Na BOM |
+|---------|----------|--------|
+| Chicote folha | `9026` | MPs + 50xx |
+| Montagem | `7026` | MPs + chicotes `9026` aninhados |
+| Amostra | `8000`, `8001` | Como chicote folha (sem semântica de montagem) |
+
+`ChatDrawingPdfExtractionService` resolve `productCode` **antes** de `validationScopes` e BOM. Fontes suplementares (`stamp_bom_table`, `full_text_section`, `cad_reference_bom`) entram via `ChatPdfBomSourceService` quando a região primária tem &lt; 2 códigos significativos.
+
+Changelog: [`2026-06-drawing-bom-pa-families.md`](../changelog/2026-06-drawing-bom-pa-families.md).
 
 Tolerâncias numéricas do checklist dimensional ficam em **`drawing_validation.json`** → `validationRules` (`decapeToleranceMm`, `lengthToleranceRatio`).
 
@@ -237,6 +250,9 @@ Estágios após extração base (`native`):
 | Artefato | Escopo |
 |----------|--------|
 | `tests/unit/domain/services/test_chat_pdf_*.py` | Fusão, tabelas por anotação, fixture `90262019` |
+| `tests/unit/domain/services/test_chat_drawing_assembly_pa_7026.py` | PA 7026/8000/8001, chicote aninhado, escopo BOM |
+| `tests/unit/domain/services/test_chat_drawing_regional_scope_service.py` | Rejeição carimbo como BOM |
+| `tests/unit/domain/services/test_chat_pdf_bom_source_service.py` | Fontes suplementares de BOM |
 | `tests/unit/domain/services/test_chat_drawing_validation_90264206.py` | Decape E/D por lado; nota de máquina; regressão FLEXTRONICS |
 | `tests/unit/application/services/test_chat_attachment_text_extractor.py` | Indexação via pipeline base |
 | `scripts/smoke_document_vision.py` | Offline + live opcional |
@@ -273,5 +289,6 @@ Melhoria contínua de acurácia: `ChatPdfRegionOcrEngineService`, perfis em `doc
 
 | Data | Entrega |
 |------|---------|
+| jun/2026 | Escopo BOM regional; famílias PA (`9026`/`7026`/`8000`/`8001`); fontes suplementares; ruído PTC — [`2026-06-drawing-bom-pa-families.md`](../changelog/2026-06-drawing-bom-pa-families.md) |
 | jun/2026 | Decape E/D por lado; `decapeMachineSide`; candidatos de cota; regressão `90264206` |
 | jun/2026 | `ChatPdf*` no chat base; skill desenho consome fusão; anotações ODA; BOM fallback multi-fonte |

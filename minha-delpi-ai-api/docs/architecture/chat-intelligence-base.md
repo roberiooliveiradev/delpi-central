@@ -96,7 +96,8 @@ Mensagem do usuário
 | `ChatPdfEmbeddedTextService` | PyMuPDF: texto nativo + anotações ODA/CAD com bbox |
 | `ChatPdfTextFusionService` | Fusão multi-fonte (prioriza embedded/anotações sobre pypdf) |
 | `ChatPdfAnnotationTableService` | Linhas tabulares a partir de bbox de anotações |
-| `ChatPdfBomSourceService` | Monta fontes de texto para parsing de BOM (`bom_region`, anotações, carimbo, `full_text`) |
+| `ChatPdfBomSourceService` | Monta fontes de texto para parsing de BOM (`bom_region`, anotações, carimbo, `full_text`, suplementares) |
+| `ChatDrawingRegionalScopeService` | Escopo regional BOM/cotas/carimbo; rejeita OCR de carimbo como lista de materiais — [changelog jun/2026](../changelog/2026-06-drawing-bom-pa-families.md) |
 | `ChatDocumentVisionSkillService` | Ativação canônica da skill `document-vision-delpi` (anexo, intent `attachment_document`, enriquecimento de desenho) |
 | `ChatDocumentVisionTurnService` | Orquestração de OCR por turno (application); consumido por tool context |
 | `ChatDocumentVisionService` | Motor visão PDF/imagem (estágio native via `ChatPdf*` + Tesseract/VLM); anexos (`documentVision`) e `drawing-analysis-delpi` |
@@ -109,7 +110,7 @@ Mensagem do usuário
 | `ChatDrawingLibraryService` | Busca PDF na biblioteca api-delpi (`GET /products/{code}/drawing/pdf`) quando análise de desenho sem anexo e com código explícito; cache em `drawing-library-cache` |
 | `ChatDrawingProductCodeResolutionService.resolve_explicit_codes_without_attachment` | Sem anexo: códigos só da mensagem ou `userContextItems` — sem herança do histórico |
 | `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |
-| `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, estágio `bom_heuristic`) em texto OCR — Onda 13.3.2 |
+| `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, score de fonte, famílias PA 9026/7026/8000/8001) — Onda 13.3.2 / 14.5 |
 | `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
 | `ChatDocumentVisionTablesService` | Tabelas `tables[]` (markdown/TSV heurístico, estágio `table_heuristic`) — Onda 13 |
 | Backends visão | `native`, `tesseract`, `docling`, `paddleocr` (profile vision), `ollama_vlm` (Ollama `/api/chat` + imagens) |
@@ -525,6 +526,8 @@ Checklist: **G1–G3** em [`../testing/smoke-operacional-manual.md`](../testing/
 Changelog: [`../changelog/2026-06-chat-anexos-desenho-ux.md`](../changelog/2026-06-chat-anexos-desenho-ux.md).
 
 **Extração de PDF (chat base, jun/2026):** qualquer anexo PDF usa `ChatPdfDocumentExtractionService` (embedded PyMuPDF + anotações ODA + fusão + pypdf). A skill de desenho aplica parse DELPI em cima do `fullText`. Doc: [`chat-pdf-document-extraction.md`](./chat-pdf-document-extraction.md).
+
+**BOM e famílias PA (jun/2026):** escopo regional, fontes suplementares e PA `7026`/`8000`/`8001`. Changelog: [`2026-06-drawing-bom-pa-families.md`](../changelog/2026-06-drawing-bom-pa-families.md).
 
 | Entrega | Detalhe |
 |---------|---------|
