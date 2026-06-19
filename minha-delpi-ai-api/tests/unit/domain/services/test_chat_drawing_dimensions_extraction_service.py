@@ -101,3 +101,19 @@ def test_merge_dimensions_prefers_cad_fallback_when_fused_length_implausible():
     assert merged["totalLengthMm"] == 1127.0
     assert merged["rightDecapeMm"] == 10.0
     assert merged["leftDecapeMm"] is None
+
+
+def test_extract_dimensions_length_first_cota_assigns_left_decape():
+    text = """
+    MEDIDAS EM MILÍMETRO
+    240 ±2 11 ±1
+    238 ±2 11 ±1
+    """
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] == 11.0
+    assert dims["rightDecapeMm"] is None
+    assert dims["decapeIndication"] == {"left": True, "right": False}
+    assert dims["totalLengthMm"] == 240.0
+    assert 238.0 in dims["segmentLengthsMm"]

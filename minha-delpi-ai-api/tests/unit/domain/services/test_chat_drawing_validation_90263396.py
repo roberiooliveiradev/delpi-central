@@ -73,7 +73,14 @@ def _pdf_extract_90263396() -> dict:
                 "EPR 125/150°C 20AWG LA 600V"
             ),
         },
-        "dimensions": {},
+        "dimensions": {
+            "totalLengthMm": 240.0,
+            "leftDecapeMm": 11.0,
+            "rightDecapeMm": None,
+            "segmentLengthsMm": [240.0, 238.0],
+            "cotaDecapeValuesMm": [11.0],
+            "decapeIndication": {"left": True, "right": False},
+        },
     }
 
 
@@ -114,3 +121,20 @@ def test_90263396_intermediates_matched_by_description_not_marked_missing():
         item.get("item") == "Intermediários" and item.get("status") == "ok"
         for item in items
     )
+
+
+def test_90263396_left_decape_matches_without_right_false_positive():
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=_payload_90263396(),
+        pdf_extract=_pdf_extract_90263396(),
+        product_code="90263396",
+    )
+
+    decape_errors = [
+        item
+        for item in items
+        if str(item.get("item", "")).startswith("Decape")
+        and item.get("status") == "error"
+    ]
+
+    assert not decape_errors

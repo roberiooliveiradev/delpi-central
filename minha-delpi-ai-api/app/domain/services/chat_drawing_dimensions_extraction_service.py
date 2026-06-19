@@ -104,24 +104,47 @@ class ChatDrawingDimensionsExtractionService:
         max_decape = ChatDrawingPatternsService.max_decape_mm()
 
         for match in cota_pattern.finditer(normalized):
-            decape = cls._parse_number(match.group(1))
-            length = cls._parse_number(match.group(2))
+            first = cls._parse_number(match.group(1))
+            second = cls._parse_number(match.group(2))
+            third = (
+                cls._parse_number(match.group(3))
+                if match.lastindex and match.lastindex >= 3
+                else None
+            )
 
-            if decape is None or length is None:
+            if first is None or second is None:
                 continue
 
-            if decape > max_decape or length > max_segment:
+            if (
+                third is not None
+                and first <= max_segment
+                and first > max_decape
+                and third <= max_decape
+            ):
+                length = first
+                decape = third
+                side = "left"
+            elif first <= max_decape and second <= max_segment:
+                decape = first
+                length = second
+                side = None
+            else:
                 continue
 
             cota_decape_values.append(decape)
 
-            if dimensions["leftDecapeMm"] is None:
-                dimensions["leftDecapeMm"] = decape
-                indication["left"] = True
+            if side == "left":
+                if dimensions["leftDecapeMm"] is None:
+                    dimensions["leftDecapeMm"] = decape
+                    indication["left"] = True
+            else:
+                if dimensions["leftDecapeMm"] is None:
+                    dimensions["leftDecapeMm"] = decape
+                    indication["left"] = True
 
-            if dimensions["rightDecapeMm"] is None:
-                dimensions["rightDecapeMm"] = decape
-                indication["right"] = True
+                if dimensions["rightDecapeMm"] is None:
+                    dimensions["rightDecapeMm"] = decape
+                    indication["right"] = True
 
             segment_lengths.append(cls._sanitize_chicote_length_mm(length, normalized))
 
@@ -129,6 +152,7 @@ class ChatDrawingDimensionsExtractionService:
             dimensions,
             decape_values,
             indication=indication,
+            text=normalized,
         )
 
         if cota_decape_values:
@@ -157,17 +181,46 @@ class ChatDrawingDimensionsExtractionService:
         decape_values: list[float],
         *,
         indication: dict[str, bool],
+        text: str = "",
     ) -> None:
         if not decape_values:
             return
 
-        side = ChatDrawingPatternsService.unlabeled_decape_tolerance_side()
+        side = cls._resolve_unlabeled_decape_side(text)
         key = "rightDecapeMm" if side == "right" else "leftDecapeMm"
 
         if dimensions.get(key) is None:
             dimensions[key] = decape_values[0]
 
         indication[side] = True
+
+    @classmethod
+    def _resolve_unlabeled_decape_side(cls, text: str) -> str:
+        default_side = ChatDrawingPatternsService.unlabeled_decape_tolerance_side()
+        normalized = str(text or "")
+
+        if not normalized.strip():
+            return default_side
+
+        decape_pos: int | None = None
+        segment_pos: int | None = None
+
+        for match in ChatDrawingPatternsService.decape_tolerance().finditer(normalized):
+            decape_pos = match.start()
+            break
+
+        for match in ChatDrawingPatternsService.segment_length_tolerance().finditer(normalized):
+            segment_pos = match.start()
+            break
+
+        if decape_pos is not None and segment_pos is not None:
+            if segment_pos < decape_pos:
+                return "left"
+
+            if decape_pos < segment_pos:
+                return default_side
+
+        return default_side
 
     @classmethod
     def merge_dimensions(
