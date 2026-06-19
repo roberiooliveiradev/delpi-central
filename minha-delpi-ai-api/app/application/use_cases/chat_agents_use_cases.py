@@ -358,8 +358,9 @@ class TransferChatAgentOwnershipUseCase:
 
 
 class GetChatAgentStatsUseCase:
-    def __init__(self, repository: ChatAgentRepositoryPort):
+    def __init__(self, repository: ChatAgentRepositoryPort, share_profile_service=None):
         self.repository = repository
+        self.share_profile_service = share_profile_service
 
     def execute(
         self,
@@ -368,6 +369,7 @@ class GetChatAgentStatsUseCase:
         agent_id: str,
         hours: int = 168,
         specialization: dict | None = None,
+        access_token: str | None = None,
     ) -> dict | None:
         record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
 
@@ -389,6 +391,13 @@ class GetChatAgentStatsUseCase:
 
         if not stats:
             return None
+
+        user_ranking = stats.get("userRanking")
+        if isinstance(user_ranking, list) and self.share_profile_service:
+            stats["userRanking"] = self.share_profile_service.enrich_user_ranking(
+                user_ranking,
+                access_token=access_token,
+            )
 
         stats["miniDashboard"] = ChatAgentMiniDashboardService.build_dashboard(stats)
         stats["recommendations"] = ChatAgentMiniDashboardService.build_recommendations(

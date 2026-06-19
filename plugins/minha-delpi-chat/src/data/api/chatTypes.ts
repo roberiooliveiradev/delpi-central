@@ -1031,6 +1031,14 @@ export type ChatAgentExportBundle = {
   }>;
 };
 
+export type ChatAgentUserRankingEntry = {
+  userId: string;
+  messages: number;
+  sessions: number;
+  userName?: string | null;
+  userEmail?: string | null;
+};
+
 export type ChatAgentStats = {
   agentId: string;
   windowHours: number;
@@ -1039,6 +1047,7 @@ export type ChatAgentStats = {
   totalSessions: number;
   actionProvidersCount: number;
   sharesCount: number;
+  userRanking?: ChatAgentUserRankingEntry[];
   miniDashboard?: Extract<ChatPresentation, { type: "dashboard" }>;
   recommendations?: string[];
 };

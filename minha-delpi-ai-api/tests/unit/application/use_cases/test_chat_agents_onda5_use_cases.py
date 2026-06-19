@@ -77,6 +77,7 @@ def test_get_agent_stats_delegates_to_repository():
         "totalSessions": 5,
         "actionProvidersCount": 1,
         "sharesCount": 0,
+        "userRanking": [],
     }
 
     result = GetChatAgentStatsUseCase(repository).execute(

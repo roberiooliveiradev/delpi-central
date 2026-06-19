@@ -332,6 +332,7 @@ def get_agent_stats(agent_id: str):
         return bad_request("hours must be a number")
 
     use_case = make_get_chat_agent_stats_use_case()
+    access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
 
     try:
         result = use_case.execute(
@@ -339,6 +340,7 @@ def get_agent_stats(agent_id: str):
             agent_id=agent_id,
             hours=hours_value,
             specialization=specialization,
+            access_token=access_token or None,
         )
     except ChatAgentPermissionDeniedError as exc:
         return chat_forbidden(str(exc))

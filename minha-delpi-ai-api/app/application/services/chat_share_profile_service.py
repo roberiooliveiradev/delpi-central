@@ -39,3 +39,38 @@ class ChatShareProfileService:
             )
 
         return enriched
+
+    def enrich_user_ranking(
+        self,
+        ranking: list[dict],
+        *,
+        access_token: str | None,
+    ) -> list[dict]:
+        if not access_token or not ranking:
+            return ranking
+
+        user_ids = [
+            str(entry.get("userId") or "")
+            for entry in ranking
+            if entry.get("userId")
+        ]
+
+        if not user_ids:
+            return ranking
+
+        profiles = self.core_api_gateway.lookup_directory_users(access_token, user_ids)
+        profile_by_id = {profile["id"]: profile for profile in profiles}
+
+        enriched: list[dict] = []
+
+        for entry in ranking:
+            profile = profile_by_id.get(str(entry.get("userId") or ""))
+            enriched.append(
+                {
+                    **entry,
+                    "userName": profile.get("name") if profile else None,
+                    "userEmail": profile.get("email") if profile else None,
+                }
+            )
+
+        return enriched

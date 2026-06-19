@@ -380,6 +380,30 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             else 0
         )
 
+        user_ranking_rows = (
+            db.session.query(
+                AiChatSessionModel.user_id,
+                func.count(AiChatMessageModel.id).label("message_count"),
+                func.count(func.distinct(AiChatSessionModel.id)).label("session_count"),
+            )
+            .join(AiChatMessageModel, AiChatMessageModel.session_id == AiChatSessionModel.id)
+            .filter(AiChatSessionModel.agent_id == agent_id)
+            .filter(AiChatMessageModel.created_at >= since)
+            .group_by(AiChatSessionModel.user_id)
+            .order_by(func.count(AiChatMessageModel.id).desc())
+            .limit(10)
+            .all()
+        )
+
+        user_ranking = [
+            {
+                "userId": str(row.user_id),
+                "messages": int(row.message_count or 0),
+                "sessions": int(row.session_count or 0),
+            }
+            for row in user_ranking_rows
+        ]
+
         return {
             "agentId": str(agent_id),
             "windowHours": safe_hours,
@@ -388,6 +412,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             "totalSessions": total_sessions,
             "actionProvidersCount": action_providers,
             "sharesCount": shares_count,
+            "userRanking": user_ranking,
         }
 
     def list_usage_summaries(

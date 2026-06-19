@@ -508,9 +508,17 @@ def make_import_chat_agent_use_case():
 
 
 def make_get_chat_agent_stats_use_case():
+    from app.application.services.chat_share_profile_service import ChatShareProfileService
     from app.application.use_cases.chat_agents_use_cases import GetChatAgentStatsUseCase
+    from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
+    from app.infrastructure.persistence.postgres_chat_agent_repository import (
+        PostgresChatAgentRepository,
+    )
 
-    return GetChatAgentStatsUseCase(PostgresChatAgentRepository())
+    return GetChatAgentStatsUseCase(
+        PostgresChatAgentRepository(),
+        ChatShareProfileService(CoreApiHttpGateway()),
+    )
 
 
 def make_search_chat_directory_users_use_case():

@@ -49,18 +49,86 @@ class ChatAgentMiniDashboardService:
             },
         }
 
+        panels: list[dict[str, Any]] = [
+            {"id": "usage-kpi", "title": "Indicadores", "presentation": kpi_panel},
+            {
+                "id": "activity-bar",
+                "title": "Volume",
+                "presentation": activity_chart,
+            },
+        ]
+
+        user_ranking_panel = cls._build_user_ranking_panel(stats)
+        if user_ranking_panel is not None:
+            panels.append(
+                {
+                    "id": "user-ranking",
+                    "title": "Ranking de usuários",
+                    "presentation": user_ranking_panel,
+                }
+            )
+
         return {
             "type": "dashboard",
             "title": "Painel do agente",
-            "panels": [
-                {"id": "usage-kpi", "title": "Indicadores", "presentation": kpi_panel},
-                {
-                    "id": "activity-bar",
-                    "title": "Volume",
-                    "presentation": activity_chart,
-                },
-            ],
+            "panels": panels,
         }
+
+    @classmethod
+    def _build_user_ranking_panel(cls, stats: dict[str, Any]) -> dict[str, Any] | None:
+        raw_ranking = stats.get("userRanking")
+        if not isinstance(raw_ranking, list) or not raw_ranking:
+            return None
+
+        rows: list[dict[str, Any]] = []
+
+        for index, entry in enumerate(raw_ranking, start=1):
+            if not isinstance(entry, dict):
+                continue
+
+            rows.append(
+                {
+                    "rank": index,
+                    "user": cls._user_display_label(entry),
+                    "messages": int(entry.get("messages") or 0),
+                    "sessions": int(entry.get("sessions") or 0),
+                }
+            )
+
+        if not rows:
+            return None
+
+        return {
+            "type": "table",
+            "title": "Ranking de usuários",
+            "columns": [
+                {"key": "rank", "label": "#", "dataType": "number"},
+                {"key": "user", "label": "Usuário", "dataType": "text"},
+                {"key": "messages", "label": "Mensagens", "dataType": "number"},
+                {"key": "sessions", "label": "Conversas", "dataType": "number"},
+            ],
+            "rows": rows,
+        }
+
+    @classmethod
+    def _user_display_label(cls, entry: dict[str, Any]) -> str:
+        name = str(entry.get("userName") or "").strip()
+        email = str(entry.get("userEmail") or "").strip()
+
+        if name and email:
+            return f"{name} ({email})"
+
+        if name:
+            return name
+
+        if email:
+            return email
+
+        user_id = str(entry.get("userId") or "").strip()
+        if user_id:
+            return f"Usuário {user_id[:8]}…"
+
+        return "Usuário desconhecido"
 
     @classmethod
     def build_recommendations(
