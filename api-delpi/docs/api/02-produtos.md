@@ -10,6 +10,8 @@ Formato de resposta: envelope `{ success, message, data }`.
 
 > **Unidades de medida (MI, BOM, fiscal):** convenção produtiva e impacto nas rotas de estrutura, estoque e simulador — [playbook-conversao-unidades-protheus.md](../roadmaps/playbook-conversao-unidades-protheus.md).
 
+> **Vigência da BOM (`SG1010`):** rotas que explodem estrutura consideram apenas linhas vigentes em `G1_INI` / `G1_FIM`. Default: **hoje**; rotas fabris com `reference_date` usam essa data. Módulo: `ProductBomValidityFilterService` — [bom-validity-filter-changelog-jun2026.md](./bom-validity-filter-changelog-jun2026.md).
+
 ## GET /products/search
 
 Busca paginada de produtos no Protheus.
@@ -57,7 +59,7 @@ Consolida cadastro + estoque (top locais) + preços em uma única chamada.
 
 ## GET /products/{code}/structure
 
-Estrutura (BOM) do produto.
+Estrutura (BOM) do produto — somente componentes **vigentes na data de hoje** (`G1_INI` / `G1_FIM`).
 
 | Query | Descrição |
 |---|---|
@@ -159,7 +161,7 @@ Exporta estrutura em Excel.
 
 ## GET /products/{code}/parents
 
-Produtos “pai” que utilizam o item na estrutura.
+Produtos “pai” que utilizam o item na estrutura (somente vínculos **vigentes hoje** em `SG1010`).
 
 Parâmetros: `max_depth`, `page`, `page_size`.
 
@@ -184,7 +186,7 @@ Clientes vinculados ao item.
 
 ## GET /products/{code}/inspection
 
-Dados de inspeção / qualidade do item.
+Dados de inspeção / qualidade do item. O escopo de produtos na árvore respeita vigência da BOM (hoje).
 
 | Query | Descrição |
 |---|---|
@@ -195,7 +197,7 @@ Dados de inspeção / qualidade do item.
 
 ## GET /products/{code}/guide
 
-Roteiro de produção.
+Roteiro de produção. A árvore de códigos para roteiro (`SG2010`) usa apenas componentes vigentes na BOM (hoje).
 
 | Query | Descrição |
 |---|---|
@@ -283,7 +285,7 @@ Preços comerciais (tabelas de preço).
 
 ## GET /products/{code}/analyser
 
-Visão consolidada (“analisador”) com múltiplas dimensões do produto em uma única chamada.
+Visão consolidada (“analisador”) com múltiplas dimensões do produto em uma única chamada. Os blocos `structure`, `guide` e `inspection` aplicam vigência da BOM (hoje).
 
 **Uso típico:** tela de detalhe do plugin Dashboard DELPI.
 

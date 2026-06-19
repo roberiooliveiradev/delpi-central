@@ -1,7 +1,12 @@
 from app.domain.ports.product.product_cost_impact_repository_port import (
     ProductCostImpactRepositoryPort,
 )
+from app.domain.services.product.product_bom_validity_filter_service import (
+    ProductBomValidityFilterService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+
+_BOM_VALIDITY = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="G1")
 
 
 class ProductCostImpactRepository(BaseRepository, ProductCostImpactRepositoryPort):
@@ -26,7 +31,7 @@ class ProductCostImpactRepository(BaseRepository, ProductCostImpactRepositoryPor
             return repo.execute_one(sql, (code,))
 
     def fetch_raw_material_cost_items(self, code: str, max_depth: int) -> list[dict]:
-        sql = """
+        sql = f"""
         DECLARE @PRODUTO VARCHAR(30) = ?;
         DECLARE @MAX_DEPTH INT = ?;
 
@@ -41,7 +46,7 @@ class ProductCostImpactRepository(BaseRepository, ProductCostImpactRepositoryPor
             FROM SG1010 G1 WITH (NOLOCK)
             WHERE G1.D_E_L_E_T_ = ''
               AND G1.G1_COD = @PRODUTO
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {_BOM_VALIDITY}
 
             UNION ALL
 
@@ -57,7 +62,7 @@ class ProductCostImpactRepository(BaseRepository, ProductCostImpactRepositoryPor
                 ON E.component_code = G1.G1_COD
             WHERE G1.D_E_L_E_T_ = ''
               AND E.level < @MAX_DEPTH
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {_BOM_VALIDITY}
         ),
 
         RAW_MATERIALS AS (

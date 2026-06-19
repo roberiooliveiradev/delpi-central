@@ -2,13 +2,18 @@
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.domain.ports.product.product_inspection_repository_port import ProductInspectionRepositoryPort
 from app.domain.entities.product.inspection import Inspection
+from app.domain.services.product.product_bom_validity_filter_service import (
+    ProductBomValidityFilterService,
+)
+
+_BOM_VALIDITY = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="G1")
 
 
 class ProductInspectionRepository(BaseRepository, ProductInspectionRepositoryPort):
 
     def fetch_inspection_rows(self, code: str, max_depth: int):
 
-        sql = """   
+        sql = f"""   
         DECLARE
             @product_code NVARCHAR(20) = ?,
             @max_depth INT = ?;
@@ -24,6 +29,7 @@ class ProductInspectionRepository(BaseRepository, ProductInspectionRepositoryPor
             FROM SG1010 G1 WITH (NOLOCK)
             WHERE G1.D_E_L_E_T_ = ''
             AND G1.G1_COD = @product_code
+            {_BOM_VALIDITY}
 
             UNION ALL
 
@@ -36,6 +42,7 @@ class ProductInspectionRepository(BaseRepository, ProductInspectionRepositoryPor
                 ON B.product_code = G1.G1_COD
             WHERE G1.D_E_L_E_T_ = ''
             AND B.bom_level < @max_depth
+            {_BOM_VALIDITY}
         ),
 
         product_scope AS (

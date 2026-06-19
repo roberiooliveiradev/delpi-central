@@ -1,5 +1,17 @@
 # CHANGELOG — api-delpi
 
+## 2026-06 — Vigência completa da BOM (SG1010)
+
+Todas as rotas de produto que percorrem estrutura passam a usar filtro de **intervalo de vigência** (`G1_INI` + `G1_FIM`), não apenas `G1_FIM > hoje` nem ausência de filtro.
+
+Detalhes: [bom-validity-filter-changelog-jun2026.md](./api/bom-validity-filter-changelog-jun2026.md).
+
+**Módulo canônico:** `ProductBomValidityFilterService`.
+
+**Rotas afetadas:** `/structure`, `/structure/excel`, `/structure/exclusivity`, `/analyser`, `/parents`, `/guide`, `/inspection`, `/directives`, `/factory-status`, `/production-status`, `/cost-impact-simulation`, catálogo `/exclusive-raw-materials/catalog`.
+
+---
+
 ## 2026-06 — Conversão de unidades Protheus (MI / BOM / fiscal)
 
 Playbook transversal para interpretação de `B1_UM`, BOM (`SG1010`), fiscal (`SB5010`) e convenção **1 MI = 1000 peças** nas rotas de produto.

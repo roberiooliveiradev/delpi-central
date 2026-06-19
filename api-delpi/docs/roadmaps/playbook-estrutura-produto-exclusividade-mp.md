@@ -72,24 +72,16 @@ A rota oficial de estrutura considera somente componentes vigentes.
 
 Nos testes, a SQL sem filtro de vigência retornou itens históricos/vencidos.
 
-Para reproduzir a rota `/products/{code}/structure`, usar:
+**Módulo canônico (jun/2026):** `ProductBomValidityFilterService` — ver [bom-validity-filter-changelog-jun2026.md](../api/bom-validity-filter-changelog-jun2026.md).
 
-```sql
-AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
-```
-
-Também pode ser usado filtro completo de intervalo:
+Para reproduzir as rotas de produto que percorrem `SG1010` (ex.: `/products/{code}/structure`), usar o filtro completo de intervalo:
 
 ```sql
 AND (G1.G1_INI = '' OR G1.G1_INI <= CONVERT(CHAR(8), GETDATE(), 112))
 AND (G1.G1_FIM = '' OR G1.G1_FIM >= CONVERT(CHAR(8), GETDATE(), 112))
 ```
 
-Porém, a lógica observada na rota usa principalmente:
-
-```sql
-G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
-```
+Rotas fabris com `reference_date` substituem a data por `@DATA_REF` (mesmo critério de `/production-status`).
 
 ---
 
@@ -121,7 +113,8 @@ WITH recursive_bom AS (
     FROM SG1010 WITH (NOLOCK)
     WHERE D_E_L_E_T_ = ''
       AND G1_COD = @PRODUTO
-      AND G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+      AND (G1_INI = '' OR G1_INI <= CONVERT(CHAR(8), GETDATE(), 112))
+      AND (G1_FIM = '' OR G1_FIM >= CONVERT(CHAR(8), GETDATE(), 112))
 
     UNION ALL
 
@@ -135,7 +128,8 @@ WITH recursive_bom AS (
         ON p.component_code = c.G1_COD
     WHERE c.D_E_L_E_T_ = ''
       AND p.bom_level < @MAX_DEPTH
-      AND c.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+      AND (c.G1_INI = '' OR c.G1_INI <= CONVERT(CHAR(8), GETDATE(), 112))
+      AND (c.G1_FIM = '' OR c.G1_FIM >= CONVERT(CHAR(8), GETDATE(), 112))
 )
 
 SELECT 

@@ -1,13 +1,19 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_parents_repository.py
+from app.domain.services.product.product_bom_validity_filter_service import (
+    ProductBomValidityFilterService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.domain.ports.product.product_parents_repository_port import ProductParentsRepositoryPort
+
+_BOM_VALIDITY = ProductBomValidityFilterService.validity_filter_sql_for_today()
+_BOM_VALIDITY_RECURSIVE = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="c")
 
 
 class ProductParentsRepository(BaseRepository, ProductParentsRepositoryPort):
 
     def fetch_parents_rows(self, code: str, max_depth: int):
 
-        sql = """
+        sql = f"""
         WITH recursive_parents AS (
             SELECT 
                 G1_COD   AS parent_code,
@@ -17,6 +23,7 @@ class ProductParentsRepository(BaseRepository, ProductParentsRepositoryPort):
             FROM SG1010
             WHERE D_E_L_E_T_ = ''
             AND G1_COMP = ?
+            {_BOM_VALIDITY}
 
             UNION ALL
 
@@ -30,6 +37,7 @@ class ProductParentsRepository(BaseRepository, ProductParentsRepositoryPort):
                 ON p.parent_code = c.G1_COMP
             WHERE c.D_E_L_E_T_ = ''
             AND p.level < ?
+            {_BOM_VALIDITY_RECURSIVE}
         )
         SELECT 
             rp.parent_code,

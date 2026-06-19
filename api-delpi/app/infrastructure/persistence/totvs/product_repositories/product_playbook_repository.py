@@ -1,6 +1,9 @@
 # app/infrastructure/persistence/totvs/product_repositories/product_playbook_repository.py
 
 from app.domain.ports.product.product_playbook_repository_port import ProductPlaybookRepositoryPort
+from app.domain.services.product.product_bom_validity_filter_service import (
+    ProductBomValidityFilterService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.product_repositories.product_playbook_production_period_sql import (
     PRODUCT_PLAYBOOK_PRODUCTION_ORDER_PERIOD_FILTER_SQL,
@@ -8,6 +11,20 @@ from app.infrastructure.persistence.totvs.product_repositories.product_playbook_
 
 
 class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
+
+    @staticmethod
+    def _bom_validity_context(
+        reference_date: str | None = None,
+    ) -> tuple[str, str, list[str]]:
+        if reference_date:
+            declare = "DECLARE @DATA_REF VARCHAR(8) = ?;"
+            validity = ProductBomValidityFilterService.validity_filter_sql(
+                alias="G1",
+                reference_param="@DATA_REF",
+            )
+            return declare, validity, [reference_date]
+        validity = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="G1")
+        return "", validity, []
 
     def fetch_product_header(self, code: str) -> dict | None:
         sql = """
@@ -24,8 +41,16 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
         with self as repo:
             return repo.execute_one(sql, (code,))
 
-    def fetch_structure_with_exclusivity(self, code: str, max_depth: int) -> list[dict]:
-        sql = """
+    def fetch_structure_with_exclusivity(
+        self,
+        code: str,
+        max_depth: int,
+        *,
+        reference_date: str | None = None,
+    ) -> list[dict]:
+        data_ref_declare, bom_validity, prefix_params = self._bom_validity_context(reference_date)
+        sql = f"""
+        {data_ref_declare}
         DECLARE @PRODUTO VARCHAR(30) = ?;
         DECLARE @MAX_DEPTH INT = ?;
 
@@ -40,7 +65,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
             FROM SG1010 G1 WITH (NOLOCK)
             WHERE G1.D_E_L_E_T_ = ''
               AND G1.G1_COD = @PRODUTO
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {bom_validity}
 
             UNION ALL
 
@@ -56,7 +81,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
                 ON EP.component_code = G1.G1_COD
             WHERE G1.D_E_L_E_T_ = ''
               AND EP.level < @MAX_DEPTH
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {bom_validity}
         ),
 
         MATERIAS_PRIMAS_DO_PRODUTO AS (
@@ -83,7 +108,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
                AND PA.B1_COD NOT LIKE '8000%'
                AND PA.B1_COD NOT LIKE '8001%'
             WHERE G1.D_E_L_E_T_ = ''
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {bom_validity}
 
             UNION ALL
 
@@ -97,7 +122,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
             INNER JOIN SG1010 G1 WITH (NOLOCK)
                 ON G1.G1_COD = TE.component_code
                AND G1.D_E_L_E_T_ = ''
-               AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {bom_validity}
             WHERE TE.level < @MAX_DEPTH
         ),
 
@@ -145,11 +170,20 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
         ORDER BY EP.path
         OPTION (MAXRECURSION 0);
         """
+        params = tuple(prefix_params + [code, max_depth])
         with self as repo:
-            return repo.execute_batch_query(sql, (code, max_depth))
+            return repo.execute_batch_query(sql, params)
 
-    def fetch_raw_material_stock(self, code: str, max_depth: int) -> list[dict]:
-        sql = """
+    def fetch_raw_material_stock(
+        self,
+        code: str,
+        max_depth: int,
+        *,
+        reference_date: str | None = None,
+    ) -> list[dict]:
+        data_ref_declare, bom_validity, prefix_params = self._bom_validity_context(reference_date)
+        sql = f"""
+        {data_ref_declare}
         DECLARE @PRODUTO VARCHAR(30) = ?;
         DECLARE @MAX_DEPTH INT = ?;
 
@@ -162,7 +196,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
             FROM SG1010 G1 WITH (NOLOCK)
             WHERE G1.D_E_L_E_T_ = ''
               AND G1.G1_COD = @PRODUTO
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {bom_validity}
 
             UNION ALL
 
@@ -176,7 +210,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
                 ON E.component_code = G1.G1_COD
             WHERE G1.D_E_L_E_T_ = ''
               AND E.level < @MAX_DEPTH
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {bom_validity}
         ),
 
         MPS AS (
@@ -230,8 +264,9 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
         ORDER BY MP.raw_material_code, E.branch, E.warehouse
         OPTION (MAXRECURSION 0);
         """
+        params = tuple(prefix_params + [code, max_depth])
         with self as repo:
-            return repo.execute_batch_query(sql, (code, max_depth))
+            return repo.execute_batch_query(sql, params)
 
     def fetch_production_status(
         self,
@@ -257,6 +292,10 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
             params.append(branch)
 
         period_filter = PRODUCT_PLAYBOOK_PRODUCTION_ORDER_PERIOD_FILTER_SQL
+        bom_validity = ProductBomValidityFilterService.validity_filter_sql(
+            alias="G1",
+            reference_param="@DATA_REF",
+        )
 
         sql = f"""
         DECLARE @PRODUTO VARCHAR(30) = ?;
@@ -276,8 +315,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
             FROM SG1010 G1 WITH (NOLOCK)
             WHERE G1.D_E_L_E_T_ = ''
               AND G1.G1_COD = @PRODUTO
-              AND (G1.G1_INI = '' OR G1.G1_INI <= @DATA_REF)
-              AND (G1.G1_FIM = '' OR G1.G1_FIM >= @DATA_REF)
+              {bom_validity}
 
             UNION ALL
 
@@ -293,8 +331,7 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
                 ON E.component_code = G1.G1_COD
             WHERE G1.D_E_L_E_T_ = ''
               AND E.level < @MAX_DEPTH
-              AND (G1.G1_INI = '' OR G1.G1_INI <= @DATA_REF)
-              AND (G1.G1_FIM = '' OR G1.G1_FIM >= @DATA_REF)
+              {bom_validity}
         ),
 
         ESCOPO_PRODUCAO AS (

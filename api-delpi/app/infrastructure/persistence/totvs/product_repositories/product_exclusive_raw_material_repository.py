@@ -4,7 +4,12 @@ from app.domain.constants.product_exclusivity import TEST_FINISHED_PRODUCT_PREFI
 from app.domain.ports.product.product_exclusive_raw_material_repository_port import (
     ProductExclusiveRawMaterialRepositoryPort,
 )
+from app.domain.services.product.product_bom_validity_filter_service import (
+    ProductBomValidityFilterService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+
+_BOM_VALIDITY = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="G1")
 
 
 class ProductExclusiveRawMaterialRepository(
@@ -63,7 +68,7 @@ class ProductExclusiveRawMaterialRepository(
                AND PA.B1_TIPO = 'PA'
                {test_filter}
             WHERE G1.D_E_L_E_T_ = ''
-              AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {_BOM_VALIDITY}
 
             UNION ALL
 
@@ -79,7 +84,7 @@ class ProductExclusiveRawMaterialRepository(
             INNER JOIN SG1010 G1 WITH (NOLOCK)
                 ON G1.G1_COD = EP.COMPONENTE
                AND G1.D_E_L_E_T_ = ''
-               AND G1.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+              {_BOM_VALIDITY}
             WHERE EP.NIVEL < ?
         ),
 

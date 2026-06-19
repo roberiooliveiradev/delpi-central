@@ -31,8 +31,13 @@ class GetProductFactoryStatusUseCase:
         structure_items = self._repository.fetch_structure_with_exclusivity(
             request.code,
             max_depth,
+            reference_date=reference_date,
         )
-        stock_items = self._repository.fetch_raw_material_stock(request.code, max_depth)
+        stock_items = self._repository.fetch_raw_material_stock(
+            request.code,
+            max_depth,
+            reference_date=reference_date,
+        )
         product_unit = str((header or {}).get("unit") or "").strip() or None
         stock_items = apply_pa_bom_reference_to_stock_items(stock_items, product_unit)
         production_items = self._repository.fetch_production_status(

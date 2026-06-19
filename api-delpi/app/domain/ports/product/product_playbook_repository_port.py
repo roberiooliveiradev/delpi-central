@@ -8,11 +8,23 @@ class ProductPlaybookRepositoryPort(ABC):
         ...
 
     @abstractmethod
-    def fetch_structure_with_exclusivity(self, code: str, max_depth: int) -> list[dict]:
+    def fetch_structure_with_exclusivity(
+        self,
+        code: str,
+        max_depth: int,
+        *,
+        reference_date: str | None = None,
+    ) -> list[dict]:
         ...
 
     @abstractmethod
-    def fetch_raw_material_stock(self, code: str, max_depth: int) -> list[dict]:
+    def fetch_raw_material_stock(
+        self,
+        code: str,
+        max_depth: int,
+        *,
+        reference_date: str | None = None,
+    ) -> list[dict]:
         ...
 
     @abstractmethod

@@ -7,6 +7,12 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 from app.domain.entities.product.guide_operation import GuideOperation
 from app.domain.ports.product.product_guide_repository_port import ProductGuideRepositoryPort
+from app.domain.services.product.product_bom_validity_filter_service import (
+    ProductBomValidityFilterService,
+)
+
+_BOM_VALIDITY = ProductBomValidityFilterService.validity_filter_sql_for_today()
+_BOM_VALIDITY_RECURSIVE = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="C")
 
 
 class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
@@ -34,6 +40,7 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
             FROM SG1010
             WHERE D_E_L_E_T_ = ''
             AND G1_COD = ?
+            {_BOM_VALIDITY}
 
             UNION ALL
 
@@ -46,6 +53,7 @@ class ProductGuideRepository(BaseRepository, ProductGuideRepositoryPort):
                 ON B.product_code = C.G1_COD
             WHERE C.D_E_L_E_T_ = ''
             AND B.bom_level < ?
+            {_BOM_VALIDITY_RECURSIVE}
         ),
         CODES AS (
             SELECT ? AS product_code, 0 AS bom_level
