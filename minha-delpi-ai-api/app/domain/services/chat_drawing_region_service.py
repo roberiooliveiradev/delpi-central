@@ -223,24 +223,24 @@ class ChatDrawingRegionService:
         lang: str,
         tesseract_config: str = "",
     ) -> str:
-        try:
-            import pytesseract
-        except ImportError:
-            return ""
-
         image = cls._render_region_image(page, bbox=bbox, matrix=matrix)
 
         if image is None:
             return ""
 
+        from app.domain.services.chat_pdf_region_ocr_engine_service import (
+            ChatPdfRegionOcrEngineService,
+        )
+
         try:
             config = str(tesseract_config or "").strip()
-            kwargs: dict[str, Any] = {"lang": lang}
+            result = ChatPdfRegionOcrEngineService.recognize(
+                image,
+                lang=lang,
+                tesseract_config=config,
+            )
 
-            if config:
-                kwargs["config"] = config
-
-            return str(pytesseract.image_to_string(image, **kwargs) or "").strip()
+            return str(result.get("text") or "").strip()
         except Exception:
             return ""
 
@@ -308,19 +308,21 @@ class ChatDrawingRegionService:
                 continue
 
             try:
-                import pytesseract
+                from app.domain.services.chat_pdf_region_ocr_engine_service import (
+                    ChatPdfRegionOcrEngineService,
+                )
 
                 processed = cls._preprocess_region_image(image)
-                text = str(
-                    pytesseract.image_to_string(
-                        processed,
-                        lang=lang,
-                        config=tesseract_config,
-                    )
-                    or ""
-                ).strip()
+                ocr_result = ChatPdfRegionOcrEngineService.recognize(
+                    processed,
+                    lang=lang,
+                    tesseract_config=tesseract_config,
+                )
+                text = str(ocr_result.get("text") or "").strip()
+                ocr_engine = str(ocr_result.get("engine") or "tesseract")
             except Exception:
                 text = ""
+                ocr_engine = "tesseract"
 
             if not text:
                 continue
@@ -331,6 +333,7 @@ class ChatDrawingRegionService:
                     "id": str(target.get("id") or region),
                     "bbox": list(target_bbox),
                     "charCount": len(text),
+                    "engine": ocr_engine,
                 }
             )
 
@@ -339,7 +342,7 @@ class ChatDrawingRegionService:
         return detail_text, {
             "detailPass": True,
             "zoomMultiplier": cls.detail_zoom_multiplier(),
-            "engine": "tesseract_detail",
+            "engine": "multi_engine_detail",
             "subRegions": sub_meta,
             "tesseractConfig": tesseract_config,
         }

@@ -56,6 +56,9 @@ Consumidores:
 | `ChatPdfTextFusionService` | Fusão multi-fonte com score (embedded > anotações > regiões > pypdf) |
 | `ChatPdfAnnotationTableService` | Tabelas a partir de bbox de anotações (cluster por linha Y) |
 | `ChatPdfDocumentExtractionService` | Orquestrador; perfis `generic` e `drawing_delpi` |
+| `ChatPdfRegionOcrEngineService` | OCR regional plugável (`tesseract`, `easyocr`, `paddleocr`) |
+| `ChatPdfRegionOcrFusionService` | Fusão de linhas entre motores por região |
+| `ChatDrawingBomRowSanitizationService` | Fantasmas de produto na BOM + códigos aninhados em descrição |
 | `ChatDrawingPdfEmbeddedTextService` | Alias de compatibilidade → delega para `ChatPdfEmbeddedTextService` |
 
 ### Perfis de layout (`layoutProfile`)
@@ -72,8 +75,11 @@ Consumidores:
 | Serviço | Função |
 |---------|--------|
 | `ChatDrawingPdfExtractionService` | Fachada: carimbo, revisão, cotas, legibilidade |
-| `ChatDrawingPdfBomExtractionService` | BOM + componentes + `bomSource` |
+| `ChatDrawingPdfBomExtractionService` | BOM + componentes + `bomSource` + sanitização de linhas |
+| `ChatDrawingBomRowSanitizationService` | Remove fantasmas (título como código), promove códigos aninhados em 50xx, dedup OCR |
 | `ChatDrawingIntermediateCodeService` | Códigos `50xx` e deduplicação OCR |
+| `ChatPdfRegionOcrEngineService` | OCR por região: `tesseract`, `easyocr`, `paddleocr` |
+| `ChatPdfRegionOcrFusionService` | Fusão de linhas multi-motor (prevalece linha com mais códigos) |
 | `ChatDrawingPdfProductContextService` | `productCode` (carimbo / filename / BOM) |
 | `ChatDrawingStampExtractionService` | Parse de carimbo e candidatos |
 | `ChatDocumentVisionBomService` | Linhas BOM, score de fonte, ruído de revisão |
@@ -82,6 +88,8 @@ Consumidores:
 `ChatDrawingPdfExtractionService` **não** abre o PDF com pypdf isolado — delega a `ChatPdfDocumentExtractionService` e aplica parse DELPI sobre `fullText` + `parseMetadata`.
 
 Na análise de desenho no chat, `ChatDocumentVisionService.enrich_drawing_extract` **deve** chamar `_extract_drawing_pdf` → `ChatDrawingPdfExtractionService` (perfil `drawing_delpi` + OCR regional). O pipeline genérico `extract_from_storage_path` (`LAYOUT_GENERIC`, sem `region_ocr`) é só para anexos/documentos comuns.
+
+**Container:** EasyOCR + Tesseract habilitados por padrão no dev — ver [vision-container-setup.md](../operations/vision-container-setup.md).
 
 ---
 
@@ -94,6 +102,7 @@ Seção **`pdfExtraction`**:
 | `fusion.minEmbeddedChars` | Mínimo de caracteres embedded para confiar sem OCR regional |
 | `annotationTable.rowClusterTolerancePt` | Tolerância vertical (pt) para agrupar células na mesma linha |
 | `regionOcr.minChars` | Abaixo disso, perfil `drawing_delpi` pode acionar OCR por região |
+| `regionOcr.engines` | Motores por região: `tesseract`, `easyocr`, `paddleocr` (ver [vision-container-setup.md](../operations/vision-container-setup.md)) |
 | `layoutProfiles.generic.enableRegionOcr` | `false` — chat base genérico não corta regiões DELPI |
 | `layoutProfiles.drawing_delpi.enableRegionOcr` | `true` — permite fallback regional na skill desenho |
 

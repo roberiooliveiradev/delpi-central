@@ -8,7 +8,7 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 |---------|-----|
 | `docker-compose.dev.yml` | Desenvolvimento local: hot-reload, Flask dev, profile `chat` / `vision` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
-| `docker-compose.vision.yml` | **Override** dev: troca para `Dockerfile.vision.dev` (Docling) |
+| `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
 | `docker-compose.prod.vision.yml` | **Override** prod: `INSTALL_VISION_EXTRAS=true` no `Dockerfile.prod` |
 | `.env.dev.example` | Modelo para copiar → `.env` no dia a dia |
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
@@ -18,9 +18,8 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 cp infra/.env.dev.example infra/.env
 docker compose -f infra/docker-compose.dev.yml --profile chat up -d
 
-# Chat + visão neural (Docling) — build mais pesado
-docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.vision.yml \
-  --profile chat build minha-delpi-ai-api
+# Chat + rebuild explícito com extras de visão (opcional — dev já inclui EasyOCR/Docling)
+./minha-delpi-ai-api/scripts/build_vision_profile.sh dev
 ```
 
 O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f infra/docker-compose.*.yml`.
@@ -35,7 +34,8 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 | Código | Volume montado (`../minha-delpi-ai-api:/app`) | Copiado na imagem (imutável) |
 | **Tesseract (OCR)** | `apt` + `por`/`eng` | `apt` + `por`/`eng` (alinhado) |
 | **Python deps** | `requirements.txt` | `requirements.txt` (mesmo arquivo) |
-| **Docling / Paddle** | Só com `Dockerfile.vision.dev` + `requirements-vision.txt` | Só se `INSTALL_VISION_EXTRAS=true` no build (`Dockerfile.prod`) |
+| **EasyOCR / Docling** | `requirements-vision.txt` no build + `install_vision_extras.sh` na subida | Só se `INSTALL_VISION_EXTRAS=true` no build (`Dockerfile.prod`) |
+| **PaddleOCR** | Opcional — descomente em `requirements-vision.txt` + rebuild | Idem |
 | Compose injeta `CHAT_DOCUMENT_VISION_*` | Sim (default `ENABLED=true`) | Sim (via `.env`; ver `.env.prod.example`) |
 | Ollama / SearXNG | Dev: profile `chat` | Prod: Ollama; SearXNG opcional por env |
 
@@ -44,7 +44,7 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 1. **Git** traz código + exemplos de env; **não** traz `.env` nem imagens Docker.
 2. Em cada máquina: `cp .env.*.example .env`, ajustar secrets, `docker compose build`.
 3. Dados (Postgres, anexos, `metadata.documentVision`) vivem nos **volumes/DB**, não na imagem.
-4. **Docling** só existe se você buildar a imagem **vision**; o compose dev normal não instala `requirements-vision.txt`.
+4. **EasyOCR/Docling** vêm no `Dockerfile.dev`; na primeira subida após pull, o entrypoint roda `install_vision_extras.sh` se faltar pacote. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 
@@ -97,12 +97,15 @@ Procedimento completo: `api-delpi/docs/api/12-procedimento-reimport-openapi.md`.
 
 | Variável | Dev (compose default) | Prod (recomendado no `.env`) |
 |----------|----------------------|------------------------------|
+| `CHAT_VISION_EXTRAS_ENABLED` | `true` | `true` (prod com `INSTALL_VISION_EXTRAS`) |
 | `CHAT_DOCUMENT_VISION_ENABLED` | `true` | `true` se usar OCR/anexos/desenhos |
-| `CHAT_DOCUMENT_VISION_BACKEND` | `auto` | `auto` (ou `tesseract` / `docling` se imagem vision) |
+| `CHAT_DOCUMENT_VISION_BACKEND` | `auto` | `auto` (ou `tesseract` / `docling` com extras na imagem) |
 | `CHAT_DOCUMENT_VISION_OLLAMA_MODEL` | `qwen2.5vl:7b` | `qwen2.5vl:7b` com `ollama_vlm` ou fallback em `auto` (`CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK=true`) |
 | `CHAT_RESPONSE_MODE_*` | modos composer | `FAST_MODEL=1.5b`, `OLLAMA_MODEL=3b` para normal/pensador |
 
-Backend `docling` exige imagem buildada com `docker-compose.vision.yml`. Sem isso, o código faz **fallback** para `native` + Tesseract.
+Backend `docling` e OCR regional `easyocr` exigem `requirements-vision.txt` na imagem (dev já inclui). Verificação: `python3 scripts/check_vision_profile_deps.py` dentro do container.
+
+Guia completo: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 

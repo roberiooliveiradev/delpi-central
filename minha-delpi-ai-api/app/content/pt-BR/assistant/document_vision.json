@@ -77,7 +77,9 @@
       "rowClusterTolerancePt": 6
     },
     "regionOcr": {
-      "minChars": 120
+      "minChars": 120,
+      "engines": ["tesseract", "easyocr", "paddleocr"],
+      "fusionStrategy": "merge_unique_lines"
     },
     "layoutProfiles": {
       "generic": {

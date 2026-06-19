@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Build da API com Dockerfile.vision.dev (Docling/Paddle em requirements-vision.txt).
+# Rebuild da API com extras de visão (EasyOCR + Docling).
 #
-# Pré-requisito: descomente pacotes em minha-delpi-ai-api/requirements-vision.txt
+# Desde jun/2026 o Dockerfile.dev já instala requirements-vision.txt.
+# Este script permanece para prod (INSTALL_VISION_EXTRAS) e fluxos explícitos.
 #
 # Uso:
-#   ./minha-delpi-ai-api/scripts/build_vision_profile.sh
+#   ./minha-delpi-ai-api/scripts/build_vision_profile.sh [dev|prod]
 
 set -euo pipefail
 
@@ -15,7 +16,7 @@ cd "$ROOT/infra"
 
 case "$TARGET" in
   dev)
-    COMPOSE_FILES=(-f docker-compose.dev.yml -f docker-compose.vision.yml)
+    COMPOSE_FILES=(-f docker-compose.dev.yml)
     COMPOSE_PROFILE=(--profile chat)
     ;;
   prod)
@@ -28,7 +29,7 @@ case "$TARGET" in
     ;;
 esac
 
-echo "== Build profile vision ($TARGET) — pode levar vários minutos com Docling =="
+echo "== Build com extras de visão ($TARGET) — EasyOCR/Docling; pode levar vários minutos =="
 docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" build minha-delpi-ai-api
 
 echo "== Recreate minha-delpi-ai-api =="

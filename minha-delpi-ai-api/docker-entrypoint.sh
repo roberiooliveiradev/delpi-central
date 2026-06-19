@@ -23,5 +23,10 @@ if [ "${SKIP_CHAT_INTELLIGENCE_SYNC:-false}" != "true" ]; then
   flask --app "$FLASK_APP" seed-chat-platform-settings
 fi
 
+if [ -f /app/scripts/install_vision_extras.sh ]; then
+  echo "👁️  Verificando extras de visão/OCR..."
+  sh /app/scripts/install_vision_extras.sh
+fi
+
 echo "🔥 Iniciando aplicação..."
 exec "$@"

@@ -1,12 +1,13 @@
-# Override opcional — imagem com extras de visão (Docling/Paddle em requirements-vision.txt).
+# Override legado — desde jun/2026 o Dockerfile.dev já inclui extras de visão.
+# Mantido para compatibilidade; equivalente a rebuild com Dockerfile.dev.
 #
-# Uso:
+# Uso (opcional):
 #   docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.vision.yml \
 #     --profile chat build minha-delpi-ai-api
-#   docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.vision.yml \
-#     --profile chat up -d --force-recreate minha-delpi-ai-api
 
 services:
   minha-delpi-ai-api:
     build:
       dockerfile: Dockerfile.vision.dev
+    environment:
+      CHAT_VISION_EXTRAS_ENABLED: ${CHAT_VISION_EXTRAS_ENABLED:-true}

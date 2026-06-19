@@ -261,6 +261,27 @@ class ChatDocumentVisionContentService:
             return 120
 
     @classmethod
+    def pdf_region_ocr_engines(cls) -> tuple[str, ...]:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "pdfExtraction",
+            "regionOcr",
+            "engines",
+        )
+
+        if isinstance(node, list):
+            engines = tuple(
+                str(item).strip().lower()
+                for item in node
+                if str(item).strip()
+            )
+
+            if engines:
+                return engines
+
+        return ("tesseract",)
+
+    @classmethod
     def pdf_layout_profile_allows_region_ocr(cls, layout_profile: str) -> bool:
         normalized = str(layout_profile or cls.LAYOUT_GENERIC).strip().lower() or cls.LAYOUT_GENERIC
         raw = ChatAssistantContentService.get(

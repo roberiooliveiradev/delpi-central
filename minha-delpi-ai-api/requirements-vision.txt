@@ -1,9 +1,12 @@
-# Extras opcionais — profile Docker Compose `vision` (Onda 13.3+).
+# Extras opcionais — visão/OCR ampliado (profile Docker + install_vision_extras.sh).
 # O MVP (native + Tesseract) usa apenas requirements.txt.
 #
-# Para habilitar backends neurais, descomente e reconstrua com Dockerfile.vision.dev:
+# Motores regionais (ChatPdfRegionOcrEngineService — document_vision.json → regionOcr.engines):
+easyocr>=1.7.0
 #
-# Docling — layout/OCR neural (MIT). Rebuild: scripts/build_vision_profile.sh
+# Layout/OCR neural de documento inteiro (CHAT_DOCUMENT_VISION_BACKEND=docling):
 docling>=2.7.0
+#
+# Paddle — descomente se houver CPU/GPU disponível (imagem bem maior):
 # paddlepaddle>=2.6.0
 # paddleocr>=2.7.0

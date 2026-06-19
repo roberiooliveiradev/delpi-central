@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_document_vision_bom_service import (
     ChatDocumentVisionBomService,
 )
+from app.domain.services.chat_drawing_bom_row_sanitization_service import (
+    ChatDrawingBomRowSanitizationService,
+)
 from app.domain.services.chat_drawing_component_code_normalization_service import (
     ChatDrawingComponentCodeNormalizationService,
 )
@@ -40,6 +43,12 @@ class ChatDrawingPdfBomExtractionService:
             exclude_product_code=product_code,
         )
 
+        if bom_rows:
+            bom_rows = ChatDrawingBomRowSanitizationService.sanitize_rows(
+                bom_rows,
+                product_code=product_code,
+            )
+
         revision_only_codes = ChatDocumentVisionBomService.codes_only_in_revision_lines(
             normalized
         )
@@ -62,6 +71,9 @@ class ChatDrawingPdfBomExtractionService:
                 list(component_codes or []),
                 bom_rows,
             )
+            component_codes.extend(
+                ChatDrawingBomRowSanitizationService.nested_component_codes(bom_rows)
+            )
 
         if not bom_rows and not component_codes:
             component_codes = cls._extract_component_codes_from_text(
@@ -74,6 +86,10 @@ class ChatDrawingPdfBomExtractionService:
             product_code=product_code,
             revision_only_codes=revision_only_codes,
             intermediate_codes=intermediate_codes,
+        )
+
+        component_codes = ChatDrawingBomRowSanitizationService.dedupe_component_codes(
+            component_codes,
         )
 
         payload: dict[str, Any] = {
@@ -105,6 +121,13 @@ class ChatDrawingPdfBomExtractionService:
             code
             for code in component_codes
             if code not in revision_only_codes and code != product_norm
+            and not (
+                product_norm
+                and ChatDrawingBomRowSanitizationService.is_product_code_ghost(
+                    code,
+                    product_norm,
+                )
+            )
         ]
         intermediate_set = set(intermediate_codes)
 
