@@ -1,3 +1,4 @@
+from app.domain.services.chat_document_vision_bom_service import ChatDocumentVisionBomService
 from app.domain.services.chat_drawing_region_service import ChatDrawingRegionService
 
 
@@ -61,6 +62,13 @@ def test_build_region_metadata_includes_detail_pass():
     assert meta["detail"]["zoomMultiplier"] == 2.5
 
 
+def test_bom_candidate_bboxes_loaded_from_json():
+    candidates = ChatDrawingRegionService.bom_candidate_bboxes()
+
+    assert len(candidates) >= 2
+    assert all(len(item.get("bbox") or []) == 4 for item in candidates)
+
+
 def test_ocr_drawing_regions_marks_detail_metadata(monkeypatch):
     class _FakePage:
         rect = type("R", (), {"width": 1000.0, "height": 1400.0})()
@@ -95,6 +103,11 @@ def test_ocr_drawing_regions_marks_detail_metadata(monkeypatch):
         ChatDrawingRegionService,
         "merge_region_ocr_texts",
         lambda base, detail: f"{base}|{detail}",
+    )
+    monkeypatch.setattr(
+        ChatDocumentVisionBomService,
+        "score_bom_text",
+        lambda text, **kwargs: 10 if "DETAIL-bom" in text or "10080591" in text else -1,
     )
 
     texts, metadata = ChatDrawingRegionService.ocr_drawing_regions(

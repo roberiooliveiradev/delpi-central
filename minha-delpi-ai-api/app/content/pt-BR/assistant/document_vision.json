@@ -68,5 +68,24 @@
     "pipeSeparator": "^\\|[\\s\\-:|]+\\|\\s*$",
     "maxTables": 3,
     "maxRows": 40
+  },
+  "pdfExtraction": {
+    "fusion": {
+      "minEmbeddedChars": 80
+    },
+    "annotationTable": {
+      "rowClusterTolerancePt": 6
+    },
+    "regionOcr": {
+      "minChars": 120
+    },
+    "layoutProfiles": {
+      "generic": {
+        "enableRegionOcr": false
+      },
+      "drawing_delpi": {
+        "enableRegionOcr": true
+      }
+    }
   }
 }

@@ -55,3 +55,12 @@ def test_drawing_stamp_detail_ocr_config():
     assert isinstance(detail.get("subRegions"), dict)
     assert detail.get("subRegions", {}).get("stamp")
     assert detail.get("subRegions", {}).get("bom")
+    preprocess = detail.get("preprocess") or {}
+    assert preprocess.get("binarize") is True
+
+
+def test_drawing_stamp_bom_candidate_bboxes():
+    candidates = ChatAssistantContentService.get_node("drawing_stamp", "bomCandidateBboxes") or []
+
+    assert len(candidates) >= 2
+    assert all(isinstance(item, dict) and len(item.get("bbox") or []) == 4 for item in candidates)

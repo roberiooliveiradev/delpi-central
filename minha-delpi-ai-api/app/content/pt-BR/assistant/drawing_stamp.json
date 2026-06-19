@@ -7,6 +7,24 @@
     "bom": [0.0, 0.0, 0.55, 0.35],
     "dimensions": [0.0, 0.12, 1.0, 0.62]
   },
+  "bomCandidateBboxes": [
+    {
+      "id": "bom_top_left",
+      "bbox": [0.0, 0.0, 0.55, 0.35]
+    },
+    {
+      "id": "bom_top_right",
+      "bbox": [0.55, 0.0, 1.0, 0.42]
+    },
+    {
+      "id": "bom_mid_left",
+      "bbox": [0.0, 0.18, 0.55, 0.55]
+    },
+    {
+      "id": "bom_mid_right",
+      "bbox": [0.45, 0.18, 1.0, 0.62]
+    }
+  ],
   "stampFieldLabels": {
     "productCode": [
       "CODIGO DELPI",
@@ -119,7 +137,10 @@
     "preprocess": {
       "grayscale": true,
       "autocontrast": true,
-      "sharpen": true
+      "sharpen": true,
+      "medianFilter": true,
+      "binarize": true,
+      "binarizeThreshold": 165
     },
     "tesseractConfig": {
       "stamp": "--psm 6 -c preserve_interword_spaces=1",

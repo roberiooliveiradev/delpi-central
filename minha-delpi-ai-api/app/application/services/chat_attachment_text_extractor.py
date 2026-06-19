@@ -3,6 +3,7 @@ import io
 import json
 import zipfile
 from pathlib import Path
+from typing import Any
 
 from app.application.services.chat_attachment_image_ocr_service import (
     ChatAttachmentImageOcrService,
@@ -204,6 +205,27 @@ class ChatAttachmentTextExtractor:
             return self._unsupported_optional(".xlsx", exc)
 
     def _extract_pdf(self, path: Path, *, page_limit: int | None = None) -> dict:
+        from app.domain.services.chat_pdf_document_extraction_service import (
+            ChatPdfDocumentExtractionService,
+        )
+
+        return ChatPdfDocumentExtractionService.extract_for_attachment_index(
+            str(path),
+            filename=path.name,
+            page_limit=page_limit,
+        )
+
+    def _extract_pdf_embedded(self, path: Path, *, page_limit: int) -> dict:
+        from app.domain.services.chat_pdf_embedded_text_service import (
+            ChatPdfEmbeddedTextService,
+        )
+
+        return ChatPdfEmbeddedTextService.extract(
+            str(path),
+            page_limit=page_limit,
+        )
+
+    def _extract_pdf_pypdf(self, path: Path, *, page_limit: int) -> dict:
         try:
             from pypdf import PdfReader
         except Exception as exc:
@@ -212,9 +234,8 @@ class ChatAttachmentTextExtractor:
         try:
             reader = PdfReader(str(path))
             pages = []
-            limit = max(1, int(page_limit or Settings.CHAT_ATTACHMENT_INDEX_PDF_PAGE_LIMIT))
 
-            for page in reader.pages[:limit]:
+            for page in reader.pages[:page_limit]:
                 pages.append(page.extract_text() or "")
 
             return {
@@ -223,7 +244,7 @@ class ChatAttachmentTextExtractor:
                 "metadata": {
                     "extractor": "pypdf",
                     "extension": ".pdf",
-                    "pageLimit": limit,
+                    "pageLimit": page_limit,
                 },
             }
         except Exception as exc:

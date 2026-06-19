@@ -15,6 +15,83 @@ from app.domain.services.chat_drawing_patterns_service import ChatDrawingPattern
 
 class ChatDocumentVisionBomService:
     @classmethod
+    def score_bom_text(cls, text: str, *, exclude_product_code: str | None = None) -> int:
+        normalized = str(text or "").strip()
+
+        if not normalized:
+            return -1
+
+        exclude = ChatProductQueryIntentService.normalize_product_code(
+            exclude_product_code or ""
+        )
+        rows = cls.extract_bom_rows(
+            normalized,
+            exclude_product_code=exclude,
+            region_scoped=True,
+        )
+        codes = cls.bom_component_codes(rows)
+        score = len(codes) * 10
+
+        if ChatDrawingPatternsService.bom_section().search(normalized):
+            score += 8
+
+        upper = normalized.upper()
+
+        if "VISTA" in upper and not codes:
+            score -= 25
+
+        if len(normalized) < 40 and not codes:
+            score -= 10
+
+        return score
+
+    @classmethod
+    def resolve_from_sources(
+        cls,
+        sources: list[tuple[str, str]],
+        *,
+        exclude_product_code: str | None = None,
+    ) -> tuple[list[dict[str, Any]], list[str], str | None]:
+        best_rows: list[dict[str, Any]] = []
+        best_codes: list[str] = []
+        best_source: str | None = None
+        best_score = -1
+
+        for source_name, text in sources:
+            normalized = str(text or "").strip()
+
+            if not normalized:
+                continue
+
+            rows = cls.extract_bom_rows(
+                normalized,
+                exclude_product_code=exclude_product_code,
+                region_scoped=source_name != "full_text_section",
+            )
+            codes = cls.bom_component_codes(rows)
+
+            if not codes and source_name == "full_text":
+                rows = cls.extract_bom_rows(
+                    normalized,
+                    exclude_product_code=exclude_product_code,
+                    region_scoped=False,
+                )
+                codes = cls.bom_component_codes(rows)
+
+            score = cls.score_bom_text(
+                normalized,
+                exclude_product_code=exclude_product_code,
+            )
+
+            if score > best_score or (score == best_score and len(codes) > len(best_codes)):
+                best_score = score
+                best_rows = rows
+                best_codes = codes
+                best_source = source_name
+
+        return best_rows, best_codes, best_source
+
+    @classmethod
     def extract_bom_rows(
         cls,
         text: str,

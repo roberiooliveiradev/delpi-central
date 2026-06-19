@@ -844,14 +844,15 @@ class ChatDocumentVisionService:
         filename: str,
         content_type: str,
     ) -> dict[str, Any]:
-        from app.application.services.chat_attachment_text_extractor import (
-            ChatAttachmentTextExtractor,
+        from app.domain.services.chat_pdf_document_extraction_service import (
+            ChatPdfDocumentExtractionService,
         )
 
-        extracted = ChatAttachmentTextExtractor().extract(
-            storage_path=storage_path,
+        extracted = ChatPdfDocumentExtractionService.extract_from_storage_path(
+            storage_path,
             filename=filename or Path(storage_path).name,
-            content_type=content_type,
+            layout_profile=ChatPdfDocumentExtractionService.LAYOUT_GENERIC,
+            enable_region_ocr=False,
         )
 
         if not extracted.get("supported"):
@@ -859,18 +860,19 @@ class ChatDocumentVisionService:
                 "",
                 engine="native",
                 stages=["native"],
-                warnings=[
-                    str((extracted.get("metadata") or {}).get("reason") or "unsupported"),
-                ],
+                warnings=list(extracted.get("warnings") or [])
+                or [str(extracted.get("reason") or "unsupported")],
             )
 
-        text = str(extracted.get("content") or "").strip()
-        metadata = extracted.get("metadata") if isinstance(extracted.get("metadata"), dict) else {}
+        metadata = extracted.get("parseMetadata")
+
+        if not isinstance(metadata, dict):
+            metadata = {}
 
         return cls._build_from_text(
-            text,
-            engine=str(metadata.get("extractor") or "native"),
-            stages=["native"],
+            str(extracted.get("fullText") or "").strip(),
+            engine=str(extracted.get("engine") or metadata.get("extractor") or "native"),
+            stages=list(extracted.get("stages") or ["native"]),
             source_metadata={**metadata, "filename": filename},
         )
 

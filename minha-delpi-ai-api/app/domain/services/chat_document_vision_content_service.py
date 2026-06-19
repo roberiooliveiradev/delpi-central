@@ -214,3 +214,64 @@ class ChatDocumentVisionContentService:
             return max(1, int(raw))
         except (TypeError, ValueError):
             return 40
+
+    @classmethod
+    def pdf_fusion_min_embedded_chars(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "fusion",
+            "minEmbeddedChars",
+            default="80",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 80
+
+    @classmethod
+    def pdf_annotation_row_cluster_tolerance_pt(cls) -> float:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "annotationTable",
+            "rowClusterTolerancePt",
+            default="6",
+        )
+
+        try:
+            return max(1.0, float(raw))
+        except (TypeError, ValueError):
+            return 6.0
+
+    @classmethod
+    def pdf_region_ocr_min_chars(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "regionOcr",
+            "minChars",
+            default="120",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 120
+
+    @classmethod
+    def pdf_layout_profile_allows_region_ocr(cls, layout_profile: str) -> bool:
+        normalized = str(layout_profile or cls.LAYOUT_GENERIC).strip().lower() or cls.LAYOUT_GENERIC
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "layoutProfiles",
+            normalized,
+            "enableRegionOcr",
+            default="false",
+        )
+
+        return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+    LAYOUT_GENERIC = "generic"

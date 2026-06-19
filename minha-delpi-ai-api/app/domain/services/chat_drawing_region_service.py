@@ -104,6 +104,34 @@ class ChatDrawingRegionService:
         return resolved
 
     @classmethod
+    def bom_candidate_bboxes(cls) -> list[dict[str, Any]]:
+        node = ChatAssistantContentService.get_node("drawing_stamp", "bomCandidateBboxes")
+        default_bbox = list(cls.region_bboxes().get("bom") or _DEFAULT_BBOXES["bom"])
+        resolved: list[dict[str, Any]] = []
+
+        if isinstance(node, list):
+            for item in node:
+                if not isinstance(item, dict):
+                    continue
+
+                bbox = item.get("bbox")
+
+                if not isinstance(bbox, list) or len(bbox) != 4:
+                    continue
+
+                resolved.append(
+                    {
+                        "id": str(item.get("id") or "bom_candidate"),
+                        "bbox": [float(value) for value in bbox],
+                    }
+                )
+
+        if not resolved:
+            resolved.append({"id": "bom_default", "bbox": default_bbox})
+
+        return resolved
+
+    @classmethod
     def stamp_bbox(cls) -> list[float]:
         return list(cls.region_bboxes().get("stamp") or _DEFAULT_BBOXES["stamp"])
 
@@ -146,11 +174,22 @@ class ChatDrawingRegionService:
         if config.get("grayscale", True):
             image = image.convert("L")
 
+        if config.get("medianFilter", False):
+            image = image.filter(ImageFilter.MedianFilter(size=3))
+
         if config.get("autocontrast", True):
             image = ImageOps.autocontrast(image)
 
         if config.get("sharpen", True):
             image = image.filter(ImageFilter.SHARPEN)
+
+        if config.get("binarize", False):
+            try:
+                threshold = int(config.get("binarizeThreshold") or 165)
+            except (TypeError, ValueError):
+                threshold = 165
+
+            image = image.point(lambda value: 255 if value >= threshold else 0, mode="L")
 
         return image
 
@@ -335,6 +374,101 @@ class ChatDrawingRegionService:
         return payload
 
     @classmethod
+    def _ocr_region_bundle(
+        cls,
+        page: Any,
+        *,
+        region: str,
+        bbox: list[float],
+        matrix: Any,
+        lang: str,
+        candidate_id: str | None = None,
+    ) -> tuple[str, dict[str, Any]]:
+        detail_regions = set(cls.detail_ocr_regions())
+        base_text = cls.ocr_region_text(page, bbox=bbox, matrix=matrix, lang=lang).strip()
+        merged_text = base_text
+        detail_meta: dict[str, Any] | None = None
+        engine = "tesseract"
+        base_char_count = len(base_text)
+
+        if region in detail_regions:
+            detail_text, detail_meta = cls.ocr_region_text_detailed(
+                page,
+                region=region,
+                bbox=bbox,
+                matrix=matrix,
+                lang=lang,
+            )
+            merged_text = cls.merge_region_ocr_texts(base_text, detail_text).strip()
+
+            if detail_text:
+                engine = "tesseract_hybrid"
+
+        metadata = cls.build_region_metadata(
+            region=region,
+            bbox=bbox,
+            char_count=len(merged_text),
+            engine=engine,
+            detail_pass=bool(detail_meta and detail_meta.get("detailPass")),
+            base_char_count=base_char_count,
+            detail_meta=detail_meta,
+        )
+
+        if candidate_id:
+            metadata["candidateId"] = candidate_id
+
+        return merged_text, metadata
+
+    @classmethod
+    def _ocr_bom_region(
+        cls,
+        page: Any,
+        *,
+        matrix: Any,
+        lang: str,
+    ) -> tuple[str, list[float], dict[str, Any]]:
+        from app.domain.services.chat_document_vision_bom_service import (
+            ChatDocumentVisionBomService,
+        )
+
+        best_text = ""
+        best_bbox = list(cls.region_bboxes().get("bom") or _DEFAULT_BBOXES["bom"])
+        best_meta: dict[str, Any] = {}
+        best_score = -1
+
+        for candidate in cls.bom_candidate_bboxes():
+            bbox = candidate.get("bbox")
+
+            if not isinstance(bbox, list) or len(bbox) != 4:
+                continue
+
+            merged_text, metadata = cls._ocr_region_bundle(
+                page,
+                region="bom",
+                bbox=[float(value) for value in bbox],
+                matrix=matrix,
+                lang=lang,
+                candidate_id=str(candidate.get("id") or ""),
+            )
+
+            if not merged_text:
+                continue
+
+            score = ChatDocumentVisionBomService.score_bom_text(merged_text)
+
+            if score > best_score:
+                best_score = score
+                best_text = merged_text
+                best_bbox = [float(value) for value in bbox]
+                best_meta = metadata
+
+        if not best_text:
+            return "", best_bbox, best_meta
+
+        best_meta["selectionScore"] = best_score
+        return best_text, best_bbox, best_meta
+
+    @classmethod
     def stamp_position_is_bottom_right(cls) -> bool:
         bbox = cls.stamp_bbox()
 
@@ -350,45 +484,39 @@ class ChatDrawingRegionService:
     ) -> tuple[dict[str, str], dict[str, dict[str, Any]]]:
         texts: dict[str, str] = {}
         metadata: dict[str, dict[str, Any]] = {}
-        detail_regions = set(cls.detail_ocr_regions())
 
         for region in _DRAWING_REGION_ORDER:
+            if region == "bom":
+                merged_text, bbox, region_meta = cls._ocr_bom_region(
+                    page,
+                    matrix=matrix,
+                    lang=lang,
+                )
+
+                if not merged_text:
+                    continue
+
+                texts[region] = merged_text
+                metadata[region] = region_meta
+                continue
+
             bbox = cls.region_bboxes().get(region)
 
             if not bbox:
                 continue
 
-            base_text = cls.ocr_region_text(page, bbox=bbox, matrix=matrix, lang=lang).strip()
-            merged_text = base_text
-            detail_meta: dict[str, Any] | None = None
-            engine = "tesseract"
-            base_char_count = len(base_text)
-
-            if region in detail_regions:
-                detail_text, detail_meta = cls.ocr_region_text_detailed(
-                    page,
-                    region=region,
-                    bbox=bbox,
-                    matrix=matrix,
-                    lang=lang,
-                )
-                merged_text = cls.merge_region_ocr_texts(base_text, detail_text).strip()
-
-                if detail_text:
-                    engine = "tesseract_hybrid"
+            merged_text, region_meta = cls._ocr_region_bundle(
+                page,
+                region=region,
+                bbox=bbox,
+                matrix=matrix,
+                lang=lang,
+            )
 
             if not merged_text:
                 continue
 
             texts[region] = merged_text
-            metadata[region] = cls.build_region_metadata(
-                region=region,
-                bbox=bbox,
-                char_count=len(merged_text),
-                engine=engine,
-                detail_pass=bool(detail_meta and detail_meta.get("detailPass")),
-                base_char_count=base_char_count,
-                detail_meta=detail_meta,
-            )
+            metadata[region] = region_meta
 
         return texts, metadata

@@ -23,26 +23,30 @@ class ChatDrawingPdfExtractionService:
 
     @classmethod
     def extract_from_storage_path(cls, storage_path: str, *, filename: str = "") -> dict[str, Any]:
-        from app.application.services.chat_attachment_text_extractor import (
-            ChatAttachmentTextExtractor,
+        from app.domain.services.chat_pdf_document_extraction_service import (
+            ChatPdfDocumentExtractionService,
         )
 
-        extracted = ChatAttachmentTextExtractor().extract(
-            storage_path=storage_path,
+        extracted = ChatPdfDocumentExtractionService.extract_from_storage_path(
+            storage_path,
             filename=filename or Path(storage_path).name,
-            content_type="application/pdf",
+            page_limit=cls.max_pages(),
+            layout_profile=ChatPdfDocumentExtractionService.LAYOUT_DRAWING_DELPI,
         )
 
         if not extracted.get("supported"):
             return cls._empty(
-                reason=str((extracted.get("metadata") or {}).get("reason") or "unsupported"),
+                reason=str(extracted.get("reason") or "unsupported"),
             )
 
-        text = str(extracted.get("content") or "").strip()
+        metadata = extracted.get("parseMetadata")
+
+        if not isinstance(metadata, dict):
+            metadata = {}
 
         return cls.parse_from_text(
-            text,
-            metadata=extracted.get("metadata") if isinstance(extracted.get("metadata"), dict) else {},
+            str(extracted.get("fullText") or "").strip(),
+            metadata=metadata,
         )
 
     @classmethod
@@ -110,30 +114,48 @@ class ChatDrawingPdfExtractionService:
         )
 
         bom_text = str((metadata or {}).get("bomText") or "").strip()
+        stamp_text = str((metadata or {}).get("stampText") or "").strip()
         dimensions_text = str((metadata or {}).get("dimensionsText") or "").strip()
+        annotation_text = str((metadata or {}).get("annotationText") or "").strip()
 
-        component_codes: list[str] = []
+        from app.domain.services.chat_document_vision_bom_service import (
+            ChatDocumentVisionBomService,
+        )
+        from app.domain.services.chat_pdf_annotation_table_service import (
+            ChatPdfAnnotationTableService,
+        )
 
-        if not bom_text:
-            component_codes = cls._extract_component_codes(normalized, exclude=product_code)
+        annotation_tables = (metadata or {}).get("annotationTables")
+
+        if not isinstance(annotation_tables, list):
+            annotation_tables = []
+
+        annotation_table_text = ChatPdfAnnotationTableService.table_text(annotation_tables)
+
+        bom_sources: list[tuple[str, str]] = []
+
+        if bom_text:
+            bom_sources.append(("bom_region", bom_text))
+
+        if annotation_table_text:
+            bom_sources.append(("annotation_table", annotation_table_text))
+
+        if annotation_text:
+            bom_sources.append(("pdf_annotations", annotation_text))
+
+        if stamp_text:
+            bom_sources.append(("stamp_region", stamp_text))
+
+        bom_sources.append(("full_text", normalized))
+
+        bom_rows, component_codes, bom_source = ChatDocumentVisionBomService.resolve_from_sources(
+            bom_sources,
+            exclude_product_code=product_code,
+        )
+
         intermediate_codes = sorted(
             ChatDrawingPatternsService.intermediate_code().findall(normalized)
         )
-
-        if bom_text:
-            from app.domain.services.chat_document_vision_bom_service import (
-                ChatDocumentVisionBomService,
-            )
-
-            bom_rows = ChatDocumentVisionBomService.extract_bom_rows(
-                bom_text,
-                exclude_product_code=product_code,
-                region_scoped=True,
-            )
-            component_codes = ChatDocumentVisionBomService.merge_component_codes_from_rows(
-                [],
-                bom_rows,
-            )
 
         from app.domain.services.chat_drawing_dimensions_extraction_service import (
             ChatDrawingDimensionsExtractionService,
@@ -157,7 +179,6 @@ class ChatDrawingPdfExtractionService:
             "internalRevision": internal_revision,
             "customerReference": customer_reference,
             "description": description,
-            "componentCodes": component_codes,
             "intermediateCodes": intermediate_codes,
             "dimensions": dimensions,
             "charCount": char_count,
@@ -174,16 +195,16 @@ class ChatDrawingPdfExtractionService:
         if metadata:
             payload["sourceMetadata"] = metadata
 
-        if bom_text:
-            from app.domain.services.chat_document_vision_bom_service import (
-                ChatDocumentVisionBomService,
-            )
+        if bom_rows:
+            payload["bomRows"] = bom_rows
 
-            payload["bomRows"] = ChatDocumentVisionBomService.extract_bom_rows(
-                bom_text,
-                exclude_product_code=product_code,
-                region_scoped=True,
-            )
+        if bom_source:
+            payload["bomSource"] = bom_source
+
+        if not bom_rows and not component_codes:
+            component_codes = cls._extract_component_codes(normalized, exclude=product_code)
+
+        payload["componentCodes"] = component_codes
 
         return payload
 
