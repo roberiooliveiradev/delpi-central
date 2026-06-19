@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.composition.content_composer import configure_domain_infrastructure_ports
@@ -17,6 +18,15 @@ configure_domain_infrastructure_ports()
 Settings.CHAT_DOCUMENT_VISION_ENABLED = True
 Settings.CHAT_DOCUMENT_VISION_BACKEND = "auto"
 Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = True
+
+_VISION_RUNTIME_STUB = {
+    "documentVisionEnabled": True,
+    "documentVisionMaxPages": max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_PAGES)),
+    "documentVisionStampCropEnabled": True,
+    "documentVisionAutoVlmFallback": False,
+    "documentVisionImageDescribeEnabled": False,
+    "documentVisionMaxChars": max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_CHARS)),
+}
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE_PATH = ROOT / "tests/fixtures/drawing_hierarchical_baseline_2026-06.json"
@@ -51,25 +61,45 @@ def main() -> int:
 
     ok = 0
     failures: list[dict] = []
+    dims_ok = 0
+    bom_ok = 0
 
     for case in runnable:
         pdf_path = DESENHOS_DIR / str(case.pdf)
-        vision = ChatDocumentVisionService.extract_from_storage_path(
-            str(pdf_path),
-            filename=pdf_path.name,
-            content_type="application/pdf",
-        )
+
+        with patch(
+            "app.application.services.chat_document_vision_service._vision_runtime",
+            return_value=_VISION_RUNTIME_STUB,
+        ):
+            vision = ChatDocumentVisionService.extract_from_storage_path(
+                str(pdf_path),
+                filename=pdf_path.name,
+                content_type="application/pdf",
+            )
         obtained = str(vision.get("productCode") or "").strip() or None
         expected = case.expected_product_code
         passed = obtained == expected
+        dims = vision.get("dimensions") if isinstance(vision.get("dimensions"), dict) else {}
+        bom_count = len(vision.get("bomRows") or [])
+        dims_partial = any(
+            dims.get(key) is not None
+            for key in ("totalLengthMm", "leftDecapeMm", "rightDecapeMm")
+        )
 
         if passed:
             ok += 1
 
+        if dims_partial:
+            dims_ok += 1
+
+        if bom_count > 0:
+            bom_ok += 1
+
         flag = "OK" if passed else "FAIL"
         print(
             f"{case.id:<6} {case.pdf:<16} {expected or '-':<10} "
-            f"{obtained or '-':<10} {flag:<6}"
+            f"{obtained or '-':<10} {flag:<6} "
+            f"dims={'Y' if dims_partial else 'n'} bom={bom_count}"
         )
 
         if not passed:
@@ -90,6 +120,8 @@ def main() -> int:
         "ok": ok,
         "total": total,
         "rate": round(ok / total, 4) if total else 0,
+        "dimensionsPartial": dims_ok,
+        "bomRowsPopulated": bom_ok,
         "baseline_ok": baseline_ok,
         "target_ok": TARGET_RATE,
     }

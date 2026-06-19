@@ -900,6 +900,7 @@ class ChatDocumentVisionService:
             stamp_crop_used = False
             stamp_text = ""
             regions: dict[str, Any] = {}
+            region_texts: dict[str, str] = {}
 
             for index in range(page_count):
                 page = document.load_page(index)
@@ -916,17 +917,20 @@ class ChatDocumentVisionService:
                         ChatDrawingRegionService,
                     )
 
-                    cropped = cls._ocr_stamp_regions(page, matrix=matrix, lang=lang)
+                    region_texts, regions = ChatDrawingRegionService.ocr_drawing_regions(
+                        page,
+                        matrix=matrix,
+                        lang=lang,
+                    )
+                    cropped = str(region_texts.get("stamp") or "").strip()
 
                     if cropped and cropped not in chunk:
                         texts.append(cropped)
                         stamp_text = cropped
                         stamp_crop_used = True
-                        regions["stamp"] = ChatDrawingRegionService.build_region_metadata(
-                            region="stamp",
-                            bbox=ChatDrawingRegionService.stamp_bbox(),
-                            char_count=len(stamp_text),
-                        )
+                    elif cropped:
+                        stamp_text = cropped
+                        stamp_crop_used = True
         finally:
             document.close()
 
@@ -940,6 +944,10 @@ class ChatDocumentVisionService:
             "warnings": warnings,
             "stampCrop": stamp_crop_used,
             "stampText": stamp_text if stamp_crop_used else "",
+            "regionTexts": region_texts,
+            "bomText": region_texts.get("bom", ""),
+            "dimensionsText": region_texts.get("dimensions", ""),
+            "titleText": region_texts.get("title", ""),
             "regions": regions,
         }
 
@@ -1179,13 +1187,35 @@ class ChatDocumentVisionService:
             ChatDrawingPdfExtractionService,
         )
 
-        parsed = ChatDrawingPdfExtractionService.parse_from_text(
-            text,
-            metadata={"extractor": engine, **(source_metadata or {})},
-        )
-
         stamp_text = str((source_metadata or {}).get("stampText") or "").strip()
         attachment_filename = str((source_metadata or {}).get("filename") or "").strip()
+        region_texts = (source_metadata or {}).get("regionTexts")
+
+        if not isinstance(region_texts, dict):
+            region_texts = {}
+
+        bom_text = str(
+            region_texts.get("bom")
+            or (source_metadata or {}).get("bomText")
+            or ""
+        ).strip()
+        dimensions_text = str(
+            region_texts.get("dimensions")
+            or (source_metadata or {}).get("dimensionsText")
+            or ""
+        ).strip()
+
+        parse_metadata = {
+            "extractor": engine,
+            **(source_metadata or {}),
+            "bomText": bom_text,
+            "dimensionsText": dimensions_text,
+        }
+
+        parsed = ChatDrawingPdfExtractionService.parse_from_text(
+            text,
+            metadata=parse_metadata,
+        )
 
         from app.domain.services.chat_drawing_product_code_resolution_service import (
             ChatDrawingProductCodeResolutionService,
@@ -1227,6 +1257,54 @@ class ChatDocumentVisionService:
         if stamp_extract.get("conflicts"):
             parsed["conflicts"] = stamp_extract["conflicts"]
 
+        from app.domain.services.chat_document_vision_bom_service import (
+            ChatDocumentVisionBomService,
+        )
+
+        bom_rows = ChatDocumentVisionBomService.extract_bom_rows(
+            bom_text,
+            exclude_product_code=parsed.get("productCode"),
+            region_scoped=bool(bom_text),
+        ) if bom_text else ChatDocumentVisionBomService.extract_bom_rows(
+            text,
+            exclude_product_code=parsed.get("productCode"),
+        )
+
+        bom_codes = ChatDocumentVisionBomService.bom_component_codes(bom_rows)
+
+        if parsed.get("productCodeCandidates"):
+            parsed["productCodeCandidates"] = (
+                ChatDocumentVisionBomService.demote_bom_codes_in_candidates(
+                    list(parsed.get("productCodeCandidates") or []),
+                    bom_codes,
+                )
+            )
+
+        if bom_rows:
+            parsed["bomRows"] = bom_rows
+            parsed["componentCodes"] = ChatDocumentVisionBomService.merge_component_codes_from_rows(
+                list(parsed.get("componentCodes") or []),
+                bom_rows,
+            )
+            stage_name = "bom_region" if bom_text else "bom_heuristic"
+
+            if stage_name not in stages:
+                stages = [*stages, stage_name]
+
+        if dimensions_text:
+            from app.domain.services.chat_drawing_dimensions_extraction_service import (
+                ChatDrawingDimensionsExtractionService,
+            )
+
+            parsed["dimensions"] = ChatDrawingDimensionsExtractionService.merge_dimensions(
+                parsed.get("dimensions") if isinstance(parsed.get("dimensions"), dict) else {},
+                region_text=dimensions_text,
+                fallback_text=text,
+            )
+
+            if "dimensions_ocr" not in stages:
+                stages = [*stages, "dimensions_ocr"]
+
         if (
             filename_code
             and parsed.get("productCode")
@@ -1246,24 +1324,6 @@ class ChatDocumentVisionService:
             ]
             parsed["productCode"] = filename_code
             parsed["productCodeSource"] = "filename_crosscheck"
-
-        from app.domain.services.chat_document_vision_bom_service import (
-            ChatDocumentVisionBomService,
-        )
-
-        bom_rows = ChatDocumentVisionBomService.extract_bom_rows(
-            text,
-            exclude_product_code=parsed.get("productCode"),
-        )
-
-        if bom_rows:
-            parsed["bomRows"] = bom_rows
-            parsed["componentCodes"] = ChatDocumentVisionBomService.merge_component_codes_from_rows(
-                list(parsed.get("componentCodes") or []),
-                bom_rows,
-            )
-            if "bom_heuristic" not in stages:
-                stages = [*stages, "bom_heuristic"]
 
         min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
         char_count = int(parsed.get("charCount") or 0)

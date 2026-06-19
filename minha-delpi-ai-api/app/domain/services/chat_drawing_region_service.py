@@ -13,6 +13,8 @@ _DEFAULT_BBOXES: dict[str, list[float]] = {
     "dimensions": [0.0, 0.12, 1.0, 0.62],
 }
 
+_DRAWING_REGION_ORDER = ("stamp", "title", "bom", "dimensions")
+
 
 class ChatDrawingRegionService:
     @classmethod
@@ -92,3 +94,34 @@ class ChatDrawingRegionService:
         bbox = cls.stamp_bbox()
 
         return len(bbox) == 4 and bbox[0] >= 0.45 and bbox[1] >= 0.5
+
+    @classmethod
+    def ocr_drawing_regions(
+        cls,
+        page: Any,
+        *,
+        matrix: Any,
+        lang: str,
+    ) -> tuple[dict[str, str], dict[str, dict[str, Any]]]:
+        texts: dict[str, str] = {}
+        metadata: dict[str, dict[str, Any]] = {}
+
+        for region in _DRAWING_REGION_ORDER:
+            bbox = cls.region_bboxes().get(region)
+
+            if not bbox:
+                continue
+
+            text = cls.ocr_region_text(page, bbox=bbox, matrix=matrix, lang=lang).strip()
+
+            if not text:
+                continue
+
+            texts[region] = text
+            metadata[region] = cls.build_region_metadata(
+                region=region,
+                bbox=bbox,
+                char_count=len(text),
+            )
+
+        return texts, metadata

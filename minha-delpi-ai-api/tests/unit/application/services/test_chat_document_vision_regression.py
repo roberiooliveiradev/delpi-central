@@ -6,6 +6,28 @@ from app.domain.services.chat_document_vision_bom_service import ChatDocumentVis
 from tests.fixtures.document_vision_regression_cases import REGRESSION_CASES
 
 
+def test_build_from_text_prefers_bom_and_dimensions_regions():
+    result = ChatDocumentVisionService._build_from_text(
+        "90299999 LISTA DE MATERIAIS 90288888",
+        engine="tesseract",
+        stages=["tesseract"],
+        source_metadata={
+            "stampText": "CODIGO DELPI 90261040",
+            "bomText": "01 10400006 2 TERMINAL\n02 90260141 1 CABO",
+            "dimensionsText": "COMPR TOTAL 1200 mm\nDECAPE ESQUERDO 15",
+            "filename": "90261040.pdf",
+        },
+    )
+
+    bom_codes = [row["code"] for row in result.get("bomRows") or []]
+
+    assert result.get("productCode") == "90261040"
+    assert "10400006" in bom_codes
+    assert result.get("dimensions", {}).get("totalLengthMm") == 1200.0
+    assert "bom_region" in (result.get("stages") or [])
+    assert "dimensions_ocr" in (result.get("stages") or [])
+
+
 def test_regression_v6_bom_heuristic():
     case = next(item for item in REGRESSION_CASES if item["id"] == "V6")
     rows = ChatDocumentVisionBomService.extract_bom_rows(case["bom_text"])

@@ -6,6 +6,13 @@ from uuid import uuid4
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.infrastructure.config.settings import Settings
 
+_VISION_RUNTIME_STUB = {
+    "documentVisionMaxPages": 10,
+    "documentVisionStampCropEnabled": False,
+    "documentVisionAutoVlmFallback": False,
+    "documentVisionImageDescribeEnabled": False,
+}
+
 
 def test_merge_into_drawing_parse_prefers_existing_and_fills_gaps():
     parsed = {
@@ -80,6 +87,13 @@ def test_extract_native_from_text(tmp_path):
             engine="pypdf",
             stages=["native"],
         ),
+    ), patch.object(
+        ChatDocumentVisionService,
+        "_stage_tesseract_pdf",
+        return_value={"fullText": "", "warnings": []},
+    ), patch(
+        "app.application.services.chat_document_vision_service._vision_runtime",
+        return_value=_VISION_RUNTIME_STUB,
     ):
         result = ChatDocumentVisionService.extract_from_storage_path(
             str(pdf_path),
@@ -113,6 +127,9 @@ def test_tesseract_pdf_stage_truncates_pages(tmp_path):
     ), patch(
         "PIL.Image.frombytes",
         return_value=MagicMock(),
+    ), patch(
+        "app.application.services.chat_document_vision_service._vision_runtime",
+        return_value={**_VISION_RUNTIME_STUB, "documentVisionMaxPages": 2},
     ):
         Settings.CHAT_DOCUMENT_VISION_MAX_PAGES = 2
         result = ChatDocumentVisionService._stage_tesseract_pdf(str(tmp_path / "x.pdf"))
@@ -136,6 +153,9 @@ def test_extract_image_uses_tesseract_pipeline(monkeypatch, tmp_path):
             "engine": "tesseract",
             "warnings": [],
         },
+    ), patch(
+        "app.application.services.chat_document_vision_service._vision_runtime",
+        return_value=_VISION_RUNTIME_STUB,
     ):
         result = ChatDocumentVisionService.extract_from_storage_path(
             str(image_path),

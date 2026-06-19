@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 14: OCR hierárquico de desenhos DELPI
 
-**Status:** parcial — Fases 14.1–14.4 e 14.7 ✅; homologação carimbo **13/13** em `desenhos/`; Fases 14.5–14.6 e 14.8 (BOM/cotas/CI) ⬜  
+**Status:** parcial — Fases 14.1–14.7 ✅; **14.5–14.6** (BOM/cotas por região) ✅ em código; **14.8** homologação `desenhos/` + CI ⬜ parcial (CI unit ✅)  
 **Criado:** 2026-06-08 · **Última revisão doc:** jun/2026  
 **Playbook:** [playbook_ocr_hierarquico_desenhos_delpi.md](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [Onda 13](./inteligencia-chat-onda-13-skill-visao-documentos-ocr.md) MVP
@@ -71,17 +71,17 @@ Fechar o gap entre o **pipeline atual de visão/OCR** e o fluxo normativo DELPI 
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 14.5.1 | BOM só região `bom` | ⬜ |
-| 14.5.2 | Componentes excluídos de `productCode` | ⬜ |
-| 14.5.3 | Paridade smoke drawing | ⬜ |
+| 14.5.1 | BOM só região `bom` | ✅ |
+| 14.5.2 | Componentes excluídos de `productCode` | ✅ |
+| 14.5.3 | Paridade smoke drawing | ✅ (unit) |
 
 ### 14.6 — Cotas e decapes
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 14.6.1 | OCR região dimensions | ⬜ |
-| 14.6.2 | Regex OCR-tolerante | ⬜ |
-| 14.6.3 | Tolerâncias inalteradas | ⬜ |
+| 14.6.1 | OCR região dimensions | ✅ |
+| 14.6.2 | Regex OCR-tolerante | ✅ |
+| 14.6.3 | Tolerâncias inalteradas | ✅ |
 
 ### 14.7 — Gate qualidade `auto`
 
@@ -95,10 +95,10 @@ Fechar o gap entre o **pipeline atual de visão/OCR** e o fluxo normativo DELPI 
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 14.8.1 | Refatorar `ChatDrawingPdfExtractionService` | ⬜ |
-| 14.8.2 | Merge vision → drawing | ⬜ |
+| 14.8.1 | Refatorar `ChatDrawingPdfExtractionService` | ✅ |
+| 14.8.2 | Merge vision → drawing | ✅ |
 | 14.8.3 | Meta **≥ 10/13** em `desenhos/` | ✅ (13/13 jun/2026) |
-| 14.8.4 | CI regressão | ⬜ |
+| 14.8.4 | CI regressão | ✅ (unit `run_onda14`) |
 | 14.8.5 | Critérios aceite Onda 12 | ⬜ |
 
 ---
@@ -136,7 +136,7 @@ Playbook §7 fases     ──┘         │
                     Onda 13 refinamentos VLM (opcional, cotas confidence)
 ```
 
-**Próxima ação recomendada:** Fase **14.5** — BOM só região `bom` + exclusão de componentes em `productCodeCandidates`.
+**Próxima ação recomendada:** homologação batch em `desenhos/` (BOM/cotas) + meta **≥ 6/13** com `dimensions` parciais.
 
 ---
 

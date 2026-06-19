@@ -49,3 +49,6 @@ jobs:
             tests/unit/domain/services/test_chat_intelligence_regression.py \
             tests/unit/domain/services/test_presentation_refactor_baseline.py \
             -q
+
+      - name: Onda 14 — OCR hierárquico desenhos (unit)
+        run: bash scripts/run_onda14_desenhos_validation.sh
