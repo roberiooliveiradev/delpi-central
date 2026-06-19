@@ -57,6 +57,8 @@
     "segmentLengthsList": "{values}",
     "decapesPair": "E={left} mm; D={right} mm",
     "guideOperationCount": "{count} operação(ões)",
+    "guideBomLevel": "nível {level}",
+    "guideBomLevelExpected": "esperado nível {level}",
     "structureItemCount": "{count} item(ns) na estrutura",
     "checkIntermediate50xx": "Conferir intermediário 50xx",
     "missingDash": "—"
@@ -84,22 +86,51 @@
     "guide": {
       "section": "Roteiro",
       "item": "Roteiro de produção (SG2010)",
-      "rule": "Roteiro obrigatório para liberação",
+      "rule": "Roteiro obrigatório e alinhado à estrutura (SG1010)",
       "recommendationMissing": "Cadastrar roteiro",
       "recommendationOk": "—"
+    },
+    "guide_structure_extra": {
+      "section": "Roteiro",
+      "item": "Produto no roteiro fora da estrutura",
+      "rule": "Todo produto do SG2010 deve existir na SG1010 (PA ou intermediário 50xx/PI)",
+      "recommendation": "Remover produto do roteiro ou cadastrar na estrutura"
+    },
+    "guide_structure_extra_item": {
+      "section": "Roteiro",
+      "item": "Produto {code} no roteiro fora da estrutura",
+      "rule": "Todo produto do SG2010 deve existir na SG1010 (PA ou intermediário 50xx/PI)",
+      "recommendation": "Remover produto do roteiro ou cadastrar na estrutura"
+    },
+    "guide_structure_missing": {
+      "section": "Roteiro",
+      "item": "Produto da estrutura sem roteiro",
+      "rule": "PA e intermediários 50xx/PI da SG1010 devem ter roteiro no SG2010",
+      "recommendation": "Cadastrar roteiro para o produto na estrutura"
+    },
+    "guide_structure_missing_item": {
+      "section": "Roteiro",
+      "item": "Produto {code} da estrutura sem roteiro",
+      "rule": "PA e intermediários 50xx/PI da SG1010 devem ter roteiro no SG2010",
+      "recommendation": "Cadastrar roteiro para o produto na estrutura"
+    },
+    "guide_structure_level": {
+      "section": "Roteiro",
+      "item": "Nível BOM do produto {code}",
+      "rule": "PA no nível 0; intermediários 50xx/PI no nível 1",
+      "recommendation": "Corrigir nível BOM no roteiro (SG2010)"
+    },
+    "guide_structure_ok": {
+      "section": "Roteiro",
+      "item": "Roteiro × estrutura",
+      "rule": "Produtos e níveis do SG2010 condizentes com a SG1010",
+      "recommendation": "—"
     },
     "inspection_qp": {
       "section": "Inspeção",
       "item": "QP6 / QP7 / QP8",
       "rule": "Inspeção obrigatória quando aplicável",
       "recommendationMissing": "Cadastrar plano de inspeção",
-      "recommendationOk": "—"
-    },
-    "guide_ct99": {
-      "section": "Roteiro",
-      "item": "Operação CT-99",
-      "rule": "Roteiro deve incluir operação CT-99 quando aplicável",
-      "recommendationMissing": "Cadastrar operação CT-99 no roteiro",
       "recommendationOk": "—"
     },
     "pdf_missing": {
@@ -278,7 +309,6 @@
     "decapeToleranceMm": 1.0,
     "maxRootStructureQuantityMm": 1000,
     "maxSegmentLengthChecks": 6,
-    "finalInspectionWorkCenterPrefix": "CT-99",
     "unitSuffixes": ["mm", "mi", "m"]
   },
   "statusPresentation": {
@@ -357,11 +387,18 @@
       "bom_extra",
       "bom_missing",
       "intermediate_extra",
-      "intermediate_missing"
+      "intermediate_missing",
+      "guide_structure_extra",
+      "guide_structure_missing"
     ],
     "expandItemTemplateSuffix": "_item",
     "expandPdfEvidenceKeys": ["bom_extra", "intermediate_extra"],
-    "expandApiEvidenceKeys": ["bom_missing", "intermediate_missing"],
+    "expandApiEvidenceKeys": [
+      "bom_missing",
+      "intermediate_missing",
+      "guide_structure_extra",
+      "guide_structure_missing"
+    ],
     "codeListDelimiter": ", ",
     "maxGuideRows": 80,
     "evidenceJoiner": "; "

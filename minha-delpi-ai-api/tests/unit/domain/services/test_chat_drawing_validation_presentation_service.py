@@ -77,10 +77,11 @@ def test_resolve_pdf_product_code_falls_back_to_context():
 def test_divergence_items_include_error_status():
     items = [
         ChatDrawingValidationContentService.item_from_template(
-            "guide_ct99",
+            "bom_missing_item",
             status="error",
             pdf_evidence="—",
-            api_evidence="Ausente",
+            api_evidence="50215434",
+            item_values={"code": "50215434"},
         ),
         ChatDrawingValidationContentService.item_from_template(
             "product_found",

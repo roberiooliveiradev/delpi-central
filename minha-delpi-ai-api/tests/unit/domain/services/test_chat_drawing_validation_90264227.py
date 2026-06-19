@@ -66,6 +66,33 @@ def test_90264227_flags_missing_intermediate_50215434():
     )
 
 
+def test_90264227_guide_not_aligned_with_structure():
+    payload = {
+        "product": {"code": "90264227", "description": "CHICOTE TRR-ITCC-0039"},
+        **_payload_90264227(),
+    }
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90264227",
+        payload=payload,
+        has_pdf_attachment=False,
+        api_ok=True,
+    )
+
+    items = package["drawingAnalysis"]["items"]
+
+    assert any(
+        item.get("item") == "Produto no roteiro fora da estrutura"
+        and item.get("status") == "critical_error"
+        for item in items
+    )
+    assert any(
+        item.get("item") == "Produto da estrutura sem roteiro"
+        and "50215434" in str(item.get("apiEvidence"))
+        for item in items
+    )
+
+
 def test_90264227_revision_client_vs_internal_ok():
     payload = {
         "product": {

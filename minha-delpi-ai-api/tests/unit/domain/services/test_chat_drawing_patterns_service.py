@@ -17,7 +17,6 @@ def test_drawing_validation_rules_from_json():
     assert ChatDrawingPatternsService.length_tolerance_ratio() == 0.05
     assert ChatDrawingPatternsService.decape_tolerance_mm() == 1.0
     assert ChatDrawingPatternsService.max_segment_length_checks() == 6
-    assert ChatDrawingPatternsService.final_inspection_work_center_prefix() == "CT-99"
 
 
 def test_intermediate_segment_pattern_parses_description():

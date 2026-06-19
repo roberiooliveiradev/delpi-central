@@ -249,10 +249,6 @@ class ChatDrawingPatternsService:
         return cls.validation_rule_int("maxSegmentLengthChecks", 6)
 
     @classmethod
-    def final_inspection_work_center_prefix(cls) -> str:
-        return str(cls.validation_rule("finalInspectionWorkCenterPrefix", "CT-99"))
-
-    @classmethod
     def unit_suffixes(cls) -> tuple[str, ...]:
         items = ChatAssistantContentService.list(
             _VALIDATION_BUNDLE,

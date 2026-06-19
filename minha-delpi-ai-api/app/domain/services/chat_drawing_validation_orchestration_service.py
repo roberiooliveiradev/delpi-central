@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
@@ -145,21 +144,17 @@ class ChatDrawingValidationOrchestrationService:
             )
         )
 
-        has_ct99 = cls._root_guide_has_ct99(root, code)
-
-        items.append(
-            cls._item_from_template(
-                "guide_ct99",
-                status=cls._STATUS_OK if has_ct99 else cls._STATUS_ERROR,
-                pdf_evidence=cls._evidence("dash"),
-                api_evidence=(
-                    cls._evidence("linked") if has_ct99 else cls._evidence("absent")
-                ),
-                recommendation_field=(
-                    "recommendationOk" if has_ct99 else "recommendationMissing"
-                ),
+        if has_guide:
+            from app.domain.services.chat_drawing_guide_structure_consistency_service import (
+                ChatDrawingGuideStructureConsistencyService,
             )
-        )
+
+            items.extend(
+                ChatDrawingGuideStructureConsistencyService.build_check_items(
+                    root=root,
+                    product_code=code,
+                )
+            )
 
         inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
         inspection_items = (
@@ -648,28 +643,6 @@ class ChatDrawingValidationOrchestrationService:
             return str(int(digits)).zfill(2)
         except ValueError:
             return digits[-2:].zfill(2)
-
-    @classmethod
-    def _root_guide_has_ct99(cls, root: dict, product_code: str) -> bool:
-        guide = root.get("guide") if isinstance(root.get("guide"), dict) else {}
-        root_code = str(product_code or "").strip()
-
-        for row in guide.get("items") or []:
-            if not isinstance(row, dict):
-                continue
-
-            if str(row.get("product_code") or "").strip() != root_code:
-                continue
-
-            for field in ("work_center", "resource_code"):
-                marker = str(row.get(field) or "").strip().upper()
-
-                prefix = ChatDrawingPatternsService.final_inspection_work_center_prefix().upper()
-
-                if marker.startswith(prefix):
-                    return True
-
-        return False
 
     @classmethod
     def _package(
