@@ -83,6 +83,7 @@ Fechar o gap entre o **pipeline atual de visão/OCR** e o fluxo normativo DELPI 
 | 14.6.1 | OCR região dimensions | ✅ |
 | 14.6.2 | Regex OCR-tolerante | ✅ |
 | 14.6.3 | Tolerâncias inalteradas | ✅ |
+| 14.6.4 | Decape E/D por lado + nota `decapeMachineSide` (regressão `90264206`) | ✅ jun/2026 |
 
 ### 14.7 — Gate qualidade `auto`
 

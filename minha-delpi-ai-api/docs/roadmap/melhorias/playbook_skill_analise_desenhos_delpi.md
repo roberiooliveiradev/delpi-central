@@ -352,6 +352,17 @@ Cota PDF  ×  API DELPI  ×  Código intermediário  ×  Norma DELPI
 
 **Tolerâncias (validation_rules):** comprimento ±5%; decape ±1 mm quando aplicável.
 
+**Implementação (código):** `ChatDrawingDimensionsExtractionService` + `ChatDrawingStructureValidationService` + padrões em `drawing_stamp.json`. Documentação: [chat-pdf-document-extraction.md](../../architecture/chat-pdf-document-extraction.md) § validação dimensional.
+
+Regras de confronto:
+
+| Lado | Valor PDF | Valor API (descrição 50xx) |
+|------|-----------|----------------------------|
+| Esquerdo | `leftDecapeMm` (ex.: nota «DECAPAR O LADO DE 4MM») | 1º número após comprimento (`…/04/06…` → 4 mm) |
+| Direito | `rightDecapeMm` (ex.: nota «DECAPE DE 6MM») | 2º número (`…/04/06…` → 6 mm) |
+
+Não comparar decape global de processo com todos os 50xx sem distinguir E/D. Notas de enrolamento (`DECAPE DE 6MM`) e decape na máquina (`4MM`) coexistem no mesmo desenho — a nota de máquina prevalece para o lado esquerdo na extração.
+
 Classificar como **erro** quando:
 
 - cota principal ausente;

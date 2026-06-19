@@ -65,11 +65,12 @@ Essas regras são utilizadas pelo **Agente de Análise de Desenhos** para classi
 |------|--------------|----------|
 | **Cotas principais** | Presentes (comprimento, decape, espaçamentos) | ✅ Todas visíveis / ⚠️ Faltantes |
 | **Tolerâncias** | Informadas no desenho | ✅ ±1mm ou conforme norma / ⚠️ Ausente |
+| **Decape E/D × 50xx** | Esquerdo e direito confrontados **por lado** (PDF × descrição `xx/xx`) | ✅ ±1 mm / ❌ Divergente |
 | **Escala** | Indicada no carimbo | ✅ 1:1 / ⚠️ Não informada |
 | **Unidade** | Sempre “mm” | ✅ Correta / ❌ Errada |
 | **Legibilidade** | Texto ≥ 2,5mm | ✅ Ok / ⚠️ Ilegível |
 
-📘 *Fonte: Drawing Rules DELPI – seção 4.*
+📘 *Fonte: Drawing Rules DELPI – seção 4. Implementação: `ChatDrawingStructureValidationService` + [chat-pdf-document-extraction.md](../../../../architecture/chat-pdf-document-extraction.md).*
 
 ---
 

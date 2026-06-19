@@ -84,6 +84,9 @@ Consumidores:
 | `ChatDrawingStampExtractionService` | Parse de carimbo e candidatos |
 | `ChatDocumentVisionBomService` | Linhas BOM, score de fonte, ruído de revisão |
 | `ChatDrawingValidationOrchestrationService` | Validação normativa e comparação API |
+| `ChatDrawingDimensionsExtractionService` | Cotas, decapes E/D, cotas `6±140±1`, notas de processo |
+| `ChatDrawingIntermediateSemanticsService` | Parse `comprimento/decapeE/decapeD` na descrição 50xx |
+| `ChatDrawingStructureValidationService` | Checklist PDF × estrutura (BOM, 50xx, decapes por lado) |
 
 `ChatDrawingPdfExtractionService` **não** abre o PDF com pypdf isolado — delega a `ChatPdfDocumentExtractionService` e aplica parse DELPI sobre `fullText` + `parseMetadata`.
 
@@ -106,7 +109,69 @@ Seção **`pdfExtraction`**:
 | `layoutProfiles.generic.enableRegionOcr` | `false` — chat base genérico não corta regiões DELPI |
 | `layoutProfiles.drawing_delpi.enableRegionOcr` | `true` — permite fallback regional na skill desenho |
 
-Regiões gráficas (bbox carimbo/BOM/cotas) continuam em **`drawing_stamp.json`**.
+Regiões gráficas (bbox carimbo/BOM/cotas) e **padrões regex de cotas/decape** continuam em **`drawing_stamp.json`** (seção `patterns` / `patternLists`).
+
+Tolerâncias numéricas do checklist dimensional ficam em **`drawing_validation.json`** → `validationRules` (`decapeToleranceMm`, `lengthToleranceRatio`).
+
+---
+
+## Validação dimensional (PDF × descrição 50xx)
+
+Orquestração: `ChatDrawingValidationOrchestrationService` → `ChatDrawingStructureValidationService.build_check_items`.
+
+### Extração de cotas (`ChatDrawingDimensionsExtractionService`)
+
+Objeto `dimensions` no `pdf_extract`:
+
+| Campo | Origem típica |
+|-------|----------------|
+| `leftDecapeMm` | `DECAPE ESQUERDO`, nota `DECAPAR O LADO DE X MM`, ou primeira cota `X±comprimento±tol` |
+| `rightDecapeMm` | `DECAPE DIREITO`, nota global `DECAPE DE X MM` (quando E não preenchido) |
+| `totalLengthMm` | `COMPRIMENTO TOTAL`, ou maior cota de trecho |
+| `segmentLengthsMm` | Valores centrais das cotas `decape±comprimento±tolerância` |
+| `cotaDecapeValuesMm` | Decapes únicos lidos nas cotas (ex.: `6` em `6±140±1`) |
+
+Padrões em `drawing_stamp.json`:
+
+| Chave | Exemplo no desenho |
+|-------|-------------------|
+| `decapeNote` | `DECAPE DE 6MM` (enrolamento — preenche E/D se ausentes) |
+| `decapeMachineSide` | `DECAPAR O LADO DE 4MM NA MÁQUINA` → **sobrescreve** `leftDecapeMm` |
+| `cotaDecapeLength` | `6±140±1` |
+| `intermediateSegment` | `CT26VERM-00036/04/06-…` (parse na API, não no PDF) |
+
+**Ordem de precedência (esquerdo):** rótulo `DECAPE E` → nota global → nota de máquina (ganha sobre global) → cota.
+
+### Parse da descrição 50xx (`ChatDrawingIntermediateSemanticsService`)
+
+Regex `intermediateSegment` extrai da SG1010:
+
+```text
+CT26VERM-00036/04/06-0000-0000  →  comprimento 36 mm, decape E 4 mm, decape D 6 mm
+```
+
+### Confronto no checklist (`ChatDrawingStructureValidationService`)
+
+| Item template | Regra |
+|---------------|-------|
+| `decape_mismatch` | Decape **esquerdo** do 50xx × `leftDecapeMm` do PDF; **direito** × `rightDecapeMm` (±1 mm) |
+| `decapes_ed` | Apenas indica se E e D foram **lidos** do PDF — não substitui confronto por código |
+| `segment_length_pending` | Cotas de trecho no PDF × comprimentos 50xx (semânticas distintas; pode ficar pendente) |
+
+Fallback: se o lado não tiver valor explícito, aceita qualquer candidato em `{leftDecapeMm, rightDecapeMm, cotaDecapeValuesMm}` dentro da tolerância.
+
+**Anti-padrão corrigido (jun/2026):** usar um único `leftDecapeMm` global para validar **ambos** os lados e **todos** os 50xx — gerava falsos positivos quando a nota global era 6 mm e a descrição tinha `04/06`.
+
+### Caso de referência: `90264206.pdf`
+
+| Leitura | Valor |
+|---------|-------|
+| Nota enrolamento | `DECAPE DE 6MM` |
+| Nota máquina | `DECAPAR O LADO DE 4MM` → `leftDecapeMm = 4` |
+| Cotas | `6±140±1`, `6±150±1`, … → `cotaDecapeValuesMm = [6]` |
+| Resultado | `50215423` / `50215424` (`04/06`) ✅; `50215431` / `50215432` (`2,5/06`) ❌ se cadastro divergir do 4 mm do desenho |
+
+Testes: `test_chat_drawing_validation_90264206.py`, `test_chat_drawing_dimensions_extraction_service.py`.
 
 ---
 
@@ -141,7 +206,7 @@ Estágios após extração base (`native`):
 | Artefato | Escopo |
 |----------|--------|
 | `tests/unit/domain/services/test_chat_pdf_*.py` | Fusão, tabelas por anotação, fixture `90262019` |
-| `tests/unit/domain/services/test_chat_drawing_pdf_extraction_bom_fallback.py` | BOM quando região OCR é ruído |
+| `tests/unit/domain/services/test_chat_drawing_validation_90264206.py` | Decape E/D por lado; nota de máquina; regressão FLEXTRONICS |
 | `tests/unit/application/services/test_chat_attachment_text_extractor.py` | Indexação via pipeline base |
 | `scripts/smoke_document_vision.py` | Offline + live opcional |
 | `desenhos/*.pdf` | Fixtures manuais (não versionar PDFs grandes em CI se política mudar) |
@@ -162,4 +227,5 @@ Estágios após extração base (`native`):
 
 | Data | Entrega |
 |------|---------|
+| jun/2026 | Decape E/D por lado; `decapeMachineSide`; candidatos de cota; regressão `90264206` |
 | jun/2026 | `ChatPdf*` no chat base; skill desenho consome fusão; anotações ODA; BOM fallback multi-fonte |
