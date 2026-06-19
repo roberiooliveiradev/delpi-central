@@ -107,6 +107,8 @@ Mensagem do usuário
 | `ChatDrawingPdfProductContextService` | Resolve `productCode` (carimbo → arquivo → BOM) |
 | `ChatDrawingPdfExtractionService` | **Fachada DELPI** — carimbo, BOM, cotas, metadados; delega leitura a `ChatPdf*` |
 | `ChatDrawingAnalyserParameterService` | Força `view=full` em `GET /products/{code}/analyser` em turnos de análise de desenho (`drawing_analysis_mode` ou intent `drawing-analysis-delpi`); evita `meta.sections[].truncated` e banner de cobertura parcial |
+| `ChatDrawingAnalyserPayloadService` | Desembrulho canônico do payload `/analyser` para validação (`external_action_data`, `authorizedResult` quando preview truncado) — [Onda 15](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) Fase 15.0 |
+| `ChatDrawingValidationOrchestrationService` | Checklist PDF × API × normas; orquestra serviços de validação — [playbook validação](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) |
 | `ChatDrawingLibraryService` | Busca PDF na biblioteca api-delpi (`GET /products/{code}/drawing/pdf`) quando análise de desenho sem anexo e com código explícito; cache em `drawing-library-cache` |
 | `ChatDrawingProductCodeResolutionService.resolve_explicit_codes_without_attachment` | Sem anexo: códigos só da mensagem ou `userContextItems` — sem herança do histórico |
 | `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |

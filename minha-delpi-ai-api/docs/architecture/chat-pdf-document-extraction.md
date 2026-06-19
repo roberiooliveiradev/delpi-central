@@ -163,6 +163,8 @@ Tolerâncias numéricas do checklist dimensional ficam em **`drawing_validation.
 
 Orquestração: `ChatDrawingValidationOrchestrationService` → `ChatDrawingStructureValidationService.build_check_items`.
 
+Roadmap de novos validadores (estrutura recursiva, inspeção, multipágina): [playbook Onda 15](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md).
+
 ### Extração de cotas (`ChatDrawingDimensionsExtractionService`)
 
 Objeto `dimensions` no `pdf_extract`:

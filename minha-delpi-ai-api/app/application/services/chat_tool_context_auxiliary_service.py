@@ -71,6 +71,7 @@ class ChatToolContextAuxiliaryService:
             has_pdf_attachment: bool,
             direct_answer: str | None,
             pdf_extract: dict | None = None,
+            external_action_data=None,
         ) -> dict | None:
             from app.domain.services.chat_drawing_validation_orchestration_service import (
                 ChatDrawingValidationOrchestrationService,
@@ -94,7 +95,12 @@ class ChatToolContextAuxiliaryService:
                 )
 
                 root = ChatDrawingAnalyserPayloadService.resolve_root_from_tool_call(
-                    tool_call
+                    tool_call,
+                    external_action_data=(
+                        external_action_data
+                        if "/analyser" in path.lower()
+                        else None
+                    ),
                 )
 
                 package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(

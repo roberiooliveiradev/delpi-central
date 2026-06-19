@@ -192,6 +192,7 @@ class ChatToolContextResultAssemblyService:
                 has_pdf_attachment=drawing_has_pdf,
                 direct_answer=direct_answer,
                 pdf_extract=drawing_pdf_extract,
+                external_action_data=last_external_action_data,
             )
 
             if drawing_analysis_payload:

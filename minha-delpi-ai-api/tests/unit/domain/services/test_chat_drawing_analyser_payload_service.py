@@ -43,3 +43,41 @@ def test_resolve_root_from_nested_api_envelope():
     root = ChatDrawingAnalyserPayloadService.resolve_root_from_tool_call(tool_call)
 
     assert root.get("product", {}).get("code") == "90260148"
+
+
+def test_resolve_root_prefers_external_action_data_over_truncated_preview():
+    payload = _analyser_payload_with_guide_and_inspection()
+    tool_call = {
+        "metadata": {
+            "ok": True,
+            "statusCode": 200,
+            "path": "/products/90260140/analyser",
+            "responsePreview": '{"data": {"product": {"code": "90260140"',
+        }
+    }
+
+    root = ChatDrawingAnalyserPayloadService.resolve_root_from_tool_call(
+        tool_call,
+        external_action_data={"data": payload},
+    )
+
+    assert root.get("product", {}).get("code") == "90260140"
+    assert isinstance(root.get("guide"), dict)
+
+
+def test_resolve_root_from_authorized_result_when_preview_truncated():
+    payload = _analyser_payload_with_guide_and_inspection()
+    tool_call = {
+        "metadata": {
+            "ok": True,
+            "statusCode": 200,
+            "path": "/products/90260140/analyser",
+            "responsePreview": '{"data": {"product": {"code": "90260140"',
+            "authorizedResult": {"data": payload},
+        }
+    }
+
+    root = ChatDrawingAnalyserPayloadService.resolve_root_from_tool_call(tool_call)
+
+    assert root.get("product", {}).get("code") == "90260140"
+    assert isinstance(root.get("structure"), dict)

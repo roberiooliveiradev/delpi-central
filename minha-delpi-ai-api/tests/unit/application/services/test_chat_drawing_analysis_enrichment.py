@@ -51,7 +51,48 @@ def test_build_drawing_analysis_enrichment_uses_response_preview():
     assert drawing["productCode"] == "90260140"
     assert len(drawing["items"]) > 1
     assert "Relatório de Análise" in str(result["directAnswer"])
-    assert "Informações completas" in str(result["directAnswer"])
+    cadastro = next(
+        item for item in drawing["items"] if item.get("item") == "Cadastro do produto"
+    )
+    assert cadastro.get("status") != "critical_error"
+
+
+def test_build_drawing_analysis_enrichment_uses_external_action_data_when_preview_truncated():
+    payload = _analyser_payload_with_guide_and_inspection()
+    formatter = ChatToolContextExternalActionFormatter(ExternalActionResultPresenter())
+    auxiliary = ChatToolContextAuxiliaryService(
+        presenter=ExternalActionResultPresenter(),
+        formatter=formatter,
+    )
+
+    result = auxiliary._build_drawing_analysis_enrichment(
+        safe_tool_calls=[
+            {
+                "name": "execute_external_action",
+                "arguments": {"code": "90260140"},
+                "metadata": {
+                    "ok": True,
+                    "statusCode": 200,
+                    "path": "/products/90260140/analyser",
+                    "responsePreview": '{"data": {"product": {"code": "90260140"',
+                },
+            }
+        ],
+        product_code="90260140",
+        has_pdf_attachment=True,
+        direct_answer="### Informações completas do produto",
+        pdf_extract={"productCode": "90260140", "revision": "01", "legible": True},
+        external_action_data={"data": payload},
+    )
+
+    assert result is not None
+    drawing = result["drawingAnalysis"]
+    assert drawing["productCode"] == "90260140"
+    assert len(drawing["items"]) > 1
+    cadastro = next(
+        item for item in drawing["items"] if item.get("item") == "Cadastro do produto"
+    )
+    assert cadastro.get("status") != "critical_error"
 
 
 def test_prefer_presentation_keeps_drawing_report_markdown():

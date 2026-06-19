@@ -34,9 +34,13 @@ class ChatToolContextExternalActionFormatter:
             safe_metadata = dict(metadata or {})
 
             if tool_name == "execute_external_action":
-                safe_metadata["responsePreview"] = self._build_response_preview(data)
                 path = str(safe_metadata.get("path") or "")
                 attached_data = self._attach_request_sql(data, None, safe_metadata)
+                preview = self._build_response_preview(attached_data)
+                safe_metadata["responsePreview"] = preview
+
+                if "/analyser" in path.lower() and preview.endswith("\n…"):
+                    safe_metadata["authorizedResult"] = attached_data
                 operational_root = self._presenter._unwrap_data(attached_data)
 
                 if isinstance(attached_data, dict):
