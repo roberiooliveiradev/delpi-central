@@ -89,9 +89,24 @@ def test_build_export_tables_include_operational_sections():
                         {
                             "product": "90264227",
                             "level": 1,
-                            "QP6": [1],
-                            "QP7": [],
-                            "QP8": [],
+                            "QP7": [
+                                {
+                                    "QP7_OPERAC": "01",
+                                    "QP7_ENSAIO": "506",
+                                    "QP7_LABOR": "LABFIS",
+                                    "QP7_NOMINA": "500",
+                                    "QP7_LIE": "495",
+                                    "QP7_LSE": "505",
+                                    "QP7_UNIMED": "MM",
+                                }
+                            ],
+                            "QP8": [
+                                {
+                                    "QP8_OPERAC": "01",
+                                    "QP8_ENSAIO": "504",
+                                    "QP8_TEXTO": "10120005",
+                                }
+                            ],
                         }
                     ]
                 },

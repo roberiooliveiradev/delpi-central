@@ -517,7 +517,45 @@
       "keyValue": ["Campo", "Valor"],
       "structure": ["Código", "Descrição", "Qtd", "Unid.", "Tipo", "Nível"],
       "guide": ["Produto", "Nível", "Operação", "Centro", "Descrição"],
-      "inspection": ["Produto", "Nível", "QP6", "QP7", "QP8"]
+      "inspection": [
+        "Produto",
+        "Nível",
+        "Seção",
+        "Op.",
+        "Ensaio",
+        "Labor.",
+        "Nominal",
+        "Lim. inf.",
+        "Lim. sup.",
+        "Unid.",
+        "Detalhe"
+      ]
+    },
+    "inspectionReport": {
+      "productLine": "**{code}** (nível {level})",
+      "headerLine": "Revisão **{revision}** — {description}",
+      "dimensionalSubtitle": "*Ensaios dimensionais*",
+      "textualSubtitle": "*Ensaios textuais / referências*",
+      "sectionDimensional": "Dimensional",
+      "sectionTextual": "Textual",
+      "maxProducts": 12,
+      "maxDimensionalRows": 40,
+      "maxTextualRows": 40,
+      "truncatedTests": "_… e mais {count} ensaio(s)._",
+      "dimensionalColumns": {
+        "operation": "Op.",
+        "test": "Ensaio",
+        "lab": "Labor.",
+        "nominal": "Nominal",
+        "lower": "Lim. inf.",
+        "upper": "Lim. sup.",
+        "unit": "Unid."
+      },
+      "textualColumns": {
+        "operation": "Op.",
+        "test": "Ensaio",
+        "text": "Texto"
+      }
     },
     "pdfSubtitle": "Validação técnica PDF × API DELPI",
     "pdfSummaryProduct": "Produto",

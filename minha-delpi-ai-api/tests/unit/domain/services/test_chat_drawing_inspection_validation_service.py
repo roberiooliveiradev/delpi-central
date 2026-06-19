@@ -55,3 +55,52 @@ def test_row_plan_counts_legacy_qp_keys():
     }
 
     assert ChatDrawingInspectionValidationService.row_plan_counts(row) == (1, 2, 1)
+
+
+def test_flatten_measurable_and_textual_rows_from_api_contract():
+    row = {
+        "product_code": "90261647",
+        "bom_level": 0,
+        "header": {
+            "revision": "02",
+            "description": "CHICOTE DE ATERRAMENTO",
+        },
+        "measurable_tests": [
+            {
+                "operation": "01",
+                "test_code": "01",
+                "labor": "LABFIS",
+                "nominal_value": "290",
+                "lower_spec_limit": "285",
+                "upper_spec_limit": "295",
+                "unit": "MM",
+            }
+        ],
+        "textual_tests": [
+            {
+                "operation": "01",
+                "test_code": "12",
+                "text": "10420256",
+            }
+        ],
+    }
+
+    measurable = ChatDrawingInspectionValidationService.flatten_measurable_rows(row)
+    textual = ChatDrawingInspectionValidationService.flatten_textual_rows(row)
+    export_rows = ChatDrawingInspectionValidationService.flatten_export_rows(row)
+
+    assert measurable == [
+        {
+            "operation": "01",
+            "test": "01",
+            "lab": "LABFIS",
+            "nominal": "290",
+            "lower": "285",
+            "upper": "295",
+            "unit": "MM",
+        }
+    ]
+    assert textual == [{"operation": "01", "test": "12", "text": "10420256"}]
+    assert len(export_rows) == 2
+    assert export_rows[0]["section"] == "Dimensional"
+    assert export_rows[1]["detail"] == "10420256"

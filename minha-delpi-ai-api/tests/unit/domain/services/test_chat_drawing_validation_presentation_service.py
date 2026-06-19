@@ -105,8 +105,24 @@ def test_export_inspection_rows_measurable_textual_contract():
                     "product_code": "90261647",
                     "bom_level": 0,
                     "header": {"product_code": "90261647", "revision": "02"},
-                    "measurable_tests": [{"test_code": "01"}] * 4,
-                    "textual_tests": [{"test_code": "504"}] * 21,
+                    "measurable_tests": [
+                        {
+                            "operation": "01",
+                            "test_code": "01",
+                            "labor": "LABFIS",
+                            "nominal_value": "290",
+                            "lower_spec_limit": "285",
+                            "upper_spec_limit": "295",
+                            "unit": "MM",
+                        }
+                    ],
+                    "textual_tests": [
+                        {
+                            "operation": "01",
+                            "test_code": "12",
+                            "text": "10420256",
+                        }
+                    ],
                 }
             ]
         }
@@ -114,30 +130,57 @@ def test_export_inspection_rows_measurable_textual_contract():
 
     rows = ChatDrawingValidationPresentationService._export_inspection_rows(root)
 
-    assert len(rows) == 1
+    assert len(rows) == 2
     assert rows[0]["product"] == "`90261647`"
-    assert rows[0]["level"] == "0"
-    assert rows[0]["qp6"] == "1"
-    assert rows[0]["qp7"] == "4"
-    assert rows[0]["qp8"] == "21"
+    assert rows[0]["section"] == "Dimensional"
+    assert rows[0]["test"] == "01"
+    assert rows[0]["nominal"] == "290"
+    assert rows[1]["section"] == "Textual"
+    assert rows[1]["detail"] == "10420256"
 
 
-def test_format_inspection_section_measurable_textual_contract():
+def test_format_inspection_section_shows_test_details():
     root = {
         "inspection": {
             "items": [
                 {
                     "product_code": "90261647",
                     "bom_level": 0,
-                    "header": {"product_code": "90261647", "revision": "02"},
-                    "measurable_tests": [{"test_code": "01"}],
-                    "textual_tests": [{"test_code": "504"}],
+                    "header": {
+                        "product_code": "90261647",
+                        "revision": "02",
+                        "description": "CHICOTE DE ATERRAMENTO",
+                    },
+                    "measurable_tests": [
+                        {
+                            "operation": "01",
+                            "test_code": "01",
+                            "labor": "LABFIS",
+                            "nominal_value": "290",
+                            "lower_spec_limit": "285",
+                            "upper_spec_limit": "295",
+                            "unit": "MM",
+                        }
+                    ],
+                    "textual_tests": [
+                        {
+                            "operation": "01",
+                            "test_code": "12",
+                            "text": "10420256",
+                        }
+                    ],
                 }
             ]
         }
     }
 
     lines = ChatDrawingValidationPresentationService._format_inspection_section(root)
+    body = "\n".join(lines)
 
-    assert any("Inspeções (QP6" in line for line in lines)
-    assert any("90261647" in line and "| 1 |" in line for line in lines)
+    assert "Inspeções (QP6" in body
+    assert "90261647" in body
+    assert "Ensaios dimensionais" in body
+    assert "Ensaios textuais" in body
+    assert "| 01 | 01 | LABFIS | 290 | 285 | 295 | MM |" in body
+    assert "| 01 | 12 | 10420256 |" in body
+    assert "Revisão **02**" in body

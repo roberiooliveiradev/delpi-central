@@ -429,6 +429,158 @@ class ChatDrawingValidationPresentationService:
         return count
 
     @classmethod
+    def _inspection_report_int(cls, *path: str, default: int) -> int:
+        raw = ChatDrawingValidationContentService.get(*path, default=str(default))
+
+        try:
+            return int(str(raw).strip())
+        except ValueError:
+            return default
+
+    @classmethod
+    def _inspection_report_column_labels(cls, group: str) -> list[tuple[str, str]]:
+        node = ChatDrawingValidationContentService.get_node(
+            "export",
+            "inspectionReport",
+            f"{group}Columns",
+        )
+
+        if not isinstance(node, dict):
+            return []
+
+        return [(str(key), str(label)) for key, label in node.items() if str(key).strip()]
+
+    @classmethod
+    def _format_inspection_markdown_table(
+        cls,
+        *,
+        rows: list[dict[str, str]],
+        columns: list[tuple[str, str]],
+        dash: str,
+    ) -> list[str]:
+        if not rows or not columns:
+            return []
+
+        header = "| " + " | ".join(label for _, label in columns) + " |"
+        separator = "|" + "|".join("---" for _ in columns) + "|"
+        lines = [header, separator]
+
+        for row in rows:
+            cells = [str(row.get(key) or dash) for key, _ in columns]
+            lines.append("| " + " | ".join(cells) + " |")
+
+        return lines
+
+    @classmethod
+    def _format_inspection_product_block(
+        cls,
+        row: dict[str, Any],
+        *,
+        dash: str,
+    ) -> list[str]:
+        if not ChatDrawingInspectionValidationService.row_has_inspection_data(row):
+            return []
+
+        product_code = ChatDrawingInspectionValidationService.row_product_code(row) or dash
+        level = ChatDrawingInspectionValidationService.row_level(row)
+        level_text = str(level if level is not None else dash)
+        lines = [
+            "",
+            ChatDrawingValidationContentService.format(
+                "export",
+                "inspectionReport",
+                "productLine",
+                code=cls.format_code(product_code),
+                level=level_text,
+            ),
+        ]
+        header = ChatDrawingInspectionValidationService.row_header_summary(row)
+
+        if header.get("revision") or header.get("description"):
+            lines.append(
+                ChatDrawingValidationContentService.format(
+                    "export",
+                    "inspectionReport",
+                    "headerLine",
+                    revision=header.get("revision") or dash,
+                    description=header.get("description") or dash,
+                )
+            )
+
+        max_dimensional = cls._inspection_report_int(
+            "export",
+            "inspectionReport",
+            "maxDimensionalRows",
+            default=40,
+        )
+        max_textual = cls._inspection_report_int(
+            "export",
+            "inspectionReport",
+            "maxTextualRows",
+            default=40,
+        )
+        measurable_rows = ChatDrawingInspectionValidationService.flatten_measurable_rows(row)
+        textual_rows = ChatDrawingInspectionValidationService.flatten_textual_rows(row)
+        dimensional_columns = cls._inspection_report_column_labels("dimensional")
+        textual_columns = cls._inspection_report_column_labels("textual")
+
+        if measurable_rows:
+            lines.append("")
+            lines.append(
+                ChatDrawingValidationContentService.get(
+                    "export",
+                    "inspectionReport",
+                    "dimensionalSubtitle",
+                )
+            )
+            lines.extend(
+                cls._format_inspection_markdown_table(
+                    rows=measurable_rows[:max_dimensional],
+                    columns=dimensional_columns,
+                    dash=dash,
+                )
+            )
+
+            if len(measurable_rows) > max_dimensional:
+                lines.append(
+                    ChatDrawingValidationContentService.format(
+                        "export",
+                        "inspectionReport",
+                        "truncatedTests",
+                        count=str(len(measurable_rows) - max_dimensional),
+                    )
+                )
+
+        if textual_rows:
+            lines.append("")
+            lines.append(
+                ChatDrawingValidationContentService.get(
+                    "export",
+                    "inspectionReport",
+                    "textualSubtitle",
+                )
+            )
+            lines.extend(
+                cls._format_inspection_markdown_table(
+                    rows=textual_rows[:max_textual],
+                    columns=textual_columns,
+                    dash=dash,
+                )
+            )
+
+            if len(textual_rows) > max_textual:
+                lines.append(
+                    ChatDrawingValidationContentService.format(
+                        "export",
+                        "inspectionReport",
+                        "truncatedTests",
+                        count=str(len(textual_rows) - max_textual),
+                    )
+                )
+
+        return lines
+
+    @classmethod
     def _format_inspection_section(cls, root: dict) -> list[str]:
         inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
         inspection_items = (
@@ -438,41 +590,30 @@ class ChatDrawingValidationPresentationService:
         if not ChatDrawingInspectionValidationService.has_inspection_plan(inspection):
             return []
 
+        max_products = cls._inspection_report_int(
+            "export",
+            "inspectionReport",
+            "maxProducts",
+            default=12,
+        )
+        dash = ChatDrawingValidationContentService.evidence("dash")
         lines = [
             "",
             ChatDrawingValidationContentService.get("report", "sections", "inspection"),
-            "| Produto | Nível | QP6 | QP7 | QP8 |",
-            "|---|---:|---:|---:|---:|",
         ]
-        dash = ChatDrawingValidationContentService.evidence("dash")
-        rendered_rows = 0
+        rendered_products = 0
 
-        for row in inspection_items[:12]:
+        for row in inspection_items[:max_products]:
             if not isinstance(row, dict):
                 continue
 
-            if not ChatDrawingInspectionValidationService.row_has_inspection_data(row):
-                continue
+            product_lines = cls._format_inspection_product_block(row, dash=dash)
 
-            qp6_count, qp7_count, qp8_count = (
-                ChatDrawingInspectionValidationService.row_plan_counts(row)
-            )
-            level = ChatDrawingInspectionValidationService.row_level(row)
+            if product_lines:
+                lines.extend(product_lines)
+                rendered_products += 1
 
-            lines.append(
-                "| {product} | {level} | {qp6} | {qp7} | {qp8} |".format(
-                    product=cls.format_code(
-                        ChatDrawingInspectionValidationService.row_product_code(row) or dash
-                    ),
-                    level=level if level is not None else dash,
-                    qp6=cls._format_inspection_count(qp6_count, dash=dash),
-                    qp7=cls._format_inspection_count(qp7_count, dash=dash),
-                    qp8=cls._format_inspection_count(qp8_count, dash=dash),
-                )
-            )
-            rendered_rows += 1
-
-        if rendered_rows == 0:
+        if rendered_products == 0:
             return []
 
         return lines
@@ -673,7 +814,19 @@ class ChatDrawingValidationPresentationService:
             tables.append(
                 cls._build_export_table(
                     "inspection",
-                    column_keys=["product", "level", "qp6", "qp7", "qp8"],
+                    column_keys=[
+                        "product",
+                        "level",
+                        "section",
+                        "operation",
+                        "test",
+                        "lab",
+                        "nominal",
+                        "lower",
+                        "upper",
+                        "unit",
+                        "detail",
+                    ],
                     column_labels=cls._export_column_labels("inspection"),
                     rows=inspection_rows,
                 )
@@ -918,21 +1071,23 @@ class ChatDrawingValidationPresentationService:
             if not ChatDrawingInspectionValidationService.row_has_inspection_data(row):
                 continue
 
-            qp6_count, qp7_count, qp8_count = (
-                ChatDrawingInspectionValidationService.row_plan_counts(row)
-            )
-            level = ChatDrawingInspectionValidationService.row_level(row)
+            detail_rows = ChatDrawingInspectionValidationService.flatten_export_rows(row)
 
-            rows.append(
-                {
-                    "product": cls.format_code(
-                        ChatDrawingInspectionValidationService.row_product_code(row) or dash
-                    ),
-                    "level": str(level if level is not None else dash),
-                    "qp6": str(cls._format_inspection_count(qp6_count, dash=dash)),
-                    "qp7": str(cls._format_inspection_count(qp7_count, dash=dash)),
-                    "qp8": str(cls._format_inspection_count(qp8_count, dash=dash)),
-                }
-            )
+            for detail in detail_rows:
+                rows.append(
+                    {
+                        "product": cls.format_code(detail.get("product") or dash),
+                        "level": str(detail.get("level") or dash),
+                        "section": str(detail.get("section") or dash),
+                        "operation": cls.format_code(detail.get("operation") or dash),
+                        "test": str(detail.get("test") or dash),
+                        "lab": str(detail.get("lab") or dash),
+                        "nominal": str(detail.get("nominal") or dash),
+                        "lower": str(detail.get("lower") or dash),
+                        "upper": str(detail.get("upper") or dash),
+                        "unit": str(detail.get("unit") or dash),
+                        "detail": str(detail.get("detail") or dash),
+                    }
+                )
 
         return rows
