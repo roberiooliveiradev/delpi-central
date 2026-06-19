@@ -1,6 +1,6 @@
 # Playbook — Validação normativa de desenhos DELPI (roadmap)
 
-> **Status (19/06/2026):** Onda **15.0–15.6** entregue.  
+> **Status (19/06/2026):** Onda **15.0–15.7** entregue.  
 > **Projeto:** Minha DELPI Chat IA  
 > **Arquitetura:** inteligência transversal no [chat base](../../architecture/chat-intelligence-base.md); agente só habilita skill `drawing-analysis-delpi`.
 
@@ -10,7 +10,8 @@
 | Action principal | `get_product_analyser` → `GET /products/{code}/analyser?view=full` |
 | Orquestrador | `ChatDrawingValidationOrchestrationService` |
 | Vocabulário checklist | `drawing_validation.json` |
-| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md) · [Extração PDF](../../architecture/chat-pdf-document-extraction.md) |
+| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md) · [Extração PDF](../../architecture/chat-pdf-document-extraction.md) · [Layout de página](../../architecture/chat-drawing-page-layout-analysis.md) |
+| Changelog layout/confiança jun/2026 | [2026-06-drawing-layout-confidence-gate.md](../../changelog/2026-06-drawing-layout-confidence-gate.md) |
 | Changelog BOM jun/2026 | [2026-06-drawing-bom-pa-families.md](../../changelog/2026-06-drawing-bom-pa-families.md) |
 | Changelog validação jun/2026 | [2026-06-drawing-validation-roadmap.md](../../changelog/2026-06-drawing-validation-roadmap.md) |
 
@@ -81,6 +82,9 @@ PDF → ChatPdfDocumentExtractionService / document-vision-delpi
 | **Índice recursivo estrutura (NOVO)** | `ChatDrawingStructureIndexService` | presenter, use case |
 | **Inspeção QP (NOVO)** | `ChatDrawingInspectionValidationService` | `if QP6` na orquestração |
 | **Cobertura multipágina (NOVO)** | `ChatDrawingMultipageCoverageService` | heurística no relatório |
+| **Layout de página (NOVO)** | `ChatDrawingPageLayoutAnalysisService` | bboxes fixos só no fallback |
+| **Confiança da leitura (NOVO)** | `ChatDrawingExtractionConfidenceService` | `legibilityScore` isolado |
+| **Gate assertivo PDF (NOVO)** | `ChatDrawingValidationAssertionService` | demotion no use case |
 | Cotas / decape | `ChatDrawingDimensionsExtractionService` | regex no MFE |
 | Textos PT checklist | `drawing_validation.json` | strings em Python |
 | Relatório / export | `ChatDrawingValidationPresentationService` | markdown ad hoc |
@@ -100,6 +104,7 @@ Fase 15.3 — Inspeção alinhada ao contrato api-delpi           [entregue]
 Fase 15.4 — Cobertura multipágina (PDF parcial × API grande)  [entregue]
 Fase 15.5 — Classificação de notas dimensionais             [entregue]
 Fase 15.6 — Quantidades BOM, balões, registro declarativo     [entregue]
+Fase 15.7 — Layout adaptativo (XY-Cut) + gate confiança ≥95%  [entregue]
 ```
 
 ---
@@ -187,6 +192,20 @@ Fase 15.6 — Quantidades BOM, balões, registro declarativo     [entregue]
 
 ---
 
+### Fase 15.7 — Layout adaptativo + confiança da leitura ✅
+
+| ID | Entrega | DoD |
+|----|---------|-----|
+| 15.7.1 | `ChatDrawingPageLayoutAnalysisService` (XY-Cut + classificação) | `drawing_stamp.json` → `layoutAnalysis` |
+| 15.7.2 | Integração em `ChatDrawingRegionService` | `regions._layoutAnalysis` + OCR adaptativo |
+| 15.7.3 | `ChatDrawingExtractionConfidenceService` | Score composto; limiar 95% |
+| 15.7.4 | `ChatDrawingValidationAssertionService` | Demotion PDF-dependent; API crítica mantida |
+| 15.7.5 | Templates `extraction_confidence` + `validationLayers` | Só JSON PT |
+| 15.7.6 | Regressão `90264227` | BOM/cotas pending; roteiro/inspeção críticos |
+| 15.7.7 | Doc [chat-drawing-page-layout-analysis.md](../../architecture/chat-drawing-page-layout-analysis.md) | Arquitetura + anti-padrões |
+
+---
+
 ## 5. Matriz problema → fase → teste
 
 | Problema | Fase | Fixture / teste |
@@ -197,6 +216,8 @@ Fase 15.6 — Quantidades BOM, balões, registro declarativo     [entregue]
 | Inspeção ausente com dados QP | 15.3 | payload `measurable_tests` |
 | PDF multipágina, BOM parcial | 15.4 | `test_chat_drawing_validation_90263622.py` |
 | 30 mm termoretração vs decape | 15.5 | `test_chat_drawing_dimensions_extraction_service.py` |
+| OCR ruim reprova BOM/cotas | 15.7 | `test_chat_drawing_validation_90264227.py` |
+| Layout BOM deslocado | 15.7 | `test_chat_drawing_page_layout_analysis_service.py` |
 
 ---
 
@@ -216,9 +237,14 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90262834.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90263622.py -q
 
+# Após Fase 15.7
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_page_layout_analysis_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_extraction_confidence_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_assertion_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90264227.py -q
+
 # Homologação batch (opcional)
-.venv/bin/python scripts/test_desenhos_extraction.py   # extração
-# api-delpi/scripts/validate_drawing_library.py --validate-report  # Fase 15.6
+.venv/bin/python scripts/validate_drawing_samples.py
 ```
 
 ---

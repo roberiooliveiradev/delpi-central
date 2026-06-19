@@ -9,7 +9,7 @@
 | Escopo | Extração estruturada do PDF de desenho (carimbo, título, BOM, cotas) |
 | Consumidores | `drawing-analysis-delpi`, `document-vision-delpi`, `ChatDrawingValidationOrchestrationService` |
 | Pré-requisitos | [Onda 12](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [Onda 13](../inteligencia-chat-onda-13-skill-visao-documentos-ocr.md) MVP |
-| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [Visão/OCR](./playbook_skill_visao_documentos_ocr_delpi.md) |
+| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [Visão/OCR](./playbook_skill_visao_documentos_ocr_delpi.md) · [Layout de página](../../architecture/chat-drawing-page-layout-analysis.md) |
 
 ---
 
@@ -83,6 +83,7 @@ Domínio adaptado: [`gpt-drawing-analyser-instructions.md`](../../knowledge/doma
 5. **API como validação** — candidato resolvido alimenta `/analyser`; divergência carimho × SB1010 é erro crítico na Onda 12.
 6. **Conteúdo PT em JSON** — rótulos, mensagens de clarificação e `reason` em `app/content/pt-BR/assistant/drawing_stamp.json` (novo bundle).
 7. **Um módulo canônico** — ver §6; testes de regressão obrigatórios antes de merge.
+8. **Layout adaptativo (15.7)** — `ChatDrawingPageLayoutAnalysisService` (XY-Cut) refina bboxes antes do OCR; fallback aos `regionBboxes` estáticos — ver [chat-drawing-page-layout-analysis.md](../../architecture/chat-drawing-page-layout-analysis.md).
 
 ---
 

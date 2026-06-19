@@ -235,6 +235,26 @@ Testes: `test_chat_pdf_document_extraction_service.py`, `test_chat_drawing_pdf_e
 
 ---
 
+## Integração com OCR regional (`ChatDrawingRegionService`)
+
+Perfil `drawing_delpi` aciona `_ocr_layout_regions` quando o texto embutido é insuficiente.
+
+Fluxo (jun/2026):
+
+```text
+Página PDF
+  → ChatDrawingPageLayoutAnalysisService (XY-Cut — opcional, layoutAnalysis.enabled)
+  → bboxes adaptativos stamp / title / bom / dimensions
+  → OCR por região (Tesseract / EasyOCR + fusão BOM)
+  → parseMetadata.regions + pageLayoutAnalysis no pdf_extract
+```
+
+Documentação completa: [chat-drawing-page-layout-analysis.md](./chat-drawing-page-layout-analysis.md).
+
+Bboxes estáticos em `drawing_stamp.json` → `regionBboxes` permanecem como **prior e fallback**.
+
+---
+
 ## Integração com `ChatDocumentVisionService`
 
 Estágios após extração base (`native`):
@@ -256,6 +276,9 @@ Estágios após extração base (`native`):
 | `tests/unit/domain/services/test_chat_drawing_regional_scope_service.py` | Rejeição carimbo como BOM |
 | `tests/unit/domain/services/test_chat_pdf_bom_source_service.py` | Fontes suplementares de BOM |
 | `tests/unit/domain/services/test_chat_drawing_validation_90264206.py` | Decape E/D por lado; nota de máquina; regressão FLEXTRONICS |
+| `tests/unit/domain/services/test_chat_drawing_page_layout_analysis_service.py` | XY-Cut; regiões adaptativas |
+| `tests/unit/domain/services/test_chat_drawing_extraction_confidence_service.py` | Gate confiança validação |
+| `scripts/validate_drawing_samples.py` | Batch API + PDF + layout/confiança |
 | `tests/unit/application/services/test_chat_attachment_text_extractor.py` | Indexação via pipeline base |
 | `scripts/smoke_document_vision.py` | Offline + live opcional |
 | `desenhos/*.pdf` | Fixtures manuais (não versionar PDFs grandes em CI se política mudar) |
@@ -291,6 +314,7 @@ Melhoria contínua de acurácia: `ChatPdfRegionOcrEngineService`, perfis em `doc
 
 | Data | Entrega |
 |------|---------|
+| jun/2026 | Layout adaptativo XY-Cut + gate confiança ≥95% — [`2026-06-drawing-layout-confidence-gate.md`](../changelog/2026-06-drawing-layout-confidence-gate.md) |
 | jun/2026 | Escopo BOM regional; famílias PA (`9026`/`7026`/`8000`/`8001`); fontes suplementares; ruído PTC — [`2026-06-drawing-bom-pa-families.md`](../changelog/2026-06-drawing-bom-pa-families.md) |
 | jun/2026 | Decape E/D por lado; `decapeMachineSide`; candidatos de cota; regressão `90264206` |
 | jun/2026 | `ChatPdf*` no chat base; skill desenho consome fusão; anotações ODA; BOM fallback multi-fonte |

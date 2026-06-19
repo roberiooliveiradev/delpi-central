@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Valida desenhos alvo (90262834, 90263622) — API /analyser + PDF local quando existir."""
+"""Valida desenhos alvo — API /analyser + PDF local + layout/confiança.
+
+Uso:
+  cd minha-delpi-ai-api
+  DRAWING_VALIDATE_CODES=90264227 python scripts/validate_drawing_samples.py
+"""
 
 from __future__ import annotations
 
@@ -10,7 +15,14 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-TARGET_CODES = ["90262834", "90263622"]
+TARGET_CODES = [
+    token.strip()
+    for token in os.environ.get(
+        "DRAWING_VALIDATE_CODES",
+        "90262834,90263622,90264227",
+    ).split(",")
+    if token.strip()
+]
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 _API_PREFIX = os.environ.get("SMOKE_API_PREFIX", "/apps/api-delpi").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
@@ -186,6 +198,7 @@ def _validate_code(code: str, *, token: str) -> dict:
         row["pdfPageCount"] = pdf_extract.get("pageCount")
         row["pdfComponentCount"] = len(pdf_extract.get("componentCodes") or [])
         row["pdfLegible"] = pdf_extract.get("legible")
+        row["pageLayoutAnalysis"] = pdf_extract.get("pageLayoutAnalysis")
 
     package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
         product_code=code,
@@ -200,6 +213,9 @@ def _validate_code(code: str, *, token: str) -> dict:
     row["warnings"] = analysis.get("warnings")
     row["checklistItems"] = len(analysis.get("items") or [])
     row["multipageCoverage"] = analysis.get("multipageCoverage")
+    row["extractionConfidence"] = (analysis.get("validationLayers") or {}).get(
+        "extractionConfidence"
+    )
 
     for item in analysis.get("items") or []:
         if not isinstance(item, dict):

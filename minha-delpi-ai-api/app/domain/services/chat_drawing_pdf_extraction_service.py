@@ -230,6 +230,14 @@ class ChatDrawingPdfExtractionService:
             validation_scopes
         )
 
+        regions_meta = meta.get("regions")
+
+        if isinstance(regions_meta, dict):
+            layout = regions_meta.get("_layoutAnalysis")
+
+            if isinstance(layout, dict) and layout:
+                payload["pageLayoutAnalysis"] = layout
+
         for key in ChatDrawingPatternsService.multipage_page_count_keys():
             raw = meta.get(key)
 

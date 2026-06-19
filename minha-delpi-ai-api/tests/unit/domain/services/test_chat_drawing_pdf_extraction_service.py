@@ -63,3 +63,23 @@ def test_parse_from_text_propagates_page_count_from_metadata():
 
     assert parsed["pageCount"] == 10
     assert parsed["pagesProcessed"] == 10
+
+
+def test_parse_from_text_propagates_page_layout_analysis_from_regions():
+    parsed = ChatDrawingPdfExtractionService.parse_from_text(
+        "CODIGO DELPI 90264227 REV.02",
+        metadata={
+            "regions": {
+                "_layoutAnalysis": {
+                    "algorithm": "xy_cut_semantic_v1",
+                    "confidence": 0.72,
+                    "semanticRegions": {"bom": [0.0, 0.0, 0.5, 0.35]},
+                }
+            }
+        },
+    )
+
+    layout = parsed.get("pageLayoutAnalysis") or {}
+
+    assert layout.get("algorithm") == "xy_cut_semantic_v1"
+    assert layout.get("confidence") == 0.72
