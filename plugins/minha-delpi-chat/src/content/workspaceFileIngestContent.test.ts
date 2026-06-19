@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   workspaceFileAgentIngestLabels,
+  workspaceFileComposerAttachmentStatusLabel,
   workspaceFileComposerAttachmentsHeader,
   workspaceFileMessageEditAttachmentsHeader,
   workspaceFileContextBinaryLine,
   workspaceFileDropzoneContent,
   workspaceFileProjectFileKindLabel,
   workspaceFileIconToneForAttachment,
+  workspaceFileIngestProgressState,
   workspaceFileKindLabel,
   workspaceFileReadingStatusLabel,
   workspaceFileReadingStatusTone,
@@ -29,9 +31,40 @@ describe("workspaceFileIngestContent", () => {
   it("resolve tom do ícone por status e extensão", () => {
     expect(
       workspaceFileIconToneForAttachment("doc.pdf", "file", "pending"),
-    ).toBe("pending");
-    expect(workspaceFileIconToneForAttachment("doc.pdf", "file", "success")).toBe("pdf");
+    ).toBe("brand");
+    expect(workspaceFileIconToneForAttachment("doc.pdf", "file", "success")).toBe("brand");
     expect(workspaceFileIconToneForAttachment("foto.png", "image", "success")).toBe("image");
+    expect(workspaceFileIconToneForAttachment("doc.pdf", "file", "error")).toBe("error");
+  });
+
+  it("exibe percentual de upload no composer", () => {
+    expect(
+      workspaceFileComposerAttachmentStatusLabel({
+        status: "uploading",
+        uploadPercent: 42,
+      }),
+    ).toBe("Processando leitura · 42%");
+  });
+
+  it("resolve estado de progresso por item", () => {
+    expect(
+      workspaceFileIngestProgressState({
+        status: "uploading",
+        uploadPercent: 55,
+        label: "Enviando arquivo",
+      }),
+    ).toEqual({
+      active: true,
+      percent: 55,
+      label: "Enviando arquivo",
+    });
+
+    expect(
+      workspaceFileIngestProgressState({
+        status: "indexed",
+        uploadPercent: 100,
+      }),
+    ).toBeUndefined();
   });
 
   it("resolve tom visual do status de leitura", () => {

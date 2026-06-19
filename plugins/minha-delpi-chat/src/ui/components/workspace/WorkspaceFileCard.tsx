@@ -9,14 +9,21 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import {
+  ingestProgressPercentLabel,
+  resolveIngestProgressPercent,
+} from "../../../content/ingestProgress";
 import type {
   WorkspaceFileIconTone,
+  WorkspaceFileIngestProgress,
   WorkspaceFileStatusTone,
 } from "../../../content/workspaceFileIngestContent";
 
 import "./workspaceFileIngest.css";
 
 export type WorkspaceFileCardVariant = "card" | "chip" | "row";
+
+export type { WorkspaceFileIngestProgress } from "../../../content/workspaceFileIngestContent";
 
 export type WorkspaceFileCardProps = {
   variant?: WorkspaceFileCardVariant;
@@ -34,6 +41,7 @@ export type WorkspaceFileCardProps = {
   secondaryLabel?: string;
   showInlineActions?: boolean;
   dismissRemove?: boolean;
+  ingestProgress?: WorkspaceFileIngestProgress;
   onPreview?: () => void;
   onDownload?: () => void;
   onRemove?: () => void;
@@ -120,6 +128,47 @@ function FileCardIcon({
   );
 }
 
+function FileCardIngestProgress({
+  percent,
+  label,
+}: {
+  percent?: number | null;
+  label?: string;
+}) {
+  const resolvedPercent = resolveIngestProgressPercent({ percent });
+  const ariaLabel =
+    resolvedPercent != null && label
+      ? `${label} — ${ingestProgressPercentLabel(resolvedPercent)}`
+      : label;
+
+  return (
+    <div
+      className="mdc-workspace-file-card__progress"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={ariaLabel}
+    >
+      {resolvedPercent != null ? (
+        <progress
+          className="mdc-workspace-file-card__progress-bar"
+          max={100}
+          value={resolvedPercent}
+          aria-valuenow={resolvedPercent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        />
+      ) : (
+        <div
+          className="mdc-workspace-file-card__progress-bar mdc-workspace-file-card__progress-bar--indeterminate"
+          role="progressbar"
+          aria-valuetext={label}
+        />
+      )}
+    </div>
+  );
+}
+
 function FileCardSubtitle({
   subtitleLabel,
   kindLabel,
@@ -154,6 +203,62 @@ function FileCardSubtitle({
   return null;
 }
 
+function FileCardActionButtons({
+  filename,
+  showInlineActions,
+  editable,
+  dismissRemove,
+  onDownload,
+  onRemove,
+}: Pick<
+  WorkspaceFileCardProps,
+  | "filename"
+  | "showInlineActions"
+  | "editable"
+  | "dismissRemove"
+  | "onDownload"
+  | "onRemove"
+>) {
+  const hasSideActions =
+    (showInlineActions && onDownload) || (editable && onRemove);
+
+  if (!hasSideActions) {
+    return null;
+  }
+
+  return (
+    <div className="mdc-workspace-file-card__actions">
+      {showInlineActions && onDownload ? (
+        <button
+          type="button"
+          className="mdc-workspace-file-card__action"
+          onClick={onDownload}
+          aria-label={`Baixar ${filename}`}
+          title="Baixar arquivo"
+        >
+          <Download size={14} aria-hidden="true" />
+        </button>
+      ) : null}
+
+      {editable && onRemove ? (
+        <button
+          type="button"
+          className={`mdc-workspace-file-card__action ${dismissRemove ? "" : "mdc-workspace-file-card__action--danger"}`}
+          onClick={onRemove}
+          aria-label={`Remover ${filename}`}
+          title="Remover arquivo"
+        >
+          {dismissRemove ? (
+            <X size={14} aria-hidden="true" />
+          ) : (
+            <Trash2 size={14} aria-hidden="true" />
+          )}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function WorkspaceFileCard({
   variant = "card",
   filename,
@@ -168,47 +273,12 @@ export function WorkspaceFileCard({
   editable = false,
   showInlineActions = true,
   dismissRemove = false,
+  ingestProgress,
   onPreview,
   onDownload,
   onRemove,
   secondaryLabel,
 }: WorkspaceFileCardProps) {
-  const bodyOpensPreview = Boolean(onPreview);
-  const hasSideActions =
-    (showInlineActions && onDownload) || (editable && onRemove);
-
-  const actionButtons = hasSideActions ? (
-      <div className="mdc-workspace-file-card__actions">
-        {showInlineActions && onDownload ? (
-          <button
-            type="button"
-            className="mdc-workspace-file-card__action"
-            onClick={onDownload}
-            aria-label={`Baixar ${filename}`}
-            title="Baixar arquivo"
-          >
-            <Download size={14} aria-hidden="true" />
-          </button>
-        ) : null}
-
-        {editable && onRemove ? (
-          <button
-            type="button"
-            className={`mdc-workspace-file-card__action ${dismissRemove ? "" : "mdc-workspace-file-card__action--danger"}`}
-            onClick={onRemove}
-            aria-label={`Remover ${filename}`}
-            title="Remover arquivo"
-          >
-            {dismissRemove ? (
-              <X size={14} aria-hidden="true" />
-            ) : (
-              <Trash2 size={14} aria-hidden="true" />
-            )}
-          </button>
-        ) : null}
-      </div>
-    ) : null;
-
   const previewAriaLabel = `Pré-visualizar ${filename}`;
 
   const showStructuredDetails =
@@ -234,6 +304,43 @@ export function WorkspaceFileCard({
         />
       )}
     </div>
+  );
+
+  const actionButtons = (
+    <FileCardActionButtons
+      filename={filename}
+      showInlineActions={showInlineActions}
+      editable={editable}
+      dismissRemove={dismissRemove}
+      onDownload={onDownload}
+      onRemove={onRemove}
+    />
+  );
+
+  const showIngestProgress = ingestProgress?.active === true;
+
+  const lead = (
+    <div className="mdc-workspace-file-card__lead">
+      <FileCardIcon
+        previewKind={previewKind}
+        thumb={thumb}
+        iconTone={iconTone}
+        compact={variant === "row"}
+      />
+      {meta}
+    </div>
+  );
+
+  const hitContent = (
+    <>
+      {lead}
+      {showIngestProgress ? (
+        <FileCardIngestProgress
+          percent={ingestProgress?.percent}
+          label={ingestProgress?.label}
+        />
+      ) : null}
+    </>
   );
 
   if (variant === "chip") {
@@ -274,69 +381,30 @@ export function WorkspaceFileCard({
     );
   }
 
-  const body = (
-    <>
-      <FileCardIcon
-        previewKind={previewKind}
-        thumb={thumb}
-        iconTone={iconTone}
-        compact={variant === "row"}
-      />
-      {meta}
-    </>
-  );
+  const surfaceClassName =
+    variant === "row"
+      ? "mdc-workspace-file-card__surface mdc-workspace-file-card__surface--row"
+      : "mdc-workspace-file-card__surface";
 
-  if (variant === "row") {
-    return (
-      <article className="mdc-workspace-file-card mdc-workspace-file-card--row">
+  const articleClassName =
+    variant === "row"
+      ? "mdc-workspace-file-card mdc-workspace-file-card--row"
+      : "mdc-workspace-file-card mdc-workspace-file-card--card";
+
+  return (
+    <article className={articleClassName}>
+      <div className={surfaceClassName}>
         {onPreview ? (
           <button
             type="button"
-            className="mdc-workspace-file-card__body mdc-workspace-file-card__body--interactive"
-            onClick={onPreview}
-            aria-label={`Pré-visualizar ${filename}`}
-          >
-            {body}
-          </button>
-        ) : (
-          <div className="mdc-workspace-file-card__body">{body}</div>
-        )}
-        {actionButtons}
-      </article>
-    );
-  }
-
-  if (bodyOpensPreview && !actionButtons) {
-    return (
-      <article className="mdc-workspace-file-card mdc-workspace-file-card--card mdc-workspace-file-card--card-unified">
-        <button
-          type="button"
-          className="mdc-workspace-file-card__surface mdc-workspace-file-card__surface--interactive"
-          onClick={onPreview}
-          aria-label={previewAriaLabel}
-        >
-          {body}
-        </button>
-      </article>
-    );
-  }
-
-  return (
-    <article
-      className={`mdc-workspace-file-card mdc-workspace-file-card--card ${actionButtons ? "" : "mdc-workspace-file-card--card-compact"}`}
-    >
-      <div className="mdc-workspace-file-card__surface">
-        {bodyOpensPreview ? (
-          <button
-            type="button"
-            className="mdc-workspace-file-card__body mdc-workspace-file-card__body--interactive"
+            className="mdc-workspace-file-card__hit mdc-workspace-file-card__hit--interactive"
             onClick={onPreview}
             aria-label={previewAriaLabel}
           >
-            {body}
+            {hitContent}
           </button>
         ) : (
-          <div className="mdc-workspace-file-card__body">{body}</div>
+          <div className="mdc-workspace-file-card__hit">{hitContent}</div>
         )}
         {actionButtons}
       </div>

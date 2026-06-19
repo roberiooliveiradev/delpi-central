@@ -1,4 +1,5 @@
 import attachmentsContent from "./attachments_content.json";
+import { ingestProgressPercentLabel } from "./ingestProgress";
 
 export type WorkspaceFileDropzoneContentVariant =
   | "session"
@@ -12,6 +13,12 @@ type ReadingStatusKey = keyof typeof attachmentsContent.preview.readingStatus;
 export type WorkspaceFileStatusTone = "default" | "pending" | "success" | "error";
 
 export type WorkspaceFileIconTone = "brand" | "pdf" | "image" | "pending" | "error";
+
+export type WorkspaceFileIngestProgress = {
+  active: boolean;
+  percent?: number | null;
+  label?: string;
+};
 
 const READING_STATUS = attachmentsContent.preview.readingStatus;
 const INGEST_UI = attachmentsContent.ingestUi;
@@ -101,7 +108,7 @@ export function workspaceFileKindLabel(filename: string): string {
 }
 
 export function workspaceFileIconToneForAttachment(
-  filename: string,
+  _filename: string,
   previewKind: "image" | "file",
   statusTone: WorkspaceFileStatusTone,
 ): WorkspaceFileIconTone {
@@ -109,19 +116,61 @@ export function workspaceFileIconToneForAttachment(
     return "error";
   }
 
-  if (statusTone === "pending") {
-    return "pending";
-  }
-
   if (previewKind === "image") {
     return "image";
   }
 
-  if (workspaceFileKindLabel(filename) === "PDF") {
-    return "pdf";
+  return "brand";
+}
+
+export function workspaceFileComposerAttachmentStatusLabel(input: {
+  status?: string | null;
+  parsed?: boolean;
+  readingStatus?: string | null;
+  uploadPercent?: number;
+}): string | undefined {
+  const indexPresentation = workspaceFileAttachmentIndexPresentation(input);
+  const baseStatusLabel = indexPresentation.statusLabel;
+  const normalizedStatus = normalizeStatus(input.status);
+
+  if (
+    (normalizedStatus === "uploading" || normalizedStatus === "queued") &&
+    typeof input.uploadPercent === "number"
+  ) {
+    const progressLabel = ingestProgressPercentLabel(input.uploadPercent);
+    const uploadLabel = workspaceFileReadingStatusLabel("uploading");
+
+    if (baseStatusLabel && baseStatusLabel !== workspaceFileReadingStatusLabel("default")) {
+      return `${baseStatusLabel} · ${progressLabel}`;
+    }
+
+    return `${uploadLabel} · ${progressLabel}`;
   }
 
-  return "brand";
+  return baseStatusLabel;
+}
+
+export function workspaceFileIngestProgressState(input: {
+  status?: string | null;
+  uploadPercent?: number | null;
+  label?: string;
+}): WorkspaceFileIngestProgress | undefined {
+  const normalized = normalizeStatus(input.status);
+
+  if (
+    normalized !== "queued" &&
+    normalized !== "uploading" &&
+    normalized !== "uploaded" &&
+    normalized !== "indexing"
+  ) {
+    return undefined;
+  }
+
+  return {
+    active: true,
+    percent: input.uploadPercent,
+    label: input.label,
+  };
 }
 
 export type WorkspaceFileIndexPresentation = {
@@ -259,6 +308,7 @@ export function workspaceFileComposerLabels() {
   return {
     clearAttachments: INGEST_UI.composer.clearAttachments,
     attachMenuLabel: INGEST_UI.composer.attachMenuLabel,
+    uploadingStatus: INGEST_UI.messageEdit.uploadingStatus,
   };
 }
 

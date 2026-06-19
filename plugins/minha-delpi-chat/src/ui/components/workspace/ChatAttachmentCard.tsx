@@ -9,6 +9,8 @@ import {
 import {
   workspaceFileAttachmentIndexPresentation,
   workspaceFileIconToneForAttachment,
+  workspaceFileIngestProgressState,
+  workspaceFileMessageEditLabels,
 } from "../../../content/workspaceFileIngestContent";
 import { WorkspaceFileCard } from "./WorkspaceFileCard";
 
@@ -26,6 +28,7 @@ export type ChatAttachmentCardModel = {
   serverAttachmentId?: string;
   localFile?: File;
   localPreviewUrl?: string | null;
+  uploadPercent?: number;
 };
 
 type ChatAttachmentCardProps = {
@@ -117,6 +120,7 @@ export function ChatAttachmentCard({
 
   const thumb =
     thumbUrl && previewKind === "image" ? <img src={thumbUrl} alt="" /> : undefined;
+  const messageEditLabels = workspaceFileMessageEditLabels();
 
   return (
     <WorkspaceFileCard
@@ -131,6 +135,11 @@ export function ChatAttachmentCard({
       editable={editable}
       showInlineActions={editable}
       dismissRemove={editable}
+      ingestProgress={workspaceFileIngestProgressState({
+        status: attachment.status,
+        uploadPercent: attachment.uploadPercent,
+        label: messageEditLabels.uploadingStatus,
+      })}
       onPreview={onPreview ? () => onPreview(attachment) : undefined}
       onRemove={onRemove ? () => onRemove(attachment.key) : undefined}
     />

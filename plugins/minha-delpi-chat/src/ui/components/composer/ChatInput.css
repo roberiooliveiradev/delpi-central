@@ -673,9 +673,47 @@
 }
 
 .mdc-chat-input__attachment-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 36rem) {
+  .mdc-chat-input__attachment-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 52rem) {
+  .mdc-chat-input__attachment-list {
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+  }
+}
+
+.mdc-chat-input__attachment-list .mdc-workspace-file-card--card {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.mdc-chat-input__attachment-list .mdc-workspace-file-card__surface {
+  padding: 0.5rem 0.45rem 0.5rem 0.55rem;
+}
+
+.mdc-chat-input__attachment-list .mdc-workspace-file-card__icon {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 0.55rem;
+}
+
+.mdc-chat-input__attachment-list .mdc-workspace-file-card__meta strong {
+  font-size: 0.8rem;
+}
+
+.mdc-chat-input__attachment-list .mdc-workspace-file-card__details {
+  font-size: 0.7rem;
 }
 
 .mdc-chat-input__attachment-chip {

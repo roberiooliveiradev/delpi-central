@@ -30,7 +30,6 @@ import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
 import { ChatInputPlusMenu } from "../shared/composer/ChatInputPlusMenu";
 import { formatAttachmentSize } from "../../chatAttachmentPreview";
 import type { ComposerAttachmentStatus } from "../../chatAttachmentStatus";
-import { ingestProgressPercentLabel } from "../../../content/ingestProgress";
 import { useAutoGrowTextarea } from "../../hooks/useAutoGrowTextarea";
 import type { ComposerContextBarItem } from "../../../state/chatAgentActivation";
 import type {
@@ -41,7 +40,9 @@ import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
   workspaceFileAttachmentIndexPresentation,
+  workspaceFileComposerAttachmentStatusLabel,
   workspaceFileIconToneForAttachment,
+  workspaceFileIngestProgressState,
 } from "../../../content/workspaceFileIngestContent";
 import {
   buildWorkspaceLocalFilePreviewTarget,
@@ -312,6 +313,8 @@ export function ChatInput({
     </button>
   );
 
+  const composerIngestLabels = workspaceFileComposerLabels();
+
   return (
     <form
       className={
@@ -369,21 +372,20 @@ export function ChatInput({
             <div className="mdc-chat-input__attachment-list">
               {attachments.map((attachment) => {
                 const isImage = attachment.type.startsWith("image/");
+                const attachmentStatus = attachment.status ?? "queued";
+                const isIngesting =
+                  attachmentStatus === "queued" || attachmentStatus === "uploading";
                 const indexPresentation = workspaceFileAttachmentIndexPresentation({
-                  status: attachment.status ?? "queued",
+                  status: attachmentStatus,
                   parsed: attachment.status === "indexed",
                   readingStatus: attachment.readingStatus,
                 });
-
-                const baseStatusLabel = indexPresentation.statusLabel;
-                const statusLabel =
-                  attachment.status === "uploading" &&
-                  typeof attachment.uploadPercent === "number"
-                    ? baseStatusLabel
-                      ? `${baseStatusLabel} · ${ingestProgressPercentLabel(attachment.uploadPercent)}`
-                      : ingestProgressPercentLabel(attachment.uploadPercent)
-                    : baseStatusLabel;
-
+                const statusLabel = workspaceFileComposerAttachmentStatusLabel({
+                  status: attachmentStatus,
+                  parsed: attachment.status === "indexed",
+                  readingStatus: attachment.readingStatus,
+                  uploadPercent: isIngesting ? undefined : attachment.uploadPercent,
+                });
                 const previewKind = isImage ? "image" : "file";
                 const sizeLabel = formatAttachmentSize(attachment.size);
 
@@ -404,6 +406,11 @@ export function ChatInput({
                     editable
                     showInlineActions={false}
                     dismissRemove
+                    ingestProgress={workspaceFileIngestProgressState({
+                      status: attachmentStatus,
+                      uploadPercent: attachment.uploadPercent,
+                      label: composerIngestLabels.uploadingStatus,
+                    })}
                     onPreview={() => {
                       openPreview(buildWorkspaceLocalFilePreviewTarget(attachment.file));
                     }}

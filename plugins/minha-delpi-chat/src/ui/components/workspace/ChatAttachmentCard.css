@@ -98,10 +98,30 @@
 }
 
 .mdc-chat-message-attachment-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
   margin-bottom: var(--mdc-space-3);
+}
+
+@media (min-width: 36rem) {
+  .mdc-chat-message-attachment-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 52rem) {
+  .mdc-chat-message-attachment-cards {
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+  }
+}
+
+.mdc-chat-message-attachment-cards .mdc-workspace-file-card--card {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
 }
 
 .mdc-chat-message-edit-attachments {

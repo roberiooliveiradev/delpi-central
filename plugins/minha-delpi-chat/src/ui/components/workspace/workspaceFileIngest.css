@@ -102,10 +102,17 @@
 
 .mdc-workspace-file-card__surface {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  align-items: stretch;
+  gap: 0.2rem;
   min-width: 0;
+  width: 100%;
   padding: 0.55rem 0.6rem;
+}
+
+.mdc-workspace-file-card__surface--row {
+  align-items: center;
+  flex: 1;
+  padding: 0;
 }
 
 .mdc-workspace-file-card__surface--interactive {
@@ -118,6 +125,87 @@
   padding: 0.55rem 0.65rem;
 }
 
+.mdc-workspace-file-card__hit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+}
+
+.mdc-workspace-file-card__hit--interactive {
+  cursor: pointer;
+}
+
+.mdc-workspace-file-card__lead {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.mdc-workspace-file-card__progress {
+  width: 100%;
+}
+
+.mdc-workspace-file-card__progress-bar {
+  display: block;
+  width: 100%;
+  height: 0.38rem;
+  border: none;
+  border-radius: 999px;
+  overflow: hidden;
+  appearance: none;
+  background: color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+}
+
+.mdc-workspace-file-card__progress-bar::-webkit-progress-bar {
+  background: color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 999px;
+}
+
+.mdc-workspace-file-card__progress-bar::-webkit-progress-value {
+  background: var(--mdc-primary);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.mdc-workspace-file-card__progress-bar::-moz-progress-bar {
+  background: var(--mdc-primary);
+  border-radius: 999px;
+}
+
+.mdc-workspace-file-card__progress-bar--indeterminate {
+  position: relative;
+  overflow: hidden;
+}
+
+.mdc-workspace-file-card__progress-bar--indeterminate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  border-radius: inherit;
+  background: var(--mdc-primary);
+  animation: mdc-workspace-file-card-progress-indeterminate 1.1s ease-in-out infinite;
+}
+
+@keyframes mdc-workspace-file-card-progress-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+/* Legado — consumidores antigos; preferir __hit */
 .mdc-workspace-file-card__body {
   display: flex;
   align-items: center;
@@ -160,8 +248,22 @@
   );
 }
 
-.mdc-workspace-file-card__icon--pdf,
-.mdc-workspace-file-card__icon--pending,
+.mdc-workspace-file-card__icon--pdf {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-danger) 78%, white) 0%,
+    var(--mdc-danger) 100%
+  );
+}
+
+.mdc-workspace-file-card__icon--pending {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--mdc-primary) 82%, white) 0%,
+    var(--mdc-primary) 100%
+  );
+}
+
 .mdc-workspace-file-card__icon--error {
   background: linear-gradient(
     145deg,
@@ -351,7 +453,7 @@
 
 .mdc-workspace-file-card--row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.55rem;
   width: 100%;
   min-height: 3rem;

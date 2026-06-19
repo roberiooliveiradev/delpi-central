@@ -175,6 +175,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   );
   const skipNextSessionLoadRef = useRef(false);
   const activeSessionIdRef = useRef<string | null>(null);
+  const ensureSessionPromiseRef = useRef<Promise<ChatSession> | null>(null);
   const userDismissedBackgroundStreamRef = useRef<Set<string>>(new Set());
   const inFlightSinceRef = useRef<Map<string, number>>(new Map());
   const streamActivityAtRef = useRef<Map<string, number>>(new Map());
@@ -430,6 +431,64 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setPendingUserMessage(null);
     setDraft("");
   }, [resetStreamingUi]);
+
+  const ensureActiveSession = useCallback(async (): Promise<ChatSession> => {
+    if (activeSession?.id) {
+      return activeSession;
+    }
+
+    if (ensureSessionPromiseRef.current) {
+      return ensureSessionPromiseRef.current;
+    }
+
+    const resolvedAgentIds =
+      options.agentIds && options.agentIds.length > 0
+        ? options.agentIds
+        : options.agentId
+          ? [options.agentId]
+          : [];
+    const resolvedProjectIds =
+      options.projectIds && options.projectIds.length > 0
+        ? options.projectIds
+        : options.projectId
+          ? [options.projectId]
+          : [];
+    const effectiveAgentId = resolvedAgentIds[0] ?? null;
+    const effectiveProjectId = resolvedProjectIds[0] ?? null;
+
+    ensureSessionPromiseRef.current = (async () => {
+      const session = await createChatSession(
+        {
+          title: "Nova conversa",
+          context: "geral",
+          projectId: effectiveProjectId,
+          agentId: effectiveAgentId,
+        },
+        {
+          getAccessToken: options.getAccessToken,
+        },
+      );
+
+      skipNextSessionLoadRef.current = true;
+      activeSessionIdRef.current = session.id;
+      setSessions((current) => [session, ...current]);
+      setActiveSession(session);
+      queueMicrotask(() => {
+        options.onSessionActivated?.(session.id, {
+          agentId: session.agent_id ?? effectiveAgentId,
+          projectId: session.project_id ?? effectiveProjectId,
+        });
+      });
+
+      return session;
+    })();
+
+    try {
+      return await ensureSessionPromiseRef.current;
+    } finally {
+      ensureSessionPromiseRef.current = null;
+    }
+  }, [activeSession, options]);
 
   const loadMessages = useCallback(
     async (
@@ -2334,6 +2393,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     loadSessions,
     loadArchivedSessions,
     startSession,
+    ensureActiveSession,
     selectSession,
     deleteSession,
     renameSession,

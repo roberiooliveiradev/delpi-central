@@ -114,6 +114,7 @@ import {
   waitForSessionAttachmentIndexed,
 } from "../../data/workspaceFileIngestPolling";
 import { mapApiAttachmentToComposerStatus } from "../chatAttachmentStatus";
+import { workspaceFileReadingStatusLabel } from "../../content/workspaceFileIngestContent";
 import {
   buildTypingCorrectionMetadata,
 } from "../../state/chatTypingCorrection";
@@ -363,6 +364,7 @@ export function ChatPage({
     loadArchivedSessions,
     loadSessions,
     startSession,
+    ensureActiveSession,
     selectSession,
     deleteSession,
     renameSession,
@@ -1746,6 +1748,19 @@ export function ChatPage({
         let resolvedAttachment = uploaded;
 
         if (isAttachmentIndexPending(uploaded.status)) {
+          setComposerAttachments((current) =>
+            current.map((item) =>
+              item.id === localId
+                ? {
+                    ...item,
+                    status: "uploading",
+                    uploadPercent: undefined,
+                    readingStatus: workspaceFileReadingStatusLabel("indexing"),
+                  }
+                : item,
+            ),
+          );
+
           const settled = await waitForSessionAttachmentIndexed(sessionId, uploaded.id, {
             getAccessToken,
           });
@@ -1785,6 +1800,29 @@ export function ChatPage({
     [getAccessToken],
   );
 
+  const beginComposerAttachmentUpload = useCallback(
+    async (localId: string, file: File) => {
+      try {
+        const session = await ensureActiveSession();
+        await uploadComposerAttachment(session.id, localId, file);
+      } catch {
+        setComposerAttachments((current) =>
+          current.map((item) =>
+            item.id === localId
+              ? {
+                  ...item,
+                  status: "failed",
+                  readingStatus: "Falha no envio",
+                  uploadPercent: undefined,
+                }
+              : item,
+          ),
+        );
+      }
+    },
+    [ensureActiveSession, uploadComposerAttachment],
+  );
+
   function handleAttachFiles(files: File[]) {
     const validFiles = files.filter((file) => file.size > 0);
 
@@ -1810,10 +1848,8 @@ export function ChatPage({
 
     setComposerAttachments((current) => [...current, ...nextAttachments].slice(0, 10));
 
-    if (activeSession?.id) {
-      for (const attachment of nextAttachments) {
-        void uploadComposerAttachment(activeSession.id, attachment.id, attachment.file);
-      }
+    for (const attachment of nextAttachments) {
+      void beginComposerAttachmentUpload(attachment.id, attachment.file);
     }
   }
 

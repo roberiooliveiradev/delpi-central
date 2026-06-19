@@ -422,21 +422,35 @@
 }
 
 .mdc-chat-project-source-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  border-radius: 0.65rem;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
 }
 
-.mdc-chat-project-source-list .mdc-workspace-file-card--row:last-child {
-  border-bottom: 0;
+@media (min-width: 40rem) {
+  .mdc-chat-project-source-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .mdc-chat-project-source-list {
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  }
 }
 
 .mdc-chat-project-source-list .mdc-workspace-file-card--row {
-  padding-inline: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+}
+
+.mdc-chat-project-source-list .mdc-workspace-file-card--row:last-child {
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
 }
 
 .mdc-chat-project-sources__note {
