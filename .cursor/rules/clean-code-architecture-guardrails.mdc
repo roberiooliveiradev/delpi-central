@@ -46,7 +46,7 @@ Só prosseguir com desvio após confirmação explícita do usuário ou refatora
 - [ ] O **pipeline completo** chama o serviço (build → enrich → align → finalize).
 - [ ] **API e MFE** concordam no contrato (metadata); MFE não reimplementa decisão da API.
 - [ ] **Teste de regressão** cobre o bug ou a qualidade esperada (fixture/canônico quando couber).
-- [ ] Nenhum texto PT novo hardcoded fora de `assistant/*.json`.
+- [ ] Nenhum texto PT novo, regex (`re.compile`) nem constante/limite mágico fora de `assistant/*.json` (exceto loaders `*_content_service` / `*_patterns_service`).
 - [ ] Rota nova seguiu **`new-api-route-checklist.mdc`** (se aplicável).
 
 ## Anti-padrão documentado (jun/2026 — apresentação)

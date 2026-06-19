@@ -21,7 +21,7 @@ alwaysApply: true
 | `chat-intelligence-base.mdc` | Pipeline, agentes, contexto, o que não duplicar no use case |
 | `presentation-operational-decoupling.mdc` | Summary playbook, banner, dataAnswer — nunca aviso no presenter |
 | `clean-architecture-chat-api.mdc` | Camadas domain/application/infrastructure/interfaces |
-| `assistant-content-json.mdc` | Textos PT-BR em `assistant/*.json` |
+| `assistant-content-json.mdc` | **Python = lógica pura**; textos, regex, constantes e limites em `assistant/*.json` |
 | `operational-api-routing.mdc` | Seleção de action api-delpi (`OperationalApiRouteSpec`) |
 | `new-api-route-checklist.mdc` | **Nova rota** — HTTP + registry + perfil + CI |
 
@@ -47,6 +47,7 @@ Bug apresentação chat   → presentation-operational-decoupling → centralize
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
 Nova intenção operacional → operational-api-routing → api_route_domains.json
 Texto novo ao usuário   → assistant-content-json
+Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)
 ```
 
 ## Ordem de prioridade em conflito

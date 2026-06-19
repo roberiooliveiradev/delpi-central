@@ -11,7 +11,7 @@ Guardrails gerais (avisar ao desviar): `clean-code-architecture-guardrails.mdc`.
 
 - `domain` **não** importa `app.infrastructure.*` nem `app.interfaces.*`.
 - `interfaces` **não** instancia `Postgres*Repository` — só `composition.make_*`.
-- Textos PT-BR para usuário vivem em `app/content/pt-BR/assistant/*.json`.
+- Textos PT-BR para usuário **e** configuração declarativa (regex, limites, thresholds) vivem em `app/content/pt-BR/assistant/*.json`; Python só com lógica + loaders canônicos.
 
 ## Onde colocar código novo
 

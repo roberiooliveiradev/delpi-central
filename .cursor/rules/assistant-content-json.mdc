@@ -1,5 +1,5 @@
 ---
-description: Textos de UI do assistente em JSON; proibir literais soltos em Python/TS
+description: Python só com lógica; textos, regex, constantes e limites em assistant/*.json
 alwaysApply: true
 ---
 
@@ -7,15 +7,29 @@ alwaysApply: true
 
 ## Princípio
 
-Textos exibidos ao usuário (títulos, mensagens, rótulos de tabela, narrativas, erros amigáveis, chips) ficam em **`minha-delpi-ai-api/app/content/pt-BR/assistant/*.json`**, carregados por serviço — **não** como strings literais em Python, use cases ou presenter.
+**Arquivos Python** (`domain/`, `application/`, use cases, presenters) contêm **lógica pura**: orquestração, comparação, parsing aplicado, decisão de fluxo e algoritmos que **não** são configuração declarativa.
 
-**Regex, heurísticas e formatação numérica/data** permanecem no código.
+**Tudo o mais** fica em **`minha-delpi-ai-api/app/content/pt-BR/assistant/*.json`**, carregado por serviço de conteúdo — **não** como literais espalhados no código:
+
+| No JSON | Exemplos |
+|---------|----------|
+| Textos PT-BR ao usuário | títulos, mensagens, `reason`, activity SSE, erros amigáveis |
+| Regex e padrões | OCR, intenção, BOM, definição de termo, safety guard |
+| Constantes e limites | thresholds, tolerâncias, caps, prefixos de família de código |
+| Vocabulário declarativo | listas de rótulos, marcadores, rankings de fonte, chaves de memória |
+
+**Única exceção de `re.compile` no Python:** loaders canônicos (`ChatAssistantContentService`, `*ContentService`, `*PatternsService`) que leem o JSON, compilam com cache e expõem para os serviços de domínio. **Proibido** `re.compile` / constantes mágicas em serviço de regra de negócio.
+
+**Permanece no código (não é config):** algoritmos de formatação/parsing (ex.: `parse_mm`, normalização de data, zip de estruturas) — mas **valores** (ratio ±5%, `1.0` mm, `maxRows`) vêm do JSON.
 
 ## Onde colocar
 
 | Tipo | Arquivo / serviço |
 |------|-------------------|
-| Genérico do assistente | Novo ou existente em `assistant/*.json` + `ChatAssistantContentService` |
+| Genérico do assistente | `assistant/*.json` + `ChatAssistantContentService` |
+| Desenho / OCR / validação | `drawing_stamp.json`, `drawing_validation.json` → `ChatDrawingPatternsService`, `ChatDrawingValidationContentService` |
+| Document vision | `document_vision.json` → `ChatDocumentVisionContentService` |
+| Aprendizagem / glossário | `learning_content.json` → `ChatLearningContentService` |
 | SQL, actions, cronograma | `external_action_responses.json` → `ExternalActionResponseContentService` |
 | Produto operacional / estoque / MFE | `product_operational_content.json` → `ChatProductOperationalContentService` |
 | Presenter (rotas, KPI, tabelas) | `presenter_content.json` + `column_labels.json` → presenter + `ExternalActionColumnLabelService` |
@@ -27,11 +41,14 @@ Catálogo completo: `minha-delpi-ai-api/docs/architecture/assistant-content-cata
 ## API no código
 
 ```python
-# ❌ Evitar
+# ❌ Evitar — texto, regex ou limite no serviço de domínio
+_CONFIRMATION_THRESHOLD = 0.5
+_PATTERN = re.compile(r"\b(90\d{6})\b")
 return {"titulo": "Estoque do produto", "linhas": ["Nenhum registro encontrado."]}
 
-# ✅ Preferir
-ChatAssistantContentService.get("presenter_content", "titlesByPathFragment", "/stock")
+# ✅ Preferir — JSON + loader; serviço só aplica lógica
+ChatDrawingPatternsService.component_code().search(text)
+ChatLearningContentService.setting_float("confirmationThreshold", 0.5)
 ChatAssistantContentService.format("presenter_content", "generic", "emptyItemsQuery")
 ```
 
@@ -39,18 +56,20 @@ Presenter: helpers `_presenter_text`, `_presenter_root_format`, `_route_presenta
 
 ## O que NÃO fazer
 
-- Copiar a mesma frase em dois serviços (ex.: presenter + use case) sem JSON compartilhado.
+- Copiar a mesma frase, regex ou limite em dois serviços sem JSON compartilhado.
 - Título de tabela, KPI, erro API ou linha de lista **só** no `system_prompt` do agente.
+- `re.compile(...)` em `chat_*_service.py` de domínio (exceto loaders `*_content_service` / `*_patterns_service`).
 - Duplicar template já em `product_operational_content` (ex.: `detailLine` de estoque).
 - Importar JSON da API no build Docker do MFE (`../../../../minha-delpi-ai-api/...`); usar cópia local + `sync:product-operational-content`.
 
 ## O que fazer (nova feature)
 
-1. Escolher bundle no catálogo (ou criar seção no JSON certo).
-2. `get` / `format` / `title_for_path` no serviço de domínio ou application — não no use case, salvo orquestração.
-3. Teste unitário mínimo: chave existe ou texto vem do bundle (`test_presenter_content_helpers.py` como modelo).
-4. Atualizar `assistant-content-catalog.md` (e `presenter-content-migration-audit.md` se for presenter).
-5. MFE: se o texto for compartilhado, espelhar em `plugins/minha-delpi-chat/src/content/` e documentar sync no README do plugin.
+1. Escolher bundle no catálogo (ou criar seção `patterns` / `limits` / `settings` no JSON certo).
+2. Estender loader canônico do pacote (`get` / `format` / `compile_pattern` / `limit_int`) — não no use case.
+3. Serviço de domínio: só consome loader + lógica.
+4. Teste unitário mínimo: chave existe ou padrão compila (`test_*_content.py`, `test_*_patterns_service.py`).
+5. Atualizar `assistant-content-catalog.md` (e `presenter-content-migration-audit.md` se for presenter).
+6. MFE: se o texto for compartilhado, espelhar em `plugins/minha-delpi-chat/src/content/` e documentar sync no README do plugin.
 
 ## Route selection e turn prep (Fase 3+)
 
@@ -66,4 +85,4 @@ Serviços extraídos do god class (`external_action_*_route_selection_service.py
 
 ## Revisão antes de merge
 
-Se o diff em `app/domain/` ou `app/application/` adiciona string em português com pontuação/frase completa → mover para JSON ou justificar (log técnico, chave Protheus, marcador de regex).
+Se o diff em `app/domain/` ou `app/application/` adiciona **string PT com pontuação**, **regex** (`re.compile`), **threshold/limite mágico** ou **lista de vocabulário** → mover para `assistant/*.json` + loader, ou justificar (log técnico, chave Protheus).
