@@ -7,7 +7,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 import {
   ingestProgressPercentLabel,
@@ -227,7 +227,15 @@ function FileCardActionButtons({
   }
 
   return (
-    <div className="mdc-workspace-file-card__actions">
+    <div
+      className="mdc-workspace-file-card__actions"
+      onClick={(event) => {
+        event.stopPropagation();
+      }}
+      onKeyDown={(event) => {
+        event.stopPropagation();
+      }}
+    >
       {showInlineActions && onDownload ? (
         <button
           type="button"
@@ -257,6 +265,20 @@ function FileCardActionButtons({
       ) : null}
     </div>
   );
+}
+
+function handlePreviewKeyDown(
+  event: KeyboardEvent<HTMLElement>,
+  onPreview?: () => void,
+) {
+  if (!onPreview) {
+    return;
+  }
+
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    onPreview();
+  }
 }
 
 export function WorkspaceFileCard({
@@ -306,43 +328,6 @@ export function WorkspaceFileCard({
     </div>
   );
 
-  const actionButtons = (
-    <FileCardActionButtons
-      filename={filename}
-      showInlineActions={showInlineActions}
-      editable={editable}
-      dismissRemove={dismissRemove}
-      onDownload={onDownload}
-      onRemove={onRemove}
-    />
-  );
-
-  const showIngestProgress = ingestProgress?.active === true;
-
-  const lead = (
-    <div className="mdc-workspace-file-card__lead">
-      <FileCardIcon
-        previewKind={previewKind}
-        thumb={thumb}
-        iconTone={iconTone}
-        compact={variant === "row"}
-      />
-      {meta}
-    </div>
-  );
-
-  const hitContent = (
-    <>
-      {lead}
-      {showIngestProgress ? (
-        <FileCardIngestProgress
-          percent={ingestProgress?.percent}
-          label={ingestProgress?.label}
-        />
-      ) : null}
-    </>
-  );
-
   if (variant === "chip") {
     return (
       <span className="mdc-workspace-file-card mdc-workspace-file-card--chip">
@@ -381,10 +366,45 @@ export function WorkspaceFileCard({
     );
   }
 
-  const surfaceClassName =
-    variant === "row"
-      ? "mdc-workspace-file-card__surface mdc-workspace-file-card__surface--row"
-      : "mdc-workspace-file-card__surface";
+  const actionButtons = (
+    <FileCardActionButtons
+      filename={filename}
+      showInlineActions={showInlineActions}
+      editable={editable}
+      dismissRemove={dismissRemove}
+      onDownload={onDownload}
+      onRemove={onRemove}
+    />
+  );
+
+  const showIngestProgress = ingestProgress?.active === true;
+
+  const surfaceContent = (
+    <>
+      <div className="mdc-workspace-file-card__lead">
+        <FileCardIcon
+          previewKind={previewKind}
+          thumb={thumb}
+          iconTone={iconTone}
+          compact={variant === "row"}
+        />
+        {meta}
+      </div>
+      {showIngestProgress ? (
+        <FileCardIngestProgress
+          percent={ingestProgress?.percent}
+          label={ingestProgress?.label}
+        />
+      ) : null}
+    </>
+  );
+
+  const surfaceClassName = [
+    "mdc-workspace-file-card__surface",
+    variant === "row" ? "mdc-workspace-file-card__surface--row" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const articleClassName =
     variant === "row"
@@ -394,18 +414,21 @@ export function WorkspaceFileCard({
   return (
     <article className={articleClassName}>
       <div className={surfaceClassName}>
-        {onPreview ? (
-          <button
-            type="button"
-            className="mdc-workspace-file-card__hit mdc-workspace-file-card__hit--interactive"
-            onClick={onPreview}
-            aria-label={previewAriaLabel}
-          >
-            {hitContent}
-          </button>
-        ) : (
-          <div className="mdc-workspace-file-card__hit">{hitContent}</div>
-        )}
+        <div
+          className={[
+            "mdc-workspace-file-card__surface-main",
+            onPreview ? "mdc-workspace-file-card__surface-main--interactive" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          role={onPreview ? "button" : undefined}
+          tabIndex={onPreview ? 0 : undefined}
+          onClick={onPreview}
+          onKeyDown={(event) => handlePreviewKeyDown(event, onPreview)}
+          aria-label={onPreview ? previewAriaLabel : undefined}
+        >
+          {surfaceContent}
+        </div>
         {actionButtons}
       </div>
     </article>
