@@ -41,6 +41,28 @@ def test_extraction_confidence_below_threshold_without_title_block():
     assert "stamp_block_missing" in result.reasons
 
 
+def test_evaluate_for_extraction_reaches_target_with_rich_bom_read():
+    result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
+        pdf_extract={
+            "productCode": "90264227",
+            "revision": "02",
+            "legible": True,
+            "charCount": 1200,
+            "componentCodes": ["10081867", "50215425", "10440134", "50215433"],
+            "intermediateCodes": ["50215425", "50215433"],
+            "validationScopes": {"bom": {"available": True}},
+            "dimensions": {
+                "leftDecapeMm": 4.0,
+                "segmentLengthsMm": [140.0, 150.0],
+            },
+            "sourceMetadata": {"stages": ["region_ocr"]},
+        }
+    )
+
+    assert result.meets_threshold is True
+    assert result.score_percent >= 95
+
+
 def test_extraction_confidence_meets_threshold_with_title_block_and_clean_checklist():
     result = ChatDrawingExtractionConfidenceService.evaluate(
         pdf_extract={

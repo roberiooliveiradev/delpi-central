@@ -203,6 +203,7 @@ Fase 15.7 — Layout adaptativo (XY-Cut) + gate confiança ≥95%  [entregue]
 | 15.7.5 | Templates `extraction_confidence` + `validationLayers` | Só JSON PT |
 | 15.7.6 | Regressão `90264227` | BOM/cotas pending; roteiro/inspeção críticos |
 | 15.7.7 | Doc [chat-drawing-page-layout-analysis.md](../../architecture/chat-drawing-page-layout-analysis.md) | Arquitetura + anti-padrões |
+| 15.7.8 | `ChatDrawingExtractionQualityRetryService` | `drawing_stamp.json` → `extractionQualityRetry`; metadata `pdf_extract.extractionQualityRetry` |
 
 ---
 
@@ -218,6 +219,7 @@ Fase 15.7 — Layout adaptativo (XY-Cut) + gate confiança ≥95%  [entregue]
 | 30 mm termoretração vs decape | 15.5 | `test_chat_drawing_dimensions_extraction_service.py` |
 | OCR ruim reprova BOM/cotas | 15.7 | `test_chat_drawing_validation_90264227.py` |
 | Layout BOM deslocado | 15.7 | `test_chat_drawing_page_layout_analysis_service.py` |
+| Leitura abaixo de 95% sem nova tentativa OCR | 15.7.8 | `test_chat_drawing_extraction_quality_retry_service.py` |
 
 ---
 
@@ -240,6 +242,7 @@ cd minha-delpi-ai-api
 # Após Fase 15.7
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_page_layout_analysis_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_extraction_confidence_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_extraction_quality_retry_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_assertion_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90264227.py -q
 

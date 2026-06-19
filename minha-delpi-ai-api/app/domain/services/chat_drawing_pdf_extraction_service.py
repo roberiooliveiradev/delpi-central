@@ -29,16 +29,37 @@ class ChatDrawingPdfExtractionService:
 
     @classmethod
     def extract_from_storage_path(cls, storage_path: str, *, filename: str = "") -> dict[str, Any]:
+        from app.domain.services.chat_drawing_extraction_quality_retry_service import (
+            ChatDrawingExtractionQualityRetryService,
+        )
+
+        return ChatDrawingExtractionQualityRetryService.extract_until_confident(
+            storage_path,
+            filename=filename or Path(storage_path).name,
+        )
+
+    @classmethod
+    def _extract_single_pass(
+        cls,
+        storage_path: str,
+        *,
+        filename: str = "",
+        extraction_options: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         from app.domain.services.chat_pdf_document_extraction_service import (
             ChatPdfDocumentExtractionService,
         )
+
+        options = extraction_options if isinstance(extraction_options, dict) else {}
+        enable_region_ocr = options.get("enableRegionOcr")
 
         extracted = ChatPdfDocumentExtractionService.extract_from_storage_path(
             storage_path,
             filename=filename or Path(storage_path).name,
             page_limit=cls.max_pages(),
             layout_profile=ChatPdfDocumentExtractionService.LAYOUT_DRAWING_DELPI,
-            enable_region_ocr=True,
+            enable_region_ocr=enable_region_ocr,
+            region_ocr_dpi_multiplier=float(options.get("regionOcrDpiMultiplier") or 1.0),
         )
 
         if not extracted.get("supported"):

@@ -61,6 +61,7 @@ class PageLayoutAnalysisResult:
 
 class ChatDrawingPageLayoutAnalysisService:
     _SEMANTIC_REGIONS = ("stamp", "title", "bom", "dimensions", "drawing_body")
+    _runtime_enabled_override: bool | None = None
 
     @classmethod
     def analyze_fitz_page(
@@ -142,9 +143,28 @@ class ChatDrawingPageLayoutAnalysisService:
 
     @classmethod
     def _enabled(cls) -> bool:
+        if cls._runtime_enabled_override is not None:
+            return cls._runtime_enabled_override
+
         node = cls._layout_config()
 
         return bool(node.get("enabled", True))
+
+    @classmethod
+    def layout_analysis_override(cls, enabled: bool | None):
+        from contextlib import contextmanager
+
+        @contextmanager
+        def _manager():
+            previous = cls._runtime_enabled_override
+            cls._runtime_enabled_override = enabled
+
+            try:
+                yield
+            finally:
+                cls._runtime_enabled_override = previous
+
+        return _manager()
 
     @classmethod
     def _layout_config(cls) -> dict[str, Any]:

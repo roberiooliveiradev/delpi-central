@@ -32,6 +32,7 @@ class ChatPdfDocumentExtractionService:
         page_limit: int | None = None,
         layout_profile: str = LAYOUT_GENERIC,
         enable_region_ocr: bool | None = None,
+        region_ocr_dpi_multiplier: float = 1.0,
     ) -> dict[str, Any]:
         path = Path(storage_path)
 
@@ -92,7 +93,11 @@ class ChatPdfDocumentExtractionService:
             embedded=embedded,
             pypdf=pypdf,
         ):
-            region_texts, regions = cls._ocr_layout_regions(str(path), page_limit=limit)
+            region_texts, regions = cls._ocr_layout_regions(
+                str(path),
+                page_limit=limit,
+                dpi_multiplier=max(1.0, float(region_ocr_dpi_multiplier or 1.0)),
+            )
             stages.append("region_ocr")
 
             for region_name, region_text in region_texts.items():
@@ -335,6 +340,7 @@ class ChatPdfDocumentExtractionService:
         storage_path: str,
         *,
         page_limit: int,
+        dpi_multiplier: float = 1.0,
     ) -> tuple[dict[str, str], dict[str, Any]]:
         try:
             import fitz
@@ -352,7 +358,7 @@ class ChatPdfDocumentExtractionService:
 
         lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"
         dpi = max(72, int(AppSettings.CHAT_DOCUMENT_VISION_DPI))
-        zoom = dpi / 72.0
+        zoom = (dpi / 72.0) * max(1.0, float(dpi_multiplier or 1.0))
         matrix = fitz.Matrix(zoom, zoom)
 
         try:

@@ -116,6 +116,41 @@ Complementar ao layout: `ChatDrawingExtractionConfidenceService` + `ChatDrawingV
 
 Itens **autoritativos da API** (roteiro, inspeção) não são rebaixados.
 
+### Retentativas de extração (qualidade ≥ 95%)
+
+Antes da validação, `ChatDrawingExtractionQualityRetryService` repete a leitura do PDF com perfis escalonados até `targetConfidence` (default **95%**), esgotar `maxAttempts` ou detectar **estagnação** (score e `componentCodes` não melhoram entre tentativas consecutivas):
+
+```text
+ChatDrawingPdfExtractionService.extract_from_storage_path
+  → ChatDrawingExtractionQualityRetryService.extract_until_confident
+       tentativa 1: standard (OCR regional automático para desenho DELPI)
+       tentativa 2: high_dpi_regions (OCR forçado, DPI × 1.75)
+       tentativa 3: high_dpi_static_layout (DPI × 2.0, layoutAnalysisEnabled: false)
+  → ChatDrawingExtractionConfidenceService.evaluate_for_extraction (score só da extração)
+  → melhor tentativa em pdf_extract + metadata extractionQualityRetry
+```
+
+| `stoppedReason` | Significado |
+|-----------------|-------------|
+| `target_reached` | Score ≥ `targetConfidence` na tentativa corrente |
+| `max_attempts` | Esgotou perfis sem atingir o alvo — retorna a **melhor** tentativa |
+| `no_improvement` | Parada antecipada — score e códigos BOM não subiram vs. tentativa anterior |
+
+Seleção da melhor tentativa: maior score → mais `componentCodes` → maior `charCount`.
+
+Config (`drawing_stamp.json` → `extractionQualityRetry`):
+
+| Chave | Default | Significado |
+|-------|---------|-------------|
+| `enabled` | `true` | Master switch |
+| `targetConfidence` | `0.95` | Limiar para parar com sucesso |
+| `maxAttempts` | `3` | Máximo de perfis executados |
+| `attempts[]` | ver JSON | `enableRegionOcr`, `regionOcrDpiMultiplier`, `layoutAnalysisEnabled` |
+
+Metadata em `pdf_extract.extractionQualityRetry`: `attemptCount`, `selectedAttemptId`, `selectedScorePercent`, `meetsTarget`, histórico `attempts[]`.
+
+**Operação:** retentativas com OCR regional + EasyOCR consomem RAM; em ambientes limitados (ex.: WSL) preferir `maxAttempts: 2` ou desabilitar retry temporariamente — o gate de validação continua demovendo BOM/cotas quando a confiança final < 95%.
+
 Doc relacionada: [playbook validação desenhos](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) § Fase 15.7.
 
 ---
@@ -125,7 +160,8 @@ Doc relacionada: [playbook validação desenhos](../roadmap/melhorias/playbook_v
 | Arquivo | Escopo |
 |---------|--------|
 | `test_chat_drawing_page_layout_analysis_service.py` | XY-Cut sintético, integração region service |
-| `test_chat_drawing_extraction_confidence_service.py` | Componentes de confiança |
+| `test_chat_drawing_extraction_confidence_service.py` | Componentes de confiança + `evaluate_for_extraction` |
+| `test_chat_drawing_extraction_quality_retry_service.py` | Retentativas até 95%, parada por estagnação |
 | `test_chat_drawing_validation_assertion_service.py` | Demotion PDF vs API |
 | `test_chat_drawing_validation_90264227.py` | Regressão FLEXTRONICS |
 
@@ -153,3 +189,4 @@ DRAWING_VALIDATE_CODES=90264227,90263622 python scripts/validate_drawing_samples
 |------|---------|
 | jun/2026 | `ChatDrawingPageLayoutAnalysisService` + integração OCR regional |
 | jun/2026 | Gate confiança ≥95% na validação (`validationLayers`) |
+| jun/2026 | Retentativas de extração até 95% (`ChatDrawingExtractionQualityRetryService`) |
