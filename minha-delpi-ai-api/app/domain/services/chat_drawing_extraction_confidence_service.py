@@ -70,6 +70,51 @@ class ChatDrawingExtractionConfidenceService:
         )
 
     @classmethod
+    def resolve_gate_confidence(
+        cls,
+        *,
+        pdf_extract: dict[str, Any] | None,
+    ) -> ExtractionConfidenceResult:
+        """Confiança para o gate de validação — qualidade OCR, sem circularidade do checklist."""
+        pdf_meta = pdf_extract if isinstance(pdf_extract, dict) else {}
+        retry = pdf_meta.get("extractionQualityRetry")
+
+        if isinstance(retry, dict):
+            selected = retry.get("selectedConfidence")
+
+            if isinstance(selected, dict) and selected:
+                components_raw = selected.get("components") or {}
+                components = {
+                    str(key): float(value)
+                    for key, value in components_raw.items()
+                    if isinstance(value, (int, float))
+                }
+
+                try:
+                    score = float(selected.get("score") or 0.0)
+                except (TypeError, ValueError):
+                    score = 0.0
+
+                try:
+                    threshold = float(
+                        selected.get("threshold") or cls._extraction_target_confidence()
+                    )
+                except (TypeError, ValueError):
+                    threshold = cls._extraction_target_confidence()
+
+                reasons_raw = selected.get("reasons") or []
+
+                return ExtractionConfidenceResult(
+                    score=score,
+                    threshold=threshold,
+                    meets_threshold=bool(selected.get("meetsThreshold")),
+                    components=components,
+                    reasons=tuple(str(item) for item in reasons_raw if str(item).strip()),
+                )
+
+        return cls.evaluate_for_extraction(pdf_extract=pdf_meta)
+
+    @classmethod
     def _extraction_target_confidence(cls) -> float:
         from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 

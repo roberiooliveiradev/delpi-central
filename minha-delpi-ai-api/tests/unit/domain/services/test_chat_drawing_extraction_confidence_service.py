@@ -20,6 +20,26 @@ def _low_confidence_pdf_extract() -> dict:
     }
 
 
+def test_resolve_gate_confidence_prefers_retry_metadata():
+    result = ChatDrawingExtractionConfidenceService.resolve_gate_confidence(
+        pdf_extract={
+            "productCode": "90262019",
+            "extractionQualityRetry": {
+                "selectedConfidence": {
+                    "score": 0.96,
+                    "threshold": 0.95,
+                    "meetsThreshold": True,
+                    "components": {"legibility": 0.96},
+                    "reasons": [],
+                }
+            },
+        }
+    )
+
+    assert result.meets_threshold is True
+    assert result.score_percent == 96
+
+
 def test_extraction_confidence_below_threshold_without_title_block():
     result = ChatDrawingExtractionConfidenceService.evaluate(
         pdf_extract=_low_confidence_pdf_extract(),

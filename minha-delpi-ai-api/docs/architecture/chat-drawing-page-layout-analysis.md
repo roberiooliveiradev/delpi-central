@@ -111,6 +111,7 @@ Complementar ao layout: `ChatDrawingExtractionConfidenceService` + `ChatDrawingV
 | Camada | Módulo | Config |
 |--------|--------|--------|
 | Score composto | `ChatDrawingExtractionConfidenceService` | `drawing_validation.json` → `validationLayers.extractionConfidence` |
+| Gate (demotion) | `resolve_gate_confidence` → `evaluate_for_extraction` / retry metadata | **Não** usar `evaluate()` com checklist (evita circularidade) |
 | Demotion assertiva | `ChatDrawingValidationAssertionService` | `minConfidenceForPdfCritical: 0.95` |
 | Orquestração | `ChatDrawingValidationOrchestrationService._apply_validation_layers` | metadata `validationLayers.extractionConfidence` |
 

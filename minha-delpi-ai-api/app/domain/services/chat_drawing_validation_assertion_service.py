@@ -28,9 +28,8 @@ class ChatDrawingValidationAssertionService:
         if not pdf_meta:
             return items, None
 
-        confidence = ChatDrawingExtractionConfidenceService.evaluate(
+        confidence = ChatDrawingExtractionConfidenceService.resolve_gate_confidence(
             pdf_extract=pdf_meta,
-            items=items,
         )
         adjusted = cls._apply_confidence_gate(items, confidence)
         adjusted = cls._prepend_confidence_item(adjusted, confidence)

@@ -124,15 +124,86 @@ def test_90264227_revision_client_vs_internal_ok():
     assert revision_items[0]["status"] == "ok"
 
 
+def test_90264227_high_extraction_confidence_keeps_bom_conflicts_visible():
+    payload = {
+        "product": {
+            "code": "90264227",
+            "description": "CHICOTE TRR-ITCC-0039",
+            "current_revision": "002",
+            "last_revision_date": "20260617",
+        },
+        **_payload_90264227(),
+    }
+    pdf_extract = {
+        **_pdf_extract_ocr(),
+        "charCount": 6000,
+        "sourceMetadata": {"stages": ["region_ocr"]},
+        "extractionQualityRetry": {
+            "meetsTarget": True,
+            "selectedConfidence": {
+                "score": 0.96,
+                "threshold": 0.95,
+                "meetsThreshold": True,
+                "components": {
+                    "legibility": 0.96,
+                    "stamp": 1.0,
+                    "bom_scope": 1.0,
+                    "ocr_regions": 1.0,
+                    "bom_completeness": 1.0,
+                    "dimensions": 1.0,
+                },
+                "reasons": [],
+            },
+        },
+    }
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90264227",
+        payload=payload,
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract=pdf_extract,
+    )
+
+    analysis = package["drawingAnalysis"]
+    confidence = (analysis.get("validationLayers") or {}).get("extractionConfidence") or {}
+
+    assert confidence.get("meetsThreshold") is True
+    assert confidence.get("scorePercent", 0) >= 95
+
+    assert any(
+        item.get("templateKey") == "extraction_confidence"
+        and item.get("status") == "ok"
+        for item in analysis["items"]
+    )
+
+    assert not any(
+        item.get("templateKey") in {"bom_extra", "bom_extra_item", "bom_quantity_mismatch"}
+        and item.get("status") == "pending"
+        and (item.get("validationLayer") or {}).get("gate") == "extraction_confidence"
+        for item in analysis["items"]
+    )
+
+
 def _pdf_extract_low_confidence() -> dict:
     return {
-        **_pdf_extract_ocr(),
-        "documentVision": {
-            "legibilityScore": 1.0,
-            "hasTitleBlock": False,
-            "stages": ["fitz_embedded", "pypdf", "region_ocr"],
-        },
+        "productCode": "90264227",
+        "legible": True,
+        "charCount": 80,
+        "componentCodes": ["10440134", "50215426"],
+        "sourceMetadata": {"stages": ["fitz_embedded"]},
         "validationScopes": {"bom": {"available": True}},
+        "extractionQualityRetry": {
+            "meetsTarget": False,
+            "selectedConfidence": {
+                "score": 0.48,
+                "threshold": 0.95,
+                "meetsThreshold": False,
+                "scorePercent": 48,
+                "components": {"legibility": 0.48},
+                "reasons": ["component_codes_missing", "dimensions_missing"],
+            },
+        },
     }
 
 
