@@ -361,6 +361,255 @@ class ChatDrawingPatternsService:
         return cls.validation_rule_float("maxPieceCountQuantity", 10.0)
 
     @classmethod
+    def compile_validation(cls, key: str) -> re.Pattern[str]:
+        cache_key = f"validation:{key}"
+
+        if cache_key not in _COMPILED:
+            raw = ChatAssistantContentService.get(
+                _VALIDATION_BUNDLE,
+                "patterns",
+                key,
+                default="",
+            )
+            _COMPILED[cache_key] = re.compile(str(raw), _DEFAULT_FLAGS)
+
+        return _COMPILED[cache_key]
+
+    @classmethod
+    def validation_rule_node(cls, *path: str) -> Any:
+        node = ChatAssistantContentService.get_node(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            *path,
+        )
+        return node if node is not None else {}
+
+    @classmethod
+    def validation_rule_str(cls, key: str, default: str = "") -> str:
+        raw = cls.validation_rule(key, default)
+        return str(raw or default)
+
+    @classmethod
+    def validation_rule_frozenset(cls, *path: str) -> frozenset[str]:
+        items = ChatAssistantContentService.list(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            *path,
+        )
+        return frozenset(str(item).strip().upper() for item in items if str(item).strip())
+
+    @classmethod
+    def structure_index_rule_int(cls, key: str, default: int) -> int:
+        raw = cls.validation_rule_node("structureIndex", key)
+
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def root_product_bom_level(cls) -> int:
+        return cls.structure_index_rule_int("rootProductBomLevel", 0)
+
+    @classmethod
+    def default_bom_level_when_unknown(cls) -> int:
+        return cls.structure_index_rule_int("defaultBomLevelWhenUnknown", 1)
+
+    @classmethod
+    def structure_root_depth(cls) -> int:
+        return cls.structure_index_rule_int("structureRootDepth", 1)
+
+    @classmethod
+    def guide_product_types(cls) -> frozenset[str]:
+        return cls.validation_rule_frozenset("structureIndex", "guideProductTypes")
+
+    @classmethod
+    def nested_bom_line_types(cls) -> frozenset[str]:
+        return cls.validation_rule_frozenset("structureIndex", "nestedBomLineTypes")
+
+    @classmethod
+    def intermediate_color_ocr_markers(cls, color: str) -> tuple[str, ...]:
+        normalized_color = str(color or "").strip().upper()
+        markers_node = cls.validation_rule_node("intermediateColorOcrMarkers")
+
+        if not isinstance(markers_node, dict):
+            markers_node = {}
+
+        raw_markers = markers_node.get(normalized_color)
+
+        if not isinstance(raw_markers, list) or not raw_markers:
+            fallback = cls.validation_rule_str(
+                "intermediateColorFallbackMarker",
+                "CB20{color}",
+            )
+            raw_markers = [fallback.format(color=normalized_color)]
+
+        return tuple(
+            str(marker).upper().replace(" ", "")
+            for marker in raw_markers
+            if str(marker).strip()
+        )
+
+    @classmethod
+    def inspection_legacy_plan_keys(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            "inspectionContract",
+            "legacyPlanKeys",
+        )
+        return tuple(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
+    def inspection_plan_list_keys(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            "inspectionContract",
+            "planListKeys",
+        )
+        return tuple(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
+    def pdf_haystack_source_metadata_keys(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            "pdfHaystackSourceMetadataKeys",
+        )
+        return tuple(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
+    def pdf_haystack_bom_row_keys(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(
+            _VALIDATION_BUNDLE,
+            "validationRules",
+            "pdfHaystackBomRowKeys",
+        )
+        return tuple(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
+    def multipage_coverage_rule(cls, key: str, default: Any = None) -> Any:
+        node = cls.validation_rule_node("multipageCoverage")
+        return node.get(key, default) if isinstance(node, dict) else default
+
+    @classmethod
+    def multipage_min_page_count(cls) -> int:
+        return cls.validation_rule_int_from_node(
+            cls.multipage_coverage_rule("minPageCount", 2),
+            2,
+        )
+
+    @classmethod
+    def multipage_min_api_codes(cls) -> int:
+        return cls.validation_rule_int_from_node(
+            cls.multipage_coverage_rule("minApiCodesToEvaluate", 3),
+            3,
+        )
+
+    @classmethod
+    def multipage_warning_ratio_below(cls) -> float:
+        return cls.validation_rule_float_from_node(
+            cls.multipage_coverage_rule("warningRatioBelow", 0.7),
+            0.7,
+        )
+
+    @classmethod
+    def multipage_pending_ratio_below(cls) -> float:
+        return cls.validation_rule_float_from_node(
+            cls.multipage_coverage_rule("pendingRatioBelow", 0.4),
+            0.4,
+        )
+
+    @classmethod
+    def multipage_page_count_keys(cls) -> tuple[str, ...]:
+        items = cls.multipage_coverage_rule("pageCountKeys", ["pageCount"])
+
+        if isinstance(items, list):
+            return tuple(str(item).strip() for item in items if str(item).strip())
+
+        return ("pageCount",)
+
+    @classmethod
+    def multipage_status_warning(cls) -> str:
+        return str(cls.multipage_coverage_rule("statusWarning", "error"))
+
+    @classmethod
+    def multipage_status_pending(cls) -> str:
+        return str(cls.multipage_coverage_rule("statusPending", "pending"))
+
+    @classmethod
+    def multipage_template_low_coverage(cls) -> str:
+        return str(
+            cls.multipage_coverage_rule("templateLowCoverage", "multipage_low_coverage")
+        )
+
+    @classmethod
+    def multipage_template_partial(cls) -> str:
+        return str(
+            cls.multipage_coverage_rule("templatePartial", "multipage_bom_partial")
+        )
+
+    @classmethod
+    def validation_rule_int_from_node(cls, raw: Any, default: int) -> int:
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def validation_rule_float_from_node(cls, raw: Any, default: float) -> float:
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def dimension_note_type_node(cls, note_type: str) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(
+            _STAMP_BUNDLE,
+            "dimensionNoteTypes",
+            note_type,
+        )
+        return node if isinstance(node, dict) else {}
+
+    @classmethod
+    def dimension_note_context_markers(cls, note_type: str) -> tuple[str, ...]:
+        markers = cls.dimension_note_type_node(note_type).get("contextMarkers")
+
+        if not isinstance(markers, list):
+            return ()
+
+        return tuple(
+            str(marker).strip().upper()
+            for marker in markers
+            if str(marker).strip()
+        )
+
+    @classmethod
+    def dimension_note_types_suppressing_decape(cls) -> tuple[str, ...]:
+        types: list[str] = []
+        node = ChatAssistantContentService.get_node(_STAMP_BUNDLE, "dimensionNoteTypes") or {}
+
+        if not isinstance(node, dict):
+            return ()
+
+        for note_type, payload in node.items():
+            if not isinstance(payload, dict):
+                continue
+
+            if payload.get("suppressesDecapeExtraction"):
+                types.append(str(note_type))
+
+        return tuple(types)
+
+    @classmethod
+    def dimension_note_validation_rule(cls, key: str, default: str = "") -> str:
+        return str(
+            cls.validation_rule_node("dimensionNoteValidation", key) or default
+        )
+
+    @classmethod
     def intermediate_description_signature(cls, description: str) -> str | None:
         match = cls.intermediate_segment().search(str(description or ""))
 

@@ -123,6 +123,25 @@
     "decape": ["DECAPE", "DECAPE MM", "DECAPEMM", "DECAPE ESQ", "DECAPE DIR"],
     "tolerance": ["TOL", "TOLER", "TOLERANCIA", "TOLERÂNCIA"]
   },
+  "dimensionNoteTypes": {
+    "decape_cable": {
+      "contextMarkers": ["DECAPE", "DECAPAR"]
+    },
+    "shrink_wrap": {
+      "contextMarkers": [
+        "TERMO ENCOL",
+        "TERMOENCOLH",
+        "LUVA TERMO",
+        "HEAT SHRINK",
+        "ENCOLHIVEL"
+      ],
+      "suppressesDecapeExtraction": true
+    },
+    "machine_side": {
+      "contextMarkers": ["DECAPAR O LADO", "NA MAQUINA", "NA MÁQUINA"],
+      "patternKeys": ["decapeMachineSide"]
+    }
+  },
   "streamStages": {
     "stampOcr": "Lendo carimbo do desenho…",
     "stampOcrDetail": "Ampliando e relendo carimbo…",

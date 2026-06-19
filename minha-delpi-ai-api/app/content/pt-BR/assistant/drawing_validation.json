@@ -59,6 +59,8 @@
     "guideOperationCount": "{count} operação(ões)",
     "guideBomLevel": "nível {level}",
     "guideBomLevelExpected": "esperado nível {level}",
+    "multipageCoverageRatio": "{ratio} ({pdfCount}/{apiCount} códigos, {pageCount} pág.)",
+    "multipageMatchedCodes": "{matched}/{apiCount} códigos SG1010 no PDF",
     "structureItemCount": "{count} item(ns) na estrutura",
     "checkIntermediate50xx": "Conferir intermediário 50xx",
     "missingDash": "—",
@@ -129,7 +131,7 @@
     "guide_structure_level": {
       "section": "Roteiro",
       "item": "Nível BOM do produto {code}",
-      "rule": "PA no nível 0; intermediários 50xx/PI no nível 1",
+      "rule": "PA no nível 0; PI/PA e 50xx nos demais níveis conforme profundidade na SG1010",
       "recommendation": "Corrigir nível BOM no roteiro (SG2010)"
     },
     "guide_structure_ok": {
@@ -312,6 +314,24 @@
       "rule": "Decape ±1 mm quando referência disponível",
       "recommendationOk": "—",
       "recommendationPending": "Informar decapes no PDF ou validar código 50xx"
+    },
+    "multipage_low_coverage": {
+      "section": "PDF",
+      "item": "Cobertura BOM multipágina",
+      "rule": "PDF com várias páginas deve expor boa parte dos códigos da SG1010",
+      "recommendation": "Conferir se todas as páginas da BOM foram lidas ou anexar PDF completo"
+    },
+    "multipage_bom_partial": {
+      "section": "PDF",
+      "item": "BOM parcial em PDF multipágina",
+      "rule": "Extração da BOM cobre fração mínima da estrutura cadastrada",
+      "recommendation": "Revisar OCR/região BOM ou páginas faltantes antes de reprovar componentes"
+    },
+    "dimension_note_ambiguous": {
+      "section": "Cotas",
+      "item": "Nota dimensional ambígua",
+      "rule": "Medidas de termoretração/ensaio não devem ser tratadas como decape de cabo",
+      "recommendation": "Conferir manualmente cotas de decape versus notas de termoencolhível"
     }
   },
   "evidence": {
@@ -330,7 +350,50 @@
     "unitSuffixes": ["mm", "mi", "m"],
     "cableLengthUnits": ["MT", "MI", "MM", "M"],
     "pieceCountUnits": ["PC", "UN", "PE", "PÇ", "PCT"],
-    "maxPieceCountQuantity": 10
+    "maxPieceCountQuantity": 10,
+    "structureIndex": {
+      "rootProductBomLevel": 0,
+      "defaultBomLevelWhenUnknown": 1,
+      "structureRootDepth": 1,
+      "guideProductTypes": ["PI", "PA"],
+      "nestedBomLineTypes": ["PI", "PA"]
+    },
+    "intermediateColorOcrMarkers": {
+      "AZUL": ["CB20AZUL", "20AWGAL"],
+      "BRAN": ["CB20BRAN", "20AWGBN"],
+      "AMAR": ["CB20AMAR", "20AWGAR"],
+      "LARA": ["CB20LARA", "20AWGLA"]
+    },
+    "intermediateColorFallbackMarker": "CB20{color}",
+    "inspectionContract": {
+      "legacyPlanKeys": ["QP6", "QP7", "QP8"],
+      "planListKeys": ["measurable_tests", "textual_tests"]
+    },
+    "pdfHaystackSourceMetadataKeys": [
+      "stampText",
+      "cadReferenceText",
+      "annotationText",
+      "dimensionsText"
+    ],
+    "pdfHaystackBomRowKeys": ["description", "desc", "text", "quantity"],
+    "multipageCoverage": {
+      "minPageCount": 2,
+      "minApiCodesToEvaluate": 3,
+      "warningRatioBelow": 0.7,
+      "pendingRatioBelow": 0.4,
+      "pageCountKeys": ["pageCount", "pagesProcessed"],
+      "statusWarning": "error",
+      "statusPending": "pending",
+      "templateLowCoverage": "multipage_low_coverage",
+      "templatePartial": "multipage_bom_partial"
+    },
+    "dimensionNoteValidation": {
+      "ambiguousTemplateKey": "dimension_note_ambiguous",
+      "ambiguousStatus": "pending"
+    }
+  },
+  "patterns": {
+    "intermediateColorSignature": "^CB\\d{2}([A-Z]{4})"
   },
   "statusPresentation": {
     "ok": { "label": "OK", "symbol": "✅" },

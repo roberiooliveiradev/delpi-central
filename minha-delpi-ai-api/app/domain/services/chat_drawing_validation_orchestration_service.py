@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_drawing_inspection_validation_service import (
+    ChatDrawingInspectionValidationService,
+)
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
@@ -157,18 +160,7 @@ class ChatDrawingValidationOrchestrationService:
             )
 
         inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
-        inspection_items = (
-            inspection.get("items") if isinstance(inspection.get("items"), list) else []
-        )
-        has_qp = False
-
-        for row in inspection_items:
-            if not isinstance(row, dict):
-                continue
-
-            if row.get("QP6") or row.get("QP7") or row.get("QP8"):
-                has_qp = True
-                break
+        has_qp = ChatDrawingInspectionValidationService.has_inspection_plan(inspection)
 
         items.append(
             cls._item_from_template(
@@ -686,6 +678,14 @@ class ChatDrawingValidationOrchestrationService:
             overall_label = cls._content("overallLabels", "approved")
             conclusion = cls._content("conclusions", "approved")
 
+        from app.domain.services.chat_drawing_multipage_coverage_service import (
+            ChatDrawingMultipageCoverageService,
+        )
+
+        multipage_coverage = ChatDrawingMultipageCoverageService.resolve_metadata_from_items(
+            items
+        )
+
         return {
             "drawingAnalysis": {
                 "status": overall,
@@ -702,6 +702,11 @@ class ChatDrawingValidationOrchestrationService:
                 "items": items,
                 "conclusion": conclusion,
                 "validationScopes": validation_scopes,
+                **(
+                    {"multipageCoverage": multipage_coverage}
+                    if multipage_coverage
+                    else {}
+                ),
             },
             "productSummary": {
                 "code": product.get("code"),

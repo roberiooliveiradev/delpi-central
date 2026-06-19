@@ -1,6 +1,6 @@
 # Playbook — Validação normativa de desenhos DELPI (roadmap)
 
-> **Status (19/06/2026):** Parcial — Fase **15.0** entregue (payload `/analyser` na validação); Fases **15.1–15.6** em backlog.  
+> **Status (19/06/2026):** Parcial — Fases **15.0–15.5** entregues; **15.6** em backlog.  
 > **Projeto:** Minha DELPI Chat IA  
 > **Arquitetura:** inteligência transversal no [chat base](../../architecture/chat-intelligence-base.md); agente só habilita skill `drawing-analysis-delpi`.
 
@@ -94,11 +94,11 @@ PDF → ChatPdfDocumentExtractionService / document-vision-delpi
 
 ```text
 Fase 15.0 — Payload analyser completo na validação           [concluída jun/2026]
-Fase 15.1 — Índice recursivo da estrutura (SG1010)          [backlog]
-Fase 15.2 — Roteiro × estrutura com profundidade real        [backlog — depende 15.1]
-Fase 15.3 — Inspeção alinhada ao contrato api-delpi           [backlog]
-Fase 15.4 — Cobertura multipágina (PDF parcial × API grande)  [backlog]
-Fase 15.5 — Classificação de notas dimensionais             [backlog]
+Fase 15.1 — Índice recursivo da estrutura (SG1010)          [entregue]
+Fase 15.2 — Roteiro × estrutura com profundidade real        [entregue — via StructureIndex]
+Fase 15.3 — Inspeção alinhada ao contrato api-delpi           [entregue]
+Fase 15.4 — Cobertura multipágina (PDF parcial × API grande)  [entregue]
+Fase 15.5 — Classificação de notas dimensionais             [entregue]
 Fase 15.6 — Quantidades BOM, balões, registro declarativo     [backlog]
 ```
 

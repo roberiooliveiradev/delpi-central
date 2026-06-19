@@ -117,3 +117,18 @@ def test_extract_dimensions_length_first_cota_assigns_left_decape():
     assert dims["decapeIndication"] == {"left": True, "right": False}
     assert dims["totalLengthMm"] == 240.0
     assert 238.0 in dims["segmentLengthsMm"]
+
+
+def test_extract_dimensions_ignores_shrink_wrap_only_context():
+    text = "LUVA TERMO ENCOLHIVEL 9,50X0,60 COMP 30MM"
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] is None
+    assert dims["rightDecapeMm"] is None
+
+
+def test_detect_ambiguous_dimension_notes_when_shrink_and_decape_coexist():
+    text = "LUVA TERMO ENCOLHIVEL COMP 30MM\nDECAPE DE 6MM"
+
+    assert ChatDrawingDimensionsExtractionService.detect_ambiguous_dimension_notes(text)

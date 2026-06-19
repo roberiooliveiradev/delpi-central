@@ -45,6 +45,7 @@ class ChatDrawingMetricsService:
             "itemsByStatus": dict(status_counter),
             "hasPdfAttachment": bool(drawing.get("hasPdfAttachment")),
             "pdfLegible": drawing.get("pdfLegible"),
+            "multipageCoverage": drawing.get("multipageCoverage"),
             "reportExported": bool(report_exported),
             "analyserOk": analyser_ok,
             "latencyMs": latency_ms,

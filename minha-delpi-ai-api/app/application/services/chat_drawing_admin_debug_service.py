@@ -157,6 +157,34 @@ class ChatDrawingAdminDebugService:
                     "criticalErrors": critical,
                 }
             )
+
+            multipage = analysis.get("multipageCoverage")
+
+            if isinstance(multipage, dict) and multipage.get("applicable"):
+                ratio = multipage.get("coverageRatio")
+                ratio_label = (
+                    f"{float(ratio) * 100:.0f}%"
+                    if isinstance(ratio, (int, float))
+                    else "—"
+                )
+                phases.append(
+                    {
+                        "id": "validation:multipage_coverage",
+                        "label": "Cobertura BOM multipágina",
+                        "status": (
+                            "ok"
+                            if not multipage.get("templateKey")
+                            else "warn"
+                        ),
+                        "detail": (
+                            f"páginas={multipage.get('pageCount')}, "
+                            f"cobertura={ratio_label}, "
+                            f"pdf={multipage.get('pdfCodeCount')}, "
+                            f"api={multipage.get('apiCodeCount')}"
+                        ),
+                        "coverageRatio": ratio,
+                    }
+                )
         else:
             phases.append(
                 {

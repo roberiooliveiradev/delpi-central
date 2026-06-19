@@ -66,7 +66,7 @@ class ChatDrawingDimensionsExtractionService:
             indication["right"] = True
 
         if dimensions["leftDecapeMm"] is None and dimensions["rightDecapeMm"] is None:
-            if not bom_contaminated:
+            if not bom_contaminated and not cls._should_skip_decape_in_context(normalized):
                 generic = cls._first_number(
                     normalized,
                     patterns=(ChatDrawingPatternsService.generic_decape(),),
@@ -82,7 +82,9 @@ class ChatDrawingDimensionsExtractionService:
                 patterns=(ChatDrawingPatternsService.decape_note(),),
             )
 
-            if note_decape is not None:
+            if note_decape is not None and not cls._should_skip_decape_in_context(
+                normalized
+            ):
                 if dimensions["rightDecapeMm"] is None:
                     dimensions["rightDecapeMm"] = note_decape
                     indication["right"] = True
@@ -104,6 +106,9 @@ class ChatDrawingDimensionsExtractionService:
         max_decape = ChatDrawingPatternsService.max_decape_mm()
 
         for match in cota_pattern.finditer(normalized):
+            if cls._should_skip_decape_in_context(normalized, start=match.start()):
+                continue
+
             first = cls._parse_number(match.group(1))
             second = cls._parse_number(match.group(2))
             third = (
@@ -485,6 +490,59 @@ class ChatDrawingDimensionsExtractionService:
                         return parsed
 
         return None
+
+    @classmethod
+    def detect_ambiguous_dimension_notes(cls, text: str) -> bool:
+        normalized = cls._normalize_ocr_text(text).upper()
+
+        if not normalized:
+            return False
+
+        has_decape = cls._text_has_note_markers(
+            normalized,
+            ChatDrawingPatternsService.dimension_note_context_markers("decape_cable"),
+        )
+        has_shrink = any(
+            cls._text_has_note_markers(
+                normalized,
+                ChatDrawingPatternsService.dimension_note_context_markers(note_type),
+            )
+            for note_type in ChatDrawingPatternsService.dimension_note_types_suppressing_decape()
+        )
+
+        return has_decape and has_shrink
+
+    @classmethod
+    def _should_skip_decape_in_context(cls, text: str, *, start: int = 0) -> bool:
+        window = cls._context_window(text, start).upper()
+
+        if cls._text_has_note_markers(
+            window,
+            ChatDrawingPatternsService.dimension_note_context_markers("decape_cable"),
+        ):
+            return False
+
+        return any(
+            cls._text_has_note_markers(
+                window,
+                ChatDrawingPatternsService.dimension_note_context_markers(note_type),
+            )
+            for note_type in ChatDrawingPatternsService.dimension_note_types_suppressing_decape()
+        )
+
+    @classmethod
+    def _context_window(cls, text: str, start: int, *, radius: int = 120) -> str:
+        normalized = str(text or "")
+        begin = max(0, start - radius)
+        end = min(len(normalized), start + radius)
+
+        return normalized[begin:end]
+
+    @classmethod
+    def _text_has_note_markers(cls, text: str, markers: tuple[str, ...]) -> bool:
+        upper = str(text or "").upper()
+
+        return any(marker in upper for marker in markers if marker)
 
     @classmethod
     def _parse_number(cls, raw: str) -> float | None:

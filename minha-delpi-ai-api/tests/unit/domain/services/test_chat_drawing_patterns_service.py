@@ -17,6 +17,31 @@ def test_drawing_validation_rules_from_json():
     assert ChatDrawingPatternsService.length_tolerance_ratio() == 0.05
     assert ChatDrawingPatternsService.decape_tolerance_mm() == 1.0
     assert ChatDrawingPatternsService.max_segment_length_checks() == 6
+    assert ChatDrawingPatternsService.root_product_bom_level() == 0
+    assert ChatDrawingPatternsService.guide_product_types() == frozenset({"PI", "PA"})
+    assert ChatDrawingPatternsService.inspection_legacy_plan_keys() == ("QP6", "QP7", "QP8")
+    assert ChatDrawingPatternsService.inspection_plan_list_keys() == (
+        "measurable_tests",
+        "textual_tests",
+    )
+    assert ChatDrawingPatternsService.intermediate_color_ocr_markers("AZUL") == (
+        "CB20AZUL",
+        "20AWGAL",
+    )
+    assert ChatDrawingPatternsService.multipage_min_page_count() == 2
+    assert ChatDrawingPatternsService.multipage_warning_ratio_below() == 0.7
+    assert "TERMO ENCOL" in ChatDrawingPatternsService.dimension_note_context_markers(
+        "shrink_wrap"
+    )
+
+
+def test_validation_intermediate_color_signature_pattern():
+    match = ChatDrawingPatternsService.compile_validation(
+        "intermediateColorSignature"
+    ).match("CB20AZUL")
+
+    assert match
+    assert match.group(1) == "AZUL"
 
 
 def test_intermediate_segment_pattern_parses_description():

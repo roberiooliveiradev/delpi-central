@@ -42,6 +42,7 @@ class ChatDrawingStructureValidationService:
             bom_scope.get("sourceKey")
         )
         bom_available = bool(bom_scope.get("available"))
+        comparison = None
 
         if not bom_available and not pdf_extract.get("componentCodes"):
             items.append(
@@ -107,6 +108,18 @@ class ChatDrawingStructureValidationService:
                         pdf_scope=bom_scope_label,
                     )
                 )
+
+        if comparison is not None:
+            from app.domain.services.chat_drawing_multipage_coverage_service import (
+                ChatDrawingMultipageCoverageService,
+            )
+
+            items.extend(
+                ChatDrawingMultipageCoverageService.build_check_items(
+                    pdf_extract=pdf_extract,
+                    comparison=comparison,
+                )
+            )
 
         items.extend(cls._intermediate_code_items(root, pdf_extract, product_code))
         items.extend(cls._intermediate_dimension_items(root, pdf_extract))
@@ -387,6 +400,62 @@ class ChatDrawingStructureValidationService:
         return best
 
     @classmethod
+    def _dimension_note_items(cls, pdf_extract: dict) -> list[dict[str, Any]]:
+        from app.domain.services.chat_drawing_dimensions_extraction_service import (
+            ChatDrawingDimensionsExtractionService,
+        )
+
+        if not ChatDrawingDimensionsExtractionService.detect_ambiguous_dimension_notes(
+            cls._dimension_note_haystack(pdf_extract)
+        ):
+            return []
+
+        content = ChatDrawingValidationContentService
+
+        return [
+            content.item_from_template(
+                ChatDrawingPatternsService.dimension_note_validation_rule(
+                    "ambiguousTemplateKey",
+                    "dimension_note_ambiguous",
+                ),
+                status=ChatDrawingPatternsService.dimension_note_validation_rule(
+                    "ambiguousStatus",
+                    "pending",
+                ),
+                pdf_evidence=content.evidence("pendingPdf"),
+                api_evidence=content.evidence("dash"),
+            )
+        ]
+
+    @classmethod
+    def _dimension_note_haystack(cls, pdf_extract: dict) -> str:
+        parts: list[str] = []
+        dimensions = pdf_extract.get("dimensions")
+
+        if isinstance(dimensions, dict):
+            for key in ("notesText", "rawText"):
+                value = dimensions.get(key)
+
+                if value:
+                    parts.append(str(value))
+
+        source_metadata = pdf_extract.get("sourceMetadata")
+
+        if isinstance(source_metadata, dict):
+            for key in ChatDrawingPatternsService.pdf_haystack_source_metadata_keys():
+                value = source_metadata.get(key)
+
+                if value:
+                    parts.append(str(value))
+
+        full_text = pdf_extract.get("fullText")
+
+        if full_text:
+            parts.append(str(full_text))
+
+        return "\n".join(parts)
+
+    @classmethod
     def _dimension_items(
         cls,
         root: dict,
@@ -398,6 +467,8 @@ class ChatDrawingStructureValidationService:
         dimensions = pdf_extract.get("dimensions") if isinstance(
             pdf_extract.get("dimensions"), dict
         ) else {}
+
+        items.extend(cls._dimension_note_items(pdf_extract))
 
         total_length = dimensions.get("totalLengthMm")
         left_decape = dimensions.get("leftDecapeMm")

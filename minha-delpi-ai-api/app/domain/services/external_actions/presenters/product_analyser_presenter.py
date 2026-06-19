@@ -1074,50 +1074,11 @@ class ExternalActionProductAnalyserPresenter:
         return insights
 
     def _flatten_analyser_structure_rows(self, structure: dict | None) -> list[dict]:
-        if not isinstance(structure, dict):
-            return []
+        from app.domain.services.chat_drawing_structure_index_service import (
+            ChatDrawingStructureIndexService,
+        )
 
-        rows: list[dict] = []
-        level1_items = structure.get("items") or []
-
-        for item in level1_items:
-            if not isinstance(item, dict):
-                continue
-
-            parent_code = item.get("code")
-            parent_description = item.get("description")
-            components = item.get("components") or []
-
-            if components:
-                for component in components:
-                    if not isinstance(component, dict):
-                        continue
-
-                    rows.append(
-                        {
-                            "parent_code": parent_code,
-                            "parent_description": parent_description,
-                            "component_code": component.get("code"),
-                            "description": component.get("description"),
-                            "type": component.get("type"),
-                            "unit": component.get("unit"),
-                            "quantity": component.get("quantity"),
-                        }
-                    )
-            else:
-                rows.append(
-                    {
-                        "parent_code": "",
-                        "parent_description": "",
-                        "component_code": item.get("code"),
-                        "description": item.get("description"),
-                        "type": item.get("type"),
-                        "unit": item.get("unit"),
-                        "quantity": item.get("quantity"),
-                    }
-                )
-
-        return rows
+        return ChatDrawingStructureIndexService.flatten_component_rows(structure)
 
     def _build_analyser_structure_components_table(
         self,

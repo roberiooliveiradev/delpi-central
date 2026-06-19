@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 
 from app.domain.services.chat_drawing_bom_reference_noise_service import (
@@ -12,19 +11,15 @@ from app.domain.services.chat_drawing_component_code_normalization_service impor
     ChatDrawingComponentCodeNormalizationService,
 )
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_structure_index_service import (
+    ChatDrawingStructureIndexService,
+)
 from app.domain.services.chat_drawing_regional_scope_service import (
     ChatDrawingRegionalScopeService,
 )
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
-
-_PI_COLOR_OCR_MARKERS: dict[str, tuple[str, ...]] = {
-    "AZUL": ("CB20AZUL", "20AWGAL"),
-    "BRAN": ("CB20BRAN", "20AWGBN"),
-    "AMAR": ("CB20AMAR", "20AWGAR"),
-    "LARA": ("CB20LARA", "20AWGLA"),
-}
 
 
 @dataclass(frozen=True)
@@ -87,45 +82,42 @@ class ChatDrawingBomComparisonService:
             return set()
 
         matched: set[str] = set()
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
 
-        for item in structure.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-
-            code = ChatProductQueryIntentService.normalize_product_code(
-                str(item.get("code") or "")
-            )
-
-            if not code or not ChatDrawingPatternsService.is_intermediate_family(code):
+        for row in ChatDrawingStructureIndexService.flatten_items(
+            root.get("structure") if isinstance(root.get("structure"), dict) else None
+        ):
+            if not row.code or not ChatDrawingPatternsService.is_intermediate_family(
+                row.code
+            ):
                 continue
 
             signature = ChatDrawingPatternsService.intermediate_description_signature(
-                str(item.get("description") or "")
+                row.description
             )
 
             if signature and signature in haystack:
-                matched.add(code)
+                matched.add(row.code)
                 continue
 
             for marker in cls._intermediate_color_markers(signature or ""):
                 if marker in haystack:
-                    matched.add(code)
+                    matched.add(row.code)
                     break
 
         return matched
 
     @classmethod
     def _intermediate_color_markers(cls, signature: str) -> tuple[str, ...]:
-        match = re.match(r"^CB\d{2}([A-Z]{4})", str(signature or "").upper())
+        match = ChatDrawingPatternsService.compile_validation(
+            "intermediateColorSignature"
+        ).match(str(signature or "").upper())
 
         if not match:
             return ()
 
         color = match.group(1)
-        markers = _PI_COLOR_OCR_MARKERS.get(color, (f"CB20{color}",))
 
-        return tuple(marker.upper().replace(" ", "") for marker in markers)
+        return ChatDrawingPatternsService.intermediate_color_ocr_markers(color)
 
     @classmethod
     def _pdf_description_haystack(cls, pdf_extract: dict) -> str:
@@ -150,12 +142,7 @@ class ChatDrawingBomComparisonService:
         source_metadata = pdf_extract.get("sourceMetadata")
 
         if isinstance(source_metadata, dict):
-            for key in (
-                "stampText",
-                "cadReferenceText",
-                "annotationText",
-                "dimensionsText",
-            ):
+            for key in ChatDrawingPatternsService.pdf_haystack_source_metadata_keys():
                 add_text(source_metadata.get(key))
 
             region_texts = source_metadata.get("regionTexts")
@@ -173,58 +160,18 @@ class ChatDrawingBomComparisonService:
             if not isinstance(row, dict):
                 continue
 
-            for key in ("description", "desc", "text", "quantity"):
+            for key in ChatDrawingPatternsService.pdf_haystack_bom_row_keys():
                 add_text(row.get(key))
 
         return "".join(parts)
 
     @classmethod
     def collect_structure_bom_codes(cls, root: dict, product_code: str) -> set[str]:
-        root_code = ChatProductQueryIntentService.normalize_product_code(product_code)
-        codes: set[str] = set()
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-
-        for item in structure.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-
-            code = ChatProductQueryIntentService.normalize_product_code(
-                str(item.get("code") or "")
-            )
-
-            if code and code != root_code:
-                codes.add(code)
-
-        return codes
+        return ChatDrawingStructureIndexService.collect_bom_line_codes(root, product_code)
 
     @classmethod
     def collect_child_cable_parents(cls, root: dict) -> dict[str, set[str]]:
-        mapping: dict[str, set[str]] = {}
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-
-        for item in structure.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-
-            parent = ChatProductQueryIntentService.normalize_product_code(
-                str(item.get("code") or "")
-            )
-
-            if not parent:
-                continue
-
-            for child in item.get("components") or []:
-                if not isinstance(child, dict):
-                    continue
-
-                child_code = ChatProductQueryIntentService.normalize_product_code(
-                    str(child.get("code") or "")
-                )
-
-                if child_code:
-                    mapping.setdefault(child_code, set()).add(parent)
-
-        return mapping
+        return ChatDrawingStructureIndexService.collect_child_cable_parent_map(root)
 
     @classmethod
     def normalize_pdf_bom_codes(

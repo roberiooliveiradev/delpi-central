@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_structure_index_service import (
+    ChatDrawingStructureIndexService,
+)
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
@@ -122,29 +124,10 @@ class ChatDrawingGuideStructureConsistencyService:
 
     @classmethod
     def collect_expected_guide_codes(cls, root: dict, product_code: str) -> set[str]:
-        root_code = ChatProductQueryIntentService.normalize_product_code(product_code)
-        codes: set[str] = set()
-
-        if root_code:
-            codes.add(root_code)
-
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-
-        for item in structure.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-
-            code = ChatProductQueryIntentService.normalize_product_code(
-                str(item.get("code") or "")
-            )
-
-            if not code or code == root_code:
-                continue
-
-            if cls._structure_item_requires_guide(item, code=code):
-                codes.add(code)
-
-        return codes
+        return ChatDrawingStructureIndexService.collect_guide_expected_codes(
+            root,
+            product_code,
+        )
 
     @classmethod
     def collect_guide_product_codes(cls, root: dict) -> set[str]:
@@ -163,15 +146,6 @@ class ChatDrawingGuideStructureConsistencyService:
                 codes.add(code)
 
         return codes
-
-    @classmethod
-    def _structure_item_requires_guide(cls, item: dict, *, code: str) -> bool:
-        if ChatDrawingPatternsService.is_intermediate_family(code):
-            return True
-
-        item_type = str(item.get("type") or "").strip().upper()
-
-        return item_type in {"PI", "PA"}
 
     @classmethod
     def _collect_level_mismatches(
@@ -204,7 +178,11 @@ class ChatDrawingGuideStructureConsistencyService:
             except (TypeError, ValueError):
                 continue
 
-            expected_level = 0 if code == root_code else 1
+            expected_level = ChatDrawingStructureIndexService.expected_bom_level(
+                code,
+                product_code=product_code,
+                root=root,
+            )
 
             if level != expected_level:
                 mismatches.append((code, level, expected_level))
