@@ -120,7 +120,7 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Web search direct answer → `web_search.json` (antes em `product_operational_content.webSearch`)
 - Web search follow-up (links, resumo, parâmetros, comparação) → `web_search.followUp`
 - Validação de desenho (relatório, templates de checklist, conclusões) → `drawing_validation.json`
-- Apresentação do relatório de desenho (rótulos de status, consolidação de itens repetidos, seções divergência/não conformidade, labels de export) → `drawing_validation.json` (`statusPresentation`, `reportFields`, `export`, `presentation`) + `ChatDrawingValidationPresentationService`; MFE render-only consome `drawingAnalysisExport.statusLabels` / `exportLabels`
+- Apresentação do relatório de desenho (rótulos de status, consolidação de itens repetidos, expansão item a item em BOM/50xx, árvore SG1010, roteiro completo com `view=full`, labels de export) → `drawing_validation.json` (`statusPresentation`, `reportFields`, `export`, `presentation`) + `ChatDrawingValidationPresentationService`; MFE render-only consome `drawingAnalysisExport.statusLabels` / `exportLabels` e suprime apresentação duplicada do `/analyser`
 - Intent de análise de desenho (gatilhos, vocabulário com anexo, PDF obrigatório, direct answers) → `drawing_query_intent.json`
 - Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
 - Interpretação de dados (marcadores genéricos) → `data_interpretation.json`

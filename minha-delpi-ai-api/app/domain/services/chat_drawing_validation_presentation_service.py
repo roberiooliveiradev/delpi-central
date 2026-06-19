@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
+
+_CODE_TOKEN = re.compile(r"^\d{5,9}$")
 
 
 class ChatDrawingValidationPresentationService:
@@ -83,6 +86,352 @@ class ChatDrawingValidationPresentationService:
             for item in items
             if isinstance(item, dict) and str(item.get("status") or "") != "ok"
         ]
+
+    @classmethod
+    def format_code(cls, value: Any) -> str:
+        token = str(value or "").strip()
+
+        if not token or token == "—":
+            return token
+
+        if _CODE_TOKEN.match(token):
+            return f"`{token}`"
+
+        return token
+
+    @classmethod
+    def format_code_list(cls, value: Any) -> str:
+        raw = str(value or "").strip()
+
+        if not raw or raw == "—":
+            return raw
+
+        delimiter = ChatDrawingValidationContentService.get(
+            "presentation",
+            "codeListDelimiter",
+            default=", ",
+        )
+        parts = [part.strip() for part in raw.split(delimiter) if part.strip()]
+
+        if not parts:
+            return raw
+
+        return delimiter.join(cls.format_code(part) for part in parts)
+
+    @classmethod
+    def format_evidence_cell(cls, value: Any) -> str:
+        raw = str(value or "").strip()
+
+        if not raw or raw == "—":
+            return raw
+
+        delimiter = ChatDrawingValidationContentService.get(
+            "presentation",
+            "codeListDelimiter",
+            default=", ",
+        )
+
+        if delimiter in raw:
+            return cls.format_code_list(raw)
+
+        return cls.format_code(raw)
+
+    @classmethod
+    def resolve_pdf_product_code(
+        cls,
+        *,
+        pdf_product_code: Any,
+        resolved_product_code: Any,
+    ) -> str:
+        pdf_code = str(pdf_product_code or "").strip()
+        resolved = str(resolved_product_code or "").strip()
+
+        if pdf_code:
+            return pdf_code
+
+        return resolved
+
+    @classmethod
+    def prepare_display_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return cls.consolidate_items(cls.expand_items(items))
+
+    @classmethod
+    def expand_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        expand_keys = {
+            str(key).strip()
+            for key in ChatDrawingValidationContentService.list_values(
+                "presentation",
+                "expandTemplateKeys",
+            )
+            if str(key).strip()
+        }
+        suffix = str(
+            ChatDrawingValidationContentService.get(
+                "presentation",
+                "expandItemTemplateSuffix",
+                default="_item",
+            )
+        ).strip()
+        delimiter = ChatDrawingValidationContentService.get(
+            "presentation",
+            "codeListDelimiter",
+            default=", ",
+        )
+        pdf_keys = {
+            str(key).strip()
+            for key in ChatDrawingValidationContentService.list_values(
+                "presentation",
+                "expandPdfEvidenceKeys",
+            )
+            if str(key).strip()
+        }
+        api_keys = {
+            str(key).strip()
+            for key in ChatDrawingValidationContentService.list_values(
+                "presentation",
+                "expandApiEvidenceKeys",
+            )
+            if str(key).strip()
+        }
+
+        if not expand_keys:
+            return [item for item in items if isinstance(item, dict)]
+
+        result: list[dict[str, Any]] = []
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            template_key = str(item.get("templateKey") or "").strip()
+
+            if template_key not in expand_keys:
+                result.append(item)
+                continue
+
+            evidence_field = (
+                "pdfEvidence"
+                if template_key in pdf_keys
+                else "apiEvidence"
+                if template_key in api_keys
+                else None
+            )
+
+            if not evidence_field:
+                result.append(item)
+                continue
+
+            codes = [
+                part.strip()
+                for part in str(item.get(evidence_field) or "").split(delimiter)
+                if part.strip() and part.strip() != "—"
+            ]
+
+            if len(codes) <= 1:
+                result.append(item)
+                continue
+
+            item_template = f"{template_key}{suffix}"
+
+            for code in codes:
+                pdf_evidence = (
+                    code
+                    if evidence_field == "pdfEvidence"
+                    else str(item.get("pdfEvidence") or ChatDrawingValidationContentService.evidence("dash"))
+                )
+                api_evidence = (
+                    code
+                    if evidence_field == "apiEvidence"
+                    else str(item.get("apiEvidence") or ChatDrawingValidationContentService.evidence("dash"))
+                )
+
+                result.append(
+                    ChatDrawingValidationContentService.item_from_template(
+                        item_template,
+                        status=str(item.get("status") or "pending"),
+                        pdf_evidence=pdf_evidence,
+                        api_evidence=api_evidence,
+                        item_values={"code": code},
+                    )
+                )
+
+        return result
+
+    @classmethod
+    def format_analyser_detail_sections(cls, root: Any) -> list[str]:
+        if not isinstance(root, dict) or not root:
+            return []
+
+        from app.domain.services.chat_presentation_tree_markdown_service import (
+            ChatPresentationTreeMarkdownService,
+        )
+        from app.domain.services.external_actions.external_action_result_presenter import (
+            ExternalActionResultPresenter,
+        )
+
+        lines: list[str] = []
+        presenter = ExternalActionResultPresenter()
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        structure_items = (
+            structure.get("items") if isinstance(structure.get("items"), list) else []
+        )
+
+        if structure_items:
+            lines.extend(
+                ["", ChatDrawingValidationContentService.get("report", "sections", "structure")]
+            )
+            tree = presenter.build_tree_presentation(root, path="/products/0/analyser")
+            outline = (
+                ChatPresentationTreeMarkdownService.build_outline_section(tree)
+                if isinstance(tree, dict)
+                else ""
+            )
+
+            if outline:
+                lines.append(outline)
+            else:
+                lines.extend(cls._format_structure_fallback_table(structure_items))
+
+            structure_total = structure.get("total")
+
+            if isinstance(structure_total, int) and structure_total > len(structure_items):
+                lines.append(
+                    ChatDrawingValidationContentService.format(
+                        "evidenceFormats",
+                        "structureItemCount",
+                        count=str(structure_total),
+                    )
+                )
+
+        guide_lines = cls._format_guide_section(root, presenter)
+
+        if guide_lines:
+            lines.extend(guide_lines)
+
+        inspection_lines = cls._format_inspection_section(root)
+
+        if inspection_lines:
+            lines.extend(inspection_lines)
+
+        return lines
+
+    @classmethod
+    def _format_structure_fallback_table(cls, structure_items: list[Any]) -> list[str]:
+        lines = [
+            "| Código | Descrição | Qtd | Tipo |",
+            "|---|---|---:|---|",
+        ]
+        dash = ChatDrawingValidationContentService.evidence("dash")
+
+        for row in structure_items[:24]:
+            if not isinstance(row, dict):
+                continue
+
+            code = cls.format_code(row.get("code") or dash)
+            lines.append(
+                "| {code} | {description} | {quantity} | {type} |".format(
+                    code=code,
+                    description=str(row.get("description") or dash)[:48],
+                    quantity=row.get("quantity") if row.get("quantity") is not None else dash,
+                    type=row.get("type") or dash,
+                )
+            )
+
+        if len(structure_items) > 24:
+            lines.append(
+                ChatDrawingValidationContentService.format(
+                    "report",
+                    "truncatedRows",
+                    count=str(len(structure_items) - 24),
+                )
+            )
+
+        return lines
+
+    @classmethod
+    def _format_guide_section(cls, root: dict, presenter: Any) -> list[str]:
+        guide = root.get("guide") if isinstance(root.get("guide"), dict) else {}
+        guide_items = guide.get("items") if isinstance(guide.get("items"), list) else []
+
+        if not guide_items:
+            return []
+
+        flattened = presenter._analyser()._flatten_analyser_guide_rows(guide_items)
+        rows = flattened if flattened else guide_items
+
+        lines = [
+            "",
+            ChatDrawingValidationContentService.get("report", "sections", "guide"),
+            "| Produto | Nível | Operação | Centro | Descrição |",
+            "|---|---:|---|---|---|",
+        ]
+        dash = ChatDrawingValidationContentService.evidence("dash")
+        max_rows = int(
+            ChatDrawingValidationContentService.get(
+                "presentation",
+                "maxGuideRows",
+                default="80",
+            )
+            or 80
+        )
+
+        for row in rows[:max_rows]:
+            if not isinstance(row, dict):
+                continue
+
+            lines.append(
+                "| {product} | {level} | {op} | {center} | {description} |".format(
+                    product=cls.format_code(row.get("product_code") or row.get("product") or dash),
+                    level=row.get("bom_level") if row.get("bom_level") is not None else row.get("level") or dash,
+                    op=cls.format_code(row.get("operation_code") or row.get("operation") or dash),
+                    center=str(row.get("work_center") or row.get("center") or row.get("resource_code") or dash),
+                    description=str(
+                        row.get("operation_description") or row.get("description") or dash
+                    )[:40],
+                )
+            )
+
+        return lines
+
+    @classmethod
+    def _format_inspection_section(cls, root: dict) -> list[str]:
+        inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
+        inspection_items = (
+            inspection.get("items") if isinstance(inspection.get("items"), list) else []
+        )
+
+        if not inspection_items:
+            return []
+
+        lines = [
+            "",
+            ChatDrawingValidationContentService.get("report", "sections", "inspection"),
+            "| Produto | Nível | QP6 | QP7 | QP8 |",
+            "|---|---:|---:|---:|---:|",
+        ]
+        dash = ChatDrawingValidationContentService.evidence("dash")
+
+        for row in inspection_items[:12]:
+            if not isinstance(row, dict):
+                continue
+
+            qp6 = row.get("QP6") if isinstance(row.get("QP6"), list) else []
+            qp7 = row.get("QP7") if isinstance(row.get("QP7"), list) else []
+            qp8 = row.get("QP8") if isinstance(row.get("QP8"), list) else []
+
+            lines.append(
+                "| {product} | {level} | {qp6} | {qp7} | {qp8} |".format(
+                    product=cls.format_code(
+                        row.get("product") or row.get("product_code") or dash
+                    ),
+                    level=row.get("level") if row.get("level") is not None else dash,
+                    qp6=len(qp6) if qp6 else dash,
+                    qp7=len(qp7) if qp7 else dash,
+                    qp8=len(qp8) if qp8 else dash,
+                )
+            )
+
+        return lines
 
     @classmethod
     def consolidate_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:

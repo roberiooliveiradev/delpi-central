@@ -140,6 +140,8 @@ export function toolCallsForDrawingAnalysisDisplay(
       humanizedSummary: _humanizedSummary,
       stackPresentationPlan: _stackPresentationPlan,
       presentationDecision: _presentationDecision,
+      dataCoverageNotice: _dataCoverageNotice,
+      pagination: _pagination,
       ...rest
     } = meta;
 

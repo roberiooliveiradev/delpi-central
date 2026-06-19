@@ -259,7 +259,7 @@ class ChatDrawingValidationOrchestrationService:
         analysis = package.get("drawingAnalysis") or {}
         product = package.get("productSummary") or {}
         raw_items = analysis.get("items") or []
-        display_items = ChatDrawingValidationPresentationService.consolidate_items(
+        display_items = ChatDrawingValidationPresentationService.prepare_display_items(
             raw_items if isinstance(raw_items, list) else []
         )
         pdf_fields = ChatDrawingValidationContentService.get_node("reportFields", "pdf") or {}
@@ -271,6 +271,11 @@ class ChatDrawingValidationOrchestrationService:
             default="|---|---|",
         )
 
+        pdf_code = ChatDrawingValidationPresentationService.resolve_pdf_product_code(
+            pdf_product_code=analysis.get("pdfProductCode"),
+            resolved_product_code=product.get("code") or analysis.get("productCode"),
+        )
+
         lines = [
             cls._content("report", "title"),
             "",
@@ -280,19 +285,23 @@ class ChatDrawingValidationOrchestrationService:
             cls._content("report", "sections", "pdfData"),
             table_header,
             table_separator,
-            f"| {pdf_fields.get('code', 'Código')} | {analysis.get('pdfProductCode') or cls._evidence('dash')} |",
+            f"| {pdf_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(pdf_code) if pdf_code else cls._evidence('dash')} |",
             f"| {pdf_fields.get('revision', 'Revisão (PDF)')} | {analysis.get('revisionPdf') or cls._evidence('dash')} |",
             f"| {pdf_fields.get('attached', 'PDF anexado')} | {pdf_fields.get('attachedYes', 'Sim') if analysis.get('hasPdfAttachment') else pdf_fields.get('attachedNo', 'Não')} |",
             "",
             cls._content("report", "sections", "apiData"),
             table_header,
             table_separator,
-            f"| {api_fields.get('code', 'Código')} | {product.get('code') or analysis.get('productCode') or cls._evidence('dash')} |",
+            f"| {api_fields.get('code', 'Código')} | {ChatDrawingValidationPresentationService.format_code(product.get('code') or analysis.get('productCode') or cls._evidence('dash'))} |",
             f"| {api_fields.get('description', 'Descrição')} | {product.get('description') or cls._evidence('dash')} |",
             f"| {api_fields.get('revision', 'Revisão (API)')} | {product.get('last_revision_date') or cls._evidence('dash')} |",
         ]
 
-        lines.extend(cls._format_analyser_detail_sections(package.get("analyserRoot")))
+        lines.extend(
+            ChatDrawingValidationPresentationService.format_analyser_detail_sections(
+                package.get("analyserRoot")
+            )
+        )
 
         lines.extend(
             [
@@ -304,7 +313,7 @@ class ChatDrawingValidationOrchestrationService:
         )
 
         divergences = ChatDrawingValidationPresentationService.divergence_items(
-            raw_items if isinstance(raw_items, list) else []
+            display_items
         )
 
         if not divergences:
@@ -319,8 +328,12 @@ class ChatDrawingValidationOrchestrationService:
                         status=ChatDrawingValidationPresentationService.status_display(
                             str(item.get("status") or "")
                         ),
-                        pdf=item.get("pdfEvidence") or cls._evidence("dash"),
-                        api=item.get("apiEvidence") or cls._evidence("dash"),
+                        pdf=ChatDrawingValidationPresentationService.format_evidence_cell(
+                            item.get("pdfEvidence") or cls._evidence("dash")
+                        ),
+                        api=ChatDrawingValidationPresentationService.format_evidence_cell(
+                            item.get("apiEvidence") or cls._evidence("dash")
+                        ),
                         rec=item.get("recommendation") or cls._evidence("dash"),
                     )
                 )
@@ -392,8 +405,12 @@ class ChatDrawingValidationOrchestrationService:
                     row_tpl.format(
                         section=item.get("section") or cls._evidence("dash"),
                         item=item.get("item") or cls._evidence("dash"),
-                        pdf=item.get("pdfEvidence") or cls._evidence("dash"),
-                        api=item.get("apiEvidence") or cls._evidence("dash"),
+                        pdf=ChatDrawingValidationPresentationService.format_evidence_cell(
+                            item.get("pdfEvidence") or cls._evidence("dash")
+                        ),
+                        api=ChatDrawingValidationPresentationService.format_evidence_cell(
+                            item.get("apiEvidence") or cls._evidence("dash")
+                        ),
                         rec=item.get("recommendation") or cls._evidence("dash"),
                     )
                 )
@@ -454,13 +471,7 @@ class ChatDrawingValidationOrchestrationService:
         *,
         package: dict[str, Any],
     ) -> str:
-        report = cls.format_report_markdown(package).strip()
-        body = str(direct_answer or "").strip()
-
-        if not body:
-            return report
-
-        return f"{report}\n\n---\n\n## Dados operacionais (API DELPI)\n\n{body}"
+        return cls.format_report_markdown(package).strip()
 
     @classmethod
     def _item(
@@ -661,113 +672,6 @@ class ChatDrawingValidationOrchestrationService:
         return False
 
     @classmethod
-    def _format_analyser_detail_sections(cls, root: Any) -> list[str]:
-        if not isinstance(root, dict) or not root:
-            return []
-
-        lines: list[str] = []
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-        structure_items = (
-            structure.get("items") if isinstance(structure.get("items"), list) else []
-        )
-
-        if structure_items:
-            lines.extend(["", cls._content("report", "sections", "structure")])
-            lines.append("| Código | Descrição | Qtd | Tipo |")
-            lines.append("|---|---|---:|---|")
-
-            for row in structure_items[:12]:
-                if not isinstance(row, dict):
-                    continue
-
-                lines.append(
-                    "| {code} | {description} | {quantity} | {type} |".format(
-                        code=row.get("code") or cls._evidence("dash"),
-                        description=str(row.get("description") or cls._evidence("dash"))[:48],
-                        quantity=row.get("quantity") if row.get("quantity") is not None else cls._evidence("dash"),
-                        type=row.get("type") or cls._evidence("dash"),
-                    )
-                )
-
-            if len(structure_items) > 12:
-                lines.append(
-                    cls._content(
-                        "report",
-                        "truncatedRows",
-                        count=len(structure_items) - 12,
-                    )
-                )
-
-        guide = root.get("guide") if isinstance(root.get("guide"), dict) else {}
-        guide_items = guide.get("items") if isinstance(guide.get("items"), list) else []
-
-        if guide_items:
-            lines.extend(["", cls._content("report", "sections", "guide")])
-            lines.append("| Produto | Nível | Operação | Centro | Descrição |")
-            lines.append("|---|---:|---|---|---|")
-
-            for row in guide_items[:16]:
-                if not isinstance(row, dict):
-                    continue
-
-                operations = (
-                    row.get("operations") if isinstance(row.get("operations"), list) else []
-                )
-
-                if not operations:
-                    lines.append(
-                        "| {product} | {level} | — | — | — |".format(
-                            product=row.get("product_code") or cls._evidence("dash"),
-                            level=row.get("bom_level") if row.get("bom_level") is not None else cls._evidence("dash"),
-                        )
-                    )
-                    continue
-
-                for operation in operations[:3]:
-                    if not isinstance(operation, dict):
-                        continue
-
-                    lines.append(
-                        "| {product} | {level} | {op} | {center} | {description} |".format(
-                            product=row.get("product_code") or cls._evidence("dash"),
-                            level=row.get("bom_level") if row.get("bom_level") is not None else cls._evidence("dash"),
-                            op=operation.get("operation_code") or cls._evidence("dash"),
-                            center=operation.get("work_center") or cls._evidence("dash"),
-                            description=str(operation.get("operation_description") or cls._evidence("dash"))[:40],
-                        )
-                    )
-
-        inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
-        inspection_items = (
-            inspection.get("items") if isinstance(inspection.get("items"), list) else []
-        )
-
-        if inspection_items:
-            lines.extend(["", cls._content("report", "sections", "inspection")])
-            lines.append("| Produto | Nível | QP6 | QP7 | QP8 |")
-            lines.append("|---|---:|---:|---:|---:|")
-
-            for row in inspection_items[:12]:
-                if not isinstance(row, dict):
-                    continue
-
-                qp6 = row.get("QP6") if isinstance(row.get("QP6"), list) else []
-                qp7 = row.get("QP7") if isinstance(row.get("QP7"), list) else []
-                qp8 = row.get("QP8") if isinstance(row.get("QP8"), list) else []
-
-                lines.append(
-                    "| {product} | {level} | {qp6} | {qp7} | {qp8} |".format(
-                        product=row.get("product") or row.get("product_code") or cls._evidence("dash"),
-                        level=row.get("level") if row.get("level") is not None else cls._evidence("dash"),
-                        qp6=len(qp6) if qp6 else cls._evidence("dash"),
-                        qp7=len(qp7) if qp7 else cls._evidence("dash"),
-                        qp8=len(qp8) if qp8 else cls._evidence("dash"),
-                    )
-                )
-
-        return lines
-
-    @classmethod
     def _package(
         cls,
         *,
@@ -812,7 +716,7 @@ class ChatDrawingValidationOrchestrationService:
                 "productCode": product_code,
                 "revisionPdf": pdf_meta.get("revision"),
                 "revisionApi": product.get("last_revision_date"),
-                "pdfProductCode": pdf_meta.get("productCode"),
+                "pdfProductCode": pdf_meta.get("productCode") or product_code,
                 "hasPdfAttachment": has_pdf_attachment,
                 "pdfLegible": pdf_meta.get("legible"),
                 "criticalErrors": critical,

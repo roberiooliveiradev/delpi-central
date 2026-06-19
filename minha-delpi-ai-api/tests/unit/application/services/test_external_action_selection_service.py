@@ -1626,6 +1626,24 @@ def test_build_product_parameters_sets_analyser_view_summary_by_default():
     assert parameters["view"] == "summary"
 
 
+def test_build_product_parameters_sets_analyser_view_full_for_drawing_analysis():
+    service = ExternalActionSelectionService(FakeRepository([]))
+
+    parameters = service._build_product_parameters(
+        {
+            "path": "/products/{code}/analyser",
+            "parametersSchema": [
+                {"name": "code"},
+                {"name": "view"},
+            ],
+        },
+        "90264227",
+        message="analise o desenho",
+    )
+
+    assert parameters["view"] == "full"
+
+
 def test_consumption_validated_top_limit_not_blocked_by_comparison_heuristic():
     service = ExternalActionSelectionService(
         FakeRepository(

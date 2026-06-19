@@ -165,9 +165,21 @@
       "rule": "Todo item de 1º nível da SG1010 deve constar na BOM do desenho",
       "recommendation": "Incluir componente na tabela de materiais"
     },
+    "bom_missing_item": {
+      "section": "BOM",
+      "item": "Componente {code} ausente no PDF",
+      "rule": "Todo item de 1º nível da SG1010 deve constar na BOM do desenho",
+      "recommendation": "Incluir componente na tabela de materiais"
+    },
     "bom_extra": {
       "section": "BOM",
       "item": "Componente extra no PDF",
+      "rule": "Item do PDF deve existir na estrutura de 1º nível",
+      "recommendation": "Remover item extra ou atualizar estrutura Protheus"
+    },
+    "bom_extra_item": {
+      "section": "BOM",
+      "item": "Componente {code} extra no PDF",
       "rule": "Item do PDF deve existir na estrutura de 1º nível",
       "recommendation": "Remover item extra ou atualizar estrutura Protheus"
     },
@@ -189,9 +201,21 @@
       "rule": "Intermediários cadastrados na SG1010",
       "recommendation": "Incluir códigos 50xx na BOM do desenho"
     },
+    "intermediate_missing_item": {
+      "section": "Código 50xx",
+      "item": "Intermediário {code} ausente no PDF",
+      "rule": "Intermediários cadastrados na SG1010",
+      "recommendation": "Incluir códigos 50xx na BOM do desenho"
+    },
     "intermediate_extra": {
       "section": "Código 50xx",
       "item": "Intermediário extra no PDF",
+      "rule": "Intermediário do PDF deve existir na SG1010",
+      "recommendation": "Remover intermediário obsoleto ou atualizar estrutura"
+    },
+    "intermediate_extra_item": {
+      "section": "Código 50xx",
+      "item": "Intermediário {code} extra no PDF",
       "rule": "Intermediário do PDF deve existir na SG1010",
       "recommendation": "Remover intermediário obsoleto ou atualizar estrutura"
     },
@@ -300,6 +324,17 @@
     "divergenceStatuses": ["critical_error", "error"],
     "consolidateTemplateKeys": ["segment_length_pending"],
     "consolidatedTemplateKey": "segment_lengths_consolidated",
+    "expandTemplateKeys": [
+      "bom_extra",
+      "bom_missing",
+      "intermediate_extra",
+      "intermediate_missing"
+    ],
+    "expandItemTemplateSuffix": "_item",
+    "expandPdfEvidenceKeys": ["bom_extra", "intermediate_extra"],
+    "expandApiEvidenceKeys": ["bom_missing", "intermediate_missing"],
+    "codeListDelimiter": ", ",
+    "maxGuideRows": 80,
     "evidenceJoiner": "; "
   }
 }

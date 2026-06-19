@@ -40,6 +40,40 @@ def test_consolidate_segment_length_items():
     assert "150 mm" in consolidated[0]["pdfEvidence"]
 
 
+def test_expand_bom_extra_into_per_code_rows():
+    items = [
+        ChatDrawingValidationContentService.item_from_template(
+            "bom_extra",
+            status="critical_error",
+            pdf_evidence="10140027, 10440133",
+            api_evidence="—",
+        ),
+    ]
+
+    expanded = ChatDrawingValidationPresentationService.expand_items(items)
+
+    assert len(expanded) == 2
+    assert expanded[0]["item"] == "Componente 10140027 extra no PDF"
+    assert expanded[1]["item"] == "Componente 10440133 extra no PDF"
+
+
+def test_format_code_wraps_product_codes():
+    assert ChatDrawingValidationPresentationService.format_code("90264227") == "`90264227`"
+    assert ChatDrawingValidationPresentationService.format_code_list("10140027, 10440133") == (
+        "`10140027`, `10440133`"
+    )
+
+
+def test_resolve_pdf_product_code_falls_back_to_context():
+    assert (
+        ChatDrawingValidationPresentationService.resolve_pdf_product_code(
+            pdf_product_code="",
+            resolved_product_code="90264227",
+        )
+        == "90264227"
+    )
+
+
 def test_divergence_items_include_error_status():
     items = [
         ChatDrawingValidationContentService.item_from_template(

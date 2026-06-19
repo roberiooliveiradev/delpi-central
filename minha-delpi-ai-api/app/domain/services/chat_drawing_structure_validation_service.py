@@ -47,12 +47,18 @@ class ChatDrawingStructureValidationService:
                 )
             )
 
-        if comparison.extra_in_pdf:
+        bom_only_extra = sorted(
+            code
+            for code in comparison.extra_in_pdf
+            if not ChatDrawingPatternsService.is_intermediate_family(str(code))
+        )
+
+        if bom_only_extra:
             items.append(
                 content.item_from_template(
                     "bom_extra",
                     status="critical_error",
-                    pdf_evidence=", ".join(comparison.extra_in_pdf[:5]),
+                    pdf_evidence=", ".join(bom_only_extra[:8]),
                     api_evidence=content.evidence("dash"),
                 )
             )

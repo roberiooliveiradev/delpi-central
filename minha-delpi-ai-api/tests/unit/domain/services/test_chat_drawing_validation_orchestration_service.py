@@ -131,5 +131,5 @@ def test_format_report_pdf_section_uses_pdf_product_code():
     report = ChatDrawingValidationOrchestrationService.format_report_markdown(package)
 
     assert "## 2. Dados identificados no PDF" in report
-    assert "| Código | 90262511 |" in report
-    assert "| Código | 90260140 |" in report
+    assert "| Código | `90262511` |" in report
+    assert "| Código | `90260140` |" in report

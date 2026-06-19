@@ -285,6 +285,10 @@ class ExternalActionProductRouteCatalogService:
                     ChatProductQueryIntentService,
                 )
 
+                if self.is_drawing_analyser_request(message, path):
+                    parameters[name] = "full"
+                    continue
+
                 normalized_message = (
                     ChatMessageNormalizationService.normalize_for_matching(message)
                     if message
