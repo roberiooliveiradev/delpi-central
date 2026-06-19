@@ -532,3 +532,103 @@ class ChatDrawingRegionService:
             metadata[region] = region_meta
 
         return texts, metadata
+
+    @classmethod
+    def ocr_multipage_drawing_regions(
+        cls,
+        document: Any,
+        *,
+        page_limit: int,
+        matrix: Any,
+        lang: str,
+    ) -> tuple[dict[str, str], dict[str, Any], int]:
+        page_count = min(int(document.page_count or 0), max(1, int(page_limit)))
+
+        if page_count < 1:
+            return {}, {}, 0
+
+        region_texts: dict[str, str] = {}
+        regions: dict[str, Any] = {}
+        aggregated_bom = ""
+        supplemental_pages: list[str] = []
+
+        for index in range(page_count):
+            page = document.load_page(index)
+
+            if index == 0:
+                page_texts, page_regions = cls.ocr_drawing_regions(
+                    page,
+                    matrix=matrix,
+                    lang=lang,
+                )
+                region_texts = dict(page_texts)
+                regions = dict(page_regions)
+                aggregated_bom = str(page_texts.get("bom") or "").strip()
+                continue
+
+            if not cls._should_ocr_bom_on_subsequent_pages():
+                break
+
+            bom_text, _, bom_meta = cls._ocr_bom_region(
+                page,
+                matrix=matrix,
+                lang=lang,
+            )
+
+            if not bom_text and cls._should_ocr_full_page_on_subsequent_pages():
+                bom_text = cls.ocr_region_text(
+                    page,
+                    bbox=[0.0, 0.0, 1.0, 1.0],
+                    matrix=matrix,
+                    lang=lang,
+                    region="bom",
+                ).strip()
+                bom_meta = cls.build_region_metadata(
+                    region="bom",
+                    bbox=[0.0, 0.0, 1.0, 1.0],
+                    char_count=len(bom_text),
+                    engine="tesseract_full_page",
+                )
+
+            if not bom_text:
+                continue
+
+            supplemental_pages.append(bom_text)
+            aggregated_bom = cls.merge_region_ocr_texts(aggregated_bom, bom_text).strip()
+            regions[f"bom_page_{index}"] = bom_meta
+
+        if aggregated_bom:
+            region_texts["bom"] = aggregated_bom
+
+            if isinstance(regions.get("bom"), dict):
+                regions["bom"]["multipageMerged"] = True
+                regions["bom"]["charCount"] = len(aggregated_bom)
+            else:
+                regions["bom"] = {
+                    "charCount": len(aggregated_bom),
+                    "multipageMerged": True,
+                }
+
+        if supplemental_pages:
+            regions["multipageSupplementalPages"] = len(supplemental_pages)
+
+        return region_texts, regions, page_count
+
+    @classmethod
+    def _should_ocr_full_page_on_subsequent_pages(cls) -> bool:
+        from app.domain.services.chat_drawing_patterns_service import (
+            ChatDrawingPatternsService,
+        )
+
+        return ChatDrawingPatternsService.multipage_ocr_full_page_text_on_subsequent_pages()
+
+    @classmethod
+    def _should_ocr_bom_on_subsequent_pages(cls) -> bool:
+        from app.domain.services.chat_drawing_patterns_service import (
+            ChatDrawingPatternsService,
+        )
+
+        return (
+            ChatDrawingPatternsService.multipage_ocr_bom_on_all_pages()
+            and ChatDrawingPatternsService.multipage_ocr_full_layout_first_page_only()
+        )

@@ -39,11 +39,12 @@ def test_rule_registry_7026_disables_balloon_presence():
 
 def test_bom_quantity_flags_mismatch_outside_tolerance():
     root = {
+        "product": {"code": "90260140", "unit": "PC"},
         "structure": {
             "items": [
-                {"code": "10081867", "quantity": 100.0, "components": []},
+                {"code": "10081867", "quantity": 100.0, "unit": "PC", "components": []},
             ]
-        }
+        },
     }
     pdf_extract = {
         "bomRows": [{"code": "10081867", "quantity": "50"}],
@@ -61,11 +62,12 @@ def test_bom_quantity_flags_mismatch_outside_tolerance():
 
 def test_bom_quantity_ok_within_tolerance():
     root = {
+        "product": {"code": "90260140", "unit": "PC"},
         "structure": {
             "items": [
-                {"code": "10081867", "quantity": 100.0, "components": []},
+                {"code": "10081867", "quantity": 100.0, "unit": "PC", "components": []},
             ]
-        }
+        },
     }
     pdf_extract = {
         "bomRows": [{"code": "10081867", "quantity": "95"}],

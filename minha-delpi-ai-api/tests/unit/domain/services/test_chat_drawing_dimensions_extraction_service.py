@@ -132,3 +132,31 @@ def test_detect_ambiguous_dimension_notes_when_shrink_and_decape_coexist():
     text = "LUVA TERMO ENCOLHIVEL COMP 30MM\nDECAPE DE 6MM"
 
     assert ChatDrawingDimensionsExtractionService.detect_ambiguous_dimension_notes(text)
+
+
+def test_extract_dimensions_ignores_process_sample_30mm():
+    text = "PONTA DE ENSAIO COMP 30MM\n30±1"
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] is None
+    assert dims["rightDecapeMm"] is None
+    assert dims["decapeIndication"] == {"left": False, "right": False}
+
+
+def test_extract_dimensions_rejects_unlabeled_30mm_tolerance():
+    text = "\n".join(["30±1", "1127±2"] * 2)
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] is None
+    assert dims["rightDecapeMm"] is None
+
+
+def test_only_implausible_global_decape_when_all_values_above_typical():
+    assert ChatDrawingDimensionsExtractionService.only_implausible_global_decape(
+        {"leftDecapeMm": 30.0, "rightDecapeMm": 30.0}
+    )
+    assert not ChatDrawingDimensionsExtractionService.only_implausible_global_decape(
+        {"leftDecapeMm": 10.0, "rightDecapeMm": None}
+    )

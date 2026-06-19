@@ -92,6 +92,55 @@ def test_structure_validation_emits_multipage_item_for_partial_bom():
     )
 
 
+def test_multipage_resolve_absence_check_status_demotes_critical():
+    status = ChatDrawingMultipageCoverageService.resolve_absence_check_status(
+        "critical_error",
+        pdf_extract={"pageCount": 10, "legible": True},
+        comparison=_comparison_90263622_scenario(),
+    )
+
+    assert status == "pending"
+
+
+def test_structure_validation_demotes_intermediate_missing_on_multipage_partial():
+    api_codes = [f"5023{i:04d}" for i in range(60)]
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": code,
+                    "description": f"CT26VERM-00036/04/06-{code}",
+                    "components": [],
+                }
+                for code in api_codes
+            ]
+        }
+    }
+    pdf_extract = {
+        "legible": True,
+        "pageCount": 10,
+        "componentCodes": [],
+        "intermediateCodes": [],
+        "validationScopes": {
+            "bom": {"available": False, "sourceKey": None, "charCount": 0}
+        },
+    }
+
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263622",
+    )
+
+    intermediate_items = [
+        item for item in items if item.get("templateKey") == "intermediate_missing"
+    ]
+
+    assert intermediate_items
+    assert intermediate_items[0]["status"] == "pending"
+    assert any(item.get("templateKey") == "multipage_bom_partial" for item in items)
+
+
 def test_orchestration_includes_multipage_metadata():
     api_codes = [f"5023{i:04d}" for i in range(60)]
     payload = {

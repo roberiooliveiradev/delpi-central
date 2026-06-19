@@ -53,3 +53,13 @@ def test_parse_illegible_short_text():
 
     assert parsed["legible"] is False
     assert parsed["productCode"] is None
+
+
+def test_parse_from_text_propagates_page_count_from_metadata():
+    parsed = ChatDrawingPdfExtractionService.parse_from_text(
+        "CODIGO DELPI 90263622 REV.01 CHICOTE DE LIGACAO",
+        metadata={"pageCount": 10, "pagesProcessed": 10, "filename": "90263622.pdf"},
+    )
+
+    assert parsed["pageCount"] == 10
+    assert parsed["pagesProcessed"] == 10

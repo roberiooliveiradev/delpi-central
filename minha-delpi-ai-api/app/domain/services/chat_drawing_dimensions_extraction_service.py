@@ -72,7 +72,7 @@ class ChatDrawingDimensionsExtractionService:
                     patterns=(ChatDrawingPatternsService.generic_decape(),),
                 )
 
-                if generic is not None:
+                if generic is not None and cls._is_plausible_cable_decape(generic):
                     dimensions["rightDecapeMm"] = generic
                     indication["right"] = True
 
@@ -82,8 +82,10 @@ class ChatDrawingDimensionsExtractionService:
                 patterns=(ChatDrawingPatternsService.decape_note(),),
             )
 
-            if note_decape is not None and not cls._should_skip_decape_in_context(
-                normalized
+            if (
+                note_decape is not None
+                and cls._is_plausible_cable_decape(note_decape)
+                and not cls._should_skip_decape_in_context(normalized)
             ):
                 if dimensions["rightDecapeMm"] is None:
                     dimensions["rightDecapeMm"] = note_decape
@@ -134,6 +136,9 @@ class ChatDrawingDimensionsExtractionService:
                 length = second
                 side = None
             else:
+                continue
+
+            if not cls._is_plausible_cable_decape(decape):
                 continue
 
             cota_decape_values.append(decape)
@@ -195,9 +200,45 @@ class ChatDrawingDimensionsExtractionService:
         key = "rightDecapeMm" if side == "right" else "leftDecapeMm"
 
         if dimensions.get(key) is None:
-            dimensions[key] = decape_values[0]
+            candidate = decape_values[0]
+
+            if not cls._is_plausible_cable_decape(candidate):
+                return
+
+            dimensions[key] = candidate
 
         indication[side] = True
+
+    @classmethod
+    def _is_plausible_cable_decape(cls, value: float | None) -> bool:
+        if value is None:
+            return False
+
+        return float(value) <= ChatDrawingPatternsService.typical_cable_decape_mm()
+
+    @classmethod
+    def only_implausible_global_decape(cls, dimensions: dict[str, Any]) -> bool:
+        if not isinstance(dimensions, dict):
+            return False
+
+        values: list[float] = []
+
+        for key in ("leftDecapeMm", "rightDecapeMm"):
+            parsed = cls._parse_number(str(dimensions.get(key) or ""))
+
+            if parsed is not None:
+                values.append(parsed)
+
+        for raw in dimensions.get("cotaDecapeValuesMm") or []:
+            parsed = cls._parse_number(str(raw))
+
+            if parsed is not None:
+                values.append(parsed)
+
+        if not values:
+            return False
+
+        return all(not cls._is_plausible_cable_decape(value) for value in values)
 
     @classmethod
     def _resolve_unlabeled_decape_side(cls, text: str) -> str:
@@ -364,6 +405,9 @@ class ChatDrawingDimensionsExtractionService:
             decape = cls._parse_number(match.group(1))
 
             if decape is None or decape > ChatDrawingPatternsService.max_decape_mm():
+                continue
+
+            if not cls._is_plausible_cable_decape(decape):
                 continue
 
             decape_values.append(decape)

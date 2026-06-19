@@ -45,7 +45,12 @@ class ChatDrawingStructureValidationService:
             bom_scope.get("sourceKey")
         )
         bom_available = bool(bom_scope.get("available"))
-        comparison = None
+        comparison = ChatDrawingBomComparisonService.compare(
+            root=root,
+            pdf_extract=pdf_extract,
+            product_code=product_code,
+        )
+        has_pdf_bom_signal = bom_available or bool(pdf_extract.get("componentCodes"))
 
         if not bom_available and not pdf_extract.get("componentCodes"):
             items.append(
@@ -58,24 +63,27 @@ class ChatDrawingStructureValidationService:
                     pdf_scope=bom_scope_label,
                 )
             )
-        else:
-            comparison = ChatDrawingBomComparisonService.compare(
-                root=root,
-                pdf_extract=pdf_extract,
-                product_code=product_code,
+
+        if has_pdf_bom_signal and comparison.missing_in_pdf:
+            from app.domain.services.chat_drawing_multipage_coverage_service import (
+                ChatDrawingMultipageCoverageService,
             )
 
-            if comparison.missing_in_pdf:
-                items.append(
-                    content.item_from_template(
-                        "bom_missing",
-                        status="critical_error",
-                        pdf_evidence=content.evidence("dash"),
-                        api_evidence=", ".join(comparison.missing_in_pdf[:5]),
-                        pdf_scope=bom_scope_label,
-                    )
+            items.append(
+                content.item_from_template(
+                    "bom_missing",
+                    status=ChatDrawingMultipageCoverageService.resolve_absence_check_status(
+                        "critical_error",
+                        pdf_extract=pdf_extract,
+                        comparison=comparison,
+                    ),
+                    pdf_evidence=content.evidence("dash"),
+                    api_evidence=", ".join(comparison.missing_in_pdf[:5]),
+                    pdf_scope=bom_scope_label,
                 )
+            )
 
+        if has_pdf_bom_signal:
             bom_only_extra = sorted(
                 code
                 for code in comparison.extra_in_pdf
@@ -112,39 +120,38 @@ class ChatDrawingStructureValidationService:
                     )
                 )
 
-        if comparison is not None:
-            from app.domain.services.chat_drawing_multipage_coverage_service import (
-                ChatDrawingMultipageCoverageService,
+        from app.domain.services.chat_drawing_multipage_coverage_service import (
+            ChatDrawingMultipageCoverageService,
+        )
+
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "multipage_coverage",
+            product_code,
+            group_code=cls._product_group_code(root),
+        ):
+            items.extend(
+                ChatDrawingMultipageCoverageService.build_check_items(
+                    pdf_extract=pdf_extract,
+                    comparison=comparison,
+                )
             )
 
-            if ChatDrawingValidationRuleRegistryService.is_enabled(
-                "multipage_coverage",
-                product_code,
-                group_code=cls._product_group_code(root),
-            ):
-                items.extend(
-                    ChatDrawingMultipageCoverageService.build_check_items(
-                        pdf_extract=pdf_extract,
-                        comparison=comparison,
-                    )
-                )
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "bom_quantity",
+            product_code,
+            group_code=cls._product_group_code(root),
+        ):
+            from app.domain.services.chat_drawing_bom_quantity_validation_service import (
+                ChatDrawingBomQuantityValidationService,
+            )
 
-            if ChatDrawingValidationRuleRegistryService.is_enabled(
-                "bom_quantity",
-                product_code,
-                group_code=cls._product_group_code(root),
-            ):
-                from app.domain.services.chat_drawing_bom_quantity_validation_service import (
-                    ChatDrawingBomQuantityValidationService,
+            items.extend(
+                ChatDrawingBomQuantityValidationService.build_check_items(
+                    root=root,
+                    pdf_extract=pdf_extract,
+                    product_code=product_code,
                 )
-
-                items.extend(
-                    ChatDrawingBomQuantityValidationService.build_check_items(
-                        root=root,
-                        pdf_extract=pdf_extract,
-                        product_code=product_code,
-                    )
-                )
+            )
 
         if ChatDrawingValidationRuleRegistryService.is_enabled(
             "balloon_presence",
@@ -161,7 +168,14 @@ class ChatDrawingStructureValidationService:
                 )
             )
 
-        items.extend(cls._intermediate_code_items(root, pdf_extract, product_code))
+        items.extend(
+            cls._intermediate_code_items(
+                root,
+                pdf_extract,
+                product_code,
+                comparison=comparison,
+            )
+        )
         items.extend(cls._intermediate_dimension_items(root, pdf_extract))
         items.extend(cls._dimension_items(root, pdf_extract, bom_scope_label))
 
@@ -201,6 +215,8 @@ class ChatDrawingStructureValidationService:
         root: dict,
         pdf_extract: dict,
         product_code: str,
+        *,
+        comparison=None,
     ) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
@@ -230,10 +246,25 @@ class ChatDrawingStructureValidationService:
         missing = sorted(api_intermediate - pdf_intermediate)
 
         if missing:
+            default_status = "error" if pdf_intermediate else "critical_error"
+
+            if comparison is not None:
+                from app.domain.services.chat_drawing_multipage_coverage_service import (
+                    ChatDrawingMultipageCoverageService,
+                )
+
+                status = ChatDrawingMultipageCoverageService.resolve_absence_check_status(
+                    default_status,
+                    pdf_extract=pdf_extract,
+                    comparison=comparison,
+                )
+            else:
+                status = default_status
+
             items.append(
                 content.item_from_template(
                     "intermediate_missing",
-                    status="error" if pdf_intermediate else "critical_error",
+                    status=status,
                     pdf_evidence=content.evidence("dash"),
                     api_evidence=", ".join(missing[:5]),
                 )
@@ -328,6 +359,9 @@ class ChatDrawingStructureValidationService:
         pdf_right = dimensions.get("rightDecapeMm")
         decape_candidates = cls._pdf_decape_candidates(dimensions)
 
+        if cls._should_skip_per_intermediate_decape_checks(pdf_extract, dimensions):
+            return items
+
         if pdf_left is None and pdf_right is None and not decape_candidates:
             return items
 
@@ -384,20 +418,55 @@ class ChatDrawingStructureValidationService:
     @classmethod
     def _pdf_decape_candidates(cls, dimensions: dict[str, Any]) -> list[float]:
         values: list[float] = []
+        indication = dimensions.get("decapeIndication")
+        side_indicated = (
+            indication if isinstance(indication, dict) else {"left": False, "right": False}
+        )
+        typical = ChatDrawingPatternsService.typical_cable_decape_mm()
 
         for key in ("leftDecapeMm", "rightDecapeMm"):
             parsed = ChatDrawingToleranceService.parse_mm(dimensions.get(key))
 
-            if parsed is not None:
-                values.append(parsed)
+            if parsed is None:
+                continue
+
+            side = "left" if key == "leftDecapeMm" else "right"
+
+            if parsed > typical and not side_indicated.get(side):
+                continue
+
+            values.append(parsed)
 
         for raw in dimensions.get("cotaDecapeValuesMm") or []:
             parsed = ChatDrawingToleranceService.parse_mm(raw)
 
-            if parsed is not None:
-                values.append(parsed)
+            if parsed is None or parsed > typical:
+                continue
+
+            values.append(parsed)
 
         return list(dict.fromkeys(values))
+
+    @classmethod
+    def _should_skip_per_intermediate_decape_checks(
+        cls,
+        pdf_extract: dict,
+        dimensions: dict[str, Any],
+    ) -> bool:
+        from app.domain.services.chat_drawing_dimensions_extraction_service import (
+            ChatDrawingDimensionsExtractionService,
+        )
+
+        haystack = cls._dimension_note_haystack(pdf_extract)
+
+        if ChatDrawingDimensionsExtractionService.detect_ambiguous_dimension_notes(
+            haystack
+        ):
+            return True
+
+        return ChatDrawingDimensionsExtractionService.only_implausible_global_decape(
+            dimensions
+        )
 
     @classmethod
     def _decape_side_indicated(cls, dimensions: dict[str, Any], side: str) -> bool:

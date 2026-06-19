@@ -139,6 +139,37 @@ class ChatDrawingPatternsService:
             return 50.0
 
     @classmethod
+    def typical_cable_decape_mm(cls) -> float:
+        raw = ChatAssistantContentService.get(
+            _STAMP_BUNDLE,
+            "dimensionHeuristics",
+            "typicalCableDecapeMm",
+            default="20",
+        )
+
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return 20.0
+
+    @classmethod
+    def multipage_ocr_rule(cls, key: str, default: Any = None) -> Any:
+        node = ChatAssistantContentService.get_node(_STAMP_BUNDLE, "multipageOcr")
+        return node.get(key, default) if isinstance(node, dict) else default
+
+    @classmethod
+    def multipage_ocr_bom_on_all_pages(cls) -> bool:
+        return bool(cls.multipage_ocr_rule("bomOnAllPages", True))
+
+    @classmethod
+    def multipage_ocr_full_layout_first_page_only(cls) -> bool:
+        return bool(cls.multipage_ocr_rule("fullLayoutRegionsFirstPageOnly", True))
+
+    @classmethod
+    def multipage_ocr_full_page_text_on_subsequent_pages(cls) -> bool:
+        return bool(cls.multipage_ocr_rule("fullPageTextOnSubsequentPages", True))
+
+    @classmethod
     def unlabeled_decape_tolerance_side(cls) -> str:
         raw = str(
             ChatAssistantContentService.get(
@@ -551,6 +582,19 @@ class ChatDrawingPatternsService:
         )
 
     @classmethod
+    def multipage_demote_absence_checks_when_partial(cls) -> bool:
+        return bool(
+            cls.multipage_coverage_rule("demoteAbsenceChecksWhenPartial", True)
+        )
+
+    @classmethod
+    def multipage_min_codes_for_full_text_harvest(cls) -> int:
+        return cls.validation_rule_int_from_node(
+            cls.multipage_coverage_rule("minCodesForFullTextHarvest", 2),
+            2,
+        )
+
+    @classmethod
     def validation_rule_int_from_node(cls, raw: Any, default: int) -> int:
         try:
             return int(raw)
@@ -612,6 +656,22 @@ class ChatDrawingPatternsService:
     @classmethod
     def quantity_tolerance_ratio(cls) -> float:
         return cls.validation_rule_float("quantityToleranceRatio", 0.1)
+
+    @classmethod
+    def bom_quantity_semantics_rule(cls, key: str, default: Any = None) -> Any:
+        node = cls.validation_rule_node("bomQuantitySemantics")
+        return node.get(key, default) if isinstance(node, dict) else default
+
+    @classmethod
+    def bom_quantity_semantics_float(cls, key: str, default: float) -> float:
+        return cls.validation_rule_float_from_node(
+            cls.bom_quantity_semantics_rule(key, default),
+            default,
+        )
+
+    @classmethod
+    def bom_quantity_pending_status(cls) -> str:
+        return str(cls.bom_quantity_semantics_rule("pendingStatus", "pending"))
 
     @classmethod
     def intermediate_description_signature(cls, description: str) -> str | None:

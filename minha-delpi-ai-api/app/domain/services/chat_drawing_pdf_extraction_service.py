@@ -53,6 +53,15 @@ class ChatDrawingPdfExtractionService:
         elif extracted.get("stages"):
             metadata = {**metadata, "stages": list(extracted.get("stages") or [])}
 
+        page_count = int(extracted.get("pageCount") or 0)
+
+        if page_count > 0:
+            metadata = {
+                **metadata,
+                "pageCount": page_count,
+                "pagesProcessed": page_count,
+            }
+
         return cls.parse_from_text(
             str(extracted.get("fullText") or "").strip(),
             metadata=metadata,
@@ -220,6 +229,19 @@ class ChatDrawingPdfExtractionService:
         payload["validationScopes"] = ChatDrawingRegionalScopeService.serialize(
             validation_scopes
         )
+
+        for key in ChatDrawingPatternsService.multipage_page_count_keys():
+            raw = meta.get(key)
+
+            try:
+                count = int(raw or 0)
+            except (TypeError, ValueError):
+                continue
+
+            if count > 0:
+                payload["pageCount"] = count
+                payload["pagesProcessed"] = count
+                break
 
         return payload
 

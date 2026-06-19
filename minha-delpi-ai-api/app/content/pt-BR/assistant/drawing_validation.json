@@ -62,6 +62,8 @@
     "multipageCoverageRatio": "{ratio} ({pdfCount}/{apiCount} códigos, {pageCount} pág.)",
     "multipageMatchedCodes": "{matched}/{apiCount} códigos SG1010 no PDF",
     "bomQuantityPdf": "qtd {quantity} (PDF)",
+    "bomQuantityPdfMilheiro": "qtd {quantity} × {scale} = {normalized} (PDF/peça → MI)",
+    "bomQuantityPdfCableLength": "qtd {quantity} × {lengthMm} mm = {normalized} MT (PDF → MI)",
     "bomQuantityApi": "qtd {quantity} (SG1010)",
     "guideComponentPair": "PI {product} × MP {component}",
     "structureItemCount": "{count} item(ns) na estrutura",
@@ -75,6 +77,7 @@
     "annotation_table": "BOM — tabela PDF",
     "pdf_annotations_bom": "BOM — anotações",
     "full_text_section": "BOM — fallback texto",
+    "full_text_multipage_harvest": "BOM — texto multipágina",
     "dimensions_region": "Cotas — região central",
     "cad_reference": "Cotas — fallback CAD",
     "stamp_region": "Carimbo",
@@ -348,6 +351,12 @@
       "rule": "Quantidades comparáveis dentro da tolerância",
       "recommendation": "—"
     },
+    "bom_quantity_pending": {
+      "section": "BOM",
+      "item": "Quantidade {code} (PDF × SG1010)",
+      "rule": "Comprimento do cabo ou unidade insuficientes para comparar qtd MT",
+      "recommendation": "Conferir cotas do PDF ou unidade na SG1010"
+    },
     "guide_component_mismatch": {
       "section": "Roteiro",
       "item": "Componente do roteiro fora da estrutura do PI",
@@ -430,13 +439,20 @@
       "statusWarning": "error",
       "statusPending": "pending",
       "templateLowCoverage": "multipage_low_coverage",
-      "templatePartial": "multipage_bom_partial"
+      "templatePartial": "multipage_bom_partial",
+      "demoteAbsenceChecksWhenPartial": true,
+      "minCodesForFullTextHarvest": 2
     },
     "dimensionNoteValidation": {
       "ambiguousTemplateKey": "dimension_note_ambiguous",
       "ambiguousStatus": "pending"
     },
-    "quantityToleranceRatio": 0.1
+    "quantityToleranceRatio": 0.1,
+    "bomQuantitySemantics": {
+      "milheiroBatchUnits": ["MI"],
+      "piecesPerMilheiro": 1000,
+      "pendingStatus": "pending"
+    }
   },
   "patterns": {
     "intermediateColorSignature": "^CB\\d{2}([A-Z]{4})"

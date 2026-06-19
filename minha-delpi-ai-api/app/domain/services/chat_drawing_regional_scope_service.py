@@ -279,6 +279,12 @@ class ChatDrawingRegionalScopeService:
         if normalized and ChatDrawingPatternsService.bom_section().search(normalized):
             candidates.append(("full_text_section", normalized, normalized))
 
+        cls._append_multipage_full_text_harvest_candidate(
+            candidates,
+            meta=meta,
+            normalized=normalized,
+        )
+
         best_key = ""
         best_text = ""
         best_score = -1
@@ -302,10 +308,16 @@ class ChatDrawingRegionalScopeService:
                 exclude_product_code=exclude_product or None,
             )
 
-            if not meaningful_codes and source_key != "full_text_section":
+            if not meaningful_codes and source_key not in (
+                "full_text_section",
+                "full_text_multipage_harvest",
+            ):
                 continue
 
-            if not rows and source_key != "full_text_section":
+            if not rows and source_key not in (
+                "full_text_section",
+                "full_text_multipage_harvest",
+            ):
                 continue
 
             best_score = score
@@ -322,6 +334,49 @@ class ChatDrawingRegionalScopeService:
             "charCount": len(best_text),
             "selectionScore": best_score,
         }
+
+    @classmethod
+    def _append_multipage_full_text_harvest_candidate(
+        cls,
+        candidates: list[tuple[str, str, str]],
+        *,
+        meta: dict[str, Any],
+        normalized: str,
+    ) -> None:
+        if not normalized:
+            return
+
+        page_count = cls._resolve_metadata_page_count(meta)
+
+        if page_count < ChatDrawingPatternsService.multipage_min_page_count():
+            return
+
+        discovered_codes: set[str] = set(
+            ChatDrawingPatternsService.intermediate_code().findall(normalized)
+        )
+
+        for match in ChatDrawingPatternsService.component_code().finditer(normalized):
+            discovered_codes.add(str(match.group(1)))
+
+        if len(discovered_codes) < ChatDrawingPatternsService.multipage_min_codes_for_full_text_harvest():
+            return
+
+        candidates.append(("full_text_multipage_harvest", normalized, normalized))
+
+    @classmethod
+    def _resolve_metadata_page_count(cls, meta: dict[str, Any]) -> int:
+        for key in ChatDrawingPatternsService.multipage_page_count_keys():
+            raw = meta.get(key)
+
+            try:
+                count = int(raw or 0)
+            except (TypeError, ValueError):
+                continue
+
+            if count > 0:
+                return count
+
+        return 0
 
     @classmethod
     def _resolve_dimensions_scope(

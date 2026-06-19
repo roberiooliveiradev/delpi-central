@@ -157,6 +157,12 @@ class ChatPdfDocumentExtractionService:
         if region_texts.get("dimensions"):
             parse_metadata["dimensionsText"] = region_texts["dimensions"]
 
+        ocr_page_count = int(regions.get("_pageCount") or embedded.get("pageCount") or 0)
+
+        if ocr_page_count > 0:
+            parse_metadata["pageCount"] = ocr_page_count
+            parse_metadata["pagesProcessed"] = ocr_page_count
+
         cad_reference_text = cls._build_cad_reference_text(
             embedded,
             annotation_tables,
@@ -190,7 +196,12 @@ class ChatPdfDocumentExtractionService:
             "engine": engine,
             "stages": stages,
             "warnings": warnings,
-            "pageCount": int(embedded.get("pageCount") or pypdf.get("pageCount") or 0),
+            "pageCount": int(
+                ocr_page_count
+                or embedded.get("pageCount")
+                or pypdf.get("pageCount")
+                or 0
+            ),
             "annotations": annotations,
             "annotationTables": annotation_tables,
             "parseMetadata": parse_metadata,
@@ -344,21 +355,18 @@ class ChatPdfDocumentExtractionService:
         zoom = dpi / 72.0
         matrix = fitz.Matrix(zoom, zoom)
 
-        region_texts: dict[str, str] = {}
-        regions: dict[str, Any] = {}
-
         try:
-            page_count = min(document.page_count, page_limit)
+            region_texts, regions, page_count = ChatDrawingRegionService.ocr_multipage_drawing_regions(
+                document,
+                page_limit=page_limit,
+                matrix=matrix,
+                lang=lang,
+            )
 
             if page_count < 1:
                 return {}, {}
 
-            page = document.load_page(0)
-            region_texts, regions = ChatDrawingRegionService.ocr_drawing_regions(
-                page,
-                matrix=matrix,
-                lang=lang,
-            )
+            regions["_pageCount"] = page_count
         finally:
             document.close()
 

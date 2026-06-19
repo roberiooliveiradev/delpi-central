@@ -137,6 +137,21 @@
       ],
       "suppressesDecapeExtraction": true
     },
+    "process_sample_length": {
+      "contextMarkers": [
+        "COMP 30",
+        "COMP30",
+        "30 MM",
+        "30MM",
+        "ENSAIO",
+        "AMOSTRA DE",
+        "EXTENSAO DE ENSAIO",
+        "EXTENSÃO DE ENSAIO",
+        "COMPRIMENTO DE ENSAIO",
+        "PONTA DE ENSAIO"
+      ],
+      "suppressesDecapeExtraction": true
+    },
     "machine_side": {
       "contextMarkers": ["DECAPAR O LADO", "NA MAQUINA", "NA MÁQUINA"],
       "patternKeys": ["decapeMachineSide"]
@@ -281,7 +296,13 @@
   "dimensionHeuristics": {
     "maxSegmentLengthMm": 6000,
     "maxDecapeMm": 50,
+    "typicalCableDecapeMm": 20,
     "unlabeledDecapeToleranceSide": "right"
+  },
+  "multipageOcr": {
+    "bomOnAllPages": true,
+    "fullLayoutRegionsFirstPageOnly": true,
+    "fullPageTextOnSubsequentPages": true
   },
   "codeFamilies": {
     "intermediatePrefix": "50",

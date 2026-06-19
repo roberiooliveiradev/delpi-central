@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from app.domain.services.chat_drawing_bom_quantity_semantics_service import (
+    ChatDrawingBomQuantitySemanticsService,
+)
 from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
@@ -46,7 +49,55 @@ class ChatDrawingTotalLengthReferenceService:
         if len(items) == 1:
             return cls._resolve_from_single_item(items[0])
 
+        cable_reference = cls._resolve_from_cable_materials(root, items)
+
+        if cable_reference is not None:
+            return cable_reference
+
         return None
+
+    @classmethod
+    def _resolve_from_cable_materials(
+        cls,
+        root: dict,
+        items: list[dict[str, Any]],
+    ) -> DrawingTotalLengthReference | None:
+        batch_scale = ChatDrawingBomQuantitySemanticsService.batch_scale_for_root(root)
+        cable_items = [
+            item
+            for item in items
+            if isinstance(item, dict)
+            and ChatDrawingBomQuantitySemanticsService.is_cable_material_code(
+                str(item.get("code") or ""),
+                str(item.get("description") or ""),
+            )
+        ]
+
+        if len(cable_items) != 1:
+            return None
+
+        item = cable_items[0]
+        quantity = item.get("quantity")
+
+        if quantity is None:
+            return None
+
+        try:
+            value = float(quantity)
+        except (TypeError, ValueError):
+            return None
+
+        unit = cls._item_unit(item)
+        per_piece_mm = ChatDrawingBomQuantitySemanticsService.per_piece_length_mm(
+            quantity=value,
+            unit=unit or "MT",
+            batch_scale=batch_scale,
+        )
+
+        if per_piece_mm is None:
+            return None
+
+        return DrawingTotalLengthReference(length_mm=per_piece_mm, unit_label="mm")
 
     @classmethod
     def _resolve_from_intermediates(
@@ -126,6 +177,11 @@ class ChatDrawingTotalLengthReferenceService:
             return None
 
         if unit in cable_units:
+            total_mm = ChatDrawingBomQuantitySemanticsService.quantity_to_mm(value, unit)
+
+            if total_mm is not None:
+                return DrawingTotalLengthReference(length_mm=total_mm, unit_label=unit)
+
             return DrawingTotalLengthReference(length_mm=value, unit_label=unit)
 
         if unit:

@@ -128,6 +128,24 @@ class ChatDrawingMultipageCoverageService:
         return None
 
     @classmethod
+    def resolve_absence_check_status(
+        cls,
+        default_status: str,
+        *,
+        pdf_extract: dict,
+        comparison: BomComparisonResult,
+    ) -> str:
+        if not ChatDrawingPatternsService.multipage_demote_absence_checks_when_partial():
+            return default_status
+
+        result = cls.evaluate(pdf_extract=pdf_extract, comparison=comparison)
+
+        if result.applicable and result.template_key and result.status:
+            return str(result.status)
+
+        return default_status
+
+    @classmethod
     def _not_applicable(
         cls,
         *,
