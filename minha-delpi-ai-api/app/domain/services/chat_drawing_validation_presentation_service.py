@@ -5,6 +5,9 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.domain.services.chat_drawing_inspection_validation_service import (
+    ChatDrawingInspectionValidationService,
+)
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
@@ -419,13 +422,20 @@ class ChatDrawingValidationPresentationService:
         return lines
 
     @classmethod
+    def _format_inspection_count(cls, count: int | None, *, dash: str) -> int | str:
+        if count is None:
+            return dash
+
+        return count
+
+    @classmethod
     def _format_inspection_section(cls, root: dict) -> list[str]:
         inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
         inspection_items = (
             inspection.get("items") if isinstance(inspection.get("items"), list) else []
         )
 
-        if not inspection_items:
+        if not ChatDrawingInspectionValidationService.has_inspection_plan(inspection):
             return []
 
         lines = [
@@ -435,26 +445,35 @@ class ChatDrawingValidationPresentationService:
             "|---|---:|---:|---:|---:|",
         ]
         dash = ChatDrawingValidationContentService.evidence("dash")
+        rendered_rows = 0
 
         for row in inspection_items[:12]:
             if not isinstance(row, dict):
                 continue
 
-            qp6 = row.get("QP6") if isinstance(row.get("QP6"), list) else []
-            qp7 = row.get("QP7") if isinstance(row.get("QP7"), list) else []
-            qp8 = row.get("QP8") if isinstance(row.get("QP8"), list) else []
+            if not ChatDrawingInspectionValidationService.row_has_inspection_data(row):
+                continue
+
+            qp6_count, qp7_count, qp8_count = (
+                ChatDrawingInspectionValidationService.row_plan_counts(row)
+            )
+            level = ChatDrawingInspectionValidationService.row_level(row)
 
             lines.append(
                 "| {product} | {level} | {qp6} | {qp7} | {qp8} |".format(
                     product=cls.format_code(
-                        row.get("product") or row.get("product_code") or dash
+                        ChatDrawingInspectionValidationService.row_product_code(row) or dash
                     ),
-                    level=row.get("level") if row.get("level") is not None else dash,
-                    qp6=len(qp6) if qp6 else dash,
-                    qp7=len(qp7) if qp7 else dash,
-                    qp8=len(qp8) if qp8 else dash,
+                    level=level if level is not None else dash,
+                    qp6=cls._format_inspection_count(qp6_count, dash=dash),
+                    qp7=cls._format_inspection_count(qp7_count, dash=dash),
+                    qp8=cls._format_inspection_count(qp8_count, dash=dash),
                 )
             )
+            rendered_rows += 1
+
+        if rendered_rows == 0:
+            return []
 
         return lines
 
@@ -886,7 +905,7 @@ class ChatDrawingValidationPresentationService:
             inspection.get("items") if isinstance(inspection.get("items"), list) else []
         )
 
-        if not inspection_items:
+        if not ChatDrawingInspectionValidationService.has_inspection_plan(inspection):
             return []
 
         dash = ChatDrawingValidationContentService.evidence("dash")
@@ -896,19 +915,23 @@ class ChatDrawingValidationPresentationService:
             if not isinstance(row, dict):
                 continue
 
-            qp6 = row.get("QP6") if isinstance(row.get("QP6"), list) else []
-            qp7 = row.get("QP7") if isinstance(row.get("QP7"), list) else []
-            qp8 = row.get("QP8") if isinstance(row.get("QP8"), list) else []
+            if not ChatDrawingInspectionValidationService.row_has_inspection_data(row):
+                continue
+
+            qp6_count, qp7_count, qp8_count = (
+                ChatDrawingInspectionValidationService.row_plan_counts(row)
+            )
+            level = ChatDrawingInspectionValidationService.row_level(row)
 
             rows.append(
                 {
                     "product": cls.format_code(
-                        row.get("product") or row.get("product_code") or dash
+                        ChatDrawingInspectionValidationService.row_product_code(row) or dash
                     ),
-                    "level": str(row.get("level") if row.get("level") is not None else dash),
-                    "qp6": str(len(qp6) if qp6 else dash),
-                    "qp7": str(len(qp7) if qp7 else dash),
-                    "qp8": str(len(qp8) if qp8 else dash),
+                    "level": str(level if level is not None else dash),
+                    "qp6": str(cls._format_inspection_count(qp6_count, dash=dash)),
+                    "qp7": str(cls._format_inspection_count(qp7_count, dash=dash)),
+                    "qp8": str(cls._format_inspection_count(qp8_count, dash=dash)),
                 }
             )
 

@@ -44,6 +44,18 @@ def test_merge_dimensions_prefers_fallback_decape_when_region_is_bom_table():
     assert 140.0 in merged["segmentLengthsMm"]
 
 
+def test_extract_dimensions_cota_left_length_right_pattern():
+    text = "MEDIDAS EM MILÍMETROS\n11±232±6\n7±133±7"
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] == 11.0
+    assert dims["rightDecapeMm"] == 6.0
+    assert 232.0 in dims["segmentLengthsMm"]
+    assert 133.0 in dims["segmentLengthsMm"]
+    assert set(dims["cotaDecapeValuesMm"]) == {11.0, 6.0, 7.0}
+
+
 def test_extract_dimensions_cota_deape_length_pattern():
     text = "MEDIDAS EM MILÍMETROS\n6±140±1\n6±150±1\nDECAPE DE 6MM"
 

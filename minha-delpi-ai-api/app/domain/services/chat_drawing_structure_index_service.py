@@ -96,6 +96,32 @@ class ChatDrawingStructureIndexService:
         return mapping
 
     @classmethod
+    def collect_catalog_alternate_map(cls, root: dict[str, Any]) -> dict[str, str]:
+        """MP alternativo na descrição (ex.: «= 10400111») → código MP canônico."""
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        mapping: dict[str, str] = {}
+        pattern = ChatDrawingPatternsService.catalog_alternate_code()
+
+        for row in cls.flatten_items(structure):
+            if not row.code:
+                continue
+
+            match = pattern.search(str(row.description or ""))
+
+            if not match:
+                continue
+
+            alternate = ChatProductQueryIntentService.normalize_product_code(
+                str(match.group(1) or "")
+            )
+            primary = ChatProductQueryIntentService.normalize_product_code(row.code)
+
+            if alternate and primary and alternate != primary:
+                mapping[alternate] = primary
+
+        return mapping
+
+    @classmethod
     def expected_bom_level(cls, code: str, *, product_code: str, root: dict[str, Any]) -> int:
         normalized = ChatProductQueryIntentService.normalize_product_code(code)
         root_code = ChatProductQueryIntentService.normalize_product_code(product_code)

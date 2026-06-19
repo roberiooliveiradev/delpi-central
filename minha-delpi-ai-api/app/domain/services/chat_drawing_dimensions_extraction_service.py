@@ -124,6 +124,31 @@ class ChatDrawingDimensionsExtractionService:
 
             if (
                 third is not None
+                and first <= max_decape
+                and second <= max_segment
+                and third <= max_decape
+                and third >= 2
+                and cls._is_plausible_cable_decape(first)
+                and cls._is_plausible_cable_decape(third)
+            ):
+                length = second
+                left_decape = first
+                right_decape = third
+                cota_decape_values.extend([left_decape, right_decape])
+
+                if dimensions["leftDecapeMm"] is None:
+                    dimensions["leftDecapeMm"] = left_decape
+                    indication["left"] = True
+
+                if dimensions["rightDecapeMm"] is None:
+                    dimensions["rightDecapeMm"] = right_decape
+                    indication["right"] = True
+
+                segment_lengths.append(cls._sanitize_chicote_length_mm(length, normalized))
+                continue
+
+            if (
+                third is not None
                 and first <= max_segment
                 and first > max_decape
                 and third <= max_decape

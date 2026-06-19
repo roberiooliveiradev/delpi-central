@@ -95,3 +95,49 @@ def test_divergence_items_include_error_status():
 
     assert len(divergences) == 1
     assert divergences[0]["status"] == "error"
+
+
+def test_export_inspection_rows_measurable_textual_contract():
+    root = {
+        "inspection": {
+            "items": [
+                {
+                    "product_code": "90261647",
+                    "bom_level": 0,
+                    "header": {"product_code": "90261647", "revision": "02"},
+                    "measurable_tests": [{"test_code": "01"}] * 4,
+                    "textual_tests": [{"test_code": "504"}] * 21,
+                }
+            ]
+        }
+    }
+
+    rows = ChatDrawingValidationPresentationService._export_inspection_rows(root)
+
+    assert len(rows) == 1
+    assert rows[0]["product"] == "`90261647`"
+    assert rows[0]["level"] == "0"
+    assert rows[0]["qp6"] == "1"
+    assert rows[0]["qp7"] == "4"
+    assert rows[0]["qp8"] == "21"
+
+
+def test_format_inspection_section_measurable_textual_contract():
+    root = {
+        "inspection": {
+            "items": [
+                {
+                    "product_code": "90261647",
+                    "bom_level": 0,
+                    "header": {"product_code": "90261647", "revision": "02"},
+                    "measurable_tests": [{"test_code": "01"}],
+                    "textual_tests": [{"test_code": "504"}],
+                }
+            ]
+        }
+    }
+
+    lines = ChatDrawingValidationPresentationService._format_inspection_section(root)
+
+    assert any("Inspeções (QP6" in line for line in lines)
+    assert any("90261647" in line and "| 1 |" in line for line in lines)

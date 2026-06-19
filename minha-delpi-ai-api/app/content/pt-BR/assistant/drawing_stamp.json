@@ -217,6 +217,7 @@
     "bomTableHeader": "QTD\\.?\\s*\\|\\s*C[ÓO]DIGO",
     "bomQuantity": "\\b(\\d+[,.]?\\d*)\\s*(?:UN|PCS|PÇ|PC|PEÇAS?)?\\b",
     "intermediateSegment": "(?:CT|CB|CA|CF|CV)\\s*[\\d,.]+[A-Z]{4}\\s*-?\\s*(\\d+)\\s*/\\s*([\\d,.]+)\\s*/\\s*([\\d,.]+)",
+    "catalogAlternateCode": "=\\s*((?:10\\d{6}|100\\d{5}))",
     "cotaDecapeLength": "\\b(\\d+)\\s*±\\s*(\\d+)\\s*±\\s*(\\d+)\\b",
     "segmentLengthTolerance": "\\b(\\d{3,5})\\s*±\\s*(\\d+)\\b",
     "decapeTolerance": "\\b(\\d{1,2})\\s*±\\s*(\\d+)\\b",

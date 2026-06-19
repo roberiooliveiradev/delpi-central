@@ -84,6 +84,13 @@ class ChatDrawingBomQuantitySemanticsService:
         piece_units = ChatDrawingPatternsService.piece_count_units()
         cable_units = ChatDrawingPatternsService.cable_length_units()
 
+        if ChatDrawingPatternsService.is_intermediate_family(api_row.code):
+            return cls._normalize_intermediate_quantity(
+                pdf_quantity=pdf_quantity,
+                api_row=api_row,
+                batch_scale=batch_scale,
+            )
+
         if api_unit in piece_units:
             normalized = pdf_quantity * batch_scale
 
@@ -129,6 +136,55 @@ class ChatDrawingBomQuantitySemanticsService:
         return PdfQuantityNormalization(
             comparable=True,
             pdf_value=pdf_quantity,
+            evidence_key="bomQuantityPdf",
+            evidence_values={"quantity": cls._format_quantity(pdf_quantity)},
+        )
+
+    @classmethod
+    def _normalize_intermediate_quantity(
+        cls,
+        *,
+        pdf_quantity: float,
+        api_row: StructureQuantityRow,
+        batch_scale: float,
+    ) -> PdfQuantityNormalization:
+        """PI/50xx — PDF qtd por chicote; MI na SG1010 é contagem de lote, não comprimento de cabo."""
+        api_unit = api_row.unit.upper()
+        piece_units = ChatDrawingPatternsService.piece_count_units()
+
+        if api_unit in piece_units:
+            normalized = pdf_quantity * batch_scale
+
+            if batch_scale > 1:
+                return PdfQuantityNormalization(
+                    comparable=True,
+                    pdf_value=normalized,
+                    evidence_key="bomQuantityPdfMilheiro",
+                    evidence_values={
+                        "quantity": cls._format_quantity(pdf_quantity),
+                        "scale": cls._format_quantity(batch_scale),
+                        "normalized": cls._format_quantity(normalized),
+                    },
+                )
+
+            return PdfQuantityNormalization(
+                comparable=True,
+                pdf_value=pdf_quantity,
+                evidence_key="bomQuantityPdf",
+                evidence_values={"quantity": cls._format_quantity(pdf_quantity)},
+            )
+
+        if api_unit in cls._milheiro_batch_units() or api_unit == "UN":
+            return PdfQuantityNormalization(
+                comparable=True,
+                pdf_value=pdf_quantity,
+                evidence_key="bomQuantityPdf",
+                evidence_values={"quantity": cls._format_quantity(pdf_quantity)},
+            )
+
+        return PdfQuantityNormalization(
+            comparable=False,
+            pdf_value=None,
             evidence_key="bomQuantityPdf",
             evidence_values={"quantity": cls._format_quantity(pdf_quantity)},
         )

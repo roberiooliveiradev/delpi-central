@@ -51,6 +51,12 @@ class ChatDrawingBomComparisonService:
             root=root,
             pdf_extract=pdf_extract,
         )
+        pdf_bom_codes = cls._drop_catalog_alternate_duplicates(
+            pdf_bom_codes,
+            catalog_map=ChatDrawingStructureIndexService.collect_catalog_alternate_map(root),
+            api_codes=api_codes,
+            child_cable_parents=cls.collect_child_cable_parents(root),
+        )
         pdf_bom_codes -= ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(
             pdf_extract
         )
@@ -203,3 +209,30 @@ class ChatDrawingBomComparisonService:
             normalized_codes.add(code)
 
         return normalized_codes
+
+    @classmethod
+    def _drop_catalog_alternate_duplicates(
+        cls,
+        pdf_codes: set[str],
+        *,
+        catalog_map: dict[str, str],
+        api_codes: set[str],
+        child_cable_parents: dict[str, set[str]],
+    ) -> set[str]:
+        """Remove MP alternativo do PDF quando o MP canônico ou o PI pai já está no PDF/API."""
+        resolved = set(pdf_codes)
+
+        for alternate, primary in catalog_map.items():
+            if alternate not in resolved:
+                continue
+
+            if primary in resolved or primary in api_codes:
+                resolved.discard(alternate)
+                continue
+
+            parent_intermediates = child_cable_parents.get(primary) or set()
+
+            if parent_intermediates & (resolved | api_codes):
+                resolved.discard(alternate)
+
+        return resolved

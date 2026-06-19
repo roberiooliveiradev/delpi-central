@@ -83,6 +83,37 @@ def test_child_cable_codes_not_counted_as_extra_when_parent_present():
     assert "10130091" in result.missing_in_pdf
 
 
+def test_catalog_alternate_code_dropped_when_parent_intermediate_in_pdf():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50233698",
+                    "description": "CF20BRAN-00232/11/06",
+                    "components": [
+                        {
+                            "code": "10400036",
+                            "description": "CABO SIL = 10400111",
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["50233698", "10400111"],
+        "intermediateCodes": ["50233698"],
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263954",
+    )
+
+    assert "10400111" not in result.extra_in_pdf
+
+
 def test_intermediate_codes_matched_by_description_fill_missing_ocr():
     root = {
         "structure": {

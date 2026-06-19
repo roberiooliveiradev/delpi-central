@@ -489,8 +489,8 @@ class ChatDrawingStructureValidationService:
         if pdf_ref is not None:
             result = ChatDrawingToleranceService.decape_within_tolerance(pdf_ref, expected)
 
-            if result is not None:
-                return result
+            if result is True:
+                return True
 
         for candidate in candidates:
             if ChatDrawingToleranceService.decape_within_tolerance(candidate, expected) is True:

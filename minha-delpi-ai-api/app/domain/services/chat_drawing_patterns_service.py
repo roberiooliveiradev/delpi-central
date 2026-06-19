@@ -95,6 +95,10 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("intermediateSegment")
 
     @classmethod
+    def catalog_alternate_code(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("catalogAlternateCode")
+
+    @classmethod
     def cota_decape_length(cls) -> re.Pattern[str]:
         return cls.compile_stamp("cotaDecapeLength")
 

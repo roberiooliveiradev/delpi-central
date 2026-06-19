@@ -110,3 +110,37 @@ def test_termoencolhivel_mt_without_drawing_length_is_pending_not_mismatch():
 
 def test_batch_scale_for_mi_root():
     assert ChatDrawingBomQuantitySemanticsService.batch_scale_for_root(_root_90264238()) == 1000.0
+
+
+def test_intermediate_pi_mi_quantity_compares_one_to_one():
+    root = {
+        "product": {"code": "90263954", "unit": "MI"},
+        "structure": {
+            "items": [
+                {
+                    "code": "50233698",
+                    "quantity": 1.0,
+                    "unit": "MI",
+                    "type": "PI",
+                    "components": [],
+                }
+            ]
+        },
+    }
+    pdf_extract = {
+        "bomRows": [{"code": "50233698", "quantity": "1"}],
+    }
+
+    pending = ChatDrawingBomQuantityValidationService.collect_pending(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263954",
+    )
+    mismatches = ChatDrawingBomQuantityValidationService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263954",
+    )
+
+    assert not pending
+    assert not mismatches
