@@ -5,9 +5,10 @@
 @import "../components/workspace/agentBuilder/agentBuilderControls.css";
 
 .mdc-chat-agent-actions-page {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  height: 100%;
   background: var(--mdc-bg);
   color: var(--mdc-text);
   overflow: hidden;
@@ -205,8 +206,8 @@
 }
 
 .mdc-chat-agent-actions-page__preview {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
   border-left: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
@@ -216,6 +217,7 @@
 
 .mdc-chat-agent-actions-page__preview-top {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 2rem;
@@ -239,9 +241,12 @@
 
 .mdc-chat-agent-actions-page__preview-card {
   display: grid;
+  flex: 0 1 auto;
   align-content: start;
   justify-items: center;
   gap: 0.78rem;
+  min-height: 0;
+  overflow-y: auto;
   padding: clamp(2rem, 7vh, 4.4rem) clamp(1rem, 4vw, 4rem);
   text-align: center;
 }
@@ -293,13 +298,15 @@
 
 .mdc-chat-agent-actions-page__preview-composer {
   display: grid;
+  flex: 0 0 auto;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 0.65rem;
   width: min(100% - 2rem, 38rem);
   min-height: 3.3rem;
-  justify-self: center;
+  align-self: center;
   margin: 1rem;
+  margin-top: auto;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 76%, transparent);
   border-radius: 999px;
   color: var(--mdc-text-muted);

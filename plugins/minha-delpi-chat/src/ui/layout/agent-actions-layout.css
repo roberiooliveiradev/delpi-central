@@ -2,6 +2,7 @@
 
 .mdc-chat-agent-actions-page__layout {
   display: grid;
+  flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
@@ -29,7 +30,7 @@
     height: auto;
     align-self: stretch;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
   }
 }
 
@@ -97,6 +98,7 @@
 
 .mdc-chat-agent-actions-page__preview-toggle {
   display: none;
+  flex: 0 0 auto;
   margin: 0 clamp(0.9rem, 2vw, 1.35rem) var(--mdc-space-3);
   align-items: center;
   justify-content: center;
@@ -143,14 +145,15 @@
   }
 
   .mdc-chat-agent-actions-page__preview--visible {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     order: 2;
     position: static;
     width: 100%;
     max-width: none;
     height: auto;
     max-height: min(48vh, 24rem);
-    overflow-y: auto;
+    overflow: hidden;
     border-left: 0;
     border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
   }
