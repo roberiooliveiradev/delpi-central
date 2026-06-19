@@ -73,6 +73,35 @@ class ChatDrawingProductCodeResolutionService:
         return current_code, current_source
 
     @classmethod
+    def resolve_explicit_codes_without_attachment(
+        cls,
+        *,
+        message: str | None,
+        user_context_items: list | None = None,
+    ) -> tuple[tuple[str, ...], str | None]:
+        """Sem PDF anexado: só códigos na mensagem ou chips de contexto (sem histórico)."""
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        message_codes = ChatAnalysisIntentService.extract_all_product_codes(message or "")
+
+        if message_codes:
+            return tuple(message_codes), "message"
+
+        context_codes = ChatUserContextItemService.resolve_all_product_codes_from_items(
+            user_context_items
+        )
+
+        if context_codes:
+            return tuple(context_codes), "context"
+
+        return (), None
+
+    @classmethod
     def extract_product_code_from_filename(cls, filename: str | None) -> str | None:
         stem = Path(str(filename or "").strip()).stem
 

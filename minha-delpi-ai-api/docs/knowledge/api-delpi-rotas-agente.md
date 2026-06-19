@@ -57,6 +57,8 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | Dados cadastrais (descrição, tipo, unidade) | `GET /products/{code}` | `get_product_detail` |
 | Resumo completo (cadastro + estoque + preços) | `GET /products/{code}/summary` | `get_product_summary` |
 | Análise completa / ficha detalhada | `GET /products/{code}/analyser` | `get_product_analyser` |
+| **PDF do desenho (biblioteca FILESERVER)** | `GET /products/{code}/drawing` | `get_product_drawing` |
+| **Download PDF do desenho** | `GET /products/{code}/drawing/pdf` | `get_product_drawing_pdf` |
 | Saldo / estoque / disponível **de um código** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM / componentes | `GET /products/{code}/structure` | `get_product_structure` |
 | Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
@@ -118,6 +120,8 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - "Simule aumento de 10% nos materiais do 90261255" → `GET /products/{code}/cost-impact-simulation?adjustment_percent=10`
 - "Diretivas 90260882" / "Diretivas 10018137" → `GET /products/directives/{identifier}`
 - "Qual o preço de venda do 10080001?" → `GET /products/{code}/pricing` (**não** usar rotas de compra MP)
+- "Analise o desenho 90262957" (sem anexo) → chat usa `GET /products/90262957/drawing/pdf` internamente + `GET /products/90262957/analyser`
+- "Validar cotas do desenho" (sem código nem PDF) → pedir código na mensagem (não herda histórico)
 
 ---
 

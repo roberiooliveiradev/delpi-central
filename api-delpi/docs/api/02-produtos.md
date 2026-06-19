@@ -287,7 +287,36 @@ Preços comerciais (tabelas de preço).
 
 Visão consolidada (“analisador”) com múltiplas dimensões do produto em uma única chamada. Os blocos `structure`, `guide` e `inspection` aplicam vigência da BOM (hoje).
 
-**Uso típico:** tela de detalhe do plugin Dashboard DELPI.
+**Uso no chat:** tela de detalhe do plugin Dashboard DELPI; skill `drawing-analysis-delpi` em turnos de validação PDF × Protheus (`view=full` obrigatório).
+
+---
+
+## GET /products/{code}/drawing
+
+Metadados do PDF técnico na biblioteca corporativa (FILESERVER).
+
+| Campo em `data` | Descrição |
+|-----------------|-----------|
+| `filename` | Nome do arquivo resolvido |
+| `revision` | Revisão extraída de `_R{NN}` no nome, se houver |
+| `size_bytes` | Tamanho em bytes |
+| `modified_at` | ISO-8601 UTC |
+
+**operationId:** `get_product_drawing` · **shape:** `scalar` · **entity:** `product_drawing`
+
+**Uso no chat:** verificar existência do desenho antes do download; a skill usa principalmente `/drawing/pdf`.
+
+Doc completa: [14-desenhos-pdf.md](./14-desenhos-pdf.md).
+
+---
+
+## GET /products/{code}/drawing/pdf
+
+Download inline do PDF (`application/pdf`). Resposta **binária** — fora do envelope JSON.
+
+**operationId:** `get_product_drawing_pdf` · **shape:** `document_export`
+
+**Uso no chat:** `ChatDrawingLibraryService` baixa o arquivo quando o usuário informa o código sem anexar PDF.
 
 ---
 

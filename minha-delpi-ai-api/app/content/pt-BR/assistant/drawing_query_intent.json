@@ -163,8 +163,9 @@
   ],
   "directAnswers": {
     "skillDisabled": "Para análise de desenhos técnicos DELPI, habilite a skill **Análise de Desenhos DELPI** (`drawing-analysis-delpi`) no agente desta conversa.",
-    "missingPdf": "Para analisar o desenho, preciso que você anexe o PDF.",
-    "missingProductCode": "Informe o código DELPI do produto (ex.: 90260140) ou anexe um PDF com carimbo legível para eu consultar a API e gerar o relatório técnico."
+    "missingPdf": "Para analisar o desenho sem anexo, informe o código DELPI do produto na mensagem (ex.: 90260140). Você também pode anexar o PDF.",
+    "missingProductCode": "Informe o código DELPI do produto na mensagem (ex.: 90260140) ou anexe um PDF com carimbo legível. Sem código e sem PDF não consigo buscar o desenho na biblioteca nem gerar o relatório técnico.",
+    "drawingLibraryNotFound": "Não encontrei o PDF do desenho na biblioteca corporativa para o produto {code}. Anexe o arquivo ou confira o código informado."
   },
   "llmFallback": {
     "policyFile": "drawing-report-llm-fallback.md",

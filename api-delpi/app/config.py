@@ -105,6 +105,11 @@ class Settings:
         "AUDIT_5S_NC_UPLOAD_DIR",
         default="/app/data/audit-5s-nc",
     )
+    DRAWING_PDF_LIBRARY_DIR: str = _get_env(
+        "DRAWING_PDF_LIBRARY_DIR",
+        "DESENHOS_PDF_DIR",
+        default="/app/data/drawing-pdfs",
+    )
 
     TRANSFORMA_MAIS_SHEET_ID: str | None = _get_env("TRANSFORMA_MAIS_SHEET_ID")
     TRANSFORMA_MAIS_GID_PROCESSOS: str | None = _get_env("TRANSFORMA_MAIS_GID_PROCESSOS")

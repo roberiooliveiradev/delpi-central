@@ -22,6 +22,7 @@ A funcionalidade deve ser uma **skill de plataforma** (`drawing-analyser`), regi
 | Conhecimento normativo | Docs ingeridos no RAG do agente (`drawing_analyser`, `drawing_rules`, `drawing_requirements`, `validation_rules`, códigos 50xx) | Mesmo RAG + policy da skill |
 | API operacional | `GET /products/{code}/analyser` em **api-delpi** e **api-externa** (mesma action `get_product_analyser`) | Fast path / roteamento automático quando houver código + PDF |
 | PDF anexado na sessão | Anexo vira `session_source` no RAG (texto extraído se houver) | Pipeline dedicado: visão/OCR estruturado + checklist |
+| PDF **sem anexo** | Não suportado | `ChatDrawingLibraryService` → `GET /products/{code}/drawing/pdf` (api-delpi) + OCR |
 | Relatório técnico | LLM responde genericamente com contexto RAG | Formato padronizado (✅ / ⚠️ / ❌) alinhado ao GPT legado |
 | Herança por agente | Não existe skill `drawing-analyser` | Agente habilita skill; engenharia/qualidade podem ser default |
 
@@ -99,6 +100,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | 12.3.2b | Decape E/D por lado; nota de máquina; sem falso positivo global 6 mm × `04/06` (`90264206`) | ✅ jun/2026 |
 | 12.3.3 | Classificação consolidada ✅ / ⚠️ / ❌ por seção do checklist | ✅ |
 | 12.3.4 | Integração em `ChatToolContextService` / action `get_product_analyser` com parâmetros de profundidade | ✅ (`page_size=50`, `max_depth=10`) |
+| 12.3.5 | Biblioteca PDF api-delpi sem anexo (`ChatDrawingLibraryService` + rotas `/drawing`, `/drawing/pdf`) | ✅ jun/2026 |
 
 ### 12.4 — UX e apresentação
 

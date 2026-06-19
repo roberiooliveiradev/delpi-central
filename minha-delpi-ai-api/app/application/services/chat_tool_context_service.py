@@ -118,9 +118,11 @@ class ChatToolContextService:
         web_search_exclusive = preparation.web_search_exclusive
         drawing_analysis_mode = preparation.drawing_analysis_mode
         drawing_product_code = preparation.drawing_product_code
+        drawing_product_codes = preparation.drawing_product_codes
         drawing_product_code_source = preparation.drawing_product_code_source
         drawing_has_pdf = preparation.drawing_has_pdf
         drawing_pdf_extract = preparation.drawing_pdf_extract
+        drawing_library_fetch = preparation.drawing_library_fetch
         drawing_runtime_skills = preparation.drawing_runtime_skills
         paginated_service = preparation.paginated_service
 
@@ -174,9 +176,11 @@ class ChatToolContextService:
             execution=execution,
             drawing_analysis_mode=drawing_analysis_mode,
             drawing_product_code=drawing_product_code,
+            drawing_product_codes=drawing_product_codes,
             drawing_product_code_source=drawing_product_code_source,
             drawing_has_pdf=drawing_has_pdf,
             drawing_pdf_extract=drawing_pdf_extract,
+            drawing_library_fetch=drawing_library_fetch,
             drawing_runtime_skills=drawing_runtime_skills,
             on_stream_activity=on_stream_activity,
         )

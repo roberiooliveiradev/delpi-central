@@ -46,7 +46,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 |---|---|
 | [00-visao-geral.md](./00-visao-geral.md) | Convenções, autenticação, formato de resposta, permissões e arquitetura. |
 | [01-health.md](./01-health.md) | Health checks globais e do módulo Strategic Indicators. |
-| [02-produtos.md](./02-produtos.md) | Busca, estrutura, playbooks fabril, estoque, NF-es, vendas e analisador de produto. |
+| [02-produtos.md](./02-produtos.md) | Busca, estrutura, playbooks fabril, estoque, NF-es, vendas, analisador e **biblioteca PDF de desenhos**. |
 | [03-vendas.md](./03-vendas.md) | Listagem de ordens de venda. |
 | [04-sistema-e-dados.md](./04-sistema-e-dados.md) | Metadados Protheus (SX2/SX3/SIX/SX9) e execução SQL controlada. |
 | [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) | Redirecionamento → API dedicada SI ([doc oficial](../../strategic-indicators-api/docs/README.md)). |
@@ -54,6 +54,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [11-guia-agente-chat.md](./11-guia-agente-chat.md) | Mapa intenção → rota para agentes do Minha DELPI Chat (OpenAPI). |
 | [13-producao-operacional.md](./13-producao-operacional.md) | Playbook 15 — consumo, OPs, perdas, programação, ranking de compras (sem SQL). |
+| [14-desenhos-pdf.md](./14-desenhos-pdf.md) | Biblioteca PDF de desenhos DELPI (FILESERVER) + integração chat. |
 | [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md) | Homologação sem VPN TOTVS (rotas Google Sheets + pytest). |
 
 ## Permissões principais

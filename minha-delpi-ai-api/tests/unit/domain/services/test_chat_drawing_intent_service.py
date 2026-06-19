@@ -38,4 +38,4 @@ def test_normalize_skill_alias():
 
 
 def test_missing_pdf_answer():
-    assert "anexe o pdf" in ChatDrawingIntentService.build_missing_pdf_answer().lower()
+    assert "código delpi" in ChatDrawingIntentService.build_missing_pdf_answer().lower()

@@ -340,6 +340,10 @@ services:
       KNOWLEDGE_CHUNK_SIZE: 1400
       KNOWLEDGE_CHUNK_OVERLAP: 200
 
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-60}
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN}
+
     volumes:
       - ../minha-delpi-ai-api:/app
       - ../shared/delpi_auth:/app/delpi_auth
@@ -783,6 +787,7 @@ services:
       SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID: ${SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID:-}
 
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
+      DRAWING_PDF_LIBRARY_DIR: ${DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -794,6 +799,7 @@ services:
     volumes:
       - ../api-delpi:/app
       - ../shared:/shared
+      - ../minha-delpi-ai-api/desenhos:/drawing-pdfs:ro
 
     depends_on:
       keycloak:

@@ -39,6 +39,8 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Dados cadastrais (leve) | `GET /products/{code}` | `get_product_detail` |
 | Resumo produto + estoque + preços | `GET /products/{code}/summary` | `get_product_summary` |
 | Ficha analítica (multi-dimensão) | `GET /products/{code}/analyser` | `get_product_analyser` |
+| **PDF do desenho técnico (biblioteca)** | `GET /products/{code}/drawing` | `get_product_drawing` |
+| **Download PDF do desenho** | `GET /products/{code}/drawing/pdf` | `get_product_drawing_pdf` |
 | Estoque/saldo **do item** | `GET /products/{code}/stock` | `get_product_stock` |
 | Estrutura / BOM | `GET /products/{code}/structure` | `get_product_structure` |
 | Estrutura + MPs exclusivas | `GET /products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` |
@@ -68,6 +70,9 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Diretivas por código DELPI ou referência do cliente (BOM + fornecedores + última compra das MPs) | `/directives/{identifier}` | `/structure` + `/suppliers` + `/last-purchase` em loop |
 | Ficha multi-dimensão explícita | `/analyser?view=full` | — |
 | Visão leve multi-dimensão (chat) | `/analyser?view=summary` | `view=full` sem necessidade |
+| Análise de desenho DELPI **sem anexo** (chat busca PDF) | `/drawing/pdf` + `/analyser` | — (orquestração interna `ChatDrawingLibraryService`) |
+
+**Skill `drawing-analysis-delpi`:** com código na mensagem e sem PDF, o chat **não** chama `/drawing` via LLM — o pipeline pré-turno baixa `/drawing/pdf` e extrai OCR antes do `/analyser`. Ver [14-desenhos-pdf.md](./14-desenhos-pdf.md).
 
 Respostas `composite_analysis` incluem `meta.sections[]` com `{ key, label, itemCount, truncated }` para o chat sinalizar cobertura parcial.
 

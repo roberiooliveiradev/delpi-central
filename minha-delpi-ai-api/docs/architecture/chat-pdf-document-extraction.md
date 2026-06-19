@@ -44,7 +44,37 @@ Consumidores:
   · ChatDocumentVisionService._stage_native — visão de documentos (perfil generic)
   · ChatDrawingPdfExtractionService.extract_from_storage_path — perfil drawing_delpi + parse DELPI
   · ChatDocumentVisionService (auto) — Tesseract/VLM quando legibilidade insuficiente
+  · ChatDrawingLibraryService — PDF da biblioteca api-delpi quando não há anexo (jun/2026)
 ```
+
+---
+
+## Biblioteca corporativa (sem anexo PDF)
+
+Quando o usuário pede análise de desenho **com código na mensagem** (ou chip de contexto) e **sem** `attachment_ids`, o pipeline não exige upload:
+
+```text
+Mensagem + código explícito (sem PDF anexado)
+  → ChatDrawingAnalysisTurnService
+        · resolve_explicit_codes_without_attachment (mensagem ou userContextItems)
+        · não herda código do histórico
+  → ChatToolContextPreTurnService
+        · ChatDrawingLibraryService.fetch_pdf
+              GET {DELPI_API_URL}/products/{code}/drawing
+              GET {DELPI_API_URL}/products/{code}/drawing/pdf
+        · cache em drawing-library-cache/{code}/
+        · ChatDocumentVisionTurnService.run_drawing_vision_from_storage_path
+  → get_product_analyser + ChatDrawingValidationOrchestrationService
+```
+
+| Regra | Comportamento |
+|-------|----------------|
+| Sem código e sem PDF | `build_missing_product_code_answer` (`drawing_query_intent.json`) |
+| Código sem PDF na biblioteca | `build_drawing_library_not_found_answer` |
+| Vários códigos na mensagem | Análise completa do **primeiro** neste turno; demais em `drawingProductCodes` no metadata |
+| Com PDF anexado | Fluxo anterior (storage do anexo) — biblioteca não é consultada |
+
+Rotas api-delpi: [14-desenhos-pdf.md](../../../api-delpi/docs/api/14-desenhos-pdf.md).
 
 ---
 

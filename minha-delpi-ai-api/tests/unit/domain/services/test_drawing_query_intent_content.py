@@ -11,8 +11,12 @@ def test_drawing_query_intent_bundle_has_vocabulary():
 
 def test_drawing_query_intent_direct_answers_from_json():
     assert "drawing-analysis-delpi" in ChatDrawingIntentService.build_skill_disabled_answer()
-    assert "anexe o pdf" in ChatDrawingIntentService.build_missing_pdf_answer().lower()
+    assert "código delpi" in ChatDrawingIntentService.build_missing_pdf_answer().lower()
+    assert "biblioteca" in ChatDrawingIntentService.build_missing_product_code_answer().lower()
     assert "90260140" in ChatDrawingIntentService.build_missing_product_code_answer()
+    assert "90262957" in ChatDrawingIntentService.build_drawing_library_not_found_answer(
+        "90262957"
+    )
 
 
 def test_conformidade_delpi_trigger_from_json_bundle():

@@ -142,8 +142,21 @@ Implementação prevista: `ChatDrawingIntentService` — não confundir com busc
 |-------|------|
 | PDF + intent drawing | Pipeline modo drawing; desliga fast path genérico incorreto |
 | Código na mensagem ou carimbo (OCR) | Dispara `get_product_analyser` |
-| Sem PDF | Resposta fixa: pedir anexo |
+| **Código na mensagem, sem PDF** | `ChatDrawingLibraryService` busca PDF em `GET /products/{code}/drawing/pdf` (api-delpi) |
+| Sem PDF **e** sem código explícito | Resposta fixa: pedir código (`missingProductCode`) |
 | Agente sem skill | Orientar habilitar skill ou negar pipeline drawing |
+
+### 4.4 Biblioteca PDF (sem anexo) — jun/2026
+
+Pré-requisitos para análise **sem upload**:
+
+1. Skill `drawing-analysis-delpi` ativa no agente.
+2. **Código DELPI** na mensagem (ex.: «analise o desenho 90262957») **ou** chip de contexto com o código.
+3. PDF existente na pasta corporativa (`DRAWING_PDF_LIBRARY_DIR` na api-delpi).
+
+O chat **não** reutiliza código de turnos anteriores para buscar na biblioteca. Vários códigos na mesma frase: análise completa do primeiro; os demais ficam em `drawingProductCodes` no metadata do turno.
+
+Rotas api-delpi: [`14-desenhos-pdf.md`](../../../../api-delpi/docs/api/14-desenhos-pdf.md). Módulo: `ChatDrawingLibraryService` · doc: [`chat-pdf-document-extraction.md`](../architecture/chat-pdf-document-extraction.md).
 
 ---
 

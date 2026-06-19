@@ -28,9 +28,11 @@ class ToolTurnPreparation:
     web_search_exclusive: bool = False
     drawing_analysis_mode: bool = False
     drawing_product_code: str | None = None
+    drawing_product_codes: tuple[str, ...] = ()
     drawing_product_code_source: str | None = None
     drawing_has_pdf: bool = False
     drawing_pdf_extract: dict | None = None
+    drawing_library_fetch: dict | None = None
     drawing_runtime_skills: dict | None = None
     paginated_service: ChatPaginatedExternalActionService | None = None
 
@@ -70,6 +72,12 @@ class ChatToolContextPreTurnService:
 
         if isinstance(memory, dict):
             workspace["workingMemory"] = memory
+
+        user_context_items = (
+            list(memory.get("userContextItems") or [])
+            if isinstance(memory, dict)
+            else None
+        )
 
         host._build_workspace_context = workspace
 
@@ -136,6 +144,7 @@ class ChatToolContextPreTurnService:
             skills=drawing_runtime_skills,
             previous_messages=previous_messages,
             attachment_context=attachment_context,
+            user_context_items=user_context_items,
         )
 
         if drawing_turn and drawing_turn.direct_answer:
@@ -159,9 +168,77 @@ class ChatToolContextPreTurnService:
             drawing_turn and drawing_turn.active and drawing_turn.skill_enabled
         )
         drawing_product_code = drawing_turn.product_code if drawing_turn else None
-        drawing_product_code_source = "turn" if drawing_product_code else None
+        drawing_product_codes = drawing_turn.product_codes if drawing_turn else ()
+        drawing_product_code_source = (
+            drawing_turn.product_code_source if drawing_turn else None
+        )
         drawing_has_pdf = bool(drawing_turn and drawing_turn.has_pdf_attachment)
         drawing_pdf_extract = None
+        drawing_library_fetch = None
+
+        if (
+            drawing_analysis_mode
+            and not drawing_has_pdf
+            and drawing_product_code
+        ):
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+            from app.domain.services.chat_drawing_library_service import (
+                ChatDrawingLibraryService,
+            )
+
+            if on_stream_activity:
+                on_stream_activity(
+                    ChatStreamActivityService.drawing_analysis_step(
+                        step_key="fetch_library_pdf",
+                        message=ChatStreamActivityService._drawing_stage_message(
+                            "fetch_library_pdf"
+                        )
+                        or "Buscando desenho na biblioteca corporativa…",
+                        state="active",
+                    )
+                )
+
+            library_result = ChatDrawingLibraryService.fetch_pdf(
+                product_code=drawing_product_code,
+                access_token=access_token,
+            )
+
+            if library_result:
+                drawing_has_pdf = True
+                drawing_library_fetch = {
+                    "productCode": library_result.product_code,
+                    "filename": library_result.filename,
+                    "storagePath": library_result.storage_path,
+                    "source": library_result.source,
+                    "metadata": library_result.metadata,
+                }
+            elif drawing_turn and drawing_turn.requires_pdf:
+                from app.domain.services.chat_drawing_intent_service import (
+                    ChatDrawingIntentService,
+                )
+
+                return ToolTurnPreparation(
+                    early_result=host._finalize_tool_context_result(
+                        message=raw_message,
+                        previous_messages=previous_messages,
+                        result={
+                            "context": "",
+                            "toolCalls": [],
+                            "nativeToolCalling": {
+                                "used": False,
+                                "providerSupports": False,
+                            },
+                            "directAnswer": ChatDrawingIntentService.build_drawing_library_not_found_answer(
+                                drawing_product_code
+                            ),
+                            "skipRag": True,
+                            "drawingAnalysisMode": True,
+                            "currentMessage": raw_message,
+                        },
+                    ),
+                )
 
         if drawing_analysis_mode and drawing_has_pdf:
             from app.application.services.chat_document_vision_turn_service import (
@@ -172,36 +249,53 @@ class ChatToolContextPreTurnService:
             )
 
             drawing_pdf_extract = {}
-            if attachment_context:
-                drawing_pdf_extract = (
-                    ChatDrawingPdfExtractionService.parse_from_attachment_context(
-                        attachment_context
-                    )
-                    or {}
-                )
 
-            drawing_pdf_extract, _vision_activation = (
-                ChatDocumentVisionTurnService.run_drawing_vision_with_progress(
-                    parsed=drawing_pdf_extract,
-                    user_id=str(user_id) if user_id else None,
-                    session_id=session_id,
-                    attachment_ids=attachment_ids,
-                    skills=drawing_runtime_skills,
-                    on_stream_activity=on_stream_activity,
+            if drawing_library_fetch:
+                drawing_pdf_extract, _vision_activation = (
+                    ChatDocumentVisionTurnService.run_drawing_vision_from_storage_path(
+                        parsed=drawing_pdf_extract,
+                        storage_path=str(drawing_library_fetch["storagePath"]),
+                        filename=str(drawing_library_fetch["filename"]),
+                        skills=drawing_runtime_skills,
+                        on_stream_activity=on_stream_activity,
+                    )
                 )
-            )
+            else:
+                if attachment_context:
+                    drawing_pdf_extract = (
+                        ChatDrawingPdfExtractionService.parse_from_attachment_context(
+                            attachment_context
+                        )
+                        or {}
+                    )
+
+                drawing_pdf_extract, _vision_activation = (
+                    ChatDocumentVisionTurnService.run_drawing_vision_with_progress(
+                        parsed=drawing_pdf_extract,
+                        user_id=str(user_id) if user_id else None,
+                        session_id=session_id,
+                        attachment_ids=attachment_ids,
+                        skills=drawing_runtime_skills,
+                        on_stream_activity=on_stream_activity,
+                    )
+                )
 
             from app.domain.services.chat_drawing_product_code_resolution_service import (
                 ChatDrawingProductCodeResolutionService,
             )
 
-            attachment_filename = (
-                ChatDrawingProductCodeResolutionService.resolve_attachment_filename(
-                    user_id=str(user_id) if user_id else None,
-                    session_id=session_id,
-                    attachment_ids=attachment_ids,
+            attachment_filename = None
+
+            if drawing_library_fetch:
+                attachment_filename = str(drawing_library_fetch.get("filename") or "")
+            else:
+                attachment_filename = (
+                    ChatDrawingProductCodeResolutionService.resolve_attachment_filename(
+                        user_id=str(user_id) if user_id else None,
+                        session_id=session_id,
+                        attachment_ids=attachment_ids,
+                    )
                 )
-            )
             drawing_pdf_extract = (
                 ChatDrawingProductCodeResolutionService.enrich_pdf_extract_conflicts(
                     drawing_pdf_extract,
@@ -380,9 +474,11 @@ class ChatToolContextPreTurnService:
             web_search_exclusive=web_search_exclusive,
             drawing_analysis_mode=drawing_analysis_mode,
             drawing_product_code=drawing_product_code,
+            drawing_product_codes=drawing_product_codes,
             drawing_product_code_source=drawing_product_code_source,
             drawing_has_pdf=drawing_has_pdf,
             drawing_pdf_extract=drawing_pdf_extract,
+            drawing_library_fetch=drawing_library_fetch,
             drawing_runtime_skills=drawing_runtime_skills,
             paginated_service=ChatPaginatedExternalActionService(
                 host.execute_tool_use_case,

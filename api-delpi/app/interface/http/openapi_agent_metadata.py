@@ -266,6 +266,26 @@ PRODUCT_ANALYSER = agent_route(
     operation_id="get_product_analyser",
 )
 
+PRODUCT_DRAWING_METADATA = agent_route(
+    summary="Metadados do desenho PDF do produto",
+    description=(
+        "Localiza o PDF técnico DELPI na biblioteca corporativa pelo código do produto. "
+        "Retorna filename, revisão, tamanho e data de modificação. "
+        "Para baixar o arquivo use /products/{code}/drawing/pdf."
+    ),
+    operation_id="get_product_drawing",
+)
+
+PRODUCT_DRAWING_PDF = agent_route(
+    summary="Download do desenho PDF do produto",
+    description=(
+        "Retorna o PDF técnico DELPI da biblioteca corporativa para o código informado. "
+        "Resposta binária application/pdf (inline). "
+        "Prefira /products/{code}/drawing quando só precisar saber se o arquivo existe."
+    ),
+    operation_id="get_product_drawing_pdf",
+)
+
 LMP_LIST = agent_route(
     summary="Listar LMPs (ordens especiais / amostras)",
     description=(

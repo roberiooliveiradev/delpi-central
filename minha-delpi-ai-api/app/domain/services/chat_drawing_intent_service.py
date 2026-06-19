@@ -115,6 +115,23 @@ class ChatDrawingIntentService:
         return cls._direct_answer("missingProductCode")
 
     @classmethod
+    def build_drawing_library_not_found_answer(cls, product_code: str | None = None) -> str:
+        template = cls._direct_answer(
+            "drawingLibraryNotFound",
+            default=(
+                "Não encontrei o PDF do desenho na biblioteca corporativa"
+                + (f" para o produto {product_code}." if product_code else ".")
+                + " Anexe o PDF ou confira o código informado."
+            ),
+        )
+        code = str(product_code or "").strip()
+
+        if code and "{code}" in template:
+            return template.replace("{code}", code)
+
+        return template
+
+    @classmethod
     def build_llm_fallback_policy_addon(
         cls,
         message: str | None,

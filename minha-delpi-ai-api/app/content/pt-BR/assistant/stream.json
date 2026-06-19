@@ -76,6 +76,7 @@
       "document_vision": "Visão de documentos"
     },
     "drawingStages": {
+      "fetch_library_pdf": "Buscando desenho na biblioteca corporativa…",
       "read_pdf": "Lendo documento (PDF ou imagem)…",
       "identify_code": "Identificando código…",
       "query_api": "Consultando API DELPI…",

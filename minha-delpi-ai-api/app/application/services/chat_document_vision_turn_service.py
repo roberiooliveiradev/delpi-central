@@ -132,6 +132,54 @@ class ChatDocumentVisionTurnService:
         return enriched, activation
 
     @classmethod
+    def run_drawing_vision_from_storage_path(
+        cls,
+        *,
+        parsed: dict[str, Any] | None,
+        storage_path: str,
+        filename: str,
+        skills: dict | None = None,
+        on_stream_activity: Callable[..., Any] | None = None,
+    ) -> tuple[dict[str, Any], DocumentVisionActivation]:
+        activation = ChatDocumentVisionSkillService.resolve_drawing_activation(skills)
+
+        if activation.enabled and on_stream_activity:
+            ChatStreamActivityService.emit_document_vision_progress(
+                on_stream_activity,
+                phase="start",
+            )
+            ChatStreamActivityService.emit_document_vision_progress(
+                on_stream_activity,
+                phase="ocr",
+            )
+
+        base = dict(parsed) if isinstance(parsed, dict) else {}
+
+        if not cls.should_run_for_drawing(skills):
+            return base, activation
+
+        vision = ChatDocumentVisionService._extract_drawing_pdf(
+            storage_path,
+            filename=filename,
+        )
+        enriched = ChatDocumentVisionService.merge_into_drawing_parse(base, vision)
+
+        if activation.enabled and on_stream_activity and enriched:
+            engine = (
+                enriched.get("extractor")
+                or enriched.get("visionEngine")
+                or "document_vision"
+            )
+            ChatStreamActivityService.emit_document_vision_progress(
+                on_stream_activity,
+                phase="complete",
+                engine=str(engine),
+                char_count=int(enriched.get("charCount") or 0),
+            )
+
+        return enriched, activation
+
+    @classmethod
     def run_attachment_vision_with_progress(
         cls,
         *,

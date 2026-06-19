@@ -29,9 +29,11 @@ class ChatToolContextResultAssemblyService:
         execution: ToolExecutionState,
         drawing_analysis_mode: bool,
         drawing_product_code: str | None,
+        drawing_product_codes: tuple[str, ...],
         drawing_product_code_source: str | None,
         drawing_has_pdf: bool,
         drawing_pdf_extract: dict | None,
+        drawing_library_fetch: dict | None,
         drawing_runtime_skills: dict | None,
         on_stream_activity,
     ) -> dict:
@@ -247,6 +249,12 @@ class ChatToolContextResultAssemblyService:
         direct_answer = str(result_payload.get("directAnswer") or "").strip() or direct_answer
 
         if result_payload.get("drawingAnalysisMode"):
+            if drawing_library_fetch:
+                result_payload["drawingLibraryFetch"] = drawing_library_fetch
+
+            if drawing_product_codes and len(drawing_product_codes) > 1:
+                result_payload["drawingProductCodes"] = list(drawing_product_codes)
+
             if drawing_pdf_extract:
                 result_payload[
                     "drawingPdfExtractSummary"
