@@ -95,6 +95,60 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("cotaDecapeLength")
 
     @classmethod
+    def segment_length_tolerance(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("segmentLengthTolerance")
+
+    @classmethod
+    def decape_tolerance(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("decapeTolerance")
+
+    @classmethod
+    def glued_tolerance_cota(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("gluedToleranceCota")
+
+    @classmethod
+    def max_segment_length_mm(cls) -> float:
+        raw = ChatAssistantContentService.get(
+            _STAMP_BUNDLE,
+            "dimensionHeuristics",
+            "maxSegmentLengthMm",
+            default="6000",
+        )
+
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return 6000.0
+
+    @classmethod
+    def max_decape_mm(cls) -> float:
+        raw = ChatAssistantContentService.get(
+            _STAMP_BUNDLE,
+            "dimensionHeuristics",
+            "maxDecapeMm",
+            default="50",
+        )
+
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return 50.0
+
+    @classmethod
+    def unlabeled_decape_tolerance_side(cls) -> str:
+        raw = str(
+            ChatAssistantContentService.get(
+                _STAMP_BUNDLE,
+                "dimensionHeuristics",
+                "unlabeledDecapeToleranceSide",
+                default="right",
+            )
+            or "right"
+        ).strip().lower()
+
+        return raw if raw in {"left", "right"} else "right"
+
+    @classmethod
     def generic_decape(cls) -> re.Pattern[str]:
         return cls.compile_stamp("genericDecape")
 

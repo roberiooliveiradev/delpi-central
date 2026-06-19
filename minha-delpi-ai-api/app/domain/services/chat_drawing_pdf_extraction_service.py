@@ -14,6 +14,12 @@ from app.domain.services.chat_drawing_pdf_bom_extraction_service import (
 from app.domain.services.chat_drawing_pdf_product_context_service import (
     ChatDrawingPdfProductContextService,
 )
+from app.domain.services.chat_drawing_product_code_resolution_service import (
+    ChatDrawingProductCodeResolutionService,
+)
+from app.domain.services.chat_pdf_annotation_table_service import (
+    ChatPdfAnnotationTableService,
+)
 
 
 class ChatDrawingPdfExtractionService:
@@ -87,27 +93,34 @@ class ChatDrawingPdfExtractionService:
         metadata: dict | None = None,
     ) -> dict[str, Any]:
         normalized = str(text or "").strip()
-        char_count = len(normalized)
+        meta = metadata if isinstance(metadata, dict) else {}
+        cad_text = cls._cad_reference_text(meta)
+        scope_text = cls._merge_scope_text(normalized, cad_text)
+        char_count = len(scope_text)
 
         from app.domain.services.chat_drawing_stamp_extraction_service import (
             ChatDrawingStampExtractionService,
         )
 
-        stamp_text = str((metadata or {}).get("stampText") or "").strip()
+        stamp_text = str(meta.get("stampText") or "").strip()
+        filename_code = ChatDrawingProductCodeResolutionService.extract_product_code_from_filename(
+            str(meta.get("filename") or "")
+        )
 
         stamp_extract = ChatDrawingStampExtractionService.extract(
-            stamp_text=stamp_text,
-            title_text=cls._title_scope_text(normalized, stamp_text=stamp_text),
+            stamp_text=stamp_text or cad_text[:1200],
+            title_text=cls._title_scope_text(scope_text, stamp_text=stamp_text or cad_text),
+            filename_code=filename_code,
         )
         product_code, stamp_source = ChatDrawingPdfProductContextService.resolve_product_code(
             stamp_extract=stamp_extract,
-            full_text=normalized,
-            metadata=metadata,
+            full_text=scope_text,
+            metadata=meta,
         )
 
         bom_payload = ChatDrawingPdfBomExtractionService.extract(
-            full_text=normalized,
-            metadata=metadata,
+            full_text=scope_text,
+            metadata=meta,
             product_code=product_code,
         )
 
@@ -115,32 +128,41 @@ class ChatDrawingPdfExtractionService:
             ChatDrawingDimensionsExtractionService,
         )
 
-        dimensions_text = str((metadata or {}).get("dimensionsText") or "").strip()
+        dimensions_text = str(meta.get("dimensionsText") or "").strip()
         dimensions = ChatDrawingDimensionsExtractionService.merge_dimensions(
-            ChatDrawingDimensionsExtractionService.extract_dimensions(normalized),
+            ChatDrawingDimensionsExtractionService.extract_dimensions(
+                normalized or cad_text
+            ),
             region_text=dimensions_text,
-            fallback_text=normalized,
+            fallback_text=cad_text or normalized,
         )
 
         component_codes = list(bom_payload.get("componentCodes") or [])
         min_chars = max(1, int(ChatDomainConfigService.chat_drawing_pdf_min_legible_chars()))
         legible = char_count >= min_chars and bool(
-            product_code or cls._extract_revision(normalized) or component_codes
+            product_code or cls._extract_revision(scope_text) or component_codes
+        )
+        revision = (
+            stamp_extract.get("revision")
+            or cls._extract_revision(scope_text)
+            or cls._extract_revision(cad_text)
         )
 
         payload: dict[str, Any] = {
             "productCode": product_code,
             "productCodeSource": stamp_source,
-            "revision": cls._extract_revision(normalized),
-            "internalRevision": cls._extract_internal_revision(normalized),
+            "revision": revision,
+            "internalRevision": cls._extract_internal_revision(scope_text or cad_text),
             "customerReference": cls._extract_labeled_value(
-                normalized,
+                scope_text,
                 labels=("COD. CLIENTE", "COD CLIENTE", "CÓD. CLIENTE", "REFERENCIA CLIENTE"),
             ),
-            "description": cls._extract_labeled_value(
-                normalized,
+            "description": stamp_extract.get("description")
+            or cls._extract_labeled_value(
+                scope_text,
                 labels=("DESCRIÇÃO", "DESCRICAO", "DESCRIPTION"),
-            ),
+            )
+            or cls._extract_chicote_description(scope_text or cad_text),
             "componentCodes": component_codes,
             "intermediateCodes": list(bom_payload.get("intermediateCodes") or []),
             "dimensions": dimensions,
@@ -155,6 +177,14 @@ class ChatDrawingPdfExtractionService:
         if stamp_extract.get("conflicts"):
             payload["conflicts"] = stamp_extract["conflicts"]
 
+        title_block = ChatDrawingStampExtractionService.build_title_block(
+            stamp_extract,
+            raw_text=(stamp_text or cad_text or scope_text)[:800],
+        )
+
+        if title_block:
+            payload["titleBlock"] = title_block
+
         if metadata:
             payload["sourceMetadata"] = metadata
 
@@ -165,6 +195,47 @@ class ChatDrawingPdfExtractionService:
             payload["bomSource"] = bom_payload["bomSource"]
 
         return payload
+
+    @classmethod
+    def _cad_reference_text(cls, metadata: dict[str, Any]) -> str:
+        cad = str(metadata.get("cadReferenceText") or "").strip()
+
+        if cad:
+            return cad
+
+        parts: list[str] = []
+        annotation_text = str(metadata.get("annotationText") or "").strip()
+
+        if annotation_text:
+            parts.append(annotation_text)
+
+        tables = metadata.get("annotationTables")
+
+        if isinstance(tables, list):
+            table_text = ChatPdfAnnotationTableService.table_text(tables).strip()
+
+            if table_text:
+                parts.append(table_text)
+
+        return "\n\n".join(parts).strip()
+
+    @classmethod
+    def _merge_scope_text(cls, full_text: str, cad_text: str) -> str:
+        parts = [part for part in (full_text, cad_text) if str(part or "").strip()]
+        return "\n\n".join(parts).strip()
+
+    @classmethod
+    def _extract_chicote_description(cls, text: str) -> str | None:
+        match = re.search(
+            r"(CHICOTE(?:\s+DE\s+LIGA[ÇC][ÃA]O)?[^\n|]{0,40})",
+            str(text or ""),
+            flags=re.IGNORECASE,
+        )
+
+        if not match:
+            return None
+
+        return match.group(1).strip()[:80]
 
     @classmethod
     def _title_scope_text(cls, text: str, *, stamp_text: str = "") -> str:

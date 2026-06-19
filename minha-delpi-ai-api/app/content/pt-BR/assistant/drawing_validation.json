@@ -265,7 +265,7 @@
     "decape_mismatch": {
       "section": "Cotas",
       "item": "Decape {side} × {code}",
-      "rule": "Decape ±1 mm (intermediário)",
+      "rule": "Decape ±1 mm quando indicado no desenho (intermediário 50xx)",
       "recommendation": "Conferir decape no desenho e na descrição 50xx"
     },
     "segment_length_pending": {

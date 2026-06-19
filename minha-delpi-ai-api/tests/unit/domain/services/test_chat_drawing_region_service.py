@@ -86,9 +86,9 @@ def test_ocr_drawing_regions_marks_detail_metadata(monkeypatch):
     monkeypatch.setattr(
         ChatDrawingRegionService,
         "ocr_region_text",
-        lambda page, *, bbox, matrix, lang, tesseract_config="": fake_ocr_region_text(
+        lambda page, *, bbox, matrix, lang, tesseract_config="", region=None: fake_ocr_region_text(
             page,
-            region=str(bbox),
+            region=str(region or bbox),
             bbox=bbox,
             matrix=matrix,
             lang=lang,

@@ -79,7 +79,15 @@
     "regionOcr": {
       "minChars": 120,
       "engines": ["tesseract", "easyocr", "paddleocr"],
-      "fusionStrategy": "merge_unique_lines"
+      "fusionStrategy": "merge_unique_lines",
+      "bomFusion": {
+        "engines": ["tesseract", "easyocr"],
+        "engineWeights": {
+          "tesseract": 1.0,
+          "easyocr": 1.15
+        },
+        "maxDigitEdits": 2
+      }
     },
     "layoutProfiles": {
       "generic": {

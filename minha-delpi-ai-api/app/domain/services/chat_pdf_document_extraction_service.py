@@ -157,6 +157,15 @@ class ChatPdfDocumentExtractionService:
         if region_texts.get("dimensions"):
             parse_metadata["dimensionsText"] = region_texts["dimensions"]
 
+        cad_reference_text = cls._build_cad_reference_text(
+            embedded,
+            annotation_tables,
+            annotation_text=str(embedded.get("annotationText") or ""),
+        )
+
+        if cad_reference_text:
+            parse_metadata["cadReferenceText"] = cad_reference_text
+
         parse_metadata["stages"] = list(stages)
 
         return {
@@ -267,6 +276,32 @@ class ChatPdfDocumentExtractionService:
         min_chars = ChatDocumentVisionContentService.pdf_region_ocr_min_chars()
 
         return max(embedded_chars, pypdf_chars) < min_chars
+
+    @classmethod
+    def _build_cad_reference_text(
+        cls,
+        embedded: dict[str, Any],
+        annotation_tables: list[dict[str, Any]],
+        *,
+        annotation_text: str = "",
+    ) -> str:
+        parts: list[str] = []
+        combined = str(embedded.get("combinedText") or "").strip()
+
+        if combined:
+            parts.append(combined)
+
+        table_text = ChatPdfAnnotationTableService.table_text(annotation_tables).strip()
+
+        if table_text and table_text not in combined:
+            parts.append(table_text)
+
+        ann = str(annotation_text or "").strip()
+
+        if ann and ann not in "\n".join(parts):
+            parts.append(ann)
+
+        return "\n\n".join(parts).strip()
 
     @classmethod
     def _ocr_layout_regions(

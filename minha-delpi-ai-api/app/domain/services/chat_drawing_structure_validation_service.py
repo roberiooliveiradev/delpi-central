@@ -232,6 +232,9 @@ class ChatDrawingStructureValidationService:
                 if expected is None:
                     continue
 
+                if not cls._decape_side_indicated(dimensions, side_key):
+                    continue
+
                 within = cls._decape_matches_pdf(
                     expected,
                     pdf_ref=pdf_ref,
@@ -281,6 +284,16 @@ class ChatDrawingStructureValidationService:
                 values.append(parsed)
 
         return list(dict.fromkeys(values))
+
+    @classmethod
+    def _decape_side_indicated(cls, dimensions: dict[str, Any], side: str) -> bool:
+        indication = dimensions.get("decapeIndication")
+
+        if isinstance(indication, dict):
+            return bool(indication.get(side))
+
+        key = "leftDecapeMm" if side == "left" else "rightDecapeMm"
+        return dimensions.get(key) is not None
 
     @classmethod
     def _decape_matches_pdf(
@@ -407,9 +420,19 @@ class ChatDrawingStructureValidationService:
             )
 
         if left_decape is not None or right_decape is not None:
-            decape_status = (
-                "ok" if left_decape is not None and right_decape is not None else "pending"
-            )
+            indication = dimensions.get("decapeIndication") if isinstance(
+                dimensions.get("decapeIndication"), dict
+            ) else {}
+            left_indicated = bool(indication.get("left")) if indication else left_decape is not None
+            right_indicated = bool(indication.get("right")) if indication else right_decape is not None
+            decape_status = "ok"
+
+            if left_indicated and left_decape is None:
+                decape_status = "pending"
+
+            if right_indicated and right_decape is None:
+                decape_status = "pending"
+
             items.append(
                 content.item_from_template(
                     "decapes_ed",

@@ -222,6 +222,7 @@ class ChatDrawingRegionService:
         matrix: Any,
         lang: str,
         tesseract_config: str = "",
+        region: str | None = None,
     ) -> str:
         image = cls._render_region_image(page, bbox=bbox, matrix=matrix)
 
@@ -238,6 +239,7 @@ class ChatDrawingRegionService:
                 image,
                 lang=lang,
                 tesseract_config=config,
+                region=region,
             )
 
             return str(result.get("text") or "").strip()
@@ -317,6 +319,7 @@ class ChatDrawingRegionService:
                     processed,
                     lang=lang,
                     tesseract_config=tesseract_config,
+                    region=region,
                 )
                 text = str(ocr_result.get("text") or "").strip()
                 ocr_engine = str(ocr_result.get("engine") or "tesseract")
@@ -388,7 +391,13 @@ class ChatDrawingRegionService:
         candidate_id: str | None = None,
     ) -> tuple[str, dict[str, Any]]:
         detail_regions = set(cls.detail_ocr_regions())
-        base_text = cls.ocr_region_text(page, bbox=bbox, matrix=matrix, lang=lang).strip()
+        base_text = cls.ocr_region_text(
+            page,
+            bbox=bbox,
+            matrix=matrix,
+            lang=lang,
+            region=region,
+        ).strip()
         merged_text = base_text
         detail_meta: dict[str, Any] | None = None
         engine = "tesseract"

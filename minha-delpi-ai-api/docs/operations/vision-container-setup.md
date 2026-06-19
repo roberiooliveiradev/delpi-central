@@ -31,7 +31,7 @@ Config: `app/content/pt-BR/assistant/document_vision.json` → `pdfExtraction.re
 | `paddleocr` | Opcional — descomente em `requirements-vision.txt` | idem |
 | `docling` | Documento inteiro (`CHAT_DOCUMENT_VISION_BACKEND=docling`) | `ChatDocumentVisionService` |
 
-Fusão multi-motor: `ChatPdfRegionOcrFusionService` (linhas com mais códigos de componente prevalecem).
+Fusão multi-motor: `ChatPdfRegionOcrFusionService` — regiões gerais mesclam linhas únicas; **BOM** usa `fuse_bom` (`tesseract`+`easyocr`, pesos em `document_vision.json` → `regionOcr.bomFusion`) e voto por dígito com confiança OCR.
 
 ## Variáveis de ambiente
 

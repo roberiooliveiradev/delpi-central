@@ -183,6 +183,9 @@
     "bomQuantity": "\\b(\\d+[,.]?\\d*)\\s*(?:UN|PCS|PÇ|PC|PEÇAS?)?\\b",
     "intermediateSegment": "(?:CT|CB|CA|CF|CV)\\s*[\\d,.]+[A-Z]{4}\\s*-?\\s*(\\d+)\\s*/\\s*([\\d,.]+)\\s*/\\s*([\\d,.]+)",
     "cotaDecapeLength": "\\b(\\d+)\\s*±\\s*(\\d+)\\s*±\\s*(\\d+)\\b",
+    "segmentLengthTolerance": "\\b(\\d{3,5})\\s*±\\s*(\\d+)\\b",
+    "decapeTolerance": "\\b(\\d{1,2})\\s*±\\s*(\\d+)\\b",
+    "gluedToleranceCota": "\\b(\\d{1,2})±1(\\d{3,4})±(\\d+)\\b",
     "genericDecape": "DEC[A4@]PE?\\s*[:.]?\\s*(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "decapeNote": "DECAPE\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "decapeMachineSide": "DECAPAR\\s+O\\s+LADO\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
@@ -229,6 +232,11 @@
     "pdfDecapeRight": [
       "DECAPE\\s*D(?:IREITO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)"
     ]
+  },
+  "dimensionHeuristics": {
+    "maxSegmentLengthMm": 6000,
+    "maxDecapeMm": 50,
+    "unlabeledDecapeToleranceSide": "right"
   },
   "codeFamilies": {
     "intermediatePrefix": "50",

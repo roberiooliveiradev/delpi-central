@@ -7,6 +7,7 @@ from typing import Any
 from app.domain.services.chat_document_vision_content_service import (
     ChatDocumentVisionContentService,
 )
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_pdf_region_ocr_fusion_service import (
     ChatPdfRegionOcrFusionService,
 )
@@ -33,30 +34,54 @@ class ChatPdfRegionOcrEngineService:
         *,
         lang: str,
         tesseract_config: str = "",
+        region: str | None = None,
     ) -> dict[str, Any]:
         by_engine: dict[str, str] = {}
+        code_tokens_by_engine: dict[str, list[dict[str, Any]]] = {}
         engines_run: list[str] = []
+        normalized_region = str(region or "").strip().lower()
 
-        for engine in cls.enabled_engines():
-            text = cls._run_engine(
+        for engine in cls._engines_for_region(normalized_region):
+            detail = cls._run_engine_detailed(
                 engine,
                 image,
                 lang=lang,
                 tesseract_config=tesseract_config,
             )
+            text = str(detail.get("text") or "").strip()
 
-            if text:
-                by_engine[engine] = text
-                engines_run.append(engine)
+            if not text:
+                continue
 
-        fused = ChatPdfRegionOcrFusionService.fuse(by_engine.values())
+            by_engine[engine] = text
+            code_tokens_by_engine[engine] = list(detail.get("codeTokens") or [])
+            engines_run.append(engine)
+
+        if normalized_region == "bom":
+            fused = ChatPdfRegionOcrFusionService.fuse_bom(
+                by_engine,
+                code_tokens_by_engine=code_tokens_by_engine,
+            )
+            fusion = "bom_weighted"
+        else:
+            fused = ChatPdfRegionOcrFusionService.fuse(by_engine.values())
+            fusion = "merge_unique_lines"
 
         return {
             "text": fused,
             "engines": engines_run,
             "byEngine": by_engine,
+            "codeTokensByEngine": code_tokens_by_engine,
             "engine": cls._engine_label(engines_run),
+            "fusion": fusion,
         }
+
+    @classmethod
+    def _engines_for_region(cls, region: str) -> tuple[str, ...]:
+        if region == "bom":
+            return ChatDocumentVisionContentService.pdf_bom_region_ocr_engines()
+
+        return cls.enabled_engines()
 
     @classmethod
     def _engine_label(cls, engines: list[str]) -> str:
@@ -69,61 +94,169 @@ class ChatPdfRegionOcrEngineService:
         return "+".join(engines)
 
     @classmethod
-    def _run_engine(
+    def _run_engine_detailed(
         cls,
         engine: str,
         image: Any,
         *,
         lang: str,
         tesseract_config: str,
-    ) -> str:
+    ) -> dict[str, Any]:
         if engine == "tesseract":
-            return cls._tesseract(image, lang=lang, tesseract_config=tesseract_config)
+            return cls._tesseract_detailed(
+                image,
+                lang=lang,
+                tesseract_config=tesseract_config,
+            )
 
         if engine == "easyocr":
-            return cls._easyocr(image, lang=lang)
+            return cls._easyocr_detailed(image, lang=lang)
 
         if engine == "paddleocr":
-            return cls._paddleocr(image)
+            text = cls._paddleocr(image)
+            return {
+                "text": text,
+                "codeTokens": cls._extract_code_tokens(text),
+            }
 
-        return ""
+        return {"text": "", "codeTokens": []}
 
     @classmethod
-    def _tesseract(cls, image: Any, *, lang: str, tesseract_config: str) -> str:
+    def _extract_code_tokens(
+        cls,
+        text: str,
+        line_confidences: dict[int, float] | None = None,
+    ) -> list[dict[str, Any]]:
+        pattern = ChatDrawingPatternsService.component_code()
+        tokens: list[dict[str, Any]] = []
+
+        for line_index, line in enumerate(str(text or "").splitlines()):
+            confidence = float((line_confidences or {}).get(line_index, 1.0))
+
+            for code_index, match in enumerate(pattern.finditer(line)):
+                code = str(match.group(1) or "").strip()
+
+                if not code:
+                    continue
+
+                tokens.append(
+                    {
+                        "code": code,
+                        "confidence": confidence,
+                        "lineIndex": line_index,
+                        "codeIndex": code_index,
+                    }
+                )
+
+        return tokens
+
+    @classmethod
+    def _tesseract_detailed(
+        cls,
+        image: Any,
+        *,
+        lang: str,
+        tesseract_config: str,
+    ) -> dict[str, Any]:
         try:
             import pytesseract
+            from pytesseract import Output
         except ImportError:
-            return ""
+            return {"text": "", "codeTokens": []}
 
         try:
-            kwargs: dict[str, Any] = {"lang": lang}
+            kwargs: dict[str, Any] = {
+                "lang": lang,
+                "output_type": Output.DICT,
+            }
             config = str(tesseract_config or "").strip()
 
             if config:
                 kwargs["config"] = config
 
-            return str(pytesseract.image_to_string(image, **kwargs) or "").strip()
+            data = pytesseract.image_to_data(image, **kwargs)
+            line_words: dict[tuple[int, int, int], list[tuple[str, float]]] = {}
+
+            for index, word in enumerate(data.get("text") or []):
+                token = str(word or "").strip()
+
+                if not token:
+                    continue
+
+                try:
+                    confidence = float(data["conf"][index])
+                except (TypeError, ValueError, KeyError):
+                    confidence = -1.0
+
+                if confidence < 0:
+                    continue
+
+                key = (
+                    int(data["block_num"][index]),
+                    int(data["par_num"][index]),
+                    int(data["line_num"][index]),
+                )
+                line_words.setdefault(key, []).append((token, confidence / 100.0))
+
+            lines: list[str] = []
+            line_confidences: dict[int, float] = {}
+
+            for line_index, (_key, words) in enumerate(sorted(line_words.items())):
+                line_text = " ".join(token for token, _confidence in words).strip()
+
+                if not line_text:
+                    continue
+
+                confidences = [value for _token, value in words if value > 0]
+                lines.append(line_text)
+                line_confidences[line_index] = (
+                    sum(confidences) / len(confidences) if confidences else 1.0
+                )
+
+            text = "\n".join(lines).strip()
+            return {
+                "text": text,
+                "codeTokens": cls._extract_code_tokens(text, line_confidences),
+            }
         except Exception:
-            return ""
+            return {"text": "", "codeTokens": []}
 
     @classmethod
-    def _easyocr(cls, image: Any, *, lang: str) -> str:
+    def _easyocr_detailed(cls, image: Any, *, lang: str) -> dict[str, Any]:
         try:
             import easyocr
             import numpy as np
         except ImportError:
-            return ""
+            return {"text": "", "codeTokens": []}
 
         try:
             languages = cls._easyocr_languages(lang)
             reader = easyocr.Reader(languages, gpu=False, verbose=False)
             array = np.array(image.convert("RGB"))
-            chunks = reader.readtext(array, detail=0, paragraph=True)
-            lines = [str(chunk or "").strip() for chunk in chunks if str(chunk or "").strip()]
+            chunks = reader.readtext(array, detail=1, paragraph=False)
+            lines: list[str] = []
+            line_confidences: dict[int, float] = {}
 
-            return "\n".join(lines).strip()
+            for line_index, item in enumerate(chunks):
+                if not isinstance(item, (list, tuple)) or len(item) < 3:
+                    continue
+
+                text = str(item[1] or "").strip()
+                confidence = float(item[2] or 0.0)
+
+                if not text:
+                    continue
+
+                lines.append(text)
+                line_confidences[line_index] = confidence if confidence > 0 else 1.0
+
+            merged = "\n".join(lines).strip()
+            return {
+                "text": merged,
+                "codeTokens": cls._extract_code_tokens(merged, line_confidences),
+            }
         except Exception:
-            return ""
+            return {"text": "", "codeTokens": []}
 
     @classmethod
     def _easyocr_languages(cls, lang: str) -> list[str]:

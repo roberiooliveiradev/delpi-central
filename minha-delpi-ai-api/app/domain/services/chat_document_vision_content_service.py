@@ -282,6 +282,72 @@ class ChatDocumentVisionContentService:
         return ("tesseract",)
 
     @classmethod
+    def pdf_bom_region_ocr_engines(cls) -> tuple[str, ...]:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "pdfExtraction",
+            "regionOcr",
+            "bomFusion",
+            "engines",
+        )
+
+        if isinstance(node, list):
+            engines = tuple(
+                str(item).strip().lower()
+                for item in node
+                if str(item).strip()
+            )
+
+            if engines:
+                return engines
+
+        return ("tesseract", "easyocr")
+
+    @classmethod
+    def pdf_bom_engine_weights(cls) -> dict[str, float]:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "pdfExtraction",
+            "regionOcr",
+            "bomFusion",
+            "engineWeights",
+        )
+
+        if not isinstance(node, dict):
+            return {"tesseract": 1.0, "easyocr": 1.15}
+
+        weights: dict[str, float] = {}
+
+        for key, value in node.items():
+            engine = str(key or "").strip().lower()
+
+            if not engine:
+                continue
+
+            try:
+                weights[engine] = float(value)
+            except (TypeError, ValueError):
+                continue
+
+        return weights or {"tesseract": 1.0, "easyocr": 1.15}
+
+    @classmethod
+    def pdf_bom_fusion_max_digit_edits(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "regionOcr",
+            "bomFusion",
+            "maxDigitEdits",
+            default="2",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 2
+
+    @classmethod
     def pdf_layout_profile_allows_region_ocr(cls, layout_profile: str) -> bool:
         normalized = str(layout_profile or cls.LAYOUT_GENERIC).strip().lower() or cls.LAYOUT_GENERIC
         raw = ChatAssistantContentService.get(

@@ -64,3 +64,40 @@ def test_extract_dimensions_machine_side_note_sets_left_decape():
 
     assert dims["leftDecapeMm"] == 4.0
     assert dims["rightDecapeMm"] == 6.0
+
+
+def test_extract_dimensions_segment_and_decape_tolerance_cad():
+    text = "\n".join(["10±1", "1127±2"] * 4)
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["leftDecapeMm"] is None
+    assert dims["rightDecapeMm"] == 10.0
+    assert dims["decapeIndication"] == {"left": False, "right": True}
+    assert dims["totalLengthMm"] == 1127.0
+    assert dims["segmentLengthsMm"] == [1127.0, 1127.0, 1127.0, 1127.0]
+
+
+def test_extract_dimensions_rejects_glued_tolerance_cota():
+    text = "ABC 10±11127±2\nEBC 10±11127±2"
+
+    dims = ChatDrawingDimensionsExtractionService.extract_dimensions(text)
+
+    assert dims["totalLengthMm"] == 1127.0
+    assert dims["rightDecapeMm"] == 10.0
+    assert dims["leftDecapeMm"] is None
+    assert 11127.0 not in (dims.get("segmentLengthsMm") or [])
+
+
+def test_merge_dimensions_prefers_cad_fallback_when_fused_length_implausible():
+    fused = "ABC 10±11127±2\nEBC 10±11127±2"
+    cad = "\n".join(["10±1", "1127±2"] * 2)
+
+    merged = ChatDrawingDimensionsExtractionService.merge_dimensions(
+        ChatDrawingDimensionsExtractionService.extract_dimensions(fused),
+        fallback_text=cad,
+    )
+
+    assert merged["totalLengthMm"] == 1127.0
+    assert merged["rightDecapeMm"] == 10.0
+    assert merged["leftDecapeMm"] is None

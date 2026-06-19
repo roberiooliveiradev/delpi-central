@@ -106,6 +106,7 @@ Seção **`pdfExtraction`**:
 | `annotationTable.rowClusterTolerancePt` | Tolerância vertical (pt) para agrupar células na mesma linha |
 | `regionOcr.minChars` | Abaixo disso, perfil `drawing_delpi` pode acionar OCR por região |
 | `regionOcr.engines` | Motores por região: `tesseract`, `easyocr`, `paddleocr` (ver [vision-container-setup.md](../operations/vision-container-setup.md)) |
+| `regionOcr.bomFusion` | BOM: só `tesseract`+`easyocr`, pesos por motor e voto por dígito com confiança OCR (sem catálogo API) |
 | `layoutProfiles.generic.enableRegionOcr` | `false` — chat base genérico não corta regiões DELPI |
 | `layoutProfiles.drawing_delpi.enableRegionOcr` | `true` — permite fallback regional na skill desenho |
 
@@ -154,7 +155,7 @@ CT26VERM-00036/04/06-0000-0000  →  comprimento 36 mm, decape E 4 mm, decape D 
 
 | Item template | Regra |
 |---------------|-------|
-| `decape_mismatch` | Decape **esquerdo** do 50xx × `leftDecapeMm` do PDF; **direito** × `rightDecapeMm` (±1 mm) |
+| `decape_mismatch` | Decape do 50xx × PDF **somente no lado indicado** no desenho (`decapeIndication`) — ±1 mm |
 | `decapes_ed` | Apenas indica se E e D foram **lidos** do PDF — não substitui confronto por código |
 | `segment_length_pending` | Cotas de trecho no PDF × comprimentos 50xx (semânticas distintas; pode ficar pendente) |
 
@@ -232,6 +233,7 @@ Estágios após extração base (`native`):
 | **Leitura** | OCR regional multi-motor, anotações ODA, fusão de linhas, parse de BOM/cotas/notas |
 | **Saneamento semântico** | Código do **título** na BOM (fantasma), ruído de **revisão**, cabo-filho já sob 50xx |
 | **Proibido** | Ajustar dígito lido porque «existe na API» — gera falso OK e mascara falha de OCR |
+| **BOM multi-motor** | `ChatPdfRegionOcrFusionService.fuse_bom` — peso `tesseract`/`easyocr` + voto por dígito com confiança OCR |
 
 Melhoria contínua de acurácia: `ChatPdfRegionOcrEngineService`, perfis em `document_vision.json`, homologação em `desenhos/`.
 
