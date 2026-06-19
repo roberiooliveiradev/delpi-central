@@ -177,6 +177,14 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp_list("bomClientReferenceNoise")
 
     @classmethod
+    def bom_stamp_layout_without_table_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("bomStampLayoutWithoutTable")
+
+    @classmethod
+    def bom_description_code_noise_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("bomDescriptionCodeNoise")
+
+    @classmethod
     def client_reference_code_patterns(cls) -> tuple[re.Pattern[str], ...]:
         cache_key = "stamp_list:clientReferenceCodeCapture"
 
@@ -451,9 +459,66 @@ class ChatDrawingPatternsService:
     @classmethod
     def is_finished_product(cls, code: str | None) -> bool:
         normalized = str(code or "").strip()
+
+        if not normalized:
+            return False
+
+        prefixes = cls.code_family_prefixes("finishedProductPrefixes")
+
+        if prefixes:
+            return any(normalized.startswith(prefix) for prefix in prefixes)
+
         prefix = cls.code_family_prefix("finishedProductPrefix", "90")
 
+        return bool(normalized.startswith(prefix))
+
+    @classmethod
+    def is_assembly_pa(cls, code: str | None) -> bool:
+        normalized = str(code or "").strip()
+        prefixes = cls.code_family_prefixes("assemblyProductPrefixes")
+
+        if prefixes:
+            return any(normalized.startswith(prefix) for prefix in prefixes)
+
+        prefix = cls.code_family_prefix("assemblyProductPrefix", "70")
+
         return bool(normalized and normalized.startswith(prefix))
+
+    @classmethod
+    def is_sample_pa(cls, code: str | None) -> bool:
+        normalized = str(code or "").strip()
+        prefixes = cls.code_family_prefixes("sampleProductPrefixes")
+
+        return bool(
+            normalized and prefixes and any(normalized.startswith(prefix) for prefix in prefixes)
+        )
+
+    @classmethod
+    def is_chicote_leaf_pa(cls, code: str | None) -> bool:
+        normalized = str(code or "").strip()
+
+        if not normalized:
+            return False
+
+        chicote_prefix = cls.code_family_prefix("finishedProductPrefix", "90")
+
+        return normalized.startswith(chicote_prefix) or cls.is_sample_pa(normalized)
+
+    @classmethod
+    def is_nested_chicote_in_assembly_bom(
+        cls,
+        code: str | None,
+        assembly_code: str | None,
+    ) -> bool:
+        normalized = str(code or "").strip()
+        assembly = str(assembly_code or "").strip()
+
+        if not normalized or not assembly or not cls.is_assembly_pa(assembly):
+            return False
+
+        chicote_prefix = cls.code_family_prefix("nestedChicotePrefix", "90")
+
+        return normalized.startswith(chicote_prefix)
 
     @classmethod
     def is_primary_drawing_code(cls, code: str | None) -> bool:

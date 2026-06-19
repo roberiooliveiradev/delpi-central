@@ -50,3 +50,16 @@ def test_dedupe_keeps_distinct_codes_without_catalog_reconcile():
     )
 
     assert codes == ["10091640", "40091640"]
+
+
+def test_nested_component_codes_skip_ptc_temperature_noise():
+    rows = [
+        {
+            "code": "10250032",
+            "description": "TERMISTOR PTC 130°C 10084053",
+        }
+    ]
+
+    codes = ChatDrawingBomRowSanitizationService.nested_component_codes(rows)
+
+    assert codes == []

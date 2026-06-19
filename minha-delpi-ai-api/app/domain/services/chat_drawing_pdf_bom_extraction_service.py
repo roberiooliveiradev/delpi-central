@@ -39,6 +39,7 @@ class ChatDrawingPdfBomExtractionService:
         bom_sources = ChatPdfBomSourceService.build_sources(
             full_text=normalized,
             metadata=metadata,
+            product_code=product_code,
         )
 
         bom_rows, component_codes, bom_source = ChatDocumentVisionBomService.resolve_from_sources(

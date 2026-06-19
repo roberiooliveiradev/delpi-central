@@ -6,6 +6,9 @@ from typing import Any
 
 from app.domain.services.chat_document_vision_bom_service import ChatDocumentVisionBomService
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_product_code_resolution_service import (
+    ChatDrawingProductCodeResolutionService,
+)
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
@@ -29,11 +32,17 @@ class ChatDrawingRegionalScopeService:
         *,
         metadata: dict[str, Any] | None,
         full_text: str = "",
+        product_code: str | None = None,
     ) -> dict[str, Any]:
         meta = metadata if isinstance(metadata, dict) else {}
         region_texts = meta.get("regionTexts") if isinstance(meta.get("regionTexts"), dict) else {}
 
-        bom_scope = cls._resolve_bom_scope(meta, region_texts, full_text)
+        bom_scope = cls._resolve_bom_scope(
+            meta,
+            region_texts,
+            full_text,
+            product_code=product_code,
+        )
         dimensions_scope = cls._resolve_dimensions_scope(meta, region_texts, full_text)
         stamp_scope = cls._resolve_stamp_scope(meta, region_texts)
 
@@ -211,12 +220,25 @@ class ChatDrawingRegionalScopeService:
         meta: dict[str, Any],
         region_texts: dict[str, Any],
         full_text: str,
+        *,
+        product_code: str | None = None,
     ) -> dict[str, Any]:
         candidates: list[tuple[str, str, str]] = []
+        exclude_product = str(product_code or "").strip()
+
+        if not exclude_product:
+            exclude_product = (
+                ChatDrawingProductCodeResolutionService.extract_product_code_from_filename(
+                    str(meta.get("filename") or "")
+                )
+                or ""
+            )
 
         bom_region = str(region_texts.get("bom") or meta.get("bomText") or "").strip()
 
-        if bom_region:
+        if bom_region and not ChatDocumentVisionBomService.is_stamp_layout_without_bom(
+            bom_region
+        ):
             candidates.append(("bom_region", bom_region, bom_region))
 
         stamp_text = str(region_texts.get("stamp") or meta.get("stampText") or "").strip()
@@ -262,15 +284,26 @@ class ChatDrawingRegionalScopeService:
         best_score = -1
 
         for source_key, candidate_text, _raw in candidates:
-            score = ChatDocumentVisionBomService.score_bom_text(candidate_text)
+            score = ChatDocumentVisionBomService.score_bom_text(
+                candidate_text,
+                exclude_product_code=exclude_product or None,
+            )
 
             if score <= best_score:
                 continue
 
             rows = ChatDocumentVisionBomService.extract_bom_rows(
                 candidate_text,
+                exclude_product_code=exclude_product or None,
                 region_scoped=True,
             )
+            meaningful_codes = ChatDocumentVisionBomService.meaningful_bom_component_codes(
+                rows,
+                exclude_product_code=exclude_product or None,
+            )
+
+            if not meaningful_codes and source_key != "full_text_section":
+                continue
 
             if not rows and source_key != "full_text_section":
                 continue

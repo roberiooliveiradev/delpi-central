@@ -52,3 +52,24 @@ def test_scope_label_from_json():
     label = ChatDrawingRegionalScopeService.scope_label("stamp_bom_table")
 
     assert "carimbo" in label.lower()
+
+
+def test_resolve_bom_scope_rejects_stamp_layout_as_bom_region():
+    stamp_like_bom = (
+        "1 | 2 | 3 | 4\n"
+        "MEDIDAS EM MILÍMETRO\n"
+        "REV. | DATA | LMP | RESUMO DAS MODIFICAÇÕES\n"
+        "CLIENTE: | WEG INDUSTRIA S.A.\n"
+        "CHICOTE DE LIGAÇÃO | 90263396"
+    )
+
+    scopes = ChatDrawingRegionalScopeService.resolve(
+        metadata={
+            "filename": "90263396.pdf",
+            "regionTexts": {"bom": stamp_like_bom},
+        },
+        product_code="90263396",
+    )
+
+    assert scopes["bom"]["available"] is False
+    assert scopes["bom"]["sourceKey"] is None

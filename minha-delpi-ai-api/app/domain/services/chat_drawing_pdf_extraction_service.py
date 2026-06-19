@@ -97,15 +97,6 @@ class ChatDrawingPdfExtractionService:
         cad_text = cls._cad_reference_text(meta)
         scope_text = cls._merge_scope_text(normalized, cad_text)
 
-        from app.domain.services.chat_drawing_regional_scope_service import (
-            ChatDrawingRegionalScopeService,
-        )
-
-        validation_scopes = ChatDrawingRegionalScopeService.resolve(
-            metadata=meta,
-            full_text=scope_text,
-        )
-        meta = {**meta, "validationScopes": validation_scopes}
         char_count = len(scope_text)
 
         from app.domain.services.chat_drawing_stamp_extraction_service import (
@@ -127,6 +118,17 @@ class ChatDrawingPdfExtractionService:
             full_text=scope_text,
             metadata=meta,
         )
+
+        from app.domain.services.chat_drawing_regional_scope_service import (
+            ChatDrawingRegionalScopeService,
+        )
+
+        validation_scopes = ChatDrawingRegionalScopeService.resolve(
+            metadata=meta,
+            full_text=scope_text,
+            product_code=product_code or filename_code,
+        )
+        meta = {**meta, "validationScopes": validation_scopes}
 
         bom_payload = ChatDrawingPdfBomExtractionService.extract(
             full_text=scope_text,

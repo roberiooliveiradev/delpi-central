@@ -32,6 +32,12 @@ def test_intermediate_segment_pattern_parses_description():
 
 def test_stamp_extraction_patterns_from_json():
     assert ChatDrawingPatternsService.code_token().search("90260140")
+    assert ChatDrawingPatternsService.code_token().search("70260048")
+    assert ChatDrawingPatternsService.code_token().search("80016332")
     assert ChatDrawingPatternsService.primary_drawing_code().match("90260140")
+    assert ChatDrawingPatternsService.primary_drawing_code().match("70260048")
+    assert ChatDrawingPatternsService.primary_drawing_code().match("80001234")
     assert ChatDrawingPatternsService.filename_code().match("90260140-1")
+    assert ChatDrawingPatternsService.filename_code().match("70260048")
+    assert ChatDrawingPatternsService.filename_code().match("80016332")
     assert ChatDrawingPatternsService.high_confidence_threshold() == 0.85

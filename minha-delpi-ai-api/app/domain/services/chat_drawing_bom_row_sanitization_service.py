@@ -64,6 +64,9 @@ class ChatDrawingBomRowSanitizationService:
         if normalized == product_norm:
             return True
 
+        if ChatDrawingPatternsService.is_nested_chicote_in_assembly_bom(normalized, product_norm):
+            return False
+
         if ChatDrawingPatternsService.is_finished_product(
             normalized
         ) and ChatDrawingPatternsService.is_finished_product(product_norm):
@@ -96,6 +99,9 @@ class ChatDrawingBomRowSanitizationService:
                 if not code or code == row_code or code in found:
                     continue
 
+                if cls._description_code_is_noise(blob, code):
+                    continue
+
                 found.append(code)
 
         return found
@@ -115,3 +121,16 @@ class ChatDrawingBomRowSanitizationService:
             resolved.append(code)
 
         return resolved
+
+    @classmethod
+    def _description_code_is_noise(cls, description: str, code: str) -> bool:
+        blob = str(description or "")
+
+        if not blob or not code:
+            return False
+
+        for pattern in ChatDrawingPatternsService.bom_description_code_noise_patterns():
+            if pattern.search(blob):
+                return True
+
+        return False

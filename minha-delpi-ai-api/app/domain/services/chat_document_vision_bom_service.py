@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.domain.services.chat_product_query_intent_service import (
@@ -29,11 +30,17 @@ class ChatDocumentVisionBomService:
             exclude_product_code=exclude,
             region_scoped=True,
         )
-        codes = cls.bom_component_codes(rows)
+        codes = cls.meaningful_bom_component_codes(
+            rows,
+            exclude_product_code=exclude,
+        )
         score = len(codes) * 10
 
         if ChatDrawingPatternsService.bom_section().search(normalized):
             score += 8
+
+        if ChatDrawingPatternsService.bom_table_header().search(normalized):
+            score += 12
 
         upper = normalized.upper()
 
@@ -42,6 +49,9 @@ class ChatDocumentVisionBomService:
 
         if len(normalized) < 40 and not codes:
             score -= 10
+
+        if cls.is_stamp_layout_without_bom(normalized):
+            score -= 40
 
         return score
 
@@ -141,6 +151,64 @@ class ChatDocumentVisionBomService:
                 codes.append(code)
 
         return codes
+
+    @classmethod
+    def meaningful_bom_component_codes(
+        cls,
+        bom_rows: list[dict[str, Any]],
+        *,
+        exclude_product_code: str | None = None,
+    ) -> list[str]:
+        exclude = ChatProductQueryIntentService.normalize_product_code(
+            exclude_product_code or ""
+        )
+        codes: list[str] = []
+
+        for row in bom_rows:
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if not code or code == exclude or code in codes:
+                continue
+
+            if ChatDrawingPatternsService.is_nested_chicote_in_assembly_bom(code, exclude):
+                codes.append(code)
+                continue
+
+            if ChatDrawingPatternsService.is_finished_product(code):
+                continue
+
+            if (
+                ChatDrawingPatternsService.is_bom_component(code)
+                or ChatDrawingPatternsService.is_intermediate_family(str(code))
+            ):
+                codes.append(code)
+
+        return codes
+
+    @classmethod
+    def is_stamp_layout_without_bom(cls, text: str) -> bool:
+        normalized = str(text or "").strip()
+
+        if not normalized:
+            return False
+
+        upper = normalized.upper()
+
+        if ChatDrawingPatternsService.bom_table_header().search(upper):
+            return False
+
+        if ChatDrawingPatternsService.bom_section().search(normalized):
+            return False
+
+        marker_hits = 0
+
+        for pattern in ChatDrawingPatternsService.bom_stamp_layout_without_table_patterns():
+            if pattern.search(upper):
+                marker_hits += 1
+
+        return marker_hits >= 2
 
     @classmethod
     def demote_bom_codes_in_candidates(
@@ -287,6 +355,9 @@ class ChatDocumentVisionBomService:
             if ChatDrawingPatternsService.is_finished_product(code):
                 continue
 
+            if cls._line_code_is_description_noise(line, code):
+                continue
+
             rows.append(
                 {
                     "code": code,
@@ -297,6 +368,31 @@ class ChatDocumentVisionBomService:
             seen.add(code)
 
     @classmethod
+    def _line_code_is_description_noise(cls, line: str, code: str) -> bool:
+        blob = str(line or "")
+
+        if not blob or not code:
+            return False
+
+        idx = blob.find(code)
+
+        if idx <= 0:
+            return False
+
+        before = blob[:idx]
+        upper_before = before.upper()
+
+        if "PTC" not in upper_before and "TERMISTOR" not in upper_before:
+            return False
+
+        return bool(
+            "°C" in before
+            or "ºC" in before
+            or "° C" in before
+            or re.search(r"PTC\s*\d+", upper_before)
+        )
+
+    @classmethod
     def _bom_section_offset(cls, text: str) -> int:
         match = ChatDrawingPatternsService.bom_section().search(text)
 
@@ -304,6 +400,31 @@ class ChatDocumentVisionBomService:
             return 0
 
         return match.start()
+
+    @classmethod
+    def _quantity_before_code(cls, line: str, code_start: int) -> str | None:
+        prefix = str(line or "")[: max(code_start, 0)].strip()
+
+        if not prefix:
+            return None
+
+        tail = prefix.split("|")[-1].strip()
+
+        if not tail:
+            segments = [segment.strip() for segment in prefix.split("|") if segment.strip()]
+
+            if segments:
+                tail = segments[-1]
+
+        qty_match = ChatDrawingPatternsService.bom_quantity().search(tail)
+
+        if not qty_match and tail.isdigit():
+            return tail.replace(",", ".")
+
+        if qty_match:
+            return qty_match.group(1).replace(",", ".")
+
+        return None
 
     @classmethod
     def _parse_bom_line(
@@ -329,7 +450,7 @@ class ChatDocumentVisionBomService:
             return None
 
         remainder = stripped[code_match.end() :].strip()
-        qty = None
+        qty = cls._quantity_before_code(stripped, code_match.start())
         description = remainder
 
         qty_match = ChatDrawingPatternsService.bom_quantity().search(remainder)
@@ -337,6 +458,12 @@ class ChatDocumentVisionBomService:
         if qty_match:
             qty = qty_match.group(1).replace(",", ".")
             description = remainder[qty_match.end() :].strip(" -|\t")
+
+        if ChatDrawingPatternsService.is_finished_product(code) and not qty:
+            return None
+
+        if cls._line_code_is_description_noise(stripped, code):
+            return None
 
         return {
             "code": code,

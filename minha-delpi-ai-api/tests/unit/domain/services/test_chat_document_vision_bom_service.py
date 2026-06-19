@@ -40,6 +40,42 @@ def test_score_bom_text_penalizes_vista_without_codes():
     assert ChatDocumentVisionBomService.score_bom_text('VISTA "A"') < 0
 
 
+def test_is_stamp_layout_without_bom_detects_revision_block():
+    text = (
+        "MEDIDAS EM MILÍMETRO\n"
+        "CLIENTE: WEG\n"
+        "CHICOTE DE LIGAÇÃO | 90263396"
+    )
+
+    assert ChatDocumentVisionBomService.is_stamp_layout_without_bom(text) is True
+
+
+def test_extract_bom_rows_skips_ptc_temperature_suffix_code():
+    text = "A | 01 | 10250032 | TERMISTOR PTC 130°C 10084053"
+
+    rows = ChatDocumentVisionBomService.extract_bom_rows(
+        text,
+        exclude_product_code="90262019",
+        region_scoped=True,
+    )
+
+    assert [row["code"] for row in rows] == ["10250032"]
+
+
+def test_meaningful_bom_component_codes_excludes_finished_product_rows():
+    rows = [
+        {"code": "90263396", "quantity": None},
+        {"code": "10080591", "quantity": "01"},
+    ]
+
+    codes = ChatDocumentVisionBomService.meaningful_bom_component_codes(
+        rows,
+        exclude_product_code="90263396",
+    )
+
+    assert codes == ["10080591"]
+
+
 def test_resolve_from_sources_prefers_stamp_when_bom_region_is_noise():
     noisy_bom = 'VISTA "A"\nLIGACAO'
     stamp_text = """
