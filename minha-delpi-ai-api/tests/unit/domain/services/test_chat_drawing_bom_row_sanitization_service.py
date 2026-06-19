@@ -44,9 +44,9 @@ def test_nested_component_codes_from_row_description():
     assert codes == ["10440133"]
 
 
-def test_dedupe_reconciles_connector_typo():
+def test_dedupe_keeps_distinct_codes_without_catalog_reconcile():
     codes = ChatDrawingBomRowSanitizationService.dedupe_component_codes(
         ["10091640", "40091640"],
     )
 
-    assert codes == ["10091640"]
+    assert codes == ["10091640", "40091640"]

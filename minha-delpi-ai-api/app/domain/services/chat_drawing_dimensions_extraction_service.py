@@ -27,6 +27,8 @@ class ChatDrawingDimensionsExtractionService:
         if not normalized:
             return dimensions
 
+        bom_contaminated = cls._is_bom_table_text(normalized)
+
         dimensions["totalLengthMm"] = cls._first_number(
             normalized,
             patterns=ChatDrawingPatternsService.length_patterns(),
@@ -46,25 +48,27 @@ class ChatDrawingDimensionsExtractionService:
         )
 
         if dimensions["leftDecapeMm"] is None and dimensions["rightDecapeMm"] is None:
-            generic = cls._first_number(
+            if not bom_contaminated:
+                generic = cls._first_number(
+                    normalized,
+                    patterns=(ChatDrawingPatternsService.generic_decape(),),
+                )
+
+                if generic is not None:
+                    dimensions["leftDecapeMm"] = generic
+
+        if not bom_contaminated:
+            note_decape = cls._first_number(
                 normalized,
-                patterns=(ChatDrawingPatternsService.generic_decape(),),
+                patterns=(ChatDrawingPatternsService.decape_note(),),
             )
 
-            if generic is not None:
-                dimensions["leftDecapeMm"] = generic
+            if note_decape is not None:
+                if dimensions["leftDecapeMm"] is None:
+                    dimensions["leftDecapeMm"] = note_decape
 
-        note_decape = cls._first_number(
-            normalized,
-            patterns=(ChatDrawingPatternsService.decape_note(),),
-        )
-
-        if note_decape is not None:
-            if dimensions["leftDecapeMm"] is None:
-                dimensions["leftDecapeMm"] = note_decape
-
-            if dimensions["rightDecapeMm"] is None:
-                dimensions["rightDecapeMm"] = note_decape
+                if dimensions["rightDecapeMm"] is None:
+                    dimensions["rightDecapeMm"] = note_decape
 
         machine_decape = cls._first_number(
             normalized,
@@ -112,12 +116,13 @@ class ChatDrawingDimensionsExtractionService:
         fallback_text: str = "",
     ) -> dict[str, float | None]:
         merged = dict(base) if isinstance(base, dict) else {}
-        region_dims = cls.extract_dimensions(region_text) if region_text.strip() else {}
-        fallback_dims = (
-            cls.extract_dimensions(fallback_text)
-            if fallback_text.strip() and not region_dims
-            else {}
+        region_dims = (
+            cls.extract_dimensions(region_text) if region_text.strip() else {}
         )
+        fallback_dims = (
+            cls.extract_dimensions(fallback_text) if fallback_text.strip() else {}
+        )
+        region_bom = cls._is_bom_table_text(region_text) if region_text.strip() else False
 
         resolved: dict[str, float | None | list[float]] = {
             "totalLengthMm": merged.get("totalLengthMm"),
@@ -129,13 +134,21 @@ class ChatDrawingDimensionsExtractionService:
 
         for key in ("totalLengthMm", "leftDecapeMm", "rightDecapeMm"):
             if resolved[key] is None and region_dims.get(key) is not None:
-                resolved[key] = region_dims[key]
+                if not (region_bom and key in ("leftDecapeMm", "rightDecapeMm")):
+                    resolved[key] = region_dims[key]
 
             if resolved[key] is None and fallback_dims.get(key) is not None:
                 resolved[key] = fallback_dims[key]
 
+            if (
+                region_bom
+                and key in ("leftDecapeMm", "rightDecapeMm")
+                and fallback_dims.get(key) is not None
+            ):
+                resolved[key] = fallback_dims[key]
+
         if not resolved["segmentLengthsMm"]:
-            for source in (region_dims, fallback_dims):
+            for source in (fallback_dims, region_dims):
                 segments = source.get("segmentLengthsMm") if isinstance(source, dict) else None
 
                 if segments:
@@ -143,7 +156,7 @@ class ChatDrawingDimensionsExtractionService:
                     break
 
         if not resolved["cotaDecapeValuesMm"]:
-            for source in (region_dims, fallback_dims):
+            for source in (fallback_dims, region_dims):
                 cota_values = (
                     source.get("cotaDecapeValuesMm") if isinstance(source, dict) else None
                 )
@@ -153,6 +166,22 @@ class ChatDrawingDimensionsExtractionService:
                     break
 
         return resolved
+
+    @classmethod
+    def _is_bom_table_text(cls, text: str) -> bool:
+        normalized = str(text or "")
+
+        if ChatDrawingPatternsService.bom_section().search(normalized):
+            return True
+
+        if ChatDrawingPatternsService.intermediate_segment().search(normalized):
+            return True
+
+        intermediate_hits = ChatDrawingPatternsService.intermediate_code().findall(
+            normalized
+        )
+
+        return len(intermediate_hits) >= 2
 
     @classmethod
     def _normalize_ocr_text(cls, text: str) -> str:

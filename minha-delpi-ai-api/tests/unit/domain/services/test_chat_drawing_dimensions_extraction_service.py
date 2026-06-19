@@ -29,6 +29,21 @@ def test_merge_dimensions_prefers_region_text():
     assert merged["rightDecapeMm"] == 9.0
 
 
+def test_merge_dimensions_prefers_fallback_decape_when_region_is_bom_table():
+    region = "50215425 CT26VERM-00036/04/06-0000 10440133"
+    fallback = "DECAPE DE 6MM\nDECAPAR O LADO DE 4MM NA MÁQUINA\n6±140±1"
+
+    merged = ChatDrawingDimensionsExtractionService.merge_dimensions(
+        {},
+        region_text=region,
+        fallback_text=fallback,
+    )
+
+    assert merged["leftDecapeMm"] == 4.0
+    assert merged["rightDecapeMm"] == 6.0
+    assert 140.0 in merged["segmentLengthsMm"]
+
+
 def test_extract_dimensions_cota_deape_length_pattern():
     text = "MEDIDAS EM MILÍMETROS\n6±140±1\n6±150±1\nDECAPE DE 6MM"
 

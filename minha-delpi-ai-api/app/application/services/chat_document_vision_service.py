@@ -1379,10 +1379,6 @@ class ChatDocumentVisionService:
             filename_code
             and parsed.get("productCode")
             and filename_code != parsed["productCode"]
-            and ChatDrawingProductCodeResolutionService.ocr_code_likely_filename_drift(
-                str(parsed["productCode"]),
-                filename_code,
-            )
         ):
             parsed["conflicts"] = list(parsed.get("conflicts") or []) + [
                 {
@@ -1392,8 +1388,6 @@ class ChatDocumentVisionService:
                     "stampCode": parsed["productCode"],
                 }
             ]
-            parsed["productCode"] = filename_code
-            parsed["productCodeSource"] = "filename_crosscheck"
 
         min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
         char_count = int(parsed.get("charCount") or 0)

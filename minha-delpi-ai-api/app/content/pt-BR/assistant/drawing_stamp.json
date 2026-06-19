@@ -230,13 +230,6 @@
       "DECAPE\\s*D(?:IREITO)?\\s*[:.]?\\s*(\\d+[,.]?\\d*)"
     ]
   },
-  "ocrNormalization": {
-    "connectorTypoPattern": "^40\\d{6}$",
-    "connectorReplacementPrefix": "10",
-    "shortTermoLength": 7,
-    "shortTermoPrefix": "101",
-    "fullTermoLength": 8
-  },
   "codeFamilies": {
     "intermediatePrefix": "50",
     "finishedProductPrefix": "90",
@@ -250,7 +243,6 @@
     "highConfidenceThreshold": 0.85
   },
   "productCodeResolution": {
-    "ocrDriftDifferenceCount": 1,
     "sourceRanking": {
       "message": 50,
       "filename": 40,

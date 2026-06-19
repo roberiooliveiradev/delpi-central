@@ -17,7 +17,7 @@ from app.domain.services.chat_product_query_intent_service import (
 class BomComparisonResult:
     missing_in_pdf: tuple[str, ...]
     extra_in_pdf: tuple[str, ...]
-    reconciled_pdf_codes: tuple[str, ...]
+    pdf_bom_codes: tuple[str, ...]
     api_codes: tuple[str, ...]
 
 
@@ -31,27 +31,25 @@ class ChatDrawingBomComparisonService:
         product_code: str,
     ) -> BomComparisonResult:
         api_codes = cls.collect_structure_bom_codes(root, product_code)
-        known_codes = cls.collect_known_structure_codes(root, product_code)
         raw_pdf_codes = set(pdf_extract.get("componentCodes") or [])
         raw_pdf_codes.update(pdf_extract.get("intermediateCodes") or [])
 
-        reconciled = cls.normalize_pdf_bom_codes(
+        pdf_bom_codes = cls.normalize_pdf_bom_codes(
             raw_pdf_codes,
-            known_codes=known_codes,
             child_cable_parents=cls.collect_child_cable_parents(root),
         )
 
-        missing = sorted(api_codes - reconciled)
+        missing = sorted(api_codes - pdf_bom_codes)
         extra = sorted(
             code
-            for code in (reconciled - api_codes)
+            for code in (pdf_bom_codes - api_codes)
             if code != ChatProductQueryIntentService.normalize_product_code(product_code)
         )
 
         return BomComparisonResult(
             missing_in_pdf=tuple(missing),
             extra_in_pdf=tuple(extra),
-            reconciled_pdf_codes=tuple(sorted(reconciled)),
+            pdf_bom_codes=tuple(sorted(pdf_bom_codes)),
             api_codes=tuple(sorted(api_codes)),
         )
 
@@ -73,28 +71,6 @@ class ChatDrawingBomComparisonService:
                 codes.add(code)
 
         return codes
-
-    @classmethod
-    def collect_known_structure_codes(cls, root: dict, product_code: str) -> set[str]:
-        known = set(cls.collect_structure_bom_codes(root, product_code))
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-
-        for item in structure.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-
-            for child in item.get("components") or []:
-                if not isinstance(child, dict):
-                    continue
-
-                code = ChatProductQueryIntentService.normalize_product_code(
-                    str(child.get("code") or "")
-                )
-
-                if code:
-                    known.add(code)
-
-        return known
 
     @classmethod
     def collect_child_cable_parents(cls, root: dict) -> dict[str, set[str]]:
@@ -130,10 +106,9 @@ class ChatDrawingBomComparisonService:
         cls,
         pdf_codes: set[str],
         *,
-        known_codes: set[str],
         child_cable_parents: dict[str, set[str]],
     ) -> set[str]:
-        reconciled: set[str] = set()
+        normalized_codes: set[str] = set()
         parents_50xx = {
             code
             for code in pdf_codes
@@ -141,9 +116,8 @@ class ChatDrawingBomComparisonService:
         }
 
         for raw_code in pdf_codes:
-            code = ChatDrawingComponentCodeNormalizationService.reconcile_with_known(
-                raw_code,
-                known_codes,
+            code = ChatDrawingComponentCodeNormalizationService.normalize_extracted(
+                raw_code
             )
 
             if not code:
@@ -154,6 +128,6 @@ class ChatDrawingBomComparisonService:
             if parent & parents_50xx:
                 continue
 
-            reconciled.add(code)
+            normalized_codes.add(code)
 
-        return reconciled
+        return normalized_codes

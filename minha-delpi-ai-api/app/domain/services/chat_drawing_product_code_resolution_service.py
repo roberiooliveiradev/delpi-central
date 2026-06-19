@@ -142,33 +142,7 @@ class ChatDrawingProductCodeResolutionService:
         if high_conf:
             return None, "unresolved"
 
-        if filename_code and code != filename_code:
-            if ChatDrawingPatternsService.is_finished_product(filename_code):
-                if float(top.get("confidence") or 0) < threshold:
-                    return filename_code, "filename_crosscheck"
-
         return code, source
-
-    @classmethod
-    def ocr_code_likely_filename_drift(cls, extracted_code: str, filename_code: str) -> bool:
-        extracted = ChatProductQueryIntentService.normalize_product_code(extracted_code)
-        filename = ChatProductQueryIntentService.normalize_product_code(filename_code)
-
-        if not extracted or not filename:
-            return False
-
-        if not (
-            ChatDrawingPatternsService.is_finished_product(extracted)
-            and ChatDrawingPatternsService.is_finished_product(filename)
-        ):
-            return False
-
-        if len(extracted) != len(filename):
-            return False
-
-        differences = sum(left != right for left, right in zip(extracted, filename))
-
-        return differences == ChatDrawingPatternsService.product_code_ocr_drift_difference_count()
 
     @classmethod
     def enrich_pdf_extract_conflicts(
@@ -196,8 +170,6 @@ class ChatDrawingProductCodeResolutionService:
                         "stampCode": pdf_code,
                     }
                 )
-                meta["productCode"] = filename_code
-                meta["productCodeSource"] = "filename_crosscheck"
 
         if conflicts:
             meta["conflicts"] = conflicts

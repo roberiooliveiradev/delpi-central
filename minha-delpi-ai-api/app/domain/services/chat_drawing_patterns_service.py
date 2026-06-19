@@ -154,21 +154,6 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("pdfDecapeRight")
 
     @classmethod
-    def ocr_normalization(cls, key: str, default: Any = None) -> Any:
-        node = ChatAssistantContentService.get_node(_STAMP_BUNDLE, "ocrNormalization") or {}
-        return node.get(key, default)
-
-    @classmethod
-    def ocr_connector_typo_pattern(cls) -> re.Pattern[str]:
-        cache_key = "ocr:connectorTypo"
-
-        if cache_key not in _COMPILED:
-            raw = str(cls.ocr_normalization("connectorTypoPattern") or r"^40\d{6}$")
-            _COMPILED[cache_key] = re.compile(raw)
-
-        return _COMPILED[cache_key]
-
-    @classmethod
     def intermediate_prefix(cls) -> str:
         return str(
             ChatAssistantContentService.get(
@@ -389,20 +374,6 @@ class ChatDrawingPatternsService:
         ) or {}
 
         return int(node.get(str(source or "").strip(), 0))
-
-    @classmethod
-    def product_code_ocr_drift_difference_count(cls) -> int:
-        raw = ChatAssistantContentService.get(
-            _STAMP_BUNDLE,
-            "productCodeResolution",
-            "ocrDriftDifferenceCount",
-            default="1",
-        )
-
-        try:
-            return int(raw)
-        except (TypeError, ValueError):
-            return 1
 
     @classmethod
     def default_chicote_description(cls) -> str:

@@ -1,9 +1,6 @@
 from app.domain.services.chat_drawing_bom_comparison_service import (
     ChatDrawingBomComparisonService,
 )
-from app.domain.services.chat_drawing_component_code_normalization_service import (
-    ChatDrawingComponentCodeNormalizationService,
-)
 
 
 def _payload_90264227() -> dict:
@@ -52,22 +49,6 @@ def _payload_90264227() -> dict:
     }
 
 
-def test_reconcile_ocr_component_codes():
-    known = {"10091640", "10130091"}
-
-    assert (
-        ChatDrawingComponentCodeNormalizationService.reconcile_with_known(
-            "40091640", known
-        )
-        == "10091640"
-    )
-    assert (
-        ChatDrawingComponentCodeNormalizationService.reconcile_with_known(
-            "1013091", known
-        )
-        == "10130091"
-    )
-
 
 def test_child_cable_codes_not_counted_as_extra_when_parent_present():
     root = _payload_90264227()
@@ -96,5 +77,7 @@ def test_child_cable_codes_not_counted_as_extra_when_parent_present():
     assert "10440134" not in result.extra_in_pdf
     assert "50215434" in result.missing_in_pdf
     assert "50225933" not in result.missing_in_pdf
-    assert "10091640" not in result.missing_in_pdf
-    assert "10130091" not in result.missing_in_pdf
+    assert "40091640" in result.extra_in_pdf
+    assert "10091640" in result.missing_in_pdf
+    assert "1013091" in result.extra_in_pdf
+    assert "10130091" in result.missing_in_pdf

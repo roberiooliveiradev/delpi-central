@@ -112,8 +112,7 @@ def test_enrich_pdf_extract_flags_bom_promotion():
         attachment_filename="90261893.pdf",
     )
 
-    assert enriched["productCode"] == "90261893"
-    assert enriched["productCodeSource"] == "filename_crosscheck"
+    assert enriched["productCode"] == "10020031"
     assert any(item["type"] == "bom_code_promoted" for item in enriched["conflicts"])
 
 

@@ -8,9 +8,6 @@ from app.domain.services.chat_drawing_component_code_normalization_service impor
     ChatDrawingComponentCodeNormalizationService,
 )
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
-from app.domain.services.chat_drawing_product_code_resolution_service import (
-    ChatDrawingProductCodeResolutionService,
-)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -64,10 +61,7 @@ class ChatDrawingBomRowSanitizationService:
         if ChatDrawingPatternsService.is_finished_product(
             normalized
         ) and ChatDrawingPatternsService.is_finished_product(product_norm):
-            return ChatDrawingProductCodeResolutionService.ocr_code_likely_filename_drift(
-                normalized,
-                product_norm,
-            )
+            return True
 
         return False
 
@@ -101,13 +95,7 @@ class ChatDrawingBomRowSanitizationService:
         return found
 
     @classmethod
-    def dedupe_component_codes(
-        cls,
-        component_codes: list[str],
-        *,
-        known_codes: set[str] | None = None,
-    ) -> list[str]:
-        known = set(known_codes or [])
+    def dedupe_component_codes(cls, component_codes: list[str]) -> list[str]:
         resolved: list[str] = []
 
         for raw in component_codes:
@@ -115,21 +103,9 @@ class ChatDrawingBomRowSanitizationService:
                 ChatProductQueryIntentService.normalize_product_code(str(raw or ""))
             )
 
-            if not code:
+            if not code or code in resolved:
                 continue
 
-            reconciled = (
-                ChatDrawingComponentCodeNormalizationService.reconcile_with_known(
-                    code,
-                    known | set(resolved),
-                )
-                or code
-            )
-
-            if reconciled in resolved:
-                continue
-
-            resolved.append(reconciled)
-            known.add(reconciled)
+            resolved.append(code)
 
         return resolved

@@ -220,6 +220,20 @@ Estágios após extração base (`native`):
 3. **OCR regional sempre ativo** — só `drawing_delpi` + texto insuficiente.
 4. **Strings PT de status OCR** em Python — `document_vision.json` / `assistant-content-json.mdc`.
 5. **Duplicar fusão** em `ChatAttachmentTextExtractor` e `ChatDocumentVisionService` — um orquestrador.
+6. **Reconciliar dígitos OCR com cadastro API** (`40091640` → `10091640`) — erro de leitura deve ser corrigido na **extração** (OCR multi-motor, região, parse), não por chute contra SG1010.
+7. **Usar texto de BOM na região de cotas** para inferir decape — região `dimensionsText` contaminada ignora notas genéricas; prevalece `fullText` embutido com notas/cotas.
+
+---
+
+## Leitura vs. reconciliação (jun/2026)
+
+| Abordagem | Quando usar |
+|-----------|-------------|
+| **Leitura** | OCR regional multi-motor, anotações ODA, fusão de linhas, parse de BOM/cotas/notas |
+| **Saneamento semântico** | Código do **título** na BOM (fantasma), ruído de **revisão**, cabo-filho já sob 50xx |
+| **Proibido** | Ajustar dígito lido porque «existe na API» — gera falso OK e mascara falha de OCR |
+
+Melhoria contínua de acurácia: `ChatPdfRegionOcrEngineService`, perfis em `document_vision.json`, homologação em `desenhos/`.
 
 ---
 

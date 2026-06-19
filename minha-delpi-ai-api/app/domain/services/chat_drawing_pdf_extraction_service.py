@@ -117,9 +117,9 @@ class ChatDrawingPdfExtractionService:
 
         dimensions_text = str((metadata or {}).get("dimensionsText") or "").strip()
         dimensions = ChatDrawingDimensionsExtractionService.merge_dimensions(
-            cls._extract_dimensions(normalized),
+            ChatDrawingDimensionsExtractionService.extract_dimensions(normalized),
             region_text=dimensions_text,
-            fallback_text=normalized if not dimensions_text else "",
+            fallback_text=normalized,
         )
 
         component_codes = list(bom_payload.get("componentCodes") or [])

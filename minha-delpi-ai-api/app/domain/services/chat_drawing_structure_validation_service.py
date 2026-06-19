@@ -63,7 +63,7 @@ class ChatDrawingStructureValidationService:
                 )
             )
 
-        if comparison.api_codes and comparison.reconciled_pdf_codes and not (
+        if comparison.api_codes and comparison.pdf_bom_codes and not (
             comparison.missing_in_pdf or comparison.extra_in_pdf
         ):
             items.append(
@@ -72,7 +72,7 @@ class ChatDrawingStructureValidationService:
                     status="ok",
                     pdf_evidence=content.evidence_format(
                         "codeCount",
-                        count=str(len(comparison.reconciled_pdf_codes)),
+                        count=str(len(comparison.pdf_bom_codes)),
                     ),
                     api_evidence=content.evidence_format(
                         "codeCount",
