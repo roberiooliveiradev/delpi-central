@@ -678,8 +678,9 @@ export const Sidebar = () => {
                   onReorder={reorderFavorites}
                 />
               </div>
+            </div>
 
-              <div className="sidebar-footer">
+            <div className="sidebar-footer">
               {canAccessAdmin && (
                 <NavLink
                   to="/admin"
@@ -896,7 +897,6 @@ export const Sidebar = () => {
               >
                 Política de Privacidade
               </NavLink>
-            </div>
             </div>
           </>
         )}

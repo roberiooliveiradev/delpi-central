@@ -64,6 +64,11 @@
     overflow: hidden;
   }
 
+  .sidebar:not(.collapsed) {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   .sidebar-mobile-backdrop {
     display: block;
     position: fixed;
@@ -362,6 +367,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.sidebar-footer {
+  flex-shrink: 0;
 }
 
 .sidebar-content {
@@ -742,7 +751,7 @@ html[data-sidebar-collapsed="false"] .sidebar.sidebar--compact .sidebar-footer-i
 }
 
 .sidebar.sidebar--compact .sidebar-content {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: auto;
   overflow: visible;
   padding: 0 0.1rem;
