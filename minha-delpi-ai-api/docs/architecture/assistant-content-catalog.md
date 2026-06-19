@@ -122,6 +122,7 @@ Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.jso
 - Validação de desenho (relatório, templates de checklist, conclusões) → `drawing_validation.json`
 - Apresentação do relatório de desenho (rótulos de status, consolidação de itens repetidos, expansão item a item em BOM/50xx, árvore SG1010, roteiro completo, labels de export) → `drawing_validation.json` (`statusPresentation`, `reportFields`, `export`, `presentation`) + `ChatDrawingValidationPresentationService`; MFE render-only consome `drawingAnalysisExport.statusLabels` / `exportLabels` e suprime apresentação duplicada do `/analyser`
 - Parâmetros do `/analyser` em turno de desenho (`view=full` obrigatório; sem `view=summary` nem paginação parcial) → `ChatDrawingAnalyserParameterService` (application: `ExternalActionProductRouteCatalogService.build_product_parameters`, `ChatExternalActionOrchestrationService`, `ChatToolContextSelectionService`)
+- Exportação do relatório de desenho (tabelas estruturadas `tables[]` para PDF/CSV/XLSX; PDF via HTML no padrão inspeções de entrada com logo DELPI) → `ChatDrawingValidationPresentationService.build_export_tables` + `ChatDrawingReportExportService`; MFE: `drawingAnalysisPrint.ts`, `drawingAnalysisExport.ts`
 - Intent de análise de desenho (gatilhos, vocabulário com anexo, PDF obrigatório, direct answers) → `drawing_query_intent.json`
 - Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
 - Interpretação de dados (marcadores genéricos) → `data_interpretation.json`

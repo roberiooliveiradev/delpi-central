@@ -1,5 +1,14 @@
 import type { ChatMessageMetadata } from "../../data/api/chatTypes";
 import { chatAlert } from "./chatNativeDialogs";
+import { printDrawingAnalysisReport } from "./drawingAnalysisPrint";
+
+export type DrawingExportTable = {
+  key: string;
+  title: string;
+  sheetName?: string;
+  columns: { key: string; label: string }[];
+  rows: Record<string, string>[];
+};
 
 export type DrawingAnalysisExportPayload = NonNullable<
   ChatMessageMetadata["drawingAnalysisExport"]
@@ -50,6 +59,10 @@ function sanitizeFilename(name: string): string {
   );
 }
 
+function sanitizeSheetName(name: string): string {
+  return name.replace(/[\\/?*[\]:]/g, "").slice(0, 31) || "Planilha";
+}
+
 function resolveProductCode(
   exportPayload: DrawingAnalysisExportPayload,
   drawingAnalysis?: Record<string, unknown>,
@@ -63,6 +76,62 @@ function resolveProductCode(
   const match = exportPayload.filename?.match(/relatorio-desenho-([a-zA-Z0-9]+)-/);
 
   return match?.[1] ?? "desenho";
+}
+
+function resolveExportTables(
+  exportPayload: DrawingAnalysisExportPayload,
+  drawingAnalysis?: Record<string, unknown>,
+): DrawingExportTable[] {
+  if (exportPayload.tables?.length) {
+    return exportPayload.tables;
+  }
+
+  const statusLabels = resolveStatusLabels(exportPayload);
+  const exportLabels = resolveExportLabels(exportPayload);
+  const tables: DrawingExportTable[] = [];
+  const nonConformityRows = exportPayload.spreadsheetRows ?? [];
+
+  if (nonConformityRows.length) {
+    const shortHeaders = exportLabels.spreadsheetShortHeaders;
+    tables.push({
+      key: "nonconformities",
+      title: exportLabels.nonconformitiesTitle || "Não conformidades",
+      sheetName: "Divergências",
+      columns: [
+        { key: "section", label: shortHeaders?.[0] || "Seção" },
+        { key: "item", label: shortHeaders?.[1] || "Item" },
+        { key: "status", label: shortHeaders?.[2] || "Status" },
+        { key: "pdfEvidence", label: shortHeaders?.[3] || "PDF" },
+        { key: "apiEvidence", label: shortHeaders?.[4] || "API" },
+        { key: "recommendation", label: shortHeaders?.[5] || "Ação" },
+      ],
+      rows: nonConformityRows.map((row) => ({ ...row })),
+    });
+  }
+
+  const items = (drawingAnalysis?.items as DrawingCheckItem[] | undefined) ?? [];
+
+  if (items.length) {
+    tables.push({
+      key: "checklist",
+      title: exportLabels.checklistTitle || "Checklist completo",
+      sheetName: "Checklist",
+      columns: [
+        { key: "section", label: "Seção" },
+        { key: "item", label: "Item" },
+        { key: "status", label: "Status" },
+        { key: "observation", label: "Observação" },
+      ],
+      rows: items.map((item) => ({
+        section: String(item.section ?? "—"),
+        item: String(item.item ?? "—"),
+        status: statusLabels[String(item.status ?? "")] ?? String(item.status ?? "—"),
+        observation: String(item.recommendation ?? "—"),
+      })),
+    });
+  }
+
+  return tables;
 }
 
 export function downloadDrawingAnalysisMarkdown(
@@ -84,176 +153,124 @@ export function downloadDrawingAnalysisMarkdown(
 
 export function downloadDrawingAnalysisCsv(
   exportPayload: DrawingAnalysisExportPayload,
+  drawingAnalysis?: Record<string, unknown>,
 ): void {
   const csv = String(exportPayload.csv || "").trim();
 
-  if (!csv) {
+  if (csv) {
+    triggerDownload(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+      exportPayload.csvFilename || "relatorio-desenho.csv",
+    );
     return;
   }
 
+  const tables = resolveExportTables(exportPayload, drawingAnalysis);
+
+  if (!tables.length) {
+    return;
+  }
+
+  const lines: string[] = ["\ufeff"];
+
+  for (let index = 0; index < tables.length; index += 1) {
+    const table = tables[index];
+
+    if (index > 0) {
+      lines.push("");
+    }
+
+    lines.push(table.title);
+
+    const header = table.columns.map((column) => column.label);
+    lines.push(header.join(";"));
+
+    for (const row of table.rows) {
+      lines.push(
+        table.columns
+          .map((column) => {
+            const text = String(row[column.key] ?? "");
+            return text.includes(";") || text.includes('"') || text.includes("\n")
+              ? `"${text.replace(/"/g, '""')}"`
+              : text;
+          })
+          .join(";"),
+      );
+    }
+  }
+
+  const code = resolveProductCode(exportPayload, drawingAnalysis);
   triggerDownload(
-    new Blob([csv], { type: "text/csv;charset=utf-8" }),
-    exportPayload.csvFilename || "nao-conformidades.csv",
+    new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" }),
+    exportPayload.csvFilename || `relatorio-desenho-${sanitizeFilename(code)}.csv`,
   );
 }
 
 export async function downloadDrawingAnalysisXlsx(
   exportPayload: DrawingAnalysisExportPayload,
+  drawingAnalysis?: Record<string, unknown>,
 ): Promise<void> {
-  const rows = exportPayload.spreadsheetRows ?? [];
+  const tables = resolveExportTables(exportPayload, drawingAnalysis);
 
-  if (!rows.length) {
+  if (!tables.length) {
     return;
   }
 
   try {
     const XLSX = await import("xlsx");
-    const headers = [
-      "Seção",
-      "Item",
-      "Status",
-      "Evidência PDF",
-      "Evidência API",
-      "Recomendação",
-    ];
-    const data = rows.map((row) => [
-      row.section,
-      row.item,
-      row.status,
-      row.pdfEvidence,
-      row.apiEvidence,
-      row.recommendation,
-    ]);
-    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data]);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Não conformidades");
-    const code =
-      exportPayload.csvFilename?.replace(/^nao-conformidades-/, "").replace(/\.csv$/, "") ||
-      "desenho";
-    XLSX.writeFile(workbook, `nao-conformidades-${code}.xlsx`);
+    const usedSheetNames = new Set<string>();
+
+    for (const table of tables) {
+      const baseName = sanitizeSheetName(table.sheetName || table.title || table.key);
+      let sheetName = baseName;
+      let suffix = 2;
+
+      while (usedSheetNames.has(sheetName)) {
+        const trimmed = baseName.slice(0, Math.max(1, 28 - String(suffix).length));
+        sheetName = `${trimmed}_${suffix}`;
+        suffix += 1;
+      }
+
+      usedSheetNames.add(sheetName);
+
+      const header = table.columns.map((column) => column.label);
+      const data = table.rows.map((row) =>
+        table.columns.map((column) => row[column.key] ?? ""),
+      );
+      const worksheet = XLSX.utils.aoa_to_sheet([header, ...data]);
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    }
+
+    const code = resolveProductCode(exportPayload, drawingAnalysis);
+    const filename =
+      exportPayload.xlsxFilename || `relatorio-desenho-${sanitizeFilename(code)}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   } catch {
     chatAlert("Não foi possível exportar XLSX. Tente o CSV ou Markdown.");
   }
 }
 
-export async function downloadDrawingAnalysisPdf(
+export function downloadDrawingAnalysisPdf(
   exportPayload: DrawingAnalysisExportPayload,
   drawingAnalysis?: Record<string, unknown>,
-): Promise<void> {
-  const markdown = String(exportPayload.markdown || "").trim();
+): void {
+  const tables = resolveExportTables(exportPayload, drawingAnalysis);
+  const payload =
+    tables.length > 0
+      ? { ...exportPayload, tables }
+      : exportPayload;
 
-  if (!markdown && !drawingAnalysis) {
+  if (!payload.tables?.length && !String(payload.markdown || "").trim()) {
     return;
   }
 
-  try {
-    const [{ jsPDF }, { autoTable }] = await Promise.all([
-      import("jspdf"),
-      import("jspdf-autotable"),
-    ]);
+  const opened = printDrawingAnalysisReport(payload, drawingAnalysis);
 
-    const code = resolveProductCode(exportPayload, drawingAnalysis);
-    const overall = String(drawingAnalysis?.overallLabel ?? "—");
-    const critical = drawingAnalysis?.criticalErrors;
-    const exportLabels = resolveExportLabels(exportPayload);
-    const statusLabels = resolveStatusLabels(exportPayload);
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-    doc.setFontSize(14);
-    doc.text(exportLabels.pdfTitle || "Relatório de Análise de Desenho DELPI", 14, 16);
-    doc.setFontSize(10);
-    doc.text(`Produto: ${code}`, 14, 24);
-    doc.text(`Status: ${overall}`, 14, 30);
-
-    if (critical != null) {
-      const criticalLabel = (exportLabels.criticalCountLabel || "Erros críticos: {count}")
-        .replace("{count}", String(critical));
-      doc.text(criticalLabel, 14, 36);
-    }
-
-    let startY = 44;
-
-    const nonConformityRows = exportPayload.spreadsheetRows ?? [];
-
-    if (nonConformityRows.length) {
-      doc.setFontSize(11);
-      doc.text(exportLabels.nonconformitiesTitle || "Não conformidades", 14, startY);
-      startY += 4;
-
-      const shortHeaders = exportLabels.spreadsheetShortHeaders;
-      autoTable(doc, {
-        head: [
-          shortHeaders && shortHeaders.length >= 6
-            ? shortHeaders
-            : ["Seção", "Item", "Status", "PDF", "API", "Ação"],
-        ],
-        body: nonConformityRows.map((row) => [
-          row.section,
-          row.item,
-          row.status,
-          row.pdfEvidence,
-          row.apiEvidence,
-          row.recommendation,
-        ]),
-        startY,
-        styles: { fontSize: 7, cellPadding: 1.5 },
-        headStyles: { fillColor: [14, 165, 233] },
-        margin: { left: 14, right: 14 },
-      });
-
-      startY = (doc as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? startY;
-      startY += 10;
-    }
-
-    const items = (drawingAnalysis?.items as DrawingCheckItem[] | undefined) ?? [];
-
-    if (items.length) {
-      if (startY > 250) {
-        doc.addPage();
-        startY = 16;
-      }
-
-      doc.setFontSize(11);
-      doc.text(exportLabels.checklistTitle || "Checklist completo", 14, startY);
-      startY += 4;
-
-      autoTable(doc, {
-        head: [["Seção", "Item", "Status", "Observação"]],
-        body: items.map((item) => [
-          String(item.section ?? "—"),
-          String(item.item ?? "—"),
-          statusLabels[String(item.status ?? "")] ?? String(item.status ?? "—"),
-          String(item.recommendation ?? "—"),
-        ]),
-        startY,
-        styles: { fontSize: 7, cellPadding: 1.5 },
-        headStyles: { fillColor: [71, 85, 105] },
-        margin: { left: 14, right: 14 },
-      });
-    } else if (!nonConformityRows.length && markdown) {
-      const lines = markdown.split("\n").slice(0, 80);
-
-      doc.setFontSize(9);
-
-      for (const line of lines) {
-        if (startY > 280) {
-          doc.addPage();
-          startY = 16;
-        }
-
-        doc.text(line.slice(0, 95), 14, startY);
-        startY += 5;
-      }
-    }
-
-    const filename =
-      exportPayload.pdfFilename ||
-      `relatorio-desenho-${sanitizeFilename(code)}.pdf`;
-
-    doc.save(filename);
-  } catch (error) {
-    console.error("[downloadDrawingAnalysisPdf]", error);
-    chatAlert("Não foi possível exportar PDF. Tente Markdown ou CSV.");
+  if (!opened) {
+    chatAlert(
+      "Não foi possível abrir a impressão do PDF. Verifique se o navegador não bloqueou pop-ups.",
+    );
   }
 }
 

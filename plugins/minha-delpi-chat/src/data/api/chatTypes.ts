@@ -636,6 +636,7 @@ export type ChatMessageMetadata = {
   drawingAnalysisExport?: {
     filename: string;
     pdfFilename?: string;
+    xlsxFilename?: string;
     mimeType: string;
     markdown: string;
     csv?: string;
@@ -643,11 +644,23 @@ export type ChatMessageMetadata = {
     statusLabels?: Record<string, string>;
     exportLabels?: {
       pdfTitle?: string;
+      pdfSubtitle?: string;
       nonconformitiesTitle?: string;
       checklistTitle?: string;
       criticalCountLabel?: string;
+      pdfSummaryProduct?: string;
+      pdfSummaryStatus?: string;
+      pdfSummaryCritical?: string;
+      pdfFooterNote?: string;
       spreadsheetShortHeaders?: string[];
     };
+    tables?: {
+      key: string;
+      title: string;
+      sheetName?: string;
+      columns: { key: string; label: string }[];
+      rows: Record<string, string>[];
+    }[];
     spreadsheetRows?: {
       section: string;
       item: string;

@@ -25,11 +25,13 @@ class ChatDrawingReportExportService:
         code = str(analysis.get("productCode") or "desenho").strip()
         safe_code = "".join(char for char in code if char.isalnum()) or "desenho"
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
-        csv_content = cls.build_nonconformity_csv(analysis)
+        tables = ChatDrawingValidationPresentationService.build_export_tables(package)
+        csv_content = cls.build_workbook_csv(tables)
 
         payload: dict[str, Any] = {
             "filename": f"relatorio-desenho-{safe_code}-{stamp}.md",
             "pdfFilename": f"relatorio-desenho-{safe_code}-{stamp}.pdf",
+            "xlsxFilename": f"relatorio-desenho-{safe_code}-{stamp}.xlsx",
             "mimeType": "text/markdown; charset=utf-8",
             "markdown": str(report_markdown or "").strip(),
             "statusLabels": ChatDrawingValidationPresentationService.status_labels_map(),
@@ -37,6 +39,10 @@ class ChatDrawingReportExportService:
                 "pdfTitle": ChatDrawingValidationContentService.get(
                     "export",
                     "pdfTitle",
+                ),
+                "pdfSubtitle": ChatDrawingValidationContentService.get(
+                    "export",
+                    "pdfSubtitle",
                 ),
                 "nonconformitiesTitle": ChatDrawingValidationContentService.get(
                     "export",
@@ -50,6 +56,22 @@ class ChatDrawingReportExportService:
                     "export",
                     "criticalCountLabel",
                 ),
+                "pdfSummaryProduct": ChatDrawingValidationContentService.get(
+                    "export",
+                    "pdfSummaryProduct",
+                ),
+                "pdfSummaryStatus": ChatDrawingValidationContentService.get(
+                    "export",
+                    "pdfSummaryStatus",
+                ),
+                "pdfSummaryCritical": ChatDrawingValidationContentService.get(
+                    "export",
+                    "pdfSummaryCritical",
+                ),
+                "pdfFooterNote": ChatDrawingValidationContentService.get(
+                    "export",
+                    "pdfFooterNote",
+                ),
                 "spreadsheetShortHeaders": ChatDrawingValidationContentService.list_values(
                     "export",
                     "spreadsheetShortHeaders",
@@ -57,10 +79,17 @@ class ChatDrawingReportExportService:
             },
         }
 
+        if tables:
+            payload["tables"] = tables
+
         if csv_content.strip():
             payload["csv"] = csv_content
-            payload["csvFilename"] = f"nao-conformidades-{safe_code}-{stamp}.csv"
-            payload["spreadsheetRows"] = cls.build_nonconformity_rows(analysis)
+            payload["csvFilename"] = f"relatorio-desenho-{safe_code}-{stamp}.csv"
+
+        nonconformity_rows = cls.build_nonconformity_rows(analysis)
+
+        if nonconformity_rows:
+            payload["spreadsheetRows"] = nonconformity_rows
 
         return payload
 
@@ -87,26 +116,56 @@ class ChatDrawingReportExportService:
         return rows
 
     @classmethod
+    def build_workbook_csv(cls, tables: list[dict[str, Any]]) -> str:
+        if not tables:
+            return ""
+
+        lines: list[str] = ["\ufeff"]
+
+        for index, table in enumerate(tables):
+            if index > 0:
+                lines.append("")
+
+            columns = table.get("columns") if isinstance(table.get("columns"), list) else []
+            rows = table.get("rows") if isinstance(table.get("rows"), list) else []
+            title = str(table.get("title") or table.get("key") or "").strip()
+
+            if title:
+                lines.append(cls._csv_row([title]))
+
+            header = [
+                str(column.get("label") or column.get("key") or "")
+                for column in columns
+                if isinstance(column, dict)
+            ]
+
+            if header:
+                lines.append(cls._csv_row(header))
+
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+
+                lines.append(
+                    cls._csv_row(
+                        [
+                            str(row.get(str(column.get("key") or "")) or "")
+                            for column in columns
+                            if isinstance(column, dict)
+                        ]
+                    )
+                )
+
+        return "\n".join(lines)
+
+    @classmethod
     def build_nonconformity_csv(cls, analysis: dict[str, Any]) -> str:
         rows = cls.build_nonconformity_rows(analysis)
 
         if not rows:
             return ""
 
-        header = [
-            str(cell)
-            for cell in ChatDrawingValidationContentService.list_values(
-                "export",
-                "spreadsheetHeaders",
-            )
-        ] or [
-            "Seção",
-            "Item",
-            "Status",
-            "Evidência PDF",
-            "Evidência API",
-            "Recomendação",
-        ]
+        header = ChatDrawingValidationPresentationService._export_spreadsheet_headers()
         lines = ["\ufeff" + cls._csv_row(header)]
 
         for row in rows:

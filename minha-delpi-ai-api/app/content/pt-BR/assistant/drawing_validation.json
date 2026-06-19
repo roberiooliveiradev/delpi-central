@@ -318,7 +318,36 @@
     "pdfTitle": "Relatório de Análise de Desenho DELPI",
     "nonconformitiesTitle": "Não conformidades",
     "checklistTitle": "Checklist completo",
-    "criticalCountLabel": "Erros críticos: {count}"
+    "criticalCountLabel": "Erros críticos: {count}",
+    "tableTitles": {
+      "pdfData": "Dados identificados no PDF",
+      "apiData": "Dados retornados pela API",
+      "structure": "Estrutura (SG1010)",
+      "guide": "Roteiro (SG2010)",
+      "inspection": "Inspeções (QP6 / QP7 / QP8)",
+      "nonconformities": "Divergências (críticas e erros)",
+      "checklist": "Checklist completo"
+    },
+    "sheetNames": {
+      "pdfData": "Dados PDF",
+      "apiData": "Dados API",
+      "structure": "Estrutura",
+      "guide": "Roteiro",
+      "inspection": "Inspeções",
+      "nonconformities": "Divergências",
+      "checklist": "Checklist"
+    },
+    "columnLabels": {
+      "keyValue": ["Campo", "Valor"],
+      "structure": ["Código", "Descrição", "Qtd", "Tipo", "Nível"],
+      "guide": ["Produto", "Nível", "Operação", "Centro", "Descrição"],
+      "inspection": ["Produto", "Nível", "QP6", "QP7", "QP8"]
+    },
+    "pdfSubtitle": "Validação técnica PDF × API DELPI",
+    "pdfSummaryProduct": "Produto",
+    "pdfSummaryStatus": "Status geral",
+    "pdfSummaryCritical": "Erros críticos",
+    "pdfFooterNote": "Relatório gerado eletronicamente pelo Minha DELPI com base nos dados do Protheus e no PDF anexado."
   },
   "presentation": {
     "divergenceStatuses": ["critical_error", "error"],

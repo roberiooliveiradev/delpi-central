@@ -532,3 +532,346 @@ class ChatDrawingValidationPresentationService:
                 best = key
 
         return best
+
+    @classmethod
+    def build_export_tables(cls, package: dict[str, Any]) -> list[dict[str, Any]]:
+        if not isinstance(package, dict):
+            return []
+
+        analysis = package.get("drawingAnalysis") if isinstance(package.get("drawingAnalysis"), dict) else {}
+        product = package.get("productSummary") if isinstance(package.get("productSummary"), dict) else {}
+        root = package.get("analyserRoot") if isinstance(package.get("analyserRoot"), dict) else {}
+        raw_items = analysis.get("items") if isinstance(analysis.get("items"), list) else []
+        display_items = cls.prepare_display_items(raw_items)
+        pdf_fields = ChatDrawingValidationContentService.get_node("reportFields", "pdf") or {}
+        api_fields = ChatDrawingValidationContentService.get_node("reportFields", "api") or {}
+        dash = ChatDrawingValidationContentService.evidence("dash")
+
+        pdf_code = cls.resolve_pdf_product_code(
+            pdf_product_code=analysis.get("pdfProductCode"),
+            resolved_product_code=product.get("code") or analysis.get("productCode"),
+        )
+
+        tables: list[dict[str, Any]] = [
+            cls._build_export_table(
+                "pdfData",
+                column_keys=["field", "value"],
+                column_labels=cls._export_column_labels("keyValue"),
+                rows=[
+                    {
+                        "field": str(pdf_fields.get("code", "Código")),
+                        "value": cls.format_code(pdf_code) if pdf_code else dash,
+                    },
+                    {
+                        "field": str(pdf_fields.get("revision", "Revisão (PDF)")),
+                        "value": str(analysis.get("revisionPdf") or dash),
+                    },
+                    {
+                        "field": str(pdf_fields.get("attached", "PDF anexado")),
+                        "value": (
+                            str(pdf_fields.get("attachedYes", "Sim"))
+                            if analysis.get("hasPdfAttachment")
+                            else str(pdf_fields.get("attachedNo", "Não"))
+                        ),
+                    },
+                ],
+            ),
+            cls._build_export_table(
+                "apiData",
+                column_keys=["field", "value"],
+                column_labels=cls._export_column_labels("keyValue"),
+                rows=[
+                    {
+                        "field": str(api_fields.get("code", "Código")),
+                        "value": cls.format_code(
+                            product.get("code") or analysis.get("productCode") or dash
+                        ),
+                    },
+                    {
+                        "field": str(api_fields.get("description", "Descrição")),
+                        "value": str(product.get("description") or dash),
+                    },
+                    {
+                        "field": str(api_fields.get("revision", "Revisão (API)")),
+                        "value": str(product.get("last_revision_date") or dash),
+                    },
+                ],
+            ),
+        ]
+
+        structure_rows = cls._export_structure_rows(root)
+
+        if structure_rows:
+            tables.append(
+                cls._build_export_table(
+                    "structure",
+                    column_keys=["code", "description", "quantity", "type", "level"],
+                    column_labels=cls._export_column_labels("structure"),
+                    rows=structure_rows,
+                )
+            )
+
+        guide_rows = cls._export_guide_rows(root)
+
+        if guide_rows:
+            tables.append(
+                cls._build_export_table(
+                    "guide",
+                    column_keys=["product", "level", "operation", "center", "description"],
+                    column_labels=cls._export_column_labels("guide"),
+                    rows=guide_rows,
+                )
+            )
+
+        inspection_rows = cls._export_inspection_rows(root)
+
+        if inspection_rows:
+            tables.append(
+                cls._build_export_table(
+                    "inspection",
+                    column_keys=["product", "level", "qp6", "qp7", "qp8"],
+                    column_labels=cls._export_column_labels("inspection"),
+                    rows=inspection_rows,
+                )
+            )
+
+        nonconformity_rows = [
+            {
+                "section": str(item.get("section") or ""),
+                "item": str(item.get("item") or ""),
+                "status": cls.status_label(str(item.get("status") or "")),
+                "pdfEvidence": str(item.get("pdfEvidence") or ""),
+                "apiEvidence": str(item.get("apiEvidence") or ""),
+                "recommendation": str(item.get("recommendation") or ""),
+            }
+            for item in cls.nonconformity_items(display_items)
+        ]
+
+        if nonconformity_rows:
+            tables.append(
+                cls._build_export_table(
+                    "nonconformities",
+                    column_keys=[
+                        "section",
+                        "item",
+                        "status",
+                        "pdfEvidence",
+                        "apiEvidence",
+                        "recommendation",
+                    ],
+                    column_labels=cls._export_spreadsheet_headers(),
+                    rows=nonconformity_rows,
+                )
+            )
+
+        checklist_rows = [
+            {
+                "section": str(item.get("section") or ""),
+                "item": str(item.get("item") or ""),
+                "status": cls.status_label(str(item.get("status") or "")),
+                "observation": str(item.get("recommendation") or ""),
+            }
+            for item in display_items
+        ]
+
+        if checklist_rows:
+            tables.append(
+                cls._build_export_table(
+                    "checklist",
+                    column_keys=["section", "item", "status", "observation"],
+                    column_labels=[
+                        "Seção",
+                        "Item",
+                        "Status",
+                        "Observação",
+                    ],
+                    rows=checklist_rows,
+                )
+            )
+
+        return [table for table in tables if table.get("rows")]
+
+    @classmethod
+    def _export_column_labels(cls, key: str) -> list[str]:
+        labels = ChatDrawingValidationContentService.list_values(
+            "export",
+            "columnLabels",
+            key,
+        )
+
+        return [str(label) for label in labels if str(label).strip()]
+
+    @classmethod
+    def _export_spreadsheet_headers(cls) -> list[str]:
+        headers = ChatDrawingValidationContentService.list_values(
+            "export",
+            "spreadsheetHeaders",
+        )
+
+        if headers:
+            return [str(header) for header in headers]
+
+        return [
+            "Seção",
+            "Item",
+            "Status",
+            "Evidência PDF",
+            "Evidência API",
+            "Recomendação",
+        ]
+
+    @classmethod
+    def _build_export_table(
+        cls,
+        key: str,
+        *,
+        column_keys: list[str],
+        column_labels: list[str],
+        rows: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        labels = column_labels or column_keys
+        columns = [
+            {"key": column_keys[index], "label": labels[index]}
+            for index in range(len(column_keys))
+            if index < len(labels)
+        ]
+
+        return {
+            "key": key,
+            "title": ChatDrawingValidationContentService.get("export", "tableTitles", key)
+            or key,
+            "sheetName": ChatDrawingValidationContentService.get("export", "sheetNames", key)
+            or key[:31],
+            "columns": columns,
+            "rows": rows,
+        }
+
+    @classmethod
+    def _export_structure_rows(cls, root: dict[str, Any]) -> list[dict[str, str]]:
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        structure_items = (
+            structure.get("items") if isinstance(structure.get("items"), list) else []
+        )
+
+        if not structure_items:
+            return []
+
+        dash = ChatDrawingValidationContentService.evidence("dash")
+        rows: list[dict[str, str]] = []
+
+        def _walk(items: list[Any], level: int = 0) -> None:
+            for row in items:
+                if not isinstance(row, dict):
+                    continue
+
+                rows.append(
+                    {
+                        "code": cls.format_code(row.get("code") or dash),
+                        "description": str(row.get("description") or dash),
+                        "quantity": str(
+                            row.get("quantity") if row.get("quantity") is not None else dash
+                        ),
+                        "type": str(row.get("type") or dash),
+                        "level": str(level),
+                    }
+                )
+
+                components = row.get("components")
+
+                if isinstance(components, list) and components:
+                    _walk(components, level + 1)
+
+        _walk(structure_items)
+        return rows
+
+    @classmethod
+    def _export_guide_rows(cls, root: dict[str, Any]) -> list[dict[str, str]]:
+        guide = root.get("guide") if isinstance(root.get("guide"), dict) else {}
+        guide_items = guide.get("items") if isinstance(guide.get("items"), list) else []
+
+        if not guide_items:
+            return []
+
+        from app.domain.services.external_actions.external_action_result_presenter import (
+            ExternalActionResultPresenter,
+        )
+
+        presenter = ExternalActionResultPresenter()
+        flattened = presenter._analyser()._flatten_analyser_guide_rows(guide_items)
+        rows_source = flattened if flattened else guide_items
+        dash = ChatDrawingValidationContentService.evidence("dash")
+        max_rows = int(
+            ChatDrawingValidationContentService.get(
+                "presentation",
+                "maxGuideRows",
+                default="80",
+            )
+            or 80
+        )
+        rows: list[dict[str, str]] = []
+
+        for row in rows_source[:max_rows]:
+            if not isinstance(row, dict):
+                continue
+
+            rows.append(
+                {
+                    "product": cls.format_code(
+                        row.get("product_code") or row.get("product") or dash
+                    ),
+                    "level": str(
+                        row.get("bom_level")
+                        if row.get("bom_level") is not None
+                        else row.get("level") or dash
+                    ),
+                    "operation": cls.format_code(
+                        row.get("operation_code") or row.get("operation") or dash
+                    ),
+                    "center": str(
+                        row.get("work_center")
+                        or row.get("center")
+                        or row.get("resource_code")
+                        or dash
+                    ),
+                    "description": str(
+                        row.get("operation_description") or row.get("description") or dash
+                    ),
+                }
+            )
+
+        return rows
+
+    @classmethod
+    def _export_inspection_rows(cls, root: dict[str, Any]) -> list[dict[str, str]]:
+        inspection = root.get("inspection") if isinstance(root.get("inspection"), dict) else {}
+        inspection_items = (
+            inspection.get("items") if isinstance(inspection.get("items"), list) else []
+        )
+
+        if not inspection_items:
+            return []
+
+        dash = ChatDrawingValidationContentService.evidence("dash")
+        rows: list[dict[str, str]] = []
+
+        for row in inspection_items:
+            if not isinstance(row, dict):
+                continue
+
+            qp6 = row.get("QP6") if isinstance(row.get("QP6"), list) else []
+            qp7 = row.get("QP7") if isinstance(row.get("QP7"), list) else []
+            qp8 = row.get("QP8") if isinstance(row.get("QP8"), list) else []
+
+            rows.append(
+                {
+                    "product": cls.format_code(
+                        row.get("product") or row.get("product_code") or dash
+                    ),
+                    "level": str(row.get("level") if row.get("level") is not None else dash),
+                    "qp6": str(len(qp6) if qp6 else dash),
+                    "qp7": str(len(qp7) if qp7 else dash),
+                    "qp8": str(len(qp8) if qp8 else dash),
+                }
+            )
+
+        return rows

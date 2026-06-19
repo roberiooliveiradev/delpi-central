@@ -1743,8 +1743,8 @@ export function ChatMessageList({
                             | undefined,
                         )
                       }
-                      aria-label="Baixar relatório PDF"
-                      title="Baixar relatório (.pdf)"
+                      aria-label="Exportar relatório PDF"
+                      title="Exportar relatório (.pdf)"
                     >
                       <Download size={15} aria-hidden="true" />
                       <span>PDF</span>
@@ -1763,34 +1763,42 @@ export function ChatMessageList({
                       <Download size={15} aria-hidden="true" />
                       <span>MD</span>
                     </button>
-                    {message.metadata.drawingAnalysisExport.csv ? (
+                    {message.metadata.drawingAnalysisExport.csv ||
+                    (message.metadata.drawingAnalysisExport.tables?.length ?? 0) > 0 ? (
                       <button
                         type="button"
                         className="mdc-chat-message-action mdc-chat-drawing-export__btn"
                         onClick={() =>
                           downloadDrawingAnalysisCsv(
                             message.metadata!.drawingAnalysisExport!,
+                            message.metadata?.drawingAnalysis as
+                              | Record<string, unknown>
+                              | undefined,
                           )
                         }
-                        aria-label="Baixar não conformidades CSV"
-                        title="Baixar não conformidades (.csv)"
+                        aria-label="Baixar tabelas CSV"
+                        title="Baixar tabelas (.csv)"
                       >
                         <Download size={15} aria-hidden="true" />
                         <span>CSV</span>
                       </button>
                     ) : null}
-                    {(message.metadata.drawingAnalysisExport.spreadsheetRows?.length ?? 0) >
-                    0 ? (
+                    {(message.metadata.drawingAnalysisExport.tables?.length ?? 0) > 0 ||
+                    (message.metadata.drawingAnalysisExport.spreadsheetRows?.length ?? 0) >
+                      0 ? (
                       <button
                         type="button"
                         className="mdc-chat-message-action mdc-chat-drawing-export__btn"
                         onClick={() =>
                           void downloadDrawingAnalysisXlsx(
                             message.metadata!.drawingAnalysisExport!,
+                            message.metadata?.drawingAnalysis as
+                              | Record<string, unknown>
+                              | undefined,
                           )
                         }
-                        aria-label="Baixar não conformidades XLSX"
-                        title="Baixar não conformidades (.xlsx)"
+                        aria-label="Baixar tabelas XLSX"
+                        title="Baixar tabelas (.xlsx)"
                       >
                         <Download size={15} aria-hidden="true" />
                         <span>XLSX</span>

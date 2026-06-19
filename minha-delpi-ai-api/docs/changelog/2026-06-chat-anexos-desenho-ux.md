@@ -120,3 +120,23 @@ cd plugins/minha-delpi-chat && npm run test -- chatAttachmentPreview
 **Testes:** `test_chat_drawing_analyser_parameter_service.py`, `test_build_product_parameters_sets_analyser_view_full_for_drawing_analysis`.
 
 **Cenário manual:** anexar PDF + código no contexto (sem gatilho textual explícito) → análise DELPI → estrutura/roteiro completos, sem banner de cobertura parcial.
+
+---
+
+## 5 — Exportação completa (PDF, CSV, XLSX)
+
+**Problema:** apenas o Markdown trazia o relatório integral; PDF limitava-se a duas tabelas (não conformidades + checklist) e CSV/XLSX exportavam só divergências.
+
+**Correção:**
+
+| Camada | Entrega |
+|--------|---------|
+| Domain | `ChatDrawingValidationPresentationService.build_export_tables` — PDF/API, estrutura, roteiro, inspeções, divergências, checklist |
+| Application | `ChatDrawingReportExportService` — `tables[]`, CSV multi-seção, `xlsxFilename` |
+| JSON | `drawing_validation.json` → `export.tableTitles`, `sheetNames`, `columnLabels`, rótulos do PDF |
+| MFE | `drawingAnalysisPrint.ts` — HTML no padrão do certificado de inspeções de entrada (logo, faixa azul, selo de status) |
+| MFE | `drawingAnalysisExport.ts` — CSV/XLSX com uma aba/seção por tabela |
+
+**Testes:** `test_chat_drawing_report_export_service.py`, `drawingAnalysisExport.test.ts`.
+
+**Cenário manual:** após análise de desenho → exportar PDF (impressão com layout DELPI), CSV e XLSX com todas as tabelas operacionais.
