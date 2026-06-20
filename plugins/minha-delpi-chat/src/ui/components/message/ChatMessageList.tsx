@@ -52,6 +52,7 @@ import {
   type HelpSelfHelpFeedbackPayload,
 } from "./ChatHelpSelfHelpFeedback";
 import { ChatAssistantContent } from "./ChatAssistantContent";
+import { resolveResponseModeEffectNotice } from "./responseModeEffectNotice";
 import {
   resolveAssistantDisplayContent,
   toolCallsForDrawingAnalysisDisplay,
@@ -1476,6 +1477,9 @@ export function ChatMessageList({
                   <ChatAssistantContent
                     content={displayContent}
                     toolCalls={assistantToolCalls}
+                    responseModeEffectNotice={resolveResponseModeEffectNotice(
+                      message.metadata,
+                    )}
                     onDrillDown={onDrillDown}
                     onOpenCanvas={onOpenCanvas}
                     requestChartExplanation={

@@ -20,6 +20,7 @@ import {
   type MemoryUsageView,
 } from "../components/shared/modal/ChatMemoryUsedDialog";
 import { ChatMessageList } from "../components/message";
+import { resolveResponseModeEffectNotice } from "../components/message/responseModeEffectNotice";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/workspace";
 import { ChatProjectSettingsModal } from "../components/workspace/ChatProjectSettingsModal";
@@ -2227,11 +2228,30 @@ export function ChatPage({
     getAccessToken,
   };
 
+  const lastResponseModeEffectNotice = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+
+      if (message.role !== "assistant") {
+        continue;
+      }
+
+      const notice = resolveResponseModeEffectNotice(message.metadata);
+
+      if (notice) {
+        return notice;
+      }
+    }
+
+    return null;
+  }, [messages]);
+
   const composerResponseModeProps = {
     showResponseModeSelector: responseModesEnabled,
     responseModes,
     responseMode,
     onResponseModeChange: setResponseMode,
+    responseModeEffectNotice: lastResponseModeEffectNotice,
   };
 
   const composerPresentationFormatProps = {

@@ -30,6 +30,7 @@ import "../presentation/rich-presentation-shared.css";
 type ChatAssistantContentProps = {
   content: string;
   toolCalls?: ChatToolCall[];
+  responseModeEffectNotice?: string | null;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   requestChartExplanation?: boolean;
@@ -39,6 +40,7 @@ type ChatAssistantContentProps = {
 export function ChatAssistantContent({
   content,
   toolCalls = [],
+  responseModeEffectNotice = null,
   onDrillDown,
   onOpenCanvas,
   requestChartExplanation = false,
@@ -155,6 +157,15 @@ export function ChatAssistantContent({
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
+      {responseModeEffectNotice ? (
+        <div
+          className="mdc-rich-presentation__coverage-notice mdc-rich-presentation__response-mode-notice"
+          role="status"
+        >
+          {responseModeEffectNotice}
+        </div>
+      ) : null}
+
       {dataCoverageNotice ? (
         <div className="mdc-rich-presentation__coverage-notice" role="status">
           {dataCoverageNotice.message}

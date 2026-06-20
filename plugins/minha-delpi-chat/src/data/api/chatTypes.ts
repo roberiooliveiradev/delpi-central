@@ -688,6 +688,14 @@ export type ChatMessageMetadata = {
     sourceCount?: number;
     sources?: ChatSource[];
   };
+  intelligence?: {
+    pipeline?: {
+      responseModeEffect?: string;
+      responseModeEffectNotice?: string;
+      directResponse?: boolean;
+      skipRag?: boolean;
+    };
+  };
   [key: string]: unknown;
 };
 

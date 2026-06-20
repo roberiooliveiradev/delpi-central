@@ -315,6 +315,21 @@
   color: color-mix(in srgb, var(--mdc-warning) 92%, var(--mdc-text));
 }
 
+.mdc-rich-presentation__response-mode-notice {
+  border-color: color-mix(in srgb, var(--mdc-accent) 28%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-accent) 8%, var(--mdc-card-bg));
+}
+
+.mdc-rich-presentation__response-mode-notice::before {
+  content: "Modo · ";
+  font-weight: 700;
+  color: color-mix(in srgb, var(--mdc-accent) 88%, var(--mdc-text));
+}
+
+.mdc-chat-input__response-mode-notice {
+  margin: 0.45rem 0 0;
+}
+
 .mdc-rich-presentation__navigation {
   display: flex;
   flex-wrap: wrap;
