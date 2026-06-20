@@ -106,6 +106,18 @@ Gate CI: `scripts/audit_presentation_prose_delivery.py --check`
 | G3 | Preview/simulate/agent admin divergência | use cases | ✅ P2.7 |
 | G4 | `ChatDataInterpretationAnswerService` usa humanized histórico | domain | ✅ `resolve_effective_humanized_summary` + archive |
 | G5 | Modos OFF → template em stacks narrativos | config `requireResponseModesForLlmProse` | ✅ P3.1 |
+| G6 | Consumidores pós-pipeline leem `humanized.linhas` direto | enrichment, contexto, rich text, MFE, error handling | ✅ helpers `should_block` + `resolve_humanized_lines_*` + audit |
+
+### Helpers canônicos (consumo pós-gate)
+
+| Helper | Uso |
+|--------|-----|
+| `should_block_template_prose_metadata()` | Bloqueia template quando `llmProseDecoupled` ou `dataOnlyPresentation` |
+| `resolve_humanized_lines_for_display()` | UI / authorized answer — `[]` quando bloqueado |
+| `resolve_humanized_lines_for_facts()` | Follow-up, contexto LLM — usa `templateProseArchive` |
+| `resolve_humanized_detail_lines_for_display()` | `linhas_detalhe` na UI |
+
+Gate CI estendido: `audit_direct_humanized_linhas_reads()` flaga `.get("linhas")` fora da allowlist (presenters upstream permanecem).
 
 ### MFE — consumo
 
@@ -114,6 +126,7 @@ Gate CI: `scripts/audit_presentation_prose_delivery.py --check`
 | `presentationMarkdownNormalization.ts` | ✅ `isLlmProseDecoupled*`, skip metadata markdown |
 | `renderPlanSegmentBuilder.ts` | ✅ lead `assistantMessage`, skip highlights template |
 | `presentationMultiRoute.ts` | ✅ não usa humanized quando decoupled |
+| `presentationProseDeliveryReaders.ts` | ✅ `shouldBlockTemplateProseMetadata`, linhas + `linhas_detalhe` |
 | `chatPresentation.ts` | ✅ via `getTextMarkdownFromToolCalls` |
 | `presentationMetadataReaders.ts` | ✅ re-export `proseDeliveryMode` / archive via `presentationProseDeliveryReaders` |
 
@@ -169,6 +182,7 @@ Objetivo: **presenter entrega só dados estruturados**; prosa 100% LLM em rotas 
 | P4.1 | Remover `synthesizeRenderPlanFromToolCalls` legado no MFE (API sempre envia v1) | ✅ `resolveRenderPlanForExecution` só consome v1 |
 | P4.2 | Deprecar `humanizedSummary.linhas` como prosa UI | ✅ `resolveRenderableHumanizedLines` ignora em `proseDeliveryMode=llm` |
 | P4.3 | Consolidar playbook-13 § LLM como caminho primário narrativo | ✅ gate único em `ChatResponseModeService` + §2.1/§8.7 playbook-13 |
+| P4.4 | Desacoplamento completo — migrar consumidores pós-pipeline | ✅ helpers display/facts + audit leituras diretas |
 
 ---
 

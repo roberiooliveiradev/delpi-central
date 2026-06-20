@@ -16,12 +16,14 @@ Narrativa operacional (`summary_then_evidence`, overview de produto) passa a usa
 | P2 | `dataOnlyPresentation`, smoke qualidade, simulate unificado |
 | P3 | `proseDeliveryByEntity/Profile/Tier/EntitySet`, métricas audit |
 | P4 | MFE `renderPlan` v1-only, linhas fora da UI LLM, playbook-13 §8.7 |
+| P4.4 | Desacoplamento completo — consumidores via helpers + audit `linhas` diretas |
 
 ## Contrato metadata
 
 - `proseDeliveryMode`, `llmProseDecoupled`, `templateProseArchive`
 - `renderPlan.segments[].source = assistantMessage` no lead LLM
 - `resolve_effective_humanized_summary()` para follow-up e contexto histórico
+- `should_block_template_prose_metadata()` + `resolve_humanized_lines_for_display|facts()` — consumo pós-gate
 
 ## Gates CI
 
