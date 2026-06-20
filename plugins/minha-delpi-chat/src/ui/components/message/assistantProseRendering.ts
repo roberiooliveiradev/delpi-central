@@ -138,6 +138,7 @@ export function toolCallsForDrawingAnalysisDisplay(
       inspectionTablePresentation: _inspectionTablePresentation,
       profileTablePresentation: _profileTablePresentation,
       humanizedSummary: _humanizedSummary,
+      templateProseArchive: _templateProseArchive,
       stackPresentationPlan: _stackPresentationPlan,
       presentationDecision: _presentationDecision,
       dataCoverageNotice: _dataCoverageNotice,

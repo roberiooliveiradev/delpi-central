@@ -77,6 +77,14 @@ export {
   renderPlanHasOnlyProseSegments,
 } from "./presentation/presentationMetadataReaders";
 
+export {
+  getProseDeliveryModeFromToolCalls,
+  getTemplateProseArchiveFromToolCalls,
+  resolveRenderableHumanizedLines,
+  resolveRenderableTemplateMarkdown,
+} from "./presentation/presentationProseDeliveryReaders";
+export type { ChatProseDeliveryMode, ChatTemplateProseArchive } from "../../data/api/chatTypes";
+
 
 export {
   getTextMarkdownFromToolCalls,

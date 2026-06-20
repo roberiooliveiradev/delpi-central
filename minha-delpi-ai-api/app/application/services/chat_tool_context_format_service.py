@@ -205,9 +205,13 @@ class ChatToolContextFormatService:
                 from app.domain.services.chat_presentation_data_only_prose_service import (
                     ChatPresentationDataOnlyProseService,
                 )
+                from app.domain.services.chat_presentation_prose_delivery_service import (
+                    ChatPresentationProseDeliveryService,
+                )
 
                 if (
-                    not ChatPresentationDataOnlyProseService.is_data_only_metadata(meta)
+                    not ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(meta)
+                    and not ChatPresentationDataOnlyProseService.is_data_only_metadata(meta)
                     and last_data
                     and (had_kpi_primary or caption_only)
                 ):

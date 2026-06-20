@@ -235,3 +235,35 @@ def test_apply_format_override_dashboard_rebuilds_render_plan_after_stack_prune(
         if isinstance(segment, dict)
     ), "override Painel deve reconstruir renderPlan com segmento dashboard"
     assert meta.get("tablePresentations"), "tabelas permanecem no payload para troca de formato"
+
+
+def test_apply_format_override_text_skips_rebuild_when_llm_prose_decoupled():
+    service = ChatToolContextFormatService()
+    archived_markdown = "### Status fabril\n\nTemplate arquivado longo."
+    metadata = {
+        "ok": True,
+        "path": "/products/90269002/factory-status",
+        "llmProseDecoupled": True,
+        "proseDeliveryMode": "llm",
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+            "presentationMode": "summary_then_evidence",
+            "proseSource": "llm",
+        },
+        "textPresentation": {"type": "markdown", "markdown": ""},
+        "templateProseArchive": {"textPresentationMarkdown": archived_markdown},
+        "humanizedSummary": {"titulo": "Status fabril — 90269002"},
+        "tablePresentations": [{"type": "table", "title": "Panorama fabril", "rows": []}],
+        "treePresentation": {"type": "tree", "root": {"id": "root"}},
+    }
+    tool_calls = [{"name": "execute_external_action", "metadata": metadata}]
+    payload = {"factory_status": "PA PRODUZIDO"}
+
+    service.apply_format_override(tool_calls, "text", payload)
+
+    meta = tool_calls[0]["metadata"]
+
+    assert meta.get("llmProseDecoupled") is True
+    assert str((meta.get("textPresentation") or {}).get("markdown") or "").strip() == ""
+    assert meta.get("templateProseArchive", {}).get("textPresentationMarkdown") == archived_markdown

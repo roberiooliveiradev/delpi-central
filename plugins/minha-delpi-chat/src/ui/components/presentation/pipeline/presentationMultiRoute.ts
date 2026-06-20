@@ -14,6 +14,10 @@ import {
 } from "../../../../content/operationalPresentationContent";
 import { dedupeTableSegments } from "./presentationTableDedup";
 import { isLlmProseDecoupledMetadata } from "../presentationMarkdownNormalization";
+import {
+  resolveRenderableHumanizedLines,
+  resolveRenderableTemplateMarkdown,
+} from "../presentationProseDeliveryReaders";
 
 export type { ProductRouteKey };
 
@@ -270,13 +274,16 @@ export function resolveRouteTextDetailMarkdown(toolCall: ChatToolCall | undefine
   }
 
   const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
-  const textPresentation = metadata.textPresentation as
-    | { markdown?: string; title?: string }
-    | undefined;
-  const markdown = String(textPresentation?.markdown || "").trim();
+
+  if (isLlmProseDecoupledMetadata(metadata)) {
+    return "";
+  }
+
+  const markdown = resolveRenderableTemplateMarkdown(metadata);
 
   if (markdown) {
     const humanized = metadata.humanizedSummary as { titulo?: string } | undefined;
+    const textPresentation = metadata.textPresentation as { title?: string } | undefined;
     const title = String(humanized?.titulo || textPresentation?.title || "").trim();
 
     return stripMarkdownHeading(markdown, title);
@@ -325,19 +332,13 @@ function resolveProseForBlock(
     return "";
   }
 
-  const humanized = metadata.humanizedSummary as { linhas?: string[] } | undefined;
-  const lines = Array.isArray(humanized?.linhas)
-    ? humanized.linhas.map((line) => String(line || "").trim()).filter(Boolean)
-    : [];
+  const lines = resolveRenderableHumanizedLines(metadata);
 
   if (lines.length) {
     return lines.join("\n\n");
   }
 
-  const textPresentation = metadata.textPresentation as { markdown?: string } | undefined;
-  const markdown = String(textPresentation?.markdown || "").trim();
-
-  return markdown;
+  return resolveRenderableTemplateMarkdown(metadata);
 }
 
 function collectVisualsForToolCall(toolCall: ChatToolCall): AssistantContentSegment[] {

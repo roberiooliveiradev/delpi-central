@@ -318,6 +318,18 @@ export type ChatPresentationDecision = {
   intent?: string | null;
 };
 
+export type ChatTemplateProseArchive = {
+  textPresentationMarkdown?: string;
+  humanizedSummary?: {
+    titulo?: string;
+    linhas?: string[];
+    linhas_detalhe?: string[];
+    [key: string]: unknown;
+  };
+};
+
+export type ChatProseDeliveryMode = "template" | "llm" | "direct";
+
 export type ChatToolCall = {
   name?: string;
   arguments?: Record<string, unknown>;
@@ -334,6 +346,20 @@ export type ChatToolCall = {
     path?: string | null;
     statusCode?: number | null;
     ok?: boolean | null;
+    proseDeliveryMode?: ChatProseDeliveryMode;
+    llmProseDecoupled?: boolean;
+    dataOnlyPresentation?: boolean;
+    templateProseArchive?: ChatTemplateProseArchive | null;
+    textPresentation?: {
+      type?: string;
+      markdown?: string;
+      title?: string;
+    } | null;
+    humanizedSummary?: {
+      titulo?: string;
+      linhas?: string[];
+      linhas_detalhe?: string[];
+    } | null;
   }) | null;
 };
 
