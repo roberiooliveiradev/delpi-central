@@ -148,7 +148,7 @@ Gate CI estendido: `audit_direct_humanized_linhas_reads()` flaga `.get("linhas")
 |---|---------|
 | P1.1 | Guard em `ChatToolContextFormatService`: não repopular `textPresentation` se `llmProseDecoupled` | ✅ |
 | P1.2 | Tipos MFE: `proseDeliveryMode`, `templateProseArchive` filtrado do render | ✅ |
-| P1.3 | Banner `responseModeEffectNotice` no composer (visibilidade modo LLM) | ✅ MFE assistant + composer |
+| P1.3 | Nota `responseModeEffectNotice` — rodapé discreto na resposta LLM (não no composer) | ✅ MFE `ChatAssistantContent` + `resolveResponseModeEffectNotice` |
 | P1.4 | Regressão MFE: `presentationMarkdownNormalization.test.ts` decoupled | ✅ |
 | P1.5 | Gate audit no CI (`audit_presentation_prose_delivery.py --check`) | ✅ |
 

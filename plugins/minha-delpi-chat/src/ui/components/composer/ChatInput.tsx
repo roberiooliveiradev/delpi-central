@@ -110,8 +110,6 @@ type ChatInputProps = {
   onDismissTypingSuggestion?: () => void;
   onUseRouteQuestion?: (query: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
-  /** Aviso do último turno (metadata.intelligence.pipeline) — visibilidade modo LLM. */
-  responseModeEffectNotice?: string | null;
 };
 
 export function ChatInput({
@@ -154,7 +152,6 @@ export function ChatInput({
   onDismissTypingSuggestion,
   onUseRouteQuestion,
   getAccessToken,
-  responseModeEffectNotice = null,
 }: ChatInputProps) {
   const { openPreview, previewModal } = useWorkspaceFilePreviewModal({ getAccessToken });
   const { accept: sessionAttachmentAccept } = useWorkspaceFileIngestPolicy("session_attachment", {
@@ -631,15 +628,6 @@ export function ChatInput({
 
             <div className="mdc-chat-input__composer-toolbar-end">{sendControl}</div>
           </div>
-
-          {responseModeEffectNotice && showResponseMode ? (
-            <div
-              className="mdc-chat-input__response-mode-notice mdc-rich-presentation__coverage-notice mdc-rich-presentation__response-mode-notice"
-              role="status"
-            >
-              {responseModeEffectNotice}
-            </div>
-          ) : null}
         </div>
       </div>
 

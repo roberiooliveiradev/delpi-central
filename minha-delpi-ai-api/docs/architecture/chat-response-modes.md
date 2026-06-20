@@ -117,7 +117,7 @@ Em `metadata.intelligence.pipeline`:
 | Campo | Valores |
 |-------|---------|
 | `responseModeEffect` | `llm_synthesis` \| `llm_synthesis_brief` (P19: nunca `operational_direct` com everywhere) |
-| `responseModeEffectNotice` | Texto PT de `response_modes.json` |
+| `responseModeEffectNotice` | Texto PT de `response_modes.json` — **MFE:** nota de rodapé discreta só na resposta do assistente quando `llm_synthesis*` e `directResponse` false; **não** no composer |
 | `directResponse` | `true` quando há direct answer final (inclui commentary direct no modo Rápida) |
 | `commentaryBriefDirect` | Flag interna no `tool_context` — preserva direct answer na montagem LLM |
 

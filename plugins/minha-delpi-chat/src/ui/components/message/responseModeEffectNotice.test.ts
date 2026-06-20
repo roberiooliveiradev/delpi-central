@@ -21,4 +21,32 @@ describe("resolveResponseModeEffectNotice", () => {
     expect(resolveResponseModeEffectNotice(null)).toBeNull();
     expect(resolveResponseModeEffectNotice({ intelligence: { pipeline: {} } })).toBeNull();
   });
+
+  it("returns null for resposta directa sem LLM", () => {
+    expect(
+      resolveResponseModeEffectNotice({
+        intelligence: {
+          pipeline: {
+            responseModeEffect: "operational_direct",
+            responseModeEffectNotice: "Resposta direta dos dados.",
+          },
+        },
+      }),
+    ).toBeNull();
+  });
+
+  it("returns null quando directResponse true (sem passagem LLM)", () => {
+    expect(
+      resolveResponseModeEffectNotice({
+        intelligence: {
+          pipeline: {
+            responseModeEffect: "llm_synthesis_brief",
+            directResponse: true,
+            responseModeEffectNotice:
+              "Texto gerado pelo modelo com base nos dados consultados.",
+          },
+        },
+      }),
+    ).toBeNull();
+  });
 });

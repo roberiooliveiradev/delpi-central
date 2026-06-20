@@ -204,6 +204,19 @@ Telemetria: `presentation_view_switch` (mesmo evento do antigo toggle).
 
 ---
 
+## Aviso de modo de resposta (Rápida / Normal / Pensador)
+
+| Onde | Regra |
+|------|--------|
+| **Composer** | **Sem** card de modo — só seletor Rápida/Normal/Pensador |
+| **Resposta assistente** | Nota de rodapé (`mdc-rich-presentation__response-mode-footnote`) quando `metadata.intelligence.pipeline.responseModeEffect` é `llm_synthesis` ou `llm_synthesis_brief` **e** `directResponse` ≠ true |
+| Texto | `responseModeEffectNotice` da API (`response_modes.json` → `pipelineEffects`) |
+| MFE | `resolveResponseModeEffectNotice` — render-only; não reescreve copy |
+
+Modo **Rápida** com commentary direct (`directResponse: true`) **não** exibe a nota (prosa sem passagem LLM).
+
+---
+
 ## Consulta multi-rota do mesmo produto (jun/2026)
 
 Perguntas como «**estoque e onde é usado** do produto 10070011» disparam **várias** `execute_external_action` (`/stock`, `/parents`, …). O MFE **não** deve tratar isso como um único stack do analyser nem fundir visuais entre rotas.

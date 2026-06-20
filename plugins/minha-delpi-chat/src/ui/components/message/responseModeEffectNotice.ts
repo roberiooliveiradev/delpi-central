@@ -15,6 +15,20 @@ export function resolveResponseModeEffectNotice(
     return null;
   }
 
+  const effect = String(
+    (pipeline as { responseModeEffect?: unknown }).responseModeEffect ?? "",
+  )
+    .trim()
+    .toLowerCase();
+
+  if (effect !== "llm_synthesis" && effect !== "llm_synthesis_brief") {
+    return null;
+  }
+
+  if ((pipeline as { directResponse?: unknown }).directResponse === true) {
+    return null;
+  }
+
   const notice = String(
     (pipeline as { responseModeEffectNotice?: unknown }).responseModeEffectNotice ?? "",
   ).trim();

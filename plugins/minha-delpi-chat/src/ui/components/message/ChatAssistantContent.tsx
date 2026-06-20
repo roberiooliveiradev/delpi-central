@@ -157,15 +157,6 @@ export function ChatAssistantContent({
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
-      {responseModeEffectNotice ? (
-        <div
-          className="mdc-rich-presentation__coverage-notice mdc-rich-presentation__response-mode-notice"
-          role="status"
-        >
-          {responseModeEffectNotice}
-        </div>
-      ) : null}
-
       {dataCoverageNotice ? (
         <div className="mdc-rich-presentation__coverage-notice" role="status">
           {dataCoverageNotice.message}
@@ -212,6 +203,12 @@ export function ChatAssistantContent({
           recommendations={presentationRecommendations}
           onNavigate={onDrillDown}
         />
+      ) : null}
+
+      {responseModeEffectNotice ? (
+        <p className="mdc-rich-presentation__response-mode-footnote" role="note">
+          {responseModeEffectNotice}
+        </p>
       ) : null}
     </div>
   );
