@@ -33,6 +33,11 @@ class ChatOperationalLlmSynthesisContextService:
         if panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
             result = f"{result}\n\n{panel_rule}" if result else f"\n\n{panel_rule}"
 
+        fidelity_rule = ChatOperationalLlmSynthesisContextContentService.factual_fidelity_rule()
+
+        if fidelity_rule and cls._tool_calls_use_prose_panel(tool_calls):
+            result = f"{result}\n\n{fidelity_rule}" if result else f"\n\n{fidelity_rule}"
+
         return result
 
     @classmethod
@@ -69,8 +74,21 @@ class ChatOperationalLlmSynthesisContextService:
         facts: list[str] = []
         path = str(metadata.get("path") or "").strip()
 
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        decoupled = ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata)
+
+        product_code = cls._product_code_from_path(path)
+
+        if product_code:
+            facts.append(f"Produto consultado: {product_code}")
+
         if path:
             facts.append(f"Rota consultada: {path}")
+
+        cls._append_unique_lines(facts, cls._facts_from_api_sections(metadata))
 
         coverage = metadata.get("dataCoverageNotice")
 
@@ -99,16 +117,47 @@ class ChatOperationalLlmSynthesisContextService:
             if narrative:
                 facts.append(narrative)
 
+            for key in ("attention", "analysis"):
+                items = data_commentary.get(key)
+
+                if not isinstance(items, list):
+                    continue
+
+                limit = ChatOperationalLlmSynthesisContextContentService.limit_int(
+                    f"max{key.capitalize()}",
+                    4 if key == "attention" else 3,
+                )
+
+                for item in items[:limit]:
+                    text = cls._stringify(item)
+
+                    if text:
+                        facts.append(text)
+
         data_answer = metadata.get("dataAnswer")
 
         if isinstance(data_answer, dict):
             summary = data_answer.get("summary")
+            skip_summary_answer = decoupled and cls._should_skip_summary_answer(metadata)
 
-            if isinstance(summary, dict):
+            if isinstance(summary, dict) and not skip_summary_answer:
                 answer = str(summary.get("answer") or "").strip()
 
                 if answer:
                     facts.append(answer)
+
+            if isinstance(summary, dict):
+                for key in ("attention", "analysis"):
+                    items = summary.get(key)
+
+                    if not isinstance(items, list):
+                        continue
+
+                    for item in items[:3]:
+                        text = cls._stringify(item)
+
+                        if text:
+                            facts.append(text)
 
             for key in ("highlights", "limitations"):
                 items = data_answer.get(key)
@@ -141,9 +190,12 @@ class ChatOperationalLlmSynthesisContextService:
             if title:
                 facts.append(title)
 
+            max_lines_key = (
+                "maxHumanizedLinesWhenDecoupled" if decoupled else "maxHumanizedLines"
+            )
             max_lines = ChatOperationalLlmSynthesisContextContentService.limit_int(
-                "maxHumanizedLines",
-                6,
+                max_lines_key,
+                2 if decoupled else 3,
             )
 
             for line in ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(
@@ -169,44 +221,115 @@ class ChatOperationalLlmSynthesisContextService:
 
         max_rows = ChatOperationalLlmSynthesisContextContentService.limit_int("maxTableRows", 4)
 
+        skip_table_rows = (
+            decoupled
+            and ChatOperationalLlmSynthesisContextContentService.skip_table_rows_when_decoupled()
+        )
+
+        if not skip_table_rows:
+            for table in cls._iter_table_presentations(metadata):
+                table_title = str(table.get("title") or "").strip()
+                role = str(table.get("role") or "").strip().casefold()
+                rows = table.get("rows")
+
+                if not isinstance(rows, list):
+                    continue
+
+                row_limit = max_rows
+
+                if role == "profile":
+                    row_limit = ChatOperationalLlmSynthesisContextContentService.limit_int(
+                        "maxProfileTableRowsWhenDecoupled" if decoupled else "maxProfileTableRows",
+                        0 if decoupled else 12,
+                    )
+
+                if row_limit <= 0:
+                    continue
+
+                for row in rows[:row_limit]:
+                    if not isinstance(row, dict):
+                        continue
+
+                    line = cls._format_table_row_fact(row)
+
+                    if not line:
+                        continue
+
+                    prefix = f"{table_title} — " if table_title else ""
+                    facts.append(f"{prefix}{line}")
+
+        facts.extend(cls._facts_from_sql_metadata(metadata))
+
+        return facts
+
+    @classmethod
+    def _product_code_from_path(cls, path: str) -> str:
+        import re
+
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        match = re.search(r"/products/(\d{4,})/", str(path or ""))
+
+        if not match:
+            return ""
+
+        return ChatProductQueryIntentService.normalize_product_code(match.group(1))
+
+    @classmethod
+    def _should_skip_summary_answer(cls, metadata: dict[str, Any]) -> bool:
         from app.domain.services.chat_presentation_prose_delivery_service import (
             ChatPresentationProseDeliveryService,
         )
 
-        decoupled = ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata)
+        if not ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata):
+            return False
+
+        if ChatOperationalLlmSynthesisContextContentService.skip_summary_answer_when_decoupled():
+            return True
+
+        path = str(metadata.get("path") or "").lower()
+
+        if "/analyser" in path or "/profile" in path:
+            return True
 
         for table in cls._iter_table_presentations(metadata):
-            table_title = str(table.get("title") or "").strip()
             role = str(table.get("role") or "").strip().casefold()
-            rows = table.get("rows")
-
-            if not isinstance(rows, list):
-                continue
-
-            row_limit = max_rows
 
             if role == "profile":
-                row_limit = ChatOperationalLlmSynthesisContextContentService.limit_int(
-                    "maxProfileTableRowsWhenDecoupled" if decoupled else "maxProfileTableRows",
-                    0 if decoupled else 12,
-                )
+                return True
 
-            if row_limit <= 0:
+        return False
+
+    @classmethod
+    def _facts_from_api_sections(cls, metadata: dict[str, Any]) -> list[str]:
+        facts: list[str] = []
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if not isinstance(api_meta, dict):
+            return facts
+
+        for section in api_meta.get("sections") or []:
+            if not isinstance(section, dict):
                 continue
 
-            for row in rows[:row_limit]:
-                if not isinstance(row, dict):
-                    continue
+            label = str(section.get("label") or section.get("key") or section.get("name") or "").strip()
+            count = section.get("itemCount", section.get("count"))
 
-                line = cls._format_table_row_fact(row)
+            if not label or count in (None, ""):
+                continue
 
-                if not line:
-                    continue
+            try:
+                numeric = int(count)
+            except (TypeError, ValueError):
+                facts.append(f"{label}: {count}")
+                continue
 
-                prefix = f"{table_title} — " if table_title else ""
-                facts.append(f"{prefix}{line}")
-
-        facts.extend(cls._facts_from_sql_metadata(metadata))
+            if numeric == 0:
+                facts.append(f"{label}: nenhum registro (0)")
+            else:
+                facts.append(f"{label}: {numeric} registro(s)")
 
         return facts
 

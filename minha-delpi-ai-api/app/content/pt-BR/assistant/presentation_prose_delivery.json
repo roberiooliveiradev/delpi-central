@@ -20,6 +20,9 @@
     "allowTemplateProseFallback": false,
     "llmSynthesisAnswerFallbackMinChars": 32
   },
+  "synthesisProse": {
+    "productCodeLeadPrefix": "O produto **{productCode}** — "
+  },
   "proseDeliveryByTier": {
     "A": "llm",
     "B": "llm",

@@ -63,6 +63,18 @@ class ChatPresentationProseDeliveryContentService:
             return 32
 
     @classmethod
+    def product_code_lead_prefix(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "synthesisProse",
+                "productCodeLeadPrefix",
+                default="O produto **{productCode}** — ",
+            )
+            or "O produto **{productCode}** — "
+        ).strip()
+
+    @classmethod
     def allow_template_prose_fallback(cls) -> bool:
         """P8.1 — template só quando modos OFF e flag explícita (rollback offline)."""
         settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")

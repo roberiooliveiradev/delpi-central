@@ -167,12 +167,12 @@ function explicitNativeFormatFromToolCalls(
       continue;
     }
 
-    for (const key of ["explicitSessionFormat", "preferredFormat"] as const) {
-      const kind = mapSelectedViewToContentFormatKind(String(metadata[key] ?? ""));
+    const kind = mapSelectedViewToContentFormatKind(
+      String(metadata.explicitSessionFormat ?? ""),
+    );
 
-      if (kind) {
-        return kind;
-      }
+    if (kind) {
+      return kind;
     }
   }
 

@@ -292,9 +292,21 @@ class ChatToolContextService:
         )
 
     @classmethod
-    def resolve_authorized_persisted_answer(cls, answer, safe_tool_calls, *, message=None, skip_replacement=False):
+    def resolve_authorized_persisted_answer(
+        cls,
+        answer,
+        safe_tool_calls,
+        *,
+        message=None,
+        skip_replacement=False,
+        response_mode_effect=None,
+    ):
         return ChatToolContextPresentationService.resolve_authorized_persisted_answer(
-            answer, safe_tool_calls, message=message, skip_replacement=skip_replacement
+            answer,
+            safe_tool_calls,
+            message=message,
+            skip_replacement=skip_replacement,
+            response_mode_effect=response_mode_effect,
         )
 
     @classmethod

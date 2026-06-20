@@ -486,3 +486,82 @@ def test_resolve_llm_synthesis_answer_fallback_keeps_nonempty_llm_answer():
     )
 
     assert result == llm_answer
+
+
+def test_ensure_product_code_in_synthesis_prose_prefixes_when_missing():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10080045/analyser",
+                "llmProseDecoupled": True,
+            },
+        }
+    ]
+
+    result = ChatPresentationProseDeliveryService.ensure_product_code_in_synthesis_prose(
+        "Produto cadastrado como MP com roteiro vazio.",
+        "me fale do produto 10080045",
+        tool_calls,
+    )
+
+    assert "10080045" in result
+    assert result.startswith("O produto **10080045**")
+
+
+def test_finalize_llm_synthesis_answer_applies_fallback_and_product_code():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10080045/analyser",
+                "llmProseDecoupled": True,
+                "dataCommentary": {
+                    "highlights": [{"text": "Cadastro MP confirmado nos dados consultados."}],
+                },
+            },
+        }
+    ]
+
+    result = ChatPresentationProseDeliveryService.finalize_llm_synthesis_answer(
+        "",
+        tool_calls,
+        message="me fale do produto 10080045",
+        response_mode_effect="llm_synthesis_brief",
+    )
+
+    assert "10080045" in result
+    assert "MP" in result
+
+
+def test_compact_fallback_skips_verbose_summary_lines():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10080045/analyser",
+                "llmProseDecoupled": True,
+                "dataCommentary": {
+                    "highlights": [{"text": "Cadastro MP confirmado."}],
+                    "summaryLines": [
+                        "- **Estrutura**: Nenhum registro (0)",
+                        "- **Roteiro**: Nenhum registro (0)",
+                    ],
+                    "attention": ["Roteiro vazio."],
+                },
+            },
+        }
+    ]
+
+    fallback = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+        "",
+        tool_calls,
+        compact=True,
+    )
+
+    assert "Cadastro MP" in fallback
+    assert "Estrutura" not in fallback
+    assert "Pontos de atenção" not in fallback

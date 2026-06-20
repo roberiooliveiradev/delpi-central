@@ -505,6 +505,8 @@ class ChatPresentationProseDeliveryService:
         cls,
         answer: str | None,
         tool_calls: list | None,
+        *,
+        compact: bool = False,
     ) -> str:
         """Quando síntese LLM falha ou retorna vazio, usa dataCommentary como lead."""
         body = str(answer or "").strip()
@@ -535,7 +537,7 @@ class ChatPresentationProseDeliveryService:
             commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(
                 metadata,
             )
-            fallback = cls._format_data_commentary_lead(commentary)
+            fallback = cls._format_data_commentary_lead(commentary, compact=compact)
 
             if fallback:
                 return fallback
@@ -543,11 +545,17 @@ class ChatPresentationProseDeliveryService:
         return body
 
     @classmethod
-    def _format_data_commentary_lead(cls, commentary: dict[str, Any] | None) -> str:
+    def _format_data_commentary_lead(
+        cls,
+        commentary: dict[str, Any] | None,
+        *,
+        compact: bool = False,
+    ) -> str:
         if not isinstance(commentary, dict):
             return ""
 
         parts: list[str] = []
+        highlight_limit = 1 if compact else 2
         highlights = [
             str(item.get("text") if isinstance(item, dict) else item or "").strip()
             for item in (commentary.get("highlights") or [])
@@ -557,10 +565,10 @@ class ChatPresentationProseDeliveryService:
         next_action = str(commentary.get("nextAction") or "").strip()
 
         if highlights:
-            parts.append("\n\n".join(highlights[:2]))
+            parts.append("\n\n".join(highlights[:highlight_limit]))
         elif interpretation:
-            parts.append(interpretation)
-        else:
+            parts.append(interpretation[:180] if compact else interpretation)
+        elif not compact:
             summary = str(commentary.get("summary") or "").strip()
 
             if not summary:
@@ -580,7 +588,7 @@ class ChatPresentationProseDeliveryService:
             if str(item or "").strip()
         ]
 
-        if attention:
+        if attention and not compact:
             header = str(
                 ChatAssistantContentService.get(
                     "presenter_content",
@@ -593,7 +601,7 @@ class ChatPresentationProseDeliveryService:
             bullets = "\n".join(f"- {item}" for item in attention[:4])
             parts.append(f"{header}\n\n{bullets}")
 
-        if next_action:
+        if next_action and not compact:
             next_header = str(
                 ChatAssistantContentService.get(
                     "presenter_content",
@@ -606,3 +614,99 @@ class ChatPresentationProseDeliveryService:
             parts.append(f"{next_header}\n\n- {next_action}")
 
         return "\n\n".join(parts).strip()
+
+    @classmethod
+    def finalize_llm_synthesis_answer(
+        cls,
+        answer: str | None,
+        tool_calls: list | None,
+        *,
+        message: str | None = None,
+        response_mode_effect: str | None = None,
+    ) -> str:
+        """Fallback de prosa vazia + enriquecimento canônico (código, fidelidade, brevidade)."""
+        compact = str(response_mode_effect or "").strip() == "llm_synthesis_brief"
+        body = cls.resolve_llm_synthesis_answer_fallback(
+            answer,
+            tool_calls,
+            compact=compact,
+        )
+
+        from app.domain.services.chat_operational_llm_synthesis_answer_enrichment_service import (
+            ChatOperationalLlmSynthesisAnswerEnrichmentService,
+        )
+
+        return ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+            body,
+            message=message,
+            tool_calls=tool_calls,
+            response_mode_effect=response_mode_effect,
+        )
+
+    @classmethod
+    def ensure_product_code_in_synthesis_prose(
+        cls,
+        answer: str | None,
+        message: str | None,
+        tool_calls: list | None,
+    ) -> str:
+        body = str(answer or "").strip()
+
+        if not body:
+            return body
+
+        product_code = cls._resolve_synthesis_product_code(message, tool_calls)
+
+        if not product_code:
+            return body
+
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(body)
+
+        if product_code in normalized:
+            return body
+
+        prefix_template = ChatPresentationProseDeliveryContentService.product_code_lead_prefix()
+        prefix = prefix_template.format(productCode=product_code)
+
+        return f"{prefix}{body}".strip()
+
+    @classmethod
+    def _resolve_synthesis_product_code(
+        cls,
+        message: str | None,
+        tool_calls: list | None,
+    ) -> str | None:
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        code = ChatProductQueryIntentService.extract_product_code(message or "")
+
+        if code:
+            return code
+
+        if not isinstance(tool_calls, list):
+            return None
+
+        import re
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            path = str(metadata.get("path") or "")
+            match = re.search(r"/products/(\d{4,})/", path)
+
+            if match:
+                return ChatProductQueryIntentService.normalize_product_code(match.group(1))
+
+        return None

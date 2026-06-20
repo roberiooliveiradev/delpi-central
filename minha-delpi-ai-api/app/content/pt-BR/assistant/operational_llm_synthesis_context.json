@@ -1,13 +1,39 @@
 {
   "title": "Fatos já consultados (responda com base neles — não peça acesso):",
-  "prosePanelRule": "A resposta ao usuário combina **prosa consultiva** (interpretação, destaques, riscos, próximos passos) com **componentes visuais** já renderizados no painel (tabela, árvore, gráfico, KPI). **Não** transcreva listas, tabelas GFM, cadastro campo a campo nem árvore no texto — o painel exibe os dados; você interpreta.",
-  "maxChars": 900,
-  "maxHumanizedLines": 4,
-  "maxTableRows": 4,
+  "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, gráfico). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta.",
+  "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta».",
+  "maxChars": 650,
+  "maxHumanizedLines": 3,
+  "maxHumanizedLinesWhenDecoupled": 2,
+  "skipSummaryAnswerWhenDecoupled": true,
+  "skipTableRowsWhenDecoupled": true,
+  "maxTableRows": 3,
   "maxProfileTableRows": 8,
   "maxProfileTableRowsWhenDecoupled": 0,
-  "maxSqlRows": 5,
-  "maxHighlights": 4,
+  "maxSqlRows": 4,
+  "maxHighlights": 3,
   "maxLimitations": 2,
-  "includeFailedTools": true
+  "maxBriefProseChars": 220,
+  "includeFailedTools": true,
+  "answerEnrichment": {
+    "productCodeOpening": "O produto **{productCode}**",
+    "emptySectionSignals": [
+      "roteiro sem operações",
+      "roteiro vazio",
+      "roteiro não retornado",
+      "sem operações registradas",
+      "não há operações",
+      "inspeção não cadastrada",
+      "inspeção ausente",
+      "estrutura vazia",
+      "sem registros"
+    ],
+    "contradictionPatterns": [
+      "há operações registradas",
+      "existem operações",
+      "foram retornadas operações",
+      "não retornadas nesta consulta",
+      "não foram retornadas"
+    ]
+  }
 }

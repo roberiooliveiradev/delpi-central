@@ -307,6 +307,16 @@ function appendTablesForRoles(
       appendUnique(segments, segment);
     }
   }
+
+  const includedTables = new Set(
+    segments.filter((segment) => segment.kind === "table"),
+  );
+
+  for (const table of tables) {
+    if (!includedTables.has(table)) {
+      appendUnique(segments, table);
+    }
+  }
 }
 
 function buildVisualPool(

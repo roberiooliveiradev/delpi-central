@@ -53,6 +53,16 @@ describe("assistantContentLayout", () => {
             type: "markdown",
             markdown: "Visão do produto com destaques.",
           },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "textPresentation" },
+              { kind: "table", slot: "operationalTables", source: "tablePresentations" },
+              { kind: "tree", slot: "tailVisuals", source: "presentation" },
+              { kind: "chart", slot: "tailVisuals", source: "chartPresentation" },
+            ],
+          },
         },
       },
     ]);
@@ -186,6 +196,36 @@ describe("assistantContentLayout", () => {
     const segments = buildAssistantContentSegments("Estoque do produto", toolCalls);
 
     expect(segments.some((segment) => segment.kind === "tree")).toBe(true);
+  });
+
+  it("stack com preferredFormat=table não ativa visão nativa single (Automático)", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          preferredFormat: "table",
+          llmProseDecoupled: true,
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "stack",
+            visualOrder: ["text", "table"],
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              { kind: "table", slot: "operationalTables", source: "tablePresentations" },
+            ],
+          },
+        },
+      },
+    ]);
+
+    expect(isNativeSingleViewSelection(toolCalls)).toEqual({
+      active: false,
+      kind: null,
+    });
   });
 
   it("usa explicitSessionFormat=dashboard mesmo com layoutMode stack", () => {

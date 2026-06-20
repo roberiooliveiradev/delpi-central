@@ -22,6 +22,13 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def factual_fidelity_rule(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "factualFidelityRule", default="")
+            or ""
+        ).strip()
+
+    @classmethod
     def max_chars(cls) -> int:
         raw = ChatAssistantContentService.get(_BUNDLE, "maxChars", default="1200")
 
@@ -57,3 +64,62 @@ class ChatOperationalLlmSynthesisContextContentService:
             return False
 
         return bool(node.get("includeFailedTools"))
+
+    @classmethod
+    def skip_summary_answer_when_decoupled(cls) -> bool:
+        node = ChatAssistantContentService.get_node(_BUNDLE)
+
+        if not isinstance(node, dict):
+            return True
+
+        return bool(node.get("skipSummaryAnswerWhenDecoupled", True))
+
+    @classmethod
+    def skip_table_rows_when_decoupled(cls) -> bool:
+        node = ChatAssistantContentService.get_node(_BUNDLE)
+
+        if not isinstance(node, dict):
+            return True
+
+        return bool(node.get("skipTableRowsWhenDecoupled", True))
+
+    @classmethod
+    def answer_enrichment_node(cls) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(_BUNDLE)
+
+        if not isinstance(node, dict):
+            return {}
+
+        enrichment = node.get("answerEnrichment")
+
+        return enrichment if isinstance(enrichment, dict) else {}
+
+    @classmethod
+    def format_answer_enrichment(cls, key: str, **kwargs: Any) -> str:
+        template = cls.answer_enrichment_node().get(key)
+
+        if not template:
+            return ""
+
+        try:
+            return str(template).format(**kwargs)
+        except (KeyError, ValueError, IndexError):
+            return str(template)
+
+    @classmethod
+    def empty_section_signals(cls) -> list[str]:
+        raw = cls.answer_enrichment_node().get("emptySectionSignals")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def contradiction_patterns(cls) -> list[str]:
+        raw = cls.answer_enrichment_node().get("contradictionPatterns")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item or "").strip()]

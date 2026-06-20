@@ -212,12 +212,15 @@ def test_collect_fact_lines_skips_profile_table_rows_when_decoupled():
                 ],
             }
         ],
-        "dataAnswer": {"summary": {"answer": "Produto cadastrado como MP."}},
+        "dataAnswer": {
+            "highlights": [{"text": "Produto cadastrado como MP."}],
+        },
     }
 
     lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
 
     assert not any("Código:" in line for line in lines)
+    assert any("10080045" in line for line in lines)
     assert any("MP" in line for line in lines)
 
 
@@ -233,3 +236,30 @@ def test_build_facts_addon_includes_prose_panel_rule_when_decoupled():
 
     assert "componentes visuais" in addon.lower()
     assert "painel" in addon.lower()
+    assert "fidelidade" in addon.lower()
+
+
+def test_collect_fact_lines_includes_api_section_counts_and_attention():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/10080045/analyser",
+        "apiDelpiResponseMeta": {
+            "sections": [
+                {"label": "Roteiro", "itemCount": 0},
+                {"label": "Inspeção", "itemCount": 2},
+            ]
+        },
+        "dataCommentary": {
+            "attention": ["Roteiro sem operações cadastradas."],
+        },
+        "dataAnswer": {
+            "highlights": [{"text": "Produto cadastrado como MP."}],
+        },
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert any("10080045" in line for line in lines)
+    assert any("Roteiro: nenhum registro" in line for line in lines)
+    assert any("roteiro sem operações" in line.lower() for line in lines)

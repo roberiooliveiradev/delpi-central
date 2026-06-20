@@ -4,10 +4,12 @@ import { hasMarkdownSyntax, stripPresentationSectionMarkers } from "./chatMarkdo
 import { isNativeSingleViewSelection } from "./assistantContentLayout";
 import {
   getPresentationTitle,
+  getRenderPlanFromToolCalls,
   getTextMarkdownFromToolCalls,
   isShortPresentationCaption,
   stripLeadingMarkdownTitle,
 } from "../chatPresentation";
+import { isLlmProseDecoupledFromToolCalls } from "../presentation/presentationMarkdownNormalization";
 
 /**
  * Regras centralizadas de prosa do assistente (chat base).
@@ -157,6 +159,28 @@ export function resolveAssistantRenderableMarkdown(
   content: string,
   toolCalls: ChatToolCall[] = [],
 ): string {
+  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+  const usesAssistantMessageLead =
+    isLlmProseDecoupledFromToolCalls(toolCalls) &&
+    Boolean(
+      renderPlan?.segments?.some(
+        (segment) =>
+          String(segment.kind || "").trim().toLowerCase() === "markdown" &&
+          String(segment.slot || "").trim().toLowerCase() === "lead" &&
+          String(segment.source || "").trim().toLowerCase() === "assistantmessage",
+      ),
+    );
+
+  if (usesAssistantMessageLead) {
+    const raw = String(content || "").trim();
+    const presentationTitle = resolveAssistantPresentationTitle(content, toolCalls);
+
+    return stripLeadingMarkdownTitleSafely(
+      stripPresentationSectionMarkers(raw),
+      presentationTitle,
+    );
+  }
+
   const nativeSingle = isNativeSingleViewSelection(toolCalls);
 
   if (nativeSingle.active && nativeSingle.kind === "text") {

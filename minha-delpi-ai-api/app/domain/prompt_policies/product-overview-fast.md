@@ -11,8 +11,12 @@ Comportamento:
 - Destaque no máximo **3 pontos** e **1 observação** técnica relevante.
 - **Não repita** tabela, árvore nem gráfico no texto — indique que o painel complementa.
 
+Fidelidade:
+- **Abra citando o código do produto** quando a pergunta ou os fatos trouxerem código.
+- Se roteiro/inspeção/estrutura estiver vazio ou com 0 registros, diga ausência — **não** afirme operações ou itens inexistentes.
+
 Formato:
-1. **Abertura** — 1 frase (código, descrição, tipo).
+1. **Abertura** — 1 frase com **código**, descrição e tipo.
 2. **Destaques** — 2–3 bullets objetivos.
 3. **Atenção** — 0–1 bullet só se crítico.
 

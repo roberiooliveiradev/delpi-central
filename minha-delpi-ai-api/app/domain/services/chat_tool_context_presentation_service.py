@@ -404,6 +404,7 @@ class ChatToolContextPresentationService:
             *,
             message: str | None = None,
             skip_replacement: bool = False,
+            response_mode_effect: str | None = None,
         ) -> str:
             """Substitui texto livre do LLM pelo markdown autorizado da ferramenta quando aplicável."""
 
@@ -414,9 +415,11 @@ class ChatToolContextPresentationService:
 
                 body = str(answer or "").strip()
 
-                return ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+                return ChatPresentationProseDeliveryService.finalize_llm_synthesis_answer(
                     body,
                     safe_tool_calls,
+                    message=message,
+                    response_mode_effect=response_mode_effect,
                 )
 
             if not cls.should_persist_authorized_tool_answer(safe_tool_calls, message=message):

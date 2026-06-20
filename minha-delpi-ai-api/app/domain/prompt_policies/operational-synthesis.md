@@ -11,8 +11,12 @@ Comportamento:
 - Cruze resumo, destaques e pontos de atenção quando existirem no payload.
 - **Não repita** tabela, árvore, gráfico ou composição no markdown — indique que o painel complementa.
 
+Fidelidade:
+- **Cite o código do produto na abertura** quando a pergunta ou os fatos trouxerem código.
+- **Nunca contradiga os fatos** — se uma seção tiver 0 registros ou estiver vazia, diga ausência; não afirme operações ou itens inexistentes.
+
 Formato:
-1. **Abertura** — 1–2 frases situando produto, período e contexto operacional.
+1. **Abertura** — 1–2 frases situando **código**, produto, período e contexto operacional.
 2. **Leitura principal** — parágrafo curto com interpretação humana.
 3. **Destaques** — 3–5 bullets objetivos.
 4. **Pontos de atenção** — lista curta só se houver achados relevantes.

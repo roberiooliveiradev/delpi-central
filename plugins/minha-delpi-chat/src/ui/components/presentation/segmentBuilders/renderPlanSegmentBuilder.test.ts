@@ -310,4 +310,65 @@ describe("renderPlanSegmentBuilder", () => {
       "Última compra por matéria-prima",
     ]);
   });
+
+  it("operationalTables inclui tabela profile quando cadastro veio nesse slot", () => {
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "table",
+        presentation: {
+          type: "table",
+          role: "profile",
+          title: "Produto 10080045",
+          columns: [
+            { key: "campo", label: "Campo" },
+            { key: "valor", label: "Valor" },
+          ],
+          rows: [{ campo: "Código", valor: "10080045" }],
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          llmProseDecoupled: true,
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "stack",
+            presentationMode: "summary_then_evidence",
+            stackPresentationPlan: {
+              profileFirst: true,
+              tableRoleOrder: ["profile", "guide", "inspection", "other"],
+            },
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              {
+                kind: "table",
+                slot: "operationalTables",
+                source: "tablePresentations",
+              },
+            ],
+          },
+        },
+      },
+    ] as never;
+
+    const segments =
+      buildSegmentsFromRenderPlan(
+        "O produto **10080045** está cadastrado como MP.",
+        visuals,
+        parseMarkdown,
+        (target, segment) => {
+          target.push(segment);
+        },
+        toolCalls,
+      ) ?? [];
+
+    expect(segments.some((segment) => segment.kind === "markdown")).toBe(true);
+    expect(segments.some((segment) => segment.kind === "table")).toBe(true);
+  });
 });

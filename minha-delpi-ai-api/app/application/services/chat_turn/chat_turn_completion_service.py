@@ -257,6 +257,11 @@ class ChatTurnCompletionService:
             answer,
             tool_calls,
             message=turn.message,
+            response_mode_effect=(
+                turn.tool_context.get("responseModeEffect")
+                if isinstance(turn.tool_context, dict)
+                else None
+            ),
             skip_replacement=bool(
                 turn.prepared.email_writing_mode
                 or turn.prepared.text_correction_mode
