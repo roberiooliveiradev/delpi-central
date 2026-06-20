@@ -16,12 +16,17 @@ def test_extract_from_region_text_parses_pipe_delimited_table():
         text,
         table_id="region_bom_p0",
         source_region="bom",
+        source_bbox=[0.0, 0.0, 0.55, 0.35],
     )
 
     assert table is not None
     assert table["rowCount"] == 2
     assert ChatPdfTableStructureService.cell_text(table, row_index=0, col_index=2) == "1"
     assert ChatPdfTableStructureService.cell_text(table, row_index=1, col_index=1) == "10080044"
+    bbox = ChatPdfTableStructureService.cell_bbox(table, row_index=0, col_index=2)
+
+    assert isinstance(bbox, list)
+    assert len(bbox) == 4
 
 
 def test_extract_from_metadata_merges_structured_tables():

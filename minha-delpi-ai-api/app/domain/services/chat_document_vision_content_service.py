@@ -420,3 +420,49 @@ class ChatDocumentVisionContentService:
             return max(1, int(raw))
         except (TypeError, ValueError):
             return 3
+
+    @classmethod
+    def table_structure_cell_dpi_multiplier(cls) -> float:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "tableStructure",
+            "cellRefinement",
+            "dpiMultiplier",
+            default="2.0",
+        )
+
+        try:
+            return max(1.0, float(raw))
+        except (TypeError, ValueError):
+            return 2.0
+
+    @classmethod
+    def table_structure_cell_padding(cls) -> float:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "tableStructure",
+            "cellRefinement",
+            "cellPadding",
+            default="0.005",
+        )
+
+        try:
+            return max(0.0, float(raw))
+        except (TypeError, ValueError):
+            return 0.005
+
+    @classmethod
+    def table_structure_cell_tesseract_config(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "pdfExtraction",
+                "tableStructure",
+                "cellRefinement",
+                "tesseractConfig",
+                default="--psm 7 -c tessedit_char_whitelist=0123456789.,",
+            )
+            or "--psm 7 -c tessedit_char_whitelist=0123456789.,"
+        ).strip()

@@ -298,3 +298,57 @@ def test_90263149_decape_mismatch_not_error_when_only_length_tolerance():
     ]
 
     assert not decape_errors
+
+
+def test_90263149_column_table_resolves_description_quantity_noise():
+    from app.application.services.chat_drawing_bom_vision_refinement_service import (
+        ChatDrawingBomVisionRefinementService,
+    )
+
+    table = {
+        "tableId": "region_bom_p0",
+        "sourceRegion": "bom",
+        "columns": [
+            {"index": 0, "headerText": "POS"},
+            {"index": 1, "headerText": "CÓDIGO"},
+            {"index": 2, "headerText": "QTD"},
+            {"index": 3, "headerText": "DESCRIÇÃO"},
+        ],
+        "rows": [
+            {
+                "index": 0,
+                "cells": [
+                    {"col": 0, "text": "1"},
+                    {"col": 1, "text": "10090050"},
+                    {"col": 2, "text": "1"},
+                    {"col": 3, "text": "ISOLADOR NYLON RETO 6,35 NU UL94V-2"},
+                ],
+            }
+        ],
+    }
+    pdf_extract = {
+        **_ocr_noisy_pdf_extract_90263149(),
+        "sourceMetadata": {"structuredTables": [table]},
+    }
+    refined = ChatDrawingBomVisionRefinementService.apply(
+        pdf_extract,
+        analyser_root=_payload_90263149(),
+        product_code="90263149",
+    )
+    by_code = {
+        row["code"]: row for row in refined.get("bomRows") or [] if isinstance(row, dict)
+    }
+
+    assert by_code["10090050"]["quantity"] == "1"
+    assert by_code["10090050"]["quantitySource"] == "column"
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90263149",
+        payload=_payload_90263149(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract=refined,
+    )
+    analysis = package.get("drawingAnalysis") or {}
+
+    assert int(analysis.get("criticalErrors") or 0) == 0

@@ -192,6 +192,8 @@ class ChatDrawingBomVisionRefinementService:
                 "rowIndex": row_index,
                 "colIndex": qty_col,
                 "engine": result.get("engine"),
+                "engines": list(result.get("engines") or []),
+                "cellBbox": result.get("bbox"),
             }
             rows[code] = current
             refined_codes.append(code)

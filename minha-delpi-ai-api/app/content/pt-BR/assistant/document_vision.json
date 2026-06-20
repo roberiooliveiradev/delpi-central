@@ -104,7 +104,8 @@
       "cellRefinement": {
         "maxAttempts": 3,
         "dpiMultiplier": 2.0,
-        "cellPadding": 0.005
+        "cellPadding": 0.005,
+        "tesseractConfig": "--psm 7 -c tessedit_char_whitelist=0123456789.,"
       }
     }
   }

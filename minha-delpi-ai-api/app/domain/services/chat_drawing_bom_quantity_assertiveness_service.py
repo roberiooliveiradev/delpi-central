@@ -209,6 +209,15 @@ class ChatDrawingBomQuantityAssertivenessService:
             if intermediate_reason:
                 return intermediate_reason
 
+        source = str(row.get("quantitySource") or "").strip().lower()
+        trusted_column_source = bool(row.get("quantityTrusted")) and source in {
+            "column",
+            "refined_column",
+        }
+
+        if trusted_column_source and source == "refined_column":
+            return None
+
         piece_units = ChatDrawingPatternsService.piece_count_units()
         api_unit = (api_row.unit if api_row else "").upper()
 
@@ -235,6 +244,8 @@ class ChatDrawingBomQuantityAssertivenessService:
         if ChatDrawingPatternsService.bom_quantity_semantics_rule(
             "rejectQuantityMatchingDescriptionNumber",
             True,
+        ) and not (
+            trusted_column_source and source == "column"
         ) and cls._quantity_matches_description(row, quantity):
             return "quantity_from_description"
 
