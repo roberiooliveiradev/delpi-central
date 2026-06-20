@@ -32,6 +32,25 @@ def test_collect_fact_lines_from_data_answer_and_tables():
     assert any("6082" in line for line in lines)
 
 
+def test_collect_fact_lines_from_archived_humanized_when_decoupled():
+    metadata = {
+        "ok": True,
+        "path": "/products/90269002/factory-status",
+        "llmProseDecoupled": True,
+        "humanizedSummary": {"titulo": "Status", "linhas": []},
+        "templateProseArchive": {
+            "humanizedSummary": {
+                "titulo": "Status",
+                "linhas": ["- Saldo MP **6082**."],
+            },
+        },
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert any("6082" in line for line in lines)
+
+
 def test_build_facts_addon_includes_title():
     metadata = {
         "ok": True,

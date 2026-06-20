@@ -98,6 +98,7 @@ jobs:
             tests/unit/domain/services/test_chat_presentation_data_only_prose_service.py \
             tests/unit/domain/services/test_chat_response_mode_service.py \
             tests/unit/application/services/test_chat_presentation_data_only_pipeline.py \
+            tests/unit/application/services/test_chat_data_interpretation_answer_service.py \
             -q
 
       - name: Gate Playbook 13 P6 MFE render-only

@@ -225,3 +225,24 @@ def test_entity_template_profile_blocks_llm_prose(monkeypatch):
     )
 
     assert mode == MODE_TEMPLATE
+
+
+def test_resolve_effective_humanized_summary_uses_archive_when_decoupled():
+    metadata = {
+        "llmProseDecoupled": True,
+        "proseDeliveryMode": "llm",
+        "humanizedSummary": {"titulo": "Status fabril", "linhas": []},
+        "templateProseArchive": {
+            "humanizedSummary": {
+                "titulo": "Status fabril",
+                "linhas": ["- OP **12345** em andamento."],
+            },
+        },
+    }
+
+    effective = ChatPresentationProseDeliveryService.resolve_effective_humanized_summary(
+        metadata,
+    )
+
+    assert effective is not None
+    assert effective["linhas"] == ["- OP **12345** em andamento."]

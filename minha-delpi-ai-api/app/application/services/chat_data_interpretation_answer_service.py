@@ -358,7 +358,6 @@ class ChatDataInterpretationAnswerService:
     @classmethod
     def _resolve_tool_summary(cls, tool_meta: dict) -> dict | None:
         path = str(tool_meta.get("path") or "").strip()
-        humanized = tool_meta.get("humanizedSummary")
         from app.domain.services.chat_humanized_data_response_service import (
             ChatHumanizedDataResponseService,
         )
@@ -391,11 +390,19 @@ class ChatDataInterpretationAnswerService:
                 line for line in attention if line not in commentary_lines
             )
 
-        if isinstance(humanized, dict):
-            title = str(humanized.get("titulo") or "").strip()
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        effective_humanized = ChatPresentationProseDeliveryService.resolve_effective_humanized_summary(
+            tool_meta,
+        )
+
+        if isinstance(effective_humanized, dict):
+            title = str(effective_humanized.get("titulo") or "").strip()
             lines = [
                 str(line).strip()
-                for line in (humanized.get("linhas") or [])
+                for line in (effective_humanized.get("linhas") or [])
                 if str(line or "").strip()
             ]
 

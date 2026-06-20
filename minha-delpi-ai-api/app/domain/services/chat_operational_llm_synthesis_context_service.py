@@ -85,28 +85,26 @@ class ChatOperationalLlmSynthesisContextService:
                     if text:
                         facts.append(text)
 
-        humanized = metadata.get("humanizedSummary")
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
 
-        if isinstance(humanized, dict):
-            title = str(humanized.get("titulo") or "").strip()
+        effective_humanized = ChatPresentationProseDeliveryService.resolve_effective_humanized_summary(
+            metadata,
+        )
+
+        if isinstance(effective_humanized, dict):
+            title = str(effective_humanized.get("titulo") or "").strip()
 
             if title:
                 facts.append(title)
-
-            archived = metadata.get("templateProseArchive")
-
-            if isinstance(archived, dict):
-                archived_humanized = archived.get("humanizedSummary")
-
-                if isinstance(archived_humanized, dict):
-                    humanized = archived_humanized
 
             max_lines = ChatOperationalLlmSynthesisContextContentService.limit_int(
                 "maxHumanizedLines",
                 6,
             )
 
-            for line in (humanized.get("linhas") or [])[:max_lines]:
+            for line in (effective_humanized.get("linhas") or [])[:max_lines]:
                 text = str(line or "").strip()
 
                 if text:

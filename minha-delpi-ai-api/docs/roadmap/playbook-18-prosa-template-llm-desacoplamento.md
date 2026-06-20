@@ -101,10 +101,10 @@ Gate CI: `scripts/audit_presentation_prose_delivery.py --check`
 
 | # | Gap | Arquivo | Fase |
 |---|-----|---------|------|
-| G1 | Decoupling só pós-tool (template ainda gerado no pipeline) | `execute_external_action_use_case` | P2 |
-| G2 | `ChatToolContextFormatService` pode repopular markdown | format service | P1 |
-| G3 | Preview/simulate/agent admin divergência | use cases | P2 |
-| G4 | `ChatDataInterpretationAnswerService` usa humanized histórico | domain | P2 |
+| G1 | Decoupling só pós-tool (template ainda gerado no pipeline) | `execute_external_action_use_case` | ✅ parcial — `dataOnlyPresentation` pula markdown |
+| G2 | `ChatToolContextFormatService` pode repopular markdown | format service | ✅ P1.1 |
+| G3 | Preview/simulate/agent admin divergência | use cases | ✅ P2.7 |
+| G4 | `ChatDataInterpretationAnswerService` usa humanized histórico | domain | ✅ `resolve_effective_humanized_summary` + archive |
 | G5 | Modos OFF → template em stacks narrativos | config `requireResponseModesForLlmProse` | ✅ P3.1 |
 
 ### MFE — consumo

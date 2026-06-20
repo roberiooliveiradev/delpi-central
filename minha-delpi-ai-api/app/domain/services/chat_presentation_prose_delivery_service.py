@@ -132,6 +132,55 @@ class ChatPresentationProseDeliveryService:
         return str(metadata.get("proseDeliveryMode") or "").strip().lower() == MODE_LLM
 
     @classmethod
+    def resolve_effective_humanized_summary(
+        cls,
+        metadata: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        """Humanized visível para fatos/follow-up — usa archive quando prosa LLM limpou linhas."""
+        if not isinstance(metadata, dict):
+            return None
+
+        humanized = metadata.get("humanizedSummary")
+        effective: dict[str, Any] = dict(humanized) if isinstance(humanized, dict) else {}
+
+        lines = [
+            str(line).strip()
+            for line in (effective.get("linhas") or [])
+            if str(line or "").strip()
+        ]
+
+        if not lines and cls.is_llm_decoupled_metadata(metadata):
+            archive = metadata.get("templateProseArchive")
+
+            if isinstance(archive, dict):
+                archived = archive.get("humanizedSummary")
+
+                if isinstance(archived, dict):
+                    if not str(effective.get("titulo") or "").strip():
+                        title = archived.get("titulo")
+
+                        if title not in (None, ""):
+                            effective["titulo"] = title
+
+                    lines = [
+                        str(line).strip()
+                        for line in (archived.get("linhas") or [])
+                        if str(line or "").strip()
+                    ]
+
+        if lines:
+            effective["linhas"] = lines
+        elif "linhas" in effective:
+            effective["linhas"] = []
+
+        title = str(effective.get("titulo") or "").strip()
+
+        if not title and not lines:
+            return None
+
+        return effective
+
+    @classmethod
     def llm_prose_globally_available(cls) -> bool:
         """P3.1 — LLM narrativo disponível mesmo sem seletor de modos quando JSON permite."""
         if ChatResponseModeService.is_enabled():

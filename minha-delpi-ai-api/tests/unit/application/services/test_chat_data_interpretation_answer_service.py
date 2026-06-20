@@ -119,3 +119,46 @@ def test_build_answer_prefers_data_commentary_over_generic_summary():
     assert "10160001" in answer
     assert "Produção" in answer
     assert "Atenção" in answer or "Validar compra" in answer
+
+
+def test_build_answer_uses_archived_humanized_when_decoupled():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90269002/factory-status",
+                            "llmProseDecoupled": True,
+                            "proseDeliveryMode": "llm",
+                            "humanizedSummary": {
+                                "titulo": "Status fabril — 90269002",
+                                "linhas": [],
+                            },
+                            "templateProseArchive": {
+                                "humanizedSummary": {
+                                    "titulo": "Status fabril — 90269002",
+                                    "linhas": [
+                                        "Situação consolidada: **PA PRODUZIDO**.",
+                                        "- OP **12345** em andamento.",
+                                    ],
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    answer = ChatDataInterpretationAnswerService.build_answer(
+        "explique os dados acima",
+        history,
+    )
+
+    assert answer
+    assert "90269002" in answer
+    assert "12345" in answer or "PA PRODUZIDO" in answer
