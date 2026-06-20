@@ -43,6 +43,7 @@ class ChatPromptBuilderService:
         current_message: str,
         *,
         response_mode: str | None = None,
+        tool_calls: list | None = None,
     ) -> str:
         from app.domain.services.chat_operational_narrative_synthesis_service import (
             ChatOperationalNarrativeSynthesisService,
@@ -51,6 +52,7 @@ class ChatPromptBuilderService:
         return ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
             current_message,
             response_mode=response_mode,
+            tool_calls=tool_calls,
         )
 
     def build_fast_path_messages(
@@ -102,6 +104,7 @@ class ChatPromptBuilderService:
         user_context: str | None = None,
         skills: dict | None = None,
         response_mode: str | None = None,
+        tool_calls: list | None = None,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
@@ -120,6 +123,7 @@ class ChatPromptBuilderService:
         base_prompt += self._operational_narrative_policy_addon(
             current_message,
             response_mode=response_mode,
+            tool_calls=tool_calls,
         )
 
         if text_task_mode:

@@ -159,7 +159,7 @@ class ChatResponseModeService:
 
         return LlmGenerationConfig(
             model=fast_model or "qwen2.5:1.5b",
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "256")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "192")),
             num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "1024")),
             temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.2")),
             response_mode="fast",

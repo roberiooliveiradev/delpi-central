@@ -98,6 +98,7 @@ class ChatProductOverviewIntentService:
         message: str | None,
         *,
         response_mode: str | None = None,
+        tool_calls: list | None = None,
     ) -> str:
         from app.domain.services.chat_operational_narrative_synthesis_service import (
             ChatOperationalNarrativeSynthesisService,
@@ -106,6 +107,7 @@ class ChatProductOverviewIntentService:
         return ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
             message,
             response_mode=response_mode,
+            tool_calls=tool_calls,
         )
 
     @classmethod

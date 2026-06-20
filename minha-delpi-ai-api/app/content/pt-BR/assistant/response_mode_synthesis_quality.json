@@ -50,7 +50,7 @@
       "thinker": 160
     },
     "maxAnswerChars": {
-      "fast": 950,
+      "fast": 420,
       "normal": 3600,
       "thinker": 4200
     },

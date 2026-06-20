@@ -67,12 +67,16 @@ class ChatOperationalNarrativeSynthesisService:
         message: str | None,
         *,
         response_mode: str | None = None,
+        tool_calls: list | None = None,
     ) -> str:
-        kind = cls.resolve_synthesis_kind(message)
+        kind = cls.resolve_synthesis_kind(message, tool_calls)
 
         if not kind:
             return ""
 
+        from app.domain.services.chat_operational_llm_synthesis_context_service import (
+            ChatOperationalLlmSynthesisContextService,
+        )
         from app.domain.services.chat_response_mode_service import ChatResponseModeService
         from app.domain.services.prompt_policy_service import PromptPolicyService
 
@@ -86,8 +90,10 @@ class ChatOperationalNarrativeSynthesisService:
             return ""
 
         policy = PromptPolicyService()._load_policy(policy_name)
+        addon = f"\n\n{policy}" if policy else ""
+        facts = ChatOperationalLlmSynthesisContextService.build_facts_addon(tool_calls)
 
-        return f"\n\n{policy}" if policy else ""
+        return f"{addon}{facts}"
 
     @classmethod
     def is_llm_synthesis_effect(cls, effect: str | None) -> bool:

@@ -237,6 +237,7 @@ class ChatTurnLlmAssemblyService:
                 user_context=user_context,
                 skills=workspace_context.get("skills"),
                 response_mode=get_active_config().response_mode,
+                tool_calls=tool_calls,
             )
 
         admin_debug_payload = ChatAdminDebugService.build_for_turn(

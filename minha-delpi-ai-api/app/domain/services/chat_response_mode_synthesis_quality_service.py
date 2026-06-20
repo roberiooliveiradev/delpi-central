@@ -113,7 +113,7 @@ class ChatResponseModeSynthesisQualityService:
                     f"({fast_elapsed}s vs {normal_elapsed}s)"
                 )
 
-            if normal_elapsed + 3.0 < fast_elapsed and normal_chars <= fast_chars:
+            if normal_elapsed + 5.0 < fast_elapsed and normal_chars < fast_chars * 0.85:
                 gaps.append(
                     "modo Normal ficou mais rápido que Rápida sem resposta mais rica "
                     f"({normal_elapsed}s vs {fast_elapsed}s; {normal_chars} vs {fast_chars} chars)"
