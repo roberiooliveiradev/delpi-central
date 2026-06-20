@@ -141,6 +141,14 @@ Doc: `api-delpi/docs/api/14-desenhos-pdf.md`.
 
 ---
 
+## Produção CPU (srv-api, 4 vCPU · ~15 GB)
+
+Perfil enxuto: **`infra/.env.prod.cpu.example`** — só tuning do host e overrides `false` (router, agentic, semantic rank, colunas R16, LanguageTool). O restante vem do default do `docker-compose.yml` prod.
+
+Catálogo completo (tudo ligado): **`infra/.env.prod.example`**.
+
+---
+
 ## Ferramentas do chat (default ligadas)
 
 Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferramentas do pipeline. Valores abaixo são os defaults do Compose quando a variável **não** está no `.env`:

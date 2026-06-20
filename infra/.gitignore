@@ -10,4 +10,5 @@ env.local
 !.env.example
 !.env.dev.example
 !.env.prod.example
+!.env.prod.cpu.example
 !env.*.example
