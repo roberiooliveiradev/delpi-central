@@ -798,3 +798,10 @@ export function getPathFromToolCalls(toolCalls?: ChatToolCall[]): string {
 
   return "";
 }
+
+export {
+  getProseDeliveryModeFromToolCalls,
+  getTemplateProseArchiveFromToolCalls,
+  resolveRenderableHumanizedLines,
+  resolveRenderableTemplateMarkdown,
+} from "./presentationProseDeliveryReaders";

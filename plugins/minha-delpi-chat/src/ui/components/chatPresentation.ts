@@ -75,14 +75,12 @@ export {
   isRenderPlanVisualKindAllowed,
   mapPresentationDecisionToViewFormat,
   renderPlanHasOnlyProseSegments,
-} from "./presentation/presentationMetadataReaders";
-
-export {
   getProseDeliveryModeFromToolCalls,
   getTemplateProseArchiveFromToolCalls,
   resolveRenderableHumanizedLines,
   resolveRenderableTemplateMarkdown,
-} from "./presentation/presentationProseDeliveryReaders";
+} from "./presentation/presentationMetadataReaders";
+
 export type { ChatProseDeliveryMode, ChatTemplateProseArchive } from "../../data/api/chatTypes";
 
 

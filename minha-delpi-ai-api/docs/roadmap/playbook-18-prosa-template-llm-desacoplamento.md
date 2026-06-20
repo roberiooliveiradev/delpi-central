@@ -1,7 +1,7 @@
 # Playbook 18 — Prosa template × LLM desacoplada
 
 **Projeto:** Minha DELPI Chat IA  
-**Status:** P0 entregue (jun/2026) · P2 parcial entregue (jun/2026) · P1/P3–P4 roadmap abaixo  
+**Status:** P0–P4 entregues (jun/2026)  
 **Relacionado:** [`playbook-13`](./playbook-13-respostas-humanizadas-dados.md), [`playbook-09`](./playbook-09-apresentacao-rica.md), [`chat-response-modes.md`](../architecture/chat-response-modes.md)
 
 ---
@@ -105,7 +105,7 @@ Gate CI: `scripts/audit_presentation_prose_delivery.py --check`
 | G2 | `ChatToolContextFormatService` pode repopular markdown | format service | P1 |
 | G3 | Preview/simulate/agent admin divergência | use cases | P2 |
 | G4 | `ChatDataInterpretationAnswerService` usa humanized histórico | domain | P2 |
-| G5 | Modos OFF → sempre template em stacks narrativos | config flag | P3 |
+| G5 | Modos OFF → template em stacks narrativos | config `requireResponseModesForLlmProse` | ✅ P3.1 |
 
 ### MFE — consumo
 
@@ -115,7 +115,7 @@ Gate CI: `scripts/audit_presentation_prose_delivery.py --check`
 | `renderPlanSegmentBuilder.ts` | ✅ lead `assistantMessage`, skip highlights template |
 | `presentationMultiRoute.ts` | ✅ não usa humanized quando decoupled |
 | `chatPresentation.ts` | ✅ via `getTextMarkdownFromToolCalls` |
-| `presentationMetadataReaders.ts` | ⏳ P1 — expor `proseDeliveryMode` tipado |
+| `presentationMetadataReaders.ts` | ✅ re-export `proseDeliveryMode` / archive via `presentationProseDeliveryReaders` |
 
 ---
 
