@@ -44,6 +44,34 @@ def test_factory_status_pipeline_skips_template_markdown():
     assert metadata.get("treePresentation") or metadata.get("tablePresentations")
 
 
+def test_factory_status_pipeline_data_only_when_modes_disabled_require_false(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "require_response_modes_for_llm_prose",
+        lambda: False,
+    )
+
+    envelope = load_api_delpi_fixture_with_meta("product_factory_status_90269002.json")
+    path = "/products/90269002/factory-status"
+
+    metadata = _use_case()._build_presentation_metadata(
+        action={"path": path},
+        sanitized_data=envelope,
+        resolved_path=path,
+        request_parameters={
+            "userMessage": "qual o status do produto 90269002 na fabrica hoje?",
+        },
+    )
+
+    assert metadata.get("dataOnlyPresentation") is True
+    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
+
+
 def test_factual_stock_pipeline_keeps_template_markdown():
     envelope = load_api_delpi_fixture_with_meta("product_stock_90269001.json")
     path = "/products/90269001/stock"

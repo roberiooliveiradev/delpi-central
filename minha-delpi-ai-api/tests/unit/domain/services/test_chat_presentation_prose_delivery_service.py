@@ -72,6 +72,64 @@ def test_resolve_mode_template_when_response_modes_disabled(monkeypatch):
     assert mode == MODE_TEMPLATE
 
 
+def test_resolve_mode_llm_when_response_modes_disabled_but_require_flag_false(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "require_response_modes_for_llm_prose",
+        lambda: False,
+    )
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "como esta o status fabril do produto 90269001?",
+        _stack_tool_calls(),
+    )
+
+    assert mode == MODE_LLM
+
+
+def test_should_skip_template_prose_when_modes_disabled_but_require_flag_false(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "require_response_modes_for_llm_prose",
+        lambda: False,
+    )
+
+    assert ChatPresentationProseDeliveryService.should_skip_template_prose_in_pipeline(
+        "qual o status do produto 90269002 na fabrica hoje?",
+    )
+
+
+def test_llm_prose_globally_available_respects_require_flag(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "require_response_modes_for_llm_prose",
+        lambda: True,
+    )
+    assert not ChatPresentationProseDeliveryService.llm_prose_globally_available()
+
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "require_response_modes_for_llm_prose",
+        lambda: False,
+    )
+    assert ChatPresentationProseDeliveryService.llm_prose_globally_available()
+
+
 def test_resolve_mode_direct_for_playbook_single_table():
     tool_calls = [
         {

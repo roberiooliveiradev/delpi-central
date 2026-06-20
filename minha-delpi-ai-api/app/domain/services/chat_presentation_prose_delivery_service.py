@@ -129,13 +129,23 @@ class ChatPresentationProseDeliveryService:
         return str(metadata.get("proseDeliveryMode") or "").strip().lower() == MODE_LLM
 
     @classmethod
+    def llm_prose_globally_available(cls) -> bool:
+        """P3.1 — LLM narrativo disponível mesmo sem seletor de modos quando JSON permite."""
+        if ChatResponseModeService.is_enabled():
+            return True
+
+        return not ChatPresentationProseDeliveryContentService.require_response_modes_for_llm_prose()
+
+    @classmethod
     def should_skip_template_prose_in_pipeline(
         cls,
         user_message: str | None,
         *,
         path: str | None = None,
     ) -> bool:
-        if not ChatResponseModeService.is_enabled():
+        del path
+
+        if not cls.llm_prose_globally_available():
             return False
 
         message = str(user_message or "").strip()
@@ -159,10 +169,7 @@ class ChatPresentationProseDeliveryService:
         ):
             return False
 
-        if ChatPresentationProseDeliveryContentService.require_response_modes_for_llm_prose():
-            return ChatResponseModeService.is_enabled()
-
-        return True
+        return ChatPresentationProseDeliveryService.llm_prose_globally_available()
 
     @classmethod
     def _qualifies_direct_prose(

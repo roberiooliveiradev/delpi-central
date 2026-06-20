@@ -7,10 +7,9 @@ from typing import Any
 from app.domain.services.chat_operational_narrative_synthesis_service import (
     ChatOperationalNarrativeSynthesisService,
 )
-from app.domain.services.chat_presentation_prose_delivery_content_service import (
-    ChatPresentationProseDeliveryContentService,
+from app.domain.services.chat_presentation_prose_delivery_service import (
+    ChatPresentationProseDeliveryService,
 )
-from app.domain.services.chat_response_mode_service import ChatResponseModeService
 
 
 class ChatPresentationLlmProseDecouplingService:
@@ -26,10 +25,7 @@ class ChatPresentationLlmProseDecouplingService:
         ):
             return False
 
-        if ChatPresentationProseDeliveryContentService.require_response_modes_for_llm_prose():
-            return ChatResponseModeService.is_enabled()
-
-        return True
+        return ChatPresentationProseDeliveryService.llm_prose_globally_available()
 
     @classmethod
     def apply_to_tool_calls(
