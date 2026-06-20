@@ -189,7 +189,7 @@ describe("renderPlanSegmentBuilder", () => {
     expect(segments.some((segment) => segment.kind === "dashboard")).toBe(false);
   });
 
-  it("sintetiza renderPlan legado a partir do stackPresentationPlan", () => {
+  it("não sintetiza renderPlan quando a API não enviou v1", () => {
     const commentary =
       "### Taxa de Conversão\n\n<!-- section:scope -->\n\nIndicador com 3 métricas.";
     const visuals: AssistantContentSegment[] = [
@@ -230,8 +230,7 @@ describe("renderPlanSegmentBuilder", () => {
       toolCalls,
     );
 
-    expect(segments?.some((segment) => segment.kind === "stackSection")).toBe(true);
-    expect(segments?.some((segment) => segment.kind === "kpi")).toBe(true);
+    expect(segments).toBeNull();
   });
 
   it("renderiza todas as tabelas do bundle no modo Tabela explícito", () => {

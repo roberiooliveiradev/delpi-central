@@ -42,7 +42,7 @@ execute_external_action
 
 MFE: buildAssistantContentSegments(content, toolCalls)
   → buildSegmentsFromRenderPlan(metadata) quando renderPlan.version === 1
-  → (legado) synthesizeRenderPlanFromToolCalls para mensagens antigas
+  → `resolveRenderPlanForExecution` consome só `renderPlan` v1 da API
   → resolveAssistantContentLayout (stack | single | markers)
   → assistantContentRegistry → ChatRichTable | ChatRichTree | …
 ```

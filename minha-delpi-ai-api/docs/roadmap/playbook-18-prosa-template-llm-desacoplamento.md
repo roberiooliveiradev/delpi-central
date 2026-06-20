@@ -166,8 +166,8 @@ Objetivo: **presenter entrega só dados estruturados**; prosa 100% LLM em rotas 
 
 | # | Entrega |
 |---|---------|
-| P4.1 | Remover `synthesizeRenderPlanFromToolCalls` legado no MFE (API sempre envia v1) |
-| P4.2 | Deprecar `humanizedSummary.linhas` como prosa UI |
+| P4.1 | Remover `synthesizeRenderPlanFromToolCalls` legado no MFE (API sempre envia v1) | ✅ `resolveRenderPlanForExecution` só consome v1 |
+| P4.2 | Deprecar `humanizedSummary.linhas` como prosa UI | ✅ `resolveRenderableHumanizedLines` ignora em `proseDeliveryMode=llm` |
 | P4.3 | Consolidar playbook-13 § LLM como caminho primário narrativo |
 
 ---

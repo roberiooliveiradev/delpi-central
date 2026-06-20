@@ -28,12 +28,7 @@ export function buildNativeSingleViewSegments(
   const caption = useFullText
     ? rawMarkdown.trim() || getTextMarkdownFromToolCalls(toolCalls) || ""
     : rawMarkdown.trim();
-  const renderPlan = resolveRenderPlanForExecution(toolCalls, caption, {
-    hasTableVisuals: visuals.some((segment) => segment.kind === "table"),
-    visualKinds: new Set(
-      visuals.map((segment) => String(segment.kind || "").trim().toLowerCase()).filter(Boolean),
-    ),
-  });
+  const renderPlan = resolveRenderPlanForExecution(toolCalls);
 
   if (
     renderPlan?.version === 1 &&

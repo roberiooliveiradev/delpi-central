@@ -60,6 +60,12 @@ export function resolveRenderableHumanizedLines(
     return [];
   }
 
+  const mode = String(metadata.proseDeliveryMode || "").trim().toLowerCase();
+
+  if (mode === "llm") {
+    return [];
+  }
+
   const humanized = metadata.humanizedSummary;
 
   if (!humanized || typeof humanized !== "object") {

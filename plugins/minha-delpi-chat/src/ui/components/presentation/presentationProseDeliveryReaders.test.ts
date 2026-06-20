@@ -40,4 +40,13 @@ describe("presentationProseDeliveryReaders", () => {
       resolveRenderableHumanizedLines(decoupledToolCall.metadata as Record<string, unknown>),
     ).toEqual([]);
   });
+
+  it("ignora humanizedSummary.linhas quando proseDeliveryMode é llm", () => {
+    const metadata = {
+      proseDeliveryMode: "llm",
+      humanizedSummary: { titulo: "Status", linhas: ["- linha legada"] },
+    };
+
+    expect(resolveRenderableHumanizedLines(metadata)).toEqual([]);
+  });
 });
