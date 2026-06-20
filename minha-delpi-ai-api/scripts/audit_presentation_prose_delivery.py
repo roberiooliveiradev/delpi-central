@@ -35,11 +35,32 @@ ANTI_PATTERNS = [
 
 ALLOWLIST_FILES = frozenset(
     {
+        "chat_presentation_prose_delivery_service.py",
+        "chat_presentation_data_only_prose_service.py",
+        "chat_presentation_llm_prose_decoupling_service.py",
+        "chat_operational_commentary_enrichment_service.py",
+        "chat_tool_context_external_action_formatter.py",
         "chat_tool_context_presentation_service.py",
         "chat_tool_context_service.py",
         "chat_response_mode_synthesis_quality_service.py",
         "chat_turn_preparation_post_tool_resolution_service.py",
         "chat_rich_presentation_text_service.py",
+        "chat_external_action_direct_answer_service.py",
+        "chat_composite_direct_answer_service.py",
+        "chat_product_query_intent_service.py",
+        "chat_data_interpretation_answer_service.py",
+        "text_presentation_presenter.py",
+    }
+)
+
+DIRECT_LINHAS_PATTERN = re.compile(
+    r'humanized(?:Summary)?\.get\(\s*["\']linhas(?:_detalhe)?["\']',
+)
+
+DIRECT_LINHAS_ALLOW_DIRS = frozenset(
+    {
+        "external_actions/presenters",
+        "tests",
     }
 )
 
@@ -92,6 +113,33 @@ def audit_mfe_decouple_helpers() -> list[str]:
     for marker in MFE_DECOUPLE_MARKERS:
         if marker not in body:
             issues.append(f"MFE sem helper canônico `{marker}` em presentationMarkdownNormalization.ts")
+
+    return issues
+
+
+def audit_direct_humanized_linhas_reads() -> list[str]:
+    """Consumidores pós-pipeline devem usar ChatPresentationProseDeliveryService helpers."""
+    issues: list[str] = []
+
+    for py_file in API_APP.rglob("*.py"):
+        rel = py_file.relative_to(ROOT)
+        rel_posix = rel.as_posix()
+
+        if any(part in rel_posix for part in DIRECT_LINHAS_ALLOW_DIRS):
+            continue
+
+        if py_file.name in ALLOWLIST_FILES:
+            continue
+
+        body = _read(py_file)
+
+        if not DIRECT_LINHAS_PATTERN.search(body):
+            continue
+
+        issues.append(
+            f"leitura direta de humanized.linhas em {rel_posix} "
+            f"(usar ChatPresentationProseDeliveryService.resolve_humanized_lines_*)"
+        )
 
     return issues
 
@@ -216,6 +264,7 @@ def main() -> int:
         *audit_canonical_modules_exist(),
         *audit_required_callsites(),
         *audit_mfe_decouple_helpers(),
+        *audit_direct_humanized_linhas_reads(),
         *audit_anti_patterns(),
         *audit_tier_and_entity_set_config(),
     ]

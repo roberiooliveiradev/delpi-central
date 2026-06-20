@@ -288,11 +288,13 @@ class ChatErrorHandlingClassifier:
             humanized = metadata.get("humanizedSummary")
 
             if isinstance(humanized, dict):
-                linhas = [
-                    str(line).strip()
-                    for line in (humanized.get("linhas") or [])
-                    if str(line).strip()
-                ]
+                from app.domain.services.chat_presentation_prose_delivery_service import (
+                    ChatPresentationProseDeliveryService,
+                )
+
+                linhas = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(
+                    metadata,
+                )
 
                 empty_phrases = (
                     "nenhum registro",
@@ -381,10 +383,14 @@ class ChatErrorHandlingClassifier:
         humanized = metadata.get("humanizedSummary")
 
         if isinstance(humanized, dict):
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
             joined = " ".join(
-                str(line).strip()
-                for line in (humanized.get("linhas") or [])
-                if str(line).strip()
+                ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(
+                    metadata,
+                )
             )
 
             if joined:
@@ -511,7 +517,13 @@ class ChatErrorHandlingClassifier:
             humanized = metadata.get("humanizedSummary")
 
             if isinstance(humanized, dict):
-                linhas = humanized.get("linhas") or []
+                from app.domain.services.chat_presentation_prose_delivery_service import (
+                    ChatPresentationProseDeliveryService,
+                )
+
+                linhas = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(
+                    metadata,
+                )
 
                 if isinstance(linhas, list) and not [
                     line for line in linhas if str(line).strip()

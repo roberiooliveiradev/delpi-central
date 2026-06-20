@@ -151,6 +151,12 @@ class ChatToolContextExternalActionFormatter:
         from app.domain.services.chat_humanized_data_response_service import (
             ChatHumanizedDataResponseService,
         )
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
+            return
 
         commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(metadata)
         humanized = metadata.get("humanizedSummary")
@@ -158,11 +164,9 @@ class ChatToolContextExternalActionFormatter:
         if not isinstance(commentary, dict) or not isinstance(humanized, dict):
             return
 
-        lines = [
-            str(line).strip()
-            for line in (humanized.get("linhas") or [])
-            if str(line or "").strip()
-        ]
+        lines = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(
+            metadata,
+        )
         extras = [
             str(line).strip()
             for line in (commentary.get("highlights") or [])

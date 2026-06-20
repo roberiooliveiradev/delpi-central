@@ -205,15 +205,19 @@ class ChatProjectConversationContextService:
             return []
 
         metadata = row.message_metadata or {}
-        humanized = metadata.get("humanizedSummary")
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
 
-        if isinstance(humanized, dict):
-            titulo = str(humanized.get("titulo") or "").strip()
-            summary_lines = [
-                str(line).strip()
-                for line in (humanized.get("linhas") or [])
-                if str(line or "").strip()
-            ]
+        effective = ChatPresentationProseDeliveryService.resolve_effective_humanized_summary(
+            metadata,
+        )
+
+        if isinstance(effective, dict):
+            titulo = str(effective.get("titulo") or "").strip()
+            summary_lines = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(
+                metadata,
+            )
             lines: list[str] = []
 
             if titulo:
@@ -242,7 +246,9 @@ class ChatProjectConversationContextService:
                 if not isinstance(call_meta, dict):
                     continue
 
-                tool_humanized = call_meta.get("humanizedSummary")
+                tool_humanized = ChatPresentationProseDeliveryService.resolve_effective_humanized_summary(
+                    call_meta,
+                )
 
                 if not isinstance(tool_humanized, dict):
                     continue

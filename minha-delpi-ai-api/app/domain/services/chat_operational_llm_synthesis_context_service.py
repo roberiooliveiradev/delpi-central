@@ -104,7 +104,9 @@ class ChatOperationalLlmSynthesisContextService:
                 6,
             )
 
-            for line in (effective_humanized.get("linhas") or [])[:max_lines]:
+            for line in ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(
+                metadata,
+            )[:max_lines]:
                 text = str(line or "").strip()
 
                 if text:

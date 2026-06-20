@@ -127,11 +127,9 @@ class ChatConversationContextService:
             return ""
 
         title = str(humanized.get("titulo") or "").strip()
-        lines = [
-            str(line).strip()
-            for line in (humanized.get("linhas") or [])
-            if str(line or "").strip()
-        ]
+        lines = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(
+            tool_meta,
+        )
 
         if not title and not lines:
             return ""

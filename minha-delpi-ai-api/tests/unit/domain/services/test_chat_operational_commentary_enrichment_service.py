@@ -42,8 +42,36 @@ def test_enrich_metadata_attaches_commentary_and_quick_reading():
     assert commentary.get("alertLevel")
     assert commentary.get("nextAction")
 
+    humanized = metadata.get("humanizedSummary")
+
+    assert isinstance(humanized, dict)
+    assert humanized.get("linhas")
+
     markdown = str(metadata["textPresentation"]["markdown"])
 
-    assert "<!-- section:summary -->" in markdown
-    assert "Destaques" in markdown
-    assert "Próxima ação" in markdown
+    assert markdown.startswith("### Status fabril")
+    assert "Situação consolidada." in markdown
+
+
+def test_enrich_metadata_skips_template_merge_when_llm_decoupled():
+    metadata = {
+        "path": "/products/90262404/factory-status",
+        "llmProseDecoupled": True,
+        "proseDeliveryMode": "llm",
+        "humanizedSummary": {"titulo": "Status fabril", "linhas": []},
+        "textPresentation": {"type": "markdown", "markdown": ""},
+        "stackPresentationPlan": {"presentationProfileKey": "factory_status"},
+    }
+    data = {
+        "factory_status": "PA PRODUZIDO",
+        "structure": {"summary": {"total_raw_materials": 3}},
+        "production": {"summary": {"pa_production_started": True}},
+        "shipping": {"summary": {"total_shipped_quantity": 0}},
+        "raw_material_stock": {"items": [], "summary": {}},
+    }
+
+    ChatOperationalCommentaryEnrichmentService.enrich_metadata(metadata, data=data)
+
+    assert isinstance(metadata.get("dataAnswer"), dict)
+    assert metadata["humanizedSummary"]["linhas"] == []
+    assert "Destaques" not in str(metadata.get("textPresentation", {}).get("markdown") or "")

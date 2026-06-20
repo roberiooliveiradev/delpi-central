@@ -181,6 +181,80 @@ class ChatPresentationProseDeliveryService:
         return effective
 
     @classmethod
+    def should_block_template_prose_metadata(cls, metadata: dict[str, Any] | None) -> bool:
+        if not isinstance(metadata, dict):
+            return False
+
+        if cls.is_llm_decoupled_metadata(metadata):
+            return True
+
+        from app.domain.services.chat_presentation_data_only_prose_service import (
+            ChatPresentationDataOnlyProseService,
+        )
+
+        return ChatPresentationDataOnlyProseService.is_data_only_metadata(metadata)
+
+    @classmethod
+    def resolve_humanized_lines_for_display(
+        cls,
+        metadata: dict[str, Any] | None,
+    ) -> list[str]:
+        if cls.should_block_template_prose_metadata(metadata):
+            return []
+
+        if not isinstance(metadata, dict):
+            return []
+
+        humanized = metadata.get("humanizedSummary")
+
+        if not isinstance(humanized, dict):
+            return []
+
+        return [
+            str(line).strip()
+            for line in (humanized.get("linhas") or [])
+            if str(line or "").strip()
+        ]
+
+    @classmethod
+    def resolve_humanized_detail_lines_for_display(
+        cls,
+        metadata: dict[str, Any] | None,
+    ) -> list[str]:
+        if cls.should_block_template_prose_metadata(metadata):
+            return []
+
+        if not isinstance(metadata, dict):
+            return []
+
+        humanized = metadata.get("humanizedSummary")
+
+        if not isinstance(humanized, dict):
+            return []
+
+        return [
+            str(line).strip()
+            for line in (humanized.get("linhas_detalhe") or [])
+            if str(line or "").strip()
+        ]
+
+    @classmethod
+    def resolve_humanized_lines_for_facts(
+        cls,
+        metadata: dict[str, Any] | None,
+    ) -> list[str]:
+        effective = cls.resolve_effective_humanized_summary(metadata)
+
+        if not isinstance(effective, dict):
+            return []
+
+        return [
+            str(line).strip()
+            for line in (effective.get("linhas") or [])
+            if str(line or "").strip()
+        ]
+
+    @classmethod
     def llm_prose_globally_available(cls) -> bool:
         """P3.1 — LLM narrativo disponível mesmo sem seletor de modos quando JSON permite."""
         if ChatResponseModeService.is_enabled():

@@ -5,8 +5,10 @@ import type { ChatToolCall } from "../../../data/api/chatTypes";
 import {
   getProseDeliveryModeFromToolCalls,
   getTemplateProseArchiveFromToolCalls,
+  resolveRenderableHumanizedDetailLines,
   resolveRenderableHumanizedLines,
   resolveRenderableTemplateMarkdown,
+  shouldBlockTemplateProseMetadata,
 } from "./presentationProseDeliveryReaders";
 
 const decoupledToolCall: ChatToolCall = {
@@ -48,5 +50,18 @@ describe("presentationProseDeliveryReaders", () => {
     };
 
     expect(resolveRenderableHumanizedLines(metadata)).toEqual([]);
+  });
+
+  it("bloqueia linhas quando dataOnlyPresentation", () => {
+    const metadata = {
+      dataOnlyPresentation: true,
+      humanizedSummary: { linhas: ["- legado"], linhas_detalhe: ["detalhe"] },
+      textPresentation: { markdown: "### Template" },
+    };
+
+    expect(shouldBlockTemplateProseMetadata(metadata)).toBe(true);
+    expect(resolveRenderableHumanizedLines(metadata)).toEqual([]);
+    expect(resolveRenderableHumanizedDetailLines(metadata)).toEqual([]);
+    expect(resolveRenderableTemplateMarkdown(metadata)).toBe("");
   });
 });

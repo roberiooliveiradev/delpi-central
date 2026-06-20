@@ -246,3 +246,30 @@ def test_resolve_effective_humanized_summary_uses_archive_when_decoupled():
 
     assert effective is not None
     assert effective["linhas"] == ["- OP **12345** em andamento."]
+
+
+def test_should_block_template_prose_metadata_when_data_only():
+    metadata = {
+        "dataOnlyPresentation": True,
+        "humanizedSummary": {"titulo": "KPI", "linhas": ["- legado"]},
+    }
+
+    assert ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata)
+    assert ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(metadata) == []
+    assert ChatPresentationProseDeliveryService.resolve_humanized_detail_lines_for_display(
+        metadata,
+    ) == []
+
+
+def test_resolve_humanized_lines_for_facts_uses_archive_when_decoupled():
+    metadata = {
+        "llmProseDecoupled": True,
+        "humanizedSummary": {"titulo": "Status", "linhas": []},
+        "templateProseArchive": {
+            "humanizedSummary": {"linhas": ["- fato arquivado."]},
+        },
+    }
+
+    assert ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(metadata) == [
+        "- fato arquivado.",
+    ]

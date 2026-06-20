@@ -48,6 +48,14 @@ class ChatDataInsightEnrichmentService:
         if commentary:
             metadata["dataCommentary"] = commentary
 
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
+            ChatPresentationScalarFieldCommentaryService.apply_text_presentation(metadata, data_answer)
+            return
+
         cls._merge_humanized_summary(metadata, commentary or data_answer)
         ChatPresentationScalarFieldCommentaryService.apply_text_presentation(metadata, data_answer)
         cls._ensure_text_markdown_commentary(metadata, commentary)
@@ -59,6 +67,10 @@ class ChatDataInsightEnrichmentService:
         metadata: dict[str, Any],
         commentary_or_answer: dict[str, Any],
     ) -> None:
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
         humanized = metadata.get("humanizedSummary")
 
         if not isinstance(humanized, dict):
@@ -66,7 +78,9 @@ class ChatDataInsightEnrichmentService:
 
         existing = [
             str(line).strip()
-            for line in (humanized.get("linhas") or [])
+            for line in ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(
+                metadata,
+            )
             if str(line or "").strip()
         ]
 

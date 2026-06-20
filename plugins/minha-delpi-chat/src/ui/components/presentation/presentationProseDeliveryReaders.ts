@@ -6,6 +6,20 @@ import type {
 
 import { isLlmProseDecoupledMetadata } from "./presentationMarkdownNormalization";
 
+export function shouldBlockTemplateProseMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!metadata || typeof metadata !== "object") {
+    return false;
+  }
+
+  if (isLlmProseDecoupledMetadata(metadata)) {
+    return true;
+  }
+
+  return metadata.dataOnlyPresentation === true;
+}
+
 export function getProseDeliveryModeFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ChatProseDeliveryMode | null {
@@ -56,13 +70,7 @@ export function resolveRenderableHumanizedLines(
     return [];
   }
 
-  if (isLlmProseDecoupledMetadata(metadata)) {
-    return [];
-  }
-
-  const mode = String(metadata.proseDeliveryMode || "").trim().toLowerCase();
-
-  if (mode === "llm") {
+  if (shouldBlockTemplateProseMetadata(metadata)) {
     return [];
   }
 
@@ -81,6 +89,32 @@ export function resolveRenderableHumanizedLines(
   return lines.map((line) => String(line || "").trim()).filter(Boolean);
 }
 
+export function resolveRenderableHumanizedDetailLines(
+  metadata: Record<string, unknown> | null | undefined,
+): string[] {
+  if (!metadata || typeof metadata !== "object") {
+    return [];
+  }
+
+  if (shouldBlockTemplateProseMetadata(metadata)) {
+    return [];
+  }
+
+  const humanized = metadata.humanizedSummary;
+
+  if (!humanized || typeof humanized !== "object") {
+    return [];
+  }
+
+  const lines = (humanized as { linhas_detalhe?: unknown }).linhas_detalhe;
+
+  if (!Array.isArray(lines)) {
+    return [];
+  }
+
+  return lines.map((line) => String(line || "").trim()).filter(Boolean);
+}
+
 export function resolveRenderableTemplateMarkdown(
   metadata: Record<string, unknown> | null | undefined,
 ): string {
@@ -88,7 +122,7 @@ export function resolveRenderableTemplateMarkdown(
     return "";
   }
 
-  if (isLlmProseDecoupledMetadata(metadata)) {
+  if (shouldBlockTemplateProseMetadata(metadata)) {
     return "";
   }
 

@@ -277,6 +277,13 @@ class ChatToolContextPresentationService:
         @classmethod
         def sync_text_presentation_from_humanized(cls, metadata: dict) -> None:
             """Espelha humanizedSummary em textPresentation quando ainda vazio (rotas playbook)."""
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
+                return
+
             humanized = metadata.get("humanizedSummary")
 
             if not isinstance(humanized, dict):
@@ -300,7 +307,11 @@ class ChatToolContextPresentationService:
 
         @classmethod
         def _authorized_body_from_metadata(cls, metadata: dict) -> str | None:
-            if metadata.get("llmProseDecoupled"):
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
                 return None
 
             text_presentation = metadata.get("textPresentation")

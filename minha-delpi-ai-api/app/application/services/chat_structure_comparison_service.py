@@ -324,15 +324,17 @@ class ChatStructureComparisonService:
 
     @classmethod
     def _profile_lines_from_tool_metadata(cls, metadata: dict) -> list[str]:
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
         humanized = metadata.get("humanizedSummary")
 
         if isinstance(humanized, dict):
             title = str(humanized.get("titulo") or "").strip()
-            lines = [
-                str(line).strip()
-                for line in (humanized.get("linhas") or [])
-                if str(line).strip()
-            ]
+            lines = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(
+                metadata,
+            )
 
             if title:
                 return [title, *lines]

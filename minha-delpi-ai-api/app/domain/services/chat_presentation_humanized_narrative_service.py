@@ -290,7 +290,13 @@ class ChatPresentationHumanizedNarrativeService:
         humanized = metadata.get("humanizedSummary")
 
         if isinstance(humanized, dict):
-            hint_lines = humanized.get("linhas") or []
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            hint_lines = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(
+                metadata,
+            )
 
             for line in hint_lines:
                 token = str(line or "").strip().lower()

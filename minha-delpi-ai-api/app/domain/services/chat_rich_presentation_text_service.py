@@ -669,20 +669,22 @@ class ChatRichPresentationTextService:
 
     @classmethod
     def _should_prefer_playbook_operational_text_answer(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
+            return False
+
         if not cls._is_playbook_operational_tool_metadata(metadata):
             return False
 
-        humanized = metadata.get("humanizedSummary")
+        linhas = ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(
+            metadata,
+        )
 
-        if isinstance(humanized, dict):
-            linhas = [
-                str(line).strip()
-                for line in (humanized.get("linhas") or [])
-                if str(line or "").strip()
-            ]
-
-            if linhas:
-                return True
+        if linhas:
+            return True
 
         text_presentation = metadata.get("textPresentation")
 
@@ -708,7 +710,11 @@ class ChatRichPresentationTextService:
             if not isinstance(metadata, dict) or not metadata.get("ok"):
                 continue
 
-            if metadata.get("llmProseDecoupled"):
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
                 return False
 
             if cls._should_prefer_playbook_operational_text_answer(metadata):
