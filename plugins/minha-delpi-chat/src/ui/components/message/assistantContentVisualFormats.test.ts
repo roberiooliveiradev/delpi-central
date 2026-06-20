@@ -6,6 +6,7 @@ import {
   resolveAvailableVisualFormatOptions,
   resolveDefaultVisualKind,
   resolveInitialToolbarKind,
+  resolveVisibleAssistantSegments,
 } from "./assistantContentVisualFormats";
 import { fixtureToolCalls } from "./testFixtures";
 
@@ -150,7 +151,7 @@ describe("assistantContentVisualFormats", () => {
     expect(textKinds).toEqual(["markdown"]);
   });
 
-  it("stack decoupled mantém prosa LLM ao filtrar tabela ou árvore", () => {
+  it("renderPlan v1: exibe todos os segmentos sem filtro client-side (render-only)", () => {
     const llmOverviewCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
@@ -193,24 +194,25 @@ describe("assistantContentVisualFormats", () => {
     const prose =
       "O produto **10080045** — TERM. OLHAL M6. Fontes cruzadas: roteiro sem operações.";
     const segments = buildAssistantContentSegments(prose, llmOverviewCalls);
+    const options = resolveAvailableVisualFormatOptions(segments, llmOverviewCalls);
+    const toolbarKind = resolveInitialToolbarKind(llmOverviewCalls, options);
 
-    const filteredTable = filterSegmentsByVisualKind(segments, "table", llmOverviewCalls);
+    expect(toolbarKind).toBeNull();
 
-    expect(
-      filteredTable.some(
-        (segment) => segment.kind === "markdown" && segment.markdown.includes("10080045"),
-      ),
-    ).toBe(true);
-    expect(filteredTable.some((segment) => segment.kind === "table")).toBe(true);
+    const visible = resolveVisibleAssistantSegments(segments, llmOverviewCalls, {
+      perSectionToolbar: false,
+      resolvedVisualKind: "table",
+      visualFormatOptionCount: options.length,
+      explicitTextSession: false,
+    });
 
-    const filteredTree = filterSegmentsByVisualKind(segments, "tree", llmOverviewCalls);
-
-    expect(
-      filteredTree.some(
-        (segment) => segment.kind === "markdown" && segment.markdown.includes("10080045"),
-      ),
-    ).toBe(true);
-    expect(filteredTree.some((segment) => segment.kind === "table")).toBe(false);
+    expect(visible.some((segment) => segment.kind === "markdown")).toBe(true);
+    expect(visible.some((segment) => segment.kind === "table")).toBe(true);
+    const markdown = visible.find((segment) => segment.kind === "markdown");
+    expect(markdown?.kind).toBe("markdown");
+    if (markdown?.kind === "markdown") {
+      expect(markdown.markdown).toContain("10080045");
+    }
   });
 
   it("usa formato selecionado pela API como padrão", () => {

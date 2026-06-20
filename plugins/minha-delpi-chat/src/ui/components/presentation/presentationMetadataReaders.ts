@@ -619,24 +619,7 @@ export function hasExplicitPresentationFormatChoice(
       return true;
     }
 
-    const preferred = String(metadata.preferredFormat || "").trim().toLowerCase();
     const decision = metadata.presentationDecision as ChatPresentationDecision | undefined;
-    const selected = mapPresentationDecisionToViewFormat(decision?.selected);
-
-    if (
-      preferred &&
-      selected &&
-      preferred === selected &&
-      preferred !== "text"
-    ) {
-      const layoutMode = String(decision?.layoutMode || "").trim().toLowerCase();
-
-      // Stack Automático: preferredFormat espelha a decisão da API, não escolha explícita do usuário.
-      if (layoutMode !== "stack") {
-        return true;
-      }
-    }
-
     const reason = String(decision?.reason || "").trim().toLowerCase();
 
     if (reason === "formato solicitado pelo usuário") {

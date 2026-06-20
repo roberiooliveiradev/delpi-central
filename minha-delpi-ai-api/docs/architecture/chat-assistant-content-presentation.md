@@ -186,8 +186,10 @@ Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`, `renderPla
 
 Quando `resolveAvailableVisualFormatOptions` retorna **≥ 2** opções (e **não** é apresentação multi-rota — ver abaixo):
 
-- Em **stack** (analyser e combinações): exibe narrativa + cada componente nativo com dados (várias tabelas, árvore, gráfico).
-- Toolbar de troca (**Completo** / **Texto** / **Tabela** / **Árvore** / **Gráfico**) no topo de `ChatAssistantContent` — filtro global sobre todos os segmentos.
+- Com **`renderPlan.version === 1`**: o MFE **não filtra** segmentos no cliente — exibe exatamente o que o plano materializou (`resolveVisibleAssistantSegments`). Troca de formato na toolbar vale para o **próximo turno** (`sessionResponseFormat` → API reescreve contrato).
+- **Legado** (sem `renderPlan`): toolbar filtra visuais localmente — evitar em rotas novas.
+- Em **stack** (analyser e combinações): a API envia narrativa + visuais no `renderPlan`; o MFE empilha mecanicamente.
+- Toolbar de troca (**Completo** / **Texto** / **Tabela** / **Árvore** / **Gráfico**) no topo de `ChatAssistantContent`.
 - **Texto** (R14): só prosa/lista — não intercala visuais; **Completo** exige `layoutMode: stack` (visão integrada).
 
 Arquivos: `AssistantContentFormatToolbar.tsx`, `assistantContentVisualFormats.ts`.

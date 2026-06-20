@@ -17,10 +17,10 @@ import {
   getPresentationDecisionFromToolCalls,
   getPreferredFormatFromToolCalls,
   hasExplicitPresentationFormatChoice,
+  hasRenderPlanContract,
   mapPresentationDecisionToViewFormat,
   type ViewFormat,
 } from "../chatPresentation";
-import { isLlmProseDecoupledFromToolCalls } from "../presentation/presentationMarkdownNormalization";
 import {
   getPresentationDecisionFromToolCall,
   mapViewTokenToContentKind,
@@ -265,20 +265,10 @@ function suppressRedundantStandaloneVisuals(
   });
 }
 
-export function shouldPreserveStackLeadMarkdown(toolCalls: ChatToolCall[] = []): boolean {
-  return (
-    shouldShowCompleteStackView(toolCalls) &&
-    isLlmProseDecoupledFromToolCalls(toolCalls)
-  );
-}
-
 export function filterSegmentsByVisualKind(
   segments: AssistantContentSegment[],
   activeKind: ContentFormatKind | null,
-  toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
-  const preserveLeadMarkdown = shouldPreserveStackLeadMarkdown(toolCalls);
-
   const filtered = !activeKind
     ? suppressRedundantStandaloneVisuals(segments)
     : segments.filter((segment) => {
@@ -295,7 +285,7 @@ export function filterSegmentsByVisualKind(
         }
 
         if (segment.kind === "markdown" || segment.kind === "code") {
-          return preserveLeadMarkdown;
+          return false;
         }
 
         if (segment.kind === "table" && isHierarchyDuplicateTable(segment.presentation)) {
@@ -315,6 +305,54 @@ export function filterSegmentsByVisualKind(
     activeKind === "table" ? expandTreeSegmentsToBlockTables(filtered) : filtered;
 
   return renumberStackSectionTitles(normalized, activeKind);
+}
+
+/**
+ * Segmentos visíveis — render-only quando a API enviou renderPlan v1.
+ * Sem renderPlan: fallback legado (toolbar filtra visuais no cliente).
+ */
+export function resolveVisibleAssistantSegments(
+  segments: AssistantContentSegment[],
+  toolCalls: ChatToolCall[],
+  options: {
+    perSectionToolbar: boolean;
+    resolvedVisualKind: ContentFormatKind | null;
+    visualFormatOptionCount: number;
+    explicitTextSession: boolean;
+  },
+): AssistantContentSegment[] {
+  if (options.perSectionToolbar) {
+    return renumberStackSectionTitles(segments, null);
+  }
+
+  if (hasRenderPlanContract(toolCalls)) {
+    return renumberStackSectionTitles(segments, null);
+  }
+
+  const resolvedTextOnly = options.resolvedVisualKind === "text";
+
+  if (options.explicitTextSession || resolvedTextOnly) {
+    const textSegments = segments.filter(
+      (segment) =>
+        segment.kind === "decision" ||
+        segment.kind === "markdown" ||
+        segment.kind === "code",
+    );
+
+    if (textSegments.length) {
+      return textSegments;
+    }
+
+    if (options.explicitTextSession) {
+      return [];
+    }
+  }
+
+  if (options.visualFormatOptionCount < 2) {
+    return renumberStackSectionTitles(segments, null);
+  }
+
+  return filterSegmentsByVisualKind(segments, options.resolvedVisualKind);
 }
 
 export function shouldShowCompleteStackView(toolCalls: ChatToolCall[]): boolean {

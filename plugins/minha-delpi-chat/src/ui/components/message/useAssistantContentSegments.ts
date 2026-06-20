@@ -4,12 +4,11 @@ import type { ChatToolCall } from "../../../data/api/chatTypes";
 
 import { buildAssistantContentSegments } from "./assistantContentSegments";
 import {
-  filterSegmentsByVisualKind,
   resolveAvailableVisualFormatOptions,
   resolveInitialToolbarKind,
+  resolveVisibleAssistantSegments,
   shouldUsePerSectionFormatToolbar,
 } from "./assistantContentVisualFormats";
-import { renumberStackSectionTitles } from "../presentation/pipeline/presentationStackSections";
 import {
   collectProductRouteBlocks,
   groupSegmentsByRouteSections,
@@ -59,43 +58,24 @@ export function useAssistantContentSegments({
 
     return map;
   }, [toolCalls]);
-  const visibleSegments = useMemo(() => {
-    if (perSectionToolbar) {
-      return renumberStackSectionTitles(segments, null);
-    }
-
-    const explicitTextSession = isExplicitTextSessionMode(toolCalls);
-    const resolvedTextOnly = resolvedVisualKind === "text";
-
-    if (explicitTextSession || resolvedTextOnly) {
-      const textSegments = segments.filter(
-        (segment) =>
-          segment.kind === "decision" ||
-          segment.kind === "markdown" ||
-          segment.kind === "code",
-      );
-
-      if (textSegments.length) {
-        return textSegments;
-      }
-
-      if (explicitTextSession) {
-        return [];
-      }
-    }
-
-    if (visualFormatOptions.length < 2) {
-      return renumberStackSectionTitles(segments, null);
-    }
-
-    return filterSegmentsByVisualKind(segments, resolvedVisualKind, toolCalls);
-  }, [
-    perSectionToolbar,
-    resolvedVisualKind,
-    segments,
-    toolCalls,
-    visualFormatOptions.length,
-  ]);
+  const explicitTextSession = isExplicitTextSessionMode(toolCalls);
+  const visibleSegments = useMemo(
+    () =>
+      resolveVisibleAssistantSegments(segments, toolCalls, {
+        perSectionToolbar,
+        resolvedVisualKind,
+        visualFormatOptionCount: visualFormatOptions.length,
+        explicitTextSession,
+      }),
+    [
+      explicitTextSession,
+      perSectionToolbar,
+      resolvedVisualKind,
+      segments,
+      toolCalls,
+      visualFormatOptions.length,
+    ],
+  );
 
   return {
     segments,

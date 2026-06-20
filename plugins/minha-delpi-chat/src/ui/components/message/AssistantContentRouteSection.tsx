@@ -13,6 +13,7 @@ import {
 } from "./assistantContentRegistry";
 import { parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import type { ChatToolCall } from "../../../data/api/chatTypes";
+import { hasRenderPlanContract } from "../chatPresentation";
 import { AssistantContentRouteCoverage } from "./AssistantContentRouteCoverage";
 import {
   getDepthStateFromToolCall,
@@ -86,11 +87,11 @@ export function AssistantContentRouteSection({
       return bodySegments;
     }
 
-    return filterSegmentsByVisualKind(
-      bodySegments,
-      resolvedVisualKind,
-      toolCall ? [toolCall] : [],
-    );
+    if (hasRenderPlanContract(toolCall ? [toolCall] : [])) {
+      return bodySegments;
+    }
+
+    return filterSegmentsByVisualKind(bodySegments, resolvedVisualKind);
   }, [
     resolvedVisualKind,
     bodySegments,
