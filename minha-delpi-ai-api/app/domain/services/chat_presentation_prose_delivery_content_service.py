@@ -49,6 +49,16 @@ class ChatPresentationProseDeliveryContentService:
         return bool(settings.get("deprecateHumanizedLinhasAsProse"))
 
     @classmethod
+    def allow_template_prose_fallback(cls) -> bool:
+        """P8.1 — template só quando modos OFF e flag explícita (rollback offline)."""
+        settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")
+
+        if not isinstance(settings, dict):
+            return False
+
+        return bool(settings.get("allowTemplateProseFallback"))
+
+    @classmethod
     def prose_delivery_mode_for_tier(cls, tier: str | None) -> str | None:
         allowed = frozenset({"template", "llm", "direct"})
         token = str(tier or "").strip().upper()

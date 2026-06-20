@@ -16,7 +16,8 @@
   "settings": {
     "requireResponseModesForLlmProse": true,
     "llmProseEverywhere": true,
-    "deprecateHumanizedLinhasAsProse": true
+    "deprecateHumanizedLinhasAsProse": true,
+    "allowTemplateProseFallback": false
   },
   "proseDeliveryByTier": {
     "A": "llm",

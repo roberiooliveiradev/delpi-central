@@ -291,6 +291,9 @@ class ChatToolContextPresentationService:
                 ChatPresentationProseDeliveryService,
             )
 
+            if not ChatPresentationProseDeliveryService.template_prose_allowed():
+                return
+
             if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
                 return
 

@@ -547,9 +547,37 @@ def test_prefer_presentation_direct_answer_skips_when_llm_prose():
     assert kept == "| Filial | Qtd |\n| --- | --- |\n| 01 | 10 |"
 
 
-def test_sync_text_presentation_from_humanized_for_playbook_operational():
+def test_sync_text_presentation_from_humanized_for_playbook_operational(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
     from app.domain.services.chat_tool_context_presentation_service import (
         ChatToolContextPresentationService,
+    )
+
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "deprecate_humanized_linhas_as_prose",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "allow_template_prose_fallback",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "require_response_modes_for_llm_prose",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        "app.domain.services.chat_presentation_prose_delivery_service.ChatResponseModeService.is_enabled",
+        lambda: False,
     )
 
     metadata = {

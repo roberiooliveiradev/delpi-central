@@ -47,7 +47,49 @@ class ChatPresentationProseDeliveryService:
         if cls._qualifies_direct_prose(message, tool_calls):
             return MODE_DIRECT
 
-        return MODE_TEMPLATE
+        if cls.template_prose_allowed():
+            return MODE_TEMPLATE
+
+        return cls._resolve_non_template_mode(message, tool_calls)
+
+    @classmethod
+    def template_prose_allowed(cls) -> bool:
+        """P8.1 — prosa template só em rollback offline (modos OFF + flag JSON)."""
+        if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
+            return False
+
+        if ChatPresentationProseDeliveryContentService.deprecate_humanized_linhas_as_prose():
+            return False
+
+        if not ChatPresentationProseDeliveryContentService.allow_template_prose_fallback():
+            return False
+
+        if ChatResponseModeService.is_enabled():
+            return False
+
+        return True
+
+    @classmethod
+    def _resolve_non_template_mode(
+        cls,
+        message: str | None,
+        tool_calls: list | None,
+    ) -> str:
+        if cls._qualifies_llm_prose(message, tool_calls):
+            return MODE_LLM
+
+        if cls._qualifies_direct_prose(message, tool_calls):
+            return MODE_DIRECT
+
+        if cls.llm_prose_globally_available():
+            return MODE_LLM
+
+        if cls._has_successful_external_action(tool_calls) or cls._has_failed_external_action(
+            tool_calls,
+        ):
+            return MODE_LLM
+
+        return MODE_DIRECT
 
     @classmethod
     def _has_successful_external_action(cls, tool_calls: list | None) -> bool:

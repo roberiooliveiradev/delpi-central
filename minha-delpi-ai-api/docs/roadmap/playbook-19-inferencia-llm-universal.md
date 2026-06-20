@@ -1,7 +1,7 @@
 # Playbook 19 — Inferência LLM universal (100% prosa)
 
 **Projeto:** Minha DELPI Chat IA  
-**Status:** P5.6 parcial — smokes matriz + fixtures pipeline (jun/2026)  
+**Status:** P8 parcial — template fallback gate + formatter sem markdown legado (jun/2026)  
 **Pré-requisito:** [Playbook 18 — desacoplamento template×LLM](./playbook-18-prosa-template-llm-desacoplamento.md) (P0–P4.4 ✅)
 
 ---
@@ -108,9 +108,9 @@ Bundles: `presentation_prose_delivery.json`, `operational_narrative_synthesis.js
 
 | # | Entrega | Status |
 |---|---------|--------|
-| P8.1 | Modo `template` só em fallback offline (modos OFF + flag) | 🔲 |
-| P8.2 | Remover geração de `textPresentation.markdown` no formatter | 🔲 |
-| P8.3 | Documentar contrato metadata v2 (sem linhas prosa) | 🔲 |
+| P8.1 | Modo `template` só em fallback offline (modos OFF + flag) | ✅ |
+| P8.2 | Remover geração de `textPresentation.markdown` no formatter | ✅ |
+| P8.3 | Documentar contrato metadata v2 (sem linhas prosa) | ✅ |
 
 ---
 
@@ -124,6 +124,20 @@ Bundles: `presentation_prose_delivery.json`, `operational_narrative_synthesis.js
 | `templateProseArchive` | Fatos históricos; **nunca** renderizar |
 | `humanizedSummary.linhas` | `[]` na UI; fatos via archive |
 | `responseModeEffect` | `llm_synthesis` \| `llm_synthesis_brief` — nunca `operational_direct` |
+
+### Metadata v2 (P19 — sem prosa template na UI)
+
+| Campo | Regra |
+|-------|--------|
+| `proseDeliveryMode` | `llm` em turnos operacionais |
+| `dataOnlyPresentation` / `llmProseDecoupled` | `true` — pipeline não persiste markdown template |
+| `humanizedSummary` | Só `titulo` (+ `sqlRows` interno quando SQL); `linhas`/`linhas_detalhe` = `[]` |
+| `textPresentation.markdown` | `""` após pipeline data-only |
+| `templateProseArchive` | Histórico para fatos LLM; **proibido** renderizar no MFE |
+| `renderPlan.segments[lead].source` | `assistantMessage` — prosa = content streamado |
+| Rollback template | `allowTemplateProseFallback: true` **e** modos OFF **e** `llmProseEverywhere: false` |
+
+Ver também: [`chat-response-modes.md`](../architecture/chat-response-modes.md) § Metadata v2.
 
 ---
 

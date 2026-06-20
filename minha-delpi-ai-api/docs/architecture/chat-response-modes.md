@@ -8,23 +8,39 @@ Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-
 
 ## Princípio
 
-Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com **presets distintos de latência**. Síntese LLM é **pontual** — overview de produto e perfis `summary_then_evidence` (estoque/fábrica narrativos); consultas factuais estreitas permanecem em direct answer.
+Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com presets distintos de latência. Com **Playbook 19** (`llmProseEverywhere`), toda prosa operacional passa por síntese LLM; visuais permanecem nativos no MFE.
 
 | Camada | Afetada pelo modo? |
 |--------|-------------------|
 | Preset LLM (modelo, tokens, ctx, temperatura) | Sim — distinto por modo |
-| Direct answer operacional factual estreito | Não — `operational_direct` |
-| Visão geral de produto | Sim — LLM em todos os modos |
-| Stack `summary_then_evidence` (estoque/fábrica narrativos) | Sim — LLM em todos os modos |
-| Perguntas abertas / Normas / redação | Sim — `llm_synthesis` |
+| Prosa operacional (playbook, KPI, SQL, narrativa) | Sim — `llm_synthesis*` |
+| Visuais (tabela, KPI, árvore, gráfico) | Não — metadata + render-only |
+| Rollback template offline | Só com `allowTemplateProseFallback` + modos OFF |
 
-Gate canônico: `ChatPresentationProseDeliveryService` (template \| llm \| direct) → intenção em `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
+Gate canônico: `ChatPresentationProseDeliveryService` (`template` \| `llm` \| `direct`) → intenção em `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
 
-Playbook: [`playbook-18-prosa-template-llm-desacoplamento.md`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md).
+Playbooks: [`playbook-18`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md), [`playbook-19`](../roadmap/playbook-19-inferencia-llm-universal.md).
 
 O composer envia `responseMode` (`fast` | `normal` | `thinker`). `llm_generation_scope` propaga o preset a **todas** as chamadas LLM do turno.
 
 Catálogo HTTP: `GET /chat/response-modes`.
+
+---
+
+## Metadata v2 (Playbook 19)
+
+Contrato pós-inferência universal — **sem prosa template na UI**:
+
+| Campo tool metadata | Valor / regra |
+|---------------------|---------------|
+| `proseDeliveryMode` | `llm` |
+| `dataOnlyPresentation`, `llmProseDecoupled` | `true` |
+| `humanizedSummary.linhas` | `[]` (fatos em `templateProseArchive` ou `dataAnswer`) |
+| `textPresentation.markdown` | vazio após pipeline |
+| `renderPlan` lead | `source: assistantMessage` |
+| `responseModeEffect` | `llm_synthesis` ou `llm_synthesis_brief` — nunca `operational_direct` |
+
+Rollback template (dev/offline): `presentation_prose_delivery.json` → `allowTemplateProseFallback: true`, `llmProseEverywhere: false`, modos de resposta desligados.
 
 ---
 
@@ -41,18 +57,15 @@ Catálogo HTTP: `GET /chat/response-modes`.
 ## Gate de síntese LLM
 
 ```
-Tool ok + intenção narrativa
+Tool execute_external_action (ok ou falha)
     │
-    ├─ product overview («me fale do produto X»)
-    ├─ summary_then_evidence (stack estoque/fábrica/produção/expedição)
-    │     └─ metadata: presentationMode ou stack + profileKey/path
-    │
+    ├─ llmProseEverywhere → proseDeliveryMode=llm + pipeline data-only
     ├─ fast     → llm_synthesis_brief
     ├─ normal   → llm_synthesis
     └─ thinker  → llm_synthesis
 
-Consulta factual estreita (filial + quantidade, sem marcador narrativo)
-    └─ operational_direct (sem LLM)
+Rollback template (offline)
+    └─ modos OFF + allowTemplateProseFallback + llmProseEverywhere=false
 ```
 
 Serviços:
@@ -84,7 +97,7 @@ Em `metadata.intelligence.pipeline`:
 
 | Campo | Valores |
 |-------|---------|
-| `responseModeEffect` | `llm_synthesis` \| `llm_synthesis_brief` \| `operational_direct` |
+| `responseModeEffect` | `llm_synthesis` \| `llm_synthesis_brief` (P19: nunca `operational_direct` com everywhere) |
 | `responseModeEffectNotice` | Texto PT de `response_modes.json` |
 | `directResponse` | `true` apenas quando há direct answer final |
 

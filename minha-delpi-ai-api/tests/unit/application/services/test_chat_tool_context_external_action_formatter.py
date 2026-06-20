@@ -49,6 +49,37 @@ def test_safe_metadata_stores_authorized_result_for_truncated_analyser_preview(
     assert safe_metadata["authorizedResult"]["data"]["product"]["code"] == "90260140"
 
 
+def test_format_external_action_context_skips_template_linhas_when_everywhere():
+    import re
+
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+    from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
+
+    formatter = ChatToolContextExternalActionFormatter(ExternalActionResultPresenter())
+    envelope = load_api_delpi_fixture_with_meta("product_stock_90269001.json")
+    metadata = {
+        "ok": True,
+        "path": "/products/90269001/stock",
+        "dataOnlyPresentation": True,
+        "proseDeliveryMode": "llm",
+    }
+
+    context = formatter._format_external_action_context(
+        "consulta estoque",
+        envelope,
+        metadata,
+    )
+
+    match = re.search(r"\{[\s\S]*\}\s*$", context)
+    assert match is not None
+    payload = json.loads(match.group(0))
+    humanized = payload.get("humanizedSummary") or {}
+
+    assert not humanized.get("linhas")
+
+
 def test_response_preview_respects_explicit_override():
     formatter = ChatToolContextExternalActionFormatter(ExternalActionResultPresenter())
     preview = formatter._build_response_preview({"padding": "x" * 200}, max_chars=80)

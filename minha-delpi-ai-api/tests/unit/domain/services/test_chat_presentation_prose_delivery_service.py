@@ -65,8 +65,27 @@ def test_resolve_mode_narrative_vs_llm(monkeypatch, message, tool_calls, expecte
     assert mode == expected
 
 
-def test_resolve_mode_template_when_response_modes_disabled(monkeypatch):
+def test_resolve_mode_template_when_response_modes_disabled_and_fallback_allowed(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "deprecate_humanized_linhas_as_prose",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "allow_template_prose_fallback",
+        lambda: True,
+    )
 
     mode = ChatPresentationProseDeliveryService.resolve_mode(
         "como esta o status fabril do produto 90269001?",
@@ -74,6 +93,23 @@ def test_resolve_mode_template_when_response_modes_disabled(monkeypatch):
     )
 
     assert mode == MODE_TEMPLATE
+
+
+def test_resolve_mode_llm_when_response_modes_disabled_and_no_template_fallback(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "como esta o status fabril do produto 90269001?",
+        _stack_tool_calls(),
+    )
+
+    assert mode == MODE_LLM
+
+
+def test_template_prose_allowed_false_when_everywhere(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+
+    assert not ChatPresentationProseDeliveryService.template_prose_allowed()
 
 
 def test_resolve_mode_llm_when_response_modes_disabled_but_require_flag_false(monkeypatch):
@@ -261,7 +297,7 @@ def test_entity_template_profile_uses_llm_when_everywhere(monkeypatch):
     assert mode == MODE_LLM
 
 
-def test_playbook_entity_stays_template_for_non_narrative_when_profile_template(monkeypatch):
+def test_playbook_entity_uses_llm_when_template_fallback_disabled(monkeypatch):
     from app.domain.services.chat_presentation_prose_delivery_content_service import (
         ChatPresentationProseDeliveryContentService,
     )
@@ -297,6 +333,58 @@ def test_playbook_entity_stays_template_for_non_narrative_when_profile_template(
 
     mode = ChatPresentationProseDeliveryService.resolve_mode(
         "quais os top itens de consumo na producao?",
+        tool_calls,
+    )
+
+    assert mode == MODE_LLM
+
+
+def test_playbook_entity_template_only_with_explicit_offline_fallback(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "deprecate_humanized_linhas_as_prose",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "allow_template_prose_fallback",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryService,
+        "_entity_prose_delivery_mode",
+        lambda **kwargs: MODE_TEMPLATE,
+    )
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/production/consumption/top-items",
+                "apiDelpiResponseMeta": {
+                    "entity": "production_consumption_top_items",
+                },
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                },
+            },
+        }
+    ]
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "listagem top consumo",
         tool_calls,
     )
 

@@ -86,6 +86,9 @@ class ChatToolContextExternalActionFormatter:
                 from app.domain.services.chat_presentation_data_only_prose_service import (
                     ChatPresentationDataOnlyProseService,
                 )
+                from app.domain.services.chat_presentation_prose_delivery_service import (
+                    ChatPresentationProseDeliveryService,
+                )
 
                 humanized = ChatPresentationDataOnlyProseService.resolve_humanized_summary(
                     self._presenter,
@@ -131,8 +134,11 @@ class ChatToolContextExternalActionFormatter:
                         if prepared:
                             safe_metadata["humanizedSummary"] = prepared
 
-                        if not ChatPresentationDataOnlyProseService.is_data_only_metadata(
-                            safe_metadata,
+                        if (
+                            not ChatPresentationDataOnlyProseService.is_data_only_metadata(
+                                safe_metadata,
+                            )
+                            and ChatPresentationProseDeliveryService.template_prose_allowed()
                         ):
                             self._merge_data_commentary_into_humanized_summary(safe_metadata)
 
@@ -288,12 +294,34 @@ class ChatToolContextExternalActionFormatter:
                     f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
                 )
 
-            humanized = self._presenter.present(
-                self._attach_request_sql(data, arguments, metadata),
-                path=path or "",
+            from app.domain.services.chat_presentation_data_only_prose_service import (
+                ChatPresentationDataOnlyProseService,
+            )
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
             )
 
-            linhas = list(humanized.get("linhas") or [])
+            attached_data = self._attach_request_sql(data, arguments, metadata)
+
+            if ChatPresentationProseDeliveryService.template_prose_allowed():
+                humanized = self._presenter.present(
+                    attached_data,
+                    path=path or "",
+                )
+            else:
+                resolved = ChatPresentationDataOnlyProseService.resolve_humanized_summary(
+                    self._presenter,
+                    attached_data,
+                    path=path or "",
+                    metadata=metadata,
+                )
+                humanized = dict(resolved) if isinstance(resolved, dict) else {}
+
+            linhas = [
+                str(line).strip()
+                for line in (humanized.get("linhas") or [])
+                if str(line or "").strip()
+            ]
             coverage = metadata.get("dataCoverageNotice")
 
             if isinstance(coverage, dict) and coverage.get("message"):

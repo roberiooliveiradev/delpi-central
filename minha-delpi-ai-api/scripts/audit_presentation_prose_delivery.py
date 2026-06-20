@@ -218,6 +218,11 @@ def audit_tier_and_entity_set_config() -> list[str]:
             "llmProseEverywhere ativo exige deprecateHumanizedLinhasAsProse=true (playbook-19 P6)"
         )
 
+    if llm_everywhere and settings.get("allowTemplateProseFallback"):
+        issues.append(
+            "llmProseEverywhere ativo exige allowTemplateProseFallback=false (playbook-19 P8.1)"
+        )
+
     by_entity_set = profiles.get("proseDeliveryByEntitySet")
 
     if not isinstance(by_entity_set, dict):

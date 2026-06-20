@@ -14,6 +14,10 @@ def test_llm_prose_everywhere_default_true():
     assert ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
 
 
+def test_allow_template_prose_fallback_default_false():
+    assert not ChatPresentationProseDeliveryContentService.allow_template_prose_fallback()
+
+
 def test_metadata_keys_from_bundle():
     assert (
         ChatPresentationProseDeliveryContentService.metadata_key("deliveryMode")
