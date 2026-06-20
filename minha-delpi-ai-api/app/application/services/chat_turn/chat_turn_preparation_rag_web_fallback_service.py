@@ -46,6 +46,51 @@ class ChatTurnPreparationRagWebFallbackService:
         return len(rag.get("sources") or []) == 0
 
     @classmethod
+    def _operational_llm_narration_pending(
+        cls,
+        *,
+        tool_calls: list | None,
+        tool_context: dict | None,
+    ) -> bool:
+        if not isinstance(tool_calls, list):
+            return False
+
+        has_external_action = any(
+            str(item.get("name") or "") == "execute_external_action" for item in tool_calls
+        )
+
+        if not has_external_action:
+            return False
+
+        if isinstance(tool_context, dict):
+            from app.domain.services.chat_operational_narrative_synthesis_service import (
+                ChatOperationalNarrativeSynthesisService,
+            )
+
+            effect = str(tool_context.get("responseModeEffect") or "").strip()
+
+            if ChatOperationalNarrativeSynthesisService.is_llm_synthesis_effect(effect):
+                return True
+
+        for item in tool_calls:
+            if str(item.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = item.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            if metadata.get("ok") is True and (
+                metadata.get("dataOnlyPresentation")
+                or metadata.get("llmProseDecoupled")
+                or str(metadata.get("proseDeliveryMode") or "") == "llm"
+            ):
+                return True
+
+        return False
+
+    @classmethod
     def should_apply(
         cls,
         *,
@@ -61,6 +106,12 @@ class ChatTurnPreparationRagWebFallbackService:
             return False
 
         if cls._web_search_already_ran(tool_calls=tool_calls, tool_context=tool_context):
+            return False
+
+        if cls._operational_llm_narration_pending(
+            tool_calls=tool_calls,
+            tool_context=tool_context,
+        ):
             return False
 
         if not cls._internal_rag_is_empty(rag):

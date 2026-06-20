@@ -3,6 +3,9 @@
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
+from app.application.services.chat_turn.chat_turn_preparation_rag_web_fallback_service import (
+    ChatTurnPreparationRagWebFallbackService,
+)
 from app.application.services.chat_turn.chat_turn_preparation_service import (
     ChatTurnPreparationService,
 )
@@ -56,6 +59,31 @@ def _prepare_with_empty_rag(
     )
 
     return prepared, rag_context_service
+
+
+def test_should_apply_skips_when_operational_llm_synthesis_pending():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/production/consumption/top-items",
+                "dataOnlyPresentation": True,
+                "proseDeliveryMode": "llm",
+            },
+        }
+    ]
+    tool_context = {"responseModeEffect": "llm_synthesis"}
+
+    assert not ChatTurnPreparationRagWebFallbackService.should_apply(
+        message="Quais itens mais consumidos no mês passado filial 01 top 10?",
+        skip_rag=False,
+        direct_answer=None,
+        rag={"sources": []},
+        tool_calls=tool_calls,
+        tool_context=tool_context,
+        text_task_pure=False,
+    )
 
 
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)

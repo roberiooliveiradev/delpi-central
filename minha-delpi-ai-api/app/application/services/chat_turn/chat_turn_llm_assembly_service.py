@@ -89,6 +89,12 @@ class ChatTurnLlmAssemblyService:
         if report_direct:
             direct_answer = report_direct
 
+        direct_answer = cls._clear_web_direct_answer_for_operational_llm_synthesis(
+            direct_answer=direct_answer,
+            tool_context=tool_context,
+            tool_calls=tool_calls,
+        )
+
         if direct_answer and isinstance(tool_context, dict):
             tool_context = {**tool_context, "directAnswer": direct_answer}
 
@@ -272,3 +278,26 @@ class ChatTurnLlmAssemblyService:
             llm_messages=llm_messages,
             admin_debug_payload=admin_debug_payload,
         )
+
+    @classmethod
+    def _clear_web_direct_answer_for_operational_llm_synthesis(
+        cls,
+        *,
+        direct_answer: str | None,
+        tool_context: dict | None,
+        tool_calls: list | None,
+    ) -> str | None:
+        from app.application.services.chat_turn.chat_turn_preparation_rag_web_fallback_service import (
+            ChatTurnPreparationRagWebFallbackService,
+        )
+
+        if not direct_answer:
+            return direct_answer
+
+        if not ChatTurnPreparationRagWebFallbackService._operational_llm_narration_pending(
+            tool_calls=tool_calls,
+            tool_context=tool_context,
+        ):
+            return direct_answer
+
+        return None

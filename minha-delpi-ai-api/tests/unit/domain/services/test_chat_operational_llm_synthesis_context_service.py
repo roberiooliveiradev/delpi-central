@@ -32,6 +32,31 @@ def test_collect_fact_lines_from_data_answer_and_tables():
     assert any("6082" in line for line in lines)
 
 
+def test_collect_fact_lines_from_playbook_presentation_rows():
+    metadata = {
+        "ok": True,
+        "path": "/production/consumption/top-items",
+        "humanizedSummary": {"titulo": "Itens mais consumidos"},
+        "presentation": {
+            "type": "table",
+            "title": "Itens mais consumidos",
+            "rows": [
+                {
+                    "item_code": "10010032",
+                    "description": "MP TESTE A",
+                    "real_consumption_qty": 120.0,
+                }
+            ],
+        },
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert any("10010032" in line for line in lines)
+    assert any("MP TESTE A" in line for line in lines)
+    assert any("120" in line for line in lines)
+
+
 def test_collect_fact_lines_from_archived_humanized_when_decoupled():
     metadata = {
         "ok": True,

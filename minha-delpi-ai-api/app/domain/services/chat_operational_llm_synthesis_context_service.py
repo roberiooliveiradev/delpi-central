@@ -163,10 +163,7 @@ class ChatOperationalLlmSynthesisContextService:
 
         max_rows = ChatOperationalLlmSynthesisContextContentService.limit_int("maxTableRows", 4)
 
-        for table in metadata.get("tablePresentations") or []:
-            if not isinstance(table, dict):
-                continue
-
+        for table in cls._iter_table_presentations(metadata):
             table_title = str(table.get("title") or "").strip()
             rows = table.get("rows")
 
@@ -192,6 +189,20 @@ class ChatOperationalLlmSynthesisContextService:
         facts.extend(cls._facts_from_sql_metadata(metadata))
 
         return facts
+
+    @classmethod
+    def _iter_table_presentations(cls, metadata: dict[str, Any]):
+        bulk = metadata.get("tablePresentations")
+
+        if isinstance(bulk, list):
+            for presentation in bulk:
+                if isinstance(presentation, dict):
+                    yield presentation
+
+        presentation = metadata.get("presentation")
+
+        if isinstance(presentation, dict) and str(presentation.get("type") or "") == "table":
+            yield presentation
 
     @classmethod
     def _facts_from_sql_metadata(cls, metadata: dict[str, Any]) -> list[str]:
