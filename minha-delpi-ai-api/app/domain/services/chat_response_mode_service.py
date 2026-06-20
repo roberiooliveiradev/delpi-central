@@ -43,6 +43,9 @@ class ChatResponseModeService:
         if normalized == "thinker":
             return cls._thinker_config()
 
+        if normalized == "normal":
+            return cls._normal_config()
+
         return cls._default_config("normal")
 
     @classmethod
@@ -76,8 +79,13 @@ class ChatResponseModeService:
         return []
 
     @classmethod
-    def should_use_presenter_direct_answer(cls, response_mode: str | None) -> bool:
-        return cls.normalize(response_mode) == "fast"
+    def resolve_synthesis_effect(cls, response_mode: str | None) -> str:
+        normalized = cls.normalize(response_mode)
+
+        if normalized == "fast":
+            return "llm_synthesis_brief"
+
+        return "llm_synthesis"
 
     @classmethod
     def apply_turn_direct_answer_policy(
@@ -89,7 +97,7 @@ class ChatResponseModeService:
         skip_rag: bool,
         tool_calls: list | None,
     ) -> tuple[str | None, bool, str | None]:
-        """Gate final do turno: overview + normal/pensador força LLM; rápida mantém presenter."""
+        """Gate final do turno: overview com tool ok força LLM em todos os modos (presets distintos)."""
         if not cls.is_enabled():
             return direct_answer, skip_rag, None
 
@@ -103,14 +111,16 @@ class ChatResponseModeService:
             tool_calls,
         )
 
-        if force_llm_overview and not cls.should_use_presenter_direct_answer(response_mode):
+        if force_llm_overview:
+            effect = cls.resolve_synthesis_effect(response_mode)
+
             if direct_answer:
-                return None, False, "llm_synthesis"
-            return direct_answer, skip_rag, "llm_synthesis"
+                return None, False, effect
+
+            return direct_answer, skip_rag, effect
 
         if direct_answer:
-            effect = "presenter_direct" if overview else "operational_direct"
-            return direct_answer, skip_rag, effect
+            return direct_answer, skip_rag, "operational_direct"
 
         return direct_answer, skip_rag, "llm_synthesis"
 
@@ -152,23 +162,28 @@ class ChatResponseModeService:
 
         return LlmGenerationConfig(
             model=fast_model or "qwen2.5:1.5b",
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "384")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "1536")),
-            temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.3")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "320")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "1280")),
+            temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.25")),
             response_mode="fast",
+        )
+
+    @classmethod
+    def _normal_config(cls) -> LlmGenerationConfig:
+        return LlmGenerationConfig(
+            model=cls._env_model("CHAT_RESPONSE_MODE_NORMAL_MODEL"),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "768")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "2048")),
+            temperature=float(os.getenv("CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE", "0.35")),
+            response_mode="normal",
         )
 
     @classmethod
     def _thinker_config(cls) -> LlmGenerationConfig:
         return LlmGenerationConfig(
             model=cls._env_model("CHAT_RESPONSE_MODE_THINKER_MODEL"),
-            max_tokens=int(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS",
-                    str(max(ChatDomainConfigService.llm_max_tokens(), 2048)),
-                )
-            ),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "4096")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", "1536")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "3072")),
             temperature=float(os.getenv("CHAT_RESPONSE_MODE_THINKER_TEMPERATURE", "0.25")),
             response_mode="thinker",
         )

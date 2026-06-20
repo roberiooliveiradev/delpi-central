@@ -8,13 +8,13 @@ Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-
 
 ## Princípio
 
-Os modos são **perfis de geração LLM** (`LlmGenerationConfig`), não um atalho para todo o pipeline.
+Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com **presets distintos de latência**. Todos os modos usam LLM para síntese narrativa quando a intenção é aberta (ex.: visão geral de produto); consultas factuais (estoque, KPI) permanecem em direct answer.
 
 | Camada | Afetada pelo modo? |
 |--------|-------------------|
-| Preset LLM (modelo, tokens, ctx, temperatura) | Sim |
+| Preset LLM (modelo, tokens, ctx, temperatura) | Sim — distinto por modo |
 | Direct answer operacional (estoque, KPI, tabela) | Não — `operational_direct` |
-| Visão geral de produto («me fale do produto X») | **Sim** — ver matriz abaixo |
+| Visão geral de produto («me fale do produto X») | **Sim** — LLM em todos os modos |
 | Perguntas abertas / Normas / redação | Sim — `llm_synthesis` |
 
 O composer envia `responseMode` (`fast` | `normal` | `thinker`) em cada mensagem. `llm_generation_scope` propaga o preset a **todas** as chamadas LLM do turno.
@@ -25,11 +25,13 @@ Catálogo HTTP: `GET /chat/response-modes`.
 
 ## Matriz por modo
 
-| Modo | Modelo (env) | max_tokens | num_ctx | temp | Visão geral produto | Operacional (estoque/KPI) |
-|------|--------------|------------|---------|------|---------------------|---------------------------|
-| **Rápida** (`fast`) | `CHAT_RESPONSE_MODE_FAST_MODEL` | `FAST_MAX_TOKENS` (384) | 1536 | 0.3 | Relatório **direto** do presenter | Direct answer |
-| **Normal** (`normal`) | `OLLAMA_MODEL` | `LLM_MAX_TOKENS` | `OLLAMA_NUM_CTX` | `LLM_TEMPERATURE` | **Síntese LLM** com policy `product-overview.md` | Direct answer |
-| **Pensador** (`thinker`) | `CHAT_RESPONSE_MODE_THINKER_MODEL` ou fallback `OLLAMA_MODEL` | `THINKER_MAX_TOKENS` | `THINKER_NUM_CTX` | 0.25 | **Síntese LLM** (ctx maior) | Direct answer |
+| Modo | Modelo (env) | max_tokens | num_ctx | temp | Policy product overview |
+|------|--------------|------------|---------|------|-------------------------|
+| **Rápida** (`fast`) | `CHAT_RESPONSE_MODE_FAST_MODEL` (1.5b) | 320 | 1280 | 0.25 | `product-overview-fast.md` |
+| **Normal** (`normal`) | `CHAT_RESPONSE_MODE_NORMAL_MODEL` ou `OLLAMA_MODEL` | 768 | 2048 | 0.35 | `product-overview.md` |
+| **Pensador** (`thinker`) | `CHAT_RESPONSE_MODE_THINKER_MODEL` ou fallback | 1536 | 3072 | 0.25 | `product-overview-thinker.md` |
+
+Consultas factuais (estoque, KPI): **direct answer em todos os modos** — sem passagem pelo LLM.
 
 ---
 
@@ -40,12 +42,14 @@ Serviço canônico: `ChatResponseModeService.apply_turn_direct_answer_policy` (c
 ```
 «me fale do produto X» + tool ok
     │
-    ├─ fast  → mantém directAnswer / markdown do presenter  (responseModeEffect: presenter_direct)
-    └─ normal / thinker → limpa directAnswer, skip_rag=false  (responseModeEffect: llm_synthesis)
-                              └─ LLM + product-overview.md + dados da tool
+    ├─ fast     → limpa directAnswer, LLM curto  (responseModeEffect: llm_synthesis_brief)
+    ├─ normal   → limpa directAnswer, LLM médio  (responseModeEffect: llm_synthesis)
+    └─ thinker  → limpa directAnswer, LLM longo  (responseModeEffect: llm_synthesis)
 ```
 
 Intent: `ChatProductOverviewIntentService` (`should_force_llm_synthesis`, `is_product_overview_message`).
+
+Policy por modo: `ChatProductOverviewIntentService._overview_policy_for_mode`.
 
 ---
 
@@ -55,7 +59,7 @@ Em `metadata.intelligence.pipeline`:
 
 | Campo | Valores |
 |-------|---------|
-| `responseModeEffect` | `llm_synthesis` \| `presenter_direct` \| `operational_direct` |
+| `responseModeEffect` | `llm_synthesis` \| `llm_synthesis_brief` \| `operational_direct` |
 | `responseModeEffectNotice` | Texto PT de `response_modes.json` → `pipelineEffects.*` |
 | `directResponse` | `true` quando há texto direct answer |
 
@@ -67,13 +71,18 @@ Em `metadata.intelligence.pipeline`:
 
 | Variável | Default | Papel |
 |----------|---------|-------|
-| `CHAT_RESPONSE_MODES_ENABLED` | `true` | Master — desligado: só preset Normal |
+| `CHAT_RESPONSE_MODES_ENABLED` | `true` | Master — desligado: só preset Normal legado |
 | `CHAT_RESPONSE_MODE_FAST_MODEL` | `qwen2.5:1.5b` | Modelo Rápida |
-| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `384` | Limite Rápida |
-| `CHAT_RESPONSE_MODE_THINKER_MODEL` | vazio → `OLLAMA_MODEL` | Modelo Pensador (recomendado: `qwen2.5:3b` com GPU) |
-| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `4096` | Contexto Pensador |
+| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `320` | Limite Rápida (síntese curta) |
+| `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `1280` | Contexto Rápida |
+| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `768` | Limite Normal |
+| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `2048` | Contexto Normal |
+| `CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE` | `0.35` | Temperatura Normal |
+| `CHAT_RESPONSE_MODE_THINKER_MODEL` | vazio → `OLLAMA_MODEL` | Modelo Pensador |
+| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `1536` | Limite Pensador |
+| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `3072` | Contexto Pensador |
 
-Stack mínimo WSL: ver `infra/docker-compose.minimal.yml` (Normal e Pensador em 1.5b; Pensador com ctx 4096).
+Stack mínimo WSL: ver `infra/docker-compose.minimal.yml` (todos em 1.5b; Normal 640 tokens / ctx 1536).
 
 ### Admin
 
@@ -95,8 +104,18 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/application/services/test_chat_turn_preparation_response_mode.py -q
 ```
 
-Benchmark manual (3 conversas, mesma pergunta): script efêmero ou smoke operacional com `responseMode` no POST.
+Benchmark manual: `scripts/smoke_response_modes_product_overview.py` com `responseMode` no POST.
+
+Referência WSL (stack mínimo, `qwen2.5:1.5b`, product overview `10080045`):
+
+| Modo | Tempo típico | `responseModeEffect` |
+|------|--------------|----------------------|
+| Rápida | ~25–30 s | `llm_synthesis_brief` |
+| Normal | ~30–35 s | `llm_synthesis` |
+| Pensador | ~40–45 s | `llm_synthesis` |
+
+Consultas factuais (estoque/KPI) permanecem `operational_direct` em todos os modos.
 
 ---
 
-*Última revisão: jun/2026 — gate product overview + metadata `responseModeEffect`.*
+*Última revisão: jun/2026 — LLM nos três modos com presets balanceados por latência.*

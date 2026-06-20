@@ -3,19 +3,19 @@
     {
       "id": "fast",
       "label": "Rápida",
-      "description": "Dados operacionais e respostas curtas. Visão geral de produto usa o relatório direto.",
+      "description": "Síntese curta com modelo leve — ideal para respostas rápidas sem perder o painel de dados.",
       "default": false
     },
     {
       "id": "normal",
       "label": "Normal",
-      "description": "Equilíbrio entre qualidade e velocidade. Visão geral de produto com narrativa do assistente.",
+      "description": "Equilíbrio entre qualidade e velocidade — narrativa consultiva com limites moderados.",
       "default": true
     },
     {
       "id": "thinker",
       "label": "Pensador",
-      "description": "Respostas mais elaboradas (pode demorar mais).",
+      "description": "Respostas mais elaboradas e contexto ampliado (pode demorar mais).",
       "default": false
     }
   ],
@@ -36,7 +36,7 @@
   },
   "pipelineEffects": {
     "llm_synthesis": "Texto gerado pelo modelo com base nos dados consultados.",
-    "presenter_direct": "Relatório operacional entregue direto — o modo afeta só perguntas abertas.",
-    "operational_direct": "Resposta direta dos dados — o modo não altera o texto."
+    "llm_synthesis_brief": "Síntese curta gerada pelo modelo — tabelas e gráficos permanecem no painel.",
+    "operational_direct": "Resposta direta dos dados — consultas factuais (estoque, KPI) não passam pelo modelo."
   }
 }

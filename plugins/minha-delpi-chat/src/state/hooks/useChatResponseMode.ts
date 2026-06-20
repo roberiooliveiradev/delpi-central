@@ -6,22 +6,22 @@ import type { ChatResponseModeId, ChatResponseModeOption } from "../../data/api/
 const STORAGE_KEY = "minha-delpi-chat.response-mode";
 
 const FALLBACK_MODES: ChatResponseModeOption[] = [
-  {
-    id: "fast",
-    label: "Rápida",
-    description: "Dados operacionais e respostas curtas. Visão geral de produto usa o relatório direto.",
-  },
-  {
-    id: "normal",
-    label: "Normal",
-    description: "Equilíbrio entre qualidade e velocidade. Visão geral de produto com narrativa do assistente.",
-    default: true,
-  },
-  {
-    id: "thinker",
-    label: "Pensador",
-    description: "Respostas mais elaboradas (pode demorar mais).",
-  },
+    {
+      id: "fast",
+      label: "Rápida",
+      description: "Síntese curta com modelo leve — respostas rápidas com painel de dados.",
+    },
+    {
+      id: "normal",
+      label: "Normal",
+      description: "Equilíbrio entre qualidade e velocidade — narrativa consultiva moderada.",
+      default: true,
+    },
+    {
+      id: "thinker",
+      label: "Pensador",
+      description: "Respostas mais elaboradas e contexto ampliado (pode demorar mais).",
+    },
 ];
 
 function normalizeMode(value: string | null | undefined): ChatResponseModeId {

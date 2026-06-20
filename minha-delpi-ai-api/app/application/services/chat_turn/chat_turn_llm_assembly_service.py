@@ -199,6 +199,8 @@ class ChatTurnLlmAssemblyService:
                     else drawing_policy_addon
                 )
 
+            from app.infrastructure.llm.llm_request_context import get_active_config
+
             llm_messages = prompt_builder_service.build_messages(
                 history=history,
                 current_message=message,
@@ -234,6 +236,7 @@ class ChatTurnLlmAssemblyService:
                 else None,
                 user_context=user_context,
                 skills=workspace_context.get("skills"),
+                response_mode=get_active_config().response_mode,
             )
 
         admin_debug_payload = ChatAdminDebugService.build_for_turn(

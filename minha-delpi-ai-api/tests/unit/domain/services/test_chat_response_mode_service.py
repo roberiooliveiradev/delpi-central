@@ -36,7 +36,7 @@ def test_list_modes_when_enabled(monkeypatch):
     assert {item["id"] for item in modes} == {"fast", "normal", "thinker"}
 
 
-def test_apply_turn_direct_answer_policy_overview_fast_keeps_direct():
+def test_apply_turn_direct_answer_policy_overview_fast_forces_brief_llm():
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
         message="me fale do produto 10080045",
         response_mode="fast",
@@ -50,9 +50,37 @@ def test_apply_turn_direct_answer_policy_overview_fast_keeps_direct():
         ],
     )
 
-    assert direct == "### Produto\n\nRelatório."
-    assert skip_rag is True
-    assert effect == "presenter_direct"
+    assert direct is None
+    assert skip_rag is False
+    assert effect == "llm_synthesis_brief"
+
+
+def test_apply_turn_direct_answer_policy_overview_thinker_forces_llm():
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="me fale do produto 10080045",
+        response_mode="thinker",
+        direct_answer="### Produto\n\nRelatório.",
+        skip_rag=True,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {"ok": True},
+            }
+        ],
+    )
+
+    assert direct is None
+    assert skip_rag is False
+    assert effect == "llm_synthesis"
+
+
+def test_normal_mode_uses_bounded_limits(monkeypatch):
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "512")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "2048")
+    config = ChatResponseModeService.resolve("normal")
+    assert config.response_mode == "normal"
+    assert config.max_tokens == 512
+    assert config.num_ctx == 2048
 
 
 def test_apply_turn_direct_answer_policy_overview_normal_forces_llm():

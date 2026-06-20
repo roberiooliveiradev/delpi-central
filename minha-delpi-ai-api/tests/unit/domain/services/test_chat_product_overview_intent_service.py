@@ -36,3 +36,18 @@ def test_should_force_llm_with_successful_tool():
         "me fale do produto 90260114",
         tool_calls,
     )
+
+
+def test_overview_policy_varies_by_response_mode():
+    assert (
+        ChatProductOverviewIntentService._overview_policy_for_mode("fast")
+        == "product-overview-fast.md"
+    )
+    assert (
+        ChatProductOverviewIntentService._overview_policy_for_mode("normal")
+        == "product-overview.md"
+    )
+    assert (
+        ChatProductOverviewIntentService._overview_policy_for_mode("thinker")
+        == "product-overview-thinker.md"
+    )

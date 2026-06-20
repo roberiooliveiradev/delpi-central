@@ -474,6 +474,12 @@ class ChatTurnPreparationPostToolResolutionService:
         if response_mode_effect:
             tool_context["responseModeEffect"] = response_mode_effect
 
+        if (
+            direct_answer is None
+            and response_mode_effect in {"llm_synthesis", "llm_synthesis_brief"}
+        ):
+            tool_context.pop("directAnswer", None)
+
         return ChatTurnPreparationPostToolResult(
             direct_answer=direct_answer,
             skip_rag=skip_rag,

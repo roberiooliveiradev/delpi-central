@@ -52,7 +52,7 @@ def main() -> int:
     agent_id = str(next(a["id"] for a in items if a.get("enabled")))
 
     results = []
-    for mode in ("fast", "normal"):
+    for mode in ("fast", "normal", "thinker"):
         session = req(
             "POST",
             f"{BASE}{PREFIX}/sessions",
@@ -84,13 +84,19 @@ def main() -> int:
 
     print(json.dumps(results, ensure_ascii=False, indent=2))
 
-    fast, normal = results
-    if fast["effect"] != "presenter_direct":
+    fast, normal, thinker = results
+    if fast["effect"] != "llm_synthesis_brief":
         return 1
     if normal["effect"] != "llm_synthesis":
         return 1
-    if normal["elapsedSec"] <= fast["elapsedSec"]:
-        print("WARN: normal não ficou mais lento que fast (CPU/Ollama)", flush=True)
+    if thinker["effect"] != "llm_synthesis":
+        return 1
+    if fast.get("directResponse"):
+        return 1
+    if normal.get("directResponse"):
+        return 1
+    if thinker["elapsedSec"] < normal["elapsedSec"] * 0.8:
+        print("WARN: thinker não ficou mais lento que normal (CPU/Ollama)", flush=True)
     return 0
 
 

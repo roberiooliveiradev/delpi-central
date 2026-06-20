@@ -93,12 +93,32 @@ class ChatProductOverviewIntentService:
         return cls.is_product_overview_message(message)
 
     @classmethod
-    def build_prompt_policy_addon(cls, message: str | None) -> str:
+    def build_prompt_policy_addon(
+        cls,
+        message: str | None,
+        *,
+        response_mode: str | None = None,
+    ) -> str:
         if not cls.is_product_overview_message(message):
             return ""
 
         from app.domain.services.prompt_policy_service import PromptPolicyService
 
-        policy = PromptPolicyService()._load_policy("product-overview.md")
+        policy_name = cls._overview_policy_for_mode(response_mode)
+        policy = PromptPolicyService()._load_policy(policy_name)
 
         return f"\n\n{policy}" if policy else ""
+
+    @classmethod
+    def _overview_policy_for_mode(cls, response_mode: str | None) -> str:
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        normalized = ChatResponseModeService.normalize(response_mode)
+
+        if normalized == "fast":
+            return "product-overview-fast.md"
+
+        if normalized == "thinker":
+            return "product-overview-thinker.md"
+
+        return "product-overview.md"
