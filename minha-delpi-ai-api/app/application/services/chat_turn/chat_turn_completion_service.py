@@ -249,6 +249,10 @@ class ChatTurnCompletionService:
         answer = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(answer)
         tool_calls = ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(tool_calls)
 
+        from app.domain.services.chat_operational_narrative_synthesis_service import (
+            ChatOperationalNarrativeSynthesisService,
+        )
+
         answer = ChatToolContextService.resolve_authorized_persisted_answer(
             answer,
             tool_calls,
@@ -264,6 +268,12 @@ class ChatTurnCompletionService:
                     isinstance(turn.tool_context, dict)
                     and turn.tool_context.get("drawingAnalysisMode")
                     and turn.tool_context.get("drawingAnalysis")
+                )
+                or (
+                    isinstance(turn.tool_context, dict)
+                    and ChatOperationalNarrativeSynthesisService.is_llm_synthesis_effect(
+                        turn.tool_context.get("responseModeEffect")
+                    )
                 )
             ),
         )

@@ -97,21 +97,18 @@ class ChatResponseModeService:
         skip_rag: bool,
         tool_calls: list | None,
     ) -> tuple[str | None, bool, str | None]:
-        """Gate final do turno: overview com tool ok força LLM em todos os modos (presets distintos)."""
+        """Gate final: overview e summary_then_evidence forçam LLM (presets por modo)."""
         if not cls.is_enabled():
             return direct_answer, skip_rag, None
 
-        from app.domain.services.chat_product_overview_intent_service import (
-            ChatProductOverviewIntentService,
+        from app.domain.services.chat_operational_narrative_synthesis_service import (
+            ChatOperationalNarrativeSynthesisService,
         )
 
-        overview = ChatProductOverviewIntentService.is_product_overview_message(message)
-        force_llm_overview = overview and ChatProductOverviewIntentService.should_force_llm_synthesis(
+        if ChatOperationalNarrativeSynthesisService.should_force_llm_synthesis(
             message,
             tool_calls,
-        )
-
-        if force_llm_overview:
+        ):
             effect = cls.resolve_synthesis_effect(response_mode)
 
             if direct_answer:
@@ -162,9 +159,9 @@ class ChatResponseModeService:
 
         return LlmGenerationConfig(
             model=fast_model or "qwen2.5:1.5b",
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "320")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "1280")),
-            temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.25")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "256")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "1024")),
+            temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.2")),
             response_mode="fast",
         )
 
@@ -172,9 +169,9 @@ class ChatResponseModeService:
     def _normal_config(cls) -> LlmGenerationConfig:
         return LlmGenerationConfig(
             model=cls._env_model("CHAT_RESPONSE_MODE_NORMAL_MODEL"),
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "768")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "2048")),
-            temperature=float(os.getenv("CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE", "0.35")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "512")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1536")),
+            temperature=float(os.getenv("CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE", "0.3")),
             response_mode="normal",
         )
 
@@ -182,8 +179,8 @@ class ChatResponseModeService:
     def _thinker_config(cls) -> LlmGenerationConfig:
         return LlmGenerationConfig(
             model=cls._env_model("CHAT_RESPONSE_MODE_THINKER_MODEL"),
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", "1536")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "3072")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", "896")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "2560")),
             temperature=float(os.getenv("CHAT_RESPONSE_MODE_THINKER_TEMPERATURE", "0.25")),
             response_mode="thinker",
         )

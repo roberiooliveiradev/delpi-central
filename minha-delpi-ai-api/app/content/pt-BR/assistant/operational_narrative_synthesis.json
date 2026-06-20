@@ -1,0 +1,61 @@
+{
+  "evidenceFirstProfileKeys": [
+    "stock",
+    "factory_status",
+    "production_status",
+    "shipping_status"
+  ],
+  "entityProfileMap": {
+    "product_stock": "stock",
+    "product_factory_status": "factory_status",
+    "product_production_status": "production_status",
+    "product_shipping_status": "shipping_status"
+  },
+  "pathMarkers": [
+    "/stock",
+    "/factory-status",
+    "/production-status",
+    "/shipping-status"
+  ],
+  "narrativeMarkers": [
+    "como esta",
+    "como está",
+    "situação",
+    "situacao",
+    "status",
+    "visao",
+    "visão",
+    "panorama",
+    "resumo",
+    "me fale",
+    "me conte",
+    "analise",
+    "análise",
+    "integrado",
+    "integrada",
+    "hoje",
+    "agora"
+  ],
+  "factualNarrowTerms": [
+    "filial",
+    "quantidade",
+    "qtd",
+    "saldo exato",
+    "somente a tabela",
+    "só a tabela",
+    "so a tabela",
+    "linha a linha"
+  ],
+  "synthesisPolicies": {
+    "product_overview": {
+      "fast": "product-overview-fast.md",
+      "normal": "product-overview.md",
+      "thinker": "product-overview-thinker.md"
+    },
+    "summary_then_evidence": {
+      "fast": "operational-synthesis-fast.md",
+      "normal": "operational-synthesis.md",
+      "thinker": "operational-synthesis-thinker.md"
+    }
+  }
+}

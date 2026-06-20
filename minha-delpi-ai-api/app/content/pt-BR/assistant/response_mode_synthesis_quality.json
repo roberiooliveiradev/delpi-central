@@ -1,0 +1,69 @@
+{
+  "deflectionMarkers": [
+    "preciso acessar",
+    "precisarei acessar",
+    "preciso consultar",
+    "precisarei consultar",
+    "precisamos consultar",
+    "vou verificar rapidamente",
+    "nao tenho acesso",
+    "não tenho acesso",
+    "nao posso consultar",
+    "não posso consultar",
+    "nao consigo consultar",
+    "não consigo consultar",
+    "desculpe pela confusao",
+    "desculpe pela confusão",
+    "houve um erro",
+    "nao especifico",
+    "não especifico",
+    "nao especifiquei",
+    "não especifiquei",
+    "no momento nao tenho",
+    "no momento não tenho",
+    "nao tenho informacoes",
+    "não tenho informações",
+    "nao foi possivel obter",
+    "não foi possível obter"
+  ],
+  "genericContextStopwords": [
+    "produto",
+    "status",
+    "estoque",
+    "fabrica",
+    "fábrica",
+    "hoje",
+    "filial",
+    "quantidade",
+    "saldo",
+    "sistema",
+    "gestao",
+    "gestão"
+  ],
+  "limits": {
+    "maxTemplateSimilarity": 0.72,
+    "minContextTokenOverlap": 2,
+    "minContextTokenLength": 4,
+    "minAnswerChars": {
+      "fast": 120,
+      "normal": 180,
+      "thinker": 160
+    },
+    "maxAnswerChars": {
+      "fast": 950,
+      "normal": 3600,
+      "thinker": 4200
+    },
+    "maxElapsedSec": {
+      "fast": 95,
+      "normal": 130,
+      "thinker": 160
+    }
+  },
+  "modeLadder": {
+    "requireDistinctContents": true,
+    "fastMaxCharsVsNormalRatio": 1.05,
+    "fastMaxElapsedVsNormalRatio": 1.25,
+    "minPairwiseContentDistance": 0.06
+  }
+}

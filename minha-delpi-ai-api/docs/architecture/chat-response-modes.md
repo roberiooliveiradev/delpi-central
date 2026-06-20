@@ -2,54 +2,66 @@
 
 Documentação canônica dos modos `responseMode` enviados pelo composer e resolvidos em `ChatResponseModeService`.
 
-Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-admin-platform-settings.md`](../knowledge/chat-admin-platform-settings.md), bundle `assistant/response_modes.json`.
+Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md), bundle `assistant/response_modes.json`, `assistant/operational_narrative_synthesis.json`.
 
 ---
 
 ## Princípio
 
-Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com **presets distintos de latência**. Todos os modos usam LLM para síntese narrativa quando a intenção é aberta (ex.: visão geral de produto); consultas factuais (estoque, KPI) permanecem em direct answer.
+Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com **presets distintos de latência**. Síntese LLM é **pontual** — overview de produto e perfis `summary_then_evidence` (estoque/fábrica narrativos); consultas factuais estreitas permanecem em direct answer.
 
 | Camada | Afetada pelo modo? |
 |--------|-------------------|
 | Preset LLM (modelo, tokens, ctx, temperatura) | Sim — distinto por modo |
-| Direct answer operacional (estoque, KPI, tabela) | Não — `operational_direct` |
-| Visão geral de produto («me fale do produto X») | **Sim** — LLM em todos os modos |
+| Direct answer operacional factual estreito | Não — `operational_direct` |
+| Visão geral de produto | Sim — LLM em todos os modos |
+| Stack `summary_then_evidence` (estoque/fábrica narrativos) | Sim — LLM em todos os modos |
 | Perguntas abertas / Normas / redação | Sim — `llm_synthesis` |
 
-O composer envia `responseMode` (`fast` | `normal` | `thinker`) em cada mensagem. `llm_generation_scope` propaga o preset a **todas** as chamadas LLM do turno.
+Gate canônico: `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
+
+O composer envia `responseMode` (`fast` | `normal` | `thinker`). `llm_generation_scope` propaga o preset a **todas** as chamadas LLM do turno.
 
 Catálogo HTTP: `GET /chat/response-modes`.
 
 ---
 
-## Matriz por modo
+## Matriz por modo (presets default)
 
-| Modo | Modelo (env) | max_tokens | num_ctx | temp | Policy product overview |
-|------|--------------|------------|---------|------|-------------------------|
-| **Rápida** (`fast`) | `CHAT_RESPONSE_MODE_FAST_MODEL` (1.5b) | 320 | 1280 | 0.25 | `product-overview-fast.md` |
-| **Normal** (`normal`) | `CHAT_RESPONSE_MODE_NORMAL_MODEL` ou `OLLAMA_MODEL` | 768 | 2048 | 0.35 | `product-overview.md` |
-| **Pensador** (`thinker`) | `CHAT_RESPONSE_MODE_THINKER_MODEL` ou fallback | 1536 | 3072 | 0.25 | `product-overview-thinker.md` |
-
-Consultas factuais (estoque, KPI): **direct answer em todos os modos** — sem passagem pelo LLM.
+| Modo | Modelo | max_tokens | num_ctx | temp | Policy overview | Policy operacional |
+|------|--------|------------|---------|------|-----------------|-------------------|
+| **Rápida** | `FAST_MODEL` (1.5b) | 256 | 1024 | 0.2 | `product-overview-fast.md` | `operational-synthesis-fast.md` |
+| **Normal** | `NORMAL_MODEL` ou `OLLAMA_MODEL` | 512 | 1536 | 0.3 | `product-overview.md` | `operational-synthesis.md` |
+| **Pensador** | `THINKER_MODEL` ou fallback | 896 | 2560 | 0.25 | `product-overview-thinker.md` | `operational-synthesis-thinker.md` |
 
 ---
 
-## Gate de product overview
-
-Serviço canônico: `ChatResponseModeService.apply_turn_direct_answer_policy` (chamado ao final de `ChatTurnPreparationPostToolResolutionService`).
+## Gate de síntese LLM
 
 ```
-«me fale do produto X» + tool ok
+Tool ok + intenção narrativa
     │
-    ├─ fast     → limpa directAnswer, LLM curto  (responseModeEffect: llm_synthesis_brief)
-    ├─ normal   → limpa directAnswer, LLM médio  (responseModeEffect: llm_synthesis)
-    └─ thinker  → limpa directAnswer, LLM longo  (responseModeEffect: llm_synthesis)
+    ├─ product overview («me fale do produto X»)
+    ├─ summary_then_evidence (stack estoque/fábrica/produção/expedição)
+    │     └─ metadata: presentationMode ou stack + profileKey/path
+    │
+    ├─ fast     → llm_synthesis_brief
+    ├─ normal   → llm_synthesis
+    └─ thinker  → llm_synthesis
+
+Consulta factual estreita (filial + quantidade, sem marcador narrativo)
+    └─ operational_direct (sem LLM)
 ```
 
-Intent: `ChatProductOverviewIntentService` (`should_force_llm_synthesis`, `is_product_overview_message`).
+Serviços:
 
-Policy por modo: `ChatProductOverviewIntentService._overview_policy_for_mode`.
+| Serviço | Papel |
+|---------|-------|
+| `ChatOperationalNarrativeSynthesisService` | Detecta kind + policy + `should_force_llm_synthesis` |
+| `ChatResponseModeService.apply_turn_direct_answer_policy` | Limpa `directAnswer`, seta `responseModeEffect` |
+| `ChatTurnCompletionService` | `skip_replacement` quando `responseModeEffect` é síntese LLM |
+
+Bundle declarativo: `assistant/operational_narrative_synthesis.json`.
 
 ---
 
@@ -60,38 +72,48 @@ Em `metadata.intelligence.pipeline`:
 | Campo | Valores |
 |-------|---------|
 | `responseModeEffect` | `llm_synthesis` \| `llm_synthesis_brief` \| `operational_direct` |
-| `responseModeEffectNotice` | Texto PT de `response_modes.json` → `pipelineEffects.*` |
-| `directResponse` | `true` quando há texto direct answer |
+| `responseModeEffectNotice` | Texto PT de `response_modes.json` |
+| `directResponse` | `true` apenas quando há direct answer final |
 
 ---
 
 ## Configuração
 
-### Variáveis de ambiente (`infra/.env` / compose)
+### Variáveis de ambiente
 
 | Variável | Default | Papel |
 |----------|---------|-------|
-| `CHAT_RESPONSE_MODES_ENABLED` | `true` | Master — desligado: só preset Normal legado |
-| `CHAT_RESPONSE_MODE_FAST_MODEL` | `qwen2.5:1.5b` | Modelo Rápida |
-| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `320` | Limite Rápida (síntese curta) |
-| `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `1280` | Contexto Rápida |
-| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `768` | Limite Normal |
-| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `2048` | Contexto Normal |
-| `CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE` | `0.35` | Temperatura Normal |
-| `CHAT_RESPONSE_MODE_THINKER_MODEL` | vazio → `OLLAMA_MODEL` | Modelo Pensador |
-| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `1536` | Limite Pensador |
-| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `3072` | Contexto Pensador |
+| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `256` | Síntese curta |
+| `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `1024` | Contexto Rápida |
+| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `512` | Síntese Normal |
+| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `1536` | Contexto Normal |
+| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `896` | Síntese Pensador |
+| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `2560` | Contexto Pensador |
 
-Stack mínimo WSL: ver `infra/docker-compose.minimal.yml` (todos em 1.5b; Normal 640 tokens / ctx 1536).
+Stack mínimo WSL: `infra/docker-compose.minimal.yml` (Normal 448 tokens / ctx 1280).
 
-### Admin
+---
 
-Painel **Plataforma → Modos de resposta**: toggle `responseModesEnabled` (runtime em `chat_response_mode_settings`). Parâmetros técnicos permanecem na env.
+## Validação de qualidade (smoke/regressão)
 
-### Textos PT
+Serviço: `ChatResponseModeSynthesisQualityService`  
+Bundle: `assistant/response_mode_synthesis_quality.json`
 
-Bundle: `app/content/pt-BR/assistant/response_modes.json`  
-Loader: `ChatResponseModeContentService`
+O smoke **não** basta checar metadata — valida por turno:
+
+| Critério | O que falha |
+|----------|-------------|
+| Pipeline | `directResponse=true` ou efeito errado |
+| Template | similaridade com `textPresentation` / markdown autorizado ≥ limite |
+| Contexto | código do produto + overlap mínimo com tokens dos dados da tool |
+| Assertividade | frases evasivas («preciso acessar», «não tenho acesso», …) |
+| Modo | Rápida mais curta/rápida que Normal; conteúdos distintos entre modos |
+
+```bash
+cd minha-delpi-ai-api
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_response_mode_synthesis_quality_service.py -q
+SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_response_modes_product_overview.py
+```
 
 ---
 
@@ -99,23 +121,12 @@ Loader: `ChatResponseModeContentService`
 
 ```bash
 cd minha-delpi-ai-api
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_operational_narrative_synthesis_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_response_mode_service.py -q
-.venv/bin/python -m pytest tests/unit/domain/services/test_chat_response_mode_content_service.py -q
 .venv/bin/python -m pytest tests/unit/application/services/test_chat_turn_preparation_response_mode.py -q
+.venv/bin/python scripts/smoke_response_modes_product_overview.py
 ```
-
-Benchmark manual: `scripts/smoke_response_modes_product_overview.py` com `responseMode` no POST.
-
-Referência WSL (stack mínimo, `qwen2.5:1.5b`, product overview `10080045`):
-
-| Modo | Tempo típico | `responseModeEffect` |
-|------|--------------|----------------------|
-| Rápida | ~25–30 s | `llm_synthesis_brief` |
-| Normal | ~30–35 s | `llm_synthesis` |
-| Pensador | ~40–45 s | `llm_synthesis` |
-
-Consultas factuais (estoque/KPI) permanecem `operational_direct` em todos os modos.
 
 ---
 
-*Última revisão: jun/2026 — LLM nos três modos com presets balanceados por latência.*
+*Última revisão: jun/2026 — gate summary_then_evidence + presets acelerados + skip authorized replacement.*

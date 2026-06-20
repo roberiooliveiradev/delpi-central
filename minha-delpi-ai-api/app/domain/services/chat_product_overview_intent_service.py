@@ -99,15 +99,14 @@ class ChatProductOverviewIntentService:
         *,
         response_mode: str | None = None,
     ) -> str:
-        if not cls.is_product_overview_message(message):
-            return ""
+        from app.domain.services.chat_operational_narrative_synthesis_service import (
+            ChatOperationalNarrativeSynthesisService,
+        )
 
-        from app.domain.services.prompt_policy_service import PromptPolicyService
-
-        policy_name = cls._overview_policy_for_mode(response_mode)
-        policy = PromptPolicyService()._load_policy(policy_name)
-
-        return f"\n\n{policy}" if policy else ""
+        return ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
+            message,
+            response_mode=response_mode,
+        )
 
     @classmethod
     def _overview_policy_for_mode(cls, response_mode: str | None) -> str:

@@ -38,17 +38,17 @@ class ChatPromptBuilderService:
 
         return f"\n\n{policy}" if policy else ""
 
-    def _product_overview_policy_addon(
+    def _operational_narrative_policy_addon(
         self,
         current_message: str,
         *,
         response_mode: str | None = None,
     ) -> str:
-        from app.domain.services.chat_product_overview_intent_service import (
-            ChatProductOverviewIntentService,
+        from app.domain.services.chat_operational_narrative_synthesis_service import (
+            ChatOperationalNarrativeSynthesisService,
         )
 
-        return ChatProductOverviewIntentService.build_prompt_policy_addon(
+        return ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
             current_message,
             response_mode=response_mode,
         )
@@ -117,7 +117,7 @@ class ChatPromptBuilderService:
         base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
         base_prompt += self._technical_description_policy_addon(current_message)
-        base_prompt += self._product_overview_policy_addon(
+        base_prompt += self._operational_narrative_policy_addon(
             current_message,
             response_mode=response_mode,
         )

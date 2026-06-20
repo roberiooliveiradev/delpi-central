@@ -76,11 +76,11 @@ def test_apply_turn_direct_answer_policy_overview_thinker_forces_llm():
 
 def test_normal_mode_uses_bounded_limits(monkeypatch):
     monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "512")
-    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "2048")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1536")
     config = ChatResponseModeService.resolve("normal")
     assert config.response_mode == "normal"
     assert config.max_tokens == 512
-    assert config.num_ctx == 2048
+    assert config.num_ctx == 1536
 
 
 def test_apply_turn_direct_answer_policy_overview_normal_forces_llm():
@@ -102,7 +102,69 @@ def test_apply_turn_direct_answer_policy_overview_normal_forces_llm():
     assert effect == "llm_synthesis"
 
 
-def test_apply_turn_direct_answer_policy_stock_stays_operational_direct():
+def test_apply_turn_direct_answer_policy_stock_narrative_forces_llm():
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="como está o estoque do produto 10080045?",
+        response_mode="normal",
+        direct_answer="### Estoque\n\nResumo.",
+        skip_rag=True,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080045/stock",
+                    "presentationDecision": {
+                        "selected": "text",
+                        "layoutMode": "stack",
+                    },
+                    "stackPresentationPlan": {
+                        "presentationProfile": "product_stock",
+                    },
+                    "textPresentation": {
+                        "type": "markdown",
+                        "markdown": "### Estoque\n\nResumo.",
+                    },
+                },
+            }
+        ],
+    )
+
+    assert direct is None
+    assert skip_rag is False
+    assert effect == "llm_synthesis"
+
+
+def test_apply_turn_direct_answer_policy_stock_factual_stays_direct():
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="estoque do produto 10080045 filial 01 quantidade",
+        response_mode="normal",
+        direct_answer="| Filial | Qtd |",
+        skip_rag=True,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080045/stock",
+                    "presentationDecision": {
+                        "selected": "text",
+                        "layoutMode": "stack",
+                    },
+                    "stackPresentationPlan": {
+                        "presentationProfile": "product_stock",
+                    },
+                },
+            }
+        ],
+    )
+
+    assert direct == "| Filial | Qtd |"
+    assert skip_rag is True
+    assert effect == "operational_direct"
+
+
+def test_apply_turn_direct_answer_policy_stock_stays_operational_direct_for_single_table():
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
         message="estoque do produto 10080045",
         response_mode="thinker",
