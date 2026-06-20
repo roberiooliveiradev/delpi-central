@@ -698,6 +698,34 @@ class ChatDrawingPatternsService:
         )
 
     @classmethod
+    def bom_column_header_terms(cls, role: str) -> tuple[str, ...]:
+        node = ChatAssistantContentService.get_node(
+            "drawing_stamp",
+            "bomColumnHeaders",
+            role,
+        )
+
+        if not isinstance(node, list):
+            return ()
+
+        return tuple(str(item).strip() for item in node if str(item).strip())
+
+    @classmethod
+    def bom_row_refinement_rule(cls, key: str, default: Any = None) -> Any:
+        node = ChatAssistantContentService.get_node("drawing_stamp", "bomRowRefinement")
+
+        return node.get(key, default) if isinstance(node, dict) else default
+
+    @classmethod
+    def bom_quantity_refinement_triggers(cls) -> frozenset[str]:
+        items = cls.bom_quantity_semantics_rule("refinementTriggers", [])
+
+        if not isinstance(items, list):
+            return frozenset()
+
+        return frozenset(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
     def intermediate_description_signature(cls, description: str) -> str | None:
         match = cls.intermediate_segment().search(str(description or ""))
 

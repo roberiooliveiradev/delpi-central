@@ -468,7 +468,15 @@
       "mismatchStatusWhenTrusted": "critical_error",
       "mismatchStatusWhenUncertain": "pending",
       "maxAlternateCrosscheckQuantity": 20,
-      "lengthToleranceDecapeValuesMm": [1, 2, 3, 5]
+      "lengthToleranceDecapeValuesMm": [1, 2, 3, 5],
+      "refinementTriggers": [
+        "quantity_from_description",
+        "decimal_piece_quantity",
+        "intermediate_length_as_quantity",
+        "quantity_api_crosscheck"
+      ],
+      "refinementExhaustedPending": true,
+      "criticalRequiresQuantitySource": ["column", "refined_column", "annotation"]
     }
   },
   "validationLayers": {

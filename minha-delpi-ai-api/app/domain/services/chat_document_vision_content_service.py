@@ -362,3 +362,61 @@ class ChatDocumentVisionContentService:
         return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
     LAYOUT_GENERIC = "generic"
+
+    @classmethod
+    def table_structure_enabled(cls) -> bool:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "tableStructure",
+            "enabled",
+            default="true",
+        )
+
+        return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+    @classmethod
+    def table_structure_max_rows(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "tableStructure",
+            "maxRows",
+            default="40",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 40
+
+    @classmethod
+    def table_structure_min_columns(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "tableStructure",
+            "minColumns",
+            default="3",
+        )
+
+        try:
+            return max(2, int(raw))
+        except (TypeError, ValueError):
+            return 3
+
+    @classmethod
+    def table_structure_cell_max_attempts(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "tableStructure",
+            "cellRefinement",
+            "maxAttempts",
+            default="3",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 3

@@ -75,6 +75,11 @@ class ChatDrawingValidationOrchestrationService:
         code = str(product_code or "").strip()
         root = payload if isinstance(payload, dict) else {}
         product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        pdf_extract = cls._apply_bom_vision_refinement(
+            pdf_extract,
+            product_code=code,
+            analyser_root=root,
+        )
 
         items: list[dict[str, Any]] = []
 
@@ -270,6 +275,35 @@ class ChatDrawingValidationOrchestrationService:
             pdf_extract=pdf_extract,
             analyser_root=root,
             extraction_confidence=extraction_confidence,
+        )
+
+    @classmethod
+    def _apply_bom_vision_refinement(
+        cls,
+        pdf_extract: dict[str, Any] | None,
+        *,
+        product_code: str,
+        analyser_root: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        if not isinstance(pdf_extract, dict) or not pdf_extract:
+            return pdf_extract
+
+        from app.application.services.chat_drawing_bom_vision_refinement_service import (
+            ChatDrawingBomVisionRefinementService,
+        )
+
+        source_meta = pdf_extract.get("sourceMetadata")
+
+        if not isinstance(source_meta, dict):
+            source_meta = {}
+
+        storage_path = str(source_meta.get("storagePath") or "").strip()
+
+        return ChatDrawingBomVisionRefinementService.apply(
+            pdf_extract,
+            storage_path=storage_path,
+            analyser_root=analyser_root,
+            product_code=product_code,
         )
 
     @classmethod

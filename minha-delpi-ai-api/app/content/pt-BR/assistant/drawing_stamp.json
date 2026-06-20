@@ -396,5 +396,19 @@
   "extractionLimits": {
     "bomMaxRows": 40,
     "bomCandidateConfidenceCap": 0.5
+  },
+  "bomColumnHeaders": {
+    "position": ["POS", "POS.", "ITEM", "IT"],
+    "code": ["CÓDIGO", "CODIGO", "COD", "CÓD"],
+    "quantity": ["QTD", "QTD.", "QTDE", "QUANT", "QUANTIDADE"],
+    "unit": ["UM", "UN", "UNID", "UNIDADE"],
+    "description": ["DESCRIÇÃO", "DESCRICAO", "DESC", "DES"]
+  },
+  "bomRowRefinement": {
+    "enabled": true,
+    "maxAttempts": 3,
+    "dpiMultiplier": 2.0,
+    "cellHorizontalPadding": 0.005,
+    "engines": ["tesseract"]
   }
 }

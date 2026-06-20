@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_document_vision_bom_service import (
     ChatDocumentVisionBomService,
 )
+from app.domain.services.chat_drawing_bom_table_interpretation_service import (
+    ChatDrawingBomTableInterpretationService,
+)
 from app.domain.services.chat_drawing_bom_reference_noise_service import (
     ChatDrawingBomReferenceNoiseService,
 )
@@ -41,11 +44,18 @@ class ChatDrawingPdfBomExtractionService:
             metadata=metadata,
             product_code=product_code,
         )
+        column_rows = ChatDrawingBomTableInterpretationService.bom_rows_from_metadata(
+            metadata,
+            product_code=product_code,
+        )
 
         bom_rows, component_codes, bom_source = ChatDocumentVisionBomService.resolve_from_sources(
             bom_sources,
             exclude_product_code=product_code,
         )
+
+        if column_rows:
+            bom_rows = cls._merge_preferred_column_rows(bom_rows, column_rows)
 
         if bom_rows:
             raw_bom_rows = list(bom_rows)
@@ -134,6 +144,29 @@ class ChatDrawingPdfBomExtractionService:
                 payload["bomSource"] = str(bom_scope["sourceKey"])
 
         return payload
+
+    @classmethod
+    def _merge_preferred_column_rows(
+        cls,
+        existing: list[dict[str, Any]],
+        column_rows: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        by_code = {
+            str(row.get("code") or ""): dict(row)
+            for row in existing
+            if isinstance(row, dict) and str(row.get("code") or "").strip()
+        }
+
+        for row in column_rows:
+            if not isinstance(row, dict):
+                continue
+
+            code = str(row.get("code") or "").strip()
+
+            if code:
+                by_code[code] = row
+
+        return list(by_code.values())
 
     @classmethod
     def _finalize_component_codes(

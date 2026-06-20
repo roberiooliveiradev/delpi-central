@@ -96,6 +96,16 @@
       "drawing_delpi": {
         "enableRegionOcr": true
       }
+    },
+    "tableStructure": {
+      "enabled": true,
+      "maxRows": 40,
+      "minColumns": 3,
+      "cellRefinement": {
+        "maxAttempts": 3,
+        "dpiMultiplier": 2.0,
+        "cellPadding": 0.005
+      }
     }
   }
 }

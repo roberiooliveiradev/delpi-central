@@ -177,6 +177,15 @@ class ChatPdfDocumentExtractionService:
         if cad_reference_text:
             parse_metadata["cadReferenceText"] = cad_reference_text
 
+        from app.domain.services.chat_pdf_table_structure_service import (
+            ChatPdfTableStructureService,
+        )
+
+        structured_tables = ChatPdfTableStructureService.extract_from_metadata(parse_metadata)
+
+        if structured_tables:
+            parse_metadata["structuredTables"] = structured_tables
+
         validation_scopes = ChatDrawingRegionalScopeService.resolve(
             metadata=parse_metadata,
             full_text=full_text,

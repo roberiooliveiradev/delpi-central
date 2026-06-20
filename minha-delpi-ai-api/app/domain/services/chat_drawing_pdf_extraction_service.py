@@ -83,9 +83,12 @@ class ChatDrawingPdfExtractionService:
                 "pagesProcessed": page_count,
             }
 
+        metadata = {**metadata, "storagePath": storage_path}
+
         return cls.parse_from_text(
             str(extracted.get("fullText") or "").strip(),
             metadata=metadata,
+            storage_path=storage_path,
         )
 
     @classmethod
@@ -121,6 +124,7 @@ class ChatDrawingPdfExtractionService:
         text: str,
         *,
         metadata: dict | None = None,
+        storage_path: str = "",
     ) -> dict[str, Any]:
         normalized = str(text or "").strip()
         meta = metadata if isinstance(metadata, dict) else {}
@@ -272,7 +276,15 @@ class ChatDrawingPdfExtractionService:
                 payload["pagesProcessed"] = count
                 break
 
-        return payload
+        from app.application.services.chat_drawing_bom_vision_refinement_service import (
+            ChatDrawingBomVisionRefinementService,
+        )
+
+        return ChatDrawingBomVisionRefinementService.apply(
+            payload,
+            storage_path=storage_path,
+            product_code=str(payload.get("productCode") or ""),
+        )
 
     @classmethod
     def _cad_reference_text(cls, metadata: dict[str, Any]) -> str:
