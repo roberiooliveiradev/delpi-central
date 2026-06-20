@@ -147,8 +147,8 @@ Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferrame
 
 | Variável | Dev | Prod | Função |
 |----------|-----|------|--------|
-| `CHAT_TOOL_ROUTER_ENABLED` | `true` | `false` | Router LLM para tools/actions |
-| `CHAT_AGENTIC_LOOP_ENABLED` | `true` | `false` | Loop agentic (planner + catálogo) |
+| `CHAT_TOOL_ROUTER_ENABLED` | `true` | `true` | Router LLM para tools/actions |
+| `CHAT_AGENTIC_LOOP_ENABLED` | `true` | `true` | Loop agentic (planner + catálogo) |
 | `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | `12` | Teto de actions no catálogo agentic |
 | `CHAT_MULTI_ACTION_ENABLED` | `true` | `true` | Várias external actions por turno |
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | `true` | Busca páginas extras quando pedido |
@@ -157,9 +157,14 @@ Dev e produção injetam no `minha-delpi-ai-api` o **pacote padrão** de ferrame
 | `CHAT_WEB_SEARCH_ENABLED` | `true` | `true` | Pesquisa web (SearXNG/Tavily/…) |
 | `CHAT_DEFAULT_SQL_AUTHORING_SKILL` | `true` | `true` | Skill `sql` no chat sem agente |
 | `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | `true` | `true` | Skill `company-knowledge` (RAG global) |
-| `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `false` | `false` | Piloto tools nativas LLM (opt-in) |
+| `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `true` | `true` | Piloto tools nativas LLM |
+| `CHAT_TYPING_CORRECTION_FUZZY_ENABLED` | `true` | `true` | Fuzzy no corretor do composer (P14) |
+| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `true` | `true` | Preflight LanguageTool na correção textual |
+| `CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED` | `true` | `true` | Descoberta LLM de rótulos de coluna |
+| `CHAT_LEARNING_AUTO_APPROVE_ENABLED` | `true` | `true` | Auto-aprovar termos aprendidos |
+| `CHAT_DOCUMENT_VISION_PADDLE_USE_GPU` | `false` | `false` | GPU no PaddleOCR (**única exceção**) |
 
-**Desligar só o necessário:** defina `false` no `infra/.env` (ex.: `CHAT_AGENTIC_LOOP_ENABLED=false` em CPU apertada). O código (`settings.py`) usa os mesmos defaults quando a API roda **fora** do Docker.
+**Desligar só o necessário:** defina `false` no `infra/.env` (ex.: `CHAT_AGENTIC_LOOP_ENABLED=false` em CPU apertada). Exceção intencional: `CHAT_DOCUMENT_VISION_PADDLE_USE_GPU` permanece `false` (CPU/WSL).
 
 **Prioridade:** o pipeline do chat lê **sempre** as variáveis de ambiente (`CHAT_*`, `RAG_*`, `EXTERNAL_ACTION_*`). No boot do container, `docker-entrypoint.sh` executa `flask sync-chat-intelligence-env` para espelhar o `.env` no painel admin (Postgres). Toggles salvos só no painel **não** alteram o runtime até mudar o `.env` e recriar o serviço. Para pular o sync: `SKIP_CHAT_INTELLIGENCE_SYNC=true`.
 
@@ -177,7 +182,7 @@ Serviço `languagetool` (`erikvl87/languagetool`) incluído em **dev** e **prod*
 
 | Variável | Default compose | Efeito |
 |----------|-----------------|--------|
-| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `false` | Liga preflight LanguageTool no turno de correção |
+| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `true` | Liga preflight LanguageTool no turno de correção |
 | `CHAT_LANGUAGETOOL_BASE_URL` | `http://languagetool:8010` | URL interna na rede Docker |
 | `CHAT_LANGUAGETOOL_TIMEOUT_SECONDS` | `4` | Timeout HTTP por turno |
 | `CHAT_LANGUAGETOOL_LANGUAGE` | `pt-BR` | Idioma enviado ao `/v2/check` |

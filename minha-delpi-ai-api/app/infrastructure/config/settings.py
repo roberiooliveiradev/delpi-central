@@ -73,10 +73,10 @@ class Settings:
         os.getenv("CHAT_TYPING_CORRECTION_ENABLED", "true").lower() == "true"
     )
     CHAT_TYPING_CORRECTION_FUZZY_ENABLED = (
-        os.getenv("CHAT_TYPING_CORRECTION_FUZZY_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_TYPING_CORRECTION_FUZZY_ENABLED", "true").lower() == "true"
     )
     CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED = (
-        os.getenv("CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED", "true").lower() == "true"
     )
     CHAT_LANGUAGETOOL_BASE_URL = os.getenv(
         "CHAT_LANGUAGETOOL_BASE_URL",
@@ -145,7 +145,7 @@ class Settings:
         os.getenv("CHAT_ATTACHMENT_CONTEXT_MAX_CHARS", "6000")
     )
     CHAT_ATTACHMENT_IMAGE_OCR_ENABLED = (
-        os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_ENABLED", "true").lower() == "true"
     )
     CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS = int(
         os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS", "4000")
@@ -164,7 +164,7 @@ class Settings:
         os.getenv("CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS", "40")
     )
     CHAT_DOCUMENT_VISION_ENABLED = (
-        os.getenv("CHAT_DOCUMENT_VISION_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_DOCUMENT_VISION_ENABLED", "true").lower() == "true"
     )
     CHAT_DOCUMENT_VISION_BACKEND = os.getenv("CHAT_DOCUMENT_VISION_BACKEND", "auto").strip().lower()
     CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = (
@@ -273,7 +273,7 @@ class Settings:
         os.getenv("CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL", "true").lower() == "true"
     )
     CHAT_PLATFORM_DEFAULT_AGENT_ENABLED = (
-        os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ENABLED", "true").lower() == "true"
     )
     CHAT_PLATFORM_DEFAULT_AGENT_ID = os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ID", "").strip()
     CHAT_PLATFORM_DEFAULT_AGENT_NAME = os.getenv(
@@ -293,7 +293,7 @@ class Settings:
     )
 
     EXTERNAL_ACTION_EMBEDDING_ON_IMPORT = (
-        os.getenv("EXTERNAL_ACTION_EMBEDDING_ON_IMPORT", "false").lower() == "true"
+        os.getenv("EXTERNAL_ACTION_EMBEDDING_ON_IMPORT", "true").lower() == "true"
     )
     EXTERNAL_ACTION_IMPORT_ASYNC_ENABLED = (
         os.getenv("EXTERNAL_ACTION_IMPORT_ASYNC_ENABLED", "true").lower() == "true"
@@ -363,7 +363,7 @@ class Settings:
     )
 
     CHAT_NATIVE_TOOL_CALLING_ENABLED = (
-        os.getenv("CHAT_NATIVE_TOOL_CALLING_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_NATIVE_TOOL_CALLING_ENABLED", "true").lower() == "true"
     )
     CHAT_WEB_SEARCH_ENABLED = (
         os.getenv("CHAT_WEB_SEARCH_ENABLED", "true").lower() == "true"
@@ -398,18 +398,18 @@ class Settings:
         os.getenv("CHAT_WEB_SEARCH_SYNTHESIS_ENABLED", "true").lower() == "true"
     )
     CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED = (
-        os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED", "false").lower()
+        os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED", "true").lower()
         == "true"
     )
     CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED = (
-        os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED", "false").lower()
+        os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED", "true").lower()
         == "true"
     )
     CHAT_PRESENTATION_COLUMN_LABEL_MAX_KEYS = int(
         os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_MAX_KEYS", "8")
     )
     CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES = int(
-        os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES", "0")
+        os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_WEB_MAX_QUERIES", "2")
     )
     CHAT_PRESENTATION_COLUMN_LABEL_CACHE_SIZE = int(
         os.getenv("CHAT_PRESENTATION_COLUMN_LABEL_CACHE_SIZE", "500")
@@ -440,7 +440,7 @@ class Settings:
     )
     # Auto-aprovar candidatos de altíssima confiança (default off: exige revisão).
     CHAT_LEARNING_AUTO_APPROVE_ENABLED = (
-        os.getenv("CHAT_LEARNING_AUTO_APPROVE_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_LEARNING_AUTO_APPROVE_ENABLED", "true").lower() == "true"
     )
     CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE = float(
         os.getenv("CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE", "0.95")
