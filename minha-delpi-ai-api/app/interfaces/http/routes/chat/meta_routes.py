@@ -225,10 +225,12 @@ def typing_suggestions():
     from app.application.services.chat_learned_normalization_service import (
         ChatLearnedNormalizationService,
     )
+    from app.domain.services.chat_composer_route_question_suggestion_service import (
+        ChatComposerRouteQuestionSuggestionService,
+    )
     from app.domain.services.chat_typing_correction_service import (
         ChatTypingCorrectionService,
     )
-    from app.infrastructure.config.settings import Settings
 
     payload = request.get_json(silent=True) or {}
 
@@ -236,6 +238,7 @@ def typing_suggestions():
         return bad_request("Request body must be a JSON object")
 
     text = str(payload.get("text") or "")
+    route_questions = ChatComposerRouteQuestionSuggestionService.suggest(text)
 
     from app.application.services.chat_platform_runtime_access import (
         learning_pipeline_settings,
@@ -252,9 +255,15 @@ def typing_suggestions():
                 "original": text,
                 "changes": [],
                 "protectedSpans": [],
+                "routeQuestions": route_questions,
+                "hasRouteQuestions": bool(route_questions),
             }
         ), 200
 
     ChatLearnedNormalizationService().ensure_loaded()
 
-    return jsonify(ChatTypingCorrectionService.suggest(text)), 200
+    result = ChatTypingCorrectionService.suggest(text)
+    result["routeQuestions"] = route_questions
+    result["hasRouteQuestions"] = bool(route_questions)
+
+    return jsonify(result), 200

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "enabled": true,
+  "maxSuggestions": 4,
+  "minDraftLength": 3,
+  "includePathRulesFromCapabilities": true,
+  "groups": [
+    {
+      "id": "drawing_analysis",
+      "label": "Análise de desenhos",
+      "prefixes": ["analise", "analisar", "validar", "valide", "verifique", "confira"],
+      "markers": ["desenho", "desenho tecnico", "carimbo", "pdf", "bom", "cotas"],
+      "questions": [
+        { "label": "Analisar desenho anexado", "query": "analise o desenho" },
+        { "label": "Validar checklist do desenho", "query": "valide o desenho anexado" },
+        { "label": "Extrair código do PDF", "query": "qual o código delpi no desenho anexado" }
+      ]
+    },
+    {
+      "id": "product_stock",
+      "label": "Estoque de produto",
+      "prefixes": ["estoque", "saldo", "quanto tem"],
+      "markers": ["estoque", "saldo", "disponivel"],
+      "questions": [
+        { "label": "Estoque por código", "query": "estoque do produto {productCode}" },
+        { "label": "Saldo do produto", "query": "saldo do produto {productCode}" }
+      ]
+    },
+    {
+      "id": "product_structure",
+      "label": "Estrutura / BOM",
+      "prefixes": ["estrutura", "componente", "bom"],
+      "markers": ["estrutura", "componente", "bom", "lista de material"],
+      "questions": [
+        { "label": "Estrutura do produto", "query": "estrutura do produto {productCode}" },
+        { "label": "Componentes do produto", "query": "componentes do produto {productCode}" }
+      ]
+    }
+  ]
+}

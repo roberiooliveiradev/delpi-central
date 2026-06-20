@@ -811,18 +811,30 @@ export type ChatTypingSuggestionChange = {
   kind: string;
 };
 
+export type ChatRouteQuestionSuggestion = {
+  label: string;
+  query: string;
+  category?: string;
+  source?: string;
+  routeToken?: string;
+  groupId?: string;
+};
+
 export type ChatTypingSuggestionResponse = {
   hasSuggestions: boolean;
   corrected: string;
   original: string;
   changes: ChatTypingSuggestionChange[];
   protectedSpans: Array<{ start: number; end: number; reason: string }>;
+  routeQuestions?: ChatRouteQuestionSuggestion[];
+  hasRouteQuestions?: boolean;
 };
 
 export type ChatTypingSuggestion = {
   original: string;
   corrected: string;
   changes: ChatTypingSuggestionChange[];
+  routeQuestions?: ChatRouteQuestionSuggestion[];
 };
 
 export type ChatTypingCorrectionMetadata = {

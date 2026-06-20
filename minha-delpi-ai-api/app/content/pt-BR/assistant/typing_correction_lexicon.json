@@ -1,6 +1,5 @@
 {
   "terms": [
-    "analyser",
     "apontamento",
     "cadastro",
     "cliente",
@@ -39,6 +38,30 @@
     "tabela de preco",
     "venda",
     "vendas"
+  ],
+  "protectedPortugueseTokens": [
+    "analisa",
+    "analise",
+    "analisar",
+    "analisando",
+    "analisado",
+    "valide",
+    "validar",
+    "verifique",
+    "verificar",
+    "confira",
+    "consulte",
+    "consultar",
+    "mostre",
+    "mostrar",
+    "liste",
+    "listar",
+    "compare",
+    "comparar",
+    "explique",
+    "explicar",
+    "resuma",
+    "resumir"
   ],
   "ambiguousTokens": [
     "bom",

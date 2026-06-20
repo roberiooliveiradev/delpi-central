@@ -5,6 +5,10 @@
     "dismissLabel": "Manter original",
     "previewPrefix": "Enviar:"
   },
+  "routeQuestions": {
+    "hint": "Perguntas sugeridas:",
+    "useLabel": "Usar pergunta"
+  },
   "plusMenu": {
     "filesSectionTitle": "Arquivos",
     "agentsSectionTitle": "Apps e agentes",

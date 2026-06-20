@@ -119,7 +119,7 @@ import {
   buildTypingCorrectionMetadata,
 } from "../../state/chatTypingCorrection";
 import { useChatTypingCorrection } from "../../state/hooks/useChatTypingCorrection";
-import { getTypingCorrectionContent } from "../../content/messageComposerContent";
+import { getRouteQuestionsContent, getTypingCorrectionContent } from "../../content/messageComposerContent";
 import type { ChatTypingCorrectionMetadata } from "../../data/api/chatTypes";
 import { recordTypingCorrectionTelemetry } from "../typingCorrectionTelemetry";
 import {
@@ -426,6 +426,7 @@ export function ChatPage({
   });
 
   const typingCorrectionLabels = useMemo(() => getTypingCorrectionContent(), []);
+  const routeQuestionLabels = useMemo(() => getRouteQuestionsContent(), []);
   const {
     suggestion: typingSuggestion,
     dismissSuggestion: dismissTypingSuggestionState,
@@ -997,6 +998,15 @@ export function ChatPage({
   const handleDismissTypingSuggestion = useCallback(() => {
     dismissTypingSuggestionState();
   }, [dismissTypingSuggestionState]);
+
+  const handleUseRouteQuestion = useCallback((query: string) => {
+    if (!query.trim()) {
+      return;
+    }
+
+    setDraft(query);
+    clearTypingSuggestion();
+  }, [clearTypingSuggestion, setDraft]);
 
   const handleAcceptTypingSuggestion = useCallback(async () => {
     if (!typingSuggestion) {
@@ -2234,8 +2244,10 @@ export function ChatPage({
   const composerTypingCorrectionProps = {
     typingSuggestion,
     typingSuggestionLabels: typingCorrectionLabels,
+    routeQuestionLabels,
     onAcceptTypingSuggestion: handleAcceptTypingSuggestion,
     onDismissTypingSuggestion: handleDismissTypingSuggestion,
+    onUseRouteQuestion: handleUseRouteQuestion,
   };
 
   const agentComposerBindings = useMemo(

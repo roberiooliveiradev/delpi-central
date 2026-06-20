@@ -20,6 +20,7 @@ class ChatTypingCorrectionFuzzyLexiconService:
     _enabled: ClassVar[bool] = False
     _terms: ClassVar[tuple[str, ...]] = ()
     _ambiguous: ClassVar[frozenset[str]] = frozenset()
+    _protected_portuguese: ClassVar[frozenset[str]] = frozenset()
 
     @classmethod
     def configure(
@@ -30,10 +31,12 @@ class ChatTypingCorrectionFuzzyLexiconService:
     ) -> None:
         terms: list[str] = []
         ambiguous: set[str] = set()
+        protected: set[str] = set()
 
         if isinstance(payload, dict):
             raw_terms = payload.get("terms")
             raw_ambiguous = payload.get("ambiguousTokens")
+            raw_protected = payload.get("protectedPortugueseTokens")
 
             if isinstance(raw_terms, list):
                 for item in raw_terms:
@@ -47,8 +50,15 @@ class ChatTypingCorrectionFuzzyLexiconService:
                     if normalized:
                         ambiguous.add(normalized)
 
+            if isinstance(raw_protected, list):
+                for item in raw_protected:
+                    normalized = cls._normalize_token(str(item or ""))
+                    if normalized:
+                        protected.add(normalized)
+
         cls._terms = tuple(dict.fromkeys(terms))
         cls._ambiguous = frozenset(ambiguous)
+        cls._protected_portuguese = frozenset(protected)
         cls._enabled = bool(enabled) and bool(cls._terms)
 
     @classmethod
@@ -111,6 +121,9 @@ class ChatTypingCorrectionFuzzyLexiconService:
             return None
 
         if normalized in cls._ambiguous:
+            return None
+
+        if normalized in cls._protected_portuguese:
             return None
 
         if normalized in cls._terms:

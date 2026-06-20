@@ -7,6 +7,11 @@ export type MessageComposerTypingCorrectionContent = {
   previewPrefix: string;
 };
 
+export type MessageComposerRouteQuestionsContent = {
+  hint: string;
+  useLabel: string;
+};
+
 export type MessageComposerPlusMenuContent = {
   filesSectionTitle: string;
   agentsSectionTitle: string;
@@ -19,6 +24,10 @@ export type MessageComposerPlusMenuContent = {
 
 export function getTypingCorrectionContent(): MessageComposerTypingCorrectionContent {
   return composerContent.typingCorrection;
+}
+
+export function getRouteQuestionsContent(): MessageComposerRouteQuestionsContent {
+  return composerContent.routeQuestions;
 }
 
 export function getComposerPlusMenuContent(): MessageComposerPlusMenuContent {

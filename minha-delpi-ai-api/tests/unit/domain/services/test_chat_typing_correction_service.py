@@ -14,10 +14,19 @@ from tests.fixtures.chat_typing_correction_cases import TYPING_CORRECTION_CASES
 
 
 @pytest.fixture(autouse=True)
-def _enable_fuzzy_lexicon():
+def _enable_fuzzy_lexicon(monkeypatch):
     ChatTypingCorrectionFuzzyLexiconService.configure(
         ContentService.load_json("assistant/typing_correction_lexicon"),
         enabled=True,
+    )
+
+    def _is_enabled_for_tests(cls) -> bool:
+        return cls._enabled
+
+    monkeypatch.setattr(
+        ChatTypingCorrectionFuzzyLexiconService,
+        "is_enabled",
+        classmethod(_is_enabled_for_tests),
     )
     yield
 
@@ -144,3 +153,23 @@ def test_fuzzy_disabled_without_flag():
     result = ChatTypingCorrectionService.suggest("status fabrril filial 01")
 
     assert result["hasSuggestions"] is False
+
+
+def test_fuzzy_skips_protected_portuguese_tokens():
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        {
+            "terms": ["analyser"],
+            "protectedPortugueseTokens": ["analise"],
+            "ambiguousTokens": [],
+        },
+        enabled=True,
+    )
+
+    assert ChatTypingCorrectionFuzzyLexiconService._match_token("analise") is None
+
+
+def test_analise_desenho_is_not_corrected_to_analyser():
+    result = ChatTypingCorrectionService.suggest("analise o desenho")
+
+    assert result["hasSuggestions"] is False
+    assert result["corrected"] == "analise o desenho"

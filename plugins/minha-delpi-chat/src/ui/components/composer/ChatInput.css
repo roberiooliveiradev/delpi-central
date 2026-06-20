@@ -100,6 +100,39 @@
   gap: 0.35rem;
 }
 
+.mdc-chat-input__route-questions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.55rem;
+  margin: 0.1rem 0.35rem 0.15rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--mdc-secondary, var(--mdc-primary)) 8%, var(--mdc-card-bg));
+  border: 1px solid color-mix(in srgb, var(--mdc-secondary, var(--mdc-primary)) 18%, var(--mdc-card-border));
+}
+
+.mdc-chat-input__route-questions-hint {
+  font-size: 0.78rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-input__route-questions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mdc-chat-input__route-question-chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
+  color: var(--mdc-text);
+}
+
 .mdc-chat-input__typing-suggestion-accept,
 .mdc-chat-input__typing-suggestion-dismiss {
   border: 0;

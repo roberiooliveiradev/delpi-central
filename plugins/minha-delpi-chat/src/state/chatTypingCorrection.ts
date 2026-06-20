@@ -64,13 +64,29 @@ export async function fetchTypingSuggestion(
   const corrected = String(response.corrected ?? "").trim();
 
   if (!response.hasSuggestions || !corrected || corrected === trimmed) {
-    return null;
+    const routeQuestions = (response.routeQuestions ?? []).filter(
+      (item) => String(item.query ?? "").trim(),
+    );
+
+    if (!routeQuestions.length) {
+      return null;
+    }
+
+    return {
+      original: response.original,
+      corrected: response.original,
+      changes: [],
+      routeQuestions,
+    };
   }
 
   return {
     original: response.original,
     corrected: response.corrected,
     changes: response.changes,
+    routeQuestions: (response.routeQuestions ?? []).filter((item) =>
+      String(item.query ?? "").trim(),
+    ),
   };
 }
 

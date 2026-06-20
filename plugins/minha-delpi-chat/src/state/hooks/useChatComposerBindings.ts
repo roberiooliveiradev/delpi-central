@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
-import { getTypingCorrectionContent } from "../../content/messageComposerContent";
+import { getRouteQuestionsContent, getTypingCorrectionContent } from "../../content/messageComposerContent";
 import {
   formatComposerPlaceholderParts,
   resolveComposerContextBarFromLists,
@@ -77,6 +77,7 @@ export function useChatComposerBindings({
   });
 
   const typingCorrectionLabels = useMemo(() => getTypingCorrectionContent(), []);
+  const routeQuestionLabels = useMemo(() => getRouteQuestionsContent(), []);
   const {
     suggestion: typingSuggestion,
     dismissSuggestion: dismissTypingSuggestionState,
@@ -196,6 +197,15 @@ export function useChatComposerBindings({
     setComposerAttachments([]);
   }
 
+  function handleUseRouteQuestion(query: string) {
+    if (!query.trim()) {
+      return;
+    }
+
+    onDraftChange(query);
+    dismissTypingSuggestionState();
+  }
+
   function handleAcceptTypingSuggestion() {
     if (!typingSuggestion) {
       return;
@@ -229,8 +239,10 @@ export function useChatComposerBindings({
     composerTypingCorrectionProps: {
       typingSuggestion,
       typingSuggestionLabels: typingCorrectionLabels,
+      routeQuestionLabels,
       onAcceptTypingSuggestion: handleAcceptTypingSuggestion,
       onDismissTypingSuggestion: dismissTypingSuggestionState,
+      onUseRouteQuestion: handleUseRouteQuestion,
     },
     composerContextProps: {
       agents,

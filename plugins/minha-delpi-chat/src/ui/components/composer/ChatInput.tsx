@@ -35,7 +35,10 @@ import type { ComposerContextBarItem } from "../../../state/chatAgentActivation"
 import type {
   ChatTypingSuggestion,
 } from "../../../data/api/chatTypes";
-import type { MessageComposerTypingCorrectionContent } from "../../../content/messageComposerContent";
+import type {
+  MessageComposerRouteQuestionsContent,
+  MessageComposerTypingCorrectionContent,
+} from "../../../content/messageComposerContent";
 import {
   workspaceFileComposerAttachmentsHeader,
   workspaceFileComposerLabels,
@@ -102,8 +105,10 @@ type ChatInputProps = {
   contextBadgeItems?: ComposerContextBarItem[];
   typingSuggestion?: ChatTypingSuggestion | null;
   typingSuggestionLabels?: MessageComposerTypingCorrectionContent;
+  routeQuestionLabels?: MessageComposerRouteQuestionsContent;
   onAcceptTypingSuggestion?: () => void;
   onDismissTypingSuggestion?: () => void;
+  onUseRouteQuestion?: (query: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
@@ -142,8 +147,10 @@ export function ChatInput({
   contextBadgeItems = [],
   typingSuggestion = null,
   typingSuggestionLabels,
+  routeQuestionLabels,
   onAcceptTypingSuggestion,
   onDismissTypingSuggestion,
+  onUseRouteQuestion,
   getAccessToken,
 }: ChatInputProps) {
   const { openPreview, previewModal } = useWorkspaceFilePreviewModal({ getAccessToken });
@@ -453,6 +460,30 @@ export function ChatInput({
               >
                 {typingSuggestionLabels.dismissLabel}
               </button>
+            </div>
+          </div>
+        ) : null}
+
+        {typingSuggestion?.routeQuestions?.length && routeQuestionLabels ? (
+          <div
+            className="mdc-chat-input__route-questions"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="mdc-chat-input__route-questions-hint">
+              {routeQuestionLabels.hint}
+            </span>
+            <div className="mdc-chat-input__route-questions-list">
+              {typingSuggestion.routeQuestions.map((item) => (
+                <button
+                  key={`${item.source ?? "route"}-${item.query}`}
+                  type="button"
+                  className="mdc-chat-input__route-question-chip"
+                  onClick={() => onUseRouteQuestion?.(item.query)}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
         ) : null}
