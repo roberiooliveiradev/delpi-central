@@ -18,7 +18,7 @@ Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com **presets 
 | Stack `summary_then_evidence` (estoque/fábrica narrativos) | Sim — LLM em todos os modos |
 | Perguntas abertas / Normas / redação | Sim — `llm_synthesis` |
 
-Gate canônico: `ChatPresentationProseDeliveryService` → `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
+Gate canônico: `ChatPresentationProseDeliveryService` (template \| llm \| direct) → intenção em `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
 
 Playbook: [`playbook-18-prosa-template-llm-desacoplamento.md`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md).
 
@@ -59,8 +59,8 @@ Serviços:
 
 | Serviço | Papel |
 |---------|-------|
-| `ChatOperationalNarrativeSynthesisService` | Detecta kind + policy + `should_force_llm_synthesis` |
-| `ChatPresentationProseDeliveryService` | Gate único: `template` \| `llm` \| `direct`; chama decouple quando LLM |
+| `ChatOperationalNarrativeSynthesisService` | Detecta kind + policy + intenção narrativa (interno ao prose gate) |
+| `ChatPresentationProseDeliveryService` | Gate único no turno: `template` \| `llm` \| `direct`; chama decouple quando LLM |
 | `ChatPresentationLlmProseDecouplingService` | Remove markdown template do metadata; `renderPlan.lead` → `assistantMessage` |
 | `ChatResponseModeService.apply_turn_direct_answer_policy` | Limpa `directAnswer`, seta `responseModeEffect` |
 | `ChatTurnCompletionService` | `skip_replacement` quando `responseModeEffect` é síntese LLM |

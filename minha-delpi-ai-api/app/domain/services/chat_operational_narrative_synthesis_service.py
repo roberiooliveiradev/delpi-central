@@ -1,4 +1,8 @@
-"""Gate canônico — síntese LLM para overview e perfis summary_then_evidence."""
+"""Gate canônico — síntese LLM para overview e perfis summary_then_evidence.
+
+Intenção narrativa e policies: este serviço.
+Escolha template vs LLM vs direct no turno: ``ChatPresentationProseDeliveryService`` (playbook-18).
+"""
 
 from __future__ import annotations
 
@@ -48,6 +52,7 @@ class ChatOperationalNarrativeSynthesisService:
         message: str | None,
         tool_calls: list | None = None,
     ) -> bool:
+        """Detecta intenção narrativa — preferir ``ChatPresentationProseDeliveryService`` no turno."""
         kind = cls.resolve_synthesis_kind(message, tool_calls)
 
         if not kind:

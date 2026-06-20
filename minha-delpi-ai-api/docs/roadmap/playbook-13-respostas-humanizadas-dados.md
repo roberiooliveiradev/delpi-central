@@ -69,8 +69,9 @@ Dados brutos (api-delpi / SQL / action)
   → ChatPresentationDecisionService           ← preferência + score + primário           [P3]
   → ChatPresentationHumanizedNarrativeService ← narrativa markdown                       [P1 evoluir]
   → ChatPresentationStackOrderService         ← stack summary_then_evidence              [existe]
-  → MFE ChatAssistantContent                  ← DecisionCard / story / painéis           [P4]
-  → LLM                                       ← complemento; nunca substituto base
+  → ChatPresentationProseDeliveryService      ← gate template | LLM | direct (playbook-18) [P4.3]
+  → MFE ChatAssistantContent                  ← renderPlan v1 + visuais; prosa LLM no lead  [P6]
+  → LLM                                       ← prosa primária em rotas narrativas; template só listagem auditável
 ```
 
 ### 2.2 Separação de responsabilidades
@@ -518,7 +519,7 @@ O MFE permanece responsável por **mecânica de UI** (registry de componentes, m
 
 - `renderHints.textRenderMode` (`compact`|`full`) + `tailVisualPolicy` sempre explícito (`legacy`|`allowlist`)
 - `ChatPresentationRenderPlanService.build()` → `metadata.renderPlan` (lead, highlights, attention, tabelas, tail)
-- MFE: `renderPlanSegmentBuilder.ts` + `buildSegmentsFromRenderPlan` — executor mecânico; `synthesizeRenderPlanFromToolCalls` para mensagens legadas sem `renderPlan` v1
+- MFE: `renderPlanSegmentBuilder.ts` + `buildSegmentsFromRenderPlan` — executor mecânico; `resolveRenderPlanForExecution` consome só `renderPlan` v1 da API
 - MFE: `presentationStackBlueprint.ts` reduzido a wrapper (`buildCanonicalStackSegments` → renderPlan); removido `buildPlanOrderedStackSegments`
 - MFE: `nativeSingleViewBuilder` consome `renderPlan` em layout não-stack
 - MFE: `shouldApplyClientMarkdownCompaction` — não recompacta quando API enviou `textRenderMode`
@@ -661,6 +662,32 @@ Ponto de encaixe no pipeline (após §5 passo 7):
 3. Teste de contrato de payload (não só snapshot MFE)?
 4. Changelog + este §8.6 atualizados?
 5. Sem texto PT novo fora de JSON?
+
+### 8.7 P7 — Prosa LLM primária (playbook-18, jun/2026)
+
+**Motivação:** narrativa operacional (`summary_then_evidence`, overview de produto) passa a ser **prosa LLM** no turno; template do presenter fica só para listagens auditáveis (playbook, KPI, tabelas).
+
+**Gate único no turno:**
+
+```text
+ChatPresentationProseDeliveryService.resolve_mode
+  → template | llm | direct
+  → apply_turn / apply_to_tool_context_result (send, stream, simulate)
+  → ChatPresentationLlmProseDecouplingService quando llm
+```
+
+**Consumidores consolidados (não chamar `should_force_llm_synthesis` direto no turno):**
+
+| Serviço | Papel |
+|---------|-------|
+| `ChatPresentationProseDeliveryService` | Escolha template vs LLM vs direct + perfis `proseDeliveryBy*` |
+| `ChatOperationalNarrativeSynthesisService` | Intenção narrativa, policies LLM, `build_prompt_policy_addon` |
+| `ChatResponseModeService.apply_turn_direct_answer_policy` | Efeito `llm_synthesis*` vs `operational_direct` via prose gate |
+| `ChatPresentationDataOnlyProseService` | Pipeline pré-tool: pula `present()` quando narrativa + modos ON |
+
+**MFE:** `renderPlan` v1 obrigatório; lead = `assistantMessage` quando `proseDeliveryMode=llm`; `humanizedSummary.linhas` não renderiza.
+
+Doc: [`playbook-18-prosa-template-llm-desacoplamento.md`](./playbook-18-prosa-template-llm-desacoplamento.md) · audit: `scripts/audit_presentation_prose_delivery.py --check`
 
 ---
 

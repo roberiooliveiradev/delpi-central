@@ -97,18 +97,22 @@ class ChatResponseModeService:
         skip_rag: bool,
         tool_calls: list | None,
     ) -> tuple[str | None, bool, str | None]:
-        """Gate final: overview e summary_then_evidence forçam LLM (presets por modo)."""
+        """Gate final: prosa narrativa via ChatPresentationProseDeliveryService (playbook-18)."""
         if not cls.is_enabled():
             return direct_answer, skip_rag, None
 
-        from app.domain.services.chat_operational_narrative_synthesis_service import (
-            ChatOperationalNarrativeSynthesisService,
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+            MODE_LLM,
         )
 
-        if ChatOperationalNarrativeSynthesisService.should_force_llm_synthesis(
+        mode = ChatPresentationProseDeliveryService.resolve_mode(
             message,
             tool_calls,
-        ):
+            response_mode=response_mode,
+        )
+
+        if mode == MODE_LLM:
             effect = cls.resolve_synthesis_effect(response_mode)
 
             if direct_answer:

@@ -275,7 +275,7 @@ Framing por rota — uma frase interpretiva por bloco (`presentation.routeFramin
 | Aspecto | Implementação |
 |---------|----------------|
 | Intent | `ChatProductQueryIntent.ANALYSER` para «me fale do produto …» (`ChatProductOverviewIntentService`) |
-| Síntese LLM | `should_force_llm_synthesis` — não usar `directAnswer` só com tabela |
+| Síntese LLM | `ChatPresentationProseDeliveryService` — gate `template` \| `llm` \| `direct` (playbook-18) |
 | Roteiro | `tablePresentations[]` ou `tablePresentation` = tabela nativa (`_build_product_analyser_guide_table`) |
 | Inspeção | `tablePresentations[]` ou `inspectionTablePresentation` = tabela nativa |
 | Cadastro | `tablePresentations[]` (última) ou `profileTablePresentation` = ficha Campo/Valor |

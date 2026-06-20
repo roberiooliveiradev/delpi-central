@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.domain.services.chat_operational_narrative_synthesis_service import (
-    ChatOperationalNarrativeSynthesisService,
-)
 from app.domain.services.chat_presentation_prose_delivery_service import (
     ChatPresentationProseDeliveryService,
 )
@@ -19,13 +16,10 @@ class ChatPresentationLlmProseDecouplingService:
         message: str | None,
         tool_calls: list | None,
     ) -> bool:
-        if not ChatOperationalNarrativeSynthesisService.should_force_llm_synthesis(
+        return ChatPresentationProseDeliveryService.should_use_llm_prose(
             message,
             tool_calls,
-        ):
-            return False
-
-        return ChatPresentationProseDeliveryService.llm_prose_globally_available()
+        )
 
     @classmethod
     def apply_to_tool_calls(

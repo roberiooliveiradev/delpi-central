@@ -22,6 +22,7 @@ NARRATIVE_GATE = "ChatOperationalNarrativeSynthesisService"
 REQUIRED_CALLSITES = {
     API_APP / "application/services/chat_turn/chat_turn_preparation_post_tool_resolution_service.py": CANONICAL_GATE,
     API_APP / "application/use_cases/admin_agent_simulate_use_case.py": "apply_to_tool_context_result",
+    API_APP / "domain/services/chat_response_mode_service.py": "ChatPresentationProseDeliveryService.resolve_mode",
 }
 
 ANTI_PATTERNS = [

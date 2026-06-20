@@ -183,6 +183,41 @@ def test_apply_turn_direct_answer_policy_stock_stays_operational_direct_for_sing
     assert effect == "operational_direct"
 
 
+def test_apply_turn_direct_answer_policy_playbook_template_stays_direct(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="quais os top itens de consumo na produção?",
+        response_mode="normal",
+        direct_answer="### Top itens\n\nLista.",
+        skip_rag=True,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/production/consumption/top-items",
+                    "apiDelpiResponseMeta": {
+                        "entity": "production_consumption_top_items",
+                    },
+                    "presentationDecision": {
+                        "selected": "table",
+                        "layoutMode": "single",
+                    },
+                    "textPresentation": {
+                        "type": "markdown",
+                        "markdown": "### Top itens\n\nLista.",
+                    },
+                },
+            }
+        ],
+    )
+
+    assert direct == "### Top itens\n\nLista."
+    assert skip_rag is True
+    assert effect == "operational_direct"
+
+
 def test_list_modes_loads_json_labels(monkeypatch):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
     modes = ChatResponseModeService.list_modes()
