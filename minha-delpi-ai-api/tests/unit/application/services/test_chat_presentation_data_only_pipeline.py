@@ -89,3 +89,65 @@ def test_factual_stock_pipeline_skips_template_when_llm_everywhere():
     markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "").strip()
     assert markdown == ""
     assert metadata.get("proseDeliveryMode") == "llm"
+
+
+def test_playbook_top_items_pipeline_data_only():
+    envelope = load_api_delpi_fixture_with_meta("production_consumption_top_items.json")
+    path = "/production/consumption/top-items"
+
+    metadata = _use_case()._build_presentation_metadata(
+        action={"path": path},
+        sanitized_data=envelope,
+        resolved_path=path,
+        request_parameters={
+            "userMessage": "Quais itens mais consumidos no mês passado top 10?",
+        },
+    )
+
+    assert metadata.get("dataOnlyPresentation") is True
+    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
+    assert metadata.get("proseDeliveryMode") == "llm"
+    assert metadata.get("llmProseDecoupled") is True
+    presentation = metadata.get("presentation") or {}
+    assert presentation.get("type") == "table" and presentation.get("rows")
+
+
+def test_kpi_cpv_pipeline_data_only():
+    envelope = load_api_delpi_fixture_with_meta("supplies_cpv.json")
+    path = "/supplies/cpv"
+
+    metadata = _use_case()._build_presentation_metadata(
+        action={"path": path},
+        sanitized_data=envelope,
+        resolved_path=path,
+        request_parameters={
+            "userMessage": "Qual o CPV da empresa?",
+        },
+    )
+
+    assert metadata.get("dataOnlyPresentation") is True
+    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
+    assert metadata.get("proseDeliveryMode") == "llm"
+    presentation = metadata.get("presentation") or {}
+    assert presentation.get("type") == "kpi" or metadata.get("kpiPresentation")
+
+
+def test_sql_pipeline_data_only():
+    envelope = load_api_delpi_fixture_with_meta("data_sql_rows.json")
+    path = "/data/sql"
+
+    metadata = _use_case()._build_presentation_metadata(
+        action={"path": path},
+        sanitized_data=envelope,
+        resolved_path=path,
+        request_parameters={
+            "userMessage": "Liste os produtos com OP planejada esta semana",
+        },
+    )
+
+    assert metadata.get("dataOnlyPresentation") is True
+    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
+    assert metadata.get("proseDeliveryMode") == "llm"
+    presentation = metadata.get("presentation") or {}
+    tables = metadata.get("tablePresentations") or metadata.get("tablePresentation")
+    assert presentation.get("type") == "table" or tables

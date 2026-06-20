@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "group_by": "general",
+    "items": [
+      {
+        "item_code": "10010032",
+        "description": "MP TESTE A",
+        "unit": "KG",
+        "real_consumption_qty": 120.0
+      },
+      {
+        "item_code": "10010045",
+        "description": "MP TESTE B",
+        "unit": "KG",
+        "real_consumption_qty": 95.5
+      }
+    ],
+    "summary": {
+      "total_records": 2,
+      "consolidated_across_branches": true,
+      "branch_filter_applied": false,
+      "period": {
+        "start": "20260301",
+        "end": "20260331"
+      }
+    },
+    "pagination": {
+      "limit": 10,
+      "is_complete": true,
+      "total": 2
+    }
+  }
+}

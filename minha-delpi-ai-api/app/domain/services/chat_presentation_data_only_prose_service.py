@@ -12,6 +12,7 @@ from app.domain.services.chat_presentation_prose_delivery_service import (
 
 class ChatPresentationDataOnlyProseService:
     FLAG = "dataOnlyPresentation"
+    STRUCTURED_HUMANIZED_KEYS = ("sqlRows",)
 
     @classmethod
     def should_apply(cls, user_message: str | None, *, path: str | None = None) -> bool:
@@ -140,15 +141,81 @@ class ChatPresentationDataOnlyProseService:
 
         titulo = cls._resolve_title_only(presenter, data, path=path, metadata=metadata)
 
-        if not titulo:
-            return None
-
         if titulo == "Lista de LMPs" and (
             "eficiencia-fabril" in path.lower() or "eficiencia_fabril" in path.lower()
         ):
             titulo = "Eficiência fabril"
 
-        return {"titulo": titulo}
+        structured = cls._resolve_structured_humanized_fields(
+            presenter,
+            data,
+            path=path,
+            metadata=metadata,
+            titulo=titulo,
+        )
+
+        if not titulo and not structured:
+            return None
+
+        result: dict[str, Any] = {}
+
+        if titulo:
+            result["titulo"] = titulo
+
+        result.update(structured)
+        return result
+
+    @classmethod
+    def _resolve_structured_humanized_fields(
+        cls,
+        presenter,
+        data,
+        *,
+        path: str,
+        metadata: dict[str, Any],
+        titulo: str,
+    ) -> dict[str, Any]:
+        lowered = str(path or "").lower()
+
+        if "/data/sql" not in lowered:
+            return {}
+
+        full = presenter.present(data, path=path)
+
+        if not isinstance(full, dict):
+            return {}
+
+        linhas = [
+            str(line).strip()
+            for line in (full.get("linhas") or [])
+            if str(line or "").strip()
+        ]
+        detail_lines = [
+            str(line).strip()
+            for line in (full.get("linhas_detalhe") or [])
+            if str(line or "").strip()
+        ]
+
+        if linhas or detail_lines:
+            archive = metadata.get("templateProseArchive")
+
+            if not isinstance(archive, dict):
+                archive = {}
+
+            archive["humanizedSummary"] = {
+                **({"titulo": titulo} if titulo else {}),
+                **({"linhas": linhas} if linhas else {}),
+                **({"linhas_detalhe": detail_lines} if detail_lines else {}),
+            }
+            metadata["templateProseArchive"] = archive
+
+        structured: dict[str, Any] = {}
+        sql_rows = full.get("sqlRows")
+
+        if isinstance(sql_rows, list) and sql_rows:
+            structured["sqlRows"] = sql_rows
+
+        return structured
 
     @classmethod
     def _resolve_title_only(

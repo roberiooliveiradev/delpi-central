@@ -2,10 +2,28 @@
 
 from __future__ import annotations
 
+import pytest
+
 from app.application.use_cases.execute_external_action_use_case import (
     ExecuteExternalActionUseCase,
 )
+from app.domain.services.chat_response_mode_service import ChatResponseModeService
 from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
+
+
+@pytest.fixture(autouse=True)
+def preserve_template_markdown_regression(monkeypatch):
+    """Testes abaixo validam embed template — força pipeline com markdown (rollback P19)."""
+    from app.domain.services.chat_presentation_data_only_prose_service import (
+        ChatPresentationDataOnlyProseService,
+    )
+
+    monkeypatch.setattr(
+        ChatPresentationDataOnlyProseService,
+        "should_apply",
+        lambda *args, **kwargs: False,
+    )
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
 
 
 def _use_case() -> ExecuteExternalActionUseCase:

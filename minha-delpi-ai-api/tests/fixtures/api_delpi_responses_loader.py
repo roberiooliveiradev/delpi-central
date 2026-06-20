@@ -149,6 +149,24 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "product_search",
         "shape": "paged_list",
     },
+    "production_consumption_top_items.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_production_consumption_top_items",
+        "entity": "production_consumption_top_items",
+        "shape": "playbook_report",
+    },
+    "supplies_cpv.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_supplies_cpv",
+        "entity": "supplies_cpv",
+        "shape": "scalar",
+    },
+    "data_sql_rows.json": {
+        "dataVersion": "2026-06",
+        "operationId": "execute_readonly_sql",
+        "entity": "sql",
+        "shape": "paged_list",
+    },
 }
 
 

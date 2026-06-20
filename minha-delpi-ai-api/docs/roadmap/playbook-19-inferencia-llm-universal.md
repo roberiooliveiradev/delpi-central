@@ -1,7 +1,7 @@
 # Playbook 19 — Inferência LLM universal (100% prosa)
 
 **Projeto:** Minha DELPI Chat IA  
-**Status:** P5.1 em curso (jun/2026)  
+**Status:** P5.6 parcial — smokes matriz + fixtures pipeline (jun/2026)  
 **Pré-requisito:** [Playbook 18 — desacoplamento template×LLM](./playbook-18-prosa-template-llm-desacoplamento.md) (P0–P4.4 ✅)
 
 ---
@@ -83,14 +83,14 @@ Bundles: `presentation_prose_delivery.json`, `operational_narrative_synthesis.js
 | P5.3 | Pipeline data-only para **qualquer** path com everywhere | ✅ |
 | P5.4 | Kinds `operational_data`, `sql_result`, `error_recovery` + policies | ✅ P5.1 |
 | P5.5 | Fatos LLM: SQL rows, KPI, paginação playbook, erro tool | ✅ P5.1 |
-| P5.6 | Smoke matriz: factory_status, top-items, KPI, SQL, erro | 🔲 |
+| P5.6 | Smoke matriz: factory_status, top-items, KPI, SQL, erro | ✅ script + fixtures unit |
 
 ### P6 — Deprecar `humanizedSummary.linhas` como prosa
 
 | # | Entrega | Status |
 |---|---------|--------|
 | P6.1 | `deprecateHumanizedLinhasAsProse` no JSON + pipeline | ✅ P5.1 |
-| P6.2 | Presenters upstream: só título; linhas → archive automático | 🔲 |
+| P6.2 | Presenters upstream: só título; linhas → archive automático | ✅ parcial (SQL sqlRows + title-only) |
 | P6.3 | Audit: flag `linhas` em presenter como legado upstream | ✅ |
 | P6.4 | Remover `operational_direct` e authorized template persist | 🔲 |
 | P6.5 | MFE: zero fallback markdown template | 🔲 |
@@ -138,8 +138,14 @@ cd minha-delpi-ai-api
   tests/unit/domain/services/test_chat_response_mode_synthesis_quality_service.py -q
 
 # Smoke por domínio (live)
-SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_response_modes_product_overview.py
-# TODO P5.6: smoke_playbook_top_items, smoke_kpi_scalar, smoke_sql, smoke_api_error
+SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_llm_universal_prose.py
+SMOKE_SCENARIO=playbook_top_items .venv/bin/python scripts/smoke_llm_universal_prose.py
+SMOKE_SCENARIO=kpi_cpv .venv/bin/python scripts/smoke_llm_universal_prose.py
+SMOKE_SCENARIO=sql .venv/bin/python scripts/smoke_llm_universal_prose.py
+SMOKE_SCENARIO=api_error .venv/bin/python scripts/smoke_llm_universal_prose.py
+SMOKE_SCENARIO=all .venv/bin/python scripts/smoke_llm_universal_prose.py
+# Qualidade LLM (latência/chars/ladder) — opcional:
+SMOKE_STRICT=1 SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_llm_universal_prose.py
 ```
 
 ### Critérios smoke (todos os modos)

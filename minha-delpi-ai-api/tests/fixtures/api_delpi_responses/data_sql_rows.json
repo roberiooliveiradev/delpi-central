@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "rows": [
+      {
+        "COD_PRODUTO": "90264130",
+        "DESCRICAO_PRODUTO": "PARAFUSO M8",
+        "QTD_PLANEJADA": 1200,
+        "UNIDADE": "UN"
+      },
+      {
+        "COD_PRODUTO": "10080047",
+        "DESCRICAO_PRODUTO": "TERMINAL PINO",
+        "QTD_PLANEJADA": 500,
+        "UNIDADE": "UN"
+      }
+    ],
+    "total": 2
+  }
+}

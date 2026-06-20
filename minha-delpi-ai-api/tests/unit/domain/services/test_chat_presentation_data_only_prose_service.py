@@ -22,10 +22,33 @@ def test_should_apply_when_narrative_message_and_modes_enabled(monkeypatch):
     )
 
 
-def test_should_not_apply_without_user_message(monkeypatch):
+def test_should_not_apply_without_user_message_when_not_everywhere(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "deprecate_humanized_linhas_as_prose",
+        lambda: False,
+    )
 
     assert not ChatPresentationDataOnlyProseService.should_apply(
+        None,
+        path="/products/90269001/factory-status",
+    )
+
+
+def test_should_apply_with_path_only_when_llm_everywhere(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    assert ChatPresentationDataOnlyProseService.should_apply(
         None,
         path="/products/90269001/factory-status",
     )
@@ -93,6 +116,34 @@ def test_resolve_humanized_summary_skips_present():
 
     presenter.present.assert_not_called()
     assert result == {"titulo": "Estoque do produto 90269001"}
+
+
+def test_resolve_humanized_summary_sql_preserves_rows_without_linhas():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    metadata = {"dataOnlyPresentation": True}
+    payload = {
+        "success": True,
+        "data": {
+            "rows": [{"COD_PRODUTO": "90264130", "QTD_PLANEJADA": 1200}],
+            "total": 1,
+        },
+    }
+
+    result = ChatPresentationDataOnlyProseService.resolve_humanized_summary(
+        presenter,
+        payload,
+        path="/data/sql",
+        metadata=metadata,
+    )
+
+    assert isinstance(result, dict)
+    assert result.get("sqlRows")
+    assert not result.get("linhas")
+    assert metadata.get("templateProseArchive", {}).get("humanizedSummary", {}).get("linhas")
 
 
 def test_finalize_metadata_clears_text_and_rebuilds_render_plan():
