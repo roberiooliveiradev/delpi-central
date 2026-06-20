@@ -184,6 +184,7 @@ def test_playbook_path_uses_playbook_domain_policy():
     )
 
     assert "ranking / playbook operacional" in addon
+    assert "Anti-deflexão" in addon or "informações adicionais" in addon
 
 
 def test_kpi_path_uses_kpi_domain_policy():
