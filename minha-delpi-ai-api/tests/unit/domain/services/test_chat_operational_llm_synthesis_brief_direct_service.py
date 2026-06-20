@@ -1,0 +1,81 @@
+from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.domain.services.chat_operational_llm_synthesis_brief_direct_service import (
+    ChatOperationalLlmSynthesisBriefDirectService,
+)
+from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+configure_domain_infrastructure_ports()
+
+
+def _tool_calls(metadata: dict) -> list[dict]:
+    return [{"name": "execute_external_action", "metadata": metadata}]
+
+
+def test_fast_commentary_direct_builds_answer_without_llm():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/10080045/analyser",
+        "dataCommentary": {
+            "highlights": [{"text": "O produto **10080045** está cadastrado como MP."}],
+            "attention": ["Roteiro sem operações registradas."],
+        },
+    }
+
+    answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "me fale do produto 10080045",
+        _tool_calls(metadata),
+        response_mode="fast",
+    )
+
+    assert answer
+    assert "10080045" in answer
+    assert "MP" in answer
+
+
+def test_apply_turn_direct_answer_policy_fast_uses_commentary_direct():
+    tool_context: dict = {}
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/10080045/analyser",
+        "presentationDecision": {"layoutMode": "stack", "selected": "table"},
+        "dataCommentary": {
+            "highlights": [
+                {"text": "O produto **10080045** está cadastrado como MP."},
+            ],
+        },
+    }
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="me fale do produto 10080045",
+        response_mode="fast",
+        direct_answer=None,
+        skip_rag=False,
+        tool_calls=_tool_calls(metadata),
+        tool_context=tool_context,
+    )
+
+    assert direct
+    assert "10080045" in direct
+    assert skip_rag is True
+    assert effect == "llm_synthesis_brief"
+    assert tool_context.get("commentaryBriefDirect") is True
+
+
+def test_normal_mode_does_not_use_commentary_direct():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "dataCommentary": {
+            "highlights": [{"text": "Cadastro MP confirmado para 10080045."}],
+        },
+    }
+
+    answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "me fale do produto 10080045",
+        _tool_calls(metadata),
+        response_mode="normal",
+    )
+
+    assert answer is None

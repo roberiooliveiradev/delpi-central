@@ -11,8 +11,13 @@ from app.domain.services.chat_operational_llm_synthesis_context_content_service 
 
 class ChatOperationalLlmSynthesisContextService:
     @classmethod
-    def build_facts_addon(cls, tool_calls: list | None) -> str:
-        lines = cls.collect_fact_lines(tool_calls)
+    def build_facts_addon(
+        cls,
+        tool_calls: list | None,
+        *,
+        response_mode: str | None = None,
+    ) -> str:
+        lines = cls.collect_fact_lines(tool_calls, response_mode=response_mode)
 
         if not lines:
             return ""
@@ -20,7 +25,7 @@ class ChatOperationalLlmSynthesisContextService:
         title = ChatOperationalLlmSynthesisContextContentService.title()
         body = "\n".join(f"- {line}" for line in lines)
         block = f"{title}\n{body}".strip()
-        max_chars = ChatOperationalLlmSynthesisContextContentService.max_chars()
+        max_chars = cls._resolve_max_chars(response_mode)
 
         if len(block) <= max_chars:
             result = f"\n\n{block}"
@@ -28,20 +33,60 @@ class ChatOperationalLlmSynthesisContextService:
             trimmed = cls._trim_block(block, max_chars)
             result = f"\n\n{trimmed}" if trimmed else ""
 
-        panel_rule = ChatOperationalLlmSynthesisContextContentService.prose_panel_rule()
+        if cls._should_append_prose_rules(tool_calls, response_mode):
+            panel_rule = ChatOperationalLlmSynthesisContextContentService.prose_panel_rule()
 
-        if panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
-            result = f"{result}\n\n{panel_rule}" if result else f"\n\n{panel_rule}"
+            if panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
+                result = f"{result}\n\n{panel_rule}" if result else f"\n\n{panel_rule}"
 
-        fidelity_rule = ChatOperationalLlmSynthesisContextContentService.factual_fidelity_rule()
+            fidelity_rule = ChatOperationalLlmSynthesisContextContentService.factual_fidelity_rule()
 
-        if fidelity_rule and cls._tool_calls_use_prose_panel(tool_calls):
-            result = f"{result}\n\n{fidelity_rule}" if result else f"\n\n{fidelity_rule}"
+            if fidelity_rule and cls._tool_calls_use_prose_panel(tool_calls):
+                result = f"{result}\n\n{fidelity_rule}" if result else f"\n\n{fidelity_rule}"
 
         return result
 
     @classmethod
-    def collect_fact_lines(cls, tool_calls: list | None) -> list[str]:
+    def _resolve_max_chars(cls, response_mode: str | None) -> int:
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        if ChatResponseModeService.normalize(response_mode) == "fast":
+            fast_cap = ChatResponseModeContentService.fast_llm_max_facts_chars()
+
+            if fast_cap is not None:
+                return fast_cap
+
+        return ChatOperationalLlmSynthesisContextContentService.max_chars()
+
+    @classmethod
+    def _should_append_prose_rules(
+        cls,
+        tool_calls: list | None,
+        response_mode: str | None,
+    ) -> bool:
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        if (
+            ChatResponseModeService.normalize(response_mode) == "fast"
+            and ChatResponseModeContentService.fast_llm_skip_prose_panel_rules()
+        ):
+            return False
+
+        return True
+
+    @classmethod
+    def collect_fact_lines(
+        cls,
+        tool_calls: list | None,
+        *,
+        response_mode: str | None = None,
+    ) -> list[str]:
         if not isinstance(tool_calls, list):
             return []
 

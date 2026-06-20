@@ -73,3 +73,34 @@ def test_post_tool_overview_fast_clears_direct_answer_for_brief_llm():
     assert result.skip_rag is True
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis_brief"
     assert "directAnswer" not in result.tool_context
+
+
+def test_post_tool_overview_fast_uses_commentary_direct_when_decoupled():
+    result = _resolve_post_tool(
+        response_mode="fast",
+        tool_context={},
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "llmProseDecoupled": True,
+                    "path": "/products/10080045/analyser",
+                    "dataCommentary": {
+                        "highlights": [
+                            {"text": "O produto **10080045** está cadastrado como MP."},
+                        ],
+                    },
+                    "presentationDecision": {
+                        "layoutMode": "stack",
+                        "visualOrder": ["text", "table"],
+                    },
+                },
+            }
+        ],
+    )
+
+    assert result.direct_answer
+    assert "10080045" in result.direct_answer
+    assert result.tool_context.get("commentaryBriefDirect") is True
+    assert result.tool_context.get("responseModeEffect") == "llm_synthesis_brief"

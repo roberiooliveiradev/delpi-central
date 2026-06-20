@@ -195,7 +195,15 @@ class ChatResponseModeSynthesisQualityService:
             gaps.append(f"pipeline.responseModeEffect esperado llm_synthesis, veio {effect!r}")
 
         if pipeline.get("directResponse"):
-            gaps.append("pipeline.directResponse=true — resposta ainda veio do template/direct answer")
+            allowed = ChatResponseModeSynthesisQualityContentService.pipeline_modes_allowing_direct_response()
+            if mode not in allowed:
+                gaps.append(
+                    "pipeline.directResponse=true — resposta ainda veio do template/direct answer"
+                )
+            elif effect != "llm_synthesis_brief":
+                gaps.append(
+                    f"pipeline.directResponse=true em {mode!r} exige responseModeEffect llm_synthesis_brief, veio {effect!r}"
+                )
 
         return gaps
 

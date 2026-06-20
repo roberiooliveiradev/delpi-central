@@ -108,8 +108,8 @@ OLLAMA_NUM_CTX=1024
 LLM_MAX_TOKENS=320
 CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS=320
 CHAT_RESPONSE_MODE_NORMAL_NUM_CTX=1024
-CHAT_RESPONSE_MODE_FAST_MAX_TOKENS=160
-CHAT_RESPONSE_MODE_FAST_NUM_CTX=768
+CHAT_RESPONSE_MODE_FAST_MAX_TOKENS=96
+CHAT_RESPONSE_MODE_FAST_NUM_CTX=512
 CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS=512
 CHAT_RESPONSE_MODE_THINKER_NUM_CTX=1536
 ```
@@ -130,6 +130,21 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_operational_llm_synthesis_context_service.py -q
 SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_llm_universal_prose.py
 ```
+
+---
+
+## Modo Rápida — commentary direct (jun/2026)
+
+Objetivo: respostas operacionais decoupled em **≤ ~10 s** sem segunda passagem Ollama.
+
+| Peça | Detalhe |
+|------|---------|
+| Serviço | `ChatOperationalLlmSynthesisBriefDirectService` |
+| Gate | `ChatResponseModeService.apply_turn_direct_answer_policy` (modo `fast` + metadata decoupled) |
+| Prosa | `dataCommentary` / `dataAnswer` + `ChatOperationalLlmSynthesisAnswerEnrichmentService` |
+| JSON | `response_modes.json` → `fastCommentaryDirect`, `fastLlmBudget` |
+| Compose | `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS=96`, `FAST_NUM_CTX=512` (fallback LLM) |
+| Smoke | `scripts/smoke_response_modes_product_overview.py`, `scripts/verify_frontend_payload_product_overview.py` |
 
 ---
 

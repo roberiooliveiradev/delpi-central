@@ -96,6 +96,7 @@ class ChatResponseModeService:
         direct_answer: str | None,
         skip_rag: bool,
         tool_calls: list | None,
+        tool_context: dict | None = None,
     ) -> tuple[str | None, bool, str | None]:
         """Gate final: prosa narrativa via ChatPresentationProseDeliveryService (playbook-18)."""
         if not cls.is_enabled():
@@ -126,6 +127,21 @@ class ChatResponseModeService:
         if mode == MODE_LLM:
             effect = cls.resolve_synthesis_effect(response_mode)
             resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(skip_rag, tool_calls)
+
+            from app.domain.services.chat_operational_llm_synthesis_brief_direct_service import (
+                ChatOperationalLlmSynthesisBriefDirectService,
+            )
+
+            brief_direct = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+                message,
+                tool_calls,
+                response_mode=response_mode,
+            )
+
+            if brief_direct:
+                ChatOperationalLlmSynthesisBriefDirectService.mark_tool_context(tool_context)
+
+                return brief_direct, resolved_skip, effect
 
             if direct_answer:
                 return None, resolved_skip, effect
@@ -212,8 +228,8 @@ class ChatResponseModeService:
 
         return LlmGenerationConfig(
             model=fast_model or "qwen2.5:1.5b",
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "160")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "768")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "96")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "512")),
             temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.2")),
             response_mode="fast",
         )

@@ -184,7 +184,10 @@ class ChatOperationalNarrativeSynthesisService:
 
         policy = PromptPolicyService()._load_policy(policy_name)
         addon = f"\n\n{policy}" if policy else ""
-        facts = ChatOperationalLlmSynthesisContextService.build_facts_addon(tool_calls)
+        facts = ChatOperationalLlmSynthesisContextService.build_facts_addon(
+            tool_calls,
+            response_mode=response_mode,
+        )
 
         return f"{addon}{facts}"
 

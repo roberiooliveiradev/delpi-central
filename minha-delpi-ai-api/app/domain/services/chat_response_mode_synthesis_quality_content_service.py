@@ -53,3 +53,11 @@ class ChatResponseModeSynthesisQualityContentService:
         value = ChatAssistantContentService.get(_BUNDLE, "modeLadder", key, default=default)
 
         return bool(value)
+
+    @classmethod
+    def pipeline_modes_allowing_direct_response(cls) -> frozenset[str]:
+        return frozenset(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(_BUNDLE, "pipeline", "allowDirectResponseModes")
+            if str(item).strip()
+        )

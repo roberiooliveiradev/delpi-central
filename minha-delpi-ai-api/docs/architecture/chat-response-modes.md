@@ -50,7 +50,7 @@ Defaults calibrados para CPU operacional (~50% menos latência vs presets anteri
 
 | Modo | Modelo | max_tokens | num_ctx | temp | Policy overview | Policy operacional |
 |------|--------|------------|---------|------|-----------------|-------------------|
-| **Rápida** | `CHAT_RESPONSE_MODE_FAST_MODEL` (default `qwen2.5:1.5b`) | 160 | 768 | 0.2 | `product-overview-fast.md` | `operational-synthesis-fast.md` |
+| **Rápida** | `CHAT_RESPONSE_MODE_FAST_MODEL` (default `qwen2.5:1.5b`) | 96 | 512 | 0.2 | `product-overview-fast.md` | `operational-synthesis-fast.md` |
 | **Normal** | `CHAT_RESPONSE_MODE_NORMAL_MODEL` ou `OLLAMA_MODEL` (default `1.5b`) | 320 | 1024 | 0.3 | `product-overview.md` | `operational-synthesis.md` |
 | **Pensador** | `CHAT_RESPONSE_MODE_THINKER_MODEL` ou fallback (default `1.5b`) | 512 | 1536 | 0.25 | `product-overview-thinker.md` | `operational-synthesis-thinker.md` |
 
@@ -64,13 +64,27 @@ Preset global quando variáveis explícitas não estão no `.env`: `CHAT_LLM_LAT
 Tool execute_external_action (ok ou falha)
     │
     ├─ llmProseEverywhere → proseDeliveryMode=llm + pipeline data-only
-    ├─ fast     → llm_synthesis_brief
+    ├─ fast + commentary direct elegível → direct answer (sem Ollama)
+    ├─ fast     → llm_synthesis_brief (fallback LLM)
     ├─ normal   → llm_synthesis
     └─ thinker  → llm_synthesis
 
 Rollback template (offline)
     └─ modos OFF + allowTemplateProseFallback + llmProseEverywhere=false
 ```
+
+### Modo Rápida — commentary direct (≤ ~10 s)
+
+Quando `response_modes.json` → `fastCommentaryDirect.enabled: true` e a tool operacional retorna metadata **decoupled** (`llmProseDecoupled`), o turno **não** chama Ollama para a prosa:
+
+1. `ChatResponseModeService.apply_turn_direct_answer_policy` tenta `ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer`.
+2. Lead montado a partir de `dataCommentary` / `dataAnswer` + `ChatOperationalLlmSynthesisAnswerEnrichmentService` (código do produto, anti-alucinação).
+3. Se o texto enriquecido ≥ `fastCommentaryDirect.minAnswerChars` (default 40), grava `directAnswer`, seta `commentaryBriefDirect` no `tool_context` e expõe `directResponse: true` com `responseModeEffect: llm_synthesis_brief`.
+4. `ChatTurnLlmAssemblyService` **preserva** o `directAnswer` quando `commentaryBriefDirect` está ativo (não limpa como síntese LLM tradicional).
+
+Fallback: se commentary direct não qualificar (tool sem decouple, texto curto, `enabled: false`), segue síntese LLM breve com budget reduzido (`fastLlmBudget.maxFactsChars: 380`).
+
+Serviço canônico: `ChatOperationalLlmSynthesisBriefDirectService`.
 
 Serviços:
 
@@ -104,7 +118,8 @@ Em `metadata.intelligence.pipeline`:
 |-------|---------|
 | `responseModeEffect` | `llm_synthesis` \| `llm_synthesis_brief` (P19: nunca `operational_direct` com everywhere) |
 | `responseModeEffectNotice` | Texto PT de `response_modes.json` |
-| `directResponse` | `true` apenas quando há direct answer final |
+| `directResponse` | `true` quando há direct answer final (inclui commentary direct no modo Rápida) |
+| `commentaryBriefDirect` | Flag interna no `tool_context` — preserva direct answer na montagem LLM |
 
 ---
 
@@ -117,8 +132,8 @@ Em `metadata.intelligence.pipeline`:
 | `CHAT_LLM_LATENCY_PROFILE` | `operational_cpu` | Preset global `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` quando não explícitos |
 | `LLM_MAX_TOKENS` | `320` (via preset) | Teto tokens turno geral |
 | `OLLAMA_NUM_CTX` | `1024` (via preset) | Contexto Ollama global |
-| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `160` | Síntese curta |
-| `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `768` | Contexto Rápida |
+| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `96` | Síntese curta (fallback LLM quando commentary direct não qualifica) |
+| `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `512` | Contexto Rápida |
 | `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `320` | Síntese Normal |
 | `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `1024` | Contexto Normal |
 | `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `512` | Síntese Pensador |
@@ -139,7 +154,7 @@ O smoke **não** basta checar metadata — valida por turno:
 
 | Critério | O que falha |
 |----------|-------------|
-| Pipeline | `directResponse=true` ou efeito errado |
+| Pipeline | `directResponse=true` em Normal/Pensador; em Rápida permitido com `llm_synthesis_brief` (commentary direct) |
 | Template | similaridade com `textPresentation` / markdown autorizado ≥ limite |
 | Contexto | código do produto + overlap mínimo com tokens dos dados da tool |
 | Assertividade | frases evasivas («preciso acessar», «não tenho acesso», …) |
@@ -159,10 +174,23 @@ SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_response_modes_prod
 cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_operational_narrative_synthesis_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_response_mode_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_operational_llm_synthesis_brief_direct_service.py -q
 .venv/bin/python -m pytest tests/unit/application/services/test_chat_turn_preparation_response_mode.py -q
 .venv/bin/python scripts/smoke_response_modes_product_overview.py
+.venv/bin/python scripts/verify_frontend_payload_product_overview.py
 ```
+
+### Bundle `response_modes.json` (declarativo)
+
+| Chave | Default | Papel |
+|-------|---------|-------|
+| `fastCommentaryDirect.enabled` | `true` | Ativa prosa Rápida sem segunda passagem LLM |
+| `fastCommentaryDirect.minAnswerChars` | `40` | Mínimo de caracteres no lead enriquecido |
+| `fastLlmBudget.maxFactsChars` | `380` | Cap de fatos no prompt quando cai no fallback LLM |
+| `fastLlmBudget.skipProsePanelRules` | `true` | Omite regras de painel no addon de fatos (Rápida) |
+
+Loader: `ChatResponseModeContentService`.
 
 ---
 
-*Última revisão: jun/2026 — preset `operational_cpu` default, modos 160/320/512 tokens, skip RAG em síntese LLM com tool ok, render plan sem lead `dataAnswer` quando decoupled.*
+*Última revisão: jun/2026 — modo Rápida com commentary direct (≤ ~10 s), presets 96/512 no fast, skip RAG em síntese LLM com tool ok, render plan sem lead `dataAnswer` quando decoupled.*

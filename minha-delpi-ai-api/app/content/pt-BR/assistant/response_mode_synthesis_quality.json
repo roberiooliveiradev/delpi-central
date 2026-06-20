@@ -70,5 +70,8 @@
     "fastMaxCharsVsNormalRatio": 1.05,
     "fastMaxElapsedVsNormalRatio": 1.25,
     "minPairwiseContentDistance": 0.06
+  },
+  "pipeline": {
+    "allowDirectResponseModes": ["fast"]
   }
 }

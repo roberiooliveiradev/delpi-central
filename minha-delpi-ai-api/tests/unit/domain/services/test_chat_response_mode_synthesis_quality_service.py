@@ -160,6 +160,50 @@ def test_accepts_grounded_llm_answer():
     assert gaps == []
 
 
+def test_accepts_fast_commentary_direct_with_direct_response():
+    content = (
+        "O produto **90269002** está com **PA PRODUZIDO** na fábrica hoje. "
+        "O saldo de MP relevante aparece como 6082 nas posições consultadas. "
+        "Use o painel para ver tabela e KPI complementares."
+    )
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_turn(
+        mode="fast",
+        question="qual o status do produto 90269002 na fabrica hoje?",
+        content=content,
+        assistant_metadata={
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "dataOnlyPresentation": True,
+                        "llmProseDecoupled": True,
+                        "proseDeliveryMode": "llm",
+                        "presentationDecision": {"selected": "table"},
+                        "textPresentation": {"type": "markdown", "markdown": ""},
+                        "tablePresentations": [
+                            {
+                                "type": "table",
+                                "title": "Panorama fabril",
+                                "rows": [{"situacao": "PA PRODUZIDO", "saldo_mp": "6082"}],
+                            }
+                        ],
+                    },
+                }
+            ],
+            "intelligence": {
+                "pipeline": {
+                    "responseModeEffect": "llm_synthesis_brief",
+                    "directResponse": True,
+                }
+            },
+        },
+        elapsed_sec=1.5,
+    )
+
+    assert gaps == []
+
+
 def test_rejects_deflection_without_context():
     gaps = ChatResponseModeSynthesisQualityService.evaluate_turn(
         mode="fast",

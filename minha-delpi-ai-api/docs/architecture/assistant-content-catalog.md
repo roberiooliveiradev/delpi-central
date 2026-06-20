@@ -37,7 +37,7 @@ Wrappers especializados (mantêm API estável):
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
 | `api_route_domains.json` | Domínios de rota operacional; **`parameterStrategies`** declarativas (bindings, patterns, granularity) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
 | `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
-| `response_modes.json` | Modos Rápida/Normal/Pensador (rótulos, aliases, avisos de `responseModeEffect`) | `ChatResponseModeContentService`, `ChatResponseModeService` |
+| `response_modes.json` | Modos Rápida/Normal/Pensador (rótulos, aliases, avisos de `responseModeEffect`, **`fastCommentaryDirect`**, **`fastLlmBudget`**) | `ChatResponseModeContentService`, `ChatResponseModeService`, `ChatOperationalLlmSynthesisBriefDirectService` |
 | `operational_narrative_synthesis.json` | Gate LLM narrativo (perfis evidence-first, policies por modo, termos factuais estreitos) | `ChatOperationalNarrativeSynthesisContentService`, `ChatOperationalNarrativeSynthesisService` |
 | `operational_llm_synthesis_context.json` | Budget de fatos no prompt LLM (`maxChars`, `maxProfileTableRows`, limites de linhas/tabela/SQL) | `ChatOperationalLlmSynthesisContextContentService`, `ChatOperationalLlmSynthesisContextService` |
 | `presentation_prose_delivery.json` | Modos prosa template × LLM × direct; chaves metadata do contrato | `ChatPresentationProseDeliveryContentService`, `ChatPresentationProseDeliveryService` |

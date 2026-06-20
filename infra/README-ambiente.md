@@ -114,7 +114,7 @@ Injetados em `docker-compose.dev.yml` e `docker-compose.yml` quando ausentes no 
 | `LLM_MAX_TOKENS` | `320` | Teto global (override do preset) |
 | `OLLAMA_NUM_CTX` | `1024` | Contexto global |
 | `CHAT_RESPONSE_MODES_ENABLED` | `true` | Seletor Rápida/Normal/Pensador |
-| `CHAT_RESPONSE_MODE_FAST_*` | 160 tok / ctx 768 | Modo Rápida |
+| `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida (fallback LLM; prosa usual via commentary direct — ver `chat-response-modes.md`) |
 | `CHAT_RESPONSE_MODE_NORMAL_*` | 320 tok / ctx 1024 | Modo Normal |
 | `CHAT_RESPONSE_MODE_THINKER_*` | 512 tok / ctx 1536 | Modo Pensador |
 

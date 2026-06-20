@@ -294,6 +294,15 @@ class ChatTurnLlmAssemblyService:
         if not direct_answer:
             return direct_answer
 
+        from app.domain.services.chat_operational_llm_synthesis_brief_direct_service import (
+            ChatOperationalLlmSynthesisBriefDirectService,
+        )
+
+        if ChatOperationalLlmSynthesisBriefDirectService.is_commentary_brief_context(
+            tool_context,
+        ):
+            return direct_answer
+
         if not ChatTurnPreparationRagWebFallbackService._operational_llm_narration_pending(
             tool_calls=tool_calls,
             tool_context=tool_context,
