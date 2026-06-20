@@ -39,7 +39,7 @@ Port genérico, interpretação colunar, OCR por célula, orquestração `ChatDr
 | `ChatDrawingBomQuantityAssertivenessService` | Trust para `column_inferred` |
 | Testes | Fixture cabeçalho corrompido + corpo legível — QTD colunar, não da descrição |
 
-**Limitação:** PDF `90263149` live ainda tem corpo BOM fragmentado no OCR regional; inferência de colunas exige corpo legível. Próximo: refinamento célula (15.8.2) no pipeline live.
+**Limitação mitigada (15.8.2):** refinamento OCR por célula no pipeline live preenche QTD quando a linha colunar existe mas a célula QTD veio vazia.
 
 ### 15.8.2b — Parse tabular/OCR regional do corpo BOM ✅
 
@@ -51,7 +51,18 @@ Port genérico, interpretação colunar, OCR por célula, orquestração `ChatDr
 | `ChatDrawingBomTableInterpretationService` | Resolução code/qty por linha; filtro `sourceRegion=bom`; `prefer_row`; metadata via `extract_from_metadata` |
 | `ChatDrawingPdfBomExtractionService` / `ChatDrawingBomVisionRefinementService` | Merge colunar preferencial |
 
-**Resultado `90263149` live:** `columnRowCount` 12+; `10090050.quantity=null` (pending/refino) em vez de `6.35` da descrição; smoke E2E sem crítico `bom_quantity_mismatch`.
+**Resultado `90263149` live:** `columnRowCount` 12+; refinamento OCR por célula preenche QTD pending (`10090050.quantity=1`, `refined_column`); smoke E2E sem crítico `bom_quantity_mismatch`.
+
+### 15.8.2 — Refinamento OCR por célula no pipeline live ✅
+
+| Artefato | Mudança |
+|----------|---------|
+| `ChatDrawingBomTableInterpretationService.locate_quantity_cell` | Localiza `(tableId, row, qtyCol)` com código desalinhado e layout padrão |
+| `ChatDrawingBomVisionRefinementService._refine_quantities` | Roda na extração (sem analyser) e na validação; triggers `missing_quantity` |
+| `drawing_validation.json` | Novos triggers `missing_quantity`, `untrusted_column_quantity` |
+| Testes | `test_locate_quantity_cell_*`, `test_apply_refines_missing_quantity_via_cell_ocr_*` |
+
+**Resultado live:** 9/11 códigos refinados via Tesseract; `10090050` QTD=`1` (não `6.35` da descrição).
 
 ### Pendente (15.8.4–15.8.6)
 

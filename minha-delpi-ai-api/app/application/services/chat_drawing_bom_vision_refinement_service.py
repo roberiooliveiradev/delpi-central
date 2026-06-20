@@ -17,6 +17,9 @@ from app.domain.services.chat_pdf_table_cell_refinement_service import (
 from app.domain.services.chat_pdf_table_structure_service import (
     ChatPdfTableStructureService,
 )
+from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntentService,
+)
 
 
 class ChatDrawingBomVisionRefinementService:
@@ -55,6 +58,9 @@ class ChatDrawingBomVisionRefinementService:
         if not isinstance(metadata, dict):
             metadata = {}
 
+        if not storage_path:
+            storage_path = str(metadata.get("storagePath") or "").strip()
+
         structured_tables = cls._structured_tables(payload, metadata)
 
         if storage_path and structured_tables:
@@ -76,13 +82,13 @@ class ChatDrawingBomVisionRefinementService:
 
         root = analyser_root if isinstance(analyser_root, dict) else {}
 
-        if root and code:
-            payload = cls._refine_untrusted_rows(
+        if storage_path and structured_tables:
+            payload = cls._refine_quantities(
                 payload,
-                root=root,
-                product_code=code,
                 storage_path=storage_path,
                 structured_tables=structured_tables,
+                product_code=code,
+                analyser_root=root,
             )
 
         if structured_tables:
@@ -151,22 +157,27 @@ class ChatDrawingBomVisionRefinementService:
         return list(by_code.values())
 
     @classmethod
-    def _refine_untrusted_rows(
+    def _refine_quantities(
         cls,
         pdf_extract: dict[str, Any],
         *,
-        root: dict,
-        product_code: str,
         storage_path: str,
         structured_tables: list[dict[str, Any]],
+        product_code: str,
+        analyser_root: dict[str, Any],
     ) -> dict[str, Any]:
         payload = dict(pdf_extract)
         triggers = ChatDrawingPatternsService.bom_quantity_refinement_triggers()
-        evidences = ChatDrawingBomQuantityAssertivenessService.collect_evidences(
-            root=root,
-            pdf_extract=payload,
+        targets = cls._collect_refinement_targets(
+            payload,
+            analyser_root=analyser_root,
             product_code=product_code,
+            triggers=triggers,
         )
+
+        if not targets:
+            return payload
+
         port = ChatPdfTableCellRefinementService()
         rows = {
             str(row.get("code") or ""): dict(row)
@@ -175,14 +186,13 @@ class ChatDrawingBomVisionRefinementService:
         }
         attempts: list[dict[str, Any]] = []
         refined_codes: list[str] = []
+        attempt_count = 0
 
-        for code, evidence in evidences.items():
-            reason = str(evidence.reason or "")
-
-            if evidence.trusted or reason not in triggers:
+        for code, reason in targets.items():
+            if reason not in triggers:
                 continue
 
-            target = cls._locate_table_row(
+            target = ChatDrawingBomTableInterpretationService.locate_quantity_cell(
                 structured_tables,
                 code=code,
             )
@@ -191,19 +201,28 @@ class ChatDrawingBomVisionRefinementService:
                 continue
 
             table_id, row_index, qty_col = target
+            current = rows.get(code, {"code": code})
+            attempt_count += 1
             result = port.refine_cell(
                 storage_path=storage_path,
                 table_id=table_id,
                 row_index=row_index,
                 col_index=qty_col,
-                fallback_text=str(evidence.quantity),
+                fallback_text=str(current.get("quantity") or ""),
             )
             text = str(result.get("text") or "").strip()
 
             if not text:
+                attempts.append(
+                    {
+                        "code": code,
+                        "reason": reason,
+                        "tableId": table_id,
+                        "success": False,
+                    }
+                )
                 continue
 
-            current = rows.get(code, {"code": code})
             current["quantity"] = text
             current["quantitySource"] = "refined_column"
             current["quantityTrusted"] = True
@@ -231,9 +250,18 @@ class ChatDrawingBomVisionRefinementService:
         if rows:
             payload["bomRows"] = list(rows.values())
 
-        if attempts:
+        if attempts or refined_codes:
+            prior_meta = payload.get("bomVisionRefinement")
+
+            if not isinstance(prior_meta, dict):
+                prior_meta = {}
+
             payload["bomVisionRefinement"] = {
+                **prior_meta,
                 "triggered": True,
+                "attempted": True,
+                "attemptCount": attempt_count,
+                "resolved": len(refined_codes),
                 "codesRefined": refined_codes,
                 "attempts": attempts,
             }
@@ -241,45 +269,56 @@ class ChatDrawingBomVisionRefinementService:
         return payload
 
     @classmethod
-    def _locate_table_row(
+    def _collect_refinement_targets(
         cls,
-        tables: list[dict[str, Any]],
+        pdf_extract: dict[str, Any],
         *,
-        code: str,
-    ) -> tuple[str, int, int] | None:
-        for table in tables:
-            if not isinstance(table, dict):
+        analyser_root: dict[str, Any],
+        product_code: str,
+        triggers: frozenset[str],
+    ) -> dict[str, str]:
+        targets: dict[str, str] = {}
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
                 continue
 
-            columns = ChatDrawingBomTableInterpretationService.resolve_column_indices(table)
-            code_col = columns.get("code")
-            qty_col = columns.get("quantity")
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
 
-            if code_col is None or qty_col is None:
+            if not code:
                 continue
 
-            table_id = str(table.get("tableId") or "")
+            if str(row.get("quantitySource") or "") == "refined_column" and row.get(
+                "quantityTrusted"
+            ):
+                continue
 
-            for row in table.get("rows") or []:
-                if not isinstance(row, dict):
+            quantity = str(row.get("quantity") or "").strip()
+
+            if not quantity or not row.get("quantityTrusted"):
+                targets[code] = "missing_quantity"
+                continue
+
+            source = str(row.get("quantitySource") or "").strip().lower()
+
+            if source == "column_inferred" and not row.get("quantityTrusted"):
+                targets[code] = "untrusted_column_quantity"
+
+        if analyser_root and product_code:
+            evidences = ChatDrawingBomQuantityAssertivenessService.collect_evidences(
+                root=analyser_root,
+                pdf_extract=pdf_extract,
+                product_code=product_code,
+            )
+
+            for code, evidence in evidences.items():
+                reason = str(evidence.reason or "")
+
+                if evidence.trusted or reason not in triggers:
                     continue
 
-                cells = {
-                    int(cell.get("col")): str(cell.get("text") or "").strip()
-                    for cell in (row.get("cells") or [])
-                    if isinstance(cell, dict)
-                }
-                cell_code = cells.get(int(code_col), "")
-                match = ChatDrawingPatternsService.component_code().search(cell_code)
+                targets[code] = reason
 
-                if not match:
-                    continue
-
-                normalized = str(match.group(1))
-
-                if normalized != code:
-                    continue
-
-                return table_id, int(row.get("index") or 0), int(qty_col)
-
-        return None
+        return targets

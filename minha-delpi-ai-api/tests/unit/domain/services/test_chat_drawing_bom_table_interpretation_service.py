@@ -126,3 +126,32 @@ def test_bom_rows_from_corrupted_header_table_90263149_layout():
     assert by_code["10090050"]["quantitySource"] in {"column", "column_inferred"}
     assert by_code["10090050"]["quantityTrusted"] is True
     assert by_code["10080044"]["quantity"] == "2"
+
+
+def test_locate_quantity_cell_finds_misaligned_partial_row():
+    table = {
+        "tableId": "region_bom_p0",
+        "sourceRegion": "bom",
+        "columns": [
+            {"index": 0, "headerText": "cóvico"},
+            {"index": 1, "headerText": "vescrição —"},
+            {"index": 2, "headerText": "iremjarD"},
+            {"index": 3, "headerText": "CÓDIGO"},
+            {"index": 4, "headerText": "DESCRIÇÃO"},
+        ],
+        "rows": [
+            {
+                "index": 1,
+                "cells": [
+                    {"col": 0, "text": "10090050"},
+                    {"col": 1, "text": "ISOLADOR NYLON RETO 6,35 NU UL94V-2"},
+                ],
+            }
+        ],
+    }
+    located = ChatDrawingBomTableInterpretationService.locate_quantity_cell(
+        [table],
+        code="10090050",
+    )
+
+    assert located == ("region_bom_p0", 1, 2)

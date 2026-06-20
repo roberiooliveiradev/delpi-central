@@ -78,6 +78,143 @@ class ChatDrawingBomTableInterpretationService:
         return cls.bom_rows_from_tables(tables, product_code=product_code)
 
     @classmethod
+    def locate_quantity_cell(
+        cls,
+        tables: list[dict[str, Any]],
+        *,
+        code: str,
+    ) -> tuple[str, int, int] | None:
+        normalized_code = ChatProductQueryIntentService.normalize_product_code(code)
+
+        if not normalized_code:
+            return None
+
+        candidate_tables = [
+            table
+            for table in tables
+            if isinstance(table, dict) and str(table.get("sourceRegion") or "").strip().lower() == "bom"
+        ]
+
+        if not candidate_tables:
+            candidate_tables = [table for table in tables if isinstance(table, dict)]
+
+        for table in candidate_tables:
+            located = cls._locate_quantity_cell_in_table(table, code=normalized_code)
+
+            if located is not None:
+                return located
+
+        return None
+
+    @classmethod
+    def _locate_quantity_cell_in_table(
+        cls,
+        table: dict[str, Any],
+        *,
+        code: str,
+    ) -> tuple[str, int, int] | None:
+        columns = cls.resolve_column_indices(table)
+        table_id = str(table.get("tableId") or "")
+
+        for row in table.get("rows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            cells = {
+                int(cell.get("col")): str(cell.get("text") or "").strip()
+                for cell in (row.get("cells") or [])
+                if isinstance(cell, dict)
+            }
+            code_index = cls._find_code_column_index(cells, columns, target_code=code)
+
+            if code_index is None:
+                continue
+
+            qty_col = cls._resolve_quantity_column_index(
+                cells,
+                columns=columns,
+                code_index=code_index,
+                table=table,
+            )
+
+            if qty_col is None:
+                continue
+
+            return table_id, int(row.get("index") or 0), int(qty_col)
+
+        return None
+
+    @classmethod
+    def _find_code_column_index(
+        cls,
+        cells: dict[int, str],
+        columns: dict[str, int | None],
+        *,
+        target_code: str,
+    ) -> int | None:
+        pattern = ChatDrawingPatternsService.component_code()
+        code_col = columns.get("code")
+
+        if code_col is not None:
+            match = pattern.search(cells.get(int(code_col), ""))
+
+            if match and ChatProductQueryIntentService.normalize_product_code(
+                match.group(1)
+            ) == target_code:
+                return int(code_col)
+
+        for col_index in sorted(cells):
+            match = pattern.search(cells[col_index])
+
+            if match and ChatProductQueryIntentService.normalize_product_code(
+                match.group(1)
+            ) == target_code:
+                return col_index
+
+        return None
+
+    @classmethod
+    def _resolve_quantity_column_index(
+        cls,
+        cells: dict[int, str],
+        *,
+        columns: dict[str, int | None],
+        code_index: int,
+        table: dict[str, Any],
+    ) -> int | None:
+        qty_col = columns.get("quantity")
+
+        if qty_col is not None:
+            candidate = cells.get(int(qty_col), "")
+
+            if candidate and cls._looks_like_quantity_cell(candidate):
+                return int(qty_col)
+
+        _, inferred_col = cls._infer_row_quantity(cells, code_index=code_index)
+
+        if inferred_col is not None:
+            return inferred_col
+
+        if qty_col is not None:
+            return int(qty_col)
+
+        col_indices = cls._table_column_indices(table)
+        layout_col = cls._layout_default_column(
+            "quantity",
+            column_count=len(col_indices),
+            col_indices=col_indices,
+            assigned=set(),
+        )
+
+        if layout_col is not None:
+            return layout_col
+
+        if code_index > 0:
+            return code_index - 1
+
+        return None
+
+    @classmethod
     def resolve_column_indices(cls, table: dict[str, Any]) -> dict[str, int | None]:
         columns = table.get("columns")
 

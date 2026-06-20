@@ -228,14 +228,14 @@ Campos opcionais para adminDebug / export — **não** viram pergunta ao usuári
 
 Loader: `ChatDrawingPatternsService.bom_column_inference_rule` / `bom_column_default_layout`.
 
-### 15.8.2 — Refinamento de célula (skill orquestra, chat base executa)
+### 15.8.2 — Refinamento de célula (skill orquestra, chat base executa) ✅
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
-| 15.8.2.1 | Skill resolve `(tableId, row, colQtd)` a partir de `code` | domain (skill) | Sem OCR — só índices |
-| 15.8.2.2 | Chama `TableCellRefinementPort.refine_cell` | application (skill) | `drawing_stamp.json` → `bomRowRefinement` (DPI, tentativas) |
-| 15.8.2.3 | Parser QTD MI/PC na skill | domain (skill) | Rejeita ruído descrição |
-| 15.8.2.4 | Regressão 90263149 | tests | QTD colunar × SG1010 |
+| 15.8.2.1 | `ChatDrawingBomTableInterpretationService.locate_quantity_cell` | domain (skill) | Código desalinhado + coluna QTD por layout |
+| 15.8.2.2 | Chama `TableCellRefinementPort.refine_cell` no pipeline live | application (skill) | Com ou sem analyser; `storagePath` + bbox |
+| 15.8.2.3 | Triggers `missing_quantity` / `untrusted_column_quantity` | JSON skill | `drawing_validation.json` → `refinementTriggers` |
+| 15.8.2.4 | Regressão 90263149 live | tests + container | `10090050.quantity=1`, `quantitySource=refined_column` |
 
 ### 15.8.2b — Parse tabular/OCR regional do corpo BOM ✅
 
@@ -354,6 +354,8 @@ Loader: `ChatDrawingPatternsService` / `ChatDrawingBomTableInterpretationService
 ```json
 {
   "refinementTriggers": [
+    "missing_quantity",
+    "untrusted_column_quantity",
     "quantity_from_description",
     "decimal_piece_quantity",
     "intermediate_length_as_quantity",

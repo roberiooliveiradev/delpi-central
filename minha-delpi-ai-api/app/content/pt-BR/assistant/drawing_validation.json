@@ -470,6 +470,8 @@
       "maxAlternateCrosscheckQuantity": 20,
       "lengthToleranceDecapeValuesMm": [1, 2, 3, 5],
       "refinementTriggers": [
+        "missing_quantity",
+        "untrusted_column_quantity",
         "quantity_from_description",
         "decimal_piece_quantity",
         "intermediate_length_as_quantity",
