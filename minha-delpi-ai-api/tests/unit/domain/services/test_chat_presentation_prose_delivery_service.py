@@ -437,3 +437,50 @@ def test_resolve_humanized_lines_for_facts_uses_archive_when_decoupled():
     assert ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(metadata) == [
         "- fato arquivado.",
     ]
+
+
+def test_resolve_llm_synthesis_answer_fallback_uses_data_commentary_when_empty():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "dataCommentary": {
+                    "summary": "O produto **10080045** está cadastrado como MP.",
+                    "attention": ["Roteiro não retornado."],
+                },
+            },
+        }
+    ]
+
+    fallback = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+        "",
+        tool_calls,
+    )
+
+    assert "10080045" in fallback
+    assert "Roteiro não retornado" in fallback
+
+
+def test_resolve_llm_synthesis_answer_fallback_keeps_nonempty_llm_answer():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "dataCommentary": {
+                    "summary": "Resumo da API que não deve substituir o LLM.",
+                },
+            },
+        }
+    ]
+    llm_answer = "Resposta sintetizada pelo modelo com contexto operacional suficiente."
+
+    result = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+        llm_answer,
+        tool_calls,
+    )
+
+    assert result == llm_answer

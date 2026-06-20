@@ -37,3 +37,33 @@ def test_resolve_authorized_persisted_answer_skips_when_llm_synthesis_effect():
 
     assert persisted == llm_answer
     assert persisted != authorized
+
+
+def test_resolve_authorized_persisted_answer_backfills_from_data_commentary_when_llm_empty():
+    from app.domain.services.chat_tool_context_presentation_service import (
+        ChatToolContextPresentationService,
+    )
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "dataCommentary": {
+                    "summary": "O produto **10080045** — TERM. OLHAL M6.",
+                    "attention": ["Plano de inspeção não cadastrado."],
+                },
+            },
+        }
+    ]
+
+    persisted = ChatToolContextPresentationService.resolve_authorized_persisted_answer(
+        "",
+        tool_calls,
+        message="me fale do produto 10080045",
+        skip_replacement=True,
+    )
+
+    assert "10080045" in persisted
+    assert "inspeção" in persisted.lower()

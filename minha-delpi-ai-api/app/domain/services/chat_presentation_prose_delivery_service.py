@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_operational_narrative_synthesis_service import (
     ChatOperationalNarrativeSynthesisService,
 )
@@ -498,3 +499,85 @@ class ChatPresentationProseDeliveryService:
                 continue
 
             metadata[key] = mode
+
+    @classmethod
+    def resolve_llm_synthesis_answer_fallback(
+        cls,
+        answer: str | None,
+        tool_calls: list | None,
+    ) -> str:
+        """Quando síntese LLM falha ou retorna vazio, usa dataCommentary como lead."""
+        body = str(answer or "").strip()
+        min_chars = ChatPresentationProseDeliveryContentService.llm_synthesis_answer_fallback_min_chars()
+
+        if len(body) >= min_chars:
+            return body
+
+        if not isinstance(tool_calls, list):
+            return body
+
+        from app.domain.services.chat_humanized_data_response_service import (
+            ChatHumanizedDataResponseService,
+        )
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            if not cls.is_llm_decoupled_metadata(metadata):
+                continue
+
+            commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(
+                metadata,
+            )
+            fallback = cls._format_data_commentary_lead(commentary)
+
+            if fallback:
+                return fallback
+
+        return body
+
+    @classmethod
+    def _format_data_commentary_lead(cls, commentary: dict[str, Any] | None) -> str:
+        if not isinstance(commentary, dict):
+            return ""
+
+        parts: list[str] = []
+        summary = str(commentary.get("summary") or "").strip()
+
+        if not summary:
+            summary_lines = [
+                str(line).strip()
+                for line in (commentary.get("summaryLines") or [])
+                if str(line or "").strip()
+            ]
+            summary = "\n\n".join(summary_lines[:3])
+
+        if summary:
+            parts.append(summary)
+
+        attention = [
+            str(item).strip()
+            for item in (commentary.get("attention") or [])
+            if str(item or "").strip()
+        ]
+
+        if attention:
+            header = str(
+                ChatAssistantContentService.get(
+                    "presenter_content",
+                    "humanizedNarrative",
+                    "attentionHeader",
+                    default="**Pontos de atenção**",
+                )
+                or "**Pontos de atenção**"
+            ).strip()
+            bullets = "\n".join(f"- {item}" for item in attention[:4])
+            parts.append(f"{header}\n\n{bullets}")
+
+        return "\n\n".join(parts).strip()

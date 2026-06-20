@@ -17,7 +17,8 @@
     "requireResponseModesForLlmProse": true,
     "llmProseEverywhere": true,
     "deprecateHumanizedLinhasAsProse": true,
-    "allowTemplateProseFallback": false
+    "allowTemplateProseFallback": false,
+    "llmSynthesisAnswerFallbackMinChars": 32
   },
   "proseDeliveryByTier": {
     "A": "llm",

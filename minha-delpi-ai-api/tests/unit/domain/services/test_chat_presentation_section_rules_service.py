@@ -100,7 +100,7 @@ def test_purchase_list_section_rules_enable_humanized_stack():
 
     assert plan["presentationProfile"] == "product_purchases"
     assert plan["humanizedSections"] is True
-    assert "profileTables" in plan["narrativeOrder"]
+    assert "operationalTables" in plan["narrativeOrder"]
 
 
 def test_resolve_explicit_narrative_order_from_json_slots():

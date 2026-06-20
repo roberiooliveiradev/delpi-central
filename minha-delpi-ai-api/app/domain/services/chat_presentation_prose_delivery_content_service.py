@@ -49,6 +49,20 @@ class ChatPresentationProseDeliveryContentService:
         return bool(settings.get("deprecateHumanizedLinhasAsProse"))
 
     @classmethod
+    def llm_synthesis_answer_fallback_min_chars(cls) -> int:
+        settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")
+
+        if not isinstance(settings, dict):
+            return 32
+
+        raw = settings.get("llmSynthesisAnswerFallbackMinChars")
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 32
+
+    @classmethod
     def allow_template_prose_fallback(cls) -> bool:
         """P8.1 — template só quando modos OFF e flag explícita (rollback offline)."""
         settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")

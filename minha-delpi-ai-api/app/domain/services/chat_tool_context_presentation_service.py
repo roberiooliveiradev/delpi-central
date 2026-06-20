@@ -408,7 +408,16 @@ class ChatToolContextPresentationService:
             """Substitui texto livre do LLM pelo markdown autorizado da ferramenta quando aplicável."""
 
             if skip_replacement:
-                return str(answer or "").strip()
+                from app.domain.services.chat_presentation_prose_delivery_service import (
+                    ChatPresentationProseDeliveryService,
+                )
+
+                body = str(answer or "").strip()
+
+                return ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+                    body,
+                    safe_tool_calls,
+                )
 
             if not cls.should_persist_authorized_tool_answer(safe_tool_calls, message=message):
                 return str(answer or "").strip()
