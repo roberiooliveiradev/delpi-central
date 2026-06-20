@@ -83,6 +83,12 @@ class ChatPresentationLlmProseDecouplingService:
         metadata["llmProseDecoupled"] = True
         metadata["proseDeliveryMode"] = "llm"
 
+        from app.domain.services.chat_presentation_data_only_prose_service import (
+            ChatPresentationDataOnlyProseService,
+        )
+
+        metadata[ChatPresentationDataOnlyProseService.FLAG] = True
+
         if isinstance(text_presentation, dict):
             text_presentation["markdown"] = ""
 

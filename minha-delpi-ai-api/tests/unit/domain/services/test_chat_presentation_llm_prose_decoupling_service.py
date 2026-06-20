@@ -63,6 +63,7 @@ def test_decouple_metadata_clears_template_and_rebuilds_render_plan(monkeypatch)
     assert ChatPresentationLlmProseDecouplingService.decouple_metadata(metadata)
 
     assert metadata["llmProseDecoupled"] is True
+    assert metadata["dataOnlyPresentation"] is True
     assert metadata["textPresentation"]["markdown"] == ""
     assert metadata["presentationDecision"]["proseSource"] == "llm"
     assert metadata["templateProseArchive"]["textPresentationMarkdown"].startswith("### Status")

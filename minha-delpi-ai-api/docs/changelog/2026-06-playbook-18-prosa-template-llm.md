@@ -32,6 +32,8 @@ python scripts/audit_presentation_prose_delivery.py --check
 
 Workflow: `.github/workflows/minha-delpi-ai-api-presentation.yml` (job `presentation-coverage`).
 
+Smoke live (jun/2026): `SMOKE_SCENARIO=factory_status` — `passed: true`, `templateChars: 0`, `llmProseDecoupled: true`.
+
 ## Referências
 
 - [`playbook-18-prosa-template-llm-desacoplamento.md`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md)
