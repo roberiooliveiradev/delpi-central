@@ -106,6 +106,25 @@ class ChatPresentationProseDeliveryService:
         return str(metadata.get("proseDeliveryMode") or "").strip().lower() == MODE_LLM
 
     @classmethod
+    def should_skip_template_prose_in_pipeline(
+        cls,
+        user_message: str | None,
+        *,
+        path: str | None = None,
+    ) -> bool:
+        if not ChatResponseModeService.is_enabled():
+            return False
+
+        message = str(user_message or "").strip()
+
+        if not message:
+            return False
+
+        return ChatOperationalNarrativeSynthesisService.message_suggests_narrative_llm_synthesis(
+            message,
+        )
+
+    @classmethod
     def _qualifies_llm_prose(
         cls,
         message: str | None,

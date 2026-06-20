@@ -115,19 +115,38 @@ class ChatToolContextExternalActionFormatter:
                         ):
                             titulo = "Eficiência fabril"
 
-                        safe_metadata["humanizedSummary"] = {
+                        from app.domain.services.chat_presentation_data_only_prose_service import (
+                            ChatPresentationDataOnlyProseService,
+                        )
+
+                        prepared = {
                             "titulo": titulo,
                             "linhas": linhas,
                         }
-                        self._merge_data_commentary_into_humanized_summary(safe_metadata)
 
-                        from app.domain.services.chat_tool_context_presentation_service import (
-                            ChatToolContextPresentationService,
-                        )
+                        if isinstance(humanized.get("linhas_detalhe"), list):
+                            prepared["linhas_detalhe"] = humanized.get("linhas_detalhe")
 
-                        ChatToolContextPresentationService.sync_text_presentation_from_humanized(
+                        prepared = ChatPresentationDataOnlyProseService.prepare_humanized_for_metadata(
                             safe_metadata,
+                            prepared,
                         )
+
+                        if prepared:
+                            safe_metadata["humanizedSummary"] = prepared
+
+                        if not ChatPresentationDataOnlyProseService.is_data_only_metadata(
+                            safe_metadata,
+                        ):
+                            self._merge_data_commentary_into_humanized_summary(safe_metadata)
+
+                            from app.domain.services.chat_tool_context_presentation_service import (
+                                ChatToolContextPresentationService,
+                            )
+
+                            ChatToolContextPresentationService.sync_text_presentation_from_humanized(
+                                safe_metadata,
+                            )
 
             return safe_metadata
 

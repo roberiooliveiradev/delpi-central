@@ -32,14 +32,28 @@ class ChatPresentationMetadataPipelineService:
         extract_response_meta: Callable[[Any], dict | None],
     ) -> dict:
         action_path = action.get("path") or ""
+        user_message = str(request_parameters.get("userMessage") or "").strip() or None
+
+        from app.domain.services.chat_presentation_data_only_prose_service import (
+            ChatPresentationDataOnlyProseService,
+        )
+
+        data_only_prose = ChatPresentationDataOnlyProseService.should_apply(
+            user_message,
+            path=resolved_path,
+        )
+
         presentation_data = presenter.prepare_presentation_data(
             sanitized_data,
             path=resolved_path,
         )
-        text_presentation = presenter.build_text_presentation(
-            presentation_data,
-            path=resolved_path,
-        )
+        text_presentation = None
+
+        if not data_only_prose:
+            text_presentation = presenter.build_text_presentation(
+                presentation_data,
+                path=resolved_path,
+            )
         tree_presentation = presenter.build_tree_presentation(
             presentation_data,
             path=resolved_path,
@@ -286,6 +300,9 @@ class ChatPresentationMetadataPipelineService:
             "apiDelpiResponseMeta": extract_response_meta(sanitized_data),
         }
 
+        if data_only_prose:
+            ChatPresentationDataOnlyProseService.mark_metadata(metadata)
+
         user_message = str(request_parameters.get("userMessage") or "").strip() or None
 
         from app.application.services.chat_tool_context_format_service import (
@@ -441,36 +458,40 @@ class ChatPresentationMetadataPipelineService:
 
         ChatPresentationEvidenceFirstLayoutService.activate(metadata)
         ChatPresentationStackOrderService.enrich_metadata(metadata)
-        ChatPresentationEvidenceFirstLayoutService.compose(metadata)
 
-        if not ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
-            ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
+        if not data_only_prose:
+            ChatPresentationEvidenceFirstLayoutService.compose(metadata)
 
-        from app.domain.services.chat_rich_presentation_text_service import (
-            ChatRichPresentationTextService,
-        )
+            if not ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
+                ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
 
-        ChatRichPresentationTextService.compact_metadata_text(metadata)
+            from app.domain.services.chat_rich_presentation_text_service import (
+                ChatRichPresentationTextService,
+            )
 
-        from app.domain.services.chat_presentation_tree_markdown_service import (
-            ChatPresentationTreeMarkdownService,
-        )
+            ChatRichPresentationTextService.compact_metadata_text(metadata)
 
-        ChatPresentationTreeMarkdownService.embed_outline_in_text_presentation(metadata)
+            from app.domain.services.chat_presentation_tree_markdown_service import (
+                ChatPresentationTreeMarkdownService,
+            )
 
-        from app.domain.services.chat_presentation_table_markdown_service import (
-            ChatPresentationTableMarkdownService,
-        )
+            ChatPresentationTreeMarkdownService.embed_outline_in_text_presentation(metadata)
 
-        ChatPresentationTableMarkdownService.embed_tables_in_text_presentation(metadata)
+            from app.domain.services.chat_presentation_table_markdown_service import (
+                ChatPresentationTableMarkdownService,
+            )
 
-        from app.domain.services.chat_presentation_chart_markdown_service import (
-            ChatPresentationChartMarkdownService,
-        )
+            ChatPresentationTableMarkdownService.embed_tables_in_text_presentation(metadata)
 
-        ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
+            from app.domain.services.chat_presentation_chart_markdown_service import (
+                ChatPresentationChartMarkdownService,
+            )
 
-        ChatPresentationEvidenceFirstLayoutService.finalize_narrative_after_embeds(metadata)
+            ChatPresentationChartMarkdownService.embed_charts_in_text_presentation(metadata)
+
+            ChatPresentationEvidenceFirstLayoutService.finalize_narrative_after_embeds(
+                metadata,
+            )
 
         ChatPresentationTitleNormalizationService.normalize_metadata(
             metadata,
@@ -496,7 +517,7 @@ class ChatPresentationMetadataPipelineService:
 
         stack_plan = metadata.get("stackPresentationPlan")
 
-        if isinstance(stack_plan, dict):
+        if isinstance(stack_plan, dict) and not data_only_prose:
             ChatPresentationStackMarkdownService.apply_section_markers(metadata, stack_plan)
 
         from app.domain.services.chat_presentation_render_pipeline_service import (
@@ -504,6 +525,9 @@ class ChatPresentationMetadataPipelineService:
         )
 
         ChatPresentationRenderPipelineService.finalize(metadata)
+
+        if data_only_prose:
+            ChatPresentationDataOnlyProseService.finalize_metadata(metadata)
 
         from app.domain.services.chat_pagination_consolidation_service import (
             ChatPaginationConsolidationService,

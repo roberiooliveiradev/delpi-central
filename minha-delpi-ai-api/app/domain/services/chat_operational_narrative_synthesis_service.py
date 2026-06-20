@@ -62,6 +62,19 @@ class ChatOperationalNarrativeSynthesisService:
         return cls._has_successful_qualifying_tool(tool_calls)
 
     @classmethod
+    def message_suggests_narrative_llm_synthesis(cls, message: str | None) -> bool:
+        """Heurística só com a mensagem — usada no pipeline antes das tools."""
+        kind = cls.resolve_synthesis_kind(message, None)
+
+        if not kind:
+            return False
+
+        if kind == _SYNTHESIS_PRODUCT_OVERVIEW:
+            return ChatProductOverviewIntentService.is_product_overview_message(message)
+
+        return not cls._looks_factual_narrow(message)
+
+    @classmethod
     def build_prompt_policy_addon(
         cls,
         message: str | None,

@@ -1,7 +1,7 @@
 # Playbook 18 — Prosa template × LLM desacoplada
 
 **Projeto:** Minha DELPI Chat IA  
-**Status:** P0 entregue (jun/2026) · P1–P4 roadmap abaixo  
+**Status:** P0 entregue (jun/2026) · P2 parcial entregue (jun/2026) · P1/P3–P4 roadmap abaixo  
 **Relacionado:** [`playbook-13`](./playbook-13-respostas-humanizadas-dados.md), [`playbook-09`](./playbook-09-apresentacao-rica.md), [`chat-response-modes.md`](../architecture/chat-response-modes.md)
 
 ---
@@ -139,18 +139,19 @@ Gate CI: `scripts/audit_presentation_prose_delivery.py --check`
 | P1.4 | Regressão MFE: `presentationMarkdownNormalization.test.ts` decoupled |
 | P1.5 | Gate audit no CI (`audit_presentation_prose_delivery.py --check`) |
 
-### P2 — LLM trata dados sem templates (ago/set 2026)
+### P2 — LLM trata dados sem templates (ago/set 2026) — parcial ✅ jun/2026
 
 Objetivo: **presenter entrega só dados estruturados**; prosa 100% LLM em rotas narrativas.
 
-| # | Entrega |
-|---|---------|
-| P2.1 | Flag `skipTemplateProse` no pipeline quando `resolve_mode == llm` |
-| P2.2 | Presenter mode `data_only`: pula `TextPresentationPresenter` + humanized narrative |
-| P2.3 | `ChatOperationalLlmSynthesisContextService` como única fonte de fatos (sem depender de archive) |
-| P2.4 | Policies LLM por perfil (`factory_status`, `stock`, …) consumindo `dataAnswer` + rows sample |
-| P2.5 | Smoke qualidade: resposta ≠ template, assertividade, modos distintos |
-| P2.6 | Unificar preview/simulate/admin no mesmo `apply_turn` |
+| # | Entrega | Status |
+|---|---------|--------|
+| P2.1 | Flag `dataOnlyPresentation` no pipeline quando mensagem narrativa + modos ON | ✅ `ChatPresentationDataOnlyProseService` |
+| P2.2 | Pular `build_text_presentation` + enrichments markdown (embeds, humanized narrative) | ✅ pipeline |
+| P2.3 | Formatter guard: humanized só `titulo`; linhas arquivadas para fatos LLM | ✅ |
+| P2.4 | `ChatToolContextFormatService` não repopula markdown quando data-only | ✅ |
+| P2.5 | Presenter mode `data_only` completo (sem chamar `present()` para linhas) | ⏳ |
+| P2.6 | Smoke qualidade: resposta ≠ template, assertividade, modos distintos | ⏳ |
+| P2.7 | Unificar preview/simulate/admin no mesmo `apply_turn` | ⏳ |
 
 ### P3 — Generalização e config (set/out 2026)
 

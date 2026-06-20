@@ -202,7 +202,15 @@ class ChatToolContextFormatService:
                 )
                 caption_only = markdown.startswith("###") and "**" not in markdown
 
-                if last_data and (had_kpi_primary or caption_only):
+                from app.domain.services.chat_presentation_data_only_prose_service import (
+                    ChatPresentationDataOnlyProseService,
+                )
+
+                if (
+                    not ChatPresentationDataOnlyProseService.is_data_only_metadata(meta)
+                    and last_data
+                    and (had_kpi_primary or caption_only)
+                ):
                     path = str(meta.get("path") or "")
                     rebuilt = self._presenter.build_text_presentation(
                         last_data,
