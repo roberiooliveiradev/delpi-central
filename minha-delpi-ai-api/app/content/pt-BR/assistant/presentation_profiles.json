@@ -362,8 +362,8 @@
     "product_stock": "llm"
   },
   "proseDeliveryByEntitySet": {
-    "playbookOperational": "template",
-    "productListPresent": "template"
+    "playbookOperational": "llm",
+    "productListPresent": "llm"
   },
   "proseDeliveryByProfile": {
     "factory_status": "llm",
@@ -378,13 +378,13 @@
     "last_purchase": "llm",
     "purchase_price_history": "llm",
     "purchase_budget_history": "llm",
-    "purchase_list": "template",
-    "table_list": "template",
-    "playbook_report": "template",
-    "kpi_series": "template",
-    "kpi_dashboard": "template",
-    "tree_hierarchy": "template",
-    "generic": "template"
+    "purchase_list": "llm",
+    "table_list": "llm",
+    "playbook_report": "llm",
+    "kpi_series": "llm",
+    "kpi_dashboard": "llm",
+    "tree_hierarchy": "llm",
+    "generic": "llm"
   },
   "entityPresentationRouting": {
     "operationalEmptyKeys": {

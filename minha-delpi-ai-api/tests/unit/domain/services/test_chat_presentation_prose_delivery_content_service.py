@@ -10,6 +10,10 @@ def test_require_response_modes_for_llm_prose_default_true():
     assert ChatPresentationProseDeliveryContentService.require_response_modes_for_llm_prose()
 
 
+def test_llm_prose_everywhere_default_true():
+    assert ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
+
+
 def test_metadata_keys_from_bundle():
     assert (
         ChatPresentationProseDeliveryContentService.metadata_key("deliveryMode")
@@ -24,11 +28,11 @@ def test_prose_delivery_mode_for_tier():
     )
     assert (
         ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier("B")
-        == "template"
+        == "llm"
     )
     assert (
         ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier("C")
-        == "template"
+        == "llm"
     )
     assert (
         ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier(None)

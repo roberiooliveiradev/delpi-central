@@ -14,12 +14,14 @@
     }
   },
   "settings": {
-    "requireResponseModesForLlmProse": true
+    "requireResponseModesForLlmProse": true,
+    "llmProseEverywhere": true,
+    "deprecateHumanizedLinhasAsProse": true
   },
   "proseDeliveryByTier": {
     "A": "llm",
-    "B": "template",
-    "C": "template"
+    "B": "llm",
+    "C": "llm"
   },
   "metadataKeys": {
     "deliveryMode": "proseDeliveryMode",

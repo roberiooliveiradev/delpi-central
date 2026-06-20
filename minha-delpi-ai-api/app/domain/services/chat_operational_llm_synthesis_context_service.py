@@ -42,7 +42,16 @@ class ChatOperationalLlmSynthesisContextService:
 
             metadata = tool_call.get("metadata")
 
-            if not isinstance(metadata, dict) or not metadata.get("ok"):
+            if not isinstance(metadata, dict):
+                continue
+
+            if not metadata.get("ok"):
+                if ChatOperationalLlmSynthesisContextContentService.include_failed_tools():
+                    cls._append_unique_lines(
+                        lines,
+                        cls._facts_from_error_metadata(metadata),
+                    )
+
                 continue
 
             cls._append_unique_lines(lines, cls._facts_from_metadata(metadata))
@@ -56,6 +65,33 @@ class ChatOperationalLlmSynthesisContextService:
 
         if path:
             facts.append(f"Rota consultada: {path}")
+
+        coverage = metadata.get("dataCoverageNotice")
+
+        if isinstance(coverage, dict):
+            message = str(coverage.get("message") or "").strip()
+
+            if message:
+                facts.append(message)
+
+        pagination = metadata.get("pagination")
+
+        if isinstance(pagination, dict):
+            if pagination.get("is_complete") is False:
+                facts.append("Resultado parcial — lista truncada pelo limite da consulta.")
+
+            total = pagination.get("total")
+
+            if total not in (None, ""):
+                facts.append(f"Total de registros: {total}")
+
+        data_commentary = metadata.get("dataCommentary")
+
+        if isinstance(data_commentary, dict):
+            narrative = str(data_commentary.get("narrativeInsight") or "").strip()
+
+            if narrative:
+                facts.append(narrative)
 
         data_answer = metadata.get("dataAnswer")
 
@@ -152,6 +188,85 @@ class ChatOperationalLlmSynthesisContextService:
 
                 prefix = f"{table_title} — " if table_title else ""
                 facts.append(f"{prefix}{'; '.join(parts[:4])}")
+
+        facts.extend(cls._facts_from_sql_metadata(metadata))
+
+        return facts
+
+    @classmethod
+    def _facts_from_sql_metadata(cls, metadata: dict[str, Any]) -> list[str]:
+        rows = cls._extract_sql_rows(metadata)
+        path = str(metadata.get("path") or "").lower()
+        is_sql = "/data/sql" in path or "sql" in str(metadata.get("actionId") or "").lower()
+
+        if not rows and not is_sql:
+            return []
+
+        facts: list[str] = []
+        max_rows = ChatOperationalLlmSynthesisContextContentService.limit_int("maxSqlRows", 5)
+
+        for row in rows[:max_rows]:
+            parts = [
+                f"{key}: {value}"
+                for key, value in row.items()
+                if str(value or "").strip()
+            ]
+
+            if parts:
+                facts.append("; ".join(parts[:5]))
+
+        return facts
+
+    @classmethod
+    def _extract_sql_rows(cls, metadata: dict[str, Any]) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        sources: list[dict[str, Any]] = []
+
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(humanized, dict):
+            sources.append(humanized)
+
+        archive = metadata.get("templateProseArchive")
+
+        if isinstance(archive, dict):
+            archived = archive.get("humanizedSummary")
+
+            if isinstance(archived, dict):
+                sources.append(archived)
+
+        for source in sources:
+            sql_rows = source.get("sqlRows")
+
+            if isinstance(sql_rows, list):
+                rows.extend(row for row in sql_rows if isinstance(row, dict))
+
+        return rows
+
+    @classmethod
+    def _facts_from_error_metadata(cls, metadata: dict[str, Any]) -> list[str]:
+        facts: list[str] = []
+        path = str(metadata.get("path") or "").strip()
+
+        if path:
+            facts.append(f"Consulta com falha: {path}")
+
+        status_code = metadata.get("statusCode")
+
+        if status_code not in (None, ""):
+            facts.append(f"HTTP {status_code}")
+
+        for key in ("message", "error", "reason"):
+            text = str(metadata.get(key) or "").strip()
+
+            if text:
+                facts.append(text)
+                break
+
+        preview = str(metadata.get("responsePreview") or "").strip()
+
+        if preview and preview not in facts:
+            facts.append(preview[:400])
 
         return facts
 

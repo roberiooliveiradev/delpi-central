@@ -17,6 +17,8 @@ Narrativa operacional (`summary_then_evidence`, overview de produto) passa a usa
 | P3 | `proseDeliveryByEntity/Profile/Tier/EntitySet`, métricas audit |
 | P4 | MFE `renderPlan` v1-only, linhas fora da UI LLM, playbook-13 §8.7 |
 | P4.4 | Desacoplamento completo — consumidores via helpers + audit `linhas` diretas |
+| P5 | `llmProseEverywhere: true` — inferência substitui template/direct em todas as rotas |
+| P5.1 | Kinds `operational_data`, `sql_result`, `error_recovery` + fatos SQL/erro/playbook |
 
 ## Contrato metadata
 
@@ -39,5 +41,6 @@ Smoke live (jun/2026): `SMOKE_SCENARIO=factory_status` — `passed: true`, `temp
 ## Referências
 
 - [`playbook-18-prosa-template-llm-desacoplamento.md`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md)
+- [`playbook-19-inferencia-llm-universal.md`](../roadmap/playbook-19-inferencia-llm-universal.md)
 - [`chat-response-modes.md`](../architecture/chat-response-modes.md)
 - Regra Cursor: `presentation-operational-decoupling.mdc`

@@ -26,6 +26,9 @@ from app.domain.services.chat_rich_presentation_text_service import (
 
 _SYNTHESIS_PRODUCT_OVERVIEW = "product_overview"
 _SYNTHESIS_SUMMARY_THEN_EVIDENCE = "summary_then_evidence"
+_SYNTHESIS_OPERATIONAL_DATA = "operational_data"
+_SYNTHESIS_SQL_RESULT = "sql_result"
+_SYNTHESIS_ERROR_RECOVERY = "error_recovery"
 
 
 class ChatOperationalNarrativeSynthesisService:
@@ -41,8 +44,34 @@ class ChatOperationalNarrativeSynthesisService:
         if cls._qualifies_summary_then_evidence(message, tool_calls):
             return _SYNTHESIS_SUMMARY_THEN_EVIDENCE
 
+        if cls._tool_calls_match_path_markers(tool_calls, cls._content().sql_path_markers()):
+            return _SYNTHESIS_SQL_RESULT
+
+        if cls._tool_calls_match_path_markers(
+            tool_calls,
+            cls._content().playbook_path_markers(),
+        ) or cls._tool_calls_match_path_markers(
+            tool_calls,
+            cls._content().kpi_path_markers(),
+        ):
+            return _SYNTHESIS_OPERATIONAL_DATA
+
         if tool_calls is None and cls._message_suggests_summary_then_evidence(message):
             return _SYNTHESIS_SUMMARY_THEN_EVIDENCE
+
+        from app.domain.services.chat_presentation_prose_delivery_content_service import (
+            ChatPresentationProseDeliveryContentService,
+        )
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
+            if ChatPresentationProseDeliveryService._has_failed_external_action(tool_calls):
+                return _SYNTHESIS_ERROR_RECOVERY
+
+            if ChatPresentationProseDeliveryService._has_successful_external_action(tool_calls):
+                return _SYNTHESIS_OPERATIONAL_DATA
 
         return None
 
@@ -53,6 +82,25 @@ class ChatOperationalNarrativeSynthesisService:
         tool_calls: list | None = None,
     ) -> bool:
         """Detecta intenção narrativa — preferir ``ChatPresentationProseDeliveryService`` no turno."""
+        from app.domain.services.chat_presentation_prose_delivery_content_service import (
+            ChatPresentationProseDeliveryContentService,
+        )
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if (
+            ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
+            and ChatPresentationProseDeliveryService.llm_prose_globally_available()
+        ):
+            if ChatPresentationProseDeliveryService._has_successful_external_action(
+                tool_calls,
+            ):
+                return True
+
+            if ChatPresentationProseDeliveryService._has_failed_external_action(tool_calls):
+                return True
+
         kind = cls.resolve_synthesis_kind(message, tool_calls)
 
         if not kind:
@@ -91,6 +139,27 @@ class ChatOperationalNarrativeSynthesisService:
         tool_calls: list | None = None,
     ) -> str:
         kind = cls.resolve_synthesis_kind(message, tool_calls)
+
+        if not kind:
+            from app.domain.services.chat_presentation_prose_delivery_content_service import (
+                ChatPresentationProseDeliveryContentService,
+            )
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            if (
+                ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
+                and ChatPresentationProseDeliveryService.llm_prose_globally_available()
+            ):
+                if ChatPresentationProseDeliveryService._has_failed_external_action(
+                    tool_calls,
+                ):
+                    kind = _SYNTHESIS_ERROR_RECOVERY
+                elif ChatPresentationProseDeliveryService._has_successful_external_action(
+                    tool_calls,
+                ):
+                    kind = kind or _SYNTHESIS_OPERATIONAL_DATA
 
         if not kind:
             return ""
@@ -251,6 +320,31 @@ class ChatOperationalNarrativeSynthesisService:
                 return mapped
 
         return None
+
+    @classmethod
+    def _tool_calls_match_path_markers(
+        cls,
+        tool_calls: list | None,
+        markers: tuple[str, ...],
+    ) -> bool:
+        if not isinstance(tool_calls, list) or not markers:
+            return False
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+
+            if any(marker in path for marker in markers):
+                return True
+
+        return False
 
     @classmethod
     def _content(cls) -> type[ChatOperationalNarrativeSynthesisContentService]:

@@ -84,3 +84,63 @@ def test_build_prompt_policy_includes_facts_block():
 
     assert "Rápida" in addon or "curta" in addon.lower()
     assert "PA PRODUZIDO" in addon
+
+
+def test_collect_fact_lines_from_failed_tool():
+    metadata = {
+        "ok": False,
+        "path": "/production/consumption/top-items",
+        "statusCode": 503,
+        "message": "Serviço indisponível",
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert any("503" in line for line in lines)
+    assert any("indisponível" in line.lower() for line in lines)
+
+
+def test_collect_fact_lines_from_sql_rows():
+    metadata = {
+        "ok": True,
+        "path": "/data/sql",
+        "humanizedSummary": {
+            "sqlRows": [{"produto": "90269001", "saldo": "150"}],
+        },
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert any("90269001" in line for line in lines)
+    assert any("150" in line for line in lines)
+
+
+def test_resolve_synthesis_kind_playbook_path():
+    from app.domain.services.chat_operational_narrative_synthesis_service import (
+        ChatOperationalNarrativeSynthesisService,
+    )
+
+    kind = ChatOperationalNarrativeSynthesisService.resolve_synthesis_kind(
+        "top itens consumo",
+        _tool_calls(
+            {
+                "ok": True,
+                "path": "/production/consumption/top-items",
+            }
+        ),
+    )
+
+    assert kind == "operational_data"
+
+
+def test_resolve_synthesis_kind_error_recovery():
+    from app.domain.services.chat_operational_narrative_synthesis_service import (
+        ChatOperationalNarrativeSynthesisService,
+    )
+
+    kind = ChatOperationalNarrativeSynthesisService.resolve_synthesis_kind(
+        "top itens consumo",
+        _tool_calls({"ok": False, "path": "/production/consumption/top-items"}),
+    )
+
+    assert kind == "error_recovery"

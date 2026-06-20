@@ -183,8 +183,11 @@ def audit_tier_and_entity_set_config() -> list[str]:
     prose = _load_json(PROSE_DELIVERY_JSON)
     profiles = _load_json(PROFILES_JSON)
 
+    settings = prose.get("settings") if isinstance(prose.get("settings"), dict) else {}
+    llm_everywhere = bool(settings.get("llmProseEverywhere"))
+
     by_tier = prose.get("proseDeliveryByTier")
-    required_tiers = ("A", "B")
+    required_tiers = ("A", "B", "C") if llm_everywhere else ("A", "B")
 
     if not isinstance(by_tier, dict):
         issues.append("presentation_prose_delivery.json sem proseDeliveryByTier")
@@ -197,23 +200,38 @@ def audit_tier_and_entity_set_config() -> list[str]:
                     f"proseDeliveryByTier.{tier} ausente ou inválido (esperado template|llm)"
                 )
 
-        if str(by_tier.get("A") or "").lower() != "llm":
-            issues.append("proseDeliveryByTier.A deve ser llm (narrativa tier A)")
+        if llm_everywhere:
+            for tier in required_tiers:
+                if str(by_tier.get(tier) or "").lower() != "llm":
+                    issues.append(
+                        f"proseDeliveryByTier.{tier} deve ser llm (llmProseEverywhere ativo)"
+                    )
+        else:
+            if str(by_tier.get("A") or "").lower() != "llm":
+                issues.append("proseDeliveryByTier.A deve ser llm (narrativa tier A)")
 
-        if str(by_tier.get("B") or "").lower() != "template":
-            issues.append("proseDeliveryByTier.B deve ser template (KPI/listagem tier B)")
+            if str(by_tier.get("B") or "").lower() != "template":
+                issues.append("proseDeliveryByTier.B deve ser template (KPI/listagem tier B)")
+
+    if llm_everywhere and not settings.get("deprecateHumanizedLinhasAsProse"):
+        issues.append(
+            "llmProseEverywhere ativo exige deprecateHumanizedLinhasAsProse=true (playbook-19 P6)"
+        )
 
     by_entity_set = profiles.get("proseDeliveryByEntitySet")
 
     if not isinstance(by_entity_set, dict):
         issues.append("presentation_profiles.json sem proseDeliveryByEntitySet")
     else:
+        expected_entity_set_mode = "llm" if llm_everywhere else "template"
+
         for set_key in ("playbookOperational", "productListPresent"):
             mode = str(by_entity_set.get(set_key) or "").strip().lower()
 
-            if mode != "template":
+            if mode != expected_entity_set_mode:
                 issues.append(
-                    f"proseDeliveryByEntitySet.{set_key} deve ser template (listagem auditável)"
+                    f"proseDeliveryByEntitySet.{set_key} deve ser {expected_entity_set_mode}"
+                    + (" (llmProseEverywhere ativo)" if llm_everywhere else " (listagem auditável)")
                 )
 
     return issues

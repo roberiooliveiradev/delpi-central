@@ -183,6 +183,9 @@ Objetivo: **presenter entrega só dados estruturados**; prosa 100% LLM em rotas 
 | P4.2 | Deprecar `humanizedSummary.linhas` como prosa UI | ✅ `resolveRenderableHumanizedLines` ignora em `proseDeliveryMode=llm` |
 | P4.3 | Consolidar playbook-13 § LLM como caminho primário narrativo | ✅ gate único em `ChatResponseModeService` + §2.1/§8.7 playbook-13 |
 | P4.4 | Desacoplamento completo — migrar consumidores pós-pipeline | ✅ helpers display/facts + audit leituras diretas |
+| P5 | Inferência LLM default global (`llmProseEverywhere`) | ✅ JSON + gate + pipeline data-only universal |
+
+**Próximo:** [Playbook 19 — inferência 100%](./playbook-19-inferencia-llm-universal.md) (P5.6–P8).
 
 ---
 

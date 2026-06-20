@@ -34,6 +34,18 @@ class ChatOperationalNarrativeSynthesisContentService:
         return tuple(ChatAssistantContentService.list(_BUNDLE, "pathMarkers"))
 
     @classmethod
+    def playbook_path_markers(cls) -> tuple[str, ...]:
+        return tuple(ChatAssistantContentService.list(_BUNDLE, "playbookPathMarkers"))
+
+    @classmethod
+    def sql_path_markers(cls) -> tuple[str, ...]:
+        return tuple(ChatAssistantContentService.list(_BUNDLE, "sqlPathMarkers"))
+
+    @classmethod
+    def kpi_path_markers(cls) -> tuple[str, ...]:
+        return tuple(ChatAssistantContentService.list(_BUNDLE, "kpiPathMarkers"))
+
+    @classmethod
     def narrative_markers(cls) -> tuple[str, ...]:
         return tuple(ChatAssistantContentService.list(_BUNDLE, "narrativeMarkers"))
 

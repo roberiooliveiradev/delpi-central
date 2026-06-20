@@ -17,6 +17,21 @@
     "/production-status",
     "/shipping-status"
   ],
+  "playbookPathMarkers": [
+    "/production/",
+    "/playbook",
+    "/top-items",
+    "/consumption/",
+    "/eficiencia"
+  ],
+  "sqlPathMarkers": [
+    "/data/sql"
+  ],
+  "kpiPathMarkers": [
+    "/kpi",
+    "/indicators",
+    "/metrics"
+  ],
   "narrativeMarkers": [
     "como esta",
     "como está",
@@ -53,6 +68,21 @@
       "thinker": "product-overview-thinker.md"
     },
     "summary_then_evidence": {
+      "fast": "operational-synthesis-fast.md",
+      "normal": "operational-synthesis.md",
+      "thinker": "operational-synthesis-thinker.md"
+    },
+    "operational_data": {
+      "fast": "operational-synthesis-fast.md",
+      "normal": "operational-synthesis.md",
+      "thinker": "operational-synthesis-thinker.md"
+    },
+    "sql_result": {
+      "fast": "operational-synthesis-fast.md",
+      "normal": "operational-synthesis.md",
+      "thinker": "operational-synthesis-thinker.md"
+    },
+    "error_recovery": {
       "fast": "operational-synthesis-fast.md",
       "normal": "operational-synthesis.md",
       "thinker": "operational-synthesis-thinker.md"

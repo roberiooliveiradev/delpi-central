@@ -135,7 +135,9 @@ def test_apply_turn_direct_answer_policy_stock_narrative_forces_llm():
     assert effect == "llm_synthesis"
 
 
-def test_apply_turn_direct_answer_policy_stock_factual_stays_direct():
+def test_apply_turn_direct_answer_policy_stock_factual_uses_llm_when_everywhere(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
         message="estoque do produto 10080045 filial 01 quantidade",
         response_mode="normal",
@@ -159,12 +161,26 @@ def test_apply_turn_direct_answer_policy_stock_factual_stays_direct():
         ],
     )
 
-    assert direct == "| Filial | Qtd |"
-    assert skip_rag is True
-    assert effect == "operational_direct"
+    assert direct is None
+    assert skip_rag is False
+    assert effect == "llm_synthesis"
 
 
-def test_apply_turn_direct_answer_policy_stock_stays_operational_direct_for_single_table():
+def test_apply_turn_direct_answer_policy_stock_stays_operational_direct_when_everywhere_off(
+    monkeypatch,
+):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
         message="estoque do produto 10080045",
         response_mode="thinker",
@@ -183,8 +199,55 @@ def test_apply_turn_direct_answer_policy_stock_stays_operational_direct_for_sing
     assert effect == "operational_direct"
 
 
-def test_apply_turn_direct_answer_policy_playbook_template_stays_direct(monkeypatch):
+def test_apply_turn_direct_answer_policy_playbook_uses_llm_when_everywhere(monkeypatch):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="quais os top itens de consumo na produção?",
+        response_mode="normal",
+        direct_answer="### Top itens\n\nLista.",
+        skip_rag=True,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/production/consumption/top-items",
+                    "apiDelpiResponseMeta": {
+                        "entity": "production_consumption_top_items",
+                    },
+                    "presentationDecision": {
+                        "selected": "table",
+                        "layoutMode": "single",
+                    },
+                    "textPresentation": {
+                        "type": "markdown",
+                        "markdown": "### Top itens\n\nLista.",
+                    },
+                },
+            }
+        ],
+    )
+
+    assert direct is None
+    assert skip_rag is False
+    assert effect == "llm_synthesis"
+
+
+def test_apply_turn_direct_answer_policy_playbook_template_stays_direct_when_everywhere_off(
+    monkeypatch,
+):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
 
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
         message="quais os top itens de consumo na produção?",

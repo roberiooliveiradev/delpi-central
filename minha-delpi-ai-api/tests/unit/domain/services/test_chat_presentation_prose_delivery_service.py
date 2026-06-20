@@ -166,6 +166,40 @@ def test_resolve_mode_direct_for_playbook_single_table():
         tool_calls,
     )
 
+    assert mode == MODE_LLM
+
+
+def test_resolve_mode_direct_when_llm_everywhere_disabled(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90269001/stock",
+                "apiDelpiResponseMeta": {"entity": "product_stock"},
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                },
+            },
+        }
+    ]
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "qual o saldo na filial 01?",
+        tool_calls,
+    )
+
     assert mode == MODE_DIRECT
 
 
@@ -211,7 +245,7 @@ def test_is_llm_decoupled_metadata_reads_prose_source():
     )
 
 
-def test_entity_template_profile_blocks_llm_prose(monkeypatch):
+def test_entity_template_profile_uses_llm_when_everywhere(monkeypatch):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
 
     tool_calls = _stack_tool_calls()
@@ -221,6 +255,48 @@ def test_entity_template_profile_blocks_llm_prose(monkeypatch):
 
     mode = ChatPresentationProseDeliveryService.resolve_mode(
         "como esta o status fabril do produto 90269001?",
+        tool_calls,
+    )
+
+    assert mode == MODE_LLM
+
+
+def test_playbook_entity_stays_template_for_non_narrative_when_profile_template(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryService,
+        "_entity_prose_delivery_mode",
+        lambda **kwargs: MODE_TEMPLATE,
+    )
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/production/consumption/top-items",
+                "apiDelpiResponseMeta": {
+                    "entity": "production_consumption_top_items",
+                },
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                },
+            },
+        }
+    ]
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "quais os top itens de consumo na producao?",
         tool_calls,
     )
 

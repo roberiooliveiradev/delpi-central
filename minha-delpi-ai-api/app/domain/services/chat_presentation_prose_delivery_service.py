@@ -31,6 +31,16 @@ class ChatPresentationProseDeliveryService:
     ) -> str:
         del response_mode
 
+        if (
+            ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
+            and cls.llm_prose_globally_available()
+        ):
+            if cls._has_successful_external_action(tool_calls):
+                return MODE_LLM
+
+            if cls._has_failed_external_action(tool_calls):
+                return MODE_LLM
+
         if cls._qualifies_llm_prose(message, tool_calls):
             return MODE_LLM
 
@@ -38,6 +48,38 @@ class ChatPresentationProseDeliveryService:
             return MODE_DIRECT
 
         return MODE_TEMPLATE
+
+    @classmethod
+    def _has_successful_external_action(cls, tool_calls: list | None) -> bool:
+        if not isinstance(tool_calls, list):
+            return False
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if isinstance(metadata, dict) and metadata.get("ok"):
+                return True
+
+        return False
+
+    @classmethod
+    def _has_failed_external_action(cls, tool_calls: list | None) -> bool:
+        if not isinstance(tool_calls, list):
+            return False
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if isinstance(metadata, dict) and metadata.get("ok") is False:
+                return True
+
+        return False
 
     @classmethod
     def apply_turn(
@@ -272,6 +314,12 @@ class ChatPresentationProseDeliveryService:
         if not cls.llm_prose_globally_available():
             return False
 
+        if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
+            return bool(str(path or "").strip())
+
+        if ChatPresentationProseDeliveryContentService.deprecate_humanized_linhas_as_prose():
+            return bool(str(path or "").strip())
+
         message = str(user_message or "").strip()
 
         if not message:
@@ -347,6 +395,9 @@ class ChatPresentationProseDeliveryService:
         message: str | None,
         tool_calls: list | None,
     ) -> bool:
+        if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
+            return False
+
         if not isinstance(tool_calls, list):
             return False
 

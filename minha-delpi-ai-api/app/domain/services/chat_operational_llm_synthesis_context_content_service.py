@@ -25,9 +25,28 @@ class ChatOperationalLlmSynthesisContextContentService:
 
     @classmethod
     def limit_int(cls, key: str, default: int) -> int:
+        node = ChatAssistantContentService.get_node(_BUNDLE)
+
+        if isinstance(node, dict) and key in node:
+            raw = node.get(key)
+
+            try:
+                return int(raw)
+            except (TypeError, ValueError):
+                return default
+
         raw = ChatAssistantContentService.get(_BUNDLE, key, default=str(default))
 
         try:
             return int(raw)
         except (TypeError, ValueError):
             return default
+
+    @classmethod
+    def include_failed_tools(cls) -> bool:
+        node = ChatAssistantContentService.get_node(_BUNDLE)
+
+        if not isinstance(node, dict):
+            return False
+
+        return bool(node.get("includeFailedTools"))

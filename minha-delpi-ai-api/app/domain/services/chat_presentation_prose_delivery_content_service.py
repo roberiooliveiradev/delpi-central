@@ -17,14 +17,36 @@ class ChatPresentationProseDeliveryContentService:
 
     @classmethod
     def require_response_modes_for_llm_prose(cls) -> bool:
-        return bool(
-            ChatAssistantContentService.get(
-                _BUNDLE,
-                "settings",
-                "requireResponseModesForLlmProse",
-                default=True,
-            )
-        )
+        settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")
+
+        if not isinstance(settings, dict):
+            return True
+
+        value = settings.get("requireResponseModesForLlmProse")
+
+        if value is None:
+            return True
+
+        return bool(value)
+
+    @classmethod
+    def llm_prose_everywhere(cls) -> bool:
+        """Quando true, todo turno com tool operacional ok usa inferência LLM (sem template/direct)."""
+        settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")
+
+        if not isinstance(settings, dict):
+            return False
+
+        return bool(settings.get("llmProseEverywhere"))
+
+    @classmethod
+    def deprecate_humanized_linhas_as_prose(cls) -> bool:
+        settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")
+
+        if not isinstance(settings, dict):
+            return False
+
+        return bool(settings.get("deprecateHumanizedLinhasAsProse"))
 
     @classmethod
     def prose_delivery_mode_for_tier(cls, tier: str | None) -> str | None:

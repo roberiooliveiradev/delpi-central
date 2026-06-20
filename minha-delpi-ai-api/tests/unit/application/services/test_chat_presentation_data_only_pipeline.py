@@ -72,7 +72,7 @@ def test_factory_status_pipeline_data_only_when_modes_disabled_require_false(mon
     assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
 
 
-def test_factual_stock_pipeline_keeps_template_markdown():
+def test_factual_stock_pipeline_skips_template_when_llm_everywhere():
     envelope = load_api_delpi_fixture_with_meta("product_stock_90269001.json")
     path = "/products/90269001/stock"
 
@@ -85,6 +85,7 @@ def test_factual_stock_pipeline_keeps_template_markdown():
         },
     )
 
-    assert not metadata.get("dataOnlyPresentation")
+    assert metadata.get("dataOnlyPresentation") is True
     markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "").strip()
-    assert markdown
+    assert markdown == ""
+    assert metadata.get("proseDeliveryMode") == "llm"

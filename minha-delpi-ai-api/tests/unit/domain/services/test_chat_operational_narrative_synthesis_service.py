@@ -66,7 +66,7 @@ def test_factory_status_stack_forces_llm_in_normal_mode():
     )
 
 
-def test_factual_narrow_stock_without_narrative_marker_skips_synthesis():
+def test_factual_narrow_stock_forces_llm_when_everywhere():
     metadata = {
         "ok": True,
         "path": "/products/10080045/stock",
@@ -77,9 +77,39 @@ def test_factual_narrow_stock_without_narrative_marker_skips_synthesis():
         "stackPresentationPlan": {
             "presentationProfile": "product_stock",
         },
-        "textPresentation": {
-            "type": "markdown",
-            "markdown": "### Estoque\n\nFilial 01: 10",
+    }
+
+    assert ChatOperationalNarrativeSynthesisService.should_force_llm_synthesis(
+        "estoque do produto 10080045 filial 01 quantidade",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": metadata,
+            }
+        ],
+    )
+
+
+def test_factual_narrow_stock_skips_synthesis_when_everywhere_off(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+
+    metadata = {
+        "ok": True,
+        "path": "/products/10080045/stock",
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+        },
+        "stackPresentationPlan": {
+            "presentationProfile": "product_stock",
         },
     }
 
