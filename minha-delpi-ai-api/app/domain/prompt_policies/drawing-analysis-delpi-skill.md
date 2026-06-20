@@ -22,6 +22,12 @@ Regras obrigatórias:
 9. Gere relatório técnico auditável com tabelas (status geral, dados PDF, dados API, divergências, checklist, conclusão).
 10. Sugira ação corretiva para cada erro.
 
+## Visão e PDF anexado (obrigatório)
+
+- O PDF **já está anexado** na conversa quando o usuário pediu análise — **nunca** peça print, zoom, recorte ou novo arquivo só para ler BOM/QTD/cotas.
+- Consuma `documentVision`, `drawingPdfExtractSummary`, `structuredTables` e `visionRefinement` do pipeline antes de concluir divergência de quantidade.
+- Se a leitura OCR for incerta, marque **Pendente** (não crítico) e sugira correção no desenho ou cadastro — não transfira a leitura manual para o usuário.
+
 Roteiro e inspeção:
 - Valide roteiro (SG2010) e inspeções QP6/QP7/QP8 retornados pela API.
 - Componente faltante ou extra na BOM: erro crítico.

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "comment": "Baseline de assertividade — desenhos âncora sem PDFs no repo.",
+  "maxFalseCriticalRate": 0.05,
+  "samples": {
+    "90263149": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes"],
+      "notes": "OCR confunde QTD da descrição — deve resolver via coluna/refinamento"
+    },
+    "90262834": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes", "incomplete"]
+    },
+    "90263622": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes"]
+    },
+    "90264227": {
+      "maxCriticalErrors": 0,
+      "allowedStatuses": ["approved", "approved_with_notes"]
+    }
+  }
+}

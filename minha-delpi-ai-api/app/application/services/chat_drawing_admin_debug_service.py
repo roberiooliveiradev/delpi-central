@@ -106,6 +106,26 @@ class ChatDrawingAdminDebugService:
                         ),
                     }
                 )
+
+            bom_refine = pdf_summary.get("bomVisionRefinement")
+
+            if isinstance(bom_refine, dict) and bom_refine.get("triggered"):
+                refined = bom_refine.get("codesRefined") if isinstance(
+                    bom_refine.get("codesRefined"), list
+                ) else []
+                phases.append(
+                    {
+                        "id": "bom_qty_refine",
+                        "label": "Refinamento QTD BOM (coluna/OCR)",
+                        "status": "ok" if refined else "warn",
+                        "detail": (
+                            f"tabelas={bom_refine.get('tableCount') or 0}, "
+                            f"colunas={bom_refine.get('columnRowCount') or 0}, "
+                            f"refinados={len(refined)}"
+                        ),
+                        "codesRefined": refined,
+                    }
+                )
         else:
             phases.append(
                 {

@@ -44,6 +44,26 @@ def test_column_quantity_source_skips_description_noise():
     assert reason is None
 
 
+def test_mismatch_status_requires_trusted_quantity_source_for_critical():
+    pdf_extract = {
+        "bomRows": [
+            {
+                "code": "10090050",
+                "quantity": "6.35",
+                "quantitySource": "line_heuristic",
+                "quantityTrusted": True,
+            }
+        ]
+    }
+    status = ChatDrawingBomQuantityAssertivenessService.mismatch_status(
+        trusted=True,
+        pdf_extract=pdf_extract,
+        code="10090050",
+    )
+
+    assert status == "pending"
+
+
 def test_rejects_intermediate_length_as_quantity():
     row = {
         "code": "50212969",

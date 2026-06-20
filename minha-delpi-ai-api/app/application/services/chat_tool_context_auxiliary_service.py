@@ -61,6 +61,11 @@ class ChatToolContextAuxiliaryService:
             if product_code_source:
                 summary["productCodeSource"] = product_code_source
 
+            refinement = pdf_extract.get("bomVisionRefinement")
+
+            if isinstance(refinement, dict) and refinement:
+                summary["bomVisionRefinement"] = refinement
+
             return summary
 
     def _build_drawing_analysis_enrichment(

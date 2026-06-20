@@ -102,21 +102,60 @@ class ChatDrawingBomQuantityAssertivenessService:
         }
 
     @classmethod
-    def mismatch_status(cls, *, trusted: bool) -> str:
-        if trusted:
+    def mismatch_status(
+        cls,
+        *,
+        trusted: bool,
+        pdf_extract: dict | None = None,
+        code: str = "",
+    ) -> str:
+        if not trusted:
             return str(
                 ChatDrawingPatternsService.bom_quantity_semantics_rule(
-                    "mismatchStatusWhenTrusted",
-                    "critical_error",
+                    "mismatchStatusWhenUncertain",
+                    "pending",
                 )
             )
 
+        required_sources = ChatDrawingPatternsService.bom_quantity_critical_requires_sources()
+
+        if required_sources:
+            row = cls._bom_row(pdf_extract, code)
+            source = str(row.get("quantitySource") or "").strip().lower()
+
+            if source not in required_sources:
+                if ChatDrawingPatternsService.bom_quantity_refinement_exhausted_pending():
+                    return str(
+                        ChatDrawingPatternsService.bom_quantity_semantics_rule(
+                            "mismatchStatusWhenUncertain",
+                            "pending",
+                        )
+                    )
+
         return str(
             ChatDrawingPatternsService.bom_quantity_semantics_rule(
-                "mismatchStatusWhenUncertain",
-                "pending",
+                "mismatchStatusWhenTrusted",
+                "critical_error",
             )
         )
+
+    @classmethod
+    def _bom_row(cls, pdf_extract: dict | None, code: str) -> dict[str, Any]:
+        normalized = str(code or "").strip()
+
+        if not normalized or not isinstance(pdf_extract, dict):
+            return {}
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            row_code = str(row.get("code") or "").strip()
+
+            if row_code == normalized:
+                return row
+
+        return {}
 
     @classmethod
     def _pick_best_evidence(

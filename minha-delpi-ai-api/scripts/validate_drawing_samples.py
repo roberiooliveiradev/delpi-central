@@ -4,10 +4,12 @@
 Uso:
   cd minha-delpi-ai-api
   DRAWING_VALIDATE_CODES=90264227 python scripts/validate_drawing_samples.py
+  DRAWING_VALIDATE_CODES=90263149,90264227 python scripts/validate_drawing_samples.py --assertiveness-gate
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -216,6 +218,8 @@ def _validate_code(code: str, *, token: str) -> dict:
     row["extractionConfidence"] = (analysis.get("validationLayers") or {}).get(
         "extractionConfidence"
     )
+    row["visionRefinement"] = analysis.get("visionRefinement")
+    row["bomVisionRefinement"] = (pdf_extract or {}).get("bomVisionRefinement")
 
     for item in analysis.get("items") or []:
         if not isinstance(item, dict):
@@ -242,6 +246,14 @@ def _validate_code(code: str, *, token: str) -> dict:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Valida desenhos alvo (API + PDF local)")
+    parser.add_argument(
+        "--assertiveness-gate",
+        action="store_true",
+        help="Falha se false_critical_rate > limiar da baseline (15.8.6)",
+    )
+    args = parser.parse_args()
+
     print(f"Base URL: {_BASE_URL}{_API_PREFIX}\n")
 
     token = _fetch_token()
@@ -274,6 +286,38 @@ def main() -> int:
         for row in rows
         if row.get("analyserHttp") != 200 or not row.get("hasProduct")
     ]
+
+    if args.assertiveness_gate:
+        chat_root = Path(__file__).resolve().parents[1]
+
+        if str(chat_root) not in sys.path:
+            sys.path.insert(0, str(chat_root))
+
+        from app.application.services.chat_drawing_validation_assertiveness_metrics_service import (
+            ChatDrawingValidationAssertivenessMetricsService,
+        )
+
+        metrics = ChatDrawingValidationAssertivenessMetricsService.aggregate(rows)
+        print(
+            "\nAssertividade: "
+            f"false_critical_rate={metrics.get('falseCriticalRate')} "
+            f"(limiar={metrics.get('maxFalseCriticalRate')}) "
+            f"pending_avg={metrics.get('pendingRateAvg')}"
+        )
+
+        for sample in metrics.get("samples") or []:
+            flag = "FAIL" if sample.get("falseCritical") or not sample.get("statusOk") else "OK"
+            print(
+                f"  [{flag}] {sample.get('code')} "
+                f"críticos={sample.get('criticalErrors')} "
+                f"status={sample.get('validationStatus')}"
+            )
+
+        if not metrics.get("passesGate"):
+            print("\n✗ Gate de assertividade reprovado.")
+            return 1
+
+        print("\n✓ Gate de assertividade aprovado.")
 
     return 1 if failed else 0
 

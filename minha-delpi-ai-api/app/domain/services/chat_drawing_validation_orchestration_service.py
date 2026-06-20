@@ -299,7 +299,7 @@ class ChatDrawingValidationOrchestrationService:
 
         storage_path = str(source_meta.get("storagePath") or "").strip()
 
-        return ChatDrawingBomVisionRefinementService.apply(
+        return ChatDrawingBomVisionRefinementService.refine_if_needed(
             pdf_extract,
             storage_path=storage_path,
             analyser_root=analyser_root,
@@ -796,6 +796,11 @@ class ChatDrawingValidationOrchestrationService:
                     if extraction_confidence
                     else {}
                 ),
+                **(
+                    {"visionRefinement": cls._vision_refinement_metadata(pdf_meta)}
+                    if cls._vision_refinement_metadata(pdf_meta)
+                    else {}
+                ),
             },
             "productSummary": {
                 "code": product.get("code"),
@@ -803,6 +808,30 @@ class ChatDrawingValidationOrchestrationService:
                 "last_revision_date": product.get("last_revision_date"),
             },
             "analyserRoot": analyser_root if isinstance(analyser_root, dict) else {},
+        }
+
+    @classmethod
+    def _vision_refinement_metadata(cls, pdf_meta: dict[str, Any]) -> dict[str, Any] | None:
+        refinement = pdf_meta.get("bomVisionRefinement")
+
+        if not isinstance(refinement, dict) or not refinement:
+            return None
+
+        attempts = refinement.get("attempts") if isinstance(refinement.get("attempts"), list) else []
+        codes_refined = (
+            refinement.get("codesRefined")
+            if isinstance(refinement.get("codesRefined"), list)
+            else []
+        )
+
+        return {
+            "attempted": bool(refinement.get("triggered")),
+            "resolved": len(codes_refined),
+            "tableCount": refinement.get("tableCount"),
+            "columnRowCount": refinement.get("columnRowCount"),
+            "attemptCount": len(attempts),
+            "codesRefined": codes_refined,
+            "stoppedReason": refinement.get("stoppedReason"),
         }
 
     @classmethod

@@ -717,6 +717,19 @@ class ChatDrawingPatternsService:
         return node.get(key, default) if isinstance(node, dict) else default
 
     @classmethod
+    def bom_quantity_critical_requires_sources(cls) -> frozenset[str]:
+        items = cls.bom_quantity_semantics_rule("criticalRequiresQuantitySource", [])
+
+        if not isinstance(items, list):
+            return frozenset()
+
+        return frozenset(str(item).strip().lower() for item in items if str(item).strip())
+
+    @classmethod
+    def bom_quantity_refinement_exhausted_pending(cls) -> bool:
+        return bool(cls.bom_quantity_semantics_rule("refinementExhaustedPending", True))
+
+    @classmethod
     def bom_quantity_refinement_triggers(cls) -> frozenset[str]:
         items = cls.bom_quantity_semantics_rule("refinementTriggers", [])
 

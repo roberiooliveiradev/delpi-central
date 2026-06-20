@@ -21,6 +21,22 @@ from app.domain.services.chat_pdf_table_structure_service import (
 
 class ChatDrawingBomVisionRefinementService:
     @classmethod
+    def refine_if_needed(
+        cls,
+        pdf_extract: dict[str, Any],
+        *,
+        storage_path: str = "",
+        analyser_root: dict | None = None,
+        product_code: str | None = None,
+    ) -> dict[str, Any]:
+        return cls.apply(
+            pdf_extract,
+            storage_path=storage_path,
+            analyser_root=analyser_root,
+            product_code=product_code,
+        )
+
+    @classmethod
     def apply(
         cls,
         pdf_extract: dict[str, Any],

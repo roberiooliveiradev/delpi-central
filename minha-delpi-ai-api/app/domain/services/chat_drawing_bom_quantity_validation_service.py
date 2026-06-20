@@ -192,6 +192,8 @@ class ChatDrawingBomQuantityValidationService:
                     "bom_quantity_mismatch",
                     status=ChatDrawingBomQuantityAssertivenessService.mismatch_status(
                         trusted=mismatch.trusted,
+                        pdf_extract=pdf_extract,
+                        code=mismatch.code,
                     ),
                     pdf_evidence=content.evidence_format(
                         mismatch.pdf_evidence_key,
