@@ -1,9 +1,11 @@
 {
   "title": "Fatos já consultados (responda com base neles — não peça acesso):",
+  "prosePanelRule": "A resposta ao usuário combina **prosa consultiva** (interpretação, destaques, riscos, próximos passos) com **componentes visuais** já renderizados no painel (tabela, árvore, gráfico, KPI). **Não** transcreva listas, tabelas GFM, cadastro campo a campo nem árvore no texto — o painel exibe os dados; você interpreta.",
   "maxChars": 900,
   "maxHumanizedLines": 4,
   "maxTableRows": 4,
   "maxProfileTableRows": 8,
+  "maxProfileTableRowsWhenDecoupled": 0,
   "maxSqlRows": 5,
   "maxHighlights": 4,
   "maxLimitations": 2,

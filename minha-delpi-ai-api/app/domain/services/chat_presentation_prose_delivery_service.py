@@ -548,18 +548,31 @@ class ChatPresentationProseDeliveryService:
             return ""
 
         parts: list[str] = []
-        summary = str(commentary.get("summary") or "").strip()
+        highlights = [
+            str(item.get("text") if isinstance(item, dict) else item or "").strip()
+            for item in (commentary.get("highlights") or [])
+            if str(item.get("text") if isinstance(item, dict) else item or "").strip()
+        ]
+        interpretation = str(commentary.get("interpretation") or "").strip()
+        next_action = str(commentary.get("nextAction") or "").strip()
 
-        if not summary:
-            summary_lines = [
-                str(line).strip()
-                for line in (commentary.get("summaryLines") or [])
-                if str(line or "").strip()
-            ]
-            summary = "\n\n".join(summary_lines[:3])
+        if highlights:
+            parts.append("\n\n".join(highlights[:2]))
+        elif interpretation:
+            parts.append(interpretation)
+        else:
+            summary = str(commentary.get("summary") or "").strip()
 
-        if summary:
-            parts.append(summary)
+            if not summary:
+                summary_lines = [
+                    str(line).strip()
+                    for line in (commentary.get("summaryLines") or [])
+                    if str(line or "").strip()
+                ]
+                summary = "\n\n".join(summary_lines[:2])
+
+            if summary:
+                parts.append(summary)
 
         attention = [
             str(item).strip()
@@ -579,5 +592,17 @@ class ChatPresentationProseDeliveryService:
             ).strip()
             bullets = "\n".join(f"- {item}" for item in attention[:4])
             parts.append(f"{header}\n\n{bullets}")
+
+        if next_action:
+            next_header = str(
+                ChatAssistantContentService.get(
+                    "presenter_content",
+                    "humanizedNarrative",
+                    "nextStepsHeader",
+                    default="**Próximos passos**",
+                )
+                or "**Próximos passos**"
+            ).strip()
+            parts.append(f"{next_header}\n\n- {next_action}")
 
         return "\n\n".join(parts).strip()

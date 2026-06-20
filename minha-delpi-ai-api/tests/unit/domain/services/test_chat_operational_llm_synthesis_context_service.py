@@ -194,3 +194,42 @@ def test_resolve_synthesis_kind_error_recovery():
     )
 
     assert kind == "error_recovery"
+
+
+def test_collect_fact_lines_skips_profile_table_rows_when_decoupled():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/10080045/analyser",
+        "tablePresentations": [
+            {
+                "type": "table",
+                "role": "profile",
+                "title": "Produto 10080045",
+                "rows": [
+                    {"campo": "Código", "valor": "10080045"},
+                    {"campo": "Descrição", "valor": "TERM. OLHAL M6"},
+                ],
+            }
+        ],
+        "dataAnswer": {"summary": {"answer": "Produto cadastrado como MP."}},
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert not any("Código:" in line for line in lines)
+    assert any("MP" in line for line in lines)
+
+
+def test_build_facts_addon_includes_prose_panel_rule_when_decoupled():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/10080045/analyser",
+        "dataAnswer": {"summary": {"answer": "Produto cadastrado."}},
+    }
+
+    addon = ChatOperationalLlmSynthesisContextService.build_facts_addon(_tool_calls(metadata))
+
+    assert "componentes visuais" in addon.lower()
+    assert "painel" in addon.lower()

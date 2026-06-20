@@ -15,6 +15,13 @@ class ChatOperationalLlmSynthesisContextContentService:
         return ChatAssistantContentService.get(_BUNDLE, "title", default="Fatos consultados:")
 
     @classmethod
+    def prose_panel_rule(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "prosePanelRule", default="")
+            or ""
+        ).strip()
+
+    @classmethod
     def max_chars(cls) -> int:
         raw = ChatAssistantContentService.get(_BUNDLE, "maxChars", default="1200")
 

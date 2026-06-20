@@ -447,8 +447,9 @@ def test_resolve_llm_synthesis_answer_fallback_uses_data_commentary_when_empty()
                 "ok": True,
                 "llmProseDecoupled": True,
                 "dataCommentary": {
-                    "summary": "O produto **10080045** está cadastrado como MP.",
+                    "highlights": [{"text": "O produto **10080045** está cadastrado como MP."}],
                     "attention": ["Roteiro não retornado."],
+                    "nextAction": "Valide roteiro com engenharia.",
                 },
             },
         }
@@ -461,6 +462,7 @@ def test_resolve_llm_synthesis_answer_fallback_uses_data_commentary_when_empty()
 
     assert "10080045" in fallback
     assert "Roteiro não retornado" in fallback
+    assert "engenharia" in fallback.lower()
 
 
 def test_resolve_llm_synthesis_answer_fallback_keeps_nonempty_llm_answer():

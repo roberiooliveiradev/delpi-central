@@ -23,11 +23,17 @@ class ChatOperationalLlmSynthesisContextService:
         max_chars = ChatOperationalLlmSynthesisContextContentService.max_chars()
 
         if len(block) <= max_chars:
-            return f"\n\n{block}"
+            result = f"\n\n{block}"
+        else:
+            trimmed = cls._trim_block(block, max_chars)
+            result = f"\n\n{trimmed}" if trimmed else ""
 
-        trimmed = cls._trim_block(block, max_chars)
+        panel_rule = ChatOperationalLlmSynthesisContextContentService.prose_panel_rule()
 
-        return f"\n\n{trimmed}" if trimmed else ""
+        if panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
+            result = f"{result}\n\n{panel_rule}" if result else f"\n\n{panel_rule}"
+
+        return result
 
     @classmethod
     def collect_fact_lines(cls, tool_calls: list | None) -> list[str]:
@@ -163,6 +169,12 @@ class ChatOperationalLlmSynthesisContextService:
 
         max_rows = ChatOperationalLlmSynthesisContextContentService.limit_int("maxTableRows", 4)
 
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        decoupled = ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata)
+
         for table in cls._iter_table_presentations(metadata):
             table_title = str(table.get("title") or "").strip()
             role = str(table.get("role") or "").strip().casefold()
@@ -175,9 +187,12 @@ class ChatOperationalLlmSynthesisContextService:
 
             if role == "profile":
                 row_limit = ChatOperationalLlmSynthesisContextContentService.limit_int(
-                    "maxProfileTableRows",
-                    12,
+                    "maxProfileTableRowsWhenDecoupled" if decoupled else "maxProfileTableRows",
+                    0 if decoupled else 12,
                 )
+
+            if row_limit <= 0:
+                continue
 
             for row in rows[:row_limit]:
                 if not isinstance(row, dict):
@@ -345,6 +360,28 @@ class ChatOperationalLlmSynthesisContextService:
     @classmethod
     def _normalize_key(cls, text: str) -> str:
         return " ".join(str(text or "").lower().split())
+
+    @classmethod
+    def _tool_calls_use_prose_panel(cls, tool_calls: list | None) -> bool:
+        if not isinstance(tool_calls, list):
+            return False
+
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if isinstance(metadata, dict) and ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(
+                metadata,
+            ):
+                return True
+
+        return False
 
     @classmethod
     def _trim_block(cls, block: str, max_chars: int) -> str:

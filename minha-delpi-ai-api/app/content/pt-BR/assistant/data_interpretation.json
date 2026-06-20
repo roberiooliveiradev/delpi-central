@@ -15,7 +15,7 @@
   ],
   "resumeIntro": "Resumo do que já consultamos sobre **{title}**:",
   "explainIntro": "Interpretação dos dados de **{title}**:",
-  "toolContextCommentaryRule": "Quando existir `dataCommentary`, comente os dados com base nos destaques e pontos de atenção — interprete riscos, cobertura e situação operacional sem repetir tabelas inteiras.",
+  "toolContextCommentaryRule": "Quando existir `dataCommentary`, comente os dados com base nos destaques e pontos de atenção — interprete riscos, cobertura e situação operacional. **Não** repita tabelas, listas extensas nem cadastro campo a campo: tabela, árvore e gráfico são exibidos no painel junto com sua prosa.",
   "unclear": "Não entendi qual aspecto dos dados anteriores você quer que eu explique. Pode dizer «resuma», «explique as diferenças» ou citar a coluna/tabela?",
   "rowDetail": {
     "heading": "**Detalhe do registro — {title}**",
