@@ -246,32 +246,69 @@ class ChatStreamTurnPrepareService:
                     else:
                         _run_prepare()
             except Exception as exc:
-                state.prepare_error_box["error"] = exc
-                try:
-                    from app.application.services.chat_stream_activity_service import (
-                        ChatStreamActivityService,
-                    )
+                from app.domain.services.chat_drawing_intent_service import (
+                    ChatDrawingIntentService,
+                )
+                from app.domain.services.chat_vision_memory_guard_service import (
+                    ChatVisionMemoryGuardService,
+                )
 
-                    state.activity_queue.put(
-                        (
-                            "activity",
-                            ChatStreamActivityService.entry(
-                                verb="Falhou",
-                                target="preparação da resposta",
-                                phase="prepare",
-                                level="error",
-                                state="failed",
-                                message=ChatAssistantContentService.get(
-                                    "stream",
-                                    "statusPrepareFailed",
-                                ),
-                                detail=str(exc)[:300],
-                                entry_id="prepare-failed",
-                            ),
-                        )
+                if ChatVisionMemoryGuardService.is_memory_related_error(exc):
+                    state.prepare_error_box["memory_limited"] = True
+                    state.prepare_error_box["friendly_message"] = (
+                        ChatDrawingIntentService.build_memory_limited_answer()
                     )
-                except Exception:
-                    pass
+                    try:
+                        from app.application.services.chat_stream_activity_service import (
+                            ChatStreamActivityService,
+                        )
+
+                        state.activity_queue.put(
+                            (
+                                "activity",
+                                ChatStreamActivityService.entry(
+                                    verb="Limitado",
+                                    target="memória do servidor",
+                                    phase="drawing_analysis",
+                                    level="warning",
+                                    state="failed",
+                                    message=ChatAssistantContentService.get(
+                                        "stream",
+                                        "statusPrepareFailedMemory",
+                                    ),
+                                    entry_id="prepare-memory-limited",
+                                ),
+                            )
+                        )
+                    except Exception:
+                        pass
+                else:
+                    state.prepare_error_box["error"] = exc
+                    try:
+                        from app.application.services.chat_stream_activity_service import (
+                            ChatStreamActivityService,
+                        )
+
+                        state.activity_queue.put(
+                            (
+                                "activity",
+                                ChatStreamActivityService.entry(
+                                    verb="Falhou",
+                                    target="preparação da resposta",
+                                    phase="prepare",
+                                    level="error",
+                                    state="failed",
+                                    message=ChatAssistantContentService.get(
+                                        "stream",
+                                        "statusPrepareFailed",
+                                    ),
+                                    detail=str(exc)[:300],
+                                    entry_id="prepare-failed",
+                                ),
+                            )
+                        )
+                    except Exception:
+                        pass
             finally:
                 state.activity_queue.put(("done", None))
 
@@ -296,8 +333,20 @@ class ChatStreamTurnPrepareService:
 
     @staticmethod
     def raise_if_failed(state: ChatStreamPrepareWorkerState) -> None:
+        if state.prepare_error_box.get("memory_limited"):
+            return
+
         if state.prepare_error_box.get("error"):
             raise state.prepare_error_box["error"]
+
+    @staticmethod
+    def memory_limited_answer(state: ChatStreamPrepareWorkerState) -> str | None:
+        if not state.prepare_error_box.get("memory_limited"):
+            return None
+
+        message = state.prepare_error_box.get("friendly_message")
+
+        return str(message).strip() if message else None
 
     @staticmethod
     def prepared_value(state: ChatStreamPrepareWorkerState):

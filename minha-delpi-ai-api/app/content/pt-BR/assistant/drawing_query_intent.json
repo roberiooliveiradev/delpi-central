@@ -165,7 +165,8 @@
     "skillDisabled": "Para análise de desenhos técnicos DELPI, habilite a skill **Análise de Desenhos DELPI** (`drawing-analysis-delpi`) no agente desta conversa.",
     "missingPdf": "Para analisar o desenho sem anexo, informe o código DELPI do produto na mensagem (ex.: 90260140). Você também pode anexar o PDF.",
     "missingProductCode": "Informe o código DELPI do produto na mensagem (ex.: 90260140) ou anexe um PDF com carimbo legível. Sem código e sem PDF não consigo buscar o desenho na biblioteca nem gerar o relatório técnico.",
-    "drawingLibraryNotFound": "Não encontrei o PDF do desenho na biblioteca corporativa para o produto {code}. Anexe o arquivo ou confira o código informado."
+    "drawingLibraryNotFound": "Não encontrei o PDF do desenho na biblioteca corporativa para o produto {code}. Anexe o arquivo ou confira o código informado.",
+    "memoryLimited": "Não consegui concluir a leitura avançada do PDF (OCR com visão) porque a memória disponível no servidor ficou insuficiente.\n\n**O que fazer agora**\n- Feche outras análises de desenho em andamento e tente novamente em 1–2 minutos.\n- Se o problema persistir, aumente a memória do WSL/Docker (recomendado ≥ 8 GB para OCR com EasyOCR).\n- Como alternativa imediata, peça apenas o código do produto na mensagem (ex.: «validar desenho 90262511») ou use um PDF já indexado com texto embutido legível.\n\nEnquanto isso, posso tentar novamente com OCR leve (somente Tesseract) se você reenviar a pergunta."
   },
   "llmFallback": {
     "policyFile": "drawing-report-llm-fallback.md",

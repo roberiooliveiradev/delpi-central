@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_document_vision_content_service import (
+    ChatDocumentVisionContentService,
+)
 
 _DEFAULT_BBOXES: dict[str, list[float]] = {
     "stamp": [0.5, 0.62, 1.0, 1.0],
@@ -145,7 +148,8 @@ class ChatDrawingRegionService:
         if not resolved:
             resolved.append({"id": "bom_default", "bbox": default_bbox})
 
-        return resolved
+        limit = ChatDocumentVisionContentService.pdf_region_ocr_max_bom_candidates()
+        return resolved[:limit]
 
     @classmethod
     def stamp_bbox(cls) -> list[float]:

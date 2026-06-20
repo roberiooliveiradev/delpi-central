@@ -132,6 +132,16 @@ class ChatDrawingIntentService:
         return template
 
     @classmethod
+    def build_memory_limited_answer(cls) -> str:
+        return cls._direct_answer(
+            "memoryLimited",
+            default=(
+                "Não consegui concluir a leitura avançada do PDF por falta de memória "
+                "no servidor. Tente novamente em instantes ou aumente a memória do ambiente."
+            ),
+        )
+
+    @classmethod
     def build_llm_fallback_policy_addon(
         cls,
         message: str | None,

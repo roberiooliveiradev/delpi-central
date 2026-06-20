@@ -333,6 +333,63 @@ class ChatDocumentVisionContentService:
         return weights or {"tesseract": 1.0, "easyocr": 1.15}
 
     @classmethod
+    def pdf_region_ocr_max_bom_candidates(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "regionOcr",
+            "maxBomCandidatesOcr",
+            default="2",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 2
+
+    @classmethod
+    def memory_guard_min_mb_for_easyocr(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "memoryGuard",
+            "minAvailableMbForEasyocr",
+            default="1400",
+        )
+
+        try:
+            return max(256, int(raw))
+        except (TypeError, ValueError):
+            return 1400
+
+    @classmethod
+    def memory_guard_min_mb_for_drawing_ocr(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "memoryGuard",
+            "minAvailableMbForDrawingOcr",
+            default="512",
+        )
+
+        try:
+            return max(128, int(raw))
+        except (TypeError, ValueError):
+            return 512
+
+    @classmethod
+    def memory_guard_easyocr_lazy_release(cls) -> bool:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "memoryGuard",
+            "easyocrLazyRelease",
+            default="true",
+        )
+
+        return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+    @classmethod
     def pdf_bom_fusion_max_digit_edits(cls) -> int:
         raw = ChatAssistantContentService.get(
             _BUNDLE,

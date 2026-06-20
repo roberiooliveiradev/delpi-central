@@ -12,6 +12,9 @@ from app.domain.services.chat_drawing_patterns_service import ChatDrawingPattern
 from app.domain.services.chat_pdf_region_ocr_fusion_service import (
     ChatPdfRegionOcrFusionService,
 )
+from app.domain.services.chat_vision_memory_guard_service import (
+    ChatVisionMemoryGuardService,
+)
 
 
 class ChatPdfRegionOcrEngineService:
@@ -59,7 +62,9 @@ class ChatPdfRegionOcrEngineService:
     @classmethod
     def enabled_engines(cls) -> tuple[str, ...]:
         if cls._runtime_engines_override is not None:
-            return cls._runtime_engines_override
+            return ChatVisionMemoryGuardService.filter_engines_for_memory(
+                cls._runtime_engines_override
+            )
 
         configured = ChatDocumentVisionContentService.pdf_region_ocr_engines()
         resolved: list[str] = []
@@ -70,7 +75,9 @@ class ChatPdfRegionOcrEngineService:
             if token and token not in resolved:
                 resolved.append(token)
 
-        return tuple(resolved or ("tesseract",))
+        return ChatVisionMemoryGuardService.filter_engines_for_memory(
+            tuple(resolved or ("tesseract",))
+        )
 
     @classmethod
     def recognize(
@@ -124,10 +131,14 @@ class ChatPdfRegionOcrEngineService:
     @classmethod
     def _engines_for_region(cls, region: str) -> tuple[str, ...]:
         if cls._runtime_engines_override is not None:
-            return cls._runtime_engines_override
+            return ChatVisionMemoryGuardService.filter_engines_for_memory(
+                cls._runtime_engines_override
+            )
 
         if region == "bom":
-            return ChatDocumentVisionContentService.pdf_bom_region_ocr_engines()
+            return ChatVisionMemoryGuardService.filter_engines_for_memory(
+                ChatDocumentVisionContentService.pdf_bom_region_ocr_engines()
+            )
 
         return cls.enabled_engines()
 
@@ -278,6 +289,8 @@ class ChatPdfRegionOcrEngineService:
 
     @classmethod
     def _easyocr_reader(cls, languages: list[str]) -> Any:
+        ChatVisionMemoryGuardService.ensure_easyocr_headroom()
+
         import easyocr
 
         key = tuple(languages)
@@ -293,11 +306,17 @@ class ChatPdfRegionOcrEngineService:
             kwargs["model_storage_directory"] = model_dir
 
         reader = easyocr.Reader(list(key), **kwargs)
-        cls._easyocr_readers[key] = reader
+
+        if not ChatVisionMemoryGuardService.easyocr_lazy_release_enabled():
+            cls._easyocr_readers[key] = reader
+
         return reader
 
     @classmethod
     def _easyocr_detailed(cls, image: Any, *, lang: str) -> dict[str, Any]:
+        if not ChatVisionMemoryGuardService.can_use_easyocr():
+            return {"text": "", "codeTokens": []}
+
         try:
             import numpy as np
         except ImportError:
@@ -334,8 +353,15 @@ class ChatPdfRegionOcrEngineService:
                 "text": merged,
                 "codeTokens": cls._extract_code_tokens(merged, line_confidences),
             }
+        except MemoryError:
+            ChatVisionMemoryGuardService.release_ocr_memory()
+            raise
         except Exception:
             return {"text": "", "codeTokens": []}
+        finally:
+            if ChatVisionMemoryGuardService.easyocr_lazy_release_enabled():
+                cls.release_cached_readers()
+                ChatVisionMemoryGuardService.release_ocr_memory()
 
     @classmethod
     def _easyocr_languages(cls, lang: str) -> list[str]:

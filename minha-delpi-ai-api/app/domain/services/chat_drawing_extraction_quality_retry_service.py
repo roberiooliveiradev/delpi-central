@@ -14,6 +14,10 @@ from app.domain.services.chat_drawing_extraction_confidence_service import (
 from app.domain.services.chat_drawing_page_layout_analysis_service import (
     ChatDrawingPageLayoutAnalysisService,
 )
+from app.domain.services.chat_vision_memory_guard_service import (
+    ChatVisionMemoryGuardService,
+)
+from app.domain.exceptions.vision_exceptions import VisionMemoryLimitedError
 
 _BUNDLE = "drawing_stamp"
 
@@ -55,11 +59,33 @@ class ChatDrawingExtractionQualityRetryService:
 
         for index, profile in enumerate(attempt_slots):
             attempt_id = str(profile.get("id") or f"attempt_{index + 1}")
-            pdf_extract = cls._extract_once(
-                storage_path,
-                filename=filename,
-                attempt=profile,
-            )
+
+            if cls._attempt_uses_easyocr(profile) and not ChatVisionMemoryGuardService.can_use_easyocr():
+                continue
+
+            try:
+                pdf_extract = cls._extract_once(
+                    storage_path,
+                    filename=filename,
+                    attempt=profile,
+                )
+            except (MemoryError, VisionMemoryLimitedError):
+                ChatVisionMemoryGuardService.release_ocr_memory()
+
+                if best is not None:
+                    payload = ChatVisionMemoryGuardService.attach_memory_limited_metadata(
+                        dict(best.pdf_extract)
+                    )
+
+                    return cls._attach_retry_metadata(
+                        payload,
+                        history=history,
+                        selected=best,
+                        target=target,
+                        stopped_reason="memory_limited",
+                    )
+
+                raise
             confidence = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
                 pdf_extract=pdf_extract,
             )
@@ -251,20 +277,15 @@ class ChatDrawingExtractionQualityRetryService:
         if not cls._release_memory_between_attempts():
             return
 
-        from app.domain.services.chat_pdf_region_ocr_engine_service import (
-            ChatPdfRegionOcrEngineService,
+        ChatVisionMemoryGuardService.release_ocr_memory()
+
+    @classmethod
+    def _attempt_uses_easyocr(cls, profile: dict[str, Any] | None) -> bool:
+        engines = cls._resolve_region_ocr_engines(profile) or list(
+            cls._loop_region_ocr_engines() or ("tesseract",)
         )
 
-        ChatPdfRegionOcrEngineService.release_cached_readers()
-        gc.collect()
-
-        try:
-            import torch
-
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-        except Exception:
-            pass
+        return any(str(engine).strip().lower() == "easyocr" for engine in engines)
 
     @classmethod
     def _profile_key(cls, profile: dict[str, Any]) -> tuple[Any, ...]:

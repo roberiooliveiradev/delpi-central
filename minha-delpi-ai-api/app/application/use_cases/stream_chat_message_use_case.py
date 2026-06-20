@@ -250,6 +250,55 @@ class StreamChatMessageUseCase:
         )
 
         yield from ChatStreamTurnPrepareService.iter_activity_events(prepare_state)
+
+        memory_answer = ChatStreamTurnPrepareService.memory_limited_answer(prepare_state)
+
+        if memory_answer:
+            yield {
+                "type": "status",
+                "message": ChatAssistantContentService.get(
+                    "stream",
+                    "statusPrepareFailedMemory",
+                ),
+            }
+
+            user_message = prepare_state.context_box.get("user_message")
+            assistant_message = self.chat_repository.create_message(
+                session_id=session_id,
+                role="assistant",
+                content=memory_answer,
+                parent_message_id=user_message.id if user_message else None,
+                metadata={
+                    "stream": True,
+                    "memoryLimited": True,
+                    "agentId": workspace_context.get("agentId"),
+                },
+            )
+            self.chat_repository.set_active_leaf_message_id(
+                session_id=session_id,
+                user_id=user_id,
+                message_id=assistant_message.id,
+            )
+            message_id = str(assistant_message.id)
+
+            yield {"type": "assistant_pending", "messageId": message_id}
+            yield {
+                "type": "playback",
+                "messageId": message_id,
+                "answer": memory_answer,
+                "sources": [],
+                "toolCalls": [],
+            }
+            yield {
+                "type": "done",
+                "messageId": message_id,
+                "answer": memory_answer,
+                "sources": [],
+                "toolCalls": [],
+                "playback": True,
+            }
+            return
+
         ChatStreamTurnPrepareService.raise_if_failed(prepare_state)
 
         prepared = ChatStreamTurnPrepareService.prepared_value(prepare_state)

@@ -11,6 +11,7 @@
   "statusPreparingContext": "Preparando tudo para te responder...",
   "statusPrepareContextReady": "Tudo pronto. Já começo a responder...",
   "statusPrepareFailed": "Tive um problema ao preparar a sua resposta.",
+  "statusPrepareFailedMemory": "Memória insuficiente para concluir a leitura avançada do PDF. Tente novamente em instantes ou aumente a memória do ambiente.",
   "statusUnderstandingQuestion": "Entendendo seu pedido...",
   "statusCheckingPermissions": "Conferindo permissões...",
   "statusBuildingTable": "Organizando em tabela...",

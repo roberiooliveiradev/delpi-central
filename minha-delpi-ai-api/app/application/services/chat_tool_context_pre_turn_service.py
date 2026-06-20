@@ -244,9 +244,19 @@ class ChatToolContextPreTurnService:
             from app.application.services.chat_document_vision_turn_service import (
                 ChatDocumentVisionTurnService,
             )
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
             from app.domain.services.chat_drawing_pdf_extraction_service import (
                 ChatDrawingPdfExtractionService,
             )
+
+            if on_stream_activity:
+                ChatStreamActivityService.emit_drawing_analysis_progress(
+                    on_stream_activity,
+                    has_pdf=drawing_has_pdf,
+                    phase="start",
+                )
 
             drawing_pdf_extract = {}
 
@@ -278,6 +288,37 @@ class ChatToolContextPreTurnService:
                         skills=drawing_runtime_skills,
                         on_stream_activity=on_stream_activity,
                     )
+                )
+
+            if drawing_pdf_extract.get("memoryLimited"):
+                from app.domain.services.chat_drawing_intent_service import (
+                    ChatDrawingIntentService,
+                )
+
+                memory_result: dict[str, Any] = {
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": ChatDrawingIntentService.build_memory_limited_answer(),
+                    "skipRag": True,
+                    "drawingAnalysisMode": True,
+                    "currentMessage": raw_message,
+                }
+
+                if drawing_pdf_extract:
+                    memory_result["drawingPdfExtractSummary"] = (
+                        host._auxiliary_service._build_drawing_pdf_extract_summary(
+                            drawing_pdf_extract,
+                            product_code_source=drawing_product_code_source,
+                        )
+                    )
+
+                return ToolTurnPreparation(
+                    early_result=host._finalize_tool_context_result(
+                        message=raw_message,
+                        previous_messages=previous_messages,
+                        result=memory_result,
+                    ),
                 )
 
             from app.domain.services.chat_drawing_product_code_resolution_service import (
@@ -317,17 +358,6 @@ class ChatToolContextPreTurnService:
                     resolved_code=resolved_code,
                     resolved_source=resolved_source,
                 )
-            )
-
-        if drawing_analysis_mode and on_stream_activity:
-            from app.application.services.chat_stream_activity_service import (
-                ChatStreamActivityService,
-            )
-
-            ChatStreamActivityService.emit_drawing_analysis_progress(
-                on_stream_activity,
-                has_pdf=drawing_has_pdf,
-                phase="start",
             )
 
         if drawing_analysis_mode and drawing_has_pdf and not drawing_product_code:

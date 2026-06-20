@@ -6,9 +6,13 @@ from typing import Any, Callable
 
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.application.services.chat_stream_activity_service import ChatStreamActivityService
+from app.domain.exceptions.vision_exceptions import VisionMemoryLimitedError
 from app.domain.services.chat_document_vision_skill_service import (
     ChatDocumentVisionSkillService,
     DocumentVisionActivation,
+)
+from app.domain.services.chat_vision_memory_guard_service import (
+    ChatVisionMemoryGuardService,
 )
 
 
@@ -108,13 +112,19 @@ class ChatDocumentVisionTurnService:
                 phase="ocr",
             )
 
-        enriched = cls.enrich_drawing_extract(
-            parsed,
-            user_id=user_id,
-            session_id=session_id,
-            attachment_ids=attachment_ids,
-            skills=skills,
-        )
+        try:
+            enriched = cls.enrich_drawing_extract(
+                parsed,
+                user_id=user_id,
+                session_id=session_id,
+                attachment_ids=attachment_ids,
+                skills=skills,
+            )
+        except (MemoryError, VisionMemoryLimitedError):
+            ChatVisionMemoryGuardService.release_ocr_memory()
+            enriched = ChatVisionMemoryGuardService.attach_memory_limited_metadata(
+                dict(parsed) if isinstance(parsed, dict) else {}
+            )
 
         if activation.enabled and on_stream_activity and enriched:
             engine = (
@@ -158,11 +168,16 @@ class ChatDocumentVisionTurnService:
         if not cls.should_run_for_drawing(skills):
             return base, activation
 
-        vision = ChatDocumentVisionService._extract_drawing_pdf(
-            storage_path,
-            filename=filename,
-        )
-        enriched = ChatDocumentVisionService.merge_into_drawing_parse(base, vision)
+        try:
+            vision = ChatDocumentVisionService._extract_drawing_pdf(
+                storage_path,
+                filename=filename,
+            )
+            enriched = ChatDocumentVisionService.merge_into_drawing_parse(base, vision)
+        except (MemoryError, VisionMemoryLimitedError):
+            ChatVisionMemoryGuardService.release_ocr_memory()
+            enriched = ChatVisionMemoryGuardService.attach_memory_limited_metadata(base)
+            return enriched, activation
 
         if activation.enabled and on_stream_activity and enriched:
             engine = (
