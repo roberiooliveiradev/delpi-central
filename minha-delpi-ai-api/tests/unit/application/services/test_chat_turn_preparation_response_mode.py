@@ -62,7 +62,7 @@ def test_post_tool_overview_normal_clears_direct_answer_for_llm():
     result = _resolve_post_tool(response_mode="normal")
 
     assert result.direct_answer is None
-    assert result.skip_rag is False
+    assert result.skip_rag is True
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
 
 
@@ -70,6 +70,6 @@ def test_post_tool_overview_fast_clears_direct_answer_for_brief_llm():
     result = _resolve_post_tool(response_mode="fast")
 
     assert result.direct_answer is None
-    assert result.skip_rag is False
+    assert result.skip_rag is True
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis_brief"
     assert "directAnswer" not in result.tool_context

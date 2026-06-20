@@ -1,8 +1,9 @@
 {
   "title": "Fatos já consultados (responda com base neles — não peça acesso):",
-  "maxChars": 1400,
-  "maxHumanizedLines": 6,
-  "maxTableRows": 6,
+  "maxChars": 900,
+  "maxHumanizedLines": 4,
+  "maxTableRows": 4,
+  "maxProfileTableRows": 8,
   "maxSqlRows": 5,
   "maxHighlights": 4,
   "maxLimitations": 2,

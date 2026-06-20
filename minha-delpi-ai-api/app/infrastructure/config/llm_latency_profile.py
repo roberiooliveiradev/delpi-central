@@ -9,15 +9,15 @@ from __future__ import annotations
 import os
 
 _PROFILES: dict[str, dict[str, int]] = {
-    # Homologação / produção CPU operacional — meta p95 < 15s (Onda 7.5).
+    # Homologação / dev operacional — meta ~50% menos latência vs balanced (jun/2026).
     "operational_cpu": {
-        "llm_max_tokens": 384,
-        "ollama_num_ctx": 1536,
+        "llm_max_tokens": 320,
+        "ollama_num_ctx": 1024,
     },
     # Default dev / equilíbrio qualidade-latência.
     "balanced": {
-        "llm_max_tokens": 1536,
-        "ollama_num_ctx": 2048,
+        "llm_max_tokens": 768,
+        "ollama_num_ctx": 1536,
     },
     # Agentes documentais ou respostas mais longas (GPU ou 16GB+ RAM).
     "documental": {
@@ -26,7 +26,7 @@ _PROFILES: dict[str, dict[str, int]] = {
     },
 }
 
-DEFAULT_PROFILE = "balanced"
+DEFAULT_PROFILE = "operational_cpu"
 
 
 def _active_profile_name() -> str:
@@ -34,7 +34,10 @@ def _active_profile_name() -> str:
 
 
 def _profile_values(name: str) -> dict[str, int]:
-    return _PROFILES.get(name, _PROFILES[DEFAULT_PROFILE])
+    if name not in _PROFILES:
+        return _PROFILES["balanced"]
+
+    return _PROFILES[name]
 
 
 def resolve_llm_max_tokens() -> int:

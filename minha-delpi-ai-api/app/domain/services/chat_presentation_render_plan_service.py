@@ -230,6 +230,9 @@ class ChatPresentationRenderPlanService:
         if ChatPresentationEvidenceFirstLayoutService.is_active(metadata):
             return False
 
+        if cls._is_llm_prose_decoupled(metadata):
+            return False
+
         data_answer = metadata.get("dataAnswer")
 
         return isinstance(data_answer, dict) and isinstance(data_answer.get("summary"), dict)

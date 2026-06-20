@@ -165,30 +165,51 @@ class ChatOperationalLlmSynthesisContextService:
 
         for table in cls._iter_table_presentations(metadata):
             table_title = str(table.get("title") or "").strip()
+            role = str(table.get("role") or "").strip().casefold()
             rows = table.get("rows")
 
             if not isinstance(rows, list):
                 continue
 
-            for row in rows[:max_rows]:
+            row_limit = max_rows
+
+            if role == "profile":
+                row_limit = ChatOperationalLlmSynthesisContextContentService.limit_int(
+                    "maxProfileTableRows",
+                    12,
+                )
+
+            for row in rows[:row_limit]:
                 if not isinstance(row, dict):
                     continue
 
-                parts = [
-                    f"{key}: {value}"
-                    for key, value in row.items()
-                    if str(value or "").strip()
-                ]
+                line = cls._format_table_row_fact(row)
 
-                if not parts:
+                if not line:
                     continue
 
                 prefix = f"{table_title} — " if table_title else ""
-                facts.append(f"{prefix}{'; '.join(parts[:4])}")
+                facts.append(f"{prefix}{line}")
 
         facts.extend(cls._facts_from_sql_metadata(metadata))
 
         return facts
+
+    @classmethod
+    def _format_table_row_fact(cls, row: dict[str, Any]) -> str:
+        campo = str(row.get("campo") or row.get("field") or "").strip()
+        valor = row.get("valor", row.get("value"))
+
+        if campo and str(valor or "").strip():
+            return f"{campo}: {valor}"
+
+        parts = [
+            f"{key}: {value}"
+            for key, value in row.items()
+            if str(value or "").strip()
+        ]
+
+        return "; ".join(parts[:4]) if parts else ""
 
     @classmethod
     def _iter_table_presentations(cls, metadata: dict[str, Any]):

@@ -191,3 +191,43 @@ def test_build_generic_complete_list_does_not_mark_pagination_limitation():
         "Resultado incompleto" in str(line)
         for line in (data_answer.get("limitations") or [])
     )
+
+
+def test_build_product_analyser_uses_analyser_commentary_not_generic_list():
+    metadata = {
+        "path": "/products/10080024/analyser",
+        "apiDelpiResponseMeta": {
+            "entity": "product_analyser",
+            "shape": "composite_analysis",
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "role": "profile",
+                "title": "Produto 10080024",
+                "rows": [
+                    {"campo": "Código", "valor": "10080024"},
+                    {"campo": "Descrição", "valor": "TERM. OLHAL M6"},
+                ],
+            }
+        ],
+    }
+    data = {
+        "product": {
+            "code": "10080024",
+            "description": "TERM. OLHAL M6",
+            "type": "MP",
+            "group_code": "1008",
+        },
+        "structure": {"items": [], "total": 0},
+        "guide": {"items": [], "total": 0},
+        "inspection": {"items": [], "total": 0},
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("profileKey") == "analyser"
+    assert "10080024" in str((data_answer.get("summary") or {}).get("answer") or "")
+    assert data_answer.get("profileKey") != "generic_list"
+    assert "14 registros" not in str((data_answer.get("summary") or {}).get("answer") or "").lower()

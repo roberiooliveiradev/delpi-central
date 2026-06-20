@@ -26,8 +26,8 @@ def test_operational_cpu_profile_defaults(monkeypatch):
     monkeypatch.setenv("CHAT_LLM_LATENCY_PROFILE", "operational_cpu")
     Settings = _reload_settings(monkeypatch)
 
-    assert Settings.LLM_MAX_TOKENS == 384
-    assert Settings.OLLAMA_NUM_CTX == 1536
+    assert Settings.LLM_MAX_TOKENS == 320
+    assert Settings.OLLAMA_NUM_CTX == 1024
 
 
 def test_explicit_env_overrides_profile(monkeypatch):
@@ -44,8 +44,8 @@ def test_unknown_profile_falls_back_to_balanced(monkeypatch):
     monkeypatch.delenv("LLM_MAX_TOKENS", raising=False)
     monkeypatch.delenv("OLLAMA_NUM_CTX", raising=False)
 
-    assert resolve_llm_max_tokens() == 1536
-    assert resolve_ollama_num_ctx() == 2048
+    assert resolve_llm_max_tokens() == 768
+    assert resolve_ollama_num_ctx() == 1536
 
 
 def test_describe_active_profile(monkeypatch):

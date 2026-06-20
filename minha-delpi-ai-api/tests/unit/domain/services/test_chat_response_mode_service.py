@@ -51,7 +51,7 @@ def test_apply_turn_direct_answer_policy_overview_fast_forces_brief_llm():
     )
 
     assert direct is None
-    assert skip_rag is False
+    assert skip_rag is True
     assert effect == "llm_synthesis_brief"
 
 
@@ -70,17 +70,17 @@ def test_apply_turn_direct_answer_policy_overview_thinker_forces_llm():
     )
 
     assert direct is None
-    assert skip_rag is False
+    assert skip_rag is True
     assert effect == "llm_synthesis"
 
 
 def test_normal_mode_uses_bounded_limits(monkeypatch):
-    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "512")
-    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1536")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "320")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1024")
     config = ChatResponseModeService.resolve("normal")
     assert config.response_mode == "normal"
-    assert config.max_tokens == 512
-    assert config.num_ctx == 1536
+    assert config.max_tokens == 320
+    assert config.num_ctx == 1024
 
 
 def test_apply_turn_direct_answer_policy_overview_normal_forces_llm():
@@ -98,7 +98,7 @@ def test_apply_turn_direct_answer_policy_overview_normal_forces_llm():
     )
 
     assert direct is None
-    assert skip_rag is False
+    assert skip_rag is True
     assert effect == "llm_synthesis"
 
 
@@ -131,7 +131,7 @@ def test_apply_turn_direct_answer_policy_stock_narrative_forces_llm():
     )
 
     assert direct is None
-    assert skip_rag is False
+    assert skip_rag is True
     assert effect == "llm_synthesis"
 
 
@@ -162,7 +162,7 @@ def test_apply_turn_direct_answer_policy_stock_factual_uses_llm_when_everywhere(
     )
 
     assert direct is None
-    assert skip_rag is False
+    assert skip_rag is True
     assert effect == "llm_synthesis"
 
 
@@ -230,7 +230,7 @@ def test_apply_turn_direct_answer_policy_playbook_uses_llm_when_everywhere(monke
     )
 
     assert direct is None
-    assert skip_rag is False
+    assert skip_rag is True
     assert effect == "llm_synthesis"
 
 
@@ -295,7 +295,26 @@ def test_apply_turn_direct_answer_policy_never_operational_direct_when_everywher
     )
 
     assert direct is None
-    assert skip_rag is False
+    assert skip_rag is True
+    assert effect == "llm_synthesis"
+
+
+def test_apply_turn_direct_answer_policy_skips_rag_when_tool_ok_even_if_not_flagged():
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="me fale do produto 10080045",
+        response_mode="normal",
+        direct_answer="### Produto\n\nRelatório.",
+        skip_rag=False,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {"ok": True, "path": "/products/10080045/analyser"},
+            }
+        ],
+    )
+
+    assert direct is None
+    assert skip_rag is True
     assert effect == "llm_synthesis"
 
 

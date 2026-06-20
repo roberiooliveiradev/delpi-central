@@ -112,13 +112,25 @@ class ChatResponseModeService:
             response_mode=response_mode,
         )
 
+        from app.domain.services.chat_presentation_prose_delivery_content_service import (
+            ChatPresentationProseDeliveryContentService,
+        )
+
+        if (
+            mode == MODE_LLM
+            and direct_answer
+            and not ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
+        ):
+            return direct_answer, skip_rag, "operational_direct"
+
         if mode == MODE_LLM:
             effect = cls.resolve_synthesis_effect(response_mode)
+            resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(skip_rag, tool_calls)
 
             if direct_answer:
-                return None, False, effect
+                return None, resolved_skip, effect
 
-            return direct_answer, skip_rag, effect
+            return direct_answer, resolved_skip, effect
 
         if direct_answer:
             from app.domain.services.chat_presentation_prose_delivery_content_service import (
@@ -127,7 +139,11 @@ class ChatResponseModeService:
 
             if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
                 effect = cls.resolve_synthesis_effect(response_mode)
-                return None, False, effect
+                resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(
+                    skip_rag,
+                    tool_calls,
+                )
+                return None, resolved_skip, effect
 
             return direct_answer, skip_rag, "operational_direct"
 
@@ -166,13 +182,38 @@ class ChatResponseModeService:
         return cls._provider_default_model()
 
     @classmethod
+    def _resolve_skip_rag_for_llm_synthesis(
+        cls,
+        skip_rag: bool,
+        tool_calls: list | None,
+    ) -> bool:
+        """Preserva skip operacional; com tool ok os fatos já bastam — evita RAG extra no prompt."""
+
+        if skip_rag:
+            return True
+
+        if not isinstance(tool_calls, list):
+            return False
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if isinstance(metadata, dict) and metadata.get("ok"):
+                return True
+
+        return False
+
+    @classmethod
     def _fast_config(cls) -> LlmGenerationConfig:
         fast_model = os.getenv("CHAT_RESPONSE_MODE_FAST_MODEL", "qwen2.5:1.5b").strip()
 
         return LlmGenerationConfig(
             model=fast_model or "qwen2.5:1.5b",
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "192")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "1024")),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "160")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "768")),
             temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.2")),
             response_mode="fast",
         )
@@ -180,9 +221,9 @@ class ChatResponseModeService:
     @classmethod
     def _normal_config(cls) -> LlmGenerationConfig:
         return LlmGenerationConfig(
-            model=cls._env_model("CHAT_RESPONSE_MODE_NORMAL_MODEL"),
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "512")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1536")),
+            model=cls._env_model("CHAT_RESPONSE_MODE_NORMAL_MODEL", "qwen2.5:1.5b"),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "320")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1024")),
             temperature=float(os.getenv("CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE", "0.3")),
             response_mode="normal",
         )
@@ -190,9 +231,9 @@ class ChatResponseModeService:
     @classmethod
     def _thinker_config(cls) -> LlmGenerationConfig:
         return LlmGenerationConfig(
-            model=cls._env_model("CHAT_RESPONSE_MODE_THINKER_MODEL"),
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", "896")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "2560")),
+            model=cls._env_model("CHAT_RESPONSE_MODE_THINKER_MODEL", "qwen2.5:1.5b"),
+            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", "512")),
+            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "1536")),
             temperature=float(os.getenv("CHAT_RESPONSE_MODE_THINKER_TEMPERATURE", "0.25")),
             response_mode="thinker",
         )

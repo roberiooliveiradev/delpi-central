@@ -744,7 +744,6 @@
       "presentationDecision": {
         "defaultTextStack": true
       },
-      "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary",
       "humanizedNarrative": "enrich"
     },
@@ -1171,7 +1170,6 @@
       },
       "humanizedNarrative": "skip",
       "compositeVisualSpec": "sale_pricing",
-      "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },
     "directives": {

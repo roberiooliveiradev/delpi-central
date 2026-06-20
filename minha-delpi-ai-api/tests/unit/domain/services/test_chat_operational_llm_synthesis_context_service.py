@@ -57,6 +57,31 @@ def test_collect_fact_lines_from_playbook_presentation_rows():
     assert any("120" in line for line in lines)
 
 
+def test_collect_fact_lines_formats_profile_campo_valor_rows():
+    metadata = {
+        "ok": True,
+        "path": "/products/10080024/analyser",
+        "tablePresentations": [
+            {
+                "type": "table",
+                "role": "profile",
+                "title": "Produto 10080024",
+                "rows": [
+                    {"campo": "Código", "valor": "10080024"},
+                    {"campo": "Descrição", "valor": "TERM. OLHAL M6"},
+                    {"campo": "Tipo", "valor": "MP"},
+                ],
+            }
+        ],
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert any(line.endswith("Código: 10080024") or "Código: 10080024" in line for line in lines)
+    assert any("Descrição: TERM. OLHAL M6" in line for line in lines)
+    assert not any("campo:" in line for line in lines)
+
+
 def test_collect_fact_lines_from_archived_humanized_when_decoupled():
     metadata = {
         "ok": True,

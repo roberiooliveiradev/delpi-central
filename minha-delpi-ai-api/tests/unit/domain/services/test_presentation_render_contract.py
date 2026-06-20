@@ -250,6 +250,42 @@ def test_render_plan_single_text_first_evidence_only_includes_prose():
     assert metadata.get("kpiPresentation") is not None
 
 
+def test_render_plan_skips_data_answer_decision_when_llm_prose_decoupled():
+    metadata = {
+        "llmProseDecoupled": True,
+        "dataOnlyPresentation": True,
+        "presentationDecision": {
+            "layoutMode": "stack",
+            "proseSource": "llm",
+        },
+        "stackPresentationPlan": {
+            "narrativeOrder": ["lead", "profileTables"],
+        },
+        "dataAnswer": {
+            "profileKey": "analyser",
+            "summary": {"answer": "Foram retornados **14** registros."},
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "role": "profile",
+                "title": "Produto 10080024",
+                "rows": [{"campo": "Código", "valor": "10080024"}],
+            }
+        ],
+    }
+
+    ChatPresentationRenderPlanService.build(metadata)
+
+    segments = metadata["renderPlan"]["segments"]
+    lead_segments = [segment for segment in segments if segment.get("slot") == "lead"]
+
+    assert lead_segments == [
+        {"kind": "markdown", "slot": "lead", "source": "assistantMessage"},
+    ]
+    assert not any(segment.get("source") == "dataAnswer" for segment in segments)
+
+
 def test_render_plan_falls_back_to_lead_markdown_when_stack_segments_empty():
     metadata = {
         "presentationDecision": {"layoutMode": "stack", "selected": "text"},
