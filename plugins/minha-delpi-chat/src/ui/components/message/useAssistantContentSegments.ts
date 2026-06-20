@@ -88,7 +88,7 @@ export function useAssistantContentSegments({
       return renumberStackSectionTitles(segments, null);
     }
 
-    return filterSegmentsByVisualKind(segments, resolvedVisualKind);
+    return filterSegmentsByVisualKind(segments, resolvedVisualKind, toolCalls);
   }, [
     perSectionToolbar,
     resolvedVisualKind,

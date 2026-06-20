@@ -20,6 +20,7 @@ import {
   mapPresentationDecisionToViewFormat,
   type ViewFormat,
 } from "../chatPresentation";
+import { isLlmProseDecoupledFromToolCalls } from "../presentation/presentationMarkdownNormalization";
 import {
   getPresentationDecisionFromToolCall,
   mapViewTokenToContentKind,
@@ -264,10 +265,20 @@ function suppressRedundantStandaloneVisuals(
   });
 }
 
+export function shouldPreserveStackLeadMarkdown(toolCalls: ChatToolCall[] = []): boolean {
+  return (
+    shouldShowCompleteStackView(toolCalls) &&
+    isLlmProseDecoupledFromToolCalls(toolCalls)
+  );
+}
+
 export function filterSegmentsByVisualKind(
   segments: AssistantContentSegment[],
   activeKind: ContentFormatKind | null,
+  toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
+  const preserveLeadMarkdown = shouldPreserveStackLeadMarkdown(toolCalls);
+
   const filtered = !activeKind
     ? suppressRedundantStandaloneVisuals(segments)
     : segments.filter((segment) => {
@@ -284,7 +295,7 @@ export function filterSegmentsByVisualKind(
         }
 
         if (segment.kind === "markdown" || segment.kind === "code") {
-          return false;
+          return preserveLeadMarkdown;
         }
 
         if (segment.kind === "table" && isHierarchyDuplicateTable(segment.presentation)) {

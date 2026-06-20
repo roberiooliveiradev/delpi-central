@@ -86,7 +86,11 @@ export function AssistantContentRouteSection({
       return bodySegments;
     }
 
-    return filterSegmentsByVisualKind(bodySegments, resolvedVisualKind);
+    return filterSegmentsByVisualKind(
+      bodySegments,
+      resolvedVisualKind,
+      toolCall ? [toolCall] : [],
+    );
   }, [
     resolvedVisualKind,
     bodySegments,

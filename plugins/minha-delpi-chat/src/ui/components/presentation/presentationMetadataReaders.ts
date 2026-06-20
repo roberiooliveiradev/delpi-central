@@ -629,7 +629,12 @@ export function hasExplicitPresentationFormatChoice(
       preferred === selected &&
       preferred !== "text"
     ) {
-      return true;
+      const layoutMode = String(decision?.layoutMode || "").trim().toLowerCase();
+
+      // Stack Automático: preferredFormat espelha a decisão da API, não escolha explícita do usuário.
+      if (layoutMode !== "stack") {
+        return true;
+      }
     }
 
     const reason = String(decision?.reason || "").trim().toLowerCase();

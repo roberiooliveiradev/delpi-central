@@ -150,6 +150,69 @@ describe("assistantContentVisualFormats", () => {
     expect(textKinds).toEqual(["markdown"]);
   });
 
+  it("stack decoupled mantém prosa LLM ao filtrar tabela ou árvore", () => {
+    const llmOverviewCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          llmProseDecoupled: true,
+          dataOnlyPresentation: true,
+          proseDeliveryMode: "llm",
+          preferredFormat: "table",
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "stack",
+            visualOrder: ["text", "table", "tree"],
+            availableViews: ["text", "table", "tree"],
+          },
+          textPresentation: { type: "markdown", markdown: "" },
+          tablePresentations: [
+            {
+              type: "table",
+              role: "profile",
+              title: "Produto 10080045",
+              columns: [
+                { key: "campo", label: "Campo" },
+                { key: "valor", label: "Valor" },
+              ],
+              rows: [{ campo: "Código", valor: "10080045" }],
+            },
+          ],
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              { kind: "table", slot: "operationalTables", source: "tablePresentations" },
+            ],
+          },
+        },
+      },
+    ]);
+    const prose =
+      "O produto **10080045** — TERM. OLHAL M6. Fontes cruzadas: roteiro sem operações.";
+    const segments = buildAssistantContentSegments(prose, llmOverviewCalls);
+
+    const filteredTable = filterSegmentsByVisualKind(segments, "table", llmOverviewCalls);
+
+    expect(
+      filteredTable.some(
+        (segment) => segment.kind === "markdown" && segment.markdown.includes("10080045"),
+      ),
+    ).toBe(true);
+    expect(filteredTable.some((segment) => segment.kind === "table")).toBe(true);
+
+    const filteredTree = filterSegmentsByVisualKind(segments, "tree", llmOverviewCalls);
+
+    expect(
+      filteredTree.some(
+        (segment) => segment.kind === "markdown" && segment.markdown.includes("10080045"),
+      ),
+    ).toBe(true);
+    expect(filteredTree.some((segment) => segment.kind === "table")).toBe(false);
+  });
+
   it("usa formato selecionado pela API como padrão", () => {
     const withTree = fixtureToolCalls([
       {
