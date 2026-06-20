@@ -190,6 +190,9 @@ class ChatErrorHandlingClassifier:
         )
 
         if outcome == "empty":
+            if cls._tool_calls_have_presentation_evidence(tool_calls):
+                return None
+
             empty_type = cls._resolve_empty_result_type(message, tool_calls)
 
             return cls._stub_classification(
@@ -285,6 +288,9 @@ class ChatErrorHandlingClassifier:
             if not isinstance(metadata, dict) or not metadata.get("ok"):
                 continue
 
+            if cls._metadata_has_presentation_evidence(metadata):
+                return False
+
             humanized = metadata.get("humanizedSummary")
 
             if isinstance(humanized, dict):
@@ -314,8 +320,89 @@ class ChatErrorHandlingClassifier:
 
             preview = str(metadata.get("responsePreview") or "")
 
-            if '"total": 0' in preview or '"rows": 0' in preview:
+            if '"rows": 0' in preview or '"rows":0' in preview:
                 return True
+
+        return False
+
+    @classmethod
+    def _tool_calls_have_presentation_evidence(cls, tool_calls: list | None) -> bool:
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+
+            if str(call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = call.get("metadata")
+
+            if isinstance(metadata, dict) and cls._metadata_has_presentation_evidence(metadata):
+                return True
+
+        return False
+
+    @classmethod
+    def _metadata_has_presentation_evidence(cls, metadata: dict[str, Any]) -> bool:
+        if not isinstance(metadata, dict) or not metadata.get("ok"):
+            return False
+
+        for key in (
+            "tablePresentations",
+            "profileTablePresentation",
+            "tablePresentation",
+            "presentation",
+            "treePresentation",
+            "chartPresentation",
+            "kpiPresentation",
+            "dashboardPresentation",
+        ):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, list):
+                for item in presentation:
+                    if isinstance(item, dict) and cls._presentation_has_rows(item):
+                        return True
+
+                continue
+
+            if isinstance(presentation, dict) and cls._presentation_has_rows(presentation):
+                return True
+
+        data_answer = metadata.get("dataAnswer")
+
+        if isinstance(data_answer, dict):
+            for metric in data_answer.get("derivedMetrics") or []:
+                if not isinstance(metric, dict):
+                    continue
+
+                label = str(metric.get("label") or "").strip().lower()
+                value = str(metric.get("value") or "").strip()
+
+                if label == "registros" and value.isdigit() and int(value) > 0:
+                    return True
+
+        return False
+
+    @classmethod
+    def _presentation_has_rows(cls, presentation: dict[str, Any]) -> bool:
+        presentation_type = str(presentation.get("type") or "").strip().lower()
+
+        if presentation_type == "table":
+            rows = presentation.get("rows")
+
+            return isinstance(rows, list) and bool(rows)
+
+        if presentation_type == "tree":
+            root = presentation.get("root")
+
+            return isinstance(root, dict) and bool(root)
+
+        if presentation_type in {"chart", "kpi", "dashboard"}:
+            for key in ("series", "data", "cards", "panels", "items"):
+                payload = presentation.get(key)
+
+                if isinstance(payload, list) and payload:
+                    return True
 
         return False
 

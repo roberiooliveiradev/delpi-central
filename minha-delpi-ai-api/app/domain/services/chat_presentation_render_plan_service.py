@@ -44,6 +44,14 @@ class ChatPresentationRenderPlanService:
         else:
             segments.extend(cls._single_view_segments(metadata, decision))
 
+        if cls._is_llm_prose_decoupled(metadata):
+            segments = cls._ensure_llm_decoupled_evidence_segments(
+                metadata,
+                segments,
+                stack_plan if isinstance(stack_plan, dict) else None,
+                decision if isinstance(decision, dict) else None,
+            )
+
         metadata["renderPlan"] = {
             "version": 1,
             "layoutMode": layout_mode,
@@ -308,3 +316,74 @@ class ChatPresentationRenderPlanService:
         )
 
         return ChatPresentationStackOrderService._markdown_has_attention(metadata)
+
+    @classmethod
+    def _ensure_llm_decoupled_evidence_segments(
+        cls,
+        metadata: dict[str, Any],
+        segments: list[dict[str, Any]],
+        plan: dict[str, Any] | None,
+        decision: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
+        """Playbook 19 — prosa LLM no lead; tabelas/árvore/gráfico permanecem no renderPlan."""
+        result = list(segments)
+        existing_kinds = {
+            str(segment.get("kind") or "").strip().lower() for segment in result
+        }
+
+        if cls._has_table_bundle(metadata) and "table" not in existing_kinds:
+            slot = (
+                "profileTables"
+                if cls._has_profile_table(metadata)
+                else "operationalTables"
+            )
+            source = cls._resolve_table_segment_source(metadata)
+
+            if source:
+                result.append({"kind": "table", "slot": slot, "source": source})
+
+        tail_plan = plan if isinstance(plan, dict) else {}
+        tail_segments = cls._tail_visual_segments(metadata, tail_plan)
+        has_tail_slot = any(
+            str(segment.get("slot") or "").strip().lower() == "tailvisuals"
+            for segment in result
+        )
+
+        if tail_segments and not has_tail_slot:
+            result.extend(tail_segments)
+            existing_kinds.update(
+                str(segment.get("kind") or "").strip().lower() for segment in tail_segments
+            )
+
+        selected = str((decision or {}).get("selected") or "").strip().lower()
+
+        if selected in _VISUAL_TOKEN_TO_KEY and selected not in existing_kinds:
+            source = cls._resolve_visual_source(metadata, selected)
+
+            if source:
+                result.append({"kind": selected, "slot": "primary", "source": source})
+
+        return result
+
+    @classmethod
+    def _resolve_table_segment_source(cls, metadata: dict[str, Any]) -> str | None:
+        bulk = metadata.get("tablePresentations")
+
+        if isinstance(bulk, list) and bulk:
+            return "tablePresentations"
+
+        for key in ("profileTablePresentation", "tablePresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict) and presentation.get("type") == "table":
+                return key
+
+        return None
+
+    @classmethod
+    def _has_profile_table(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_section_rules_service import (
+            ChatPresentationSectionRulesService,
+        )
+
+        return ChatPresentationSectionRulesService._has_profile_table(metadata)

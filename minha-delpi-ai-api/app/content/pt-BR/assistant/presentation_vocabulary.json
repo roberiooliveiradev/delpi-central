@@ -590,7 +590,7 @@
       "summary_then_evidence": {
         "slots": ["lead", "operationalTables", "tailVisuals", "attention"],
         "slotSources": {
-          "operationalTables": ["guide", "inspection"],
+          "operationalTables": ["guide", "inspection", "profile"],
           "tailVisuals": ["presentation_slots"]
         }
       },

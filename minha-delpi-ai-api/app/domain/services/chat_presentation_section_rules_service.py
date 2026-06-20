@@ -227,6 +227,10 @@ class ChatPresentationSectionRulesService:
 
         if slot == "operationalTables":
             keys = sources if isinstance(sources, list) else ["guide", "inspection", "structure"]
+
+            if "profile" in keys and cls._has_profile_table(metadata):
+                return True
+
             return any(bool(visibility.get(str(key))) for key in keys)
 
         if slot == "tailVisuals":

@@ -128,6 +128,46 @@ def test_web_search_empty_uses_web_no_source_not_operational_empty():
     assert classification.error_type == "web_no_source"
 
 
+def test_analyser_composite_empty_sections_does_not_classify_empty_when_profile_table_exists():
+    answer = (
+        "O produto **10080045** é um terminal olhal. "
+        "Roteiro sem operações registradas e estrutura vazia na API."
+    )
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "path": "/products/10080045/analyser",
+                "tablePresentations": [
+                    {
+                        "type": "table",
+                        "role": "profile",
+                        "title": "Produto 10080045",
+                        "rows": [{"campo": "Código", "valor": "10080045"}],
+                    }
+                ],
+                "dataAnswer": {
+                    "derivedMetrics": [{"label": "Registros", "value": "14"}],
+                },
+                "responsePreview": (
+                    '{"data":{"structure":{"total":0},"guide":{"total":0},'
+                    '"inspection":{"total":0}}}'
+                ),
+            },
+        }
+    ]
+
+    classification = ChatErrorHandlingClassifier.classify(
+        message="me fale do produto 10080045",
+        answer=answer,
+        tool_calls=tool_calls,
+    )
+
+    assert classification is None
+
+
 def test_help_error_skipped_when_recovery_present():
     from app.application.services.chat_help_error_follow_up_service import (
         ChatHelpErrorFollowUpService,

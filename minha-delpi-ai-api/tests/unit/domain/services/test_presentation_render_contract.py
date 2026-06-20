@@ -284,6 +284,47 @@ def test_render_plan_skips_data_answer_decision_when_llm_prose_decoupled():
         {"kind": "markdown", "slot": "lead", "source": "assistantMessage"},
     ]
     assert not any(segment.get("source") == "dataAnswer" for segment in segments)
+    assert any(
+        segment.get("kind") == "table" and segment.get("source") == "tablePresentations"
+        for segment in segments
+    )
+
+
+def test_render_plan_appends_profile_table_when_llm_decoupled_and_narrative_lead_only():
+    metadata = {
+        "llmProseDecoupled": True,
+        "dataOnlyPresentation": True,
+        "presentationDecision": {
+            "layoutMode": "stack",
+            "presentationMode": "summary_then_evidence",
+            "selected": "table",
+            "proseSource": "llm",
+        },
+        "stackPresentationPlan": {
+            "presentationMode": "summary_then_evidence",
+            "narrativeOrder": ["lead"],
+            "sectionVisibility": {
+                "profile": False,
+                "guide": False,
+                "structure": False,
+            },
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "role": "profile",
+                "title": "Produto 10080045",
+                "rows": [{"campo": "Código", "valor": "10080045"}],
+            }
+        ],
+    }
+
+    ChatPresentationRenderPlanService.build(metadata)
+
+    segments = metadata["renderPlan"]["segments"]
+
+    assert any(segment.get("kind") == "table" for segment in segments)
+    assert segments[0]["source"] == "assistantMessage"
 
 
 def test_render_plan_falls_back_to_lead_markdown_when_stack_segments_empty():
