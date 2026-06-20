@@ -1,6 +1,7 @@
 # Changelog — BOM colunar, refinamento de visão e assertividade 95% (Fase 15.8)
 
 **Data:** 20/06/2026  
+**Commit:** `8e7556b43` (15.8.4–15.8.6)  
 **Escopo:** skill desenho orquestra visão do chat base; usuário não envia print/zoom.  
 **Playbook:** [`playbook_bom_colunar_visao_skill_desenho.md`](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md)
 
@@ -122,6 +123,21 @@ DRAWING_VALIDATE_CODES=90263149,90262834,90263622,90264227 \
 docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
   delpi-minha-delpi-ai-api python /app/scripts/smoke_drawing_90263149_chat_e2e.py
 ```
+
+---
+
+## Homologação live (20/06/2026)
+
+Container `delpi-minha-delpi-ai-api` após rebuild:
+
+| Métrica | Resultado |
+|---------|-----------|
+| `10090050` QTD | `1`, `refined_column`, `quantityTrusted=true` |
+| `columnRowCount` | 12 |
+| `visionRefinement.resolved` | Preservado entre extração e validação (8+ códigos) |
+| Críticos live `90263149` | Parcial — `bom_extra` reduzido; pendente zerar códigos fantasma OCR e QTD residual |
+
+Smoke E2E requer Keycloak/gateway estáveis após `docker compose up --build`.
 
 ---
 

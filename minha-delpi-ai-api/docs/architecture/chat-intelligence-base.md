@@ -109,8 +109,8 @@ Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) sã
 | `ChatPdfEmbeddedTextService` | PyMuPDF: texto nativo + anotações ODA/CAD com bbox |
 | `ChatPdfTextFusionService` | Fusão multi-fonte (prioriza embedded/anotações sobre pypdf) |
 | `ChatPdfAnnotationTableService` | Linhas tabulares a partir de bbox de anotações |
-| **`ChatPdfTableStructureService`** | **Backlog 15.8** — tabelas genéricas; sem semântica BOM |
-| **`TableCellRefinementPort`** / **`ChatPdfTableCellRefinementService`** | **Backlog 15.8** — re-OCR célula; skill orquestra |
+| **`ChatPdfTableStructureService`** | Tabelas genéricas + `rowParsing` (15.8); sem semântica BOM |
+| **`TableCellRefinementPort`** / **`ChatPdfTableCellRefinementService`** | Re-OCR célula; skill orquestra (15.8) |
 | `ChatPdfBomSourceService` | **Skill/legado** — fontes texto parse BOM |
 | `ChatDrawingRegionalScopeService` | **Skill** — escopo BOM/cotas/carimbo — [changelog jun/2026](../changelog/2026-06-drawing-bom-pa-families.md) |
 | `ChatDocumentVisionSkillService` | Ativação canônica da skill `document-vision-delpi` (anexo, intent `attachment_document`, enriquecimento de desenho) |
@@ -128,8 +128,11 @@ Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) sã
 | `ChatDrawingProductCodeResolutionService.resolve_explicit_codes_without_attachment` | Sem anexo: códigos só da mensagem ou `userContextItems` — sem herança do histórico |
 | `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |
 | `ChatDocumentVisionBomService` | **Skill (legado)** — heurística linha → `bomRows`; substituir por interpretação colunar 15.8 |
-| **`ChatDrawingBomTableInterpretationService`** | **Backlog 15.8** — mapeia `tables[]` → `bomRows` |
-| **`ChatDrawingBomVisionRefinementService`** | **Backlog 15.8** — loop refinamento; chama `TableCellRefinementPort` |
+| **`ChatDrawingBomTableInterpretationService`** | Mapeia `tables[]` → `bomRows`; inferência colunar (15.8) |
+| **`ChatDrawingBomVisionRefinementService`** | Loop refinamento; `TableCellRefinementPort`; merge idempotente (15.8) |
+| **`ChatDrawingBomComparisonService`** | Comparação PDF × SG1010; modo estruturado `bomComparison` (15.8.4) |
+| **`ChatDrawingValidationAssertivenessMetricsService`** | Gate batch assertividade 95% (15.8.6) |
+| **`ChatDrawingFollowUpService`** | Chips pós-análise; «Reextrair BOM do PDF» condicional (15.8.5) |
 | `ChatDrawingBomQuantityAssertivenessService` | **Skill** — ruído OCR QTD; crítico vs pending |
 | `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
 | `ChatDocumentVisionTablesService` | Tabelas `tables[]` (markdown/TSV heurístico, estágio `table_heuristic`) — Onda 13 |

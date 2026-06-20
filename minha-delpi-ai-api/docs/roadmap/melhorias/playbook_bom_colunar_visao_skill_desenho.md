@@ -1,6 +1,6 @@
 # Playbook — BOM colunar, refinamento de visão e assertividade 95% (desenhos DELPI)
 
-> **Status (20/06/2026):** **Backlog** — Fase **15.8** da [Onda 15](./playbook_validacao_desenhos_delpi_roadmap.md).  
+> **Status (20/06/2026):** **Entregue no código** — Fases **15.8.0–15.8.6** implementadas; homologação live **`90263149` parcial** (QTD âncora `10090050` OK; `bom_extra` / códigos OCR fantasma ainda em evolução). Changelog: [`2026-06-drawing-bom-column-vision-refinement.md`](../../changelog/2026-06-drawing-bom-column-vision-refinement.md).  
 > **Pré-requisitos:** Onda 13 (visão), Onda 14 (OCR regional), Onda 15.6 (quantidades BOM), Onda 15.7 (retry confiança ≥95%), assertividade jun/2026 (`ChatDrawingBomQuantityAssertivenessService`).  
 > **Arquitetura:** [chat base](../../architecture/chat-intelligence-base.md) = visão **genérica** (regiões, tabelas, células); [skill `drawing-analysis-delpi`](./playbook_skill_analise_desenhos_delpi.md) = **BOM, SG1010, cotas DELPI, assertividade** — ver `.cursor/rules/chat-intelligence-base.mdc`, `centralized-rules-first.mdc`, `assistant-content-json.mdc`.
 
@@ -90,9 +90,9 @@ PDF já anexado
 |---------|---------------|--------|
 | OCR BOM | Região `bom` inteira → texto → `_parse_bom_line` | QTD = primeiro número plausível na **linha** (inclui descrição: `6,35`, `6 PINOS`, `00120`) |
 | Retry extração | `ChatDrawingExtractionQualityRetryService` até confiança **95%** | Retry **global** (DPI/layout); não isola coluna QTD |
-| Assertividade | `ChatDrawingBomQuantityAssertivenessService` | Evita crítico falso → **pending**; **não** dispara releitura dirigida |
-| Skill policy | Usa `documentVision` / `drawingPdfExtractSummary` | Não proíbe explicitamente pedido de print ao usuário |
-| Follow-up | `ChatDrawingFollowUpService` — chips fixos | Não aciona nova leitura de visão |
+| Assertividade | `ChatDrawingBomQuantityAssertivenessService` + gate batch | Evita crítico falso → **pending**; comparação BOM preferencial por linhas colunar (`bomComparison`); gate exige `statusOk` |
+| Skill policy | Usa `documentVision` / `visionRefinement` | Proíbe pedir print; chip «Reextrair BOM» documentado |
+| Follow-up | `ChatDrawingFollowUpService` — chips fixos + **«Reextrair BOM do PDF»** condicional | Reanalisa com mesmo anexo quando há issue BOM + `visionRefinement` |
 
 ### 2.2 Alvo
 
@@ -113,7 +113,9 @@ PDF já anexado
 | 10080044 | 2 | 2000 | 2000 ✓ | idem |
 | 50212969 | 1 PI | 1 MI | 1 MI ✓ | — |
 
-**Esperado pós-15.8:** 0 críticos BOM; status `approved` ou `approved_with_notes`; `bomRows[].quantitySource=column` nos itens comparados.
+**Esperado pós-15.8 (unitário):** 0 críticos `bom_quantity_mismatch` em fixture OCR ruidoso (`test_chat_drawing_validation_90263149.py`).
+
+**Homologação live `90263149` (20/06/2026):** `10090050.quantity=1`, `quantitySource=refined_column`; `visionRefinement.resolved` preservado entre passadas; `bom_extra` reduzido vs OCR bruto — **pendente** zerar críticos estruturais (códigos fantasma em linhas colunar trusted, QTD residual em `10500020`/`10500075`).
 
 ---
 
@@ -196,24 +198,24 @@ Campos opcionais para adminDebug / export — **não** viram pergunta ao usuári
 
 ## 5. Roadmap Fase 15.8 (entregas)
 
-### 15.8.0 — Port e contrato genérico (chat base)
+### 15.8.0 — Port e contrato genérico (chat base) ✅
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
-| 15.8.0.1 | `TableCellRefinementPort` | domain/port | `refine_cell(storage_path, table_id, row_index, col_index) → { text, bbox, engines }` |
-| 15.8.0.2 | `ChatPdfTableStructureService` | domain (chat base) | Detecta colunas/linhas em região tabular; popula `documentVision.tables[]` |
-| 15.8.0.3 | `ChatPdfTableCellRefinementService` | infrastructure/domain | Implementa port; usa OCR regional existente |
-| 15.8.0.4 | `document_vision.json` → `pdfExtraction.tableStructure` | JSON | Headers genéricos, DPI, padding — **sem** chaves BOM |
-| 15.8.0.5 | Testes sem vocabulário DELPI | tests | `test_chat_pdf_table_structure_service.py` |
+| 15.8.0.1 | `TableCellRefinementPort` | domain/port | ✅ |
+| 15.8.0.2 | `ChatPdfTableStructureService` | domain (chat base) | ✅ |
+| 15.8.0.3 | `ChatPdfTableCellRefinementService` | infrastructure/domain | ✅ |
+| 15.8.0.4 | `document_vision.json` → `pdfExtraction.tableStructure` | JSON | ✅ |
+| 15.8.0.5 | Testes sem vocabulário DELPI | tests | ✅ `test_chat_pdf_table_structure_service.py` |
 
-### 15.8.1 — Interpretação tabular BOM (skill desenho)
+### 15.8.1 — Interpretação tabular BOM (skill desenho) ✅
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
-| 15.8.1.1 | `ChatDrawingBomTableInterpretationService` | domain (skill) | Lê `tables[]`; mapeia colunas via `drawing_stamp.json` → `bomColumnHeaders` |
-| 15.8.1.2 | Vocabulário cabeçalho BOM em `drawing_stamp.json` | JSON skill | `POS`, `CÓDIGO`, `QTD`, `UM`, `DESCRIÇÃO` |
-| 15.8.1.3 | Integração em `ChatDrawingPdfBomExtractionService` | skill | Preferir tabela colunar; fallback `ChatDocumentVisionBomService._parse_bom_line` |
-| 15.8.1.4 | Testes | tests | `test_chat_drawing_bom_table_interpretation_service.py` |
+| 15.8.1.1 | `ChatDrawingBomTableInterpretationService` | domain (skill) | ✅ |
+| 15.8.1.2 | Vocabulário cabeçalho BOM em `drawing_stamp.json` | JSON skill | ✅ `bomColumnHeaders` |
+| 15.8.1.3 | Integração em `ChatDrawingPdfBomExtractionService` | skill | ✅ |
+| 15.8.1.4 | Testes | tests | ✅ |
 
 ### 15.8.1b — Inferência de colunas com cabeçalho OCR corrompido ✅
 
@@ -247,41 +249,44 @@ Loader: `ChatDrawingPatternsService.bom_column_inference_rule` / `bom_column_def
 | 15.8.2b.4 | Merge colunar × linha (`prefer_row`) | skill | `10090050`: `quantity=null`, não `6.35` |
 | 15.8.2b.5 | Testes snippet OCR real + dedupe | tests | `test_chat_pdf_table_structure_service.py` |
 
-### 15.8.3 — Orquestração refinamento (skill application)
+### 15.8.3 — Orquestração refinamento (skill application) ✅
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
-| 15.8.3.1 | `ChatDrawingBomVisionRefinementService.refine_if_needed` | application (**skill**) | Após interpretação BOM, antes validação; **não** em turn prep genérico |
-| 15.8.3.2 | `refinementTriggers` em `drawing_validation.json` | JSON skill | Códigos `quantity_from_description`, etc. |
-| 15.8.3.3 | Merge idempotente `bomRows` | domain (skill) | |
-| 15.8.3.4 | adminDebug `drawing:bom_qty_refine` | application (skill) | Não `vision:bom_*` no pipeline genérico |
-| 15.8.3.5 | Ponto único: `ChatDrawingPdfExtractionService` / enrichment desenho | guardrail | Send/Stream não duplicam |
+| 15.8.3.1 | `ChatDrawingBomVisionRefinementService.refine_if_needed` | application (**skill**) | ✅ extração + validação |
+| 15.8.3.2 | `refinementTriggers` em `drawing_validation.json` | JSON skill | ✅ incl. `missing_quantity`, `untrusted_column_quantity` |
+| 15.8.3.3 | Merge idempotente `bomRows` + `codesRefined` | application (skill) | ✅ acumula entre passadas |
+| 15.8.3.4 | adminDebug `drawing:bom_qty_refine` | application (skill) | ✅ |
+| 15.8.3.5 | Ponto único: `ChatDrawingPdfExtractionService` / enrichment desenho | guardrail | ✅ |
+| 15.8.3.6 | Retry OCR em colunas adjacentes + plausibilidade QTD | application (skill) | ✅ `quantityColumnRetryOffsets`; `quantityMaxDigits` |
 
-### 15.8.4 — Assertividade e validação
-
-| ID | Entrega | Camada | DoD |
-|----|---------|--------|-----|
-| 15.8.4.1 | Assertiveness consulta `quantitySource=column|refined_column` como trusted preferencial | domain | Cross-check SG1010 após refinamento |
-| 15.8.4.2 | `build_check_items` inclui `visionRefinement` metadado | domain | Sem strings PT novas em Python |
-| 15.8.4.3 | Regressão `test_chat_drawing_validation_90263149.py` | tests | 0 críticos BOM; pending só se refinamento falhou |
-| 15.8.4.4 | Regressão assertiveness existente verde | tests | `test_chat_drawing_bom_quantity_assertiveness_service.py` |
-
-### 15.8.5 — Policy e follow-up (sem pedir anexo extra)
+### 15.8.4 — Assertividade e validação ✅
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
-| 15.8.5.1 | Atualizar `drawing-analysis-delpi-skill.md` | policy | Proibir pedir print/zoom; obrigar consumo de `documentVision` |
-| 15.8.5.2 | `ChatDrawingFollowUpService` — chip opcional «Reextrair BOM do PDF» | application | Dispara **reanálise** com mesmo anexo, não pede novo arquivo |
-| 15.8.5.3 | Queries em `personality_playbook.json` → `drawingFollowUpQueries` | JSON | Template com `{{productCode}}` |
+| 15.8.4.1 | Assertiveness consulta `quantitySource=column|refined_column` como trusted preferencial | domain | ✅ |
+| 15.8.4.2 | `drawingAnalysis.visionRefinement` metadado | domain | ✅ `resolved`, `codesRefined`, `attemptCount` |
+| 15.8.4.3 | Regressão `test_chat_drawing_validation_90263149.py` | tests | ✅ 0 críticos QTD em fixture; live parcial |
+| 15.8.4.4 | Comparação BOM estruturada | domain | ✅ `ChatDrawingBomComparisonService` + `bomComparison` JSON |
+| 15.8.4.5 | Regressão assertiveness existente verde | tests | ✅ `test_chat_drawing_bom_quantity_assertiveness_service.py` |
 
-### 15.8.6 — Métricas assertividade 95%
+### 15.8.5 — Policy e follow-up (sem pedir anexo extra) ✅
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
-| 15.8.6.1 | `ChatDrawingValidationAssertivenessMetricsService` (ou extensão métricas existente) | application | `falseCriticalRate`, `trueCriticalRate`, `pendingRate` por código |
-| 15.8.6.2 | `scripts/validate_drawing_samples.py --assertiveness-gate` | scripts | Falha CI se `false_critical_rate > 0.05` na lista configurada |
-| 15.8.6.3 | Baseline `desenhos/` commitada em fixture JSON (sem PDFs) | tests | `drawing_assertiveness_baseline.json` |
-| 15.8.6.4 | Homologação batch documentada | doc | Comando em § 7 abaixo |
+| 15.8.5.1 | Atualizar `drawing-analysis-delpi-skill.md` | policy | ✅ |
+| 15.8.5.2 | `ChatDrawingFollowUpService` — chip «Reextrair BOM do PDF» | application | ✅ condicional; priorizado nos 6 chips |
+| 15.8.5.3 | Queries em `personality_playbook.json` → `drawingFollowUpQueries` | JSON | ✅ `{{productCode}}` |
+| 15.8.5.4 | `ChatDrawingFollowUpTurnService._wants_bom_reextract` | application | ✅ não intercepta — reanálise com mesmo PDF |
+
+### 15.8.6 — Métricas assertividade 95% ✅
+
+| ID | Entrega | Camada | DoD |
+|----|---------|--------|-----|
+| 15.8.6.1 | `ChatDrawingValidationAssertivenessMetricsService` | application | ✅ `falseCriticalRate`, `statusOk`, `pendingRate` |
+| 15.8.6.2 | `scripts/validate_drawing_samples.py --assertiveness-gate` | scripts | ✅ falha se `falseCriticalRate > 0.05` **ou** `statusOk` falso |
+| 15.8.6.3 | Baseline `desenhos/` commitada em fixture JSON (sem PDFs) | tests | ✅ `drawing_assertiveness_baseline.json` |
+| 15.8.6.4 | Homologação batch documentada | doc | ✅ § 7 abaixo |
 
 ---
 
@@ -330,7 +335,12 @@ Loader: `ChatDocumentVisionContentService`.
     "maxAttempts": 3,
     "dpiMultiplier": 2.0,
     "cellHorizontalPadding": 0.005,
-    "engines": ["tesseract"]
+    "engines": ["tesseract"],
+    "quantityColumnRetryOffsets": [0, -1, 1, -2, 2]
+  },
+  "bomComparison": {
+    "preferStructuredRowsMinCount": 2,
+    "structuredQuantitySources": ["column", "column_inferred", "refined_column"]
   },
   "bomColumnInference": {
     "enabled": true,
@@ -347,9 +357,22 @@ Loader: `ChatDocumentVisionContentService`.
 }
 ```
 
-Loader: `ChatDrawingPatternsService` / `ChatDrawingBomTableInterpretationService`.
+Loader: `ChatDrawingPatternsService` (`bom_column_inference_rule`, `bom_row_refinement_rule`, `bom_comparison_rule`, `bom_structured_quantity_sources`).
 
-### 6.3 `drawing_validation.json` → `bomQuantitySemantics`
+### 6.3 `personality_playbook.json` (follow-up skill)
+
+```json
+{
+  "drawingFollowUpChips": ["…", "Reextrair BOM do PDF", "Reanalisar desenho"],
+  "drawingFollowUpQueries": {
+    "Reextrair BOM do PDF": "reextraia a tabela de materiais do desenho {{productCode}} com o PDF anexado"
+  }
+}
+```
+
+Loader: `ChatDrawingFollowUpService` via `ContentService.personality_playbook()`.
+
+### 6.4 `drawing_validation.json` → `bomQuantitySemantics`
 
 ```json
 {
@@ -366,7 +389,7 @@ Loader: `ChatDrawingPatternsService` / `ChatDrawingBomTableInterpretationService
 }
 ```
 
-### 6.4 `stream.json` (opcional)
+### 6.5 `stream.json` (opcional)
 
 Estágios SSE genéricos: `vision:table_structure`, `vision:table_cell_refine` (textos em JSON). Estágios skill: `drawing:bom_qty_refine` — só com skill ativa.
 
@@ -384,6 +407,11 @@ cd minha-delpi-ai-api
 # Unit — skill desenho
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_bom_table_interpretation_service.py -q
 .venv/bin/python -m pytest tests/unit/application/services/test_chat_drawing_bom_vision_refinement_service.py -q
+# Unit — skill desenho (15.8.4–15.8.6)
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_bom_comparison_service.py -q
+.venv/bin/python -m pytest tests/unit/application/services/test_chat_drawing_validation_assertiveness_metrics_service.py -q
+.venv/bin/python -m pytest tests/unit/application/services/test_chat_drawing_follow_up_service.py -q
+.venv/bin/python -m pytest tests/unit/application/services/test_chat_drawing_follow_up_turn_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90263149.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_bom_quantity_assertiveness_service.py -q
 
@@ -393,8 +421,11 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90263622.py -q
 
 # Homologação local (PDFs em desenhos/, gitignored)
-DRAWING_VALIDATE_CODES=90263149,90262834,90263622 \
+DRAWING_VALIDATE_CODES=90263149,90262834,90263622,90264227 \
   .venv/bin/python scripts/validate_drawing_samples.py --assertiveness-gate
+
+# Diagnóstico live (container) — extração + validação offline
+docker exec -e PYTHONPATH=/app delpi-minha-delpi-ai-api python /app/scripts/_diag_90263149.py
 
 # E2E chat real (container) — gate assertividade QTD (0 críticos bom_quantity_mismatch)
 docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
@@ -413,8 +444,9 @@ docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
 | Problema | Entrega | Teste |
 |----------|---------|-------|
 | QTD da descrição vira crítico BOM | 15.8.1–15.8.4 | `test_chat_drawing_validation_90263149.py` |
-| Retry global não corrige coluna | 15.8.2–15.8.3 | `test_chat_drawing_bom_row_refinement_service.py` |
-| Skill pede print ao usuário | 15.8.5 | Revisão policy + teste conteúdo JSON |
+| `componentCodes` OCR gera `bom_extra` falso | 15.8.4.4 | `test_structured_bom_rows_ignore_noisy_component_codes` |
+| Retry global não corrige coluna | 15.8.2–15.8.3 | `test_chat_drawing_bom_vision_refinement_service.py` |
+| Skill pede print ao usuário | 15.8.5 | `drawing-analysis-delpi-skill.md` + `test_chat_drawing_follow_up_turn_service.py` |
 | Assertividade < 95% na biblioteca | 15.8.6 | `validate_drawing_samples.py --assertiveness-gate` |
 | Layout BOM sem cabeçalho | 15.8.1 fallback | `_parse_bom_line` + pending, não crítico |
 | Duplicação OCR skill/visão | guardrail § 1 | Code review — skill só orquestra |
@@ -431,6 +463,10 @@ docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
 | `ChatPdfRegionOcrEngineService` | chat base | Motor OCR das células |
 | `ChatDocumentVisionService` | chat base | Emite `tables[]`; merge neutro |
 | `ChatDrawingPdfExtractionService` | skill | Fachada que liga visão genérica + interpretação DELPI |
+| `ChatDrawingBomComparisonService` | skill | Comparação PDF × SG1010; modo estruturado (`bomComparison`) |
+| `ChatDrawingBomVisionRefinementService` | application (skill) | Loop refinamento; merge `codesRefined` idempotente |
+| `ChatDrawingValidationAssertivenessMetricsService` | application | Gate batch 95% (`falseCriticalRate` + `statusOk`) |
+| `ChatDrawingFollowUpService` | application | Chip «Reextrair BOM do PDF» condicional |
 
 ---
 
@@ -444,13 +480,22 @@ docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
 
 ---
 
-## 11. Ordem de implementação recomendada
+## 11. Ordem de implementação (concluída 20/06/2026)
 
-1. **15.8.0** — port + tabela genérica no chat base (sem BOM).
-2. **15.8.1** — interpretação BOM na skill (`bomColumnHeaders` em `drawing_stamp.json`).
-3. **15.8.2** — skill orquestra `refine_cell` na coluna QTD.
-4. **15.8.3** — loop em fachada skill-only.
-5. **15.8.4–15.8.6** — assertividade, policy, gate 95%.
+1. **15.8.0** — port + tabela genérica no chat base ✅
+2. **15.8.1 / 15.8.1b** — interpretação BOM + inferência colunas ✅
+3. **15.8.2 / 15.8.2b** — refinamento célula + parse tabular corpo ✅
+4. **15.8.3** — loop skill + retry colunas adjacentes ✅
+5. **15.8.4–15.8.6** — assertividade, policy, gate 95% ✅
+
+### Próximo (pós-15.8 — homologação live)
+
+| Item | Objetivo |
+|------|----------|
+| Filtro código BOM × SG1010 fuzzy | Reduzir `bom_extra` quando OCR troca dígitos (`10080106` vs `10080010`) |
+| Validação código antes de `quantityTrusted` | Não confiar linha colunar cujo código não existe no analyser nem é 50xx |
+| Bbox real por célula | Substituir grade uniforme em `apply_cell_bboxes` |
+| Gate live `--assertiveness-gate` | Zerar críticos em `90263149` na suite completa |
 
 ---
 
@@ -458,7 +503,8 @@ docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [playbook_validacao_desenhos_delpi_roadmap.md](./playbook_validacao_desenhos_delpi_roadmap.md) | Onda 15 — fases 15.0–15.7 ✅ |
+| [playbook_validacao_desenhos_delpi_roadmap.md](./playbook_validacao_desenhos_delpi_roadmap.md) | Onda 15 — fases 15.0–15.8 ✅ (homologação live parcial) |
+| [2026-06-drawing-bom-column-vision-refinement.md](../../changelog/2026-06-drawing-bom-column-vision-refinement.md) | Changelog Fase 15.8 |
 | [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | § 14.5 BOM por região |
 | [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Skill `document-vision-delpi` |
 | [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Skill `drawing-analysis-delpi` |
@@ -472,12 +518,12 @@ docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
 
 ## 13. Critérios de aceite (Fase 15.8)
 
-- [ ] Chat base expõe `tables[]` **sem** campos `bomRows` / `quantity` semânticos.
-- [ ] Nenhum serviço `ChatPdf*` referencia SG1010, BOM ou milheiro MI.
-- [ ] `90263149`: 0 erros críticos BOM após pipeline skill completo.
-- [ ] `bomRows` de itens comparados trazem `quantitySource` ∈ `{column, refined_column}` quando layout tabular detectado.
-- [ ] Nenhum template `recommendation` ou policy pede print/zoom/recorte ao usuário.
-- [ ] Refinamento roda no mesmo turno, sem nova tool LLM obrigatória.
-- [ ] `false_critical_rate ≤ 5%` na lista de homologação configurada.
-- [ ] Zero string PT / regex / limiar novo fora de `drawing_stamp.json` / `drawing_validation.json` (exceto loaders).
-- [ ] Regressões Onda 15.7 e assertiveness jun/2026 permanecem verdes.
+- [x] Chat base expõe `tables[]` **sem** campos `bomRows` / `quantity` semânticos.
+- [x] Nenhum serviço `ChatPdf*` referencia SG1010, BOM ou milheiro MI.
+- [ ] `90263149` live: 0 erros críticos BOM após pipeline skill completo (unitário OK; live parcial).
+- [x] `bomRows` de itens comparados trazem `quantitySource` ∈ `{column, column_inferred, refined_column}` quando layout tabular detectado.
+- [x] Nenhum template `recommendation` ou policy pede print/zoom/recorte ao usuário.
+- [x] Refinamento roda no mesmo turno, sem nova tool LLM obrigatória.
+- [ ] `false_critical_rate ≤ 5%` **e** `statusOk` na lista de homologação configurada (gate implementado; batch depende de PDFs locais).
+- [x] Zero string PT / regex / limiar novo fora de `drawing_stamp.json` / `drawing_validation.json` / `personality_playbook.json` (exceto loaders).
+- [x] Regressões Onda 15.7 e assertiveness jun/2026 permanecem verdes.

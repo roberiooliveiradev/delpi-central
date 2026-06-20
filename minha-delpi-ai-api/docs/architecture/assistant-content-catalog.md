@@ -51,7 +51,7 @@ Wrappers especializados (mantêm API estável):
 | `web_search.json` | Resposta direta e follow-up pós-pesquisa | `ChatWebSearchDirectAnswerService`, `ChatWebSearchSourceFollowUpService` |
 | `drawing_validation.json` | Relatório, checklist, rótulos de status (`statusPresentation`), campos do markdown (`reportFields`), export CSV/PDF/XLSX (`export`), regras de consolidação de seção (`presentation`), **`bomQuantitySemantics.refinementTriggers`** (15.8) | `ChatDrawingValidationContentService`, `ChatDrawingValidationPresentationService`, `ChatDrawingValidationOrchestrationService`, `ChatDrawingReportExportService`, `ChatDrawingBomQuantityAssertivenessService` |
 | `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
-| `drawing_stamp.json` | Rótulos de carimbo, regiões, **`layoutAnalysis`** (XY-Cut), exclusões cliente/BOM, clarificações, gate nativo (Onda 14), padrões de cota/decape, **`bomColumnHeaders`** / **`bomColumnInference`** / **`bomRowRefinement`** (15.8) | `ChatDrawingStampExtractionService`, `ChatDrawingPageLayoutAnalysisService`, `ChatDrawingDimensionsExtractionService`, `ChatDrawingPatternsService`, `ChatDrawingBomTableInterpretationService` |
+| `drawing_stamp.json` | Rótulos de carimbo, regiões, **`layoutAnalysis`** (XY-Cut), exclusões cliente/BOM, clarificações, gate nativo (Onda 14), padrões de cota/decape, **`bomColumnHeaders`** / **`bomColumnInference`** / **`bomRowRefinement`** / **`bomComparison`** (15.8) | `ChatDrawingStampExtractionService`, `ChatDrawingPageLayoutAnalysisService`, `ChatDrawingDimensionsExtractionService`, `ChatDrawingPatternsService`, `ChatDrawingBomTableInterpretationService`, `ChatDrawingBomComparisonService` |
 | `document_vision.json` | Intent OCR, VLM, `pdfExtraction` (fusão, perfis `generic`/`drawing_delpi`); **`pdfExtraction.tableStructure`** + **`rowParsing`** (15.8.2b, genérico) | `ChatDocumentVisionContentService`, `ChatPdfDocumentExtractionService`, `ChatPdfTableStructureService`, `ChatDocumentVisionSkillService` |
 | `user_context.json` | Respostas diretas sobre perfil e papéis | `ChatUserContextService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
@@ -74,7 +74,7 @@ Wrappers especializados (mantêm API estável):
 | `text_correction_spell_check.json` | Preflight LanguageTool na skill de correção textual | `ChatTextCorrectionSpellContentService` |
 | `capabilities.json` | Capacidades | `ChatCapabilitiesService` |
 | `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
-| `personality_playbook.json` | Tom e feedback | `ChatPersonalityContentService` |
+| `personality_playbook.json` | Tom, feedback, **`drawingFollowUpChips`** / **`drawingFollowUpQueries`** (incl. «Reextrair BOM do PDF», 15.8.5) | `ChatPersonalityContentService`, `ChatDrawingFollowUpService` |
 | `sql_intent_vocabulary.json` | Marcadores SQL (intenção, refinamento, produção, analisador) — seção **`shared`** para termos reutilizados | `ChatSqlIntentVocabularyService` → vários `ChatSql*` |
 | `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
 | `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
