@@ -106,6 +106,24 @@ def test_resolve_mode_direct_for_playbook_single_table():
     assert mode == MODE_DIRECT
 
 
+def test_apply_to_tool_context_result_decouples_executed_tools(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    tool_context = {
+        "context": "tool output",
+        "toolCalls": _stack_tool_calls(),
+    }
+
+    mode = ChatPresentationProseDeliveryService.apply_to_tool_context_result(
+        tool_context,
+        "qual o status do produto 90269002 na fabrica hoje?",
+    )
+
+    assert mode == MODE_LLM
+    metadata = tool_context["toolCalls"][0]["metadata"]
+    assert metadata.get("llmProseDecoupled") is True
+
+
 def test_apply_turn_decouples_and_stamps_delivery_mode(monkeypatch):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
 

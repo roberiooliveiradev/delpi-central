@@ -63,6 +63,29 @@ class ChatPresentationProseDeliveryService:
         return mode
 
     @classmethod
+    def apply_to_tool_context_result(
+        cls,
+        tool_context: dict[str, Any] | None,
+        message: str | None,
+        *,
+        response_mode: str | None = None,
+    ) -> str:
+        """Aplica o gate canônico ao payload de tool context (send, stream, simulate, preview)."""
+        if not isinstance(tool_context, dict):
+            return MODE_TEMPLATE
+
+        tool_calls = tool_context.get("toolCalls")
+
+        if not isinstance(tool_calls, list) or not tool_calls:
+            return MODE_TEMPLATE
+
+        return cls.apply_turn(
+            message,
+            tool_calls,
+            response_mode=response_mode,
+        )
+
+    @classmethod
     def should_use_llm_prose(
         cls,
         message: str | None,

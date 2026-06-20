@@ -50,6 +50,7 @@ class AdminAgentSimulateUseCase:
         agent_metadata_override: dict | None = None,
         skip_enabled_check: bool = False,
         previous_messages: list[dict] | None = None,
+        response_mode: str | None = None,
     ) -> dict:
         normalized_question = str(question or "").strip()
 
@@ -97,6 +98,7 @@ class AdminAgentSimulateUseCase:
             specialization=specialization,
             execute_tools_in_sandbox=execute_tools_in_sandbox,
             previous_messages=history,
+            response_mode=response_mode,
         )
         tool_context = str(tool_context_payload.get("context") or "")
         analysis_mode = ChatIntelligencePipelineService.analysis_mode_from_tool_context(
@@ -265,6 +267,7 @@ class AdminAgentSimulateUseCase:
         specialization: dict | None = None,
         execute_tools_in_sandbox: bool = False,
         previous_messages: list | None = None,
+        response_mode: str | None = None,
     ) -> tuple[dict, list[dict]]:
         if (
             execute_tools_in_sandbox
@@ -281,6 +284,16 @@ class AdminAgentSimulateUseCase:
                 actions_enabled=True,
                 allowed_tool_names=allowed_tool_names,
                 previous_messages=previous_messages,
+            )
+
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            ChatPresentationProseDeliveryService.apply_to_tool_context_result(
+                result,
+                question,
+                response_mode=response_mode,
             )
 
             tool_calls = [

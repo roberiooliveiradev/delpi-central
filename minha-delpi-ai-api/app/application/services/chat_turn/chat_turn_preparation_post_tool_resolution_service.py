@@ -340,9 +340,9 @@ class ChatTurnPreparationPostToolResolutionService:
                 ChatPresentationProseDeliveryService,
             )
 
-            ChatPresentationProseDeliveryService.apply_turn(
+            ChatPresentationProseDeliveryService.apply_to_tool_context_result(
+                {"toolCalls": tool_calls},
                 message,
-                tool_calls,
                 response_mode=response_mode,
             )
 

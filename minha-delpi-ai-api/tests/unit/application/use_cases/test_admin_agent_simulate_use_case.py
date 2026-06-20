@@ -1,9 +1,13 @@
 from unittest.mock import Mock
 
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.application.services.admin_guideline_prompt_service import AdminGuidelinePromptService
 from app.application.use_cases.admin_agent_simulate_use_case import AdminAgentSimulateUseCase
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
+from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+configure_domain_infrastructure_ports()
 
 
 def _make_use_case(**kwargs) -> AdminAgentSimulateUseCase:
@@ -67,6 +71,41 @@ class FakeChatToolContextService:
         }
 
 
+class FakeFactoryStatusToolContextService:
+    def build_context(self, user_id, access_token, message, actions_enabled=True, **kwargs):
+        return {
+            "context": "Status fabril consolidado.",
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "arguments": {},
+                    "reason": "Consulta status fabril.",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90269002/factory-status",
+                        "presentationDecision": {
+                            "selected": "text",
+                            "layoutMode": "stack",
+                            "presentationMode": "summary_then_evidence",
+                        },
+                        "stackPresentationPlan": {
+                            "presentationProfile": "product_factory_status",
+                            "humanizedSections": True,
+                        },
+                        "textPresentation": {
+                            "type": "markdown",
+                            "markdown": "### Status fabril\n\nSituação consolidada.",
+                        },
+                        "humanizedSummary": {
+                            "titulo": "Status fabril",
+                            "linhas": ["- OP em andamento."],
+                        },
+                    },
+                }
+            ],
+        }
+
+
 def test_admin_agent_simulate_builds_prompt_and_comparison():
     use_case = _make_use_case()
 
@@ -95,6 +134,24 @@ def test_admin_agent_simulate_executes_tools_with_access_token():
     assert result["plannedToolCalls"][0]["status"] == "executed"
     assert "get_current_user" in result["finalPrompt"]["systemPrompt"]
     assert result["debugContext"]["toolsExecuted"] is True
+
+
+def test_admin_agent_simulate_applies_prose_delivery_on_sandbox_tools(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+    use_case = _make_use_case(
+        chat_tool_context_service=FakeFactoryStatusToolContextService(),
+    )
+
+    result = use_case.execute(
+        question="qual o status do produto 90269002 na fabrica hoje?",
+        user_id="00000000-0000-0000-0000-000000000001",
+        access_token="token-test",
+        execute_tools_in_sandbox=True,
+    )
+
+    metadata = result["plannedToolCalls"][0]["metadata"]
+    assert metadata.get("llmProseDecoupled") is True
+    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
 
 
 def test_admin_agent_simulate_rejects_empty_question():
