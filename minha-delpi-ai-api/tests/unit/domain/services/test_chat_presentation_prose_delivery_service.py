@@ -2,6 +2,7 @@
 
 import pytest
 
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_presentation_prose_delivery_service import (
     ChatPresentationProseDeliveryService,
     MODE_DIRECT,
@@ -9,6 +10,8 @@ from app.domain.services.chat_presentation_prose_delivery_service import (
     MODE_TEMPLATE,
 )
 from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+configure_domain_infrastructure_ports()
 
 
 def _stack_tool_calls(*, markdown: str = "### Status\n\nTemplate.") -> list[dict]:
@@ -18,6 +21,7 @@ def _stack_tool_calls(*, markdown: str = "### Status\n\nTemplate.") -> list[dict
             "metadata": {
                 "ok": True,
                 "path": "/products/90269001/factory-status",
+                "apiDelpiResponseMeta": {"entity": "product_factory_status"},
                 "textPresentation": {"type": "markdown", "markdown": markdown},
                 "humanizedSummary": {"titulo": "Status", "linhas": ["- OP 12."]},
                 "dataAnswer": {
@@ -106,6 +110,7 @@ def test_should_skip_template_prose_when_modes_disabled_but_require_flag_false(m
 
     assert ChatPresentationProseDeliveryService.should_skip_template_prose_in_pipeline(
         "qual o status do produto 90269002 na fabrica hoje?",
+        path="/products/90269002/factory-status",
     )
 
 
@@ -204,3 +209,19 @@ def test_is_llm_decoupled_metadata_reads_prose_source():
     assert ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(
         {"presentationDecision": {"proseSource": "llm"}},
     )
+
+
+def test_entity_template_profile_blocks_llm_prose(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    tool_calls = _stack_tool_calls()
+    tool_calls[0]["metadata"]["apiDelpiResponseMeta"] = {
+        "entity": "production_consumption_top_items",
+    }
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "como esta o status fabril do produto 90269001?",
+        tool_calls,
+    )
+
+    assert mode == MODE_TEMPLATE

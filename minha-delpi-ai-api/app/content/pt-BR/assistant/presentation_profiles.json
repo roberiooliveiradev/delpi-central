@@ -355,6 +355,24 @@
       "eficiencia_fabril_appointment"
     ]
   },
+  "proseDeliveryByEntity": {
+    "product_factory_status": "llm",
+    "product_production_status": "llm",
+    "product_shipping_status": "llm",
+    "product_stock": "llm"
+  },
+  "proseDeliveryByProfile": {
+    "factory_status": "llm",
+    "production_status": "llm",
+    "shipping_status": "llm",
+    "stock": "llm",
+    "table_list": "template",
+    "playbook_report": "template",
+    "kpi_series": "template",
+    "kpi_dashboard": "template",
+    "tree_hierarchy": "template",
+    "generic": "template"
+  },
   "entityPresentationRouting": {
     "operationalEmptyKeys": {
       "product_suppliers": "suppliers",

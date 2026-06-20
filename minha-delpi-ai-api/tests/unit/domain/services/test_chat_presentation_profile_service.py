@@ -257,3 +257,27 @@ def test_commentary_profile_key_maps_operational_and_generic_profiles() -> None:
         )
         == "generic_list"
     )
+
+
+def test_prose_delivery_mode_entity_and_profile_fallback() -> None:
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="product_factory_status",
+            path="/products/90269002/factory-status",
+        )
+        == "llm"
+    )
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="production_consumption_top_items",
+            path="/production/consumption/top-items",
+        )
+        == "template"
+    )
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            path="/products/90260144/guide",
+            entity="product_guide",
+        )
+        == "template"
+    )

@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_operational_narrative_synthesis_service import (
     ChatOperationalNarrativeSynthesisService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_presentation_prose_delivery_content_service import (
     ChatPresentationProseDeliveryContentService,
 )
@@ -143,14 +146,15 @@ class ChatPresentationProseDeliveryService:
         *,
         path: str | None = None,
     ) -> bool:
-        del path
-
         if not cls.llm_prose_globally_available():
             return False
 
         message = str(user_message or "").strip()
 
         if not message:
+            return False
+
+        if cls._entity_prose_delivery_mode(path=path) == MODE_TEMPLATE:
             return False
 
         return ChatOperationalNarrativeSynthesisService.message_suggests_narrative_llm_synthesis(
@@ -169,7 +173,50 @@ class ChatPresentationProseDeliveryService:
         ):
             return False
 
-        return ChatPresentationProseDeliveryService.llm_prose_globally_available()
+        if cls._entity_prose_delivery_mode(tool_calls=tool_calls) == MODE_TEMPLATE:
+            return False
+
+        return cls.llm_prose_globally_available()
+
+    @classmethod
+    def _entity_prose_delivery_mode(
+        cls,
+        *,
+        path: str | None = None,
+        tool_calls: list | None = None,
+    ) -> str | None:
+        entity = cls._resolve_entity_from_context(tool_calls, path)
+
+        return ChatPresentationProfileService.prose_delivery_mode(
+            entity=entity,
+            path=path,
+        )
+
+    @classmethod
+    def _resolve_entity_from_context(
+        cls,
+        tool_calls: list | None,
+        path: str | None,
+    ) -> str | None:
+        if isinstance(tool_calls, list):
+            for tool_call in tool_calls:
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                metadata = tool_call.get("metadata")
+
+                if not isinstance(metadata, dict):
+                    continue
+
+                api_meta = metadata.get("apiDelpiResponseMeta")
+
+                if isinstance(api_meta, dict):
+                    entity = str(api_meta.get("entity") or "").strip()
+
+                    if entity:
+                        return entity
+
+        return ChatPresentationProfileService.resolve_entity_from_path(path)
 
     @classmethod
     def _qualifies_direct_prose(

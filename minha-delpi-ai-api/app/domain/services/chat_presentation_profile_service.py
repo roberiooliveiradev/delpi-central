@@ -53,6 +53,38 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         return dict(node) if isinstance(node, dict) else {}
 
     @classmethod
+    def prose_delivery_mode(
+        cls,
+        *,
+        entity: str | None = None,
+        path: str | None = None,
+    ) -> str | None:
+        """P3.2 — modo canônico de prosa por entidade ou perfil declarativo."""
+        allowed = frozenset({"template", "llm", "direct"})
+        token = str(entity or "").strip()
+        by_entity = cls.node("proseDeliveryByEntity")
+
+        if isinstance(by_entity, dict) and token:
+            mode = str(by_entity.get(token) or "").strip().lower()
+
+            if mode in allowed:
+                return mode
+
+        if not path and not token:
+            return None
+
+        profile_key = cls.resolve_profile_key(path, entity)
+        by_profile = cls.node("proseDeliveryByProfile")
+
+        if isinstance(by_profile, dict):
+            mode = str(by_profile.get(profile_key) or "").strip().lower()
+
+            if mode in allowed:
+                return mode
+
+        return None
+
+    @classmethod
     def operational_empty_route_key(cls, entity: str | None) -> str | None:
         mapping = cls.entity_presentation_routing().get("operationalEmptyKeys") or {}
         token = str(entity or "").strip()
