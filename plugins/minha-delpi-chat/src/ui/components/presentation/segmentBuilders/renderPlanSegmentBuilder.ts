@@ -312,9 +312,13 @@ function appendTablesForRoles(
     segments.filter((segment) => segment.kind === "table"),
   );
 
-  for (const table of tables) {
-    if (!includedTables.has(table)) {
-      appendUnique(segments, table);
+  for (const segment of tables) {
+    if (segment.kind !== "table") {
+      continue;
+    }
+
+    if (!includedTables.has(segment)) {
+      appendUnique(segments, segment);
     }
   }
 }
@@ -487,6 +491,10 @@ export function buildSegmentsFromRenderPlan(
         );
       } else if (slot === "primary") {
         for (const table of resolveTableSegmentsForRenderSpec(spec, tables, plan, toolCalls)) {
+          if (table.kind !== "table") {
+            continue;
+          }
+
           appendUnique(segments, table);
         }
       }
