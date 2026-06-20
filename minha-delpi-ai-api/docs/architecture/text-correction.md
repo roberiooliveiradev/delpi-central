@@ -9,6 +9,7 @@ Mensagem
   → ChatTextTaskIntentService (categoria correct / rewrite)
   → ChatTextCorrectionIntentService (subtipo, não compete com e-mail)
   → estágio text_task + text_correction (sem tools/RAG)
+  → ChatTextCorrectionPromptSupplementService (preflight LanguageTool opcional)
   → policies administrative-writing.md + text-correction.md
   → LLM
   → ChatTextCorrectionAnswerGuardService
@@ -25,6 +26,8 @@ Mensagem
 | `ChatTextCorrectionAnswerGuardService` | Trim «só versão final» |
 | `ChatTextCorrectionFollowUpService` | Chips do `personality_playbook.json` |
 | `ChatTextCorrectionTurnService` | Orquestração no turno (send/stream) |
+| `ChatTextCorrectionSpellPreflightService` | Preflight LanguageTool — filtra issues e injeta bloco no prompt |
+| `ChatTextCorrectionSpellCheckService` | Facade domain → `TextCorrectionSpellCheckPort` |
 | `ChatTextCorrectionCanvasService` | Lousa: lê `canvasOpen`, atualiza após correção |
 | `ChatTextCorrectionPreferenceService` | Preferências de sessão (`textCorrection`, `textCorrectionPreferences`) |
 
@@ -34,7 +37,8 @@ Mensagem
 - `textTask.subtype`: ex. `text_correct_basic`
 - `textCorrectionFollowUpSuggestions`: chips de refinamento
 - `textCorrectionQuality`: falhas do validador (opcional)
-- `textCorrectionMetrics`: snapshot leve (subtipo, fonte, `canvasUpdated`, qualidade)
+- `textCorrectionMetrics`: snapshot leve (subtipo, fonte, `canvasUpdated`, qualidade, `spellPreflight*`)
+- `textCorrectionSpellPreflight`: resumo do preflight LanguageTool quando usado
 - `textCorrectionCanvasUpdate`: `{ applied: true }` quando a lousa foi regravada
 - `canvasOpen`: markdown corrigido (turnos «corrija o texto da lousa» com lousa ativa)
 - `adminDebug.textCorrection*`: mesma trilha para painel admin (`ChatAdminDebugService.sync_text_correction_trace`)

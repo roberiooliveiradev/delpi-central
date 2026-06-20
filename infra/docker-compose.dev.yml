@@ -177,6 +177,24 @@ services:
     networks:
       - delpi-network
 
+  languagetool:
+    image: erikvl87/languagetool:latest
+    container_name: delpi-languagetool
+    restart: unless-stopped
+    profiles:
+      - chat
+    ports:
+      - "8010:8010"
+    environment:
+      Java_Xms: 512m
+      Java_Xmx: 2g
+    networks:
+      - delpi-network
+    deploy:
+      resources:
+        limits:
+          memory: 2500M
+
   minha-delpi-ai-api:
     build:
       context: ../minha-delpi-ai-api
@@ -303,6 +321,12 @@ services:
       # Corretor de digitação (Playbook 14)
       CHAT_TYPING_CORRECTION_ENABLED: ${CHAT_TYPING_CORRECTION_ENABLED:-true}
       CHAT_TYPING_CORRECTION_FUZZY_ENABLED: ${CHAT_TYPING_CORRECTION_FUZZY_ENABLED:-true}
+
+      # Preflight LanguageTool na skill de correção textual
+      CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED: ${CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED:-false}
+      CHAT_LANGUAGETOOL_BASE_URL: ${CHAT_LANGUAGETOOL_BASE_URL:-http://languagetool:8010}
+      CHAT_LANGUAGETOOL_TIMEOUT_SECONDS: ${CHAT_LANGUAGETOOL_TIMEOUT_SECONDS:-4}
+      CHAT_LANGUAGETOOL_LANGUAGE: ${CHAT_LANGUAGETOOL_LANGUAGE:-pt-BR}
 
       # Aprendizagem contínua (playbook) — ligado por padrão; defina false na env para desligar
       CHAT_LEARNING_ENABLED: ${CHAT_LEARNING_ENABLED:-true}

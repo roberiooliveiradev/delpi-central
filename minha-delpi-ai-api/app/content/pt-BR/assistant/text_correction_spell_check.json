@@ -1,0 +1,44 @@
+{
+  "enabled": true,
+  "minSourceLength": 8,
+  "maxSourceLength": 8000,
+  "maxIssuesInPrompt": 12,
+  "maxReplacementPreview": 3,
+  "fragmentPreviewLength": 80,
+  "ignoredRuleIds": [
+    "UPPERCASE_SENTENCE_START",
+    "PUNCTUATION_PARAGRAPH_END",
+    "WHITESPACE_RULE",
+    "COMMA_PARENTHESIS_WHITESPACE",
+    "DOUBLE_PUNCTUATION"
+  ],
+  "ignoredCategories": [
+    "STYLE",
+    "TYPOGRAPHY",
+    "REDUNDANCY",
+    "SEMANTICS"
+  ],
+  "protectedPatterns": [
+    "\\b\\d{5,}\\b",
+    "\\bBOM\\b",
+    "\\bCPV\\b",
+    "\\bLMP\\b",
+    "\\bNFE\\b",
+    "\\bOP\\b",
+    "\\bPA\\b",
+    "\\bPI\\b",
+    "\\bERP\\b",
+    "\\bProtheus\\b"
+  ],
+  "prompt": {
+    "header": "Pré-análise ortográfica (LanguageTool — referência para o LLM):",
+    "issueLine": "- Trecho «{fragment}» — {message}{suggestions}",
+    "suggestionsPrefix": " Sugestões: ",
+    "suggestionsSeparator": ", ",
+    "noSuggestions": "",
+    "footer": "Use estas pistas como referência; preserve códigos, siglas ERP, nomes próprios e o sentido original."
+  },
+  "metrics": {
+    "engine": "languagetool"
+  }
+}

@@ -75,6 +75,17 @@ class Settings:
     CHAT_TYPING_CORRECTION_FUZZY_ENABLED = (
         os.getenv("CHAT_TYPING_CORRECTION_FUZZY_ENABLED", "false").lower() == "true"
     )
+    CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED = (
+        os.getenv("CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED", "false").lower() == "true"
+    )
+    CHAT_LANGUAGETOOL_BASE_URL = os.getenv(
+        "CHAT_LANGUAGETOOL_BASE_URL",
+        "http://languagetool:8010",
+    )
+    CHAT_LANGUAGETOOL_TIMEOUT_SECONDS = float(
+        os.getenv("CHAT_LANGUAGETOOL_TIMEOUT_SECONDS", "4")
+    )
+    CHAT_LANGUAGETOOL_LANGUAGE = os.getenv("CHAT_LANGUAGETOOL_LANGUAGE", "pt-BR")
     CHAT_INPUT_SECURITY_MODE = os.getenv("CHAT_INPUT_SECURITY_MODE", "enforce").lower().strip()
     CHAT_INPUT_SECURITY_BLOCK_THRESHOLD = float(
         os.getenv("CHAT_INPUT_SECURITY_BLOCK_THRESHOLD", "0.7")

@@ -39,6 +39,14 @@ class AppConfigPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def chat_text_correction_spell_check_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_languagetool_language(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
     def learning_pipeline_flag(self, key: str) -> bool:
         raise NotImplementedError
 

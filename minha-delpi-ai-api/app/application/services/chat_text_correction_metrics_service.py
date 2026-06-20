@@ -66,6 +66,30 @@ class ChatTextCorrectionMetricsService:
             "followUpChipCount": follow_up_count,
             "canvasUpdated": bool(canvas_updated),
             "canvasSource": ctx.get("source") == "canvas",
+            **cls._spell_preflight_metrics(workspace_context),
+        }
+
+    @classmethod
+    def _spell_preflight_metrics(
+        cls,
+        workspace_context: dict | None,
+    ) -> dict[str, object]:
+        preflight = (workspace_context or {}).get("textCorrectionSpellPreflight")
+
+        if not isinstance(preflight, dict):
+            return {
+                "spellPreflightUsed": False,
+                "spellPreflightIssueCount": 0,
+                "spellPreflightFilteredIssueCount": 0,
+            }
+
+        return {
+            "spellPreflightUsed": bool(preflight.get("used")),
+            "spellPreflightIssueCount": int(preflight.get("issueCount") or 0),
+            "spellPreflightFilteredIssueCount": int(
+                preflight.get("filteredIssueCount") or 0
+            ),
+            "spellPreflightEngine": str(preflight.get("engine") or "").strip() or None,
         }
 
     @classmethod
@@ -91,3 +115,13 @@ class ChatTextCorrectionMetricsService:
 
         if snapshot:
             metadata["textCorrectionMetrics"] = snapshot
+
+        preflight = (workspace_context or {}).get("textCorrectionSpellPreflight")
+
+        if isinstance(preflight, dict) and preflight.get("used"):
+            metadata["textCorrectionSpellPreflight"] = {
+                "used": True,
+                "issueCount": int(preflight.get("issueCount") or 0),
+                "filteredIssueCount": int(preflight.get("filteredIssueCount") or 0),
+                "engine": preflight.get("engine"),
+            }

@@ -171,6 +171,31 @@ docker exec delpi-minha-delpi-ai-api printenv | grep -E '^(CHAT_TOOL_ROUTER|CHAT
 
 Após alterar `.env`: `docker compose … up -d --force-recreate minha-delpi-ai-api`.
 
+### LanguageTool (correção textual)
+
+Serviço `languagetool` (`erikvl87/languagetool`) incluído em **dev** e **prod**. Usado apenas pela skill «corrija este texto» — **não** pelo corretor de typos operacionais do composer (Playbook 14).
+
+| Variável | Default compose | Efeito |
+|----------|-----------------|--------|
+| `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED` | `false` | Liga preflight LanguageTool no turno de correção |
+| `CHAT_LANGUAGETOOL_BASE_URL` | `http://languagetool:8010` | URL interna na rede Docker |
+| `CHAT_LANGUAGETOOL_TIMEOUT_SECONDS` | `4` | Timeout HTTP por turno |
+| `CHAT_LANGUAGETOOL_LANGUAGE` | `pt-BR` | Idioma enviado ao `/v2/check` |
+
+**Prod:** o serviço **não** expõe porta pública — só `minha-delpi-ai-api` acessa na rede interna. Reservar ~2,5 GB RAM.
+
+```bash
+# Deploy / atualização
+docker compose -f infra/docker-compose.yml pull languagetool
+docker compose -f infra/docker-compose.yml up -d --force-recreate languagetool minha-delpi-ai-api
+
+# Validar (na máquina de deploy, se 8010 não estiver exposto — use exec na API)
+docker exec delpi-minha-delpi-ai-api printenv | grep CHAT_TEXT_CORRECTION_SPELL
+curl -sf -X POST http://127.0.0.1:8010/v2/check -d 'language=pt-BR' -d 'text=teste'  # só se porta exposta para debug
+```
+
+Config declarativa (regras ignoradas, siglas ERP): `minha-delpi-ai-api/app/content/pt-BR/assistant/text_correction_spell_check.json`.
+
 ---
 
 ## Checklist deploy produção
@@ -181,6 +206,7 @@ Após alterar `.env`: `docker compose … up -d --force-recreate minha-delpi-ai-
 - [ ] `CHAT_DOCUMENT_VISION_ENABLED=true` (padrão no `.env.prod.example`)
 - [ ] `CHAT_DOCUMENT_VISION_BACKEND=docling` ou `auto` conforme política do servidor
 - [ ] `ollama pull` dos modelos de chat e embedding (`OLLAMA_MODEL`, `EMBEDDING_MODEL`)
+- [ ] `CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED=true` + serviço `languagetool` no ar (opcional; ~2,5 GB RAM)
 - [ ] Não commitar `.env` (já no `.gitignore`)
 
 ### Rebuild prod com visão (já incluída no compose padrão)

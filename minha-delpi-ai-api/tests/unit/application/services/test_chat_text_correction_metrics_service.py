@@ -20,6 +20,26 @@ def test_build_snapshot_for_correction_turn():
     assert snapshot["followUpChipCount"] == 3
 
 
+def test_build_snapshot_includes_spell_preflight_metrics():
+    snapshot = ChatTextCorrectionMetricsService.build_snapshot(
+        message="corrija: o estoque esta baixo",
+        workspace_context={
+            "textCorrectionMode": True,
+            "textCorrectionSpellPreflight": {
+                "used": True,
+                "issueCount": 2,
+                "filteredIssueCount": 1,
+                "engine": "languagetool",
+            },
+        },
+    )
+
+    assert snapshot is not None
+    assert snapshot["spellPreflightUsed"] is True
+    assert snapshot["spellPreflightIssueCount"] == 2
+    assert snapshot["spellPreflightFilteredIssueCount"] == 1
+
+
 def test_attach_via_follow_up_metadata():
     metadata: dict = {}
     ChatTextCorrectionFollowUpService.attach_to_assistant_metadata(

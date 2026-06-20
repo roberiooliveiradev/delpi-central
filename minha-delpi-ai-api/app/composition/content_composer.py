@@ -5,6 +5,9 @@ from app.domain.services.chat_domain_config_service import ChatDomainConfigServi
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
+from app.domain.services.chat_text_correction_spell_check_service import (
+    ChatTextCorrectionSpellCheckService,
+)
 from app.domain.services.presentation_column_label_discovery_service import (
     PresentationColumnLabelDiscoveryService,
 )
@@ -30,6 +33,9 @@ from app.infrastructure.presentation.presentation_column_label_discovery_adapter
 )
 from app.infrastructure.presentation.presentation_column_label_web_search_adapter import (
     InfrastructurePresentationColumnLabelWebSearchAdapter,
+)
+from app.infrastructure.spelling.languagetool_spell_check_adapter import (
+    InfrastructureLanguageToolSpellCheckAdapter,
 )
 
 _CONFIGURED = False
@@ -75,6 +81,9 @@ def configure_domain_infrastructure_ports() -> None:
     )
     PresentationColumnLabelWebSearchService.configure(
         InfrastructurePresentationColumnLabelWebSearchAdapter()
+    )
+    ChatTextCorrectionSpellCheckService.configure(
+        InfrastructureLanguageToolSpellCheckAdapter()
     )
     PresentationColumnLabelLlmService.configure(make_llm_gateway())
     _configure_typo_correction_rules()

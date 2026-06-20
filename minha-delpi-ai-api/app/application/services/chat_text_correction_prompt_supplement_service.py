@@ -13,6 +13,9 @@ from app.domain.services.chat_text_correction_intent_service import (
 from app.domain.services.chat_text_correction_preference_service import (
     ChatTextCorrectionPreferenceService,
 )
+from app.domain.services.chat_text_correction_spell_preflight_service import (
+    ChatTextCorrectionSpellPreflightService,
+)
 
 
 class ChatTextCorrectionPromptSupplementService:
@@ -123,4 +126,42 @@ class ChatTextCorrectionPromptSupplementService:
         if pref_block:
             lines.append(pref_block)
 
+        preflight_source = cls._resolve_preflight_source(
+            ctx=ctx,
+            previous_messages=previous_messages,
+        )
+        preflight = ChatTextCorrectionSpellPreflightService.run(
+            source_text=preflight_source,
+            preserved_codes=ctx.get("preservedCodes") or [],
+        )
+
+        if isinstance(workspace_context, dict) and preflight is not None:
+            workspace_context["textCorrectionSpellPreflight"] = preflight
+
+        prompt_block = str((preflight or {}).get("promptBlock") or "").strip()
+
+        if prompt_block:
+            lines.append(prompt_block)
+
         return "\n".join(lines)
+
+    @classmethod
+    def _resolve_preflight_source(
+        cls,
+        *,
+        ctx: dict,
+        previous_messages: list[Any] | None,
+    ) -> str | None:
+        source = ctx.get("source")
+
+        if source == "canvas":
+            canvas_markdown, _, _ = ChatTextCorrectionCanvasService.load_active_canvas(
+                previous_messages
+            )
+
+            if canvas_markdown.strip():
+                return canvas_markdown.strip()
+
+        source_text = str(ctx.get("sourceText") or "").strip()
+
+        return source_text or None

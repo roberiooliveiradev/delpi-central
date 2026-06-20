@@ -65,6 +65,12 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
     def chat_typing_correction_fuzzy_enabled(self) -> bool:
         return self.learning_pipeline_flag("typingCorrectionFuzzyEnabled")
 
+    def chat_text_correction_spell_check_enabled(self) -> bool:
+        return bool(Settings.CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED)
+
+    def chat_languagetool_language(self) -> str:
+        return str(Settings.CHAT_LANGUAGETOOL_LANGUAGE or "pt-BR")
+
     def learning_pipeline_flag(self, key: str) -> bool:
         from app.infrastructure.config.chat_admin_settings_runtime_reader import (
             read_learning_pipeline_settings,

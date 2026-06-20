@@ -163,6 +163,25 @@ services:
     networks:
       - delpi-network
 
+  languagetool:
+    image: erikvl87/languagetool:latest
+    container_name: delpi-languagetool
+    restart: unless-stopped
+    environment:
+      Java_Xms: 512m
+      Java_Xmx: 2g
+    networks:
+      - delpi-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 2500M
+
   minha-delpi-ai-api:
     build:
       context: ..
@@ -266,6 +285,12 @@ services:
       CHAT_TYPING_CORRECTION_ENABLED: ${CHAT_TYPING_CORRECTION_ENABLED:-true}
       CHAT_TYPING_CORRECTION_FUZZY_ENABLED: ${CHAT_TYPING_CORRECTION_FUZZY_ENABLED:-false}
 
+      # Preflight LanguageTool — skill de correção textual (requer serviço languagetool)
+      CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED: ${CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED:-false}
+      CHAT_LANGUAGETOOL_BASE_URL: ${CHAT_LANGUAGETOOL_BASE_URL:-http://languagetool:8010}
+      CHAT_LANGUAGETOOL_TIMEOUT_SECONDS: ${CHAT_LANGUAGETOOL_TIMEOUT_SECONDS:-4}
+      CHAT_LANGUAGETOOL_LANGUAGE: ${CHAT_LANGUAGETOOL_LANGUAGE:-pt-BR}
+
       CHAT_LEARNING_ENABLED: ${CHAT_LEARNING_ENABLED:-true}
       CHAT_LEARNING_APPLY_VOCABULARY: ${CHAT_LEARNING_APPLY_VOCABULARY:-true}
       CHAT_LEARNING_CAPTURE_FROM_FEEDBACK: ${CHAT_LEARNING_CAPTURE_FROM_FEEDBACK:-true}
@@ -327,6 +352,7 @@ services:
       - postgres-plugins
       - ollama
       - searxng
+      - languagetool
 
     networks:
       - delpi-network
