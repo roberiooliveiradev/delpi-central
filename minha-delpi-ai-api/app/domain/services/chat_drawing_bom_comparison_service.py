@@ -40,14 +40,21 @@ class ChatDrawingBomComparisonService:
         product_code: str,
     ) -> BomComparisonResult:
         api_codes = cls.collect_structure_bom_codes(root, product_code)
-        raw_pdf_codes = set(pdf_extract.get("componentCodes") or [])
-        raw_pdf_codes.update(pdf_extract.get("intermediateCodes") or [])
+
+        if cls._prefer_structured_bom_rows(pdf_extract):
+            raw_pdf_codes: set[str] = set()
+        else:
+            raw_pdf_codes = set(pdf_extract.get("componentCodes") or [])
+            raw_pdf_codes.update(pdf_extract.get("intermediateCodes") or [])
 
         pdf_bom_codes = cls.normalize_pdf_bom_codes(
             raw_pdf_codes,
             child_cable_parents=cls.collect_child_cable_parents(root),
         )
-        pdf_bom_codes |= cls.collect_primary_bom_row_codes(pdf_extract)
+        pdf_bom_codes |= cls.collect_primary_bom_row_codes(
+            pdf_extract,
+            structured_only=cls._prefer_structured_bom_rows(pdf_extract),
+        )
         pdf_bom_codes |= cls.intermediate_codes_matched_by_description(
             root=root,
             pdf_extract=pdf_extract,
@@ -77,8 +84,14 @@ class ChatDrawingBomComparisonService:
         )
 
     @classmethod
-    def collect_primary_bom_row_codes(cls, pdf_extract: dict) -> set[str]:
+    def collect_primary_bom_row_codes(
+        cls,
+        pdf_extract: dict,
+        *,
+        structured_only: bool = False,
+    ) -> set[str]:
         codes: set[str] = set()
+        structured_sources = ChatDrawingPatternsService.bom_structured_quantity_sources()
 
         for row in pdf_extract.get("bomRows") or []:
             if not isinstance(row, dict):
@@ -86,6 +99,15 @@ class ChatDrawingBomComparisonService:
 
             if ChatDrawingBomReferenceNoiseService.is_client_reference_row(row):
                 continue
+
+            if structured_only:
+                source = str(row.get("quantitySource") or "").strip().lower()
+
+                if structured_sources and source not in structured_sources:
+                    continue
+
+                if not row.get("quantityTrusted"):
+                    continue
 
             code = ChatProductQueryIntentService.normalize_product_code(
                 str(row.get("code") or "")
@@ -95,6 +117,40 @@ class ChatDrawingBomComparisonService:
                 codes.add(code)
 
         return codes
+
+    @classmethod
+    def _prefer_structured_bom_rows(cls, pdf_extract: dict) -> bool:
+        refinement = pdf_extract.get("bomVisionRefinement")
+
+        if isinstance(refinement, dict) and int(refinement.get("columnRowCount") or 0) > 0:
+            return True
+
+        min_rows = int(
+            ChatDrawingPatternsService.bom_comparison_rule("preferStructuredRowsMinCount", 2)
+            or 2
+        )
+        structured_sources = ChatDrawingPatternsService.bom_structured_quantity_sources()
+        structured_rows = 0
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if not code:
+                continue
+
+            source = str(row.get("quantitySource") or "").strip().lower()
+
+            if structured_sources and source not in structured_sources:
+                continue
+
+            structured_rows += 1
+
+        return structured_rows >= min_rows
 
     @classmethod
     def intermediate_codes_matched_by_description(

@@ -79,6 +79,13 @@ class ChatDrawingFollowUpService:
         if critical <= 0 and "Ver só erros críticos" in labels:
             labels = [label for label in labels if label != "Ver só erros críticos"]
 
+        if not cls._should_offer_bom_reextract(drawing) and "Reextrair BOM do PDF" in labels:
+            labels = [label for label in labels if label != "Reextrair BOM do PDF"]
+        elif "Reextrair BOM do PDF" in labels:
+            labels = [label for label in labels if label != "Reextrair BOM do PDF"]
+            insert_at = 1 if critical > 0 else 2
+            labels.insert(min(insert_at, len(labels)), "Reextrair BOM do PDF")
+
         suggestions: list[dict[str, str]] = []
 
         for label in labels[:6]:
@@ -91,3 +98,36 @@ class ChatDrawingFollowUpService:
             suggestions.append({"label": str(label), "query": template})
 
         return suggestions
+
+    @classmethod
+    def _should_offer_bom_reextract(cls, drawing: dict) -> bool:
+        vision = drawing.get("visionRefinement")
+
+        if not isinstance(vision, dict) or not vision.get("attempted"):
+            return False
+
+        bom_issue_keys = {
+            "bom_extra",
+            "bom_missing",
+            "bom_quantity_mismatch",
+            "bom_quantity_pending",
+        }
+        items = drawing.get("items") if isinstance(drawing.get("items"), list) else []
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            template_key = str(item.get("templateKey") or "").strip()
+
+            if template_key not in bom_issue_keys:
+                continue
+
+            if str(item.get("status") or "").strip() in {
+                "critical_error",
+                "error",
+                "pending",
+            }:
+                return True
+
+        return int(drawing.get("criticalErrors") or 0) > 0

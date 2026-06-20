@@ -32,6 +32,9 @@ class ChatDrawingFollowUpTurnService:
         if cls._wants_reanalysis(message):
             return None
 
+        if cls._wants_bom_reextract(message):
+            return None
+
         analysis = cls._last_drawing_analysis(previous_messages)
 
         if not analysis:
@@ -93,6 +96,18 @@ class ChatDrawingFollowUpTurnService:
     def _wants_reanalysis(cls, message: str) -> bool:
         normalized = str(message).casefold()
         return bool(re.search(r"\breanalise\b|\bre-analise\b", normalized))
+
+    @classmethod
+    def _wants_bom_reextract(cls, message: str) -> bool:
+        folded = cls._fold_accents(str(message).casefold())
+        return bool(
+            re.search(
+                r"reextrair\s+(a\s+)?(tabela\s+de\s+materiais|bom)|"
+                r"extrair\s+novamente\s+(a\s+)?bom|"
+                r"reextraia\s+(a\s+)?(tabela\s+de\s+materiais|bom)",
+                folded,
+            )
+        )
 
     @classmethod
     def _wants_critical_only(cls, normalized: str) -> bool:

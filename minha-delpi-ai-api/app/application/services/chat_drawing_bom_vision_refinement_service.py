@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.domain.services.chat_drawing_bom_quantity_assertiveness_service import (
@@ -97,11 +98,19 @@ class ChatDrawingBomVisionRefinementService:
             if not isinstance(refinement_meta, dict):
                 refinement_meta = {}
 
+            prior_codes = [
+                str(code).strip()
+                for code in (refinement_meta.get("codesRefined") or [])
+                if str(code).strip()
+            ]
+
             payload["bomVisionRefinement"] = {
                 **refinement_meta,
                 "triggered": True,
                 "tableCount": len(structured_tables),
                 "columnRowCount": len(column_rows),
+                "resolved": len(prior_codes),
+                "codesRefined": prior_codes,
             }
 
         return payload
@@ -203,11 +212,12 @@ class ChatDrawingBomVisionRefinementService:
             table_id, row_index, qty_col = target
             current = rows.get(code, {"code": code})
             attempt_count += 1
-            result = port.refine_cell(
+            result, used_col = cls._refine_quantity_cell(
+                port,
                 storage_path=storage_path,
                 table_id=table_id,
                 row_index=row_index,
-                col_index=qty_col,
+                qty_col=qty_col,
                 fallback_text=str(current.get("quantity") or ""),
             )
             text = str(result.get("text") or "").strip()
@@ -231,7 +241,7 @@ class ChatDrawingBomVisionRefinementService:
                 "reason": reason,
                 "tableId": table_id,
                 "rowIndex": row_index,
-                "colIndex": qty_col,
+                "colIndex": used_col,
                 "engine": result.get("engine"),
                 "engines": list(result.get("engines") or []),
                 "cellBbox": result.get("bbox"),
@@ -256,17 +266,77 @@ class ChatDrawingBomVisionRefinementService:
             if not isinstance(prior_meta, dict):
                 prior_meta = {}
 
+            prior_codes = [
+                str(item).strip()
+                for item in (prior_meta.get("codesRefined") or [])
+                if str(item).strip()
+            ]
+            merged_codes = list(dict.fromkeys(prior_codes + refined_codes))
+            prior_attempts = [
+                item
+                for item in (prior_meta.get("attempts") or [])
+                if isinstance(item, dict)
+            ]
+            prior_attempt_count = int(prior_meta.get("attemptCount") or len(prior_attempts))
+
             payload["bomVisionRefinement"] = {
                 **prior_meta,
                 "triggered": True,
                 "attempted": True,
-                "attemptCount": attempt_count,
-                "resolved": len(refined_codes),
-                "codesRefined": refined_codes,
-                "attempts": attempts,
+                "attemptCount": prior_attempt_count + attempt_count,
+                "resolved": len(merged_codes),
+                "codesRefined": merged_codes,
+                "attempts": prior_attempts + attempts,
             }
 
         return payload
+
+    @classmethod
+    def _refine_quantity_cell(
+        cls,
+        port: ChatPdfTableCellRefinementService,
+        *,
+        storage_path: str,
+        table_id: str,
+        row_index: int,
+        qty_col: int,
+        fallback_text: str,
+    ) -> tuple[dict[str, Any], int]:
+        empty: dict[str, Any] = {"text": "", "engines": [], "engine": "", "bbox": None}
+
+        for offset in ChatDrawingPatternsService.bom_quantity_column_retry_offsets():
+            col_index = qty_col if offset == 0 else qty_col + offset
+
+            if col_index < 0:
+                continue
+
+            result = port.refine_cell(
+                storage_path=storage_path,
+                table_id=table_id,
+                row_index=row_index,
+                col_index=col_index,
+                fallback_text=fallback_text if offset == 0 else "",
+            )
+            text = str(result.get("text") or "").strip()
+
+            if text and cls._accepts_quantity_text(text):
+                return dict(result), col_index
+
+        return empty, qty_col
+
+    @classmethod
+    def _accepts_quantity_text(cls, text: str) -> bool:
+        cleaned = str(text or "").strip()
+
+        if not cleaned or not ChatDrawingPatternsService.bom_quantity().match(cleaned):
+            return False
+
+        max_digits = int(
+            ChatDrawingPatternsService.bom_column_inference_rule("quantityMaxDigits", 4) or 4
+        )
+        digits = re.sub(r"\D", "", cleaned.split(",")[0].split(".")[0])
+
+        return 0 < len(digits) <= max_digits
 
     @classmethod
     def _collect_refinement_targets(

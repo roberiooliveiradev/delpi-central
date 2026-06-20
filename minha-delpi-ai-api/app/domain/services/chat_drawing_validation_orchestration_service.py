@@ -829,7 +829,7 @@ class ChatDrawingValidationOrchestrationService:
             "resolved": len(codes_refined),
             "tableCount": refinement.get("tableCount"),
             "columnRowCount": refinement.get("columnRowCount"),
-            "attemptCount": len(attempts),
+            "attemptCount": int(refinement.get("attemptCount") or len(attempts)),
             "codesRefined": codes_refined,
             "stoppedReason": refinement.get("stoppedReason"),
         }

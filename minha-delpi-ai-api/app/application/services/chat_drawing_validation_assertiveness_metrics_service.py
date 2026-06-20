@@ -93,6 +93,7 @@ class ChatDrawingValidationAssertivenessMetricsService:
         pending_avg = sum(float(item.get("pendingRate") or 0.0) for item in evaluated) / total
         max_rate = float(baseline.get("maxFalseCriticalRate") or 0.05)
         false_rate = false_count / total
+        status_failures = sum(1 for item in evaluated if not item.get("statusOk"))
 
         return {
             "sampleCount": total,
@@ -102,7 +103,8 @@ class ChatDrawingValidationAssertivenessMetricsService:
             "trueCriticalRate": round(true_count / total, 4),
             "pendingRateAvg": round(pending_avg, 4),
             "maxFalseCriticalRate": max_rate,
-            "passesGate": false_rate <= max_rate,
+            "statusFailureCount": status_failures,
+            "passesGate": false_rate <= max_rate and status_failures == 0,
             "samples": evaluated,
         }
 

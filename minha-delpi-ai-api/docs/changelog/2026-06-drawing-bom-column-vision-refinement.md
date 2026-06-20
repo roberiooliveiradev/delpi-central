@@ -64,9 +64,39 @@ Port genérico, interpretação colunar, OCR por célula, orquestração `ChatDr
 
 **Resultado live:** 9/11 códigos refinados via Tesseract; `10090050` QTD=`1` (não `6.35` da descrição).
 
-### Pendente (15.8.4–15.8.6)
+### 15.8.4 — Assertividade e validação ✅
 
-Assertividade gate batch, policy follow-up, `--assertiveness-gate` — ver playbook § 5.
+| Artefato | Mudança |
+|----------|---------|
+| `ChatDrawingBomComparisonService` | Com sinal BOM colunar (`columnRowCount` ou `bomRows` com `quantitySource` estruturado), ignora `componentCodes` OCR ruidoso — reduz `bom_extra` falso |
+| `drawing_stamp.json` → `bomComparison` | `preferStructuredRowsMinCount`, `structuredQuantitySources` |
+| `ChatDrawingBomVisionRefinementService` | Merge idempotente de `codesRefined`/`attempts` entre extração e validação |
+| `ChatDrawingValidationOrchestrationService` | `visionRefinement.resolved` preserva códigos refinados na 2ª passada |
+| Testes | `test_structured_bom_rows_ignore_noisy_component_codes`, metadata `codesRefined` |
+
+### 15.8.5 — Policy e follow-up ✅
+
+| Artefato | Mudança |
+|----------|---------|
+| `personality_playbook.json` | Chip «Reextrair BOM do PDF» + query com `{{productCode}}` |
+| `ChatDrawingFollowUpService` | Chip condicional quando há issue BOM + `visionRefinement.attempted` |
+| `ChatDrawingFollowUpTurnService` | `_wants_bom_reextract` — não intercepta (reanálise com mesmo PDF) |
+| `drawing-analysis-delpi-skill.md` | Proíbe pedir print; documenta chip de reextração |
+
+### 15.8.6 — Gate assertividade 95% ✅
+
+| Artefato | Mudança |
+|----------|---------|
+| `ChatDrawingValidationAssertivenessMetricsService` | `passesGate` exige `falseCriticalRate ≤ limiar` **e** `statusOk` por amostra |
+| `scripts/validate_drawing_samples.py` | `--assertiveness-gate` já reporta `statusOk` por código |
+| `drawing_assertiveness_baseline.json` | Baseline âncora (90263149, 90262834, 90263622, 90264227) |
+
+### 15.8.3 (acabamento) — Retry colunas adjacentes ✅
+
+| Artefato | Mudança |
+|----------|---------|
+| `drawing_stamp.json` → `bomRowRefinement.quantityColumnRetryOffsets` | `[0, -1, 1, -2, 2]` |
+| `ChatDrawingBomVisionRefinementService._refine_quantity_cell` | Retry OCR em colunas vizinhas quando QTD primária falha |
 
 ---
 
@@ -78,7 +108,15 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest \
   tests/unit/domain/services/test_chat_drawing_bom_table_interpretation_service.py \
   tests/unit/domain/services/test_chat_drawing_bom_quantity_assertiveness_service.py \
-  tests/unit/domain/services/test_chat_drawing_validation_90263149.py -q
+  tests/unit/domain/services/test_chat_drawing_validation_90263149.py \
+  tests/unit/domain/services/test_chat_drawing_bom_comparison_service.py \
+  tests/unit/application/services/test_chat_drawing_bom_vision_refinement_service.py \
+  tests/unit/application/services/test_chat_drawing_validation_assertiveness_metrics_service.py \
+  tests/unit/application/services/test_chat_drawing_follow_up_service.py -q
+
+# Gate assertividade (requer PDFs locais / container)
+DRAWING_VALIDATE_CODES=90263149,90262834,90263622,90264227 \
+  .venv/bin/python scripts/validate_drawing_samples.py --assertiveness-gate
 
 # E2E chat (container) — gate QTD: 0 críticos bom_quantity_mismatch
 docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \

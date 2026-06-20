@@ -421,6 +421,11 @@
     "maxAttempts": 3,
     "dpiMultiplier": 2.0,
     "cellHorizontalPadding": 0.005,
-    "engines": ["tesseract"]
+    "engines": ["tesseract"],
+    "quantityColumnRetryOffsets": [0, -1, 1, -2, 2]
+  },
+  "bomComparison": {
+    "preferStructuredRowsMinCount": 2,
+    "structuredQuantitySources": ["column", "column_inferred", "refined_column"]
   }
 }

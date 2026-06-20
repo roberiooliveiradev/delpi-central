@@ -42,3 +42,48 @@ def test_attach_hides_critical_chip_when_no_errors():
 
     assert "Ver só erros críticos" not in labels
     assert "Ver checklist completo" in labels
+
+
+def test_offers_bom_reextract_chip_when_bom_issues_and_vision_refinement():
+    metadata: dict = {}
+    drawing = {
+        "productCode": "90263149",
+        "criticalErrors": 1,
+        "status": "rejected",
+        "visionRefinement": {"attempted": True, "columnRowCount": 12},
+        "items": [
+            {
+                "templateKey": "bom_extra",
+                "status": "critical_error",
+            }
+        ],
+    }
+
+    ChatDrawingFollowUpService.attach_to_assistant_metadata(
+        metadata,
+        intelligence={"drawingAnalysis": drawing},
+    )
+
+    labels = [item["label"] for item in metadata.get("drawingFollowUpSuggestions") or []]
+
+    assert "Reextrair BOM do PDF" in labels
+
+
+def test_hides_bom_reextract_chip_without_bom_issues():
+    metadata: dict = {}
+    drawing = {
+        "productCode": "90263149",
+        "criticalErrors": 0,
+        "status": "approved",
+        "visionRefinement": {"attempted": True, "columnRowCount": 12},
+        "items": [{"templateKey": "bom_match_ok", "status": "ok"}],
+    }
+
+    ChatDrawingFollowUpService.attach_to_assistant_metadata(
+        metadata,
+        intelligence={"drawingAnalysis": drawing},
+    )
+
+    labels = [item["label"] for item in metadata.get("drawingFollowUpSuggestions") or []]
+
+    assert "Reextrair BOM do PDF" not in labels

@@ -51,3 +51,12 @@ def test_reanalysis_not_intercepted():
     )
 
     assert answer is None
+
+
+def test_bom_reextract_not_intercepted():
+    answer = ChatDrawingFollowUpTurnService.resolve_direct_answer(
+        "reextraia a tabela de materiais do desenho 90260140 com o PDF anexado",
+        previous_messages=_assistant_with_drawing(),
+    )
+
+    assert answer is None

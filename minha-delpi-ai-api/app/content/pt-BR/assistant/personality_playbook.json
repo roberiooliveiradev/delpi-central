@@ -699,13 +699,14 @@
     "Traduzir para inglês": "traduza o e-mail anterior para inglês corporativo",
     "Colocar na lousa": "coloque o e-mail anterior na lousa para edição"
   },
-  "drawingFollowUpChips": [
+    "drawingFollowUpChips": [
     "Ver só erros críticos",
     "Ver checklist completo",
     "Validar BOM",
     "Validar cotas",
     "Gerar relatório",
     "Colocar na lousa",
+    "Reextrair BOM do PDF",
     "Reanalisar desenho"
   ],
   "drawingFollowUpQueries": {
@@ -715,6 +716,7 @@
     "Validar cotas": "valide as cotas e decapes do desenho {{productCode}}",
     "Gerar relatório": "gere novamente o relatório técnico do desenho {{productCode}}",
     "Colocar na lousa": "coloque o relatório de análise do desenho {{productCode}} na lousa",
+    "Reextrair BOM do PDF": "reextraia a tabela de materiais do desenho {{productCode}} com o PDF anexado",
     "Reanalisar desenho": "reanalise o desenho técnico {{productCode}} com o PDF anexado"
   },
   "canvasFollowUpChips": [

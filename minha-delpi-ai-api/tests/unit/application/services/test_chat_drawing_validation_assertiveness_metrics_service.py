@@ -67,3 +67,19 @@ def test_evaluate_row_respects_allowed_statuses():
 
     assert result["falseCritical"] is False
     assert result["statusOk"] is False
+
+
+def test_aggregate_fails_gate_when_status_not_allowed():
+    rows = [
+        {
+            "code": "90263149",
+            "validationStatus": "rejected",
+            "criticalErrors": 0,
+            "checklistItems": 10,
+            "pendingItems": [],
+        }
+    ]
+    metrics = ChatDrawingValidationAssertivenessMetricsService.aggregate(rows)
+
+    assert metrics["passesGate"] is False
+    assert metrics["statusFailureCount"] == 1

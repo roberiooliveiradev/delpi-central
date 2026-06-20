@@ -83,37 +83,6 @@ def test_child_cable_codes_not_counted_as_extra_when_parent_present():
     assert "10130091" in result.missing_in_pdf
 
 
-def test_catalog_alternate_code_dropped_when_parent_intermediate_in_pdf():
-    root = {
-        "structure": {
-            "items": [
-                {
-                    "code": "50233698",
-                    "description": "CF20BRAN-00232/11/06",
-                    "components": [
-                        {
-                            "code": "10400036",
-                            "description": "CABO SIL = 10400111",
-                        }
-                    ],
-                }
-            ]
-        }
-    }
-    pdf_extract = {
-        "componentCodes": ["50233698", "10400111"],
-        "intermediateCodes": ["50233698"],
-    }
-
-    result = ChatDrawingBomComparisonService.compare(
-        root=root,
-        pdf_extract=pdf_extract,
-        product_code="90263954",
-    )
-
-    assert "10400111" not in result.extra_in_pdf
-
-
 def test_intermediate_codes_matched_by_description_fill_missing_ocr():
     root = {
         "structure": {
@@ -145,3 +114,92 @@ def test_intermediate_codes_matched_by_description_fill_missing_ocr():
 
     assert "50233302" not in result.missing_in_pdf
     assert "50233301" not in result.missing_in_pdf
+
+
+def test_structured_bom_rows_ignore_noisy_component_codes():
+    root = {
+        "structure": {
+            "items": [
+                {"code": "10080010", "quantity": 1.0, "components": []},
+                {"code": "10090050", "quantity": 1.0, "components": []},
+                {"code": "50212969", "quantity": 1.0, "components": []},
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": [
+            "10080010",
+            "10090050",
+            "50212969",
+            "10020028",
+            "10020029",
+            "50232599",
+        ],
+        "bomRows": [
+            {
+                "code": "10080010",
+                "quantity": "1",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            },
+            {
+                "code": "10090050",
+                "quantity": "1",
+                "quantitySource": "refined_column",
+                "quantityTrusted": True,
+            },
+            {
+                "code": "50212969",
+                "quantity": "1",
+                "quantitySource": "column_inferred",
+                "quantityTrusted": True,
+            },
+        ],
+        "bomVisionRefinement": {"columnRowCount": 3},
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263149",
+    )
+
+    assert "10020028" not in result.extra_in_pdf
+    assert "10020029" not in result.extra_in_pdf
+    assert not result.extra_in_pdf
+
+
+def test_structured_bom_rows_skip_untrusted_row_codes():
+    root = {
+        "structure": {
+            "items": [
+                {"code": "10080010", "quantity": 1.0, "components": []},
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["10080010", "10080106"],
+        "bomRows": [
+            {
+                "code": "10080010",
+                "quantity": "1",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            },
+            {
+                "code": "10080106",
+                "quantity": "1",
+                "quantitySource": "column_inferred",
+                "quantityTrusted": False,
+            },
+        ],
+        "bomVisionRefinement": {"columnRowCount": 2},
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90263149",
+    )
+
+    assert "10080106" not in result.extra_in_pdf

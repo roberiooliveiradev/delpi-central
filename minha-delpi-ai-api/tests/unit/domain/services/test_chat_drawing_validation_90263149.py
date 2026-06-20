@@ -379,6 +379,9 @@ def test_90263149_package_exposes_vision_refinement_metadata():
             "triggered": True,
             "tableCount": 1,
             "columnRowCount": 1,
+            "codesRefined": ["10090050", "10080010"],
+            "resolved": 2,
+            "attemptCount": 2,
         },
         "sourceMetadata": {"structuredTables": [table]},
     }
@@ -395,46 +398,5 @@ def test_90263149_package_exposes_vision_refinement_metadata():
     assert isinstance(vision, dict)
     assert vision.get("attempted") is True
     assert vision.get("tableCount") == 1
-
-
-def test_90263149_package_exposes_vision_refinement_metadata():
-    table = {
-        "tableId": "region_bom_p0",
-        "sourceRegion": "bom",
-        "columns": [
-            {"index": 0, "headerText": "POS"},
-            {"index": 1, "headerText": "CÓDIGO"},
-            {"index": 2, "headerText": "QTD"},
-        ],
-        "rows": [
-            {
-                "index": 0,
-                "cells": [
-                    {"col": 1, "text": "10090050"},
-                    {"col": 2, "text": "1"},
-                ],
-            }
-        ],
-    }
-    pdf_extract = {
-        **_ocr_noisy_pdf_extract_90263149(),
-        "bomVisionRefinement": {
-            "triggered": True,
-            "tableCount": 1,
-            "columnRowCount": 1,
-        },
-        "sourceMetadata": {"structuredTables": [table]},
-    }
-    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
-        product_code="90263149",
-        payload=_payload_90263149(),
-        has_pdf_attachment=True,
-        api_ok=True,
-        pdf_extract=pdf_extract,
-    )
-    analysis = package.get("drawingAnalysis") or {}
-    vision = analysis.get("visionRefinement")
-
-    assert isinstance(vision, dict)
-    assert vision.get("attempted") is True
-    assert vision.get("tableCount") == 1
+    assert vision.get("resolved") == 2
+    assert vision.get("codesRefined") == ["10090050", "10080010"]

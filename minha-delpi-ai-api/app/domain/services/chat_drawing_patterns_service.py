@@ -741,6 +741,38 @@ class ChatDrawingPatternsService:
         return node.get(key, default) if isinstance(node, dict) else default
 
     @classmethod
+    def bom_comparison_rule(cls, key: str, default: Any = None) -> Any:
+        node = ChatAssistantContentService.get_node("drawing_stamp", "bomComparison")
+
+        return node.get(key, default) if isinstance(node, dict) else default
+
+    @classmethod
+    def bom_quantity_column_retry_offsets(cls) -> tuple[int, ...]:
+        items = cls.bom_row_refinement_rule("quantityColumnRetryOffsets", [0, -1, 1])
+
+        if not isinstance(items, list):
+            return (0, -1, 1)
+
+        offsets: list[int] = []
+
+        for item in items:
+            try:
+                offsets.append(int(item))
+            except (TypeError, ValueError):
+                continue
+
+        return tuple(offsets) if offsets else (0, -1, 1)
+
+    @classmethod
+    def bom_structured_quantity_sources(cls) -> frozenset[str]:
+        items = cls.bom_comparison_rule("structuredQuantitySources", [])
+
+        if not isinstance(items, list):
+            return frozenset()
+
+        return frozenset(str(item).strip().lower() for item in items if str(item).strip())
+
+    @classmethod
     def bom_quantity_critical_requires_sources(cls) -> frozenset[str]:
         items = cls.bom_quantity_semantics_rule("criticalRequiresQuantitySource", [])
 
