@@ -708,6 +708,9 @@ class ChatRichPresentationTextService:
             if not isinstance(metadata, dict) or not metadata.get("ok"):
                 continue
 
+            if metadata.get("llmProseDecoupled"):
+                return False
+
             if cls._should_prefer_playbook_operational_text_answer(metadata):
                 return True
 

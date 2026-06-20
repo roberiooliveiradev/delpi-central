@@ -50,9 +50,9 @@ class ChatPresentationRenderPlanService:
             "segments": segments,
         }
 
-        if not segments and cls._has_text_presentation(metadata):
+        if not segments and cls._should_include_lead_segment(metadata):
             metadata["renderPlan"]["segments"] = [
-                {"kind": "markdown", "slot": "lead", "source": "textPresentation"},
+                cls._lead_markdown_segment(metadata),
             ]
 
     @classmethod
@@ -84,19 +84,25 @@ class ChatPresentationRenderPlanService:
         for slot in narrative_order:
             token = str(slot).strip()
 
-            if token == "lead" and cls._has_text_presentation(metadata):
-                segments.append(
-                    {"kind": "markdown", "slot": "lead", "source": "textPresentation"},
-                )
+            if token == "lead" and cls._should_include_lead_segment(metadata):
+                segments.append(cls._lead_markdown_segment(metadata))
                 continue
 
-            if token == "highlights" and cls._markdown_has_highlights(metadata):
+            if (
+                token == "highlights"
+                and not cls._is_llm_prose_decoupled(metadata)
+                and cls._markdown_has_highlights(metadata)
+            ):
                 segments.append(
                     {"kind": "markdown", "slot": "highlights", "source": "textPresentation"},
                 )
                 continue
 
-            if token == "attention" and cls._markdown_has_attention(metadata):
+            if (
+                token == "attention"
+                and not cls._is_llm_prose_decoupled(metadata)
+                and cls._markdown_has_attention(metadata)
+            ):
                 segments.append(
                     {"kind": "markdown", "slot": "attention", "source": "textPresentation"},
                 )
@@ -189,12 +195,12 @@ class ChatPresentationRenderPlanService:
 
         selected = str((decision or {}).get("selected") or "").strip().lower()
 
-        if selected == "canvas" and cls._has_text_presentation(metadata):
-            segments.append({"kind": "markdown", "slot": "lead", "source": "textPresentation"})
+        if selected == "canvas" and cls._should_include_lead_segment(metadata):
+            segments.append(cls._lead_markdown_segment(metadata))
             return segments
 
-        if cls._has_text_presentation(metadata) and selected in {"", "text"}:
-            segments.append({"kind": "markdown", "slot": "lead", "source": "textPresentation"})
+        if cls._should_include_lead_segment(metadata) and selected in {"", "text"}:
+            segments.append(cls._lead_markdown_segment(metadata))
 
         if selected in _VISUAL_TOKEN_TO_KEY:
             source = cls._resolve_visual_source(metadata, selected)
@@ -236,6 +242,27 @@ class ChatPresentationRenderPlanService:
             return False
 
         return bool(str(text_presentation.get("markdown") or "").strip())
+
+    @classmethod
+    def _is_llm_prose_decoupled(cls, metadata: dict[str, Any]) -> bool:
+        return bool(metadata.get("llmProseDecoupled"))
+
+    @classmethod
+    def _should_include_lead_segment(cls, metadata: dict[str, Any]) -> bool:
+        if cls._is_llm_prose_decoupled(metadata):
+            return True
+
+        return cls._has_text_presentation(metadata)
+
+    @classmethod
+    def _lead_markdown_segment(cls, metadata: dict[str, Any]) -> dict[str, str]:
+        source = (
+            "assistantMessage"
+            if cls._is_llm_prose_decoupled(metadata)
+            else "textPresentation"
+        )
+
+        return {"kind": "markdown", "slot": "lead", "source": source}
 
     @classmethod
     def _table_bundle_count(cls, metadata: dict[str, Any]) -> int:

@@ -1,7 +1,88 @@
 import type { ChatPresentation, ChatToolCall } from "../../../data/api/chatTypes";
 
+export function isLlmProseDecoupledMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!metadata || typeof metadata !== "object") {
+    return false;
+  }
+
+  if (metadata.llmProseDecoupled === true) {
+    return true;
+  }
+
+  const decision = metadata.presentationDecision;
+
+  if (decision && typeof decision === "object") {
+    const proseSource = String(
+      (decision as Record<string, unknown>).proseSource || "",
+    )
+      .trim()
+      .toLowerCase();
+
+    if (proseSource === "llm") {
+      return true;
+    }
+  }
+
+  return String(metadata.proseDeliveryMode || "").trim().toLowerCase() === "llm";
+}
+
+export function isLlmProseDecoupledFromToolCalls(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+
+    if (metadata?.ok === false) {
+      continue;
+    }
+
+    if (isLlmProseDecoupledMetadata(metadata)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function resolveLeadMarkdownSource(
+  metadata: Record<string, unknown>,
+  commentary: string,
+): "assistantMessage" | "textPresentation" {
+  if (isLlmProseDecoupledMetadata(metadata)) {
+    return "assistantMessage";
+  }
+
+  const textPresentation = metadata.textPresentation;
+
+  if (
+    textPresentation &&
+    typeof textPresentation === "object" &&
+    String((textPresentation as { markdown?: string }).markdown || "").trim()
+  ) {
+    return "textPresentation";
+  }
+
+  if (String(commentary || "").trim()) {
+    return "assistantMessage";
+  }
+
+  return "textPresentation";
+}
+
 export function getTextMarkdownFromToolCalls(toolCalls?: ChatToolCall[]): string {
   if (!Array.isArray(toolCalls)) {
+    return "";
+  }
+
+  if (isLlmProseDecoupledFromToolCalls(toolCalls)) {
     return "";
   }
 

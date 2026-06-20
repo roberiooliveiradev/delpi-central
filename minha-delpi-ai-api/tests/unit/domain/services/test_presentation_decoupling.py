@@ -126,3 +126,21 @@ def test_resolve_table_hint_for_stock_path():
 
     assert hint
     assert "tabela" in hint.lower()
+
+
+def test_llm_prose_decoupling_archives_template_without_exposing_markdown():
+    from app.domain.services.chat_presentation_llm_prose_decoupling_service import (
+        ChatPresentationLlmProseDecouplingService,
+    )
+
+    metadata = {
+        "ok": True,
+        "textPresentation": {"markdown": "### Estoque\n\nSaldo **150** un."},
+        "presentationDecision": {"layoutMode": "stack"},
+    }
+
+    ChatPresentationLlmProseDecouplingService.decouple_metadata(metadata)
+
+    assert metadata["textPresentation"]["markdown"] == ""
+    assert "150" in metadata["templateProseArchive"]["textPresentationMarkdown"]
+    assert metadata["llmProseDecoupled"] is True

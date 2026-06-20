@@ -18,7 +18,9 @@ Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com **presets 
 | Stack `summary_then_evidence` (estoque/fábrica narrativos) | Sim — LLM em todos os modos |
 | Perguntas abertas / Normas / redação | Sim — `llm_synthesis` |
 
-Gate canônico: `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
+Gate canônico: `ChatPresentationProseDeliveryService` → `ChatOperationalNarrativeSynthesisService` + `ChatResponseModeService.apply_turn_direct_answer_policy`.
+
+Playbook: [`playbook-18-prosa-template-llm-desacoplamento.md`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md).
 
 O composer envia `responseMode` (`fast` | `normal` | `thinker`). `llm_generation_scope` propaga o preset a **todas** as chamadas LLM do turno.
 
@@ -58,10 +60,21 @@ Serviços:
 | Serviço | Papel |
 |---------|-------|
 | `ChatOperationalNarrativeSynthesisService` | Detecta kind + policy + `should_force_llm_synthesis` |
+| `ChatPresentationProseDeliveryService` | Gate único: `template` \| `llm` \| `direct`; chama decouple quando LLM |
+| `ChatPresentationLlmProseDecouplingService` | Remove markdown template do metadata; `renderPlan.lead` → `assistantMessage` |
 | `ChatResponseModeService.apply_turn_direct_answer_policy` | Limpa `directAnswer`, seta `responseModeEffect` |
 | `ChatTurnCompletionService` | `skip_replacement` quando `responseModeEffect` é síntese LLM |
 
 Bundle declarativo: `assistant/operational_narrative_synthesis.json`.
+
+### Desacoplamento template × LLM
+
+Quando síntese LLM está ativa (`CHAT_RESPONSE_MODES_ENABLED` + gate narrativo):
+
+1. `ChatPresentationLlmProseDecouplingService` arquiva o markdown do presenter em `templateProseArchive`, zera `textPresentation.markdown` e seta `llmProseDecoupled`.
+2. `renderPlan` mantém slots visuais (tabela, árvore, KPI, gráfico) e aponta o **lead** para `assistantMessage` — prosa vem da resposta LLM streamada.
+3. `should_prefer_authorized_answer_over_llm` e `should_persist_authorized_tool_answer` retornam `false` quando decoupled.
+4. Fatos para o prompt LLM continuam em `dataAnswer`, tabelas, KPI e `humanizedSummary` (`ChatOperationalLlmSynthesisContextService`).
 
 ---
 

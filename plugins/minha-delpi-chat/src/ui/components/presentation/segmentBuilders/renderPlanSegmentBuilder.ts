@@ -1,6 +1,11 @@
 import type { ChatToolCall } from "../../../../data/api/chatTypes";
 
 import {
+  isLlmProseDecoupledMetadata,
+  resolveLeadMarkdownSource,
+} from "../presentationMarkdownNormalization";
+
+import {
   bucketTableSegmentsByRole,
   partitionCommentarySections,
 } from "../../message/assistantContentInterleave";
@@ -173,6 +178,17 @@ function buildTailVisualSegments(
   return segments;
 }
 
+function shouldIncludeLeadSegment(
+  metadata: Record<string, unknown>,
+  commentary: string,
+): boolean {
+  if (isLlmProseDecoupledMetadata(metadata)) {
+    return true;
+  }
+
+  return hasTextPresentation(metadata, commentary);
+}
+
 function buildStackRenderPlanSegments(
   metadata: Record<string, unknown>,
   plan: StackPresentationPlan,
@@ -188,17 +204,29 @@ function buildStackRenderPlanSegments(
   for (const slot of plan.narrativeOrder) {
     const token = String(slot).trim();
 
-    if (token === "lead" && hasTextPresentation(metadata, commentary)) {
-      segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
+    if (token === "lead" && shouldIncludeLeadSegment(metadata, commentary)) {
+      segments.push({
+        kind: "markdown",
+        slot: "lead",
+        source: resolveLeadMarkdownSource(metadata, commentary),
+      });
       continue;
     }
 
-    if (token === "highlights" && markdownHasHighlights(commentary)) {
+    if (
+      token === "highlights" &&
+      !isLlmProseDecoupledMetadata(metadata) &&
+      markdownHasHighlights(commentary)
+    ) {
       segments.push({ kind: "markdown", slot: "highlights", source: "textPresentation" });
       continue;
     }
 
-    if (token === "attention" && markdownHasAttention(commentary)) {
+    if (
+      token === "attention" &&
+      !isLlmProseDecoupledMetadata(metadata) &&
+      markdownHasAttention(commentary)
+    ) {
       segments.push({ kind: "markdown", slot: "attention", source: "textPresentation" });
       continue;
     }
@@ -348,8 +376,12 @@ export function synthesizeRenderPlanFromToolCalls(
       ? buildStackRenderPlanSegments(metadata, plan, commentary, resolvedHints)
       : buildSingleViewRenderPlanSegments(metadata, plan, commentary);
 
-  if (!segments.length && hasTextPresentation(metadata, commentary)) {
-    segments.push({ kind: "markdown", slot: "lead", source: "textPresentation" });
+  if (!segments.length && shouldIncludeLeadSegment(metadata, commentary)) {
+    segments.push({
+      kind: "markdown",
+      slot: "lead",
+      source: resolveLeadMarkdownSource(metadata, commentary),
+    });
   }
 
   if (!segments.length) {

@@ -1,0 +1,25 @@
+{
+  "modes": {
+    "template": {
+      "label": "Template",
+      "description": "Prosa montada pelo presenter (humanizedSummary / textPresentation). Visuais nos slots nativos."
+    },
+    "llm": {
+      "label": "LLM",
+      "description": "Prosa montada pelo LLM a partir de fatos estruturados. Template arquivado; visuais inalterados."
+    },
+    "direct": {
+      "label": "Direct",
+      "description": "Resposta factual estreita autorizada (sem síntese LLM narrativa)."
+    }
+  },
+  "settings": {
+    "requireResponseModesForLlmProse": true
+  },
+  "metadataKeys": {
+    "deliveryMode": "proseDeliveryMode",
+    "decoupled": "llmProseDecoupled",
+    "proseSource": "proseSource",
+    "archive": "templateProseArchive"
+  }
+}

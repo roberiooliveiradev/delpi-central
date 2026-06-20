@@ -300,6 +300,9 @@ class ChatToolContextPresentationService:
 
         @classmethod
         def _authorized_body_from_metadata(cls, metadata: dict) -> str | None:
+            if metadata.get("llmProseDecoupled"):
+                return None
+
             text_presentation = metadata.get("textPresentation")
 
             if isinstance(text_presentation, dict):

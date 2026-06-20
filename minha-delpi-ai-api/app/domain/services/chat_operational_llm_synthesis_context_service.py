@@ -93,6 +93,14 @@ class ChatOperationalLlmSynthesisContextService:
             if title:
                 facts.append(title)
 
+            archived = metadata.get("templateProseArchive")
+
+            if isinstance(archived, dict):
+                archived_humanized = archived.get("humanizedSummary")
+
+                if isinstance(archived_humanized, dict):
+                    humanized = archived_humanized
+
             max_lines = ChatOperationalLlmSynthesisContextContentService.limit_int(
                 "maxHumanizedLines",
                 6,

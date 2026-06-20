@@ -1,0 +1,34 @@
+"""Loader JSON `presentation_prose_delivery` — modos template × LLM × direct."""
+
+from __future__ import annotations
+
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+
+_BUNDLE = "presentation_prose_delivery"
+
+
+class ChatPresentationProseDeliveryContentService:
+    @classmethod
+    def mode_label(cls, mode: str) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "modes", mode, "label", default=mode)
+            or mode
+        ).strip()
+
+    @classmethod
+    def require_response_modes_for_llm_prose(cls) -> bool:
+        return bool(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "settings",
+                "requireResponseModesForLlmProse",
+                default=True,
+            )
+        )
+
+    @classmethod
+    def metadata_key(cls, key: str) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "metadataKeys", key, default=key)
+            or key
+        ).strip()

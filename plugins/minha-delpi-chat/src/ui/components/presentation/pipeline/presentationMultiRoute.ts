@@ -13,6 +13,7 @@ import {
   type ProductRouteKey,
 } from "../../../../content/operationalPresentationContent";
 import { dedupeTableSegments } from "./presentationTableDedup";
+import { isLlmProseDecoupledMetadata } from "../presentationMarkdownNormalization";
 
 export type { ProductRouteKey };
 
@@ -319,6 +320,11 @@ function resolveProseForBlock(
   }
 
   const metadata = (block.toolCall.metadata ?? {}) as Record<string, unknown>;
+
+  if (isLlmProseDecoupledMetadata(metadata)) {
+    return "";
+  }
+
   const humanized = metadata.humanizedSummary as { linhas?: string[] } | undefined;
   const lines = Array.isArray(humanized?.linhas)
     ? humanized.linhas.map((line) => String(line || "").trim()).filter(Boolean)
