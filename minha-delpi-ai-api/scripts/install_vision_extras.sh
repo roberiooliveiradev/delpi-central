@@ -53,6 +53,8 @@ if [ "$need_install" = "true" ]; then
     fi
   fi
 
+  pip install --upgrade pip setuptools wheel
+  pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
   pip install --no-cache-dir -r "$REQ_FILE"
   python3 "${APP_ROOT}/scripts/prefetch_vision_models.py" || true
 else

@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
-# Rebuild da API com extras de visão (EasyOCR + Docling).
+# Rebuild permanente da API com extras de visão (EasyOCR + Docling + modelos EasyOCR).
 #
-# Desde jun/2026 o Dockerfile.dev já instala requirements-vision.txt.
-# Este script permanece para prod (INSTALL_VISION_EXTRAS) e fluxos explícitos.
+# Dev: Dockerfile.dev + compose já fixam INSTALL_VISION_EXTRAS=true em todo build.
+# Prod: use target prod + docker-compose.prod.vision.yml
 #
 # Uso:
 #   ./minha-delpi-ai-api/scripts/build_vision_profile.sh [dev|prod]
+#   NO_CACHE=1 ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TARGET="${1:-dev}"
+export INSTALL_VISION_EXTRAS=true
 
 cd "$ROOT/infra"
+
+BUILD_ARGS=(--build-arg "INSTALL_VISION_EXTRAS=true")
+if [ "${NO_CACHE:-0}" = "1" ]; then
+  BUILD_ARGS+=(--no-cache)
+fi
 
 case "$TARGET" in
   dev)
@@ -29,8 +36,8 @@ case "$TARGET" in
     ;;
 esac
 
-echo "== Build com extras de visão ($TARGET) — EasyOCR/Docling + modelos; pode levar vários minutos =="
-docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" build --no-cache minha-delpi-ai-api
+echo "== Build permanente com extras de visão ($TARGET) — pode levar vários minutos =="
+docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" build "${BUILD_ARGS[@]}" minha-delpi-ai-api
 
 echo "== Recreate minha-delpi-ai-api =="
 docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" up -d --force-recreate minha-delpi-ai-api
@@ -38,4 +45,4 @@ docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" up -d --force-recre
 docker compose "${COMPOSE_FILES[@]}" "${COMPOSE_PROFILE[@]}" exec -T minha-delpi-ai-api \
   python3 scripts/check_vision_profile_deps.py --require-easyocr --require-easyocr-models
 
-echo "Profile vision ($TARGET): build concluído."
+echo "Profile vision ($TARGET): extras permanentes na imagem — OK."

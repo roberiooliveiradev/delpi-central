@@ -11,6 +11,7 @@ ENV CHAT_VISION_EXTRAS_WARN=true
 ENV CHAT_EASYOCR_MODEL_DIR=/opt/delpi-vision/easyocr
 
 ARG INSTALL_VISION_EXTRAS=true
+ENV INSTALL_VISION_EXTRAS=${INSTALL_VISION_EXTRAS}
 
 COPY requirements.txt requirements-vision.txt ./
 COPY scripts/docker_install_vision_extras.sh \

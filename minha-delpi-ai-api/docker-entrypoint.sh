@@ -27,9 +27,8 @@ fi
 # (bloqueava o Flask 10–20 min e gerava 502 no gateway).
 if [ "${CHAT_VISION_EXTRAS_WARN:-true}" = "true" ]; then
   if ! python3 -c "import easyocr" >/dev/null 2>&1; then
-    echo "⚠️  EasyOCR ausente — OCR regional usará só Tesseract até rebuild da imagem."
-    echo "    Dev:  ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev"
-    echo "    Prod: INSTALL_VISION_EXTRAS=true docker compose -f infra/docker-compose.yml build minha-delpi-ai-api"
+    echo "⚠️  EasyOCR ausente — rebuild da imagem (extras devem vir do build, não do entrypoint):"
+    echo "    ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev"
   elif [ -n "${CHAT_EASYOCR_MODEL_DIR:-}" ] && [ ! -d "${CHAT_EASYOCR_MODEL_DIR}" ]; then
     echo "⚠️  Modelos EasyOCR ausentes em ${CHAT_EASYOCR_MODEL_DIR} — rebuild com prefetch no Dockerfile."
   fi

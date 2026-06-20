@@ -181,6 +181,9 @@ services:
     build:
       context: ../minha-delpi-ai-api
       dockerfile: Dockerfile.dev
+      args:
+        # Extras de visão sempre na imagem dev (EasyOCR + Docling + modelos prefetch).
+        INSTALL_VISION_EXTRAS: "true"
     profiles:
       - chat
       - vision
