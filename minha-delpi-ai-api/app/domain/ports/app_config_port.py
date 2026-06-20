@@ -71,6 +71,10 @@ class AppConfigPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def chat_web_search_retry_en_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def chat_pagination_auto_fetch_enabled(self) -> bool:
         raise NotImplementedError
 

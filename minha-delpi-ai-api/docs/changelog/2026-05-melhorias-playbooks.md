@@ -121,7 +121,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 | Entrega | Detalhe |
 |---------|---------|
-| Agente padrão | `ChatPlatformDefaultAgentService` — sessão sem agente usa agente de sistema (nome/ID via env) |
+| Agente padrão (histórico) | Removido `ChatPlatformDefaultAgentService` — chat comum **não** herda agente de plataforma; ativação explícita via `ChatWorkspaceAgentActivationService` |
 | Chips condicionais | Operacionais exigem `userActivatedAgent` (agente no composer); genéricos/texto sem agente |
 | Sem agentic em chip | `ChatFollowUpChipQueryService` + `should_skip_agentic_loop` para consultas explícitas dos atalhos |
 

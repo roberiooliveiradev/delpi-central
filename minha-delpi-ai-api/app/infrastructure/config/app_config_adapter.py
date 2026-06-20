@@ -98,6 +98,9 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
     def chat_web_search_auto_augment_enabled(self) -> bool:
         return self._intelligence().web_search_auto_augment_enabled
 
+    def chat_web_search_retry_en_enabled(self) -> bool:
+        return bool(Settings.CHAT_WEB_SEARCH_RETRY_EN)
+
     def chat_pagination_auto_fetch_enabled(self) -> bool:
         return self._intelligence().pagination_auto_fetch_enabled
 

@@ -130,10 +130,11 @@ class WebSearchQueryService:
             if cleaned and cleaned not in candidates:
                 candidates.append(cleaned)
 
-        retry = cls.build_english_retry_query(sanitized or normalized)
+        if cls._english_retry_enabled():
+            retry = cls.build_english_retry_query(sanitized or normalized)
 
-        if retry and retry not in candidates:
-            candidates.append(retry)
+            if retry and retry not in candidates:
+                candidates.append(retry)
 
         tokens = cls.extract_entity_tokens(sanitized or normalized)
 
@@ -162,6 +163,18 @@ class WebSearchQueryService:
                     candidates.append(cleaned)
 
         return candidates
+
+    @classmethod
+    def _english_retry_enabled(cls) -> bool:
+        try:
+            from app.domain.services.chat_domain_config_service import (
+                ChatDomainConfigService,
+            )
+
+            return ChatDomainConfigService.chat_web_search_retry_en_enabled()
+        except RuntimeError:
+            # Testes unitários sem wiring de AppConfigPort — mantém retry ligado.
+            return True
 
     @classmethod
     def is_useful_payload(cls, payload: dict | None) -> bool:

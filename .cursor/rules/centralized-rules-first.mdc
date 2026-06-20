@@ -15,7 +15,7 @@ alwaysApply: true
 |---------|-----------------|-----------------|
 | Pipeline / intenção / tools / RAG / direct answer | `minha-delpi-ai-api` → serviços em `application/services/` + `domain/services/` (`ChatTurnPreparation*`, `ChatIntentRouterService`, `ChatAssistantIdentityService`) | `SendChatMessageUseCase`, `StreamChatMessageUseCase`, prompt de agente |
 | Skip de tools por intenção | `ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags` + `should_skip_tools` | `build_tool_context` inline, flags só no frontend |
-| Ativação de agente (chat comum vs agente) | API: `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` · MFE: `chatAgentActivation.ts` | `CHAT_PLATFORM_DEFAULT_AGENT_*` implícito, `default_agent_id` de projeto na rota, `setContextAgentId` ad hoc |
+| Ativação de agente (chat comum vs agente) | API: `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` · MFE: `chatAgentActivation.ts` | `default_agent_id` de projeto na rota, `setContextAgentId` ad hoc |
 | Textos PT (status, activity, respostas) | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
 | Regex, limites, thresholds, vocabulário | `assistant/*.json` → `*ContentService` / `*PatternsService` | `re.compile` e constantes em `chat_*_service.py` |
 | Prosa/markdown/título/streaming do assistente | `plugins/minha-delpi-chat` → `assistantProseRendering.ts` + `chatMarkdown.ts` | `ChatMessageList`, `ChatAssistantContent`, hooks com `if` próprio |

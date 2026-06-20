@@ -862,7 +862,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 | `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED` | `true` | Síntese estruturada via LLM |
 | `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` | `2` | Mínimo de snippets úteis para sintetizar |
 | `CHAT_WEB_SEARCH_PROVIDER` | `auto` | Ordem: `tavily` → `serper` → `bing` → `searxng` → `duckduckgo`; ou valor único |
-| `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry em inglês quando PT/inicial vier vazio |
+| `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry automático em EN quando PT/inicial vier vazio (`WebSearchQueryService.build_search_candidates`) |
 | `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Limite por consulta |
 | `CHAT_WEB_SEARCH_TIMEOUT_SECONDS` | `8` | Timeout HTTP dos provedores |
 | `CHAT_WEB_SEARCH_SEARXNG_BASE_URL` | — (dev: `http://searxng:8080`) | Instância SearXNG self-hosted (`GET /search?format=json`) |

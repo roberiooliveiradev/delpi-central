@@ -55,7 +55,6 @@ class Settings:
     VLLM_API_KEY = os.getenv("VLLM_API_KEY", "minha-delpi-local-vllm")
     VLLM_TIMEOUT_SECONDS = float(os.getenv("VLLM_TIMEOUT_SECONDS", "300"))
 
-    EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "ollama")
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "bge-m3")
     EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1024"))
     EMBEDDING_TIMEOUT_SECONDS = float(os.getenv("EMBEDDING_TIMEOUT_SECONDS", "120"))
@@ -272,14 +271,6 @@ class Settings:
     CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL = (
         os.getenv("CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL", "true").lower() == "true"
     )
-    CHAT_PLATFORM_DEFAULT_AGENT_ENABLED = (
-        os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ENABLED", "true").lower() == "true"
-    )
-    CHAT_PLATFORM_DEFAULT_AGENT_ID = os.getenv("CHAT_PLATFORM_DEFAULT_AGENT_ID", "").strip()
-    CHAT_PLATFORM_DEFAULT_AGENT_NAME = os.getenv(
-        "CHAT_PLATFORM_DEFAULT_AGENT_NAME",
-        "Agente Minha DELPI",
-    ).strip()
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
     CHAT_HISTORY_SUMMARY_ENABLED = (

@@ -78,3 +78,17 @@ def test_build_english_retry_query_strips_company_filler():
     retry = WebSearchQueryService.build_english_retry_query("a empresa tyco")
 
     assert retry == "tyco"
+
+
+def test_build_search_candidates_skips_english_retry_when_disabled(monkeypatch):
+    monkeypatch.setattr(
+        "app.domain.services.web_search_query_service.WebSearchQueryService._english_retry_enabled",
+        classmethod(lambda cls: False),
+    )
+
+    candidates = WebSearchQueryService.build_search_candidates(
+        "python linguagem de programacao"
+    )
+
+    assert "python programming language" not in candidates
+    assert candidates[0] == "python linguagem de programacao"

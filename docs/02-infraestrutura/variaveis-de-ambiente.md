@@ -176,7 +176,7 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS` | Só quando `CHAT_PERSIST_BEFORE_PLAYBACK=false`: chars por chunk no streaming SSE legado. **Recomendado:** `4` |
 | `CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS` | Só quando `CHAT_PERSIST_BEFORE_PLAYBACK=false`: delay entre chunks SSE. **Recomendado:** `0`–`45` |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Score mínimo em fluxos de assertividade (default `0.35`) |
-| `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
+| `EMBEDDING_MODEL` | Ex.: `bge-m3` (Ollama via `LocalEmbeddingGateway`) |
 | `RATE_LIMIT_*` | Limites por janela |
 | `KNOWLEDGE_*` | Limites de ingestão RAG |
 | `LGPD_REQUIRE_AI_CONSENT` | `true` (default maio/2026) — exige consentimento `ai_context` antes de injetar PII no LLM |

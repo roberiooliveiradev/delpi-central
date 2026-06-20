@@ -197,7 +197,7 @@ Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../t
 | `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Máx. resultados por consulta web |
 | `CHAT_WEB_SEARCH_TIMEOUT_SECONDS` | `8` | Timeout HTTP dos provedores |
 | `CHAT_WEB_SEARCH_PROVIDER` | `auto` | `auto` \| `duckduckgo` \| `tavily` \| `serper` \| `bing` \| `searxng` |
-| `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry automático em EN quando PT/inicial vier vazio |
+| `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry automático em EN quando PT/inicial vier vazio; consultado em `WebSearchQueryService` via `AppConfigPort` |
 | `CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED` | `true` | Resposta direta (`directAnswer`) sem passar pelo LLM principal |
 | `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED` | `true` | Síntese estruturada (seções + timeline) via LLM auxiliar |
 | `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` | `2` | Mínimo de snippets úteis para acionar síntese |
