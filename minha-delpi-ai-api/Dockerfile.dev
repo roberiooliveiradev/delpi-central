@@ -30,7 +30,8 @@ RUN apt-get update \
         netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt \
     && chmod +x scripts/docker_install_vision_extras.sh \
     && INSTALL_VISION_EXTRAS="${INSTALL_VISION_EXTRAS}" APP_ROOT=/app bash scripts/docker_install_vision_extras.sh
 

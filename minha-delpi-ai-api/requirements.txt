@@ -7,7 +7,7 @@ requests==2.32.3
 SQLAlchemy==2.0.36
 Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.7
-psycopg[binary]==3.2.3
+psycopg[binary]==3.3.4
 pgvector==0.3.6
 pytest==8.3.4
 redis==5.2.1

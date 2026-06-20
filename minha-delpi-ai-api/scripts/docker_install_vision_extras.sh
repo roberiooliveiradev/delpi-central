@@ -27,6 +27,7 @@ if ! grep -v '^[[:space:]]*#' "$REQ_FILE" | grep -q '[a-zA-Z0-9]'; then
 fi
 
 echo "📦 [build] Instalando requirements-vision.txt…"
+pip install --upgrade pip setuptools wheel
 pip install --no-cache-dir -r "$REQ_FILE"
 
 echo "📥 [build] Prefetch de modelos EasyOCR…"

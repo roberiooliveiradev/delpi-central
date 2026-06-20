@@ -348,6 +348,8 @@ services:
     volumes:
       - ../minha-delpi-ai-api:/app
       - ../shared/delpi_auth:/app/delpi_auth
+      # Evita .venv do host sobrescrever wheels do container (ld.so / psycopg).
+      - /app/.venv
 
     depends_on:
       core-api:

@@ -1,6 +1,9 @@
 # Extras opcionais — visão/OCR ampliado (profile Docker + install_vision_extras.sh).
 # O MVP (native + Tesseract) usa apenas requirements.txt.
 #
+# Pin de tifffile: evita falha de hash pip quando PyPI republica o wheel (jun/2026).
+tifffile>=2024.8.30,<2026.6
+#
 # Motores regionais (ChatPdfRegionOcrEngineService — document_vision.json → regionOcr.engines):
 easyocr>=1.7.0
 #
