@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.domain.entities.tool_result import ToolResult
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+from app.domain.services.chat_tool_context_presentation_service import (
+    ChatToolContextPresentationService,
+)
 from app.domain.services.tool_selection_service import ToolSelectionService
 from tests.unit.domain.services.test_external_action_result_presenter_analyser_humanized import (
     _analyser_payload_with_guide_and_inspection,
@@ -512,6 +515,36 @@ def test_build_authorized_answer_prefers_text_presentation_markdown():
         tool_calls,
         message="me fale do produto 90260149",
     )
+
+
+def test_prefer_presentation_direct_answer_skips_when_llm_prose():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90269001/stock",
+                "llmProseDecoupled": True,
+                "proseDeliveryMode": "llm",
+                "dataOnlyPresentation": True,
+                "presentationDecision": {"selected": "table"},
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Estoque",
+                    "columns": [{"key": "branch", "label": "Filial"}],
+                    "rows": [{"branch": "01"}],
+                },
+            },
+        }
+    ]
+
+    kept = ChatToolContextPresentationService.prefer_presentation_direct_answer(
+        "| Filial | Qtd |\n| --- | --- |\n| 01 | 10 |",
+        tool_calls,
+        message="estoque do produto 90269001",
+    )
+
+    assert kept == "| Filial | Qtd |\n| --- | --- |\n| 01 | 10 |"
 
 
 def test_sync_text_presentation_from_humanized_for_playbook_operational():

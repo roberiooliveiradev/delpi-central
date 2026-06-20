@@ -281,6 +281,24 @@ def test_apply_turn_direct_answer_policy_playbook_template_stays_direct_when_eve
     assert effect == "operational_direct"
 
 
+def test_apply_turn_direct_answer_policy_never_operational_direct_when_everywhere(
+    monkeypatch,
+):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="estoque do produto 10080045",
+        response_mode="normal",
+        direct_answer="| Filial | Qtd |",
+        skip_rag=True,
+        tool_calls=None,
+    )
+
+    assert direct is None
+    assert skip_rag is False
+    assert effect == "llm_synthesis"
+
+
 def test_list_modes_loads_json_labels(monkeypatch):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
     modes = ChatResponseModeService.list_modes()

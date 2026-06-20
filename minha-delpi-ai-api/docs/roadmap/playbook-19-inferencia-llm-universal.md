@@ -92,15 +92,15 @@ Bundles: `presentation_prose_delivery.json`, `operational_narrative_synthesis.js
 | P6.1 | `deprecateHumanizedLinhasAsProse` no JSON + pipeline | ✅ P5.1 |
 | P6.2 | Presenters upstream: só título; linhas → archive automático | ✅ parcial (SQL sqlRows + title-only) |
 | P6.3 | Audit: flag `linhas` em presenter como legado upstream | ✅ |
-| P6.4 | Remover `operational_direct` e authorized template persist | 🔲 |
-| P6.5 | MFE: zero fallback markdown template | 🔲 |
+| P6.4 | Remover `operational_direct` e authorized template persist | ✅ |
+| P6.5 | MFE: zero fallback markdown template | ✅ |
 
 ### P7 — Qualidade assertiva por modo
 
 | # | Entrega | Status |
 |---|---------|--------|
 | P7.1 | Limites por modo em `response_mode_synthesis_quality.json` | ✅ existente |
-| P7.2 | Smoke ladder Rápida/Normal/Pensador (distância + latência) | 🔲 |
+| P7.2 | Smoke ladder Rápida/Normal/Pensador (distância + latência) | ✅ parcial (SMOKE_STRICT + teste estrutural) |
 | P7.3 | Gates CI: min chars, max templateSimilarity, anti-deflection | ✅ parcial |
 | P7.4 | Ajuste prompts `operational-synthesis-*.md` por domínio (SQL/playbook) | 🔲 |
 

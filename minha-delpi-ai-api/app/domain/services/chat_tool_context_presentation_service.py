@@ -98,6 +98,16 @@ class ChatToolContextPresentationService:
             from app.domain.services.chat_drawing_intent_service import (
                 ChatDrawingIntentService,
             )
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            if ChatPresentationProseDeliveryService.should_use_llm_prose(
+                message,
+                safe_tool_calls,
+            ):
+                return direct_answer
+
             from app.domain.services.chat_product_overview_intent_service import (
                 ChatProductOverviewIntentService,
             )

@@ -121,6 +121,14 @@ class ChatResponseModeService:
             return direct_answer, skip_rag, effect
 
         if direct_answer:
+            from app.domain.services.chat_presentation_prose_delivery_content_service import (
+                ChatPresentationProseDeliveryContentService,
+            )
+
+            if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
+                effect = cls.resolve_synthesis_effect(response_mode)
+                return None, False, effect
+
             return direct_answer, skip_rag, "operational_direct"
 
         return direct_answer, skip_rag, "llm_synthesis"

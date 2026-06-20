@@ -6,6 +6,7 @@ import {
   collectProductRouteBlocks,
   groupSegmentsByRouteSections,
   isMultiRouteProductPresentation,
+  resolveRouteTextDetailMarkdown,
   routeKeyFromPath,
   routeKeyFromSectionId,
 } from "./presentationMultiRoute";
@@ -278,5 +279,30 @@ describe("presentationMultiRoute", () => {
     expect(getDataCoverageNoticeFromToolCalls([stockCall, parentsCall])?.message).toContain(
       "Produtos pai parcial",
     );
+  });
+
+  it("não renderiza markdown template em rota desacoplada LLM", () => {
+    const toolCall = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/products/90269001/stock",
+          llmProseDecoupled: true,
+          proseDeliveryMode: "llm",
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Estoque\n\n| Filial | Qtd |\n| --- | --- |",
+          },
+          humanizedSummary: {
+            titulo: "Estoque",
+            linhas: ["- Saldo positivo na filial 01."],
+            linhas_detalhe: ["- Detalhe filial 02."],
+          },
+        },
+      },
+    ])[0];
+
+    expect(resolveRouteTextDetailMarkdown(toolCall)).toBe("");
   });
 });
