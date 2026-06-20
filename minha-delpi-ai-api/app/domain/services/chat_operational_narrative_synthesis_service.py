@@ -64,6 +64,9 @@ class ChatOperationalNarrativeSynthesisService:
     @classmethod
     def message_suggests_narrative_llm_synthesis(cls, message: str | None) -> bool:
         """Heurística só com a mensagem — usada no pipeline antes das tools."""
+        if cls._message_suggests_summary_then_evidence(message):
+            return True
+
         kind = cls.resolve_synthesis_kind(message, None)
 
         if not kind:

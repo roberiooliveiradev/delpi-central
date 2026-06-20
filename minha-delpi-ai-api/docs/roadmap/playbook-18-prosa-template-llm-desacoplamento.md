@@ -149,8 +149,8 @@ Objetivo: **presenter entrega só dados estruturados**; prosa 100% LLM em rotas 
 | P2.2 | Pular `build_text_presentation` + enrichments markdown (embeds, humanized narrative) | ✅ pipeline |
 | P2.3 | Formatter guard: humanized só `titulo`; linhas arquivadas para fatos LLM | ✅ |
 | P2.4 | `ChatToolContextFormatService` não repopula markdown quando data-only | ✅ |
-| P2.5 | Presenter mode `data_only` completo (sem chamar `present()` para linhas) | ⏳ |
-| P2.6 | Smoke qualidade: resposta ≠ template, assertividade, modos distintos | ⏳ |
+| P2.5 | Presenter mode `data_only` completo (sem chamar `present()` para linhas) | ✅ `resolve_humanized_summary` |
+| P2.6 | Smoke qualidade: resposta ≠ template, assertividade, modos distintos | ✅ validador + smoke |
 | P2.7 | Unificar preview/simulate/admin no mesmo `apply_turn` | ⏳ |
 
 ### P3 — Generalização e config (set/out 2026)

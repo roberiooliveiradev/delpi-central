@@ -128,6 +128,16 @@ def main() -> int:
                 "directResponse": pipeline.get("directResponse"),
                 "templateChars": len(template),
                 "templateSimilarity": similarity,
+                "dataOnlyPresentation": any(
+                    (tc.get("metadata") or {}).get("dataOnlyPresentation")
+                    for tc in tool_calls
+                    if isinstance(tc, dict)
+                ),
+                "llmProseDecoupled": any(
+                    (tc.get("metadata") or {}).get("llmProseDecoupled")
+                    for tc in tool_calls
+                    if isinstance(tc, dict)
+                ),
                 "contextTokensSample": context_tokens,
                 "qualityGaps": gaps,
                 "preview": content[:160].replace("\n", " "),

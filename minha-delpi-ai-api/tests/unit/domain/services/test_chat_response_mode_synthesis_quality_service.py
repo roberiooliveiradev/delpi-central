@@ -59,24 +59,94 @@ def test_detects_template_clone():
     assert any("template operacional" in gap for gap in gaps)
 
 
+def test_accepts_data_only_decoupled_metadata():
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_turn(
+        mode="normal",
+        question="qual o status do produto 90269002 na fabrica hoje?",
+        content=(
+            "O produto 90269002 está com **PA PRODUZIDO** na fábrica hoje. "
+            "O saldo de MP relevante aparece como 6082 nas posições consultadas."
+        ),
+        assistant_metadata={
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "dataOnlyPresentation": True,
+                        "llmProseDecoupled": True,
+                        "proseDeliveryMode": "llm",
+                        "presentationDecision": {"selected": "table"},
+                        "textPresentation": {"type": "markdown", "markdown": ""},
+                        "humanizedSummary": {"titulo": "Status fabril — 90269002"},
+                        "tablePresentations": [
+                            {
+                                "type": "table",
+                                "title": "Panorama fabril",
+                                "rows": [{"situacao": "PA PRODUZIDO", "saldo_mp": "6082"}],
+                            }
+                        ],
+                    },
+                }
+            ],
+            "intelligence": {
+                "pipeline": {
+                    "responseModeEffect": "llm_synthesis",
+                    "directResponse": False,
+                }
+            },
+        },
+        elapsed_sec=35.0,
+    )
+
+    assert gaps == []
+
+
+def test_rejects_template_markdown_in_data_only_turn():
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_turn(
+        mode="normal",
+        question="qual o status do produto 90269002 na fabrica hoje?",
+        content="Resposta LLM sobre 90269002 PA PRODUZIDO com saldo MP 6082.",
+        assistant_metadata={
+            "toolCalls": _factory_tool_calls(TEMPLATE),
+            "intelligence": {
+                "pipeline": {
+                    "responseModeEffect": "llm_synthesis",
+                    "directResponse": False,
+                }
+            },
+        },
+        elapsed_sec=30.0,
+    )
+
+    assert any("dataOnlyPresentation" in gap or "textPresentation.markdown" in gap for gap in gaps)
+
+
 def test_accepts_grounded_llm_answer():
     content = (
         "O produto 90269002 está com **PA PRODUZIDO** na fábrica hoje. "
         "O saldo de MP relevante aparece como 6082 nas posições consultadas. "
         "Use o painel para ver árvore, tabela e KPI complementares."
     )
+    tool_calls = _factory_tool_calls(
+        "",
+        data_answer={
+            "profileKey": "factory_status",
+            "summary": {"answer": "PA PRODUZIDO com saldo MP 6082"},
+        },
+    )
+    tool_calls[0]["metadata"]["dataOnlyPresentation"] = True
+    tool_calls[0]["metadata"]["llmProseDecoupled"] = True
+    tool_calls[0]["metadata"]["proseDeliveryMode"] = "llm"
+    tool_calls[0]["metadata"]["textPresentation"] = {"type": "markdown", "markdown": ""}
+    tool_calls[0]["metadata"]["humanizedSummary"] = {"titulo": "Status fabril — 90269002"}
+
     gaps = ChatResponseModeSynthesisQualityService.evaluate_turn(
         mode="normal",
         question="qual o status do produto 90269002 na fabrica hoje?",
         content=content,
         assistant_metadata={
-            "toolCalls": _factory_tool_calls(
-                TEMPLATE,
-                data_answer={
-                    "profileKey": "factory_status",
-                    "summary": {"answer": "PA PRODUZIDO com saldo MP 6082"},
-                },
-            ),
+            "toolCalls": tool_calls,
             "intelligence": {
                 "pipeline": {
                     "responseModeEffect": "llm_synthesis",

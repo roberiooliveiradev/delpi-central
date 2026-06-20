@@ -32,7 +32,7 @@ def test_factory_status_pipeline_skips_template_markdown():
         sanitized_data=envelope,
         resolved_path=path,
         request_parameters={
-            "userMessage": "como esta o status fabril do produto 90269002?",
+            "userMessage": "qual o status do produto 90269002 na fabrica hoje?",
         },
     )
 

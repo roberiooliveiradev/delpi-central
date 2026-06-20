@@ -34,6 +34,12 @@ def test_overview_resolves_product_overview_kind():
     assert kind == "product_overview"
 
 
+def test_factory_status_message_suggests_narrative_before_tools():
+    assert ChatOperationalNarrativeSynthesisService.message_suggests_narrative_llm_synthesis(
+        "qual o status do produto 90269002 na fabrica hoje?",
+    )
+
+
 def test_factory_status_stack_resolves_summary_then_evidence():
     kind = ChatOperationalNarrativeSynthesisService.resolve_synthesis_kind(
         "qual o status do produto 90269002 na fabrica hoje?",

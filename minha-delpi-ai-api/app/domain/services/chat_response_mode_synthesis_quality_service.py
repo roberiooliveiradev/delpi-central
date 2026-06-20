@@ -43,6 +43,7 @@ class ChatResponseModeSynthesisQualityService:
 
         gaps.extend(cls._evaluate_pipeline(pipeline, normalized_mode))
         gaps.extend(cls._evaluate_answer_shape(body, normalized_mode, elapsed_sec))
+        gaps.extend(cls._evaluate_prose_decoupling(tool_calls, pipeline))
         gaps.extend(cls._evaluate_not_template_clone(body, tool_calls))
         gaps.extend(cls._evaluate_context_and_assertiveness(body, question, tool_calls))
         gaps.extend(cls._evaluate_deflection(body))
@@ -234,6 +235,73 @@ class ChatResponseModeSynthesisQualityService:
 
             if max_elapsed and elapsed_sec > max_elapsed:
                 gaps.append(f"tempo excedido em {mode} ({elapsed_sec}s > {max_elapsed}s)")
+
+        return gaps
+
+    @classmethod
+    def _evaluate_prose_decoupling(
+        cls,
+        tool_calls: list[dict[str, Any]] | None,
+        pipeline: dict[str, Any],
+    ) -> list[str]:
+        """P2.6 — turno LLM deve ter metadata data-only (sem markdown template nos toolCalls)."""
+        gaps: list[str] = []
+        effect = str(pipeline.get("responseModeEffect") or "").strip()
+
+        if effect not in {"llm_synthesis", "llm_synthesis_brief"}:
+            return gaps
+
+        if not isinstance(tool_calls, list) or not tool_calls:
+            return gaps
+
+        for index, tool_call in enumerate(tool_calls):
+            if not isinstance(tool_call, dict):
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            if not metadata.get("presentationDecision"):
+                continue
+
+            prefix = f"toolCalls[{index}]"
+
+            if not (
+                metadata.get("dataOnlyPresentation") or metadata.get("llmProseDecoupled")
+            ):
+                gaps.append(
+                    f"{prefix}: síntese LLM sem dataOnlyPresentation/llmProseDecoupled"
+                )
+                continue
+
+            text_presentation = metadata.get("textPresentation")
+
+            if isinstance(text_presentation, dict):
+                markdown = str(text_presentation.get("markdown") or "").strip()
+
+                if markdown:
+                    gaps.append(
+                        f"{prefix}: textPresentation.markdown ainda preenchido em turno data-only"
+                    )
+
+            humanized = metadata.get("humanizedSummary")
+
+            if isinstance(humanized, dict):
+                linhas = humanized.get("linhas") or []
+                linhas_detalhe = humanized.get("linhas_detalhe") or []
+
+                if linhas or linhas_detalhe:
+                    gaps.append(
+                        f"{prefix}: humanizedSummary ainda contém linhas template em data-only"
+                    )
+
+            if str(metadata.get("proseDeliveryMode") or "") != "llm":
+                gaps.append(
+                    f"{prefix}: proseDeliveryMode esperado 'llm', "
+                    f"veio {metadata.get('proseDeliveryMode')!r}"
+                )
 
         return gaps
 
