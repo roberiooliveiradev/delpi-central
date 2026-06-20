@@ -215,7 +215,21 @@ Campos opcionais para adminDebug / export — **não** viram pergunta ao usuári
 | 15.8.1.3 | Integração em `ChatDrawingPdfBomExtractionService` | skill | Preferir tabela colunar; fallback `ChatDocumentVisionBomService._parse_bom_line` |
 | 15.8.1.4 | Testes | tests | `test_chat_drawing_bom_table_interpretation_service.py` |
 
-### 15.8.2 — Refinamento de célula (skill orquestra, chat base executa)
+### 15.8.1b — Inferência de colunas com cabeçalho OCR corrompido ✅
+
+Quando o OCR distorce rótulos (`cóvico`, `vescrição —`, `iremjarD`) mas o **corpo** da tabela permanece legível (layout POS/UM/QTD/CÓDIGO/DESCRIÇÃO):
+
+| ID | Entrega | Camada | DoD |
+|----|---------|--------|-----|
+| 15.8.1b.1 | Resolução em 3 passadas: exato → fuzzy (edit distance) → inferência por perfil colunar | domain (skill) | `resolve_column_indices` |
+| 15.8.1b.2 | `drawing_stamp.json` → `bomColumnInference` | JSON skill | layouts 4/5/6 colunas, `fuzzyHeaderMaxEditDistance`, `minBodyRowsForInference` |
+| 15.8.1b.3 | `quantitySource: column_inferred` + trust em assertiveness | domain (skill) | `criticalRequiresQuantitySource` inclui `column_inferred` |
+| 15.8.1b.4 | Testes fixture cabeçalho corrompido + corpo legível | tests | `10090050` QTD=`1`, não `6.35` da descrição |
+
+**Limitação conhecida (`90263149` live):** se o **corpo** também vem fragmentado (`{0: 'D', 1: 'o1'}`), `columnRowCount` permanece 0 — próximo passo: OCR regional por célula (15.8.2) ou parse tabular do chat base.
+
+Loader: `ChatDrawingPatternsService.bom_column_inference_rule` / `bom_column_default_layout`.
+
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
@@ -301,6 +315,18 @@ Loader: `ChatDocumentVisionContentService`.
     "dpiMultiplier": 2.0,
     "cellHorizontalPadding": 0.005,
     "engines": ["tesseract"]
+  },
+  "bomColumnInference": {
+    "enabled": true,
+    "fuzzyHeaderMaxEditDistance": 3,
+    "minBodyRowsForInference": 2,
+    "minColumnMatchScore": 0.45,
+    "quantityMaxDigits": 4,
+    "defaultLayouts": {
+      "4": ["position", "code", "quantity", "description"],
+      "5": ["position", "code", "quantity", "unit", "description"],
+      "6": ["position", "code", "quantity", "unit", "description", "notes"]
+    }
   }
 }
 ```
@@ -318,7 +344,7 @@ Loader: `ChatDrawingPatternsService` / `ChatDrawingBomTableInterpretationService
     "quantity_api_crosscheck"
   ],
   "refinementExhaustedPending": true,
-  "criticalRequiresQuantitySource": ["column", "refined_column", "annotation"]
+  "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"]
 }
 ```
 
@@ -351,6 +377,10 @@ cd minha-delpi-ai-api
 # Homologação local (PDFs em desenhos/, gitignored)
 DRAWING_VALIDATE_CODES=90263149,90262834,90263622 \
   .venv/bin/python scripts/validate_drawing_samples.py --assertiveness-gate
+
+# E2E chat real (container) — gate assertividade QTD (0 críticos bom_quantity_mismatch)
+docker exec -e SMOKE_BASE_URL=http://delpi-gateway -e PYTHONPATH=/app \
+  delpi-minha-delpi-ai-api python /app/scripts/smoke_drawing_90263149_chat_e2e.py
 
 # Smoke desenho
 .venv/bin/python scripts/smoke_drawing_analyser.py

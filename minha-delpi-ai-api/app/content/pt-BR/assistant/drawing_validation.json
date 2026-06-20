@@ -476,7 +476,7 @@
         "quantity_api_crosscheck"
       ],
       "refinementExhaustedPending": true,
-      "criticalRequiresQuantitySource": ["column", "refined_column", "annotation"]
+      "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"]
     }
   },
   "validationLayers": {

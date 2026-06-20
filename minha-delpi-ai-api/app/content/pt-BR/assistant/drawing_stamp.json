@@ -404,6 +404,18 @@
     "unit": ["UM", "UN", "UNID", "UNIDADE"],
     "description": ["DESCRIÇÃO", "DESCRICAO", "DESC", "DES"]
   },
+  "bomColumnInference": {
+    "enabled": true,
+    "fuzzyHeaderMaxEditDistance": 3,
+    "minBodyRowsForInference": 2,
+    "minColumnMatchScore": 0.45,
+    "quantityMaxDigits": 4,
+    "defaultLayouts": {
+      "4": ["position", "code", "quantity", "description"],
+      "5": ["position", "code", "quantity", "unit", "description"],
+      "6": ["position", "code", "quantity", "unit", "description", "notes"]
+    }
+  },
   "bomRowRefinement": {
     "enabled": true,
     "maxAttempts": 3,

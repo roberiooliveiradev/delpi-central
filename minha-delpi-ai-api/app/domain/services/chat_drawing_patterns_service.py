@@ -711,6 +711,30 @@ class ChatDrawingPatternsService:
         return tuple(str(item).strip() for item in node if str(item).strip())
 
     @classmethod
+    def bom_column_inference_rule(cls, key: str, default: Any = None) -> Any:
+        node = ChatAssistantContentService.get_node("drawing_stamp", "bomColumnInference")
+
+        return node.get(key, default) if isinstance(node, dict) else default
+
+    @classmethod
+    def bom_column_inference_enabled(cls) -> bool:
+        return bool(cls.bom_column_inference_rule("enabled", True))
+
+    @classmethod
+    def bom_column_default_layout(cls, column_count: int) -> tuple[str, ...]:
+        layouts = cls.bom_column_inference_rule("defaultLayouts", {})
+
+        if not isinstance(layouts, dict):
+            return ()
+
+        layout = layouts.get(str(column_count))
+
+        if not isinstance(layout, list):
+            return ()
+
+        return tuple(str(item).strip() for item in layout if str(item).strip())
+
+    @classmethod
     def bom_row_refinement_rule(cls, key: str, default: Any = None) -> Any:
         node = ChatAssistantContentService.get_node("drawing_stamp", "bomRowRefinement")
 

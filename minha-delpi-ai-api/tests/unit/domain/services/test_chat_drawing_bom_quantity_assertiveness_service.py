@@ -64,6 +64,26 @@ def test_mismatch_status_requires_trusted_quantity_source_for_critical():
     assert status == "pending"
 
 
+def test_column_inferred_quantity_source_skips_description_noise():
+    row = {
+        "code": "10090050",
+        "quantity": "1",
+        "description": "ISOLADOR NYLON RETO 6,35 NU UL94V-2",
+        "quantitySource": "column_inferred",
+        "quantityTrusted": True,
+    }
+    reason = ChatDrawingBomQuantityAssertivenessService._untrusted_reason(
+        row=row,
+        code="10090050",
+        quantity=1.0,
+        api_row=None,
+        root={},
+        pdf_extract={},
+    )
+
+    assert reason is None
+
+
 def test_rejects_intermediate_length_as_quantity():
     row = {
         "code": "50212969",

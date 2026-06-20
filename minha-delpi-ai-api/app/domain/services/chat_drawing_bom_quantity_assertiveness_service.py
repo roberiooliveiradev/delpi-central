@@ -251,6 +251,7 @@ class ChatDrawingBomQuantityAssertivenessService:
         source = str(row.get("quantitySource") or "").strip().lower()
         trusted_column_source = bool(row.get("quantityTrusted")) and source in {
             "column",
+            "column_inferred",
             "refined_column",
         }
 
