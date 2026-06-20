@@ -1,6 +1,6 @@
 # Playbook — Validação normativa de desenhos DELPI (roadmap)
 
-> **Status (19/06/2026):** Onda **15.0–15.7** entregue.  
+> **Status (20/06/2026):** Onda **15.0–15.7** entregue; **15.8** (BOM colunar + loop skill→visão) em backlog — [playbook dedicado](./playbook_bom_colunar_visao_skill_desenho.md).  
 > **Projeto:** Minha DELPI Chat IA  
 > **Arquitetura:** inteligência transversal no [chat base](../../architecture/chat-intelligence-base.md); agente só habilita skill `drawing-analysis-delpi`.
 
@@ -105,6 +105,7 @@ Fase 15.4 — Cobertura multipágina (PDF parcial × API grande)  [entregue]
 Fase 15.5 — Classificação de notas dimensionais             [entregue]
 Fase 15.6 — Quantidades BOM, balões, registro declarativo     [entregue]
 Fase 15.7 — Layout adaptativo (XY-Cut) + gate confiança ≥95%  [entregue]
+Fase 15.8 — BOM colunar + refinamento visão + assertividade 95% [backlog]
 ```
 
 ---
@@ -207,6 +208,23 @@ Fase 15.7 — Layout adaptativo (XY-Cut) + gate confiança ≥95%  [entregue]
 
 ---
 
+### Fase 15.8 — BOM colunar + loop skill → visão ⬜
+
+> Playbook completo: [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md)
+
+| ID | Entrega | DoD |
+|----|---------|-----|
+| 15.8.1 | `ChatDrawingBomTableInterpretationService` + `ChatPdfTableStructureService` (chat base) | Tabela genérica → interpretação BOM na skill |
+| 15.8.2 | `TableCellRefinementPort` + skill orquestra | OCR célula sem vocabulário BOM no chat base |
+| 15.8.3 | `ChatDrawingBomVisionRefinementService` | Loop automático pós-extração; triggers via JSON |
+| 15.8.4 | Integração assertiveness + checklist | 90263149: 0 críticos BOM; `quantitySource` no contrato |
+| 15.8.5 | Policy + follow-up «reextrair BOM» | Proibir pedir print; chip reanalisa mesmo PDF |
+| 15.8.6 | Gate assertividade ≥95% | `validate_drawing_samples.py --assertiveness-gate` |
+
+**Princípio:** skill **orquestra** visão do chat base; usuário **não** envia zoom/print. **Fronteira:** chat comum **não** conhece BOM/QTD/SG1010 — [playbook 15.8 § 0](./playbook_bom_colunar_visao_skill_desenho.md).
+
+---
+
 ## 5. Matriz problema → fase → teste
 
 | Problema | Fase | Fixture / teste |
@@ -220,6 +238,8 @@ Fase 15.7 — Layout adaptativo (XY-Cut) + gate confiança ≥95%  [entregue]
 | OCR ruim reprova BOM/cotas | 15.7 | `test_chat_drawing_validation_90264227.py` |
 | Layout BOM deslocado | 15.7 | `test_chat_drawing_page_layout_analysis_service.py` |
 | Leitura abaixo de 95% sem nova tentativa OCR | 15.7.8 | `test_chat_drawing_extraction_quality_retry_service.py` |
+| QTD OCR da descrição → crítico BOM falso | 15.8 | `test_chat_drawing_validation_90263149.py` |
+| Skill pede print em vez de re-OCR | 15.8.5 | `drawing-analysis-delpi-skill.md` + JSON |
 
 ---
 
@@ -246,8 +266,13 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_assertion_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90264227.py -q
 
+# Após Fase 15.8 — ver playbook_bom_colunar_visao_skill_desenho.md § 7
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_drawing_validation_90263149.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_document_vision_bom_column_service.py -q
+
 # Homologação batch (opcional)
 .venv/bin/python scripts/validate_drawing_samples.py
+# .venv/bin/python scripts/validate_drawing_samples.py --assertiveness-gate  # após 15.8.6
 ```
 
 ---
@@ -280,3 +305,4 @@ cd minha-delpi-ai-api
 | [inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) | Extração que alimenta validação |
 | [chat-pdf-document-extraction.md](../../architecture/chat-pdf-document-extraction.md) | BOM, cotas, famílias PA |
 | [assistant-content-catalog.md](../../architecture/assistant-content-catalog.md) | `drawing_validation.json` |
+| [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md) | Fase 15.8 — BOM colunar, loop visão, assertividade 95% |

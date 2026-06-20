@@ -27,7 +27,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Análise de desenhos DELPI | [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial (MVP) — skill `drawing-analysis-delpi`, smoke `smoke_drawing_analyser.py` |
 | Visão / OCR documentos (chat base) | [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial (MVP) — [Onda 13](../inteligencia-chat-onda-13-skill-visao-documentos-ocr.md); Tesseract+PyMuPDF; Docling/VLM backlog |
 | **OCR hierárquico desenhos** | [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Backlog** — [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md); carimbo base-direita, resolução de código sem prefixo `902` |
-| **Validação normativa PDF × API (Onda 15)** | [playbook_validacao_desenhos_delpi_roadmap.md](./playbook_validacao_desenhos_delpi_roadmap.md) | **Parcial** — Fase 15.0 ✅ payload analyser; 15.1–15.6 backlog (90262834/90263622) |
+| **Validação normativa PDF × API (Onda 15)** | [playbook_validacao_desenhos_delpi_roadmap.md](./playbook_validacao_desenhos_delpi_roadmap.md) | **Parcial** — 15.0–15.7 ✅; **15.8** BOM colunar + loop visão → [playbook](./playbook_bom_colunar_visao_skill_desenho.md) |
 | Metadados Protheus | [api-delpi-chat-intelligence-audit.md](../api-delpi-chat-intelligence-audit.md) | `/system/tables/*` + [smoke](../../testing/smoke-system-metadata-homologacao.md) |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência arquivada — ver [STATUS](./STATUS_ROADMAP_MELHORIAS.md) |
 
@@ -37,6 +37,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 - [Contexto manual + Q&A + fechamento roadmap](../../changelog/2026-06-contexto-manual-e-roadmap.md)
 - [BOM de desenhos — escopo regional e famílias PA](../../changelog/2026-06-drawing-bom-pa-families.md)
 - [Validação de desenhos — payload analyser e roadmap Onda 15](../../changelog/2026-06-drawing-validation-roadmap.md)
+- [BOM colunar e assertividade 95% — roadmap Fase 15.8](../../changelog/2026-06-drawing-bom-column-vision-refinement.md)
 
 **Arquitetura vigente:** [`../../architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md).
 

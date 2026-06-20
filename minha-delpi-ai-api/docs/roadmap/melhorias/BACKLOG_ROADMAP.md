@@ -19,7 +19,7 @@ Itens **ainda não fechados** após sincronização com o código (revisão **12
 |---|------|-----|-------|
 | 3 | **Onda 14** — BOM por região, cotas, CI regressão | [playbook](./playbook_ocr_hierarquico_desenhos_delpi.md) · [onda-14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) | Carimbo 13/13 ✅; próximo: Fase 14.5 |
 | 4 | **Onda 12** — cotas, checklist normas, paridade legado | [playbook](./playbook_skill_analise_desenhos_delpi.md) · [onda-12](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) | MVP `drawing-analysis-delpi` + smoke |
-| 4b | **Onda 15** — validação normativa (estrutura recursiva, inspeção, multipágina) | [playbook](./playbook_validacao_desenhos_delpi_roadmap.md) | 15.0 ✅; próximo: 15.1 StructureIndex |
+| 4b | **Onda 15** — validação normativa + BOM colunar | [playbook](./playbook_validacao_desenhos_delpi_roadmap.md) · [15.8](./playbook_bom_colunar_visao_skill_desenho.md) | 15.0–15.7 ✅; próximo: **15.8** assertividade 95% |
 | 5 | **Onda 13** — Docling/VLM, OCR avançado | [playbook](./playbook_skill_visao_documentos_ocr_delpi.md) · [onda-13](../inteligencia-chat-onda-13-skill-visao-documentos-ocr.md) | MVP Tesseract/PyMuPDF no chat base |
 | 6 | **Playbook 17** — orchestrator + poll cross-família | [playbook-17](../playbook-17-importacao-arquivos-e-fontes-unificada.md) | MVP UI ✅; API unificada pendente |
 

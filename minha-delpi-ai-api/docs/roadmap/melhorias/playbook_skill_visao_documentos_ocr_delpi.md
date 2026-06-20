@@ -31,6 +31,19 @@ Princípios:
 2. **Local-first** — processamento no cluster DELPI (WSL/Docker); sem enviar PDF confidencial a APIs cloud por padrão.
 3. **Pipeline em camadas** — texto nativo do PDF → OCR clássico → layout/OCR neural → VLM local (opcional), com fallback e telemetria por estágio.
 4. **Licença compatível com produto** — priorizar **Apache 2.0** e **MIT**; GPL (Surya/Marker) só com aval jurídica explícita.
+5. **Sem semântica de desenho** — o chat base entrega texto, regiões e `tables[]` **genéricos**. BOM, QTD, SG1010, decape e checklist DELPI são **somente** da skill `drawing-analysis-delpi` — ver [playbook 15.8 § 0](./playbook_bom_colunar_visao_skill_desenho.md).
+
+### 1.1 O que a visão genérica NÃO faz
+
+| Não faz (chat base) | Faz a skill desenho |
+|---------------------|---------------------|
+| Interpretar tabela como BOM | `bomRows`, comparação × SG1010 |
+| Validar quantidade ou decape | Assertividade, crítico vs pending |
+| Conhecer milheiro MI / família PA | `ChatDrawingBomQuantitySemanticsService` |
+| Chips «Validar BOM» | `ChatDrawingFollowUpService` |
+| Policy com vocabulário Protheus desenho | `drawing-analysis-delpi-skill.md` |
+
+Perfil layout `drawing_delpi` = **preset de bboxes** (geometria), não parse normativo.
 
 ---
 

@@ -246,6 +246,8 @@ Fase 14.8 — Integração pipeline + regressão desenhos/    [backlog]
 | 14.5.2 | Códigos BOM **não** entram em `productCodeCandidates` com confidence > 0.5 | Regressão H2 (90261040) |
 | 14.5.3 | `bomRows` populadas; merge com SG1010 na Onda 12 inalterado | Smoke drawing existente verde |
 
+> **Extensão (Onda 15.8):** parse **colunar** (QTD por coluna, não por linha) + OCR célula — [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md).
+
 ---
 
 ### Fase 14.6 — Cotas e decapes

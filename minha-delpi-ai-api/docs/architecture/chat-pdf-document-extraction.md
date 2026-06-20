@@ -165,6 +165,8 @@ Orquestração: `ChatDrawingValidationOrchestrationService` → `ChatDrawingStru
 
 Roadmap de novos validadores (estrutura recursiva, inspeção, multipágina): [playbook Onda 15](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md).
 
+**BOM colunar e assertividade 95%:** o chat base entrega tabelas genéricas; a skill desenho interpreta BOM e orquestra refinamento — [playbook 15.8](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md) § 0.
+
 ### Extração de cotas (`ChatDrawingDimensionsExtractionService`)
 
 Objeto `dimensions` no `pdf_extract`:

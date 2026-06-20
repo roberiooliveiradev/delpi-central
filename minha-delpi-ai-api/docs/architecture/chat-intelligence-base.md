@@ -77,6 +77,19 @@ Mensagem do usuário
 
 **Camadas antes do LLM (modelo completo, short-circuit, implementação por fases):** [`chat-pre-llm-layers.md`](./chat-pre-llm-layers.md).
 
+### Chat comum × skill desenho (fronteira)
+
+O **chat comum** não conhece BOM, QTD, SG1010, decape, intermediário 50xx nem checklist DELPI. Esses conceitos existem **somente** quando a skill `drawing-analysis-delpi` está ativa (enrichment / `drawingAnalysisMode`).
+
+| Camada | Vocabulário | Exemplos de serviço |
+|--------|-------------|-------------------|
+| **Chat base / visão genérica** | região, tabela, célula, texto, legível | `ChatPdfDocumentExtractionService`, `ChatDocumentVisionService`, **`ChatPdfTableStructureService`** (15.8) |
+| **Skill desenho** | BOM, QTD, SG1010, cotas, crítico/pending | `ChatDrawingPdfExtractionService`, `ChatDrawingValidationOrchestrationService`, **`ChatDrawingBomTableInterpretationService`** (15.8) |
+
+Contrato neutro: `documentVision.tables[]`. Contrato skill: `bomRows`, `drawingAnalysis`, `validationScopes`. Playbook: [15.8 § 0](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md).
+
+Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) são **consumidos só pelo fluxo de desenho** — não expandir semântica DELPI para turn prep genérico, intent `attachment_document` ou prompt global.
+
 ### Serviços centrais
 
 | Serviço | Função |
@@ -96,13 +109,15 @@ Mensagem do usuário
 | `ChatPdfEmbeddedTextService` | PyMuPDF: texto nativo + anotações ODA/CAD com bbox |
 | `ChatPdfTextFusionService` | Fusão multi-fonte (prioriza embedded/anotações sobre pypdf) |
 | `ChatPdfAnnotationTableService` | Linhas tabulares a partir de bbox de anotações |
-| `ChatPdfBomSourceService` | Monta fontes de texto para parsing de BOM (`bom_region`, anotações, carimbo, `full_text`, suplementares) |
-| `ChatDrawingRegionalScopeService` | Escopo regional BOM/cotas/carimbo; rejeita OCR de carimbo como lista de materiais — [changelog jun/2026](../changelog/2026-06-drawing-bom-pa-families.md) |
+| **`ChatPdfTableStructureService`** | **Backlog 15.8** — tabelas genéricas; sem semântica BOM |
+| **`TableCellRefinementPort`** / **`ChatPdfTableCellRefinementService`** | **Backlog 15.8** — re-OCR célula; skill orquestra |
+| `ChatPdfBomSourceService` | **Skill/legado** — fontes texto parse BOM |
+| `ChatDrawingRegionalScopeService` | **Skill** — escopo BOM/cotas/carimbo — [changelog jun/2026](../changelog/2026-06-drawing-bom-pa-families.md) |
 | `ChatDocumentVisionSkillService` | Ativação canônica da skill `document-vision-delpi` (anexo, intent `attachment_document`, enriquecimento de desenho) |
 | `ChatDocumentVisionTurnService` | Orquestração de OCR por turno (application); consumido por tool context |
 | `ChatDocumentVisionService` | Motor visão PDF/imagem (estágio native via `ChatPdf*` + Tesseract/VLM); anexos (`documentVision`) e `drawing-analysis-delpi` |
-| OCR hierárquico desenhos (Onda 14) | `ChatDrawingRegionService` (regiões carimbo/BOM/cotas) + `ChatDrawingStampExtractionService` — [playbook](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) |
-| `ChatDrawingPdfBomExtractionService` | Orquestra BOM DELPI: `ChatDocumentVisionBomService` + filtro de revisão + códigos 50xx |
+| OCR hierárquico desenhos (Onda 14) | **Skill/layout** — `ChatDrawingRegionService` + `ChatDrawingStampExtractionService` — [playbook](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) |
+| `ChatDrawingPdfBomExtractionService` | **Skill** — BOM DELPI a partir de visão genérica + interpretação |
 | `ChatDrawingIntermediateCodeService` | Coleta e deduplicação OCR de códigos intermediários `50xx` |
 | `ChatDrawingPdfProductContextService` | Resolve `productCode` (carimbo → arquivo → BOM) |
 | `ChatDrawingPdfExtractionService` | **Fachada DELPI** — carimbo, BOM, cotas, metadados; delega leitura a `ChatPdf*` |
@@ -112,7 +127,10 @@ Mensagem do usuário
 | `ChatDrawingLibraryService` | Busca PDF na biblioteca api-delpi (`GET /products/{code}/drawing/pdf`) quando análise de desenho sem anexo e com código explícito; cache em `drawing-library-cache` |
 | `ChatDrawingProductCodeResolutionService.resolve_explicit_codes_without_attachment` | Sem anexo: códigos só da mensagem ou `userContextItems` — sem herança do histórico |
 | `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |
-| `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, score de fonte, famílias PA 9026/7026/8000/8001) — Onda 13.3.2 / 14.5 |
+| `ChatDocumentVisionBomService` | **Skill (legado)** — heurística linha → `bomRows`; substituir por interpretação colunar 15.8 |
+| **`ChatDrawingBomTableInterpretationService`** | **Backlog 15.8** — mapeia `tables[]` → `bomRows` |
+| **`ChatDrawingBomVisionRefinementService`** | **Backlog 15.8** — loop refinamento; chama `TableCellRefinementPort` |
+| `ChatDrawingBomQuantityAssertivenessService` | **Skill** — ruído OCR QTD; crítico vs pending |
 | `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
 | `ChatDocumentVisionTablesService` | Tabelas `tables[]` (markdown/TSV heurístico, estágio `table_heuristic`) — Onda 13 |
 | Backends visão | `native`, `tesseract`, `docling`, `paddleocr` (profile vision), `ollama_vlm` (Ollama `/api/chat` + imagens) |
