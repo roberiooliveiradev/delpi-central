@@ -16,6 +16,11 @@
   "settings": {
     "requireResponseModesForLlmProse": true
   },
+  "proseDeliveryByTier": {
+    "A": "llm",
+    "B": "template",
+    "C": "template"
+  },
   "metadataKeys": {
     "deliveryMode": "proseDeliveryMode",
     "decoupled": "llmProseDecoupled",

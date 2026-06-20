@@ -361,11 +361,24 @@
     "product_shipping_status": "llm",
     "product_stock": "llm"
   },
+  "proseDeliveryByEntitySet": {
+    "playbookOperational": "template",
+    "productListPresent": "template"
+  },
   "proseDeliveryByProfile": {
     "factory_status": "llm",
     "production_status": "llm",
     "shipping_status": "llm",
     "stock": "llm",
+    "analyser": "llm",
+    "sale_pricing": "llm",
+    "raw_material_price_intelligence": "llm",
+    "cost_impact_simulation": "llm",
+    "structure_exclusivity": "llm",
+    "last_purchase": "llm",
+    "purchase_price_history": "llm",
+    "purchase_budget_history": "llm",
+    "purchase_list": "template",
     "table_list": "template",
     "playbook_report": "template",
     "kpi_series": "template",

@@ -159,8 +159,8 @@ Objetivo: **presenter entrega só dados estruturados**; prosa 100% LLM em rotas 
 |---|---------|
 | P3.1 | `requireResponseModesForLlmProse: false` → LLM prose sem seletor de modos | ✅ `llm_prose_globally_available` |
 | P3.2 | Perfil JSON `proseDeliveryByEntity` em `presentation_profiles.json` | ✅ + `proseDeliveryByProfile` |
-| P3.3 | Rotas tier A/B: default `llm` para narrativa, `template` para listagem auditável |
-| P3.4 | Métricas: taxa template vs LLM, similaridade smoke, latência por modo |
+| P3.3 | Rotas tier A/B: default `llm` para narrativa, `template` para listagem auditável | ✅ `proseDeliveryByTier` + `proseDeliveryByEntitySet` |
+| P3.4 | Métricas: taxa template vs LLM, similaridade smoke, latência por modo | ✅ `audit_presentation_prose_delivery.py --report-metrics` + gate tier/entitySet |
 
 ### P4 — Remoção de legado (out 2026+)
 

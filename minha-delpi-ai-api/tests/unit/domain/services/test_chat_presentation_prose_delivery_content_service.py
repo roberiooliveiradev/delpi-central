@@ -15,3 +15,22 @@ def test_metadata_keys_from_bundle():
         ChatPresentationProseDeliveryContentService.metadata_key("deliveryMode")
         == "proseDeliveryMode"
     )
+
+
+def test_prose_delivery_mode_for_tier():
+    assert (
+        ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier("A")
+        == "llm"
+    )
+    assert (
+        ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier("B")
+        == "template"
+    )
+    assert (
+        ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier("C")
+        == "template"
+    )
+    assert (
+        ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier(None)
+        is None
+    )

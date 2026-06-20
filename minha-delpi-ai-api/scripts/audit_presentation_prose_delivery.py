@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -11,6 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 API_APP = ROOT / "app"
 MFE_SRC = ROOT.parent / "plugins" / "minha-delpi-chat" / "src"
+PROSE_DELIVERY_JSON = API_APP / "content/pt-BR/assistant/presentation_prose_delivery.json"
+PROFILES_JSON = API_APP / "content/pt-BR/assistant/presentation_profiles.json"
 
 CANONICAL_GATE = "ChatPresentationProseDeliveryService"
 DECOUPLE_SERVICE = "ChatPresentationLlmProseDecouplingService"
@@ -117,16 +120,103 @@ def audit_anti_patterns() -> list[str]:
     return issues
 
 
+def _load_json(path: Path) -> dict:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    return payload if isinstance(payload, dict) else {}
+
+
+def audit_tier_and_entity_set_config() -> list[str]:
+    issues: list[str] = []
+    prose = _load_json(PROSE_DELIVERY_JSON)
+    profiles = _load_json(PROFILES_JSON)
+
+    by_tier = prose.get("proseDeliveryByTier")
+    required_tiers = ("A", "B")
+
+    if not isinstance(by_tier, dict):
+        issues.append("presentation_prose_delivery.json sem proseDeliveryByTier")
+    else:
+        for tier in required_tiers:
+            mode = str(by_tier.get(tier) or "").strip().lower()
+
+            if mode not in {"template", "llm"}:
+                issues.append(
+                    f"proseDeliveryByTier.{tier} ausente ou inválido (esperado template|llm)"
+                )
+
+        if str(by_tier.get("A") or "").lower() != "llm":
+            issues.append("proseDeliveryByTier.A deve ser llm (narrativa tier A)")
+
+        if str(by_tier.get("B") or "").lower() != "template":
+            issues.append("proseDeliveryByTier.B deve ser template (KPI/listagem tier B)")
+
+    by_entity_set = profiles.get("proseDeliveryByEntitySet")
+
+    if not isinstance(by_entity_set, dict):
+        issues.append("presentation_profiles.json sem proseDeliveryByEntitySet")
+    else:
+        for set_key in ("playbookOperational", "productListPresent"):
+            mode = str(by_entity_set.get(set_key) or "").strip().lower()
+
+            if mode != "template":
+                issues.append(
+                    f"proseDeliveryByEntitySet.{set_key} deve ser template (listagem auditável)"
+                )
+
+    return issues
+
+
+def build_prose_delivery_metrics_report() -> dict[str, object]:
+    profiles = _load_json(PROFILES_JSON)
+    prose = _load_json(PROSE_DELIVERY_JSON)
+
+    by_entity = profiles.get("proseDeliveryByEntity") or {}
+    by_profile = profiles.get("proseDeliveryByProfile") or {}
+    by_entity_set = profiles.get("proseDeliveryByEntitySet") or {}
+    by_tier = prose.get("proseDeliveryByTier") or {}
+
+    entity_modes: dict[str, int] = {}
+    for mode in by_entity.values():
+        token = str(mode or "").strip().lower()
+        entity_modes[token] = entity_modes.get(token, 0) + 1
+
+    profile_modes: dict[str, int] = {}
+    for mode in by_profile.values():
+        token = str(mode or "").strip().lower()
+        profile_modes[token] = profile_modes.get(token, 0) + 1
+
+    return {
+        "proseDeliveryByEntity": {"count": len(by_entity), "byMode": entity_modes},
+        "proseDeliveryByProfile": {"count": len(by_profile), "byMode": profile_modes},
+        "proseDeliveryByEntitySet": dict(by_entity_set),
+        "proseDeliveryByTier": dict(by_tier),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Exit 1 se houver issues")
+    parser.add_argument(
+        "--report-metrics",
+        action="store_true",
+        help="Imprime JSON com contagem template/llm por camada declarativa",
+    )
     args = parser.parse_args()
+
+    if args.report_metrics:
+        print(json.dumps(build_prose_delivery_metrics_report(), ensure_ascii=False, indent=2))
+        return 0
 
     issues = [
         *audit_canonical_modules_exist(),
         *audit_required_callsites(),
         *audit_mfe_decouple_helpers(),
         *audit_anti_patterns(),
+        *audit_tier_and_entity_set_config(),
     ]
 
     if not issues:

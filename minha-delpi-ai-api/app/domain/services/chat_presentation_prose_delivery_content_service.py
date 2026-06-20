@@ -27,6 +27,25 @@ class ChatPresentationProseDeliveryContentService:
         )
 
     @classmethod
+    def prose_delivery_mode_for_tier(cls, tier: str | None) -> str | None:
+        allowed = frozenset({"template", "llm", "direct"})
+        token = str(tier or "").strip().upper()
+        mode = str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "proseDeliveryByTier",
+                token,
+                default="",
+            )
+            or ""
+        ).strip().lower()
+
+        if mode in allowed:
+            return mode
+
+        return None
+
+    @classmethod
     def metadata_key(cls, key: str) -> str:
         return str(
             ChatAssistantContentService.get(_BUNDLE, "metadataKeys", key, default=key)

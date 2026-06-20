@@ -82,6 +82,38 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             if mode in allowed:
                 return mode
 
+        if token:
+            by_entity_set = cls.node("proseDeliveryByEntitySet")
+
+            if isinstance(by_entity_set, dict):
+                for set_key, configured in by_entity_set.items():
+                    if token not in cls.entity_set(str(set_key or "")):
+                        continue
+
+                    mode = str(configured or "").strip().lower()
+
+                    if mode in allowed:
+                        return mode
+
+        if token or path:
+            from app.domain.services.chat_presentation_coverage_service import (
+                ChatPresentationCoverageService,
+            )
+            from app.domain.services.chat_presentation_prose_delivery_content_service import (
+                ChatPresentationProseDeliveryContentService,
+            )
+
+            tier = ChatPresentationCoverageService.classify_tier(
+                entity=token or None,
+                path=str(path or ""),
+            )
+            tier_mode = ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier(
+                tier,
+            )
+
+            if tier_mode in allowed:
+                return tier_mode
+
         return None
 
     @classmethod

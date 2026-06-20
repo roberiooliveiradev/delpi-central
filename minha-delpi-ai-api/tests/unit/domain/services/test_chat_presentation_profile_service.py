@@ -281,3 +281,62 @@ def test_prose_delivery_mode_entity_and_profile_fallback() -> None:
         )
         == "template"
     )
+
+
+def test_prose_delivery_mode_entity_set_fallback(monkeypatch) -> None:
+    original_node = ChatPresentationProfileService.node
+
+    def patched_node(*keys: str):
+        if keys == ("proseDeliveryByProfile",):
+            return {}
+        if keys == ("proseDeliveryByEntity",):
+            return {}
+        return original_node(*keys)
+
+    monkeypatch.setattr(
+        ChatPresentationProfileService,
+        "node",
+        staticmethod(patched_node),
+    )
+
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="production_consumption_top_items",
+            path="/production/consumption/top-items",
+        )
+        == "template"
+    )
+
+
+def test_prose_delivery_mode_tier_fallback(monkeypatch) -> None:
+    original_node = ChatPresentationProfileService.node
+
+    def patched_node(*keys: str):
+        if keys and keys[0] in {
+            "proseDeliveryByProfile",
+            "proseDeliveryByEntity",
+            "proseDeliveryByEntitySet",
+        }:
+            return {}
+        return original_node(*keys)
+
+    monkeypatch.setattr(
+        ChatPresentationProfileService,
+        "node",
+        staticmethod(patched_node),
+    )
+
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="product_factory_status",
+            path="/products/90269002/factory-status",
+        )
+        == "llm"
+    )
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="depreciation_pct",
+            path="/kpi/depreciation-pct",
+        )
+        == "template"
+    )
