@@ -101,7 +101,7 @@ Gate CI: `scripts/audit_presentation_prose_delivery.py --check`
 
 | # | Gap | Arquivo | Fase |
 |---|-----|---------|------|
-| G1 | Decoupling só pós-tool (template ainda gerado no pipeline) | `execute_external_action_use_case` | ✅ parcial — `dataOnlyPresentation` pula markdown |
+| G1 | Pipeline data-only + decouple pós-tool | `ChatPresentationDataOnlyProseService` | ✅ |
 | G2 | `ChatToolContextFormatService` pode repopular markdown | format service | ✅ P1.1 |
 | G3 | Preview/simulate/agent admin divergência | use cases | ✅ P2.7 |
 | G4 | `ChatDataInterpretationAnswerService` usa humanized histórico | domain | ✅ `resolve_effective_humanized_summary` + archive |
@@ -205,16 +205,17 @@ SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_response_modes_prod
 
 ## 6. Checklist PR (obrigatório)
 
-- [ ] Regra nova → `ChatPresentationProseDeliveryService` + teste
-- [ ] Texto PT → `assistant/*.json`
-- [ ] MFE render-only — não redecide template vs LLM
-- [ ] `audit_presentation_prose_delivery.py --check` verde
-- [ ] Playbook-13 / chat-response-modes alinhados se contrato mudar
+- [x] Regra nova → `ChatPresentationProseDeliveryService` + teste
+- [x] Texto PT → `assistant/*.json`
+- [x] MFE render-only — não redecide template vs LLM
+- [x] `audit_presentation_prose_delivery.py --check` verde
+- [x] Playbook-13 / chat-response-modes alinhados se contrato mudar
 
 ---
 
 ## 7. Referências
 
+- Changelog: [`2026-06-playbook-18-prosa-template-llm.md`](../changelog/2026-06-playbook-18-prosa-template-llm.md)
 - Regra Cursor: `presentation-operational-decoupling.mdc`
 - [`assistant-content-catalog.md`](../architecture/assistant-content-catalog.md) — bundle `presentation_prose_delivery.json`
 - Changelog modos: [`chat-response-modes.md`](../architecture/chat-response-modes.md)

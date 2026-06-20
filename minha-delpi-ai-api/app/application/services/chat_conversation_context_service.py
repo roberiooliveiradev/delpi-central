@@ -115,7 +115,13 @@ class ChatConversationContextService:
 
     @classmethod
     def _format_humanized_summary(cls, tool_meta: dict) -> str:
-        humanized = tool_meta.get("humanizedSummary")
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        humanized = ChatPresentationProseDeliveryService.resolve_effective_humanized_summary(
+            tool_meta,
+        )
 
         if not isinstance(humanized, dict):
             return ""

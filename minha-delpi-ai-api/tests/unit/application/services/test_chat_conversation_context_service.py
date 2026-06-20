@@ -40,6 +40,49 @@ def test_build_analysis_context_includes_humanized_summary():
     assert "perfil" in context.lower() or "permiss" in context.lower()
 
 
+def test_build_analysis_context_uses_archived_humanized_when_decoupled():
+    messages = [
+        {
+            "role": "assistant",
+            "content": "Status fabril",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90269002/factory-status",
+                            "llmProseDecoupled": True,
+                            "proseDeliveryMode": "llm",
+                            "humanizedSummary": {
+                                "titulo": "Status fabril — 90269002",
+                                "linhas": [],
+                            },
+                            "templateProseArchive": {
+                                "humanizedSummary": {
+                                    "titulo": "Status fabril — 90269002",
+                                    "linhas": [
+                                        "Situação consolidada: **PA PRODUZIDO**.",
+                                        "- OP **12345** em andamento.",
+                                    ],
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    context = ChatConversationContextService.build_analysis_context(
+        messages,
+        message="explique os dados acima",
+    )
+
+    assert "90269002" in context
+    assert "12345" in context or "PA PRODUZIDO" in context
+
+
 def test_build_analysis_context_includes_tool_preview():
     messages = [
         SimpleNamespace(
