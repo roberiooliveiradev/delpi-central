@@ -6,6 +6,9 @@ import os
 
 from app.domain.entities.llm_generation_config import LlmGenerationConfig
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+from app.domain.services.chat_response_mode_content_service import (
+    ChatResponseModeContentService,
+)
 
 VALID_MODES = frozenset({"fast", "normal", "thinker"})
 DEFAULT_MODE = "normal"
@@ -19,23 +22,7 @@ class ChatResponseModeService:
     @staticmethod
     def normalize(mode: str | None) -> str:
         raw = str(mode or "").strip().lower()
-
-        aliases = {
-            "rapida": "fast",
-            "rápida": "fast",
-            "quick": "fast",
-            "veloz": "fast",
-            "pensador": "thinker",
-            "pensar": "thinker",
-            "think": "thinker",
-            "deep": "thinker",
-            "profundo": "thinker",
-            "balanced": "normal",
-            "padrao": "normal",
-            "padrão": "normal",
-            "default": "normal",
-        }
-
+        aliases = ChatResponseModeContentService.alias_map()
         resolved = aliases.get(raw, raw)
 
         if resolved not in VALID_MODES:
@@ -63,34 +50,76 @@ class ChatResponseModeService:
         if not cls.is_enabled():
             return []
 
-        items = [
-            {
-                "id": "fast",
-                "label": "Rápida",
-                "description": "Respostas mais curtas e ágeis.",
-                "default": False,
-            },
-            {
-                "id": "normal",
-                "label": "Normal",
-                "description": "Equilíbrio entre qualidade e velocidade.",
-                "default": True,
-            },
-            {
-                "id": "thinker",
-                "label": "Pensador",
-                "description": "Respostas mais elaboradas (pode demorar mais).",
-                "default": False,
-            },
-        ]
+        items: list[dict[str, object]] = []
 
-        for item in items:
-            config = cls.resolve(str(item["id"]))
+        for entry in ChatResponseModeContentService.mode_catalog():
+            mode_id = str(entry.get("id") or "").strip()
+
+            if mode_id not in VALID_MODES:
+                continue
+
+            item = {
+                "id": mode_id,
+                "label": str(entry.get("label") or mode_id),
+                "description": str(entry.get("description") or ""),
+                "default": bool(entry.get("default")),
+            }
+            config = cls.resolve(mode_id)
             item["model"] = config.model
             item["maxTokens"] = config.max_tokens
             item["numCtx"] = config.num_ctx
+            items.append(item)
 
-        return items
+        if items:
+            return items
+
+        return []
+
+    @classmethod
+    def should_use_presenter_direct_answer(cls, response_mode: str | None) -> bool:
+        return cls.normalize(response_mode) == "fast"
+
+    @classmethod
+    def apply_turn_direct_answer_policy(
+        cls,
+        *,
+        message: str,
+        response_mode: str | None,
+        direct_answer: str | None,
+        skip_rag: bool,
+        tool_calls: list | None,
+    ) -> tuple[str | None, bool, str | None]:
+        """Gate final do turno: overview + normal/pensador força LLM; rápida mantém presenter."""
+        if not cls.is_enabled():
+            return direct_answer, skip_rag, None
+
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        overview = ChatProductOverviewIntentService.is_product_overview_message(message)
+        force_llm_overview = overview and ChatProductOverviewIntentService.should_force_llm_synthesis(
+            message,
+            tool_calls,
+        )
+
+        if force_llm_overview and not cls.should_use_presenter_direct_answer(response_mode):
+            if direct_answer:
+                return None, False, "llm_synthesis"
+            return direct_answer, skip_rag, "llm_synthesis"
+
+        if direct_answer:
+            effect = "presenter_direct" if overview else "operational_direct"
+            return direct_answer, skip_rag, effect
+
+        return direct_answer, skip_rag, "llm_synthesis"
+
+    @classmethod
+    def pipeline_effect_notice(cls, effect: str | None) -> str:
+        if not effect:
+            return ""
+
+        return ChatResponseModeContentService.pipeline_effect_text(effect)
 
     @classmethod
     def _provider_default_model(cls) -> str:
@@ -136,7 +165,7 @@ class ChatResponseModeService:
             max_tokens=int(
                 os.getenv(
                     "CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS",
-                    str(max(ChatDomainConfigService.llm_max_tokens(), 1536)),
+                    str(max(ChatDomainConfigService.llm_max_tokens(), 2048)),
                 )
             ),
             num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "4096")),

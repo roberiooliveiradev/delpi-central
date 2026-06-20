@@ -67,6 +67,7 @@ class ChatTurnPreparationPostToolResolutionService:
         resolve_user_identity_answer: Callable[[str], str | None],
         resolve_capabilities_answer: Callable[[str], str | None],
         attachment_ids: list[str] | None = None,
+        response_mode: str | None = None,
     ) -> ChatTurnPreparationPostToolResult:
         from app.application.services.chat_drawing_turn_enrichment_service import (
             ChatDrawingTurnEnrichmentService,
@@ -457,6 +458,21 @@ class ChatTurnPreparationPostToolResolutionService:
 
         if text_task_pure and not direct_answer:
             skip_rag = True
+
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        direct_answer, skip_rag, response_mode_effect = (
+            ChatResponseModeService.apply_turn_direct_answer_policy(
+                message=message,
+                response_mode=response_mode,
+                direct_answer=direct_answer,
+                skip_rag=skip_rag,
+                tool_calls=tool_calls,
+            )
+        )
+
+        if response_mode_effect:
+            tool_context["responseModeEffect"] = response_mode_effect
 
         return ChatTurnPreparationPostToolResult(
             direct_answer=direct_answer,

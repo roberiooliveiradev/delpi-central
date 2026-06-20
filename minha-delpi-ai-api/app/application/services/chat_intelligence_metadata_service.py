@@ -25,6 +25,19 @@ class ChatIntelligenceMetadataService:
             "directResponse": bool(resolved_direct),
             "skipRag": bool(skip_rag),
         }
+        response_mode_effect = str(tool_context.get("responseModeEffect") or "").strip()
+
+        if response_mode_effect:
+            flags["responseModeEffect"] = response_mode_effect
+
+            from app.domain.services.chat_response_mode_service import (
+                ChatResponseModeService,
+            )
+
+            notice = ChatResponseModeService.pipeline_effect_notice(response_mode_effect)
+
+            if notice:
+                flags["responseModeEffectNotice"] = notice
         if stages:
             flags["stages"] = list(stages)
         return flags

@@ -57,6 +57,8 @@ Mapa de navegação — não substitui a tabela completa em [§ Serviços centra
 
 O composer envia `responseMode` (`fast` | `normal` | `thinker`) em cada mensagem. `ChatResponseModeService` resolve modelo e limites (`LlmGenerationConfig`); `llm_request_context` propaga o preset a **todas** as chamadas LLM do turno (tools, RAG synthesis, stream). Catálogo: `GET /chat/response-modes`. Configuração: variáveis `CHAT_RESPONSE_MODE_*` em `infra/.env`.
 
+**Matriz completa, gate de product overview e metadata:** [`chat-response-modes.md`](./chat-response-modes.md).
+
 ---
 
 ## Pipeline base

@@ -1,0 +1,66 @@
+# Override dev — stack mínimo: chat + desenho + api-delpi (sem SearXNG, LanguageTool, dashboards).
+#
+# Uso:
+#   ./infra/scripts/up-minimal-dev.sh
+#   ./infra/scripts/up-minimal-dev.sh --restore   # restaura dumps em D:\delpi-backups\...
+
+services:
+  searxng:
+    profiles:
+      - optional-heavy
+
+  languagetool:
+    profiles:
+      - optional-heavy
+
+  strategic-indicators-api:
+    profiles:
+      - optional-heavy
+
+  transformometro-api:
+    profiles:
+      - optional-heavy
+
+  maintenance-api:
+    profiles:
+      - optional-heavy
+
+  minha-delpi-ai-api:
+    depends_on: !override
+      core-api:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      CHAT_WEB_SEARCH_ENABLED: "false"
+      CHAT_LEARNING_GLOSSARY_WEB_MEANING: "false"
+      CHAT_PRESENTATION_COLUMN_LABEL_WEB_SEARCH_ENABLED: "false"
+      CHAT_TYPING_CORRECTION_ENABLED: "false"
+      CHAT_TEXT_CORRECTION_SPELL_CHECK_ENABLED: "false"
+      OLLAMA_MODEL: qwen2.5:1.5b
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX:-1536}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-1024}
+      CHAT_RESPONSE_MODE_THINKER_MODEL: qwen2.5:1.5b
+      CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS: "2048"
+      CHAT_RESPONSE_MODE_THINKER_NUM_CTX: "4096"
+      CHAT_HISTORY_MAX_MESSAGES: "8"
+      MAX_CONTEXT_CHUNKS: "4"
+      CHAT_AGENTIC_LOOP_MAX_STEPS: "1"
+    deploy:
+      resources:
+        limits:
+          memory: 3500M
+
+  ollama:
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_PARALLEL: "1"
+    deploy:
+      resources:
+        limits:
+          memory: 4500M

@@ -50,3 +50,15 @@ def test_build_includes_rag_retrieved_and_visible_counts():
     assert metadata["ragVisibleSourceCount"] == 1
     assert metadata["ragRetrievedCount"] == 4
     assert metadata["ragRetrievedChunkCount"] == 4
+
+
+def test_build_pipeline_flags_includes_response_mode_effect():
+    pipeline = ChatIntelligenceMetadataService.build_pipeline_flags(
+        fast_path=False,
+        operational_optimize=False,
+        tool_context={"responseModeEffect": "operational_direct"},
+        skip_rag=True,
+    )
+
+    assert pipeline["responseModeEffect"] == "operational_direct"
+    assert pipeline["responseModeEffectNotice"]

@@ -1,0 +1,42 @@
+{
+  "modes": [
+    {
+      "id": "fast",
+      "label": "Rápida",
+      "description": "Dados operacionais e respostas curtas. Visão geral de produto usa o relatório direto.",
+      "default": false
+    },
+    {
+      "id": "normal",
+      "label": "Normal",
+      "description": "Equilíbrio entre qualidade e velocidade. Visão geral de produto com narrativa do assistente.",
+      "default": true
+    },
+    {
+      "id": "thinker",
+      "label": "Pensador",
+      "description": "Respostas mais elaboradas (pode demorar mais).",
+      "default": false
+    }
+  ],
+  "aliases": {
+    "rapida": "fast",
+    "rápida": "fast",
+    "quick": "fast",
+    "veloz": "fast",
+    "pensador": "thinker",
+    "pensar": "thinker",
+    "think": "thinker",
+    "deep": "thinker",
+    "profundo": "thinker",
+    "balanced": "normal",
+    "padrao": "normal",
+    "padrão": "normal",
+    "default": "normal"
+  },
+  "pipelineEffects": {
+    "llm_synthesis": "Texto gerado pelo modelo com base nos dados consultados.",
+    "presenter_direct": "Relatório operacional entregue direto — o modo afeta só perguntas abertas.",
+    "operational_direct": "Resposta direta dos dados — o modo não altera o texto."
+  }
+}

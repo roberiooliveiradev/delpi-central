@@ -37,6 +37,7 @@ Wrappers especializados (mantêm API estável):
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
 | `api_route_domains.json` | Domínios de rota operacional; **`parameterStrategies`** declarativas (bindings, patterns, granularity) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
 | `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
+| `response_modes.json` | Modos Rápida/Normal/Pensador (rótulos, aliases, avisos de `responseModeEffect`) | `ChatResponseModeContentService`, `ChatResponseModeService` |
 | `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |
 | Changelog integrado | `docs/changelog/2026-06-product-directives-chat.md` | Roteamento, apresentação, MFE filtros, modos Automático/Tabela/Texto |
 | `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `operational_route_registry.json` |

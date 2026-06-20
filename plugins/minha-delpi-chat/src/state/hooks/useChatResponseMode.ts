@@ -9,12 +9,12 @@ const FALLBACK_MODES: ChatResponseModeOption[] = [
   {
     id: "fast",
     label: "Rápida",
-    description: "Respostas mais curtas e ágeis.",
+    description: "Dados operacionais e respostas curtas. Visão geral de produto usa o relatório direto.",
   },
   {
     id: "normal",
     label: "Normal",
-    description: "Equilíbrio entre qualidade e velocidade.",
+    description: "Equilíbrio entre qualidade e velocidade. Visão geral de produto com narrativa do assistente.",
     default: true,
   },
   {

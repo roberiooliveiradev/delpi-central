@@ -17,7 +17,7 @@ export const CHAT_RESPONSE_MODE_TOGGLE_META: Record<
   responseModesEnabled: {
     title: "Modos de resposta na sessão",
     summary:
-      "Exibe o seletor Texto / Painel / Automático no chat. Desligado, a apresentação segue só o perfil automático do pipeline.",
+      "Exibe o seletor Rápida / Normal / Pensador no chat. Desligado, todas as mensagens usam o preset Normal.",
     pros: [
       "Usuário controla quando ver tabelas e gráficos versus prosa.",
       "Útil em demos e suporte quando o modo automático erra o formato.",
