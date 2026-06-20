@@ -304,6 +304,13 @@
       "(?:\\d+\\s*°|°\\s*C|ºC|PTC\\s*\\d+)\\s*(?:10\\d{6}|100\\d{5})\\b",
       "(?:TERMISTOR|PTC).*(?:°|º)\\s*C.*\\b(?:10\\d{6}|100\\d{5})\\b"
     ],
+    "bomDescriptionQuantityNoise": [
+      "(\\d+),\\d+\\s*X",
+      "(\\d+[,.]\\d+)\\s*X\\s*\\d",
+      "(\\d+[,.]\\d+)\\s*NU\\b",
+      "(\\d+)\\s*PINOS?\\b",
+      "(\\d+[,.]\\d+)\\s*POL\\b"
+    ],
     "bomClientReferenceNoise": [
       "DC\\s*:?\\s*Z",
       "DC:Z-",

@@ -459,7 +459,16 @@
     "bomQuantitySemantics": {
       "milheiroBatchUnits": ["MI"],
       "piecesPerMilheiro": 1000,
-      "pendingStatus": "pending"
+      "pendingStatus": "pending",
+      "maxTrustedPieceQuantity": 99,
+      "rejectDecimalPieceQuantity": true,
+      "rejectQuantityMatchingDescriptionNumber": true,
+      "rejectIntermediateLengthAsQuantity": true,
+      "intermediateLengthQuantityMinMm": 50,
+      "mismatchStatusWhenTrusted": "critical_error",
+      "mismatchStatusWhenUncertain": "pending",
+      "maxAlternateCrosscheckQuantity": 20,
+      "lengthToleranceDecapeValuesMm": [1, 2, 3, 5]
     }
   },
   "validationLayers": {

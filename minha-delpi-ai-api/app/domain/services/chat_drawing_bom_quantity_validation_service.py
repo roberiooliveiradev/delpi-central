@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from app.domain.services.chat_drawing_bom_quantity_assertiveness_service import (
+    ChatDrawingBomQuantityAssertivenessService,
+)
 from app.domain.services.chat_drawing_bom_quantity_semantics_service import (
     ChatDrawingBomQuantitySemanticsService,
 )
@@ -22,6 +25,7 @@ class BomQuantityMismatch:
     api_quantity: float
     pdf_evidence_key: str
     pdf_evidence_values: dict[str, str]
+    trusted: bool = True
 
 
 @dataclass(frozen=True)
@@ -45,15 +49,20 @@ class ChatDrawingBomQuantityValidationService:
             root,
             product_code,
         )
-        pdf_quantities = cls.collect_pdf_quantities(pdf_extract)
+        evidences = ChatDrawingBomQuantityAssertivenessService.collect_evidences(
+            root=root,
+            pdf_extract=pdf_extract,
+            product_code=product_code,
+        )
         mismatches: list[BomQuantityMismatch] = []
 
         for code, api_row in sorted(api_quantities.items()):
-            pdf_qty = pdf_quantities.get(code)
+            evidence = evidences.get(code)
 
-            if pdf_qty is None:
+            if evidence is None or not evidence.trusted:
                 continue
 
+            pdf_qty = evidence.quantity
             normalization = ChatDrawingBomQuantitySemanticsService.normalize_pdf_quantity(
                 pdf_quantity=pdf_qty,
                 api_row=api_row,
@@ -78,6 +87,7 @@ class ChatDrawingBomQuantityValidationService:
                         api_quantity=api_row.quantity,
                         pdf_evidence_key=normalization.evidence_key,
                         pdf_evidence_values=normalization.evidence_values,
+                        trusted=True,
                     )
                 )
 
@@ -95,29 +105,50 @@ class ChatDrawingBomQuantityValidationService:
             root,
             product_code,
         )
-        pdf_quantities = cls.collect_pdf_quantities(pdf_extract)
+        evidences = ChatDrawingBomQuantityAssertivenessService.collect_evidences(
+            root=root,
+            pdf_extract=pdf_extract,
+            product_code=product_code,
+        )
         pending: list[BomQuantityPending] = []
 
         for code, api_row in sorted(api_quantities.items()):
-            pdf_qty = pdf_quantities.get(code)
+            evidence = evidences.get(code)
 
-            if pdf_qty is None:
+            if evidence is None:
+                continue
+
+            if evidence.trusted:
+                normalization = ChatDrawingBomQuantitySemanticsService.normalize_pdf_quantity(
+                    pdf_quantity=evidence.quantity,
+                    api_row=api_row,
+                    root=root,
+                    pdf_extract=pdf_extract,
+                )
+
+                if normalization.comparable:
+                    continue
+
+                pending.append(
+                    BomQuantityPending(
+                        code=code,
+                        pdf_quantity=evidence.quantity,
+                        pdf_evidence_key=normalization.evidence_key,
+                        pdf_evidence_values=normalization.evidence_values,
+                    )
+                )
                 continue
 
             normalization = ChatDrawingBomQuantitySemanticsService.normalize_pdf_quantity(
-                pdf_quantity=pdf_qty,
+                pdf_quantity=evidence.quantity,
                 api_row=api_row,
                 root=root,
                 pdf_extract=pdf_extract,
             )
-
-            if normalization.comparable:
-                continue
-
             pending.append(
                 BomQuantityPending(
                     code=code,
-                    pdf_quantity=pdf_qty,
+                    pdf_quantity=evidence.quantity,
                     pdf_evidence_key=normalization.evidence_key,
                     pdf_evidence_values=normalization.evidence_values,
                 )
@@ -137,7 +168,11 @@ class ChatDrawingBomQuantityValidationService:
             root,
             product_code,
         )
-        pdf_quantities = cls.collect_pdf_quantities(pdf_extract)
+        evidences = ChatDrawingBomQuantityAssertivenessService.collect_evidences(
+            root=root,
+            pdf_extract=pdf_extract,
+            product_code=product_code,
+        )
         mismatches = cls.compare(
             root=root,
             pdf_extract=pdf_extract,
@@ -155,7 +190,9 @@ class ChatDrawingBomQuantityValidationService:
             items.append(
                 content.item_from_template(
                     "bom_quantity_mismatch",
-                    status="critical_error",
+                    status=ChatDrawingBomQuantityAssertivenessService.mismatch_status(
+                        trusted=mismatch.trusted,
+                    ),
                     pdf_evidence=content.evidence_format(
                         mismatch.pdf_evidence_key,
                         **mismatch.pdf_evidence_values,
@@ -167,6 +204,8 @@ class ChatDrawingBomQuantityValidationService:
                     item_values={"code": mismatch.code},
                 )
             )
+
+        pending_codes = {row.code for row in pending}
 
         for row in pending[:4]:
             items.append(
@@ -187,9 +226,11 @@ class ChatDrawingBomQuantityValidationService:
 
         compared = {
             code
-            for code in api_quantities
-            if code in pdf_quantities
-            and not any(item.code == code for item in pending)
+            for code, evidence in evidences.items()
+            if code in api_quantities
+            and evidence.trusted
+            and code not in pending_codes
+            and not any(item.code == code for item in mismatches)
         }
 
         if compared and not mismatches:

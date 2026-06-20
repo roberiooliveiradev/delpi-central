@@ -220,6 +220,10 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp_list("bomDescriptionCodeNoise")
 
     @classmethod
+    def bom_description_quantity_noise_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("bomDescriptionQuantityNoise")
+
+    @classmethod
     def client_reference_code_patterns(cls) -> tuple[re.Pattern[str], ...]:
         cache_key = "stamp_list:clientReferenceCodeCapture"
 
@@ -676,6 +680,22 @@ class ChatDrawingPatternsService:
     @classmethod
     def bom_quantity_pending_status(cls) -> str:
         return str(cls.bom_quantity_semantics_rule("pendingStatus", "pending"))
+
+    @classmethod
+    def length_tolerance_decape_values_mm(cls) -> frozenset[float]:
+        items = cls.bom_quantity_semantics_rule(
+            "lengthToleranceDecapeValuesMm",
+            [1, 2, 3, 5],
+        )
+
+        if not isinstance(items, list):
+            return frozenset({1.0, 2.0, 3.0, 5.0})
+
+        return frozenset(
+            float(value)
+            for value in items
+            if str(value).strip()
+        )
 
     @classmethod
     def intermediate_description_signature(cls, description: str) -> str | None:

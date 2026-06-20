@@ -47,6 +47,7 @@ class ChatDrawingBomComparisonService:
             raw_pdf_codes,
             child_cable_parents=cls.collect_child_cable_parents(root),
         )
+        pdf_bom_codes |= cls.collect_primary_bom_row_codes(pdf_extract)
         pdf_bom_codes |= cls.intermediate_codes_matched_by_description(
             root=root,
             pdf_extract=pdf_extract,
@@ -74,6 +75,26 @@ class ChatDrawingBomComparisonService:
             pdf_bom_codes=tuple(sorted(pdf_bom_codes)),
             api_codes=tuple(sorted(api_codes)),
         )
+
+    @classmethod
+    def collect_primary_bom_row_codes(cls, pdf_extract: dict) -> set[str]:
+        codes: set[str] = set()
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            if ChatDrawingBomReferenceNoiseService.is_client_reference_row(row):
+                continue
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if code:
+                codes.add(code)
+
+        return codes
 
     @classmethod
     def intermediate_codes_matched_by_description(

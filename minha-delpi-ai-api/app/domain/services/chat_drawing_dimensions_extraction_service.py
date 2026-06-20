@@ -157,6 +157,10 @@ class ChatDrawingDimensionsExtractionService:
                 decape = third
                 side = "left"
             elif first <= max_decape and second <= max_segment:
+                if second >= 100 and first <= ChatDrawingPatternsService.typical_cable_decape_mm():
+                    segment_lengths.append(cls._sanitize_chicote_length_mm(second, normalized))
+                    continue
+
                 decape = first
                 length = second
                 side = None
@@ -228,6 +232,9 @@ class ChatDrawingDimensionsExtractionService:
             candidate = decape_values[0]
 
             if not cls._is_plausible_cable_decape(candidate):
+                return
+
+            if cls._is_length_tolerance_decape_value(candidate, text):
                 return
 
             dimensions[key] = candidate
@@ -428,11 +435,23 @@ class ChatDrawingDimensionsExtractionService:
                 continue
 
             decape = cls._parse_number(match.group(1))
+            tolerance = cls._parse_number(match.group(2))
 
             if decape is None or decape > ChatDrawingPatternsService.max_decape_mm():
                 continue
 
+            if (
+                tolerance is not None
+                and tolerance >= 100
+                and decape <= ChatDrawingPatternsService.typical_cable_decape_mm()
+            ):
+                segment_values.append(tolerance)
+                continue
+
             if not cls._is_plausible_cable_decape(decape):
+                continue
+
+            if cls._is_length_tolerance_decape_value(decape, text):
                 continue
 
             decape_values.append(decape)
@@ -612,6 +631,21 @@ class ChatDrawingDimensionsExtractionService:
         upper = str(text or "").upper()
 
         return any(marker in upper for marker in markers if marker)
+
+    @classmethod
+    def _is_length_tolerance_decape_value(cls, decape: float, text: str) -> bool:
+        allowed = ChatDrawingPatternsService.length_tolerance_decape_values_mm()
+
+        if float(decape) not in allowed:
+            return False
+
+        for match in ChatDrawingPatternsService.segment_length_tolerance().finditer(text):
+            tolerance = cls._parse_number(match.group(2))
+
+            if tolerance is not None and abs(float(tolerance) - float(decape)) < 0.01:
+                return True
+
+        return False
 
     @classmethod
     def _parse_number(cls, raw: str) -> float | None:
