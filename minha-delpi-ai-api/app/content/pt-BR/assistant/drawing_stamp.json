@@ -22,16 +22,33 @@
   "extractionQualityRetry": {
     "enabled": true,
     "targetConfidence": 0.95,
-    "maxAttempts": 2,
+    "maxAttempts": 5,
     "releaseMemoryBetweenAttempts": true,
     "regionOcrEngines": ["tesseract"],
-    "comment": "Loop de retry usa só Tesseract — EasyOCR/PyTorch fica fora do loop (pesado, ~1.5GB RAM, OOM no WSL).",
+    "comment": "Tentativas 1–4 só Tesseract (escala DPI/região). Tentativa 5 opcional EasyOCR na imagem dev — libera RAM entre passagens.",
     "attempts": [
       { "id": "standard", "enableRegionOcr": null },
       {
-        "id": "high_dpi_tesseract",
+        "id": "region_ocr",
+        "enableRegionOcr": true
+      },
+      {
+        "id": "high_dpi_1_5",
         "enableRegionOcr": true,
         "regionOcrDpiMultiplier": 1.5
+      },
+      {
+        "id": "high_dpi_2_0_layout",
+        "enableRegionOcr": true,
+        "regionOcrDpiMultiplier": 2.0,
+        "layoutAnalysisEnabled": true
+      },
+      {
+        "id": "easyocr_fusion_2_0",
+        "enableRegionOcr": true,
+        "regionOcrDpiMultiplier": 2.0,
+        "layoutAnalysisEnabled": true,
+        "regionOcrEngines": ["tesseract", "easyocr"]
       }
     ]
   },

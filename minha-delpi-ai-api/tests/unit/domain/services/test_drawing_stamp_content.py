@@ -64,3 +64,16 @@ def test_drawing_stamp_bom_candidate_bboxes():
 
     assert len(candidates) >= 2
     assert all(isinstance(item, dict) and len(item.get("bbox") or []) == 4 for item in candidates)
+
+
+def test_drawing_stamp_extraction_quality_retry_profiles():
+    retry = ChatAssistantContentService.get_node("drawing_stamp", "extractionQualityRetry") or {}
+
+    assert retry.get("enabled") is True
+    assert int(retry.get("maxAttempts") or 0) >= 5
+
+    attempts = retry.get("attempts") or []
+
+    assert len(attempts) >= 5
+    assert attempts[0].get("id") == "standard"
+    assert attempts[-1].get("regionOcrEngines") == ["tesseract", "easyocr"]

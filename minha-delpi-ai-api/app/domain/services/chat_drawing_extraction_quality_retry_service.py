@@ -49,10 +49,11 @@ class ChatDrawingExtractionQualityRetryService:
         target = cls._target_confidence()
         max_attempts = cls._max_attempts()
         attempts = cls._attempt_profiles()
+        attempt_slots = attempts[:max_attempts]
         history: list[ExtractionQualityAttemptResult] = []
         best: ExtractionQualityAttemptResult | None = None
 
-        for index, profile in enumerate(attempts[:max_attempts]):
+        for index, profile in enumerate(attempt_slots):
             attempt_id = str(profile.get("id") or f"attempt_{index + 1}")
             pdf_extract = cls._extract_once(
                 storage_path,
@@ -85,7 +86,15 @@ class ChatDrawingExtractionQualityRetryService:
                     stopped_reason="target_reached",
                 )
 
-            if index >= 1 and cls._attempt_stalled(history[-2], result):
+            if (
+                index >= 1
+                and cls._attempt_stalled(history[-2], result)
+                and len(attempt_slots) - index - 1 > 0
+                and not cls._has_distinct_remaining_profiles(
+                    history_len=index + 1,
+                    attempt_slots=attempt_slots,
+                )
+            ):
                 selected = best or result
 
                 return cls._attach_retry_metadata(
@@ -96,10 +105,13 @@ class ChatDrawingExtractionQualityRetryService:
                     stopped_reason="no_improvement",
                 )
 
-            remaining = len(attempts[:max_attempts]) - index - 1
+            remaining = len(attempt_slots) - index - 1
 
             if remaining > 0:
-                if not cls._should_schedule_next_attempt(history=history):
+                if not cls._should_schedule_next_attempt(
+                    history=history,
+                    attempt_slots=attempt_slots,
+                ):
                     selected = best or result
 
                     return cls._attach_retry_metadata(
@@ -214,6 +226,7 @@ class ChatDrawingExtractionQualityRetryService:
         cls,
         *,
         history: list[ExtractionQualityAttemptResult],
+        attempt_slots: list[dict[str, Any]] | None = None,
     ) -> bool:
         if not history:
             return False
@@ -223,8 +236,13 @@ class ChatDrawingExtractionQualityRetryService:
         if latest.confidence.meets_threshold:
             return False
 
+        slots = attempt_slots if isinstance(attempt_slots, list) else cls._attempt_profiles()[: cls._max_attempts()]
+
         if len(history) >= 2 and cls._attempt_stalled(history[-2], latest):
-            return False
+            return cls._has_distinct_remaining_profiles(
+                history_len=len(history),
+                attempt_slots=slots,
+            )
 
         return latest.confidence.score < cls._target_confidence()
 
@@ -247,6 +265,39 @@ class ChatDrawingExtractionQualityRetryService:
                 torch.cuda.empty_cache()
         except Exception:
             pass
+
+    @classmethod
+    def _profile_key(cls, profile: dict[str, Any]) -> tuple[Any, ...]:
+        engines = profile.get("regionOcrEngines")
+
+        if not isinstance(engines, list) or not engines:
+            engines = cls._loop_region_ocr_engines() or ("tesseract",)
+
+        return (
+            profile.get("enableRegionOcr"),
+            profile.get("regionOcrDpiMultiplier"),
+            profile.get("layoutAnalysisEnabled"),
+            tuple(str(item).strip().lower() for item in engines if str(item).strip()),
+        )
+
+    @classmethod
+    def _has_distinct_remaining_profiles(
+        cls,
+        *,
+        history_len: int,
+        attempt_slots: list[dict[str, Any]] | None = None,
+    ) -> bool:
+        attempts = attempt_slots if isinstance(attempt_slots, list) else cls._attempt_profiles()[: cls._max_attempts()]
+
+        if history_len >= len(attempts):
+            return False
+
+        seen = {cls._profile_key(profile) for profile in attempts[:history_len]}
+
+        return any(
+            cls._profile_key(profile) not in seen
+            for profile in attempts[history_len:]
+        )
 
     @classmethod
     def _attempt_stalled(
@@ -339,9 +390,9 @@ class ChatDrawingExtractionQualityRetryService:
         raw = cls._retry_config().get("maxAttempts")
 
         try:
-            return max(1, int(raw if raw is not None else 2))
+            return max(1, int(raw if raw is not None else 5))
         except (TypeError, ValueError):
-            return 2
+            return 5
 
     @classmethod
     def _release_memory_between_attempts(cls) -> bool:
@@ -356,9 +407,23 @@ class ChatDrawingExtractionQualityRetryService:
 
         return [
             {"id": "standard", "enableRegionOcr": None},
+            {"id": "region_ocr", "enableRegionOcr": True},
             {
-                "id": "high_dpi_tesseract",
+                "id": "high_dpi_1_5",
                 "enableRegionOcr": True,
                 "regionOcrDpiMultiplier": 1.5,
+            },
+            {
+                "id": "high_dpi_2_0_layout",
+                "enableRegionOcr": True,
+                "regionOcrDpiMultiplier": 2.0,
+                "layoutAnalysisEnabled": True,
+            },
+            {
+                "id": "easyocr_fusion_2_0",
+                "enableRegionOcr": True,
+                "regionOcrDpiMultiplier": 2.0,
+                "layoutAnalysisEnabled": True,
+                "regionOcrEngines": ["tesseract", "easyocr"],
             },
         ]

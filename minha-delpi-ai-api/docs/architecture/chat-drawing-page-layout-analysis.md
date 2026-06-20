@@ -130,7 +130,10 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
   → ChatDrawingExtractionQualityRetryService.extract_until_confident
        motores: Tesseract only (override em ChatPdfRegionOcrEngineService)
        tentativa 1: standard (OCR regional automático)
-       tentativa 2: high_dpi_tesseract (DPI × 1.5) — só se score < 95%
+       tentativa 2: region_ocr (OCR regional explícito)
+       tentativa 3: high_dpi_1_5 (DPI × 1.5)
+       tentativa 4: high_dpi_2_0_layout (DPI × 2 + layout adaptativo)
+       tentativa 5: easyocr_fusion_2_0 (Tesseract + EasyOCR, só se score < 95%)
   → gc.collect() + libera cache EasyOCR entre tentativas (caso tenha sido usado antes)
   → ChatDrawingExtractionConfidenceService.evaluate_for_extraction
 ```
@@ -139,7 +142,7 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
 |-----------------|-------------|
 | `target_reached` | Score ≥ `targetConfidence` na tentativa corrente |
 | `max_attempts` | Esgotou perfis sem atingir o alvo — retorna a **melhor** tentativa |
-| `no_improvement` | Parada antecipada — score e códigos BOM não subiram vs. tentativa anterior |
+| `no_improvement` | Parada antecipada — score e códigos BOM não subiram **e** não há perfil distinto restante |
 
 Seleção da melhor tentativa: maior score → mais `componentCodes` → maior `charCount`.
 
@@ -149,7 +152,7 @@ Config (`drawing_stamp.json` → `extractionQualityRetry`):
 |-------|---------|-------------|
 | `enabled` | `true` | Master switch |
 | `targetConfidence` | `0.95` | Limiar para parar com sucesso |
-| `maxAttempts` | `2` | Máximo de perfis (standard + DPI alto) |
+| `maxAttempts` | `5` | Máximo de perfis escalonados (standard → EasyOCR) |
 | `regionOcrEngines` | `["tesseract"]` | **Só Tesseract** em todo o loop — sem EasyOCR |
 | `releaseMemoryBetweenAttempts` | `true` | `gc` + libera readers EasyOCR entre passagens |
 | `attempts[]` | ver JSON | `enableRegionOcr`, `regionOcrDpiMultiplier`, `layoutAnalysisEnabled` |

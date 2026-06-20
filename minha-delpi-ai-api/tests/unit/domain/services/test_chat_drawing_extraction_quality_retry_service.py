@@ -239,7 +239,79 @@ def test_retry_stops_after_two_attempts_without_improvement(monkeypatch):
     retry = result.get("extractionQualityRetry") or {}
 
     assert retry.get("attemptCount") == 2
-    assert retry.get("stoppedReason") == "no_improvement"
+    assert retry.get("stoppedReason") == "max_attempts"
+
+
+def test_retry_continues_after_stall_when_distinct_profiles_remain(monkeypatch):
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_max_attempts",
+        classmethod(lambda cls: 5),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_attempt_profiles",
+        classmethod(
+            lambda cls: [
+                {"id": "standard", "enableRegionOcr": None},
+                {"id": "region_ocr", "enableRegionOcr": True},
+                {
+                    "id": "high_dpi_1_5",
+                    "enableRegionOcr": True,
+                    "regionOcrDpiMultiplier": 1.5,
+                },
+                {
+                    "id": "high_dpi_2_0_layout",
+                    "enableRegionOcr": True,
+                    "regionOcrDpiMultiplier": 2.0,
+                    "layoutAnalysisEnabled": True,
+                },
+                {
+                    "id": "easyocr_fusion_2_0",
+                    "enableRegionOcr": True,
+                    "regionOcrDpiMultiplier": 2.0,
+                    "regionOcrEngines": ["tesseract", "easyocr"],
+                },
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_release_extraction_memory",
+        classmethod(lambda cls: None),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_extract_once",
+        staticmethod(
+            lambda storage_path, *, filename="", attempt=None: {
+                "productCode": "90261040",
+                "componentCodes": ["10081867"],
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionConfidenceService,
+        "evaluate_for_extraction",
+        classmethod(
+            lambda cls, *, pdf_extract: ExtractionConfidenceResult(
+                score=0.55,
+                threshold=0.95,
+                meets_threshold=False,
+                components={},
+                reasons=(),
+            )
+        ),
+    )
+
+    result = ChatDrawingExtractionQualityRetryService.extract_until_confident(
+        "/tmp/x.pdf",
+        filename="90261040.pdf",
+    )
+    retry = result.get("extractionQualityRetry") or {}
+
+    assert retry.get("attemptCount") == 5
+    assert retry.get("stoppedReason") == "max_attempts"
 
 
 def test_retry_loop_defaults_to_tesseract_only(monkeypatch):
