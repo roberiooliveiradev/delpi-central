@@ -168,8 +168,8 @@ services:
       context: ..
       dockerfile: minha-delpi-ai-api/Dockerfile.prod
       args:
-        # true = instala requirements-vision.txt (Docling) na imagem — build mais pesado
-        INSTALL_VISION_EXTRAS: ${INSTALL_VISION_EXTRAS:-false}
+        # Extras de visão sempre na imagem prod (EasyOCR + Docling + modelos prefetch).
+        INSTALL_VISION_EXTRAS: "true"
 
     container_name: delpi-minha-delpi-ai-api
     restart: unless-stopped

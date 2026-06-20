@@ -9,7 +9,7 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 | `docker-compose.dev.yml` | Desenvolvimento local: hot-reload, Flask dev, profile `chat` / `vision` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
 | `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
-| `docker-compose.prod.vision.yml` | **Override** prod: `INSTALL_VISION_EXTRAS=true` no `Dockerfile.prod` |
+| `docker-compose.prod.vision.yml` | **Override legado** prod — redundante; compose base já inclui visão |
 | `.env.dev.example` | Modelo para copiar → `.env` no dia a dia |
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
 
@@ -34,7 +34,7 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 | Código | Volume montado (`../minha-delpi-ai-api:/app`) | Copiado na imagem (imutável) |
 | **Tesseract (OCR)** | `apt` + `por`/`eng` | `apt` + `por`/`eng` (alinhado) |
 | **Python deps** | `requirements.txt` | `requirements.txt` (mesmo arquivo) |
-| **EasyOCR / Docling** | Build via `docker_install_vision_extras.sh` + modelos em `/opt/delpi-vision/easyocr` | Só se `INSTALL_VISION_EXTRAS=true` no build (`Dockerfile.prod`) |
+| **EasyOCR / Docling** | Build via `docker_install_vision_extras.sh` + modelos em `/opt/delpi-vision/easyocr` | Idem (default no `Dockerfile.prod`) |
 | **PaddleOCR** | Opcional — descomente em `requirements-vision.txt` + rebuild | Idem |
 | Compose injeta `CHAT_DOCUMENT_VISION_*` | Sim (default `ENABLED=true`) | Sim (via `.env`; ver `.env.prod.example`) |
 | Ollama / SearXNG | Dev: profile `chat` | Prod: Ollama; SearXNG opcional por env |
@@ -44,7 +44,7 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 1. **Git** traz código + exemplos de env; **não** traz `.env` nem imagens Docker.
 2. Em cada máquina: `cp .env.*.example .env`, ajustar secrets, `docker compose build`.
 3. Dados (Postgres, anexos, `metadata.documentVision`) vivem nos **volumes/DB**, não na imagem.
-4. **EasyOCR/Docling** e **pesos EasyOCR** vêm no build (`Dockerfile.dev`); entrypoint não roda `pip install`. Rebuild: `./minha-delpi-ai-api/scripts/build_vision_profile.sh dev`. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
+4. **EasyOCR/Docling** e **pesos EasyOCR** vêm no build (`Dockerfile.dev` / `Dockerfile.prod`); entrypoint não roda `pip install`. Rebuild: `./minha-delpi-ai-api/scripts/build_vision_profile.sh [dev|prod]`. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 
@@ -177,14 +177,14 @@ Após alterar `.env`: `docker compose … up -d --force-recreate minha-delpi-ai-
 
 - [ ] `cp infra/.env.prod.example infra/.env` e trocar todos os `CHANGE_ME`
 - [ ] `KEYCLOAK_ISSUER` / `PUBLIC_BASE_URL` com URL HTTPS real (gateway)
-- [ ] `docker compose -f infra/docker-compose.yml build` na máquina de deploy
+- [ ] `docker compose -f infra/docker-compose.yml build` na máquina de deploy (EasyOCR/Docling já na imagem)
 - [ ] `CHAT_DOCUMENT_VISION_ENABLED=true` (padrão no `.env.prod.example`)
-- [ ] Docling opcional: `INSTALL_VISION_EXTRAS=true` antes do `build` + `CHAT_DOCUMENT_VISION_BACKEND=docling`
+- [ ] `CHAT_DOCUMENT_VISION_BACKEND=docling` ou `auto` conforme política do servidor
 - [ ] `ollama pull` dos modelos de chat e embedding (`OLLAMA_MODEL`, `EMBEDDING_MODEL`)
 - [ ] Não commitar `.env` (já no `.gitignore`)
 
-### Build prod com Docling (opcional)
+### Rebuild prod com visão (já incluída no compose padrão)
 
 ```bash
-INSTALL_VISION_EXTRAS=true docker compose -f infra/docker-compose.yml build minha-delpi-ai-api
+./minha-delpi-ai-api/scripts/build_vision_profile.sh prod
 ```

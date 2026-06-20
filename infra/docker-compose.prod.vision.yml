@@ -1,12 +1,8 @@
-# Override produção — instala Docling/Paddle (requirements-vision.txt) na imagem da API.
+# Override legado produção — desde jun/2026 docker-compose.yml já fixa INSTALL_VISION_EXTRAS=true.
+# Mantido para fluxos explícitos e compatibilidade com scripts antigos.
 #
-# Uso:
-#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.vision.yml \
-#     build minha-delpi-ai-api
-#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.vision.yml \
-#     up -d --force-recreate minha-delpi-ai-api
-#
-# Requer CHAT_DOCUMENT_VISION_BACKEND=docling (ou paddleocr) no .env quando aplicável.
+# Uso (equivalente ao compose base):
+#   docker compose -f infra/docker-compose.yml build minha-delpi-ai-api
 
 services:
   minha-delpi-ai-api:

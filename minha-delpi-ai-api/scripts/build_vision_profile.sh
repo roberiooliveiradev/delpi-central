@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Rebuild permanente da API com extras de visão (EasyOCR + Docling + modelos EasyOCR).
 #
-# Dev: Dockerfile.dev + compose já fixam INSTALL_VISION_EXTRAS=true em todo build.
-# Prod: use target prod + docker-compose.prod.vision.yml
+# Dev e prod: Dockerfile.* + compose fixam INSTALL_VISION_EXTRAS=true em todo build.
 #
 # Uso:
 #   ./minha-delpi-ai-api/scripts/build_vision_profile.sh [dev|prod]
@@ -27,7 +26,7 @@ case "$TARGET" in
     COMPOSE_PROFILE=(--profile chat)
     ;;
   prod)
-    COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.prod.vision.yml)
+    COMPOSE_FILES=(-f docker-compose.yml)
     COMPOSE_PROFILE=()
     ;;
   *)

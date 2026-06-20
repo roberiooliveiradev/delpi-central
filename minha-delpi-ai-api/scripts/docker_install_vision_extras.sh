@@ -3,7 +3,7 @@
 # Não usar no entrypoint — runtime pip quebra recreate e gera 502 no gateway.
 #
 # Variáveis:
-#   INSTALL_VISION_EXTRAS   true (default dev) | false (prod mínimo)
+#   INSTALL_VISION_EXTRAS   true (default dev/prod) | false (imagem mínima, opt-out)
 #   CHAT_EASYOCR_MODEL_DIR    destino dos pesos EasyOCR (prefetch no build)
 
 set -euo pipefail
@@ -30,7 +30,10 @@ fi
 echo "📦 [build] Extras de visão permanentes — PyTorch CPU + requirements-vision…"
 pip install --upgrade pip setuptools wheel
 pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install --no-cache-dir -r "$REQ_FILE"
+# Índice CPU primeiro evita resolver torch+nvidia/cu13 via PyPI (CRC/OOM no WSL).
+pip install --no-cache-dir -r "$REQ_FILE" \
+  --index-url https://download.pytorch.org/whl/cpu \
+  --extra-index-url https://pypi.org/simple
 
 echo "📥 [build] Prefetch de modelos EasyOCR (camada da imagem)…"
 python3 "${APP_ROOT}/scripts/prefetch_vision_models.py"

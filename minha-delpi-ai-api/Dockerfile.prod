@@ -8,7 +8,8 @@ ENV CHAT_VISION_EXTRAS_WARN=true
 ENV CHAT_EASYOCR_MODEL_DIR=/opt/delpi-vision/easyocr
 
 # INSTALL_VISION_EXTRAS=true instala requirements-vision.txt + modelos EasyOCR na imagem.
-ARG INSTALL_VISION_EXTRAS=false
+ARG INSTALL_VISION_EXTRAS=true
+ENV INSTALL_VISION_EXTRAS=${INSTALL_VISION_EXTRAS}
 
 COPY minha-delpi-ai-api/requirements.txt minha-delpi-ai-api/requirements-vision.txt ./
 COPY minha-delpi-ai-api/scripts/docker_install_vision_extras.sh \
@@ -28,7 +29,8 @@ RUN apt-get update \
         netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt \
     && chmod +x scripts/docker_install_vision_extras.sh \
     && INSTALL_VISION_EXTRAS="${INSTALL_VISION_EXTRAS}" APP_ROOT=/app bash scripts/docker_install_vision_extras.sh
 

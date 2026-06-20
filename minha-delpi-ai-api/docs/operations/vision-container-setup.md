@@ -1,8 +1,8 @@
 # Visão/OCR no container — minha-delpi-ai-api
 
-## O que está habilitado por padrão (dev)
+## O que está habilitado por padrão (dev e prod)
 
-A imagem `Dockerfile.dev` instala **no build** (camada permanente da imagem):
+As imagens `Dockerfile.dev` e `Dockerfile.prod` instalam **no build** (camada permanente da imagem):
 
 | Camada | Pacotes / artefatos |
 |--------|---------------------|
@@ -36,7 +36,7 @@ Config: `app/content/pt-BR/assistant/document_vision.json` → `pdfExtraction.re
 | Motor | Uso | Módulo |
 |-------|-----|--------|
 | `tesseract` | Sempre (CPU) | `ChatPdfRegionOcrEngineService` |
-| `easyocr` | Regiões carimbo/BOM — **habilitado no container dev** | idem |
+| `easyocr` | Regiões carimbo/BOM — **habilitado nas imagens dev e prod** | idem |
 | `paddleocr` | Opcional — descomente em `requirements-vision.txt` | idem |
 | `docling` | Documento inteiro (`CHAT_DOCUMENT_VISION_BACKEND=docling`) | `ChatDocumentVisionService` |
 
@@ -77,7 +77,13 @@ docker exec delpi-minha-delpi-ai-api sh /app/scripts/install_vision_extras.sh
 
 ## Produção
 
-`Dockerfile.prod` mantém extras opcionais via build arg (`INSTALL_VISION_EXTRAS=false` por padrão).
+`Dockerfile.prod` e `infra/docker-compose.yml` fixam `INSTALL_VISION_EXTRAS=true` — mesmo pipeline do dev (`docker_install_vision_extras.sh`, PyTorch CPU, prefetch EasyOCR, build falha se incompleto).
+
+Para imagem **mínima** (sem EasyOCR/Docling), passe explicitamente no build:
+
+```bash
+docker compose -f infra/docker-compose.yml build --build-arg INSTALL_VISION_EXTRAS=false minha-delpi-ai-api
+```
 
 ### Servidor — verificar antes de instalar
 
@@ -125,8 +131,8 @@ Equivalente manual:
 
 ```bash
 cd infra
-docker compose -f docker-compose.yml -f docker-compose.prod.vision.yml build minha-delpi-ai-api
-docker compose -f docker-compose.yml -f docker-compose.prod.vision.yml up -d --force-recreate minha-delpi-ai-api
+docker compose -f docker-compose.yml build minha-delpi-ai-api
+docker compose -f docker-compose.yml up -d --force-recreate minha-delpi-ai-api
 
 docker exec delpi-minha-delpi-ai-api python3 scripts/check_vision_profile_deps.py \
   --require-easyocr --require-easyocr-models
@@ -140,7 +146,6 @@ Variáveis úteis no `.env` do servidor:
 CHAT_DOCUMENT_VISION_ENABLED=true
 CHAT_DOCUMENT_VISION_BACKEND=auto
 CHAT_EASYOCR_MODEL_DIR=/opt/delpi-vision/easyocr
-INSTALL_VISION_EXTRAS=true   # só no momento do build, ou use docker-compose.prod.vision.yml
 ```
 
 ### Servidor — emergência (sem rebuild)
@@ -154,13 +159,7 @@ docker exec -e CHAT_VISION_EXTRAS_RUNTIME_INSTALL=true \
 
 O script é idempotente: pula `pip install` se `easyocr` já importar; roda prefetch de modelos se necessário.
 
-Build arg alternativo:
-
-```bash
-INSTALL_VISION_EXTRAS=true docker compose -f infra/docker-compose.yml build minha-delpi-ai-api
-```
-
-Ou override: `infra/docker-compose.prod.vision.yml`.
+Override legado: `infra/docker-compose.prod.vision.yml` (redundante desde jun/2026).
 
 ## PaddleOCR (opcional)
 
