@@ -288,7 +288,7 @@ class ChatPresentationDataOnlyProseService:
                 if ChatOperationalResponseProfileService.is_playbook_operational_entity(
                     entity,
                 ):
-                    return presenter._playbook()._playbook_entity_title(
+                    return presenter._playbook_report()._playbook_entity_title(
                         entity,
                         table=False,
                     )

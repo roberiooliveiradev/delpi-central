@@ -28,6 +28,9 @@ from app.composition.production_operational_composer import (
     build_get_production_work_center_order_summary_use_case,
 )
 from app.core.responses import error_response, not_found_response
+from app.domain.services.production.production_consumption_top_items_group_by_service import (
+    ProductionConsumptionTopItemsGroupByService,
+)
 from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_ALLOCATION_GAPS,
     PRODUCTION_CONSUMPTION_BY_ITEM,

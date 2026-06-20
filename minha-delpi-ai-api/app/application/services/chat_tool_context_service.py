@@ -236,9 +236,11 @@ class ChatToolContextService:
             execution=execution,
             drawing_analysis_mode=False,
             drawing_product_code=None,
+            drawing_product_codes=(),
             drawing_product_code_source=None,
             drawing_has_pdf=False,
             drawing_pdf_extract=None,
+            drawing_library_fetch=None,
             drawing_runtime_skills=None,
             on_stream_activity=on_stream_activity,
         )

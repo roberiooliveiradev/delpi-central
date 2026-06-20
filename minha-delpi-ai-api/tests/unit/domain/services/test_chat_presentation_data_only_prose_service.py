@@ -95,6 +95,28 @@ def test_resolve_title_only_uses_profile_spec(monkeypatch):
     assert "fábrica" in titulo.lower()
 
 
+def test_resolve_title_only_playbook_entity_via_api_meta():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    metadata = {
+        "dataOnlyPresentation": True,
+        "apiDelpiResponseMeta": {"entity": "production_consumption_top_items"},
+    }
+
+    titulo = ChatPresentationDataOnlyProseService._resolve_title_only(
+        presenter,
+        {"data": {"items": []}},
+        path="/production/consumption/top-items",
+        metadata=metadata,
+    )
+
+    assert titulo
+    assert "consum" in titulo.lower() or "itens" in titulo.lower()
+
+
 def test_resolve_humanized_summary_skips_present():
     presenter = MagicMock()
     presenter.present.side_effect = AssertionError("present() não deve ser chamado")
