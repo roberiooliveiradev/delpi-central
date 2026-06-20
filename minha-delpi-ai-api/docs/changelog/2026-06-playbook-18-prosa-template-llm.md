@@ -42,5 +42,6 @@ Smoke live (jun/2026): `SMOKE_SCENARIO=factory_status` — `passed: true`, `temp
 
 - [`playbook-18-prosa-template-llm-desacoplamento.md`](../roadmap/playbook-18-prosa-template-llm-desacoplamento.md)
 - [`playbook-19-inferencia-llm-universal.md`](../roadmap/playbook-19-inferencia-llm-universal.md)
+- [`2026-06-playbook-19-prosa-latencia-analyser.md`](./2026-06-playbook-19-prosa-latencia-analyser.md) — correções pós-P5 (analyser, latência, skip RAG)
 - [`chat-response-modes.md`](../architecture/chat-response-modes.md)
 - Regra Cursor: `presentation-operational-decoupling.mdc`

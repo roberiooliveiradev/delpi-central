@@ -101,7 +101,26 @@ Procedimento completo: `api-delpi/docs/api/12-procedimento-reimport-openapi.md`.
 | `CHAT_DOCUMENT_VISION_ENABLED` | `true` | `true` se usar OCR/anexos/desenhos |
 | `CHAT_DOCUMENT_VISION_BACKEND` | `auto` | `auto` (ou `tesseract` / `docling` com extras na imagem) |
 | `CHAT_DOCUMENT_VISION_OLLAMA_MODEL` | `qwen2.5vl:7b` | `qwen2.5vl:7b` com `ollama_vlm` ou fallback em `auto` (`CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK=true`) |
-| `CHAT_RESPONSE_MODE_*` | modos composer | `FAST_MODEL=1.5b`, `OLLAMA_MODEL=3b` para normal/pensador |
+| `CHAT_RESPONSE_MODE_*` | modos composer — ver tabela abaixo | Prod CPU: alinhar ao preset `operational_cpu` se `.env` legado |
+
+### LLM chat — defaults compose (jun/2026)
+
+Injetados em `docker-compose.dev.yml` e `docker-compose.yml` quando ausentes no `.env`:
+
+| Variável | Default compose | Papel |
+|----------|-----------------|-------|
+| `OLLAMA_MODEL` | `qwen2.5:1.5b` | Modelo base (turnos fora dos modos) |
+| `CHAT_LLM_LATENCY_PROFILE` | `operational_cpu` | Preset 320 tokens / ctx 1024 |
+| `LLM_MAX_TOKENS` | `320` | Teto global (override do preset) |
+| `OLLAMA_NUM_CTX` | `1024` | Contexto global |
+| `CHAT_RESPONSE_MODES_ENABLED` | `true` | Seletor Rápida/Normal/Pensador |
+| `CHAT_RESPONSE_MODE_FAST_*` | 160 tok / ctx 768 | Modo Rápida |
+| `CHAT_RESPONSE_MODE_NORMAL_*` | 320 tok / ctx 1024 | Modo Normal |
+| `CHAT_RESPONSE_MODE_THINKER_*` | 512 tok / ctx 1536 | Modo Pensador |
+
+Documentação: [`chat-response-modes.md`](../minha-delpi-ai-api/docs/architecture/chat-response-modes.md), changelog [`2026-06-playbook-19-prosa-latencia-analyser.md`](../minha-delpi-ai-api/docs/changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
+
+**Prod srv-api:** `.env` com `OLLAMA_MODEL=3b` e ctx 2048 **não** herda estes defaults — atualizar explicitamente ou aceitar latência maior. Após mudança: `docker compose … up -d --force-recreate minha-delpi-ai-api`.
 
 Backend `docling` e OCR regional `easyocr` exigem `requirements-vision.txt` na imagem (dev já inclui). Verificação: `python3 scripts/check_vision_profile_deps.py` dentro do container.
 

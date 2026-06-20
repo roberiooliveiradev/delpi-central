@@ -44,13 +44,17 @@ Rollback template (dev/offline): `presentation_prose_delivery.json` → `allowTe
 
 ---
 
-## Matriz por modo (presets default)
+## Matriz por modo (presets default — jun/2026)
+
+Defaults calibrados para CPU operacional (~50% menos latência vs presets anteriores). Compose dev/prod alinha `OLLAMA_MODEL` e modos em `qwen2.5:1.5b`; srv-api prod pode manter `OLLAMA_MODEL=3b` para turnos fora dos modos.
 
 | Modo | Modelo | max_tokens | num_ctx | temp | Policy overview | Policy operacional |
 |------|--------|------------|---------|------|-----------------|-------------------|
-| **Rápida** | `FAST_MODEL` (1.5b) | 256 | 1024 | 0.2 | `product-overview-fast.md` | `operational-synthesis-fast.md` |
-| **Normal** | `NORMAL_MODEL` ou `OLLAMA_MODEL` | 512 | 1536 | 0.3 | `product-overview.md` | `operational-synthesis.md` |
-| **Pensador** | `THINKER_MODEL` ou fallback | 896 | 2560 | 0.25 | `product-overview-thinker.md` | `operational-synthesis-thinker.md` |
+| **Rápida** | `CHAT_RESPONSE_MODE_FAST_MODEL` (default `qwen2.5:1.5b`) | 160 | 768 | 0.2 | `product-overview-fast.md` | `operational-synthesis-fast.md` |
+| **Normal** | `CHAT_RESPONSE_MODE_NORMAL_MODEL` ou `OLLAMA_MODEL` (default `1.5b`) | 320 | 1024 | 0.3 | `product-overview.md` | `operational-synthesis.md` |
+| **Pensador** | `CHAT_RESPONSE_MODE_THINKER_MODEL` ou fallback (default `1.5b`) | 512 | 1536 | 0.25 | `product-overview-thinker.md` | `operational-synthesis-thinker.md` |
+
+Preset global quando variáveis explícitas não estão no `.env`: `CHAT_LLM_LATENCY_PROFILE=operational_cpu` → `LLM_MAX_TOKENS=320`, `OLLAMA_NUM_CTX=1024` (`llm_latency_profile.py`). Ver [`rag-context-min-score-calibracao.md`](../roadmap/rag-context-min-score-calibracao.md).
 
 ---
 
@@ -75,7 +79,8 @@ Serviços:
 | `ChatOperationalNarrativeSynthesisService` | Detecta kind + policy + intenção narrativa (interno ao prose gate) |
 | `ChatPresentationProseDeliveryService` | Gate único no turno: `template` \| `llm` \| `direct`; chama decouple quando LLM |
 | `ChatPresentationLlmProseDecouplingService` | Remove markdown template do metadata; `renderPlan.lead` → `assistantMessage` |
-| `ChatResponseModeService.apply_turn_direct_answer_policy` | Limpa `directAnswer`, seta `responseModeEffect` |
+| `ChatResponseModeService.apply_turn_direct_answer_policy` | Limpa `directAnswer`, seta `responseModeEffect`, resolve `skip_rag` |
+| `ChatResponseModeService._resolve_skip_rag_for_llm_synthesis` | Preserva skip operacional; força skip quando `execute_external_action` ok (evita RAG ~7 s redundante) |
 | `ChatTurnCompletionService` | `skip_replacement` quando `responseModeEffect` é síntese LLM |
 
 Bundle declarativo: `assistant/operational_narrative_synthesis.json`.
@@ -109,14 +114,19 @@ Em `metadata.intelligence.pipeline`:
 
 | Variável | Default | Papel |
 |----------|---------|-------|
-| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `256` | Síntese curta |
-| `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `1024` | Contexto Rápida |
-| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `512` | Síntese Normal |
-| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `1536` | Contexto Normal |
-| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `896` | Síntese Pensador |
-| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `2560` | Contexto Pensador |
+| `CHAT_LLM_LATENCY_PROFILE` | `operational_cpu` | Preset global `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` quando não explícitos |
+| `LLM_MAX_TOKENS` | `320` (via preset) | Teto tokens turno geral |
+| `OLLAMA_NUM_CTX` | `1024` (via preset) | Contexto Ollama global |
+| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `160` | Síntese curta |
+| `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `768` | Contexto Rápida |
+| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `320` | Síntese Normal |
+| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `1024` | Contexto Normal |
+| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `512` | Síntese Pensador |
+| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `1536` | Contexto Pensador |
 
-Stack mínimo WSL: `infra/docker-compose.minimal.yml` (Normal 448 tokens / ctx 1280).
+Compose: `infra/docker-compose.dev.yml` e `infra/docker-compose.yml` injetam os defaults acima.
+
+Stack mínimo WSL: `infra/docker-compose.minimal.yml` (presets intermediários — Normal 448 / ctx 1280).
 
 ---
 
@@ -155,4 +165,4 @@ cd minha-delpi-ai-api
 
 ---
 
-*Última revisão: jun/2026 — gate summary_then_evidence + presets acelerados + skip authorized replacement.*
+*Última revisão: jun/2026 — preset `operational_cpu` default, modos 160/320/512 tokens, skip RAG em síntese LLM com tool ok, render plan sem lead `dataAnswer` quando decoupled.*

@@ -70,17 +70,23 @@ Use `CHAT_LLM_LATENCY_PROFILE` quando não quiser calibrar `LLM_MAX_TOKENS` e `O
 
 | Perfil | `LLM_MAX_TOKENS` | `OLLAMA_NUM_CTX` | Quando |
 |--------|------------------|------------------|--------|
-| `operational_cpu` | 384 | 1536 | Homologação / produção CPU operacional (meta p95 &lt; 15s) |
-| `balanced` | 1536 | 2048 | Dev local (default) |
+| `operational_cpu` | 320 | 1024 | **Default** compose dev/prod — homologação CPU operacional (meta p95 &lt; 15–35 s por modo) |
+| `balanced` | 768 | 1536 | Dev local quando perfil unknown ou override explícito |
 | `documental` | 768 | 4096 | Agentes só RAG ou GPU/16GB+ |
 
-Exemplo homologação:
+Exemplo homologação (jun/2026 — alinhado ao compose):
 
 ```env
 CHAT_LLM_LATENCY_PROFILE=operational_cpu
+LLM_MAX_TOKENS=320
+OLLAMA_NUM_CTX=1024
+CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS=320
+CHAT_RESPONSE_MODE_NORMAL_NUM_CTX=1024
 CHAT_OPERATIONAL_FAST_PATH_ENABLED=true
 CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED=true
 ```
+
+**Nota:** variáveis explícitas (`LLM_MAX_TOKENS`, `OLLAMA_NUM_CTX`, `CHAT_RESPONSE_MODE_*`) **sempre** têm prioridade sobre o preset. Hosts prod com `.env` legado (ex.: ctx 2048, tokens 1536) não herdam o tuning até atualizar o `.env`. Ver changelog [`2026-06-playbook-19-prosa-latencia-analyser.md`](../changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
 
 Status do perfil ativo: campo `latencyProfile` em `GET /chat/llm/status` (admin).
 

@@ -190,7 +190,7 @@ Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../t
 | `CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS` | `10` | Máx. parâmetros por action no catálogo agentic (11.3.2) |
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | Consolidação paginada (11.4.4) |
 | `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` | Páginas por turno antes de pedir confirmação |
-| `CHAT_LLM_LATENCY_PROFILE` | `balanced` | Preset `operational_cpu` / `documental` para `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` |
+| `CHAT_LLM_LATENCY_PROFILE` | `operational_cpu` | Preset `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` (`320` / `1024`); ver [`rag-context-min-score-calibracao.md`](../roadmap/rag-context-min-score-calibracao.md) |
 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `false` | Master switch; admin `nativeToolCallingEnabled` + agente piloto `metadata.intelligence.nativeToolCallingEnabled` |
 | `CHAT_UTILITY_DIRECT_ENABLED` | `true` | Hora/data/ano via `utility_answers.json`; typos normalizados antes do match |
 | `CHAT_WEB_SEARCH_ENABLED` | `false` | Master switch; admin `webSearchEnabled` |

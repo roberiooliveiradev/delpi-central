@@ -2,7 +2,7 @@
 
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
-Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [new-api-route-checklist.md](./new-api-route-checklist.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md), [changelog P6 `renderPlan` e modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md), [changelog viewIntent](../changelog/2026-06-viewintent-apresentacao-automatica.md).
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [new-api-route-checklist.md](./new-api-route-checklist.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md), [changelog P6 `renderPlan` e modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md), [changelog viewIntent](../changelog/2026-06-viewintent-apresentacao-automatica.md), [changelog P19 prosa/latência analyser](../changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
 
 ---
 
@@ -357,7 +357,7 @@ Regra: **presenters** montam estrutura visual (`tablePresentation`, `textPresent
 |-------|-----------------|----------------|
 | Resultado incompleto / paginação operacional | `ChatOperationalResultCompletenessService` → `ChatDataCoverageNoticeService` | Banner `metadata.dataCoverageNotice` |
 | Refinamento local (agrupamento sobre amostra) | `ChatOperationalGroupBySessionRefinementService` → `sessionDataRefinement` + `sessionAggregateSample` | Ver [session-data-refinement.md](./session-data-refinement.md) |
-| Atenção e limitações na prosa | `ChatDataInsightService` → `dataAnswer` / `dataCommentary` | Lead do `renderPlan` (modo Automático) |
+| Atenção e limitações na prosa | `ChatDataInsightService` → `dataAnswer` / `dataCommentary` | Lead do `renderPlan` (modo Automático) — **exceto** quando `llmProseDecoupled` (lead = `assistantMessage` only) |
 | Dica «use a tabela/árvore» | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | Toolbar / chips de formato |
 | Insight curto do visual selecionado | `ChatPresentationInsightService.build_with_metadata` (prioriza `dataAnswer`) | Legenda do painel |
 | Campos técnicos (`is_complete`, `branch_filter_applied`, `consolidated_across_branches`) | API: `ProductionOperationalSummarySemanticsService` · Chat: `ChatOperationalSummarySemanticsService` + `ChatPresentationOperationalMetadataFieldService` | **Não** entram em KPI, linhas playbook nem markdown |
@@ -373,6 +373,22 @@ Regra: **presenters** montam estrutura visual (`tablePresentation`, `textPresent
 ### Heurística «lista extensa»
 
 `ChatDataInsightService` só emite `largeList` quando **não** há incompletude operacional nem flag `paginated` — evita aviso genérico redundante com `dataCoverageNotice`.
+
+### Prosa LLM desacoplada (Playbook 19 — jun/2026)
+
+Quando `llmProseDecoupled: true`:
+
+| Sinal | Onde fica | O que **não** renderiza no MFE |
+|-------|-----------|--------------------------------|
+| Prosa consultiva | Stream LLM (`assistantMessage`) | `textPresentation.markdown`, `humanizedSummary.linhas` |
+| Destaques / atenção estruturados | Prompt LLM via `ChatOperationalLlmSynthesisContextService` | Segmento `renderPlan` `decision` / `source: dataAnswer` no lead |
+| Visuais (tabela analyser, KPI, árvore) | Slots do `renderPlan` | — |
+
+`ChatPresentationRenderPlanService._should_include_decision` retorna `false` — evita lead com «Foram retornados N registros» enquanto a síntese LLM carrega.
+
+**Commentary por perfil:** `presentation_profiles.json` → `commentaryProfileKey` (ex.: `analyser`, `sale_pricing`). Chave **duplicada no mesmo objeto JSON** sobrescreve silenciosamente — regressão: `test_build_product_analyser_uses_analyser_commentary_not_generic_list`.
+
+Fatos LLM para tabela `role=profile`: formato `Campo: valor`; limites em `operational_llm_synthesis_context.json` (`maxProfileTableRows`, `maxChars`).
 
 ---
 

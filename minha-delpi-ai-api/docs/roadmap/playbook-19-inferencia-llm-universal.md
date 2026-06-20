@@ -1,7 +1,7 @@
 # Playbook 19 — Inferência LLM universal (100% prosa)
 
 **Projeto:** Minha DELPI Chat IA  
-**Status:** P8 parcial — template fallback gate + formatter sem markdown legado (jun/2026)  
+**Status:** P8 parcial + correções latência/prosa analyser (jun/2026)  
 **Pré-requisito:** [Playbook 18 — desacoplamento template×LLM](./playbook-18-prosa-template-llm-desacoplamento.md) (P0–P4.4 ✅)
 
 ---
@@ -171,7 +171,29 @@ SMOKE_STRICT=1 SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_llm_
 
 ---
 
-## 7. O que NÃO fazer
+## 7. Correções pós-rollout (jun/2026)
+
+Entregas após smoke «me fale do produto» com prosa genérica e latência ~70 s.
+
+| # | Problema | Correção | Módulo / artefato |
+|---|----------|----------|-------------------|
+| 9.1 | `commentaryProfileKey` duplicado em `analyser` e `sale_pricing` → `dataAnswer` genérico («N registros») | Remover chave duplicada; manter perfil específico | `presentation_profiles.json` |
+| 9.2 | Lead do `renderPlan` exibia `dataAnswer` genérico junto com prosa LLM | `_should_include_decision` → `false` quando `llmProseDecoupled` | `ChatPresentationRenderPlanService` |
+| 9.3 | RAG ~7 s em turno operacional com tool ok | `_resolve_skip_rag_for_llm_synthesis` preserva/força skip | `ChatResponseModeService` |
+| 9.4 | Prompt LLM grande (ctx 1536+, 1400 chars fatos) | Preset `operational_cpu` default 320/1024; modos 160/320/512; fatos compactos | `llm_latency_profile.py`, compose, `operational_llm_synthesis_context.json` |
+| 9.5 | Tabela profile analyser pouco legível no prompt | Fatos `Campo: valor`; `maxProfileTableRows: 8` | `ChatOperationalLlmSynthesisContextService` |
+
+**Resultado smoke CPU:** Normal ~31 s (antes ~67 s); quality gates OK.
+
+Changelog detalhado: [`2026-06-playbook-19-prosa-latencia-analyser.md`](../changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
+
+### Armadilha — JSON com chaves duplicadas
+
+Objetos em `presentation_profiles.json` **não falham** no parse quando a mesma chave aparece duas vezes — a última vence silenciosamente. Ao adicionar `commentaryProfileKey`, revisar o bloco inteiro do perfil e rodar testes de commentary (`test_build_product_analyser_uses_analyser_commentary_not_generic_list`).
+
+---
+
+## 8. O que NÃO fazer
 
 - Reintroduzir prosa template no presenter **e** LLM no mesmo turno.
 - Ler `humanizedSummary.linhas` em consumidores pós-gate (usar helpers P18).
@@ -180,9 +202,10 @@ SMOKE_STRICT=1 SMOKE_SCENARIO=factory_status .venv/bin/python scripts/smoke_llm_
 
 ---
 
-## 8. Referências
+## 9. Referências
 
 - [Playbook 18](./playbook-18-prosa-template-llm-desacoplamento.md)
 - [chat-response-modes.md](../architecture/chat-response-modes.md)
 - Changelog: [`2026-06-playbook-18-prosa-template-llm.md`](../changelog/2026-06-playbook-18-prosa-template-llm.md)
+- Changelog: [`2026-06-playbook-19-prosa-latencia-analyser.md`](../changelog/2026-06-playbook-19-prosa-latencia-analyser.md)
 - Regras: `presentation-operational-decoupling.mdc`, `centralized-rules-first.mdc`
