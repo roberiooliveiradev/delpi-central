@@ -21,5 +21,25 @@
     "decoupled": "llmProseDecoupled",
     "proseSource": "proseSource",
     "archive": "templateProseArchive"
+  },
+  "dataOnlyTitles": {
+    "factory_status": {
+      "routeNamespace": "factoryStatus",
+      "withCodeKey": "titleWithCode",
+      "genericKey": "titleGeneric"
+    },
+    "production_status": {
+      "routeNamespace": "productionStatus",
+      "withCodeKey": "titleWithCode",
+      "genericKey": "titleGeneric"
+    },
+    "shipping_status": {
+      "routeNamespace": "shippingStatus",
+      "withCodeKey": "titleWithCode",
+      "genericKey": "titleGeneric"
+    },
+    "stock": {
+      "productDetailKey": "stock"
+    }
   }
 }

@@ -1,11 +1,16 @@
 """Testes — pipeline data-only (P2): sem prosa template quando LLM narrará."""
 
+from unittest.mock import MagicMock
+
 import pytest
 
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_presentation_data_only_prose_service import (
     ChatPresentationDataOnlyProseService,
 )
 from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+configure_domain_infrastructure_ports()
 
 
 def test_should_apply_when_narrative_message_and_modes_enabled(monkeypatch):
@@ -43,6 +48,51 @@ def test_prepare_humanized_strips_linhas_and_archives():
     archive = metadata["templateProseArchive"]["humanizedSummary"]
     assert archive["linhas"] == ["- OP 12 em andamento."]
     assert archive["linhas_detalhe"] == ["- Filial 01: 10 un."]
+
+
+def test_resolve_title_only_uses_profile_spec(monkeypatch):
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    metadata = {
+        "dataOnlyPresentation": True,
+        "dataAnswer": {"profileKey": "factory_status"},
+    }
+
+    titulo = ChatPresentationDataOnlyProseService._resolve_title_only(
+        presenter,
+        {"data": {"product": {"code": "90269002"}}},
+        path="/products/90269002/factory-status",
+        metadata=metadata,
+    )
+
+    assert "90269002" in titulo
+    assert "fábrica" in titulo.lower()
+
+
+def test_resolve_humanized_summary_skips_present():
+    presenter = MagicMock()
+    presenter.present.side_effect = AssertionError("present() não deve ser chamado")
+
+    metadata = {"dataOnlyPresentation": True, "dataAnswer": {"profileKey": "stock"}}
+    presenter._unwrap_data.return_value = {"product": {"code": "90269001"}}
+    presenter._extract_product_code_from_path.return_value = "90269001"
+    presenter._route_presentation.side_effect = lambda *args, **kwargs: "unused"
+    presenter._presenter_content.return_value._path_fragment_title.return_value = None
+    presenter._fallback_title.return_value = None
+    presenter._presenter_text.return_value = "fallback"
+
+    result = ChatPresentationDataOnlyProseService.resolve_humanized_summary(
+        presenter,
+        {"data": {"product": {"code": "90269001"}}},
+        path="/products/90269001/stock",
+        metadata=metadata,
+    )
+
+    presenter.present.assert_not_called()
+    assert result == {"titulo": "Estoque do produto 90269001"}
 
 
 def test_finalize_metadata_clears_text_and_rebuilds_render_plan():

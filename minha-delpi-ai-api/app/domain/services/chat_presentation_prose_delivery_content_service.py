@@ -32,3 +32,20 @@ class ChatPresentationProseDeliveryContentService:
             ChatAssistantContentService.get(_BUNDLE, "metadataKeys", key, default=key)
             or key
         ).strip()
+
+    @classmethod
+    def data_only_title_spec(cls, profile_key: str) -> dict[str, str] | None:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "dataOnlyTitles",
+            str(profile_key or "").strip(),
+        )
+
+        if not isinstance(node, dict):
+            return None
+
+        return {
+            str(key).strip(): str(value).strip()
+            for key, value in node.items()
+            if str(key).strip() and str(value).strip()
+        }

@@ -83,9 +83,15 @@ class ChatToolContextExternalActionFormatter:
                             data_answer,
                         )
 
-                humanized = self._presenter.present(
+                from app.domain.services.chat_presentation_data_only_prose_service import (
+                    ChatPresentationDataOnlyProseService,
+                )
+
+                humanized = ChatPresentationDataOnlyProseService.resolve_humanized_summary(
+                    self._presenter,
                     attached_data,
                     path=path,
+                    metadata=safe_metadata,
                 )
 
                 if isinstance(humanized, dict):
@@ -108,16 +114,6 @@ class ChatToolContextExternalActionFormatter:
 
                     if humanized.get("titulo") or linhas:
                         titulo = str(humanized.get("titulo") or "").strip()
-
-                        if titulo == "Lista de LMPs" and (
-                            "eficiencia-fabril" in path.lower()
-                            or "eficiencia_fabril" in path.lower()
-                        ):
-                            titulo = "Eficiência fabril"
-
-                        from app.domain.services.chat_presentation_data_only_prose_service import (
-                            ChatPresentationDataOnlyProseService,
-                        )
 
                         prepared = {
                             "titulo": titulo,

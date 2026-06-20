@@ -127,6 +127,135 @@ class ChatPresentationDataOnlyProseService:
         return {"titulo": titulo} if titulo else None
 
     @classmethod
+    def resolve_humanized_summary(
+        cls,
+        presenter,
+        data,
+        *,
+        path: str,
+        metadata: dict[str, Any],
+    ) -> dict | Any | None:
+        if not cls.is_data_only_metadata(metadata):
+            return presenter.present(data, path=path)
+
+        titulo = cls._resolve_title_only(presenter, data, path=path, metadata=metadata)
+
+        if not titulo:
+            return None
+
+        if titulo == "Lista de LMPs" and (
+            "eficiencia-fabril" in path.lower() or "eficiencia_fabril" in path.lower()
+        ):
+            titulo = "Eficiência fabril"
+
+        return {"titulo": titulo}
+
+    @classmethod
+    def _resolve_title_only(
+        cls,
+        presenter,
+        data,
+        *,
+        path: str,
+        metadata: dict[str, Any],
+    ) -> str:
+        code = cls._extract_product_code(presenter, data, path)
+        profile_key = str((metadata.get("dataAnswer") or {}).get("profileKey") or "").strip()
+
+        from app.domain.services.chat_presentation_prose_delivery_content_service import (
+            ChatPresentationProseDeliveryContentService,
+        )
+
+        spec = (
+            ChatPresentationProseDeliveryContentService.data_only_title_spec(profile_key)
+            if profile_key
+            else None
+        )
+
+        if spec:
+            detail_key = spec.get("productDetailKey")
+
+            if detail_key:
+                from app.domain.services.chat_assistant_content_service import (
+                    ChatAssistantContentService,
+                )
+
+                template = str(
+                    ChatAssistantContentService.get(
+                        "presenter_content",
+                        "productDetailTitles",
+                        detail_key,
+                        default="",
+                    )
+                    or ""
+                ).strip()
+
+                if template and code:
+                    return template.format(code=code)
+
+            route_namespace = spec.get("routeNamespace")
+
+            if route_namespace:
+                with_code_key = spec.get("withCodeKey") or "titleWithCode"
+                generic_key = spec.get("genericKey") or "titleGeneric"
+
+                if code:
+                    return presenter._route_presentation(
+                        route_namespace,
+                        with_code_key,
+                        code=code,
+                    )
+
+                return presenter._route_presentation(route_namespace, generic_key)
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            entity = str(api_meta.get("entity") or "").strip()
+
+            if entity:
+                from app.domain.services.chat_operational_response_profile_service import (
+                    ChatOperationalResponseProfileService,
+                )
+
+                if ChatOperationalResponseProfileService.is_playbook_operational_entity(
+                    entity,
+                ):
+                    return presenter._playbook()._playbook_entity_title(
+                        entity,
+                        table=False,
+                    )
+
+        fragment = presenter._presenter_content()._path_fragment_title(
+            path.rstrip("/").rsplit("/", 1)[-1],
+        )
+
+        if fragment:
+            return fragment
+
+        fallback = presenter._fallback_title(path)
+
+        if fallback:
+            return fallback
+
+        return presenter._presenter_text("generic", "queryResultTitle")
+
+    @classmethod
+    def _extract_product_code(cls, presenter, data, path: str) -> str:
+        root = presenter._unwrap_data(data)
+
+        if isinstance(root, dict):
+            product = root.get("product")
+
+            if isinstance(product, dict):
+                code = str(product.get("code") or product.get("product_code") or "").strip()
+
+                if code:
+                    return code
+
+        return str(presenter._extract_product_code_from_path(path) or "").strip()
+
+    @classmethod
     def finalize_metadata(cls, metadata: dict[str, Any]) -> None:
         if not cls.is_data_only_metadata(metadata):
             return
