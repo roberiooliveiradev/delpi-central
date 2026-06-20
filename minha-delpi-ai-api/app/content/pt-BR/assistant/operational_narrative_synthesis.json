@@ -73,19 +73,29 @@
       "thinker": "operational-synthesis-thinker.md"
     },
     "operational_data": {
-      "fast": "operational-synthesis-fast.md",
-      "normal": "operational-synthesis.md",
-      "thinker": "operational-synthesis-thinker.md"
+      "fast": "operational-synthesis-playbook-fast.md",
+      "normal": "operational-synthesis-playbook.md",
+      "thinker": "operational-synthesis-playbook-thinker.md"
+    },
+    "playbook_data": {
+      "fast": "operational-synthesis-playbook-fast.md",
+      "normal": "operational-synthesis-playbook.md",
+      "thinker": "operational-synthesis-playbook-thinker.md"
+    },
+    "kpi_data": {
+      "fast": "operational-synthesis-kpi-fast.md",
+      "normal": "operational-synthesis-kpi.md",
+      "thinker": "operational-synthesis-kpi-thinker.md"
     },
     "sql_result": {
-      "fast": "operational-synthesis-fast.md",
-      "normal": "operational-synthesis.md",
-      "thinker": "operational-synthesis-thinker.md"
+      "fast": "operational-synthesis-sql-fast.md",
+      "normal": "operational-synthesis-sql.md",
+      "thinker": "operational-synthesis-sql-thinker.md"
     },
     "error_recovery": {
-      "fast": "operational-synthesis-fast.md",
-      "normal": "operational-synthesis.md",
-      "thinker": "operational-synthesis-thinker.md"
+      "fast": "operational-synthesis-error-fast.md",
+      "normal": "operational-synthesis-error.md",
+      "thinker": "operational-synthesis-error-thinker.md"
     }
   }
 }

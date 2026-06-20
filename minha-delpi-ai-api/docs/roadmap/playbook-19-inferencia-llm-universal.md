@@ -102,7 +102,7 @@ Bundles: `presentation_prose_delivery.json`, `operational_narrative_synthesis.js
 | P7.1 | Limites por modo em `response_mode_synthesis_quality.json` | ✅ existente |
 | P7.2 | Smoke ladder Rápida/Normal/Pensador (distância + latência) | ✅ parcial (SMOKE_STRICT + teste estrutural) |
 | P7.3 | Gates CI: min chars, max templateSimilarity, anti-deflection | ✅ parcial |
-| P7.4 | Ajuste prompts `operational-synthesis-*.md` por domínio (SQL/playbook) | 🔲 |
+| P7.4 | Ajuste prompts `operational-synthesis-*.md` por domínio (SQL/playbook/KPI/erro) | ✅ |
 
 ### P8 — Remoção de legado template
 

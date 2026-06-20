@@ -27,6 +27,8 @@ from app.domain.services.chat_rich_presentation_text_service import (
 _SYNTHESIS_PRODUCT_OVERVIEW = "product_overview"
 _SYNTHESIS_SUMMARY_THEN_EVIDENCE = "summary_then_evidence"
 _SYNTHESIS_OPERATIONAL_DATA = "operational_data"
+_SYNTHESIS_PLAYBOOK_DATA = "playbook_data"
+_SYNTHESIS_KPI_DATA = "kpi_data"
 _SYNTHESIS_SQL_RESULT = "sql_result"
 _SYNTHESIS_ERROR_RECOVERY = "error_recovery"
 
@@ -171,8 +173,9 @@ class ChatOperationalNarrativeSynthesisService:
         from app.domain.services.prompt_policy_service import PromptPolicyService
 
         normalized = ChatResponseModeService.normalize(response_mode)
+        policy_kind = cls._resolve_policy_kind(kind, tool_calls)
         policy_name = ChatOperationalNarrativeSynthesisContentService.synthesis_policy(
-            kind,
+            policy_kind,
             normalized,
         )
 
@@ -320,6 +323,19 @@ class ChatOperationalNarrativeSynthesisService:
                 return mapped
 
         return None
+
+    @classmethod
+    def _resolve_policy_kind(cls, kind: str, tool_calls: list | None) -> str:
+        if kind == _SYNTHESIS_OPERATIONAL_DATA:
+            if cls._tool_calls_match_path_markers(
+                tool_calls,
+                cls._content().kpi_path_markers(),
+            ):
+                return _SYNTHESIS_KPI_DATA
+
+            return _SYNTHESIS_PLAYBOOK_DATA
+
+        return kind
 
     @classmethod
     def _tool_calls_match_path_markers(

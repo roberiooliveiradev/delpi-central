@@ -166,3 +166,105 @@ def test_build_prompt_policy_addon_for_operational_synthesis():
     )
 
     assert "Rápida" in addon or "curta" in addon.lower()
+
+
+def test_playbook_path_uses_playbook_domain_policy():
+    addon = ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
+        "top itens de consumo no periodo",
+        response_mode="normal",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/production/consumption/top-items",
+                },
+            }
+        ],
+    )
+
+    assert "ranking / playbook operacional" in addon
+
+
+def test_kpi_path_uses_kpi_domain_policy():
+    addon = ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
+        "qual o cpv do periodo",
+        response_mode="normal",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/production/kpi/cpv",
+                },
+            }
+        ],
+    )
+
+    assert "KPI / indicador" in addon
+
+
+def test_sql_path_uses_sql_domain_policy():
+    addon = ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
+        "consulta sql",
+        response_mode="normal",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/data/sql/rows",
+                },
+            }
+        ],
+    )
+
+    assert "consulta SQL" in addon
+
+
+def test_failed_tool_uses_error_domain_policy():
+    addon = ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
+        "top itens",
+        response_mode="normal",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": False,
+                    "path": "/production/consumption/top-items",
+                    "statusCode": 500,
+                    "responsePreview": "Internal error",
+                },
+            }
+        ],
+    )
+
+    assert "falha de consulta operacional" in addon or "falha operacional" in addon
+
+
+def test_resolve_policy_kind_splits_operational_data():
+    assert (
+        ChatOperationalNarrativeSynthesisService._resolve_policy_kind(
+            "operational_data",
+            [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {"ok": True, "path": "/production/kpi/cpv"},
+                }
+            ],
+        )
+        == "kpi_data"
+    )
+
+    assert (
+        ChatOperationalNarrativeSynthesisService._resolve_policy_kind(
+            "operational_data",
+            [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {"ok": True, "path": "/production/top-items"},
+                }
+            ],
+        )
+        == "playbook_data"
+    )
