@@ -23,6 +23,15 @@ class ChatDrawingBomTableInterpretationService:
         product_code: str | None = None,
     ) -> list[dict[str, Any]]:
         exclude = ChatProductQueryIntentService.normalize_product_code(product_code or "")
+        candidate_tables = [
+            table
+            for table in tables
+            if isinstance(table, dict) and str(table.get("sourceRegion") or "").strip().lower() == "bom"
+        ]
+
+        if candidate_tables:
+            tables = candidate_tables
+
         best_rows: list[dict[str, Any]] = []
         best_score = -1
 
@@ -46,25 +55,25 @@ class ChatDrawingBomTableInterpretationService:
         *,
         product_code: str | None = None,
     ) -> list[dict[str, Any]]:
+        from app.domain.services.chat_pdf_table_structure_service import (
+            ChatPdfTableStructureService,
+        )
+
         meta = metadata if isinstance(metadata, dict) else {}
-        tables: list[dict[str, Any]] = []
+        tables = ChatPdfTableStructureService.extract_from_metadata(meta)
 
-        structured = meta.get("structuredTables")
+        if not tables:
+            document_vision = meta.get("documentVision")
 
-        if isinstance(structured, list):
-            tables.extend(item for item in structured if isinstance(item, dict))
+            if isinstance(document_vision, dict):
+                vision_tables = document_vision.get("tables")
 
-        document_vision = meta.get("documentVision")
+                if isinstance(vision_tables, list):
+                    for item in vision_tables:
+                        normalized = cls._normalize_legacy_table(item)
 
-        if isinstance(document_vision, dict):
-            vision_tables = document_vision.get("tables")
-
-            if isinstance(vision_tables, list):
-                for item in vision_tables:
-                    normalized = cls._normalize_legacy_table(item)
-
-                    if normalized:
-                        tables.append(normalized)
+                        if normalized:
+                            tables.append(normalized)
 
         return cls.bom_rows_from_tables(tables, product_code=product_code)
 
@@ -143,43 +152,166 @@ class ChatDrawingBomTableInterpretationService:
                 for cell in (row.get("cells") or [])
                 if isinstance(cell, dict) and str(cell.get("text") or "").strip()
             }
-            code_raw = cells.get(int(code_col), "")
-            match = ChatDrawingPatternsService.component_code().search(code_raw)
 
-            if not match:
+            if cls._is_noise_cells(cells):
                 continue
 
-            code = ChatProductQueryIntentService.normalize_product_code(match.group(1))
+            resolved = cls._resolve_row_fields(
+                cells,
+                columns=columns,
+                table=table,
+            )
+
+            if resolved is None:
+                continue
+
+            code = resolved["code"]
 
             if not code or code == exclude or code in seen:
                 continue
 
-            quantity = cells.get(int(qty_col), "") if qty_col is not None else ""
-            description = cells.get(int(desc_col), "") if desc_col is not None else ""
-            qty_source = "column"
-
-            if qty_col is not None and not cls._header_matches_role(
-                table,
-                col_index=int(qty_col),
-                role="quantity",
-            ):
-                qty_source = "column_inferred"
-
-            if not quantity and qty_col is None:
-                continue
-
-            rows.append(
-                {
-                    "code": code,
-                    "quantity": cls._normalize_quantity_text(quantity),
-                    "description": (description or None),
-                    "quantitySource": qty_source,
-                    "quantityTrusted": bool(str(quantity or "").strip()),
-                }
-            )
+            rows.append(resolved)
             seen.add(code)
 
         return rows
+
+    @classmethod
+    def _resolve_row_fields(
+        cls,
+        cells: dict[int, str],
+        *,
+        columns: dict[str, int | None],
+        table: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        code_col = columns.get("code")
+        qty_col = columns.get("quantity")
+        desc_col = columns.get("description")
+        code_index: int | None = int(code_col) if code_col is not None else None
+        code_raw = cells.get(int(code_col), "") if code_col is not None else ""
+        match = ChatDrawingPatternsService.component_code().search(code_raw)
+
+        if not match:
+            for col_index in sorted(cells):
+                candidate = cells[col_index]
+                candidate_match = ChatDrawingPatternsService.component_code().search(candidate)
+
+                if candidate_match:
+                    match = candidate_match
+                    code_raw = candidate
+                    code_index = col_index
+                    break
+
+        if not match or code_index is None:
+            return None
+
+        code = ChatProductQueryIntentService.normalize_product_code(match.group(1))
+        quantity = cells.get(int(qty_col), "") if qty_col is not None else ""
+        description = cells.get(int(desc_col), "") if desc_col is not None else ""
+        qty_source = "column"
+
+        if quantity and not cls._looks_like_quantity_cell(quantity):
+            quantity = ""
+
+        if qty_col is not None and not cls._header_matches_role(
+            table,
+            col_index=int(qty_col),
+            role="quantity",
+        ):
+            qty_source = "column_inferred"
+
+        if not quantity:
+            inferred_qty, inferred_col = cls._infer_row_quantity(cells, code_index=code_index)
+
+            if inferred_qty:
+                quantity = inferred_qty
+
+                if inferred_col is not None and (
+                    qty_col is None or inferred_col != int(qty_col)
+                ):
+                    qty_source = "column_inferred"
+
+        if not quantity and qty_col is None and not description:
+            description = cls._infer_row_description(cells, code_index=code_index)
+
+            if not description:
+                return None
+
+        if not description:
+            description = cls._infer_row_description(cells, code_index=code_index)
+
+        return {
+            "code": code,
+            "quantity": cls._normalize_quantity_text(quantity),
+            "description": (description or None),
+            "quantitySource": qty_source,
+            "quantityTrusted": bool(str(quantity or "").strip()),
+        }
+
+    @classmethod
+    def _infer_row_quantity(
+        cls,
+        cells: dict[int, str],
+        *,
+        code_index: int,
+    ) -> tuple[str, int | None]:
+        for offset in (-2, -1, 1, 2):
+            col_index = code_index + offset
+            candidate = cells.get(col_index, "")
+
+            if candidate and cls._looks_like_quantity_cell(candidate):
+                return candidate, col_index
+
+        return "", None
+
+    @classmethod
+    def _infer_row_description(
+        cls,
+        cells: dict[int, str],
+        *,
+        code_index: int,
+    ) -> str:
+        for col_index in sorted(cells):
+            if col_index <= code_index:
+                continue
+
+            candidate = cells[col_index]
+
+            if len(candidate) >= 8 and not ChatDrawingPatternsService.component_code().search(
+                candidate
+            ):
+                return candidate
+
+        return ""
+
+    @classmethod
+    def _looks_like_quantity_cell(cls, raw: str) -> bool:
+        text = str(raw or "").strip()
+
+        if not text:
+            return False
+
+        upper = text.upper()
+
+        if upper in {"PC", "UN", "UM", "MI", "MT", "KG", "M", "MM"}:
+            return False
+
+        if upper == "PI":
+            return True
+
+        cleaned = text.replace(",", ".")
+
+        if re.fullmatch(r"\d{1,4}(?:\.\d+)?", cleaned):
+            return True
+
+        return False
+
+    @classmethod
+    def _is_noise_cells(cls, cells: dict[int, str]) -> bool:
+        from app.domain.services.chat_pdf_table_structure_service import (
+            ChatPdfTableStructureService,
+        )
+
+        return ChatPdfTableStructureService.is_noise_row(cells)
 
     @classmethod
     def _infer_missing_columns(
@@ -205,9 +337,16 @@ class ChatDrawingBomTableInterpretationService:
             return result
 
         for role in missing_roles:
-            candidate = cls._best_profile_column(profiles, role, assigned=set(result.values()))
+            candidate = cls._best_profile_column(
+                profiles,
+                role,
+                assigned=set(result.values()),
+            )
 
             if candidate is not None:
+                if role == "position" and candidate > 2:
+                    continue
+
                 result[role] = candidate
                 continue
 
@@ -219,7 +358,13 @@ class ChatDrawingBomTableInterpretationService:
             )
 
             if layout_col is not None:
+                if role == "position" and layout_col > 2:
+                    continue
+
                 result[role] = layout_col
+
+        if result.get("position") is not None and int(result["position"]) > 2:
+            result["position"] = None
 
         if result.get("code") is not None and result.get("quantity") is None:
             adjacent = cls._adjacent_quantity_column(
@@ -466,7 +611,7 @@ class ChatDrawingBomTableInterpretationService:
                 if isinstance(cell, dict) and str(cell.get("text") or "").strip()
             }
 
-            if cells:
+            if cells and not cls._is_noise_cells(cells):
                 rows.append(cells)
 
         return rows
@@ -662,6 +807,33 @@ class ChatDrawingBomTableInterpretationService:
             return cleaned
 
         return text
+
+    @classmethod
+    def prefer_row(
+        cls,
+        existing: dict[str, Any],
+        candidate: dict[str, Any],
+    ) -> dict[str, Any]:
+        existing_source = str(existing.get("quantitySource") or "")
+        candidate_source = str(candidate.get("quantitySource") or "")
+        trusted_sources = {"column", "column_inferred", "refined_column", "annotation"}
+
+        if candidate_source in trusted_sources and existing_source not in trusted_sources:
+            return dict(candidate)
+
+        if existing_source in trusted_sources and candidate_source not in trusted_sources:
+            return dict(existing)
+
+        if candidate.get("quantityTrusted") and not existing.get("quantityTrusted"):
+            return dict(candidate)
+
+        if existing.get("quantityTrusted") and not candidate.get("quantityTrusted"):
+            return dict(existing)
+
+        if candidate_source in trusted_sources:
+            return dict(candidate)
+
+        return dict(existing)
 
     @classmethod
     def _score_rows(cls, rows: list[dict[str, Any]]) -> int:

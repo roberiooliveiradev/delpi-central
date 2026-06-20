@@ -41,6 +41,18 @@ Port genérico, interpretação colunar, OCR por célula, orquestração `ChatDr
 
 **Limitação:** PDF `90263149` live ainda tem corpo BOM fragmentado no OCR regional; inferência de colunas exige corpo legível. Próximo: refinamento célula (15.8.2) no pipeline live.
 
+### 15.8.2b — Parse tabular/OCR regional do corpo BOM ✅
+
+| Artefato | Mudança |
+|----------|---------|
+| `ChatPdfTableStructureService` | Re-ancoragem por linha-âncora (score largura/QTD), filtro de ruído OCR, linhas parciais 2 colunas, dedupe por qualidade |
+| `document_vision.json` → `tableStructure.rowParsing` | Marcadores de cabeçalho, `rowAnchorMinDigits`, padrões de ruído |
+| `ChatDocumentVisionContentService` | Loaders `table_structure_header_markers`, `table_structure_noise_row_patterns`, … |
+| `ChatDrawingBomTableInterpretationService` | Resolução code/qty por linha; filtro `sourceRegion=bom`; `prefer_row`; metadata via `extract_from_metadata` |
+| `ChatDrawingPdfBomExtractionService` / `ChatDrawingBomVisionRefinementService` | Merge colunar preferencial |
+
+**Resultado `90263149` live:** `columnRowCount` 12+; `10090050.quantity=null` (pending/refino) em vez de `6.35` da descrição; smoke E2E sem crítico `bom_quantity_mismatch`.
+
 ### Pendente (15.8.4–15.8.6)
 
 Assertividade gate batch, policy follow-up, `--assertiveness-gate` — ver playbook § 5.

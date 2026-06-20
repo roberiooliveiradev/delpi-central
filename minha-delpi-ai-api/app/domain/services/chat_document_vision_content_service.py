@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
@@ -466,3 +467,89 @@ class ChatDocumentVisionContentService:
             )
             or "--psm 7 -c tessedit_char_whitelist=0123456789.,"
         ).strip()
+
+    @classmethod
+    def _table_structure_row_parsing(cls, key: str, default: Any = None) -> Any:
+        return ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "tableStructure",
+            "rowParsing",
+            key,
+            default=default,
+        )
+
+    @classmethod
+    def table_structure_header_markers(cls) -> tuple[str, ...]:
+        raw = cls._table_structure_row_parsing("headerMarkers", [])
+
+        if not isinstance(raw, list):
+            return tuple()
+
+        resolved: list[str] = []
+
+        for item in raw:
+            token = str(item or "").strip().upper()
+
+            if token and token not in resolved:
+                resolved.append(token)
+
+        return tuple(resolved)
+
+    @classmethod
+    def table_structure_header_scan_max_lines(cls) -> int:
+        raw = cls._table_structure_row_parsing("headerScanMaxLines", 24)
+
+        try:
+            return max(4, int(raw))
+        except (TypeError, ValueError):
+            return 24
+
+    @classmethod
+    def table_structure_header_min_marker_hits(cls) -> int:
+        raw = cls._table_structure_row_parsing("headerMinMarkerHits", 2)
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 2
+
+    @classmethod
+    def table_structure_row_anchor_min_digits(cls) -> int:
+        raw = cls._table_structure_row_parsing("rowAnchorMinDigits", 8)
+
+        try:
+            return max(4, int(raw))
+        except (TypeError, ValueError):
+            return 8
+
+    @classmethod
+    def table_structure_min_partial_row_columns(cls) -> int:
+        raw = cls._table_structure_row_parsing("minPartialRowColumns", 2)
+
+        try:
+            return max(2, int(raw))
+        except (TypeError, ValueError):
+            return 2
+
+    @classmethod
+    def table_structure_noise_row_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        raw = cls._table_structure_row_parsing("noiseRowPatterns", [])
+
+        if not isinstance(raw, list):
+            return tuple()
+
+        compiled: list[re.Pattern[str]] = []
+
+        for item in raw:
+            pattern = str(item or "").strip()
+
+            if not pattern:
+                continue
+
+            try:
+                compiled.append(re.compile(pattern, re.IGNORECASE))
+            except re.error:
+                continue
+
+        return tuple(compiled)

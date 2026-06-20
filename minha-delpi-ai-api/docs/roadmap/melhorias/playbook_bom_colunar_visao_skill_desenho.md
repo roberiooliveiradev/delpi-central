@@ -217,8 +217,6 @@ Campos opcionais para adminDebug / export — **não** viram pergunta ao usuári
 
 ### 15.8.1b — Inferência de colunas com cabeçalho OCR corrompido ✅
 
-Quando o OCR distorce rótulos (`cóvico`, `vescrição —`, `iremjarD`) mas o **corpo** da tabela permanece legível (layout POS/UM/QTD/CÓDIGO/DESCRIÇÃO):
-
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
 | 15.8.1b.1 | Resolução em 3 passadas: exato → fuzzy (edit distance) → inferência por perfil colunar | domain (skill) | `resolve_column_indices` |
@@ -226,10 +224,11 @@ Quando o OCR distorce rótulos (`cóvico`, `vescrição —`, `iremjarD`) mas o 
 | 15.8.1b.3 | `quantitySource: column_inferred` + trust em assertiveness | domain (skill) | `criticalRequiresQuantitySource` inclui `column_inferred` |
 | 15.8.1b.4 | Testes fixture cabeçalho corrompido + corpo legível | tests | `10090050` QTD=`1`, não `6.35` da descrição |
 
-**Limitação conhecida (`90263149` live):** se o **corpo** também vem fragmentado (`{0: 'D', 1: 'o1'}`), `columnRowCount` permanece 0 — próximo passo: OCR regional por célula (15.8.2) ou parse tabular do chat base.
+**Limitação mitigada (15.8.2b):** parse tabular re-ancora após ruído OCR e linhas parciais (`10090050 | descrição`); QTD ausente vira `pending`, não `6.35` da descrição.
 
 Loader: `ChatDrawingPatternsService.bom_column_inference_rule` / `bom_column_default_layout`.
 
+### 15.8.2 — Refinamento de célula (skill orquestra, chat base executa)
 
 | ID | Entrega | Camada | DoD |
 |----|---------|--------|-----|
@@ -237,6 +236,16 @@ Loader: `ChatDrawingPatternsService.bom_column_inference_rule` / `bom_column_def
 | 15.8.2.2 | Chama `TableCellRefinementPort.refine_cell` | application (skill) | `drawing_stamp.json` → `bomRowRefinement` (DPI, tentativas) |
 | 15.8.2.3 | Parser QTD MI/PC na skill | domain (skill) | Rejeita ruído descrição |
 | 15.8.2.4 | Regressão 90263149 | tests | QTD colunar × SG1010 |
+
+### 15.8.2b — Parse tabular/OCR regional do corpo BOM ✅
+
+| ID | Entrega | Camada | DoD |
+|----|---------|--------|-----|
+| 15.8.2b.1 | `ChatPdfTableStructureService` — re-ancoragem, ruído, linhas parciais | chat base | `document_vision.json` → `tableStructure.rowParsing` |
+| 15.8.2b.2 | Dedupe prefere tabela mais rica (`structuredTables` × `regionTexts`) | chat base | `_table_quality` |
+| 15.8.2b.3 | Interpretação por linha (código/QTD desalinhados) + filtro `sourceRegion=bom` | skill | `ChatDrawingBomTableInterpretationService` |
+| 15.8.2b.4 | Merge colunar × linha (`prefer_row`) | skill | `10090050`: `quantity=null`, não `6.35` |
+| 15.8.2b.5 | Testes snippet OCR real + dedupe | tests | `test_chat_pdf_table_structure_service.py` |
 
 ### 15.8.3 — Orquestração refinamento (skill application)
 
@@ -285,7 +294,14 @@ Loader: `ChatDrawingPatternsService.bom_column_inference_rule` / `bom_column_def
   "pdfExtraction": {
     "tableStructure": {
       "enabled": true,
-      "maxColumns": 12,
+      "maxRows": 40,
+      "minColumns": 3,
+      "rowParsing": {
+        "headerScanMaxLines": 24,
+        "rowAnchorMinDigits": 8,
+        "minPartialRowColumns": 2,
+        "noiseRowPatterns": ["^[DO\\s|lo/@\"'.]+$"]
+      },
       "cellRefinement": {
         "maxAttempts": 3,
         "dpiMultiplier": 2.0,

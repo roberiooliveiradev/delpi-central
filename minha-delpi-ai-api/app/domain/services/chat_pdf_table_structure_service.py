@@ -11,6 +11,8 @@ from app.domain.services.chat_document_vision_content_service import (
 
 
 class ChatPdfTableStructureService:
+    _ANCHOR_PATTERN: re.Pattern[str] | None = None
+
     @classmethod
     def extract_from_metadata(cls, metadata: dict[str, Any] | None) -> list[dict[str, Any]]:
         if not cls.enabled():
@@ -312,21 +314,59 @@ class ChatPdfTableStructureService:
         return ChatDocumentVisionContentService.table_structure_min_columns()
 
     @classmethod
+    def is_noise_row(cls, cells: list[str] | dict[int, str]) -> bool:
+        if isinstance(cells, dict):
+            values = [str(value or "").strip() for value in cells.values() if str(value or "").strip()]
+        else:
+            values = [str(value or "").strip() for value in cells if str(value or "").strip()]
+
+        if not values:
+            return True
+
+        joined = " | ".join(values)
+
+        for pattern in ChatDocumentVisionContentService.table_structure_noise_row_patterns():
+            if pattern.search(joined):
+                return True
+
+        if cls._row_has_anchor_cell(values):
+            return False
+
+        if all(len(value) <= 6 for value in values) and all(
+            re.fullmatch(r"[DO0-9\s./|]+", value, re.IGNORECASE) for value in values
+        ):
+            return True
+
+        if all(len(value) <= 2 for value in values):
+            return True
+
+        return False
+
+    @classmethod
     def _parse_rows(cls, text: str) -> list[list[str]]:
         if "|" in text and cls._looks_like_tabular_header(text):
-            return cls._parse_delimited_rows(text, delimiter="|")
+            parsed = cls._parse_delimited_rows(text, delimiter="|")
+
+            if parsed:
+                return cls._reanchor_table_rows(parsed)
 
         if "\t" in text:
             parsed = cls._parse_delimited_rows(text, delimiter="\t")
 
             if parsed:
-                return parsed
+                return cls._reanchor_table_rows(parsed)
 
-        return cls._parse_whitespace_rows(text)
+        parsed = cls._parse_whitespace_rows(text)
+
+        if parsed:
+            return cls._reanchor_table_rows(parsed)
+
+        return parsed
 
     @classmethod
     def _parse_delimited_rows(cls, text: str, *, delimiter: str) -> list[list[str]]:
         rows: list[list[str]] = []
+        min_partial = ChatDocumentVisionContentService.table_structure_min_partial_row_columns()
 
         for line in text.splitlines():
             stripped = str(line or "").strip()
@@ -334,17 +374,25 @@ class ChatPdfTableStructureService:
             if not stripped or stripped.replace(delimiter, "").strip() == "":
                 continue
 
-            if delimiter == "|":
-                cells = [cell.strip() for cell in stripped.strip("|").split("|")]
-            else:
-                cells = [cell.strip() for cell in stripped.split(delimiter)]
-
-            cells = [cell for cell in cells if cell]
+            cells = cls._split_delimited_cells(stripped, delimiter=delimiter)
 
             if len(cells) >= cls.min_columns():
                 rows.append(cells)
+                continue
+
+            if len(cells) >= min_partial and cls._row_has_anchor_cell(cells):
+                rows.append(cells)
 
         return rows
+
+    @classmethod
+    def _split_delimited_cells(cls, line: str, *, delimiter: str) -> list[str]:
+        if delimiter == "|":
+            cells = [cell.strip().strip("._") for cell in line.strip("|").split("|")]
+        else:
+            cells = [cell.strip().strip("._") for cell in line.split(delimiter)]
+
+        return [cell for cell in cells if cell]
 
     @classmethod
     def _parse_whitespace_rows(cls, text: str) -> list[list[str]]:
@@ -365,20 +413,203 @@ class ChatPdfTableStructureService:
         return rows
 
     @classmethod
+    def _reanchor_table_rows(cls, rows: list[list[str]]) -> list[list[str]]:
+        if len(rows) < 2:
+            return rows
+
+        anchor_index = cls._first_anchor_row_index(rows)
+
+        if anchor_index is None:
+            filtered = [rows[0]] + [
+                row for row in rows[1:] if not cls.is_noise_row(row)
+            ]
+            return filtered if len(filtered) >= 2 else rows
+
+        header_candidates = rows[:anchor_index]
+
+        if not header_candidates:
+            header = rows[0]
+            body = rows[anchor_index:]
+        else:
+            body = rows[anchor_index:]
+            header = cls._pick_header_row(
+                header_candidates,
+                body_width=len(body[0]) if body else len(header_candidates[-1]),
+            )
+            body = rows[anchor_index:]
+
+        filtered_body = [row for row in body if not cls.is_noise_row(row)]
+
+        if not filtered_body:
+            filtered_body = body
+
+        normalized_body = [cls._normalize_body_row(row, header_width=len(header)) for row in filtered_body]
+
+        return [header] + normalized_body
+
+    @classmethod
+    def _first_anchor_row_index(cls, rows: list[list[str]]) -> int | None:
+        scan_limit = min(
+            len(rows),
+            ChatDocumentVisionContentService.table_structure_header_scan_max_lines(),
+        )
+        best_index: int | None = None
+        best_score = float("-inf")
+
+        for index in range(scan_limit):
+            row = rows[index]
+
+            if not cls._row_has_anchor_cell(row):
+                continue
+
+            score = cls._anchor_row_score(row)
+
+            if score > best_score:
+                best_score = score
+                best_index = index
+
+        return best_index
+
+    @classmethod
+    def _anchor_row_score(cls, cells: list[str]) -> float:
+        width = len(cells)
+        anchor_hits = sum(1 for cell in cells if cls._anchor_pattern().search(str(cell or "")))
+        score = float(anchor_hits)
+
+        if 4 <= width <= 6:
+            score += 10.0
+        elif width == 3:
+            score += 4.0
+        elif width > 7:
+            score -= 6.0
+
+        if anchor_hits == 1:
+            score += 5.0
+        elif anchor_hits > 1:
+            score -= 4.0
+
+        if cls._row_has_short_quantity_cell(cells):
+            score += 3.0
+
+        return score
+
+    @classmethod
+    def _row_has_short_quantity_cell(cls, cells: list[str]) -> bool:
+        for cell in cells:
+            text = str(cell or "").strip().replace(",", ".")
+
+            if re.fullmatch(r"\d{1,4}(?:\.\d+)?", text):
+                return True
+
+        return False
+
+    @classmethod
+    def _pick_header_row(
+        cls,
+        candidates: list[list[str]],
+        *,
+        body_width: int,
+    ) -> list[str]:
+        if not candidates:
+            return []
+
+        min_hits = ChatDocumentVisionContentService.table_structure_header_min_marker_hits()
+        marked = [
+            row
+            for row in candidates
+            if cls._header_score(row) >= min_hits and not cls._row_has_anchor_cell(row)
+        ]
+
+        if marked:
+            return max(marked, key=lambda row: (cls._header_score(row), len(row)))
+
+        without_anchor = [row for row in candidates if not cls._row_has_anchor_cell(row)]
+
+        if without_anchor:
+            return max(
+                without_anchor,
+                key=lambda row: (cls._header_score(row), -abs(len(row) - body_width), len(row)),
+            )
+
+        return max(candidates, key=len)
+
+    @classmethod
+    def _header_score(cls, cells: list[str]) -> int:
+        markers = ChatDocumentVisionContentService.table_structure_header_markers()
+        min_hits = ChatDocumentVisionContentService.table_structure_header_min_marker_hits()
+        joined = " ".join(str(cell or "") for cell in cells).upper()
+        hits = sum(1 for marker in markers if marker in joined)
+
+        if hits >= min_hits:
+            return hits
+
+        if cls._row_has_anchor_cell(cells):
+            return 0
+
+        return hits
+
+    @classmethod
+    def _row_has_anchor_cell(cls, cells: list[str]) -> bool:
+        pattern = cls._anchor_pattern()
+
+        for cell in cells:
+            if pattern.search(str(cell or "")):
+                return True
+
+        return False
+
+    @classmethod
+    def _anchor_pattern(cls) -> re.Pattern[str]:
+        if cls._ANCHOR_PATTERN is None:
+            digits = ChatDocumentVisionContentService.table_structure_row_anchor_min_digits()
+            cls._ANCHOR_PATTERN = re.compile(rf"\b\d{{{digits},}}\b")
+
+        return cls._ANCHOR_PATTERN
+
+    @classmethod
+    def _normalize_body_row(cls, cells: list[str], *, header_width: int) -> list[str]:
+        if header_width <= 0 or len(cells) >= header_width:
+            return cells
+
+        padded = list(cells)
+
+        while len(padded) < header_width:
+            padded.append("")
+
+        return padded[:header_width]
+
+    @classmethod
     def _dedupe_tables(cls, tables: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        seen: set[str] = set()
-        resolved: list[dict[str, Any]] = []
+        best_by_id: dict[str, dict[str, Any]] = {}
 
         for table in tables:
             table_id = str(table.get("tableId") or "").strip()
 
-            if not table_id or table_id in seen:
+            if not table_id:
                 continue
 
-            seen.add(table_id)
-            resolved.append(table)
+            existing = best_by_id.get(table_id)
 
-        return resolved
+            if existing is None or cls._table_quality(table) >= cls._table_quality(existing):
+                best_by_id[table_id] = table
+
+        return list(best_by_id.values())
+
+    @classmethod
+    def _table_quality(cls, table: dict[str, Any]) -> tuple[int, int]:
+        rows = table.get("rows")
+
+        if not isinstance(rows, list):
+            return (0, 0)
+
+        row_count = len(rows)
+        cell_count = sum(
+            len(row.get("cells") or [])
+            for row in rows
+            if isinstance(row, dict)
+        )
+
+        return (row_count, cell_count)
 
     @classmethod
     def _looks_like_tabular_header(cls, text: str) -> bool:
@@ -386,7 +617,7 @@ class ChatPdfTableStructureService:
             if "|" not in line:
                 continue
 
-            cells = [cell.strip() for cell in line.strip("|").split("|") if cell.strip()]
+            cells = cls._split_delimited_cells(line, delimiter="|")
 
             if len(cells) >= cls.min_columns():
                 return True

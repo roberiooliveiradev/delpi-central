@@ -101,6 +101,29 @@
       "enabled": true,
       "maxRows": 40,
       "minColumns": 3,
+      "rowParsing": {
+        "headerScanMaxLines": 24,
+        "headerMinMarkerHits": 2,
+        "headerMarkers": [
+          "POS",
+          "COD",
+          "CODIGO",
+          "CÓDIGO",
+          "QTD",
+          "QTDE",
+          "UM",
+          "DESC",
+          "DESCRI",
+          "DESCR"
+        ],
+        "rowAnchorMinDigits": 8,
+        "minPartialRowColumns": 2,
+        "noiseRowPatterns": [
+          "^[DO\\s|lo/@\"'.\\[\\]{}]+$",
+          "^ol+[/o|]+$",
+          "^=+.*\\|.*$"
+        ]
+      },
       "cellRefinement": {
         "maxAttempts": 3,
         "dpiMultiplier": 2.0,

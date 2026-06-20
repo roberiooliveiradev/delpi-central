@@ -163,8 +163,16 @@ class ChatDrawingPdfBomExtractionService:
 
             code = str(row.get("code") or "").strip()
 
-            if code:
+            if not code:
+                continue
+
+            prior = by_code.get(code)
+
+            if prior is None:
                 by_code[code] = row
+                continue
+
+            by_code[code] = ChatDrawingBomTableInterpretationService.prefer_row(prior, row)
 
         return list(by_code.values())
 
