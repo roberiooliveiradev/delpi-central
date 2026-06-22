@@ -101,8 +101,11 @@ class ChatResponseModeSynthesisQualityService:
 
         fast_elapsed = float(fast.get("elapsedSec") or 0.0)
         normal_elapsed = float(normal.get("elapsedSec") or 0.0)
+        both_commentary_direct = bool(fast.get("directResponse")) and bool(
+            normal.get("directResponse")
+        )
 
-        if fast_elapsed and normal_elapsed:
+        if fast_elapsed and normal_elapsed and not both_commentary_direct:
             elapsed_ratio_limit = ChatResponseModeSynthesisQualityContentService.mode_ladder_float(
                 "fastMaxElapsedVsNormalRatio",
                 default=1.25,
@@ -196,14 +199,23 @@ class ChatResponseModeSynthesisQualityService:
 
         if pipeline.get("directResponse"):
             allowed = ChatResponseModeSynthesisQualityContentService.pipeline_modes_allowing_direct_response()
+
             if mode not in allowed:
                 gaps.append(
                     "pipeline.directResponse=true — resposta ainda veio do template/direct answer"
                 )
-            elif effect != "llm_synthesis_brief":
-                gaps.append(
-                    f"pipeline.directResponse=true em {mode!r} exige responseModeEffect llm_synthesis_brief, veio {effect!r}"
+            else:
+                expected_effect = (
+                    ChatResponseModeSynthesisQualityContentService.pipeline_direct_response_effect(
+                        mode
+                    )
                 )
+
+                if expected_effect and effect != expected_effect:
+                    gaps.append(
+                        f"pipeline.directResponse=true em {mode!r} exige "
+                        f"responseModeEffect {expected_effect!r}, veio {effect!r}"
+                    )
 
         return gaps
 

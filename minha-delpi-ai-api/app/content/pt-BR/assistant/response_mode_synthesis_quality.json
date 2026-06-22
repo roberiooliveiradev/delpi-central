@@ -72,6 +72,10 @@
     "minPairwiseContentDistance": 0.06
   },
   "pipeline": {
-    "allowDirectResponseModes": ["fast"]
+    "allowDirectResponseModes": ["fast", "normal"],
+    "directResponseEffects": {
+      "fast": "llm_synthesis_brief",
+      "normal": "llm_synthesis"
+    }
   }
 }

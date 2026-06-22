@@ -61,3 +61,16 @@ class ChatResponseModeSynthesisQualityContentService:
             for item in ChatAssistantContentService.list(_BUNDLE, "pipeline", "allowDirectResponseModes")
             if str(item).strip()
         )
+
+    @classmethod
+    def pipeline_direct_response_effect(cls, mode: str) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "pipeline",
+                "directResponseEffects",
+                str(mode or "").strip().lower(),
+                default="",
+            )
+            or ""
+        ).strip()
