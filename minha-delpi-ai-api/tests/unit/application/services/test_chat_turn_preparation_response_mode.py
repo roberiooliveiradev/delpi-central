@@ -1,6 +1,9 @@
 from app.application.services.chat_turn.chat_turn_preparation_post_tool_resolution_service import (
     ChatTurnPreparationPostToolResolutionService,
 )
+from app.domain.services.chat_meta_llm_synthesis_service import (
+    ChatMetaLlmSynthesisService,
+)
 from app.domain.services.chat_user_profile_llm_synthesis_service import (
     ChatUserProfileLlmSynthesisService,
 )
@@ -95,10 +98,35 @@ def test_post_tool_user_identity_routes_to_llm_not_direct_answer():
 
     assert result.direct_answer is None
     assert result.skip_rag is True
-    assert result.tool_context.get(ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FLAG)
+    assert result.tool_context.get(ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_LLM_SYNTHESIS)
     assert (
-        result.tool_context.get(ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FACTS)
+        result.tool_context.get(ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS)
         == profile
+    )
+    assert result.tool_context.get(ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FLAG)
+    assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
+
+
+def test_post_tool_capabilities_question_routes_to_llm_not_direct_answer():
+    caps = (
+        "Posso ajudar você nestes formatos:\n\n"
+        "**Sempre disponíveis (chat comum e agentes)**\n"
+        "- Respostas com base na documentação autorizada (RAG)."
+    )
+    result = _resolve_post_tool(
+        message="o que você pode fazer?",
+        pipeline_stages=[],
+        tool_context={},
+        tool_calls=[],
+        resolve_capabilities_answer=lambda _message: caps,
+        response_mode="normal",
+    )
+
+    assert result.direct_answer is None
+    assert result.skip_rag is True
+    assert caps in result.tool_context.get(
+        ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS,
+        "",
     )
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
 

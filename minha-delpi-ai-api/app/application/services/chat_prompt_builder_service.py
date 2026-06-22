@@ -120,6 +120,7 @@ class ChatPromptBuilderService:
         text_task_attachment_context: str | None = None,
         user_context: str | None = None,
         profile_synthesis_facts: str | None = None,
+        meta_synthesis_tool_context: dict | None = None,
         skills: dict | None = None,
         response_mode: str | None = None,
         tool_calls: list | None = None,
@@ -229,6 +230,7 @@ class ChatPromptBuilderService:
                 "content": self._compose_user_message(
                     current_message,
                     profile_synthesis_facts=profile_synthesis_facts,
+                    tool_context=meta_synthesis_tool_context,
                 ),
             }
         )
@@ -240,12 +242,14 @@ class ChatPromptBuilderService:
         current_message: str,
         *,
         profile_synthesis_facts: str | None = None,
+        tool_context: dict | None = None,
     ) -> str:
-        from app.domain.services.chat_user_profile_llm_synthesis_service import (
-            ChatUserProfileLlmSynthesisService,
+        from app.domain.services.chat_meta_llm_synthesis_service import (
+            ChatMetaLlmSynthesisService,
         )
 
-        return ChatUserProfileLlmSynthesisService.resolve_user_message_content(
+        return ChatMetaLlmSynthesisService.resolve_user_message_content(
             message=current_message,
-            profile_synthesis_facts=profile_synthesis_facts,
+            synthesis_facts=profile_synthesis_facts,
+            tool_context=tool_context,
         )

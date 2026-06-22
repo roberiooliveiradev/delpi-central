@@ -317,5 +317,11 @@
       "agent_selection",
       "rag"
     ]
+  },
+  "llmSynthesis": {
+    "userMessageLead": "Responda em linguagem natural com os fatos canônicos sobre o assistente abaixo. Não invente origem, stack ou histórico — use somente o que está no bloco.",
+    "userMessageQuestionPrefix": "Pergunta:",
+    "factsSectionTitle": "Sobre o assistente nesta conversa",
+    "compoundSectionTitle": "Sobre o assistente"
   }
 }

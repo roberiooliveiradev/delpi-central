@@ -1211,5 +1211,11 @@
     "Esse componente é crítico? Mostre onde é usado, saldo e compras recentes.",
     "Compare compra, venda e estoque desse produto.",
     "Quais produtos de um grupo estão sem estoque, mas tiveram venda recente?"
-  ]
+  ],
+  "llmSynthesis": {
+    "userMessageLead": "Responda em linguagem natural com o catálogo real de capacidades abaixo. Liste o que está disponível nesta sessão — não invente rotas, APIs ou ferramentas que não apareçam nos fatos.",
+    "userMessageQuestionPrefix": "Pergunta:",
+    "factsSectionTitle": "Capacidades desta sessão",
+    "compoundSectionTitle": "O que você pode fazer aqui"
+  }
 }

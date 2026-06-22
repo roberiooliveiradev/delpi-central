@@ -88,6 +88,14 @@ class ChatTurnPreparationPostToolResolutionService:
             tool_context=tool_context,
             pipeline_stages=pipeline_stages,
             resolve_profile_facts=resolve_user_identity_answer,
+            workspace_context=workspace_context,
+            resolve_capabilities_facts=resolve_capabilities_answer,
+            resolve_assistant_identity_facts=lambda _message: (
+                ChatAssistantIdentityService.build_direct_answer(
+                    message=message,
+                    workspace_context=workspace_context,
+                )
+            ),
         )
         tool_context = profile_prep.tool_context
         pipeline_stages = profile_prep.pipeline_stages
@@ -103,6 +111,7 @@ class ChatTurnPreparationPostToolResolutionService:
         if (
             assistant_identity_question
             and resolve_chat_intelligence_runtime().assistant_identity_direct_enabled
+            and not profile_prep.skip_compound_direct_answers
         ):
             assistant_identity_direct = ChatAssistantIdentityService.build_direct_answer(
                 message=message,
@@ -124,7 +133,7 @@ class ChatTurnPreparationPostToolResolutionService:
             or operational_optimize
             or analysis_mode
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
-            or bool(assistant_identity_direct)
+            or (assistant_identity_question and profile_prep.skip_rag)
         )
 
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService

@@ -17,8 +17,8 @@ def test_apply_identity_llm_route_skips_direct_answers():
     assert result.skip_user_direct_answer is True
     assert result.skip_rag is True
     assert result.skip_meta_direct_answer is True
-    assert result.skip_compound_direct_answers is False
-    assert result.tool_context[ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FLAG]
+    assert result.skip_compound_direct_answers is True
+    assert result.tool_context["metaLlmSynthesis"] is True
     assert (
         ChatUserProfileLlmSynthesisService.PIPELINE_STAGE_IDENTITY_LLM_SYNTHESIS
         in result.pipeline_stages

@@ -58,7 +58,9 @@ Wrappers especializados (mantêm API estável):
 | `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
 | `drawing_stamp.json` | Rótulos de carimbo, regiões, **`layoutAnalysis`** (XY-Cut), exclusões cliente/BOM, clarificações, gate nativo (Onda 14), padrões de cota/decape, **`bomColumnHeaders`** / **`bomColumnInference`** / **`bomRowRefinement`** / **`bomComparison`** (15.8) | `ChatDrawingStampExtractionService`, `ChatDrawingPageLayoutAnalysisService`, `ChatDrawingDimensionsExtractionService`, `ChatDrawingPatternsService`, `ChatDrawingBomTableInterpretationService`, `ChatDrawingBomComparisonService` |
 | `document_vision.json` | Intent OCR, VLM, `pdfExtraction` (fusão, perfis `generic`/`drawing_delpi`); **`pdfExtraction.tableStructure`** + **`rowParsing`** (15.8.2b, genérico) | `ChatDocumentVisionContentService`, `ChatPdfDocumentExtractionService`, `ChatPdfTableStructureService`, `ChatDocumentVisionSkillService` |
-| `user_context.json` | Respostas diretas sobre perfil e papéis | `ChatUserContextService` |
+| `user_context.json` | Respostas diretas sobre perfil e papéis; `llmSynthesis` para prosa LLM | `ChatUserContextService`, `ChatUserProfileContentService` |
+| `capabilities.json` | Catálogo de capacidades; `llmSynthesis` para prosa LLM | `ChatCapabilitiesService`, `ChatCapabilitiesContentService` |
+| `identity.json` | Identidade do assistente; `llmSynthesis` para prosa LLM | `ChatAssistantIdentityService`, `ChatAssistantIdentityContentService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
 | `humanized_data_response.json` | Templates de resumo, alertLevel, limitações, próximas ações e camadas de leitura (Playbook 13) | `ChatHumanizedDataResponseContentService`, `ChatHumanizedDataResponseService` |
 | `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
@@ -67,7 +69,6 @@ Wrappers especializados (mantêm API estável):
 | `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
 | `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
 | `interactivity.json` | Chips, refinamentos | Vários serviços de interatividade |
-| `identity.json` | Quem é você, perfil | `ChatAssistantIdentityService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
 | `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |

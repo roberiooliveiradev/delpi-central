@@ -284,11 +284,11 @@ Perguntas como «quem é você», «quem te criou», «o que você é» (não co
 | Etapa | Comportamento |
 |-------|----------------|
 | Classificação | `ChatAssistantIdentityService.is_assistant_identity_question` / `classify` (categorias: `who`, `origin`, `role`, `what`, `limits`, `usage`) |
-| Resposta | **`build_direct_answer`** montada dinamicamente via `ChatAgentProfileService` (`name`, `description`, `systemPrompt` publicados; override opcional em `metadata.identity.responses`) quando `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=true` (default) — **sem RAG nem LLM** |
-| Desligar atalho | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=false` — volta RAG + LLM + policy `chat-assistant-identity.md` |
+| Síntese LLM (padrão com `llmProseEverywhere`) | `ChatMetaLlmTurnPreparationService` injeta `build_direct_answer` em `toolContext.metaSynthesisFacts` + policy `chat-assistant-identity.md` — **sem RAG**, prosa pelo modelo |
+| Atalho legado | `build_direct_answer` direto quando `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=true` **e** a rota meta LLM não está ativa |
 | RAG (modo legado) | `build_rag_query`, `RAG_IDENTITY_QUESTION_MIN_SCORE`, filtro `is_identity_relevant_chunk` (rejeita `Normas_Tecnicas_*` mesmo com “DELPI” no trecho) |
 
-Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com perfil RBAC completo nem chamam o Ollama.
+Com síntese LLM ativa, o modelo recebe fatos canônicos (nome do agente, papel, limites) e compõe a resposta — evita alucinação de origem/stack sem consulta pesada.
 
 ### Perfil do usuário («quem sou eu»)
 
@@ -296,12 +296,27 @@ Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com per
 |-------|----------------|
 | Intenção | `ChatUserProfileIntentService` — termos em `user_context.json` → `identityTerms` |
 | Fonte | `GET {CORE_API_BASE_URL}/me` + `me/access-profile` via `ChatUserContextService` |
-| Turno | `ChatUserProfileTurnPreparationService` — estágio `identity_llm_synthesis`, sem resposta direta |
-| Síntese LLM | `ChatUserProfileLlmSynthesisService` — fatos (`build_direct_answer`) em `toolContext.userProfileSynthesisFacts` + policy `chat-user-profile.md` |
+| Turno | `ChatMetaLlmTurnPreparationService` — estágio `meta_llm_synthesis` / `identity_llm_synthesis`, sem resposta direta |
+| Síntese LLM | `ChatMetaLlmSynthesisService` — fatos (`build_direct_answer`) em `toolContext.metaSynthesisFacts` + policy `chat-user-profile.md` |
 | Prompt | `ChatUserProfileContentService` (`promptContext`, `llmSynthesis`) + PII no contexto quando titular (`should_include_pii_in_llm_context`) |
 | Consentimento | `GET {CORE_API_BASE_URL}/me/consents` — com `LGPD_REQUIRE_AI_CONSENT=true`, PII entra no prompt LLM **só** em perguntas sobre o próprio usuário |
 
-Perguntas compostas (perfil + capacidades + assistente) também seguem síntese LLM — `skip_compound_direct_answers` evita atalhos isolados de capacidade/identidade do assistente.
+### Capacidades («o que você pode fazer?»)
+
+| Etapa | Comportamento |
+|-------|----------------|
+| Intenção | `ChatCapabilitiesService.is_capabilities_question` (não confundir com ajuda por tópico ou release notes) |
+| Fonte | `ChatCapabilitiesService.build_direct_answer` — catálogo da sessão (skills, actions, exemplos) |
+| Síntese LLM | Mesmo pipeline meta — `capabilities.json` → `llmSynthesis` + policy `chat-capabilities.md` |
+| Direct legado | Suprimido quando a rota meta LLM está ativa (`skip_isolated_meta_direct_answers`) |
+
+### Perguntas meta compostas
+
+Mensagens que misturam perfil + capacidades + identidade do assistente (`ChatMetaDirectAnswerService.detect_intents`) recebem **um** bloco com seções `##` em `metaSynthesisSections`; o LLM responde em prosa única sem atalhos isolados por domínio.
+
+**Smokes:** `scripts/smoke_identity_profile.py`, `scripts/smoke_meta_llm_responses.py`.
+
+**Testes:** `test_chat_meta_llm_synthesis_service.py`, `test_chat_meta_llm_turn_preparation_service.py`, `test_chat_turn_preparation_response_mode.py`.
 
 ### Small talk (maio/2026)
 
