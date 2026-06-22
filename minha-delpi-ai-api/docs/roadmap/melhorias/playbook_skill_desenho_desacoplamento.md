@@ -240,7 +240,7 @@ DRAWING_VALIDATE_CODES=90262008,90264243,90264227 \
 .venv/bin/python -m pytest tests/unit/domain/services/test_drawing_validation_content.py -q
 ```
 
-**Gate proposto (Fase C):** `scripts/audit_drawing_validation_registry.py --check` — todo `templateKey` em `drawing_validation.json` tem `rule_id` no registry e teste mínimo.
+**Gate proposto (Fase C):** `scripts/audit_drawing_validation_registry.py --check` — todo `templateKey` em `drawing_validation.json` tem `rule_id` no registry **e** toda regra tem caso de regressão ou teste de serviço dedicado.
 
 ---
 
@@ -251,7 +251,7 @@ DRAWING_VALIDATE_CODES=90262008,90264243,90264227 \
 - [x] Turn prep hidrata `drawingAnalysis` em follow-ups e injeta policy render-only (`ChatDrawingLlmPresentationService`)
 - [x] `drawing_validation_rules.json` cobre todas as regras ativas do orchestrator
 - [x] Família PA desliga regra sem alterar skill nem agente
-- [ ] Novos fixes entram como caso de **regra** + teste de serviço (não só `test_*_90xxxxxx.py`)
+- [x] Novos fixes entram como caso de **regra** + teste de serviço (`drawing_validation_rule_regression_cases.py`)
 - [ ] Checklist UI e relatório LLM concordam (mesmo `items[]`)
 - [ ] RAG normativo não define status OK/Pendente/Crítico
 

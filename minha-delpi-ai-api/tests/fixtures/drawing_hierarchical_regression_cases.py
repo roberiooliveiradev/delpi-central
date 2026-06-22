@@ -137,6 +137,19 @@ DRAWING_HIERARCHICAL_REGRESSION_CASES: tuple[DrawingHierarchicalCase, ...] = (
         expected_product_code="90264233",
         notes="Regressão acertos atuais.",
     ),
+    DrawingHierarchicalCase(
+        id="H14",
+        pdf=None,
+        expected_product_code="90262008",
+        fixture={
+            "stampText": (
+                "ES EXECUTADO VERIFICADO | LIBERADO | DATA\n"
+                "| 20/08/24 04 |\n"
+                "90262008 REV.08\n"
+            ),
+        },
+        notes="Revisão interna tabela carimbo — regra revision_cross_check (Fase C).",
+    ),
 )
 
 
