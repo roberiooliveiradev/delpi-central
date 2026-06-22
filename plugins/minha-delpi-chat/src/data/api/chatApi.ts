@@ -51,6 +51,7 @@ import type {
 } from "./chatTypes";
 import {
   fetchChatApi,
+  fetchChatApiBootstrap,
   formatTransientChatApiMessage,
   isTransientHttpStatus,
 } from "./chatApiFetch";
@@ -181,7 +182,7 @@ async function postFormData<T>(
 export async function getChatCapabilities(
   options: ChatApiOptions = {},
 ): Promise<ChatCapabilities> {
-  const response = await fetchChatApi(`${API_BASE_URL}/chat/capabilities`, {
+  const response = await fetchChatApiBootstrap(`${API_BASE_URL}/chat/capabilities`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -258,7 +259,7 @@ export async function createChatSession(
 export async function getChatResponseModes(
   options: ChatApiOptions = {},
 ): Promise<ChatResponseModesResponse> {
-  const response = await fetchChatApi(`${API_BASE_URL}/chat/response-modes`, {
+  const response = await fetchChatApiBootstrap(`${API_BASE_URL}/chat/response-modes`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -280,7 +281,7 @@ export async function listChatSessions(
     ? `${API_BASE_URL}/chat/sessions?${queryString}`
     : `${API_BASE_URL}/chat/sessions`;
 
-  const response = await fetchChatApi(url, {
+  const response = await fetchChatApiBootstrap(url, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -998,7 +999,7 @@ export async function listChatAgents(
   }
 
   const query = params.toString() ? `?${params.toString()}` : "";
-  const response = await fetchChatApi(`${API_BASE_URL}/chat/agents${query}`, {
+  const response = await fetchChatApiBootstrap(`${API_BASE_URL}/chat/agents${query}`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });
@@ -1285,7 +1286,7 @@ export async function upsertChatAgentAction(
 export async function listChatProjects(
   options: ChatApiOptions = {},
 ): Promise<ChatProject[]> {
-  const response = await fetchChatApi(`${API_BASE_URL}/chat/projects`, {
+  const response = await fetchChatApiBootstrap(`${API_BASE_URL}/chat/projects`, {
     method: "GET",
     headers: await getAuthHeaders(options),
   });

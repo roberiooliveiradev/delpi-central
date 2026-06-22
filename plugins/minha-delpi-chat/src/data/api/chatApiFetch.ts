@@ -1,6 +1,18 @@
 const TRANSIENT_HTTP_STATUSES = new Set([502, 503, 504]);
 
+/** Retry curto para chamadas interativas (envio, stream, etc.). */
 const DEFAULT_RETRY_DELAYS_MS = [350, 700, 1400, 2800];
+
+/**
+ * Retry longo para cold start / rebuild de container (nginx 502 enquanto a API sobe).
+ * ~127s de backoff antes de desistir.
+ */
+export const BOOTSTRAP_RETRY_DELAYS_MS = [
+  500, 1000, 2000, 4000, 8000, 16000, 32000, 64000,
+];
+
+/** Retentativas automáticas na UI após esgotar o fetch bootstrap. */
+export const BOOTSTRAP_UI_AUTO_RETRY_DELAYS_MS = [3000, 6000, 12000, 24000, 48000];
 
 export function isTransientHttpStatus(status: number): boolean {
   return TRANSIENT_HTTP_STATUSES.has(status);
@@ -44,6 +56,13 @@ export async function fetchChatApi(
   }
 
   throw new Error("Falha ao comunicar com o Minha DELPI Chat.");
+}
+
+export async function fetchChatApiBootstrap(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  return fetchChatApi(input, init, BOOTSTRAP_RETRY_DELAYS_MS);
 }
 
 export function formatTransientChatApiMessage(status: number): string {

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  BOOTSTRAP_RETRY_DELAYS_MS,
   fetchChatApi,
   isBootstrapLoadErrorMessage,
   isTransientHttpStatus,
@@ -27,6 +28,11 @@ describe("chatApiFetch", () => {
     expect(response.status).toBe(200);
 
     vi.unstubAllGlobals();
+  });
+
+  it("bootstrap expõe backoff longo para cold start", () => {
+    expect(BOOTSTRAP_RETRY_DELAYS_MS.length).toBeGreaterThan(4);
+    expect(BOOTSTRAP_RETRY_DELAYS_MS.at(-1)).toBeGreaterThanOrEqual(32000);
   });
 
   it("classifica mensagens de bootstrap", () => {

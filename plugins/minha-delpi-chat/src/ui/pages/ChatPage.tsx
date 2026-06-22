@@ -10,6 +10,7 @@ import {
 } from "../components/shell/ChatOnboardingTour";
 import "./ChatPage.css";
 import "../layout/chat-layout.css";
+import { useChatBootstrapAutoRetry } from "../../state/hooks/useChatBootstrapAutoRetry";
 import { useChatLayout } from "../../state/hooks/useChatLayout";
 import { ChatInput, type ChatInputAttachment } from "../components/composer";
 import { ChatInlineError } from "../components/shared/ChatInlineError";
@@ -1107,6 +1108,14 @@ export function ChatPage({
     loadProjects,
     loadSessions,
   ]);
+
+  const isBootstrapAutoRetrying = useChatBootstrapAutoRetry({
+    bootstrapLoadError,
+    isLoadingSessions,
+    isLoadingAgents,
+    isLoadingProjects,
+    reloadBootstrapData,
+  });
 
   const { isDesktop, isLandscape, isNarrow } = useChatLayout();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -2600,7 +2609,8 @@ export function ChatPage({
             }}
           />
 
-          {error || workspaceError || unansweredTurnRecovery ? (
+          {(error || workspaceError || unansweredTurnRecovery) &&
+          !(bootstrapLoadError && isBootstrapAutoRetrying) ? (
             <ChatInlineError
               title={
                 error?.includes("diálogo dos atalhos") ||
