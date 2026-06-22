@@ -79,7 +79,8 @@ infrastructure/           Postgres, Ollama/vLLM, HTTP api-delpi, loaders JSON
 
 **Regra de ouro:** melhorias de inteligência vão em `domain/services` ou `application/services` compartilhados — **nunca** só no prompt de um agente ou só no use case.
 
-Playbook detalhado: [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md).
+Playbook detalhado: [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md).  
+Organização dos ~600 services: [`../roadmap/playbook-20-organizacao-services-chat.md`](../roadmap/playbook-20-organizacao-services-chat.md).
 
 ---
 

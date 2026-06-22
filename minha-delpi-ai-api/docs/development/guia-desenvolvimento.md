@@ -128,6 +128,10 @@ app/
 
 6. É novo endpoint HTTP?
    → interfaces/http/routes/ + use case + composition/make_*
+
+7. Dúvida sobre camada, nome ou pasta do service?
+   → docs/roadmap/playbook-20-organizacao-services-chat.md
+   → python3 scripts/audit_service_inventory.py --summary
 ```
 
 ### 3.2 Checklist de implementação

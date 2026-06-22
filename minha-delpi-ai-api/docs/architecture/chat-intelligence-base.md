@@ -22,6 +22,8 @@ Melhorias de inteligência (comparação, insights, fast path operacional, respo
 
 **Clean architecture (roadmap):** [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md) — revisão de camadas, débitos, fases 0–6 e baseline [`clean-architecture-baseline.json`](./clean-architecture-baseline.json).
 
+**Organização dos services:** [`../roadmap/playbook-20-organizacao-services-chat.md`](../roadmap/playbook-20-organizacao-services-chat.md) — taxonomia domain/application, código morto, convenções; auditoria `scripts/audit_service_inventory.py`.
+
 **ADRs:** [`adr/README.md`](./adr/README.md) — decisões aceitas (chat base, paridade send/stream, JSON, ports, HTTP modular, gate de conteúdo).
 
 ---

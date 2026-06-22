@@ -35,6 +35,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [playbook-17-importacao-arquivos-e-fontes-unificada.md](./playbook-17-importacao-arquivos-e-fontes-unificada.md) | **Playbook 17 (MVP concluído):** kit `WorkspaceFileDropzone`/`Card`, policy API, polling sessão; backlog: orchestrator + poll cross-família. |
 | [playbook-chat-preco-mp-simulador-custos-pa.md](./playbook-chat-preco-mp-simulador-custos-pa.md) | Integração chat preço MP + simulador PA (Fase 0 do Playbook 15). |
 | [playbook-11-clean-architecture-chat-api.md](./playbook-11-clean-architecture-chat-api.md) | **Playbook 11:** clean architecture — revisão, roadmap por fases, checklist de PR, baseline de auditoria. |
+| [playbook-20-organizacao-services-chat.md](./playbook-20-organizacao-services-chat.md) | **Playbook 20:** organização dos services (`domain/services`, `application/services`) — taxonomia, código morto, convenções, auditoria. |
 | [docie-desacoplamento-selecao-rotas-openapi.md](./docie-desacoplamento-selecao-rotas-openapi.md) | **DOCIE (proposta):** mapa de acoplamentos api-delpi na seleção de rotas + plano para registry declarativo generalista. |
 | [../architecture/adr/README.md](../architecture/adr/README.md) | **ADRs** do chat — decisões de camadas, JSON, ports e CI (Fase 6). |
 | [playbook-06-erros-resultados-vazios.md](./playbook-06-erros-resultados-vazios.md) | **Playbook 06:** erros e vazios — classificação, templates, chips de recuperação (E1–E15). |
