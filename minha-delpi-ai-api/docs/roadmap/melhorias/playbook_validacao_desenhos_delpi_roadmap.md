@@ -10,7 +10,7 @@
 | Action principal | `get_product_analyser` → `GET /products/{code}/analyser?view=full` |
 | Orquestrador | `ChatDrawingValidationOrchestrationService` |
 | Vocabulário checklist | `drawing_validation.json` |
-| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md) · [Extração PDF](../../architecture/chat-pdf-document-extraction.md) · [Layout de página](../../architecture/chat-drawing-page-layout-analysis.md) |
+| Playbooks relacionados | [Análise de desenhos](./playbook_skill_analise_desenhos_delpi.md) · [OCR hierárquico](./playbook_ocr_hierarquico_desenhos_delpi.md) · [Extração PDF](../../architecture/chat-pdf-document-extraction.md) · [Layout de página](../../architecture/chat-drawing-page-layout-analysis.md) · [**Desacoplamento skill**](./playbook_skill_desenho_desacoplamento.md) |
 | Changelog layout/confiança jun/2026 | [2026-06-drawing-layout-confidence-gate.md](../../changelog/2026-06-drawing-layout-confidence-gate.md) |
 | Changelog BOM jun/2026 | [2026-06-drawing-bom-pa-families.md](../../changelog/2026-06-drawing-bom-pa-families.md) |
 | Changelog validação jun/2026 | [2026-06-drawing-validation-roadmap.md](../../changelog/2026-06-drawing-validation-roadmap.md) |
@@ -296,6 +296,7 @@ DRAWING_VALIDATE_CODES=90263149,90262834,90263622,90264227 \
 3. **15.4** — cobertura multipágina (transparência 90263622).
 4. **15.5** — notas dimensionais (90262834).
 5. **15.6** — quantidades, balões, registry declarativo.
+6. **16.0** — desacoplamento skill × pipeline → [playbook_skill_desenho_desacoplamento.md](./playbook_skill_desenho_desacoplamento.md) (Fases A–E).
 
 ---
 
@@ -303,6 +304,7 @@ DRAWING_VALIDATE_CODES=90263149,90262834,90263622,90264227 \
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [playbook_skill_desenho_desacoplamento.md](./playbook_skill_desenho_desacoplamento.md) | Policy fina, registry completo, testes por regra, LLM render-only |
 | [inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) | MVP skill + validação |
 | [inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) | Extração que alimenta validação |
 | [chat-pdf-document-extraction.md](../../architecture/chat-pdf-document-extraction.md) | BOM, cotas, famílias PA |

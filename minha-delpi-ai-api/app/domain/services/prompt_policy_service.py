@@ -93,6 +93,16 @@ class PromptPolicyService:
         "scope: project_source",
     )
 
+    DRAWING_ANALYSIS_MARKERS = (
+        "drawinganalysismode",
+        "drawinganalysisexport",
+        "drawinganalysis",
+        "checklist completo",
+        "relatório de análise",
+        "relatorio de analise",
+        "templatekey",
+    )
+
     def build_system_prompt(self) -> str:
         return self._join_policy_sections(
             self._load_policy("base.md"),
@@ -255,6 +265,9 @@ class PromptPolicyService:
 
         if self._contains_any(normalized_rag_context, self.PROJECT_SOURCE_MARKERS):
             sections.append(self._load_policy("project-sources-content.md"))
+
+        if self._contains_any(normalized_tool_context, self.DRAWING_ANALYSIS_MARKERS):
+            sections.append(self._load_policy("drawing-analysis-render-only.md"))
 
         if not resolved_skills.get("sqlAuthoring") and (
             self._contains_any(normalized_rag_context, self.SQL_MARKERS)

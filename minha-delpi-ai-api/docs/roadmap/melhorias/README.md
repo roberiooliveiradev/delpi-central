@@ -28,6 +28,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Visão / OCR documentos (chat base) | [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial (MVP) — [Onda 13](../inteligencia-chat-onda-13-skill-visao-documentos-ocr.md); Tesseract+PyMuPDF; Docling/VLM backlog |
 | **OCR hierárquico desenhos** | [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Backlog** — [Onda 14](../inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md); carimbo base-direita, resolução de código sem prefixo `902` |
 | **Validação normativa PDF × API (Onda 15)** | [playbook_validacao_desenhos_delpi_roadmap.md](./playbook_validacao_desenhos_delpi_roadmap.md) | **Parcial** — 15.0–15.7 ✅; **15.8** BOM colunar + loop visão → [playbook](./playbook_bom_colunar_visao_skill_desenho.md) |
+| **Skill desenho desacoplada (jun/2026)** | [playbook_skill_desenho_desacoplamento.md](./playbook_skill_desenho_desacoplamento.md) | **Backlog** — Fases A–E: policy fina, registry, testes por regra, LLM render-only |
 | Metadados Protheus | [api-delpi-chat-intelligence-audit.md](../api-delpi-chat-intelligence-audit.md) | `/system/tables/*` + [smoke](../../testing/smoke-system-metadata-homologacao.md) |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência arquivada — ver [STATUS](./STATUS_ROADMAP_MELHORIAS.md) |
 

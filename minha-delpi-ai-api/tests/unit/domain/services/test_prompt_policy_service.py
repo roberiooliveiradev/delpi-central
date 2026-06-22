@@ -227,13 +227,27 @@ def test_contextual_prompt_includes_project_sources_policy():
     assert "nunca" in prompt.lower() and "acessar arquivos" in prompt.lower()
 
 
-def test_contextual_prompt_includes_project_sources_policy():
+def test_contextual_prompt_includes_drawing_render_only_when_analysis_in_tool_context():
     service = PromptPolicyService()
 
     prompt = service.build_contextual_prompt(
-        rag_context="[Fonte 1]\nEscopo: project_source\nTrecho: conteúdo do treinamento",
-        tool_context="",
+        rag_context="",
+        tool_context=(
+            '{"drawingAnalysisMode": true, "drawingAnalysis": {"items": ['
+            '{"item": "Revisão", "status": "ok", "templateKey": "revision_cross_ok"}]}}'
+        ),
+        skills={"drawingAnalysis": True},
     )
 
-    assert "fontes do projeto" in prompt.lower()
-    assert "nunca" in prompt.lower() and "acessar arquivos" in prompt.lower()
+    assert "Modo render-only" in prompt
+    assert "não altere" in prompt.lower()
+    assert "drawingAnalysis.items" in prompt or "drawingAnalysisExport" in prompt
+
+
+def test_drawing_skill_policy_is_decoupled_from_validation_rules():
+    policy_path = PromptPolicyService.POLICY_DIR / "drawing-analysis-delpi-skill.md"
+    content = policy_path.read_text(encoding="utf-8").lower()
+
+    assert "pipeline" in content
+    assert "revisão divergente: erro crítico" not in content
+    assert "componente faltante ou extra na bom: erro crítico" not in content

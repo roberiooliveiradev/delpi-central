@@ -2,7 +2,7 @@
 
 **Status:** parcial (Fases 1–5 + E2E live + intent `drawing_analysis` no pipeline — maio/2026); extração carimbo/código → [Onda 14](./inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md)  
 **Criado:** 2026-05-29  
-**Playbook de produto:** [playbook_skill_analise_desenhos_delpi.md](./melhorias/playbook_skill_analise_desenhos_delpi.md) (`drawing-analysis-delpi`) · extração hierárquica: [playbook OCR hierárquico](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) · **validação normativa (Onda 15):** [playbook_validacao_desenhos_delpi_roadmap.md](./melhorias/playbook_validacao_desenhos_delpi_roadmap.md)  
+**Playbook de produto:** [playbook_skill_analise_desenhos_delpi.md](./melhorias/playbook_skill_analise_desenhos_delpi.md) (`drawing-analysis-delpi`) · extração hierárquica: [playbook OCR hierárquico](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) · **validação normativa (Onda 15):** [playbook_validacao_desenhos_delpi_roadmap.md](./melhorias/playbook_validacao_desenhos_delpi_roadmap.md) · **desacoplamento skill (backlog):** [playbook_skill_desenho_desacoplamento.md](./melhorias/playbook_skill_desenho_desacoplamento.md)  
 **Pré-requisitos:** [Onda 11](./inteligencia-chat-onda-11-paridade-assistentes.md), [arquitetura chat base](../architecture/chat-intelligence-base.md), sync GPT_instructions ([coverage map](../knowledge/gpt-instructions-coverage-map.md))
 
 ---

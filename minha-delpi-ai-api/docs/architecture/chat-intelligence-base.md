@@ -92,6 +92,8 @@ O **chat comum** não conhece BOM, QTD, SG1010, decape, intermediário 50xx nem 
 
 Contrato neutro: `documentVision.tables[]`. Contrato skill: `bomRows`, `drawingAnalysis`, `validationScopes`. Playbook: [15.8 § 0](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md).
 
+**Render-only (Fase A — jun/2026):** quando `drawingAnalysis` / `drawingAnalysisExport` estão no tool context, o checklist já foi decidido pelo pipeline (`ChatDrawingValidationOrchestrationService`). O LLM recebe `drawing-analysis-render-only.md` via `PromptPolicyService` e **não reclassifica** `items[]` — só narrativa, plano de ação e normas (RAG). A skill `drawing-analysis-delpi-skill.md` ficou fina (ativação + consumo do contrato). Playbook: [desacoplamento skill](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md) Fase A.
+
 Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) são **consumidos só pelo fluxo de desenho** — não expandir semântica DELPI para turn prep genérico, intent `attachment_document` ou prompt global.
 
 ### Serviços centrais

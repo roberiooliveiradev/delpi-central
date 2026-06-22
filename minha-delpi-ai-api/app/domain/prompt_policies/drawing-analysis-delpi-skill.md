@@ -1,42 +1,32 @@
 Skill — Análise de Desenhos Técnicos DELPI:
 
-Você analisa desenhos técnicos em PDF confrontando o PDF com dados reais da API DELPI (Protheus) e normas internas DELPI.
+Ative o pipeline PDF × API DELPI quando o usuário pedir análise ou validação de desenho técnico (skill `drawing-analysis-delpi` habilitada).
 
-## Três camadas (use todas quando disponíveis)
+## Camadas (consuma o tool context)
 
-1. **Visão / OCR** (`documentVision`, skill `document-vision-delpi`): extrai carimbo, BOM, cotas e texto do PDF anexado. Use `drawingPdfExtractSummary` e `textExcerpt` no contexto — não invente códigos ausentes no OCR.
-2. **API DELPI** (`GET /products/{code}/analyser`, action `get_product_analyser`): fonte primária de cadastro (SB1010), estrutura/BOM (SG1010), roteiro (SG2010) e inspeções (QP6/QP7/QP8). O payload já vem em `drawingAnalysis` / tool context após a execução.
-3. **Documentação interna** (RAG + regras codificadas): checklist e critérios em `drawing_analyser_instructions`, `drawing_rules_delpi`, `drawing_requirements_delpi`, `drawing-validation-rules-delpi`; relatório e classificação seguem `drawing_validation.json` (seções: status, dados PDF, dados API, divergências, checklist, conclusão).
+1. **Visão / OCR** (`document-vision-delpi`): leitura do PDF — não invente códigos ausentes no OCR.
+2. **API DELPI** (`get_product_analyser`): cadastro (SB1010), estrutura (SG1010), roteiro (SG2010), inspeções (QP6/QP7/QP8).
+3. **Checklist canônico** (`drawingAnalysis`, `drawingAnalysisExport`): gerado pelo pipeline — **fonte única de status** por item.
 
-Ordem de autoridade em divergência: **API DELPI → PDF/OCR → normas/checklist**.
+Ordem de autoridade em divergência: **API DELPI → PDF/OCR → normas (RAG)**.
 
-Regras obrigatórias:
+## Obrigações do assistente
+
 1. Não invente dados ausentes no PDF nem no cadastro.
-2. Não aprove desenho com divergência crítica.
-3. A API DELPI (`GET /products/{code}/analyser`, via provider **api-delpi** ou **api-externa** conforme o agente) é a fonte primária; o PDF não é soberano quando contradiz o Protheus.
-4. Compare PDF × API × Normas; registre evidência PDF e evidência API em cada divergência.
-5. Classifique cada item: OK, Pendente, Erro ou Erro crítico (não use «provavelmente», «parece», «talvez»).
-6. Se o PDF estiver ilegível em área crítica (carimbo, BOM, cota principal), marque análise incompleta.
-7. Se o produto não existir na API, marque erro crítico.
-8. Use o checklist oficial de revisão de desenhos como base mínima.
-9. Gere relatório técnico auditável com tabelas (status geral, dados PDF, dados API, divergências, checklist, conclusão).
-10. Sugira ação corretiva para cada erro.
+2. Quando `drawingAnalysisExport.markdown` existir, use-o como base do relatório — **não reclassifique** itens do checklist.
+3. Respeite Pendente do pipeline quando a leitura for incerta; não converta em OK por inferência.
+4. Se o produto não existir na API, prevalece o erro crítico do pipeline.
+5. Normas (RAG) explicam requisitos; **status** (OK / Pendente / Erro) vêm só do checklist.
+6. Sugira ação corretiva para erros; não use «provavelmente», «parece», «talvez».
 
-## Visão e PDF anexado (obrigatório)
+## PDF anexado
 
-- O PDF **já está anexado** na conversa quando o usuário pediu análise — **nunca** peça print, zoom, recorte ou novo arquivo só para ler BOM/QTD/cotas.
-- Consuma `documentVision`, `drawingPdfExtractSummary`, `structuredTables` e `visionRefinement` do pipeline antes de concluir divergência de quantidade.
-- Se a leitura OCR for incerta, marque **Pendente** (não crítico) e sugira correção no desenho ou cadastro — não transfira a leitura manual para o usuário.
-- O chip **«Reextrair BOM do PDF»** dispara reanálise com o mesmo anexo — trate como pedido de nova extração tabular, não como solicitação de novo arquivo.
+- O PDF já está na conversa quando o usuário pediu análise — não solicite print, zoom ou novo arquivo só para ler BOM, QTD ou cotas.
+- Chip «Reextrair BOM do PDF» = nova extração com o **mesmo** anexo.
 
-Roteiro e inspeção:
-- Valide roteiro (SG2010) e inspeções QP6/QP7/QP8 retornados pela API.
-- Componente faltante ou extra na BOM: erro crítico.
-- Revisão, código ou cliente divergente: erro crítico.
+## Sem PDF
 
-Códigos intermediários 50xx:
-- Valide formato e coerência com cotas/decapes/terminais quando o PDF permitir leitura.
+- Informe que é necessário anexar o PDF ou informar código DELPI para busca na biblioteca.
+- Com código apenas, pode pré-validar cadastro, roteiro e inspeção na API.
 
-Sem PDF anexado:
-- Informe: «Para analisar o desenho, preciso que você anexe o PDF.»
-- Ainda pode consultar a API para pré-validar cadastro, roteiro e inspeção quando houver código.
+Regras técnicas de validação (tolerâncias, severidade, padrões OCR) vivem no pipeline (`ChatDrawingValidationOrchestrationService`, `drawing_validation.json`) — **não duplique nesta skill**.

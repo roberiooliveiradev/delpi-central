@@ -28,6 +28,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — OCR PDF/imagem; regiões hierárquicas → Onda 14 |
 | [playbook_ocr_hierarquico_desenhos_delpi.md](./playbook_ocr_hierarquico_desenhos_delpi.md) | **Parcial** | Onda 14: 14.1–14.4 + 14.7 ✅; homologação 13/13; 14.5–14.6 BOM/cotas ⬜ |
 | [playbook_validacao_desenhos_delpi_roadmap.md](./playbook_validacao_desenhos_delpi_roadmap.md) | **Parcial** | Onda 15: 15.0–15.7 ✅; **15.8** BOM colunar → [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md) |
+| [playbook_skill_desenho_desacoplamento.md](./playbook_skill_desenho_desacoplamento.md) | **Backlog** | Fases A–E — policy fina, registry completo, LLM render-only, testes por regra |
 | [playbook_bom_colunar_visao_skill_desenho.md](./playbook_bom_colunar_visao_skill_desenho.md) | **Backlog** | Fase 15.8 — OCR coluna QTD, loop skill→visão, assertividade 95% |
 | [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
 

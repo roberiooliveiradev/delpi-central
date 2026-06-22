@@ -318,7 +318,8 @@ def test_drawing_analysis_policy_documents_three_layers():
         / "drawing-analysis-delpi-skill.md"
     ).read_text(encoding="utf-8")
 
-    assert "documentVision" in policy
-    assert "/analyser" in policy
-    assert "drawing_validation.json" in policy
+    assert "documentVision" in policy or "document-vision-delpi" in policy
+    assert "/analyser" in policy or "get_product_analyser" in policy
+    assert "drawing_validation.json" in policy or "pipeline" in policy.lower()
     assert "API DELPI" in policy
+    assert "não reclassifique" in policy.lower()

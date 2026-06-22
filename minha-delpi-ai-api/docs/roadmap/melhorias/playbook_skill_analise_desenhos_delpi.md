@@ -726,6 +726,7 @@ Alinhado à [Onda 12](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md
 | **4 — Relatório avançado** | Evidências por página; severidade; plano de ação; export; lousa | 12.4 |
 | **5 — UI interativa** | Progresso; chips filtro; seções; reanálise; comparar revisões | 12.4.2, MFE |
 | **6 — Qualidade e auditoria** | Métricas; histórico; dashboard; feedback; testes D1–D12 | 12.5 |
+| **7 — Desacoplamento skill** | Policy fina; registry; testes por regra; LLM render-only | → [playbook desacoplamento](./playbook_skill_desenho_desacoplamento.md) Fases A–E |
 
 ### Pipeline (referência implementação)
 
