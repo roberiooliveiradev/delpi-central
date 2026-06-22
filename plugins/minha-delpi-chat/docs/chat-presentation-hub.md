@@ -35,7 +35,8 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Chart axis, agregação, build-from-table | `presentation/pipeline/chart*.ts`, `buildChartPresentationFromTable.ts` | 29 |
 | Tree flatten/export, chart payload normalize, explain fallback | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts`, `chartExplain.ts` | 30, 32 |
 | Formatação célula KPI/tabela | `presentation/tableCellFormatting.ts` | 34 |
-| Export CSV/XLSX/PDF/PNG e lousa markdown | `presentation/export/exportUtils.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts`, `dashboardExportCsv.ts` | 38 |
+| Export CSV/XLSX/PNG e lousa markdown | `presentation/export/exportUtils.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts`, `dashboardExportCsv.ts` | 38 |
+| Export PDF + dispatch central | `src/export/` (`runChatExport`, `pdf/delpiDocumentHtml.ts`) — ver [`export.md`](./export.md) | jun/2026 |
 | Readers metadata (`get*FromToolCalls`, render plan, coverage) | `presentation/presentationMetadataReaders.ts` | 39 |
 | Normalização markdown (`strip*`, `tablePresentationToMarkdown`) | `presentation/presentationMarkdownNormalization.ts` | 40 |
 | Pair resolver (merge tabelas/gráficos, `PresentationPair`) | `presentation/presentationPairResolver.ts` | 41 |
@@ -45,7 +46,8 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Layout stack vs single, ordem visual | `message/assistantContentLayout.ts` | 20+ |
 
 Barrel do pipeline: `presentation/pipeline/index.ts`.  
-Barrel de export: `presentation/export/index.ts` (consumo via `presentation/index.ts` ou `./presentation/export`).
+Barrel de export: `presentation/export/index.ts` ou **`src/export/index.ts`** (preferido para PDF/dispatch).  
+Documentação: [`export.md`](./export.md).
 
 ## Regras de import
 

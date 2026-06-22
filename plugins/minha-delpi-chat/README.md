@@ -14,6 +14,7 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 | Admin (componentes) | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
 | **Refatoração frontend (roadmap)** | [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md) |
 | Estrutura de componentes | [docs/component-structure.md](docs/component-structure.md) |
+| **Exportação (CSV/XLSX/PDF/PNG)** | [docs/export.md](docs/export.md) |
 | CSS apresentação rica | [docs/rich-presentation-css.md](docs/rich-presentation-css.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
@@ -49,6 +50,7 @@ O Nginx serve `dist/` em `/apps/minha-delpi-chat/assets/`.
 
 ```text
 src/
+  export/            # Módulo canônico: runChatExport, PDF certificado DELPI (ver docs/export.md)
   data/api/          # chatApi.ts, adminApi.ts, tipos
   state/             # chatStreamHandoff.ts, chatMessageDelivery.ts
   state/hooks/       # useChatSession, useChatAdmin, …
@@ -70,7 +72,7 @@ Ver roadmap: [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.
 - Mensagens com streaming, fontes, tool calls e anexos (cards na timeline com `readingStatus`; edição de anexos ao **reenviar** pergunta com preview em card/modal)
 - Log de atividade em tempo real (SSE `activity`) com três pontos pulsando durante o carregamento
 - Tabelas/gráficos/árvore/KPI via **`ChatAssistantContent`** — ver [Apresentação no chat](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md)
-- **Exportação de apresentações:** tabelas, gráficos, árvores, KPIs e dashboards expõem **CSV**, **Excel** e **PDF** na toolbar (`ChatPresentationExportButtons` + `presentation/export/exportUtils.ts`); gráficos mantêm **PNG**; PDF de gráfico usa rasterização SVG quando disponível
+- **Exportação:** tabelas, gráficos, árvores, KPIs e dashboards — **CSV**, **Excel** e **PDF** via módulo [`src/export/`](docs/export.md) (`ChatPresentationExportButtons` + `runChatExport`); gráficos mantêm **PNG**; **PDF** usa layout certificado DELPI (logo, cabeçalho e rodapé — mesmo visual do relatório de desenho); desenho técnico exporta PDF/MD/CSV/XLSX com `ChatDrawingExportButtons`
 - **Lousa (canvas):** card inline na conversa com prévia do markdown + modal para editar/salvar; comando «coloque na lousa/canvas» após uma resposta do assistente
 - Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
 - **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor

@@ -82,7 +82,7 @@ Campo exposto nas respostas: `pa_reference` (e `product.pa_reference`).
 | `GET /products/directives/{identifier}` | estrutura + cobertura estoque | Por 1 PA |
 | `GET /products/{code}/factory-status` | blocos structure / stock | Por 1 PA |
 
-### 3.4 Quantidades operacionais (OP / apontamento)
+### 3.3 Quantidades operacionais (OP / apontamento)
 
 | Artefato | Caminho |
 |----------|---------|
@@ -103,8 +103,7 @@ Para `C2_UM = MI` ou `B1_UM = MI` em rotas de OP/cronograma/apontamento:
 
 Rotas: `/production/schedule/today`, `/production/orders/open`, `/production/orders/finished`, `/production/orders/by-op/{op}`, OEE (listagem e detalhe de apontamento).
 
-
-Ver também [`playbook-simulador-impacto-custos-pa.md`](./playbook-simulador-impacto-custos-pa.md).
+### 3.4 Fórmula do simulador de custo
 
 ```text
 extended_cost = quantity_per_pa × unit_cost

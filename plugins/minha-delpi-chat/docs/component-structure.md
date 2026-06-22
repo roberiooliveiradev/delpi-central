@@ -1,38 +1,38 @@
 # Estrutura de componentes — Minha DELPI Chat (MFE)
 
-> Atualizado em **17/06/2026** após PR-1–51 — **Fase H concluída** ([`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)).
+> Atualizado em **22/06/2026** — módulo `src/export/` (exportação centralizada + PDF certificado DELPI).
 
 ## Mapa de pastas feature
 
 ```text
-src/ui/components/
-├── shared/              # Primitivos cross-feature (overlay, modal, menus, composer base)
-│   ├── overlay/         # AnchoredMenuPortal, ModalPortal, menuPositionUtils
-│   ├── modal/           # ChatModal, alert/confirm/prompt dialogs + hooks (PR-44)
-│   ├── composer/        # ComposerOptionSelector, ChatInputPlusMenu
-│   └── menus/           # ActionMenuPanel, DropdownMenuTrigger
-├── presentation/        # Apresentação rica (ChatRich*, segmentBuilders/, pipeline/, export/, CSS)
-│   ├── pipeline/        # Stack, dedup, labels, chart/tree builders
-│   ├── export/          # CSV/XLSX/PDF/PNG, lousa markdown (PR-38)
-│   ├── presentationMetadataReaders.ts  # get*FromToolCalls (PR-39)
-│   ├── presentationMarkdownNormalization.ts  # strip*, table markdown (PR-40)
-│   ├── presentationPairResolver.ts  # pair, merge tabelas/gráficos (PR-41)
-│   ├── chatClipboard.ts             # util copy clipboard (PR-51)
-│   └── segmentBuilders/
-├── composer/            # ChatInput, mention menu, selectors formato/modo
-├── message/             # Conteúdo do assistente + timeline (ChatMessageList)
-├── workspace/           # Arquivos de projeto/agente (dropzone, cards, ingest CSS)
-│   └── agentBuilder/    # Controles e painéis do builder de agente (PR-53)
-├── shell/               # Sidebar, ContextBar, ContextTopbar (PR-35)
-├── canvas/              # Lousa lateral e preview inline (PR-45)
-├── admin/               # Painel administrativo (shell + abas modulares)
-└── [raiz]               # Hub `chatPresentation.ts` apenas (PR-51)
+src/
+├── export/              # Módulo canônico: CSV/XLSX/PDF/PNG, dispatch, PDF certificado DELPI (jun/2026)
+│   └── pdf/             # HTML + impressão (logo, layout desenho = layout tabela)
+└── ui/
+    └── components/
+        ├── shared/              # Primitivos cross-feature (overlay, modal, menus, composer base)
+        │   ├── overlay/
+        │   ├── modal/
+        │   ├── composer/
+        │   └── menus/
+        ├── presentation/        # ChatRich*, pipeline/, export/ (payloads), CSS
+        │   ├── pipeline/
+        │   ├── export/          # CSV/XLSX, PNG, lousa; PDF → src/export/pdf/
+        │   └── segmentBuilders/
+        ├── composer/
+        ├── message/
+        ├── workspace/
+        ├── shell/
+        ├── canvas/
+        ├── admin/
+        └── [raiz ui/components] # Hub `chatPresentation.ts` apenas (PR-51)
 ```
 
 Barrels públicos:
 
 | Pasta | Barrel | Consumo preferido |
 |-------|--------|-------------------|
+| `src/export/` | `export/index.ts` | `import { runChatExport, exportPresentation } from "../export"` |
 | `shared/` | `shared/index.ts` | `import { ChatModal } from "./shared"` |
 | `presentation/` | `presentation/index.ts` | `import { ChatRichTable } from "./presentation"` |
 | `presentation/export/` | `presentation/export/index.ts` | `import { exportPresentation } from "./presentation/export"` |
@@ -77,7 +77,9 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 
 **Em `presentation/` (PR-34, PR-38–41, PR-43):** `tableCellFormatting`, metadata readers, markdown normalization, pair resolver, export/copy buttons, `chartPresentationUx`, `chartViewState`, `chatDrillDown`.
 
-**Em `presentation/export/` (PR-38):** `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv`.
+**Em `presentation/export/` (PR-38):** `exportUtils`, `chartPngExport`, `chartCanvasMarkdown`, `dashboardExportCsv` — PDF delega a `src/export/pdf/`.
+
+**Em `src/export/` (jun/2026):** `runChatExport`, `ChatExportButtons`, primitivos compartilhados, `pdf/` (layout certificado DELPI). Ver [`export.md`](./export.md).
 
 **Em `message/` (PR-21–23, PR-31–34, PR-37):** segmentos, `ChatMessageList`, prosa, coverage, markdown (`chatMarkdown` + `ChatMarkdown`), sources, decision card, interactivity, mermaid.
 
@@ -109,6 +111,7 @@ Documentação completa: [`chat-presentation-hub.md`](./chat-presentation-hub.md
 
 ## Referências
 
+- **Exportação (CSV/XLSX/PDF/PNG):** [`export.md`](./export.md)
 - Roadmap: [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md)
 - Hub apresentação: [`chat-presentation-hub.md`](./chat-presentation-hub.md)
 - Primitivos admin: [`admin/README.md`](../src/ui/components/admin/README.md)

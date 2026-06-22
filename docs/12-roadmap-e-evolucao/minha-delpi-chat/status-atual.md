@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado em **18/06/2026** — workspace projetos/agentes (jun/2026), refatoração frontend MFE (PR-1–42, **Fase G concluída**), Playbook 15 api-delpi, PB17 MVP, Onda 14 parcial.
+> Atualizado em **22/06/2026** — exportação centralizada + PDF certificado DELPI; conversão MI→UN na api-delpi (jun/2026).
 
 ## Visão geral
 
@@ -18,6 +18,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 | **Refatoração frontend (plugin)** | [plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) |
 | **Estrutura de componentes (MFE)** | [plugins/minha-delpi-chat/docs/component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) |
 | **Hub apresentação (MFE)** | [plugins/minha-delpi-chat/docs/chat-presentation-hub.md](../../../plugins/minha-delpi-chat/docs/chat-presentation-hub.md) |
+| **Exportação MFE (CSV/PDF/PNG)** | [plugins/minha-delpi-chat/docs/export.md](../../../plugins/minha-delpi-chat/docs/export.md) |
 | Roadmap admin | [minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
 | Inteligência do chat | [minha-delpi-ai-api/docs/roadmap/README.md](../../../minha-delpi-ai-api/docs/roadmap/README.md) |
@@ -60,7 +61,7 @@ Fases **A–G** concluídas (PR-1–42). Hub `chatPresentation.ts` fatiado (PR-3
 | Pipeline apresentação (stack, dedup, chart/tree) | ✅ PR-27–30, PR-32 |
 | Prosa, markdown, fixtures, formatação célula | ✅ PR-31–34 |
 | Hub fatiado (readers, markdown, pair resolver) | ✅ PR-39–41 |
-| Export apresentação (CSV/XLSX/PDF/PNG) | ✅ PR-38 |
+| Export apresentação (CSV/XLSX/PDF/PNG) | ✅ PR-38 + `src/export/` (PDF certificado DELPI, jun/2026) |
 | Hex C3 residual (rich tree/chart, máscaras) | ✅ PR-42 |
 | CI build + testes apresentação (49/49) | ✅ |
 
@@ -71,7 +72,16 @@ Fases **A–G** concluídas (PR-1–42). Hub `chatPresentation.ts` fatiado (PR-3
 | [frontend-refactor-roadmap.md](../../../plugins/minha-delpi-chat/docs/frontend-refactor-roadmap.md) | Backlog PR-1–42, Fase G, métricas |
 | [component-structure.md](../../../plugins/minha-delpi-chat/docs/component-structure.md) | Mapa de pastas e matriz pendências |
 | [chat-presentation-hub.md](../../../plugins/minha-delpi-chat/docs/chat-presentation-hub.md) | Contrato hub metadata ↔ UI |
+| [export.md](../../../plugins/minha-delpi-chat/docs/export.md) | Exportação centralizada e PDF certificado |
 | [rich-presentation-css.md](../../../plugins/minha-delpi-chat/docs/rich-presentation-css.md) | CSS compartilhado tabela/gráfico/KPI |
+
+### Entregas exportação e api-delpi (jun/2026)
+
+| Entrega | Status |
+|---------|--------|
+| Módulo `src/export/` (`runChatExport`, primitivos compartilhados) | ✅ |
+| PDF unificado — layout certificado DELPI (logo; tabela = desenho) | ✅ `src/export/pdf/` |
+| Quantidades operacionais MI→UN (cronograma, OPs, OEE) | ✅ api-delpi — [playbook § 3.4](../../../api-delpi/docs/roadmaps/playbook-conversao-unidades-protheus.md) |
 
 **Próximo (opcional):** reduzir arquivos na raiz `components/` (~55 → ≤25) — modais e orquestração ainda na raiz; fora do escopo estrutural PR-1–42.
 

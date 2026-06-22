@@ -304,7 +304,7 @@ Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34). **Fa
 | Build obrigatório | `.cursor/rules/plugins-frontend-build.mdc` |
 | Prosa/markdown assistente | `message/assistantProseRendering.ts` (canônico MFE) |
 | Hub metadata apresentação | [`chat-presentation-hub.md`](./chat-presentation-hub.md) |
-| Export apresentação (CSV/XLSX/PDF/PNG) | `presentation/export/` — ver hub § já extraído |
+| Export apresentação (CSV/XLSX/PDF/PNG) | `src/export/` + `presentation/export/` — ver [`export.md`](../../../plugins/minha-delpi-chat/docs/export.md) |
 | Apresentação rica API | `chat-assistant-content-presentation.md` (API) |
 | CSS apresentação rica (MFE) | `docs/rich-presentation-css.md` |
 | Estrutura feature folders | `docs/component-structure.md` |
@@ -319,7 +319,8 @@ Fases **A–F** entregues (PR-1–26). **Pipeline + message** (PR-27–34). **Fa
 | Arquivos TS/TSX na raiz `components/` | 1 | hub `chatPresentation.ts` ✅ |
 | Arquivos CSS na raiz `components/` | 0 | co-localizados com feature ou `ui/styles/` ✅ |
 | Módulos em `presentation/pipeline/` | 57 arquivos TS/TSX (pasta inteira) | estável; hub fatiado PR-39–41 |
-| Módulos em `presentation/export/` | 8 arquivos TS/TSX | exportUtils, PNG, canvas markdown, dashboard CSV ✅ |
+| Módulos em `src/export/` | dispatch + `pdf/` (layout certificado) | jun/2026 ✅ |
+| Módulos em `presentation/export/` | payloads CSV/XLSX, PNG, lousa markdown | PR-38 ✅ |
 | Módulos em `message/` | 59 arquivos TS/TSX | empty/follow-up/actions + InteractivityBlock, Sources, markdown ✅ |
 | Componentes em `shared/` (excl. admin) | 28 arquivos | ≥15 (overlay + modal + menus + layout) ✅ |
 | Modais usando `ChatModal` | 14 / ~14 | 14 / 14 ✅ |
