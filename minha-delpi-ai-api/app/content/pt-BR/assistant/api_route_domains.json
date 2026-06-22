@@ -175,7 +175,7 @@
         },
         {
           "source": "pagination.page_size",
-          "matchAliases": ["page_size", "pagesize", "limit"]
+          "matchAliases": ["page_size", "pagesize"]
         },
         {
           "source": "work_center_regex",

@@ -39,6 +39,23 @@ def test_build_date_branch_infers_granularity_for_series():
     assert parameters["start_date"]
 
 
+def test_build_date_branch_does_not_bind_limit_from_pagination_page_size() -> None:
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "reference_date", "in": "query"},
+                {"name": "limit", "in": "query"},
+            ],
+        },
+        "produtos programados para produzir hoje",
+    )
+
+    assert "reference_date" in parameters
+    assert "limit" not in parameters
+
+
 def test_build_date_branch_empty_default_limit():
     builder = OperationalApiParameterBuilderService()
 

@@ -196,6 +196,10 @@ def test_operational_route_selection_production_losses_top() -> None:
 
 
 def test_operational_route_selection_production_schedule_today() -> None:
+    from app.domain.services.operational_api_parameter_builder_service import (
+        OperationalApiParameterBuilderService,
+    )
+
     repository = _FakeRepository(
         [
             {
@@ -219,16 +223,18 @@ def test_operational_route_selection_production_schedule_today() -> None:
     )
     catalog = ExternalActionProductRouteCatalogService(repository)
     service = ExternalActionOperationalRouteSelectionService(catalog)
+    builder = OperationalApiParameterBuilderService()
 
     selected = service.select_production_operational(
         "Quais produtos serão produzidos hoje?",
         allowed_action_ids=["production-schedule-today", "sql-action"],
-        build_date_branch_parameters=lambda action, message, **kwargs: {},
+        build_date_branch_parameters=builder.build_date_branch,
     )
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "production-schedule-today"
     assert selected["arguments"]["parameters"]["limit"] == 500
+    assert "reference_date" in selected["arguments"]["parameters"]
 
 
 def test_operational_route_selection_sale_orders() -> None:

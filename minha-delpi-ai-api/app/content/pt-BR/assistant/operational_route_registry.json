@@ -1130,7 +1130,11 @@
         "method": "GET"
       },
       "parameters": {
-        "strategy": "date_branch"
+        "strategy": "date_branch",
+        "queryDefaults": {
+          "limit": 500
+        },
+        "overrideKeys": ["limit"]
       },
       "presentation": {
         "reasonKey": "productionScheduleToday"

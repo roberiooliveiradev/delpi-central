@@ -7,7 +7,6 @@ from typing import Callable
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -21,6 +20,9 @@ from app.domain.services.external_actions.external_action_response_content_servi
 )
 from app.domain.services.operational_route_matcher_service import (
     OperationalRouteMatcherService,
+)
+from app.domain.services.operational_route_query_defaults_service import (
+    OperationalRouteQueryDefaultsService,
 )
 from app.domain.services.operational_route_registry_service import (
     OperationalRouteRegistryService,
@@ -1030,10 +1032,14 @@ class ExternalActionOperationalRouteSelectionService:
                         "product_code_prefix": filter_code,
                     }
 
-                parameters = self._apply_schedule_today_query_defaults(action, parameters)
-
             if not parameters:
                 parameters = {}
+
+            parameters = OperationalRouteQueryDefaultsService.apply(
+                action,
+                parameters,
+                route=route,
+            )
 
             parameters = self._catalog.filter_parameters_to_schema(
                 action,
@@ -1071,36 +1077,3 @@ class ExternalActionOperationalRouteSelectionService:
             return {}
 
         return None
-
-    @classmethod
-    def _apply_schedule_today_query_defaults(cls, action: dict, parameters: dict) -> dict:
-        defaults = ChatAssistantContentService.get_node(
-            "operational_parameters",
-            "productionScheduleTodayDefaults",
-        )
-
-        if not isinstance(defaults, dict):
-            return parameters
-
-        merged = dict(parameters or {})
-        existing = {str(key).strip().lower() for key in merged}
-        schema_by_lower = {
-            str(parameter.get("name") or "").strip().lower(): parameter.get("name")
-            for parameter in (action.get("parametersSchema") or [])
-            if str(parameter.get("name") or "").strip()
-        }
-
-        for key, value in defaults.items():
-            lowered = str(key or "").strip().lower()
-
-            if not lowered or lowered in existing:
-                continue
-
-            schema_name = schema_by_lower.get(lowered)
-
-            if schema_name is None:
-                continue
-
-            merged[schema_name] = value
-
-        return merged
