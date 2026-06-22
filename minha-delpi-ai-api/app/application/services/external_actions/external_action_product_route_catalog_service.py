@@ -384,10 +384,20 @@ class ExternalActionProductRouteCatalogService:
         if not normalized:
             return None
 
-        patterns = (
-            r"(?:aumento|reajuste|subir|simul\w*)\s*(?:de\s*)?([+-]?\d+(?:[.,]\d+)?)\s*(?:%|percento|por\s*cento)",
-            r"([+-]?\d+(?:[.,]\d+)?)\s*(?:%|percento|por\s*cento)\s*(?:de\s*)?(?:aumento|reajuste|simul)",
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
         )
+
+        patterns = ChatProductOperationalContentService.list(
+            "costImpactAdjustmentPercent",
+            "patterns",
+        )
+
+        if not patterns:
+            patterns = [
+                r"(?:aumento|reajuste|subir|simul\w*)\s*(?:de\s*)?([+-]?\d+(?:[.,]\d+)?)\s*(?:%|percento|por\s*cento)",
+                r"([+-]?\d+(?:[.,]\d+)?)\s*(?:%|percento|por\s*cento)\s*(?:de\s*)?(?:aumento|reajuste|simul)",
+            ]
 
         for pattern in patterns:
             match = re.search(pattern, normalized)

@@ -97,6 +97,14 @@ def test_looks_like_factory_status_colloquial_fabrica():
     assert ChatProductQueryIntentService._looks_like_factory_status_question(normalized)
 
 
+def test_looks_like_factory_status_integrated_vision_colloquial():
+    normalized = ChatMessageNormalizationService.normalize_for_matching(
+        "Situação na fábrica / visão fabril integrada do PA 90269002"
+    )
+
+    assert ChatProductQueryIntentService._looks_like_factory_status_question(normalized)
+
+
 def test_resolve_product_intent_producao_nao_herda_estructure():
     history = [
         {

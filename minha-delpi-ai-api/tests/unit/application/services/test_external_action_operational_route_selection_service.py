@@ -92,6 +92,42 @@ def test_operational_route_selection_picks_factory_status() -> None:
     assert selected["arguments"]["actionId"] == "factory-status"
 
 
+def test_operational_route_selection_picks_factory_status_for_integrated_vision() -> None:
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "reference_date"},
+                ],
+            },
+            {
+                "actionId": "production-status",
+                "method": "GET",
+                "path": "/products/{code}/production-status",
+                "operationId": "get_product_production_status",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    message = "Situação na fábrica / visão fabril integrada do PA 90269002 hoje"
+    selected = service.select(
+        message,
+        message.lower(),
+        allowed_action_ids=["factory-status", "production-status"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "factory-status"
+
+
 def test_operational_route_selection_by_intent_stock() -> None:
     repository = _FakeRepository(
         [

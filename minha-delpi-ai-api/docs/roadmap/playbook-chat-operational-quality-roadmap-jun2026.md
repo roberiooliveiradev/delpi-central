@@ -1,6 +1,6 @@
 # Playbook — Qualidade operacional no chat (fabril, MP, custo PA)
 
-**Status:** Sprint 1 em andamento (jun/2026)  
+**Status:** Sprint 2 em andamento (jun/2026)  
 **Evidência E2E:** `scripts/eval_real_product_flow_jun2026.py` · relatório `scripts/eval_real_product_flow_report.json`  
 **PA de referência homologado:** `90260140` (programação 22/06/2026)  
 **Relacionado:** [playbook-chat-preco-mp-simulador-custos-pa.md](./playbook-chat-preco-mp-simulador-custos-pa.md) · [chat-response-modes.md](../architecture/chat-response-modes.md) · [homologacao-docie-produto-pb15-jun2026.md](../testing/homologacao-docie-produto-pb15-jun2026.md)
@@ -23,7 +23,7 @@ Fluxo real testado: programação do dia → PA **9026** da lista → perguntas 
 
 ## 2. Roadmap por sprint
 
-### Sprint 1 — Confiabilidade e fatos (P0) — **em implementação**
+### Sprint 1 — Confiabilidade e fatos (P0) — **concluído**
 
 | ID | Entrega | Módulo canônico | Aceite |
 |----|---------|-----------------|--------|
@@ -35,7 +35,7 @@ Fluxo real testado: programação do dia → PA **9026** da lista → perguntas 
 
 **Config declarativa:** `external_action_responses.json` → `httpExecution`.
 
-### Sprint 2 — Roteamento e parâmetros (P1)
+### Sprint 2 — Roteamento e parâmetros (P1) — **em implementação**
 
 | ID | Entrega |
 |----|---------|

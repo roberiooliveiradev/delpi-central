@@ -372,3 +372,37 @@ def test_collect_recent_playbook_date_from_user_message_when_tool_has_no_params(
         )
 
     assert inherited.get("reference_date") == "18-06-2026"
+
+
+def test_missing_date_not_requested_for_production_status_with_product_code():
+    answer = ChatOperationalParameterService.resolve_missing_date_answer(
+        "O produto 90260140 já começou a produzir? Tem apontamento na OP?"
+    )
+
+    assert answer is None
+
+
+def test_merge_into_parameters_defaults_today_for_production_status_with_code():
+    action = {
+        "path": "/products/{code}/production-status",
+        "parametersSchema": [
+            {"name": "code"},
+            {"name": "reference_date"},
+            {"name": "date_start"},
+            {"name": "date_end"},
+        ],
+    }
+
+    with patch("app.domain.services.chat_date_range_intent_service.date") as mock_date:
+        mock_date.today.return_value = date(2026, 6, 22)
+
+        parameters = ChatOperationalDateParameterService.merge_into_parameters(
+            action,
+            "O produto 90260140 já começou a produzir? Tem apontamento na OP?",
+            {"code": "90260140"},
+            previous_messages=None,
+        )
+
+    assert parameters["reference_date"] == "22-06-2026"
+    assert parameters["date_start"] == "22-06-2026"
+    assert parameters["date_end"] == "22-06-2026"

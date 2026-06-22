@@ -53,6 +53,13 @@
       "standard cost"
     ]
   },
+  "costImpactAdjustmentPercent": {
+    "patterns": [
+      "(?:aumento|reajuste|subir|simul\\w*)\\s*(?:de\\s*)?([+-]?\\d+(?:[.,]\\d+)?)\\s*(?:%|percento|por\\s*cento)",
+      "([+-]?\\d+(?:[.,]\\d+)?)\\s*(?:%|percento|por\\s*cento)\\s*(?:de\\s*)?(?:aumento|reajuste|simul)",
+      "simul\\w*\\s*\\+?([+-]?\\d+(?:[.,]\\d+)?)\\s*(?:%|percento|por\\s*cento)"
+    ]
+  },
   "pluralPhrasing": {
     "productReferenceTerms": [
       "produtos",

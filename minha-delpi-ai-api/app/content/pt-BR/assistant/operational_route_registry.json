@@ -658,7 +658,7 @@
     {
       "id": "productLastPurchase",
       "domain": "product",
-      "priority": 110,
+      "priority": 151,
       "routeSegment": "last-purchase",
       "match": {
         "customPredicate": "lastPurchase",

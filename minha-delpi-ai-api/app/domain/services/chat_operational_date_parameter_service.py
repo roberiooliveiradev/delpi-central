@@ -210,6 +210,83 @@ class ChatOperationalDateParameterService:
 
                     break
 
+        return cls._apply_implicit_reference_date_today(
+            action,
+            merged,
+            message=message,
+            previous_messages=previous_messages,
+        )
+
+    @classmethod
+    def _implicit_reference_date_today_path_markers(cls) -> tuple[str, ...]:
+        markers = (_parameter_content().get("implicitReferenceDateTodayPathMarkers") or [])
+
+        if isinstance(markers, list) and markers:
+            return tuple(str(marker).strip().lower() for marker in markers if str(marker).strip())
+
+        return ("/production-status",)
+
+    @classmethod
+    def _apply_implicit_reference_date_today(
+        cls,
+        action: dict,
+        parameters: dict,
+        *,
+        message: str | None,
+        previous_messages: list[Any] | None = None,
+    ) -> dict:
+        path = str(action.get("path") or "").lower()
+
+        if not any(marker in path for marker in cls._implicit_reference_date_today_path_markers()):
+            return parameters
+
+        if cls.parameters_have_date(action, parameters):
+            return parameters
+
+        has_product_code = False
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if str(name or "").strip().lower() != "code":
+                continue
+
+            if str(parameters.get(name) or "").strip():
+                has_product_code = True
+                break
+
+        if not has_product_code:
+            return parameters
+
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+
+        date_range = ChatDateRangeIntentService.resolve(
+            "hoje",
+            previous_messages=previous_messages,
+        )
+
+        if not date_range:
+            return parameters
+
+        merged = dict(parameters)
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name or name in merged:
+                continue
+
+            lowered = str(name).strip().lower()
+
+            if lowered in _DATE_REFERENCE_KEYS:
+                merged[name] = date_range.start_date
+            elif lowered in _DATE_START_KEYS:
+                merged[name] = date_range.start_date
+            elif lowered in _DATE_END_KEYS:
+                merged[name] = date_range.end_date
+
         return merged
 
     @classmethod
@@ -496,7 +573,7 @@ class ChatOperationalDateParameterService:
 
         if ChatProductQueryIntentService._looks_like_production_status_question(normalized):
             if product_code or ChatProductQueryIntentService.extract_product_code(normalized):
-                return "production_status"
+                return None
 
         if ChatProductQueryIntentService._looks_like_shipping_status_question(normalized):
             if product_code or ChatProductQueryIntentService._has_product_scope_reference(
