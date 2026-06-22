@@ -213,6 +213,13 @@ P6_EXTENDED_PIPELINE_CASES: tuple[dict[str, str], ...] = (
         "fixture": "product_directives_90260882.json",
         "user_message": "diretivas 90260882",
     },
+    {
+        "id": "production_schedule_today_auto",
+        "profile_key": "playbook_report",
+        "path": "/production/schedule/today",
+        "fixture": "production_schedule_today_20260622.json",
+        "user_message": "quais produtos estão programados para produzir hoje",
+    },
 )
 
 

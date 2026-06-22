@@ -29,7 +29,7 @@ def test_entity_contract_covers_routed_entities() -> None:
 def test_tier_a_pipeline_fixtures_declared() -> None:
     cases = ChatPresentationVocabularyService.playbook12_tier_a_pipeline_cases()
 
-    assert len(cases) >= 13
+    assert len(cases) >= 14
 
     for case in cases:
         assert case.get("fixture")

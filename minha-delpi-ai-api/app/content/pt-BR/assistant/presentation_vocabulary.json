@@ -735,6 +735,18 @@
         "expected_presentation_profile": "product_purchases",
         "expected_layout_mode": "single",
         "expected_visuals": ["text"]
+      },
+      {
+        "id": "tier_a_production_schedule_today",
+        "profile_key": "playbook_report",
+        "path": "/production/schedule/today",
+        "fixture": "production_schedule_today_20260622.json",
+        "user_message": "quais produtos estão programados para produzir hoje",
+        "expected_presentation_profile": "production_schedule_today",
+        "expected_layout_mode": "single",
+        "expected_visuals": ["text"],
+        "expected_min_table_presentations": 1,
+        "expected_available_views": ["text", "table"]
       }
     ]
   }

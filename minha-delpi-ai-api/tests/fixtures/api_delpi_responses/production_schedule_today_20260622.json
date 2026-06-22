@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "message": "Programação de produção do dia carregada com sucesso.",
+  "data": {
+    "reference_date": "20260622",
+    "items": [
+      {
+        "branch": "01",
+        "production_order": "000123",
+        "product_code": "90260140",
+        "description": "PA HOMOLOGADO REF",
+        "planned_qty": 15.0,
+        "produced_qty": 0.0,
+        "priority": 500,
+        "work_center": "CT01"
+      },
+      {
+        "branch": "01",
+        "production_order": "000124",
+        "product_code": "90261255",
+        "description": "CHICOTE PA",
+        "planned_qty": 10.0,
+        "produced_qty": 0.0,
+        "priority": 450,
+        "work_center": "CT02"
+      }
+    ],
+    "summary": {
+      "total_records": 2,
+      "branch_filter_applied": false,
+      "consolidated_across_branches": true,
+      "is_complete": true,
+      "reference_date": "20260622"
+    },
+    "pagination": {
+      "limit": 50,
+      "offset": 0,
+      "returned": 2,
+      "is_complete": true
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Playbook — Qualidade operacional no chat (fabril, MP, custo PA)
 
-**Status:** Sprint 3 concluído (jun/2026)  
+**Status:** Sprint 4 em andamento (jun/2026)  
 **Evidência E2E:** `scripts/eval_real_product_flow_jun2026.py` · relatório `scripts/eval_real_product_flow_report.json`  
 **PA de referência homologado:** `90260140` (programação 22/06/2026)  
 **Relacionado:** [playbook-chat-preco-mp-simulador-custos-pa.md](./playbook-chat-preco-mp-simulador-custos-pa.md) · [chat-response-modes.md](../architecture/chat-response-modes.md) · [homologacao-docie-produto-pb15-jun2026.md](../testing/homologacao-docie-produto-pb15-jun2026.md)
@@ -53,14 +53,14 @@ Fluxo real testado: programação do dia → PA **9026** da lista → perguntas 
 | S3.3 | Pensador: anti-duplicação de blocos na finalização |
 | S3.4 | Smoke fixo PA do dia nos 3 modos no CI (`eval_response_modes_product_routes_jun2026.py`) |
 
-### Sprint 4 — Apresentação rica (P2)
+### Sprint 4 — Apresentação rica (P2) — **em andamento**
 
-| Rota | Entrega |
-|------|---------|
-| `/production/schedule/today` | Tabela auditável com códigos 9026 (não prosa inventada) |
-| `/factory-status` | Painel seções structure / production / shipping / `factory_status` |
-| `/cost-impact-simulation` | Pareto + KPI simulação |
-| `/raw-material-price-intelligence` | Última compra + variação + orçamento |
+| Rota | Entrega | Status |
+|------|---------|--------|
+| `/production/schedule/today` | Tabela auditável com códigos 9026 (não prosa inventada) | Fixture tier A + códigos no texto/tabela |
+| `/factory-status` | Painel seções structure / production / shipping / `factory_status` | Perfil `factory_status` (tier A existente) |
+| `/cost-impact-simulation` | Pareto + KPI simulação | Perfil `cost_impact_simulation` (tier A existente) |
+| `/raw-material-price-intelligence` | Última compra + variação + orçamento | Perfil `raw_material_price_intelligence` (tier A existente) |
 
 ### Sprint 5 — Regressão contínua
 

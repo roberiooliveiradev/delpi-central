@@ -72,14 +72,25 @@ class ExternalActionPlaybookReportPresenter:
                     if not isinstance(item, dict):
                         continue
 
-                    label = str(item.get("description") or "").strip()
+                    product_code = str(
+                        item.get("product_code")
+                        or item.get("item_code")
+                        or item.get("material_code")
+                        or item.get("component_code")
+                        or "",
+                    ).strip()
+                    description = str(item.get("description") or "").strip()
+                    label = ""
+
+                    if product_code and description:
+                        label = f"{product_code} — {description}"
+                    elif description:
+                        label = description
+                    elif product_code:
+                        label = product_code
 
                     if not label:
                         for key in (
-                            "product_code",
-                            "item_code",
-                            "material_code",
-                            "component_code",
                             "production_order",
                             "work_center",
                         ):
