@@ -359,7 +359,17 @@ class ChatDrawingPdfExtractionService:
 
     @classmethod
     def _extract_internal_revision(cls, text: str) -> str | None:
-        matches = ChatDrawingPatternsService.internal_revision_table().findall(str(text or ""))
+        blob = str(text or "")
+        matches: list[str] = []
+
+        for pattern in ChatDrawingPatternsService.internal_revision_table_patterns():
+            matches.extend(str(item) for item in pattern.findall(blob))
+
+        if not matches:
+            legacy = ChatDrawingPatternsService.internal_revision_table().findall(blob)
+
+            if legacy:
+                matches.extend(str(item) for item in legacy)
 
         if not matches:
             return None

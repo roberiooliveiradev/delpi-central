@@ -469,6 +469,7 @@
       "mismatchStatusWhenTrusted": "critical_error",
       "mismatchStatusWhenUncertain": "pending",
       "maxAlternateCrosscheckQuantity": 20,
+      "rejectSegmentMatchingStructurePieceQuantity": true,
       "lengthToleranceDecapeValuesMm": [1, 2, 3, 5],
       "refinementTriggers": [
         "missing_quantity",
@@ -477,6 +478,9 @@
         "decimal_piece_quantity",
         "intermediate_length_as_quantity",
         "quantity_api_crosscheck"
+      ],
+      "skipPendingWhenUntrustedReasons": [
+        "quantity_from_description"
       ],
       "refinementExhaustedPending": true,
       "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"]

@@ -24,6 +24,29 @@ def test_rejects_quantity_matching_description_dimension():
     assert reason in {"quantity_from_description", "decimal_piece_quantity"}
 
 
+def test_rejects_quantity_matching_dimension_from_stamp_line_when_row_truncated():
+    row = {
+        "code": "10120073",
+        "quantity": "12.",
+        "description": "00X0,80 PT 130°C 1,5KV PVC ROHS",
+    }
+    pdf_extract = {
+        "sourceMetadata": {
+            "stampText": "B | 1 | 10120073 [TUBO ISOLANTE 12,00X0,80 PT 130°C 1,5KV PVC ROHS",
+        }
+    }
+    reason = ChatDrawingBomQuantityAssertivenessService._untrusted_reason(
+        row=row,
+        code="10120073",
+        quantity=12.0,
+        api_row=None,
+        root={},
+        pdf_extract=pdf_extract,
+    )
+
+    assert reason == "quantity_from_description"
+
+
 def test_column_quantity_source_skips_description_noise():
     row = {
         "code": "10090050",

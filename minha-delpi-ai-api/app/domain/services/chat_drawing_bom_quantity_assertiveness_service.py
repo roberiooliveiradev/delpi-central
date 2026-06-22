@@ -286,7 +286,12 @@ class ChatDrawingBomQuantityAssertivenessService:
             True,
         ) and not (
             trusted_column_source and source == "column"
-        ) and cls._quantity_matches_description(row, quantity):
+        ) and cls._quantity_matches_description(
+            row,
+            quantity,
+            code=code,
+            pdf_extract=pdf_extract,
+        ):
             return "quantity_from_description"
 
         if api_row is not None and not cls._matches_api(
@@ -390,8 +395,19 @@ class ChatDrawingBomQuantityAssertivenessService:
         return None
 
     @classmethod
-    def _quantity_matches_description(cls, row: dict[str, Any], quantity: float) -> bool:
-        description = str(row.get("description") or "")
+    def _quantity_matches_description(
+        cls,
+        row: dict[str, Any],
+        quantity: float,
+        *,
+        code: str = "",
+        pdf_extract: dict | None = None,
+    ) -> bool:
+        description = cls._resolved_row_description(
+            row,
+            code=code,
+            pdf_extract=pdf_extract or {},
+        )
 
         if not description.strip():
             return False
@@ -401,6 +417,35 @@ class ChatDrawingBomQuantityAssertivenessService:
                 return True
 
         return False
+
+    @classmethod
+    def _resolved_row_description(
+        cls,
+        row: dict[str, Any],
+        *,
+        code: str,
+        pdf_extract: dict,
+    ) -> str:
+        parts = [str(row.get("description") or "")]
+        normalized_code = ChatProductQueryIntentService.normalize_product_code(code)
+
+        if not normalized_code:
+            return " ".join(part for part in parts if part).strip()
+
+        source_metadata = pdf_extract.get("sourceMetadata")
+
+        if isinstance(source_metadata, dict):
+            stamp_text = str(source_metadata.get("stampText") or "")
+
+            for line in stamp_text.splitlines():
+                compact = line.replace(" ", "")
+
+                if normalized_code not in compact:
+                    continue
+
+                parts.append(line.strip())
+
+        return " ".join(part for part in parts if part).strip()
 
     @classmethod
     def _description_numeric_tokens(cls, description: str) -> set[float]:

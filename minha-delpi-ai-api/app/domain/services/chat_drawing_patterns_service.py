@@ -79,6 +79,10 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("internalRevisionTable")
 
     @classmethod
+    def internal_revision_table_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls.compile_stamp_list("internalRevisionTableCapture")
+
+    @classmethod
     def bom_section(cls) -> re.Pattern[str]:
         return cls.compile_stamp("bomSection")
 
@@ -792,6 +796,15 @@ class ChatDrawingPatternsService:
     @classmethod
     def bom_quantity_refinement_triggers(cls) -> frozenset[str]:
         items = cls.bom_quantity_semantics_rule("refinementTriggers", [])
+
+        if not isinstance(items, list):
+            return frozenset()
+
+        return frozenset(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
+    def bom_quantity_skip_pending_reasons(cls) -> frozenset[str]:
+        items = cls.bom_quantity_semantics_rule("skipPendingWhenUntrustedReasons", [])
 
         if not isinstance(items, list):
             return frozenset()

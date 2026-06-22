@@ -7,8 +7,20 @@ from app.domain.services.chat_drawing_bom_comparison_service import (
 from app.domain.services.chat_drawing_guide_component_consistency_service import (
     ChatDrawingGuideComponentConsistencyService,
 )
+from app.domain.services.chat_drawing_bom_quantity_assertiveness_service import (
+    ChatDrawingBomQuantityAssertivenessService,
+)
+from app.domain.services.chat_drawing_bom_quantity_validation_service import (
+    ChatDrawingBomQuantityValidationService,
+)
+from app.domain.services.chat_drawing_pdf_extraction_service import (
+    ChatDrawingPdfExtractionService,
+)
 from app.domain.services.chat_drawing_structure_validation_service import (
     ChatDrawingStructureValidationService,
+)
+from app.domain.services.chat_drawing_validation_orchestration_service import (
+    ChatDrawingValidationOrchestrationService,
 )
 
 configure_domain_infrastructure_ports()
@@ -232,3 +244,90 @@ def test_90262008_structure_validation_without_bom_criticals():
     assert not bom_extra
     assert not bom_missing_connector
     assert not guide_critical
+
+
+def test_90262008_internal_revision_from_stamp_table_date_row():
+    stamp = (
+        "ES EXECUTADO VERIFICADO | LIBERADO | DATA\n"
+        "| 20/08/24 04 |\n"
+        "90262008 REV.08\n"
+    )
+
+    assert ChatDrawingPdfExtractionService._extract_internal_revision(stamp) == "04"
+
+
+def test_90262008_revision_cross_check_ok_when_internal_matches_api():
+    payload = {
+        "product": {
+            "code": "90262008",
+            "current_revision": "004",
+            "last_revision_date": "20260619",
+        },
+        "structure": _payload_90262008()["structure"],
+        "guide": {"items": [], "total": 0},
+        "inspection": {"items": []},
+    }
+    pdf_extract = {
+        **_pdf_extract_90262008(),
+        "revision": "08",
+        "internalRevision": "04",
+    }
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90262008",
+        payload=payload,
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract=pdf_extract,
+    )
+
+    revision_items = [
+        item
+        for item in package["drawingAnalysis"]["items"]
+        if item.get("item") == "Revisão"
+    ]
+
+    assert revision_items
+    assert revision_items[0]["status"] == "ok"
+
+
+def test_90262008_tube_quantity_from_dimension_not_trusted():
+    evidences = ChatDrawingBomQuantityAssertivenessService.collect_evidences(
+        root=_payload_90262008(),
+        pdf_extract=_pdf_extract_90262008(),
+        product_code="90262008",
+    )
+
+    evidence = evidences.get("10120073")
+
+    assert evidence is not None
+    assert evidence.trusted is False
+    assert evidence.reason == "quantity_from_description"
+
+
+def test_90262008_tube_quantity_pending_not_critical_mismatch():
+    pending = ChatDrawingBomQuantityValidationService.collect_pending(
+        root=_payload_90262008(),
+        pdf_extract=_pdf_extract_90262008(),
+        product_code="90262008",
+    )
+
+    codes = {item.code for item in pending}
+
+    assert "10120073" not in codes
+
+
+def test_90262008_no_false_segment_length_pending_for_structure_piece_qty():
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=_payload_90262008(),
+        pdf_extract=_pdf_extract_90262008(),
+        product_code="90262008",
+    )
+
+    segment_pending = [
+        item
+        for item in items
+        if item.get("templateKey") == "segment_length_pending"
+    ]
+
+    assert not segment_pending

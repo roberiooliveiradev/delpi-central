@@ -118,6 +118,11 @@ class ChatDrawingBomQuantityValidationService:
             if evidence is None:
                 continue
 
+            if not evidence.trusted and evidence.reason in (
+                ChatDrawingPatternsService.bom_quantity_skip_pending_reasons()
+            ):
+                continue
+
             if evidence.trusted:
                 normalization = ChatDrawingBomQuantitySemanticsService.normalize_pdf_quantity(
                     pdf_quantity=evidence.quantity,
