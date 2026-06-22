@@ -71,6 +71,10 @@
       "base de dados da internet"
     ],
     "minAnchorTokenOverlap": 2,
-    "minUngroundedSentenceChars": 32
+    "minUngroundedSentenceChars": 32,
+    "dedupeParagraphKeyChars": 160,
+    "dedupeParagraphMinKeyChars": 40,
+    "dedupeSentenceKeyChars": 160,
+    "dedupeSentenceMinKeyChars": 48
   }
 }

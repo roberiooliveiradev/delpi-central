@@ -85,5 +85,54 @@
     "normal": 5,
     "thinker": 15
   },
-  "qualityFallbackMinChars": 40
+  "qualityFallbackMinChars": 40,
+  "commentaryLead": {
+    "depthByMode": {
+      "fast": "brief",
+      "normal": "standard",
+      "thinker": "expanded"
+    },
+    "defaultDepth": "standard",
+    "briefDirectToolContextFlag": "commentaryBriefDirect",
+    "synthesisEffectByDepth": {
+      "brief": "llm_synthesis_brief",
+      "standard": "llm_synthesis",
+      "expanded": "llm_synthesis"
+    },
+    "profiles": {
+      "brief": {
+        "highlightLimit": 1,
+        "interpretationMaxChars": 180,
+        "summaryLineLimit": 1,
+        "attentionLimit": 0,
+        "limitationsLimit": 0,
+        "nextStepsLimit": 0,
+        "includeNarrativeInsight": false,
+        "includeSummaryWhenNoHighlights": false,
+        "includeNextSteps": false
+      },
+      "standard": {
+        "highlightLimit": 2,
+        "interpretationMaxChars": 0,
+        "summaryLineLimit": 3,
+        "attentionLimit": 3,
+        "limitationsLimit": 0,
+        "nextStepsLimit": 1,
+        "includeNarrativeInsight": false,
+        "includeSummaryWhenNoHighlights": true,
+        "includeNextSteps": true
+      },
+      "expanded": {
+        "highlightLimit": 6,
+        "interpretationMaxChars": 0,
+        "summaryLineLimit": 3,
+        "attentionLimit": 6,
+        "limitationsLimit": 4,
+        "nextStepsLimit": 3,
+        "includeNarrativeInsight": true,
+        "includeSummaryWhenNoHighlights": true,
+        "includeNextSteps": true
+      }
+    }
+  }
 }

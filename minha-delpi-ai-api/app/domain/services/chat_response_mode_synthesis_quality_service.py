@@ -74,7 +74,12 @@ class ChatResponseModeSynthesisQualityService:
         gaps: list[str] = []
 
         if not content:
-            gaps.append("resposta vazia após síntese LLM")
+            gaps.append(
+                ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                    "emptyAnswer",
+                    default="resposta vazia após síntese LLM",
+                ),
+            )
             return gaps
 
         gaps.extend(cls._evaluate_context_and_assertiveness(content, question, tool_calls))
@@ -95,13 +100,26 @@ class ChatResponseModeSynthesisQualityService:
         seen: set[str] = set()
         repeats = 0
 
+        min_sentence_chars = ChatResponseModeSynthesisQualityContentService.coherence_limit_int(
+            "repeatedSentenceMinChars",
+            default=48,
+        )
+        key_chars = ChatResponseModeSynthesisQualityContentService.coherence_limit_int(
+            "repeatedSentenceKeyChars",
+            default=160,
+        )
+        min_repeats = ChatResponseModeSynthesisQualityContentService.coherence_limit_int(
+            "minRepeatedSentences",
+            default=1,
+        )
+
         for sentence in sentences:
             text = str(sentence or "").strip()
 
-            if len(text) < 48:
+            if len(text) < min_sentence_chars:
                 continue
 
-            key = ChatMessageNormalizationService.normalize_for_matching(text)[:160]
+            key = ChatMessageNormalizationService.normalize_for_matching(text)[:key_chars]
 
             if key in seen:
                 repeats += 1
@@ -109,14 +127,24 @@ class ChatResponseModeSynthesisQualityService:
 
             seen.add(key)
 
-        if repeats >= 1:
-            return ["resposta com frases repetidas"]
+        if repeats >= min_repeats:
+            return [
+                ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                    "repeatedSentences",
+                    default="resposta com frases repetidas",
+                ),
+            ]
 
         return []
 
     @classmethod
     def _evaluate_sparse_numbered_lists(cls, content: str) -> list[str]:
         sparse_lines = 0
+        patterns = ChatResponseModeSynthesisQualityContentService.sparse_list_patterns()
+        min_lines = ChatResponseModeSynthesisQualityContentService.coherence_limit_int(
+            "sparseListMinLines",
+            default=2,
+        )
 
         for line in content.splitlines():
             stripped = line.strip()
@@ -124,15 +152,16 @@ class ChatResponseModeSynthesisQualityService:
             if not stripped:
                 continue
 
-            if re.match(r"^\d+\.\s*$", stripped):
-                sparse_lines += 1
-                continue
-
-            if re.match(r"^\d+\.\s+\d+\.", stripped):
+            if any(pattern.search(stripped) for pattern in patterns):
                 sparse_lines += 1
 
-        if sparse_lines >= 2:
-            return ["lista numerada com itens vazios ou esparsos"]
+        if sparse_lines >= min_lines:
+            return [
+                ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                    "sparseNumberedList",
+                    default="lista numerada com itens vazios ou esparsos",
+                ),
+            ]
 
         return []
 

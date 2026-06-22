@@ -80,5 +80,20 @@
     "directResponseEffects": {
       "fast": "llm_synthesis_brief"
     }
+  },
+  "coherenceChecks": {
+    "gaps": {
+      "emptyAnswer": "resposta vazia após síntese LLM",
+      "repeatedSentences": "resposta com frases repetidas",
+      "sparseNumberedList": "lista numerada com itens vazios ou esparsos"
+    },
+    "repeatedSentenceMinChars": 48,
+    "repeatedSentenceKeyChars": 160,
+    "minRepeatedSentences": 1,
+    "sparseListMinLines": 2,
+    "sparseListPatterns": [
+      "^\\d+\\.\\s*$",
+      "^\\d+\\.\\s+\\d+\\."
+    ]
   }
 }

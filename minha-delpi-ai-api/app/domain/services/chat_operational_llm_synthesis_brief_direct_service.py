@@ -8,26 +8,19 @@ from app.domain.services.chat_operational_llm_synthesis_answer_enrichment_servic
 from app.domain.services.chat_presentation_prose_delivery_service import (
     ChatPresentationProseDeliveryService,
 )
+from app.domain.services.chat_operational_commentary_lead_content_service import (
+    ChatOperationalCommentaryLeadContentService,
+)
 from app.domain.services.chat_response_mode_content_service import (
     ChatResponseModeContentService,
 )
 from app.domain.services.chat_response_mode_service import ChatResponseModeService
 
-_COMMENTARY_BRIEF_FLAG = "commentaryBriefDirect"
-
 
 class ChatOperationalLlmSynthesisBriefDirectService:
     @classmethod
     def _commentary_depth(cls, response_mode: str | None) -> str:
-        normalized = ChatResponseModeService.normalize(response_mode)
-
-        if normalized == "fast":
-            return "brief"
-
-        if normalized == "thinker":
-            return "expanded"
-
-        return "standard"
+        return ChatOperationalCommentaryLeadContentService.depth_for_mode(response_mode)
 
     @classmethod
     def build_commentary_lead(
@@ -42,7 +35,7 @@ class ChatOperationalLlmSynthesisBriefDirectService:
             return None
 
         depth = cls._commentary_depth(response_mode)
-        use_compact = compact if compact is not None else depth == "brief"
+        use_compact = compact if compact is not None else depth == cls._brief_depth_key()
 
         body = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
             "",
@@ -54,7 +47,7 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         if not body:
             return None
 
-        effect = "llm_synthesis_brief" if depth == "brief" else "llm_synthesis"
+        effect = ChatOperationalCommentaryLeadContentService.synthesis_effect_for_depth(depth)
         enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
             body,
             message=message,
@@ -147,11 +140,21 @@ class ChatOperationalLlmSynthesisBriefDirectService:
     @classmethod
     def mark_tool_context(cls, tool_context: dict | None) -> None:
         if isinstance(tool_context, dict):
-            tool_context[_COMMENTARY_BRIEF_FLAG] = True
+            tool_context[cls._brief_direct_flag()] = True
 
     @classmethod
     def is_commentary_brief_context(cls, tool_context: dict | None) -> bool:
-        return isinstance(tool_context, dict) and bool(tool_context.get(_COMMENTARY_BRIEF_FLAG))
+        return isinstance(tool_context, dict) and bool(
+            tool_context.get(cls._brief_direct_flag()),
+        )
+
+    @classmethod
+    def _brief_direct_flag(cls) -> str:
+        return ChatOperationalCommentaryLeadContentService.brief_direct_tool_context_flag()
+
+    @classmethod
+    def _brief_depth_key(cls) -> str:
+        return ChatOperationalCommentaryLeadContentService.default_brief_depth()
 
     @classmethod
     def _qualifies(cls, tool_calls: list | None) -> bool:

@@ -228,3 +228,50 @@ class ChatResponseModeContentService:
     @classmethod
     def quality_fallback_min_chars(cls) -> int:
         return cls._node_int("qualityFallbackMinChars", default=40)
+
+    @classmethod
+    def _commentary_lead_node(cls) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "commentaryLead")
+
+        return node if isinstance(node, dict) else {}
+
+    @classmethod
+    def commentary_lead_depth_for_mode(cls, mode: str) -> str:
+        node = cls._commentary_lead_node().get("depthByMode")
+
+        if not isinstance(node, dict):
+            return ""
+
+        return str(node.get(str(mode or "").strip().lower()) or "").strip().lower()
+
+    @classmethod
+    def commentary_lead_default_depth(cls) -> str:
+        return str(cls._commentary_lead_node().get("defaultDepth") or "standard").strip().lower()
+
+    @classmethod
+    def commentary_brief_direct_tool_context_flag(cls) -> str:
+        return str(
+            cls._commentary_lead_node().get("briefDirectToolContextFlag") or "commentaryBriefDirect",
+        ).strip()
+
+    @classmethod
+    def commentary_lead_synthesis_effect(cls, depth: str) -> str:
+        node = cls._commentary_lead_node().get("synthesisEffectByDepth")
+
+        if not isinstance(node, dict):
+            return "llm_synthesis"
+
+        resolved = str(depth or "").strip().lower()
+
+        return str(node.get(resolved) or node.get("standard") or "llm_synthesis").strip()
+
+    @classmethod
+    def commentary_lead_profile(cls, depth: str) -> dict[str, Any]:
+        node = cls._commentary_lead_node().get("profiles")
+
+        if not isinstance(node, dict):
+            return {}
+
+        profile = node.get(str(depth or "").strip().lower())
+
+        return profile if isinstance(profile, dict) else {}

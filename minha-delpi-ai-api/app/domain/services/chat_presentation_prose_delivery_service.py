@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_operational_commentary_lead_service import (
+    ChatOperationalCommentaryLeadService,
+)
 from app.domain.services.chat_operational_narrative_synthesis_service import (
     ChatOperationalNarrativeSynthesisService,
 )
@@ -557,111 +560,11 @@ class ChatPresentationProseDeliveryService:
         compact: bool = False,
         depth: str | None = None,
     ) -> str:
-        if not isinstance(commentary, dict):
-            return ""
-
-        resolved_depth = str(depth or ("brief" if compact else "standard")).strip().lower()
-        parts: list[str] = []
-        highlight_limit = {
-            "brief": 1,
-            "standard": 2,
-            "expanded": 6,
-        }.get(resolved_depth, 2)
-        highlights = [
-            str(item.get("text") if isinstance(item, dict) else item or "").strip()
-            for item in (commentary.get("highlights") or [])
-            if str(item.get("text") if isinstance(item, dict) else item or "").strip()
-        ]
-        interpretation = str(commentary.get("interpretation") or "").strip()
-        narrative_insight = str(commentary.get("narrativeInsight") or "").strip()
-        next_action = str(commentary.get("nextAction") or "").strip()
-
-        if highlights:
-            parts.append("\n\n".join(highlights[:highlight_limit]))
-        elif interpretation:
-            parts.append(
-                interpretation[:180]
-                if resolved_depth == "brief"
-                else interpretation,
-            )
-        elif resolved_depth != "brief":
-            summary = str(commentary.get("summary") or "").strip()
-
-            if not summary:
-                summary_lines = [
-                    str(line).strip()
-                    for line in (commentary.get("summaryLines") or [])
-                    if str(line or "").strip()
-                ]
-                summary = "\n\n".join(
-                    summary_lines[:1 if resolved_depth == "brief" else 3],
-                )
-
-            if summary:
-                parts.append(summary)
-
-        if narrative_insight and resolved_depth == "expanded":
-            parts.append(narrative_insight)
-
-        attention = [
-            str(item).strip()
-            for item in (commentary.get("attention") or [])
-            if str(item or "").strip()
-        ]
-        attention_limit = {
-            "brief": 0,
-            "standard": 3,
-            "expanded": 6,
-        }.get(resolved_depth, 3)
-
-        if attention and attention_limit:
-            header = str(
-                ChatAssistantContentService.get(
-                    "presenter_content",
-                    "humanizedNarrative",
-                    "attentionHeader",
-                    default="**Pontos de atenção**",
-                )
-                or "**Pontos de atenção**"
-            ).strip()
-            bullets = "\n".join(f"- {item}" for item in attention[:attention_limit])
-            parts.append(f"{header}\n\n{bullets}")
-
-        limitations = [
-            str(item).strip()
-            for item in (commentary.get("limitations") or [])
-            if str(item or "").strip()
-        ]
-
-        if limitations and resolved_depth == "expanded":
-            header = str(
-                ChatAssistantContentService.get(
-                    "presenter_content",
-                    "humanizedNarrative",
-                    "limitationsHeader",
-                    default="**Limitações**",
-                )
-                or "**Limitações**"
-            ).strip()
-            bullets = "\n".join(f"- {item}" for item in limitations[:4])
-            parts.append(f"{header}\n\n{bullets}")
-
-        if next_action and resolved_depth != "brief":
-            next_header = str(
-                ChatAssistantContentService.get(
-                    "presenter_content",
-                    "humanizedNarrative",
-                    "nextStepsHeader",
-                    default="**Próximos passos**",
-                )
-                or "**Próximos passos**"
-            ).strip()
-            limit = 1 if resolved_depth == "standard" else 3
-            steps = [step.strip() for step in next_action.split("\n") if step.strip()]
-            bullets = "\n".join(f"- {step}" for step in steps[:limit])
-            parts.append(f"{next_header}\n\n{bullets}")
-
-        return "\n\n".join(parts).strip()
+        return ChatOperationalCommentaryLeadService.format_lead(
+            commentary,
+            compact=compact,
+            depth=depth,
+        )
 
     @classmethod
     def finalize_llm_synthesis_answer(

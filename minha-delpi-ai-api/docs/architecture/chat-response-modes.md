@@ -79,7 +79,17 @@ Rollback template (offline)
 
 Pós-processamento anti-alucinação: `ChatOperationalLlmSynthesisAnswerEnrichmentService` (marcadores em `operational_llm_synthesis_context.json` → `hallucinationMarkers`, grounding por overlap de âncoras, dedupe de parágrafos).
 
-Finalização do turno: `ChatOperationalLlmSynthesisTurnFinalizationService` — enrichment + gate de coerência (`evaluate_synthesis_coherence`) + fallback para `dataCommentary` quando o LLM evade, alucina ou repete frases. Profundidade do commentary: **brief** (Rápida), **standard** (Normal), **expanded** (Pensador).
+Finalização do turno: `ChatOperationalLlmSynthesisTurnFinalizationService` — enrichment + gate de coerência (`evaluate_synthesis_coherence`) + fallback para `dataCommentary` quando o LLM evade, alucina ou repete frases.
+
+Profundidade do commentary (declarativa em `response_modes.json` → `commentaryLead`):
+
+| Modo | `depthByMode` | Perfil | Serviço canônico |
+|------|---------------|--------|------------------|
+| Rápida | `brief` | 1 destaque, sem atenção/limitações | `ChatOperationalCommentaryLeadService` |
+| Normal | `standard` | 2 destaques, até 3 atenções, 1 próximo passo | idem |
+| Pensador | `expanded` | até 6 destaques/atenções, limitações, insight narrativo | idem |
+
+Loader: `ChatOperationalCommentaryLeadContentService` → `ChatResponseModeContentService`.
 
 ### Modo Rápida — commentary direct (≤ ~3 s)
 
@@ -169,7 +179,7 @@ O smoke **não** basta checar metadata — valida por turno:
 | Pipeline | `directResponse=true` só em **Rápida** (`allowDirectResponseModes: ["fast"]`); Normal/Pensador exigem LLM |
 | Template | similaridade com `textPresentation` / markdown autorizado ≥ limite |
 | Contexto | código do produto + overlap mínimo com tokens dos dados da tool |
-| Assertividade | frases evasivas («preciso acessar», «não tenho acesso», …) |
+| Assertividade | frases evasivas (`deflectionMarkers`), alucinação (`hallucinationMarkers`), listas esparsas e frases repetidas (`coherenceChecks`) |
 | Modo | Rápida mais curta/rápida que Normal; conteúdos distintos entre modos |
 
 ```bash
@@ -188,6 +198,9 @@ cd minha-delpi-ai-api
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_response_mode_service.py -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_chat_operational_llm_synthesis_brief_direct_service.py -q
 .venv/bin/python -m pytest tests/unit/application/services/test_chat_turn_preparation_response_mode.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_operational_commentary_lead_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_operational_commentary_lead_content_service.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_response_mode_synthesis_content_loaders.py -q
 .venv/bin/python scripts/smoke_response_modes_product_overview.py
 .venv/bin/python scripts/verify_frontend_payload_product_overview.py
 ```
@@ -207,9 +220,31 @@ cd minha-delpi-ai-api
 | `thinkerLlmBudget.maxFactsChars` | `520` | Cap de fatos no prompt Pensador |
 | `generationLimits` | ver JSON | Tokens/ctx/temperature por modo |
 | `latencyTargetsSec` | fast 3 / normal 5 / thinker 15 | Metas de latência para smoke |
+| `qualityFallbackMinChars` | `40` | Mínimo do fallback commentary pós-LLM (Normal/Pensador) |
+| `commentaryLead.depthByMode` | fast→brief, normal→standard, thinker→expanded | Profundidade do lead `dataCommentary` |
+| `commentaryLead.profiles` | brief / standard / expanded | Limites de destaques, atenção, limitações, próximos passos |
+| `commentaryLead.briefDirectToolContextFlag` | `commentaryBriefDirect` | Flag interna no `tool_context` |
 
-Loader: `ChatResponseModeContentService`.
+Loader: `ChatResponseModeContentService`, `ChatOperationalCommentaryLeadContentService`.
+
+### Bundle `response_mode_synthesis_quality.json` — `coherenceChecks`
+
+| Chave | Papel |
+|-------|-------|
+| `gaps.*` | Mensagens PT dos gaps de coerência pós-síntese |
+| `repeatedSentenceMinChars` / `repeatedSentenceKeyChars` | Detecção de frases repetidas |
+| `sparseListMinLines` / `sparseListPatterns` | Listas numeradas vazias/esparsas (regex compiladas no loader) |
+
+### Bundle `operational_llm_synthesis_context.json` — `answerEnrichment`
+
+| Chave | Papel |
+|-------|-------|
+| `hallucinationMarkers` | Marcadores de alucinação no enrichment |
+| `dedupeParagraphKeyChars` / `dedupeParagraphMinKeyChars` | Dedupe de parágrafos |
+| `dedupeSentenceKeyChars` / `dedupeSentenceMinKeyChars` | Dedupe de frases |
+
+Loader: `ChatOperationalLlmSynthesisContextContentService`.
 
 ---
 
-*Última revisão: jun/2026 — Rápida commentary direct; Normal/Pensador LLM com metas 5 s / 15 s; anti-alucinação no enrichment; presets 128/768 (normal) e 280/1152 (thinker).*
+*Última revisão: jun/2026 — commentary lead e coherence checks declarativos em JSON; Python só orquestra via loaders canônicos.*

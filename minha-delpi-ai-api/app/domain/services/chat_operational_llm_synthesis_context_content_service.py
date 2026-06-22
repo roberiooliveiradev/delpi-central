@@ -152,6 +152,31 @@ class ChatOperationalLlmSynthesisContextContentService:
             return 32
 
     @classmethod
+    def dedupe_paragraph_key_chars(cls) -> int:
+        return cls._answer_enrichment_int("dedupeParagraphKeyChars", 160)
+
+    @classmethod
+    def dedupe_paragraph_min_key_chars(cls) -> int:
+        return cls._answer_enrichment_int("dedupeParagraphMinKeyChars", 40)
+
+    @classmethod
+    def dedupe_sentence_key_chars(cls) -> int:
+        return cls._answer_enrichment_int("dedupeSentenceKeyChars", 160)
+
+    @classmethod
+    def dedupe_sentence_min_key_chars(cls) -> int:
+        return cls._answer_enrichment_int("dedupeSentenceMinKeyChars", 48)
+
+    @classmethod
+    def _answer_enrichment_int(cls, key: str, default: int) -> int:
+        raw = cls.answer_enrichment_node().get(key)
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
     def max_normal_prose_chars(cls) -> int:
         return cls.limit_int("maxNormalProseChars", 520)
 

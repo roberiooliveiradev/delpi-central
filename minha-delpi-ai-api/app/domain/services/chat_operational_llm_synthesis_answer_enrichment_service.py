@@ -474,14 +474,18 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         paragraphs = [str(item or "").strip() for item in re.split(r"\n\s*\n", answer.strip())]
         kept: list[str] = []
         seen: set[str] = set()
+        key_chars = ChatOperationalLlmSynthesisContextContentService.dedupe_paragraph_key_chars()
+        min_key_chars = (
+            ChatOperationalLlmSynthesisContextContentService.dedupe_paragraph_min_key_chars()
+        )
 
         for paragraph in paragraphs:
             if not paragraph:
                 continue
 
-            key = ChatMessageNormalizationService.normalize_for_matching(paragraph)[:160]
+            key = ChatMessageNormalizationService.normalize_for_matching(paragraph)[:key_chars]
 
-            if len(key) > 40 and key in seen:
+            if len(key) > min_key_chars and key in seen:
                 continue
 
             seen.add(key)
@@ -494,6 +498,8 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         sentences = cls._SENTENCE_SPLIT_RE.split(answer.strip())
         kept: list[str] = []
         seen: set[str] = set()
+        key_chars = ChatOperationalLlmSynthesisContextContentService.dedupe_sentence_key_chars()
+        min_key_chars = ChatOperationalLlmSynthesisContextContentService.dedupe_sentence_min_key_chars()
 
         for sentence in sentences:
             text = str(sentence or "").strip()
@@ -501,9 +507,9 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             if not text:
                 continue
 
-            key = ChatMessageNormalizationService.normalize_for_matching(text)[:160]
+            key = ChatMessageNormalizationService.normalize_for_matching(text)[:key_chars]
 
-            if len(key) > 48 and key in seen:
+            if len(key) > min_key_chars and key in seen:
                 continue
 
             seen.add(key)

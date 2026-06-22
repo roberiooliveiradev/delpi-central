@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+from functools import lru_cache
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
@@ -80,3 +82,47 @@ class ChatResponseModeSynthesisQualityContentService:
             )
             or ""
         ).strip()
+
+    @classmethod
+    def _coherence_checks_node(cls) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "coherenceChecks")
+
+        return node if isinstance(node, dict) else {}
+
+    @classmethod
+    def coherence_gap(cls, key: str, *, default: str = "") -> str:
+        gaps = cls._coherence_checks_node().get("gaps")
+
+        if not isinstance(gaps, dict):
+            return default
+
+        return str(gaps.get(key) or default).strip()
+
+    @classmethod
+    def coherence_limit_int(cls, key: str, *, default: int = 0) -> int:
+        raw = cls._coherence_checks_node().get(key)
+
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def sparse_list_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        raw = cls._coherence_checks_node().get("sparseListPatterns")
+
+        if not isinstance(raw, list):
+            return ()
+
+        patterns: list[re.Pattern[str]] = []
+
+        for item in raw:
+            pattern = str(item or "").strip()
+
+            if not pattern:
+                continue
+
+            patterns.append(re.compile(pattern))
+
+        return tuple(patterns)

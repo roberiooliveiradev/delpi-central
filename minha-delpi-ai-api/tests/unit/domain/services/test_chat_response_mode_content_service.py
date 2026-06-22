@@ -24,3 +24,8 @@ def test_pipeline_effect_text():
     text = ChatResponseModeContentService.pipeline_effect_text("operational_direct")
 
     assert "dados" in text.lower()
+
+
+def test_commentary_lead_depth_by_mode():
+    assert ChatResponseModeContentService.commentary_lead_depth_for_mode("fast") == "brief"
+    assert ChatResponseModeContentService.commentary_lead_depth_for_mode("thinker") == "expanded"
