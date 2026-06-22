@@ -10,7 +10,9 @@ from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
 )
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
-from app.application.services.chat_user_context_service import ChatUserContextService
+from app.domain.services.chat_user_profile_intent_service import (
+    ChatUserProfileIntentService,
+)
 
 
 @dataclass(frozen=True)
@@ -34,7 +36,7 @@ class ChatMetaDirectAnswerService:
     @classmethod
     def detect_intents(cls, message: str) -> MetaDirectAnswerIntents:
         return MetaDirectAnswerIntents(
-            user_profile=ChatUserContextService.is_user_identity_question(message),
+            user_profile=ChatUserProfileIntentService.is_user_identity_question(message),
             capabilities=ChatCapabilitiesService.is_capability_inquiry(message),
             assistant_identity=ChatAssistantIdentityService.classify(message) is not None,
         )

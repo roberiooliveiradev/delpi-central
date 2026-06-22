@@ -14,62 +14,6 @@ logger = logging.getLogger("minha-delpi-ai-api.user_context")
 
 _PII_FIELDS = ("name", "email")
 
-_USER_IDENTITY_TERMS = (
-    "quem sou eu",
-    "quem sou",
-    "meus papéis",
-    "meus papeis",
-    "meu papel",
-    "meus grupos",
-    "meu grupo",
-    "minhas permissões",
-    "minhas permissoes",
-    "minha permissão",
-    "minha permissao",
-    "meu perfil",
-    "meus dados",
-    "meu email",
-    "meu e-mail",
-    "meu nome",
-    "quais apps",
-    "meus apps",
-    "meus aplicativos",
-    "sobre mim",
-    "diz sobre mim",
-    "sabe sobre mim",
-    "informações sobre mim",
-    "informacoes sobre mim",
-    "o que sabe de mim",
-    "o que diz sobre mim",
-    "me fale sobre mim",
-    "fale sobre mim",
-    "quais são meus",
-    "quais sao meus",
-    "quais são minhas",
-    "quais sao minhas",
-    "o que tenho acesso",
-    "que acesso eu tenho",
-    "acesso a quais",
-    "posso acessar",
-    "permissões de",
-    "permissões do",
-    "permissões da",
-    "permissao de",
-    "permissao do",
-    "permissao da",
-    "funcionalidades de",
-    "funcionalidades do",
-    "funcionalidades da",
-    "apps do papel",
-    "apps da role",
-    "apps do role",
-    "o que entrega",
-    "o que o papel",
-    "o que a role",
-    "o papel ",
-    " a role ",
-)
-
 
 class ChatUserContextService:
     """Constrói bloco textual com informações do usuário para injeção no prompt."""
@@ -90,8 +34,11 @@ class ChatUserContextService:
 
     @classmethod
     def is_user_identity_question(cls, message: str) -> bool:
-        normalized = str(message or "").lower()
-        return any(term in normalized for term in _USER_IDENTITY_TERMS)
+        from app.domain.services.chat_user_profile_intent_service import (
+            ChatUserProfileIntentService,
+        )
+
+        return ChatUserProfileIntentService.is_user_identity_question(message)
 
     @staticmethod
     def _strip_pii(me: dict) -> dict:
@@ -135,7 +82,12 @@ class ChatUserContextService:
             return False
         return not self._has_ai_context_consent(access_token)
 
-    def build_user_context(self, access_token: str | None) -> str:
+    def build_user_context(
+        self,
+        access_token: str | None,
+        *,
+        include_pii_for_identity: bool = False,
+    ) -> str:
         if not access_token or not getattr(Settings, "CHAT_USER_CONTEXT_ENABLED", True):
             return ""
 
@@ -148,7 +100,7 @@ class ChatUserContextService:
         if not me or me.get("authorized") is False:
             return ""
 
-        if self._should_strip_pii(access_token):
+        if self._should_strip_pii(access_token) and not include_pii_for_identity:
             me = self._strip_pii(me)
 
         access_profile = self._fetch_access_profile(access_token)
@@ -207,13 +159,15 @@ class ChatUserContextService:
         apps: list[dict],
         access_profile: dict | None = None,
     ) -> str:
-        parts = [
-            "[Dados do usuário que está conversando com você]",
-            "REGRA: quando o usuário perguntar sobre si mesmo (quem sou, meus papéis, "
-            "permissões de um papel, apps, funcionalidades, meu perfil, sobre mim, etc.), "
-            "responda com os dados abaixo. Para um papel específico, use permissões e apps "
-            "daquele papel — não misture com outros papéis.",
-        ]
+        from app.domain.services.chat_user_profile_content_service import (
+            ChatUserProfileContentService,
+        )
+
+        parts = [ChatUserProfileContentService.prompt_context_header()]
+        rule = ChatUserProfileContentService.prompt_context_rule()
+
+        if rule:
+            parts.append(rule)
 
         name = me.get("name") or ""
         email = me.get("email") or ""

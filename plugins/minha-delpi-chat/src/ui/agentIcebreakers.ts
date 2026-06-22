@@ -5,9 +5,7 @@ import {
   type ShortcutFieldId,
 } from "./chatShortcutPrompt";
 
-/** Limites de quebra-gelos na home do agente e no builder. */
-export const AGENT_ICEBREAKER_MAX_COUNT = 6;
-export const AGENT_ICEBREAKER_HOME_DISPLAY_COUNT = 3;
+/** Limite por sugestão (caracteres) — sem teto de quantidade na home ou no builder. */
 export const AGENT_ICEBREAKER_MAX_CHARS = 72;
 
 export type AgentIcebreakerTemplate = {
@@ -62,8 +60,7 @@ export function normalizeAgentIcebreakers(value: unknown): string[] {
   return value
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, AGENT_ICEBREAKER_MAX_COUNT);
+    .filter(Boolean);
 }
 
 /** Valor efetivo na home: configurados ou padrão corporativo. */
@@ -229,12 +226,12 @@ export function resolveIcebreakerVisualKind(template: string): IcebreakerVisualK
 /** Classe de densidade do grid conforme a quantidade de sugestões. */
 export function getIcebreakerGridDensityClass(count: number): string {
   if (count <= 3) {
-    return "mdc-chat-agent-home__icebreakers--few";
+    return "mdc-chat-agent-landing__prompts-grid--few";
   }
 
   if (count === 4) {
-    return "mdc-chat-agent-home__icebreakers--quad";
+    return "mdc-chat-agent-landing__prompts-grid--quad";
   }
 
-  return "mdc-chat-agent-home__icebreakers--many";
+  return "mdc-chat-agent-landing__prompts-grid--many";
 }

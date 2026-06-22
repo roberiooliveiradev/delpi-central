@@ -3,7 +3,6 @@ import { useRef, useState, type DragEvent } from "react";
 
 import {
   AGENT_ICEBREAKER_MAX_CHARS,
-  AGENT_ICEBREAKER_MAX_COUNT,
   AGENT_ICEBREAKER_PLACEHOLDER_FIELDS,
   AGENT_ICEBREAKER_TEMPLATES,
   buildIcebreakerPlaceholderToken,
@@ -47,10 +46,6 @@ export function AgentIcebreakersEditor({
   }
 
   function addIcebreaker() {
-    if (icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT) {
-      return;
-    }
-
     onChange([...icebreakers, ""]);
     setFocusedIndex(icebreakers.length);
   }
@@ -157,10 +152,6 @@ export function AgentIcebreakersEditor({
       return;
     }
 
-    if (icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT) {
-      return;
-    }
-
     onChange([...icebreakers, normalizedTemplate]);
     setFocusedIndex(icebreakers.length);
   }
@@ -177,8 +168,8 @@ export function AgentIcebreakersEditor({
       <p className="mdc-agent-icebreakers-editor__help">
         Use texto livre ou campos editáveis como{" "}
         <code>{buildIcebreakerPlaceholderToken("productCode")}</code> — na home, o clique envia
-        a pergunta (com diálogo para placeholders). Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões,{" "}
-        {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada.
+        a pergunta (com diálogo para placeholders). {AGENT_ICEBREAKER_MAX_CHARS} caracteres por
+        sugestão; a home exibe todas com rolagem quando necessário.
         {canReorder ? (
           <> Arraste pela alça à esquerda ou use as setas para definir a ordem na home.</>
         ) : null}
@@ -339,7 +330,6 @@ export function AgentIcebreakersEditor({
           type="button"
           className="mdc-chat-ws-outline-btn"
           onClick={addIcebreaker}
-          disabled={icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT}
         >
           <Plus size={16} aria-hidden="true" />
           <span>Adicionar quebra-gelo</span>

@@ -8,6 +8,9 @@ from uuid import UUID
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
+from app.domain.services.chat_user_profile_intent_service import (
+    ChatUserProfileIntentService,
+)
 from app.infrastructure.config.settings import Settings
 
 if TYPE_CHECKING:
@@ -261,28 +264,39 @@ class ChatTurnUseCaseSupportService:
         operational_optimize: bool,
         analysis_mode: bool = False,
     ) -> str | None:
-        if analysis_mode and not ChatUserContextService.is_user_identity_question(message):
+        if analysis_mode and not ChatUserProfileIntentService.is_user_identity_question(message):
             return None
 
         if (
             operational_optimize
             and Settings.CHAT_OPERATIONAL_SLIM_USER_CONTEXT
-            and not ChatUserContextService.is_user_identity_question(message)
+            and not ChatUserProfileIntentService.is_user_identity_question(message)
         ):
             return None
 
-        block = self.build_user_context(access_token)
+        include_pii = ChatUserProfileIntentService.should_include_pii_in_llm_context(message)
+        block = self.build_user_context(
+            access_token,
+            include_pii_for_identity=include_pii,
+        )
         return block or None
 
     @staticmethod
-    def build_user_context(access_token: str | None) -> str:
+    def build_user_context(
+        access_token: str | None,
+        *,
+        include_pii_for_identity: bool = False,
+    ) -> str:
         if not access_token:
             return ""
 
         from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
-        return service.build_user_context(access_token)
+        return service.build_user_context(
+            access_token,
+            include_pii_for_identity=include_pii_for_identity,
+        )
 
     @staticmethod
     def resolve_user_identity_answer(access_token: str | None, message: str) -> str | None:

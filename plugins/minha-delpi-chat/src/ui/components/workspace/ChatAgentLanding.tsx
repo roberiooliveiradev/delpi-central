@@ -2,7 +2,7 @@ import { Settings } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
-  AGENT_ICEBREAKER_HOME_DISPLAY_COUNT,
+  getIcebreakerGridDensityClass,
   resolveIcebreakerCardPresentation,
 } from "../../agentIcebreakers";
 import { ChatAgentIcon } from "./ChatAgentIcon";
@@ -36,8 +36,6 @@ export function ChatAgentLanding({
   className,
   footer,
 }: ChatAgentLandingProps) {
-  const displayIcebreakers = icebreakers.slice(0, AGENT_ICEBREAKER_HOME_DISPLAY_COUNT);
-
   return (
     <section
       className={["mdc-chat-landing", "mdc-chat-agent-landing", className].filter(Boolean).join(" ")}
@@ -58,9 +56,9 @@ export function ChatAgentLanding({
         </button>
       ) : null}
 
-      {displayIcebreakers.length > 0 ? (
+      {icebreakers.length > 0 ? (
         <div
-          className="mdc-chat-landing__prompts mdc-chat-agent-landing__prompts"
+          className="mdc-chat-agent-landing__prompts-region"
           role="region"
           aria-label="Sugestões para começar"
         >
@@ -68,28 +66,40 @@ export function ChatAgentLanding({
             <p className="mdc-chat-agent-landing__prompts-hint">{defaultIcebreakersHint}</p>
           ) : null}
 
-          {displayIcebreakers.map((icebreaker) => {
-            const presentation = resolveIcebreakerCardPresentation(icebreaker);
+          <div className="mdc-chat-agent-landing__prompts-scroll">
+            <div
+              className={[
+                "mdc-chat-landing__prompts",
+                "mdc-chat-agent-landing__prompts",
+                getIcebreakerGridDensityClass(icebreakers.length),
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {icebreakers.map((icebreaker, index) => {
+                const presentation = resolveIcebreakerCardPresentation(icebreaker);
 
-            return (
-              <button
-                key={icebreaker}
-                type="button"
-                className="mdc-chat-landing__prompt"
-                disabled={icebreakersDisabled}
-                title={icebreaker}
-                onClick={() => onIcebreakerClick?.(icebreaker)}
-              >
-                <strong>{presentation.title}</strong>
-                {presentation.subtitle ? (
-                  <>
-                    {" "}
-                    <span className="mdc-chat-landing__prompt-detail">{presentation.subtitle}</span>
-                  </>
-                ) : null}
-              </button>
-            );
-          })}
+                return (
+                  <button
+                    key={`${icebreaker}-${index}`}
+                    type="button"
+                    className="mdc-chat-landing__prompt"
+                    disabled={icebreakersDisabled}
+                    title={icebreaker}
+                    onClick={() => onIcebreakerClick?.(icebreaker)}
+                  >
+                    <strong>{presentation.title}</strong>
+                    {presentation.subtitle ? (
+                      <>
+                        {" "}
+                        <span className="mdc-chat-landing__prompt-detail">{presentation.subtitle}</span>
+                      </>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       ) : null}
 

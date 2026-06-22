@@ -15,6 +15,9 @@ from app.application.services.chat_intelligence_pipeline_service import (
 from app.application.services.chat_meta_direct_answer_service import (
     ChatMetaDirectAnswerService,
 )
+from app.application.services.chat_user_profile_turn_preparation_service import (
+    ChatUserProfileTurnPreparationService,
+)
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
@@ -80,6 +83,14 @@ class ChatTurnPreparationPostToolResolutionService:
         )
 
         resolved_skills = workspace_context.get("skills") or {}
+        profile_prep = ChatUserProfileTurnPreparationService.apply_identity_llm_route(
+            message=message,
+            tool_context=tool_context,
+            pipeline_stages=pipeline_stages,
+            resolve_profile_facts=resolve_user_identity_answer,
+        )
+        tool_context = profile_prep.tool_context
+        pipeline_stages = profile_prep.pipeline_stages
         assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
             message
         )
@@ -193,33 +204,41 @@ class ChatTurnPreparationPostToolResolutionService:
             skip_rag = True
 
         if not direct_answer:
-            meta_direct = ChatMetaDirectAnswerService.build(
-                message=message,
-                workspace_context=workspace_context,
-                resolve_user_identity_answer=resolve_user_identity_answer,
-                resolve_capabilities_answer=resolve_capabilities_answer,
-            )
+            if not profile_prep.skip_meta_direct_answer:
+                meta_direct = ChatMetaDirectAnswerService.build(
+                    message=message,
+                    workspace_context=workspace_context,
+                    resolve_user_identity_answer=resolve_user_identity_answer,
+                    resolve_capabilities_answer=resolve_capabilities_answer,
+                )
 
-            if meta_direct:
-                direct_answer = meta_direct
-                skip_rag = True
-                pipeline_stages.append("meta_direct_answer")
+                if meta_direct:
+                    direct_answer = meta_direct
+                    skip_rag = True
+                    pipeline_stages.append("meta_direct_answer")
 
-        if not direct_answer:
+        if not direct_answer and not profile_prep.skip_user_direct_answer:
             user_direct = resolve_user_identity_answer(message)
 
             if user_direct:
                 direct_answer = user_direct
                 skip_rag = True
 
-        if not direct_answer:
+        if profile_prep.skip_rag:
+            skip_rag = True
+
+        if not direct_answer and not profile_prep.skip_compound_direct_answers:
             caps_direct = resolve_capabilities_answer(message)
 
             if caps_direct:
                 direct_answer = caps_direct
                 skip_rag = True
 
-        if not direct_answer and assistant_identity_direct:
+        if (
+            not direct_answer
+            and assistant_identity_direct
+            and not profile_prep.skip_compound_direct_answers
+        ):
             direct_answer = assistant_identity_direct
             skip_rag = True
 

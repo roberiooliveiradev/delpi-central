@@ -37,8 +37,14 @@ describe("agentIcebreakers", () => {
 
   it("usa grid 2x2 para quatro sugestões", () => {
     expect(getIcebreakerGridDensityClass(4)).toBe(
-      "mdc-chat-agent-home__icebreakers--quad",
+      "mdc-chat-agent-landing__prompts-grid--quad",
     );
+  });
+
+  it("preserva todos os quebra-gelos configurados sem truncar", () => {
+    const many = Array.from({ length: 8 }, (_, index) => `sugestão ${index + 1}`);
+
+    expect(resolveAgentIcebreakersForDisplay({ icebreakers: many })).toEqual(many);
   });
 
   it("reordena quebra-gelos preservando conteúdo", () => {

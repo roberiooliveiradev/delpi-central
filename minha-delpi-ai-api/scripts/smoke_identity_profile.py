@@ -93,6 +93,25 @@ def main() -> int:
         print("FAIL: resposta vazia", file=sys.stderr)
         return 1
 
+    placeholder_markers = ("[nome]", "[email]", "[nome do usuário]", "[email do usuário]")
+    lowered = answer.lower()
+    for marker in placeholder_markers:
+        if marker in lowered:
+            print(
+                f"FAIL: resposta contém placeholder literal «{marker}»",
+                file=sys.stderr,
+            )
+            print(answer[:400], file=sys.stderr)
+            return 1
+
+    if "@" not in answer and "Nome:" not in answer and "nome:" not in lowered:
+        print(
+            "FAIL: resposta não contém e-mail nem linha de nome do perfil",
+            file=sys.stderr,
+        )
+        print(answer[:400], file=sys.stderr)
+        return 1
+
     print("OK identity profile answer")
     print(answer[:320].replace("\n", " "))
     return 0

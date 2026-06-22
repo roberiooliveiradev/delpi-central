@@ -13,6 +13,9 @@ from app.application.services.chat_intelligence_metadata_service import (
     ChatIntelligenceMetadataService,
 )
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.domain.services.chat_user_profile_llm_synthesis_service import (
+    ChatUserProfileLlmSynthesisService,
+)
 from app.infrastructure.config.settings import Settings
 
 if TYPE_CHECKING:
@@ -169,6 +172,9 @@ class ChatTurnLlmAssemblyService:
                 operational_optimize=operational_optimize,
                 analysis_mode=analysis_mode,
             )
+            profile_synthesis_facts = ChatUserProfileLlmSynthesisService.extract_synthesis_facts(
+                tool_context if isinstance(tool_context, dict) else None,
+            )
             from app.application.services.chat_email_turn_service import ChatEmailTurnService
             from app.application.services.chat_text_correction_turn_service import (
                 ChatTextCorrectionTurnService,
@@ -241,6 +247,7 @@ class ChatTurnLlmAssemblyService:
                 if prepared.text_task_mode
                 else None,
                 user_context=user_context,
+                profile_synthesis_facts=profile_synthesis_facts,
                 skills=workspace_context.get("skills"),
                 response_mode=get_active_config().response_mode,
                 tool_calls=tool_calls,

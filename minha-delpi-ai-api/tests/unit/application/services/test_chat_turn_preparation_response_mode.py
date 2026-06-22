@@ -1,6 +1,9 @@
 from app.application.services.chat_turn.chat_turn_preparation_post_tool_resolution_service import (
     ChatTurnPreparationPostToolResolutionService,
 )
+from app.domain.services.chat_user_profile_llm_synthesis_service import (
+    ChatUserProfileLlmSynthesisService,
+)
 
 
 def _resolve_post_tool(**overrides):
@@ -73,6 +76,31 @@ def test_post_tool_overview_fast_clears_direct_answer_for_brief_llm():
     assert result.skip_rag is True
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis_brief"
     assert "directAnswer" not in result.tool_context
+
+
+def test_post_tool_user_identity_routes_to_llm_not_direct_answer():
+    profile = (
+        "**Seu perfil na Minha DELPI:**\n\n"
+        "- **Nome:** Robério Oliveira\n"
+        "- **Email:** engenharia6@delpi.com.br"
+    )
+    result = _resolve_post_tool(
+        message="quem sou eu?",
+        pipeline_stages=["identity_shortcut"],
+        tool_context={},
+        tool_calls=[],
+        resolve_user_identity_answer=lambda _message: profile,
+        response_mode="normal",
+    )
+
+    assert result.direct_answer is None
+    assert result.skip_rag is True
+    assert result.tool_context.get(ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FLAG)
+    assert (
+        result.tool_context.get(ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FACTS)
+        == profile
+    )
+    assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
 
 
 def test_post_tool_overview_fast_uses_commentary_direct_when_decoupled():

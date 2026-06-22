@@ -294,11 +294,14 @@ Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com per
 
 | Etapa | Comportamento |
 |-------|----------------|
+| Intenção | `ChatUserProfileIntentService` — termos em `user_context.json` → `identityTerms` |
 | Fonte | `GET {CORE_API_BASE_URL}/me` + `me/access-profile` via `ChatUserContextService` |
-| Resposta direta | `build_direct_answer` — exibe nome/e-mail ao titular (não aplica `_strip_pii`; LGPD só no bloco injetado no LLM em `build_user_context`) |
-| Consentimento | `GET {CORE_API_BASE_URL}/me/consents` (mesmo prefixo que `/me`; **não** duplicar `/core-api` no path quando a base já é `http://core-api:8000`) |
+| Turno | `ChatUserProfileTurnPreparationService` — estágio `identity_llm_synthesis`, sem resposta direta |
+| Síntese LLM | `ChatUserProfileLlmSynthesisService` — fatos (`build_direct_answer`) em `toolContext.userProfileSynthesisFacts` + policy `chat-user-profile.md` |
+| Prompt | `ChatUserProfileContentService` (`promptContext`, `llmSynthesis`) + PII no contexto quando titular (`should_include_pii_in_llm_context`) |
+| Consentimento | `GET {CORE_API_BASE_URL}/me/consents` — com `LGPD_REQUIRE_AI_CONSENT=true`, PII entra no prompt LLM **só** em perguntas sobre o próprio usuário |
 
-Se o consentimento `ai_context` não estiver concedido e `LGPD_REQUIRE_AI_CONSENT=true`, o prompt LLM não recebe PII — mas a resposta direta na UI continua mostrando nome/e-mail quando `/me` os retorna.
+Perguntas compostas (perfil + capacidades + assistente) também seguem síntese LLM — `skip_compound_direct_answers` evita atalhos isolados de capacidade/identidade do assistente.
 
 ### Small talk (maio/2026)
 

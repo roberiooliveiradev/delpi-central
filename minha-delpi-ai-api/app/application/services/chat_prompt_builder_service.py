@@ -2,6 +2,23 @@ class ChatPromptBuilderService:
     def __init__(self, prompt_policy_service):
         self.prompt_policy_service = prompt_policy_service
 
+    def _user_profile_policy_addon(self, current_message: str) -> str:
+        from app.domain.services.chat_user_profile_intent_service import (
+            ChatUserProfileIntentService,
+        )
+        from app.domain.services.chat_user_profile_llm_synthesis_service import (
+            ChatUserProfileLlmSynthesisService,
+        )
+
+        if not ChatUserProfileIntentService.is_user_identity_question(current_message):
+            return ""
+
+        policy = self.prompt_policy_service._load_policy(
+            ChatUserProfileLlmSynthesisService.POLICY_NAME,
+        )
+
+        return f"\n\n{policy}" if policy else ""
+
     def _assistant_identity_policy_addon(self, current_message: str) -> str:
         from app.application.services.chat_assistant_identity_service import (
             ChatAssistantIdentityService,
@@ -102,6 +119,7 @@ class ChatPromptBuilderService:
         text_correction_prompt_supplement: str | None = None,
         text_task_attachment_context: str | None = None,
         user_context: str | None = None,
+        profile_synthesis_facts: str | None = None,
         skills: dict | None = None,
         response_mode: str | None = None,
         tool_calls: list | None = None,
@@ -117,6 +135,7 @@ class ChatPromptBuilderService:
             text_correction_mode=text_correction_mode,
             skills=skills,
         )
+        base_prompt += self._user_profile_policy_addon(current_message)
         base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
         base_prompt += self._technical_description_policy_addon(current_message)
@@ -207,8 +226,26 @@ class ChatPromptBuilderService:
         messages.append(
             {
                 "role": "user",
-                "content": current_message,
+                "content": self._compose_user_message(
+                    current_message,
+                    profile_synthesis_facts=profile_synthesis_facts,
+                ),
             }
         )
 
         return messages
+
+    def _compose_user_message(
+        self,
+        current_message: str,
+        *,
+        profile_synthesis_facts: str | None = None,
+    ) -> str:
+        from app.domain.services.chat_user_profile_llm_synthesis_service import (
+            ChatUserProfileLlmSynthesisService,
+        )
+
+        return ChatUserProfileLlmSynthesisService.resolve_user_message_content(
+            message=current_message,
+            profile_synthesis_facts=profile_synthesis_facts,
+        )

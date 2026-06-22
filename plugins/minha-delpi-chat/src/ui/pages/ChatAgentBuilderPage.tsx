@@ -59,7 +59,6 @@ import {
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
 import {
-  AGENT_ICEBREAKER_MAX_COUNT,
   agentIcebreakersUseDefaults,
   clampIcebreakerDraft,
   resolveAgentIcebreakersForEditor,
@@ -527,8 +526,7 @@ export function ChatAgentBuilderPage({
     () =>
       icebreakers
         .map((item) => clampIcebreakerDraft(item.trim()))
-        .filter(Boolean)
-        .slice(0, AGENT_ICEBREAKER_MAX_COUNT),
+        .filter(Boolean),
     [icebreakers],
   );
 

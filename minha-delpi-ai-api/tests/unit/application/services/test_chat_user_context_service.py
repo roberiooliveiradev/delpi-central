@@ -81,6 +81,48 @@ def test_core_api_url_joins_me_consents_without_duplicate_prefix():
         Settings.CORE_API_BASE_URL = original
 
 
+def test_compose_llm_synthesis_user_message_includes_profile_facts():
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+    from app.domain.services.chat_user_profile_llm_synthesis_service import (
+        ChatUserProfileLlmSynthesisService,
+    )
+
+    configure_domain_infrastructure_ports()
+
+    composed = ChatUserProfileLlmSynthesisService.compose_user_message(
+        profile_facts="- **Nome:** Ana\n- **Email:** ana@delpi.com.br",
+        question="quem sou eu?",
+    )
+
+    assert "Ana" in composed
+    assert "ana@delpi.com.br" in composed
+    assert "quem sou eu?" in composed.lower()
+
+
+def test_build_user_context_includes_pii_for_identity_when_strip_enabled():
+    gateway = StubCoreGateway(
+        me={
+            "authorized": True,
+            "name": "Robério Oliveira",
+            "email": "engenharia6@delpi.com.br",
+            "is_superadmin": True,
+            "roles": ["Chat Full"],
+            "permissions": ["minha-delpi.chat.access"],
+        },
+        profile={"effectiveApps": [{"label": "Chat", "name": "Minha DELPI Chat"}]},
+    )
+    service = ChatUserContextService(gateway)
+    service._should_strip_pii = lambda _token: True  # type: ignore[method-assign]
+
+    without_pii = service.build_user_context("token")
+    with_pii = service.build_user_context("token", include_pii_for_identity=True)
+
+    assert "Robério Oliveira" not in without_pii
+    assert "engenharia6@delpi.com.br" not in without_pii
+    assert "Robério Oliveira" in with_pii
+    assert "engenharia6@delpi.com.br" in with_pii
+
+
 def test_build_direct_answer_keeps_name_email_for_identity_question():
     gateway = StubCoreGateway(
         me={

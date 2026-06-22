@@ -189,16 +189,15 @@
     font-size: 0.8rem;
   }
 
-  .mdc-chat-agent-home__icebreakers,
-  .mdc-chat-agent-home__icebreakers--few,
-  .mdc-chat-agent-home__icebreakers--quad,
-  .mdc-chat-agent-home__icebreakers--many {
+  .mdc-chat-agent-landing__prompts-grid--few,
+  .mdc-chat-agent-landing__prompts-grid--quad,
+  .mdc-chat-agent-landing__prompts-grid--many {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
   }
 
-  .mdc-chat-agent-home__icebreakers-scroll {
-    max-height: min(16.5rem, 38vh);
+  .mdc-chat-agent-landing__prompts-scroll {
+    max-height: min(14rem, 34vh);
   }
 
   .mdc-chat-agent-home__actions {
