@@ -157,6 +157,10 @@ def _update_manifest(results: list[dict], manifest_path: Path) -> None:
 
 
 def main() -> int:
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_AGENT_DIR)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
