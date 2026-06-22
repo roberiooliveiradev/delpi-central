@@ -431,3 +431,71 @@ def test_full_staged_batch_keeps_eng_passagem_counts() -> None:
     assert "QTD_PASSAGENS_ENG" in batch_sql
     assert "QTD_RETORNOU_ENG" in batch_sql
     assert "ORDER BY" in batch_sql
+
+
+def test_candidate_period_filter_homolog_in_period_uses_lf_only() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(
+            period_inclusion_policy="homolog_in_period",
+        ),
+    )
+    request = ListLMPRequest(date_start="20260501", date_end="20260531")
+
+    where_sql, _params = repo._sql_candidate_period_where_clause(
+        request,
+        anchor_date_sql="L.ANCHOR_START_DATE",
+    )
+
+    assert "LF.ANCHOR_START_DATE" in where_sql
+    assert "FIRST_ENG" not in where_sql
+    assert " OR " not in where_sql
+
+
+def test_candidate_lmps_skips_first_eng_cte_when_homolog_policy() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(
+            period_inclusion_policy="homolog_in_period",
+        ),
+    )
+    request = ListLMPRequest(date_start="20260501", date_end="20260531")
+
+    candidate_sql, _params = repo._sql_candidate_lmps_cte(request, lmp_only=False)
+
+    assert "OvFirstEngineeringArrival AS" not in candidate_sql
+
+
+def test_strict_residence_after_homolog_reclassifies_finalized_lmp() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(
+            strict_residence_after_homolog=True,
+            min_engineering_residence_minutes=30,
+        ),
+    )
+
+    sql = repo._effective_listing_kind_expr()
+
+    assert "C.HAS_LMP_FINALIZED = 1" in sql
+    assert "THEN 'OUTRO'" in sql
+    assert sql.index("HAS_LMP_FINALIZED = 1") < sql.index("HAS_LMP_FINALIZED = 0")
+
+
+def test_strict_residence_filter_drops_sample_bypass() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(strict_residence_after_homolog=True),
+    )
+
+    sql = repo._engineering_residence_filter_sql()
+
+    assert "HAS_SAMPLE_ANCHOR" not in sql
+    assert "TEMPO_TOTAL_MINUTOS_ENG" in sql
+
+
+def test_dashboard_summary_select_exposes_revision_fields() -> None:
+    repo = _repository()
+
+    sql = repo._staged_final_select(include_qtd_pi=True, order_by=False, summary_only=True)
+
+    assert "homolog_revision" in sql
+    assert "measurement_revision" in sql
+    assert "homolog_date" in sql
+    assert "cycle_index" in sql

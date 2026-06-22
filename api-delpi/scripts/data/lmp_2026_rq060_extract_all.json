@@ -1,0 +1,875 @@
+[
+  {
+    "lmp_num": 2,
+    "lmp_ano": "002 26",
+    "mes": "2026-01",
+    "folder": "LMP 002 26 - BUHLER - Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 002 26 - BUHLER - Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003386",
+    "error": null
+  },
+  {
+    "lmp_num": 3,
+    "lmp_ano": "003 26",
+    "mes": "2026-01",
+    "folder": "LMP 003 26 - WEG Motores - Lan���amento -18765755",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 003 26 - WEG Motores - Lan���amento -18765755\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "002966",
+    "error": null
+  },
+  {
+    "lmp_num": 4,
+    "lmp_ano": "004 26",
+    "mes": "2026-01",
+    "folder": "LMP 004 26 - Wanke - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 004 26 - Wanke - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003181",
+    "error": null
+  },
+  {
+    "lmp_num": 5,
+    "lmp_ano": "005 26",
+    "mes": "2026-01",
+    "folder": "LMP 005 26 - WEG Linhares - Lan���amento -19094854",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 005 26 - WEG Linhares - Lan���amento -19094854\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003361",
+    "error": null
+  },
+  {
+    "lmp_num": 6,
+    "lmp_ano": "006 26",
+    "mes": "2026-01",
+    "folder": "LMP 006 26 - FAMAC - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 006 26 - FAMAC - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003425",
+    "error": null
+  },
+  {
+    "lmp_num": 7,
+    "lmp_ano": "007 26",
+    "mes": "2026-01",
+    "folder": "LMP 007 26 - 3RHO - Lan���amento 2 itens",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 007 26 - 3RHO - Lan���amento 2 itens\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003366",
+    "error": null
+  },
+  {
+    "lmp_num": 8,
+    "lmp_ano": "008 26",
+    "mes": "2026-01",
+    "folder": "LMP 008 26 - 3RHO -Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 008 26 - 3RHO -Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003427",
+    "error": null
+  },
+  {
+    "lmp_num": 9,
+    "lmp_ano": "009 26",
+    "mes": "2026-01",
+    "folder": "LMP 009 26 - WEG Motores -Modifica������o- 17608796",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 009 26 - WEG Motores -Modifica������o- 17608796\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003443",
+    "error": null
+  },
+  {
+    "lmp_num": 10,
+    "lmp_ano": "010 26",
+    "mes": "2026-01",
+    "folder": "LMP 0010 26 - WEG Motores -Modifica������o-19094854",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 0010 26 - WEG Motores -Modifica������o-19094854\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003361",
+    "error": null
+  },
+  {
+    "lmp_num": 11,
+    "lmp_ano": "011 26",
+    "mes": "2026-02",
+    "folder": "LMP 011 26 - WEG Linhares - Lan���amento -14824770",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 011 26 - WEG Linhares - Lan���amento -14824770\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003111",
+    "error": null
+  },
+  {
+    "lmp_num": 12,
+    "lmp_ano": "012 26",
+    "mes": "2026-02",
+    "folder": "LMP 012 26 - WEG Linhares - Lan���amento -18207231",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 012 26 - WEG Linhares - Lan���amento -18207231\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "002770",
+    "error": null
+  },
+  {
+    "lmp_num": 13,
+    "lmp_ano": "013 26",
+    "mes": "2026-02",
+    "folder": "LMP 013 26 - WEG Linhares - Lan���amento -18491534",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 013 26 - WEG Linhares - Lan���amento -18491534\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "002880",
+    "error": null
+  },
+  {
+    "lmp_num": 14,
+    "lmp_ano": "014 26",
+    "mes": "2026-02",
+    "folder": "LMP 014 26 - WEG Linhares - Lan���amento -18435249",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 014 26 - WEG Linhares - Lan���amento -18435249\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003213",
+    "error": null
+  },
+  {
+    "lmp_num": 15,
+    "lmp_ano": "015 26",
+    "mes": "2026-02",
+    "folder": "LMP 015 26 - WEG Linhares - Lan���amento - 17971964",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 015 26 - WEG Linhares - Lan���amento - 17971964\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003448",
+    "error": null
+  },
+  {
+    "lmp_num": 16,
+    "lmp_ano": "016 26",
+    "mes": "2026-02",
+    "folder": "LMP 016 26 - WEG Energia - Lan���amento - 17144296",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 016 26 - WEG Energia - Lan���amento - 17144296\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003420",
+    "error": null
+  },
+  {
+    "lmp_num": 17,
+    "lmp_ano": "017 26",
+    "mes": "2026-02",
+    "folder": "LMP 017 26 - FAMAC - Modifica������o - 8itens",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 017 26 - FAMAC - Modifica������o - 8itens\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003425",
+    "error": null
+  },
+  {
+    "lmp_num": 18,
+    "lmp_ano": "018 26",
+    "mes": "2026-02",
+    "folder": "LMP 018 26 - WEG Motores -Lan���amento-19010115",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 018 26 - WEG Motores -Lan���amento-19010115\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003443",
+    "error": null
+  },
+  {
+    "lmp_num": 19,
+    "lmp_ano": "019 26",
+    "mes": "2026-02",
+    "folder": "LMP 019 26 - WEG Linhares - Modifica������o -13537714 - 13536801",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 019 26 - WEG Linhares - Modifica������o -13537714 - 13536801\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003454",
+    "error": null
+  },
+  {
+    "lmp_num": 20,
+    "lmp_ano": "020 26",
+    "mes": "2026-02",
+    "folder": "LMP 020 26 - WEG Energia - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 020 26 - WEG Energia - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003459",
+    "error": null
+  },
+  {
+    "lmp_num": 21,
+    "lmp_ano": "021 26",
+    "mes": "2026-02",
+    "folder": "LMP 021 26 - WEG Energia - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 021 26 - WEG Energia - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003460",
+    "error": null
+  },
+  {
+    "lmp_num": 22,
+    "lmp_ano": "022 26",
+    "mes": "2026-02",
+    "folder": "LMP 022 26 - WEG Energia - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 022 26 - WEG Energia - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003461",
+    "error": null
+  },
+  {
+    "lmp_num": 23,
+    "lmp_ano": "023 26",
+    "mes": "2026-02",
+    "folder": "LMP 023 26 - BUHLER - Modifica������o 15 intes",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 023 26 - BUHLER - Modifica������o 15 intes\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003386",
+    "error": null
+  },
+  {
+    "lmp_num": 24,
+    "lmp_ano": "024 26",
+    "mes": "2026-02",
+    "folder": "LMP 024 26 - WEG Energia - Lan���amento - 18347886",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 024 26 - WEG Energia - Lan���amento - 18347886\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003450",
+    "error": null
+  },
+  {
+    "lmp_num": 25,
+    "lmp_ano": "025 26",
+    "mes": "2026-02",
+    "folder": "LMP 025 26 - WEG Drives- Lan���amento -19128228-19128241-19128231",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 025 26 - WEG Drives- Lan���amento -19128228-19128241-19128231\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003413",
+    "error": null
+  },
+  {
+    "lmp_num": 26,
+    "lmp_ano": "026 26",
+    "mes": "2026-02",
+    "folder": "LMP 026 26 - WEG Linhares - Lan���amento -15664705",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 026 26 - WEG Linhares - Lan���amento -15664705\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000005",
+    "error": null
+  },
+  {
+    "lmp_num": 27,
+    "lmp_ano": "027 26",
+    "mes": "2026-02",
+    "folder": "LMP 027 26 - WEG Drives- Lan���amento -19221466",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 027 26 - WEG Drives- Lan���amento -19221466\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003478",
+    "error": null
+  },
+  {
+    "lmp_num": 28,
+    "lmp_ano": "028 26",
+    "mes": "2026-02",
+    "folder": "LMP 028 26 - WEG Motores -Mofifica������o- 90262960",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 028 26 - WEG Motores -Mofifica������o- 90262960\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003497",
+    "error": null
+  },
+  {
+    "lmp_num": 29,
+    "lmp_ano": "029 26",
+    "mes": "2026-02",
+    "folder": "LMP 029 26 - WEG Motores -Mofifica������o- 4 itens",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 029 26 - WEG Motores -Mofifica������o- 4 itens\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003498",
+    "error": null
+  },
+  {
+    "lmp_num": 30,
+    "lmp_ano": "030 26",
+    "mes": "2026-02",
+    "folder": "LMP 030 26 - WEG Motores -Mofifica������o- 90263073",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 030 26 - WEG Motores -Mofifica������o- 90263073\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003499",
+    "error": null
+  },
+  {
+    "lmp_num": 31,
+    "lmp_ano": "031 26",
+    "mes": "2026-02",
+    "folder": "LMP 031 26 - WEG Motores -Mofifica������o- 90263547",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 031 26 - WEG Motores -Mofifica������o- 90263547\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003500",
+    "error": null
+  },
+  {
+    "lmp_num": 32,
+    "lmp_ano": "032 26",
+    "mes": "2026-02",
+    "folder": "LMP 032 26 - Menegotti -Mofifica������o- 90260249",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 032 26 - Menegotti -Mofifica������o- 90260249\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003472",
+    "error": null
+  },
+  {
+    "lmp_num": 33,
+    "lmp_ano": "033 26",
+    "mes": "2026-02",
+    "folder": "LMP 033 26 - WEG Linhares - Lan���amento - contra pe���a",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 033 26 - WEG Linhares - Lan���amento - contra pe���a\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000352",
+    "error": null
+  },
+  {
+    "lmp_num": 34,
+    "lmp_ano": "034 26",
+    "mes": "2026-02",
+    "folder": "LMP 034 26 - Famac-Mofifica������o- 90263752",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 034 26 - Famac-Mofifica������o- 90263752\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003502",
+    "error": null
+  },
+  {
+    "lmp_num": 35,
+    "lmp_ano": "035 26",
+    "mes": "2026-02",
+    "folder": "LMP 035 26 - WEG Linhares - Lan���amento -19128657",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 035 26 - WEG Linhares - Lan���amento -19128657\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003335",
+    "error": null
+  },
+  {
+    "lmp_num": 36,
+    "lmp_ano": "036 26",
+    "mes": "2026-02",
+    "folder": "LMP 036 26 - BUHLER - Modifica������o 15 intes",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 036 26 - BUHLER - Modifica������o 15 intes\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003386",
+    "error": null
+  },
+  {
+    "lmp_num": 37,
+    "lmp_ano": "037 26",
+    "mes": "2026-03",
+    "folder": "LMP 037 26 - WEG Motores -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 037 26 - WEG Motores -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003506",
+    "error": null
+  },
+  {
+    "lmp_num": 38,
+    "lmp_ano": "038 26",
+    "mes": "2026-03",
+    "folder": "LMP 038 26 - Colormaq- Modifica������o-90480092",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 038 26 - Colormaq- Modifica������o-90480092\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003506",
+    "error": null
+  },
+  {
+    "lmp_num": 39,
+    "lmp_ano": "039 26",
+    "mes": "2026-03",
+    "folder": "LMP 039 26 - WEG Linhares- lan���amento - 19235388",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 039 26 - WEG Linhares- lan���amento - 19235388\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000026",
+    "error": null
+  },
+  {
+    "lmp_num": 40,
+    "lmp_ano": "040 26",
+    "mes": "2026-03",
+    "folder": "LMP 040 26 - WEG Linhares- lan���amento - 19243063",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 040 26 - WEG Linhares- lan���amento - 19243063\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003446",
+    "error": null
+  },
+  {
+    "lmp_num": 41,
+    "lmp_ano": "041 26",
+    "mes": "2026-03",
+    "folder": "LMP 041 26 - WEG Linhares- lan���amento - 19253745 - 19253743",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 041 26 - WEG Linhares- lan���amento - 19253745 - 19253743\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000033",
+    "error": null
+  },
+  {
+    "lmp_num": 42,
+    "lmp_ano": "042 26",
+    "mes": "2026-03",
+    "folder": "LMP 042 26 - WEG Linhares- lan���amento - 19163609",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 042 26 - WEG Linhares- lan���amento - 19163609\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003421",
+    "error": null
+  },
+  {
+    "lmp_num": 43,
+    "lmp_ano": "043 26",
+    "mes": "2026-03",
+    "folder": "LMP 043 26 - WEG Linhares- Modifica������o -18057909",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 043 26 - WEG Linhares- Modifica������o -18057909\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003362",
+    "error": null
+  },
+  {
+    "lmp_num": 44,
+    "lmp_ano": "044 26",
+    "mes": "2026-03",
+    "folder": "LMP 044 26 - Wanke - Modifica������o - 90264147 - 90264148",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 044 26 - Wanke - Modifica������o - 90264147 - 90264148\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003529",
+    "error": null
+  },
+  {
+    "lmp_num": 45,
+    "lmp_ano": "045 26",
+    "mes": "2026-03",
+    "folder": "LMP 045 26 TRACTIAN - Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 045 26 TRACTIAN - Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 - LMP - 049-25 - TRACTIAN - An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003523",
+    "error": null
+  },
+  {
+    "lmp_num": 46,
+    "lmp_ano": "046 26",
+    "mes": "2026-03",
+    "folder": "LMP 046 26 - WEG Motores -Mofifica������o- 90262511",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 046 26 - WEG Motores -Mofifica������o- 90262511\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003528",
+    "error": null
+  },
+  {
+    "lmp_num": 47,
+    "lmp_ano": "047 26",
+    "mes": "2026-03",
+    "folder": "LMP 047 26 - WEG Linhares -Modifica������o -90264195",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 047 26 - WEG Linhares -Modifica������o -90264195\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000051",
+    "error": null
+  },
+  {
+    "lmp_num": 48,
+    "lmp_ano": "048 26",
+    "mes": "2026-03",
+    "folder": "LMP 048 26 - WEG Linhares -Lan���amento -18982498",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 048 26 - WEG Linhares -Lan���amento -18982498\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003246",
+    "error": null
+  },
+  {
+    "lmp_num": 49,
+    "lmp_ano": "049 26",
+    "mes": "2026-03",
+    "folder": "LMP 049 26 - WEG Linhares -Lan���amento -19089018",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 049 26 - WEG Linhares -Lan���amento -19089018\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000034",
+    "error": null
+  },
+  {
+    "lmp_num": 50,
+    "lmp_ano": "050 26",
+    "mes": "2026-03",
+    "folder": "LMP 050 26 - WEG Linhares -Lan���amento -19262909",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 050 26 - WEG Linhares -Lan���amento -19262909\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003514",
+    "error": null
+  },
+  {
+    "lmp_num": 51,
+    "lmp_ano": "051 26",
+    "mes": "2026-03",
+    "folder": "LMP 051 26 - G-MEYER -Modifica������o- 90260987",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 051 26 - G-MEYER -Modifica������o- 90260987\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003538",
+    "error": null
+  },
+  {
+    "lmp_num": 52,
+    "lmp_ano": "052 26",
+    "mes": "2026-03",
+    "folder": "LMP 052 26 -MAGATECH -Modifica������o- 90263904",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 052 26 -MAGATECH -Modifica������o- 90263904\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003540",
+    "error": null
+  },
+  {
+    "lmp_num": 53,
+    "lmp_ano": "053 26",
+    "mes": "2026-03",
+    "folder": "LMP 053 26 - FALCON -Modifica������o -90262944",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 053 26 - FALCON -Modifica������o -90262944\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003541",
+    "error": null
+  },
+  {
+    "lmp_num": 54,
+    "lmp_ano": "054 26",
+    "mes": "2026-04",
+    "folder": "LMP 054 26 - WANKE -Modifica������o -90264142 90264147 90264148",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 054 26 - WANKE -Modifica������o -90264142 90264147 90264148\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000066",
+    "error": null
+  },
+  {
+    "lmp_num": 55,
+    "lmp_ano": "055 26",
+    "mes": "2026-04",
+    "folder": "LMP 055 26 TRACTIAN - Modifica������o- 90264206",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 055 26 TRACTIAN - Modifica������o- 90264206\\ANALISE CRITICA - VERIFICA������O\\RQ-060 - LMP - 049-25 - TRACTIAN - An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003523",
+    "error": null
+  },
+  {
+    "lmp_num": 56,
+    "lmp_ano": "056 26",
+    "mes": "2026-04",
+    "folder": "LMP 056 26 WEG linhares- Lan���amento- 10432787",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 056 26 WEG linhares- Lan���amento- 10432787\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003470",
+    "error": null
+  },
+  {
+    "lmp_num": 57,
+    "lmp_ano": "057 26",
+    "mes": "2026-04",
+    "folder": "LMP 057 26 WEG linhares- Modifica������o- 19128657",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 057 26 WEG linhares- Modifica������o- 19128657\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000073",
+    "error": null
+  },
+  {
+    "lmp_num": 58,
+    "lmp_ano": "058 26",
+    "mes": "2026-04",
+    "folder": "LMP 058 26 - WEG Energia - Lan���amento- 8 itens",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 058 26 - WEG Energia - Lan���amento- 8 itens\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003532",
+    "error": null
+  },
+  {
+    "lmp_num": 59,
+    "lmp_ano": "059 26",
+    "mes": "2026-04",
+    "folder": "LMP 059 26 TRACTIAN - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 059 26 TRACTIAN - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 - LMP - 049-25 - TRACTIAN - An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003331",
+    "error": null
+  },
+  {
+    "lmp_num": 60,
+    "lmp_ano": "060 26",
+    "mes": "2026-04",
+    "folder": "LMP 060 26 - BUHLER - Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 060 26 - BUHLER - Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003173",
+    "error": null
+  },
+  {
+    "lmp_num": 61,
+    "lmp_ano": "061 26",
+    "mes": "2026-04",
+    "folder": "LMP 061 26 - WEG Linhares -Lan���amento-19106407",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 061 26 - WEG Linhares -Lan���amento-19106407\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003355",
+    "error": null
+  },
+  {
+    "lmp_num": 62,
+    "lmp_ano": "062 26",
+    "mes": "2026-04",
+    "folder": "LMP 062 26 - WEG Linhares -Modifica������o- 90480109",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 062 26 - WEG Linhares -Modifica������o- 90480109\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000085",
+    "error": null
+  },
+  {
+    "lmp_num": 63,
+    "lmp_ano": "063 26",
+    "mes": "2026-04",
+    "folder": "LMP 063 26 - Colormaq -Modifica������o- 90480092",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 063 26 - Colormaq -Modifica������o- 90480092\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000087",
+    "error": null
+  },
+  {
+    "lmp_num": 64,
+    "lmp_ano": "064 26",
+    "mes": "2026-04",
+    "folder": "LMP 064 26 - WEG Linhares- Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 064 26 - WEG Linhares- Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000061",
+    "error": null
+  },
+  {
+    "lmp_num": 65,
+    "lmp_ano": "065 26",
+    "mes": "2026-04",
+    "folder": "LMP 065 26 - Wanke - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 065 26 - Wanke - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000088",
+    "error": null
+  },
+  {
+    "lmp_num": 66,
+    "lmp_ano": "066 26",
+    "mes": "2026-04",
+    "folder": "LMP 066 26 - Wanke - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 066 26 - Wanke - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000089",
+    "error": null
+  },
+  {
+    "lmp_num": 67,
+    "lmp_ano": "067 26",
+    "mes": "2026-04",
+    "folder": "LMP 067 26 - Wanke - Lan���amento - 7 itens (plug Argentino)",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 067 26 - Wanke - Lan���amento - 7 itens (plug Argentino)\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003306",
+    "error": null
+  },
+  {
+    "lmp_num": 68,
+    "lmp_ano": "068 26",
+    "mes": "2026-04",
+    "folder": "LMP 068 26 - WEG Motores -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 068 26 - WEG Motores -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003506",
+    "error": null
+  },
+  {
+    "lmp_num": 69,
+    "lmp_ano": "069 26",
+    "mes": "2026-04",
+    "folder": "LMP 069 26 - 3RHO -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 069 26 - 3RHO -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003031",
+    "error": null
+  },
+  {
+    "lmp_num": 70,
+    "lmp_ano": "070 26",
+    "mes": "2026-05",
+    "folder": "LMP 070 26 -FLEX TRONIC -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 070 26 -FLEX TRONIC -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003562",
+    "error": null
+  },
+  {
+    "lmp_num": 71,
+    "lmp_ano": "071 26",
+    "mes": "2026-05",
+    "folder": "LMP 071 26 - 3RHO-Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 071 26 - 3RHO-Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003403",
+    "error": null
+  },
+  {
+    "lmp_num": 72,
+    "lmp_ano": "072 26",
+    "mes": "2026-05",
+    "folder": "LMP 072 26 - WEG Linhares -Lan���amento-19381065",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 072 26 - WEG Linhares -Lan���amento-19381065\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000090",
+    "error": null
+  },
+  {
+    "lmp_num": 73,
+    "lmp_ano": "073 26",
+    "mes": "2026-05",
+    "folder": "LMP 073 26 - Wanke - Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 073 26 - Wanke - Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000102",
+    "error": null
+  },
+  {
+    "lmp_num": 74,
+    "lmp_ano": "074 26",
+    "mes": "2026-05",
+    "folder": "LMP 074 26- Weg Motores Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 074 26- Weg Motores Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003568",
+    "error": null
+  },
+  {
+    "lmp_num": 75,
+    "lmp_ano": "075 26",
+    "mes": "2026-05",
+    "folder": "LMP 075 26- Weg Linhares- Modifica������o - 90264221",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 075 26- Weg Linhares- Modifica������o - 90264221\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000111",
+    "error": null
+  },
+  {
+    "lmp_num": 76,
+    "lmp_ano": "076 26",
+    "mes": "2026-05",
+    "folder": "LMP 076 26- Weg Linhares- Lan���amento - 19373355",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 076 26- Weg Linhares- Lan���amento - 19373355\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000084",
+    "error": null
+  },
+  {
+    "lmp_num": 77,
+    "lmp_ano": "077 26",
+    "mes": "2026-05",
+    "folder": "LMP 077 26- Weg Linhares- Modifica������o - 90263991",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 077 26- Weg Linhares- Modifica������o - 90263991\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003571",
+    "error": null
+  },
+  {
+    "lmp_num": 78,
+    "lmp_ano": "078 26",
+    "mes": "2026-05",
+    "folder": "LMP 078 26- Buhler- Lan���amento -",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 078 26- Buhler- Lan���amento -\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003567",
+    "error": null
+  },
+  {
+    "lmp_num": 79,
+    "lmp_ano": "079 26",
+    "mes": "2026-05",
+    "folder": "LMP 079 26 - WEG Linhares -Modifica������o- 90264229",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 079 26 - WEG Linhares -Modifica������o- 90264229\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000090",
+    "error": null
+  },
+  {
+    "lmp_num": 80,
+    "lmp_ano": "080 26",
+    "mes": "2026-05",
+    "folder": "LMP 080 26 - WEG Linhares -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 080 26 - WEG Linhares -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003551",
+    "error": null
+  },
+  {
+    "lmp_num": 81,
+    "lmp_ano": "081 26",
+    "mes": "2026-05",
+    "folder": "LMP 081 26 - WEG Linhares -Lan���amento -",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 081 26 - WEG Linhares -Lan���amento -\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000054",
+    "error": null
+  },
+  {
+    "lmp_num": 82,
+    "lmp_ano": "082 26",
+    "mes": "2026-05",
+    "folder": "LMP 082 26 - WEG Linhares -Lan���amento -",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 082 26 - WEG Linhares -Lan���amento -\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000097",
+    "error": null
+  },
+  {
+    "lmp_num": 83,
+    "lmp_ano": "083 26",
+    "mes": "2026-05",
+    "folder": "LMP 083 26 - WEG Energia -Lan���amento -",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 083 26 - WEG Energia -Lan���amento -\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003574",
+    "error": null
+  },
+  {
+    "lmp_num": 84,
+    "lmp_ano": "084 26",
+    "mes": "2026-05",
+    "folder": "LMP 084 26 - WEG Energia -Lan���amento -",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 084 26 - WEG Energia -Lan���amento -\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003572",
+    "error": null
+  },
+  {
+    "lmp_num": 85,
+    "lmp_ano": "085 26",
+    "mes": "2026-05",
+    "folder": "LMP 085 26 - WEG Energia -Lan���amento -",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 085 26 - WEG Energia -Lan���amento -\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003573",
+    "error": null
+  },
+  {
+    "lmp_num": 86,
+    "lmp_ano": "086 26",
+    "mes": "2026-05",
+    "folder": "LMP 086 26 - WEG linhares -Lan���amento -",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 086 26 - WEG linhares -Lan���amento -\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000061",
+    "error": null
+  },
+  {
+    "lmp_num": 87,
+    "lmp_ano": "087 26",
+    "mes": "2026-06",
+    "folder": "LMP 087 26 - Wanke Modifica������o- 90480103, 90480095, 90480115- 90480094",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 087 26 - Wanke Modifica������o- 90480103, 90480095, 90480115- 90480094\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000124",
+    "error": null
+  },
+  {
+    "lmp_num": 88,
+    "lmp_ano": "088 26",
+    "mes": "2026-06",
+    "folder": "LMP 088 26 - Weg Motores - Lan���amento 19471063",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 088 26 - Weg Motores - Lan���amento 19471063\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003506",
+    "error": null
+  },
+  {
+    "lmp_num": 89,
+    "lmp_ano": "089 26",
+    "mes": "2026-06",
+    "folder": "LMP 089 26 TRACTIAN - Modifica������o- 90264206",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 089 26 TRACTIAN - Modifica������o- 90264206\\ANALISE CRITICA - VERIFICA������O\\RQ-060 - LMP - 049-25 - TRACTIAN - An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003523",
+    "error": null
+  },
+  {
+    "lmp_num": 90,
+    "lmp_ano": "090 26",
+    "mes": "2026-06",
+    "folder": "LMP 090 26 -FLEX TRONIC -Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 090 26 -FLEX TRONIC -Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003562",
+    "error": null
+  },
+  {
+    "lmp_num": 91,
+    "lmp_ano": "091 26",
+    "mes": "2026-06",
+    "folder": "LMP 091 26 - WEG Linhares -Lan���amento - 19122268",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 091 26 - WEG Linhares -Lan���amento - 19122268\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003410",
+    "error": null
+  },
+  {
+    "lmp_num": 92,
+    "lmp_ano": "092 26",
+    "mes": "2026-06",
+    "folder": "LMP 092 26 -WANKE -Modifica������o",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 092 26 -WANKE -Modifica������o\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000133",
+    "error": null
+  },
+  {
+    "lmp_num": 93,
+    "lmp_ano": "093 26",
+    "mes": "2026-06",
+    "folder": "LMP 093 26 -Weg linhares -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 093 26 -Weg linhares -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003377",
+    "error": null
+  },
+  {
+    "lmp_num": 94,
+    "lmp_ano": "094 26",
+    "mes": "2026-06",
+    "folder": "LMP 094 26 -Buhler -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 094 26 -Buhler -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003578",
+    "error": null
+  },
+  {
+    "lmp_num": 95,
+    "lmp_ano": "095 26",
+    "mes": "2026-06",
+    "folder": "LMP 095 26 -Weg linhares -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 095 26 -Weg linhares -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000120",
+    "error": null
+  },
+  {
+    "lmp_num": 96,
+    "lmp_ano": "096 26",
+    "mes": "2026-06",
+    "folder": "LMP 096 26 -Weg linhares -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 096 26 -Weg linhares -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "000125",
+    "error": null
+  },
+  {
+    "lmp_num": 97,
+    "lmp_ano": "097 26",
+    "mes": "2026-06",
+    "folder": "LMP 097 26 -Weg linhares -Lan���amento",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 097 26 -Weg linhares -Lan���amento\\ANALISE CRITICA - VERIFICA������O\\RQ-060 An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003092",
+    "error": null
+  },
+  {
+    "lmp_num": 98,
+    "lmp_ano": "098 26",
+    "mes": "2026-06",
+    "folder": "LMP 098 26 TRACTIAN - Modifica������o- 90264050",
+    "rq060": "X:\\ENGENHARIA\\1 LMP's\\LMP 2026\\LMP 098 26 TRACTIAN - Modifica������o- 90264050\\ANALISE CRITICA - VERIFICA������O\\RQ-060 - LMP - 049-25 - TRACTIAN - An���lise Cr���tica de Produtos Rev07.docx",
+    "ov": "003595",
+    "error": null
+  }
+]

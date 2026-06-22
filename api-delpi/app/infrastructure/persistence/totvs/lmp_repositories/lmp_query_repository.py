@@ -14,6 +14,10 @@ from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_history_event import LMPHistoryEvent
 from app.domain.entities.lmp.lmp_product import LMPProduct
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
+from app.domain.services.lmp_period_inclusion_semantics_service import (
+    HOMOLOG_IN_PERIOD,
+    LmpPeriodInclusionSemanticsService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_settings import (
     LMPQuerySettings,
@@ -93,6 +97,16 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
     def _engineering_residence_filter_sql(self) -> str:
         """Tempo mínimo em engenharia aplica somente a LMP; Amostra e Outro listam sempre."""
+        minutes = self._min_engineering_residence_minutes()
+        if self.settings.strict_residence_after_homolog:
+            return f"""
+            WHERE
+                C.LISTING_KIND IN ('{LISTING_KIND_SAMPLE}', '{LISTING_KIND_OTHER}')
+                OR (
+                    C.LISTING_KIND = '{LISTING_KIND_LMP}'
+                    AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= {minutes}
+                )
+        """
         return f"""
             WHERE
                 C.LISTING_KIND IN ('{LISTING_KIND_SAMPLE}', '{LISTING_KIND_OTHER}')
@@ -112,8 +126,18 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         has_sample_field: str = "C.HAS_SAMPLE_ANCHOR",
         has_lmp_finalized_field: str = "C.HAS_LMP_FINALIZED",
     ) -> str:
+        minutes = self._min_engineering_residence_minutes()
+        strict_after_homolog = ""
+        if self.settings.strict_residence_after_homolog:
+            strict_after_homolog = f"""
+                WHEN {listing_kind_field} = '{LISTING_KIND_LMP}'
+                 AND {has_lmp_finalized_field} = 1
+                 AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) < {minutes}
+                THEN '{LISTING_KIND_OTHER}'
+            """
         return f"""
             CASE
+                {strict_after_homolog}
                 WHEN {listing_kind_field} = '{LISTING_KIND_LMP}'
                  AND {has_sample_field} = 1
                  AND ISNULL(H.TEMPO_MINUTOS_AMOSTRA_ENG, 0) > 0
@@ -135,10 +159,17 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         residence_filter_count: int = 1,
     ) -> tuple:
         minutes = self._min_engineering_residence_minutes()
+        if self.settings.strict_residence_after_homolog:
+            return tuple([minutes] * listing_kind_reclass_count)
         params: list[int] = []
         params.extend([minutes] * residence_filter_count)
         params.extend([minutes] * listing_kind_reclass_count)
         return tuple(params)
+
+    def _period_inclusion_policy(self) -> str:
+        return LmpPeriodInclusionSemanticsService.normalize_policy(
+            self.settings.period_inclusion_policy,
+        )
 
     def _uses_period_revision_measurement(
         self,
@@ -172,6 +203,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         *,
         anchor_date_sql: str,
         first_eng_date_sql: str = "F.FIRST_ENG_DATE",
+        homolog_date_sql: str = "LF.ANCHOR_START_DATE",
     ) -> Tuple[str, tuple]:
         qb_anchor = QueryBuilder()
         qb_anchor.date_range(
@@ -187,6 +219,19 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         ):
             return where_anchor, params_anchor
 
+        qb_homolog = QueryBuilder()
+        qb_homolog.date_range(
+            field=homolog_date_sql,
+            start=request.date_start,
+            end=request.date_end,
+        )
+        where_homolog, params_homolog = qb_homolog.build()
+
+        if self._period_inclusion_policy() == HOMOLOG_IN_PERIOD:
+            if not where_homolog:
+                return "1=0", ()
+            return where_homolog, params_homolog
+
         qb_first = QueryBuilder()
         qb_first.date_range(
             field=first_eng_date_sql,
@@ -195,13 +240,20 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         where_first, params_first = qb_first.build()
 
-        if not where_anchor and not where_first:
-            return "1=1", ()
-        if not where_anchor:
+        sql = LmpPeriodInclusionSemanticsService.build_candidate_period_predicate(
+            policy=self._period_inclusion_policy(),
+            anchor_date_sql=anchor_date_sql,
+            first_eng_date_sql=first_eng_date_sql,
+            homolog_date_sql=homolog_date_sql,
+            where_anchor=where_anchor,
+            where_first_eng=where_first,
+            where_homolog=where_homolog,
+        )
+        if sql == where_first:
             return where_first, params_first
-        if not where_first:
+        if sql == where_anchor:
             return where_anchor, params_anchor
-        return f"(({where_anchor}) OR ({where_first}))", (*params_anchor, *params_first)
+        return sql, (*params_anchor, *params_first)
 
     def _sql_ov_first_engineering_arrival_cte(
         self,
@@ -1006,7 +1058,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         first_eng_join = ""
         anchor_start_expr = "L.ANCHOR_START_DATE"
         other_start_expr = "R.ANCHOR_START_DATE"
-        if has_period:
+        if has_period and LmpPeriodInclusionSemanticsService.requires_first_eng_join(
+            self._period_inclusion_policy(),
+        ):
             first_eng_cte, first_eng_params = self._sql_ov_first_engineering_arrival_cte(
                 request.branch,
             )
@@ -1158,6 +1212,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             return f"""
                     E.AIJ_FILIAL,
                     E.AIJ_NROPOR,
+                    MAX(M.ULTIMA_REVISA_MEDICAO) AS MEASUREMENT_REVISION,
                     {tempo_cols}"""
 
         return f"""
@@ -2852,6 +2907,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     {listing_kind_expr} AS listing_kind,
                     C.LMP_START_DATE AS start_date,
                     C.LMP_END_DATE AS end_date,
+                    C.AD1_REVISA AS homolog_revision,
+                    H.MEASUREMENT_REVISION AS measurement_revision,
+                    C.LMP_START_DATE AS homolog_date,
+                    1 AS cycle_index,
                     H.ENGINEERING_STATUS AS engineering_status,
                     H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
                     {qtd_pi_select}
@@ -2870,6 +2929,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     C.HAS_LMP_FINALIZED,
                     C.LMP_START_DATE,
                     C.LMP_END_DATE,
+                    C.AD1_REVISA,
+                    H.MEASUREMENT_REVISION,
                     H.ENGINEERING_STATUS,
                     H.TEMPO_TOTAL_MINUTOS_ENG,
                     H.TEMPO_MINUTOS_AMOSTRA_ENG
@@ -3242,6 +3303,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 "listing_kind": row.get("listing_kind"),
                 "start_date": row.get("start_date"),
                 "end_date": row.get("end_date"),
+                "homolog_revision": row.get("homolog_revision"),
+                "measurement_revision": row.get("measurement_revision"),
+                "homolog_date": row.get("homolog_date"),
+                "cycle_index": int(row.get("cycle_index") or 1),
                 "engineering_status": row.get("engineering_status"),
                 "engineering_total_minutes": int(row.get("engineering_total_minutes") or 0),
                 "qtd_pi": int(row.get("qtd_pi") or 0),

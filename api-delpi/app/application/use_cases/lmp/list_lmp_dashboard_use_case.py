@@ -46,8 +46,6 @@ class ListLMPDashboardUseCase:
             listing_kind=item.listing_kind,
             start_date=item.start_date,
             end_date=item.end_date,
-            engineering_status=item.engineering_status,
-            qtd_pi=int(item.qtd_pi or 0),
             nivel=nivel,
             dias_uteis_sla=sla_days,
             sla_minutos=sla_minutes,
@@ -55,6 +53,12 @@ class ListLMPDashboardUseCase:
             data_limite=data_limite,
             lead_time_util=lead_time_util,
             status=status,
+            homolog_revision=item.reference_revision,
+            measurement_revision=item.measurement_revision,
+            homolog_date=item.start_date,
+            cycle_index=1,
+            engineering_status=item.engineering_status,
+            qtd_pi=int(item.qtd_pi or 0),
         )
 
     def _filter_items_by_status(
@@ -203,8 +207,6 @@ class ListLMPDashboardUseCase:
                 listing_kind=row.get("listing_kind"),
                 start_date=row.get("start_date"),
                 end_date=row.get("end_date"),
-                engineering_status=row.get("engineering_status"),
-                qtd_pi=int(row.get("qtd_pi") or 0),
                 nivel=nivel,
                 dias_uteis_sla=sla_days,
                 sla_minutos=sla_minutes,
@@ -212,6 +214,12 @@ class ListLMPDashboardUseCase:
                 data_limite=data_limite,
                 lead_time_util=lead_time_util,
                 status=status,
+                homolog_revision=row.get("homolog_revision"),
+                measurement_revision=row.get("measurement_revision"),
+                homolog_date=row.get("homolog_date") or row.get("start_date"),
+                cycle_index=int(row.get("cycle_index") or 1),
+                engineering_status=row.get("engineering_status"),
+                qtd_pi=int(row.get("qtd_pi") or 0),
             ))
 
         set_cached_lmp_dashboard(cache_key, items)

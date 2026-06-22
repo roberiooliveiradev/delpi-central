@@ -9,6 +9,12 @@ class LMPQuerySettings:
     # Tempo mínimo de permanência em engenharia — aplica somente a LISTING_KIND LMP.
     min_engineering_residence_minutes: int = 30
 
+    # anchor_or_first_eng (legado) | homolog_in_period (alinhado RQ-060 / reabertura)
+    period_inclusion_policy: str = "anchor_or_first_eng"
+
+    # Homolog LMP com permanência < min → OUTRO; remove bypass amostra pós-homolog
+    strict_residence_after_homolog: bool = False
+
     # Prioridade quando a OV possui mais de um marcador na mesma revisão.
     listing_kind_priority: Dict[str, int] = field(
         default_factory=lambda: {

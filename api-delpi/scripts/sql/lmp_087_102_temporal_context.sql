@@ -1,0 +1,44 @@
+-- Contexto temporal global: first_eng, first_homolog, ciclos anteriores (087, 102)
+WITH
+TargetOvs AS (
+    SELECT * FROM (VALUES ('000087','02'),('000102','02')) AS T(s,n)
+),
+EngSupport AS (
+    SELECT * FROM (VALUES
+        ('000002','000003'),('000002','000008'),('000002','000012'),
+        ('000003','000003'),('000003','000012')
+    ) AS E(p,st)
+),
+Homolog AS (
+    SELECT A.AIJ_FILIAL, A.AIJ_NROPOR, A.AIJ_REVISA, A.AIJ_DTINIC homolog_date, A.AIJ_PROVEN, A.AIJ_STAGE
+    FROM AIJ010 A
+    WHERE A.D_E_L_E_T_=''
+      AND ((A.AIJ_PROVEN='000002' AND A.AIJ_STAGE='000012') OR (A.AIJ_PROVEN='000003' AND A.AIJ_STAGE='000012'))
+      AND EXISTS (SELECT 1 FROM TargetOvs T WHERE T.s=A.AIJ_NROPOR AND T.n=A.AIJ_FILIAL)
+),
+FirstEng AS (
+    SELECT A.AIJ_FILIAL, A.AIJ_NROPOR, MIN(A.AIJ_DTINIC) first_eng
+    FROM AIJ010 A
+    INNER JOIN EngSupport E ON E.p=A.AIJ_PROVEN AND E.st=A.AIJ_STAGE
+    WHERE A.D_E_L_E_T_='' AND EXISTS (SELECT 1 FROM TargetOvs T WHERE T.s=A.AIJ_NROPOR AND T.n=A.AIJ_FILIAL)
+    GROUP BY A.AIJ_FILIAL, A.AIJ_NROPOR
+),
+EngByMonth AS (
+    SELECT A.AIJ_FILIAL, A.AIJ_NROPOR,
+        SUBSTRING(A.AIJ_DTINIC,1,6) ym,
+        COUNT(*) events,
+        SUM(CASE WHEN ISNULL(A.AIJ_DTENCE,'')<>'' AND ISNULL(A.AIJ_HRENCE,'')<>'' THEN 1 ELSE 0 END) closed
+    FROM AIJ010 A
+    INNER JOIN EngSupport E ON E.p=A.AIJ_PROVEN AND E.st=A.AIJ_STAGE
+    WHERE A.D_E_L_E_T_='' AND EXISTS (SELECT 1 FROM TargetOvs T WHERE T.s=A.AIJ_NROPOR AND T.n=A.AIJ_FILIAL)
+    GROUP BY A.AIJ_FILIAL, A.AIJ_NROPOR, SUBSTRING(A.AIJ_DTINIC,1,6)
+)
+SELECT 'first_eng' AS metric, FE.AIJ_NROPOR sale_number, RTRIM(FE.AIJ_FILIAL) branch, FE.first_eng value_date, NULL revision
+FROM FirstEng FE
+UNION ALL
+SELECT 'homolog_rev', H.AIJ_NROPOR, RTRIM(H.AIJ_FILIAL), H.homolog_date, H.AIJ_REVISA
+FROM Homolog H
+UNION ALL
+SELECT 'eng_month', E.AIJ_NROPOR, RTRIM(E.AIJ_FILIAL), E.ym + '01', NULL
+FROM EngByMonth E
+ORDER BY sale_number, metric, value_date;

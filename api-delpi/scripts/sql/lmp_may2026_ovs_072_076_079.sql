@@ -1,0 +1,29 @@
+-- OVs para pastas 072, 076, 079 (produto na planilha) + homolog maio
+SELECT
+    RTRIM(ADJ.ADJ_NROPOR) AS sale_number,
+    RTRIM(ADJ.ADJ_FILIAL) AS branch,
+    RTRIM(ADJ.ADJ_PROD) AS product_code,
+    RTRIM(AD1.AD1_DESCRI) AS sale_description,
+    HM.homolog_date
+FROM ADJ010 ADJ
+INNER JOIN AD1010 AD1
+    ON AD1.AD1_FILIAL = ADJ.ADJ_FILIAL
+   AND AD1.AD1_NROPOR = ADJ.ADJ_NROPOR
+   AND AD1.D_E_L_E_T_ = ''
+LEFT JOIN (
+    SELECT RTRIM(A.AIJ_NROPOR) AS sale_number, RTRIM(A.AIJ_FILIAL) AS branch,
+           MIN(A.AIJ_DTINIC) AS homolog_date
+    FROM AIJ010 A
+    WHERE A.D_E_L_E_T_ = ''
+      AND ((A.AIJ_PROVEN = '000002' AND A.AIJ_STAGE = '000012')
+        OR (A.AIJ_PROVEN = '000003' AND A.AIJ_STAGE = '000012'))
+      AND A.AIJ_DTINIC BETWEEN '20260501' AND '20260531'
+    GROUP BY A.AIJ_NROPOR, A.AIJ_FILIAL
+) HM ON HM.sale_number = ADJ.ADJ_NROPOR AND HM.branch = ADJ.ADJ_FILIAL
+WHERE ADJ.D_E_L_E_T_ = ''
+  AND (
+        ADJ.ADJ_PROD LIKE '19381065%'
+     OR ADJ.ADJ_PROD LIKE '19373355%'
+     OR ADJ.ADJ_PROD LIKE '90264229%'
+  )
+ORDER BY ADJ.ADJ_PROD, sale_number;
