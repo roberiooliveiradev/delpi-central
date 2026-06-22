@@ -150,7 +150,10 @@ export const CHAT_TEXT_HOME_STARTERS: ChatHomeStarter[] = [
 /** Quebra-gelos padrão na home do agente (sem código fixo). */
 export const DEFAULT_AGENT_ICEBREAKERS: string[] = [
   "me fale do produto {{productCode}}",
+  "qual o status fabril hoje do produto {{productCode}}?",
+  "quais MPs exclusivas tem o produto {{productCode}}?",
+  "análise de preço da matéria-prima {{productCode}}",
+  "quais materiais mais impactam o custo do PA {{productCode}}?",
   "qual o estoque do produto {{productCode}}?",
-  "pesquise na web sobre {{searchQuery}}",
   "o que você pode fazer?",
 ];

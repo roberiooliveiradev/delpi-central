@@ -17,7 +17,42 @@ export type AgentIcebreakerTemplate = {
 /** Modelos com campos editáveis `{{campo}}` — mesmo padrão da home do chat. */
 export const AGENT_ICEBREAKER_TEMPLATES: AgentIcebreakerTemplate[] = [
   { label: "Consultar produto", template: "me fale do produto {{productCode}}" },
+  {
+    label: "Status fabril",
+    template: "qual o status fabril hoje do produto {{productCode}}?",
+    hint: "Estrutura, MPs, produção e expedição",
+  },
+  {
+    label: "MPs exclusivas",
+    template: "quais MPs exclusivas tem o produto {{productCode}}?",
+    hint: "Matérias-primas usadas só neste PA",
+  },
+  {
+    label: "Preço da MP",
+    template: "análise de preço da matéria-prima {{productCode}}",
+    hint: "Fornecedor, ICMS, orçamento e variação",
+  },
+  {
+    label: "Última compra",
+    template: "última compra e ICMS do produto {{productCode}}",
+    hint: "NF de entrada e fornecedor",
+  },
+  {
+    label: "Impacto de custo",
+    template: "quais materiais mais impactam o custo do PA {{productCode}}?",
+    hint: "Ranking Pareto das MPs na BOM",
+  },
+  {
+    label: "Simular reajuste",
+    template: "simule aumento de 10% nos materiais do produto {{productCode}}",
+    hint: "Efeito no custo total de materiais",
+  },
   { label: "Ver estoque", template: "qual o estoque do produto {{productCode}}?" },
+  {
+    label: "Expedição",
+    template: "o produto {{productCode}} já foi liberado para expedição?",
+    hint: "Inspeção final e quantidade liberada",
+  },
   { label: "Pesquisar na web", template: "pesquise na web sobre {{searchQuery}}" },
   {
     label: "Capacidades",
