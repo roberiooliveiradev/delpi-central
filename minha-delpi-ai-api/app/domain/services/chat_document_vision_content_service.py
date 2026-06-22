@@ -262,6 +262,35 @@ class ChatDocumentVisionContentService:
             return 120
 
     @classmethod
+    def pdf_attachment_index_page_ocr_enabled(cls) -> bool:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "pdfExtraction",
+            "attachmentIndex",
+            "pageOcrWhenEmbeddedBelowMinChars",
+        )
+
+        if isinstance(node, bool):
+            return node
+
+        return True
+
+    @classmethod
+    def pdf_attachment_index_max_pages(cls) -> int:
+        raw = ChatAssistantContentService.get(
+            _BUNDLE,
+            "pdfExtraction",
+            "attachmentIndex",
+            "maxPages",
+            default="10",
+        )
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 10
+
+    @classmethod
     def pdf_region_ocr_engines(cls) -> tuple[str, ...]:
         node = ChatAssistantContentService.get_node(
             _BUNDLE,

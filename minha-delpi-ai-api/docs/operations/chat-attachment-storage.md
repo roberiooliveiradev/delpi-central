@@ -67,11 +67,23 @@ Subpastas adicionais (mesma raiz):
 | Componente | Caminho |
 |------------|---------|
 | Upload anexo | `app/application/use_cases/chat_attachments_use_cases.py` |
+| Extração de texto (canônico) | `app/application/services/chat_workspace_file_text_extraction_service.py` |
 | Upload fonte | `app/application/use_cases/chat_sources_use_cases.py` |
 | Download | `app/application/use_cases/download_chat_file_use_cases.py` |
 | Cache desenho | `app/domain/services/chat_drawing_library_service.py` |
 
 Fallback sem env: `/tmp/minha-delpi-chat-attachments` (adequado só para testes locais fora do Docker).
+
+## Leitura de conteúdo
+
+Após o upload, a indexação chama `ChatWorkspaceFileTextExtractionService` (Playbook 17). Formatos office legados:
+
+- `.doc` — `antiword` no container (instalado no Dockerfile)
+- `.xls` — `xlrd` (Python)
+
+PDF escaneado na indexação: quando o texto embutido fica abaixo do limiar (`document_vision.json` → `pdfExtraction.attachmentIndex`), a API rasteriza páginas com Tesseract antes de gravar chunks RAG.
+
+Matriz completa: `docs/roadmap/playbook-17-importacao-arquivos-e-fontes-unificada.md` § 12.
 
 ## Migração / anexos antigos
 

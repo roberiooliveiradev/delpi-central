@@ -40,7 +40,8 @@ PDF (storage_path)
         · retorna fullText, stages, parseMetadata, annotationTables
 
 Consumidores:
-  · ChatAttachmentTextExtractor — indexação de qualquer PDF (perfil generic)
+  · ChatWorkspaceFileTextExtractionService — indexação de qualquer formato permitido (fachada `ChatAttachmentTextExtractor`)
+  · ChatPdfDocumentExtractionService.extract_for_attachment_index — PDF com fallback Tesseract página quando embutido &lt; limiar
   · ChatDocumentVisionService._stage_native — visão de documentos (perfil generic)
   · ChatDrawingPdfExtractionService.extract_from_storage_path — perfil drawing_delpi + parse DELPI
   · ChatDocumentVisionService (auto) — Tesseract/VLM quando legibilidade insuficiente
@@ -85,7 +86,8 @@ Rotas api-delpi: [14-desenhos-pdf.md](../../../api-delpi/docs/api/14-desenhos-pd
 | `ChatPdfEmbeddedTextService` | PyMuPDF: texto nativo + anotações com `{page, content, bbox, type}` |
 | `ChatPdfTextFusionService` | Fusão multi-fonte com score (embedded > anotações > regiões > pypdf) |
 | `ChatPdfAnnotationTableService` | Tabelas a partir de bbox de anotações (cluster por linha Y) |
-| `ChatPdfDocumentExtractionService` | Orquestrador; perfis `generic` e `drawing_delpi` |
+| `ChatPdfDocumentExtractionService` | Orquestrador; perfis `generic` e `drawing_delpi`; `extract_for_attachment_index` com OCR página |
+| `ChatPdfPageTesseractOcrService` | Tesseract página inteira para PDF escaneado na indexação de anexos |
 | `ChatPdfRegionOcrEngineService` | OCR regional plugável (`tesseract`, `easyocr`, `paddleocr`) |
 | `ChatPdfRegionOcrFusionService` | Fusão de linhas entre motores por região |
 | `ChatDrawingBomRowSanitizationService` | Fantasmas de produto na BOM + códigos aninhados em descrição |
@@ -95,7 +97,7 @@ Rotas api-delpi: [14-desenhos-pdf.md](../../../api-delpi/docs/api/14-desenhos-pd
 
 | Perfil | Uso | OCR regional |
 |--------|-----|--------------|
-| `generic` | Indexação, intent «ler PDF», boletos, contratos | Desligado por padrão |
+| `generic` | Indexação, intent «ler PDF», boletos, contratos | Desligado por padrão; **indexação** aciona `ChatPdfPageTesseractOcrService` quando texto &lt; `regionOcr.minChars` |
 | `drawing_delpi` | `ChatDrawingPdfExtractionService`, análise de desenho | Ligado quando texto embutido &lt; limiar (`document_vision.json` → `pdfExtraction.layoutProfiles.drawing_delpi`) |
 
 ---
@@ -140,6 +142,21 @@ Seção **`pdfExtraction`**:
 | `regionOcr.bomFusion` | BOM: só `tesseract`+`easyocr`, pesos por motor e voto por dígito com confiança OCR (sem catálogo API) |
 | `layoutProfiles.generic.enableRegionOcr` | `false` — chat base genérico não corta regiões DELPI |
 | `layoutProfiles.drawing_delpi.enableRegionOcr` | `true` — permite fallback regional na skill desenho |
+| `attachmentIndex.pageOcrWhenEmbeddedBelowMinChars` | `true` — indexação de anexo aciona Tesseract página quando embutido &lt; `regionOcr.minChars` |
+| `attachmentIndex.maxPages` | Máximo de páginas rasterizadas na indexação OCR (padrão `10`) |
+
+### Indexação de PDF escaneado (anexos)
+
+Fluxo em `extract_for_attachment_index`:
+
+```text
+extract_from_storage_path (generic, sem region_ocr)
+  → charCount < regionOcr.minChars?
+        → ChatPdfPageTesseractOcrService (Tesseract página inteira, até attachmentIndex.maxPages)
+        → estágio attachment_index_tesseract no metadata
+```
+
+Não usa regiões DELPI nem EasyOCR — adequado para contratos/boletos escaneados na indexação RAG. Análise de desenho continua no perfil `drawing_delpi` + `ChatDocumentVisionService`.
 
 Regiões gráficas (bbox carimbo/BOM/cotas) e **padrões regex de cotas/decape** continuam em **`drawing_stamp.json`** (seção `patterns` / `patternLists` / `codeFamilies`).
 
@@ -281,7 +298,9 @@ Estágios após extração base (`native`):
 | `tests/unit/domain/services/test_chat_drawing_page_layout_analysis_service.py` | XY-Cut; regiões adaptativas |
 | `tests/unit/domain/services/test_chat_drawing_extraction_confidence_service.py` | Gate confiança validação |
 | `scripts/validate_drawing_samples.py` | Batch API + PDF + layout/confiança |
-| `tests/unit/application/services/test_chat_attachment_text_extractor.py` | Indexação via pipeline base |
+| `tests/unit/application/services/test_chat_workspace_file_text_extraction_service.py` | Indexação office/PDF via pipeline base |
+| `tests/unit/domain/services/test_chat_pdf_attachment_index_ocr.py` | OCR Tesseract na indexação de PDF escaneado |
+| `tests/unit/application/services/test_chat_attachment_text_extractor.py` | Fachada de indexação |
 | `scripts/smoke_document_vision.py` | Offline + live opcional |
 | `desenhos/*.pdf` | Fixtures manuais (não versionar PDFs grandes em CI se política mudar) |
 

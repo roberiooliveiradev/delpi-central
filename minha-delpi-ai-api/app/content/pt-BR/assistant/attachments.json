@@ -229,5 +229,21 @@
     "optionsJoiner": ", ",
     "optionsLastJoiner": " ou ",
     "minAssistantContentLength": 80
+  },
+  "fileExtraction": {
+    "csvMaxRows": 300,
+    "xlsxMaxSheetLimit": 10,
+    "xlsxMaxRowsPerSheet": 300,
+    "subprocessTimeoutSeconds": 30,
+    "legacyFormats": {
+      "doc": {
+        "reason": "legacy_doc_format",
+        "userHint": "Não foi possível ler este .doc automaticamente. Salve como .docx ou envie em PDF."
+      },
+      "xls": {
+        "reason": "legacy_xls_format",
+        "userHint": "Não foi possível ler este .xls automaticamente. Salve como .xlsx."
+      }
+    }
   }
 }

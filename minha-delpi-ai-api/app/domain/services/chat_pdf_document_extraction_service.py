@@ -230,6 +230,10 @@ class ChatPdfDocumentExtractionService:
         filename: str = "",
         page_limit: int | None = None,
     ) -> dict[str, Any]:
+        from app.domain.services.chat_pdf_page_tesseract_ocr_service import (
+            ChatPdfPageTesseractOcrService,
+        )
+
         extracted = cls.extract_from_storage_path(
             storage_path,
             filename=filename,
@@ -248,13 +252,45 @@ class ChatPdfDocumentExtractionService:
                 },
             }
 
+        content = str(extracted.get("fullText") or "").strip()
+        stages = list(extracted.get("stages") or [])
+        min_chars = ChatDocumentVisionContentService.pdf_region_ocr_min_chars()
+        index_page_limit = page_limit or ChatDocumentVisionContentService.pdf_attachment_index_max_pages()
+
+        if (
+            len(content) < min_chars
+            and ChatDocumentVisionContentService.pdf_attachment_index_page_ocr_enabled()
+        ):
+            ocr = ChatPdfPageTesseractOcrService.extract_text(
+                storage_path,
+                page_limit=index_page_limit,
+            )
+            ocr_text = str(ocr.get("fullText") or "").strip()
+
+            if ocr_text:
+                content = f"{content}\n\n{ocr_text}".strip() if content else ocr_text
+                stages.append("attachment_index_tesseract")
+                extracted["engine"] = "attachment_index_tesseract"
+                extracted["warnings"] = list(extracted.get("warnings") or []) + list(
+                    ocr.get("warnings") or []
+                )
+
         metadata = dict(extracted.get("parseMetadata") or {})
         metadata["extension"] = ".pdf"
         metadata["annotationTableCount"] = len(extracted.get("annotationTables") or [])
+        metadata["stages"] = stages
+        metadata["engine"] = extracted.get("engine")
+        metadata["charCount"] = len(content)
+
+        if "attachment_index_tesseract" in stages:
+            metadata["attachmentIndexOcr"] = {
+                "engine": "tesseract_page",
+                "triggeredBelowMinChars": min_chars,
+            }
 
         return {
             "supported": True,
-            "content": str(extracted.get("fullText") or ""),
+            "content": content,
             "metadata": metadata,
         }
 

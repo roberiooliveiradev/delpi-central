@@ -99,6 +99,7 @@ O chat expõe **sete superfícies distintas** para enviar ou ingerir arquivos. C
 | Módulo | Camada | Responsabilidade |
 |--------|--------|------------------|
 | `WorkspaceFileIngestPolicyService` | domain | ✅ `accept` MIME/ext, tamanho máx, famílias — `GET /chat/ingest/policy` |
+| `ChatWorkspaceFileTextExtractionService` | application | ✅ Leitura canônica txt/csv/json/docx/xlsx/**doc**/**xls**/pdf/imagem — anexos, fontes, admin |
 | `WorkspaceFileIngestStatusService` | domain | **Backlog** — hoje labels via `workspaceFileIngestContent.ts` + `attachments.json` |
 | `WorkspaceFileIngestOrchestratorService` | application | **Backlog** — hoje cada família usa endpoint próprio (anexo, source, knowledge) |
 | Ports por família | domain | `ChatAttachmentRepositoryPort`, source repos, knowledge repo |
@@ -259,3 +260,28 @@ O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE
 | E | Fixtures F6/F7 + `workspaceFileIngest.test.ts` | ✅ parcial |
 | F | `useWorkspaceFileIngestPolicy` nos dropzones + composer | ✅ |
 | F | `scripts/smoke_workspace_file_ingest.py` (policy HTTP) | ✅ |
+| G | `ChatWorkspaceFileTextExtractionService` + docx/xlsx/doc/xls | ✅ |
+| G | OCR Tesseract na indexação de PDF escaneado (`attachmentIndex`) | ✅ |
+
+---
+
+## 12. Matriz formato × leitura (jun/2026)
+
+Pipeline canônico: `ChatWorkspaceFileTextExtractionService` → `ChatAttachmentTextExtractor` (fachada).
+
+| Extensão | Extrator | Indexação RAG | Observação |
+|----------|----------|---------------|------------|
+| `.txt`, `.md` | plain text | Sim | UTF-8 com fallback |
+| `.csv` | csv | Sim | Limite `fileExtraction.csvMaxRows` |
+| `.json` | json | Sim | Pretty-print quando válido |
+| `.docx` | python-docx | Sim | Parágrafos + tabelas |
+| `.xlsx` | openpyxl | Sim | Limite planilhas/linhas em `attachments.json` |
+| `.doc` | antiword | Sim* | *Requer `antiword` no container; senão hint `legacy_doc_format` |
+| `.xls` | xlrd | Sim* | *Formato binário legado; falha → hint `legacy_xls_format` |
+| `.pdf` | `ChatPdfDocumentExtractionService` | Sim | Texto embutido + anotações; scan &lt; 120 chars → Tesseract página (`attachmentIndex`) |
+| `.png`, `.jpg`, … | metadados + OCR opcional | Sim | OCR via `ChatAttachmentImageOcrService` quando habilitado |
+
+**Container:** `antiword` instalado em `Dockerfile.prod` / `Dockerfile.dev` junto com Tesseract.
+
+**Config:** limites office em `attachments.json` → `fileExtraction`; OCR de index PDF em `document_vision.json` → `pdfExtraction.attachmentIndex`.
+

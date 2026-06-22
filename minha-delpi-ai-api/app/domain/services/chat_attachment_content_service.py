@@ -205,3 +205,63 @@ class ChatAttachmentContentService:
             return value
 
         return 80
+
+    @classmethod
+    def file_extraction_block(cls) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "fileExtraction")
+
+        return node if isinstance(node, dict) else {}
+
+    @classmethod
+    def file_extraction_csv_max_rows(cls) -> int:
+        value = cls.file_extraction_block().get("csvMaxRows")
+
+        try:
+            return max(1, int(value))
+        except (TypeError, ValueError):
+            return 300
+
+    @classmethod
+    def file_extraction_xlsx_max_sheets(cls) -> int:
+        value = cls.file_extraction_block().get("xlsxMaxSheetLimit")
+
+        try:
+            return max(1, int(value))
+        except (TypeError, ValueError):
+            return 10
+
+    @classmethod
+    def file_extraction_xlsx_max_rows_per_sheet(cls) -> int:
+        value = cls.file_extraction_block().get("xlsxMaxRowsPerSheet")
+
+        try:
+            return max(1, int(value))
+        except (TypeError, ValueError):
+            return 300
+
+    @classmethod
+    def file_extraction_subprocess_timeout_seconds(cls) -> int:
+        value = cls.file_extraction_block().get("subprocessTimeoutSeconds")
+
+        try:
+            return max(5, int(value))
+        except (TypeError, ValueError):
+            return 30
+
+    @classmethod
+    def file_extraction_legacy_format(cls, extension: str) -> dict[str, str]:
+        block = cls.file_extraction_block().get("legacyFormats")
+
+        if not isinstance(block, dict):
+            return {}
+
+        key = str(extension or "").strip().lower().lstrip(".")
+        node = block.get(key)
+
+        if not isinstance(node, dict):
+            return {}
+
+        return {
+            "reason": str(node.get("reason") or "").strip(),
+            "userHint": str(node.get("userHint") or "").strip(),
+        }

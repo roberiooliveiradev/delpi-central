@@ -103,6 +103,10 @@
         "enableRegionOcr": true
       }
     },
+    "attachmentIndex": {
+      "pageOcrWhenEmbeddedBelowMinChars": true,
+      "maxPages": 10
+    },
     "tableStructure": {
       "enabled": true,
       "maxRows": 40,

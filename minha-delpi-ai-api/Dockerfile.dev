@@ -25,6 +25,7 @@ RUN apt-get update \
         tesseract-ocr-por \
         tesseract-ocr-eng \
         poppler-utils \
+        antiword \
         libgl1 \
         libglib2.0-0 \
         libgomp1 \
