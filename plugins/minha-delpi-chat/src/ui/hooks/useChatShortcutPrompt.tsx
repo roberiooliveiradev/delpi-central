@@ -6,6 +6,7 @@ import {
   hasShortcutPlaceholders,
   normalizeShortcutTemplate,
   resolveShortcutFields,
+  type ShortcutFieldDefinition,
   type ShortcutPrefillContext,
 } from "../chatShortcutPrompt";
 import { ChatShortcutPromptDialog } from "../components/shared";
@@ -15,6 +16,7 @@ type PendingShortcutPrompt = {
   title?: string;
   description?: string;
   confirmLabel?: string;
+  fields?: ShortcutFieldDefinition[];
   prefill?: ShortcutPrefillContext;
   resolve: (query: string | null) => void;
 };
@@ -23,6 +25,7 @@ export type ShortcutPromptOptions = {
   title?: string;
   description?: string;
   confirmLabel?: string;
+  fields?: import("../chatShortcutPrompt").ShortcutFieldDefinition[];
 };
 
 type UseChatShortcutPromptOptions = {
@@ -60,7 +63,7 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
         return Promise.resolve(template);
       }
 
-      const fields = resolveShortcutFields(template);
+      const fields = promptOptions?.fields ?? resolveShortcutFields(template);
 
       if (fields.length === 0) {
         return Promise.resolve(null);
@@ -78,6 +81,7 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
           title: promptOptions?.title,
           description: promptOptions?.description,
           confirmLabel: promptOptions?.confirmLabel,
+          fields,
           prefill,
           resolve,
         };
@@ -97,7 +101,7 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
       return null;
     }
 
-    const fields = resolveShortcutFields(pending.template);
+    const fields = pending.fields ?? resolveShortcutFields(pending.template);
     const initialValues = buildShortcutPrefill(
       fields.map((field) => field.id),
       pending.prefill,

@@ -8,6 +8,11 @@ import {
   resolveStarterPromptOptions,
   starterRequiresShortcutModal,
 } from "../../chatShortcutPrompt";
+import {
+  icebreakerRequiresShortcutModal,
+  resolveIcebreakerPromptOptions,
+  type AgentIcebreakerEntry,
+} from "../../agentIcebreakers";
 import { ChatAgentConversationSurface } from "./ChatAgentConversationSurface";
 
 import "./ChatAgentPreviewWorkspace.css";
@@ -80,13 +85,15 @@ export function ChatAgentPreviewWorkspace({
     await sendMessage(resolved);
   }
 
-  async function handleIcebreaker(template: string) {
-    if (!starterRequiresShortcutModal(template, {})) {
+  async function handleIcebreaker(entry: AgentIcebreakerEntry) {
+    const template = entry.template.trim();
+
+    if (!icebreakerRequiresShortcutModal(entry)) {
       await sendMessage(template);
       return;
     }
 
-    const promptOptions = resolveStarterPromptOptions(template, {});
+    const promptOptions = resolveIcebreakerPromptOptions(entry);
     const resolved = await resolveShortcutQuery(template, promptOptions);
 
     if (!resolved || hasUnresolvedShortcutPlaceholders(resolved)) {
@@ -110,8 +117,8 @@ export function ChatAgentPreviewWorkspace({
           composerBindings={composerBindings}
           onDraftChange={setDraft}
           onSubmit={() => void submitMessage()}
-          onIcebreaker={(query) => {
-            void handleIcebreaker(query);
+          onIcebreaker={(entry) => {
+            void handleIcebreaker(entry);
           }}
           defaultIcebreakersHint={defaultIcebreakersHint}
           streamingStatus={streamingStatus ?? undefined}

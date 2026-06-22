@@ -91,3 +91,58 @@ def test_skips_enrichment_without_llm_synthesis_effect():
     )
 
     assert enriched == answer
+
+
+def test_strips_hallucination_markers_from_llm_answer():
+    answer = (
+        "O produto **10080045** é MP do grupo 1008. "
+        "Trata-se de um componente de engrenagem 2D usado na operação de preparo."
+    )
+    metadata = {
+        "ok": True,
+        "path": "/products/10080045/analyser",
+        "dataCommentary": {
+            "highlights": [{"text": "O produto **10080045** está cadastrado como MP."}],
+        },
+    }
+
+    enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+        answer,
+        message="me fale do produto 10080045",
+        tool_calls=_tool_calls(metadata),
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert "10080045" in enriched
+    assert "engrenagem" not in enriched.lower()
+
+
+def test_dedupes_repeated_paragraphs():
+    paragraph = (
+        "O produto **10080045** está cadastrado como MP. "
+        "O painel traz cadastro, estrutura e roteiro."
+    )
+    answer = f"{paragraph}\n\n{paragraph}"
+
+    enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+        answer,
+        message="me fale do produto 10080045",
+        tool_calls=_tool_calls({"ok": True, "path": "/products/10080045/analyser"}),
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert enriched.count("10080045") == 1
+
+
+def test_trims_normal_prose_to_budget():
+    answer = "O produto **10080045** " + ("é MP. " * 120)
+
+    enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+        answer,
+        message="me fale do produto 10080045",
+        tool_calls=_tool_calls({"ok": True, "path": "/products/10080045/analyser"}),
+        response_mode_effect="llm_synthesis",
+        response_mode="normal",
+    )
+
+    assert len(enriched) <= 521

@@ -63,7 +63,7 @@ def test_apply_turn_direct_answer_policy_fast_uses_commentary_direct():
     assert tool_context.get("commentaryBriefDirect") is True
 
 
-def test_normal_commentary_direct_builds_answer_when_enabled():
+def test_normal_commentary_direct_disabled_returns_none():
     metadata = {
         "ok": True,
         "llmProseDecoupled": True,
@@ -81,11 +81,10 @@ def test_normal_commentary_direct_builds_answer_when_enabled():
         response_mode="normal",
     )
 
-    assert answer
-    assert "10080045" in answer
+    assert answer is None
 
 
-def test_apply_turn_direct_answer_policy_normal_uses_commentary_direct():
+def test_apply_turn_direct_answer_policy_normal_uses_llm_not_commentary_direct():
     tool_context: dict = {}
     metadata = {
         "ok": True,
@@ -107,8 +106,7 @@ def test_apply_turn_direct_answer_policy_normal_uses_commentary_direct():
         tool_context=tool_context,
     )
 
-    assert direct
-    assert "10080045" in direct
+    assert direct is None
     assert skip_rag is True
     assert effect == "llm_synthesis"
-    assert tool_context.get("commentaryBriefDirect") is True
+    assert tool_context.get("commentaryBriefDirect") is not True

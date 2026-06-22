@@ -24,19 +24,25 @@ class ChatResponseModeSynthesisQualityContentService:
 
     @classmethod
     def limit_int(cls, *path: str, default: int = 0) -> int:
-        raw = ChatAssistantContentService.get(_BUNDLE, *path, default=str(default))
+        node = ChatAssistantContentService.get_node(_BUNDLE, *path)
+
+        if node in (None, ""):
+            return default
 
         try:
-            return int(raw)
+            return int(node)
         except (TypeError, ValueError):
             return default
 
     @classmethod
     def limit_float(cls, *path: str, default: float = 0.0) -> float:
-        value = ChatAssistantContentService.get(_BUNDLE, *path, default=default)
+        node = ChatAssistantContentService.get_node(_BUNDLE, *path)
+
+        if node in (None, ""):
+            return default
 
         try:
-            return float(value)
+            return float(node)
         except (TypeError, ValueError):
             return default
 

@@ -248,33 +248,144 @@ class ChatResponseModeService:
 
     @classmethod
     def _fast_config(cls) -> LlmGenerationConfig:
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+
         fast_model = os.getenv("CHAT_RESPONSE_MODE_FAST_MODEL", "qwen2.5:1.5b").strip()
 
         return LlmGenerationConfig(
             model=fast_model or "qwen2.5:1.5b",
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "96")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_FAST_NUM_CTX", "512")),
-            temperature=float(os.getenv("CHAT_RESPONSE_MODE_FAST_TEMPERATURE", "0.2")),
+            max_tokens=int(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_FAST_MAX_TOKENS",
+                    str(
+                        ChatResponseModeContentService.generation_limit_int(
+                            "fast",
+                            "maxTokens",
+                            default=96,
+                        )
+                    ),
+                )
+            ),
+            num_ctx=int(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_FAST_NUM_CTX",
+                    str(
+                        ChatResponseModeContentService.generation_limit_int(
+                            "fast",
+                            "numCtx",
+                            default=512,
+                        )
+                    ),
+                )
+            ),
+            temperature=float(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_FAST_TEMPERATURE",
+                    str(
+                        ChatResponseModeContentService.generation_limit_float(
+                            "fast",
+                            "temperature",
+                            default=0.2,
+                        )
+                    ),
+                )
+            ),
             response_mode="fast",
         )
 
     @classmethod
     def _normal_config(cls) -> LlmGenerationConfig:
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+
         return LlmGenerationConfig(
             model=cls._env_model("CHAT_RESPONSE_MODE_NORMAL_MODEL", "qwen2.5:1.5b"),
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "320")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1024")),
-            temperature=float(os.getenv("CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE", "0.3")),
+            max_tokens=int(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS",
+                    str(
+                        ChatResponseModeContentService.generation_limit_int(
+                            "normal",
+                            "maxTokens",
+                            default=96,
+                        )
+                    ),
+                )
+            ),
+            num_ctx=int(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_NORMAL_NUM_CTX",
+                    str(
+                        ChatResponseModeContentService.generation_limit_int(
+                            "normal",
+                            "numCtx",
+                            default=512,
+                        )
+                    ),
+                )
+            ),
+            temperature=float(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE",
+                    str(
+                        ChatResponseModeContentService.generation_limit_float(
+                            "normal",
+                            "temperature",
+                            default=0.2,
+                        )
+                    ),
+                )
+            ),
             response_mode="normal",
         )
 
     @classmethod
     def _thinker_config(cls) -> LlmGenerationConfig:
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+
         return LlmGenerationConfig(
             model=cls._env_model("CHAT_RESPONSE_MODE_THINKER_MODEL", "qwen2.5:1.5b"),
-            max_tokens=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", "512")),
-            num_ctx=int(os.getenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "1536")),
-            temperature=float(os.getenv("CHAT_RESPONSE_MODE_THINKER_TEMPERATURE", "0.25")),
+            max_tokens=int(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS",
+                    str(
+                        ChatResponseModeContentService.generation_limit_int(
+                            "thinker",
+                            "maxTokens",
+                            default=220,
+                        )
+                    ),
+                )
+            ),
+            num_ctx=int(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_THINKER_NUM_CTX",
+                    str(
+                        ChatResponseModeContentService.generation_limit_int(
+                            "thinker",
+                            "numCtx",
+                            default=1024,
+                        )
+                    ),
+                )
+            ),
+            temperature=float(
+                os.getenv(
+                    "CHAT_RESPONSE_MODE_THINKER_TEMPERATURE",
+                    str(
+                        ChatResponseModeContentService.generation_limit_float(
+                            "thinker",
+                            "temperature",
+                            default=0.2,
+                        )
+                    ),
+                )
+            ),
             response_mode="thinker",
         )
 

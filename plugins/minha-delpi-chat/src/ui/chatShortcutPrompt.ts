@@ -32,6 +32,7 @@ export type ShortcutFieldDefinition = {
   required?: boolean;
   pattern?: RegExp;
   patternHint?: string;
+  multiline?: boolean;
 };
 
 const FIELD_DEFINITIONS: Record<ShortcutFieldId, ShortcutFieldDefinition> = {
@@ -143,6 +144,29 @@ function placeholderLabel(fieldId: string): string {
   return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : "Valor";
 }
 
+/** Subtítulo de card — sem código de exemplo fixo (ex.: 10080001). */
+export function shortcutFillPromptForTemplate(template: string): string | undefined {
+  const ids = listShortcutFieldIds(template);
+
+  if (!ids.length) {
+    return undefined;
+  }
+
+  const labels = ids.map((fieldId) => {
+    if (fieldId in FIELD_DEFINITIONS) {
+      return FIELD_DEFINITIONS[fieldId as ShortcutFieldId].label.toLowerCase();
+    }
+
+    return placeholderLabel(fieldId).toLowerCase();
+  });
+
+  if (labels.length === 1) {
+    return `Informe o ${labels[0]} ao clicar`;
+  }
+
+  return `Informe ${labels.join(" e ")} ao clicar`;
+}
+
 /** Texto de exemplo exibido no lugar de `{{campo}}` (cards, tour, tooltips). */
 export function shortcutDisplayHintForField(fieldId: string): string {
   if (fieldId in FIELD_DEFINITIONS) {
@@ -170,6 +194,119 @@ export function formatShortcutTemplateForDisplay(template: string): string {
   );
 }
 
+/** Configuração declarativa de campo em quebra-gelo do agente (metadata.icebreakers[].fields). */
+export type IcebreakerFieldConfig = {
+  id: string;
+  label: string;
+  fieldType: string;
+  required?: boolean;
+  placeholder?: string;
+};
+
+const ICEBREAKER_FIELD_TYPE_SPECS: Record<
+  string,
+  Pick<ShortcutFieldDefinition, "inputMode" | "pattern" | "patternHint" | "multiline" | "placeholder">
+> = {
+  productCode: {
+    inputMode: "numeric",
+    pattern: /^\d{4,12}$/,
+    patternHint: "Informe um código numérico (4 a 12 dígitos).",
+    placeholder: "Ex.: 10080001",
+  },
+  searchQuery: {
+    placeholder: SEARCH_QUERY_PLACEHOLDER,
+  },
+  period: {
+    placeholder: "Ex.: últimos 30 dias",
+  },
+  productDescription: {
+    placeholder: "Ex.: cabo flexível 2,5 mm",
+  },
+  salesOrder: {
+    inputMode: "numeric",
+    pattern: /^\d{4,12}$/,
+    patternHint: "Informe o número da ordem de venda.",
+    placeholder: "Ex.: 003267",
+  },
+  ovNumber: {
+    inputMode: "numeric",
+    pattern: /^\d{4,12}$/,
+    patternHint: "Informe o número da ordem de venda.",
+    placeholder: "Ex.: 003267",
+  },
+  emailRecipient: {
+    placeholder: "Ex.: fornecedor ABC",
+  },
+  emailSubject: {
+    placeholder: "Ex.: prazo de entrega",
+  },
+  textContent: {
+    multiline: true,
+    placeholder: "Cole ou descreva o trecho",
+  },
+  meetingNotes: {
+    multiline: true,
+    placeholder: "Cole as anotações ou tópicos discutidos",
+  },
+  announcementTopic: {
+    placeholder: "Ex.: prazo de entrega",
+  },
+  text: {
+    placeholder: "Digite o valor",
+  },
+  numeric: {
+    inputMode: "numeric",
+    pattern: /^\d+([.,]\d+)?$/,
+    patternHint: "Informe um número válido.",
+    placeholder: "Ex.: 10",
+  },
+  multilineText: {
+    multiline: true,
+    placeholder: "Digite o texto",
+  },
+};
+
+export const ICEBREAKER_FIELD_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "productCode", label: "Código do produto" },
+  { value: "searchQuery", label: "Termo de pesquisa" },
+  { value: "period", label: "Período" },
+  { value: "salesOrder", label: "Ordem de venda" },
+  { value: "emailRecipient", label: "Destinatário de e-mail" },
+  { value: "emailSubject", label: "Assunto de e-mail" },
+  { value: "textContent", label: "Texto longo" },
+  { value: "text", label: "Texto curto" },
+  { value: "numeric", label: "Número" },
+  { value: "multilineText", label: "Texto multilinha" },
+];
+
+export function shortcutFieldDefinitionFromIcebreakerConfig(
+  config: IcebreakerFieldConfig,
+): ShortcutFieldDefinition {
+  const fieldId = String(config.id ?? "").trim();
+  const fieldType = String(config.fieldType ?? "text").trim() || "text";
+  const label = String(config.label ?? "").trim() || placeholderLabel(fieldId);
+  const typeSpec = ICEBREAKER_FIELD_TYPE_SPECS[fieldType] ?? ICEBREAKER_FIELD_TYPE_SPECS.text;
+  const canonical =
+    fieldType in FIELD_DEFINITIONS
+      ? FIELD_DEFINITIONS[fieldType as ShortcutFieldId]
+      : null;
+
+  return {
+    id: fieldId,
+    label,
+    placeholder:
+      String(config.placeholder ?? "").trim() ||
+      canonical?.placeholder ||
+      typeSpec.placeholder ||
+      `Informe ${label.toLowerCase()}`,
+    inputMode: typeSpec.inputMode ?? canonical?.inputMode,
+    pattern: typeSpec.pattern ?? canonical?.pattern,
+    patternHint: typeSpec.patternHint ?? canonical?.patternHint,
+    multiline: typeSpec.multiline ?? canonical?.multiline,
+    required: config.required ?? true,
+  };
+}
+
 function fieldDefinitionForPlaceholder(fieldId: string): ShortcutFieldDefinition {
   if (fieldId in FIELD_DEFINITIONS) {
     return FIELD_DEFINITIONS[fieldId as ShortcutFieldId];
@@ -185,8 +322,19 @@ function fieldDefinitionForPlaceholder(fieldId: string): ShortcutFieldDefinition
   };
 }
 
-export function resolveShortcutFields(query: string): ShortcutFieldDefinition[] {
-  return listShortcutFieldIds(query).map((id) => fieldDefinitionForPlaceholder(id));
+export function resolveShortcutFields(
+  query: string,
+  overrides?: IcebreakerFieldConfig[],
+): ShortcutFieldDefinition[] {
+  const fieldIds = listShortcutFieldIds(query);
+  const overrideById = new Map(
+    (overrides ?? []).map((item) => {
+      const definition = shortcutFieldDefinitionFromIcebreakerConfig(item);
+      return [definition.id, definition] as const;
+    }),
+  );
+
+  return fieldIds.map((id) => overrideById.get(id) ?? fieldDefinitionForPlaceholder(id));
 }
 
 /** Bloqueia envio se ainda houver `{{campo}}` sem substituir. */

@@ -64,20 +64,22 @@ Preset global quando variáveis explícitas não estão no `.env`: `CHAT_LLM_LAT
 Tool execute_external_action (ok ou falha)
     │
     ├─ llmProseEverywhere → proseDeliveryMode=llm + pipeline data-only
-    ├─ fast + commentary direct elegível → direct answer (sem Ollama)
-    ├─ fast     → llm_synthesis_brief (fallback LLM)
-    ├─ normal   → llm_synthesis
-    └─ thinker  → llm_synthesis
+    ├─ fast + commentary direct elegível → direct answer (sem Ollama) — **só Rápida**
+    ├─ fast     → commentary direct ou llm_synthesis_brief (fallback LLM)
+    ├─ normal   → llm_synthesis (meta ≤ 5 s)
+    └─ thinker  → llm_synthesis (meta ≤ 15 s)
 
 Rollback template (offline)
     └─ modos OFF + allowTemplateProseFallback + llmProseEverywhere=false
 ```
 
-### Modo Normal — commentary direct (decoupled)
+### Modo Normal — síntese LLM (meta ≤ 5 s)
 
-Quando `response_modes.json` → `normalCommentaryDirect.enabled: true` e a tool retorna metadata **decoupled**, o turno **não** chama Ollama para a prosa — mesmo mecanismo da Rápida, com `responseModeEffect: llm_synthesis` e budget de fatos `normalLlmBudget.maxFactsChars` (default 520) no fallback LLM.
+`normalCommentaryDirect.enabled` está **`false`** por padrão: o modo Normal **sempre** passa pelo Ollama (`llm_synthesis`), com budget reduzido para latência (`generationLimits.normal`: 96 tokens / ctx 512; `normalLlmBudget.maxFactsChars`: 400; `maxNormalProseChars`: 520).
 
-### Modo Rápida — commentary direct (≤ ~10 s)
+Pós-processamento anti-alucinação: `ChatOperationalLlmSynthesisAnswerEnrichmentService` (marcadores em `operational_llm_synthesis_context.json` → `hallucinationMarkers`, grounding por overlap de âncoras, dedupe de parágrafos).
+
+### Modo Rápida — commentary direct (≤ ~3 s)
 
 Quando `response_modes.json` → `fastCommentaryDirect.enabled: true` e a tool operacional retorna metadata **decoupled** (`llmProseDecoupled`), o turno **não** chama Ollama para a prosa:
 
@@ -138,10 +140,10 @@ Em `metadata.intelligence.pipeline`:
 | `OLLAMA_NUM_CTX` | `1024` (via preset) | Contexto Ollama global |
 | `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `96` | Síntese curta (fallback LLM quando commentary direct não qualifica) |
 | `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `512` | Contexto Rápida |
-| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `320` | Síntese Normal |
-| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `1024` | Contexto Normal |
-| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `512` | Síntese Pensador |
-| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `1536` | Contexto Pensador |
+| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `96` | Síntese Normal (meta ≤ 5 s) |
+| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `512` | Contexto Normal |
+| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `220` | Síntese Pensador (meta ≤ 15 s) |
+| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `1024` | Contexto Pensador |
 
 Compose: `infra/docker-compose.dev.yml` e `infra/docker-compose.yml` injetam os defaults acima.
 
@@ -158,7 +160,7 @@ O smoke **não** basta checar metadata — valida por turno:
 
 | Critério | O que falha |
 |----------|-------------|
-| Pipeline | `directResponse=true` em Normal/Pensador; em Rápida permitido com `llm_synthesis_brief` (commentary direct) |
+| Pipeline | `directResponse=true` só em **Rápida** (`allowDirectResponseModes: ["fast"]`); Normal/Pensador exigem LLM |
 | Template | similaridade com `textPresentation` / markdown autorizado ≥ limite |
 | Contexto | código do produto + overlap mínimo com tokens dos dados da tool |
 | Assertividade | frases evasivas («preciso acessar», «não tenho acesso», …) |
@@ -190,15 +192,18 @@ cd minha-delpi-ai-api
 |-------|---------|-------|
 | `fastCommentaryDirect.enabled` | `true` | Ativa prosa Rápida sem segunda passagem LLM |
 | `fastCommentaryDirect.minAnswerChars` | `40` | Mínimo de caracteres no lead enriquecido |
-| `normalCommentaryDirect.enabled` | `true` | Ativa prosa Normal sem segunda passagem LLM (decoupled) |
-| `normalCommentaryDirect.minAnswerChars` | `40` | Mínimo de caracteres no lead enriquecido (Normal) |
+| `normalCommentaryDirect.enabled` | `false` | Normal usa LLM (não commentary direct) |
+| `normalCommentaryDirect.minAnswerChars` | `40` | Mínimo se reativar commentary direct no Normal |
 | `fastLlmBudget.maxFactsChars` | `380` | Cap de fatos no prompt quando cai no fallback LLM |
 | `fastLlmBudget.skipProsePanelRules` | `true` | Omite regras de painel no addon de fatos (Rápida) |
-| `normalLlmBudget.maxFactsChars` | `520` | Cap de fatos no prompt Normal (fallback LLM) |
-| `normalLlmBudget.skipProsePanelRules` | `false` | Mantém regras de painel no addon (Normal) |
+| `normalLlmBudget.maxFactsChars` | `400` | Cap de fatos no prompt Normal |
+| `normalLlmBudget.skipProsePanelRules` | `true` | Omite regras de painel no addon (Normal — latência) |
+| `thinkerLlmBudget.maxFactsChars` | `520` | Cap de fatos no prompt Pensador |
+| `generationLimits` | ver JSON | Tokens/ctx/temperature por modo |
+| `latencyTargetsSec` | fast 3 / normal 5 / thinker 15 | Metas de latência para smoke |
 
 Loader: `ChatResponseModeContentService`.
 
 ---
 
-*Última revisão: jun/2026 — modo Rápida com commentary direct (≤ ~10 s), presets 96/512 no fast, skip RAG em síntese LLM com tool ok, render plan sem lead `dataAnswer` quando decoupled.*
+*Última revisão: jun/2026 — Rápida commentary direct; Normal/Pensador LLM com metas 5 s / 15 s; anti-alucinação no enrichment; presets 128/768 (normal) e 280/1152 (thinker).*

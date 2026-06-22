@@ -18,6 +18,11 @@ from app.domain.services.chat_operational_narrative_synthesis_service import (
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_response_mode_synthesis_quality_content_service import (
+    ChatResponseModeSynthesisQualityContentService,
+)
+
+_TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9./%-]{3,}", re.IGNORECASE)
 
 
 class ChatOperationalLlmSynthesisAnswerEnrichmentService:
@@ -33,6 +38,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         message: str | None,
         tool_calls: list | None,
         response_mode_effect: str | None = None,
+        response_mode: str | None = None,
     ) -> str:
         body = str(answer or "").strip()
 
@@ -47,10 +53,16 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         if cls._tool_calls_use_decoupled_panel(tool_calls):
             body = cls._strip_markdown_tables(body)
 
+        body = cls._dedupe_repeated_paragraphs(body)
         body = cls._strip_contradictory_claims(body, tool_calls)
+        body = cls._strip_hallucination_markers(body)
+        body = cls._strip_deflection_markers(body)
+        body = cls._strip_ungrounded_sentences(body, tool_calls)
 
         if response_mode_effect == "llm_synthesis_brief":
             body = cls._trim_brief_prose(body)
+        elif response_mode_effect == "llm_synthesis":
+            body = cls._trim_mode_prose(body, response_mode=response_mode)
 
         return body.strip()
 
@@ -60,6 +72,43 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             "maxBriefProseChars",
             420,
         )
+        body = str(answer or "").strip()
+
+        if len(body) <= max_chars:
+            return body
+
+        trimmed = body[:max_chars].rstrip()
+
+        if " " in trimmed:
+            trimmed = trimmed.rsplit(" ", 1)[0].rstrip()
+
+        return f"{trimmed}…" if trimmed else body[:max_chars]
+
+    @classmethod
+    def _trim_mode_prose(cls, answer: str, *, response_mode: str | None) -> str:
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        normalized = ChatResponseModeService.normalize(response_mode)
+
+        if normalized == "thinker":
+            return cls._trim_thinker_prose(answer)
+
+        max_chars = ChatOperationalLlmSynthesisContextContentService.max_normal_prose_chars()
+        body = str(answer or "").strip()
+
+        if len(body) <= max_chars:
+            return body
+
+        trimmed = body[:max_chars].rstrip()
+
+        if " " in trimmed:
+            trimmed = trimmed.rsplit(" ", 1)[0].rstrip()
+
+        return f"{trimmed}…" if trimmed else body[:max_chars]
+
+    @classmethod
+    def _trim_thinker_prose(cls, answer: str) -> str:
+        max_chars = ChatOperationalLlmSynthesisContextContentService.max_thinker_prose_chars()
         body = str(answer or "").strip()
 
         if len(body) <= max_chars:
@@ -241,6 +290,172 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             return answer
 
         return " ".join(kept).strip()
+
+    @classmethod
+    def _strip_hallucination_markers(cls, answer: str) -> str:
+        markers = [
+            ChatMessageNormalizationService.normalize_for_matching(marker)
+            for marker in ChatOperationalLlmSynthesisContextContentService.hallucination_markers()
+            if str(marker or "").strip()
+        ]
+
+        if not markers:
+            return answer
+
+        sentences = cls._SENTENCE_SPLIT_RE.split(answer.strip())
+        kept: list[str] = []
+
+        for sentence in sentences:
+            text = str(sentence or "").strip()
+
+            if not text:
+                continue
+
+            normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+
+            if any(marker in normalized for marker in markers):
+                continue
+
+            kept.append(text)
+
+        if not kept:
+            return answer
+
+        return " ".join(kept).strip()
+
+    @classmethod
+    def _strip_deflection_markers(cls, answer: str) -> str:
+        markers = [
+            ChatMessageNormalizationService.normalize_for_matching(marker)
+            for marker in ChatResponseModeSynthesisQualityContentService.deflection_markers()
+            if str(marker or "").strip()
+        ]
+
+        if not markers:
+            return answer
+
+        sentences = cls._SENTENCE_SPLIT_RE.split(answer.strip())
+        kept: list[str] = []
+
+        for sentence in sentences:
+            text = str(sentence or "").strip()
+
+            if not text:
+                continue
+
+            normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+
+            if any(marker in normalized for marker in markers):
+                continue
+
+            kept.append(text)
+
+        if not kept:
+            return answer
+
+        return " ".join(kept).strip()
+
+    @classmethod
+    def _strip_ungrounded_sentences(cls, answer: str, tool_calls: list | None) -> str:
+        anchors = cls._collect_anchor_tokens(tool_calls)
+        min_overlap = ChatOperationalLlmSynthesisContextContentService.min_anchor_token_overlap()
+
+        if not anchors:
+            return answer
+
+        sentences = cls._SENTENCE_SPLIT_RE.split(answer.strip())
+        kept: list[str] = []
+
+        for sentence in sentences:
+            text = str(sentence or "").strip()
+
+            if not text:
+                continue
+
+            if len(text) < ChatOperationalLlmSynthesisContextContentService.min_ungrounded_sentence_chars():
+                kept.append(text)
+                continue
+
+            tokens = cls._content_tokens(text)
+
+            if not tokens:
+                kept.append(text)
+                continue
+
+            overlap = len(tokens & anchors)
+
+            if overlap >= min_overlap:
+                kept.append(text)
+
+        if not kept:
+            return answer
+
+        return " ".join(kept).strip()
+
+    @classmethod
+    def _collect_anchor_tokens(cls, tool_calls: list | None) -> set[str]:
+        anchors: set[str] = set()
+
+        if not isinstance(tool_calls, list):
+            return anchors
+
+        stopwords = ChatResponseModeSynthesisQualityContentService.generic_context_stopwords()
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            for chunk in cls._iter_metadata_text_chunks(metadata):
+                for token in cls._content_tokens(chunk):
+                    if token in stopwords:
+                        continue
+
+                    anchors.add(token)
+
+            summary = str(metadata.get("humanizedSummary") or "").strip()
+
+            if summary:
+                for token in cls._content_tokens(summary):
+                    if token in stopwords:
+                        continue
+
+                    anchors.add(token)
+
+        return anchors
+
+    @classmethod
+    def _content_tokens(cls, text: str) -> set[str]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+        return {
+            token
+            for token in _TOKEN_RE.findall(normalized)
+            if len(token) >= 4
+        }
+
+    @classmethod
+    def _dedupe_repeated_paragraphs(cls, answer: str) -> str:
+        paragraphs = [str(item or "").strip() for item in re.split(r"\n\s*\n", answer.strip())]
+        kept: list[str] = []
+        seen: set[str] = set()
+
+        for paragraph in paragraphs:
+            if not paragraph:
+                continue
+
+            key = ChatMessageNormalizationService.normalize_for_matching(paragraph)[:160]
+
+            if len(key) > 40 and key in seen:
+                continue
+
+            seen.add(key)
+            kept.append(paragraph)
+
+        return "\n\n".join(kept).strip()
 
     @classmethod
     def _metadata_indicates_empty_sections(cls, tool_calls: list | None) -> bool:

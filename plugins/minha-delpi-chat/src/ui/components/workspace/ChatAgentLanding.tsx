@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 import type { ReactNode } from "react";
 
+import type { AgentIcebreakerEntry } from "../../agentIcebreakers";
 import {
   getIcebreakerGridDensityClass,
   resolveIcebreakerCardPresentation,
@@ -14,7 +15,8 @@ export type ChatAgentLandingProps = {
   icon?: string | null;
   description?: string | null;
   icebreakers?: string[];
-  onIcebreakerClick?: (template: string) => void;
+  icebreakerEntries?: AgentIcebreakerEntry[];
+  onIcebreakerClick?: (entry: AgentIcebreakerEntry) => void;
   icebreakersDisabled?: boolean;
   defaultIcebreakersHint?: string | null;
   canManageAgent?: boolean;
@@ -28,6 +30,7 @@ export function ChatAgentLanding({
   icon,
   description,
   icebreakers = [],
+  icebreakerEntries,
   onIcebreakerClick,
   icebreakersDisabled = false,
   defaultIcebreakersHint,
@@ -36,6 +39,12 @@ export function ChatAgentLanding({
   className,
   footer,
 }: ChatAgentLandingProps) {
+  const entries: AgentIcebreakerEntry[] =
+    icebreakerEntries ??
+    icebreakers.map((template) => ({
+      template,
+    }));
+
   return (
     <section
       className={["mdc-chat-landing", "mdc-chat-agent-landing", className].filter(Boolean).join(" ")}
@@ -56,7 +65,7 @@ export function ChatAgentLanding({
         </button>
       ) : null}
 
-      {icebreakers.length > 0 ? (
+      {entries.length > 0 ? (
         <div
           className="mdc-chat-agent-landing__prompts-region"
           role="region"
@@ -71,22 +80,22 @@ export function ChatAgentLanding({
               className={[
                 "mdc-chat-landing__prompts",
                 "mdc-chat-agent-landing__prompts",
-                getIcebreakerGridDensityClass(icebreakers.length),
+                getIcebreakerGridDensityClass(entries.length),
               ]
                 .filter(Boolean)
                 .join(" ")}
             >
-              {icebreakers.map((icebreaker, index) => {
-                const presentation = resolveIcebreakerCardPresentation(icebreaker);
+              {entries.map((entry, index) => {
+                const presentation = resolveIcebreakerCardPresentation(entry);
 
                 return (
                   <button
-                    key={`${icebreaker}-${index}`}
+                    key={`${entry.template}-${index}`}
                     type="button"
                     className="mdc-chat-landing__prompt"
                     disabled={icebreakersDisabled}
-                    title={icebreaker}
-                    onClick={() => onIcebreakerClick?.(icebreaker)}
+                    title={entry.template}
+                    onClick={() => onIcebreakerClick?.(entry)}
                   >
                     <strong>{presentation.title}</strong>
                     {presentation.subtitle ? (

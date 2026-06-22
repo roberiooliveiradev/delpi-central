@@ -51,7 +51,7 @@
     "minContextTokenLength": 4,
     "minAnswerChars": {
       "fast": 120,
-      "normal": 180,
+      "normal": 72,
       "thinker": 160
     },
     "maxAnswerChars": {
@@ -60,9 +60,9 @@
       "thinker": 4200
     },
     "maxElapsedSec": {
-      "fast": 95,
-      "normal": 130,
-      "thinker": 160
+      "fast": 8,
+      "normal": 5,
+      "thinker": 15
     }
   },
   "modeLadder": {
@@ -72,10 +72,9 @@
     "minPairwiseContentDistance": 0.06
   },
   "pipeline": {
-    "allowDirectResponseModes": ["fast", "normal"],
+    "allowDirectResponseModes": ["fast"],
     "directResponseEffects": {
-      "fast": "llm_synthesis_brief",
-      "normal": "llm_synthesis"
+      "fast": "llm_synthesis_brief"
     }
   }
 }

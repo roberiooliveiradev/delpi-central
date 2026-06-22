@@ -1,9 +1,25 @@
 from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.domain.services.chat_response_mode_synthesis_quality_content_service import (
+    ChatResponseModeSynthesisQualityContentService,
+)
 from app.domain.services.chat_response_mode_synthesis_quality_service import (
     ChatResponseModeSynthesisQualityService,
 )
 
 configure_domain_infrastructure_ports()
+
+
+def test_mode_limits_load_numeric_json():
+    assert ChatResponseModeSynthesisQualityContentService.mode_limit_int(
+        "maxElapsedSec",
+        "normal",
+        default=180,
+    ) == 5
+    assert ChatResponseModeSynthesisQualityContentService.mode_limit_int(
+        "maxElapsedSec",
+        "thinker",
+        default=180,
+    ) == 15
 
 
 def _factory_tool_calls(template: str, *, data_answer: dict | None = None) -> list[dict]:
@@ -53,7 +69,7 @@ def test_detects_template_clone():
                 }
             },
         },
-        elapsed_sec=30.0,
+        elapsed_sec=4.0,
     )
 
     assert any("template operacional" in gap for gap in gaps)
@@ -65,7 +81,8 @@ def test_accepts_data_only_decoupled_metadata():
         question="qual o status do produto 90269002 na fabrica hoje?",
         content=(
             "O produto 90269002 está com **PA PRODUZIDO** na fábrica hoje. "
-            "O saldo de MP relevante aparece como 6082 nas posições consultadas."
+            "O saldo de MP relevante aparece como 6082 nas posições consultadas. "
+            "A leitura operacional indica continuidade produtiva sem bloqueios críticos no recorte consultado."
         ),
         assistant_metadata={
             "toolCalls": [
@@ -96,7 +113,7 @@ def test_accepts_data_only_decoupled_metadata():
                 }
             },
         },
-        elapsed_sec=35.0,
+        elapsed_sec=4.0,
     )
 
     assert gaps == []
@@ -116,7 +133,7 @@ def test_rejects_template_markdown_in_data_only_turn():
                 }
             },
         },
-        elapsed_sec=30.0,
+        elapsed_sec=4.0,
     )
 
     assert any("dataOnlyPresentation" in gap or "textPresentation.markdown" in gap for gap in gaps)
@@ -154,7 +171,7 @@ def test_accepts_grounded_llm_answer():
                 }
             },
         },
-        elapsed_sec=35.0,
+        elapsed_sec=4.0,
     )
 
     assert gaps == []
@@ -218,10 +235,50 @@ def test_rejects_deflection_without_context():
                 }
             },
         },
-        elapsed_sec=20.0,
+        elapsed_sec=7.0,
     )
 
     assert any("evasiva" in gap for gap in gaps)
+
+
+def test_rejects_elapsed_above_mode_target():
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_turn(
+        mode="normal",
+        question="me fale do produto 10080045",
+        content="O produto 10080045 está cadastrado como MP no grupo 1008.",
+        assistant_metadata={
+            "toolCalls": _factory_tool_calls(""),
+            "intelligence": {
+                "pipeline": {
+                    "responseModeEffect": "llm_synthesis",
+                    "directResponse": False,
+                }
+            },
+        },
+        elapsed_sec=12.0,
+    )
+
+    assert any("tempo excedido" in gap for gap in gaps)
+
+
+def test_rejects_hallucination_markers():
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_turn(
+        mode="thinker",
+        question="me fale do produto 10080045",
+        content="O produto 10080045 é um componente de engrenagem 2D usado na operação de preparo.",
+        assistant_metadata={
+            "toolCalls": _factory_tool_calls(""),
+            "intelligence": {
+                "pipeline": {
+                    "responseModeEffect": "llm_synthesis",
+                    "directResponse": False,
+                }
+            },
+        },
+        elapsed_sec=10.0,
+    )
+
+    assert any("alucinação" in gap for gap in gaps)
 
 
 def test_mode_ladder_requires_distinct_contents():

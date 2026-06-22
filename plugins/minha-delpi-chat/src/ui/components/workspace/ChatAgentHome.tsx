@@ -1,5 +1,8 @@
 import type { ChatAgent } from "../../../data/api/chatTypes";
-import { resolveAgentIcebreakersForDisplay } from "../../agentIcebreakers";
+import {
+  resolveAgentIcebreakerEntries,
+  type AgentIcebreakerEntry,
+} from "../../agentIcebreakers";
 
 import { ChatAgentLanding } from "./ChatAgentLanding";
 
@@ -7,7 +10,7 @@ import "./ChatAgentHome.css";
 
 type ChatAgentHomeProps = {
   agent: ChatAgent;
-  onUseSuggestion: (value: string) => void;
+  onUseSuggestion: (entry: AgentIcebreakerEntry) => void;
   canManageAgent?: boolean;
   onManageAgent?: () => void;
   defaultIcebreakersHint?: string | null;
@@ -26,7 +29,7 @@ export function ChatAgentHome({
       name={agent.name}
       icon={agent.icon}
       description={agent.description}
-      icebreakers={resolveAgentIcebreakersForDisplay(agent.metadata)}
+      icebreakerEntries={resolveAgentIcebreakerEntries(agent.metadata)}
       onIcebreakerClick={onUseSuggestion}
       canManageAgent={canManageAgent}
       onManageAgent={onManageAgent}

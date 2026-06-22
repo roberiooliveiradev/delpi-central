@@ -6,17 +6,16 @@ import {
 } from "./agentIcebreakers";
 
 describe("resolveIcebreakerCardPresentation", () => {
-  it("separa rótulo e exemplo dos templates padrão", () => {
+  it("usa rótulo curto e hint — sem código 10080001 no subtítulo", () => {
     expect(
       resolveIcebreakerCardPresentation("me fale do produto {{productCode}}"),
     ).toEqual({
       title: "Consultar produto",
-      subtitle: "10080001",
-      example: "10080001",
+      subtitle: "Cadastro, estoque e visão geral",
     });
   });
 
-  it("usa hint quando o template não tem exemplo", () => {
+  it("usa hint quando o template não tem placeholder", () => {
     expect(resolveIcebreakerCardPresentation("o que você pode fazer?")).toEqual({
       title: "Capacidades",
       subtitle: "Ferramentas, dados e limites do agente",
@@ -30,16 +29,14 @@ describe("resolveIcebreakerCardPresentation", () => {
       ),
     ).toEqual({
       title: "Status fabril",
-      subtitle: "10080001?",
-      example: "10080001?",
+      subtitle: "Estrutura, MPs, produção e expedição",
     });
 
     expect(
       resolveIcebreakerCardPresentation("análise de preço da matéria-prima {{productCode}}"),
     ).toEqual({
       title: "Preço da MP",
-      subtitle: "10080001",
-      example: "10080001",
+      subtitle: "Fornecedor, ICMS, orçamento e variação",
     });
 
     expect(
@@ -48,15 +45,34 @@ describe("resolveIcebreakerCardPresentation", () => {
       ),
     ).toEqual({
       title: "Impacto de custo",
-      subtitle: "10080001?",
-      example: "10080001?",
+      subtitle: "Ranking Pareto das MPs na BOM",
+    });
+  });
+
+  it("aceita label e hint vindos do metadata da API", () => {
+    expect(
+      resolveIcebreakerCardPresentation("pergunta custom {{productCode}}", {
+        label: "Título custom",
+        hint: "Subtítulo configurável",
+      }),
+    ).toEqual({
+      title: "Título custom",
+      subtitle: "Subtítulo configurável",
     });
   });
 
   it("resolve variante visual por template", () => {
-    expect(resolveIcebreakerVisualKind("qual o estoque do produto {{productCode}}?")).toBe(
-      "stock",
-    );
-    expect(resolveIcebreakerVisualKind("pesquise na web sobre {{searchQuery}}")).toBe("web");
+    expect(
+      resolveIcebreakerVisualKind({
+        template: "qual o estoque do produto {{productCode}}?",
+        fields: [{ id: "productCode", label: "Código", fieldType: "productCode" }],
+      }),
+    ).toBe("stock");
+    expect(
+      resolveIcebreakerVisualKind({
+        template: "pesquise na web sobre {{searchQuery}}",
+        fields: [{ id: "searchQuery", label: "Termo", fieldType: "searchQuery" }],
+      }),
+    ).toBe("web");
   });
 });

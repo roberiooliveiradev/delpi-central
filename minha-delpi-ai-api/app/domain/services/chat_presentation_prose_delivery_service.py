@@ -635,12 +635,14 @@ class ChatPresentationProseDeliveryService:
         from app.domain.services.chat_operational_llm_synthesis_answer_enrichment_service import (
             ChatOperationalLlmSynthesisAnswerEnrichmentService,
         )
+        from app.infrastructure.llm.llm_request_context import get_active_config
 
         return ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
             body,
             message=message,
             tool_calls=tool_calls,
             response_mode_effect=response_mode_effect,
+            response_mode=get_active_config().response_mode,
         )
 
     @classmethod

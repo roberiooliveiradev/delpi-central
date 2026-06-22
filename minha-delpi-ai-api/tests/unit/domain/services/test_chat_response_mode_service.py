@@ -101,6 +101,24 @@ def test_apply_turn_direct_answer_policy_overview_thinker_forces_llm():
     assert effect == "llm_synthesis"
 
 
+def test_normal_mode_default_limits_from_json(monkeypatch):
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", raising=False)
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", raising=False)
+    config = ChatResponseModeService.resolve("normal")
+    assert config.response_mode == "normal"
+    assert config.max_tokens == 96
+    assert config.num_ctx == 512
+
+
+def test_thinker_mode_default_limits_from_json(monkeypatch):
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", raising=False)
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", raising=False)
+    config = ChatResponseModeService.resolve("thinker")
+    assert config.response_mode == "thinker"
+    assert config.max_tokens == 220
+    assert config.num_ctx == 1024
+
+
 def test_normal_mode_uses_bounded_limits(monkeypatch):
     monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "320")
     monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1024")

@@ -123,3 +123,38 @@ class ChatOperationalLlmSynthesisContextContentService:
             return []
 
         return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def hallucination_markers(cls) -> list[str]:
+        raw = cls.answer_enrichment_node().get("hallucinationMarkers")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def min_anchor_token_overlap(cls) -> int:
+        raw = cls.answer_enrichment_node().get("minAnchorTokenOverlap")
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return 2
+
+    @classmethod
+    def min_ungrounded_sentence_chars(cls) -> int:
+        raw = cls.answer_enrichment_node().get("minUngroundedSentenceChars")
+
+        try:
+            return max(16, int(raw))
+        except (TypeError, ValueError):
+            return 32
+
+    @classmethod
+    def max_normal_prose_chars(cls) -> int:
+        return cls.limit_int("maxNormalProseChars", 520)
+
+    @classmethod
+    def max_thinker_prose_chars(cls) -> int:
+        return cls.limit_int("maxThinkerProseChars", 960)

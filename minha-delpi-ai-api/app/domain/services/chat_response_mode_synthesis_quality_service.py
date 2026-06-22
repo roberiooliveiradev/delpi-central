@@ -47,6 +47,7 @@ class ChatResponseModeSynthesisQualityService:
         gaps.extend(cls._evaluate_not_template_clone(body, tool_calls))
         gaps.extend(cls._evaluate_context_and_assertiveness(body, question, tool_calls))
         gaps.extend(cls._evaluate_deflection(body))
+        gaps.extend(cls._evaluate_hallucination_markers(body))
 
         return gaps
 
@@ -86,8 +87,10 @@ class ChatResponseModeSynthesisQualityService:
 
         fast_chars = int(fast.get("chars") or len(str(fast.get("content") or "")))
         normal_chars = int(normal.get("chars") or len(str(normal.get("content") or "")))
+        fast_direct = bool(fast.get("directResponse"))
+        normal_direct = bool(normal.get("directResponse"))
 
-        if fast_chars and normal_chars:
+        if fast_chars and normal_chars and not (fast_direct and not normal_direct):
             ratio_limit = ChatResponseModeSynthesisQualityContentService.mode_ladder_float(
                 "fastMaxCharsVsNormalRatio",
                 default=1.05,
@@ -396,6 +399,22 @@ class ChatResponseModeSynthesisQualityService:
         for marker in ChatResponseModeSynthesisQualityContentService.deflection_markers():
             if marker in normalized:
                 return [f"resposta evasiva/genérica detectada ({marker})"]
+
+        return []
+
+    @classmethod
+    def _evaluate_hallucination_markers(cls, content: str) -> list[str]:
+        from app.domain.services.chat_operational_llm_synthesis_context_content_service import (
+            ChatOperationalLlmSynthesisContextContentService,
+        )
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(content)
+
+        for marker in ChatOperationalLlmSynthesisContextContentService.hallucination_markers():
+            normalized_marker = ChatMessageNormalizationService.normalize_for_matching(marker)
+
+            if normalized_marker and normalized_marker in normalized:
+                return [f"marcador de alucinação detectado ({marker})"]
 
         return []
 

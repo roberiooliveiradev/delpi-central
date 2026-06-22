@@ -2,7 +2,10 @@
   "title": "Fatos já consultados (responda com base neles — não peça acesso):",
   "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, gráfico). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta.",
   "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta».",
-  "maxChars": 520,
+  "maxChars": 480,
+  "maxBriefProseChars": 220,
+  "maxNormalProseChars": 520,
+  "maxThinkerProseChars": 960,
   "maxHumanizedLines": 3,
   "maxHumanizedLinesWhenDecoupled": 2,
   "skipSummaryAnswerWhenDecoupled": true,
@@ -13,7 +16,6 @@
   "maxSqlRows": 4,
   "maxHighlights": 3,
   "maxLimitations": 2,
-  "maxBriefProseChars": 220,
   "includeFailedTools": true,
   "answerEnrichment": {
     "productCodeOpening": "O produto **{productCode}**",
@@ -34,6 +36,34 @@
       "foram retornadas operações",
       "não retornadas nesta consulta",
       "não foram retornadas"
-    ]
+    ],
+    "hallucinationMarkers": [
+      "insumo farmaceutico",
+      "insumo farmacêutico",
+      "farmacêutico",
+      "pacotes de alimentos",
+      "rota chamada",
+      "doença arterial",
+      "risco elevado de desenvolvimento",
+      "segmento de eletronicos",
+      "segmento de eletrônicos",
+      "engrenagem",
+      "engrenagem 2d",
+      "componente de engrenagem",
+      "serie 2d",
+      "série 2d",
+      "configuracao 1",
+      "configuração 1",
+      "configuracao 2",
+      "configuração 2",
+      "operacao de preparo",
+      "operação de preparo",
+      "openai",
+      "chatgpt",
+      "criado em 2019",
+      "base de dados da internet"
+    ],
+    "minAnchorTokenOverlap": 2,
+    "minUngroundedSentenceChars": 32
   }
 }

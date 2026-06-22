@@ -82,6 +82,11 @@ import {
   type StarterInvokeContext,
 } from "../chatShortcutPrompt";
 import {
+  icebreakerRequiresShortcutModal,
+  resolveIcebreakerPromptOptions,
+  type AgentIcebreakerEntry,
+} from "../agentIcebreakers";
+import {
   readHomeCatalogCache,
   readStoredOnboardingProfileId,
   writeHomeCatalogCache,
@@ -2029,8 +2034,39 @@ export function ChatPage({
     }
   }
 
-  function handleAgentIcebreaker(query: string) {
-    void handleHomeStarter(query);
+  async function handleAgentIcebreaker(entry: AgentIcebreakerEntry) {
+    if (shortcutPromptResolvingRef.current || isShortcutPromptOpen()) {
+      return;
+    }
+
+    const template = normalizeShortcutTemplate(entry.template.trim());
+
+    if (!template) {
+      return;
+    }
+
+    const promptOptions = resolveIcebreakerPromptOptions(entry);
+
+    if (!icebreakerRequiresShortcutModal(entry)) {
+      clearError();
+      await sendMessageWithOperationalAgent({ content: template });
+      return;
+    }
+
+    shortcutPromptResolvingRef.current = true;
+
+    try {
+      const resolved = await resolveShortcutQuery(template, promptOptions);
+
+      if (!resolved || hasUnresolvedShortcutPlaceholders(resolved)) {
+        return;
+      }
+
+      clearError();
+      await sendMessageWithOperationalAgent({ content: resolved });
+    } finally {
+      shortcutPromptResolvingRef.current = false;
+    }
   }
 
   async function handleEditAndResendMessage(
@@ -2619,8 +2655,8 @@ export function ChatPage({
               onDraftChange={setDraft}
               onSubmit={handleSubmitMessage}
               onCancel={cancelStreaming}
-              onIcebreaker={(query) => {
-                void handleAgentIcebreaker(query);
+              onIcebreaker={(entry) => {
+                void handleAgentIcebreaker(entry);
               }}
               canManageAgent={canManageAgents}
               onManageAgent={() => {

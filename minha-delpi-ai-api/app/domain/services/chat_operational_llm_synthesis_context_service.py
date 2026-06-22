@@ -65,6 +65,12 @@ class ChatOperationalLlmSynthesisContextService:
             if normal_cap is not None:
                 return normal_cap
 
+        if ChatResponseModeService.normalize(response_mode) == "thinker":
+            thinker_cap = ChatResponseModeContentService.thinker_llm_max_facts_chars()
+
+            if thinker_cap is not None:
+                return thinker_cap
+
         return ChatOperationalLlmSynthesisContextContentService.max_chars()
 
     @classmethod
@@ -87,6 +93,12 @@ class ChatOperationalLlmSynthesisContextService:
         if (
             ChatResponseModeService.normalize(response_mode) == "normal"
             and ChatResponseModeContentService.normal_llm_skip_prose_panel_rules()
+        ):
+            return False
+
+        if (
+            ChatResponseModeService.normalize(response_mode) == "thinker"
+            and ChatResponseModeContentService.thinker_llm_skip_prose_panel_rules()
         ):
             return False
 

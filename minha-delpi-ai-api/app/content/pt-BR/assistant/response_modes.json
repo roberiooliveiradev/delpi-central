@@ -45,7 +45,7 @@
     "minAnswerChars": 40
   },
   "normalCommentaryDirect": {
-    "enabled": true,
+    "enabled": false,
     "minAnswerChars": 40
   },
   "fastLlmBudget": {
@@ -53,7 +53,33 @@
     "skipProsePanelRules": true
   },
   "normalLlmBudget": {
+    "maxFactsChars": 400,
+    "skipProsePanelRules": true
+  },
+  "thinkerLlmBudget": {
     "maxFactsChars": 520,
     "skipProsePanelRules": false
+  },
+  "generationLimits": {
+    "fast": {
+      "maxTokens": 96,
+      "numCtx": 512,
+      "temperature": 0.2
+    },
+    "normal": {
+      "maxTokens": 96,
+      "numCtx": 512,
+      "temperature": 0.2
+    },
+    "thinker": {
+      "maxTokens": 220,
+      "numCtx": 1024,
+      "temperature": 0.2
+    }
+  },
+  "latencyTargetsSec": {
+    "fast": 3,
+    "normal": 5,
+    "thinker": 15
   }
 }

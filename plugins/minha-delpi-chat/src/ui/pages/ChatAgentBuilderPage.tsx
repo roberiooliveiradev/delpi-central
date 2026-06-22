@@ -60,10 +60,10 @@ import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
 import {
   agentIcebreakersUseDefaults,
-  clampIcebreakerDraft,
-  resolveAgentIcebreakersForEditor,
+  normalizeIcebreakerEntriesForSave,
+  resolveAgentIcebreakerEntriesForEditor,
+  type AgentIcebreakerEntry,
 } from "../agentIcebreakers";
-import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 import { ChatAgentIcon } from "../components/workspace/ChatAgentIcon";
@@ -209,8 +209,8 @@ export function ChatAgentBuilderPage({
   const [isLoadingShares, setIsLoadingShares] = useState(false);
   const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
-  const [icebreakers, setIcebreakers] = useState<string[]>(() =>
-    resolveAgentIcebreakersForEditor(agent?.metadata ?? null),
+  const [icebreakers, setIcebreakers] = useState<AgentIcebreakerEntry[]>(() =>
+    resolveAgentIcebreakerEntriesForEditor(agent?.metadata ?? null),
   );
   const [icebreakersUsingDefaults, setIcebreakersUsingDefaults] = useState(() =>
     agent ? agentIcebreakersUseDefaults(agent.metadata) : false,
@@ -307,7 +307,7 @@ export function ChatAgentBuilderPage({
         setEnabled(details.enabled);
         setMaxToolCalls(details.max_tool_calls);
         setRequiresConfirmationForWrite(details.requires_confirmation_for_write);
-        setIcebreakers(resolveAgentIcebreakersForEditor(details.metadata));
+        setIcebreakers(resolveAgentIcebreakerEntriesForEditor(details.metadata));
         setIcebreakersUsingDefaults(agentIcebreakersUseDefaults(details.metadata));
 
         const nextCapabilities = getMetadataRecord(details.metadata, "capabilities");
@@ -523,10 +523,7 @@ export function ChatAgentBuilderPage({
   }
 
   const normalizedIcebreakers = useMemo(
-    () =>
-      icebreakers
-        .map((item) => clampIcebreakerDraft(item.trim()))
-        .filter(Boolean),
+    () => normalizeIcebreakerEntriesForSave(icebreakers),
     [icebreakers],
   );
 
@@ -547,7 +544,7 @@ export function ChatAgentBuilderPage({
       <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
 
       <AgentIcebreakersEditor
-        icebreakers={icebreakers}
+        entries={icebreakers}
         usingDefaults={icebreakersUsingDefaults}
         onChange={(next) => {
           setIcebreakers(next);
@@ -600,13 +597,13 @@ export function ChatAgentBuilderPage({
     });
 
     setIcebreakers((current) => {
-      const filled = current.map((item) => item.trim()).filter(Boolean);
+      const filled = current.filter((item) => item.template.trim() && item.label?.trim());
 
       if (filled.length > 0) {
         return current;
       }
 
-      return [...DEFAULT_AGENT_ICEBREAKERS];
+      return resolveAgentIcebreakerEntriesForEditor(null);
     });
     setIcebreakersUsingDefaults(false);
 

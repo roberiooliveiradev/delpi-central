@@ -28,77 +28,56 @@
   background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
 }
 
-.mdc-agent-icebreakers-editor__templates,
-.mdc-agent-icebreakers-editor__fields {
+.mdc-agent-icebreakers-editor__list {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.85rem;
 }
 
-.mdc-agent-icebreakers-editor__templates-label,
-.mdc-agent-icebreakers-editor__fields-label {
-  color: var(--mdc-title);
-  font-size: 0.8rem;
-  font-weight: 780;
-}
-
-.mdc-agent-icebreakers-editor__template-list,
-.mdc-agent-icebreakers-editor__field-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.mdc-agent-icebreakers-editor__template-btn,
-.mdc-agent-icebreakers-editor__field-btn {
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-card-bg) 80%, transparent);
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 650;
-  padding: 0.35rem 0.65rem;
-}
-
-.mdc-agent-icebreakers-editor__template-btn:hover,
-.mdc-agent-icebreakers-editor__field-btn:hover {
-  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-card-border));
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
-  color: var(--mdc-primary);
-}
-
-.mdc-agent-icebreakers-editor__row {
+.mdc-agent-icebreakers-editor__card {
   display: grid;
-  gap: 0.4rem;
-  min-width: 0;
-  border-radius: 0.78rem;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
   transition: box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.mdc-agent-icebreakers-editor__row--dragging {
+.mdc-agent-icebreakers-editor__card--dragging {
   opacity: 0.55;
 }
 
-.mdc-agent-icebreakers-editor__row--drop-target {
+.mdc-agent-icebreakers-editor__card--drop-target {
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mdc-primary) 45%, transparent);
   background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
 }
 
-.mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-row {
+.mdc-agent-icebreakers-editor__card-toolbar {
   display: flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 0;
 }
 
+.mdc-agent-icebreakers-editor__card-index {
+  flex: 1 1 auto;
+  color: var(--mdc-title);
+  font-size: 0.82rem;
+}
+
+.mdc-agent-icebreakers-editor__card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
 .mdc-agent-icebreakers-editor__drag-handle {
-  flex: 0 0 2.2rem;
   display: inline-grid;
   place-items: center;
+  width: 2rem;
+  height: 2rem;
   border: 0;
-  border-right: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  border-radius: 0.55rem;
   background: transparent;
   color: var(--mdc-text-muted);
   cursor: grab;
@@ -114,31 +93,22 @@
   color: var(--mdc-primary);
 }
 
-.mdc-agent-icebreakers-editor__reorder-actions {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  align-self: stretch;
-  border-left: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
-}
-
-.mdc-agent-icebreakers-editor__reorder-btn {
+.mdc-agent-icebreakers-editor__reorder-btn,
+.mdc-agent-icebreakers-editor__remove-btn,
+.mdc-agent-icebreakers-editor__field-remove {
   display: inline-grid;
   place-items: center;
-  width: 2.2rem;
-  min-height: 0;
+  width: 2rem;
+  height: 2rem;
   border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 0.55rem;
   background: transparent;
   color: var(--mdc-text-muted);
   cursor: pointer;
 }
 
-.mdc-agent-icebreakers-editor__reorder-actions .mdc-agent-icebreakers-editor__reorder-btn:last-child {
-  border-bottom: 0;
-}
-
-.mdc-agent-icebreakers-editor__reorder-btn:hover:not(:disabled) {
+.mdc-agent-icebreakers-editor__reorder-btn:hover:not(:disabled),
+.mdc-agent-icebreakers-editor__field-remove:hover {
   background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
   color: var(--mdc-primary);
 }
@@ -148,40 +118,134 @@
   cursor: not-allowed;
 }
 
-.mdc-agent-icebreakers-editor__remove-btn {
-  flex: 0 0 2.6rem;
-  align-self: stretch;
-  display: inline-grid;
-  place-items: center;
-  border: 0;
-  border-left: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-}
-
 .mdc-agent-icebreakers-editor__remove-btn:hover {
   background: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
   color: var(--mdc-danger);
 }
 
-.mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-field {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: auto;
-  height: 4rem;
-  min-height: 4rem;
-  max-height: 4rem;
-  padding: 0.7rem 0.8rem;
-  line-height: 1.45;
-  resize: none;
-  overflow-y: auto;
+.mdc-agent-icebreakers-editor__grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-count {
-  flex: 0 0 auto;
-  align-self: center;
-  border-left: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+.mdc-agent-icebreakers-editor__label,
+.mdc-agent-icebreakers-editor__mini-label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.mdc-agent-icebreakers-editor__label > span,
+.mdc-agent-icebreakers-editor__mini-label > span {
+  color: var(--mdc-title);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mdc-agent-icebreakers-editor__label input,
+.mdc-agent-icebreakers-editor__label textarea,
+.mdc-agent-icebreakers-editor__mini-label input,
+.mdc-agent-icebreakers-editor__mini-label select {
+  width: 100%;
+  min-width: 0;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+  color: var(--mdc-text);
+  font: inherit;
+  font-size: 0.84rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.mdc-agent-icebreakers-editor__template {
+  min-height: 4rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.mdc-agent-icebreakers-editor__count {
+  justify-self: end;
+  color: var(--mdc-text-muted);
+  font-size: 0.74rem;
+}
+
+.mdc-agent-icebreakers-editor__fields-block {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem;
+  border-radius: 0.75rem;
+  border: 1px dashed color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 35%, transparent);
+}
+
+.mdc-agent-icebreakers-editor__fields-head {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mdc-agent-icebreakers-editor__fields-head > span {
+  color: var(--mdc-title);
+  font-size: 0.8rem;
+  font-weight: 780;
+}
+
+.mdc-agent-icebreakers-editor__field-type-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mdc-agent-icebreakers-editor__field-type-btn,
+.mdc-agent-icebreakers-editor__insert-token {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-card-bg) 80%, transparent);
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 650;
+  padding: 0.3rem 0.55rem;
+}
+
+.mdc-agent-icebreakers-editor__field-type-btn:hover,
+.mdc-agent-icebreakers-editor__insert-token:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-agent-icebreakers-editor__fields-empty {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+}
+
+.mdc-agent-icebreakers-editor__fields-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.mdc-agent-icebreakers-editor__field-row {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto auto auto;
+  align-items: end;
+}
+
+.mdc-agent-icebreakers-editor__mini-label--grow {
+  grid-column: span 1;
+}
+
+.mdc-agent-icebreakers-editor__required {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+  padding-bottom: 0.55rem;
 }
 
 .mdc-agent-icebreakers-editor__preview {
@@ -206,71 +270,22 @@
   opacity: 0.92;
 }
 
-@container agent-workspace (max-width: 720px) {
-  .mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-row {
-    flex-wrap: wrap;
+@container agent-workspace (max-width: 900px) {
+  .mdc-agent-icebreakers-editor__grid {
+    grid-template-columns: 1fr;
   }
 
-  .mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-field {
-    flex: 1 1 100%;
-    border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  }
-
-  .mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-count {
-    border-left: 0;
-    padding-inline: 0.55rem 0.35rem;
-  }
-
-  .mdc-agent-icebreakers-editor__reorder-actions {
-    flex: 1 1 100%;
+  .mdc-agent-icebreakers-editor__field-row {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: none;
-    border-left: 0;
-    border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
   }
 
-  .mdc-agent-icebreakers-editor__reorder-btn {
-    width: auto;
-    min-height: 2.35rem;
-    border-bottom: 0;
-    border-right: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  }
-
-  .mdc-agent-icebreakers-editor__reorder-actions
-    .mdc-agent-icebreakers-editor__reorder-btn:last-child {
-    border-right: 0;
-  }
-
-  .mdc-agent-icebreakers-editor__drag-handle {
-    border-right: 0;
-  }
-
-  .mdc-agent-icebreakers-editor__remove-btn {
-    flex: 0 0 2.6rem;
-  }
-
-  .mdc-agent-icebreakers-editor__template-list,
-  .mdc-agent-icebreakers-editor__field-list {
-    gap: 0.35rem;
-  }
-
-  .mdc-agent-icebreakers-editor__template-btn,
-  .mdc-agent-icebreakers-editor__field-btn {
-    font-size: 0.74rem;
-    padding: 0.32rem 0.55rem;
-  }
-
-  .mdc-agent-icebreakers-editor__help {
-    font-size: 0.8rem;
+  .mdc-agent-icebreakers-editor__insert-token {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 }
 
 @media (max-width: 480px) {
-  .mdc-agent-icebreakers-editor__templates,
-  .mdc-agent-icebreakers-editor__fields {
-    gap: 0.35rem;
-  }
-
   .mdc-agent-icebreakers-editor__defaults-notice {
     font-size: 0.8rem;
     padding: 0.55rem 0.65rem;
@@ -278,5 +293,9 @@
 
   .mdc-agent-icebreakers-editor__preview {
     font-size: 0.74rem;
+  }
+
+  .mdc-agent-icebreakers-editor__field-row {
+    grid-template-columns: 1fr;
   }
 }

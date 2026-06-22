@@ -88,27 +88,50 @@ export function ChatShortcutPromptDialog({
         {fields.map((field) => (
           <label key={field.id} className="mdc-chat-shortcut-prompt__field">
             <span>{field.label}</span>
-            <input
-              type="text"
-              inputMode={field.inputMode === "numeric" ? "numeric" : "text"}
-              autoComplete="off"
-              autoFocus={fields[0]?.id === field.id}
-              placeholder={field.placeholder}
-              value={values[field.id] ?? ""}
-              onChange={(event) => {
-                const next = event.target.value;
-                setValues((current) => ({ ...current, [field.id]: next }));
-                setErrors((current) => {
-                  if (!current[field.id]) {
-                    return current;
-                  }
+            {field.multiline ? (
+              <textarea
+                rows={4}
+                autoComplete="off"
+                autoFocus={fields[0]?.id === field.id}
+                placeholder={field.placeholder}
+                value={values[field.id] ?? ""}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setValues((current) => ({ ...current, [field.id]: next }));
+                  setErrors((current) => {
+                    if (!current[field.id]) {
+                      return current;
+                    }
 
-                  const copy = { ...current };
-                  delete copy[field.id];
-                  return copy;
-                });
-              }}
-            />
+                    const copy = { ...current };
+                    delete copy[field.id];
+                    return copy;
+                  });
+                }}
+              />
+            ) : (
+              <input
+                type="text"
+                inputMode={field.inputMode === "numeric" ? "numeric" : "text"}
+                autoComplete="off"
+                autoFocus={fields[0]?.id === field.id}
+                placeholder={field.placeholder}
+                value={values[field.id] ?? ""}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setValues((current) => ({ ...current, [field.id]: next }));
+                  setErrors((current) => {
+                    if (!current[field.id]) {
+                      return current;
+                    }
+
+                    const copy = { ...current };
+                    delete copy[field.id];
+                    return copy;
+                  });
+                }}
+              />
+            )}
             {errors[field.id] ? (
               <small className="mdc-chat-shortcut-prompt__error">{errors[field.id]}</small>
             ) : null}

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import type { ChatAgent, ChatMessage, ChatStreamActivityEntry, ChatToolCall } from "../../../data/api/chatTypes";
 import type { ChatComposerBindings } from "../../../state/hooks/useChatComposerBindings";
+import type { AgentIcebreakerEntry } from "../../agentIcebreakers";
 import { ChatInput } from "../composer/ChatInput";
 import { ChatMessageList } from "../message/ChatMessageList";
 import { ChatAgentHome } from "./ChatAgentHome";
@@ -18,7 +19,7 @@ type ChatAgentConversationSurfaceProps = {
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
   onCancel?: () => void;
-  onIcebreaker: (query: string) => void;
+  onIcebreaker: (entry: AgentIcebreakerEntry) => void;
   defaultIcebreakersHint?: string | null;
   canManageAgent?: boolean;
   onManageAgent?: () => void;

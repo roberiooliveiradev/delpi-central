@@ -130,3 +130,81 @@ class ChatResponseModeContentService:
             return False
 
         return bool(node.get("skipProsePanelRules"))
+
+    @classmethod
+    def thinker_llm_max_facts_chars(cls) -> int | None:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "thinkerLlmBudget")
+
+        if not isinstance(node, dict):
+            return None
+
+        raw = node.get("maxFactsChars")
+
+        if raw in (None, ""):
+            return None
+
+        try:
+            return max(128, int(raw))
+        except (TypeError, ValueError):
+            return None
+
+    @classmethod
+    def thinker_llm_skip_prose_panel_rules(cls) -> bool:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "thinkerLlmBudget")
+
+        if not isinstance(node, dict):
+            return False
+
+        return bool(node.get("skipProsePanelRules"))
+
+    @classmethod
+    def _node_int(cls, *path: str, default: int) -> int:
+        node = ChatAssistantContentService.get_node(_BUNDLE, *path)
+
+        if node in (None, ""):
+            return default
+
+        try:
+            return int(node)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def _node_float(cls, *path: str, default: float) -> float:
+        node = ChatAssistantContentService.get_node(_BUNDLE, *path)
+
+        if node in (None, ""):
+            return default
+
+        try:
+            return float(node)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def generation_limit_int(cls, mode: str, field: str, *, default: int) -> int:
+        return cls._node_int(
+            "generationLimits",
+            str(mode or "").strip().lower(),
+            field,
+            default=default,
+        )
+
+    @classmethod
+    def generation_limit_float(cls, mode: str, field: str, *, default: float) -> float:
+        return cls._node_float(
+            "generationLimits",
+            str(mode or "").strip().lower(),
+            field,
+            default=default,
+        )
+
+    @classmethod
+    def latency_target_sec(cls, mode: str, *, default: int) -> int:
+        value = cls._node_int(
+            "latencyTargetsSec",
+            str(mode or "").strip().lower(),
+            default=default,
+        )
+
+        return max(1, value)
