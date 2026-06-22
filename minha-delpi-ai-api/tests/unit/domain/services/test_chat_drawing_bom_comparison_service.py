@@ -241,3 +241,35 @@ def test_structured_bom_supplements_presence_from_component_codes():
 
     assert "10130006" not in result.missing_in_pdf
     assert not result.missing_in_pdf
+
+
+def test_nested_mp_under_pi_not_extra_when_only_in_stamp_bom_table():
+    root = {
+        "structure": {
+            "items": [
+                {"code": "10120073", "quantity": 650.0, "components": []},
+                {
+                    "code": "50225426",
+                    "description": "CA0,75VERM-00792/04/14-3800-0000",
+                    "components": [
+                        {"code": "10020006", "quantity": 792.0},
+                        {"code": "10080138", "quantity": 1000.0},
+                    ],
+                },
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["10020006", "10080138", "10120073"],
+        "bomRows": [{"code": "10020006"}, {"code": "10080138"}, {"code": "10120073"}],
+        "validationScopes": {"bom": {"sourceKey": "stamp_bom_table", "available": True}},
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90262008",
+    )
+
+    assert "10020006" not in result.extra_in_pdf
+    assert "10080138" not in result.extra_in_pdf

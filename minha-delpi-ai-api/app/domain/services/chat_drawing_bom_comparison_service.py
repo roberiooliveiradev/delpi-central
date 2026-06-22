@@ -63,6 +63,10 @@ class ChatDrawingBomComparisonService:
             root=root,
             pdf_extract=pdf_extract,
         )
+        pdf_bom_codes |= cls.collect_haystack_presence_codes(
+            pdf_extract,
+            api_codes=set(api_codes),
+        )
         pdf_bom_codes = cls._drop_catalog_alternate_duplicates(
             pdf_bom_codes,
             catalog_map=ChatDrawingStructureIndexService.collect_catalog_alternate_map(root),
@@ -73,11 +77,19 @@ class ChatDrawingBomComparisonService:
             pdf_extract
         )
 
+        structure_all_codes = ChatDrawingStructureIndexService.collect_all_codes(
+            root,
+            product_code,
+        )
+        normalized_product = ChatProductQueryIntentService.normalize_product_code(
+            product_code
+        )
+
         missing = sorted(api_codes - pdf_bom_codes)
         extra = sorted(
             code
             for code in (pdf_bom_codes - api_codes)
-            if code != ChatProductQueryIntentService.normalize_product_code(product_code)
+            if code != normalized_product and code not in structure_all_codes
         )
 
         return BomComparisonResult(
@@ -199,6 +211,51 @@ class ChatDrawingBomComparisonService:
                 continue
 
             codes.add(code)
+
+        return codes
+
+    @classmethod
+    def collect_haystack_presence_codes(
+        cls,
+        pdf_extract: dict,
+        *,
+        api_codes: set[str],
+    ) -> set[str]:
+        """Códigos presentes no haystack regional (carimbo/BOM) mas ausentes de componentCodes."""
+        haystack_parts: list[str] = []
+        primary = cls._pdf_description_haystack(pdf_extract)
+
+        if primary:
+            haystack_parts.append(primary)
+
+        source_metadata = pdf_extract.get("sourceMetadata")
+
+        if isinstance(source_metadata, dict):
+            for key in ChatDrawingPatternsService.pdf_haystack_source_metadata_keys():
+                text = str(source_metadata.get(key) or "").strip()
+
+                if text:
+                    haystack_parts.append(text.upper())
+
+        full_text = str(pdf_extract.get("fullText") or "").strip()
+
+        if full_text:
+            haystack_parts.append(full_text.upper())
+
+        if not haystack_parts or not api_codes:
+            return set()
+
+        pattern = ChatDrawingPatternsService.component_code()
+        codes: set[str] = set()
+
+        for haystack in haystack_parts:
+            for match in pattern.finditer(haystack):
+                code = ChatProductQueryIntentService.normalize_product_code(
+                    str(match.group(1) or "")
+                )
+
+                if code and code in api_codes:
+                    codes.add(code)
 
         return codes
 

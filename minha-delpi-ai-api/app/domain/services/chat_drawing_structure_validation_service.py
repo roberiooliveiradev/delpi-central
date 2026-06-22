@@ -359,7 +359,11 @@ class ChatDrawingStructureValidationService:
         pdf_right = dimensions.get("rightDecapeMm")
         decape_candidates = cls._pdf_decape_candidates(dimensions)
 
-        if cls._should_skip_per_intermediate_decape_checks(pdf_extract, dimensions):
+        if cls._should_skip_per_intermediate_decape_checks(
+            pdf_extract,
+            dimensions,
+            root=root,
+        ):
             return items
 
         if pdf_left is None and pdf_right is None and not decape_candidates:
@@ -452,6 +456,8 @@ class ChatDrawingStructureValidationService:
         cls,
         pdf_extract: dict,
         dimensions: dict[str, Any],
+        *,
+        root: dict | None = None,
     ) -> bool:
         from app.domain.services.chat_drawing_dimensions_extraction_service import (
             ChatDrawingDimensionsExtractionService,
@@ -464,9 +470,49 @@ class ChatDrawingStructureValidationService:
         ):
             return True
 
-        return ChatDrawingDimensionsExtractionService.only_implausible_global_decape(
+        if ChatDrawingDimensionsExtractionService.only_implausible_global_decape(
             dimensions
+        ):
+            return True
+
+        if root and cls._global_decape_conflicts_with_intermediate_profile(
+            dimensions,
+            root,
+        ):
+            return True
+
+        return False
+
+    @classmethod
+    def _global_decape_conflicts_with_intermediate_profile(
+        cls,
+        dimensions: dict[str, Any],
+        root: dict,
+    ) -> bool:
+        from app.domain.services.chat_drawing_intermediate_semantics_service import (
+            ChatDrawingIntermediateSemanticsService,
         )
+
+        pdf_left = ChatDrawingToleranceService.parse_mm(dimensions.get("leftDecapeMm"))
+
+        if pdf_left is None:
+            return False
+
+        expected_lefts = [
+            float(value)
+            for row in ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(
+                root
+            )
+            if (value := row.get("leftDecapeMm")) is not None
+        ]
+
+        if not expected_lefts:
+            return False
+
+        max_expected = max(expected_lefts)
+        ratio = ChatDrawingPatternsService.decape_global_mismatch_ratio()
+
+        return pdf_left > max_expected * ratio
 
     @classmethod
     def _decape_side_indicated(cls, dimensions: dict[str, Any], side: str) -> bool:

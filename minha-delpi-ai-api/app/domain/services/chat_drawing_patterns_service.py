@@ -361,6 +361,10 @@ class ChatDrawingPatternsService:
         return cls.validation_rule_float("decapeToleranceMm", 1.0)
 
     @classmethod
+    def decape_global_mismatch_ratio(cls) -> float:
+        return cls.validation_rule_float("decapeGlobalMismatchRatio", 2.5)
+
+    @classmethod
     def max_root_structure_quantity_mm(cls) -> float:
         return cls.validation_rule_float("maxRootStructureQuantityMm", 1000.0)
 

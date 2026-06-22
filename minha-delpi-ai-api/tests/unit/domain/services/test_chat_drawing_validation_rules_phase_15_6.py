@@ -113,6 +113,37 @@ def test_guide_component_mismatch_when_mp_not_under_pi():
     assert mismatches[0].component_code == "10091640"
 
 
+def test_guide_component_ok_when_legacy_pi_code_matches_structure_fingerprint():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50225425",
+                    "description": "CA0,75BRAN-00792/04/14-3800-0000",
+                    "components": [],
+                }
+            ]
+        },
+        "guide": {
+            "items": [
+                {
+                    "product_code": "90262008",
+                    "component_code": "50221606",
+                    "component_description": "CA18BRAN-00792/04/14-3800-0000",
+                    "bom_level": 0,
+                }
+            ]
+        },
+    }
+
+    mismatches = ChatDrawingGuideComponentConsistencyService.compare(
+        root=root,
+        product_code="90262008",
+    )
+
+    assert not mismatches
+
+
 def test_guide_component_ok_for_pa_root_when_mp_in_structure():
     root = {
         "structure": {

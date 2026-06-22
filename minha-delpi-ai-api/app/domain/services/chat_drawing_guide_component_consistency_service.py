@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
+from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_structure_index_service import (
     ChatDrawingStructureIndexService,
 )
@@ -36,18 +38,29 @@ class ChatDrawingGuideComponentConsistencyService:
             component_code = ChatProductQueryIntentService.normalize_product_code(
                 str(row.get("component_code") or "")
             )
+            component_description = str(
+                row.get("component_description") or row.get("description") or ""
+            ).strip()
 
             if not guide_product or not component_code:
                 continue
 
             if guide_product == root_code:
-                if component_code not in structure_codes:
-                    mismatches.append(
-                        GuideComponentMismatch(
-                            product_code=guide_product,
-                            component_code=component_code,
-                        )
+                if component_code in structure_codes:
+                    continue
+
+                if cls._matches_structure_intermediate_fingerprint(
+                    root,
+                    component_description=component_description,
+                ):
+                    continue
+
+                mismatches.append(
+                    GuideComponentMismatch(
+                        product_code=guide_product,
+                        component_code=component_code,
                     )
+                )
                 continue
 
             if not cls._is_component_under_product(root, guide_product, component_code):
@@ -101,6 +114,51 @@ class ChatDrawingGuideComponentConsistencyService:
     @classmethod
     def _collect_structure_codes(cls, root: dict, root_code: str) -> set[str]:
         return ChatDrawingStructureIndexService.collect_all_codes(root, root_code)
+
+    @classmethod
+    def _matches_structure_intermediate_fingerprint(
+        cls,
+        root: dict,
+        *,
+        component_description: str,
+    ) -> bool:
+        guide_fingerprint = cls._intermediate_fingerprint(component_description)
+
+        if not guide_fingerprint:
+            return False
+
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+
+        for row in ChatDrawingStructureIndexService.flatten_items(structure):
+            if not row.code or not ChatDrawingPatternsService.is_intermediate_family(
+                row.code
+            ):
+                continue
+
+            structure_fingerprint = cls._intermediate_fingerprint(row.description)
+
+            if structure_fingerprint and structure_fingerprint == guide_fingerprint:
+                return True
+
+        return False
+
+    @classmethod
+    def _intermediate_fingerprint(cls, description: str) -> tuple[str, str, str] | None:
+        match = ChatDrawingPatternsService.intermediate_segment().search(
+            str(description or "")
+        )
+
+        if not match:
+            return None
+
+        color_match = re.search(r"([A-Z]{4})-\d", str(description or "").upper())
+        color = color_match.group(1) if color_match else ""
+
+        return (
+            color,
+            str(match.group(2) or "").strip().zfill(2),
+            str(match.group(3) or "").strip().zfill(2),
+        )
 
     @classmethod
     def _is_component_under_product(
