@@ -76,14 +76,30 @@ Fallback sem env: `/tmp/minha-delpi-chat-attachments` (adequado só para testes 
 
 ## Leitura de conteúdo
 
-Após o upload, a indexação chama `ChatWorkspaceFileTextExtractionService` (Playbook 17). Formatos office legados:
+Após o upload, a indexação chama `ChatWorkspaceFileTextExtractionService` (Playbook 17).
+
+**Documento canônico de limites:** [chat-workspace-file-extraction-limits.md](../architecture/chat-workspace-file-extraction-limits.md) — upload (25 MB), truncamento por formato, PDF (20 páginas / OCR scan), planilhas (300×10), imagens (OCR 4000 chars) e aviso de arquivo extenso (120k chars / 40 páginas).
+
+Resumo rápido:
+
+| Tipo | Limite na extração |
+|------|-------------------|
+| CSV | 300 linhas |
+| XLS/XLSX | 10 planilhas, 300 linhas cada |
+| PDF | 20 páginas (texto); OCR Tesseract se &lt; 120 chars embutidos |
+| Imagem | OCR opcional, máx. 4000 caracteres |
+| DOC | `antiword` (30 s timeout) |
+| TXT/MD/JSON/DOCX | Sem truncamento explícito na leitura |
+
+Formatos office legados:
 
 - `.doc` — `antiword` no container (instalado no Dockerfile)
 - `.xls` — `xlrd` (Python)
 
 PDF escaneado na indexação: quando o texto embutido fica abaixo do limiar (`document_vision.json` → `pdfExtraction.attachmentIndex`), a API rasteriza páginas com Tesseract antes de gravar chunks RAG.
 
-Matriz completa: `docs/roadmap/playbook-17-importacao-arquivos-e-fontes-unificada.md` § 12.
+Matriz completa: `docs/roadmap/playbook-17-importacao-arquivos-e-fontes-unificada.md` § 12.  
+Limites detalhados: `docs/architecture/chat-workspace-file-extraction-limits.md`.
 
 ## Migração / anexos antigos
 

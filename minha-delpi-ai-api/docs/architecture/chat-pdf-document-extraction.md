@@ -143,7 +143,9 @@ Seção **`pdfExtraction`**:
 | `layoutProfiles.generic.enableRegionOcr` | `false` — chat base genérico não corta regiões DELPI |
 | `layoutProfiles.drawing_delpi.enableRegionOcr` | `true` — permite fallback regional na skill desenho |
 | `attachmentIndex.pageOcrWhenEmbeddedBelowMinChars` | `true` — indexação de anexo aciona Tesseract página quando embutido &lt; `regionOcr.minChars` |
-| `attachmentIndex.maxPages` | Máximo de páginas rasterizadas na indexação OCR (padrão `10`) |
+| `attachmentIndex.maxPages` | Máximo de páginas rasterizadas no OCR de indexação quando `page_limit` omitido (padrão `10`) |
+
+**Limites completos de leitura (upload, truncamento, env):** [chat-workspace-file-extraction-limits.md](./chat-workspace-file-extraction-limits.md).
 
 ### Indexação de PDF escaneado (anexos)
 

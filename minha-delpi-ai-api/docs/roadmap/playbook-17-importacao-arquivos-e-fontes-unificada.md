@@ -231,6 +231,7 @@ Implementar 17 **não** altera welcome/chips — só unifica **entrada** e **vis
 | `AdminFileDropzone.tsx` | Primitive visual admin |
 | `attachment_routes.py` | Upload sessão |
 | `project_routes.py` | Fontes agente/projeto |
+| [chat-workspace-file-extraction-limits.md](../architecture/chat-workspace-file-extraction-limits.md) | Limites de leitura (upload, truncamento, env) |
 
 ---
 
@@ -267,21 +268,26 @@ O Playbook 17 define **famílias de ingestão**, **módulos canônicos** API/MFE
 
 ## 12. Matriz formato × leitura (jun/2026)
 
+**Limites completos (upload, truncamento, env, JSON):** [chat-workspace-file-extraction-limits.md](../architecture/chat-workspace-file-extraction-limits.md).
+
 Pipeline canônico: `ChatWorkspaceFileTextExtractionService` → `ChatAttachmentTextExtractor` (fachada).
 
-| Extensão | Extrator | Indexação RAG | Observação |
-|----------|----------|---------------|------------|
-| `.txt`, `.md` | plain text | Sim | UTF-8 com fallback |
-| `.csv` | csv | Sim | Limite `fileExtraction.csvMaxRows` |
-| `.json` | json | Sim | Pretty-print quando válido |
-| `.docx` | python-docx | Sim | Parágrafos + tabelas |
-| `.xlsx` | openpyxl | Sim | Limite planilhas/linhas em `attachments.json` |
-| `.doc` | antiword | Sim* | *Requer `antiword` no container; senão hint `legacy_doc_format` |
-| `.xls` | xlrd | Sim* | *Formato binário legado; falha → hint `legacy_xls_format` |
-| `.pdf` | `ChatPdfDocumentExtractionService` | Sim | Texto embutido + anotações; scan &lt; 120 chars → Tesseract página (`attachmentIndex`) |
-| `.png`, `.jpg`, … | metadados + OCR opcional | Sim | OCR via `ChatAttachmentImageOcrService` quando habilitado |
+| Extensão | Extrator | Indexação RAG | Limite principal na leitura |
+|----------|----------|---------------|----------------------------|
+| `.txt`, `.md` | plain text | Sim | Arquivo inteiro (UTF-8) |
+| `.csv` | csv | Sim | **300 linhas** |
+| `.json` | json | Sim | Arquivo inteiro |
+| `.docx` | python-docx | Sim | Parágrafos + tabelas (sem limite explícito) |
+| `.xlsx` | openpyxl | Sim | **10 planilhas** × **300 linhas** |
+| `.doc` | antiword | Sim* | *Container com `antiword`; timeout **30 s** |
+| `.xls` | xlrd | Sim* | *Mesmos limites de planilha que `.xlsx` |
+| `.pdf` | `ChatPdfDocumentExtractionService` | Sim | **20 páginas** (env); scan → Tesseract até **10** páginas OCR se embutido &lt; **120** chars |
+| `.png`, `.jpg`, … | metadados + OCR opcional | Sim | OCR até **4000** chars quando habilitado |
 
-**Container:** `antiword` instalado em `Dockerfile.prod` / `Dockerfile.dev` junto com Tesseract.
+| Upload (todas as famílias) | **25 MB** máximo · extensões por família em `WorkspaceFileIngestPolicyService` |
+| Aviso «arquivo extenso» (pós-index) | ≥ **120 000** chars ou ≥ **40** páginas no preview — não trunca extração |
 
-**Config:** limites office em `attachments.json` → `fileExtraction`; OCR de index PDF em `document_vision.json` → `pdfExtraction.attachmentIndex`.
+**Container:** `antiword` + Tesseract em `Dockerfile.prod` / `Dockerfile.dev`.
+
+**Config:** `attachments.json` → `fileExtraction`; PDF/index OCR → `document_vision.json` → `pdfExtraction.attachmentIndex`.
 
