@@ -20,6 +20,9 @@ from app.domain.services.chat_drawing_bom_quantity_validation_service import (
 from app.domain.services.chat_drawing_guide_component_consistency_service import (
     ChatDrawingGuideComponentConsistencyService,
 )
+from app.domain.services.chat_drawing_guide_structure_consistency_service import (
+    ChatDrawingGuideStructureConsistencyService,
+)
 from app.domain.services.chat_drawing_pdf_extraction_service import (
     ChatDrawingPdfExtractionService,
 )
@@ -67,20 +70,10 @@ def test_rule_case_is_registered_in_catalog(case):
     assert case.rule_id in catalog
 
 
-def test_all_catalog_rules_have_at_least_one_case_or_service_test():
+def test_all_catalog_rules_have_at_least_one_case():
     catalog = set(ChatDrawingValidationRuleRegistryService._rule_catalog())
     covered = rule_ids_with_cases()
-    service_only = {
-        "product_code_cross_check",
-        "guide_structure",
-        "multipage_coverage",
-        "intermediate_presence",
-        "intermediate_length",
-        "total_length",
-        "decapes_ed",
-        "dimension_note",
-    }
-    missing = catalog - covered - service_only
+    missing = catalog - covered
 
     assert not missing, f"Regras sem caso de regressão: {sorted(missing)}"
 
@@ -295,3 +288,187 @@ def test_rule_case_ids_unique_per_rule():
         ids = [case.id for case in cases_for_rule(rule_id)]
 
         assert len(ids) == len(set(ids))
+
+
+def test_product_code_cross_check_mismatch():
+    from app.domain.services.chat_drawing_validation_orchestration_service import (
+        ChatDrawingValidationOrchestrationService,
+    )
+
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90260140",
+        payload={
+            "product": {"code": "90260140"},
+            "structure": {"items": []},
+            "guide": {"items": []},
+            "inspection": {"items": []},
+        },
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "legible": True,
+            "productCode": "90260999",
+            "componentCodes": [],
+        },
+    )
+
+    mismatches = [
+        item
+        for item in package["drawingAnalysis"]["items"]
+        if item.get("templateKey") == "product_code_mismatch"
+    ]
+
+    assert mismatches
+
+
+def test_guide_structure_flags_extra_product():
+    from tests.unit.domain.services.test_chat_drawing_bom_comparison_service import (
+        _payload_90264227,
+    )
+
+    items = ChatDrawingGuideStructureConsistencyService.build_check_items(
+        root=_payload_90264227(),
+        product_code="90264227",
+    )
+
+    assert any(item.get("templateKey") == "guide_structure_extra" for item in items)
+
+
+def test_multipage_coverage_low_signal():
+    from app.domain.services.chat_drawing_bom_comparison_service import BomComparisonResult
+    from app.domain.services.chat_drawing_multipage_coverage_service import (
+        ChatDrawingMultipageCoverageService,
+    )
+
+    api_codes = tuple(f"5023{i:04d}" for i in range(10))
+    pdf_codes = api_codes[:5]
+    comparison = BomComparisonResult(
+        missing_in_pdf=tuple(api_codes[5:]),
+        extra_in_pdf=(),
+        pdf_bom_codes=pdf_codes,
+        api_codes=api_codes,
+    )
+
+    result = ChatDrawingMultipageCoverageService.evaluate(
+        pdf_extract={"pageCount": 3, "legible": True},
+        comparison=comparison,
+    )
+
+    assert result.template_key == "multipage_low_coverage"
+
+
+def test_intermediate_presence_missing():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50225425",
+                    "description": "CA0,75BRAN-00792/04/14-3800-0000",
+                    "components": [],
+                }
+            ]
+        }
+    }
+    pdf_extract = {"legible": True, "intermediateCodes": [], "componentCodes": []}
+
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90262008",
+    )
+
+    assert any(item.get("templateKey") == "intermediate_missing" for item in items)
+
+
+def test_intermediate_length_mismatch():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50225425",
+                    "description": "CA0,75BRAN-00792/04/14-3800-0000",
+                    "components": [{"code": "10020043", "quantity": 100.0, "unit": "MT"}],
+                }
+            ]
+        }
+    }
+    pdf_extract = {
+        "legible": True,
+        "intermediateCodes": ["50225425"],
+        "componentCodes": ["50225425"],
+        "bomRows": [{"code": "50225425"}],
+        "dimensions": {},
+    }
+
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90262008",
+    )
+
+    assert any(item.get("templateKey") == "intermediate_length" for item in items)
+
+
+def test_total_length_within_tolerance_ok():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50225425",
+                    "description": "CA0,75BRAN-00792/04/14-3800-0000",
+                    "components": [{"code": "10020043", "quantity": 1000.0, "unit": "MT"}],
+                }
+            ]
+        }
+    }
+    pdf_extract = {
+        "legible": True,
+        "componentCodes": ["50225425"],
+        "bomRows": [{"code": "50225425"}],
+        "dimensions": {"totalLengthMm": 1000.0},
+    }
+
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90262008",
+    )
+
+    assert any(
+        item.get("templateKey") == "total_length" and item.get("status") == "ok"
+        for item in items
+    )
+
+
+def test_decapes_ed_pending_when_side_missing():
+    root = {"structure": {"items": []}}
+    pdf_extract = {
+        "legible": True,
+        "componentCodes": [],
+        "dimensions": {
+            "leftDecapeMm": 14.0,
+            "rightDecapeMm": None,
+            "decapeIndication": {"left": True, "right": True},
+        },
+    }
+
+    items = ChatDrawingStructureValidationService.build_check_items(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90262008",
+    )
+
+    assert any(
+        item.get("templateKey") == "decapes_ed" and item.get("status") == "pending"
+        for item in items
+    )
+
+
+def test_dimension_note_ambiguous_detected():
+    from app.domain.services.chat_drawing_dimensions_extraction_service import (
+        ChatDrawingDimensionsExtractionService,
+    )
+
+    text = "TERMO ENCOLHÍVEL 25 MM DECAPE 14 MM"
+
+    assert ChatDrawingDimensionsExtractionService.detect_ambiguous_dimension_notes(text)

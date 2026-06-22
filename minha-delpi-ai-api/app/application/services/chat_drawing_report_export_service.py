@@ -11,6 +11,9 @@ from app.domain.services.chat_drawing_validation_content_service import (
 from app.domain.services.chat_drawing_validation_presentation_service import (
     ChatDrawingValidationPresentationService,
 )
+from app.domain.services.chat_drawing_analysis_export_consistency_service import (
+    ChatDrawingAnalysisExportConsistencyService,
+)
 
 
 class ChatDrawingReportExportService:
@@ -27,6 +30,11 @@ class ChatDrawingReportExportService:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
         tables = ChatDrawingValidationPresentationService.build_export_tables(package)
         csv_content = cls.build_workbook_csv(tables)
+        consistency = ChatDrawingAnalysisExportConsistencyService.validate(
+            package=package,
+            report_markdown=str(report_markdown or "").strip(),
+            export_tables=tables,
+        )
 
         payload: dict[str, Any] = {
             "filename": f"relatorio-desenho-{safe_code}-{stamp}.md",
@@ -90,6 +98,8 @@ class ChatDrawingReportExportService:
 
         if nonconformity_rows:
             payload["spreadsheetRows"] = nonconformity_rows
+
+        payload["checklistConsistency"] = consistency
 
         return payload
 

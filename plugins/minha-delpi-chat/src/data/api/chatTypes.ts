@@ -695,6 +695,13 @@ export type ChatMessageMetadata = {
       apiEvidence: string;
       recommendation: string;
     }[];
+    checklistConsistency?: {
+      ok?: boolean;
+      displayItemCount?: number;
+      markdownChecklistRows?: number;
+      exportChecklistRows?: number;
+      issues?: string[];
+    };
   };
   guidedFlow?: ChatGuidedFlow | null;
   guidedFlowCards?: ChatGuidedFlowCard[];

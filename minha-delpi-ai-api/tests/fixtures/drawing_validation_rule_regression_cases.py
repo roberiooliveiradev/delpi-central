@@ -232,6 +232,46 @@ DRAWING_VALIDATION_RULE_CASES: tuple[DrawingValidationRuleCase, ...] = (
         rule_id="balloon_presence",
         category="Família 7026 desliga balloon_presence",
     ),
+    DrawingValidationRuleCase(
+        id="R-product-code-mismatch",
+        rule_id="product_code_cross_check",
+        category="Código PDF diverge do cadastro SB1010",
+    ),
+    DrawingValidationRuleCase(
+        id="R-guide-structure-extra",
+        rule_id="guide_structure",
+        category="Produto do roteiro fora da estrutura SG1010",
+    ),
+    DrawingValidationRuleCase(
+        id="R-multipage-low-coverage",
+        rule_id="multipage_coverage",
+        category="BOM multipágina com cobertura baixa",
+    ),
+    DrawingValidationRuleCase(
+        id="R-intermediate-missing",
+        rule_id="intermediate_presence",
+        category="Intermediário 50xx ausente no PDF",
+    ),
+    DrawingValidationRuleCase(
+        id="R-intermediate-length",
+        rule_id="intermediate_length",
+        category="Comprimento 50xx × cabo filho fora de tolerância",
+    ),
+    DrawingValidationRuleCase(
+        id="R-total-length",
+        rule_id="total_length",
+        category="Comprimento total PDF × referência estrutura",
+    ),
+    DrawingValidationRuleCase(
+        id="R-decapes-ed",
+        rule_id="decapes_ed",
+        category="Decapes E/D globais no PDF",
+    ),
+    DrawingValidationRuleCase(
+        id="R-dimension-note-ambiguous",
+        rule_id="dimension_note",
+        category="Nota dimensional ambígua (termo vs decape)",
+    ),
 )
 
 

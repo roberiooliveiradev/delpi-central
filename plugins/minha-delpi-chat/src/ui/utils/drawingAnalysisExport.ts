@@ -7,6 +7,7 @@ import {
 } from "../../export/primitives";
 import { chatAlert } from "./chatNativeDialogs";
 import { buildExcelCsvBlob } from "./drawingAnalysisCsvEncoding";
+import { validateDrawingChecklistConsistency } from "./drawingAnalysisConsistency";
 import { printDrawingAnalysisReport } from "./drawingAnalysisPrint";
 
 export type DrawingExportTable = {
@@ -63,12 +64,54 @@ function resolveProductCode(
   return match?.[1] ?? "desenho";
 }
 
+function buildChecklistTableFromItems(
+  items: DrawingCheckItem[],
+  exportPayload: DrawingAnalysisExportPayload,
+): DrawingExportTable {
+  const statusLabels = resolveStatusLabels(exportPayload);
+  const exportLabels = resolveExportLabels(exportPayload);
+
+  return {
+    key: "checklist",
+    title: exportLabels.checklistTitle || "Checklist completo",
+    sheetName: "Checklist",
+    columns: [
+      { key: "section", label: "Seção" },
+      { key: "item", label: "Item" },
+      { key: "status", label: "Status" },
+      { key: "observation", label: "Observação" },
+    ],
+    rows: items.map((item) => ({
+      section: String(item.section ?? "—"),
+      item: String(item.item ?? "—"),
+      status: statusLabels[String(item.status ?? "")] ?? String(item.status ?? "—"),
+      observation: String(item.recommendation ?? "—"),
+    })),
+  };
+}
+
 function resolveExportTables(
   exportPayload: DrawingAnalysisExportPayload,
   drawingAnalysis?: Record<string, unknown>,
 ): DrawingExportTable[] {
+  const items = (drawingAnalysis?.items as DrawingCheckItem[] | undefined) ?? [];
+
   if (exportPayload.tables?.length) {
-    return exportPayload.tables;
+    const tables = exportPayload.tables.map((table) => ({
+      ...table,
+      rows: table.rows.map((row) => ({ ...row })),
+    }));
+
+    if (items.length) {
+      const consistency = validateDrawingChecklistConsistency(exportPayload, drawingAnalysis);
+      const checklistIndex = tables.findIndex((table) => table.key === "checklist");
+
+      if (!consistency.ok && checklistIndex >= 0) {
+        tables[checklistIndex] = buildChecklistTableFromItems(items, exportPayload);
+      }
+    }
+
+    return tables;
   }
 
   const statusLabels = resolveStatusLabels(exportPayload);
@@ -94,26 +137,8 @@ function resolveExportTables(
     });
   }
 
-  const items = (drawingAnalysis?.items as DrawingCheckItem[] | undefined) ?? [];
-
   if (items.length) {
-    tables.push({
-      key: "checklist",
-      title: exportLabels.checklistTitle || "Checklist completo",
-      sheetName: "Checklist",
-      columns: [
-        { key: "section", label: "Seção" },
-        { key: "item", label: "Item" },
-        { key: "status", label: "Status" },
-        { key: "observation", label: "Observação" },
-      ],
-      rows: items.map((item) => ({
-        section: String(item.section ?? "—"),
-        item: String(item.item ?? "—"),
-        status: statusLabels[String(item.status ?? "")] ?? String(item.status ?? "—"),
-        observation: String(item.recommendation ?? "—"),
-      })),
-    });
+    tables.push(buildChecklistTableFromItems(items, exportPayload));
   }
 
   return tables;

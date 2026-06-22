@@ -11,20 +11,6 @@ from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _CONTENT = _REPO_ROOT / "app" / "content" / "pt-BR" / "assistant"
 
-# Regras cobertas por testes de serviço dedicados (fora drawing_validation_rule_regression_cases).
-_SERVICE_ONLY_RULES = frozenset(
-    {
-        "product_code_cross_check",
-        "guide_structure",
-        "multipage_coverage",
-        "intermediate_presence",
-        "intermediate_length",
-        "total_length",
-        "decapes_ed",
-        "dimension_note",
-    }
-)
-
 
 def _load_json(name: str) -> dict:
     path = _CONTENT / name
@@ -79,7 +65,7 @@ def _audit_rule_coverage(rules_bundle: dict) -> tuple[list[str], list[str]]:
         return [], []
 
     catalog_ids = {str(key) for key in catalog}
-    covered = rule_ids_with_cases() | _SERVICE_ONLY_RULES
+    covered = rule_ids_with_cases()
     missing = sorted(catalog_ids - covered)
     extra = sorted(covered - catalog_ids)
 
@@ -134,8 +120,7 @@ def audit(*, check: bool, check_rules: bool) -> int:
 
         if not rule_missing and not rule_extra:
             print(
-                f"OK: {len(rules_bundle.get('rules') or {})} regras com cobertura "
-                f"({len(_SERVICE_ONLY_RULES)} via testes de serviço)."
+                f"OK: {len(rules_bundle.get('rules') or {})} regras com caso de regressão."
             )
 
         if check and (rule_missing or rule_extra):
