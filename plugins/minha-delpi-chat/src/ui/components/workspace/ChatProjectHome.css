@@ -407,11 +407,13 @@
 }
 
 .mdc-chat-project-sources {
-  display: grid;
-  gap: var(--mdc-space-3);
   max-height: none;
   overflow: visible;
   padding-right: 0;
+}
+
+.mdc-chat-project-sources.mdc-workspace-sources-panel {
+  max-width: none;
 }
 
 .mdc-chat-project-sources__error {
@@ -419,97 +421,6 @@
   color: var(--mdc-danger);
   font-size: 0.84rem;
   line-height: 1.4;
-}
-
-.mdc-chat-project-source-list {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.45rem;
-  width: 100%;
-  min-width: 0;
-}
-
-@media (min-width: 40rem) {
-  .mdc-chat-project-source-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 64rem) {
-  .mdc-chat-project-source-list {
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  }
-}
-
-.mdc-chat-project-source-list .mdc-workspace-file-card--row {
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  border-radius: 0.65rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
-  padding: 0.45rem 0.65rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-}
-
-.mdc-chat-project-source-list .mdc-workspace-file-card--row:last-child {
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-}
-
-.mdc-chat-project-sources__note {
-  margin-top: 0.75rem;
-}
-
-.mdc-chat-project-sources__note summary {
-  cursor: pointer;
-  color: var(--mdc-text-muted);
-  font-size: 0.86rem;
-  font-weight: 700;
-  list-style: none;
-}
-
-.mdc-chat-project-sources__note summary::-webkit-details-marker {
-  display: none;
-}
-
-.mdc-chat-project-sources__ghost {
-  width: fit-content;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-text) 9%, transparent);
-  color: var(--mdc-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 750;
-  padding: 0.55rem 0.85rem;
-}
-
-.mdc-chat-project-source-note {
-  display: grid;
-  gap: 0.65rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
-  border-radius: 1rem;
-  padding: 1rem;
-}
-
-.mdc-chat-project-source-note input,
-.mdc-chat-project-source-note textarea {
-  width: 100%;
-  border: 1px solid var(--mdc-control-border);
-  border-radius: 0.8rem;
-  background: var(--mdc-control-bg);
-  color: var(--mdc-control-text);
-  font: inherit;
-  padding: 0.7rem 0.8rem;
-}
-
-.mdc-chat-project-source-note button {
-  width: fit-content;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-primary);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 820;
-  padding: 0.55rem 0.8rem;
 }
 
 .mdc-chat-project-settings {

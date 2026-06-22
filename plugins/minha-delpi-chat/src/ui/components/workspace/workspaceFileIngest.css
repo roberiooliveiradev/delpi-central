@@ -554,3 +554,100 @@
 .mdc-workspace-file-dropzone--compact .mdc-workspace-file-dropzone__action {
   display: none;
 }
+
+/* ——— Painel + lista responsiva de fontes (projeto, agente) ——— */
+
+.mdc-workspace-sources-panel {
+  display: grid;
+  gap: var(--mdc-space-3);
+  width: 100%;
+  min-width: 0;
+  max-width: var(--mdc-workspace-sources-max-width, var(--mdc-chat-column-max));
+}
+
+.mdc-workspace-sources-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.mdc-workspace-sources-panel__note {
+  margin-top: 0.15rem;
+}
+
+.mdc-workspace-source-note {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.mdc-workspace-source-note input,
+.mdc-workspace-source-note textarea {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 76%, transparent);
+  border-radius: 0.8rem;
+  background: var(--mdc-input-bg, var(--mdc-control-bg));
+  color: var(--mdc-text);
+  font: inherit;
+  padding: 0.7rem 0.8rem;
+}
+
+.mdc-workspace-file-source-list__item {
+  min-width: 0;
+}
+
+.mdc-workspace-file-source-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 40rem) {
+  .mdc-workspace-file-source-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .mdc-workspace-file-source-list {
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  }
+}
+
+.mdc-workspace-file-source-list .mdc-workspace-file-card--row {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+}
+
+.mdc-workspace-file-source-list .mdc-workspace-file-card--row:last-child {
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+}
+
+@media (max-width: 767px) {
+  .mdc-workspace-file-dropzone {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    text-align: center;
+    gap: 0.55rem;
+    padding: 0.85rem;
+  }
+
+  .mdc-workspace-file-dropzone__icon {
+    justify-self: center;
+  }
+
+  .mdc-workspace-file-dropzone__action {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -82,6 +82,10 @@ import {
   AgentBuilderSwitch,
   AgentKnowledgeSourcesPanel,
 } from "../components/workspace/agentBuilder";
+import {
+  WorkspaceSourceNoteDetails,
+  WorkspaceSourceNoteForm,
+} from "../components/workspace/WorkspaceSourceNote";
 import { AgentMiniDashboard } from "../components/admin/agents/AgentMiniDashboard";
 import "../components/admin/agents/AgentMiniDashboard.css";
 
@@ -1780,63 +1784,47 @@ export function ChatAgentBuilderPage({
             <h2 className="mdc-chat-ws-section-head">Conhecimento</h2>
 
             {agent ? (
-              <>
-                {onOpenRagAdmin ? (
-                  <button
-                    type="button"
-                    className="mdc-chat-ws-outline-btn"
-                    onClick={() => onOpenRagAdmin(agent.id)}
-                  >
-                    Especialização RAG (admin)
-                  </button>
-                ) : null}
-
-                <AgentKnowledgeSourcesPanel
-                  sources={agentSources}
-                  isUploading={isSavingSource}
-                  uploadPercent={sourceUploadPercent}
-                  notice={sourceNotice}
-                  getAccessToken={getAccessToken}
-                  onUploadFiles={uploadAgentKnowledgeFiles}
-                  onLocalDuplicatesSkipped={(count) =>
-                    setSourceNotice(
-                      count === 1
-                        ? "Este arquivo já está neste agente (mesmo conteúdo)."
-                        : `${count} arquivo(s) ignorado(s): conteúdo já existente.`,
-                    )
-                  }
-                  onRemoveSource={removeAgentSource}
-                  onDownloadSource={downloadAgentSource}
-                  noteSlot={
-                    <details className="mdc-chat-ws-details">
-                      <summary>Adicionar nota de texto</summary>
-                      <div className="mdc-chat-ws-details-body">
-                        <div className="mdc-chat-agent-builder__source-note">
-                          <input
-                            value={sourceTitle}
-                            onChange={(event) => setSourceTitle(event.target.value)}
-                            placeholder="Título da nota"
-                          />
-                          <textarea
-                            value={sourceContent}
-                            onChange={(event) => setSourceContent(event.target.value)}
-                            rows={4}
-                            placeholder="Cole contexto, políticas ou conhecimento do agente..."
-                          />
-                          <button
-                            type="button"
-                            className="mdc-chat-ws-outline-btn"
-                            disabled={isSavingSource || !sourceContent.trim()}
-                            onClick={() => void createAgentKnowledgeNote()}
-                          >
-                            Adicionar nota
-                          </button>
-                        </div>
-                      </div>
-                    </details>
-                  }
-                />
-              </>
+              <AgentKnowledgeSourcesPanel
+                sources={agentSources}
+                isUploading={isSavingSource}
+                uploadPercent={sourceUploadPercent}
+                notice={sourceNotice}
+                getAccessToken={getAccessToken}
+                onUploadFiles={uploadAgentKnowledgeFiles}
+                onLocalDuplicatesSkipped={(count) =>
+                  setSourceNotice(
+                    count === 1
+                      ? "Este arquivo já está neste agente (mesmo conteúdo)."
+                      : `${count} arquivo(s) ignorado(s): conteúdo já existente.`,
+                  )
+                }
+                onRemoveSource={removeAgentSource}
+                onDownloadSource={downloadAgentSource}
+                headerSlot={
+                  onOpenRagAdmin ? (
+                    <button
+                      type="button"
+                      className="mdc-chat-ws-outline-btn"
+                      onClick={() => onOpenRagAdmin(agent.id)}
+                    >
+                      Especialização RAG (admin)
+                    </button>
+                  ) : null
+                }
+                noteSlot={
+                  <WorkspaceSourceNoteDetails>
+                    <WorkspaceSourceNoteForm
+                      title={sourceTitle}
+                      content={sourceContent}
+                      onTitleChange={setSourceTitle}
+                      onContentChange={setSourceContent}
+                      onSubmit={() => void createAgentKnowledgeNote()}
+                      disabled={isSavingSource}
+                      contentPlaceholder="Cole contexto, políticas ou conhecimento do agente..."
+                    />
+                  </WorkspaceSourceNoteDetails>
+                }
+              />
             ) : (
               <p className="mdc-chat-ws-empty">Salve o agente para adicionar arquivos e notas.</p>
             )}

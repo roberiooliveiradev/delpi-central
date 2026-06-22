@@ -15,6 +15,8 @@ import {
 import { IngestProgressIndicator } from "../../shared/IngestProgressIndicator";
 import { WorkspaceFileCard } from "../WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "../WorkspaceFileDropzone";
+import { WorkspaceFileSourceList, WorkspaceFileSourceListItem } from "../WorkspaceFileSourceList";
+import { WorkspaceSourcesPanel } from "../WorkspaceSourcesPanel";
 
 import "./AgentKnowledgeSourcesPanel.css";
 import "../workspaceFileIngest.css";
@@ -30,6 +32,7 @@ type AgentKnowledgeSourcesPanelProps = {
   onDownloadSource?: (sourceId: string) => Promise<void>;
   onLocalDuplicatesSkipped?: (count: number) => void;
   noteSlot?: ReactNode;
+  headerSlot?: ReactNode;
 };
 
 function formatFileSize(bytes: number | null | undefined): string {
@@ -69,6 +72,7 @@ export function AgentKnowledgeSourcesPanel({
   onDownloadSource,
   onLocalDuplicatesSkipped,
   noteSlot,
+  headerSlot,
 }: AgentKnowledgeSourcesPanelProps) {
   const ingestLabels = workspaceFileAgentIngestLabels();
   const { openPreview, previewModal } = useWorkspaceFilePreviewModal({ getAccessToken });
@@ -141,7 +145,7 @@ export function AgentKnowledgeSourcesPanel({
   );
 
   return (
-    <div className="mdc-agent-knowledge">
+    <WorkspaceSourcesPanel className="mdc-agent-knowledge" headerSlot={headerSlot}>
       <WorkspaceFileDropzone
         multiple
         disabled={isUploading}
@@ -168,14 +172,14 @@ export function AgentKnowledgeSourcesPanel({
       ) : null}
 
       {sources.length > 0 ? (
-        <ul className="mdc-agent-knowledge__cards" aria-label={ingestLabels.listAriaLabel}>
+        <WorkspaceFileSourceList ariaLabel={ingestLabels.listAriaLabel}>
           {sources.map((source) => {
             const label = getSourceLabel(source);
             const isDuplicateMarked = source.duplicate === true;
             const indexStatus = workspaceFileSourceIndexPresentation(source);
 
             return (
-              <li key={source.id}>
+              <WorkspaceFileSourceListItem key={source.id}>
                 <WorkspaceFileCard
                   variant="row"
                   filename={label}
@@ -205,17 +209,17 @@ export function AgentKnowledgeSourcesPanel({
                     void onRemoveSource(source.id);
                   }}
                 />
-              </li>
+              </WorkspaceFileSourceListItem>
             );
           })}
-        </ul>
+        </WorkspaceFileSourceList>
       ) : (
         <p className="mdc-chat-ws-empty">{ingestLabels.emptyState}</p>
       )}
 
-      {noteSlot ? <div className="mdc-agent-knowledge__note">{noteSlot}</div> : null}
+      {noteSlot}
 
       {previewModal}
-    </div>
+    </WorkspaceSourcesPanel>
   );
 }

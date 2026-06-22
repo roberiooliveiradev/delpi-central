@@ -35,6 +35,12 @@ import {
 import { IngestProgressIndicator } from "../shared/IngestProgressIndicator";
 import { WorkspaceFileCard } from "./WorkspaceFileCard";
 import { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
+import { WorkspaceFileSourceList, WorkspaceFileSourceListItem } from "./WorkspaceFileSourceList";
+import { WorkspaceSourcesPanel } from "./WorkspaceSourcesPanel";
+import {
+  WorkspaceSourceNoteDetails,
+  WorkspaceSourceNoteForm,
+} from "./WorkspaceSourceNote";
 
 import "./ChatProjectHome.css";
 import "./workspaceFileIngest.css";
@@ -512,7 +518,7 @@ export function ChatProjectHome({
             </div>
           </div>
         ) : (
-          <div className="mdc-chat-project-sources" role="tabpanel">
+          <WorkspaceSourcesPanel className="mdc-chat-project-sources" role="tabpanel">
             <WorkspaceFileDropzone
               disabled={isSavingSource}
               isBusy={isSavingSource}
@@ -542,10 +548,7 @@ export function ChatProjectHome({
             {isLoadingSources ? (
               <p className="mdc-chat-project-home__empty">{projectIngestLabels.loadingSources}</p>
             ) : sources.length > 0 ? (
-              <div
-                className="mdc-chat-project-source-list"
-                aria-label={projectIngestLabels.listAriaLabel}
-              >
+              <WorkspaceFileSourceList ariaLabel={projectIngestLabels.listAriaLabel}>
                 {sources.map((source) => {
                   const sourceDate = formatSourceDate(source.updated_at || source.created_at);
                   const label = source.original_filename || source.title || "Arquivo";
@@ -555,10 +558,10 @@ export function ChatProjectHome({
                     typeof sizeBytes === "number" ? formatAttachmentSize(sizeBytes) : undefined;
 
                   return (
-                    <WorkspaceFileCard
-                      key={source.id}
-                      variant="row"
-                      filename={label}
+                    <WorkspaceFileSourceListItem key={source.id}>
+                      <WorkspaceFileCard
+                        variant="row"
+                        filename={label}
                       iconTone={workspaceFileIconToneForAttachment(
                         label,
                         "file",
@@ -585,38 +588,26 @@ export function ChatProjectHome({
                         void onDeleteSource?.(source.id);
                       }}
                     />
+                    </WorkspaceFileSourceListItem>
                   );
                 })}
-              </div>
+              </WorkspaceFileSourceList>
             ) : (
               <p className="mdc-chat-project-home__empty">{projectIngestLabels.emptyState}</p>
             )}
 
-            <details className="mdc-chat-project-sources__note">
-              <summary>Adicionar nota de texto</summary>
-              <div className="mdc-chat-project-source-note">
-                <input
-                  value={sourceTitle}
-                  onChange={(event) => setSourceTitle(event.target.value)}
-                  placeholder="Título da nota"
-                />
-                <textarea
-                  value={sourceContent}
-                  onChange={(event) => setSourceContent(event.target.value)}
-                  placeholder="Cole aqui regras, contexto ou conhecimento do projeto..."
-                  rows={4}
-                />
-                <button
-                  type="button"
-                  className="mdc-chat-project-sources__ghost"
-                  disabled={isSavingSource || !sourceContent.trim()}
-                  onClick={() => void createTextSource()}
-                >
-                  Adicionar nota
-                </button>
-              </div>
-            </details>
-          </div>
+            <WorkspaceSourceNoteDetails>
+              <WorkspaceSourceNoteForm
+                title={sourceTitle}
+                content={sourceContent}
+                onTitleChange={setSourceTitle}
+                onContentChange={setSourceContent}
+                onSubmit={() => void createTextSource()}
+                disabled={isSavingSource}
+                contentPlaceholder="Cole aqui regras, contexto ou conhecimento do projeto..."
+              />
+            </WorkspaceSourceNoteDetails>
+          </WorkspaceSourcesPanel>
         )}
         </ChatAnimatedPanel>
       </div>

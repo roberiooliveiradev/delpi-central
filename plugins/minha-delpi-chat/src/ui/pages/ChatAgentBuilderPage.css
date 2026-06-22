@@ -538,7 +538,6 @@
 }
 
 .mdc-chat-agent-builder__action-list,
-.mdc-chat-agent-builder__source-list,
 .mdc-chat-agent-builder__share-list {
   display: grid;
   gap: 0.35rem;
@@ -617,7 +616,6 @@
   color: var(--mdc-danger) !important;
 }
 
-.mdc-chat-agent-builder__source-list article,
 .mdc-chat-agent-builder__transfer {
   display: grid;
   gap: 0.75rem;
@@ -658,8 +656,6 @@
 
 .mdc-chat-agent-builder__action-list strong,
 .mdc-chat-agent-builder__action-list small,
-.mdc-chat-agent-builder__source-list strong,
-.mdc-chat-agent-builder__source-list small,
 .mdc-chat-agent-builder__share-list strong,
 .mdc-chat-agent-builder__share-list small {
   display: block;
@@ -669,42 +665,8 @@
 }
 
 .mdc-chat-agent-builder__action-list small,
-.mdc-chat-agent-builder__source-list small,
 .mdc-chat-agent-builder__share-list small {
   color: var(--mdc-text-muted);
-}
-
-.mdc-chat-agent-builder__source-upload {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: fit-content;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
-  color: var(--mdc-primary);
-  cursor: pointer;
-  font-weight: 820;
-  padding: 0.62rem 0.9rem;
-}
-
-.mdc-chat-agent-builder__source-upload input {
-  display: none;
-}
-
-.mdc-chat-agent-builder__source-note {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.mdc-chat-agent-builder__source-note input,
-.mdc-chat-agent-builder__source-note textarea {
-  width: 100%;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 76%, transparent);
-  border-radius: 0.8rem;
-  background: var(--mdc-input-bg);
-  color: var(--mdc-text);
-  font: inherit;
-  padding: 0.7rem 0.8rem;
 }
 
 
@@ -1009,9 +971,9 @@
 .mdc-chat-agent-builder__panel {
   display: grid;
   gap: 1.35rem;
-  width: 100%;
-  max-width: none;
-  margin: 0;
+  width: min(100%, var(--mdc-chat-column-max));
+  max-width: var(--mdc-chat-column-max);
+  margin-inline: auto;
   padding: clamp(1.25rem, 3vh, 2rem) clamp(1rem, 2.5vw, 1.75rem) 2.5rem;
 }
 
@@ -1110,10 +1072,6 @@
 .mdc-chat-agent-builder__actions-summary article > button {
   border-color: color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
   background: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
-}
-
-.mdc-chat-agent-builder__source-list article {
-  border-bottom-color: color-mix(in srgb, var(--mdc-card-border) 38%, transparent);
 }
 
 .mdc-chat-agent-builder__preview {
@@ -1380,6 +1338,10 @@
   display: grid;
   gap: 0.75rem;
   min-width: 0;
+}
+
+.mdc-chat-agent-builder__panel .mdc-workspace-sources-panel {
+  max-width: none;
 }
 
 .mdc-chat-agent-builder__icebreakers-section {

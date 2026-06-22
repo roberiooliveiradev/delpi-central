@@ -1,5 +1,11 @@
 export { WorkspaceFileCard } from "./WorkspaceFileCard";
 export { WorkspaceFileDropzone } from "./WorkspaceFileDropzone";
+export { WorkspaceFileSourceList, WorkspaceFileSourceListItem } from "./WorkspaceFileSourceList";
+export { WorkspaceSourcesPanel } from "./WorkspaceSourcesPanel";
+export {
+  WorkspaceSourceNoteDetails,
+  WorkspaceSourceNoteForm,
+} from "./WorkspaceSourceNote";
 export { ChatProjectHome } from "./ChatProjectHome";
 export { ChatProjectCard } from "./ChatProjectCard";
 export { ChatProjectCreateModal } from "./ChatProjectCreateModal";
