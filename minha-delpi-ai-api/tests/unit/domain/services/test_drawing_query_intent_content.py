@@ -33,3 +33,13 @@ def test_llm_fallback_policy_loaded_from_json():
 
     assert "Relatório de Análise de Desenho DELPI" in addon
     assert "Não invente" in addon or "nao invente" in addon.lower()
+
+
+def test_follow_up_render_only_policy_configured():
+    policy_file = ChatAssistantContentService.get(
+        "drawing_query_intent",
+        "followUpRenderOnly",
+        "policyFile",
+    )
+
+    assert policy_file == "drawing-analysis-render-only.md"

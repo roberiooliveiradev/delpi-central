@@ -92,7 +92,7 @@ O **chat comum** não conhece BOM, QTD, SG1010, decape, intermediário 50xx nem 
 
 Contrato neutro: `documentVision.tables[]`. Contrato skill: `bomRows`, `drawingAnalysis`, `validationScopes`. Playbook: [15.8 § 0](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md).
 
-**Render-only (Fase A — jun/2026):** quando `drawingAnalysis` / `drawingAnalysisExport` estão no tool context, o checklist já foi decidido pelo pipeline (`ChatDrawingValidationOrchestrationService`). O LLM recebe `drawing-analysis-render-only.md` via `PromptPolicyService` e **não reclassifica** `items[]` — só narrativa, plano de ação e normas (RAG). A skill `drawing-analysis-delpi-skill.md` ficou fina (ativação + consumo do contrato). Playbook: [desacoplamento skill](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md) Fase A.
+**Render-only (Fase A — jun/2026):** quando `drawingAnalysis` / `drawingAnalysisExport` estão no tool context, o checklist já foi decidido pelo pipeline (`ChatDrawingValidationOrchestrationService`). O LLM recebe `drawing-analysis-render-only.md` via `PromptPolicyService` e **não reclassifica** `items[]` — só narrativa, plano de ação e normas (RAG). Follow-ups sem novo PDF reidratam o último `drawingAnalysis` com `ChatDrawingLlmPresentationService`. Playbook: [desacoplamento skill](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md) Fase A ✅.
 
 Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) são **consumidos só pelo fluxo de desenho** — não expandir semântica DELPI para turn prep genérico, intent `attachment_document` ou prompt global.
 
@@ -133,6 +133,7 @@ Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) sã
 | `ChatDrawingLibraryService` | Busca PDF na biblioteca api-delpi (`GET /products/{code}/drawing/pdf`) quando análise de desenho sem anexo e com código explícito; cache em `drawing-library-cache` |
 | `ChatDrawingProductCodeResolutionService.resolve_explicit_codes_without_attachment` | Sem anexo: códigos só da mensagem ou `userContextItems` — sem herança do histórico |
 | `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |
+| `ChatDrawingLlmPresentationService` | Hidratação de `drawingAnalysis` em follow-ups + policy render-only para LLM (Fase A desacoplamento) |
 | `ChatDocumentVisionBomService` | **Skill (legado)** — heurística linha → `bomRows`; substituir por interpretação colunar 15.8 |
 | **`ChatDrawingBomTableInterpretationService`** | Mapeia `tables[]` → `bomRows`; inferência colunar (15.8) |
 | **`ChatDrawingBomVisionRefinementService`** | Loop refinamento; `TableCellRefinementPort`; merge idempotente (15.8) |

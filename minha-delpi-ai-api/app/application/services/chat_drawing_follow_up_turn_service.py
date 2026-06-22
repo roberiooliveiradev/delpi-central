@@ -6,6 +6,9 @@ import re
 from typing import Any
 
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+from app.domain.services.chat_drawing_llm_presentation_service import (
+    ChatDrawingLlmPresentationService,
+)
 from app.domain.services.chat_drawing_validation_orchestration_service import (
     ChatDrawingValidationOrchestrationService,
 )
@@ -35,7 +38,9 @@ class ChatDrawingFollowUpTurnService:
         if cls._wants_bom_reextract(message):
             return None
 
-        analysis = cls._last_drawing_analysis(previous_messages)
+        analysis = ChatDrawingLlmPresentationService.last_analysis_from_messages(
+            previous_messages
+        )
 
         if not analysis:
             return None
@@ -73,24 +78,9 @@ class ChatDrawingFollowUpTurnService:
 
     @classmethod
     def _last_drawing_analysis(cls, previous_messages: list | None) -> dict[str, Any] | None:
-        for item in reversed(previous_messages or []):
-            if not isinstance(item, dict):
-                continue
-
-            if str(item.get("role") or "").strip().lower() != "assistant":
-                continue
-
-            metadata = item.get("metadata")
-
-            if not isinstance(metadata, dict):
-                continue
-
-            drawing = metadata.get("drawingAnalysis")
-
-            if isinstance(drawing, dict) and drawing.get("items"):
-                return drawing
-
-        return None
+        return ChatDrawingLlmPresentationService.last_analysis_from_messages(
+            previous_messages
+        )
 
     @classmethod
     def _wants_reanalysis(cls, message: str) -> bool:

@@ -171,5 +171,8 @@
   "llmFallback": {
     "policyFile": "drawing-report-llm-fallback.md",
     "title": "Relatório de Análise de Desenho DELPI"
+  },
+  "followUpRenderOnly": {
+    "policyFile": "drawing-analysis-render-only.md"
   }
 }

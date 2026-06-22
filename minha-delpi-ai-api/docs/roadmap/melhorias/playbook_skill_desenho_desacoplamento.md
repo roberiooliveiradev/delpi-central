@@ -154,7 +154,7 @@ Formalizar ligação `rule_id` → serviço → `templateKey` em `ChatDrawingVal
 
 | Fase | Escopo | Entregáveis | Esforço |
 |------|--------|-------------|---------|
-| **A — Contrato skill × pipeline** | Policy enxuta; LLM render-only | `drawing-analysis-delpi-skill.md` ≤ 40 linhas técnicas; instrução em turn prep para ecoar `items[]`; doc em `chat-intelligence-base.md` | 1–2 d | **Em andamento (jun/2026)** — policy fina + `drawing-analysis-render-only.md` no `PromptPolicyService` |
+| **A — Contrato skill × pipeline** | Policy enxuta; LLM render-only | `drawing-analysis-delpi-skill.md` ≤ 40 linhas técnicas; instrução em turn prep para ecoar `items[]`; doc em `chat-intelligence-base.md` | 1–2 d | **Concluída (jun/2026)** — `ChatDrawingLlmPresentationService` + policies |
 | **B — Registry completo** | Todas as regras em `drawing_validation_rules.json` | Famílias PA ligam/desligam regras; orchestrator consulta registry antes de montar items | 2–3 d |
 | **C — Testes por regra** | Migrar âncoras de produto para categorias | Casos em `drawing_hierarchical_regression_cases.py`; baseline `drawing_assertiveness_baseline.json`; smoke por regra, não por SKU | contínuo |
 | **D — RAG enxuto** | Normas sem duplicar checklist | Docs GPT = contexto normativo; status só via pipeline | 1 d |
@@ -246,9 +246,9 @@ DRAWING_VALIDATE_CODES=90262008,90264243,90264227 \
 
 ## 7. Critérios de aceite
 
-- [ ] Policy `drawing-analysis-delpi-skill.md` sem thresholds nem classificação técnica duplicada
+- [x] Policy `drawing-analysis-delpi-skill.md` sem thresholds nem classificação técnica duplicada
 - [x] Policy render-only injetada quando tool context contém `drawingAnalysis` (`drawing-analysis-render-only.md`)
-- [ ] Turn prep instrui LLM a **não** reclassificar `drawingAnalysis.items` (follow-ups sem export)
+- [x] Turn prep hidrata `drawingAnalysis` em follow-ups e injeta policy render-only (`ChatDrawingLlmPresentationService`)
 - [ ] `drawing_validation_rules.json` cobre todas as regras ativas do orchestrator
 - [ ] Família PA desliga regra sem alterar skill nem agente
 - [ ] Novos fixes entram como caso de **regra** + teste de serviço (não só `test_*_90xxxxxx.py`)

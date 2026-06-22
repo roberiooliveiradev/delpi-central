@@ -82,6 +82,26 @@ class ChatTurnLlmAssemblyService:
             attachment_ids=attachment_ids,
         )
 
+        from app.domain.services.chat_drawing_llm_presentation_service import (
+            ChatDrawingLlmPresentationService,
+        )
+
+        tool_context = ChatDrawingLlmPresentationService.hydrate_tool_context(
+            tool_context if isinstance(tool_context, dict) else {},
+            message=message,
+            attachment_ids=attachment_ids,
+            previous_messages=previous_messages,
+        )
+
+        if isinstance(tool_context, dict):
+            tool_context = {
+                **tool_context,
+                "context": ChatDrawingLlmPresentationService.enrich_context_string(
+                    str(tool_context.get("context") or ""),
+                    tool_context,
+                ),
+            }
+
         report_direct = ChatDrawingTurnEnrichmentService.resolve_report_direct_answer(
             tool_context
         )
@@ -199,9 +219,17 @@ class ChatTurnLlmAssemblyService:
                 ChatDrawingIntentService,
             )
 
-            drawing_policy_addon = ChatDrawingIntentService.build_llm_fallback_policy_addon(
-                message,
-                attachment_ids=attachment_ids,
+            drawing_policy_addon = (
+                ChatDrawingLlmPresentationService.build_llm_policy_addon(
+                    message=message,
+                    attachment_ids=attachment_ids,
+                    tool_context=tool_context if isinstance(tool_context, dict) else None,
+                    previous_messages=previous_messages,
+                )
+                or ChatDrawingIntentService.build_llm_fallback_policy_addon(
+                    message,
+                    attachment_ids=attachment_ids,
+                )
             )
             merged_admin_guidelines = admin_guidelines_prompt
 
