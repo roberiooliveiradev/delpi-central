@@ -16,6 +16,7 @@
   "settings": {
     "requireResponseModesForLlmProse": true,
     "llmProseEverywhere": true,
+    "preserveDirectAnswerStages": ["small_talk", "utility_direct"],
     "deprecateHumanizedLinhasAsProse": true,
     "allowTemplateProseFallback": false,
     "llmSynthesisAnswerFallbackMinChars": 32

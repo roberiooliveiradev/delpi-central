@@ -131,6 +131,22 @@ def test_post_tool_capabilities_question_routes_to_llm_not_direct_answer():
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
 
 
+def test_post_tool_small_talk_keeps_direct_answer_with_llm_prose_everywhere():
+    greeting = "Bom dia! Como posso ajudar?"
+    result = _resolve_post_tool(
+        message="bom dia",
+        pipeline_stages=["small_talk"],
+        tool_context={},
+        tool_calls=[],
+        small_talk_direct=greeting,
+        response_mode="normal",
+    )
+
+    assert result.direct_answer == greeting
+    assert result.skip_rag is True
+    assert result.tool_context.get("responseModeEffect") == "simple_direct"
+
+
 def test_post_tool_overview_fast_uses_commentary_direct_when_decoupled():
     result = _resolve_post_tool(
         response_mode="fast",

@@ -40,6 +40,17 @@ class ChatPresentationProseDeliveryContentService:
         return bool(settings.get("llmProseEverywhere"))
 
     @classmethod
+    def preserve_direct_answer_stages(cls) -> frozenset[str]:
+        settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")
+
+        if not isinstance(settings, dict):
+            return frozenset()
+
+        stages = settings.get("preserveDirectAnswerStages") or []
+
+        return frozenset(str(item).strip() for item in stages if str(item).strip())
+
+    @classmethod
     def deprecate_humanized_linhas_as_prose(cls) -> bool:
         settings = ChatAssistantContentService.get_node(_BUNDLE, "settings")
 

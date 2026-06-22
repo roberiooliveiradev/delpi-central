@@ -108,7 +108,7 @@
     "rule": "REGRA: quando o usuário perguntar sobre si mesmo (quem sou, meus papéis, permissões de um papel, apps, funcionalidades, meu perfil, sobre mim, etc.), responda com os dados abaixo. Para um papel específico, use permissões e apps daquele papel — não misture com outros papéis."
   },
   "llmSynthesis": {
-    "userMessageLead": "Responda à pergunta em linguagem natural, citando os dados reais do perfil abaixo. Nunca use placeholders como [nome] ou [email] e não fale sobre quem é o assistente — o foco é o usuário autenticado.",
+    "userMessageLead": "Responda à pergunta em linguagem natural, citando os dados reais do perfil abaixo sobre o USUÁRIO AUTENTICADO (não sobre você, o assistente). Nunca use placeholders como [nome] ou [email]; inclua nome e e-mail quando estiverem no bloco.",
     "userMessageQuestionPrefix": "Pergunta:"
   }
 }

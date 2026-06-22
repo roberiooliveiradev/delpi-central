@@ -337,6 +337,8 @@ Playbook de inteligência (seções 4-8, 11, 28). Corrige a experiência artific
 
 O gate **não altera a resposta** — apenas classifica e controla a visibilidade das etapas; no pior caso, um turno simples mostra brevemente uma etapa técnica, nunca uma resposta errada.
 
+Com `llmProseEverywhere: true`, estágios em `presentation_prose_delivery.json` → `preserveDirectAnswerStages` (`small_talk`, `utility_direct`) **mantêm** a resposta direta canônica — `ChatResponseModeService.apply_turn_direct_answer_policy` retorna `simple_direct` sem chamar o LLM.
+
 Conteúdo: `assistant/unclear_requests.json`. Testes: `test_chat_simple_turn_gate_service.py`, `test_chat_unclear_request_service.py`, casos `SIMPLE_TURN_GATE_CASES` / `UNCLEAR_REQUEST_CASES` em `chat_intelligence_regression_cases.py`.
 
 ### Preferências de sessão e métricas de eficiência (jun/2026)

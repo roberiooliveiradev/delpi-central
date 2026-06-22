@@ -97,10 +97,18 @@ class ChatResponseModeService:
         skip_rag: bool,
         tool_calls: list | None,
         tool_context: dict | None = None,
+        pipeline_stages: list[str] | None = None,
     ) -> tuple[str | None, bool, str | None]:
         """Gate final: prosa narrativa via ChatPresentationProseDeliveryService (playbook-18)."""
         if not cls.is_enabled():
             return direct_answer, skip_rag, None
+
+        from app.domain.services.chat_presentation_prose_delivery_content_service import (
+            ChatPresentationProseDeliveryContentService,
+        )
+
+        if direct_answer and cls._should_preserve_direct_answer(pipeline_stages):
+            return direct_answer, skip_rag, "simple_direct"
 
         from app.domain.services.chat_presentation_prose_delivery_service import (
             ChatPresentationProseDeliveryService,
@@ -164,6 +172,22 @@ class ChatResponseModeService:
             return direct_answer, skip_rag, "operational_direct"
 
         return direct_answer, skip_rag, "llm_synthesis"
+
+    @classmethod
+    def _should_preserve_direct_answer(cls, pipeline_stages: list[str] | None) -> bool:
+        from app.domain.services.chat_presentation_prose_delivery_content_service import (
+            ChatPresentationProseDeliveryContentService,
+        )
+
+        if not isinstance(pipeline_stages, list):
+            return False
+
+        preserve = ChatPresentationProseDeliveryContentService.preserve_direct_answer_stages()
+
+        if not preserve:
+            return False
+
+        return any(str(stage).strip() in preserve for stage in pipeline_stages)
 
     @classmethod
     def pipeline_effect_notice(cls, effect: str | None) -> str:

@@ -489,6 +489,7 @@ class ChatTurnPreparationPostToolResolutionService:
                 skip_rag=skip_rag,
                 tool_calls=tool_calls,
                 tool_context=tool_context,
+                pipeline_stages=pipeline_stages,
             )
         )
 

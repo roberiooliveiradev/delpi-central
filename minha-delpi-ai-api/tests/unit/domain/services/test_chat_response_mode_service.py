@@ -36,7 +36,34 @@ def test_list_modes_when_enabled(monkeypatch):
     assert {item["id"] for item in modes} == {"fast", "normal", "thinker"}
 
 
-def test_apply_turn_direct_answer_policy_overview_fast_forces_brief_llm():
+def test_apply_turn_direct_answer_policy_preserves_small_talk_direct():
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="bom dia",
+        response_mode="normal",
+        direct_answer="Bom dia! Como posso ajudar?",
+        skip_rag=True,
+        tool_calls=[],
+        pipeline_stages=["small_talk"],
+    )
+
+    assert direct == "Bom dia! Como posso ajudar?"
+    assert skip_rag is True
+    assert effect == "simple_direct"
+
+
+def test_apply_turn_direct_answer_policy_preserves_utility_direct():
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="que horas são?",
+        response_mode="normal",
+        direct_answer="São 14:30 no horário de Brasília.",
+        skip_rag=True,
+        tool_calls=[],
+        pipeline_stages=["utility_direct"],
+    )
+
+    assert direct == "São 14:30 no horário de Brasília."
+    assert effect == "simple_direct"
+
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
         message="me fale do produto 10080045",
         response_mode="fast",

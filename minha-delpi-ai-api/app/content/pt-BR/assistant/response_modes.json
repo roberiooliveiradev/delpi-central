@@ -37,7 +37,8 @@
   "pipelineEffects": {
     "llm_synthesis": "Texto gerado pelo modelo com base nos dados consultados.",
     "llm_synthesis_brief": "Síntese curta gerada pelo modelo — tabelas e gráficos permanecem no painel.",
-    "operational_direct": "Resposta direta dos dados — consultas factuais estreitas (filial, quantidade exata) não passam pelo modelo."
+    "operational_direct": "Resposta direta dos dados — consultas factuais estreitas (filial, quantidade exata) não passam pelo modelo.",
+    "simple_direct": "Resposta direta do catálogo — sem síntese LLM (saudação, hora/data, utilitários)."
   },
   "fastCommentaryDirect": {
     "enabled": true,
