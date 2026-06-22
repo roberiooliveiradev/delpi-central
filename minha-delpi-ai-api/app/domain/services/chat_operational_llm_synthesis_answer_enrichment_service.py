@@ -56,6 +56,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             body = cls._strip_markdown_tables(body)
 
         body = cls._dedupe_repeated_paragraphs(body)
+        body = cls._dedupe_repeated_sentences(body)
         body = cls._strip_sparse_list_items(body)
         body = cls._strip_contradictory_claims(body, tool_calls)
         body = cls._strip_hallucination_markers(body)
@@ -69,6 +70,33 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
 
         return body.strip()
 
+    @classmethod
+    def _strip_sparse_list_items(cls, answer: str) -> str:
+        lines = str(answer or "").splitlines()
+        kept: list[str] = []
+
+        for line in lines:
+            stripped = line.strip()
+
+            if not stripped:
+                kept.append(line)
+                continue
+
+            if cls._EMPTY_NUMBERED_ITEM_RE.match(stripped):
+                continue
+
+            if cls._SPARSE_NUMBERED_RUN_RE.match(stripped):
+                continue
+
+            if re.match(r"^\d+\.\s+\d+\.", stripped):
+                continue
+
+            kept.append(line)
+
+        collapsed = "\n".join(kept)
+        collapsed = re.sub(r"\n{3,}", "\n\n", collapsed)
+
+        return collapsed.strip()
 
     @classmethod
     def _trim_brief_prose(cls, answer: str) -> str:
@@ -460,6 +488,31 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             kept.append(paragraph)
 
         return "\n\n".join(kept).strip()
+
+    @classmethod
+    def _dedupe_repeated_sentences(cls, answer: str) -> str:
+        sentences = cls._SENTENCE_SPLIT_RE.split(answer.strip())
+        kept: list[str] = []
+        seen: set[str] = set()
+
+        for sentence in sentences:
+            text = str(sentence or "").strip()
+
+            if not text:
+                continue
+
+            key = ChatMessageNormalizationService.normalize_for_matching(text)[:160]
+
+            if len(key) > 48 and key in seen:
+                continue
+
+            seen.add(key)
+            kept.append(text)
+
+        if not kept:
+            return answer
+
+        return " ".join(kept).strip()
 
     @classmethod
     def _metadata_indicates_empty_sections(cls, tool_calls: list | None) -> bool:

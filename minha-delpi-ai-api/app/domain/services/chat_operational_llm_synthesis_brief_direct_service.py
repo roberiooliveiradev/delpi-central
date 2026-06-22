@@ -18,26 +18,43 @@ _COMMENTARY_BRIEF_FLAG = "commentaryBriefDirect"
 
 class ChatOperationalLlmSynthesisBriefDirectService:
     @classmethod
+    def _commentary_depth(cls, response_mode: str | None) -> str:
+        normalized = ChatResponseModeService.normalize(response_mode)
+
+        if normalized == "fast":
+            return "brief"
+
+        if normalized == "thinker":
+            return "expanded"
+
+        return "standard"
+
+    @classmethod
     def build_commentary_lead(
         cls,
         message: str | None,
         tool_calls: list | None,
         *,
-        compact: bool,
+        response_mode: str | None = None,
+        compact: bool | None = None,
     ) -> str | None:
         if not cls._qualifies(tool_calls):
             return None
 
+        depth = cls._commentary_depth(response_mode)
+        use_compact = compact if compact is not None else depth == "brief"
+
         body = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
             "",
             tool_calls,
-            compact=compact,
+            compact=use_compact,
+            commentary_depth=depth,
         ).strip()
 
         if not body:
             return None
 
-        effect = "llm_synthesis_brief" if compact else "llm_synthesis"
+        effect = "llm_synthesis_brief" if depth == "brief" else "llm_synthesis"
         enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
             body,
             message=message,
@@ -56,8 +73,11 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         response_mode: str | None,
     ) -> str | None:
         normalized = ChatResponseModeService.normalize(response_mode)
-        compact = normalized == "fast"
-        lead = cls.build_commentary_lead(message, tool_calls, compact=compact)
+        lead = cls.build_commentary_lead(
+            message,
+            tool_calls,
+            response_mode=normalized,
+        )
 
         if not lead:
             return None
@@ -90,6 +110,7 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         enriched = cls.build_commentary_lead(
             message,
             tool_calls,
+            response_mode=normalized,
             compact=compact,
         )
 

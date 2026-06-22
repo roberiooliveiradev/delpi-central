@@ -36,6 +36,9 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
             answer,
             tool_calls,
             compact=compact,
+            commentary_depth=ChatOperationalLlmSynthesisBriefDirectService._commentary_depth(
+                normalized_mode,
+            ),
         )
 
         body = cls._enrich(

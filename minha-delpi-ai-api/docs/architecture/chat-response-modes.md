@@ -79,6 +79,8 @@ Rollback template (offline)
 
 Pós-processamento anti-alucinação: `ChatOperationalLlmSynthesisAnswerEnrichmentService` (marcadores em `operational_llm_synthesis_context.json` → `hallucinationMarkers`, grounding por overlap de âncoras, dedupe de parágrafos).
 
+Finalização do turno: `ChatOperationalLlmSynthesisTurnFinalizationService` — enrichment + gate de coerência (`evaluate_synthesis_coherence`) + fallback para `dataCommentary` quando o LLM evade, alucina ou repete frases. Profundidade do commentary: **brief** (Rápida), **standard** (Normal), **expanded** (Pensador).
+
 ### Modo Rápida — commentary direct (≤ ~3 s)
 
 Quando `response_modes.json` → `fastCommentaryDirect.enabled: true` e a tool operacional retorna metadata **decoupled** (`llmProseDecoupled`), o turno **não** chama Ollama para a prosa:

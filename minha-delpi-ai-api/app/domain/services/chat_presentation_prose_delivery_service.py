@@ -507,6 +507,7 @@ class ChatPresentationProseDeliveryService:
         tool_calls: list | None,
         *,
         compact: bool = False,
+        commentary_depth: str | None = None,
     ) -> str:
         """Quando síntese LLM falha ou retorna vazio, usa dataCommentary como lead."""
         body = str(answer or "").strip()
@@ -537,7 +538,11 @@ class ChatPresentationProseDeliveryService:
             commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(
                 metadata,
             )
-            fallback = cls._format_data_commentary_lead(commentary, compact=compact)
+            fallback = cls._format_data_commentary_lead(
+                commentary,
+                compact=compact,
+                depth=commentary_depth,
+            )
 
             if fallback:
                 return fallback
@@ -550,25 +555,36 @@ class ChatPresentationProseDeliveryService:
         commentary: dict[str, Any] | None,
         *,
         compact: bool = False,
+        depth: str | None = None,
     ) -> str:
         if not isinstance(commentary, dict):
             return ""
 
+        resolved_depth = str(depth or ("brief" if compact else "standard")).strip().lower()
         parts: list[str] = []
-        highlight_limit = 1 if compact else 2
+        highlight_limit = {
+            "brief": 1,
+            "standard": 2,
+            "expanded": 6,
+        }.get(resolved_depth, 2)
         highlights = [
             str(item.get("text") if isinstance(item, dict) else item or "").strip()
             for item in (commentary.get("highlights") or [])
             if str(item.get("text") if isinstance(item, dict) else item or "").strip()
         ]
         interpretation = str(commentary.get("interpretation") or "").strip()
+        narrative_insight = str(commentary.get("narrativeInsight") or "").strip()
         next_action = str(commentary.get("nextAction") or "").strip()
 
         if highlights:
             parts.append("\n\n".join(highlights[:highlight_limit]))
         elif interpretation:
-            parts.append(interpretation[:180] if compact else interpretation)
-        elif not compact:
+            parts.append(
+                interpretation[:180]
+                if resolved_depth == "brief"
+                else interpretation,
+            )
+        elif resolved_depth != "brief":
             summary = str(commentary.get("summary") or "").strip()
 
             if not summary:
@@ -577,18 +593,28 @@ class ChatPresentationProseDeliveryService:
                     for line in (commentary.get("summaryLines") or [])
                     if str(line or "").strip()
                 ]
-                summary = "\n\n".join(summary_lines[:2])
+                summary = "\n\n".join(
+                    summary_lines[:1 if resolved_depth == "brief" else 3],
+                )
 
             if summary:
                 parts.append(summary)
+
+        if narrative_insight and resolved_depth == "expanded":
+            parts.append(narrative_insight)
 
         attention = [
             str(item).strip()
             for item in (commentary.get("attention") or [])
             if str(item or "").strip()
         ]
+        attention_limit = {
+            "brief": 0,
+            "standard": 3,
+            "expanded": 6,
+        }.get(resolved_depth, 3)
 
-        if attention and not compact:
+        if attention and attention_limit:
             header = str(
                 ChatAssistantContentService.get(
                     "presenter_content",
@@ -598,10 +624,29 @@ class ChatPresentationProseDeliveryService:
                 )
                 or "**Pontos de atenção**"
             ).strip()
-            bullets = "\n".join(f"- {item}" for item in attention[:4])
+            bullets = "\n".join(f"- {item}" for item in attention[:attention_limit])
             parts.append(f"{header}\n\n{bullets}")
 
-        if next_action and not compact:
+        limitations = [
+            str(item).strip()
+            for item in (commentary.get("limitations") or [])
+            if str(item or "").strip()
+        ]
+
+        if limitations and resolved_depth == "expanded":
+            header = str(
+                ChatAssistantContentService.get(
+                    "presenter_content",
+                    "humanizedNarrative",
+                    "limitationsHeader",
+                    default="**Limitações**",
+                )
+                or "**Limitações**"
+            ).strip()
+            bullets = "\n".join(f"- {item}" for item in limitations[:4])
+            parts.append(f"{header}\n\n{bullets}")
+
+        if next_action and resolved_depth != "brief":
             next_header = str(
                 ChatAssistantContentService.get(
                     "presenter_content",
@@ -611,7 +656,10 @@ class ChatPresentationProseDeliveryService:
                 )
                 or "**Próximos passos**"
             ).strip()
-            parts.append(f"{next_header}\n\n- {next_action}")
+            limit = 1 if resolved_depth == "standard" else 3
+            steps = [step.strip() for step in next_action.split("\n") if step.strip()]
+            bullets = "\n".join(f"- {step}" for step in steps[:limit])
+            parts.append(f"{next_header}\n\n{bullets}")
 
         return "\n\n".join(parts).strip()
 

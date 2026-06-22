@@ -81,8 +81,38 @@ class ChatResponseModeSynthesisQualityService:
         gaps.extend(cls._evaluate_deflection(content))
         gaps.extend(cls._evaluate_hallucination_markers(content))
         gaps.extend(cls._evaluate_sparse_numbered_lists(content))
+        gaps.extend(cls._evaluate_repeated_sentences(content))
 
         return gaps
+
+    @classmethod
+    def _evaluate_repeated_sentences(cls, content: str) -> list[str]:
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+
+        sentences = re.split(r"(?<=[.!?])\s+", content.strip())
+        seen: set[str] = set()
+        repeats = 0
+
+        for sentence in sentences:
+            text = str(sentence or "").strip()
+
+            if len(text) < 48:
+                continue
+
+            key = ChatMessageNormalizationService.normalize_for_matching(text)[:160]
+
+            if key in seen:
+                repeats += 1
+                continue
+
+            seen.add(key)
+
+        if repeats >= 1:
+            return ["resposta com frases repetidas"]
+
+        return []
 
     @classmethod
     def _evaluate_sparse_numbered_lists(cls, content: str) -> list[str]:
