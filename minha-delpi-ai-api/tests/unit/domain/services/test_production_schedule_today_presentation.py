@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from app.application.use_cases.execute_external_action_use_case import (
+    ExecuteExternalActionUseCase,
+)
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
@@ -9,6 +12,15 @@ from tests.fixtures.api_delpi_responses_loader import (
     load_api_delpi_data,
     load_api_delpi_fixture_with_meta,
 )
+
+
+def _use_case() -> ExecuteExternalActionUseCase:
+    return ExecuteExternalActionUseCase(
+        repository=None,
+        gateway=None,
+        policy=None,
+        audit_repository=None,
+    )
 
 
 def test_production_schedule_today_table_preserves_product_codes() -> None:
@@ -42,3 +54,26 @@ def test_production_schedule_today_text_lists_codes_with_descriptions() -> None:
     assert "90260140" in joined
     assert "90261255" in joined
     assert "PA HOMOLOGADO REF" in joined
+
+
+def test_production_schedule_today_automatic_omits_redundant_dashboard() -> None:
+    envelope = load_api_delpi_fixture_with_meta("production_schedule_today_20260622.json")
+    metadata = _use_case()._build_presentation_metadata(
+        action={"path": "/production/schedule/today"},
+        sanitized_data=envelope,
+        resolved_path="/production/schedule/today",
+        request_parameters={
+            "userMessage": "quais produtos estão programados para produzir hoje",
+        },
+    )
+
+    render_plan = metadata.get("renderPlan") or {}
+    segments = render_plan.get("segments") or []
+    kinds = {str(item.get("kind") or "").strip().lower() for item in segments if isinstance(item, dict)}
+
+    assert metadata.get("dashboardPresentation") is None
+    assert "dashboard" not in kinds
+
+    table_segments = [item for item in segments if isinstance(item, dict) and item.get("kind") == "table"]
+
+    assert len(table_segments) == 1

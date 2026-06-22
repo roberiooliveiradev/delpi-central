@@ -272,7 +272,48 @@ class ChatPresentationRichStackPolicyService:
         if cls._should_use_dashboard_only_tail(metadata, profile):
             return ["dashboard"]
 
+        if cls._should_omit_dashboard_for_table_primary(metadata, profile):
+            ordered = [view for view in ordered if view != "dashboard"]
+
         return ordered
+
+    @classmethod
+    def _should_omit_dashboard_for_table_primary(
+        cls,
+        metadata: dict[str, Any],
+        profile: dict[str, Any],
+    ) -> bool:
+        tail_policy = str(profile.get("stackTailPolicy") or "").strip().lower()
+
+        if tail_policy != "table_primary":
+            return False
+
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        if explicit == "dashboard":
+            return False
+
+        return cls.metadata_has_operational_table(metadata)
+
+    @classmethod
+    def metadata_has_operational_table(cls, metadata: dict[str, Any]) -> bool:
+        bulk = metadata.get("tablePresentations")
+
+        if isinstance(bulk, list):
+            for item in bulk:
+                if isinstance(item, dict) and str(item.get("type") or "").strip().lower() == "table":
+                    return True
+
+        for key in ("tablePresentation", "profileTablePresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if (
+                isinstance(presentation, dict)
+                and str(presentation.get("type") or "").strip().lower() == "table"
+            ):
+                return True
+
+        return False
 
     @classmethod
     def _should_use_dashboard_only_tail(

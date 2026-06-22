@@ -41,6 +41,7 @@ class ChatPresentationPayloadPruningService:
         cls._ensure_tail_visual_policy(metadata, plan)
         cls._prune_null_presentations(metadata)
         cls._prune_structure_duplicate_tables(metadata)
+        cls._prune_table_primary_dashboard(metadata, plan)
         cls._prune_allowlisted_visuals(metadata, plan)
         cls._attach_render_hints(metadata, plan)
 
@@ -69,6 +70,86 @@ class ChatPresentationPayloadPruningService:
             return
 
         plan["tailVisualPolicy"] = "legacy"
+
+    @classmethod
+    def _prune_table_primary_dashboard(
+        cls,
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+    ) -> None:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+        from app.domain.services.chat_presentation_rich_stack_policy_service import (
+            ChatPresentationRichStackPolicyService,
+        )
+
+        path = str(metadata.get("path") or "")
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+
+        if not ChatPresentationRichStackPolicyService._should_omit_dashboard_for_table_primary(
+            metadata,
+            profile,
+        ):
+            return
+
+        if metadata.pop("dashboardPresentation", None) is None:
+            return
+
+        tail_order = plan.get("tailVisualOrder")
+
+        if isinstance(tail_order, list):
+            plan["tailVisualOrder"] = [
+                token
+                for token in tail_order
+                if str(token).strip().lower() != "dashboard"
+            ]
+
+        hints = plan.get("renderHints")
+
+        if not isinstance(hints, dict):
+            hints = {}
+            plan["renderHints"] = hints
+
+        existing = hints.get("suppressedKinds")
+
+        if isinstance(existing, list):
+            merged = list(dict.fromkeys([*existing, "dashboard"]))
+        else:
+            merged = ["dashboard"]
+
+        hints["suppressedKinds"] = merged
+
+        decision = metadata.get("presentationDecision")
+
+        if not isinstance(decision, dict):
+            return
+
+        for key in ("availableViews", "visualOrder"):
+            values = decision.get(key)
+
+            if not isinstance(values, list):
+                continue
+
+            decision[key] = [
+                item for item in values if str(item).strip().lower() != "dashboard"
+            ]
+
+        available_formats = metadata.get("availableFormats")
+
+        if isinstance(available_formats, list):
+            metadata["availableFormats"] = [
+                item for item in available_formats if str(item).strip().lower() != "dashboard"
+            ]
 
     @classmethod
     def _prune_allowlisted_visuals(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> None:

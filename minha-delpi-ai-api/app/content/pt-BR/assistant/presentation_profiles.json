@@ -842,6 +842,7 @@
       "flags": [
         "table"
       ],
+      "stackTailPolicy": "table_primary",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },
@@ -859,6 +860,7 @@
       "flags": [
         "table"
       ],
+      "stackTailPolicy": "table_primary",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary",
       "humanizedNarrative": "enrich"
@@ -1362,6 +1364,7 @@
         "table"
       ],
       "chartPolicy": "skip",
+      "stackTailPolicy": "table_primary",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary",
       "humanizedNarrative": "enrich"
