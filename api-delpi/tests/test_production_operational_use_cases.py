@@ -146,6 +146,21 @@ def test_schedule_today_use_case_uses_reference_date() -> None:
     )
 
 
+def test_schedule_today_use_case_default_limit_is_500() -> None:
+    repository = MagicMock()
+    repository.fetch_schedule_today.return_value = []
+
+    use_case = GetProductionScheduleTodayUseCase(repository)
+    result = use_case.execute(ProductionOperationalRequest(reference_date="2026-06-11"))
+
+    assert result["pagination"]["limit"] == 500
+    repository.fetch_schedule_today.assert_called_once_with(
+        reference_date="20260611",
+        branch=None,
+        limit=501,
+    )
+
+
 def test_schedule_today_use_case_marks_incomplete_when_over_limit() -> None:
     repository = MagicMock()
     repository.fetch_schedule_today.return_value = [

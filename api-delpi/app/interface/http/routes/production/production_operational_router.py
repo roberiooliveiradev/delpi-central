@@ -194,7 +194,7 @@ def get_losses_top_materials(
 def get_schedule_today(
     reference_date: Optional[str] = Query(default=None),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
-    limit: Optional[int] = Query(default=None, ge=1, le=200),
+    limit: Optional[int] = Query(default=None, ge=1, le=500),
 ):
     try:
         dto = ProductionOperationalRequest(

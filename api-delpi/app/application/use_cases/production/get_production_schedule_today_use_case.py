@@ -11,7 +11,7 @@ from app.application.services.production.production_operational_summary_service 
 )
 from app.domain.constants.production_operational import (
     DEFAULT_SCHEDULE_TODAY_LIMIT,
-    MAX_PRODUCTION_OPERATIONAL_LIMIT,
+    MAX_SCHEDULE_TODAY_LIMIT,
 )
 from app.domain.ports.production.production_schedule_repository_port import (
     ProductionScheduleRepositoryPort,
@@ -31,7 +31,7 @@ class GetProductionScheduleTodayUseCase:
         )
         limit = min(
             request.limit or DEFAULT_SCHEDULE_TODAY_LIMIT,
-            MAX_PRODUCTION_OPERATIONAL_LIMIT,
+            MAX_SCHEDULE_TODAY_LIMIT,
         )
 
         fetch_limit = overfetch_limit(limit)

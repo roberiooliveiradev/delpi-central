@@ -33,7 +33,7 @@
       "reference_date": "20260622"
     },
     "pagination": {
-      "limit": 50,
+      "limit": 500,
       "offset": 0,
       "returned": 2,
       "is_complete": true
