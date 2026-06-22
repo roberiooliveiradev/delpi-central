@@ -68,6 +68,8 @@
     "bomQuantityApi": "qtd {quantity} (SG1010)",
     "guideComponentPair": "PI {product} × MP {component}",
     "structureItemCount": "{count} item(ns) na estrutura",
+    "structureBomValidityFilter": "Vigente ({columns}) na data do servidor",
+    "revisionApiCurrent": "REV.{revision} (cadastro)",
     "checkIntermediate50xx": "Conferir intermediário 50xx",
     "missingDash": "—",
     "pdfScopePrefix": " [{scope}]"
@@ -217,6 +219,18 @@
       "item": "Revisão",
       "rule": "Revisão do carimbo × cadastro",
       "recommendation": "Atualizar revisão do PDF ou cadastro Protheus"
+    },
+    "structure_bom_validity_ok": {
+      "section": "Estrutura",
+      "item": "Vigência BOM (SG1010)",
+      "rule": "Estrutura filtrada por G1_INI/G1_FIM na data do servidor",
+      "recommendation": "—"
+    },
+    "structure_bom_validity_revision_lag": {
+      "section": "Estrutura",
+      "item": "Vigência BOM × revisão do PDF",
+      "rule": "Revisão do PDF anterior à revisão cadastral pode não refletir a estrutura vigente",
+      "recommendation": "Conferir se o desenho corresponde à revisão atual ou solicitar estrutura histórica"
     },
     "bom_missing": {
       "section": "BOM",
@@ -483,7 +497,9 @@
         "quantity_from_description"
       ],
       "refinementExhaustedPending": true,
-      "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"]
+      "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"],
+      "lengthConsumableCodePrefixes": ["101", "105"],
+      "lengthConsumableDescriptionMarkers": ["TUBO", "TERMOENCOLHIVEL"]
     }
   },
   "validationLayers": {

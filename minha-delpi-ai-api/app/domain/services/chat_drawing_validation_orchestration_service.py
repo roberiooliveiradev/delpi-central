@@ -255,7 +255,12 @@ class ChatDrawingValidationOrchestrationService:
                 )
             )
 
-            items.extend(cls._pdf_cross_check_items(product, code, pdf_meta))
+            items.extend(cls._pdf_cross_check_items(
+                product,
+                code,
+                pdf_meta,
+                structure=root.get("structure") if isinstance(root.get("structure"), dict) else {},
+            ))
 
             from app.domain.services.chat_drawing_structure_validation_service import (
                 ChatDrawingStructureValidationService,
@@ -589,6 +594,8 @@ class ChatDrawingValidationOrchestrationService:
         product: dict,
         api_code: str,
         pdf_extract: dict,
+        *,
+        structure: dict | None = None,
     ) -> list[dict[str, Any]]:
         from app.domain.services.chat_drawing_validation_rule_registry_service import (
             ChatDrawingValidationRuleRegistryService,
@@ -623,29 +630,44 @@ class ChatDrawingValidationOrchestrationService:
                     )
                 )
 
-        if not ChatDrawingValidationRuleRegistryService.is_enabled(
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
             "revision_cross_check",
             api_code,
             group_code=group_code,
         ):
-            return items
+            pdf_revision = str(pdf_extract.get("revision") or "").strip()
+            pdf_internal_revision = str(pdf_extract.get("internalRevision") or "").strip()
+            api_current_revision = str(product.get("current_revision") or "").strip()
+            api_revision_date = str(
+                product.get("last_revision_date") or product.get("revision") or ""
+            ).strip()
 
-        pdf_revision = str(pdf_extract.get("revision") or "").strip()
-        pdf_internal_revision = str(pdf_extract.get("internalRevision") or "").strip()
-        api_current_revision = str(product.get("current_revision") or "").strip()
-        api_revision_date = str(
-            product.get("last_revision_date") or product.get("revision") or ""
-        ).strip()
+            revision_item = cls._build_revision_cross_check_item(
+                pdf_revision=pdf_revision,
+                pdf_internal_revision=pdf_internal_revision,
+                api_current_revision=api_current_revision,
+                api_revision_date=api_revision_date,
+            )
 
-        revision_item = cls._build_revision_cross_check_item(
-            pdf_revision=pdf_revision,
-            pdf_internal_revision=pdf_internal_revision,
-            api_current_revision=api_current_revision,
-            api_revision_date=api_revision_date,
+            if revision_item:
+                items.append(revision_item)
+
+        from app.domain.services.chat_drawing_structure_validity_notice_service import (
+            ChatDrawingStructureValidityNoticeService,
         )
 
-        if revision_item:
-            items.append(revision_item)
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "structure_bom_validity",
+            api_code,
+            group_code=group_code,
+        ):
+            items.extend(
+                ChatDrawingStructureValidityNoticeService.build_check_items(
+                    product=product,
+                    pdf_extract=pdf_extract,
+                    structure=structure if isinstance(structure, dict) else {},
+                )
+            )
 
         return items
 

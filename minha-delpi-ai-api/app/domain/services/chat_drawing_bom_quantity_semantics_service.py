@@ -180,23 +180,31 @@ class ChatDrawingBomQuantitySemanticsService:
             )
 
         if api_unit in cable_units:
-            if not ChatDrawingBomQuantitySemanticsService.is_cable_material_code(
-                api_row.code,
-                cls._structure_item_description(root, api_row.code),
-            ):
-                return PdfQuantityNormalization(
-                    comparable=False,
-                    pdf_value=None,
-                    evidence_key="bomQuantityPdf",
-                    evidence_values={"quantity": cls._format_quantity(pdf_quantity)},
+            description = cls._structure_item_description(root, api_row.code)
+
+            if cls.is_cable_material_code(api_row.code, description):
+                return cls._normalize_cable_length_quantity(
+                    pdf_quantity=pdf_quantity,
+                    api_row=api_row,
+                    root=root,
+                    pdf_extract=pdf_extract,
+                    batch_scale=batch_scale,
                 )
 
-            return cls._normalize_cable_length_quantity(
-                pdf_quantity=pdf_quantity,
-                api_row=api_row,
-                root=root,
-                pdf_extract=pdf_extract,
-                batch_scale=batch_scale,
+            if cls.is_length_consumable_material(api_row.code, description):
+                return cls._normalize_length_consumable_quantity(
+                    pdf_quantity=pdf_quantity,
+                    api_row=api_row,
+                    root=root,
+                    pdf_extract=pdf_extract,
+                    batch_scale=batch_scale,
+                )
+
+            return PdfQuantityNormalization(
+                comparable=False,
+                pdf_value=None,
+                evidence_key="bomQuantityPdf",
+                evidence_values={"quantity": cls._format_quantity(pdf_quantity)},
             )
 
         return PdfQuantityNormalization(
@@ -253,6 +261,24 @@ class ChatDrawingBomQuantitySemanticsService:
             pdf_value=None,
             evidence_key="bomQuantityPdf",
             evidence_values={"quantity": cls._format_quantity(pdf_quantity)},
+        )
+
+    @classmethod
+    def _normalize_length_consumable_quantity(
+        cls,
+        *,
+        pdf_quantity: float,
+        api_row: StructureQuantityRow,
+        root: dict,
+        pdf_extract: dict,
+        batch_scale: float,
+    ) -> PdfQuantityNormalization:
+        return cls._normalize_cable_length_quantity(
+            pdf_quantity=pdf_quantity,
+            api_row=api_row,
+            root=root,
+            pdf_extract=pdf_extract,
+            batch_scale=batch_scale,
         )
 
     @classmethod
@@ -406,6 +432,21 @@ class ChatDrawingBomQuantitySemanticsService:
             return True
 
         return "CABO" in upper_desc or "CABOS" in upper_desc
+
+    @classmethod
+    def is_length_consumable_material(cls, code: str, description: str = "") -> bool:
+        normalized = ChatProductQueryIntentService.normalize_product_code(code)
+        upper_desc = str(description or "").upper()
+
+        for prefix in ChatDrawingPatternsService.length_consumable_code_prefixes():
+            if normalized.startswith(prefix):
+                return True
+
+        for marker in ChatDrawingPatternsService.length_consumable_description_markers():
+            if marker in upper_desc:
+                return True
+
+        return False
 
     @classmethod
     def _root_product_unit(cls, root: dict) -> str:

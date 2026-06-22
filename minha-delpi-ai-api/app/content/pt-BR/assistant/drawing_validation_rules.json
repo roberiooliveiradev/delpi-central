@@ -47,6 +47,15 @@
         "revision_critical"
       ]
     },
+    "structure_bom_validity": {
+      "section": "Estrutura",
+      "description": "Vigência SG1010 (G1_INI/G1_FIM) e alinhamento com revisão do PDF",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "structure_bom_validity_ok",
+        "structure_bom_validity_revision_lag"
+      ]
+    },
     "guide_structure": {
       "section": "Roteiro",
       "description": "Produtos e níveis SG2010 × SG1010",

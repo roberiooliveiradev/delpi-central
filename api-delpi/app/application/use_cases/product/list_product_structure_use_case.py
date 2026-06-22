@@ -1,6 +1,9 @@
 # app/application/use_cases/products/list_product_structure_use_case.py
 
 from app.domain.ports.product.product_structure_repository_port import ProductStructureRepositoryPort
+from app.domain.services.product.product_bom_validity_filter_service import (
+    ProductBomValidityFilterService,
+)
 from app.application.services.bom_tree_builder import BomTreeBuilder
 from app.application.dto.product.list_product_structured_request import ListProductStructureRequest
 from app.application.models.page import Page
@@ -22,6 +25,8 @@ class ListProductStructureUseCase:
 
         root = BomTreeBuilder.build(rows, request.code)
 
+        bom_validity = ProductBomValidityFilterService.response_metadata()
+
         if not root:
             return {
                 "root": None,
@@ -29,7 +34,8 @@ class ListProductStructureUseCase:
                 "page": None,
                 "page_size": None,
                 "total": 0,
-                "total_pages": 0
+                "total_pages": 0,
+                "bom_validity": bom_validity,
             }
 
         # modo full
@@ -46,7 +52,8 @@ class ListProductStructureUseCase:
                 "page": None,
                 "page_size": None,
                 "total": len(root.components),
-                "total_pages": None
+                "total_pages": None,
+                "bom_validity": bom_validity,
             }
 
         # modo paginado
@@ -68,5 +75,6 @@ class ListProductStructureUseCase:
             "unit": root.unit,
             "quantity": root.quantity
         }
+        page["bom_validity"] = bom_validity
 
         return page

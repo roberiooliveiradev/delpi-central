@@ -183,6 +183,13 @@ DRAWING_VALIDATION_RULE_CASES: tuple[DrawingValidationRuleCase, ...] = (
         smoke_product_code="90262008",
     ),
     DrawingValidationRuleCase(
+        id="R-structure-bom-validity",
+        rule_id="structure_bom_validity",
+        category="Vigência SG1010 e revisão PDF × cadastro",
+        notes="bom_validity.current + aviso quando revisão PDF < current_revision.",
+        smoke_product_code="90262008",
+    ),
+    DrawingValidationRuleCase(
         id="R-bom-stamp-nested-mp",
         rule_id="bom_comparison",
         category="BOM carimbo — MP aninhado não vira extra",

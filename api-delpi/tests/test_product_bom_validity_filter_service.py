@@ -25,3 +25,9 @@ def test_validity_filter_sql_for_today_with_alias() -> None:
     sql = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="c")
     assert "c.G1_INI" in sql
     assert "c.G1_FIM" in sql
+
+
+def test_response_metadata_for_chat_consumption() -> None:
+    metadata = ProductBomValidityFilterService.response_metadata()
+    assert metadata["filter"] == "current"
+    assert "G1_INI" in metadata["validityColumns"]

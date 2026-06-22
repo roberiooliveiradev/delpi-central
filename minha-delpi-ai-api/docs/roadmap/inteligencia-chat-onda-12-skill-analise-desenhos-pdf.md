@@ -157,6 +157,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 ## O que já está pronto (não repetir na implementação)
 
 - Docs GPT de desenho adaptados e ingeridos no agente ([sync script](../../scripts/sync_gpt_instructions_knowledge.py)).
+- Tutorial conversão unidades: catálogo `agentKnowledgeSources` + [sync_drawing_agent_knowledge.py](../../scripts/sync_drawing_agent_knowledge.py) (`produto-conversao-unidades-protheus.txt`).
 - Mapa documento a documento ([gpt-instructions-coverage-map.md](../knowledge/gpt-instructions-coverage-map.md)).
 - Action OpenAPI `get_product_analyser` nos catálogos api-delpi e api-externa.
 - Pipeline base de anexos (`session_source`) e RAG por agente.

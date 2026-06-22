@@ -14,6 +14,8 @@ class BomNode:
     secondary_unit: Optional[str] = None
     conversion_factor: Optional[float] = None
     conversion_type: Optional[str] = None
+    third_unit: Optional[str] = None
+    third_conversion_factor: Optional[float] = None
 
     components: List["BomNode"] = field(default_factory=list)
 
@@ -35,5 +37,11 @@ class BomNode:
 
         if self.conversion_type:
             payload["conversion_type"] = self.conversion_type
+
+        if self.third_unit:
+            payload["third_unit"] = self.third_unit
+
+        if self.third_conversion_factor is not None:
+            payload["third_conversion_factor"] = self.third_conversion_factor
 
         return payload

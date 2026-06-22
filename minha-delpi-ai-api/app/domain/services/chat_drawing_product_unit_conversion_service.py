@@ -34,6 +34,8 @@ class ChatDrawingProductUnitConversionService:
         secondary_unit: str | None = None,
         conversion_factor: float | None = None,
         conversion_type: str | None = None,
+        third_unit: str | None = None,
+        third_conversion_factor: float | None = None,
     ) -> float | None:
         normalized_unit = str(unit or "").strip().upper()
 
@@ -55,7 +57,22 @@ class ChatDrawingProductUnitConversionService:
         if converted is None or not secondary:
             return None
 
-        return cls._physical_quantity_to_mm(converted, secondary)
+        secondary_mm = cls._physical_quantity_to_mm(converted, secondary)
+
+        if secondary_mm is not None:
+            return secondary_mm
+
+        third = str(third_unit or "").strip().upper()
+        third_converted = cls.apply_conversion_factor(
+            converted,
+            third_conversion_factor,
+            conversion_type,
+        )
+
+        if third_converted is None or not third:
+            return None
+
+        return cls._physical_quantity_to_mm(third_converted, third)
 
     @classmethod
     def quantity_to_mm_from_structure_item(
@@ -74,6 +91,8 @@ class ChatDrawingProductUnitConversionService:
             secondary_unit=str(item.get("secondary_unit") or ""),
             conversion_factor=cls._parse_positive(item.get("conversion_factor")),
             conversion_type=str(item.get("conversion_type") or ""),
+            third_unit=str(item.get("third_unit") or ""),
+            third_conversion_factor=cls._parse_positive(item.get("third_conversion_factor")),
         )
 
     @classmethod

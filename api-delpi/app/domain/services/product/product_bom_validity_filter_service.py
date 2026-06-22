@@ -24,3 +24,12 @@ class ProductBomValidityFilterService:
         return f"""
               AND ({prefix}G1_INI = '' OR {prefix}G1_INI <= {today})
               AND ({prefix}G1_FIM = '' OR {prefix}G1_FIM >= {today})"""
+
+    @classmethod
+    def response_metadata(cls) -> dict[str, str]:
+        """Metadados neutros para consumo do chat (sem texto PT)."""
+        return {
+            "filter": "current",
+            "reference": "server_date",
+            "validityColumns": "G1_INI,G1_FIM",
+        }

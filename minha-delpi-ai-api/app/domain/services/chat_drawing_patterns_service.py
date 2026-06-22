@@ -690,6 +690,30 @@ class ChatDrawingPatternsService:
         return str(cls.bom_quantity_semantics_rule("pendingStatus", "pending"))
 
     @classmethod
+    def length_consumable_code_prefixes(cls) -> frozenset[str]:
+        items = cls.bom_quantity_semantics_rule(
+            "lengthConsumableCodePrefixes",
+            ["101", "105"],
+        )
+
+        if not isinstance(items, list):
+            return frozenset()
+
+        return frozenset(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
+    def length_consumable_description_markers(cls) -> frozenset[str]:
+        items = cls.bom_quantity_semantics_rule(
+            "lengthConsumableDescriptionMarkers",
+            ["TUBO", "TERMOENCOLHIVEL"],
+        )
+
+        if not isinstance(items, list):
+            return frozenset()
+
+        return frozenset(str(item).strip().upper() for item in items if str(item).strip())
+
+    @classmethod
     def length_tolerance_decape_values_mm(cls) -> frozenset[float]:
         items = cls.bom_quantity_semantics_rule(
             "lengthToleranceDecapeValuesMm",

@@ -56,3 +56,21 @@ def test_per_piece_mm_with_mi_batch_scale():
         )
         == 650.0
     )
+
+
+def test_quantity_to_mm_via_third_unit_chain():
+    item = {
+        "code": "10139999",
+        "unit": "CX",
+        "secondary_unit": "UN",
+        "conversion_factor": 1.0,
+        "conversion_type": "M",
+        "third_unit": "MM",
+        "third_conversion_factor": 650.0,
+        "quantity": 1.0,
+    }
+
+    assert (
+        ChatDrawingProductUnitConversionService.quantity_to_mm_from_structure_item(1.0, item)
+        == 650.0
+    )

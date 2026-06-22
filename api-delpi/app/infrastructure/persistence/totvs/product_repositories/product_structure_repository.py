@@ -53,6 +53,8 @@ class ProductStructureRepository(BaseRepository, ProductStructureRepositoryPort)
             comp.B1_SEGUM  AS component_secondary_unit,
             comp.B1_CONV   AS component_conversion_factor,
             comp.B1_TIPCONV AS component_conversion_type,
+            comp.B1_UM3    AS component_third_unit,
+            comp.B1_CONV3  AS component_third_conversion_factor,
 
             rb.quantity,
             rb.bom_level

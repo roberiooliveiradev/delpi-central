@@ -636,6 +636,7 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | Intent Normas / descrição técnica | `tests/unit/domain/services/test_chat_technical_description_intent_service.py` |
 | Download anexos/fontes | `tests/unit/application/use_cases/test_download_chat_file_use_cases.py` |
 | Sync / ingest GPT_instructions (agente) | `scripts/sync_gpt_instructions_knowledge.py --ingest` |
+| Sync / ingest tutorial conversão unidades (desenho) | `scripts/sync_drawing_agent_knowledge.py --ingest` |
 | Sync conhecimento global | `scripts/sync_gpt_instructions_knowledge.py --sync-global --ingest-global` |
 | Export bundle agente | `scripts/export_agent_knowledge_bundle.py` |
 | Refinamento paginação | `tests/unit/domain/services/test_chat_operational_refinement_service.py` |

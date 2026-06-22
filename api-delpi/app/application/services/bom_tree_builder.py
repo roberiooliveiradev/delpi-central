@@ -6,23 +6,30 @@ from app.domain.entities.product.bom_node import BomNode
 class BomTreeBuilder:
 
     @staticmethod
+    def _parse_positive_float(raw) -> float | None:
+        try:
+            value = float(raw) if raw not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+
+        if value is None or value <= 0:
+            return None
+
+        return value
+
+    @staticmethod
     def build(rows, root_code: str):
 
         items = {}
 
         for r in rows:
 
-            conversion_factor = r.get("component_conversion_factor")
-
-            try:
-                parsed_conversion_factor = (
-                    float(conversion_factor) if conversion_factor not in (None, "") else None
-                )
-            except (TypeError, ValueError):
-                parsed_conversion_factor = None
-
-            if parsed_conversion_factor is not None and parsed_conversion_factor <= 0:
-                parsed_conversion_factor = None
+            parsed_conversion_factor = BomTreeBuilder._parse_positive_float(
+                r.get("component_conversion_factor")
+            )
+            parsed_third_conversion_factor = BomTreeBuilder._parse_positive_float(
+                r.get("component_third_conversion_factor")
+            )
 
             component = BomNode(
                 code=r["component_code"],
@@ -33,6 +40,8 @@ class BomTreeBuilder:
                 secondary_unit=r.get("component_secondary_unit") or None,
                 conversion_factor=parsed_conversion_factor,
                 conversion_type=r.get("component_conversion_type") or None,
+                third_unit=r.get("component_third_unit") or None,
+                third_conversion_factor=parsed_third_conversion_factor,
             )
 
             parent_code = r["parent_code"]

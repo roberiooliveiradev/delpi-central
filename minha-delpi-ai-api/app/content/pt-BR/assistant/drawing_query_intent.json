@@ -182,6 +182,14 @@
     "policyFile": "drawing-analysis-unit-conversion.md",
     "ragSource": "produto-conversao-unidades-protheus.txt"
   },
+  "agentKnowledgeSources": [
+    {
+      "sourceFile": "produto-conversao-unidades-protheus.txt",
+      "title": "Tutorial — Conversão correta de unidades no Protheus DELPI",
+      "tags": ["produto", "engenharia", "desenho", "unidades"],
+      "notes": "MI/MT, B1_CONV, SG1010 — sync via scripts/sync_drawing_agent_knowledge.py"
+    }
+  ],
   "ragQuery": {
     "drawingAnalysisSuffix": "conversão unidades Protheus MI milheiro B1_CONV B1_SEGUM SG1010 SB1010 produto-conversao-unidades drawing validation BOM chicote"
   }

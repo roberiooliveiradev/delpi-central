@@ -71,6 +71,20 @@ def test_unit_conversion_policy_configured():
     assert rag_source == "produto-conversao-unidades-protheus.txt"
 
 
+def test_agent_knowledge_sources_configured():
+    sources = ChatAssistantContentService.get_node(
+        "drawing_query_intent",
+        "agentKnowledgeSources",
+    )
+
+    assert isinstance(sources, list) and sources
+    assert any(
+        isinstance(item, dict)
+        and item.get("sourceFile") == "produto-conversao-unidades-protheus.txt"
+        for item in sources
+    )
+
+
 def test_drawing_analysis_rag_query_suffix_from_json():
     from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 
