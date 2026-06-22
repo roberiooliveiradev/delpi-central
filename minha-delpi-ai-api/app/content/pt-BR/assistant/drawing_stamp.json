@@ -25,7 +25,7 @@
     "maxAttempts": 5,
     "releaseMemoryBetweenAttempts": true,
     "regionOcrEngines": ["tesseract"],
-    "comment": "Tentativas 1–4 só Tesseract (escala DPI/região). Tentativa 5 opcional EasyOCR na imagem dev — libera RAM entre passagens.",
+    "comment": "Tentativas 1–4: Tesseract-only em carimbo/cotas/título; BOM mantém fusão tesseract+easyocr (document_vision.bomFusion). Tentativa 5 reforça EasyOCR em todas as regiões — libera RAM entre passagens.",
     "attempts": [
       { "id": "standard", "enableRegionOcr": null },
       {

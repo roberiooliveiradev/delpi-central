@@ -130,14 +130,18 @@ class ChatPdfRegionOcrEngineService:
 
     @classmethod
     def _engines_for_region(cls, region: str) -> tuple[str, ...]:
+        normalized = str(region or "").strip().lower()
+
+        # BOM mantém fusão multi-motor (document_vision.json → bomFusion.engines)
+        # mesmo quando o loop de retry força Tesseract-only nas demais regiões.
+        if normalized == "bom":
+            return ChatVisionMemoryGuardService.filter_engines_for_memory(
+                ChatDocumentVisionContentService.pdf_bom_region_ocr_engines()
+            )
+
         if cls._runtime_engines_override is not None:
             return ChatVisionMemoryGuardService.filter_engines_for_memory(
                 cls._runtime_engines_override
-            )
-
-        if region == "bom":
-            return ChatVisionMemoryGuardService.filter_engines_for_memory(
-                ChatDocumentVisionContentService.pdf_bom_region_ocr_engines()
             )
 
         return cls.enabled_engines()

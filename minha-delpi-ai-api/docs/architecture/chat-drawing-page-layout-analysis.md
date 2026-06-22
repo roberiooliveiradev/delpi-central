@@ -123,7 +123,7 @@ Antes da validação, `ChatDrawingExtractionQualityRetryService` repete a leitur
 
 **Por que era lento e pesado:** cada região (carimbo, BOM, cotas) rasteriza a página e, no default global, rodava **Tesseract + EasyOCR**. EasyOCR carrega modelos PyTorch (~1–1.5 GB RAM) e executa por recorte; com 2–3 passagens e DPI alto, o WSL estourava memória (exit 137).
 
-**Política atual:** o **loop de retry usa só Tesseract** (`extractionQualityRetry.regionOcrEngines: ["tesseract"]`). EasyOCR permanece disponível fora do loop (visão de documento / enriquecimento opcional), mas não entra nas retentativas de validação de desenho.
+**Política atual:** o loop de retry força **Tesseract-only** em carimbo, título e cotas (`extractionQualityRetry.regionOcrEngines: ["tesseract"]`). A região **BOM** mantém fusão **Tesseract + EasyOCR** (`document_vision.json` → `bomFusion.engines`) para voto por dígito — sem reconciliar com catálogo API. EasyOCR nas demais regiões só na tentativa 5 (`easyocr_fusion_2_0`).
 
 ```text
 ChatDrawingPdfExtractionService.extract_from_storage_path
@@ -153,7 +153,7 @@ Config (`drawing_stamp.json` → `extractionQualityRetry`):
 | `enabled` | `true` | Master switch |
 | `targetConfidence` | `0.95` | Limiar para parar com sucesso |
 | `maxAttempts` | `5` | Máximo de perfis escalonados (standard → EasyOCR) |
-| `regionOcrEngines` | `["tesseract"]` | **Só Tesseract** em todo o loop — sem EasyOCR |
+| `regionOcrEngines` | `["tesseract"]` | Tesseract-only em carimbo/cotas/título; **BOM** ignora override e usa `bomFusion.engines` |
 | `releaseMemoryBetweenAttempts` | `true` | `gc` + libera readers EasyOCR entre passagens |
 | `attempts[]` | ver JSON | `enableRegionOcr`, `regionOcrDpiMultiplier`, `layoutAnalysisEnabled` |
 
