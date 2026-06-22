@@ -3,48 +3,165 @@
     "defaultFamily": "default",
     "prefixLength": 4
   },
+  "coreTemplateKeys": [
+    "product_not_found",
+    "product_found",
+    "revision_api",
+    "guide",
+    "inspection_qp",
+    "pdf_missing",
+    "bom_pending",
+    "pdf_attached",
+    "extraction_confidence"
+  ],
   "families": {
     "default": {
-      "enabledRules": [
-        "bom_quantity",
-        "guide_component",
-        "balloon_presence",
-        "multipage_coverage"
-      ]
+      "enabledRules": ["*"]
     },
     "9026": {
-      "enabledRules": [
-        "bom_quantity",
-        "guide_component",
-        "balloon_presence",
-        "multipage_coverage"
-      ]
+      "enabledRules": ["*"]
     },
     "7026": {
-      "enabledRules": [
-        "bom_quantity",
-        "guide_component",
-        "multipage_coverage"
-      ],
+      "enabledRules": ["*"],
       "disabledRules": ["balloon_presence"]
     }
   },
   "rules": {
-    "bom_quantity": {
-      "section": "BOM",
-      "description": "Quantidade PDF × SG1010 (nível 1)"
+    "product_code_cross_check": {
+      "section": "Cabeçalho",
+      "description": "Código DELPI do PDF × cadastro SB1010",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "product_code_mismatch",
+        "product_code_ok"
+      ]
+    },
+    "revision_cross_check": {
+      "section": "Cabeçalho",
+      "description": "Revisão interna DELPI × current_revision",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "revision_cross_ok",
+        "revision_client_ok",
+        "revision_manual_pending",
+        "revision_critical"
+      ]
+    },
+    "guide_structure": {
+      "section": "Roteiro",
+      "description": "Produtos e níveis SG2010 × SG1010",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "guide_structure_extra",
+        "guide_structure_extra_item",
+        "guide_structure_missing",
+        "guide_structure_missing_item",
+        "guide_structure_level",
+        "guide_structure_ok"
+      ]
     },
     "guide_component": {
       "section": "Roteiro",
-      "description": "component_code SG2010 × filhos do PI na SG1010"
+      "description": "component_code SG2010 × filhos do PI na SG1010",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "guide_component_mismatch",
+        "guide_component_ok"
+      ]
+    },
+    "bom_comparison": {
+      "section": "BOM",
+      "description": "Conjunto de componentes PDF × SG1010 (1º nível)",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "bom_missing",
+        "bom_missing_item",
+        "bom_extra",
+        "bom_extra_item",
+        "bom_match_ok",
+        "bom_scope_unavailable"
+      ]
+    },
+    "bom_quantity": {
+      "section": "BOM",
+      "description": "Quantidade PDF × SG1010 (nível 1)",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "bom_quantity_mismatch",
+        "bom_quantity_ok",
+        "bom_quantity_pending"
+      ]
     },
     "balloon_presence": {
       "section": "BOM",
-      "description": "Presença de códigos BOM nas anotações/balões (fase 1)"
+      "description": "Presença de códigos BOM nas anotações/balões",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "balloon_coverage_unavailable",
+        "balloon_missing_codes",
+        "balloon_presence_ok"
+      ]
     },
     "multipage_coverage": {
       "section": "PDF",
-      "description": "Cobertura BOM em PDF multipágina"
+      "description": "Cobertura BOM em PDF multipágina",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "multipage_low_coverage",
+        "multipage_bom_partial"
+      ]
+    },
+    "intermediate_presence": {
+      "section": "Código 50xx",
+      "description": "Intermediários cadastrados × BOM do PDF",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "intermediate_malformed",
+        "intermediate_missing",
+        "intermediate_missing_item",
+        "intermediate_extra",
+        "intermediate_extra_item",
+        "intermediate_match_ok"
+      ]
+    },
+    "intermediate_length": {
+      "section": "Código 50xx",
+      "description": "Comprimento do intermediário × quantidade do cabo filho",
+      "defaultEnabled": true,
+      "templateKeys": ["intermediate_length"]
+    },
+    "decape_per_intermediate": {
+      "section": "Cotas",
+      "description": "Decape por intermediário 50xx (±1 mm)",
+      "defaultEnabled": true,
+      "templateKeys": ["decape_mismatch"]
+    },
+    "segment_length": {
+      "section": "Cotas",
+      "description": "Cota de trecho × comprimento 50xx (±5%)",
+      "defaultEnabled": true,
+      "templateKeys": [
+        "segment_length_pending",
+        "segment_lengths_consolidated"
+      ]
+    },
+    "total_length": {
+      "section": "Cotas",
+      "description": "Comprimento total PDF × referência da estrutura",
+      "defaultEnabled": true,
+      "templateKeys": ["total_length"]
+    },
+    "decapes_ed": {
+      "section": "Cotas",
+      "description": "Decapes E/D globais no PDF",
+      "defaultEnabled": true,
+      "templateKeys": ["decapes_ed"]
+    },
+    "dimension_note": {
+      "section": "Cotas",
+      "description": "Notas dimensionais ambíguas (termo vs decape)",
+      "defaultEnabled": true,
+      "templateKeys": ["dimension_note_ambiguous"]
     }
   }
 }

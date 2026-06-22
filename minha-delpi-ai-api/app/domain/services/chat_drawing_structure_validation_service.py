@@ -54,74 +54,80 @@ class ChatDrawingStructureValidationService:
             product_code=product_code,
         )
         has_pdf_bom_signal = bom_available or bool(pdf_extract.get("componentCodes"))
+        group_code = cls._product_group_code(root)
 
-        if not bom_available and not pdf_extract.get("componentCodes"):
-            items.append(
-                content.item_from_template(
-                    "bom_scope_unavailable",
-                    status="pending",
-                    pdf_evidence=content.evidence("pendingPdf"),
-                    api_evidence=content.evidence("dash"),
-                    recommendation_field="recommendationPending",
-                    pdf_scope=bom_scope_label,
-                )
-            )
-
-        if has_pdf_bom_signal and comparison.missing_in_pdf:
-            from app.domain.services.chat_drawing_multipage_coverage_service import (
-                ChatDrawingMultipageCoverageService,
-            )
-
-            items.append(
-                content.item_from_template(
-                    "bom_missing",
-                    status=ChatDrawingMultipageCoverageService.resolve_absence_check_status(
-                        "critical_error",
-                        pdf_extract=pdf_extract,
-                        comparison=comparison,
-                    ),
-                    pdf_evidence=content.evidence("dash"),
-                    api_evidence=", ".join(comparison.missing_in_pdf[:5]),
-                    pdf_scope=bom_scope_label,
-                )
-            )
-
-        if has_pdf_bom_signal:
-            bom_only_extra = sorted(
-                code
-                for code in comparison.extra_in_pdf
-                if not ChatDrawingPatternsService.is_intermediate_family(str(code))
-            )
-
-            if bom_only_extra:
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "bom_comparison",
+            product_code,
+            group_code=group_code,
+        ):
+            if not bom_available and not pdf_extract.get("componentCodes"):
                 items.append(
                     content.item_from_template(
-                        "bom_extra",
-                        status="critical_error",
-                        pdf_evidence=", ".join(bom_only_extra[:8]),
+                        "bom_scope_unavailable",
+                        status="pending",
+                        pdf_evidence=content.evidence("pendingPdf"),
                         api_evidence=content.evidence("dash"),
+                        recommendation_field="recommendationPending",
                         pdf_scope=bom_scope_label,
                     )
                 )
 
-            if comparison.api_codes and comparison.pdf_bom_codes and not (
-                comparison.missing_in_pdf or comparison.extra_in_pdf
-            ):
+            if has_pdf_bom_signal and comparison.missing_in_pdf:
+                from app.domain.services.chat_drawing_multipage_coverage_service import (
+                    ChatDrawingMultipageCoverageService,
+                )
+
                 items.append(
                     content.item_from_template(
-                        "bom_match_ok",
-                        status="ok",
-                        pdf_evidence=content.evidence_format(
-                            "codeCount",
-                            count=str(len(comparison.pdf_bom_codes)),
+                        "bom_missing",
+                        status=ChatDrawingMultipageCoverageService.resolve_absence_check_status(
+                            "critical_error",
+                            pdf_extract=pdf_extract,
+                            comparison=comparison,
                         ),
-                        api_evidence=content.evidence_format(
-                            "codeCount",
-                            count=str(len(comparison.api_codes)),
-                        ),
+                        pdf_evidence=content.evidence("dash"),
+                        api_evidence=", ".join(comparison.missing_in_pdf[:5]),
                         pdf_scope=bom_scope_label,
                     )
                 )
+
+            if has_pdf_bom_signal:
+                bom_only_extra = sorted(
+                    code
+                    for code in comparison.extra_in_pdf
+                    if not ChatDrawingPatternsService.is_intermediate_family(str(code))
+                )
+
+                if bom_only_extra:
+                    items.append(
+                        content.item_from_template(
+                            "bom_extra",
+                            status="critical_error",
+                            pdf_evidence=", ".join(bom_only_extra[:8]),
+                            api_evidence=content.evidence("dash"),
+                            pdf_scope=bom_scope_label,
+                        )
+                    )
+
+                if comparison.api_codes and comparison.pdf_bom_codes and not (
+                    comparison.missing_in_pdf or comparison.extra_in_pdf
+                ):
+                    items.append(
+                        content.item_from_template(
+                            "bom_match_ok",
+                            status="ok",
+                            pdf_evidence=content.evidence_format(
+                                "codeCount",
+                                count=str(len(comparison.pdf_bom_codes)),
+                            ),
+                            api_evidence=content.evidence_format(
+                                "codeCount",
+                                count=str(len(comparison.api_codes)),
+                            ),
+                            pdf_scope=bom_scope_label,
+                        )
+                    )
 
         from app.domain.services.chat_drawing_multipage_coverage_service import (
             ChatDrawingMultipageCoverageService,
@@ -130,7 +136,7 @@ class ChatDrawingStructureValidationService:
         if ChatDrawingValidationRuleRegistryService.is_enabled(
             "multipage_coverage",
             product_code,
-            group_code=cls._product_group_code(root),
+            group_code=group_code,
         ):
             items.extend(
                 ChatDrawingMultipageCoverageService.build_check_items(
@@ -142,7 +148,7 @@ class ChatDrawingStructureValidationService:
         if ChatDrawingValidationRuleRegistryService.is_enabled(
             "bom_quantity",
             product_code,
-            group_code=cls._product_group_code(root),
+            group_code=group_code,
         ):
             from app.domain.services.chat_drawing_bom_quantity_validation_service import (
                 ChatDrawingBomQuantityValidationService,
@@ -159,7 +165,7 @@ class ChatDrawingStructureValidationService:
         if ChatDrawingValidationRuleRegistryService.is_enabled(
             "balloon_presence",
             product_code,
-            group_code=cls._product_group_code(root),
+            group_code=group_code,
         ):
             from app.domain.services.chat_drawing_balloon_validation_service import (
                 ChatDrawingBalloonValidationService,
@@ -171,16 +177,47 @@ class ChatDrawingStructureValidationService:
                 )
             )
 
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "intermediate_presence",
+            product_code,
+            group_code=group_code,
+        ):
+            items.extend(
+                cls._intermediate_code_items(
+                    root,
+                    pdf_extract,
+                    product_code,
+                    comparison=comparison,
+                )
+            )
+
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "intermediate_length",
+            product_code,
+            group_code=group_code,
+        ) or ChatDrawingValidationRuleRegistryService.is_enabled(
+            "decape_per_intermediate",
+            product_code,
+            group_code=group_code,
+        ):
+            items.extend(
+                cls._intermediate_dimension_items(
+                    root,
+                    pdf_extract,
+                    product_code,
+                    group_code=group_code,
+                )
+            )
+
         items.extend(
-            cls._intermediate_code_items(
+            cls._dimension_items(
                 root,
                 pdf_extract,
-                product_code,
-                comparison=comparison,
+                bom_scope_label,
+                product_code=product_code,
+                group_code=group_code,
             )
         )
-        items.extend(cls._intermediate_dimension_items(root, pdf_extract))
-        items.extend(cls._dimension_items(root, pdf_extract, bom_scope_label))
 
         return items
 
@@ -319,41 +356,58 @@ class ChatDrawingStructureValidationService:
         cls,
         root: dict,
         pdf_extract: dict,
+        product_code: str,
+        *,
+        group_code: str | None = None,
     ) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
         intermediate_rows = (
             ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
         )
+        length_enabled = ChatDrawingValidationRuleRegistryService.is_enabled(
+            "intermediate_length",
+            product_code,
+            group_code=group_code,
+        )
+        decape_enabled = ChatDrawingValidationRuleRegistryService.is_enabled(
+            "decape_per_intermediate",
+            product_code,
+            group_code=group_code,
+        )
 
-        for row in intermediate_rows:
-            code = str(row.get("code") or "")
-            length = row.get("lengthMm")
-            cable_qty = row.get("cableQuantityMm")
-            cable_unit = str(row.get("cableUnit") or "mm")
+        if length_enabled:
+            for row in intermediate_rows:
+                code = str(row.get("code") or "")
+                length = row.get("lengthMm")
+                cable_qty = row.get("cableQuantityMm")
+                cable_unit = str(row.get("cableUnit") or "mm")
 
-            if length is None or cable_qty is None:
-                continue
+                if length is None or cable_qty is None:
+                    continue
 
-            within = ChatDrawingToleranceService.lengths_within_tolerance(length, cable_qty)
+                within = ChatDrawingToleranceService.lengths_within_tolerance(length, cable_qty)
 
-            if within is False:
-                items.append(
-                    content.item_from_template(
-                        "intermediate_length",
-                        status="critical_error",
-                        pdf_evidence=content.evidence_format(
-                            "lengthFromDescription",
-                            length=str(length),
-                        ),
-                        api_evidence=content.evidence_format(
-                            "lengthFromStructure",
-                            length=str(cable_qty),
-                            unit=cable_unit,
-                        ),
-                        item_values={"code": code},
+                if within is False:
+                    items.append(
+                        content.item_from_template(
+                            "intermediate_length",
+                            status="critical_error",
+                            pdf_evidence=content.evidence_format(
+                                "lengthFromDescription",
+                                length=str(length),
+                            ),
+                            api_evidence=content.evidence_format(
+                                "lengthFromStructure",
+                                length=str(cable_qty),
+                                unit=cable_unit,
+                            ),
+                            item_values={"code": code},
+                        )
                     )
-                )
+
+        if not decape_enabled:
+            return items
 
         dimensions = pdf_extract.get("dimensions") if isinstance(
             pdf_extract.get("dimensions"), dict
@@ -626,6 +680,9 @@ class ChatDrawingStructureValidationService:
         root: dict,
         pdf_extract: dict,
         bom_scope_label: str = "",
+        *,
+        product_code: str = "",
+        group_code: str | None = None,
     ) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
         content = ChatDrawingValidationContentService
@@ -633,7 +690,12 @@ class ChatDrawingStructureValidationService:
             pdf_extract.get("dimensions"), dict
         ) else {}
 
-        items.extend(cls._dimension_note_items(pdf_extract))
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "dimension_note",
+            product_code,
+            group_code=group_code,
+        ):
+            items.extend(cls._dimension_note_items(pdf_extract))
 
         total_length = dimensions.get("totalLengthMm")
         left_decape = dimensions.get("leftDecapeMm")
@@ -643,7 +705,11 @@ class ChatDrawingStructureValidationService:
             ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
         )
 
-        if segment_lengths:
+        if segment_lengths and ChatDrawingValidationRuleRegistryService.is_enabled(
+            "segment_length",
+            product_code,
+            group_code=group_code,
+        ):
             api_lengths = [
                 row.get("lengthMm")
                 for row in intermediate_rows
@@ -705,7 +771,15 @@ class ChatDrawingStructureValidationService:
             else None
         )
 
-        if total_length is not None and api_reference is not None:
+        if (
+            total_length is not None
+            and api_reference is not None
+            and ChatDrawingValidationRuleRegistryService.is_enabled(
+                "total_length",
+                product_code,
+                group_code=group_code,
+            )
+        ):
             within = ChatDrawingToleranceService.lengths_within_tolerance(
                 total_length,
                 api_reference.length_mm,
@@ -745,7 +819,14 @@ class ChatDrawingStructureValidationService:
                 )
             )
 
-        if left_decape is not None or right_decape is not None:
+        if (
+            (left_decape is not None or right_decape is not None)
+            and ChatDrawingValidationRuleRegistryService.is_enabled(
+                "decapes_ed",
+                product_code,
+                group_code=group_code,
+            )
+        ):
             indication = dimensions.get("decapeIndication") if isinstance(
                 dimensions.get("decapeIndication"), dict
             ) else {}

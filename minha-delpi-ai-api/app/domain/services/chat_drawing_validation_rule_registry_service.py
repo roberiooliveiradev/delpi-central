@@ -13,6 +13,8 @@ _BUNDLE = "drawing_validation_rules"
 
 
 class ChatDrawingValidationRuleRegistryService:
+    _template_rule_index_cache: dict[str, str] | None = None
+
     @classmethod
     def is_enabled(
         cls,
@@ -82,6 +84,100 @@ class ChatDrawingValidationRuleRegistryService:
             candidates = enabled
 
         return tuple(rule for rule in candidates if rule not in disabled)
+
+    @classmethod
+    def rule_for_template(cls, template_key: str) -> str | None:
+        normalized = str(template_key or "").strip()
+
+        if not normalized:
+            return None
+
+        return cls._template_rule_index().get(normalized)
+
+    @classmethod
+    def template_keys_for_rule(cls, rule_id: str) -> tuple[str, ...]:
+        node = cls._rule_catalog().get(str(rule_id or "").strip())
+
+        if not isinstance(node, dict):
+            return ()
+
+        raw = node.get("templateKeys")
+
+        if not isinstance(raw, list):
+            return ()
+
+        return tuple(str(key).strip() for key in raw if str(key).strip())
+
+    @classmethod
+    def is_template_enabled(
+        cls,
+        template_key: str,
+        product_code: str,
+        *,
+        group_code: str | None = None,
+    ) -> bool:
+        normalized = str(template_key or "").strip()
+
+        if not normalized:
+            return True
+
+        if normalized in cls._core_template_keys():
+            return True
+
+        rule_id = cls.rule_for_template(normalized)
+
+        if not rule_id:
+            return True
+
+        return cls.is_enabled(rule_id, product_code, group_code=group_code)
+
+    @classmethod
+    def filter_items(
+        cls,
+        items: list[dict[str, Any]],
+        product_code: str,
+        *,
+        group_code: str | None = None,
+    ) -> list[dict[str, Any]]:
+        return [
+            item
+            for item in items
+            if cls.is_template_enabled(
+                str(item.get("templateKey") or ""),
+                product_code,
+                group_code=group_code,
+            )
+        ]
+
+    @classmethod
+    def _core_template_keys(cls) -> frozenset[str]:
+        raw = ChatAssistantContentService.get_node(_BUNDLE, "coreTemplateKeys")
+
+        if not isinstance(raw, list):
+            return frozenset()
+
+        return frozenset(str(item).strip() for item in raw if str(item).strip())
+
+    @classmethod
+    def _template_rule_index(cls) -> dict[str, str]:
+        if cls._template_rule_index_cache is not None:
+            return cls._template_rule_index_cache
+
+        index: dict[str, str] = {}
+
+        for rule_id, node in cls._rule_catalog().items():
+            if not isinstance(node, dict):
+                continue
+
+            for template_key in node.get("templateKeys") or []:
+                normalized = str(template_key).strip()
+
+                if normalized:
+                    index[normalized] = str(rule_id)
+
+        cls._template_rule_index_cache = index
+
+        return index
 
     @classmethod
     def _rule_catalog(cls) -> dict[str, Any]:

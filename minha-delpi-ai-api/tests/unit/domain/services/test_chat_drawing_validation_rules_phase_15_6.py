@@ -24,6 +24,56 @@ def test_rule_registry_default_family_enables_bom_quantity():
     )
 
 
+def test_rule_registry_star_enables_bom_comparison():
+    enabled = ChatDrawingValidationRuleRegistryService.list_enabled_rules(
+        "90262008",
+        group_code="9026",
+    )
+
+    assert "bom_comparison" in enabled
+    assert "revision_cross_check" in enabled
+
+
+def test_rule_for_template_maps_bom_missing():
+    assert (
+        ChatDrawingValidationRuleRegistryService.rule_for_template("bom_missing")
+        == "bom_comparison"
+    )
+
+
+def test_core_template_always_enabled():
+    assert ChatDrawingValidationRuleRegistryService.is_template_enabled(
+        "product_found",
+        "70260048",
+        group_code="7026",
+    )
+
+
+def test_filter_items_removes_balloon_for_7026():
+    items = [
+        {"templateKey": "product_found", "status": "ok"},
+        {"templateKey": "balloon_presence_ok", "status": "ok"},
+    ]
+
+    filtered = ChatDrawingValidationRuleRegistryService.filter_items(
+        items,
+        "70260048",
+        group_code="7026",
+    )
+
+    keys = {item.get("templateKey") for item in filtered}
+
+    assert "product_found" in keys
+    assert "balloon_presence_ok" not in keys
+
+
+def test_template_keys_for_rule_bom_quantity():
+    keys = ChatDrawingValidationRuleRegistryService.template_keys_for_rule("bom_quantity")
+
+    assert "bom_quantity_mismatch" in keys
+    assert "bom_quantity_ok" in keys
+
+
 def test_rule_registry_7026_disables_balloon_presence():
     assert not ChatDrawingValidationRuleRegistryService.is_enabled(
         "balloon_presence",

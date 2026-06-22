@@ -161,27 +161,33 @@ class ChatDrawingValidationOrchestrationService:
             from app.domain.services.chat_drawing_guide_structure_consistency_service import (
                 ChatDrawingGuideStructureConsistencyService,
             )
-
-            items.extend(
-                ChatDrawingGuideStructureConsistencyService.build_check_items(
-                    root=root,
-                    product_code=code,
-                )
-            )
-
-            from app.domain.services.chat_drawing_guide_component_consistency_service import (
-                ChatDrawingGuideComponentConsistencyService,
-            )
             from app.domain.services.chat_drawing_validation_rule_registry_service import (
                 ChatDrawingValidationRuleRegistryService,
             )
 
             product = root.get("product") if isinstance(root.get("product"), dict) else {}
+            group_code = str(product.get("group_code") or "").strip() or None
+
+            if ChatDrawingValidationRuleRegistryService.is_enabled(
+                "guide_structure",
+                code,
+                group_code=group_code,
+            ):
+                items.extend(
+                    ChatDrawingGuideStructureConsistencyService.build_check_items(
+                        root=root,
+                        product_code=code,
+                    )
+                )
+
+            from app.domain.services.chat_drawing_guide_component_consistency_service import (
+                ChatDrawingGuideComponentConsistencyService,
+            )
 
             if ChatDrawingValidationRuleRegistryService.is_enabled(
                 "guide_component",
                 code,
-                group_code=str(product.get("group_code") or "") or None,
+                group_code=group_code,
             ):
                 items.extend(
                     ChatDrawingGuideComponentConsistencyService.build_check_items(
@@ -262,6 +268,18 @@ class ChatDrawingValidationOrchestrationService:
                     product_code=code,
                 )
             )
+
+        from app.domain.services.chat_drawing_validation_rule_registry_service import (
+            ChatDrawingValidationRuleRegistryService,
+        )
+
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        group_code = str(product.get("group_code") or "").strip() or None
+        items = ChatDrawingValidationRuleRegistryService.filter_items(
+            items,
+            code,
+            group_code=group_code,
+        )
 
         items, extraction_confidence = cls._apply_validation_layers(
             items,
@@ -572,28 +590,45 @@ class ChatDrawingValidationOrchestrationService:
         api_code: str,
         pdf_extract: dict,
     ) -> list[dict[str, Any]]:
+        from app.domain.services.chat_drawing_validation_rule_registry_service import (
+            ChatDrawingValidationRuleRegistryService,
+        )
+
         items: list[dict[str, Any]] = []
+        group_code = str(product.get("group_code") or "").strip() or None
         pdf_code = str(pdf_extract.get("productCode") or "").strip()
         api_product_code = str(product.get("code") or api_code or "").strip()
 
-        if pdf_code and api_product_code and pdf_code != api_product_code:
-            items.append(
-                cls._item_from_template(
-                    "product_code_mismatch",
-                    status=cls._STATUS_CRITICAL,
-                    pdf_evidence=pdf_code,
-                    api_evidence=api_product_code,
+        if ChatDrawingValidationRuleRegistryService.is_enabled(
+            "product_code_cross_check",
+            api_code,
+            group_code=group_code,
+        ):
+            if pdf_code and api_product_code and pdf_code != api_product_code:
+                items.append(
+                    cls._item_from_template(
+                        "product_code_mismatch",
+                        status=cls._STATUS_CRITICAL,
+                        pdf_evidence=pdf_code,
+                        api_evidence=api_product_code,
+                    )
                 )
-            )
-        elif pdf_code and api_product_code:
-            items.append(
-                cls._item_from_template(
-                    "product_code_ok",
-                    status=cls._STATUS_OK,
-                    pdf_evidence=pdf_code,
-                    api_evidence=api_product_code,
+            elif pdf_code and api_product_code:
+                items.append(
+                    cls._item_from_template(
+                        "product_code_ok",
+                        status=cls._STATUS_OK,
+                        pdf_evidence=pdf_code,
+                        api_evidence=api_product_code,
+                    )
                 )
-            )
+
+        if not ChatDrawingValidationRuleRegistryService.is_enabled(
+            "revision_cross_check",
+            api_code,
+            group_code=group_code,
+        ):
+            return items
 
         pdf_revision = str(pdf_extract.get("revision") or "").strip()
         pdf_internal_revision = str(pdf_extract.get("internalRevision") or "").strip()

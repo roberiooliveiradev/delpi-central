@@ -249,8 +249,8 @@ DRAWING_VALIDATE_CODES=90262008,90264243,90264227 \
 - [x] Policy `drawing-analysis-delpi-skill.md` sem thresholds nem classificação técnica duplicada
 - [x] Policy render-only injetada quando tool context contém `drawingAnalysis` (`drawing-analysis-render-only.md`)
 - [x] Turn prep hidrata `drawingAnalysis` em follow-ups e injeta policy render-only (`ChatDrawingLlmPresentationService`)
-- [ ] `drawing_validation_rules.json` cobre todas as regras ativas do orchestrator
-- [ ] Família PA desliga regra sem alterar skill nem agente
+- [x] `drawing_validation_rules.json` cobre todas as regras ativas do orchestrator
+- [x] Família PA desliga regra sem alterar skill nem agente
 - [ ] Novos fixes entram como caso de **regra** + teste de serviço (não só `test_*_90xxxxxx.py`)
 - [ ] Checklist UI e relatório LLM concordam (mesmo `items[]`)
 - [ ] RAG normativo não define status OK/Pendente/Crítico
