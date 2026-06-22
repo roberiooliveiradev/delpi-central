@@ -269,6 +269,10 @@ class PromptPolicyService:
         if self._contains_any(normalized_tool_context, self.DRAWING_ANALYSIS_MARKERS):
             sections.append(self._load_policy("drawing-analysis-render-only.md"))
 
+            if normalized_rag_context.strip():
+                rag_policy = self._drawing_rag_normative_policy_file()
+                sections.append(self._load_policy(rag_policy))
+
         if not resolved_skills.get("sqlAuthoring") and (
             self._contains_any(normalized_rag_context, self.SQL_MARKERS)
             or self._contains_any(normalized_tool_context, self.SQL_MARKERS)
@@ -286,6 +290,17 @@ class PromptPolicyService:
 
     def _contains_any(self, value: str, markers: tuple[str, ...]) -> bool:
         return any(self._normalize(marker) in value for marker in markers)
+
+    @classmethod
+    def _drawing_rag_normative_policy_file(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                "drawing_query_intent",
+                "ragNormative",
+                "policyFile",
+                default="drawing-analysis-rag-normative.md",
+            )
+        )
 
     def _normalize(self, value: str | None) -> str:
         return str(value or "").casefold()

@@ -244,6 +244,42 @@ def test_contextual_prompt_includes_drawing_render_only_when_analysis_in_tool_co
     assert "drawingAnalysis.items" in prompt or "drawingAnalysisExport" in prompt
 
 
+def test_contextual_prompt_includes_drawing_rag_normative_when_rag_and_analysis():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="Normas_Tecnicas_DELPI: decape de cabo ±1 mm quando indicado.",
+        tool_context='{"drawingAnalysisMode": true, "drawingAnalysis": {"items": []}}',
+        skills={"drawingAnalysis": True},
+    )
+
+    assert "RAG normativo" in prompt
+    assert "não" in prompt.lower() and "status" in prompt.lower()
+    assert "Ordem de autoridade" in prompt or "API DELPI" in prompt
+
+
+def test_contextual_prompt_omits_drawing_rag_normative_without_rag_context():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context='{"drawingAnalysisMode": true, "drawingAnalysis": {"items": []}}',
+        skills={"drawingAnalysis": True},
+    )
+
+    assert "Modo render-only" in prompt
+    assert "RAG normativo" not in prompt
+
+
+def test_document_vision_policy_excludes_validation_checklist():
+    policy_path = PromptPolicyService.POLICY_DIR / "document-vision-delpi-skill.md"
+    content = policy_path.read_text(encoding="utf-8").lower()
+
+    assert "fora de escopo" in content
+    assert "drawinganalysis" in content.replace("-", "")
+    assert "erro crítico" not in content or "não" in content
+
+
 def test_drawing_skill_policy_is_decoupled_from_validation_rules():
     policy_path = PromptPolicyService.POLICY_DIR / "drawing-analysis-delpi-skill.md"
     content = policy_path.read_text(encoding="utf-8").lower()

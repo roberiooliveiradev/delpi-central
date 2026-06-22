@@ -174,5 +174,8 @@
   },
   "followUpRenderOnly": {
     "policyFile": "drawing-analysis-render-only.md"
+  },
+  "ragNormative": {
+    "policyFile": "drawing-analysis-rag-normative.md"
   }
 }

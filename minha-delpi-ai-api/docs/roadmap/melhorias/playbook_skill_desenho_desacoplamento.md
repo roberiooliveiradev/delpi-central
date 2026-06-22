@@ -157,8 +157,8 @@ Formalizar ligação `rule_id` → serviço → `templateKey` em `ChatDrawingVal
 | **A — Contrato skill × pipeline** | Policy enxuta; LLM render-only | `drawing-analysis-delpi-skill.md` ≤ 40 linhas técnicas; instrução em turn prep para ecoar `items[]`; doc em `chat-intelligence-base.md` | 1–2 d | **Concluída (jun/2026)** — `ChatDrawingLlmPresentationService` + policies |
 | **B — Registry completo** | Todas as regras em `drawing_validation_rules.json` | Famílias PA ligam/desligam regras; orchestrator consulta registry antes de montar items | 2–3 d |
 | **C — Testes por regra** | Migrar âncoras de produto para categorias | Casos em `drawing_hierarchical_regression_cases.py`; baseline `drawing_assertiveness_baseline.json`; smoke por regra, não por SKU | contínuo |
-| **D — RAG enxuto** | Normas sem duplicar checklist | Docs GPT = contexto normativo; status só via pipeline | 1 d |
-| **E — Visão separada** | `document-vision-delpi` sem regras de validação | Policy de desenho referencia visão como dependência | 0,5 d |
+| **D — RAG enxuto** | Normas sem duplicar checklist | Docs GPT = contexto normativo; status só via pipeline | 1 d | **Concluída (jun/2026)** — `drawing-analysis-rag-normative.md` |
+| **E — Visão separada** | `document-vision-delpi` sem regras de validação | Policy de desenho referencia visão como dependência | 0,5 d | **Concluída (jun/2026)** — escopo explícito fora de checklist |
 
 ### Fase A — detalhe
 
@@ -253,7 +253,7 @@ DRAWING_VALIDATE_CODES=90262008,90264243,90264227 \
 - [x] Família PA desliga regra sem alterar skill nem agente
 - [x] Novos fixes entram como caso de **regra** + teste de serviço (`drawing_validation_rule_regression_cases.py`)
 - [ ] Checklist UI e relatório LLM concordam (mesmo `items[]`)
-- [ ] RAG normativo não define status OK/Pendente/Crítico
+- [x] RAG normativo não define status OK/Pendente/Crítico (`drawing-analysis-rag-normative.md`)
 
 ---
 

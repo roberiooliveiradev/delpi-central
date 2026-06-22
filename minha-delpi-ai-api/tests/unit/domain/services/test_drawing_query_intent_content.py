@@ -43,3 +43,13 @@ def test_follow_up_render_only_policy_configured():
     )
 
     assert policy_file == "drawing-analysis-render-only.md"
+
+
+def test_rag_normative_policy_configured():
+    policy_file = ChatAssistantContentService.get(
+        "drawing_query_intent",
+        "ragNormative",
+        "policyFile",
+    )
+
+    assert policy_file == "drawing-analysis-rag-normative.md"

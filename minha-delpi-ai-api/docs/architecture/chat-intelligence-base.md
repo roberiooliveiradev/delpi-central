@@ -94,6 +94,10 @@ Contrato neutro: `documentVision.tables[]`. Contrato skill: `bomRows`, `drawingA
 
 **Render-only (Fase A — jun/2026):** quando `drawingAnalysis` / `drawingAnalysisExport` estão no tool context, o checklist já foi decidido pelo pipeline (`ChatDrawingValidationOrchestrationService`). O LLM recebe `drawing-analysis-render-only.md` via `PromptPolicyService` e **não reclassifica** `items[]` — só narrativa, plano de ação e normas (RAG). Follow-ups sem novo PDF reidratam o último `drawingAnalysis` com `ChatDrawingLlmPresentationService`. Playbook: [desacoplamento skill](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md) Fase A ✅.
 
+**RAG normativo (Fase D — jun/2026):** com checklist de desenho **e** trechos RAG no turno, `PromptPolicyService` injeta `drawing-analysis-rag-normative.md` — normas explicam requisitos; **status** permanece só em `drawingAnalysis.items[]`.
+
+**Visão separada (Fase E — jun/2026):** `document-vision-delpi-skill.md` cobre OCR/descrição visual apenas; validação técnica e checklist ficam em `drawing-analysis-delpi` + pipeline `ChatDrawing*`.
+
 Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) são **consumidos só pelo fluxo de desenho** — não expandir semântica DELPI para turn prep genérico, intent `attachment_document` ou prompt global.
 
 ### Serviços centrais
