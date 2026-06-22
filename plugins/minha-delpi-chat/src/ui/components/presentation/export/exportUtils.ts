@@ -9,6 +9,11 @@ import {
 import type { ExportColumn, TableExportPayload } from "../../../../export/types";
 import { chatAlert } from "../../../utils/chatNativeDialogs";
 import { formatChartColumnLabel } from "../pipeline/chartAxisSelection";
+import {
+  exportChartPayloadToPdf,
+  exportTablePayloadToPdf,
+  exportTablePayloadsToPdf,
+} from "../../../../export/pdf/tablePdfExport";
 import { rasterizeChartElement } from "./chartPngExport";
 import { buildDashboardCsv } from "./dashboardExportCsv";
 import { exportTreeToCsv, treePresentationToTable } from "../pipeline/treePresentationUtils";
@@ -180,34 +185,7 @@ export function exportPayloadToXlsx(payload: TableExportPayload): void {
 }
 
 export function exportPayloadToPdf(payload: TableExportPayload): void {
-  if (!payload.columns.length) {
-    chatAlert("Não há dados para exportar em PDF.");
-    return;
-  }
-
-  void Promise.all([import("jspdf"), import("jspdf-autotable")])
-    .then(([{ jsPDF }, { autoTable }]) => {
-      const doc = new jsPDF({ orientation: "landscape" });
-
-      doc.setFontSize(14);
-      doc.text(payload.title || "Dados", 14, 18);
-
-      autoTable(doc, {
-        head: [payload.columns.map((column) => column.label)],
-        body: payload.rows.map((row) =>
-          payload.columns.map((column) => String(row[column.key] ?? "")),
-        ),
-        startY: 24,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [14, 165, 233] },
-      });
-
-      doc.save(`${sanitizeFilename(payload.title || "dados")}.pdf`);
-    })
-    .catch((error) => {
-      console.error("[exportPayloadToPdf]", error);
-      chatAlert("Não foi possível exportar PDF. Tente novamente.");
-    });
+  exportTablePayloadToPdf(payload);
 }
 
 export function exportToXlsx(presentation: TablePresentation) {
@@ -255,40 +233,7 @@ export function exportChartPresentationToPdf(
   const title = presentation.title || "grafico";
 
   void rasterizeChartElement(chartRoot ?? null).then((dataUrl) => {
-    if (dataUrl) {
-      void import("jspdf")
-        .then(({ jsPDF }) => {
-          const img = new Image();
-
-          img.onload = () => {
-            const doc = new jsPDF({ orientation: "landscape" });
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const margin = 14;
-            const maxWidth = pageWidth - margin * 2;
-            const ratio = img.height / img.width || 0.5;
-            const imageWidth = maxWidth;
-            const imageHeight = imageWidth * ratio;
-
-            doc.setFontSize(14);
-            doc.text(title, margin, 18);
-            doc.addImage(dataUrl, "PNG", margin, 24, imageWidth, imageHeight);
-            doc.save(`${sanitizeFilename(title)}.pdf`);
-          };
-
-          img.onerror = () => {
-            exportPayloadToPdf(payload);
-          };
-
-          img.src = dataUrl;
-        })
-        .catch((error) => {
-          console.error("[exportChartPresentationToPdf]", error);
-          chatAlert("Não foi possível exportar PDF. Tente novamente.");
-        });
-      return;
-    }
-
-    exportPayloadToPdf(payload);
+    exportChartPayloadToPdf(title, payload, dataUrl);
   });
 }
 
@@ -384,58 +329,7 @@ export function exportDashboardToXlsx(presentation: DashboardPresentation) {
 
 export function exportDashboardToPdf(presentation: DashboardPresentation) {
   const sheets = buildDashboardExportSheets(presentation);
-
-  if (!sheets.length) {
-    chatAlert("Não há dados para exportar em PDF.");
-    return;
-  }
-
-      void Promise.all([import("jspdf"), import("jspdf-autotable")])
-    .then(([{ jsPDF }, { autoTable }]) => {
-      const doc = new jsPDF({ orientation: "landscape" });
-      let cursorY = 18;
-
-      doc.setFontSize(14);
-      doc.text(presentation.title || "Dashboard", 14, cursorY);
-      cursorY += 10;
-
-      for (const sheet of sheets) {
-        if (!sheet.columns.length) {
-          continue;
-        }
-
-        if (cursorY > doc.internal.pageSize.getHeight() - 30) {
-          doc.addPage();
-          cursorY = 18;
-        }
-
-        doc.setFontSize(11);
-        doc.text(sheet.title, 14, cursorY);
-        cursorY += 4;
-
-        autoTable(doc, {
-          head: [sheet.columns.map((column) => column.label)],
-          body: sheet.rows.map((row) =>
-            sheet.columns.map((column) => String(row[column.key] ?? "")),
-          ),
-          startY: cursorY + 2,
-          styles: { fontSize: 8 },
-          headStyles: { fillColor: [14, 165, 233] },
-        });
-
-        const finalY = (
-          doc as unknown as { lastAutoTable?: { finalY?: number } }
-        ).lastAutoTable?.finalY;
-
-        cursorY = typeof finalY === "number" ? finalY + 12 : cursorY + 24;
-      }
-
-      doc.save(`${sanitizeFilename(presentation.title || "dashboard")}.pdf`);
-    })
-    .catch((error) => {
-      console.error("[exportDashboardToPdf]", error);
-      chatAlert("Não foi possível exportar PDF. Tente novamente.");
-    });
+  exportTablePayloadsToPdf(presentation.title || "dashboard", sheets);
 }
 
 export function exportPresentation(

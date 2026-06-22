@@ -69,4 +69,15 @@ export type {
   DrawingExportTable,
 } from "../ui/utils/drawingAnalysisExport";
 
+export {
+  buildDelpiDocumentHtml,
+  exportTablePayloadToPdf,
+  exportTablePayloadsToPdf,
+  exportChartPayloadToPdf,
+  printDelpiDocumentHtml,
+  printDelpiDocumentSpec,
+  resolveDelpiLogoUrl,
+} from "./pdf";
+export type { DelpiDocumentSpec } from "./pdf";
+
 export { parseContentDispositionFilename, triggerBlobDownload } from "../utils/downloadBlob";
