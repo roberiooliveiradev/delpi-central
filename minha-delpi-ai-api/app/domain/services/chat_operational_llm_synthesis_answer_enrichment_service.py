@@ -55,7 +55,18 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             body = cls._strip_markdown_tables(body)
 
         body = cls._dedupe_repeated_paragraphs(body)
-        body = cls._dedupe_repeated_sentences(body)
+
+        is_thinker = str(response_mode or "").strip().lower() == "thinker"
+        has_markdown_sections = "### " in body
+
+        if is_thinker and has_markdown_sections:
+            body = cls._dedupe_markdown_sections(body)
+        else:
+            body = cls._dedupe_repeated_sentences(body)
+
+            if is_thinker:
+                body = cls._dedupe_markdown_sections(body)
+
         body = cls._strip_sparse_list_items(body)
         body = cls._strip_contradictory_claims(body, tool_calls)
         body = cls._strip_hallucination_markers(body)
@@ -495,6 +506,55 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             kept.append(paragraph)
 
         return "\n\n".join(kept).strip()
+
+    @classmethod
+    def _dedupe_markdown_sections(cls, answer: str) -> str:
+        lines = str(answer or "").splitlines()
+        kept: list[str] = []
+        seen_titles: set[str] = set()
+        section_lines: list[str] = []
+        skip_until_next_section = False
+
+        def flush_section() -> None:
+            nonlocal section_lines
+
+            if not section_lines:
+                return
+
+            kept.extend(section_lines)
+            section_lines = []
+
+        for line in lines:
+            stripped = str(line or "").strip()
+
+            if stripped.startswith("### "):
+                title_key = ChatMessageNormalizationService.normalize_for_matching(
+                    stripped[4:].strip(),
+                )
+
+                if title_key and title_key in seen_titles:
+                    flush_section()
+                    skip_until_next_section = True
+                    continue
+
+                flush_section()
+                skip_until_next_section = False
+
+                if title_key:
+                    seen_titles.add(title_key)
+
+                section_lines = [line]
+                continue
+
+            if skip_until_next_section:
+                continue
+
+            if section_lines or stripped:
+                section_lines.append(line)
+
+        flush_section()
+
+        return "\n".join(kept).strip()
 
     @classmethod
     def _dedupe_repeated_sentences(cls, answer: str) -> str:

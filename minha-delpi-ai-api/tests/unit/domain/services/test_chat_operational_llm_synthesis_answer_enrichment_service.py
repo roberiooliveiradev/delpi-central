@@ -146,3 +146,25 @@ def test_trims_normal_prose_to_budget():
     )
 
     assert len(enriched) <= 521
+
+
+def test_dedupes_repeated_markdown_sections_for_thinker():
+    answer = (
+        "### Destaques\n\n"
+        "O produto **10080045** está cadastrado como MP.\n\n"
+        "### Destaques\n\n"
+        "O produto **10080045** está cadastrado como MP.\n\n"
+        "### Pontos de atenção\n\n"
+        "Roteiro sem operações registradas."
+    )
+
+    enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+        answer,
+        message="me fale do produto 10080045",
+        tool_calls=_tool_calls({"ok": True, "path": "/products/10080045/analyser"}),
+        response_mode_effect="llm_synthesis",
+        response_mode="thinker",
+    )
+
+    assert enriched.count("### Destaques") == 1
+    assert "### Pontos de atenção" in enriched

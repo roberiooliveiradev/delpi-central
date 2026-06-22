@@ -63,6 +63,41 @@ def test_apply_turn_direct_answer_policy_fast_uses_commentary_direct():
     assert tool_context.get("commentaryBriefDirect") is True
 
 
+def test_apply_turn_direct_answer_policy_fast_prefers_commentary_over_composite_direct():
+    tool_context: dict = {}
+    composite_direct = "### Status fabril\n\nProsa longa do presenter."
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/90260140/factory-status",
+        "dataCommentary": {
+            "highlights": [
+                {
+                    "text": (
+                        "Status fabril **INTERMEDIÁRIOS EM PRODUÇÃO / PA NÃO FINALIZADO** "
+                        "para o produto **90260140**."
+                    ),
+                },
+            ],
+        },
+    }
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="Qual o status completo na fábrica do produto 90260140 hoje?",
+        response_mode="fast",
+        direct_answer=composite_direct,
+        skip_rag=True,
+        tool_calls=_tool_calls(metadata),
+        tool_context=tool_context,
+    )
+
+    assert direct
+    assert direct != composite_direct
+    assert "90260140" in direct
+    assert effect == "llm_synthesis_brief"
+    assert tool_context.get("commentaryBriefDirect") is True
+
+
 def test_normal_commentary_direct_disabled_returns_none():
     metadata = {
         "ok": True,

@@ -173,4 +173,38 @@ class ChatOperationalLlmSynthesisBriefDirectService:
             if ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata):
                 return True
 
+            if cls._has_actionable_commentary(metadata):
+                return True
+
+        return False
+
+    @classmethod
+    def _has_actionable_commentary(cls, metadata: dict) -> bool:
+        commentary = metadata.get("dataCommentary")
+
+        if isinstance(commentary, dict):
+            highlights = commentary.get("highlights")
+
+            if isinstance(highlights, list) and highlights:
+                return True
+
+            if str(commentary.get("summary") or "").strip():
+                return True
+
+            if str(commentary.get("narrativeInsight") or "").strip():
+                return True
+
+        data_answer = metadata.get("dataAnswer")
+
+        if not isinstance(data_answer, dict):
+            return False
+
+        summary = data_answer.get("summary")
+
+        if isinstance(summary, str) and summary.strip():
+            return True
+
+        if isinstance(summary, dict) and str(summary.get("answer") or "").strip():
+            return True
+
         return False

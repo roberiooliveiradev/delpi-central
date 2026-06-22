@@ -129,17 +129,6 @@ class ChatResponseModeService:
             response_mode=response_mode,
         )
 
-        from app.domain.services.chat_presentation_prose_delivery_content_service import (
-            ChatPresentationProseDeliveryContentService,
-        )
-
-        if (
-            mode == MODE_LLM
-            and direct_answer
-            and not ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
-        ):
-            return direct_answer, skip_rag, "operational_direct"
-
         if mode == MODE_LLM:
             effect = cls.resolve_synthesis_effect(response_mode)
             resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(skip_rag, tool_calls)
@@ -158,6 +147,12 @@ class ChatResponseModeService:
                 ChatOperationalLlmSynthesisBriefDirectService.mark_tool_context(tool_context)
 
                 return brief_direct, resolved_skip, effect
+
+            if (
+                direct_answer
+                and not ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
+            ):
+                return direct_answer, skip_rag, "operational_direct"
 
             if direct_answer:
                 return None, resolved_skip, effect
