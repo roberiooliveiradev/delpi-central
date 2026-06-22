@@ -170,17 +170,19 @@ Stack mínimo WSL: `infra/docker-compose.minimal.yml` (presets intermediários �
 ## Validação de qualidade (smoke/regressão)
 
 Serviço: `ChatResponseModeSynthesisQualityService`  
-Bundle: `assistant/response_mode_synthesis_quality.json`
+Bundle: `assistant/response_mode_synthesis_quality.json` (`gaps`, `coherenceChecks`, `modeLadder`, `turnFinalization`)
 
 O smoke **não** basta checar metadata — valida por turno:
 
 | Critério | O que falha |
 |----------|-------------|
-| Pipeline | `directResponse=true` só em **Rápida** (`allowDirectResponseModes: ["fast"]`); Normal/Pensador exigem LLM |
+| Pipeline | `directResponse=true` só em **Rápida**; efeitos esperados em `pipeline.expectedEffectsByMode` |
 | Template | similaridade com `textPresentation` / markdown autorizado ≥ limite |
-| Contexto | código do produto + overlap mínimo com tokens dos dados da tool |
-| Assertividade | frases evasivas (`deflectionMarkers`), alucinação (`hallucinationMarkers`), listas esparsas e frases repetidas (`coherenceChecks`) |
-| Modo | Rápida mais curta/rápida que Normal; conteúdos distintos entre modos |
+| Contexto | código do produto + overlap mínimo; atributos de grupo não ancorados (`ungroundedGroupClaimTriggers`) |
+| Assertividade | frases evasivas (`deflectionMarkers`), alucinação (`hallucinationMarkers`), listas esparsas, runs `1. 2. 3.` e seções boilerplate LLM |
+| Modo | Rápida mais curta/rápida que Normal; conteúdos distintos entre modos (`modeLadder`) |
+
+**Estabilidade Pensador/Normal:** `ChatOperationalLlmSynthesisTurnFinalizationService` avalia coerência **antes** do enrichment quando `turnFinalization.preferCommentaryBeforeEnrich` está ativo; em gaps, substitui por `dataCommentary` na profundidade do modo (expanded no Pensador).
 
 ```bash
 cd minha-delpi-ai-api

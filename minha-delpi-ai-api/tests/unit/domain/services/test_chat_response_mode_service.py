@@ -51,6 +51,22 @@ def test_apply_turn_direct_answer_policy_preserves_small_talk_direct():
     assert effect == "simple_direct"
 
 
+def test_apply_turn_direct_answer_policy_preserves_common_chat_operational_guidance():
+    guidance = "**Dados operacionais exigem um agente**"
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="me fale do produto 10080055",
+        response_mode="normal",
+        direct_answer=guidance,
+        skip_rag=True,
+        tool_calls=[],
+        pipeline_stages=["common_chat_operational_guidance", "direct_answer"],
+    )
+
+    assert direct == guidance
+    assert skip_rag is True
+    assert effect == "simple_direct"
+
+
 def test_apply_turn_direct_answer_policy_preserves_utility_direct():
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
         message="que horas são?",

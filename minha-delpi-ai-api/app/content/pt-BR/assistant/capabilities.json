@@ -1032,6 +1032,14 @@
     ]
   },
   "interactive": {
+    "operationalCardFlowIds": [
+      "product",
+      "stock",
+      "sales",
+      "purchases",
+      "suppliers",
+      "lmp"
+    ],
     "cards": [
       {
         "title": "Produtos",

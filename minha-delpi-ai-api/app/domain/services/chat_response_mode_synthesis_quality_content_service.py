@@ -84,6 +84,91 @@ class ChatResponseModeSynthesisQualityContentService:
         ).strip()
 
     @classmethod
+    def mode_ladder_int(cls, key: str, default: int = 0) -> int:
+        return cls.limit_int("modeLadder", key, default=default)
+
+    @classmethod
+    def mode_ladder_required_pairs(cls) -> tuple[tuple[str, str], ...]:
+        raw = ChatAssistantContentService.get_node(_BUNDLE, "modeLadder", "requiredPairs")
+
+        if not isinstance(raw, list):
+            return (("fast", "normal"), ("normal", "thinker"))
+
+        pairs: list[tuple[str, str]] = []
+
+        for item in raw:
+            if not isinstance(item, list) or len(item) < 2:
+                continue
+
+            left = str(item[0] or "").strip().lower()
+            right = str(item[1] or "").strip().lower()
+
+            if left and right:
+                pairs.append((left, right))
+
+        return tuple(pairs) if pairs else (("fast", "normal"), ("normal", "thinker"))
+
+    @classmethod
+    def pipeline_expected_effect(cls, mode: str) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "pipeline",
+                "expectedEffectsByMode",
+                str(mode or "").strip().lower(),
+                default="",
+            )
+            or ""
+        ).strip()
+
+    @classmethod
+    def pipeline_expected_prose_delivery_mode(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "pipeline",
+                "expectedProseDeliveryMode",
+                default="llm",
+            )
+            or "llm"
+        ).strip()
+
+    @classmethod
+    def turn_finalization_modes(cls) -> frozenset[str]:
+        return frozenset(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(
+                _BUNDLE,
+                "turnFinalization",
+                "coherenceFallbackModes",
+            )
+            if str(item).strip()
+        )
+
+    @classmethod
+    def turn_finalization_prefer_commentary_before_enrich(cls) -> bool:
+        value = ChatAssistantContentService.get(
+            _BUNDLE,
+            "turnFinalization",
+            "preferCommentaryBeforeEnrich",
+            default=True,
+        )
+
+        return bool(value)
+
+    @classmethod
+    def gap(cls, *path: str, default: str = "", **kwargs: Any) -> str:
+        template = ChatAssistantContentService.get(_BUNDLE, "gaps", *path, default=default)
+
+        if template in (None, ""):
+            return default
+
+        try:
+            return str(template).format(**kwargs)
+        except (KeyError, ValueError, IndexError):
+            return str(template)
+
+    @classmethod
     def _coherence_checks_node(cls) -> dict[str, Any]:
         node = ChatAssistantContentService.get_node(_BUNDLE, "coherenceChecks")
 
@@ -110,7 +195,42 @@ class ChatResponseModeSynthesisQualityContentService:
     @classmethod
     @lru_cache(maxsize=1)
     def sparse_list_patterns(cls) -> tuple[re.Pattern[str], ...]:
-        raw = cls._coherence_checks_node().get("sparseListPatterns")
+        return cls._compile_pattern_list("sparseListPatterns")
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def numbered_run_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls._compile_pattern_list("numberedRunPatterns")
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def llm_boilerplate_section_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return cls._compile_pattern_list("llmBoilerplateSectionPatterns")
+
+    @classmethod
+    def ungrounded_group_claim_triggers(cls) -> tuple[str, ...]:
+        raw = cls._coherence_checks_node().get("ungroundedGroupClaimTriggers")
+
+        if not isinstance(raw, list):
+            return ()
+
+        return tuple(
+            str(item).strip().lower()
+            for item in raw
+            if str(item or "").strip()
+        )
+
+    @classmethod
+    def ungrounded_group_claim_min_token_length(cls) -> int:
+        return cls.coherence_limit_int("ungroundedGroupClaimMinTokenLength", default=4)
+
+    @classmethod
+    def numbered_run_min_dots(cls) -> int:
+        return max(2, cls.coherence_limit_int("numberedRunMinDots", default=3))
+
+    @classmethod
+    def _compile_pattern_list(cls, key: str) -> tuple[re.Pattern[str], ...]:
+        raw = cls._coherence_checks_node().get(key)
 
         if not isinstance(raw, list):
             return ()
@@ -123,6 +243,6 @@ class ChatResponseModeSynthesisQualityContentService:
             if not pattern:
                 continue
 
-            patterns.append(re.compile(pattern))
+            patterns.append(re.compile(pattern, re.IGNORECASE))
 
         return tuple(patterns)

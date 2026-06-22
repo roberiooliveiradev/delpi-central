@@ -564,6 +564,7 @@ class ChatTurnCompletionService:
         ChatGuidedFlowService.attach_to_assistant_metadata(
             assistant_metadata,
             message=turn.request.message,
+            workspace_context=turn.workspace_context,
         )
 
         if canvas_open_payload:

@@ -104,3 +104,39 @@ def test_finalize_persisted_answer_strips_sparse_numbered_lists():
     assert "10080045" in result
     assert "\n2.\n" not in result
     assert "\n3.\n" not in result
+
+
+def test_finalize_persisted_answer_thinker_falls_back_on_fabricated_group():
+    llm_answer = (
+        "O código do produto é **10080045**, que pertence ao grupo de "
+        "**Componentes Elétricos**. **Destaques:**\n1. 2. 3. 4. 5."
+    )
+
+    result = ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+        llm_answer,
+        _overview_tool_calls(),
+        message="me fale do produto 10080045",
+        response_mode="thinker",
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert "10080045" in result
+    assert "componentes eletricos" not in result.lower()
+    assert "componentes elétricos" not in result.lower()
+    assert "MP" in result or "1008" in result
+
+
+def test_finalize_persisted_answer_normal_falls_back_when_llm_too_short():
+    llm_answer = "O código do produto é 10080045."
+
+    result = ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+        llm_answer,
+        _overview_tool_calls(),
+        message="me fale do produto 10080045",
+        response_mode="normal",
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert len(result) >= 72
+    assert "10080045" in result
+    assert "MP" in result or "roteiro" in result.lower()

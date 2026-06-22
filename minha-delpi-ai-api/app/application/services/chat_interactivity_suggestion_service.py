@@ -258,15 +258,24 @@ class ChatInteractivitySuggestionService:
         workspace_context: dict | None,
     ) -> str | None:
         capabilities = (workspace_context or {}).get("capabilities") or {}
+        operational_labels = {
+            str(item).strip()
+            for item in (_content().get("operationalAgentRequiredLabels") or [])
+            if str(item or "").strip()
+        }
+        operational_disabled = str(
+            (_content().get("disabledReasons") or {}).get("operationalAgentRequired")
+            or "Ative um agente com consultas operacionais para usar esta ação."
+        ).strip()
 
         if label == "Colocar na lousa" and capabilities.get("canvas") is False:
             return "A lousa não está habilitada neste agente."
 
-        if label in {"Ver estoque", "Ver fornecedores", "Ver estrutura", "Ver vendas"}:
+        if label in operational_labels:
             if not (workspace_context or {}).get("userActivatedAgent") and not (
                 workspace_context or {}
             ).get("actionsEnabled"):
-                return "Ative um agente com consultas operacionais para usar esta ação."
+                return operational_disabled
 
         sql_action_labels = {
             "Executar query",

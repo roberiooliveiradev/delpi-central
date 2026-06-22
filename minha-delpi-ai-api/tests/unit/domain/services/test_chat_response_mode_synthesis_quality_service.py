@@ -281,6 +281,37 @@ def test_rejects_hallucination_markers():
     assert any("alucinação" in gap for gap in gaps)
 
 
+def test_rejects_fabricated_group_claim():
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_synthesis_coherence(
+        mode="thinker",
+        question="me fale do produto 10080045",
+        content=(
+            "O produto **10080045** pertence ao grupo de **Componentes Elétricos** "
+            "sem registros no roteiro."
+        ),
+        tool_calls=_factory_tool_calls(
+            "",
+            data_answer={
+                "profileKey": "product_overview",
+                "summary": {"answer": "MP grupo 1008"},
+            },
+        ),
+    )
+
+    assert any("grupo" in gap.lower() or "ancorado" in gap.lower() for gap in gaps)
+
+
+def test_rejects_numbered_run_in_single_line():
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_synthesis_coherence(
+        mode="thinker",
+        question="me fale do produto 10080045",
+        content="O produto 10080045 está cadastrado.\n**Destaques:**\n1. 2. 3. 4. 5.",
+        tool_calls=_factory_tool_calls(""),
+    )
+
+    assert any("esparsa" in gap for gap in gaps)
+
+
 def test_mode_ladder_requires_distinct_contents():
     results = [
         {

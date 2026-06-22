@@ -86,6 +86,8 @@ class ChatResponseModeSynthesisQualityService:
         gaps.extend(cls._evaluate_deflection(content))
         gaps.extend(cls._evaluate_hallucination_markers(content))
         gaps.extend(cls._evaluate_sparse_numbered_lists(content))
+        gaps.extend(cls._evaluate_numbered_runs_in_line(content))
+        gaps.extend(cls._evaluate_llm_boilerplate_sections(content))
         gaps.extend(cls._evaluate_repeated_sentences(content))
 
         return gaps
@@ -166,6 +168,66 @@ class ChatResponseModeSynthesisQualityService:
         return []
 
     @classmethod
+    def _evaluate_numbered_runs_in_line(cls, content: str) -> list[str]:
+        patterns = ChatResponseModeSynthesisQualityContentService.numbered_run_patterns()
+
+        if not patterns:
+            return []
+
+        for line in content.splitlines():
+            stripped = line.strip()
+
+            if not stripped:
+                continue
+
+            if any(pattern.search(stripped) for pattern in patterns):
+                return [
+                    ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                        "numberedRunInLine",
+                        default="lista numerada esparsa em linha única",
+                    ),
+                ]
+
+        return []
+
+    @classmethod
+    def _evaluate_llm_boilerplate_sections(cls, content: str) -> list[str]:
+        patterns = ChatResponseModeSynthesisQualityContentService.llm_boilerplate_section_patterns()
+
+        if not patterns:
+            return []
+
+        lines = [line.strip() for line in content.splitlines() if line.strip()]
+
+        for index, line in enumerate(lines):
+            normalized = ChatMessageNormalizationService.normalize_for_matching(line)
+
+            for pattern in patterns:
+                if not pattern.search(normalized):
+                    continue
+
+                next_line = lines[index + 1] if index + 1 < len(lines) else ""
+                next_normalized = ChatMessageNormalizationService.normalize_for_matching(next_line)
+                numbered_run = any(
+                    run_pattern.search(next_line.strip())
+                    for run_pattern in ChatResponseModeSynthesisQualityContentService.numbered_run_patterns()
+                )
+
+                if numbered_run or not next_line:
+                    section = line.strip("* ").split(":")[0]
+                    template = ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                        "llmBoilerplateSection",
+                        default="seção boilerplate do LLM sem conteúdo ancorado ({section})",
+                    )
+
+                    try:
+                        return [template.format(section=section)]
+                    except (KeyError, ValueError, IndexError):
+                        return [template]
+
+        return []
+
+    @classmethod
     def evaluate_mode_ladder(cls, results: list[dict[str, Any]]) -> list[str]:
         gaps: list[str] = []
 
@@ -173,7 +235,7 @@ class ChatResponseModeSynthesisQualityService:
             return gaps
 
         by_mode = {str(item.get("mode") or ""): item for item in results}
-        required_pairs = (("fast", "normal"), ("normal", "thinker"))
+        required_pairs = ChatResponseModeSynthesisQualityContentService.mode_ladder_required_pairs()
         min_distance = ChatResponseModeSynthesisQualityContentService.mode_ladder_float(
             "minPairwiseContentDistance",
             default=0.06,
@@ -192,8 +254,18 @@ class ChatResponseModeSynthesisQualityService:
 
             if distance < min_distance:
                 gaps.append(
-                    f"{left_mode} vs {right_mode}: respostas equivalentes "
-                    f"(distância {distance:.2f} < {min_distance:.2f})"
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "ladder",
+                        "equivalentContents",
+                        default=(
+                            f"{left_mode} vs {right_mode}: respostas equivalentes "
+                            f"(distância {distance:.2f} < {min_distance:.2f})"
+                        ),
+                        left_mode=left_mode,
+                        right_mode=right_mode,
+                        distance=distance,
+                        min_distance=min_distance,
+                    ),
                 )
 
         fast = by_mode.get("fast") or {}
@@ -212,8 +284,16 @@ class ChatResponseModeSynthesisQualityService:
 
             if fast_chars > normal_chars * ratio_limit:
                 gaps.append(
-                    "modo Rápida deveria ser mais curto que Normal "
-                    f"({fast_chars} vs {normal_chars} chars)"
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "ladder",
+                        "fastLongerThanNormal",
+                        default=(
+                            "modo Rápida deveria ser mais curto que Normal "
+                            f"({fast_chars} vs {normal_chars} chars)"
+                        ),
+                        fast_chars=fast_chars,
+                        normal_chars=normal_chars,
+                    ),
                 )
 
         fast_elapsed = float(fast.get("elapsedSec") or 0.0)
@@ -230,14 +310,45 @@ class ChatResponseModeSynthesisQualityService:
 
             if fast_elapsed > normal_elapsed * elapsed_ratio_limit:
                 gaps.append(
-                    "modo Rápida demorou desproporcionalmente vs Normal "
-                    f"({fast_elapsed}s vs {normal_elapsed}s)"
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "ladder",
+                        "fastSlowerThanNormal",
+                        default=(
+                            "modo Rápida demorou desproporcionalmente vs Normal "
+                            f"({fast_elapsed}s vs {normal_elapsed}s)"
+                        ),
+                        fast_elapsed=fast_elapsed,
+                        normal_elapsed=normal_elapsed,
+                    ),
                 )
 
-            if normal_elapsed + 5.0 < fast_elapsed and normal_chars < fast_chars * 0.85:
+            elapsed_delta = ChatResponseModeSynthesisQualityContentService.mode_ladder_float(
+                "normalFasterMinElapsedDeltaSec",
+                default=5.0,
+            )
+            chars_ratio = ChatResponseModeSynthesisQualityContentService.mode_ladder_float(
+                "normalFasterMaxCharsRatio",
+                default=0.85,
+            )
+
+            if (
+                normal_elapsed + elapsed_delta < fast_elapsed
+                and normal_chars < fast_chars * chars_ratio
+            ):
                 gaps.append(
-                    "modo Normal ficou mais rápido que Rápida sem resposta mais rica "
-                    f"({normal_elapsed}s vs {fast_elapsed}s; {normal_chars} vs {fast_chars} chars)"
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "ladder",
+                        "normalFasterWithoutRicherContent",
+                        default=(
+                            "modo Normal ficou mais rápido que Rápida sem resposta mais rica "
+                            f"({normal_elapsed}s vs {fast_elapsed}s; "
+                            f"{normal_chars} vs {fast_chars} chars)"
+                        ),
+                        normal_elapsed=normal_elapsed,
+                        fast_elapsed=fast_elapsed,
+                        normal_chars=normal_chars,
+                        fast_chars=fast_chars,
+                    ),
                 )
 
         return gaps
@@ -307,19 +418,32 @@ class ChatResponseModeSynthesisQualityService:
     def _evaluate_pipeline(cls, pipeline: dict[str, Any], mode: str) -> list[str]:
         gaps: list[str] = []
         effect = str(pipeline.get("responseModeEffect") or "").strip()
+        expected = ChatResponseModeSynthesisQualityContentService.pipeline_expected_effect(mode)
 
-        if mode == "fast" and effect != "llm_synthesis_brief":
-            gaps.append(f"pipeline.responseModeEffect esperado llm_synthesis_brief, veio {effect!r}")
-
-        if mode in {"normal", "thinker"} and effect != "llm_synthesis":
-            gaps.append(f"pipeline.responseModeEffect esperado llm_synthesis, veio {effect!r}")
+        if expected and effect != expected:
+            gaps.append(
+                ChatResponseModeSynthesisQualityContentService.gap(
+                    "pipeline",
+                    "responseModeEffectMismatch",
+                    default=f"pipeline.responseModeEffect esperado {expected}, veio {effect!r}",
+                    expected=expected,
+                    actual=effect,
+                ),
+            )
 
         if pipeline.get("directResponse"):
             allowed = ChatResponseModeSynthesisQualityContentService.pipeline_modes_allowing_direct_response()
 
             if mode not in allowed:
                 gaps.append(
-                    "pipeline.directResponse=true — resposta ainda veio do template/direct answer"
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "pipeline",
+                        "directResponseUnexpected",
+                        default=(
+                            "pipeline.directResponse=true — resposta ainda veio do "
+                            "template/direct answer"
+                        ),
+                    ),
                 )
             else:
                 expected_effect = (
@@ -330,8 +454,17 @@ class ChatResponseModeSynthesisQualityService:
 
                 if expected_effect and effect != expected_effect:
                     gaps.append(
-                        f"pipeline.directResponse=true em {mode!r} exige "
-                        f"responseModeEffect {expected_effect!r}, veio {effect!r}"
+                        ChatResponseModeSynthesisQualityContentService.gap(
+                            "pipeline",
+                            "directResponseEffectMismatch",
+                            default=(
+                                f"pipeline.directResponse=true em {mode!r} exige "
+                                f"responseModeEffect {expected_effect!r}, veio {effect!r}"
+                            ),
+                            mode=mode,
+                            expected=expected_effect,
+                            actual=effect,
+                        ),
                     )
 
         return gaps
@@ -358,10 +491,28 @@ class ChatResponseModeSynthesisQualityService:
         )
 
         if chars < min_chars:
-            gaps.append(f"resposta curta demais para {mode} ({chars} < {min_chars} chars)")
+            gaps.append(
+                ChatResponseModeSynthesisQualityContentService.gap(
+                    "answerShape",
+                    "tooShort",
+                    default=f"resposta curta demais para {mode} ({chars} < {min_chars} chars)",
+                    mode=mode,
+                    chars=chars,
+                    min_chars=min_chars,
+                ),
+            )
 
         if max_chars and chars > max_chars:
-            gaps.append(f"resposta longa demais para {mode} ({chars} > {max_chars} chars)")
+            gaps.append(
+                ChatResponseModeSynthesisQualityContentService.gap(
+                    "answerShape",
+                    "tooLong",
+                    default=f"resposta longa demais para {mode} ({chars} > {max_chars} chars)",
+                    mode=mode,
+                    chars=chars,
+                    max_chars=max_chars,
+                ),
+            )
 
         if elapsed_sec is not None:
             max_elapsed = ChatResponseModeSynthesisQualityContentService.mode_limit_int(
@@ -371,7 +522,18 @@ class ChatResponseModeSynthesisQualityService:
             )
 
             if max_elapsed and elapsed_sec > max_elapsed:
-                gaps.append(f"tempo excedido em {mode} ({elapsed_sec}s > {max_elapsed}s)")
+                gaps.append(
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "answerShape",
+                        "elapsedExceeded",
+                        default=(
+                            f"tempo excedido em {mode} ({elapsed_sec}s > {max_elapsed}s)"
+                        ),
+                        mode=mode,
+                        elapsed_sec=elapsed_sec,
+                        max_elapsed=max_elapsed,
+                    ),
+                )
 
         return gaps
 
@@ -384,6 +546,9 @@ class ChatResponseModeSynthesisQualityService:
         """P2.6 — turno LLM deve ter metadata data-only (sem markdown template nos toolCalls)."""
         gaps: list[str] = []
         effect = str(pipeline.get("responseModeEffect") or "").strip()
+        expected_prose_mode = (
+            ChatResponseModeSynthesisQualityContentService.pipeline_expected_prose_delivery_mode()
+        )
 
         if effect not in {"llm_synthesis", "llm_synthesis_brief"}:
             return gaps
@@ -409,7 +574,12 @@ class ChatResponseModeSynthesisQualityService:
                 metadata.get("dataOnlyPresentation") or metadata.get("llmProseDecoupled")
             ):
                 gaps.append(
-                    f"{prefix}: síntese LLM sem dataOnlyPresentation/llmProseDecoupled"
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "proseDecoupling",
+                        "missingDataOnlyFlags",
+                        default=f"{prefix}: síntese LLM sem dataOnlyPresentation/llmProseDecoupled",
+                        prefix=prefix,
+                    ),
                 )
                 continue
 
@@ -420,7 +590,15 @@ class ChatResponseModeSynthesisQualityService:
 
                 if markdown:
                     gaps.append(
-                        f"{prefix}: textPresentation.markdown ainda preenchido em turno data-only"
+                        ChatResponseModeSynthesisQualityContentService.gap(
+                            "proseDecoupling",
+                            "markdownStillFilled",
+                            default=(
+                                f"{prefix}: textPresentation.markdown ainda preenchido "
+                                "em turno data-only"
+                            ),
+                            prefix=prefix,
+                        ),
                     )
 
             humanized = metadata.get("humanizedSummary")
@@ -431,13 +609,30 @@ class ChatResponseModeSynthesisQualityService:
 
                 if linhas or linhas_detalhe:
                     gaps.append(
-                        f"{prefix}: humanizedSummary ainda contém linhas template em data-only"
+                        ChatResponseModeSynthesisQualityContentService.gap(
+                            "proseDecoupling",
+                            "humanizedLinesRemain",
+                            default=(
+                                f"{prefix}: humanizedSummary ainda contém linhas template "
+                                "em data-only"
+                            ),
+                            prefix=prefix,
+                        ),
                     )
 
-            if str(metadata.get("proseDeliveryMode") or "") != "llm":
+            if str(metadata.get("proseDeliveryMode") or "") != expected_prose_mode:
                 gaps.append(
-                    f"{prefix}: proseDeliveryMode esperado 'llm', "
-                    f"veio {metadata.get('proseDeliveryMode')!r}"
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "proseDecoupling",
+                        "proseDeliveryModeMismatch",
+                        default=(
+                            f"{prefix}: proseDeliveryMode esperado "
+                            f"'{expected_prose_mode}', veio {metadata.get('proseDeliveryMode')!r}"
+                        ),
+                        prefix=prefix,
+                        expected=expected_prose_mode,
+                        actual=metadata.get("proseDeliveryMode"),
+                    ),
                 )
 
         return gaps
@@ -462,8 +657,16 @@ class ChatResponseModeSynthesisQualityService:
 
         if similarity >= max_similarity:
             gaps.append(
-                "resposta reproduz o template operacional "
-                f"(similaridade {similarity:.2f} >= {max_similarity:.2f})"
+                ChatResponseModeSynthesisQualityContentService.gap(
+                    "template",
+                    "clone",
+                    default=(
+                        "resposta reproduz o template operacional "
+                        f"(similaridade {similarity:.2f} >= {max_similarity:.2f})"
+                    ),
+                    similarity=similarity,
+                    max_similarity=max_similarity,
+                ),
             )
 
         return gaps
@@ -480,7 +683,16 @@ class ChatResponseModeSynthesisQualityService:
         product_code = ChatProductQueryIntentService.extract_product_code(question or "")
 
         if product_code and product_code not in normalized_content:
-            gaps.append(f"código do produto {product_code} ausente na resposta")
+            gaps.append(
+                ChatResponseModeSynthesisQualityContentService.gap(
+                    "context",
+                    "missingProductCode",
+                    default=f"código do produto {product_code} ausente na resposta",
+                    product_code=product_code,
+                ),
+            )
+
+        gaps.extend(cls._evaluate_fabricated_group_claims(content, tool_calls))
 
         context_tokens = cls.extract_context_tokens(tool_calls)
 
@@ -500,11 +712,68 @@ class ChatResponseModeSynthesisQualityService:
         if overlap < min_overlap:
             sample = ", ".join(sorted(context_tokens)[:6])
             gaps.append(
-                "pouco contexto operacional na resposta "
-                f"({overlap}/{min_overlap} tokens; esperado algo como: {sample})"
+                ChatResponseModeSynthesisQualityContentService.gap(
+                    "context",
+                    "lowOverlap",
+                    default=(
+                        "pouco contexto operacional na resposta "
+                        f"({overlap}/{min_overlap} tokens; esperado algo como: {sample})"
+                    ),
+                    overlap=overlap,
+                    min_overlap=min_overlap,
+                    sample=sample,
+                ),
             )
 
         return gaps
+
+    @classmethod
+    def _evaluate_fabricated_group_claims(
+        cls,
+        content: str,
+        tool_calls: list[dict[str, Any]] | None,
+    ) -> list[str]:
+        triggers = ChatResponseModeSynthesisQualityContentService.ungrounded_group_claim_triggers()
+
+        if not triggers:
+            return []
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(content)
+        anchors = cls.extract_context_tokens(tool_calls)
+        stopwords = ChatResponseModeSynthesisQualityContentService.generic_context_stopwords()
+        min_len = ChatResponseModeSynthesisQualityContentService.ungrounded_group_claim_min_token_length()
+
+        for trigger in triggers:
+            trigger_norm = ChatMessageNormalizationService.normalize_for_matching(trigger)
+
+            if trigger_norm not in normalized:
+                continue
+
+            start = normalized.find(trigger_norm) + len(trigger_norm)
+            segment = normalized[start : start + 120]
+            segment_tokens = {
+                token
+                for token in _TOKEN_RE.findall(segment)
+                if len(token) >= min_len and token not in stopwords
+            }
+
+            if not segment_tokens:
+                continue
+
+            if segment_tokens & anchors:
+                continue
+
+            sample = ", ".join(sorted(segment_tokens)[:4])
+            return [
+                ChatResponseModeSynthesisQualityContentService.gap(
+                    "context",
+                    "fabricatedGroupClaim",
+                    default=f"atributo de grupo/fabricação não ancorado nos dados ({sample})",
+                    sample=sample,
+                ),
+            ]
+
+        return []
 
     @classmethod
     def _evaluate_deflection(cls, content: str) -> list[str]:
@@ -512,7 +781,13 @@ class ChatResponseModeSynthesisQualityService:
 
         for marker in ChatResponseModeSynthesisQualityContentService.deflection_markers():
             if marker in normalized:
-                return [f"resposta evasiva/genérica detectada ({marker})"]
+                return [
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "deflection",
+                        default=f"resposta evasiva/genérica detectada ({marker})",
+                        marker=marker,
+                    ),
+                ]
 
         return []
 
@@ -528,7 +803,13 @@ class ChatResponseModeSynthesisQualityService:
             normalized_marker = ChatMessageNormalizationService.normalize_for_matching(marker)
 
             if normalized_marker and normalized_marker in normalized:
-                return [f"marcador de alucinação detectado ({marker})"]
+                return [
+                    ChatResponseModeSynthesisQualityContentService.gap(
+                        "hallucination",
+                        default=f"marcador de alucinação detectado ({marker})",
+                        marker=marker,
+                    ),
+                ]
 
         return []
 

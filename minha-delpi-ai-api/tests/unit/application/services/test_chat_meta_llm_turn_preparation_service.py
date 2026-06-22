@@ -6,11 +6,11 @@ from app.domain.services.chat_meta_llm_synthesis_service import (
 )
 
 
-def test_capabilities_question_routes_to_llm_synthesis():
+def test_capabilities_question_routes_to_llm_synthesis_with_operational_agent():
     caps = "Posso ajudar você nestes formatos:\n\n- RAG"
     result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
         message="o que você pode fazer?",
-        workspace_context={},
+        workspace_context={"userActivatedAgent": True, "actionsEnabled": True},
         tool_context={},
         pipeline_stages=[],
         resolve_profile_facts=lambda _message: None,
@@ -23,6 +23,22 @@ def test_capabilities_question_routes_to_llm_synthesis():
     assert result.skip_meta_direct_answer is True
     assert result.skip_isolated_meta_direct_answers is True
     assert caps in result.tool_context[ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS]
+
+
+def test_capabilities_question_skips_llm_synthesis_in_common_chat():
+    caps = "Posso ajudar você nestes formatos:\n\n- RAG"
+    result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
+        message="o que você pode fazer?",
+        workspace_context={"userActivatedAgent": False, "actionsEnabled": False},
+        tool_context={},
+        pipeline_stages=[],
+        resolve_profile_facts=lambda _message: None,
+        resolve_capabilities_facts=lambda _message: caps,
+        resolve_assistant_identity_facts=lambda _message: None,
+    )
+
+    assert result.active is False
+    assert result.skip_meta_direct_answer is False
 
 
 def test_assistant_identity_question_routes_to_llm_synthesis():

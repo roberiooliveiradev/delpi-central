@@ -268,5 +268,19 @@
   "presentationDetailQueries": {
     "supplier": "detalhe fornecedor {supplierCode} loja {supplierStore} do produto {productCode}",
     "purchaseRecord": "detalhe documento {documentNumber} origem {source} do produto {productCode}"
+  },
+  "operationalAgentRequiredLabels": [
+    "Consultar produto",
+    "Visão 360°",
+    "Buscar por descrição",
+    "Onde é usado?",
+    "Ver estoque",
+    "Ver fornecedores",
+    "Ver estrutura",
+    "Ver vendas",
+    "Ver compras"
+  ],
+  "disabledReasons": {
+    "operationalAgentRequired": "Ative um agente com consultas operacionais para usar esta ação."
   }
 }

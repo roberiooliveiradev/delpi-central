@@ -73,19 +73,71 @@
     "requireDistinctContents": true,
     "fastMaxCharsVsNormalRatio": 1.05,
     "fastMaxElapsedVsNormalRatio": 1.25,
-    "minPairwiseContentDistance": 0.06
+    "minPairwiseContentDistance": 0.06,
+    "normalFasterMinElapsedDeltaSec": 5.0,
+    "normalFasterMaxCharsRatio": 0.85,
+    "requiredPairs": [
+      ["fast", "normal"],
+      ["normal", "thinker"]
+    ]
   },
   "pipeline": {
     "allowDirectResponseModes": ["fast"],
     "directResponseEffects": {
       "fast": "llm_synthesis_brief"
+    },
+    "expectedEffectsByMode": {
+      "fast": "llm_synthesis_brief",
+      "normal": "llm_synthesis",
+      "thinker": "llm_synthesis"
+    },
+    "expectedProseDeliveryMode": "llm"
+  },
+  "turnFinalization": {
+    "coherenceFallbackModes": ["normal", "thinker"],
+    "preferCommentaryBeforeEnrich": true
+  },
+  "gaps": {
+    "pipeline": {
+      "responseModeEffectMismatch": "pipeline.responseModeEffect esperado {expected}, veio {actual}",
+      "directResponseUnexpected": "pipeline.directResponse=true — resposta ainda veio do template/direct answer",
+      "directResponseEffectMismatch": "pipeline.directResponse=true em {mode} exige responseModeEffect {expected}, veio {actual}"
+    },
+    "answerShape": {
+      "tooShort": "resposta curta demais para {mode} ({chars} < {min_chars} chars)",
+      "tooLong": "resposta longa demais para {mode} ({chars} > {max_chars} chars)",
+      "elapsedExceeded": "tempo excedido em {mode} ({elapsed_sec}s > {max_elapsed}s)"
+    },
+    "template": {
+      "clone": "resposta reproduz o template operacional (similaridade {similarity:.2f} >= {max_similarity:.2f})"
+    },
+    "context": {
+      "missingProductCode": "código do produto {product_code} ausente na resposta",
+      "lowOverlap": "pouco contexto operacional na resposta ({overlap}/{min_overlap} tokens; esperado algo como: {sample})",
+      "fabricatedGroupClaim": "atributo de grupo/fabricação não ancorado nos dados ({sample})"
+    },
+    "deflection": "resposta evasiva/genérica detectada ({marker})",
+    "hallucination": "marcador de alucinação detectado ({marker})",
+    "ladder": {
+      "equivalentContents": "{left_mode} vs {right_mode}: respostas equivalentes (distância {distance:.2f} < {min_distance:.2f})",
+      "fastLongerThanNormal": "modo Rápida deveria ser mais curto que Normal ({fast_chars} vs {normal_chars} chars)",
+      "fastSlowerThanNormal": "modo Rápida demorou desproporcionalmente vs Normal ({fast_elapsed}s vs {normal_elapsed}s)",
+      "normalFasterWithoutRicherContent": "modo Normal ficou mais rápido que Rápida sem resposta mais rica ({normal_elapsed}s vs {fast_elapsed}s; {normal_chars} vs {fast_chars} chars)"
+    },
+    "proseDecoupling": {
+      "missingDataOnlyFlags": "{prefix}: síntese LLM sem dataOnlyPresentation/llmProseDecoupled",
+      "markdownStillFilled": "{prefix}: textPresentation.markdown ainda preenchido em turno data-only",
+      "humanizedLinesRemain": "{prefix}: humanizedSummary ainda contém linhas template em data-only",
+      "proseDeliveryModeMismatch": "{prefix}: proseDeliveryMode esperado '{expected}', veio {actual}"
     }
   },
   "coherenceChecks": {
     "gaps": {
       "emptyAnswer": "resposta vazia após síntese LLM",
       "repeatedSentences": "resposta com frases repetidas",
-      "sparseNumberedList": "lista numerada com itens vazios ou esparsos"
+      "sparseNumberedList": "lista numerada com itens vazios ou esparsos",
+      "numberedRunInLine": "lista numerada esparsa em linha única",
+      "llmBoilerplateSection": "seção boilerplate do LLM sem conteúdo ancorado ({section})"
     },
     "repeatedSentenceMinChars": 48,
     "repeatedSentenceKeyChars": 160,
@@ -94,6 +146,24 @@
     "sparseListPatterns": [
       "^\\d+\\.\\s*$",
       "^\\d+\\.\\s+\\d+\\."
-    ]
+    ],
+    "numberedRunMinDots": 3,
+    "numberedRunPatterns": [
+      "^\\d+\\.\\s+(?:\\d+\\.\\s+){2,}\\d*\\.?\\s*$",
+      "^\\d+\\.\\s+(?:\\d+\\.\\s+)+$"
+    ],
+    "llmBoilerplateSectionPatterns": [
+      "^\\*\\*abertura:\\*\\*",
+      "^\\*\\*destaques:\\*\\*",
+      "^\\*\\*pontos de atencao:\\*\\*",
+      "^\\*\\*pontos de atenção:\\*\\*"
+    ],
+    "ungroundedGroupClaimTriggers": [
+      "pertence ao grupo de",
+      "grupo de componentes",
+      "componentes eletricos",
+      "componentes elétricos"
+    ],
+    "ungroundedGroupClaimMinTokenLength": 4
   }
 }

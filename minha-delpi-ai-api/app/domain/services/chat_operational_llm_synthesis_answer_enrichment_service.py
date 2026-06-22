@@ -30,7 +30,6 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
     _MARKDOWN_TABLE_LINE_RE = re.compile(r"^\s*\|.*\|\s*$")
     _MARKDOWN_TABLE_SEPARATOR_RE = re.compile(r"^\s*\|?\s*:?-{2,}")
     _EMPTY_NUMBERED_ITEM_RE = re.compile(r"^\s*\d+\.\s*$")
-    _SPARSE_NUMBERED_RUN_RE = re.compile(r"^\s*\d+\.\s+(?:\d+\.\s+)+$")
 
     @classmethod
     def finalize_answer(
@@ -74,6 +73,10 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
     def _strip_sparse_list_items(cls, answer: str) -> str:
         lines = str(answer or "").splitlines()
         kept: list[str] = []
+        sparse_patterns = ChatResponseModeSynthesisQualityContentService.sparse_list_patterns()
+        numbered_run_patterns = (
+            ChatResponseModeSynthesisQualityContentService.numbered_run_patterns()
+        )
 
         for line in lines:
             stripped = line.strip()
@@ -85,10 +88,10 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             if cls._EMPTY_NUMBERED_ITEM_RE.match(stripped):
                 continue
 
-            if cls._SPARSE_NUMBERED_RUN_RE.match(stripped):
+            if any(pattern.search(stripped) for pattern in numbered_run_patterns):
                 continue
 
-            if re.match(r"^\d+\.\s+\d+\.", stripped):
+            if any(pattern.search(stripped) for pattern in sparse_patterns):
                 continue
 
             kept.append(line)

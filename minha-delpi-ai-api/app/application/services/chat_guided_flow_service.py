@@ -49,9 +49,15 @@ _FLOW_TOPIC_MARKERS: tuple[tuple[str, tuple[str, ...]], ...] = (
 
 class ChatGuidedFlowService:
     @classmethod
-    def attach_to_assistant_metadata(cls, metadata: dict, *, message: str) -> None:
+    def attach_to_assistant_metadata(
+        cls,
+        metadata: dict,
+        *,
+        message: str,
+        workspace_context: dict | None = None,
+    ) -> None:
         if ChatCapabilitiesService.is_capabilities_question(message):
-            cards = cls.build_capability_cards()
+            cards = cls.build_capability_cards(workspace_context=workspace_context)
 
             if cards:
                 metadata["guidedFlowCards"] = cards
@@ -149,17 +155,39 @@ class ChatGuidedFlowService:
         }
 
     @classmethod
-    def build_capability_cards(cls) -> list[dict[str, Any]]:
+    def build_capability_cards(
+        cls,
+        *,
+        workspace_context: dict | None = None,
+    ) -> list[dict[str, Any]]:
         interactive = _capabilities_content().get("interactive") or {}
         cards = interactive.get("cards")
 
         if not isinstance(cards, list):
             return []
 
+        from app.application.services.chat_workspace_agent_activation_service import (
+            ChatWorkspaceAgentActivationService,
+        )
+
+        operational_enabled = ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            workspace_context,
+        )
+        operational_flow_ids = {
+            str(item).strip().lower()
+            for item in (interactive.get("operationalCardFlowIds") or [])
+            if str(item or "").strip()
+        }
+
         result: list[dict[str, Any]] = []
 
         for card in cards:
             if not isinstance(card, dict):
+                continue
+
+            flow_id = str(card.get("flowId") or "").strip().lower()
+
+            if not operational_enabled and flow_id in operational_flow_ids:
                 continue
 
             title = str(card.get("title") or "").strip()
