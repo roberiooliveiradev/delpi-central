@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_drawing_bom_comparison_service import (
     ChatDrawingBomComparisonService,
 )
+from app.domain.services.chat_drawing_bom_quantity_semantics_service import (
+    ChatDrawingBomQuantitySemanticsService,
+)
 from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
@@ -715,7 +718,11 @@ class ChatDrawingStructureValidationService:
                 for row in intermediate_rows
                 if row.get("lengthMm") is not None
             ]
-            structure_piece_quantities = cls._structure_piece_quantities(root)
+            structure_piece_quantities = (
+                ChatDrawingBomQuantitySemanticsService.collect_structure_segment_reference_mm(
+                    root
+                )
+            )
             failing_segments: list[float] = []
 
             for segment in segment_lengths[
@@ -859,34 +866,6 @@ class ChatDrawingStructureValidationService:
             )
 
         return items
-
-    @classmethod
-    def _structure_piece_quantities(cls, root: dict) -> set[float]:
-        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-        piece_units = ChatDrawingPatternsService.piece_count_units()
-        values: set[float] = set()
-
-        for item in structure.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-
-            code = ChatProductQueryIntentService.normalize_product_code(
-                str(item.get("code") or "")
-            )
-
-            if not code or ChatDrawingPatternsService.is_intermediate_family(code):
-                continue
-
-            unit = str(item.get("unit") or "").upper()
-            quantity = ChatDrawingToleranceService.parse_mm(item.get("quantity"))
-
-            if quantity is None:
-                continue
-
-            if unit in piece_units or unit == "":
-                values.add(float(quantity))
-
-        return values
 
     @classmethod
     def _segment_matches_structure_piece_quantity(

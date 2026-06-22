@@ -112,6 +112,37 @@ def test_batch_scale_for_mi_root():
     assert ChatDrawingBomQuantitySemanticsService.batch_scale_for_root(_root_90264238()) == 1000.0
 
 
+def test_batch_scale_uses_product_conversion_factor_when_present():
+    root = {
+        "product": {"code": "90262008", "unit": "MI", "conversion_factor": 500.0},
+        "structure": {"items": []},
+    }
+
+    assert ChatDrawingBomQuantitySemanticsService.batch_scale_for_root(root) == 500.0
+
+
+def test_structure_segment_reference_mm_normalizes_mt_for_mi_parent():
+    root = {
+        "product": {"code": "90262008", "unit": "MI"},
+        "structure": {
+            "items": [
+                {
+                    "code": "10120073",
+                    "quantity": 650.0,
+                    "unit": "MT",
+                    "components": [],
+                }
+            ]
+        },
+    }
+
+    references = ChatDrawingBomQuantitySemanticsService.collect_structure_segment_reference_mm(
+        root
+    )
+
+    assert 650.0 in references
+
+
 def test_intermediate_pi_mi_quantity_compares_one_to_one():
     root = {
         "product": {"code": "90263954", "unit": "MI"},

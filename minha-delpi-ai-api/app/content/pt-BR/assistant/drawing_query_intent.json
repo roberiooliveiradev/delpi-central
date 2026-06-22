@@ -177,5 +177,12 @@
   },
   "ragNormative": {
     "policyFile": "drawing-analysis-rag-normative.md"
+  },
+  "unitConversion": {
+    "policyFile": "drawing-analysis-unit-conversion.md",
+    "ragSource": "produto-conversao-unidades-protheus.txt"
+  },
+  "ragQuery": {
+    "drawingAnalysisSuffix": "conversão unidades Protheus MI milheiro B1_CONV B1_SEGUM SG1010 SB1010 produto-conversao-unidades drawing validation BOM chicote"
   }
 }

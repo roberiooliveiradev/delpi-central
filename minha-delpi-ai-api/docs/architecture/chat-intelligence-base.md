@@ -96,6 +96,8 @@ Contrato neutro: `documentVision.tables[]`. Contrato skill: `bomRows`, `drawingA
 
 **RAG normativo (Fase D — jun/2026):** com checklist de desenho **e** trechos RAG no turno, `PromptPolicyService` injeta `drawing-analysis-rag-normative.md` — normas explicam requisitos; **status** permanece só em `drawingAnalysis.items[]`.
 
+**Conversão de unidades (jun/2026):** pipeline `ChatDrawingProductUnitConversionService` + policy `drawing-analysis-unit-conversion.md`; query RAG enriquecida em turnos de desenho (`ChatDrawingIntentService.build_rag_query`). Limitações e roadmap: [`chat-drawing-skill-limitations.md`](./chat-drawing-skill-limitations.md).
+
 **Visão separada (Fase E — jun/2026):** `document-vision-delpi-skill.md` cobre OCR/descrição visual apenas; validação técnica e checklist ficam em `drawing-analysis-delpi` + pipeline `ChatDrawing*`.
 
 Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) são **consumidos só pelo fluxo de desenho** — não expandir semântica DELPI para turn prep genérico, intent `attachment_document` ou prompt global.

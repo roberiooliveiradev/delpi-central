@@ -172,3 +172,21 @@ class ChatDrawingIntentService:
             return ""
 
         return f"\n\n{policy_body}".strip()
+
+    @classmethod
+    def build_rag_query(cls, message: str | None) -> str:
+        base = str(message or "").strip()
+        suffix = ChatAssistantContentService.get(
+            _INTENT_CONTENT_BUNDLE,
+            "ragQuery",
+            "drawingAnalysisSuffix",
+            default="",
+        )
+
+        if not suffix:
+            return base
+
+        if not base:
+            return suffix
+
+        return f"{base} {suffix}".strip()

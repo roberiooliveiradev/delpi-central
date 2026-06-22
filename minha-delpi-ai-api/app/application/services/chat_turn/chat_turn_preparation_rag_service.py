@@ -77,6 +77,15 @@ class ChatTurnPreparationRagService:
         return None
 
     @classmethod
+    def _is_drawing_analysis_turn(cls, message: str, tool_context: dict) -> bool:
+        if isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode"):
+            return True
+
+        from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+
+        return ChatDrawingIntentService.is_drawing_analysis_request(message)
+
+    @classmethod
     def build(
         cls,
         *,
@@ -147,6 +156,12 @@ class ChatTurnPreparationRagService:
                 rag_min_score = resolve_chat_intelligence_runtime().rag_identity_question_min_score
             elif technical_description_normas:
                 rag_query = ChatTechnicalDescriptionIntentService.build_rag_query(message)
+            elif cls._is_drawing_analysis_turn(message, tool_context):
+                from app.domain.services.chat_drawing_intent_service import (
+                    ChatDrawingIntentService,
+                )
+
+                rag_query = ChatDrawingIntentService.build_rag_query(message)
             elif semantic_memory_service.should_use_enriched_query(workspace_context):
                 rag_query = semantic_memory_service.resolve_rag_query(
                     message,

@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_product_unit_conversion_service import (
+    ChatDrawingProductUnitConversionService,
+)
 from app.domain.services.chat_drawing_structure_index_service import (
     ChatDrawingStructureIndexService,
 )
@@ -34,10 +37,73 @@ class ChatDrawingBomQuantitySemanticsService:
     def batch_scale_for_root(cls, root: dict) -> float:
         unit = cls._root_product_unit(root)
 
-        if unit in cls._milheiro_batch_units():
-            return cls._pieces_per_milheiro()
+        if unit not in cls._milheiro_batch_units():
+            return 1.0
 
-        return 1.0
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        conversion_factor = cls._parse_quantity(product.get("conversion_factor"))
+
+        if conversion_factor is not None and conversion_factor > 0:
+            return conversion_factor
+
+        pa_reference = root.get("pa_reference")
+
+        if not isinstance(pa_reference, dict):
+            pa_reference = product.get("pa_reference")
+
+        if isinstance(pa_reference, dict):
+            catalog_unit = str(pa_reference.get("catalog_unit") or "").strip().upper()
+
+            if catalog_unit in cls._milheiro_batch_units():
+                return cls._pieces_per_milheiro()
+
+        return cls._pieces_per_milheiro()
+
+    @classmethod
+    def collect_structure_segment_reference_mm(cls, root: dict) -> set[float]:
+        """Valores da SG1010 (1º nível) comparáveis a cotas em mm — com conversão MI/MT."""
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        batch_scale = cls.batch_scale_for_root(root)
+        piece_units = ChatDrawingPatternsService.piece_count_units()
+        cable_units = ChatDrawingPatternsService.cable_length_units()
+        values: set[float] = set()
+
+        for item in structure.get("items") or []:
+            if not isinstance(item, dict):
+                continue
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(item.get("code") or "")
+            )
+
+            if not code or ChatDrawingPatternsService.is_intermediate_family(code):
+                continue
+
+            unit = cls._item_unit(item)
+            quantity = cls._parse_quantity(item.get("quantity"))
+
+            if quantity is None:
+                continue
+
+            if unit in piece_units or unit == "":
+                if batch_scale > 1:
+                    values.add(quantity / batch_scale)
+                else:
+                    values.add(float(quantity))
+                continue
+
+            if unit in cable_units:
+                per_piece_mm = ChatDrawingProductUnitConversionService.per_piece_mm(
+                    quantity=quantity,
+                    unit=unit,
+                    batch_scale=batch_scale,
+                    item=item,
+                )
+
+                if per_piece_mm is not None:
+                    values.add(per_piece_mm)
+
+        return values
 
     @classmethod
     def collect_structure_quantities(
@@ -286,10 +352,11 @@ class ChatDrawingBomQuantitySemanticsService:
         if quantity is None:
             return None
 
-        return cls.per_piece_length_mm(
+        return ChatDrawingProductUnitConversionService.per_piece_mm(
             quantity=quantity,
             unit=cls._item_unit(item) or "MT",
             batch_scale=cls.batch_scale_for_root(root),
+            item=item,
         )
 
     @classmethod
@@ -305,19 +372,14 @@ class ChatDrawingBomQuantitySemanticsService:
         return str(item.get("description") or "")
 
     @classmethod
-    def quantity_to_mm(cls, quantity: float, unit: str) -> float | None:
-        normalized_unit = str(unit or "").strip().upper()
+    def quantity_to_mm(cls, quantity: float, unit: str, *, item: dict | None = None) -> float | None:
+        if isinstance(item, dict):
+            return ChatDrawingProductUnitConversionService.quantity_to_mm_from_structure_item(
+                quantity,
+                item,
+            )
 
-        if not normalized_unit:
-            return None
-
-        if normalized_unit in {"MT", "M"}:
-            return quantity * 1000.0
-
-        if normalized_unit == "MM":
-            return quantity
-
-        return None
+        return ChatDrawingProductUnitConversionService.quantity_to_mm(quantity, unit)
 
     @classmethod
     def per_piece_length_mm(
@@ -326,13 +388,14 @@ class ChatDrawingBomQuantitySemanticsService:
         quantity: float,
         unit: str,
         batch_scale: float,
+        item: dict | None = None,
     ) -> float | None:
-        total_mm = cls.quantity_to_mm(quantity, unit)
-
-        if total_mm is None or batch_scale <= 0:
-            return None
-
-        return total_mm / batch_scale
+        return ChatDrawingProductUnitConversionService.per_piece_mm(
+            quantity=quantity,
+            unit=unit,
+            batch_scale=batch_scale,
+            item=item,
+        )
 
     @classmethod
     def is_cable_material_code(cls, code: str, description: str = "") -> bool:

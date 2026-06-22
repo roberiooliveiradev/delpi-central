@@ -21,6 +21,12 @@ class DrawingValidationRuleCase:
 
 def payload_stamp_bom_nested_mp() -> dict[str, Any]:
     return {
+        "product": {
+            "code": "90262008",
+            "type": "PA",
+            "unit": "MI",
+            "current_revision": "004",
+        },
         "structure": {
             "items": [
                 {
@@ -32,7 +38,7 @@ def payload_stamp_bom_nested_mp() -> dict[str, Any]:
                 {
                     "code": "10120073",
                     "quantity": 650.0,
-                    "unit": "PC",
+                    "unit": "MT",
                     "components": [],
                 },
                 {
@@ -209,7 +215,7 @@ DRAWING_VALIDATION_RULE_CASES: tuple[DrawingValidationRuleCase, ...] = (
     DrawingValidationRuleCase(
         id="R-segment-structure-piece-qty",
         rule_id="segment_length",
-        category="Cota 650 mm coincide com qtd peça — não pendência falsa",
+        category="Cota 650 mm coincide com consumo MT normalizado — não pendência falsa",
         smoke_product_code="90262008",
     ),
     DrawingValidationRuleCase(

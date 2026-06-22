@@ -2,8 +2,16 @@
   "agentId": "b85edd53-2fd9-4e2f-ab17-92fd288f4f85",
   "exportedAt": "2026-06-09T02:59:00.463947+00:00",
   "outputDir": "/app/docs/knowledge/domains/agents/minha-delpi-chat",
-  "fileCount": 12,
+  "fileCount": 13,
   "files": [
+    {
+      "canonicalFilename": "produto-conversao-unidades-protheus.txt",
+      "originalFilename": "produto-conversao-unidades-protheus.txt",
+      "title": "Tutorial — Conversão correta de unidades no Protheus DELPI",
+      "documentId": "pending-ingest-produto-conversao-unidades",
+      "chunkCount": 0,
+      "sizeBytes": 0
+    },
     {
       "canonicalFilename": "api-delpi-rotas-agente.md",
       "originalFilename": "api-delpi-rotas-agente.md",

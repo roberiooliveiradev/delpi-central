@@ -50,6 +50,9 @@ class ProductStructureRepository(BaseRepository, ProductStructureRepositoryPort)
             comp.B1_DESC   AS component_description,
             comp.B1_TIPO   AS component_type,
             comp.B1_UM     AS component_unit,
+            comp.B1_SEGUM  AS component_secondary_unit,
+            comp.B1_CONV   AS component_conversion_factor,
+            comp.B1_TIPCONV AS component_conversion_type,
 
             rb.quantity,
             rb.bom_level

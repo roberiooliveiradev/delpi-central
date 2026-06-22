@@ -92,6 +92,7 @@ class ChatDrawingTotalLengthReferenceService:
             quantity=value,
             unit=unit or "MT",
             batch_scale=batch_scale,
+            item=item,
         )
 
         if per_piece_mm is None:

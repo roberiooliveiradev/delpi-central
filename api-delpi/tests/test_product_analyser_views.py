@@ -114,3 +114,38 @@ def test_analyser_summary_limits_sections_and_product_fields() -> None:
     assert len(result["structure"]["items"]) <= 3
     assert len(result["guide"]["items"]) <= 3
     assert len(result["inspection"]["items"]) <= 3
+
+
+def test_analyser_attaches_pa_reference_for_mi_product() -> None:
+    product = MagicMock()
+    product.to_dict.return_value = {
+        "code": "90262008",
+        "description": "CHICOTE DE LIGACAO",
+        "type": "PA",
+        "unit": "MI",
+    }
+    search_result = MagicMock(items=[product])
+
+    search_uc = MagicMock()
+    search_uc.execute.return_value = search_result
+
+    structure_uc = MagicMock()
+    structure_uc.execute.return_value = {"items": [], "total": 0}
+
+    guide_uc = MagicMock()
+    guide_uc.execute.return_value = {"items": [], "total": 0}
+
+    inspection_uc = MagicMock()
+    inspection_uc.execute.return_value = {"items": [], "total": 0}
+
+    use_case = ProductAnalyserUseCase(
+        search_products_use_case=search_uc,
+        structure_use_case=structure_uc,
+        guide_use_case=guide_uc,
+        inspection_use_case=inspection_uc,
+    )
+
+    result = use_case.execute(ProductAnalyserRequest(code="90262008", view="full"))
+
+    assert result["pa_reference"]["catalog_unit"] == "MI"
+    assert result["product"]["pa_reference"]["reference_unit"] == "PA"

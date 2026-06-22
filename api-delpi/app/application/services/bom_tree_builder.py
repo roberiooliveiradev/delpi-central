@@ -12,12 +12,27 @@ class BomTreeBuilder:
 
         for r in rows:
 
+            conversion_factor = r.get("component_conversion_factor")
+
+            try:
+                parsed_conversion_factor = (
+                    float(conversion_factor) if conversion_factor not in (None, "") else None
+                )
+            except (TypeError, ValueError):
+                parsed_conversion_factor = None
+
+            if parsed_conversion_factor is not None and parsed_conversion_factor <= 0:
+                parsed_conversion_factor = None
+
             component = BomNode(
                 code=r["component_code"],
                 description=r["component_description"],
                 type=r["component_type"],
                 unit=r["component_unit"],
-                quantity=float(r["quantity"]) if r["quantity"] else 0
+                quantity=float(r["quantity"]) if r["quantity"] else 0,
+                secondary_unit=r.get("component_secondary_unit") or None,
+                conversion_factor=parsed_conversion_factor,
+                conversion_type=r.get("component_conversion_type") or None,
             )
 
             parent_code = r["parent_code"]

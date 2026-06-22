@@ -268,6 +268,7 @@ class PromptPolicyService:
 
         if self._contains_any(normalized_tool_context, self.DRAWING_ANALYSIS_MARKERS):
             sections.append(self._load_policy("drawing-analysis-render-only.md"))
+            sections.append(self._load_policy(self._drawing_unit_conversion_policy_file()))
 
             if normalized_rag_context.strip():
                 rag_policy = self._drawing_rag_normative_policy_file()
@@ -299,6 +300,17 @@ class PromptPolicyService:
                 "ragNormative",
                 "policyFile",
                 default="drawing-analysis-rag-normative.md",
+            )
+        )
+
+    @classmethod
+    def _drawing_unit_conversion_policy_file(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                "drawing_query_intent",
+                "unitConversion",
+                "policyFile",
+                default="drawing-analysis-unit-conversion.md",
             )
         )
 

@@ -30,3 +30,5 @@ Ordem de autoridade em divergência: **API DELPI → PDF/OCR → normas (RAG)**.
 - Com código apenas, pode pré-validar cadastro, roteiro e inspeção na API.
 
 Regras técnicas de validação (tolerâncias, severidade, padrões OCR) vivem no pipeline (`ChatDrawingValidationOrchestrationService`, `drawing_validation.json`) — **não duplique nesta skill**.
+
+Conversão de unidades Protheus (MI, `B1_CONV`, SG1010): pipeline `ChatDrawingProductUnitConversionService` decide; consulte limitações em `docs/architecture/chat-drawing-skill-limitations.md`.

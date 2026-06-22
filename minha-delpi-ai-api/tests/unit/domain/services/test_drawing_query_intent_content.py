@@ -53,3 +53,29 @@ def test_rag_normative_policy_configured():
     )
 
     assert policy_file == "drawing-analysis-rag-normative.md"
+
+
+def test_unit_conversion_policy_configured():
+    policy_file = ChatAssistantContentService.get(
+        "drawing_query_intent",
+        "unitConversion",
+        "policyFile",
+    )
+    rag_source = ChatAssistantContentService.get(
+        "drawing_query_intent",
+        "unitConversion",
+        "ragSource",
+    )
+
+    assert policy_file == "drawing-analysis-unit-conversion.md"
+    assert rag_source == "produto-conversao-unidades-protheus.txt"
+
+
+def test_drawing_analysis_rag_query_suffix_from_json():
+    from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+
+    query = ChatDrawingIntentService.build_rag_query("validar desenho 90262008")
+
+    assert "90262008" in query
+    assert "B1_CONV" in query
+    assert "produto-conversao-unidades" in query

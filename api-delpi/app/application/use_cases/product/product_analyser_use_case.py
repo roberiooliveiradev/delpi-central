@@ -10,6 +10,7 @@ from app.application.use_cases.product.list_product_structure_use_case import Li
 from app.application.use_cases.product.list_product_guide_use_case import ListProductGuideUseCase
 from app.application.use_cases.product.list_product_inspection_use_case import ListProductInspectionUseCase
 from app.application.services.product.protheus_field_normalizer import narrow_product_fields
+from app.application.services.product.product_playbook_service import attach_pa_reference
 
 SUMMARY_PAGE_SIZE = 3
 SUMMARY_MAX_DEPTH = 2
@@ -96,9 +97,11 @@ class ProductAnalyserUseCase:
                 )
             )
 
-        return {
+        payload = {
             "product": product,
             "structure": structure,
             "guide": guide,
             "inspection": inspection,
         }
+
+        return attach_pa_reference(payload, product)
