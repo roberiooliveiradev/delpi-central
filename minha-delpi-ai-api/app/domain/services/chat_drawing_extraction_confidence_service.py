@@ -152,10 +152,36 @@ class ChatDrawingExtractionConfidenceService:
         if product_code and revision:
             return 0.96
 
+        if product_code and cls._stamp_corroborated_by_bom_read(pdf_meta):
+            return 0.96
+
         if product_code:
             return ChatDrawingPatternsService.extraction_confidence_code_only_stamp()
 
         return cls._stamp_component(pdf_meta, reasons)
+
+    @classmethod
+    def _stamp_corroborated_by_bom_read(cls, pdf_meta: dict[str, Any]) -> bool:
+        component_count = len(pdf_meta.get("componentCodes") or [])
+        min_components = int(
+            ChatDrawingPatternsService.bom_comparison_rule(
+                "stampCorroborationMinComponentCodes",
+                3,
+            )
+            or 3
+        )
+
+        if component_count < min_components:
+            return False
+
+        scopes = pdf_meta.get("validationScopes")
+
+        if not isinstance(scopes, dict):
+            return False
+
+        bom_scope = scopes.get("bom")
+
+        return isinstance(bom_scope, dict) and bool(bom_scope.get("available"))
 
     @classmethod
     def _bom_completeness_component(cls, pdf_meta: dict[str, Any], reasons: list[str]) -> float:
@@ -167,6 +193,14 @@ class ChatDrawingExtractionConfidenceService:
                 return 1.0
 
             if components:
+                has_intermediate_family = any(
+                    ChatDrawingPatternsService.is_intermediate_family(str(code))
+                    for code in components
+                )
+
+                if not has_intermediate_family:
+                    return 1.0
+
                 reasons.append("intermediate_codes_missing")
                 return ChatDrawingPatternsService.extraction_confidence_bom_scope_partial()
 
@@ -182,10 +216,15 @@ class ChatDrawingExtractionConfidenceService:
             return ChatDrawingPatternsService.extraction_confidence_segment_pending()
 
         has_segments = bool(dimensions.get("segmentLengthsMm"))
-        has_decape = dimensions.get("leftDecapeMm") is not None or dimensions.get("rightDecapeMm") is not None
+        has_left_decape = dimensions.get("leftDecapeMm") is not None
+        has_right_decape = dimensions.get("rightDecapeMm") is not None
+        has_decape = has_left_decape or has_right_decape
         has_length = dimensions.get("totalLengthMm") is not None
 
         if has_segments and has_decape:
+            return 1.0
+
+        if has_left_decape and has_right_decape:
             return 1.0
 
         if has_length or has_decape or has_segments:

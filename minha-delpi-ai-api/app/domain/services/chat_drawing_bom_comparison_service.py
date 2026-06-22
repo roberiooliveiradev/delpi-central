@@ -55,6 +55,10 @@ class ChatDrawingBomComparisonService:
             pdf_extract,
             structured_only=cls._prefer_structured_bom_rows(pdf_extract),
         )
+        pdf_bom_codes |= cls.collect_supplemental_presence_codes(
+            pdf_extract,
+            api_codes=set(api_codes),
+        )
         pdf_bom_codes |= cls.intermediate_codes_matched_by_description(
             root=root,
             pdf_extract=pdf_extract,
@@ -151,6 +155,52 @@ class ChatDrawingBomComparisonService:
             structured_rows += 1
 
         return structured_rows >= min_rows
+
+    @classmethod
+    def collect_supplemental_presence_codes(
+        cls,
+        pdf_extract: dict,
+        *,
+        api_codes: set[str],
+    ) -> set[str]:
+        """Presença OCR (componentCodes / linhas não confiáveis) quando BOM colunar domina quantidades."""
+        if not cls._prefer_structured_bom_rows(pdf_extract):
+            return set()
+
+        codes: set[str] = set()
+        structured_sources = ChatDrawingPatternsService.bom_structured_quantity_sources()
+
+        for raw in pdf_extract.get("componentCodes") or []:
+            code = ChatProductQueryIntentService.normalize_product_code(str(raw or ""))
+
+            if code and code in api_codes:
+                codes.add(code)
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            if ChatDrawingBomReferenceNoiseService.is_client_reference_row(row):
+                continue
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if not code or code not in api_codes:
+                continue
+
+            if code in codes:
+                continue
+
+            source = str(row.get("quantitySource") or "").strip().lower()
+
+            if structured_sources and source in structured_sources and row.get("quantityTrusted"):
+                continue
+
+            codes.add(code)
+
+        return codes
 
     @classmethod
     def intermediate_codes_matched_by_description(

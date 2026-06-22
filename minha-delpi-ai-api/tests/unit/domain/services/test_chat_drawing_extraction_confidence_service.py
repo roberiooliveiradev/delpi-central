@@ -83,6 +83,25 @@ def test_evaluate_for_extraction_reaches_target_with_rich_bom_read():
     assert result.score_percent >= 95
 
 
+def test_evaluate_for_extraction_flat_mp_bom_without_intermediates():
+    result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
+        pdf_extract={
+            "productCode": "90264243",
+            "legible": True,
+            "charCount": 900,
+            "componentCodes": ["10080308", "10080843", "10130006", "10420396"],
+            "intermediateCodes": [],
+            "validationScopes": {"bom": {"available": True}},
+            "dimensions": {"leftDecapeMm": 8.0, "rightDecapeMm": 15.0},
+            "sourceMetadata": {"stages": ["region_ocr"]},
+        }
+    )
+
+    assert result.meets_threshold is True
+    assert "intermediate_codes_missing" not in result.reasons
+    assert "dimensions_partial" not in result.reasons
+
+
 def test_extraction_confidence_meets_threshold_with_title_block_and_clean_checklist():
     result = ChatDrawingExtractionConfidenceService.evaluate(
         pdf_extract={

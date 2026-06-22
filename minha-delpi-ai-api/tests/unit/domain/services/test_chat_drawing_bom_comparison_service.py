@@ -203,3 +203,41 @@ def test_structured_bom_rows_skip_untrusted_row_codes():
     )
 
     assert "10080106" not in result.extra_in_pdf
+
+
+def test_structured_bom_supplements_presence_from_component_codes():
+    root = {
+        "structure": {
+            "items": [
+                {"code": "10080308", "quantity": 1.0, "components": []},
+                {"code": "10130006", "quantity": 30.0, "components": []},
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["10080308", "10130006"],
+        "bomRows": [
+            {
+                "code": "10080308",
+                "quantity": "1",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            },
+            {
+                "code": "10130006",
+                "quantity": "30",
+                "quantitySource": "column_inferred",
+                "quantityTrusted": False,
+            },
+        ],
+        "bomVisionRefinement": {"columnRowCount": 2},
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90264243",
+    )
+
+    assert "10130006" not in result.missing_in_pdf
+    assert not result.missing_in_pdf

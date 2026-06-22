@@ -139,6 +139,22 @@ def test_guide_component_ok_for_pa_root_when_mp_in_structure():
     assert not mismatches
 
 
+def test_balloon_ok_when_codes_only_in_structured_bom_table():
+    pdf_extract = {
+        "componentCodes": ["10080308", "10080843"],
+        "bomRows": [
+            {"code": "10080308", "quantity": "1", "quantitySource": "column"},
+            {"code": "10080843", "quantity": "1", "quantitySource": "column"},
+        ],
+        "bomVisionRefinement": {"columnRowCount": 2},
+        "sourceMetadata": {},
+    }
+
+    items = ChatDrawingBalloonValidationService.build_check_items(pdf_extract=pdf_extract)
+
+    assert any(item.get("templateKey") == "balloon_presence_ok" for item in items)
+
+
 def test_balloon_missing_codes_when_annotations_partial():
     pdf_extract = {
         "componentCodes": ["10081867", "10091640"],

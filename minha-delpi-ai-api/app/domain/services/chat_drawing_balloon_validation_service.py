@@ -30,9 +30,10 @@ class ChatDrawingBalloonValidationService:
     def evaluate(cls, *, pdf_extract: dict) -> BalloonCoverageResult:
         bom_codes = cls._collect_bom_codes(pdf_extract)
         annotation_text = cls._annotation_haystack(pdf_extract)
-        annotations_available = bool(annotation_text.strip())
+        structured_codes = cls._collect_structured_bom_annotation_codes(pdf_extract)
+        annotations_available = bool(annotation_text.strip()) or bool(structured_codes)
         annotation_codes = cls._extract_codes(annotation_text)
-        annotation_set = set(annotation_codes)
+        annotation_set = set(annotation_codes) | structured_codes
         missing = tuple(
             sorted(code for code in bom_codes if code not in annotation_set)
         )
@@ -91,6 +92,36 @@ class ChatDrawingBalloonValidationService:
             )
 
         return items
+
+    @classmethod
+    def _collect_structured_bom_annotation_codes(cls, pdf_extract: dict) -> set[str]:
+        refinement = pdf_extract.get("bomVisionRefinement")
+
+        if not isinstance(refinement, dict) or int(refinement.get("columnRowCount") or 0) <= 0:
+            scopes = pdf_extract.get("validationScopes")
+
+            if not isinstance(scopes, dict):
+                return set()
+
+            bom_scope = scopes.get("bom")
+
+            if not isinstance(bom_scope, dict) or not bom_scope.get("available"):
+                return set()
+
+        codes: set[str] = set()
+
+        for row in pdf_extract.get("bomRows") or []:
+            if not isinstance(row, dict):
+                continue
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(row.get("code") or "")
+            )
+
+            if code:
+                codes.add(code)
+
+        return codes
 
     @classmethod
     def _collect_bom_codes(cls, pdf_extract: dict) -> tuple[str, ...]:
