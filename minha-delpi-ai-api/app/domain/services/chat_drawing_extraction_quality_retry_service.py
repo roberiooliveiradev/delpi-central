@@ -113,6 +113,37 @@ class ChatDrawingExtractionQualityRetryService:
                 )
 
             if (
+                best is not None
+                and cls._pdf_extract_used_embedded_only(best.pdf_extract)
+                and cls._embedded_text_meets_ocr_gate(best.pdf_extract)
+                and cls._embedded_bom_extracted(best.pdf_extract)
+                and str(best.pdf_extract.get("productCode") or "").strip()
+                and index + 1 < len(attempt_slots)
+            ):
+                return cls._attach_retry_metadata(
+                    best.pdf_extract,
+                    history=history,
+                    selected=best,
+                    target=target,
+                    stopped_reason="embedded_sufficient",
+                )
+
+            if (
+                index >= 1
+                and cls._attempt_stalled(history[-2], result)
+                and best is not None
+                and cls._pdf_extract_used_embedded_only(best.pdf_extract)
+                and cls._embedded_bom_extracted(best.pdf_extract)
+            ):
+                return cls._attach_retry_metadata(
+                    best.pdf_extract,
+                    history=history,
+                    selected=best,
+                    target=target,
+                    stopped_reason="embedded_sufficient",
+                )
+
+            if (
                 index >= 1
                 and cls._attempt_stalled(history[-2], result)
                 and len(attempt_slots) - index - 1 > 0
@@ -360,6 +391,54 @@ class ChatDrawingExtractionQualityRetryService:
         best_chars = int(current_best.pdf_extract.get("charCount") or 0)
 
         return candidate_chars > best_chars
+
+    @classmethod
+    def _pdf_extract_used_embedded_only(cls, pdf_extract: dict[str, Any]) -> bool:
+        source = pdf_extract.get("sourceMetadata")
+
+        if not isinstance(source, dict):
+            return False
+
+        stages = [str(stage).strip() for stage in (source.get("stages") or []) if str(stage).strip()]
+
+        return "fitz_embedded" in stages and "region_ocr" not in stages
+
+    @classmethod
+    def _embedded_text_meets_ocr_gate(cls, pdf_extract: dict[str, Any]) -> bool:
+        """Texto embutido ≥ minChars — OCR regional não acrescenta (document_vision.regionOcr)."""
+        from app.domain.services.chat_document_vision_content_service import (
+            ChatDocumentVisionContentService,
+        )
+
+        min_chars = ChatDocumentVisionContentService.pdf_region_ocr_min_chars()
+        source = pdf_extract.get("sourceMetadata")
+
+        if not isinstance(source, dict):
+            return False
+
+        embedded = source.get("embedded")
+
+        if not isinstance(embedded, dict):
+            return False
+
+        native_chars = int(embedded.get("nativeCharCount") or 0)
+        annotation_chars = int(embedded.get("annotationCharCount") or 0)
+
+        return max(native_chars, annotation_chars, native_chars + annotation_chars) >= min_chars
+
+    @classmethod
+    def _embedded_bom_extracted(cls, pdf_extract: dict[str, Any]) -> bool:
+        if pdf_extract.get("componentCodes"):
+            return True
+
+        scopes = pdf_extract.get("validationScopes")
+
+        if not isinstance(scopes, dict):
+            return False
+
+        bom_scope = scopes.get("bom")
+
+        return isinstance(bom_scope, dict) and bool(bom_scope.get("available"))
 
     @classmethod
     def _attach_retry_metadata(

@@ -42,6 +42,21 @@ def test_document_extraction_fuses_90262019_without_region_ocr():
     assert "10090481" in extracted["fullText"]
 
 
+def test_drawing_profile_skips_region_ocr_when_embedded_sufficient():
+    pdf = require_drawing_pdf("90262019.pdf")
+
+    extracted = ChatPdfDocumentExtractionService.extract_from_storage_path(
+        str(pdf),
+        filename="90262019.pdf",
+        layout_profile=ChatPdfDocumentExtractionService.LAYOUT_DRAWING_DELPI,
+    )
+
+    assert extracted["supported"] is True
+    assert "fitz_embedded" in extracted["stages"]
+    assert "region_ocr" not in extracted["stages"]
+    assert "90262019" in extracted["fullText"]
+
+
 def test_drawing_extraction_builds_bom_for_90262019():
     pdf = require_drawing_pdf("90262019.pdf")
 
@@ -55,6 +70,9 @@ def test_drawing_extraction_builds_bom_for_90262019():
         "10250032",
         "10080591",
         "10090481",
-        "10084053",
     }
+    assert "10084053" not in set(parsed["componentCodes"] or [])
     assert len(parsed.get("bomRows") or []) >= 3
+    source = parsed.get("sourceMetadata") if isinstance(parsed.get("sourceMetadata"), dict) else {}
+    stages = list(source.get("stages") or [])
+    assert "region_ocr" not in stages

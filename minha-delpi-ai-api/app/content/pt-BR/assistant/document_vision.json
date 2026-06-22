@@ -78,7 +78,7 @@
     },
     "regionOcr": {
       "minChars": 120,
-      "engines": ["tesseract", "easyocr"],
+      "engines": ["tesseract"],
       "fusionStrategy": "merge_unique_lines",
       "maxBomCandidatesOcr": 2,
       "bomFusion": {
@@ -91,7 +91,7 @@
       }
     },
     "memoryGuard": {
-      "minAvailableMbForEasyocr": 1400,
+      "minAvailableMbForEasyocr": 2800,
       "minAvailableMbForDrawingOcr": 512,
       "easyocrLazyRelease": true
     },

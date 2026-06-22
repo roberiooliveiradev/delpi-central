@@ -349,12 +349,11 @@ class ChatDocumentVisionContentService:
 
     @classmethod
     def memory_guard_min_mb_for_easyocr(cls) -> int:
-        raw = ChatAssistantContentService.get(
+        raw = ChatAssistantContentService.get_node(
             _BUNDLE,
             "pdfExtraction",
             "memoryGuard",
             "minAvailableMbForEasyocr",
-            default="1400",
         )
 
         try:
@@ -364,12 +363,11 @@ class ChatDocumentVisionContentService:
 
     @classmethod
     def memory_guard_min_mb_for_drawing_ocr(cls) -> int:
-        raw = ChatAssistantContentService.get(
+        raw = ChatAssistantContentService.get_node(
             _BUNDLE,
             "pdfExtraction",
             "memoryGuard",
             "minAvailableMbForDrawingOcr",
-            default="512",
         )
 
         try:
@@ -379,13 +377,15 @@ class ChatDocumentVisionContentService:
 
     @classmethod
     def memory_guard_easyocr_lazy_release(cls) -> bool:
-        raw = ChatAssistantContentService.get(
+        raw = ChatAssistantContentService.get_node(
             _BUNDLE,
             "pdfExtraction",
             "memoryGuard",
             "easyocrLazyRelease",
-            default="true",
         )
+
+        if isinstance(raw, bool):
+            return raw
 
         return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 

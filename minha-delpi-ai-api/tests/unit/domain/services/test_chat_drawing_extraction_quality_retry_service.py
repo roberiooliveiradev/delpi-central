@@ -7,6 +7,9 @@ from app.domain.services.chat_drawing_extraction_confidence_service import (
 from app.domain.services.chat_drawing_extraction_quality_retry_service import (
     ChatDrawingExtractionQualityRetryService,
 )
+from app.domain.services.chat_vision_memory_guard_service import (
+    ChatVisionMemoryGuardService,
+)
 
 
 def test_retry_stops_on_first_attempt_when_confident(monkeypatch):
@@ -281,6 +284,11 @@ def test_retry_continues_after_stall_when_distinct_profiles_remain(monkeypatch):
         classmethod(lambda cls: None),
     )
     monkeypatch.setattr(
+        ChatVisionMemoryGuardService,
+        "can_use_easyocr",
+        classmethod(lambda cls: True),
+    )
+    monkeypatch.setattr(
         ChatDrawingExtractionQualityRetryService,
         "_extract_once",
         staticmethod(
@@ -312,6 +320,52 @@ def test_retry_continues_after_stall_when_distinct_profiles_remain(monkeypatch):
 
     assert retry.get("attemptCount") == 5
     assert retry.get("stoppedReason") == "max_attempts"
+
+
+def test_retry_stops_after_embedded_only_when_ocr_gate_met(monkeypatch):
+    attempts = []
+
+    def fake_extract(storage_path, *, filename="", attempt=None):
+        attempts.append(attempt)
+        return {
+            "productCode": "90262019",
+            "charCount": 2400,
+            "componentCodes": ["10081867"],
+            "validationScopes": {"bom": {"available": True}},
+            "sourceMetadata": {
+                "stages": ["fitz_embedded", "pypdf"],
+                "embedded": {"nativeCharCount": 1800, "annotationCharCount": 600},
+            },
+        }
+
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_extract_once",
+        staticmethod(fake_extract),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionConfidenceService,
+        "evaluate_for_extraction",
+        classmethod(
+            lambda cls, *, pdf_extract: ExtractionConfidenceResult(
+                score=0.55,
+                threshold=0.95,
+                meets_threshold=False,
+                components={"dimensions": 0.55},
+                reasons=("dimensions_missing",),
+            )
+        ),
+    )
+
+    result = ChatDrawingExtractionQualityRetryService.extract_until_confident(
+        "/tmp/x.pdf",
+        filename="90262019.pdf",
+    )
+    retry = result.get("extractionQualityRetry") or {}
+
+    assert retry.get("stoppedReason") == "embedded_sufficient"
+    assert retry.get("attemptCount") == 1
+    assert len(attempts) == 1
 
 
 def test_retry_loop_defaults_to_tesseract_only(monkeypatch):
