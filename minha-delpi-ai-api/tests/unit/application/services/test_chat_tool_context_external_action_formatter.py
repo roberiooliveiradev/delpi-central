@@ -49,6 +49,26 @@ def test_safe_metadata_stores_authorized_result_for_truncated_analyser_preview(
     assert safe_metadata["authorizedResult"]["data"]["product"]["code"] == "90260140"
 
 
+def test_safe_metadata_preserves_existing_data_answer_when_enrichment_skips():
+    formatter = ChatToolContextExternalActionFormatter(ExternalActionResultPresenter())
+    incoming_data_answer = {
+        "summary": "PA em produção.",
+        "profileKey": "factory_status",
+    }
+    safe_metadata = formatter._build_safe_tool_metadata(
+        "execute_external_action",
+        {
+            "ok": False,
+            "statusCode": 504,
+            "path": "/products/90260140/factory-status",
+            "dataAnswer": incoming_data_answer,
+        },
+        {"success": False, "error": "timeout"},
+    )
+
+    assert safe_metadata.get("dataAnswer") == incoming_data_answer
+
+
 def test_format_external_action_context_skips_template_linhas_when_everywhere():
     import re
 

@@ -27,21 +27,15 @@ class ChatSecurityMessagingService:
                 default="Não encontrei esse recurso. Verifique o código ou filtro informado.",
             )
 
-        if code in (401, 403) or error.lower() in ("unauthorized", "forbidden"):
-            return ExternalActionResponseContentService.get(
-                "security",
-                "noAccess",
-            )
+        lowered_error = error.lower()
 
-        if "/stock" in lowered_path or "estoque" in error.lower():
+        if "/stock" in lowered_path or "estoque" in lowered_error:
             return ExternalActionResponseContentService.get(
                 "security",
                 "stockQueryFailed",
             )
 
         if "/system/" in lowered_path:
-            lowered_error = error.lower()
-
             if any(
                 term in lowered_error
                 for term in (
@@ -59,6 +53,18 @@ class ChatSecurityMessagingService:
                     "security",
                     "systemMetadataQueryFailed",
                 )
+
+        if code == 504 or cls._looks_like_http_read_timeout(error):
+            return ExternalActionResponseContentService.get(
+                "composite",
+                "timeout",
+            )
+
+        if code in (401, 403) or lowered_error in ("unauthorized", "forbidden"):
+            return ExternalActionResponseContentService.get(
+                "security",
+                "noAccess",
+            )
 
         if "/data/sql" in lowered_path:
             from app.domain.services.chat_sql_execution_error_interpretation_service import (
@@ -110,6 +116,19 @@ class ChatSecurityMessagingService:
         return ExternalActionResponseContentService.get(
             "security",
             "operationalQueryFailed",
+        )
+
+    @classmethod
+    def _looks_like_http_read_timeout(cls, error: str) -> bool:
+        lowered = str(error or "").strip().lower()
+
+        if not lowered:
+            return False
+
+        return (
+            lowered == "timeout"
+            or "read timed out" in lowered
+            or "readtimeout" in lowered.replace(" ", "")
         )
 
     @classmethod

@@ -32,6 +32,16 @@ class ChatToolContextExternalActionFormatter:
             data,
         ) -> dict:
             safe_metadata = dict(metadata or {})
+            preserved_insight_metadata = {
+                key: safe_metadata[key]
+                for key in (
+                    "dataAnswer",
+                    "dataCommentary",
+                    "presentationDecision",
+                    "dataCoverageNotice",
+                )
+                if safe_metadata.get(key)
+            }
 
             if tool_name == "execute_external_action":
                 path = str(safe_metadata.get("path") or "")
@@ -149,6 +159,16 @@ class ChatToolContextExternalActionFormatter:
                             ChatToolContextPresentationService.sync_text_presentation_from_humanized(
                                 safe_metadata,
                             )
+
+            tool_ok = safe_metadata.get("ok")
+
+            if tool_ok is False:
+                for key, value in preserved_insight_metadata.items():
+                    safe_metadata[key] = value
+            else:
+                for key, value in preserved_insight_metadata.items():
+                    if not safe_metadata.get(key):
+                        safe_metadata[key] = value
 
             return safe_metadata
 

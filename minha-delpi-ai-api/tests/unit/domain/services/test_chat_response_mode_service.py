@@ -387,6 +387,35 @@ def test_apply_turn_direct_answer_policy_skips_rag_when_tool_ok_even_if_not_flag
     assert effect == "llm_synthesis"
 
 
+def test_apply_turn_direct_answer_policy_keeps_failure_direct_without_llm(monkeypatch):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    failure_direct = (
+        "**Atenção — pontos para revisar**\n"
+        "- **/products/90260140/factory-status:** consulta indisponível."
+    )
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="visão fabril do 90260140",
+        response_mode="fast",
+        direct_answer=failure_direct,
+        skip_rag=True,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": False,
+                    "statusCode": 504,
+                    "path": "/products/90260140/factory-status",
+                },
+            }
+        ],
+    )
+
+    assert direct == failure_direct
+    assert skip_rag is True
+    assert effect == "operational_direct"
+
+
 def test_list_modes_loads_json_labels(monkeypatch):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
     modes = ChatResponseModeService.list_modes()

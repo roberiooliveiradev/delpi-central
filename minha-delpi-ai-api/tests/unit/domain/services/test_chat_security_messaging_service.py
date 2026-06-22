@@ -77,3 +77,17 @@ def test_system_metadata_db_failure_message():
     )
 
     assert "protheus" in message.lower() or "dicionário" in message.lower()
+
+
+def test_timeout_failure_uses_composite_timeout_message():
+    message = ChatSecurityMessagingService.resolve_api_failure(
+        {
+            "ok": False,
+            "statusCode": 504,
+            "error": "read timed out",
+        },
+        path="/products/90260140/factory-status",
+    )
+
+    assert "demorou" in message.lower()
+    assert "timeout" not in message.lower()

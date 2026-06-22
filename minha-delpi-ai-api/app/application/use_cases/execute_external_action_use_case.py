@@ -84,6 +84,7 @@ class ExecuteExternalActionUseCase:
             parameters=gateway_parameters,
             body=arguments.get("body"),
             access_token=access_token,
+            action_path=action.get("path") or "",
         )
 
         sanitized_data = self.policy.sanitize_response(result["data"])

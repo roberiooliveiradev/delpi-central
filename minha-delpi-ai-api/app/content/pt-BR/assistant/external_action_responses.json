@@ -776,10 +776,23 @@
     "notFound404": "Não encontrei esse recurso (HTTP 404). Verifique o código ou número informado.",
     "forbidden": "Não consegui acessar com as permissões atuais (HTTP {code}). Confira o agente ativo ou solicite acesso.",
     "serverError": "A API teve uma falha temporária (HTTP {code}). Tente novamente em instantes.",
+    "timeout": "A consulta demorou mais que o esperado e foi interrompida. Tente novamente em instantes ou refine o filtro (produto, filial ou período).",
     "httpStatus": "a API retornou status HTTP {code}.",
     "notSuccessful": "a consulta não foi concluída com sucesso.",
     "timeout": "a consulta demorou além do esperado. Tente novamente ou refine o filtro.",
     "partialSuccess": "parte das consultas retornou dados; veja os avisos abaixo."
+  },
+  "httpExecution": {
+    "defaultTimeoutSeconds": 30,
+    "compositeAnalysisTimeoutSeconds": 60,
+    "retryOnceOnTimeout": true,
+    "retryOnceOnStatusCodes": [502, 503, 504],
+    "compositePathMarkers": [
+      "/factory-status",
+      "/raw-material-price-intelligence",
+      "/cost-impact-simulation",
+      "/analyser"
+    ]
   },
   "temporal": {
     "today": "hoje",

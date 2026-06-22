@@ -110,6 +110,14 @@ class ChatResponseModeService:
         if direct_answer and cls._should_preserve_direct_answer(pipeline_stages):
             return direct_answer, skip_rag, "simple_direct"
 
+        if cls._all_operational_tools_failed(tool_calls):
+            failure_direct = direct_answer or cls._build_operational_failure_direct_answer(
+                tool_calls
+            )
+
+            if failure_direct:
+                return failure_direct, skip_rag, "operational_direct"
+
         from app.domain.services.chat_presentation_prose_delivery_service import (
             ChatPresentationProseDeliveryService,
             MODE_LLM,
@@ -172,6 +180,67 @@ class ChatResponseModeService:
             return direct_answer, skip_rag, "operational_direct"
 
         return direct_answer, skip_rag, "llm_synthesis"
+
+    @classmethod
+    def _all_operational_tools_failed(cls, tool_calls: list | None) -> bool:
+        if not isinstance(tool_calls, list) or not tool_calls:
+            return False
+
+        external_calls = [
+            tool_call
+            for tool_call in tool_calls
+            if str(tool_call.get("name") or "") == "execute_external_action"
+        ]
+
+        if not external_calls:
+            return False
+
+        return all(
+            not (
+                isinstance(tool_call.get("metadata"), dict)
+                and tool_call.get("metadata").get("ok")
+            )
+            for tool_call in external_calls
+        )
+
+    @classmethod
+    def _build_operational_failure_direct_answer(cls, tool_calls: list | None) -> str | None:
+        if not isinstance(tool_calls, list):
+            return None
+
+        from app.domain.services.external_actions.external_action_response_content_service import (
+            ExternalActionResponseContentService,
+        )
+
+        issues: list[str] = []
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            from app.domain.services.chat_security_messaging_service import (
+                ChatSecurityMessagingService,
+            )
+
+            path = str(metadata.get("path") or "")
+            label = path or str(metadata.get("actionId") or "consulta")
+            message = ChatSecurityMessagingService.resolve_api_failure(metadata, path=path)
+            issues.append(f"- **{label}:** {message}")
+
+        if not issues:
+            return ExternalActionResponseContentService.get(
+                "security",
+                "operationalQueryFailed",
+            )
+
+        header = ExternalActionResponseContentService.get("composite", "attentionHeader")
+
+        return f"{header}\n" + "\n".join(issues)
 
     @classmethod
     def _should_preserve_direct_answer(cls, pipeline_stages: list[str] | None) -> bool:

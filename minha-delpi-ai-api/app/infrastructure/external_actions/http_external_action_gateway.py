@@ -3,6 +3,10 @@ from urllib.parse import quote
 
 import requests
 
+from app.domain.services.external_action_http_execution_service import (
+    ExternalActionHttpExecutionService,
+)
+
 
 class HttpExternalActionGateway:
     def execute(
@@ -12,9 +16,15 @@ class HttpExternalActionGateway:
         parameters: dict | None,
         body,
         access_token: str | None,
+        *,
+        action_path: str = "",
     ) -> dict:
         parameters = parameters or {}
-        started_at = time.perf_counter()
+        resolved_path = str(action_path or action.get("path") or "")
+        timeout_seconds = ExternalActionHttpExecutionService.resolve_timeout_seconds(
+            provider=provider,
+            action_path=resolved_path,
+        )
 
         url = self._build_url(
             base_url=provider["baseUrl"],
@@ -24,27 +34,59 @@ class HttpExternalActionGateway:
 
         query_params = self._extract_query_params(action, parameters)
         headers = self._build_headers(provider, access_token)
+        method = action["method"]
 
-        response = requests.request(
-            method=action["method"],
-            url=url,
-            params=query_params,
-            json=body if self._should_send_json_body(action, body) else None,
-            data=body if self._should_send_raw_body(action, body) else None,
-            headers=headers,
-            timeout=provider.get("timeoutSeconds", 30),
-        )
+        for attempt_index in range(2):
+            started_at = time.perf_counter()
 
-        duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
+            try:
+                response = requests.request(
+                    method=method,
+                    url=url,
+                    params=query_params,
+                    json=body if self._should_send_json_body(action, body) else None,
+                    data=body if self._should_send_raw_body(action, body) else None,
+                    headers=headers,
+                    timeout=timeout_seconds,
+                )
+            except requests.Timeout:
+                duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
 
-        payload = self._parse_response(response)
+                if ExternalActionHttpExecutionService.should_retry(
+                    attempt_index=attempt_index,
+                    timed_out=True,
+                ):
+                    continue
 
-        return {
-            "statusCode": response.status_code,
-            "durationMs": duration_ms,
-            "data": payload,
-            "ok": 200 <= response.status_code < 300,
-        }
+                return {
+                    "statusCode": 504,
+                    "durationMs": duration_ms,
+                    "data": {
+                        "success": False,
+                        "error": "timeout",
+                        "message": "read timed out",
+                    },
+                    "ok": False,
+                }
+
+            duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
+            payload = self._parse_response(response)
+            result = {
+                "statusCode": response.status_code,
+                "durationMs": duration_ms,
+                "data": payload,
+                "ok": 200 <= response.status_code < 300,
+            }
+
+            if ExternalActionHttpExecutionService.should_retry(
+                attempt_index=attempt_index,
+                status_code=response.status_code,
+            ):
+                continue
+
+            return result
+
+        return result
 
     def _build_url(self, base_url: str, path: str, parameters: dict) -> str:
         final_path = path
