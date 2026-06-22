@@ -315,6 +315,15 @@
   color: color-mix(in srgb, var(--mdc-warning) 92%, var(--mdc-text));
 }
 
+.mdc-rich-presentation__coverage-notice--info {
+  border-color: color-mix(in srgb, var(--mdc-info, var(--mdc-accent)) 28%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-info, var(--mdc-accent)) 8%, var(--mdc-card-bg));
+}
+
+.mdc-rich-presentation__coverage-notice--info::before {
+  content: none;
+}
+
 .mdc-rich-presentation__response-mode-footnote {
   margin: 0.65rem 0 0;
   padding: 0;

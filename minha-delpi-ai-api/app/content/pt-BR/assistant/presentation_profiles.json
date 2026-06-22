@@ -451,6 +451,30 @@
       "purchases_top_products"
     ]
   },
+  "operationalConsolidationCoverage": {
+    "listingEntities": [
+      "production_schedule_today",
+      "production_orders_open",
+      "production_orders_finished",
+      "production_orders_finished_without_consumption",
+      "production_work_center_order_summary",
+      "production_work_center_average_planned_time",
+      "production_losses_records",
+      "production_allocation_gaps",
+      "production_planned_vs_real_time",
+      "production_order_detail",
+      "open_sales_order",
+      "open_production_order",
+      "commercial_proposal_document",
+      "production_consumption_by_item"
+    ],
+    "messageKeys": {
+      "aggregatedComplete": "operationalConsolidatedAllBranches",
+      "listingComplete": "operationalConsolidatedListingAllBranches",
+      "aggregatedIncomplete": "operationalIncompleteConsolidated",
+      "listingIncomplete": "operationalIncompleteListingAllBranches"
+    }
+  },
   "pathRules": [
     {
       "contains": "/structure/exclusivity",

@@ -49,7 +49,11 @@ class ChatDataCoverageNoticeService:
                 messages.append(pagination["message"])
                 details["pagination"] = pagination
 
-            operational = cls._operational_limit_notice(root, response_meta=response_meta)
+            operational = cls._operational_limit_notice(
+                root,
+                response_meta=response_meta,
+                path=path,
+            )
 
             if operational:
                 messages.append(operational["message"])
@@ -58,6 +62,7 @@ class ChatDataCoverageNoticeService:
                 consolidated = cls._operational_consolidated_notice(
                     root,
                     response_meta=response_meta,
+                    path=path,
                 )
 
                 if consolidated:
@@ -187,6 +192,11 @@ class ChatDataCoverageNoticeService:
             return "pagination"
 
         if details.get("operationalConsolidation"):
+            consolidation = details["operationalConsolidation"]
+
+            if consolidation.get("isComplete") is True:
+                return "info"
+
             return "partial"
 
         if details.get("depth"):
@@ -295,6 +305,7 @@ class ChatDataCoverageNoticeService:
         root: dict,
         *,
         response_meta: dict | None = None,
+        path: str = "",
     ) -> dict | None:
         from app.domain.services.chat_operational_result_completeness_service import (
             ChatOperationalResultCompletenessService,
@@ -303,6 +314,7 @@ class ChatDataCoverageNoticeService:
         return ChatOperationalResultCompletenessService.build_notice_payload(
             root,
             response_meta=response_meta,
+            path=path or None,
         )
 
     @classmethod
@@ -311,6 +323,7 @@ class ChatDataCoverageNoticeService:
         root: dict,
         *,
         response_meta: dict | None = None,
+        path: str = "",
     ) -> dict | None:
         from app.domain.services.chat_operational_result_completeness_service import (
             ChatOperationalResultCompletenessService,
@@ -319,6 +332,7 @@ class ChatDataCoverageNoticeService:
         return ChatOperationalResultCompletenessService.build_consolidated_payload(
             root,
             response_meta=response_meta,
+            path=path or None,
         )
 
     @classmethod

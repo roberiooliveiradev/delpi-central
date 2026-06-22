@@ -140,6 +140,45 @@ def test_build_generic_categorical_shape_adds_visual_hint():
     assert derived_metrics[0].get("label") == "Registros"
 
 
+def test_build_schedule_today_complete_list_does_not_add_page_limitation() -> None:
+    rows = [
+        {
+            "production_order": f"245559010{index:02d}",
+            "product_code": "70260010",
+            "description": "CHICOTE BUHLER",
+            "planned_qty": 0.001,
+            "branch": "01" if index < 164 else "02",
+        }
+        for index in range(169)
+    ]
+    metadata = {
+        "path": "/production/schedule/today",
+        "apiDelpiResponseMeta": {
+            "entity": "production_schedule_today",
+            "pagination": {"limit": 500, "returned": 169, "is_complete": True},
+        },
+        "tablePresentation": {"type": "table", "rows": rows},
+    }
+    data = {
+        "items": rows,
+        "summary": {
+            "total_records": 169,
+            "reference_date": "20260622",
+            "is_complete": True,
+            "branch_filter_applied": False,
+            "consolidated_across_branches": True,
+        },
+        "pagination": {"limit": 500, "offset": 0, "returned": 169, "is_complete": True},
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    limitations = "\n".join(data_answer.get("limitations") or []).lower()
+    assert "registros desta página" not in limitations
+    assert "resultado incompleto" not in limitations
+
+
 def test_build_generic_complete_list_does_not_mark_pagination_limitation():
     rows = [
         {

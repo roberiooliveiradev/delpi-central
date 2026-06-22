@@ -9,6 +9,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_operational_consolidation_coverage_service import (
+    ChatOperationalConsolidationCoverageService,
+)
 
 _BUNDLE = "data_coverage"
 
@@ -63,12 +66,17 @@ class ChatOperationalResultCompletenessService:
         root: dict[str, Any],
         *,
         response_meta: dict[str, Any] | None = None,
+        path: str | None = None,
     ) -> str | None:
         context = cls.enrich_context(root, response_meta=response_meta)
 
         if not cls.consolidated_across_branches(context):
             return None
 
+        entity = ChatOperationalConsolidationCoverageService.resolve_entity(
+            response_meta=response_meta,
+            path=path,
+        )
         pagination = cls.resolve_pagination(context) or {}
         summary = context.get("summary") if isinstance(context.get("summary"), dict) else {}
         returned = cls._as_int(pagination.get("returned")) or cls._as_int(
@@ -76,18 +84,34 @@ class ChatOperationalResultCompletenessService:
         ) or 0
         limit = cls._as_int(pagination.get("limit"))
         limit_text = str(limit) if limit is not None else "—"
+        incomplete = cls.is_incomplete(context, response_meta=response_meta)
 
-        if cls.is_incomplete(context):
+        if incomplete:
+            message_key = ChatOperationalConsolidationCoverageService.coverage_message_key(
+                entity=entity,
+                incomplete=True,
+            )
+
             return ChatAssistantContentService.format(
                 _BUNDLE,
-                "operationalIncompleteConsolidated",
+                message_key,
                 returned=returned,
                 limit=limit_text,
             ).strip()
 
+        if not ChatOperationalConsolidationCoverageService.should_emit_complete_consolidation_notice(
+            entity
+        ):
+            return None
+
+        message_key = ChatOperationalConsolidationCoverageService.coverage_message_key(
+            entity=entity,
+            incomplete=False,
+        )
+
         return ChatAssistantContentService.get(
             _BUNDLE,
-            "operationalConsolidatedAllBranches",
+            message_key,
             default="",
         ).strip() or None
 
@@ -97,8 +121,14 @@ class ChatOperationalResultCompletenessService:
         root: dict[str, Any],
         *,
         response_meta: dict[str, Any] | None = None,
+        path: str | None = None,
     ) -> dict[str, Any] | None:
-        message = cls.build_consolidated_message(root, response_meta=response_meta)
+        context = cls.enrich_context(root, response_meta=response_meta)
+        message = cls.build_consolidated_message(
+            root,
+            response_meta=response_meta,
+            path=path,
+        )
 
         if not message:
             return None
@@ -106,6 +136,7 @@ class ChatOperationalResultCompletenessService:
         return {
             "message": message,
             "consolidatedAcrossBranches": True,
+            "isComplete": not cls.is_incomplete(context, response_meta=response_meta),
         }
 
     @classmethod
@@ -149,8 +180,13 @@ class ChatOperationalResultCompletenessService:
         root: dict[str, Any],
         *,
         response_meta: dict[str, Any] | None = None,
+        path: str | None = None,
     ) -> str | None:
-        payload = cls.build_notice_payload(root, response_meta=response_meta)
+        payload = cls.build_notice_payload(
+            root,
+            response_meta=response_meta,
+            path=path,
+        )
 
         if not payload:
             return None
@@ -163,12 +199,17 @@ class ChatOperationalResultCompletenessService:
         root: dict[str, Any],
         *,
         response_meta: dict[str, Any] | None = None,
+        path: str | None = None,
     ) -> dict[str, Any] | None:
         context = cls.enrich_context(root, response_meta=response_meta)
 
         if not cls.is_incomplete(context):
             return None
 
+        entity = ChatOperationalConsolidationCoverageService.resolve_entity(
+            response_meta=response_meta,
+            path=path,
+        )
         pagination = cls.resolve_pagination(context) or {}
         summary = context.get("summary") if isinstance(context.get("summary"), dict) else {}
         returned = cls._as_int(pagination.get("returned")) or cls._as_int(
@@ -178,9 +219,13 @@ class ChatOperationalResultCompletenessService:
         limit_text = str(limit) if limit is not None else "—"
 
         if cls.consolidated_across_branches(context):
+            message_key = ChatOperationalConsolidationCoverageService.coverage_message_key(
+                entity=entity,
+                incomplete=True,
+            )
             message = ChatAssistantContentService.format(
                 _BUNDLE,
-                "operationalIncompleteConsolidated",
+                message_key,
                 returned=returned,
                 limit=limit_text,
             )
@@ -239,8 +284,13 @@ class ChatOperationalResultCompletenessService:
         consolidated_message = cls.build_consolidated_message(
             data,
             response_meta=response_meta,
+            path=str(metadata.get("path") or "").strip() or None,
         )
-        incomplete_message = cls.build_notice_message(data, response_meta=response_meta)
+        incomplete_message = cls.build_notice_message(
+            data,
+            response_meta=response_meta,
+            path=str(metadata.get("path") or "").strip() or None,
+        )
 
         if consolidated_message and not incomplete_message:
             existing_highlights = [

@@ -184,7 +184,7 @@ export type ChatDataAnswer = {
 };
 
 export type ChatDataCoverageNotice = {
-  kind?: "pagination" | "depth" | "preview" | "partial" | string;
+  kind?: "pagination" | "depth" | "preview" | "partial" | "info" | string;
   message: string;
   messages?: string[];
   details?: Record<string, unknown>;

@@ -2,6 +2,7 @@ import type { ChatDepthState, ChatPaginationState } from "../../../data/api/chat
 
 type AssistantContentRouteCoverageProps = {
   message: string;
+  kind?: string | null;
   pagination?: ChatPaginationState | null;
   depth?: ChatDepthState | null;
   onNavigate?: (query: string) => void;
@@ -9,6 +10,7 @@ type AssistantContentRouteCoverageProps = {
 
 export function AssistantContentRouteCoverage({
   message,
+  kind = null,
   pagination = null,
   depth = null,
   onNavigate,
@@ -18,10 +20,14 @@ export function AssistantContentRouteCoverage({
     (pagination.hasPrevious || pagination.hasNext || (pagination.totalPages ?? 0) > 1);
   const showDepth = Boolean(depth?.canIncrease);
   const showNavigation = Boolean(onNavigate && (showPagination || showDepth));
+  const noticeClassName =
+    kind === "info"
+      ? "mdc-rich-presentation__coverage-notice mdc-rich-presentation__coverage-notice--info"
+      : "mdc-rich-presentation__coverage-notice";
 
   return (
     <div className="mdc-assistant-content__route-coverage">
-      <div className="mdc-rich-presentation__coverage-notice" role="status">
+      <div className={noticeClassName} role="status">
         {message}
       </div>
 

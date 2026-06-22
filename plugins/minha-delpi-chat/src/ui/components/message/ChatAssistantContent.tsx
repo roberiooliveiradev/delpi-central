@@ -158,7 +158,14 @@ export function ChatAssistantContent({
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
       {dataCoverageNotice ? (
-        <div className="mdc-rich-presentation__coverage-notice" role="status">
+        <div
+          className={
+            dataCoverageNotice.kind === "info"
+              ? "mdc-rich-presentation__coverage-notice mdc-rich-presentation__coverage-notice--info"
+              : "mdc-rich-presentation__coverage-notice"
+          }
+          role="status"
+        >
           {dataCoverageNotice.message}
         </div>
       ) : null}

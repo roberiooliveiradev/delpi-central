@@ -116,6 +116,7 @@ export function AssistantContentRouteSection({
       {dataCoverageNotice ? (
         <AssistantContentRouteCoverage
           message={dataCoverageNotice.message}
+          kind={dataCoverageNotice.kind}
           pagination={paginationState}
           depth={depthState}
           onNavigate={onDrillDown}

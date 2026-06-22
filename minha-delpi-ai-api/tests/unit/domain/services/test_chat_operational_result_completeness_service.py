@@ -59,12 +59,57 @@ def test_build_consolidated_message_when_complete() -> None:
         },
     }
 
-    message = ChatOperationalResultCompletenessService.build_consolidated_message(root)
+    message = ChatOperationalResultCompletenessService.build_consolidated_message(
+        root,
+        response_meta={"entity": "production_consumption_top_items"},
+    )
 
     assert message
     assert "consolidados" in message.lower()
-    assert "todas as filiais" in message.lower()
+    assert "somados" in message.lower()
     assert "incompleto" not in message.lower()
+
+
+def test_build_consolidated_message_skips_complete_listing_entity() -> None:
+    root = {
+        "pagination": {"limit": 500, "returned": 169, "is_complete": True},
+        "summary": {
+            "branch_filter_applied": False,
+            "consolidated_across_branches": True,
+            "total_records": 169,
+            "is_complete": True,
+        },
+    }
+
+    message = ChatOperationalResultCompletenessService.build_consolidated_message(
+        root,
+        response_meta={"entity": "production_schedule_today"},
+        path="/production/schedule/today",
+    )
+
+    assert message is None
+
+
+def test_build_notice_message_for_listing_incomplete() -> None:
+    root = {
+        "pagination": {"limit": 500, "returned": 500, "is_complete": False},
+        "summary": {
+            "branch_filter_applied": False,
+            "consolidated_across_branches": True,
+            "total_records": 500,
+            "is_complete": False,
+        },
+    }
+
+    message = ChatOperationalResultCompletenessService.build_notice_message(
+        root,
+        response_meta={"entity": "production_schedule_today"},
+        path="/production/schedule/today",
+    )
+
+    assert message
+    assert "consulta em todas as filiais" in message.lower()
+    assert "ranking" not in message.lower()
 
 
 def test_apply_to_commentary_adds_attention_and_limitations() -> None:

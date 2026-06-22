@@ -171,9 +171,42 @@ def test_operational_consolidated_notice_when_complete():
     )
 
     assert notice is not None
+    assert notice["kind"] == "info"
     assert "consolidados" in notice["message"].lower()
     assert "todas as filiais" in notice["message"].lower()
     assert notice["details"]["operationalConsolidation"]["consolidatedAcrossBranches"] is True
+    assert notice["details"]["operationalConsolidation"]["isComplete"] is True
+
+
+def test_operational_consolidated_notice_absent_for_complete_listing() -> None:
+    notice = ChatDataCoverageNoticeService.build(
+        {
+            "items": [{"production_order": str(index)} for index in range(169)],
+            "summary": {
+                "total_records": 169,
+                "branch_filter_applied": False,
+                "consolidated_across_branches": True,
+                "is_complete": True,
+            },
+            "pagination": {
+                "limit": 500,
+                "offset": 0,
+                "returned": 169,
+                "is_complete": True,
+            },
+        },
+        path="/production/schedule/today",
+        response_meta={
+            "entity": "production_schedule_today",
+            "pagination": {
+                "limit": 500,
+                "returned": 169,
+                "is_complete": True,
+            },
+        },
+    )
+
+    assert notice is None
 
 
 def test_operational_limit_notice_when_playbook_pagination_incomplete():
@@ -183,6 +216,7 @@ def test_operational_limit_notice_when_playbook_pagination_incomplete():
             "summary": {
                 "total_records": 50,
                 "branch_filter_applied": False,
+                "consolidated_across_branches": True,
                 "is_complete": False,
             },
             "pagination": {
@@ -194,6 +228,7 @@ def test_operational_limit_notice_when_playbook_pagination_incomplete():
         },
         path="/production/schedule/today",
         response_meta={
+            "entity": "production_schedule_today",
             "pagination": {
                 "limit": 50,
                 "returned": 50,
@@ -204,8 +239,8 @@ def test_operational_limit_notice_when_playbook_pagination_incomplete():
 
     assert notice is not None
     assert notice["kind"] == "pagination"
-    assert "Resultado incompleto" in notice["message"]
-    assert "sem filtro de filial" in notice["message"]
+    assert "consulta em todas as filiais" in notice["message"].lower()
+    assert "sem filtro de filial" not in notice["message"]
     assert notice["details"]["operationalPagination"]["isComplete"] is False
 
 
@@ -232,6 +267,7 @@ def test_operational_consolidated_incomplete_notice():
     assert notice is not None
     assert "consolidados" in notice["message"].lower()
     assert "todas as filiais" in notice["message"].lower()
+    assert "ranking" in notice["message"].lower()
     assert "sem filtro de filial" not in notice["message"]
 
 
