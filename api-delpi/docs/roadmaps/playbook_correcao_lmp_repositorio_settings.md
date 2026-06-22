@@ -888,3 +888,20 @@ Com `listing_type=LMP` e `20260501`–`20260530`:
 - `tests/test_lmp_query_repository_sql.py`
   - `test_listing_type_filter_uses_effective_kind_not_anchor`
   - demais testes de batch, residência e medição por revisão
+
+---
+
+## 23. Auditoria RQ-060 × dashboard (investigação jun/2026)
+
+Registro completo da extração RQ-060 (pastas 002–098), cruzamento mês a mês com o dashboard e scripts SQL/Python de homologação:
+
+**[lmp-2026-rq060-vs-dashboard-auditoria.md](../investigation/lmp-2026-rq060-vs-dashboard-auditoria.md)**
+
+Resumo rápido:
+
+| Mês | Pastas RQ-060 | Dashboard API | Status |
+|-----|---------------|---------------|--------|
+| Jun/2026 | 12 | 12 | Alinhado 1:1 |
+| Mai/2026 | 17 | 23 | Divergente — filtro `anchor OR first_eng`, multi-OV, dup OV |
+
+Script de cruzamento: `scripts/investigate_lmp_period_vs_rq060.py --month YYYY-MM [--dashboard-only]`.

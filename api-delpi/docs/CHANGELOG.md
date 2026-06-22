@@ -1,5 +1,17 @@
 # CHANGELOG — api-delpi
 
+## 2026-06 — Auditoria LMP: RQ-060 vs dashboard
+
+Investigação de divergência entre controle interno (pastas LMP Ano + RQ-060) e `GET /engineering/lmps/dashboard/items` (jan–jun/2026). Extração automatizada de OVs dos Word, scripts de cruzamento e SQL de homologação (foco mai/jun).
+
+Documentação: [lmp-2026-rq060-vs-dashboard-auditoria.md](./investigation/lmp-2026-rq060-vs-dashboard-auditoria.md).
+
+**Scripts:** `scripts/investigate_lmp_period_vs_rq060.py`, `scripts/extract_rq060_via_powershell.ps1`, `scripts/sql/lmp_may2026_*`.
+
+**Código preparatório (opt-in):** `LmpPeriodInclusionSemanticsService`, `period_inclusion_policy` (`anchor_or_first_eng` | `homolog_in_period`).
+
+---
+
 ## 2026-06 — Vigência completa da BOM (SG1010)
 
 Todas as rotas de produto que percorrem estrutura passam a usar filtro de **intervalo de vigência** (`G1_INI` + `G1_FIM`), não apenas `G1_FIM > hoje` nem ausência de filtro.
