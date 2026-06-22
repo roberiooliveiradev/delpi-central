@@ -125,6 +125,27 @@ def test_losses_top_materials_use_case_passes_loss_type() -> None:
     assert kwargs["loss_type"] == "refugo"
 
 
+def test_schedule_today_use_case_converts_mi_planned_qty_to_units() -> None:
+    repository = MagicMock()
+    repository.fetch_schedule_today.return_value = [
+        {
+            "production_order": "24602201014",
+            "product_code": "70260022",
+            "planned_qty": 0.003,
+            "unit": "MI",
+        }
+    ]
+
+    use_case = GetProductionScheduleTodayUseCase(repository)
+    result = use_case.execute(
+        ProductionOperationalRequest(reference_date="2026-06-22", limit=20)
+    )
+
+    item = result["items"][0]
+    assert item["planned_qty"] == 3.0
+    assert item["unit"] == "UN"
+
+
 def test_schedule_today_use_case_uses_reference_date() -> None:
     repository = MagicMock()
     repository.fetch_schedule_today.return_value = [

@@ -1,0 +1,21 @@
+{
+  "default": {
+    "displayUnitFactor": 1,
+    "displayUnit": null
+  },
+  "units": {
+    "MI": {
+      "catalogUnit": "MI",
+      "displayUnitFactor": 1000,
+      "displayUnit": "UN"
+    }
+  },
+  "quantityFields": [
+    "planned_qty",
+    "produced_qty",
+    "pending_qty",
+    "order_planned_qty",
+    "order_produced_qty",
+    "lost_qty"
+  ]
+}

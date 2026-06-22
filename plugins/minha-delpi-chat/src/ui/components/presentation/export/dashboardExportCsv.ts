@@ -1,40 +1,24 @@
 import type { ChatPresentation } from "../../../../data/api/chatTypes";
+import { csvRow, sanitizeFilename, triggerFileDownload } from "../../../../export/primitives";
 
 type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;
-
-function csvCell(value: unknown): string {
-  if (value == null) {
-    return "";
-  }
-
-  const text = String(value);
-
-  if (text.includes(";") || text.includes('"') || text.includes("\n")) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-
-  return text;
-}
-
-function csvRow(cells: unknown[]): string {
-  return cells.map(csvCell).join(";");
-}
-
-function sanitizeFilename(value: string): string {
-  return value.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_").slice(0, 80) || "dashboard";
-}
 
 function chartColumns(
   rows: Record<string, unknown>[],
   config?: { xAxis?: string; yAxis?: string | string[] },
 ): string[] {
-  const xAxis = config?.xAxis ?? Object.keys(rows[0] ?? {}).find((key) => typeof rows[0]?.[key] === "string") ?? "label";
+  const xAxis =
+    config?.xAxis ??
+    Object.keys(rows[0] ?? {}).find((key) => typeof rows[0]?.[key] === "string") ??
+    "label";
   const yAxisRaw = config?.yAxis;
   const yAxes = Array.isArray(yAxisRaw)
     ? yAxisRaw
     : yAxisRaw
       ? [yAxisRaw]
-      : Object.keys(rows[0] ?? {}).filter((key) => key !== xAxis && typeof rows[0]?.[key] === "number");
+      : Object.keys(rows[0] ?? {}).filter(
+          (key) => key !== xAxis && typeof rows[0]?.[key] === "number",
+        );
 
   return [xAxis, ...yAxes.filter((key) => key && key !== xAxis)];
 }
@@ -83,11 +67,8 @@ export function buildDashboardCsv(presentation: DashboardPresentation): string {
 
 export function downloadDashboardCsv(presentation: DashboardPresentation): void {
   const csv = buildDashboardCsv(presentation);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${sanitizeFilename(presentation.title || "dashboard")}.csv`;
-  anchor.click();
-  URL.revokeObjectURL(url);
+  triggerFileDownload(
+    new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    `${sanitizeFilename(presentation.title || "dashboard", "dashboard")}.csv`,
+  );
 }

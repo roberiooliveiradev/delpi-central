@@ -1,12 +1,6 @@
 import { readMdcCssVar } from "../../../theme/mdcCssVars";
+import { sanitizeFilename } from "../../../../export/primitives";
 import { chatAlert } from "../../../utils/chatNativeDialogs";
-
-function sanitizeFilename(name: string): string {
-  return name
-    .replace(/[^a-zA-Z0-9À-ÿ\s_-]/g, "")
-    .replace(/\s+/g, "_")
-    .slice(0, 60);
-}
 
 const STYLE_PROPS = [
   "fill",

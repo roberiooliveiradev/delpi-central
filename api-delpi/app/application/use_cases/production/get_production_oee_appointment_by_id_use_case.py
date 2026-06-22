@@ -21,6 +21,9 @@ from app.domain.production.production_appointment_time_analysis import (
 from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
 )
+from app.domain.services.production.production_operational_quantity_service import (
+    ProductionOperationalQuantityService,
+)
 
 
 class GetProductionOeeAppointmentByIdUseCase:
@@ -45,6 +48,8 @@ class GetProductionOeeAppointmentByIdUseCase:
         )
         if not appointment:
             return None
+
+        appointment = ProductionOperationalQuantityService.normalize_item(appointment)
 
         product_code = str(appointment.get("product_code") or "").strip()
         branch = str(appointment.get("branch") or request.branch or "").strip() or None

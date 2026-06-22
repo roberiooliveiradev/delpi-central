@@ -6,6 +6,9 @@ from app.application.dto.production.get_production_order_by_op_request import (
 from app.domain.ports.production.production_orders_repository_port import (
     ProductionOrdersRepositoryPort,
 )
+from app.domain.services.production.production_operational_quantity_service import (
+    ProductionOperationalQuantityService,
+)
 
 
 class GetProductionOrderByOpUseCase:
@@ -33,6 +36,9 @@ class GetProductionOrderByOpUseCase:
                 sort_dir=self._normalize_sort_dir(request.linked_sort_dir),
             )
         )
+
+        row = ProductionOperationalQuantityService.normalize_item(row)
+        linked_orders = ProductionOperationalQuantityService.normalize_items(linked_orders)
 
         on_time = sum(1 for item in linked_orders if item.get("otd_status") == "on_time")
         late = sum(1 for item in linked_orders if item.get("otd_status") == "late")

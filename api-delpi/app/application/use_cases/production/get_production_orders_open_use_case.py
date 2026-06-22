@@ -16,6 +16,9 @@ from app.domain.constants.production_operational import (
 from app.domain.ports.production.production_orders_repository_port import (
     ProductionOrdersRepositoryPort,
 )
+from app.domain.services.production.production_operational_quantity_service import (
+    ProductionOperationalQuantityService,
+)
 from app.domain.services.production.protheus_date_range_service import (
     ProtheusDateRangeService,
 )
@@ -42,6 +45,7 @@ class GetProductionOrdersOpenUseCase:
             limit=fetch_limit,
         )
         items, is_complete = trim_overfetched(raw_items, limit)
+        items = ProductionOperationalQuantityService.normalize_items(items)
 
         return {
             "reference_date": reference_date,

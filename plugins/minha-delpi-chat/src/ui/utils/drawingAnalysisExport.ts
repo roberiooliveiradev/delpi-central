@@ -1,4 +1,10 @@
 import type { ChatMessageMetadata } from "../../data/api/chatTypes";
+import {
+  csvCell,
+  sanitizeFilename,
+  sanitizeSheetName,
+  triggerFileDownload,
+} from "../../export/primitives";
 import { chatAlert } from "./chatNativeDialogs";
 import { buildExcelCsvBlob } from "./drawingAnalysisCsvEncoding";
 import { printDrawingAnalysisReport } from "./drawingAnalysisPrint";
@@ -40,28 +46,6 @@ function resolveStatusLabels(
 
 function resolveExportLabels(exportPayload: DrawingAnalysisExportPayload) {
   return exportPayload.exportLabels ?? {};
-}
-
-function triggerDownload(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-function sanitizeFilename(name: string): string {
-  return (
-    name
-      .replace(/[^a-zA-Z0-9À-ÿ\s_-]/g, "")
-      .replace(/\s+/g, "_")
-      .slice(0, 60) || "relatorio-desenho"
-  );
-}
-
-function sanitizeSheetName(name: string): string {
-  return name.replace(/[\\/?*[\]:]/g, "").slice(0, 31) || "Planilha";
 }
 
 function resolveProductCode(
@@ -144,7 +128,7 @@ export function downloadDrawingAnalysisMarkdown(
     return;
   }
 
-  triggerDownload(
+  triggerFileDownload(
     new Blob([markdown], {
       type: exportPayload.mimeType || "text/markdown;charset=utf-8",
     }),
@@ -167,14 +151,7 @@ function buildClientCsvContent(tables: DrawingExportTable[]): string {
 
     for (const row of table.rows) {
       lines.push(
-        table.columns
-          .map((column) => {
-            const text = String(row[column.key] ?? "");
-            return text.includes(";") || text.includes('"') || text.includes("\n")
-              ? `"${text.replace(/"/g, '""')}"`
-              : text;
-          })
-          .join(";"),
+        table.columns.map((column) => csvCell(row[column.key])).join(";"),
       );
     }
   }
@@ -189,10 +166,10 @@ export function downloadDrawingAnalysisCsv(
   const csv = String(exportPayload.csv || "").trim();
   const code = resolveProductCode(exportPayload, drawingAnalysis);
   const filename =
-    exportPayload.csvFilename || `relatorio-desenho-${sanitizeFilename(code)}.csv`;
+    exportPayload.csvFilename || `relatorio-desenho-${sanitizeFilename(code, "relatorio-desenho")}.csv`;
 
   if (csv) {
-    triggerDownload(buildExcelCsvBlob(csv), filename);
+    triggerFileDownload(buildExcelCsvBlob(csv), filename);
     return;
   }
 
@@ -202,7 +179,7 @@ export function downloadDrawingAnalysisCsv(
     return;
   }
 
-  triggerDownload(buildExcelCsvBlob(buildClientCsvContent(tables)), filename);
+  triggerFileDownload(buildExcelCsvBlob(buildClientCsvContent(tables)), filename);
 }
 
 export async function downloadDrawingAnalysisXlsx(
@@ -221,7 +198,10 @@ export async function downloadDrawingAnalysisXlsx(
     const usedSheetNames = new Set<string>();
 
     for (const table of tables) {
-      const baseName = sanitizeSheetName(table.sheetName || table.title || table.key);
+      const baseName = sanitizeSheetName(
+        table.sheetName || table.title || table.key,
+        "Planilha",
+      );
       let sheetName = baseName;
       let suffix = 2;
 
@@ -243,7 +223,7 @@ export async function downloadDrawingAnalysisXlsx(
 
     const code = resolveProductCode(exportPayload, drawingAnalysis);
     const filename =
-      exportPayload.xlsxFilename || `relatorio-desenho-${sanitizeFilename(code)}.xlsx`;
+      exportPayload.xlsxFilename || `relatorio-desenho-${sanitizeFilename(code, "relatorio-desenho")}.xlsx`;
     XLSX.writeFile(workbook, filename);
   } catch {
     chatAlert("Não foi possível exportar XLSX. Tente o CSV ou Markdown.");

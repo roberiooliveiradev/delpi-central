@@ -33,6 +33,8 @@ export {
   presentationToCanvasPayload,
   exportChartElementToPng,
   buildDashboardCsv,
-} from "./export";
+  runChatExport,
+  ChatDrawingExportButtons,
+} from "../../../export";
 export { copyTextToClipboard, scheduleCopyFeedback } from "./chatClipboard";
 export { ChatDashboardDataPanel } from "./ChatDashboardDataPanel";

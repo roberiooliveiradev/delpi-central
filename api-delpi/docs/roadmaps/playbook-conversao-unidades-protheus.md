@@ -82,7 +82,27 @@ Campo exposto nas respostas: `pa_reference` (e `product.pa_reference`).
 | `GET /products/directives/{identifier}` | estrutura + cobertura estoque | Por 1 PA |
 | `GET /products/{code}/factory-status` | blocos structure / stock | Por 1 PA |
 
-### 3.3 Fórmula do simulador de custo
+### 3.4 Quantidades operacionais (OP / apontamento)
+
+| Artefato | Caminho |
+|----------|---------|
+| Serviço | `app/domain/services/production/production_operational_quantity_service.py` |
+| Perfil JSON | `app/content/production_operational_units.json` |
+
+Para `C2_UM = MI` ou `B1_UM = MI` em rotas de OP/cronograma/apontamento:
+
+```json
+{
+  "catalogUnit": "MI",
+  "displayUnitFactor": 1000,
+  "displayUnit": "UN"
+}
+```
+
+**Interpretação:** `C2_QUANT`, `C2_QUJE`, `H6_QTDPROD` etc. vêm do Protheus em **milheiro**; a API expõe **peças** (`planned_qty`, `produced_qty`, …) com `unit = UN`. Distinto de `ProductPaBomReferenceService` (BOM por 1 PA/MI).
+
+Rotas: `/production/schedule/today`, `/production/orders/open`, `/production/orders/finished`, `/production/orders/by-op/{op}`, OEE (listagem e detalhe de apontamento).
+
 
 Ver também [`playbook-simulador-impacto-custos-pa.md`](./playbook-simulador-impacto-custos-pa.md).
 

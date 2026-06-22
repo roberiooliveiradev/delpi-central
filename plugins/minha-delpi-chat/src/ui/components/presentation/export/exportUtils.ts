@@ -1,4 +1,12 @@
 import type { ChatPresentation } from "../../../../data/api/chatTypes";
+import {
+  buildUtf8CsvBlob,
+  csvCell,
+  sanitizeFilename,
+  sanitizeSheetName,
+  triggerFileDownload,
+} from "../../../../export/primitives";
+import type { ExportColumn, TableExportPayload } from "../../../../export/types";
 import { chatAlert } from "../../../utils/chatNativeDialogs";
 import { formatChartColumnLabel } from "../pipeline/chartAxisSelection";
 import { rasterizeChartElement } from "./chartPngExport";
@@ -11,55 +19,8 @@ type TreePresentation = Extract<ChatPresentation, { type: "tree" }>;
 type KpiPresentation = Extract<ChatPresentation, { type: "kpi" }>;
 type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;
 
-export type ExportColumn = { key: string; label: string };
-
-export type TableExportPayload = {
-  title: string;
-  columns: ExportColumn[];
-  rows: Record<string, unknown>[];
-};
-
-function csvCell(value: unknown): string {
-  if (value == null) {
-    return "";
-  }
-
-  const text = String(value);
-
-  if (text.includes(";") || text.includes('"') || text.includes("\n")) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-
-  return text;
-}
-
-function triggerDownload(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-/** Nome de aba Excel: sem \\ / ? * [ ] : e máx. 31 caracteres. */
-export function sanitizeSheetName(name: string): string {
-  const cleaned = name
-    .replace(/[\\/?*[\]:]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const base = cleaned || "Dados";
-
-  return base.length <= 31 ? base : `${base.slice(0, 28).trimEnd()}...`;
-}
-
-export function sanitizeFilename(name: string): string {
-  return name
-    .replace(/[^a-zA-Z0-9À-ÿ\s_-]/g, "")
-    .replace(/\s+/g, "_")
-    .slice(0, 60);
-}
+export type { ExportColumn, TableExportPayload };
+export { sanitizeFilename, sanitizeSheetName } from "../../../../export/primitives";
 
 export function buildTableExportPayload(
   presentation: TablePresentation,
@@ -168,7 +129,6 @@ export function exportPayloadToCsv(payload: TableExportPayload): void {
     return;
   }
 
-  const BOM = "\uFEFF";
   const header = payload.columns.map((column) => column.label).join(";");
   const body = payload.rows
     .map((row) =>
@@ -176,8 +136,8 @@ export function exportPayloadToCsv(payload: TableExportPayload): void {
     )
     .join("\n");
 
-  triggerDownload(
-    new Blob([`${BOM}${header}\n${body}`], { type: "text/csv;charset=utf-8" }),
+  triggerFileDownload(
+    buildUtf8CsvBlob(`${header}\n${body}`),
     `${sanitizeFilename(payload.title)}.csv`,
   );
 }
@@ -364,7 +324,7 @@ export function exportKpiPresentationToPdf(presentation: KpiPresentation) {
 
 export function exportDashboardToCsv(presentation: DashboardPresentation) {
   const csv = buildDashboardCsv(presentation);
-  triggerDownload(
+  triggerFileDownload(
     new Blob([csv], { type: "text/csv;charset=utf-8" }),
     `${sanitizeFilename(presentation.title || "dashboard")}.csv`,
   );

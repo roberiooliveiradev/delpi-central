@@ -8,6 +8,9 @@ from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
 )
+from app.domain.services.production.production_operational_quantity_service import (
+    ProductionOperationalQuantityService,
+)
 
 
 class GetProductionOeeUseCase:
@@ -78,6 +81,10 @@ class GetProductionOeeUseCase:
                 oee_pct = None
 
         appointments_page = self._repository.list_oee_appointments(request)
+        appointments_payload = appointments_page.to_dict()
+        appointments_payload["items"] = ProductionOperationalQuantityService.normalize_items(
+            appointments_payload.get("items") or []
+        )
 
         return {
             "branch": request.branch or "consolidated",
@@ -90,5 +97,5 @@ class GetProductionOeeUseCase:
                 "outlier_appointments": outlier_appointments,
                 "outlier_percentage": outlier_percentage,
             },
-            "appointments": appointments_page.to_dict(),
+            "appointments": appointments_payload,
         }

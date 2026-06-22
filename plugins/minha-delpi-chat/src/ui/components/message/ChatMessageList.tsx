@@ -3,7 +3,6 @@ import {
   BookmarkPlus,
   Check,
   Copy,
-  Download,
   GitBranch,
   MessagesSquare,
   Pencil,
@@ -58,12 +57,7 @@ import {
   toolCallsForDrawingAnalysisDisplay,
 } from "./assistantProseRendering";
 import { ChatMarkdown } from "./ChatMarkdown";
-import {
-  downloadDrawingAnalysisCsv,
-  downloadDrawingAnalysisMarkdown,
-  downloadDrawingAnalysisPdf,
-  downloadDrawingAnalysisXlsx,
-} from "../../utils/drawingAnalysisExport";
+import { ChatDrawingExportButtons } from "../../../export/ChatExportButtons";
 import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../../state/chatMessageDelivery";
@@ -1735,80 +1729,12 @@ export function ChatMessageList({
                   </p>
                 ) : null}
                 {message.metadata?.drawingAnalysisExport?.markdown ? (
-                  <div className="mdc-chat-drawing-export">
-                    <button
-                      type="button"
-                      className="mdc-chat-message-action mdc-chat-drawing-export__btn"
-                      onClick={() =>
-                        void downloadDrawingAnalysisPdf(
-                          message.metadata!.drawingAnalysisExport!,
-                          message.metadata?.drawingAnalysis as
-                            | Record<string, unknown>
-                            | undefined,
-                        )
-                      }
-                      aria-label="Exportar relatório PDF"
-                      title="Exportar relatório (.pdf)"
-                    >
-                      <Download size={15} aria-hidden="true" />
-                      <span>PDF</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="mdc-chat-message-action mdc-chat-drawing-export__btn"
-                      onClick={() =>
-                        downloadDrawingAnalysisMarkdown(
-                          message.metadata!.drawingAnalysisExport!,
-                        )
-                      }
-                      aria-label="Baixar relatório Markdown"
-                      title="Baixar relatório (.md)"
-                    >
-                      <Download size={15} aria-hidden="true" />
-                      <span>MD</span>
-                    </button>
-                    {message.metadata.drawingAnalysisExport.csv ||
-                    (message.metadata.drawingAnalysisExport.tables?.length ?? 0) > 0 ? (
-                      <button
-                        type="button"
-                        className="mdc-chat-message-action mdc-chat-drawing-export__btn"
-                        onClick={() =>
-                          downloadDrawingAnalysisCsv(
-                            message.metadata!.drawingAnalysisExport!,
-                            message.metadata?.drawingAnalysis as
-                              | Record<string, unknown>
-                              | undefined,
-                          )
-                        }
-                        aria-label="Baixar tabelas CSV"
-                        title="Baixar tabelas (.csv)"
-                      >
-                        <Download size={15} aria-hidden="true" />
-                        <span>CSV</span>
-                      </button>
-                    ) : null}
-                    {(message.metadata.drawingAnalysisExport.tables?.length ?? 0) > 0 ||
-                    (message.metadata.drawingAnalysisExport.spreadsheetRows?.length ?? 0) >
-                      0 ? (
-                      <button
-                        type="button"
-                        className="mdc-chat-message-action mdc-chat-drawing-export__btn"
-                        onClick={() =>
-                          void downloadDrawingAnalysisXlsx(
-                            message.metadata!.drawingAnalysisExport!,
-                            message.metadata?.drawingAnalysis as
-                              | Record<string, unknown>
-                              | undefined,
-                          )
-                        }
-                        aria-label="Baixar tabelas XLSX"
-                        title="Baixar tabelas (.xlsx)"
-                      >
-                        <Download size={15} aria-hidden="true" />
-                        <span>XLSX</span>
-                      </button>
-                    ) : null}
-                  </div>
+                  <ChatDrawingExportButtons
+                    exportPayload={message.metadata.drawingAnalysisExport}
+                    drawingAnalysis={
+                      message.metadata?.drawingAnalysis as Record<string, unknown> | undefined
+                    }
+                  />
                 ) : null}
                 {!message.metadata?.interactivity?.consolidated ? (
                   <>
