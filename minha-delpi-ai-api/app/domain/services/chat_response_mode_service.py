@@ -252,10 +252,16 @@ class ChatResponseModeService:
             ChatResponseModeContentService,
         )
 
-        fast_model = os.getenv("CHAT_RESPONSE_MODE_FAST_MODEL", "qwen2.5:1.5b").strip()
+        fast_model = os.getenv(
+            "CHAT_RESPONSE_MODE_FAST_MODEL",
+            ChatResponseModeContentService.generation_limit_model("fast", default="qwen2.5:1.5b"),
+        ).strip()
 
         return LlmGenerationConfig(
-            model=fast_model or "qwen2.5:1.5b",
+            model=fast_model or ChatResponseModeContentService.generation_limit_model(
+                "fast",
+                default="qwen2.5:1.5b",
+            ),
             max_tokens=int(
                 os.getenv(
                     "CHAT_RESPONSE_MODE_FAST_MAX_TOKENS",
@@ -302,7 +308,13 @@ class ChatResponseModeService:
         )
 
         return LlmGenerationConfig(
-            model=cls._env_model("CHAT_RESPONSE_MODE_NORMAL_MODEL", "qwen2.5:1.5b"),
+            model=cls._env_model(
+                "CHAT_RESPONSE_MODE_NORMAL_MODEL",
+                ChatResponseModeContentService.generation_limit_model(
+                    "normal",
+                    default="qwen2.5:1.5b",
+                ),
+            ),
             max_tokens=int(
                 os.getenv(
                     "CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS",
@@ -310,7 +322,7 @@ class ChatResponseModeService:
                         ChatResponseModeContentService.generation_limit_int(
                             "normal",
                             "maxTokens",
-                            default=96,
+                            default=256,
                         )
                     ),
                 )
@@ -322,7 +334,7 @@ class ChatResponseModeService:
                         ChatResponseModeContentService.generation_limit_int(
                             "normal",
                             "numCtx",
-                            default=512,
+                            default=1536,
                         )
                     ),
                 )
@@ -334,7 +346,7 @@ class ChatResponseModeService:
                         ChatResponseModeContentService.generation_limit_float(
                             "normal",
                             "temperature",
-                            default=0.2,
+                            default=0.1,
                         )
                     ),
                 )
@@ -349,7 +361,13 @@ class ChatResponseModeService:
         )
 
         return LlmGenerationConfig(
-            model=cls._env_model("CHAT_RESPONSE_MODE_THINKER_MODEL", "qwen2.5:1.5b"),
+            model=cls._env_model(
+                "CHAT_RESPONSE_MODE_THINKER_MODEL",
+                ChatResponseModeContentService.generation_limit_model(
+                    "thinker",
+                    default="qwen2.5:3b",
+                ),
+            ),
             max_tokens=int(
                 os.getenv(
                     "CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS",
@@ -357,7 +375,7 @@ class ChatResponseModeService:
                         ChatResponseModeContentService.generation_limit_int(
                             "thinker",
                             "maxTokens",
-                            default=220,
+                            default=512,
                         )
                     ),
                 )
@@ -369,7 +387,7 @@ class ChatResponseModeService:
                         ChatResponseModeContentService.generation_limit_int(
                             "thinker",
                             "numCtx",
-                            default=1024,
+                            default=2048,
                         )
                     ),
                 )
@@ -381,7 +399,7 @@ class ChatResponseModeService:
                         ChatResponseModeContentService.generation_limit_float(
                             "thinker",
                             "temperature",
-                            default=0.2,
+                            default=0.15,
                         )
                     ),
                 )

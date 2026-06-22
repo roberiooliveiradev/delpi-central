@@ -158,6 +158,22 @@ class ChatResponseModeContentService:
         return bool(node.get("skipProsePanelRules"))
 
     @classmethod
+    def generation_limit_model(cls, mode: str, *, default: str) -> str:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "generationLimits",
+            str(mode or "").strip().lower(),
+        )
+
+        if isinstance(node, dict):
+            raw = str(node.get("model") or "").strip()
+
+            if raw:
+                return raw
+
+        return default
+
+    @classmethod
     def _node_int(cls, *path: str, default: int) -> int:
         node = ChatAssistantContentService.get_node(_BUNDLE, *path)
 

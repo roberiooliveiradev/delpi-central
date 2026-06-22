@@ -6,6 +6,8 @@
     "precisarei consultar",
     "precisaria de informações",
     "preciso de informações adicionais",
+    "seria necessario acessar",
+    "seria necessário acessar",
     "seria necessario consultar",
     "seria necessário consultar",
     "para responder a sua consulta",
@@ -60,9 +62,9 @@
       "thinker": 4200
     },
     "maxElapsedSec": {
-      "fast": 8,
-      "normal": 5,
-      "thinker": 15
+      "fast": 15,
+      "normal": 45,
+      "thinker": 90
     }
   },
   "modeLadder": {

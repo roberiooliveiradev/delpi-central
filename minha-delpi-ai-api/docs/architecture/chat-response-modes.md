@@ -46,13 +46,13 @@ Rollback template (dev/offline): `presentation_prose_delivery.json` → `allowTe
 
 ## Matriz por modo (presets default — jun/2026)
 
-Defaults calibrados para CPU operacional (~50% menos latência vs presets anteriores). Compose dev/prod alinha `OLLAMA_MODEL` e modos em `qwen2.5:1.5b`; srv-api prod pode manter `OLLAMA_MODEL=3b` para turnos fora dos modos.
+Defaults calibrados para **assertividade** (temperatura baixa, contexto ampliado). Latência alinha depois. Compose: Normal `qwen2.5:1.5b`, Pensador `qwen2.5:3b`.
 
 | Modo | Modelo | max_tokens | num_ctx | temp | Policy overview | Policy operacional |
 |------|--------|------------|---------|------|-----------------|-------------------|
-| **Rápida** | `CHAT_RESPONSE_MODE_FAST_MODEL` (default `qwen2.5:1.5b`) | 96 | 512 | 0.2 | `product-overview-fast.md` | `operational-synthesis-fast.md` |
-| **Normal** | `CHAT_RESPONSE_MODE_NORMAL_MODEL` ou `OLLAMA_MODEL` (default `1.5b`) | 320 | 1024 | 0.3 | `product-overview.md` | `operational-synthesis.md` |
-| **Pensador** | `CHAT_RESPONSE_MODE_THINKER_MODEL` ou fallback (default `1.5b`) | 512 | 1536 | 0.25 | `product-overview-thinker.md` | `operational-synthesis-thinker.md` |
+| **Rápida** | `qwen2.5:1.5b` | 96 | 512 | 0.2 | `product-overview-fast.md` | `operational-synthesis-fast.md` |
+| **Normal** | `qwen2.5:1.5b` | 256 | 1536 | 0.1 | `product-overview.md` | `operational-synthesis.md` |
+| **Pensador** | `qwen2.5:3b` | 512 | 2048 | 0.15 | `product-overview-thinker.md` | `operational-synthesis-thinker.md` |
 
 Preset global quando variáveis explícitas não estão no `.env`: `CHAT_LLM_LATENCY_PROFILE=operational_cpu` → `LLM_MAX_TOKENS=320`, `OLLAMA_NUM_CTX=1024` (`llm_latency_profile.py`). Ver [`rag-context-min-score-calibracao.md`](../roadmap/rag-context-min-score-calibracao.md).
 
@@ -66,16 +66,16 @@ Tool execute_external_action (ok ou falha)
     ├─ llmProseEverywhere → proseDeliveryMode=llm + pipeline data-only
     ├─ fast + commentary direct elegível → direct answer (sem Ollama) — **só Rápida**
     ├─ fast     → commentary direct ou llm_synthesis_brief (fallback LLM)
-    ├─ normal   → llm_synthesis (meta ≤ 5 s)
-    └─ thinker  → llm_synthesis (meta ≤ 15 s)
+    ├─ normal   → llm_synthesis (`qwen2.5:1.5b`, temp 0.1)
+    └─ thinker  → llm_synthesis (`qwen2.5:3b`, temp 0.15)
 
 Rollback template (offline)
     └─ modos OFF + allowTemplateProseFallback + llmProseEverywhere=false
 ```
 
-### Modo Normal — síntese LLM (meta ≤ 5 s)
+### Modo Normal — síntese LLM (`qwen2.5:1.5b`)
 
-`normalCommentaryDirect.enabled` está **`false`** por padrão: o modo Normal **sempre** passa pelo Ollama (`llm_synthesis`), com budget reduzido para latência (`generationLimits.normal`: 96 tokens / ctx 512; `normalLlmBudget.maxFactsChars`: 400; `maxNormalProseChars`: 520).
+`normalCommentaryDirect.enabled` está **`false`**: o Normal passa pelo Ollama com foco em assertividade (`generationLimits.normal`: 256 tokens / ctx 1536 / temp **0.1**; `normalLlmBudget.maxFactsChars`: 520).
 
 Pós-processamento anti-alucinação: `ChatOperationalLlmSynthesisAnswerEnrichmentService` (marcadores em `operational_llm_synthesis_context.json` → `hallucinationMarkers`, grounding por overlap de âncoras, dedupe de parágrafos).
 
@@ -140,10 +140,14 @@ Em `metadata.intelligence.pipeline`:
 | `OLLAMA_NUM_CTX` | `1024` (via preset) | Contexto Ollama global |
 | `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` | `96` | Síntese curta (fallback LLM quando commentary direct não qualifica) |
 | `CHAT_RESPONSE_MODE_FAST_NUM_CTX` | `512` | Contexto Rápida |
-| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `96` | Síntese Normal (meta ≤ 5 s) |
-| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `512` | Contexto Normal |
-| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `220` | Síntese Pensador (meta ≤ 15 s) |
-| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `1024` | Contexto Pensador |
+| `CHAT_RESPONSE_MODE_NORMAL_MODEL` | `qwen2.5:1.5b` | Modelo Normal |
+| `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS` | `256` | Síntese Normal |
+| `CHAT_RESPONSE_MODE_NORMAL_NUM_CTX` | `1536` | Contexto Normal |
+| `CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE` | `0.1` | Temperatura Normal (assertividade) |
+| `CHAT_RESPONSE_MODE_THINKER_MODEL` | `qwen2.5:3b` | Modelo Pensador |
+| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` | `512` | Síntese Pensador |
+| `CHAT_RESPONSE_MODE_THINKER_NUM_CTX` | `2048` | Contexto Pensador |
+| `CHAT_RESPONSE_MODE_THINKER_TEMPERATURE` | `0.15` | Temperatura Pensador |
 
 Compose: `infra/docker-compose.dev.yml` e `infra/docker-compose.yml` injetam os defaults acima.
 

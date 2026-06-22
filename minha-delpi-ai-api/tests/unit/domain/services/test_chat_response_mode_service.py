@@ -104,19 +104,27 @@ def test_apply_turn_direct_answer_policy_overview_thinker_forces_llm():
 def test_normal_mode_default_limits_from_json(monkeypatch):
     monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", raising=False)
     monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", raising=False)
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE", raising=False)
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_MODEL", raising=False)
     config = ChatResponseModeService.resolve("normal")
     assert config.response_mode == "normal"
-    assert config.max_tokens == 96
-    assert config.num_ctx == 512
+    assert config.model == "qwen2.5:1.5b"
+    assert config.max_tokens == 256
+    assert config.num_ctx == 1536
+    assert config.temperature == 0.1
 
 
 def test_thinker_mode_default_limits_from_json(monkeypatch):
     monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", raising=False)
     monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", raising=False)
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_TEMPERATURE", raising=False)
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_MODEL", raising=False)
     config = ChatResponseModeService.resolve("thinker")
     assert config.response_mode == "thinker"
-    assert config.max_tokens == 220
-    assert config.num_ctx == 1024
+    assert config.model == "qwen2.5:3b"
+    assert config.max_tokens == 512
+    assert config.num_ctx == 2048
+    assert config.temperature == 0.15
 
 
 def test_normal_mode_uses_bounded_limits(monkeypatch):

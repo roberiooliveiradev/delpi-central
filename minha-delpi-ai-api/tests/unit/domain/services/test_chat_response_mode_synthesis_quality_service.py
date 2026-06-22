@@ -14,12 +14,12 @@ def test_mode_limits_load_numeric_json():
         "maxElapsedSec",
         "normal",
         default=180,
-    ) == 5
+    ) == 45
     assert ChatResponseModeSynthesisQualityContentService.mode_limit_int(
         "maxElapsedSec",
         "thinker",
         default=180,
-    ) == 15
+    ) == 90
 
 
 def _factory_tool_calls(template: str, *, data_answer: dict | None = None) -> list[dict]:
@@ -255,7 +255,7 @@ def test_rejects_elapsed_above_mode_target():
                 }
             },
         },
-        elapsed_sec=12.0,
+        elapsed_sec=50.0,
     )
 
     assert any("tempo excedido" in gap for gap in gaps)

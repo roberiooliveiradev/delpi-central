@@ -53,28 +53,31 @@
     "skipProsePanelRules": true
   },
   "normalLlmBudget": {
-    "maxFactsChars": 400,
-    "skipProsePanelRules": true
+    "maxFactsChars": 520,
+    "skipProsePanelRules": false
   },
   "thinkerLlmBudget": {
-    "maxFactsChars": 520,
+    "maxFactsChars": 680,
     "skipProsePanelRules": false
   },
   "generationLimits": {
     "fast": {
+      "model": "qwen2.5:1.5b",
       "maxTokens": 96,
       "numCtx": 512,
       "temperature": 0.2
     },
     "normal": {
-      "maxTokens": 96,
-      "numCtx": 512,
-      "temperature": 0.2
+      "model": "qwen2.5:1.5b",
+      "maxTokens": 256,
+      "numCtx": 1536,
+      "temperature": 0.1
     },
     "thinker": {
-      "maxTokens": 220,
-      "numCtx": 1024,
-      "temperature": 0.2
+      "model": "qwen2.5:3b",
+      "maxTokens": 512,
+      "numCtx": 2048,
+      "temperature": 0.15
     }
   },
   "latencyTargetsSec": {
