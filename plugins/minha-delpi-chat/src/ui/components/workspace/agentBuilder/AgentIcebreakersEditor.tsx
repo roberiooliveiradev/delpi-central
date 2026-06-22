@@ -415,7 +415,7 @@ export function AgentIcebreakersEditor({
                             </label>
                           </div>
 
-                          <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--3">
+                          <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--meta">
                             <label className="mdc-chat-ws-field">
                               <span>Tipo</span>
                               <select
@@ -436,7 +436,7 @@ export function AgentIcebreakersEditor({
                               </select>
                             </label>
 
-                            <label className="mdc-chat-ws-field mdc-agent-icebreakers-editor__field-grow">
+                            <label className="mdc-chat-ws-field">
                               <span>Placeholder</span>
                               <input
                                 type="text"
@@ -452,20 +452,22 @@ export function AgentIcebreakersEditor({
                               />
                             </label>
 
-                            <label className="mdc-chat-ws-checkbox-row mdc-agent-icebreakers-editor__required">
-                              <input
-                                type="checkbox"
-                                checked={field.required !== false}
-                                onChange={(event) =>
-                                  onChange(
-                                    updateField(entries, index, fieldIndex, {
-                                      required: event.target.checked,
-                                    }),
-                                  )
-                                }
-                              />
-                              <span>Obrigatório</span>
-                            </label>
+                            <div className="mdc-agent-icebreakers-editor__required-wrap">
+                              <label className="mdc-chat-ws-checkbox-row mdc-agent-icebreakers-editor__required">
+                                <input
+                                  type="checkbox"
+                                  checked={field.required !== false}
+                                  onChange={(event) =>
+                                    onChange(
+                                      updateField(entries, index, fieldIndex, {
+                                        required: event.target.checked,
+                                      }),
+                                    )
+                                  }
+                                />
+                                <span>Obrigatório</span>
+                              </label>
+                            </div>
                           </div>
                         </div>
                       ))}

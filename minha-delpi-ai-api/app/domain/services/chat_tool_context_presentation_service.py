@@ -405,20 +405,20 @@ class ChatToolContextPresentationService:
             message: str | None = None,
             skip_replacement: bool = False,
             response_mode_effect: str | None = None,
+            response_mode: str | None = None,
         ) -> str:
             """Substitui texto livre do LLM pelo markdown autorizado da ferramenta quando aplicável."""
 
             if skip_replacement:
-                from app.domain.services.chat_presentation_prose_delivery_service import (
-                    ChatPresentationProseDeliveryService,
+                from app.domain.services.chat_operational_llm_synthesis_turn_finalization_service import (
+                    ChatOperationalLlmSynthesisTurnFinalizationService,
                 )
 
-                body = str(answer or "").strip()
-
-                return ChatPresentationProseDeliveryService.finalize_llm_synthesis_answer(
-                    body,
+                return ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+                    answer,
                     safe_tool_calls,
                     message=message,
+                    response_mode=response_mode,
                     response_mode_effect=response_mode_effect,
                 )
 

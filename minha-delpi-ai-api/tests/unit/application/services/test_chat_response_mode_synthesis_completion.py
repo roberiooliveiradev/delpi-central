@@ -33,6 +33,8 @@ def test_resolve_authorized_persisted_answer_skips_when_llm_synthesis_effect():
         tool_calls,
         message="qual o status do produto 90269002 na fabrica hoje?",
         skip_replacement=True,
+        response_mode_effect="llm_synthesis",
+        response_mode="normal",
     )
 
     assert persisted == llm_answer
@@ -63,6 +65,8 @@ def test_resolve_authorized_persisted_answer_backfills_from_data_commentary_when
         tool_calls,
         message="me fale do produto 10080045",
         skip_replacement=True,
+        response_mode_effect="llm_synthesis",
+        response_mode="fast",
     )
 
     assert "10080045" in persisted

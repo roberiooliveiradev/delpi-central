@@ -300,6 +300,7 @@ class ChatToolContextService:
         message=None,
         skip_replacement=False,
         response_mode_effect=None,
+        response_mode=None,
     ):
         return ChatToolContextPresentationService.resolve_authorized_persisted_answer(
             answer,
@@ -307,6 +308,7 @@ class ChatToolContextService:
             message=message,
             skip_replacement=skip_replacement,
             response_mode_effect=response_mode_effect,
+            response_mode=response_mode,
         )
 
     @classmethod

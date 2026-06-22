@@ -18,6 +18,58 @@ _COMMENTARY_BRIEF_FLAG = "commentaryBriefDirect"
 
 class ChatOperationalLlmSynthesisBriefDirectService:
     @classmethod
+    def build_commentary_lead(
+        cls,
+        message: str | None,
+        tool_calls: list | None,
+        *,
+        compact: bool,
+    ) -> str | None:
+        if not cls._qualifies(tool_calls):
+            return None
+
+        body = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+            "",
+            tool_calls,
+            compact=compact,
+        ).strip()
+
+        if not body:
+            return None
+
+        effect = "llm_synthesis_brief" if compact else "llm_synthesis"
+        enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+            body,
+            message=message,
+            tool_calls=tool_calls,
+            response_mode_effect=effect,
+        ).strip()
+
+        return enriched or None
+
+    @classmethod
+    def try_build_quality_fallback(
+        cls,
+        message: str | None,
+        tool_calls: list | None,
+        *,
+        response_mode: str | None,
+    ) -> str | None:
+        normalized = ChatResponseModeService.normalize(response_mode)
+        compact = normalized == "fast"
+        lead = cls.build_commentary_lead(message, tool_calls, compact=compact)
+
+        if not lead:
+            return None
+
+        min_chars = ChatResponseModeContentService.quality_fallback_min_chars()
+
+        if len(lead) < min_chars:
+            return None
+
+        return lead
+
+    @classmethod
     def try_build_direct_answer(
         cls,
         message: str | None,
@@ -34,22 +86,16 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         if not cls._qualifies(tool_calls):
             return None
 
-        body = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
-            "",
+        compact = normalized == "fast"
+        enriched = cls.build_commentary_lead(
+            message,
             tool_calls,
-            compact=normalized == "fast",
+            compact=compact,
         )
-        effect = (
-            "llm_synthesis_brief"
-            if normalized == "fast"
-            else "llm_synthesis"
-        )
-        enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
-            body,
-            message=message,
-            tool_calls=tool_calls,
-            response_mode_effect=effect,
-        ).strip()
+
+        if not enriched:
+            return None
+
         min_chars = config["min_chars"]
 
         if len(enriched) < min_chars:

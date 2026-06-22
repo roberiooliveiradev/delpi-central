@@ -623,26 +623,22 @@ class ChatPresentationProseDeliveryService:
         *,
         message: str | None = None,
         response_mode_effect: str | None = None,
+        response_mode: str | None = None,
     ) -> str:
         """Fallback de prosa vazia + enriquecimento canônico (código, fidelidade, brevidade)."""
-        compact = str(response_mode_effect or "").strip() == "llm_synthesis_brief"
-        body = cls.resolve_llm_synthesis_answer_fallback(
-            answer,
-            tool_calls,
-            compact=compact,
-        )
-
-        from app.domain.services.chat_operational_llm_synthesis_answer_enrichment_service import (
-            ChatOperationalLlmSynthesisAnswerEnrichmentService,
+        from app.domain.services.chat_operational_llm_synthesis_turn_finalization_service import (
+            ChatOperationalLlmSynthesisTurnFinalizationService,
         )
         from app.infrastructure.llm.llm_request_context import get_active_config
 
-        return ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
-            body,
+        resolved_mode = response_mode or get_active_config().response_mode
+
+        return ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+            answer,
+            tool_calls,
             message=message,
-            tool_calls=tool_calls,
+            response_mode=resolved_mode,
             response_mode_effect=response_mode_effect,
-            response_mode=get_active_config().response_mode,
         )
 
     @classmethod

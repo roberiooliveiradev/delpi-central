@@ -84,5 +84,6 @@
     "fast": 3,
     "normal": 5,
     "thinker": 15
-  }
+  },
+  "qualityFallbackMinChars": 40
 }

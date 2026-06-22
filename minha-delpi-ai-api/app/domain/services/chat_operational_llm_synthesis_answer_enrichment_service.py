@@ -29,6 +29,8 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
     _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
     _MARKDOWN_TABLE_LINE_RE = re.compile(r"^\s*\|.*\|\s*$")
     _MARKDOWN_TABLE_SEPARATOR_RE = re.compile(r"^\s*\|?\s*:?-{2,}")
+    _EMPTY_NUMBERED_ITEM_RE = re.compile(r"^\s*\d+\.\s*$")
+    _SPARSE_NUMBERED_RUN_RE = re.compile(r"^\s*\d+\.\s+(?:\d+\.\s+)+$")
 
     @classmethod
     def finalize_answer(
@@ -54,6 +56,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             body = cls._strip_markdown_tables(body)
 
         body = cls._dedupe_repeated_paragraphs(body)
+        body = cls._strip_sparse_list_items(body)
         body = cls._strip_contradictory_claims(body, tool_calls)
         body = cls._strip_hallucination_markers(body)
         body = cls._strip_deflection_markers(body)
@@ -65,6 +68,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             body = cls._trim_mode_prose(body, response_mode=response_mode)
 
         return body.strip()
+
 
     @classmethod
     def _trim_brief_prose(cls, answer: str) -> str:

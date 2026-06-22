@@ -253,6 +253,17 @@ class ChatTurnCompletionService:
             ChatOperationalNarrativeSynthesisService,
         )
 
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        response_mode = ChatResponseModeService.normalize(
+            (
+                turn.tool_context.get("responseMode")
+                if isinstance(turn.tool_context, dict)
+                else None
+            )
+            or getattr(turn.request, "response_mode", None),
+        )
+
         answer = ChatToolContextService.resolve_authorized_persisted_answer(
             answer,
             tool_calls,
@@ -262,6 +273,7 @@ class ChatTurnCompletionService:
                 if isinstance(turn.tool_context, dict)
                 else None
             ),
+            response_mode=response_mode,
             skip_replacement=bool(
                 turn.prepared.email_writing_mode
                 or turn.prepared.text_correction_mode

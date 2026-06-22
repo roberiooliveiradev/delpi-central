@@ -45,11 +45,66 @@ class ChatResponseModeSynthesisQualityService:
         gaps.extend(cls._evaluate_answer_shape(body, normalized_mode, elapsed_sec))
         gaps.extend(cls._evaluate_prose_decoupling(tool_calls, pipeline))
         gaps.extend(cls._evaluate_not_template_clone(body, tool_calls))
-        gaps.extend(cls._evaluate_context_and_assertiveness(body, question, tool_calls))
-        gaps.extend(cls._evaluate_deflection(body))
-        gaps.extend(cls._evaluate_hallucination_markers(body))
+        gaps.extend(cls._evaluate_synthesis_coherence(body, question, tool_calls))
 
         return gaps
+
+    @classmethod
+    def evaluate_synthesis_coherence(
+        cls,
+        *,
+        mode: str,
+        question: str,
+        content: str,
+        tool_calls: list[dict[str, Any]] | None,
+    ) -> list[str]:
+        return cls._evaluate_synthesis_coherence(
+            str(content or "").strip(),
+            question,
+            tool_calls if isinstance(tool_calls, list) else None,
+        )
+
+    @classmethod
+    def _evaluate_synthesis_coherence(
+        cls,
+        content: str,
+        question: str,
+        tool_calls: list[dict[str, Any]] | None,
+    ) -> list[str]:
+        gaps: list[str] = []
+
+        if not content:
+            gaps.append("resposta vazia após síntese LLM")
+            return gaps
+
+        gaps.extend(cls._evaluate_context_and_assertiveness(content, question, tool_calls))
+        gaps.extend(cls._evaluate_deflection(content))
+        gaps.extend(cls._evaluate_hallucination_markers(content))
+        gaps.extend(cls._evaluate_sparse_numbered_lists(content))
+
+        return gaps
+
+    @classmethod
+    def _evaluate_sparse_numbered_lists(cls, content: str) -> list[str]:
+        sparse_lines = 0
+
+        for line in content.splitlines():
+            stripped = line.strip()
+
+            if not stripped:
+                continue
+
+            if re.match(r"^\d+\.\s*$", stripped):
+                sparse_lines += 1
+                continue
+
+            if re.match(r"^\d+\.\s+\d+\.", stripped):
+                sparse_lines += 1
+
+        if sparse_lines >= 2:
+            return ["lista numerada com itens vazios ou esparsos"]
+
+        return []
 
     @classmethod
     def evaluate_mode_ladder(cls, results: list[dict[str, Any]]) -> list[str]:

@@ -224,3 +224,7 @@ class ChatResponseModeContentService:
         )
 
         return max(1, value)
+
+    @classmethod
+    def quality_fallback_min_chars(cls) -> int:
+        return cls._node_int("qualityFallbackMinChars", default=40)

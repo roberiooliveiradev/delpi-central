@@ -496,6 +496,8 @@ class ChatTurnPreparationPostToolResolutionService:
         if response_mode_effect:
             tool_context["responseModeEffect"] = response_mode_effect
 
+        tool_context["responseMode"] = ChatResponseModeService.normalize(response_mode)
+
         if (
             direct_answer is None
             and response_mode_effect in {"llm_synthesis", "llm_synthesis_brief"}
