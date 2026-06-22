@@ -154,6 +154,7 @@ def test_schedule_today_use_case_default_limit_is_500() -> None:
     result = use_case.execute(ProductionOperationalRequest(reference_date="2026-06-11"))
 
     assert result["pagination"]["limit"] == 500
+    assert result["summary"]["consolidated_across_branches"] is True
     repository.fetch_schedule_today.assert_called_once_with(
         reference_date="20260611",
         branch=None,

@@ -62,7 +62,7 @@ class ProductionScheduleRepository(
             OP.C2_UM,
             OP.C2_PRIOR,
             OA.H8_DTINI
-        ORDER BY OP.C2_PRODUTO ASC
+        ORDER BY OP.C2_FILIAL ASC, OP.C2_PRODUTO ASC, OP.C2_OP ASC
         """
 
         with self as repo:

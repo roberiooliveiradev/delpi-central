@@ -223,11 +223,12 @@ def test_operational_route_selection_production_schedule_today() -> None:
     selected = service.select_production_operational(
         "Quais produtos serão produzidos hoje?",
         allowed_action_ids=["production-schedule-today", "sql-action"],
-        build_date_branch_parameters=lambda action, message, **kwargs: {"limit": 50},
+        build_date_branch_parameters=lambda action, message, **kwargs: {},
     )
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "production-schedule-today"
+    assert selected["arguments"]["parameters"]["limit"] == 500
 
 
 def test_operational_route_selection_sale_orders() -> None:

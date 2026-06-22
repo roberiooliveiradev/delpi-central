@@ -50,6 +50,7 @@ class GetProductionScheduleTodayUseCase:
                 branch=request.branch,
                 reference_date=reference_date,
                 is_complete=is_complete,
+                consolidated_across_branches=request.branch is None,
             ),
             "pagination": build_operational_pagination(
                 limit=limit,

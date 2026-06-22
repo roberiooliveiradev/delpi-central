@@ -19,8 +19,12 @@
     "period_metric": "Para esse indicador, preciso do **período** (ex.: *março de 2026*, *últimos 30 dias*, *este mês*)."
   },
   "implicitReferenceDateTodayPathMarkers": [
-    "/production-status"
+    "/production-status",
+    "/production/schedule/today"
   ],
+  "productionScheduleTodayDefaults": {
+    "limit": 500
+  },
   "missingBranch": "Qual **filial** devo usar? Ex.: *01* ou *matriz*.",
   "ambiguousPeriodYear": "Para **{month_label}**, preciso confirmar o ano: você quer os dados de **{current_year}** (este ano) ou de **{previous_year}**?",
   "ambiguousPeriodRange": "Encontrei mais de uma interpretação de período. Confirme se quer **{option_a}** ou **{option_b}**.",
