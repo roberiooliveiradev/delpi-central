@@ -1009,9 +1009,15 @@
 .mdc-chat-agent-builder__panel {
   display: grid;
   gap: 1.35rem;
-  width: min(100%, 46rem);
+  width: min(100%, 52rem);
   margin: 0 auto;
-  padding: clamp(1.25rem, 3vh, 2rem) clamp(1rem, 2.5vw, 1.5rem) 2.5rem;
+  padding: clamp(1.25rem, 3vh, 2rem) clamp(1.25rem, 4vw, 2rem) 2.5rem;
+}
+
+@container agent-workspace (min-width: 1100px) {
+  .mdc-chat-agent-builder__panel {
+    width: min(100%, 56rem);
+  }
 }
 
 .mdc-chat-agent-builder__section {
@@ -1377,10 +1383,6 @@
 
 .mdc-chat-agent-builder__icebreakers-section {
   scroll-margin-top: 4.5rem;
-  padding: 0.85rem 0.95rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 22%, var(--mdc-card-border));
-  border-radius: 0.9rem;
-  background: color-mix(in srgb, var(--mdc-primary) 4%, var(--mdc-card-bg));
 }
 
 .mdc-chat-agent-builder__version-list {
@@ -1462,7 +1464,7 @@
   }
 
   .mdc-chat-agent-builder__icebreakers-section {
-    padding: 0.75rem 0.8rem;
+    scroll-margin-top: 3.5rem;
   }
 
   .mdc-chat-agent-builder__hero-name {

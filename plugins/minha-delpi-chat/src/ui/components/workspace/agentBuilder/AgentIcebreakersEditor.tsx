@@ -60,6 +60,7 @@ export function AgentIcebreakersEditor({
 }: AgentIcebreakersEditorProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [newFieldType, setNewFieldType] = useState(ICEBREAKER_FIELD_TYPE_OPTIONS[0]?.value ?? "text");
   const templateRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
 
   const canReorder = entries.length > 1;
@@ -144,7 +145,7 @@ export function AgentIcebreakersEditor({
     });
   }
 
-  function addField(entryIndex: number, fieldType = "text") {
+  function addField(entryIndex: number, fieldType = newFieldType) {
     const entry = entries[entryIndex];
     const fields = [...(entry.fields ?? [])];
     const nextField = createIcebreakerField(fields.length, fieldType);
@@ -163,22 +164,21 @@ export function AgentIcebreakersEditor({
   return (
     <div className="mdc-agent-icebreakers-editor">
       {usingDefaults ? (
-        <p className="mdc-agent-icebreakers-editor__defaults-notice">
-          Estes são os quebra-gelos padrão exibidos na home do agente. Edite, remova ou salve
-          rascunho para torná-los permanentes.
+        <p className="mdc-agent-icebreakers-editor__notice">
+          Sugestões padrão — edite e salve o rascunho para personalizar.
         </p>
       ) : null}
 
-      <p className="mdc-agent-icebreakers-editor__help">
-        Configure título, subtítulo, pergunta e campos de entrada. Use{" "}
-        <code>{buildIcebreakerPlaceholderToken("campo1")}</code> na pergunta para cada campo
-        adicionado. Na home, o clique abre o diálogo com os tipos escolhidos.
+      <p className="mdc-agent-icebreakers-editor__lead">
+        Cada card na home tem título, subtítulo e pergunta. Use{" "}
+        <code>{buildIcebreakerPlaceholderToken("campo1")}</code> para pedir dados ao clicar.
       </p>
 
       <div className="mdc-agent-icebreakers-editor__list" aria-label="Lista de quebra-gelos">
         {entries.map((entry, index) => {
           const presentation = resolveIcebreakerCardPresentation(entry);
           const fields = entry.fields ?? [];
+          const cardTitle = entry.label?.trim() || `Sugestão ${index + 1}`;
 
           return (
             <article
@@ -204,273 +204,285 @@ export function AgentIcebreakersEditor({
                   : undefined
               }
             >
-              <div className="mdc-agent-icebreakers-editor__card-toolbar">
-                {canReorder ? (
-                  <button
-                    type="button"
-                    className="mdc-agent-icebreakers-editor__drag-handle"
-                    draggable
-                    onDragStart={(event) => handleDragStart(index, event)}
-                    onDragEnd={handleDragEnd}
-                    aria-label={`Reordenar quebra-gelo ${index + 1}`}
-                    title="Arrastar para reordenar"
-                  >
-                    <GripVertical size={16} aria-hidden="true" />
-                  </button>
-                ) : null}
-
-                <strong className="mdc-agent-icebreakers-editor__card-index">
-                  Quebra-gelo {index + 1}
-                </strong>
+              <header className="mdc-agent-icebreakers-editor__card-head">
+                <div className="mdc-agent-icebreakers-editor__card-title">
+                  {canReorder ? (
+                    <button
+                      type="button"
+                      className="mdc-agent-icebreakers-editor__drag-handle"
+                      draggable
+                      onDragStart={(event) => handleDragStart(index, event)}
+                      onDragEnd={handleDragEnd}
+                      aria-label={`Reordenar ${cardTitle}`}
+                      title="Arrastar para reordenar"
+                    >
+                      <GripVertical size={15} aria-hidden="true" />
+                    </button>
+                  ) : null}
+                  <span>{cardTitle}</span>
+                </div>
 
                 <div className="mdc-agent-icebreakers-editor__card-actions">
                   {canReorder ? (
                     <>
                       <button
                         type="button"
-                        className="mdc-agent-icebreakers-editor__reorder-btn"
+                        className="mdc-agent-icebreakers-editor__icon-btn"
                         onClick={() => moveEntryByStep(index, -1)}
                         disabled={index === 0}
-                        aria-label={`Subir quebra-gelo ${index + 1}`}
+                        aria-label={`Subir ${cardTitle}`}
                       >
                         <ChevronUp size={15} aria-hidden="true" />
                       </button>
                       <button
                         type="button"
-                        className="mdc-agent-icebreakers-editor__reorder-btn"
+                        className="mdc-agent-icebreakers-editor__icon-btn"
                         onClick={() => moveEntryByStep(index, 1)}
                         disabled={index === entries.length - 1}
-                        aria-label={`Descer quebra-gelo ${index + 1}`}
+                        aria-label={`Descer ${cardTitle}`}
                       >
                         <ChevronDown size={15} aria-hidden="true" />
                       </button>
                     </>
                   ) : null}
-
                   <button
                     type="button"
-                    className="mdc-agent-icebreakers-editor__remove-btn"
+                    className="mdc-agent-icebreakers-editor__icon-btn mdc-agent-icebreakers-editor__icon-btn--danger"
                     onClick={() => removeEntry(index)}
-                    aria-label="Remover quebra-gelo"
+                    aria-label={`Remover ${cardTitle}`}
                   >
-                    <X size={16} aria-hidden="true" />
+                    <X size={15} aria-hidden="true" />
                   </button>
                 </div>
-              </div>
+              </header>
 
-              <div className="mdc-agent-icebreakers-editor__grid">
-                <label className="mdc-agent-icebreakers-editor__label">
-                  <span>Título do card</span>
-                  <input
-                    type="text"
-                    value={entry.label ?? ""}
-                    maxLength={AGENT_ICEBREAKER_TITLE_MAX_CHARS}
-                    placeholder="Ex.: Status fabril"
-                    onChange={(event) =>
-                      onChange(
-                        updateEntry(entries, index, {
-                          label: clampIcebreakerTitle(event.target.value),
-                        }),
-                      )
-                    }
-                  />
-                </label>
+              <div className="mdc-agent-icebreakers-editor__card-body">
+                <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--2">
+                  <label className="mdc-chat-ws-field">
+                    <span>Título do card</span>
+                    <input
+                      type="text"
+                      value={entry.label ?? ""}
+                      maxLength={AGENT_ICEBREAKER_TITLE_MAX_CHARS}
+                      placeholder="Ex.: Status fabril"
+                      onChange={(event) =>
+                        onChange(
+                          updateEntry(entries, index, {
+                            label: clampIcebreakerTitle(event.target.value),
+                          }),
+                        )
+                      }
+                    />
+                  </label>
 
-                <label className="mdc-agent-icebreakers-editor__label">
-                  <span>Subtítulo</span>
-                  <input
-                    type="text"
-                    value={entry.hint ?? ""}
-                    maxLength={AGENT_ICEBREAKER_HINT_MAX_CHARS}
-                    placeholder="Ex.: Estrutura, MPs, produção e expedição"
-                    onChange={(event) =>
-                      onChange(
-                        updateEntry(entries, index, {
-                          hint: clampIcebreakerHint(event.target.value),
-                        }),
-                      )
-                    }
-                  />
-                </label>
-              </div>
-
-              <label className="mdc-agent-icebreakers-editor__label">
-                <span>Pergunta enviada ao clicar</span>
-                <textarea
-                  ref={(element) => {
-                    templateRefs.current[index] = element;
-                  }}
-                  className="mdc-agent-icebreakers-editor__template"
-                  value={entry.template}
-                  rows={2}
-                  maxLength={AGENT_ICEBREAKER_MAX_CHARS}
-                  placeholder="Ex.: qual o status fabril hoje do produto {{productCode}}?"
-                  onChange={(event) =>
-                    onChange(
-                      updateEntry(entries, index, {
-                        template: clampIcebreakerDraft(event.target.value),
-                      }),
-                    )
-                  }
-                />
-                <span className="mdc-agent-icebreakers-editor__count">
-                  {entry.template.length}/{AGENT_ICEBREAKER_MAX_CHARS}
-                </span>
-              </label>
-
-              <div className="mdc-agent-icebreakers-editor__fields-block">
-                <div className="mdc-agent-icebreakers-editor__fields-head">
-                  <span>Campos de entrada</span>
-                  <div className="mdc-agent-icebreakers-editor__field-type-picker">
-                    {ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        className="mdc-agent-icebreakers-editor__field-type-btn"
-                        onClick={() => addField(index, option.value)}
-                      >
-                        + {option.label}
-                      </button>
-                    ))}
-                  </div>
+                  <label className="mdc-chat-ws-field">
+                    <span>Subtítulo</span>
+                    <input
+                      type="text"
+                      value={entry.hint ?? ""}
+                      maxLength={AGENT_ICEBREAKER_HINT_MAX_CHARS}
+                      placeholder="Ex.: Estrutura, MPs, produção e expedição"
+                      onChange={(event) =>
+                        onChange(
+                          updateEntry(entries, index, {
+                            hint: clampIcebreakerHint(event.target.value),
+                          }),
+                        )
+                      }
+                    />
+                  </label>
                 </div>
 
-                {fields.length === 0 ? (
-                  <p className="mdc-agent-icebreakers-editor__fields-empty">
-                    Sem campos — a pergunta será enviada direto ao clicar.
-                  </p>
-                ) : (
-                  <div className="mdc-agent-icebreakers-editor__fields-list">
-                    {fields.map((field, fieldIndex) => (
-                      <div
-                        key={`${field.id}-${fieldIndex}`}
-                        className="mdc-agent-icebreakers-editor__field-row"
+                <label className="mdc-chat-ws-field">
+                  <span>Pergunta enviada ao clicar</span>
+                  <textarea
+                    ref={(element) => {
+                      templateRefs.current[index] = element;
+                    }}
+                    className="mdc-agent-icebreakers-editor__template"
+                    value={entry.template}
+                    rows={2}
+                    maxLength={AGENT_ICEBREAKER_MAX_CHARS}
+                    placeholder="Ex.: qual o status fabril hoje do produto {{productCode}}?"
+                    onChange={(event) =>
+                      onChange(
+                        updateEntry(entries, index, {
+                          template: clampIcebreakerDraft(event.target.value),
+                        }),
+                      )
+                    }
+                  />
+                  <small className="mdc-agent-icebreakers-editor__count">
+                    {entry.template.length}/{AGENT_ICEBREAKER_MAX_CHARS}
+                  </small>
+                </label>
+
+                <section className="mdc-agent-icebreakers-editor__fields">
+                  <div className="mdc-agent-icebreakers-editor__fields-top">
+                    <span className="mdc-agent-icebreakers-editor__fields-label">Campos de entrada</span>
+                    <div className="mdc-agent-icebreakers-editor__add-field">
+                      <select
+                        value={newFieldType}
+                        onChange={(event) => setNewFieldType(event.target.value)}
+                        aria-label="Tipo do novo campo"
                       >
-                        <label className="mdc-agent-icebreakers-editor__mini-label">
-                          <span>ID</span>
-                          <input
-                            type="text"
-                            value={field.id}
-                            maxLength={AGENT_ICEBREAKER_FIELD_ID_MAX_CHARS}
-                            onChange={(event) =>
-                              onChange(
-                                updateField(entries, index, fieldIndex, {
-                                  id: event.target.value
-                                    .replace(/[^\w]/g, "")
-                                    .slice(0, AGENT_ICEBREAKER_FIELD_ID_MAX_CHARS),
-                                }),
-                              )
-                            }
-                          />
-                        </label>
-
-                        <label className="mdc-agent-icebreakers-editor__mini-label">
-                          <span>Rótulo</span>
-                          <input
-                            type="text"
-                            value={field.label}
-                            maxLength={AGENT_ICEBREAKER_FIELD_LABEL_MAX_CHARS}
-                            onChange={(event) =>
-                              onChange(
-                                updateField(entries, index, fieldIndex, {
-                                  label: event.target.value.slice(
-                                    0,
-                                    AGENT_ICEBREAKER_FIELD_LABEL_MAX_CHARS,
-                                  ),
-                                }),
-                              )
-                            }
-                          />
-                        </label>
-
-                        <label className="mdc-agent-icebreakers-editor__mini-label">
-                          <span>Tipo</span>
-                          <select
-                            value={field.fieldType}
-                            onChange={(event) =>
-                              onChange(
-                                updateField(entries, index, fieldIndex, {
-                                  fieldType: event.target.value,
-                                }),
-                              )
-                            }
-                          >
-                            {ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-
-                        <label className="mdc-agent-icebreakers-editor__mini-label mdc-agent-icebreakers-editor__mini-label--grow">
-                          <span>Placeholder</span>
-                          <input
-                            type="text"
-                            value={field.placeholder ?? ""}
-                            placeholder="Opcional"
-                            onChange={(event) =>
-                              onChange(
-                                updateField(entries, index, fieldIndex, {
-                                  placeholder: event.target.value.trim() || undefined,
-                                }),
-                              )
-                            }
-                          />
-                        </label>
-
-                        <label className="mdc-agent-icebreakers-editor__required">
-                          <input
-                            type="checkbox"
-                            checked={field.required !== false}
-                            onChange={(event) =>
-                              onChange(
-                                updateField(entries, index, fieldIndex, {
-                                  required: event.target.checked,
-                                }),
-                              )
-                            }
-                          />
-                          <span>Obrigatório</span>
-                        </label>
-
-                        <button
-                          type="button"
-                          className="mdc-agent-icebreakers-editor__insert-token"
-                          onClick={() => insertPlaceholder(index, field.id)}
-                          title={buildIcebreakerPlaceholderToken(field.id)}
-                        >
-                          Inserir {buildIcebreakerPlaceholderToken(field.id)}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="mdc-agent-icebreakers-editor__field-remove"
-                          onClick={() => removeField(index, fieldIndex)}
-                          aria-label="Remover campo"
-                        >
-                          <X size={14} aria-hidden="true" />
-                        </button>
-                      </div>
-                    ))}
+                        {ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="mdc-chat-ws-outline-btn"
+                        onClick={() => addField(index)}
+                      >
+                        <Plus size={14} aria-hidden="true" />
+                        <span>Adicionar</span>
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
 
-              {entry.label?.trim() || entry.template.trim() ? (
-                <p className="mdc-agent-icebreakers-editor__preview">
-                  <span>Prévia no card:</span> <strong>{presentation.title}</strong>
-                  {presentation.subtitle ? (
-                    <>
-                      {" "}
-                      <em>{presentation.subtitle}</em>
-                    </>
-                  ) : null}
-                  {hasShortcutPlaceholders(entry.template) ? (
-                    <span> — ao clicar, abre diálogo com {fields.length || "os"} campo(s).</span>
-                  ) : null}
-                </p>
-              ) : null}
+                  {fields.length === 0 ? (
+                    <p className="mdc-agent-icebreakers-editor__fields-empty">
+                      Nenhum campo — a pergunta é enviada direto ao clicar.
+                    </p>
+                  ) : (
+                    <div className="mdc-agent-icebreakers-editor__fields-list">
+                      {fields.map((field, fieldIndex) => (
+                        <div
+                          key={`${field.id}-${fieldIndex}`}
+                          className="mdc-agent-icebreakers-editor__field-card"
+                        >
+                          <div className="mdc-agent-icebreakers-editor__field-card-head">
+                            <strong>{field.label || field.id}</strong>
+                            <div className="mdc-agent-icebreakers-editor__field-card-actions">
+                              <button
+                                type="button"
+                                className="mdc-chat-ws-outline-btn mdc-agent-icebreakers-editor__token-btn"
+                                onClick={() => insertPlaceholder(index, field.id)}
+                                title={buildIcebreakerPlaceholderToken(field.id)}
+                              >
+                                Inserir {buildIcebreakerPlaceholderToken(field.id)}
+                              </button>
+                              <button
+                                type="button"
+                                className="mdc-agent-icebreakers-editor__icon-btn mdc-agent-icebreakers-editor__icon-btn--danger"
+                                onClick={() => removeField(index, fieldIndex)}
+                                aria-label="Remover campo"
+                              >
+                                <X size={14} aria-hidden="true" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--2">
+                            <label className="mdc-chat-ws-field">
+                              <span>ID na pergunta</span>
+                              <input
+                                type="text"
+                                value={field.id}
+                                maxLength={AGENT_ICEBREAKER_FIELD_ID_MAX_CHARS}
+                                onChange={(event) =>
+                                  onChange(
+                                    updateField(entries, index, fieldIndex, {
+                                      id: event.target.value
+                                        .replace(/[^\w]/g, "")
+                                        .slice(0, AGENT_ICEBREAKER_FIELD_ID_MAX_CHARS),
+                                    }),
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <label className="mdc-chat-ws-field">
+                              <span>Rótulo no diálogo</span>
+                              <input
+                                type="text"
+                                value={field.label}
+                                maxLength={AGENT_ICEBREAKER_FIELD_LABEL_MAX_CHARS}
+                                onChange={(event) =>
+                                  onChange(
+                                    updateField(entries, index, fieldIndex, {
+                                      label: event.target.value.slice(
+                                        0,
+                                        AGENT_ICEBREAKER_FIELD_LABEL_MAX_CHARS,
+                                      ),
+                                    }),
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+
+                          <div className="mdc-agent-icebreakers-editor__row mdc-agent-icebreakers-editor__row--3">
+                            <label className="mdc-chat-ws-field">
+                              <span>Tipo</span>
+                              <select
+                                value={field.fieldType}
+                                onChange={(event) =>
+                                  onChange(
+                                    updateField(entries, index, fieldIndex, {
+                                      fieldType: event.target.value,
+                                    }),
+                                  )
+                                }
+                              >
+                                {ICEBREAKER_FIELD_TYPE_OPTIONS.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+
+                            <label className="mdc-chat-ws-field mdc-agent-icebreakers-editor__field-grow">
+                              <span>Placeholder</span>
+                              <input
+                                type="text"
+                                value={field.placeholder ?? ""}
+                                placeholder="Opcional"
+                                onChange={(event) =>
+                                  onChange(
+                                    updateField(entries, index, fieldIndex, {
+                                      placeholder: event.target.value.trim() || undefined,
+                                    }),
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <label className="mdc-chat-ws-checkbox-row mdc-agent-icebreakers-editor__required">
+                              <input
+                                type="checkbox"
+                                checked={field.required !== false}
+                                onChange={(event) =>
+                                  onChange(
+                                    updateField(entries, index, fieldIndex, {
+                                      required: event.target.checked,
+                                    }),
+                                  )
+                                }
+                              />
+                              <span>Obrigatório</span>
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                {entry.label?.trim() || entry.template.trim() ? (
+                  <p className="mdc-agent-icebreakers-editor__preview">
+                    <span>Prévia:</span> {presentation.title}
+                    {presentation.subtitle ? ` · ${presentation.subtitle}` : ""}
+                    {hasShortcutPlaceholders(entry.template) && fields.length > 0
+                      ? ` · diálogo com ${fields.length} campo(s)`
+                      : ""}
+                  </p>
+                ) : null}
+              </div>
             </article>
           );
         })}
