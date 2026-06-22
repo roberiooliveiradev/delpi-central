@@ -42,6 +42,16 @@ _DRAWINGS_DIRS = [
 ]
 
 
+def _tesseract_available() -> bool:
+    try:
+        import pytesseract
+
+        pytesseract.get_tesseract_version()
+        return True
+    except Exception:
+        return False
+
+
 def _request(method: str, url: str, *, token: str | None = None) -> tuple[int, dict | None, str]:
     headers = {"Accept": "application/json"}
 
@@ -255,6 +265,12 @@ def main() -> int:
     args = parser.parse_args()
 
     print(f"Base URL: {_BASE_URL}{_API_PREFIX}\n")
+
+    if not _tesseract_available():
+        print(
+            "⚠ Tesseract não encontrado no PATH — extração regional do PDF ficará vazia.\n"
+            "  Use o container delpi-minha-delpi-ai-api ou instale tesseract-ocr (por+eng).\n"
+        )
 
     token = _fetch_token()
     rows = []
