@@ -14,6 +14,7 @@ ENV/
 env/
 env.bak/
 desenhos/
+scripts/eval_*_report.json
 # ---- 🧰 IDEs e Editores ----
 .vscode/
 .idea/

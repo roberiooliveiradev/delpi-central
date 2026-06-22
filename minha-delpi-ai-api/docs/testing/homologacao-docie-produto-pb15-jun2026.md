@@ -81,6 +81,33 @@ Apresentação rica: [`presentation-homologation-jun2026.md`](presentation-homol
 
 ---
 
+## 6. Homologação E2E — qualidade operacional (jun/2026)
+
+**PA de referência:** `90260140` (programação 22/06/2026) · roadmap [`playbook-chat-operational-quality-roadmap-jun2026.md`](../roadmap/playbook-chat-operational-quality-roadmap-jun2026.md)
+
+### Regressão offline (CI)
+
+| Suite | Comando | Escopo |
+|-------|---------|--------|
+| Seleção PA 90260140 | `pytest tests/unit/domain/services/test_chat_intelligence_regression.py -k OQ -q` | Fabril, produção, expedição, custo +10% |
+| Contrato scripts eval | `pytest tests/unit/scripts/test_operational_quality_eval_jun2026.py -q` | `FOLLOW_UPS` / `SCENARIOS` alinhados ao mapa |
+
+### Smoke E2E (stack local + Ollama)
+
+Requer `SMOKE_BASE_URL=http://localhost`, credenciais Keycloak e api-delpi ativa.
+
+```bash
+cd minha-delpi-ai-api
+PYTHONPATH=. SMOKE_BASE_URL=http://localhost SMOKE_PAUSE_SECONDS=1 \
+  .venv/bin/python scripts/eval_real_product_flow_jun2026.py
+PYTHONPATH=. SMOKE_BASE_URL=http://localhost SMOKE_PAUSE_SECONDS=1.5 \
+  .venv/bin/python scripts/eval_response_modes_product_routes_jun2026.py
+```
+
+Relatórios gerados em `scripts/eval_*_report.json` (ignorados pelo git).
+
+---
+
 ## Reexecução rápida
 
 ```bash

@@ -1,6 +1,6 @@
 # Playbook — Qualidade operacional no chat (fabril, MP, custo PA)
 
-**Status:** Sprint 4 em andamento (jun/2026)  
+**Status:** Sprint 5 concluído (jun/2026)  
 **Evidência E2E:** `scripts/eval_real_product_flow_jun2026.py` · relatório `scripts/eval_real_product_flow_report.json`  
 **PA de referência homologado:** `90260140` (programação 22/06/2026)  
 **Relacionado:** [playbook-chat-preco-mp-simulador-custos-pa.md](./playbook-chat-preco-mp-simulador-custos-pa.md) · [chat-response-modes.md](../architecture/chat-response-modes.md) · [homologacao-docie-produto-pb15-jun2026.md](../testing/homologacao-docie-produto-pb15-jun2026.md)
@@ -53,7 +53,7 @@ Fluxo real testado: programação do dia → PA **9026** da lista → perguntas 
 | S3.3 | Pensador: anti-duplicação de blocos na finalização |
 | S3.4 | Smoke fixo PA do dia nos 3 modos no CI (`eval_response_modes_product_routes_jun2026.py`) |
 
-### Sprint 4 — Apresentação rica (P2) — **em andamento**
+### Sprint 4 — Apresentação rica (P2) — **concluído**
 
 | Rota | Entrega | Status |
 |------|---------|--------|
@@ -62,11 +62,14 @@ Fluxo real testado: programação do dia → PA **9026** da lista → perguntas 
 | `/cost-impact-simulation` | Pareto + KPI simulação | Perfil `cost_impact_simulation` (tier A existente) |
 | `/raw-material-price-intelligence` | Última compra + variação + orçamento | Perfil `raw_material_price_intelligence` (tier A existente) |
 
-### Sprint 5 — Regressão contínua
+### Sprint 5 — Regressão contínua — **concluído**
 
-- `chat_intelligence_regression_cases.py` — mapa fabril/MP/custo do usuário
-- `eval_real_product_flow_jun2026.py` no pipeline de homologação
-- Atualizar [homologacao-docie-produto-pb15-jun2026.md](../testing/homologacao-docie-produto-pb15-jun2026.md)
+| Entrega | Onde |
+|---------|------|
+| Mapa fabril/MP/custo PA **90260140** | `OPERATIONAL_QUALITY_JUN2026_CASES` em `chat_intelligence_regression_cases.py` |
+| Contrato offline dos scripts E2E | `tests/unit/scripts/test_operational_quality_eval_jun2026.py` |
+| Homologação documentada | `homologacao-docie-produto-pb15-jun2026.md` §6 |
+| Relatórios eval fora do git | `.gitignore` → `scripts/eval_*_report.json` |
 
 ---
 
@@ -81,6 +84,9 @@ Ver tabela do usuário (fabril amplo → `/factory-status`; MP → `/raw-materia
 ```bash
 cd minha-delpi-ai-api
 .venv/bin/python scripts/eval_real_product_flow_jun2026.py
+.venv/bin/python scripts/eval_response_modes_product_routes_jun2026.py
+.venv/bin/python -m pytest tests/unit/scripts/test_operational_quality_eval_jun2026.py -q
+.venv/bin/python -m pytest tests/unit/domain/services/test_chat_intelligence_regression.py -k OQ -q
 .venv/bin/python -m pytest tests/unit/domain/services/test_external_action_http_execution_service.py -q
 .venv/bin/python -m pytest tests/unit/infrastructure/external_actions/test_http_external_action_gateway_retry.py -q
 ```

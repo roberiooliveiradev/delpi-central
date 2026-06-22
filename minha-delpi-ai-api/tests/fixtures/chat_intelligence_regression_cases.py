@@ -2185,6 +2185,163 @@ PROJECT_SOURCES_SLOT_CASES = [
     },
 ]
 
+# Fluxo homologado PA 90260140 (jun/2026) — alinhado a eval_real_product_flow_jun2026.py.
+OPERATIONAL_QUALITY_JUN2026_CASES = [
+    {
+        "id": "OQ01",
+        "message": "Qual o status completo na fábrica do produto 90260140 hoje?",
+        "actions": [
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [{"name": "code"}, {"name": "reference_date"}],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador completo",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "factory-status",
+        "expected_path_fragment": "/factory-status",
+    },
+    {
+        "id": "OQ02",
+        "message": "me dá a visão fabril integrada do produto 90260140",
+        "actions": [
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "production-status",
+                "method": "GET",
+                "path": "/products/{code}/production-status",
+                "operationId": "get_product_production_status",
+                "summary": "Análise produtiva",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "factory-status",
+        "expected_path_fragment": "/factory-status",
+    },
+    {
+        "id": "OQ03",
+        "message": "O produto 90260140 já começou a produzir? Tem apontamento na OP?",
+        "actions": [
+            {
+                "actionId": "production-status",
+                "method": "GET",
+                "path": "/products/{code}/production-status",
+                "operationId": "get_product_production_status",
+                "summary": "Análise produtiva",
+                "parametersSchema": [{"name": "code"}, {"name": "reference_date"}],
+            },
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "production-status",
+        "expected_path_fragment": "/production-status",
+    },
+    {
+        "id": "OQ04",
+        "message": "Quanto do produto 90260140 já foi liberado para expedição hoje?",
+        "actions": [
+            {
+                "actionId": "shipping-status",
+                "method": "GET",
+                "path": "/products/{code}/shipping-status",
+                "operationId": "get_product_shipping_status",
+                "summary": "Expedição do PA",
+                "parametersSchema": [{"name": "code"}, {"name": "reference_date"}],
+            },
+            {
+                "actionId": "factory-status",
+                "method": "GET",
+                "path": "/products/{code}/factory-status",
+                "operationId": "get_product_factory_status",
+                "summary": "Status fabril",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "shipping-status",
+        "expected_path_fragment": "/shipping-status",
+    },
+    {
+        "id": "OQ05",
+        "message": "Quais materiais mais impactam o custo do PA 90260140?",
+        "actions": [
+            {
+                "actionId": "cost-impact-simulation",
+                "method": "GET",
+                "path": "/products/{code}/cost-impact-simulation",
+                "operationId": "get_product_cost_impact_simulation",
+                "summary": "Simulador de impacto de custos do PA",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "cost-impact-simulation",
+        "expected_path_fragment": "/cost-impact-simulation",
+    },
+    {
+        "id": "OQ06",
+        "message": "Simule aumento de 10% nos materiais do produto 90260140",
+        "actions": [
+            {
+                "actionId": "cost-impact-simulation",
+                "method": "GET",
+                "path": "/products/{code}/cost-impact-simulation",
+                "operationId": "get_product_cost_impact_simulation",
+                "summary": "Simulador de impacto de custos do PA",
+                "parametersSchema": [
+                    {"name": "code"},
+                    {"name": "adjustment_percent"},
+                ],
+            },
+            {
+                "actionId": "pricing",
+                "method": "GET",
+                "path": "/products/{code}/pricing",
+                "operationId": "get_product_pricing",
+                "summary": "Preços do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "cost-impact-simulation",
+        "expected_parameters": {"adjustment_percent": 10.0},
+        "expected_path_fragment": "/cost-impact-simulation",
+    },
+]
+
+OPERATIONAL_QUALITY_JUN2026_INDEX = [
+    {"id": case["id"], "message": case["message"], "expected_action_id": case["expected_action_id"]}
+    for case in OPERATIONAL_QUALITY_JUN2026_CASES
+]
+
 # treinamento-agente-interacoes-jun2026.md — consultas operacionais (não capabilities).
 TRAINING_AGENT_CAPABILITY_GATE_CASES = [
     "estoque do produto 10080022",
