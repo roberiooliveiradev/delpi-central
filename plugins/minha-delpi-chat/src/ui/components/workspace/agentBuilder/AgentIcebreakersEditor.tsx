@@ -258,7 +258,8 @@ export function AgentIcebreakersEditor({
         </button>
       </div>
 
-      <div className="mdc-agent-icebreakers-editor__list" aria-label="Lista de quebra-gelos">
+      <div className="mdc-agent-icebreakers-editor__list-scroll">
+        <div className="mdc-agent-icebreakers-editor__list" aria-label="Lista de quebra-gelos">
         {entries.map((entry, index) => {
           const presentation = resolveIcebreakerCardPresentation(entry);
           const fields = entry.fields ?? [];
@@ -605,6 +606,7 @@ export function AgentIcebreakersEditor({
             </article>
           );
         })}
+        </div>
       </div>
     </div>
   );
