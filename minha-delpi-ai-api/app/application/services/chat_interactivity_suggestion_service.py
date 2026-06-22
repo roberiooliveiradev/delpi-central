@@ -18,6 +18,12 @@ from app.application.services.chat_operational_refinement_interactivity_service 
 from app.application.services.chat_presentation_interactivity_service import (
     ChatPresentationInteractivityService,
 )
+from app.domain.services.chat_interactivity_content_service import (
+    ChatInteractivityContentService,
+)
+from app.domain.services.chat_interactivity_suggestion_availability_service import (
+    ChatInteractivitySuggestionAvailabilityService,
+)
 from app.infrastructure.content.content_service import ContentService
 
 
@@ -98,7 +104,11 @@ class ChatInteractivitySuggestionService:
             )
             for item in raw
         ]
-        deduped = cls._dedupe(enriched)
+        visible = ChatInteractivitySuggestionAvailabilityService.omit_unavailable(
+            enriched,
+            workspace_context=workspace_context,
+        )
+        deduped = cls._dedupe(visible)
         ranked = cls._rank(
             deduped,
             metadata=metadata,
@@ -237,7 +247,10 @@ class ChatInteractivitySuggestionService:
             enriched["requiresConfirmation"] = True
             enriched["tooltip"] = "Esta ação pede confirmação antes de executar."
 
-        disabled = cls._disabled_reason(label, workspace_context=workspace_context)
+        disabled = ChatInteractivitySuggestionAvailabilityService.resolve_disabled_reason(
+            label,
+            workspace_context=workspace_context,
+        )
 
         if disabled:
             enriched["disabledReason"] = disabled
@@ -257,39 +270,10 @@ class ChatInteractivitySuggestionService:
         *,
         workspace_context: dict | None,
     ) -> str | None:
-        capabilities = (workspace_context or {}).get("capabilities") or {}
-        operational_labels = {
-            str(item).strip()
-            for item in (_content().get("operationalAgentRequiredLabels") or [])
-            if str(item or "").strip()
-        }
-        operational_disabled = str(
-            (_content().get("disabledReasons") or {}).get("operationalAgentRequired")
-            or "Ative um agente com consultas operacionais para usar esta ação."
-        ).strip()
-
-        if label == "Colocar na lousa" and capabilities.get("canvas") is False:
-            return "A lousa não está habilitada neste agente."
-
-        if label in operational_labels:
-            if not (workspace_context or {}).get("userActivatedAgent") and not (
-                workspace_context or {}
-            ).get("actionsEnabled"):
-                return operational_disabled
-
-        sql_action_labels = {
-            "Executar query",
-            "Ver colunas da tabela",
-            "Ver schema completo",
-            "Ver relações",
-            "Interpretar resultado",
-            "Gerar gráfico",
-        }
-
-        if label in sql_action_labels and not (workspace_context or {}).get("actionsEnabled"):
-            return "Ative um agente com actions SQL/schema para consultar ou executar no banco."
-
-        return None
+        return ChatInteractivitySuggestionAvailabilityService.resolve_disabled_reason(
+            label,
+            workspace_context=workspace_context,
+        )
 
     @classmethod
     def _resolve_group(cls, label: str, fallback: str) -> str:
@@ -452,9 +436,13 @@ class ChatInteractivitySuggestionService:
         max_primary = cls._max_primary()
         enabled = [item for item in items if not item.get("disabledReason")]
         disabled = [item for item in items if item.get("disabledReason")]
-
         primary = enabled[:max_primary]
-        overflow = enabled[max_primary:] + disabled
+
+        if ChatInteractivityContentService.hide_unavailable_suggestions():
+            overflow = enabled[max_primary:]
+        else:
+            overflow = enabled[max_primary:] + disabled
+
         more: dict[str, list[dict[str, Any]]] = {}
         group_labels = _content().get("groupLabels") or {}
 
@@ -501,9 +489,4 @@ class ChatInteractivitySuggestionService:
 
     @classmethod
     def _max_primary(cls) -> int:
-        token = _content().get("maxPrimary")
-
-        if isinstance(token, int) and token > 0:
-            return token
-
-        return 4
+        return ChatInteractivityContentService.max_primary()

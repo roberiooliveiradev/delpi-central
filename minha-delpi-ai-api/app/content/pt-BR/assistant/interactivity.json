@@ -1,4 +1,7 @@
 {
+  "settings": {
+    "hideUnavailableSuggestions": true
+  },
   "maxPrimary": 4,
   "moreOptionsLabel": "Mais opções",
   "groupLabels": {
@@ -280,7 +283,17 @@
     "Ver vendas",
     "Ver compras"
   ],
+  "sqlAgentRequiredLabels": [
+    "Executar query",
+    "Ver colunas da tabela",
+    "Ver schema completo",
+    "Ver relações",
+    "Interpretar resultado",
+    "Gerar gráfico"
+  ],
   "disabledReasons": {
-    "operationalAgentRequired": "Ative um agente com consultas operacionais para usar esta ação."
+    "operationalAgentRequired": "Ative um agente com consultas operacionais para usar esta ação.",
+    "sqlAgentRequired": "Ative um agente com actions SQL/schema para consultar ou executar no banco.",
+    "canvasDisabled": "A lousa não está habilitada neste agente."
   }
 }

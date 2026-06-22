@@ -141,7 +141,7 @@ INTERACTIVITY_CASES: list[dict] = [
             ],
         },
         "workspace_context": {"capabilities": {"canvas": True}, "userActivatedAgent": False},
-        "expect_disabled_label": "Ver estoque",
+        "expect_absent_label": "Ver estoque",
     },
     {
         "id": "I14",
@@ -190,5 +190,23 @@ INTERACTIVITY_CASES: list[dict] = [
             },
         },
         "expect_primary_label": "Colocar na lousa",
+    },
+    {
+        "id": "I17",
+        "metadata": {
+            "followUpSuggestions": [
+                {"label": "Consultar produto", "query": "me fale do produto 1"},
+                {"label": "Ver estoque", "query": "estoque do produto 1"},
+                {"label": "Gerar gráfico", "query": "gere um gráfico"},
+                {"label": "Pesquisar na web", "query": "pesquise na web sobre tendências"},
+            ],
+        },
+        "workspace_context": {
+            "capabilities": {"canvas": True},
+            "userActivatedAgent": False,
+            "actionsEnabled": False,
+        },
+        "expect_absent_labels": ["Consultar produto", "Ver estoque", "Gerar gráfico"],
+        "expect_in_suggestions": "Pesquisar na web",
     },
 ]

@@ -28,7 +28,7 @@ def test_interactivity_cases(case):
 
     assert interactivity.get("consolidated") is True
 
-    if not case.get("expect_disabled_label"):
+    if not case.get("expect_disabled_label") and not case.get("expect_absent_label"):
         assert interactivity.get("suggestions")
 
     if case.get("expect_more"):
@@ -79,6 +79,17 @@ def test_interactivity_cases(case):
             if item.get("label") == case["expect_disabled_label"]
         ]
         assert disabled and disabled[0].get("disabledReason")
+
+    if case.get("expect_absent_label") or case.get("expect_absent_labels"):
+        all_labels = [
+            item.get("label")
+            for item in list(interactivity["suggestions"])
+            + sum((interactivity.get("moreSuggestions") or {}).values(), [])
+        ]
+        absent = [case["expect_absent_label"]] if case.get("expect_absent_label") else []
+
+        for label in absent + list(case.get("expect_absent_labels") or []):
+            assert label not in all_labels
 
     if case.get("expect_context_bar"):
         assert interactivity.get("contextBar")

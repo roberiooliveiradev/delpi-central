@@ -68,7 +68,7 @@ Wrappers especializados (mantêm API estável):
 | `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados; **`directAnswers.projectSources`** — inventário de fontes do projeto) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService`, `ChatProjectSourcesIntentService` |
 | `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
 | `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
-| `interactivity.json` | Chips, refinamentos | Vários serviços de interatividade |
+| `interactivity.json` | Chips, refinamentos, disponibilidade (`hideUnavailableSuggestions`, labels operacionais/SQL) | `ChatInteractivityContentService`, `ChatInteractivitySuggestionAvailabilityService`, `ChatInteractivitySuggestionService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
 | `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
