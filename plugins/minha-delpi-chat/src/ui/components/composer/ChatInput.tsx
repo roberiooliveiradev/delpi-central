@@ -358,6 +358,9 @@ export function ChatInput({
           hasContextBadges ? "mdc-chat-input__box--with-context-badges" : "",
           hasAttachments ? "mdc-chat-input__box--with-attachments" : "",
           showResponseMode ? "mdc-chat-input__box--with-response-mode" : "",
+          showPresentationFormat && showResponseMode
+            ? "mdc-chat-input__box--with-dual-composer-options"
+            : "",
         ]
           .filter(Boolean)
           .join(" ")}

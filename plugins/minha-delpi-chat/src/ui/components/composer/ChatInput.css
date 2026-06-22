@@ -70,6 +70,66 @@
   flex-shrink: 0;
 }
 
+/* + formato + modo em telas estreitas: grid no bloco de ações */
+@media (max-width: 520px) {
+  .mdc-chat-input__box--with-dual-composer-options .mdc-chat-input__composer-toolbar {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    padding-inline: 0.05rem;
+  }
+
+  .mdc-chat-input__box--with-dual-composer-options .mdc-chat-input__composer-toolbar-start {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.28rem;
+    min-width: 0;
+  }
+
+  .mdc-chat-input__box--with-dual-composer-options .mdc-chat-input__composer-toolbar-end {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .mdc-chat-input__box--with-dual-composer-options .mdc-composer-option-selector {
+    flex: initial;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .mdc-chat-input__box--with-dual-composer-options .mdc-composer-option-selector__trigger {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    justify-content: center;
+    gap: 0.28rem;
+    padding-inline: 0.38rem 0.42rem;
+    font-size: 0.76rem;
+  }
+
+  .mdc-chat-input__box--with-dual-composer-options .mdc-composer-option-selector__trigger > span {
+    min-width: 0;
+  }
+
+  .mdc-chat-input__box--with-dual-composer-options {
+    min-height: 3.65rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .mdc-chat-input__box--with-dual-composer-options .mdc-chat-input__composer-toolbar-start {
+    flex: 1 1 100%;
+  }
+
+  .mdc-chat-input__box--with-dual-composer-options .mdc-chat-input__composer-toolbar-end {
+    flex: 1 1 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
 .mdc-chat-input__typing-suggestion {
   display: flex;
   flex-wrap: wrap;

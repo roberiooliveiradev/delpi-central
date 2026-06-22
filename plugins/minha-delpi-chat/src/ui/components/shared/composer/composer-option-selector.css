@@ -107,6 +107,12 @@
     min-width: 0;
   }
 
+  .mdc-chat-input__box--with-dual-composer-options
+    .mdc-chat-input__composer-toolbar-start
+    .mdc-composer-option-selector {
+    flex: initial;
+  }
+
   .mdc-chat-input__composer-toolbar-start .mdc-composer-option-selector__trigger {
     width: 100%;
     max-width: 100%;

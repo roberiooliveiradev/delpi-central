@@ -271,14 +271,28 @@
 
 @media (max-width: 767px) {
   .mdc-chat-empty-composer {
+    justify-content: flex-end;
     padding-inline: max(0.65rem, env(safe-area-inset-left, 0px))
       max(0.65rem, env(safe-area-inset-right, 0px));
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
   }
 
+  .mdc-chat-empty-composer__column {
+    justify-content: flex-end;
+    margin-block: 0;
+    gap: var(--mdc-space-2);
+  }
+
   .mdc-chat-empty-composer__scroll {
+    flex: 1 1 auto;
+    justify-content: flex-start;
     gap: var(--mdc-space-3);
     padding-block: clamp(0.5rem, 1.25vh, 0.85rem);
+  }
+
+  .mdc-chat-empty-composer__column > .mdc-chat-input small {
+    margin-top: 0.35rem;
+    padding-inline: 0.15rem;
   }
 
   .mdc-chat-empty-composer .mdc-chat-empty-state,
