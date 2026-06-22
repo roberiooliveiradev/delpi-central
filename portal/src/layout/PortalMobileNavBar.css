@@ -1,49 +1,39 @@
 :root {
-  --portal-mobile-nav-size: 3.25rem;
+  --portal-mobile-nav-size: calc(2.75rem + 0.7rem);
 }
 
 /*
- * Chrome mobile (≤1024px): padding do conteúdo só quando a barra está visível.
+ * Chrome mobile (≤1024px): a barra entra no fluxo do .app-shell (não fixed)
+ * para reservar espaço real — sem padding compensatório em .main-area.
  * Mutuamente exclusivo com sidebar aberta (data-sidebar-collapsed="true" = barra visível).
  */
 @media (max-width: 1024px) {
-  .app-shell > .main-area {
+  html[data-sidebar-collapsed="true"] .app-shell {
+    flex-direction: column;
+  }
+
+  html[data-sidebar-collapsed="true"] .app-shell > .main-area {
     box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0;
     padding-left: 0;
     padding-bottom: 0;
   }
 }
 
-@media (max-width: 1024px) and (orientation: portrait) {
-  html[data-sidebar-collapsed="true"] .app-shell > .main-area {
-    padding-bottom: calc(
-      var(--portal-mobile-nav-size) + env(safe-area-inset-bottom, 0px)
-    );
-    padding-left: 0;
+@media (max-width: 1024px) and (orientation: landscape),
+  (max-width: 1024px) and (min-aspect-ratio: 1/1) {
+  html[data-sidebar-collapsed="true"] .app-shell {
+    flex-direction: row;
   }
-}
 
-@media (max-width: 1024px) and (orientation: landscape) {
-  html[data-sidebar-collapsed="true"] .app-shell > .main-area {
-    padding-left: calc(
-      var(--portal-mobile-nav-size) + env(safe-area-inset-left, 0px)
-    );
-    padding-bottom: 0;
-  }
-}
-
-@media (max-width: 1024px) and (min-aspect-ratio: 1/1) {
-  html[data-sidebar-collapsed="true"] .app-shell > .main-area {
-    padding-left: calc(
-      var(--portal-mobile-nav-size) + env(safe-area-inset-left, 0px)
-    );
-    padding-bottom: 0;
-  }
-}
-
-@media (max-width: 1024px) and (orientation: portrait) and (max-aspect-ratio: 1/1) {
   html[data-sidebar-collapsed="true"] .app-shell > .main-area {
     padding-left: 0;
+    padding-bottom: 0;
+  }
+
+  html[data-sidebar-collapsed="true"] .portal-mobile-nav {
+    order: -1;
   }
 }
 
@@ -53,9 +43,10 @@
 
 @media (max-width: 1024px) {
   .portal-mobile-nav {
-    position: fixed;
+    position: relative;
     z-index: 50;
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     gap: 0.65rem;
@@ -154,10 +145,11 @@
 
   @media (orientation: portrait) {
     .portal-mobile-nav {
-      right: 0;
-      bottom: 0;
-      left: 0;
+      right: auto;
+      bottom: auto;
+      left: auto;
       flex-direction: row;
+      width: 100%;
       min-height: var(--portal-mobile-nav-size);
       padding: 0.35rem 0.65rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
     }
@@ -172,14 +164,16 @@
 
   @media (orientation: landscape) {
     .portal-mobile-nav {
-      top: 0;
-      bottom: 0;
-      left: 0;
+      top: auto;
+      bottom: auto;
+      left: auto;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       width: var(--portal-mobile-nav-size);
       min-width: var(--portal-mobile-nav-size);
+      align-self: stretch;
+      height: auto;
       padding: calc(0.45rem + env(safe-area-inset-top, 0px)) 0.35rem 0.45rem
         calc(0.35rem + env(safe-area-inset-left, 0px));
     }
@@ -198,16 +192,18 @@
   }
 
   .portal-mobile-nav.portal-mobile-nav--dock-side {
-    top: 0;
+    top: auto;
     right: auto;
-    bottom: 0;
-    left: 0;
+    bottom: auto;
+    left: auto;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     width: var(--portal-mobile-nav-size);
     min-width: var(--portal-mobile-nav-size);
+    align-self: stretch;
     min-height: auto;
+    height: auto;
     padding: calc(0.45rem + env(safe-area-inset-top, 0px)) 0.35rem 0.45rem
       calc(0.35rem + env(safe-area-inset-left, 0px));
   }

@@ -135,7 +135,6 @@ function AppShell() {
   return (
     <div className="app-shell">
       <Sidebar />
-      <PortalMobileNavBar />
       <PortalTour />
 
       <div className="main-area">
@@ -209,6 +208,8 @@ function AppShell() {
           </Routes>
         </div>
       </div>
+
+      <PortalMobileNavBar />
     </div>
   );
 }
