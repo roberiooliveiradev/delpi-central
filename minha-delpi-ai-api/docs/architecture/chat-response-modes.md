@@ -73,6 +73,10 @@ Rollback template (offline)
     └─ modos OFF + allowTemplateProseFallback + llmProseEverywhere=false
 ```
 
+### Modo Normal — commentary direct (decoupled)
+
+Quando `response_modes.json` → `normalCommentaryDirect.enabled: true` e a tool retorna metadata **decoupled**, o turno **não** chama Ollama para a prosa — mesmo mecanismo da Rápida, com `responseModeEffect: llm_synthesis` e budget de fatos `normalLlmBudget.maxFactsChars` (default 520) no fallback LLM.
+
 ### Modo Rápida — commentary direct (≤ ~10 s)
 
 Quando `response_modes.json` → `fastCommentaryDirect.enabled: true` e a tool operacional retorna metadata **decoupled** (`llmProseDecoupled`), o turno **não** chama Ollama para a prosa:
@@ -186,8 +190,12 @@ cd minha-delpi-ai-api
 |-------|---------|-------|
 | `fastCommentaryDirect.enabled` | `true` | Ativa prosa Rápida sem segunda passagem LLM |
 | `fastCommentaryDirect.minAnswerChars` | `40` | Mínimo de caracteres no lead enriquecido |
+| `normalCommentaryDirect.enabled` | `true` | Ativa prosa Normal sem segunda passagem LLM (decoupled) |
+| `normalCommentaryDirect.minAnswerChars` | `40` | Mínimo de caracteres no lead enriquecido (Normal) |
 | `fastLlmBudget.maxFactsChars` | `380` | Cap de fatos no prompt quando cai no fallback LLM |
 | `fastLlmBudget.skipProsePanelRules` | `true` | Omite regras de painel no addon de fatos (Rápida) |
+| `normalLlmBudget.maxFactsChars` | `520` | Cap de fatos no prompt Normal (fallback LLM) |
+| `normalLlmBudget.skipProsePanelRules` | `false` | Mantém regras de painel no addon (Normal) |
 
 Loader: `ChatResponseModeContentService`.
 

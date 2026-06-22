@@ -59,6 +59,12 @@ class ChatOperationalLlmSynthesisContextService:
             if fast_cap is not None:
                 return fast_cap
 
+        if ChatResponseModeService.normalize(response_mode) == "normal":
+            normal_cap = ChatResponseModeContentService.normal_llm_max_facts_chars()
+
+            if normal_cap is not None:
+                return normal_cap
+
         return ChatOperationalLlmSynthesisContextContentService.max_chars()
 
     @classmethod
@@ -75,6 +81,12 @@ class ChatOperationalLlmSynthesisContextService:
         if (
             ChatResponseModeService.normalize(response_mode) == "fast"
             and ChatResponseModeContentService.fast_llm_skip_prose_panel_rules()
+        ):
+            return False
+
+        if (
+            ChatResponseModeService.normalize(response_mode) == "normal"
+            and ChatResponseModeContentService.normal_llm_skip_prose_panel_rules()
         ):
             return False
 

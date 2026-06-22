@@ -44,8 +44,16 @@
     "enabled": true,
     "minAnswerChars": 40
   },
+  "normalCommentaryDirect": {
+    "enabled": true,
+    "minAnswerChars": 40
+  },
   "fastLlmBudget": {
     "maxFactsChars": 380,
     "skipProsePanelRules": true
+  },
+  "normalLlmBudget": {
+    "maxFactsChars": 520,
+    "skipProsePanelRules": false
   }
 }

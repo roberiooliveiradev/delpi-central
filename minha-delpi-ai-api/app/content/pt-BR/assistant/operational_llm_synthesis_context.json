@@ -2,7 +2,7 @@
   "title": "Fatos já consultados (responda com base neles — não peça acesso):",
   "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, gráfico). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta.",
   "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta».",
-  "maxChars": 650,
+  "maxChars": 520,
   "maxHumanizedLines": 3,
   "maxHumanizedLinesWhenDecoupled": 2,
   "skipSummaryAnswerWhenDecoupled": true,

@@ -1,4 +1,4 @@
-"""Síntese Rápida sem segunda passagem LLM — lead a partir de dataCommentary/dataAnswer."""
+"""Síntese Rápida/Normal sem segunda passagem LLM — lead a partir de dataCommentary/dataAnswer."""
 
 from __future__ import annotations
 
@@ -25,10 +25,10 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         *,
         response_mode: str | None,
     ) -> str | None:
-        if ChatResponseModeService.normalize(response_mode) != "fast":
-            return None
+        normalized = ChatResponseModeService.normalize(response_mode)
+        config = cls._resolve_mode_config(normalized)
 
-        if not ChatResponseModeContentService.fast_commentary_direct_enabled():
+        if not config:
             return None
 
         if not cls._qualifies(tool_calls):
@@ -37,20 +37,45 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         body = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
             "",
             tool_calls,
-            compact=True,
+            compact=normalized == "fast",
+        )
+        effect = (
+            "llm_synthesis_brief"
+            if normalized == "fast"
+            else "llm_synthesis"
         )
         enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
             body,
             message=message,
             tool_calls=tool_calls,
-            response_mode_effect="llm_synthesis_brief",
+            response_mode_effect=effect,
         ).strip()
-        min_chars = ChatResponseModeContentService.fast_commentary_direct_min_chars()
+        min_chars = config["min_chars"]
 
         if len(enriched) < min_chars:
             return None
 
         return enriched
+
+    @classmethod
+    def _resolve_mode_config(cls, normalized_mode: str) -> dict[str, int] | None:
+        if normalized_mode == "fast":
+            if not ChatResponseModeContentService.fast_commentary_direct_enabled():
+                return None
+
+            return {
+                "min_chars": ChatResponseModeContentService.fast_commentary_direct_min_chars(),
+            }
+
+        if normalized_mode == "normal":
+            if not ChatResponseModeContentService.normal_commentary_direct_enabled():
+                return None
+
+            return {
+                "min_chars": ChatResponseModeContentService.normal_commentary_direct_min_chars(),
+            }
+
+        return None
 
     @classmethod
     def mark_tool_context(cls, tool_context: dict | None) -> None:

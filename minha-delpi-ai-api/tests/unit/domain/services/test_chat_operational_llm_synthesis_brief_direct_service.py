@@ -63,12 +63,15 @@ def test_apply_turn_direct_answer_policy_fast_uses_commentary_direct():
     assert tool_context.get("commentaryBriefDirect") is True
 
 
-def test_normal_mode_does_not_use_commentary_direct():
+def test_normal_commentary_direct_builds_answer_when_enabled():
     metadata = {
         "ok": True,
         "llmProseDecoupled": True,
+        "path": "/products/10080045/analyser",
         "dataCommentary": {
-            "highlights": [{"text": "Cadastro MP confirmado para 10080045."}],
+            "highlights": [
+                {"text": "O produto **10080045** está cadastrado como MP."},
+            ],
         },
     }
 
@@ -78,4 +81,34 @@ def test_normal_mode_does_not_use_commentary_direct():
         response_mode="normal",
     )
 
-    assert answer is None
+    assert answer
+    assert "10080045" in answer
+
+
+def test_apply_turn_direct_answer_policy_normal_uses_commentary_direct():
+    tool_context: dict = {}
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/10080045/analyser",
+        "dataCommentary": {
+            "highlights": [
+                {"text": "O produto **10080045** está cadastrado como MP."},
+            ],
+        },
+    }
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="me fale do produto 10080045",
+        response_mode="normal",
+        direct_answer=None,
+        skip_rag=False,
+        tool_calls=_tool_calls(metadata),
+        tool_context=tool_context,
+    )
+
+    assert direct
+    assert "10080045" in direct
+    assert skip_rag is True
+    assert effect == "llm_synthesis"
+    assert tool_context.get("commentaryBriefDirect") is True

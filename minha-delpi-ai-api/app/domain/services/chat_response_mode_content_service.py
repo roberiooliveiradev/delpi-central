@@ -59,6 +59,27 @@ class ChatResponseModeContentService:
             return 40
 
     @classmethod
+    def normal_commentary_direct_enabled(cls) -> bool:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "normalCommentaryDirect")
+
+        if not isinstance(node, dict):
+            return False
+
+        return bool(node.get("enabled", False))
+
+    @classmethod
+    def normal_commentary_direct_min_chars(cls) -> int:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "normalCommentaryDirect")
+
+        if not isinstance(node, dict):
+            return 48
+
+        try:
+            return max(1, int(node.get("minAnswerChars", 48)))
+        except (TypeError, ValueError):
+            return 48
+
+    @classmethod
     def fast_llm_max_facts_chars(cls) -> int | None:
         node = ChatAssistantContentService.get_node(_BUNDLE, "fastLlmBudget")
 
@@ -78,6 +99,32 @@ class ChatResponseModeContentService:
     @classmethod
     def fast_llm_skip_prose_panel_rules(cls) -> bool:
         node = ChatAssistantContentService.get_node(_BUNDLE, "fastLlmBudget")
+
+        if not isinstance(node, dict):
+            return False
+
+        return bool(node.get("skipProsePanelRules"))
+
+    @classmethod
+    def normal_llm_max_facts_chars(cls) -> int | None:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "normalLlmBudget")
+
+        if not isinstance(node, dict):
+            return None
+
+        raw = node.get("maxFactsChars")
+
+        if raw in (None, ""):
+            return None
+
+        try:
+            return max(128, int(raw))
+        except (TypeError, ValueError):
+            return None
+
+    @classmethod
+    def normal_llm_skip_prose_panel_rules(cls) -> bool:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "normalLlmBudget")
 
         if not isinstance(node, dict):
             return False
