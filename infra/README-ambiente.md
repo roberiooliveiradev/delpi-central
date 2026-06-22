@@ -44,7 +44,8 @@ O Compose lê **`infra/.env`** por padrão quando o comando é executado com `-f
 1. **Git** traz código + exemplos de env; **não** traz `.env` nem imagens Docker.
 2. Em cada máquina: `cp .env.*.example .env`, ajustar secrets, `docker compose build`.
 3. Dados (Postgres, anexos, `metadata.documentVision`) vivem nos **volumes/DB**, não na imagem.
-4. **EasyOCR/Docling** e **pesos EasyOCR** vêm no build (`Dockerfile.dev` / `Dockerfile.prod`); entrypoint não roda `pip install`. Rebuild: `./minha-delpi-ai-api/scripts/build_vision_profile.sh [dev|prod]`. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
+4. **Anexos de chat** e **fontes de projeto** (upload) ficam em `${DELPI_DATA_HOST_DIR:-$HOME/.delpi}/chat-attachments` e `.../chat-sources` no host — montados em `/data/delpi/...` no container (`CHAT_ATTACHMENT_STORAGE_PATH` / `CHAT_SOURCE_STORAGE_PATH`). Recriar o container **não** apaga esses arquivos; anexos antigos gravados em `/tmp/minha-delpi-chat-attachments` precisam ser reenviados.
+5. **EasyOCR/Docling** e **pesos EasyOCR** vêm no build (`Dockerfile.dev` / `Dockerfile.prod`); entrypoint não roda `pip install`. Rebuild: `./minha-delpi-ai-api/scripts/build_vision_profile.sh [dev|prod]`. Doc: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 
@@ -157,6 +158,32 @@ docker exec delpi-api-delpi ls /drawing-pdfs | wc -l
 Catálogo: `GET /apps/api-delpi/products/drawings?page_size=5` (via gateway).
 
 Doc: `api-delpi/docs/api/14-desenhos-pdf.md`.
+
+---
+
+## Anexos e fontes persistentes (chat)
+
+Uploads de conversa e arquivos de fonte de projeto **devem** sobreviver a rebuild do container.
+
+| Variável | Default no container | Descrição |
+|----------|----------------------|-----------|
+| `DELPI_DATA_HOST_DIR` | `${HOME}/.delpi` no host | Pasta base **fora do repositório** |
+| `CHAT_ATTACHMENT_STORAGE_PATH` | `/data/delpi/chat-attachments` | Anexos de sessão + cache `drawing-library-cache` |
+| `CHAT_SOURCE_STORAGE_PATH` | `/data/delpi/chat-sources` | PDFs/docs enviados como fonte de projeto ou agente |
+
+Volumes (prod e dev): `${DELPI_DATA_HOST_DIR}/chat-attachments` e `.../chat-sources` montados nos paths acima.
+
+```bash
+# Ajuste opcional em infra/.env
+DELPI_DATA_HOST_DIR=/var/lib/delpi
+
+docker compose -f infra/docker-compose.yml up -d --force-recreate minha-delpi-ai-api
+ls -la ~/.delpi/chat-attachments   # ou o caminho configurado
+```
+
+Anexos gravados antes desta configuração (path `/tmp/minha-delpi-chat-attachments` no container) precisam ser **reenviados**.
+
+Guia completo: [`minha-delpi-ai-api/docs/operations/chat-attachment-storage.md`](../minha-delpi-ai-api/docs/operations/chat-attachment-storage.md).
 
 ---
 

@@ -298,6 +298,19 @@ Permissão: `minha-delpi.chat.access`
 
 Resposta `200`: arquivo binário com header `Content-Disposition: attachment; filename="..."`.
 
+### Armazenamento em disco
+
+Os bytes do arquivo **não** ficam no Postgres — só `storage_path` na tabela `ai_chat_attachments`.
+
+| Ambiente | Raiz (`CHAT_ATTACHMENT_STORAGE_PATH`) | Layout |
+|----------|----------------------------------------|--------|
+| Docker (compose) | `/data/delpi/chat-attachments` (volume no host) | `{user_id}/{session_id}/{uuid}{ext}` |
+| Local / testes | `/tmp/minha-delpi-chat-attachments` (default) | idem |
+
+Fontes de projeto/agente usam `CHAT_SOURCE_STORAGE_PATH` (`ChatSourceFileStorage`).
+
+Operações (backup, `DELPI_DATA_HOST_DIR`, migração de anexos em `/tmp`): [`docs/operations/chat-attachment-storage.md`](../operations/chat-attachment-storage.md).
+
 ---
 
 ## Artefatos

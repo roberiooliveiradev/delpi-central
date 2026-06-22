@@ -55,6 +55,8 @@ flask --app app.main:app run --debug
 
 Com Docker, migrations rodam no boot do container (`docker-entrypoint.sh`). Ver [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md).
 
+**Anexos e fontes de projeto:** em Docker, configure volumes persistentes (`CHAT_ATTACHMENT_STORAGE_PATH`, `DELPI_DATA_HOST_DIR`). Ver [docs/operations/chat-attachment-storage.md](docs/operations/chat-attachment-storage.md) e `infra/README-ambiente.md`.
+
 ## Estrutura do código
 
 ```text

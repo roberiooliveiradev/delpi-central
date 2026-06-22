@@ -323,6 +323,8 @@ services:
 
       CHAT_ATTACHMENT_IMAGE_OCR_ENABLED: ${CHAT_ATTACHMENT_IMAGE_OCR_ENABLED:-true}
       CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS: ${CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS:-4000}
+      CHAT_ATTACHMENT_STORAGE_PATH: ${CHAT_ATTACHMENT_STORAGE_PATH:-/data/delpi/chat-attachments}
+      CHAT_SOURCE_STORAGE_PATH: ${CHAT_SOURCE_STORAGE_PATH:-/data/delpi/chat-sources}
       CHAT_DOCUMENT_VISION_ENABLED: ${CHAT_DOCUMENT_VISION_ENABLED:-true}
       CHAT_DOCUMENT_VISION_BACKEND: ${CHAT_DOCUMENT_VISION_BACKEND:-auto}
       CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING: ${CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING:-true}
@@ -350,6 +352,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+    volumes:
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/chat-attachments:/data/delpi/chat-attachments
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/chat-sources:/data/delpi/chat-sources
     
     depends_on:
       - core-api
