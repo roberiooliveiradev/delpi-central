@@ -21,7 +21,7 @@ O Portal carrega o MFE, injeta o JWT Keycloak em `configureHttpClient` e roteia 
 
 - **KPIs:** % LMP dentro do prazo, lead time médio útil, total de propostas no período
 - **Gráficos:** contagem por nível (1–3), por status (Pontual, Atrasado, Andamento, Retornada), média de lead time por nível, evolução temporal de lead time e quantidade de propostas
-- **Tabela:** listagem detalhada das LMPs filtradas (filial, proposta, datas, SLA, classificação) — clique abre **detalhe da OV**
+- **Tabela:** listagem detalhada das LMPs filtradas (filial, proposta, **revisão**, **ciclo**, datas, SLA, classificação) — clique abre **detalhe da OV**
 
 ### Detalhe da OV (`/apps/dashboard-lmps/ov/{sale_number}`)
 
@@ -178,7 +178,18 @@ Isso garante gráficos mesmo se o backend não enviar `charts`, com possível di
 | Lead time médio útil | `avg_lead_time` | Média em dias úteis |
 | Total de propostas | `total_lmps` | Quantidade no filtro |
 
-Cada linha da tabela inclui `nivel` (Nível 1–3), `status` (classificação de prazo), `dias_uteis_sla`, `data_limite`, `lead_time_util`, entre outros campos de `LmpDashboardItem`.
+Cada linha da tabela inclui `nivel` (Nível 1–3), `status` (classificação de prazo), `dias_uteis_sla`, `data_limite`, `lead_time_util`, **`homolog_revision` / `measurement_revision`**, **`cycle_index`**, entre outros campos de `LmpDashboardItem`.
+
+### Colunas Revisão e Ciclo (jun/2026)
+
+| Coluna UI | Campo | Significado |
+|-----------|-------|-------------|
+| Revisão | `homolog_revision` (fallback `measurement_revision`) | Revisão AD1010 do ciclo medido no período |
+| Ciclo | `cycle_index` | 1 = primeiro ciclo no mês; 2+ = reabertura ou nova revisão com trabalho LMP |
+
+A api-delpi usa política **`work_month_lmp`** por padrão: a mesma OV pode aparecer em **várias linhas** no mês. A chave de linha na tabela inclui revisão e ciclo para evitar colisão no React. Export CSV inclui as duas colunas.
+
+Auditoria e cruzamento RQ-060: `api-delpi/docs/investigation/lmp-2026-rq060-vs-dashboard-auditoria.md` §6.1.
 
 ---
 
@@ -245,6 +256,7 @@ Ver [STRUCTURE.md](./STRUCTURE.md).
 | [STRUCTURE.md](./STRUCTURE.md) | Pastas e convenções |
 | `api-delpi/docs/api/06-modulos-departamentais.md` | Engenharia / LMP no backend (detalhe + `/history/*`) |
 | `documentos/Routes/documentacao_completa_da_rota_lmp.md` | Contrato detalhado da rota LMP |
+| `api-delpi/docs/investigation/lmp-2026-rq060-vs-dashboard-auditoria.md` | Auditoria RQ-060, política `work_month_lmp`, gate SQL |
 | `plugins/dashboard-quality/docs/DOCUMENTACAO.md` | Plugin irmão (referência de padrão MFE) |
 
 ---
@@ -256,4 +268,4 @@ Melhorias ainda não implementadas:
 - Filiais dinâmicas via API (hoje opções fixas `01`/`02`)
 - Script `register-manifest.sh` e CI dedicado no monorepo
 
-**Já entregue (jun/2026):** detalhe OV, timeline, filtros do histórico, mini-Gantt por evento, Gantt global, preferências `localStorage`, filtros na URL, tooltips em ações/paginação/BOM, impressão básica (`@media print`).
+**Já entregue (jun/2026):** detalhe OV, timeline, filtros do histórico, mini-Gantt por evento, Gantt global, preferências `localStorage`, filtros na URL, tooltips em ações/paginação/BOM, impressão básica (`@media print`), colunas **Revisão** e **Ciclo** na tabela principal.

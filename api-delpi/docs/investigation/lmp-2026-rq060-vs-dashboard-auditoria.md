@@ -5,7 +5,7 @@ Documento de registro da investigação (jun/2026) sobre divergências entre o *
 > **Princípio:** o RQ-060 é **evidência de auditoria**, não regra de listagem. A rota deve refletir o fluxo real no Protheus (`AIJ010` + revisão `AD1010`). Este documento registra o cruzamento manual/automatizado para calibrar critérios de período e homologação. Ver também [playbook_correcao_lmp_repositorio_settings.md](../roadmaps/playbook_correcao_lmp_repositorio_settings.md).
 
 **Última atualização:** 22/06/2026  
-**Commit de referência:** `28091c4a` — *Investiga divergência LMP 2026 e extrai OVs dos RQ-060 por LMP Ano.*
+**Commit de referência:** `7374a055` — *Implementa work_month_lmp como política padrão de listagem LMP.*
 
 ---
 
@@ -354,12 +354,58 @@ Relatórios: `scripts/data/lmp_may2026_rq060_vs_dashboard_report.json`, `lmp_may
 | `LmpPeriodInclusionSemanticsService` | Predicado SQL por política |
 | `LmpListingKindSemanticsService` | Tipo efetivo LMP / Amostra / Outro |
 | `LmpListingCycleSemanticsService` | Ciclo homologação / `cycle_index` |
-| `period_inclusion_policy` | Default **`anchor_in_period`** |
+| `period_inclusion_policy` | Default **`work_month_lmp`** (ver §6.1) |
 | `strict_residence_after_homolog` | Opt-in — LMP homologada com &lt; 30 min → OUTRO |
 
 Campos adicionais no dashboard: `homolog_revision`, `measurement_revision`, `homolog_date`, `cycle_index`.
 
 Testes: `tests/test_lmp_query_repository_sql.py`, `tests/test_lmp_listing_cycle_semantics_service.py` (42 casos no container).
+
+---
+
+## 6.1 Política atual — `work_month_lmp` (jun/2026)
+
+Evolução após `anchor_in_period`: o controle RQ-060 organiza pastas pelo **mês do trabalho recebido/feito**, não só pela data de homologação 000012. A política **`work_month_lmp`** (padrão em `LMPQuerySettings.period_inclusion_policy`) combina:
+
+1. **Revisões com trabalho LMP no mês** — `first_eng` ou âncora LMP na revisão, com ≥30 min em engenharia (AIJ010).
+2. **Fallback âncora OV** — candidatos de `anchor_in_period` quando não há revisão qualificada no mês (`NOT EXISTS WorkMonthRevisionKeys`).
+3. **Múltiplas linhas** — mesma OV, revisões diferentes no período → linhas distintas com `cycle_index` 1, 2, …
+
+**Módulo SQL:** `LMPQueryRepository._sql_work_month_lmp_candidates_cte`  
+**Histórico medido por revisão do candidato:** `uses_per_revision_candidate_listing()` (`per_candidate_revision=True` no batch).
+
+### Cruzamento RQ-060 (jan–jun/2026, pós-deploy)
+
+| Mês | Pastas RQ | Interseção API | Só RQ (não na API) |
+|-----|-----------|----------------|---------------------|
+| Jan | 8 | 6 | 2 |
+| Fev | 25 | 21 | 4 |
+| Mar | 16 | 14 | 2 |
+| Abr | 16 | 12 | 4 |
+| Mai | 16 | 14 | 2 |
+| Jun | 12 | **12** | **0** |
+
+**Recall global:** 79/93 (84,9%). Jun/2026 fecha 1:1 com o controle.
+
+### Políticas comparadas (gate)
+
+| Política | Critério | Jun/2026 vs RQ |
+|----------|----------|----------------|
+| `anchor_or_first_eng` | Legado — bleed por `first_eng` | Infla (mai 23 OVs) |
+| `anchor_in_period` | Âncora LMP no mês, 1 linha/OV | 12/12 ✓ |
+| `homolog_cycles_in_period` | Homolog 000012 no mês, multi-ciclo | 8/12 ✗ |
+| **`work_month_lmp`** | Trabalho na revisão no mês + fallback âncora | **12/12** ✓, multi-revisão |
+
+Validar antes de alterar SQL: `scripts/validate_lmp_period_policies_vs_rq060.py`, `scripts/sql/lmp_period_policy_gate_compare.sql`.
+
+### Campos expostos no dashboard
+
+| Campo | Significado |
+|-------|-------------|
+| `homolog_revision` | Revisão AD1010 do ciclo medido (homologação) |
+| `measurement_revision` | Revisão usada nas métricas de engenharia |
+| `homolog_date` | Data da homologação 000012 do ciclo |
+| `cycle_index` | Índice do ciclo de trabalho no mês para a mesma OV (1, 2, …) |
 
 ---
 
@@ -460,10 +506,10 @@ docker exec -w /app delpi-api-delpi python scripts/validate_lmp_period_policies_
 | **dashboard_atual** (`anchor_in_period`) | Âncora LMP na revisão atual | **12/12** ✓ | Padrão após revert |
 | `anchor_in_period_ov` | Idem (SQL simplificado) | 10/12 | Aproximação — dashboard real bate 12 |
 | `homolog_rev_in_period` | Homolog 000012 no mês | 8/12 | Desalinha mês da pasta (jun) |
-| `eng_rev_work_month` | ≥30 min eng + first_eng ou âncora na revisão no mês | 7/12 | Candidata futura multi-revisão |
+| `eng_rev_work_month` | ≥30 min eng + first_eng ou âncora na revisão no mês | 7/12 | Evoluiu para **`work_month_lmp`** (implementado) |
 | `eng_rev_first_eng_only` | ≥30 min + first_eng no mês (sem exigir homolog) | — | Só investigação; infla demais |
 
-**Conclusão (jun/2026):** manter **`anchor_in_period`** para alinhamento mensal com controle. Próxima evolução: **`eng_rev_work_month`** (várias revisões, ≥30 min, mês do trabalho) — só implementar após gate fechar abr/mai/jun com critério de aceite (ex.: interseção ≥15/16 em mai).
+**Conclusão (jun/2026):** política em produção é **`work_month_lmp`** — alinha jun/2026 12/12, permite múltiplas linhas por OV no mês e melhora recall jan–jun vs só `anchor_in_period`. Manter gate antes de novas alterações no repositório.
 
 ---
 
@@ -508,12 +554,35 @@ Princípio: **listagem leve**, **histórico sob demanda**, **investigação offl
 
 ## 12. Pendências
 
-- [ ] Rodar gate para **jan–abr/2026** e fixar critério de aceite (interseção RQ vs política).
-- [ ] Prototipar **`eng_rev_work_month`** no gate; só codar se mai/jun dentro do aceite.
-- [ ] Homologar **abril/2026** (16 pastas vs 12 dashboard — ver gate `eng_rev_work_month` 11/16).
-- [x] Jun/2026 1:1 com `anchor_in_period` (revert `homolog_cycles` como padrão).
-- [ ] Fase 2: múltiplas linhas por revisão qualificada (≥30 min) sem perder mês do controle.
-- [ ] Decidir contagem oficial MFE: **pastas** (RQ) vs **linhas** (revisão/ciclo).
+- [ ] Rodar gate para **jan–abr/2026** e fixar critério de aceite formal (interseção RQ vs política).
+- [ ] Investigar **só-RQ** (14 OVs jan–jun) — pasta sem trabalho ≥30 min ou OV mal extraída do Word.
+- [ ] Homologar **abril/2026** (16 pastas vs 12 dashboard).
+- [x] Jun/2026 1:1 com `work_month_lmp` (12/12, 0 só-RQ).
+- [x] Política **`work_month_lmp`** implementada e default na API.
+- [x] Colunas **Revisão** e **Ciclo** nos MFEs `dashboard-lmps` e `dashboard-engineering`.
+- [ ] Decidir contagem oficial MFE: **pastas** (RQ) vs **linhas** (revisão/ciclo) — UI já exibe linhas.
+
+---
+
+## 14. Frontend — dashboards LMP
+
+Os plugins **`dashboard-lmps`** e **`dashboard-engineering`** (aba LMPs) consomem `GET /engineering/lmps/dashboard/items` e exibem na tabela principal:
+
+| Coluna | Campo API | Descrição |
+|--------|-----------|-----------|
+| Revisão | `homolog_revision` → fallback `measurement_revision` | Revisão AD1010 do ciclo medido no período |
+| Ciclo | `cycle_index` | 1 = primeiro ciclo no mês; 2+ = reabertura ou nova revisão |
+
+**Implementação:**
+
+- `plugins/dashboard-lmps` — `DashboardLmpsPage.tsx`, `lmpListingDisplay.ts`, export CSV, tooltips em `helpTooltips.ts`
+- `plugins/dashboard-engineering` — `LmpPage.tsx`, `lmpDisplay.ts`
+
+**Chave de linha:** `filial-tipo-OV-revisão-ciclo` — evita colisão React quando a mesma OV aparece mais de uma vez no período.
+
+**Detalhe da OV:** clique continua em `/ov/{sale_number}`; histórico completo em `/history/events` (revisão opcional na query).
+
+Doc MFE: `plugins/dashboard-lmps/docs/API_MAPPING.md`, `plugins/dashboard-lmps/docs/DOCUMENTACAO.md`.
 
 ---
 

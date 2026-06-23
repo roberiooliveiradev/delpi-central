@@ -49,6 +49,9 @@ export type LmpItem = {
   end_date?: string | null;
   reference_revision?: string | null;
   measurement_revision?: string | null;
+  homolog_revision?: string | null;
+  homolog_date?: string | null;
+  cycle_index?: number | null;
   engineering_status?: string | null;
   qtd_engineering_entries?: number;
   qtd_engineering_closed?: number;

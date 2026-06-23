@@ -10,7 +10,7 @@ Microfrontend (Module Federation) para o departamento **Engenharia** no escopo d
 ## Navegação
 
 - `/apps/dashboard-engineering` — visão geral (KPIs + atalhos)
-- `/apps/dashboard-engineering/lmp` — gráficos e tabela de LMPs
+- `/apps/dashboard-engineering/lmp` — gráficos e tabela de LMPs (colunas **Revisão** e **Ciclo** alinhadas à política `work_month_lmp` da api-delpi)
 - `/apps/dashboard-engineering/transforma` — ganhos e processos Transforma+
 
 ## API (`api-delpi`)
@@ -24,6 +24,10 @@ Microfrontend (Module Federation) para o departamento **Engenharia** no escopo d
 Base no gateway: `/apps/api-delpi/engineering`
 
 Datas LMP: query em `YYYYMMDD`. Transforma+: `YYYY-MM-DD`.
+
+### Listagem LMP — revisão e ciclo
+
+A tabela consome os mesmos campos do dashboard LMPs dedicado (`homolog_revision`, `measurement_revision`, `cycle_index`). Quando a mesma OV aparece mais de uma vez no período (reabertura ou nova revisão com trabalho LMP no mês), cada linha traz **Revisão** e **Ciclo** para distinguir os registros. Ver auditoria: `api-delpi/docs/investigation/lmp-2026-rq060-vs-dashboard-auditoria.md` §6.1 e §14.
 
 ## Permissão
 

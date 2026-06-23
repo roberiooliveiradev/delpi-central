@@ -35,6 +35,9 @@ import { buildLmpFallbackCharts } from "../utils/lmpCharts";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
 import {
+  buildLmpDashboardRowKey,
+  formatCycleIndex,
+  formatDashboardRevision,
   formatListingKind,
   formatLmpApiDate,
   parseLmpDateNumber,
@@ -149,6 +152,18 @@ export function LmpPage({ pathname }: LmpPageProps) {
         render: (row) => formatListingKind(row.listing_kind),
       },
       { key: "sale", header: "Nº proposta", render: (row) => row.sale_number },
+      {
+        key: "revision",
+        header: "Revisão",
+        className: "ds-table__col--compact",
+        render: (row) => formatDashboardRevision(row),
+      },
+      {
+        key: "cycle",
+        header: "Ciclo",
+        className: "ds-table__col--numeric",
+        render: (row) => formatCycleIndex(row.cycle_index),
+      },
       {
         key: "desc",
         header: "Descrição",
@@ -401,9 +416,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
         hint={periodLabel}
         columns={columns}
         rows={sortedItems}
-        rowKey={(row) =>
-          `${row.branch ?? "x"}-${row.listing_kind ?? "x"}-${row.sale_number}`
-        }
+        rowKey={buildLmpDashboardRowKey}
         loading={loading && items.length === 0}
         refreshing={refreshing}
         emptyMessage={

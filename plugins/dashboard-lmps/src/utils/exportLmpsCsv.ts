@@ -1,5 +1,9 @@
 import type { LmpDashboardItem } from "../types/lmp";
 import { downloadCsv } from "./csv";
+import {
+  formatCycleIndex,
+  formatDashboardRevision,
+} from "./lmpListingDisplay";
 
 function formatApiDate(value?: string | null): string {
   if (!value || value.length !== 8) return "";
@@ -17,6 +21,8 @@ const EXPORT_HEADERS = [
   "Filial",
   "Tipo",
   "Nº Proposta",
+  "Revisão",
+  "Ciclo",
   "Descrição",
   "Data Início",
   "Data Fim",
@@ -34,6 +40,8 @@ function rowToCsvCells(row: LmpDashboardItem): string[] {
     row.branch ?? "",
     formatListingKind(row.listing_kind),
     row.sale_number,
+    formatDashboardRevision(row),
+    formatCycleIndex(row.cycle_index),
     row.sale_description ?? "",
     formatApiDate(row.start_date),
     formatApiDate(row.end_date),

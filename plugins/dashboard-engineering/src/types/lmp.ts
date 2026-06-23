@@ -12,6 +12,10 @@ export type LmpDashboardItem = {
   start_date?: string | null;
   end_date?: string | null;
   engineering_status?: string | null;
+  homolog_revision?: string | null;
+  homolog_date?: string | null;
+  measurement_revision?: string | null;
+  cycle_index?: number | null;
   qtd_pi?: number | null;
   nivel: LmpNivel;
   dias_uteis_sla: number;

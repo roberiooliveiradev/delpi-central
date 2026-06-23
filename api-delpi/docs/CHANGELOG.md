@@ -18,11 +18,13 @@ Gate antes de merge: `scripts/validate_lmp_period_policies_vs_rq060.py`.
 
 **Módulo:** `LMPQueryRepository._sql_work_month_lmp_candidates_cte`.
 
+**Frontend (jun/2026):** colunas **Revisão** e **Ciclo** nos dashboards `dashboard-lmps` e `dashboard-engineering` (consomem `homolog_revision`, `measurement_revision`, `cycle_index`).
+
 ---
 
-Implementação de listagem **por ciclo de homologação 000012** (`cycle_index`, revisão do ciclo). **Não** é o padrão: filtra pelo **mês da homolog** no Protheus, o que desalinha do controle RQ (ex.: jun/2026 8 vs 12 pastas). Padrão permanece **`anchor_in_period`** (âncora LMP no mês ≈ trabalho recebido no mês).
+## 2026-06 — Modelo `homolog_cycles_in_period` (não padrão)
 
-Próximo passo alinhado ao controle: política por **revisão com ≥30 min eng** e atividade LMP **no mês** (não só data de homolog).
+Implementação de listagem **por ciclo de homologação 000012** (`cycle_index`, revisão do ciclo). **Não** é o padrão: filtra pelo **mês da homolog** no Protheus, o que desalinha do controle RQ (ex.: jun/2026 8 vs 12 pastas). Substituído por **`work_month_lmp`**.
 
 **Módulo:** `LMPQueryRepository._sql_homolog_cycle_candidates_cte`.
 

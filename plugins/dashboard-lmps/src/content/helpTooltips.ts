@@ -54,6 +54,10 @@ export const LMPS_HELP_TOOLTIPS = {
     branch: "Filial TOTVS vinculada à proposta.",
     kind: "Tipo de listagem: LMP, Amostra ou Outro.",
     sale: "Número da proposta / ordem de venda (OV).",
+    revision:
+      "Revisão AD1010 usada na medição do ciclo (homologação medida ou revisão de engenharia do período).",
+    cycle:
+      "Índice do ciclo de trabalho no mês para a mesma OV (1 = primeiro ciclo; 2+ = reabertura ou nova revisão no período).",
     description: "Descrição comercial resumida da proposta.",
     startDate: "Data de início da proposta no TOTVS.",
     endDate: "Data de encerramento ou previsão de fim.",

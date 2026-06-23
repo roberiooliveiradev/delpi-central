@@ -38,6 +38,11 @@ import {
 } from "../utils/dates";
 import { formatGoalSubtitle } from "../utils/goalDisplay";
 import { exportLmpsDashboardCsv } from "../utils/exportLmpsCsv";
+import {
+  buildLmpDashboardRowKey,
+  formatCycleIndex,
+  formatDashboardRevision,
+} from "../utils/lmpListingDisplay";
 import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { readLmpsFilters, syncLmpsFiltersToUrl, type LmpsFilterUrlState } from "../utils/filterUrl";
@@ -286,6 +291,24 @@ export function DashboardLmpsPage({
         sortable: true,
         sortValue: (row) => row.sale_number,
         render: (row) => row.sale_number,
+      },
+      {
+        key: "revision",
+        header: "Revisão",
+        headerHint: LMPS_HELP_TOOLTIPS.table.revision,
+        className: "lmps-table__col--compact",
+        sortable: true,
+        sortValue: (row) => formatDashboardRevision(row),
+        render: (row) => formatDashboardRevision(row),
+      },
+      {
+        key: "cycle",
+        header: "Ciclo",
+        headerHint: LMPS_HELP_TOOLTIPS.table.cycle,
+        className: "lmps-table__col--numeric",
+        sortable: true,
+        sortValue: (row) => row.cycle_index ?? 1,
+        render: (row) => formatCycleIndex(row.cycle_index),
       },
       {
         key: "desc",
@@ -635,9 +658,7 @@ export function DashboardLmpsPage({
         hint={periodLabel}
         columns={tableColumns}
         rows={filteredItems}
-        rowKey={(row) =>
-          `${row.branch ?? "sem-filial"}-${row.listing_kind ?? "sem-tipo"}-${row.sale_number}`
-        }
+        rowKey={buildLmpDashboardRowKey}
         loading={loading && filteredItems.length === 0}
         refreshing={refreshing}
         clientSort={{
@@ -656,6 +677,8 @@ export function DashboardLmpsPage({
           [
             row.branch,
             row.sale_number,
+            formatDashboardRevision(row),
+            formatCycleIndex(row.cycle_index),
             row.sale_description,
             row.engineering_status,
             row.nivel,

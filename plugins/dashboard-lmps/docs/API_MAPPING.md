@@ -156,8 +156,14 @@ Enriquecimento: `api-delpi/app/domain/services/lmp_history_flow_transition.py`. 
 | `data_limite` | Data limite (`YYYYMMDD`) |
 | `lead_time_util` | Lead time útil (dias) |
 | `status` | `Pontual` \| `Atrasado` \| `Andamento` \| `Retornada` |
+| `homolog_revision` | Revisão AD1010 do ciclo medido (homologação no período) |
+| `measurement_revision` | Revisão usada nas métricas de engenharia do painel |
+| `homolog_date` | Data da homologação 000012 (`YYYYMMDD`) |
+| `cycle_index` | Índice do ciclo de trabalho no mês para a mesma OV (1, 2, …) |
 
-Tipos TypeScript: `src/types/lmp.ts`.
+Com política **`work_month_lmp`** (padrão api-delpi), a mesma OV pode gerar **várias linhas** no mês quando há revisões distintas com trabalho LMP qualificado. A UI exibe **Revisão** e **Ciclo** para distinguir essas linhas.
+
+Tipos TypeScript: `src/types/lmp.ts`. Formatadores: `src/utils/lmpListingDisplay.ts`.
 
 ---
 
