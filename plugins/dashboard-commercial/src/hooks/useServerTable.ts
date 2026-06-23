@@ -25,6 +25,14 @@ export function useServerTable(options: UseServerTableOptions = {}) {
     setQuery((current) => ({ ...current, page: Math.max(1, page) }));
   }, []);
 
+  const setPageSize = useCallback((pageSize: number) => {
+    setQuery((current) => ({
+      ...current,
+      page: 1,
+      pageSize,
+    }));
+  }, []);
+
   const resetPage = useCallback(() => {
     setQuery((current) => ({ ...current, page: 1 }));
   }, []);
@@ -50,6 +58,7 @@ export function useServerTable(options: UseServerTableOptions = {}) {
   return {
     query,
     setPage,
+    setPageSize,
     resetPage,
     handleSortChange,
   };

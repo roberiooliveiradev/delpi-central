@@ -21,11 +21,13 @@ Plugin **microfrontend** (Module Federation) para indicadores do departamento **
 | Lista de propostas | `GET /commercial/proposals` | — (detalhe da taxa de fechamento) |
 | % ROL — novos negócios | `GET /commercial/new-business-rol-pct` | `commercial_new_business_rol` |
 
-Gráficos: evolução do ROL (filiais 01 e 02) e funil propostas × ganhas.
+Gráficos: evolução do ROL (filiais 01 e 02) e funil propostas × ganhas. Exportação **CSV / Excel / PDF / PNG** por seção nos cards de gráfico e tabela.
 
 **Detalhe da proposta:** clique na linha da tabela abre `/proposta/{proposal_number}` — cabeçalho, produtos ADJ010, estrutura BOM e histórico AIJ010. Ver [DETALHE-PROPOSTA.md](./DETALHE-PROPOSTA.md).
 
-**Tabela «Propostas do período»:** ordenação, busca e paginação no servidor; filtro de status dentro do card. Ver [PROPOSTAS-PERIODO.md](./PROPOSTAS-PERIODO.md).
+**Tabela «Propostas do período»:** ordenação, busca e paginação no servidor (10/20/50/100 itens, salto de página); filtro de status dentro do card. Ver [PROPOSTAS-PERIODO.md](./PROPOSTAS-PERIODO.md).
+
+**Exportação:** módulo `src/export/` — ver [export.md](./export.md).
 
 Catálogo SI: um indicador `commercial-rol` (`per_unit`, curva R$); `commercial-rol-matrix` e `commercial-rol-branch` ficam inativos.
 
@@ -46,7 +48,7 @@ Os KPIs exibem meta comparável, badge de escopo (ex.: meta filial 01) e desempe
 ## Padrão alinhado ao dashboard-quality
 
 - Module Federation + token do portal
-- `FilterBar`, KPIs, impressão (`@media print`)
+- `FilterBar`, KPIs, impressão (`@media print`; sem botão «Imprimir» no header — use PDF ou Ctrl+P)
 - Carga paralela com `Promise.allSettled` e erros por seção
 - Scripts: `scripts/ci/build-dashboard-commercial.sh`, `scripts/homologacao/check-dashboard-commercial.sh`
 

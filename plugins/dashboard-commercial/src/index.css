@@ -1724,9 +1724,19 @@
 .dashboard-commercial .dc-pagination {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 16px;
   flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dc-card-border);
+}
+
+.dashboard-commercial .dc-pagination__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: min(100%, 280px);
 }
 
 .dashboard-commercial .dc-pagination__info {
@@ -1734,9 +1744,81 @@
   color: var(--dc-text-muted);
 }
 
+.dashboard-commercial .dc-pagination__size,
+.dashboard-commercial .dc-pagination__jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--dc-font-sm);
+  color: var(--dc-text-muted);
+}
+
+.dashboard-commercial .dc-pagination__size-label,
+.dashboard-commercial .dc-pagination__jump-label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dashboard-commercial .dc-pagination__size-select,
+.dashboard-commercial .dc-pagination__jump-select {
+  min-width: 72px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--dc-card-border);
+  background: var(--dc-card-bg);
+  color: var(--dc-title);
+  font: inherit;
+}
+
+.dashboard-commercial .dc-pagination__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .dashboard-commercial .dc-pagination__actions {
   display: flex;
   gap: 8px;
+}
+
+.dashboard-commercial .dc-pagination__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.dashboard-commercial .dc-pagination__page {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid var(--dc-card-border);
+  background: var(--dc-card-bg);
+  color: var(--dc-title);
+  font-size: var(--dc-font-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-commercial .dc-pagination__page:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--dc-accent) 45%, var(--dc-card-border));
+  color: var(--dc-accent);
+}
+
+.dashboard-commercial .dc-pagination__page--active {
+  border-color: var(--dc-accent);
+  background: color-mix(in srgb, var(--dc-accent) 16%, var(--dc-card-bg));
+  color: var(--dc-accent);
+}
+
+.dashboard-commercial .dc-pagination__ellipsis {
+  min-width: 20px;
+  text-align: center;
+  color: var(--dc-text-muted);
+  font-size: var(--dc-font-sm);
 }
 
 .dashboard-commercial .dc-module-shortcut__phase {

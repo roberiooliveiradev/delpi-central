@@ -6,7 +6,7 @@ cd plugins/dashboard-commercial && npm run ci
 ./scripts/ci/build-dashboard-commercial.sh
 ```
 
-Testes unitários de exportação: `npm run test` (Vitest em `src/export/`). Ver [export.md](./export.md).
+Testes unitários: `npm run test` (Vitest em `src/export/` e `src/utils/`). Ver [export.md](./export.md).
 
 ## Docker
 
@@ -39,7 +39,9 @@ export TOKEN="<jwt>"
 - [ ] 5 KPIs carregam com período padrão (mês atual)
 - [ ] Filtro de filial altera conversão e clientes novos
 - [ ] Gráficos ROL e funil exibem dados
-- [ ] Impressão oculta filtros e mostra resumo do período
+- [ ] Exportação PNG do gráfico ROL gera imagem completa (eixos, linhas, legenda)
+- [ ] Exportação PNG do funil inclui KPIs e etapas
+- [ ] Impressão oculta filtros e mostra resumo do período (Ctrl+P)
 - [ ] Recarregar página mantém filtros na URL
 - [ ] Exportação CSV/Excel/PDF no header do dashboard (relatório completo)
 - [ ] Exportação por seção: KPIs, ROL, funil, propostas
@@ -54,8 +56,8 @@ Ver [PROPOSTAS-PERIODO.md](./PROPOSTAS-PERIODO.md).
 | Status | Dropdown **dentro do card** (Todas / Ganhas / Em aberto) |
 | Busca | Digitar termo (ex.: `weg`, `ganha`, número) — debounce e nova requisição; total atualiza |
 | Ordenação | Clicar coluna — ordem vem do backend (não só da página visível) |
-| Paginação | 20 por página; total global no rodapé |
-| Exportação | CSV/Excel/PDF da tabela respeita busca, status e ordenação atuais |
+| Paginação | Seletor 10/20/50/100; botões de página + «Ir para»; faixa «Exibindo X–Y de Z» |
+| Exportação | CSV/Excel/PDF/PNG da tabela; PNG nos gráficos ROL e funil |
 | Navegação | Clique na linha abre detalhe com filial e revisão corretas |
 
 #### Testes automatizados

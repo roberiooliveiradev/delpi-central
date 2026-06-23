@@ -94,6 +94,7 @@ export function DashboardCommercialPage({
     PROPOSAL_SEARCH_DEBOUNCE_MS
   );
   const rolChartExportRef = useRef<HTMLDivElement>(null);
+  const funnelChartExportRef = useRef<HTMLDivElement>(null);
   const proposalsServerTable = useServerTable({
     pageSize: PROPOSALS_PAGE_SIZE,
     defaultSortKey: "proposal_date",
@@ -195,8 +196,6 @@ export function DashboardCommercialPage({
   const hasChartValues = rolSeries.points.some(
     (point) => point.rolMatrix > 0 || point.rolBranch > 0
   );
-
-  const printDisabled = loading && !hasData;
 
   const handleChartDrillDown = useCallback(
     (nextStart: string, nextEnd: string) => {
@@ -460,7 +459,6 @@ export function DashboardCommercialPage({
         dateEnd={dateEnd}
         branch={branch}
         customerSegment={customerSegment}
-        printDisabled={printDisabled}
         exportActions={
           <CommercialExportButtons
             variant="dashboard"
@@ -655,14 +653,18 @@ export function DashboardCommercialPage({
               variant="table"
               payload={funnelExportPayload}
               disabled={!closingRate}
+              getChartRoot={() => funnelChartExportRef.current}
               className="dc-export-actions dc-export-actions--compact"
+              buttonClassName="dc-ghost-btn dc-chart-toolbar__export"
             />
           }
         >
-          <ConversionFunnelChart
-            data={closingRate}
-            loading={isBusy && !closingRate}
-          />
+          <div ref={funnelChartExportRef}>
+            <ConversionFunnelChart
+              data={closingRate}
+              loading={isBusy && !closingRate}
+            />
+          </div>
         </ChartCard>
       </section>
 
@@ -697,6 +699,7 @@ export function DashboardCommercialPage({
               pageSize: proposalsPageSize,
               total: proposalsTotal,
               onPageChange: proposalsServerTable.setPage,
+              onPageSizeChange: proposalsServerTable.setPageSize,
             }}
             serverSort={{
               sortKey: proposalsServerTable.query.sortKey,

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../../hooks/useClientPagination";
@@ -10,6 +10,7 @@ import { HelpTooltip } from "../HelpTooltip";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "../LoadingActivityCard";
 import { Pagination } from "../Pagination";
+import { TABLE_PAGE_SIZE_OPTIONS } from "../../utils/paginationPages";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -18,6 +19,8 @@ export type ServerPaginationConfig = {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: readonly number[];
 };
 
 export type ServerSortConfig = {
@@ -93,8 +96,12 @@ export function DataTableSection<T>({
   headerActions,
 }: DataTableSectionProps<T>) {
   const [localSearch, setLocalSearch] = useState("");
+  const [localPageSize, setLocalPageSize] = useState(pageSize);
   const search = serverSearch?.value ?? localSearch;
   const handleSearchChange = serverSearch?.onChange ?? setLocalSearch;
+  const effectivePageSize = serverPagination?.pageSize ?? localPageSize;
+  const pageSizeOptions =
+    serverPagination?.pageSizeOptions ?? TABLE_PAGE_SIZE_OPTIONS;
 
   const filteredRows = useMemo(() => {
     if (serverPagination) return rows;
@@ -112,13 +119,25 @@ export function DataTableSection<T>({
 
   const { page, setPage, slice, total } = useClientPagination(
     filteredRows,
-    pageSize
+    effectivePageSize
   );
   const displayRows = serverPagination ? rows : slice;
   const paginationPage = serverPagination?.page ?? page;
   const paginationTotal = serverPagination?.total ?? total;
-  const paginationSize = serverPagination?.pageSize ?? pageSize;
+  const paginationSize = serverPagination?.pageSize ?? effectivePageSize;
   const handlePageChange = serverPagination?.onPageChange ?? setPage;
+  const handlePageSizeChange = useCallback(
+    (nextPageSize: number) => {
+      if (serverPagination?.onPageSizeChange) {
+        serverPagination.onPageSizeChange(nextPageSize);
+        return;
+      }
+
+      setLocalPageSize(nextPageSize);
+      setPage(1);
+    },
+    [serverPagination, setPage],
+  );
 
   const showInitialLoading = loading && rows.length === 0;
   const showRefreshLoading = refreshing && rows.length > 0;
@@ -227,6 +246,8 @@ export function DataTableSection<T>({
             pageSize={paginationSize}
             total={paginationTotal}
             onPageChange={handlePageChange}
+            pageSizeOptions={pageSizeOptions}
+            onPageSizeChange={handlePageSizeChange}
           />
         </>
       )}

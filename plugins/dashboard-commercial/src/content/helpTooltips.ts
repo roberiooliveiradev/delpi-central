@@ -16,8 +16,6 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
       "Indicadores comerciais do TOTVS: ROL por filial, taxa de conversão de propostas, OTD de pedidos e participação de novos negócios no ROL.",
     refresh:
       "Recarrega KPIs, gráficos e tabela com os filtros atuais (período e filial).",
-    print:
-      "Gera relatório para impressão com o resumo do período e indicadores visíveis.",
     back:
       "Retorna ao dashboard comercial preservando período e filial na URL.",
     detailRefresh:
@@ -26,9 +24,11 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
       "Dados extraídos do Protheus (AD1010, SD2, SC5/SC6). Metas vêm do módulo Indicadores Estratégicos quando configuradas.",
   },
   pagination: {
-    info: "Paginação local dos registros já carregados, respeitando busca e ordenação.",
-    previous: "Volta uma página mantendo busca e ordenação.",
-    next: "Avança uma página mantendo busca e ordenação.",
+    info: "Paginação server-side: busca, ordenação e tamanho da página são aplicados na consulta.",
+    pageSize: "Define quantos registros são buscados por página (10, 20, 50 ou 100).",
+    jump: "Seleciona diretamente a página desejada.",
+    previous: "Volta uma página mantendo busca, ordenação e tamanho da lista.",
+    next: "Avança uma página mantendo busca, ordenação e tamanho da lista.",
   },
   kpis: {
     rol: "ROL (R$ com IPI) no período. Com filial Todas, exibe soma ou comparativo das filiais 01 e 02 conforme o card.",

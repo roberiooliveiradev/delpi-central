@@ -69,16 +69,20 @@ export function ConversionFunnelChart({
 
   if (loading && !hasData) {
     return (
-      <div className="dc-funnel dc-funnel--loading" aria-busy="true">
-        <div className="dc-state-box">Carregando funil…</div>
+      <div className="dc-chart-export-root">
+        <div className="dc-funnel dc-funnel--loading" aria-busy="true">
+          <div className="dc-state-box">Carregando funil…</div>
+        </div>
       </div>
     );
   }
 
   if (!hasData) {
     return (
-      <div className="dc-funnel dc-funnel--empty">
-        <div className="dc-state-box">Sem propostas no período filtrado.</div>
+      <div className="dc-chart-export-root">
+        <div className="dc-funnel dc-funnel--empty">
+          <div className="dc-state-box">Sem propostas no período filtrado.</div>
+        </div>
       </div>
     );
   }
@@ -87,6 +91,7 @@ export function ConversionFunnelChart({
     goalPct != null && conversionPct != null ? conversionPct - goalPct : null;
 
   return (
+    <div className="dc-chart-export-root">
     <div className="dc-funnel" role="img" aria-label="Funil de conversão comercial">
       <div className="dc-funnel__summary">
         <div className="dc-funnel__rate">
@@ -168,6 +173,7 @@ export function ConversionFunnelChart({
           <code>AD1_DTASSI</code>) no período filtrado.
         </p>
       </div>
+    </div>
     </div>
   );
 }

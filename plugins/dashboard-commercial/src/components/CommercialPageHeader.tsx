@@ -3,12 +3,10 @@ import { ListFilter, TrendingUp } from "lucide-react";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { HelpTooltip } from "./HelpTooltip";
-import { PrintReportButton } from "./PrintReportButton";
 import { PrintReportSummary } from "./PrintReportSummary";
 
 type CommercialPageHeaderProps = {
   filterState: CommercialFilterUrlState;
-  printDisabled?: boolean;
   exportActions?: ReactNode;
   onRefresh: () => void;
   refreshing?: boolean;
@@ -16,7 +14,6 @@ type CommercialPageHeaderProps = {
 
 export function CommercialPageHeader({
   filterState,
-  printDisabled = false,
   exportActions,
   onRefresh,
   refreshing = false,
@@ -53,14 +50,6 @@ export function CommercialPageHeader({
           {exportActions ? (
             <div className="dc-header-action dc-no-print">{exportActions}</div>
           ) : null}
-          <div className="dc-header-action">
-            <PrintReportButton disabled={printDisabled} />
-            <HelpTooltip
-              content={COMMERCIAL_HELP_TOOLTIPS.actions.print}
-              ariaLabel="Ajuda: imprimir relatório"
-              className="dc-header-action__help"
-            />
-          </div>
           <div className="dc-header-action">
             <button
               className="dc-primary-btn dc-no-print"
