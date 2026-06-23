@@ -72,7 +72,7 @@ export function CommercialDetailPage({
         <div className="dc-detail-page__header">
           <button
             type="button"
-            className="dc-secondary-btn"
+            className="dc-ghost-btn"
             onClick={handleBack}
           >
             <ArrowLeft size={16} aria-hidden />
@@ -116,15 +116,16 @@ export function CommercialDetailPage({
             />
           </p>
         </div>
-        <div className="dc-detail-page__actions">
+        <div className="dc-header-actions dc-no-print">
           <div className="dc-header-action">
             <button
               type="button"
-              className="dc-secondary-btn"
+              className="dc-ghost-btn"
               onClick={detail.reload}
+              disabled={detail.loading}
             >
               <RefreshCw size={16} aria-hidden />
-              Atualizar
+              {detail.loading ? "Atualizando…" : "Atualizar"}
             </button>
             <HelpTooltip
               content={COMMERCIAL_HELP_TOOLTIPS.actions.detailRefresh}
@@ -135,7 +136,7 @@ export function CommercialDetailPage({
           <div className="dc-header-action">
             <button
               type="button"
-              className="dc-secondary-btn"
+              className="dc-ghost-btn"
               onClick={handleBack}
             >
               <ArrowLeft size={16} aria-hidden />
