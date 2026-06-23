@@ -3,7 +3,7 @@ import {
   getCpv,
   getInventoryTurnover,
   getOtd,
-  getStockValue,
+  getStockValueSummary,
 } from "../api/suppliesApi";
 import type {
   CpvData,
@@ -83,7 +83,7 @@ export function useSuppliesDashboard({
           [
             (signal) => getCpv(periodParams, signal),
             (signal) => getOtd(periodParams, signal),
-            (signal) => getStockValue(stockParams, signal),
+            (signal) => getStockValueSummary(stockParams, signal),
             (signal) => getInventoryTurnover(periodParams, signal),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,

@@ -128,8 +128,10 @@ Parâmetros adicionais:
 - SQL canônico: `supplies_repositories/stock_value_historical_sql.py` (CTE `movimentos_sd3` — uma varredura SD3010).
 - SI/IDD: `summary_only=true` → `HISTORICAL_STOCK_SUMMARY_SQL` (sem temp table).
 - Cache: `query_cache` namespace `stock-value|…` (TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+- `summary_only=true`: rollup `item_totals` (sem `estoque_item`); consolidado sem filial → fan-out filiais `01`/`02` com cache por filial.
 - SQL histórico: `WITH (NOLOCK)` em SB9010 e SD3010 (leitura analítica).
 - Console: `operation_id=get_supplies_stock_value`; detalhes em [supplies-estoque-historico.md](./supplies-estoque-historico.md#implementação-sql-e-performance-jun2026).
+- MFE dashboard KPI: `summary_only=true` via `getStockValueSummary` (não carrega bundle completo).
 
 ---
 
@@ -251,6 +253,13 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/ppm/external/series` | Série PPM externo. |
 | GET | `/quality/ppm/internal` | PPM interno (detalhado). |
 | GET | `/quality/ppm/external` | PPM externo (detalhado). |
+
+**Performance (PPM — jun/2026):**
+
+- `GET /quality/ppm/{internal|external}/summary`: cache `ppm-summary|{type}|…` por período/filial (TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+- `GET /quality/ppm/{internal|external}/series`: cache da série completa (`ppm-internal-series|…`, `ppm-external-series|…`); buckets reutilizam `ppm-summary`.
+- SQL: `QI2010` com `WITH (NOLOCK)` em leituras analíticas.
+- MFE `PpmPage`: carrega série interna ou externa sob demanda (modo comparar busca ambas). Console: `get_ppm_external_series` / `get_ppm_internal_series`.
 
 ---
 

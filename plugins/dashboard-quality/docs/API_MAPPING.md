@@ -97,3 +97,14 @@ daily_savings = (segundos_por_ocorrencia × ocorrencias_por_dia / 3600) × custo
 **Listagem completa (tabela do dashboard):** chamar `/kaizens/summary` **sem** `date_start`/`date_end` para todos os kaizens implantados; KPIs e gráficos continuam usando o período filtrado.
 
 Documentação completa: `api-delpi/docs/api/06-modulos-departamentais.md` (§ Kaizen).
+
+---
+
+## Performance (jun/2026)
+
+| Recurso | Comportamento no MFE | Cache api-delpi |
+|---------|----------------------|-----------------|
+| Gráfico PPM (`PpmPage`) | Série interna **ou** externa sob demanda; ambas só no modo «Comparar» | `ppm-{type}-series` + `ppm-summary` por bucket (TTL 300 s) |
+| Hook `usePpmChartSeries` | Cache cliente 60 s (`useQualityResource`) | — |
+
+Testes de regressão cache: `api-delpi/tests/test_ppm_query_cache.py`.

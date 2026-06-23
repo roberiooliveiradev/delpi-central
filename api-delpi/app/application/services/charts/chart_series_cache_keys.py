@@ -9,6 +9,7 @@ from app.application.dto.production.production_oee_series_request import (
 from app.application.dto.production.production_otd_series_request import (
     ProductionOtdSeriesRequest,
 )
+from app.application.dto.ppm.ppm_series_request import PpmSeriesRequest
 
 
 def commercial_rol_series_cache_key(request: CommercialRolSeriesRequest) -> str:
@@ -39,6 +40,18 @@ def production_otd_series_cache_key(request: ProductionOtdSeriesRequest) -> str:
     return "|".join(
         [
             "production-otd-series",
+            request.granularity,
+            request.date_start or "",
+            request.date_end or "",
+            request.branch or "",
+        ]
+    )
+
+
+def ppm_series_cache_key(request: PpmSeriesRequest) -> str:
+    return "|".join(
+        [
+            f"ppm-{request.type}-series",
             request.granularity,
             request.date_start or "",
             request.date_end or "",

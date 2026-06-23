@@ -16,6 +16,7 @@ type UsePpmChartSeriesParams = {
   type: PpmType;
   filters: DateRangeParams;
   granularity: ChartGranularity;
+  enabled?: boolean;
 };
 
 type UsePpmChartSeriesResult = {
@@ -30,6 +31,7 @@ export function usePpmChartSeries({
   type,
   filters,
   granularity,
+  enabled = true,
 }: UsePpmChartSeriesParams): UsePpmChartSeriesResult {
   const cacheKey = [
     "ppm-series",
@@ -59,7 +61,7 @@ export function usePpmChartSeries({
       filters.date_start,
       filters.date_end,
     ],
-    { cacheKey, cacheTtlMs: 60_000 }
+    { cacheKey, cacheTtlMs: 60_000, enabled }
   );
 
   const points: PpmSeriesPoint[] =

@@ -2,6 +2,12 @@ from datetime import datetime, timedelta
 
 from app.application.models.page import Page
 from app.domain.entities.ppm.ppm_item import PpmItem
+from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
+from app.application.services.quality.ppm_query_cache import (
+    get_cached_ppm_summary,
+    ppm_summary_cache_key,
+    set_cached_ppm_summary,
+)
 from app.domain.entities.ppm.ppm_summary import PpmSummary
 from app.domain.entities.ppm.produced_quantity import (
     ProducedQuantityByProduct,
@@ -47,6 +53,16 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         return to_protheus_date(date_start), exclusive_end_date(date_end)
 
     def get_summary(self, request) -> PpmSummary:
+        cache_key = ppm_summary_cache_key(request)
+        cached = get_cached_ppm_summary(cache_key)
+        if cached is not None:
+            return cached
+
+        summary = self._load_summary(request)
+        set_cached_ppm_summary(cache_key, summary)
+        return summary
+
+    def _load_summary(self, request) -> PpmSummary:
         date_start, date_end_exclusive = self._resolve_date_range(
             request.date_start,
             request.date_end,
@@ -76,7 +92,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                             0
                         )
                     ) AS total_devolvido_un
-                FROM QI2010
+                FROM QI2010 WITH (NOLOCK)
                 WHERE {where_nc}
             ),
             {ctes.ct_inspecao_cte.strip()},
@@ -262,7 +278,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             FROM (
                 SELECT
                     LTRIM(RTRIM(QI2_FILIAL)) AS branch
-                FROM QI2010
+                FROM QI2010 WITH (NOLOCK)
                 WHERE {where_nc}
 
                 UNION
@@ -301,7 +317,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         )
 
         base_sql = f"""
-            FROM QI2010
+            FROM QI2010 WITH (NOLOCK)
             WHERE {where_clause}
         """
 

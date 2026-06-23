@@ -66,12 +66,14 @@ export function PpmPage({ pathname }: PpmPageProps) {
     type: "internal",
     filters: apiParams,
     granularity,
+    enabled: compareChart || ppmType === "internal",
   });
 
   const externalSeries = usePpmChartSeries({
     type: "external",
     filters: apiParams,
     granularity,
+    enabled: compareChart || ppmType === "external",
   });
 
   const activeSeries = ppmType === "internal" ? internalSeries : externalSeries;

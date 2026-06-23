@@ -32,12 +32,13 @@ def test_historical_summary_only_sql_skips_temp_table_and_breakdown() -> None:
 
     assert "#Delpi_StockItems" not in sql
     assert "DROP TABLE IF EXISTS" not in sql
-    assert "GROUP BY branch" not in sql
+    assert "GROUP BY branch\n        ORDER BY branch" not in sql
     assert "SELECT TOP" not in sql
     assert "COUNT(DISTINCT product_code) AS total_products" in sql
     assert sql.count("FROM SD3010") == 1
     assert "movimentos_sd3" in sql
-    assert "item_keys" in sql
+    assert "item_totals" in sql
+    assert "estoque_item" not in sql
     assert "FULL OUTER JOIN" not in sql
 
 
@@ -168,3 +169,72 @@ def test_inventory_turnover_stock_request_is_summary_only() -> None:
     )
 
     assert stock_request.summary_only is True
+
+
+def test_consolidated_summary_only_fans_out_per_branch() -> None:
+    repo = StockValueQueryRepository()
+    request = GetStockValueRequest(
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        summary_only=True,
+    )
+
+    branch_calls: list[str] = []
+
+    def fake_branch_bundle(branch_request: GetStockValueRequest) -> dict:
+        branch_calls.append(branch_request.branch or "")
+        return {
+            "summary": {
+                "branch": branch_request.branch,
+                "location": "all",
+                "total_stock_value": 100.0,
+                "total_stock_quantity": 10.0,
+                "total_records": 1,
+                "total_products": 1,
+                "total_locations": 1,
+            },
+            "by_branch": [],
+            "by_location": [],
+            "top_products": [],
+        }
+
+    with patch.object(
+        StockValueQueryRepository,
+        "_fetch_branch_summary_bundle",
+        side_effect=fake_branch_bundle,
+    ):
+        bundle = repo._fetch_consolidated_summary_bundle(request)
+
+    assert branch_calls == ["01", "02"]
+    assert bundle["summary"]["total_stock_value"] == 200.0
+    assert len(bundle["by_branch"]) == 2
+
+
+def test_get_stock_value_bundle_uses_fan_out_for_consolidated_summary() -> None:
+    repo = StockValueQueryRepository()
+    request = GetStockValueRequest(
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        summary_only=True,
+    )
+    expected = {
+        "summary": {"branch": "consolidated", "total_stock_value": 1.0},
+        "by_branch": [],
+        "by_location": [],
+        "top_products": [],
+    }
+
+    with patch.object(
+        StockValueQueryRepository,
+        "_fetch_consolidated_summary_bundle",
+        return_value=expected,
+    ) as fan_out_mock:
+        with patch.object(
+            StockValueQueryRepository,
+            "_fetch_historical_bundle",
+        ) as historical_mock:
+            result = repo.get_stock_value_bundle(request)
+
+    assert result == expected
+    fan_out_mock.assert_called_once_with(request)
+    historical_mock.assert_not_called()

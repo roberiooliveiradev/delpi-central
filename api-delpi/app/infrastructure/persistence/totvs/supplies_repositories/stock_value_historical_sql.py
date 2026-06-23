@@ -14,7 +14,7 @@ _SD3_NET_VALUE = """
                         ELSE -D3.D3_CUSTO1
                     END"""
 
-HISTORICAL_STOCK_ITEM_CTES = f"""
+HISTORICAL_STOCK_BASE_CTES = f"""
         WITH ultima_data_sb9 AS (
             SELECT
                 B9_FILIAL AS branch,
@@ -94,7 +94,10 @@ HISTORICAL_STOCK_ITEM_CTES = f"""
                 D3.D3_FILIAL,
                 RTRIM(D3.D3_LOCAL),
                 RTRIM(D3.D3_COD)
-        ),
+        )
+"""
+
+HISTORICAL_STOCK_ESTOQUE_ITEM_CTES = """,
         item_keys AS (
             SELECT branch, location, product_code FROM fechamento_base
             UNION
@@ -123,8 +126,38 @@ HISTORICAL_STOCK_ITEM_CTES = f"""
         )
 """
 
+HISTORICAL_STOCK_SUMMARY_ROLLUP_CTES = """,
+        item_totals AS (
+            SELECT
+                branch,
+                location,
+                product_code,
+                SUM(part_quantity) AS total_stock_quantity,
+                SUM(part_value) AS total_stock_value
+            FROM (
+                SELECT
+                    branch,
+                    location,
+                    product_code,
+                    closing_base_quantity AS part_quantity,
+                    closing_base_value AS part_value
+                FROM fechamento_base
+                UNION ALL
+                SELECT
+                    branch,
+                    location,
+                    product_code,
+                    bridge_quantity + period_net_quantity,
+                    bridge_value + period_net_value
+                FROM movimentos_sd3
+            ) parts
+            GROUP BY branch, location, product_code
+        )
+"""
+
 HISTORICAL_STOCK_SUMMARY_SQL = (
-    HISTORICAL_STOCK_ITEM_CTES
+    HISTORICAL_STOCK_BASE_CTES
+    + HISTORICAL_STOCK_SUMMARY_ROLLUP_CTES
     + """
         SELECT
             SUM(total_stock_value) AS total_stock_value,
@@ -132,9 +165,11 @@ HISTORICAL_STOCK_SUMMARY_SQL = (
             COUNT(*) AS total_records,
             COUNT(DISTINCT product_code) AS total_products,
             COUNT(DISTINCT location) AS total_locations
-        FROM estoque_item
+        FROM item_totals
     """
 )
+
+HISTORICAL_STOCK_ITEM_CTES = HISTORICAL_STOCK_BASE_CTES + HISTORICAL_STOCK_ESTOQUE_ITEM_CTES
 
 HISTORICAL_STOCK_BY_BRANCH_SQL = (
     HISTORICAL_STOCK_ITEM_CTES

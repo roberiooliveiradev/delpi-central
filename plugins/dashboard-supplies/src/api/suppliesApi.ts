@@ -31,6 +31,9 @@ function buildQuery(params: SuppliesQueryParams = {}): string {
   if (params.strict_idd_period != null) {
     searchParams.set("strict_idd_period", String(params.strict_idd_period));
   }
+  if ((params as { summary_only?: boolean }).summary_only) {
+    searchParams.set("summary_only", "true");
+  }
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
@@ -65,14 +68,28 @@ export function getStockValue(
   params: Pick<
     SuppliesFilterParams,
     "branch" | "location" | "top_limit" | "start_date" | "end_date"
-  >,
+  > & { summary_only?: boolean },
   signal?: AbortSignal
 ) {
   return fetchSuppliesData<StockValueData>(
     "/stock-value",
-    { ...params, top_limit: params.top_limit ?? 20 },
+    {
+      ...params,
+      top_limit: params.top_limit ?? 20,
+      ...(params.summary_only ? { summary_only: true } : {}),
+    },
     signal
   );
+}
+
+export function getStockValueSummary(
+  params: Pick<
+    SuppliesFilterParams,
+    "branch" | "location" | "start_date" | "end_date"
+  >,
+  signal?: AbortSignal
+) {
+  return getStockValue({ ...params, summary_only: true }, signal);
 }
 
 export function getInventoryTurnover(

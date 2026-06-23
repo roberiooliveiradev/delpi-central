@@ -223,17 +223,18 @@ O CPV vem de `SD2010` no período (`SUM(D2_CUSTO1)`, `D2_EMISSAO`), com CFOPs Ka
 ultima_data_sb9     → MAX(B9_DATA) por filial antes de start_date
 fechamento_base     → saldo SB9010 na data de fechamento (por filial/local/produto)
 movimentos_sd3      → uma leitura SD3010; CASE separa ponte e período
-item_keys           → UNION das chaves (fechamento + movimentos)
-estoque_item        → LEFT JOINs; soma base + ponte + período por item
+item_totals         → UNION ALL + GROUP BY (summary_only; evita item_keys + LEFT JOIN duplo)
+item_keys           → UNION das chaves (fechamento + movimentos) — só bundle
+estoque_item        → LEFT JOINs; soma base + ponte + período por item — só bundle
 ```
 
 ### Caminhos de execução
 
 | Caller | `summary_only` | SQL | Observação |
 |---|---|---|---|
-| SI, IDD | `true` | `HISTORICAL_STOCK_SUMMARY_SQL` | Agregação direta no `estoque_item`; **sem** temp table `#Delpi_StockItems` |
-| Chat / MFE (bundle) | `false` | `HISTORICAL_STOCK_BUNDLE_BATCH_SQL` | Materializa `#Delpi_StockItems` uma vez; 4 SELECTs de breakdown |
-| Estoque atual (sem datas) | qualquer | `SB2010` | Leve; ignora histórico |
+| SI, IDD, dashboard KPI | `true` | `HISTORICAL_STOCK_SUMMARY_SQL` | `item_totals` (rollup); consolidado sem filial → **fan-out 01+02** com cache por filial |
+| Chat / MFE detalhe (`StockPage`) | `false` | `HISTORICAL_STOCK_BUNDLE_BATCH_SQL` | Materializa `#Delpi_StockItems` uma vez; 4 SELECTs de breakdown |
+| Estoque atual (sem datas) | `summary_only` consolidado | `SB2010` + fan-out | KPI leve; breakdown continua no bundle completo |
 
 Chaves de cache (`stock_value_cache_key`): incluem `branch`, datas, `top_limit` e sufixo `summary` vs `full` (TTL: `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 
@@ -246,7 +247,7 @@ Duas hashes para a mesma operação são **esperadas**:
 | Variante | Causa típica | Latência relativa |
 |---|---|---|
 | Com `branch=01/02` | Filtro em SB9/SD3 | Menor |
-| Consolidado (sem `branch`) | Todas as filiais | Maior (~1,5–2×) |
+| Consolidado (sem `branch`) | Todas as filiais em uma varredura | **Fan-out 01+02** em `summary_only` (jun/2026) ou maior latência no bundle completo |
 
 Alertas `slow_sql` (> 2500 ms) no modo histórico consolidado indicam volume TOTVS ou cache frio — validar aba **Cache** e índices abaixo antes de alterar regra de negócio.
 
@@ -273,6 +274,7 @@ Validar com plano de execução antes/depois; nomes podem variar por ambiente Pr
 | Commit / tema | Mudança | Efeito |
 |---|---|---|
 | Refatoração CTE único | Unificação `movimentos_sd3`; `UNION`+`LEFT JOIN` no lugar de `FULL OUTER JOIN`; `summary_only` sem temp table | Menos I/O em SD3010; SI/IDD mais leves |
+| Summary rollup + fan-out | `item_totals` (UNION ALL); consolidado `summary_only` por filial 01/02 + cache | Reduz alertas `slow_sql` em `get_supplies_stock_value` |
 | Filtro em intervalo | `OR` (ponte \| período) → range `(closing_base_date, end_date_exclusive)` | Melhor chance de index seek em SD3010 |
 
 A **semântica** (`sb9_last_closure_plus_sd3_movements`) e os totais validados (ex.: consolidado abril/2026) permanecem os mesmos.

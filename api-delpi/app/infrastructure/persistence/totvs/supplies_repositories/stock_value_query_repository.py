@@ -17,6 +17,8 @@ from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_hist
     format_historical_stock_sql,
 )
 
+_DEFAULT_STOCK_BRANCHES = ("01", "02")
+
 
 class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
 
@@ -97,6 +99,102 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             d3_loc_params=d3_loc_params,
         )
         return sql, params
+
+    def _should_fan_out_consolidated_summary(self, request: GetStockValueRequest) -> bool:
+        if not request.summary_only:
+            return False
+        if (request.branch or "").strip():
+            return False
+        if (request.location or "").strip():
+            return False
+        return True
+
+    def _branch_stock_request(
+        self,
+        request: GetStockValueRequest,
+        branch: str,
+    ) -> GetStockValueRequest:
+        return GetStockValueRequest(
+            branch=branch,
+            location=request.location,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            top_limit=request.top_limit,
+            summary_only=True,
+        )
+
+    def _merge_consolidated_summary_bundle(
+        self,
+        branch_bundles: list[dict],
+        *,
+        branch_label: str,
+        location_label: str,
+    ) -> dict:
+        summaries = [bundle.get("summary") or {} for bundle in branch_bundles]
+        by_branch = [
+            {
+                "branch": summary.get("branch"),
+                "total_stock_value": float(summary.get("total_stock_value") or 0),
+                "total_stock_quantity": float(summary.get("total_stock_quantity") or 0),
+                "total_records": int(summary.get("total_records") or 0),
+                "total_products": int(summary.get("total_products") or 0),
+                "total_locations": int(summary.get("total_locations") or 0),
+            }
+            for summary in summaries
+            if summary.get("branch")
+        ]
+
+        return {
+            "summary": {
+                "branch": branch_label,
+                "location": location_label,
+                "total_stock_value": sum(
+                    float(summary.get("total_stock_value") or 0) for summary in summaries
+                ),
+                "total_stock_quantity": sum(
+                    float(summary.get("total_stock_quantity") or 0) for summary in summaries
+                ),
+                "total_records": sum(
+                    int(summary.get("total_records") or 0) for summary in summaries
+                ),
+                "total_products": sum(
+                    int(summary.get("total_products") or 0) for summary in summaries
+                ),
+                "total_locations": sum(
+                    int(summary.get("total_locations") or 0) for summary in summaries
+                ),
+            },
+            "by_branch": by_branch,
+            "by_location": [],
+            "top_products": [],
+        }
+
+    def _fetch_branch_summary_bundle(self, request: GetStockValueRequest) -> dict:
+        cache_key = stock_value_cache_key(request)
+        cached = get_cached_stock_value_bundle(cache_key)
+        if cached is not None:
+            return cached
+
+        if self._uses_historical_estimation(request):
+            bundle = self._fetch_historical_bundle(request)
+        else:
+            bundle = self._fetch_current_bundle(request)
+
+        set_cached_stock_value_bundle(cache_key, bundle)
+        return bundle
+
+    def _fetch_consolidated_summary_bundle(self, request: GetStockValueRequest) -> dict:
+        branch_bundles = [
+            self._fetch_branch_summary_bundle(self._branch_stock_request(request, branch))
+            for branch in _DEFAULT_STOCK_BRANCHES
+        ]
+
+        branch_label, location_label = self._labels(request)
+        return self._merge_consolidated_summary_bundle(
+            branch_bundles,
+            branch_label=branch_label,
+            location_label=location_label,
+        )
 
     def _build_filters(self, request: GetStockValueRequest):
         qb = QueryBuilder()
@@ -223,7 +321,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                 COUNT(*) AS total_records,
                 COUNT(DISTINCT SB2.B2_COD) AS total_products,
                 COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
-            FROM SB2010 SB2
+            FROM SB2010 SB2 WITH (NOLOCK)
             WHERE {where_clause}
         """
 
@@ -240,7 +338,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                     COUNT(*) AS total_records,
                     COUNT(DISTINCT SB2.B2_COD) AS total_products,
                     COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
-                FROM SB2010 SB2
+                FROM SB2010 SB2 WITH (NOLOCK)
                 WHERE {where_clause}
                 GROUP BY SB2.B2_FILIAL
                 ORDER BY SB2.B2_FILIAL;
@@ -252,7 +350,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                     ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
                     COUNT(*) AS total_records,
                     COUNT(DISTINCT SB2.B2_COD) AS total_products
-                FROM SB2010 SB2
+                FROM SB2010 SB2 WITH (NOLOCK)
                 WHERE {where_clause}
                 GROUP BY SB2.B2_FILIAL, SB2.B2_LOCAL
                 ORDER BY SB2.B2_FILIAL, SB2.B2_LOCAL;
@@ -264,8 +362,8 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                     ISNULL(SUM(SB2.B2_QATU), 0) AS total_stock_quantity,
                     ROUND(AVG(CAST(SB2.B2_CM1 AS DECIMAL(18, 6))), 6) AS average_unit_cost,
                     COUNT(DISTINCT SB2.B2_LOCAL) AS total_locations
-                FROM SB2010 SB2
-                LEFT JOIN SB1010 SB1
+                FROM SB2010 SB2 WITH (NOLOCK)
+                LEFT JOIN SB1010 SB1 WITH (NOLOCK)
                     ON SB1.D_E_L_E_T_ = ''
                    AND SB1.B1_COD = SB2.B2_COD
                 WHERE {where_clause}
@@ -290,7 +388,9 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         if cached is not None:
             return cached
 
-        if self._uses_historical_estimation(request):
+        if self._should_fan_out_consolidated_summary(request):
+            bundle = self._fetch_consolidated_summary_bundle(request)
+        elif self._uses_historical_estimation(request):
             bundle = self._fetch_historical_bundle(request)
         else:
             bundle = self._fetch_current_bundle(request)
