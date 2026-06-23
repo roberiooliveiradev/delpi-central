@@ -26,7 +26,7 @@ export function CommercialProductStructuresSection({
       titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.productStructureSection}
       hint="BOM / estrutura analítica com níveis aninhados"
       icon={<Boxes size={20} aria-hidden />}
-      className="dc-detail-card--wide"
+      className="dc-detail-card--full"
     >
       <StructureLegend />
 

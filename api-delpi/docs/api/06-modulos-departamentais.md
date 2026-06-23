@@ -42,10 +42,10 @@ Parâmetros comuns de período:
 | GET | `/commercial/new-clients-rol-pct` | % do ROL de clientes novos. |
 | GET | `/commercial/rol/series` | Série temporal de ROL (`granularity`: day, week, month, year). |
 | GET | `/commercial/proposals` | Listagem paginada de propostas (OV). Filtros: `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment` (`weg`/`new_business`). |
-| GET | `/commercial/proposals/{proposal_number}` | Detalhe da proposta (AD1010 + cliente/vendedor). Query: `branch` (obrig.), `revision` opcional. |
+| GET | `/commercial/proposals/{proposal_number}` | Detalhe da proposta (AD1010 + cliente/vendedor + **`list_products[]`** ADJ010). Query: `branch` (obrig.), `revision` opcional. Produtos via `LMPQueryRepository.list_ov_products` (SQL compartilhado com LMP). |
 | GET | `/commercial/proposals/{proposal_number}/history/events` | Histórico AIJ010 da OV — mesmo pipeline que LMP (`get_lmp_history_events`). Query: `branch`, `revision`, `date_start`, `date_end` (período aceito pelo MFE; **não** dispara batch de listagem). |
 
-**MFE `dashboard-commercial`:** detalhe em `/apps/dashboard-commercial/proposta/{proposal_number}` consome **`GET /commercial/proposals/{proposal_number}`** + **`/history/events`** em paralelo (`useCommercialProposalDetail`).
+**MFE `dashboard-commercial`:** detalhe em `/apps/dashboard-commercial/proposta/{proposal_number}` consome **`GET /commercial/proposals/{proposal_number}`** + **`/history/events`** em paralelo (`useCommercialProposalDetail`). Estrutura BOM por produto: **`GET /products/{code}/structure`** (`useCommercialProductStructures`). Documentação: `plugins/dashboard-commercial/docs/DETALHE-PROPOSTA.md`.
 
 **Performance (`/commercial/.../history/events`):** ver § Engenharia — histórico (`/history/events`); custo O(eventos da OV), não varredura `AllListingAnchorRaw`.
 

@@ -39,3 +39,16 @@ export TOKEN="<jwt>"
 - [ ] Gráficos ROL e funil exibem dados
 - [ ] Impressão oculta filtros e mostra resumo do período
 - [ ] Recarregar página mantém filtros na URL
+
+### Detalhe da proposta (`/proposta/{proposal_number}`)
+
+Ver [DETALHE-PROPOSTA.md](./DETALHE-PROPOSTA.md).
+
+| Área | O que validar |
+|------|----------------|
+| Navegação | Voltar preserva período/filial na URL |
+| Cabeçalho | Status, datas, cliente, vendedor; tooltips |
+| Produtos | Tabela ADJ010; badges de tipo PA/PI |
+| BOM | Árvore expandível; legenda; oculta quando sem estrutura |
+| Histórico | Timeline / tabela AIJ010 |
+| Ações | Atualizar recarrega detalhe + histórico + BOM |
