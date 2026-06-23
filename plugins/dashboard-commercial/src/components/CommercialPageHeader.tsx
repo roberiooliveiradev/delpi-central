@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ListFilter, TrendingUp } from "lucide-react";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -8,6 +9,7 @@ import { PrintReportSummary } from "./PrintReportSummary";
 type CommercialPageHeaderProps = {
   filterState: CommercialFilterUrlState;
   printDisabled?: boolean;
+  exportActions?: ReactNode;
   onRefresh: () => void;
   refreshing?: boolean;
 };
@@ -15,6 +17,7 @@ type CommercialPageHeaderProps = {
 export function CommercialPageHeader({
   filterState,
   printDisabled = false,
+  exportActions,
   onRefresh,
   refreshing = false,
 }: CommercialPageHeaderProps) {
@@ -47,6 +50,9 @@ export function CommercialPageHeader({
         </div>
 
         <div className="dc-header-actions">
+          {exportActions ? (
+            <div className="dc-header-action dc-no-print">{exportActions}</div>
+          ) : null}
           <div className="dc-header-action">
             <PrintReportButton disabled={printDisabled} />
             <HelpTooltip

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CommercialFilters } from "./CommercialFilters";
 import { CommercialPageHeader } from "./CommercialPageHeader";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
@@ -9,6 +10,7 @@ type FilterBarProps = {
   branch: string;
   customerSegment: CommercialFilterUrlState["customerSegment"];
   printDisabled?: boolean;
+  exportActions?: ReactNode;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
@@ -26,6 +28,7 @@ export function FilterBar({
   branch,
   customerSegment,
   printDisabled = false,
+  exportActions,
   onDateStartChange,
   onDateEndChange,
   onBranchChange,
@@ -38,6 +41,7 @@ export function FilterBar({
       <CommercialPageHeader
         filterState={filterState}
         printDisabled={printDisabled}
+        exportActions={exportActions}
         onRefresh={onRefresh}
         refreshing={refreshing}
       />

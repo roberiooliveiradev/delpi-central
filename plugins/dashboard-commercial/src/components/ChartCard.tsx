@@ -8,6 +8,7 @@ type ChartCardProps = {
   children: ReactNode;
   hint?: string;
   className?: string;
+  headerActions?: ReactNode;
 };
 
 export function ChartCard({
@@ -16,6 +17,7 @@ export function ChartCard({
   children,
   hint,
   className,
+  headerActions,
 }: ChartCardProps) {
   const titleId = useId();
 
@@ -26,20 +28,25 @@ export function ChartCard({
       role="region"
     >
       <div className="dc-chart-card__header">
-        <h2 id={titleId} className="dc-chart-card__title">
-          {title}
-          {titleHint ? (
-            <HelpTooltip
-              content={titleHint}
-              ariaLabel={`Ajuda: ${title}`}
-              className="dc-chart-card__title-help"
-            />
+        <div className="dc-chart-card__heading">
+          <h2 id={titleId} className="dc-chart-card__title">
+            {title}
+            {titleHint ? (
+              <HelpTooltip
+                content={titleHint}
+                ariaLabel={`Ajuda: ${title}`}
+                className="dc-chart-card__title-help"
+              />
+            ) : null}
+          </h2>
+          {hint ? (
+            <p className="dc-chart-card__hint" id={`${titleId}-hint`}>
+              {hint}
+            </p>
           ) : null}
-        </h2>
-        {hint ? (
-          <p className="dc-chart-card__hint" id={`${titleId}-hint`}>
-            {hint}
-          </p>
+        </div>
+        {headerActions ? (
+          <div className="dc-chart-card__actions dc-no-print">{headerActions}</div>
         ) : null}
       </div>
       <div

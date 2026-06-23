@@ -6,6 +6,8 @@ cd plugins/dashboard-commercial && npm run ci
 ./scripts/ci/build-dashboard-commercial.sh
 ```
 
+Testes unitários de exportação: `npm run test` (Vitest em `src/export/`). Ver [export.md](./export.md).
+
 ## Docker
 
 ```bash
@@ -39,6 +41,9 @@ export TOKEN="<jwt>"
 - [ ] Gráficos ROL e funil exibem dados
 - [ ] Impressão oculta filtros e mostra resumo do período
 - [ ] Recarregar página mantém filtros na URL
+- [ ] Exportação CSV/Excel/PDF no header do dashboard (relatório completo)
+- [ ] Exportação por seção: KPIs, ROL, funil, propostas
+- [ ] Detalhe OV: exportação completa inclui BOM quando disponível
 
 ### Detalhe da proposta (`/proposta/{proposal_number}`)
 
@@ -51,4 +56,5 @@ Ver [DETALHE-PROPOSTA.md](./DETALHE-PROPOSTA.md).
 | Produtos | Tabela ADJ010; badges de tipo PA/PI |
 | BOM | Árvore expandível; legenda; oculta quando sem estrutura |
 | Histórico | Timeline / tabela AIJ010 |
+| Exportação | CSV / Excel / PDF por seção e relatório completo |
 | Ações | Atualizar recarrega detalhe + histórico + BOM |

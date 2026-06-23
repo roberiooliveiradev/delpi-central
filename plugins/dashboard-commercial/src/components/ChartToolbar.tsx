@@ -12,6 +12,7 @@ type ChartToolbarProps = {
   idPrefix?: string;
   onExportCsv?: () => void;
   exportDisabled?: boolean;
+  exportActions?: ReactNode;
   extra?: ReactNode;
 };
 
@@ -21,6 +22,7 @@ export function ChartToolbar({
   idPrefix,
   onExportCsv,
   exportDisabled = false,
+  exportActions,
   extra,
 }: ChartToolbarProps) {
   return (
@@ -39,7 +41,8 @@ export function ChartToolbar({
       </div>
       <div className="dc-chart-toolbar__actions">
         {extra}
-        {onExportCsv ? (
+        {exportActions}
+        {!exportActions && onExportCsv ? (
           <div className="dc-chart-toolbar__action">
             <button
               type="button"

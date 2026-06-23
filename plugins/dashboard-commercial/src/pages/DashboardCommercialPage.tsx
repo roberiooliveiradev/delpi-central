@@ -29,7 +29,14 @@ import type {
   CommercialProposal,
   CommercialProposalStatusFilter,
 } from "../types/commercial";
-import { downloadRolSeriesCsv } from "../utils/chartSeriesExport";
+import {
+  buildDashboardKpisPayload,
+  buildFunnelPayload,
+  buildProposalsPayload,
+  buildRolSeriesPayload,
+  CommercialExportButtons,
+  type DashboardExportContext,
+} from "../export";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
 import {
@@ -166,9 +173,84 @@ export function DashboardCommercialPage({
     [setDateStart, setDateEnd]
   );
 
-  const handleExportChartCsv = useCallback(() => {
-    downloadRolSeriesCsv("rol-evolucao.csv", rolSeries.points);
-  }, [rolSeries.points]);
+
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: COMMERCIAL_KPI_TITLES.rol,
+        valor: rolKpi.value,
+        contexto: [rolKpi.contextLabel, rolKpi.goalLabel].filter(Boolean).join(" · "),
+      },
+      {
+        indicador: COMMERCIAL_KPI_TITLES.salesOrderOtd,
+        valor: formatPercent(salesOrderOtd?.sales_order_otd_pct),
+        contexto: `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: COMMERCIAL_KPI_TITLES.closingRate,
+        valor: formatPercent(closingRate?.sales_conversion_rate_pct),
+        contexto: `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: COMMERCIAL_KPI_TITLES.newBusinessRol,
+        valor: formatPercent(newBusinessRol?.new_business_rol_pct),
+        contexto: `${formatNewBusinessRolContextLine(newBusinessRol, customerSegment, formatCurrency)} · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+      },
+    ],
+    [
+      branchLabel,
+      closingRate,
+      consolidatedOtherKpisLabel,
+      customerSegment,
+      newBusinessRol,
+      periodLabel,
+      rolKpi.contextLabel,
+      rolKpi.goalLabel,
+      rolKpi.value,
+      salesOrderOtd,
+    ],
+  );
+
+  const dashboardExportContext = useMemo<DashboardExportContext>(
+    () => ({
+      documentTitle: "dashboard-comercial",
+      periodLabel,
+      scopeLabel: branchLabel ?? consolidatedOtherKpisLabel,
+      kpiRows: kpiExportRows,
+      rolPoints: rolSeries.points,
+      funnel: closingRate,
+      proposals,
+    }),
+    [
+      branchLabel,
+      closingRate,
+      consolidatedOtherKpisLabel,
+      kpiExportRows,
+      periodLabel,
+      proposals,
+      rolSeries.points,
+    ],
+  );
+
+  const proposalsExportPayload = useMemo(
+    () => buildProposalsPayload(proposals),
+    [proposals],
+  );
+
+  const rolSeriesExportPayload = useMemo(
+    () => buildRolSeriesPayload(rolSeries.points),
+    [rolSeries.points],
+  );
+
+  const kpiExportPayload = useMemo(
+    () => buildDashboardKpisPayload(kpiExportRows),
+    [kpiExportRows],
+  );
+
+  const funnelExportPayload = useMemo(
+    () => buildFunnelPayload(closingRate),
+    [closingRate],
+  );
 
   const handleProposalRowClick = useCallback(
     (row: CommercialProposal) => {
@@ -296,6 +378,13 @@ export function DashboardCommercialPage({
         branch={branch}
         customerSegment={customerSegment}
         printDisabled={printDisabled}
+        exportActions={
+          <CommercialExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={loading && !hasData}
+          />
+        }
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
@@ -345,6 +434,14 @@ export function DashboardCommercialPage({
       ) : null}
 
       <section className="dc-kpi-grid" aria-busy={isBusy}>
+        <div className="dc-kpi-grid__export dc-no-print">
+          <CommercialExportButtons
+            variant="table"
+            payload={kpiExportPayload}
+            disabled={isBusy && !hasData}
+            className="dc-export-actions dc-export-actions--compact"
+          />
+        </div>
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.rol}
           titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.rol}
@@ -411,8 +508,15 @@ export function DashboardCommercialPage({
             idPrefix="rol"
             granularity={granularity}
             onGranularityChange={setGranularity}
-            onExportCsv={handleExportChartCsv}
-            exportDisabled={rolSeries.points.length === 0}
+            exportActions={
+              <CommercialExportButtons
+                variant="table"
+                payload={rolSeriesExportPayload}
+                disabled={rolSeries.points.length === 0}
+                className="dc-export-actions dc-export-actions--compact"
+                buttonClassName="dc-ghost-btn dc-chart-toolbar__export"
+              />
+            }
           />
 
           {rolSeries.error ? (
@@ -459,6 +563,14 @@ export function DashboardCommercialPage({
           titleHint={COMMERCIAL_HELP_TOOLTIPS.charts.conversionFunnel}
           hint="Volume de propostas, ganhas e perdas no período — alinhado ao KPI de conversão."
           className="dc-chart-card--funnel"
+          headerActions={
+            <CommercialExportButtons
+              variant="table"
+              payload={funnelExportPayload}
+              disabled={!closingRate}
+              className="dc-export-actions dc-export-actions--compact"
+            />
+          }
         >
           <ConversionFunnelChart
             data={closingRate}
@@ -539,6 +651,14 @@ export function DashboardCommercialPage({
               ]
                 .filter(Boolean)
                 .join(" ")
+            }
+            headerActions={
+              <CommercialExportButtons
+                variant="table"
+                payload={proposalsExportPayload}
+                disabled={proposals.length === 0}
+                className="dc-export-actions dc-export-actions--compact"
+              />
             }
           />
         )}

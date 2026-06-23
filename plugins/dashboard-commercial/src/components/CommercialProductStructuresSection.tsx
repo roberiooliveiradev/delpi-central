@@ -10,11 +10,13 @@ import { StructureLegend } from "./StructureLegend";
 type CommercialProductStructuresSectionProps = {
   entries: CommercialProductStructureEntry[];
   loading?: boolean;
+  exportActions?: React.ReactNode;
 };
 
 export function CommercialProductStructuresSection({
   entries,
   loading = false,
+  exportActions,
 }: CommercialProductStructuresSectionProps) {
   if (!loading && entries.length === 0) {
     return null;
@@ -27,6 +29,7 @@ export function CommercialProductStructuresSection({
       hint="BOM / estrutura analítica com níveis aninhados"
       icon={<Boxes size={20} aria-hidden />}
       className="dc-detail-card--full"
+      headerActions={exportActions}
     >
       <StructureLegend />
 

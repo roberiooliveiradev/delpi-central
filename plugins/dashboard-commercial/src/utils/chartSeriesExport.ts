@@ -1,27 +1,12 @@
-import { COMMERCIAL_ROL_SERIES_LABELS } from "../constants/commercialIndicators";
-import { downloadCsv } from "./csv";
+import { buildRolSeriesPayload, exportTableFormat } from "../export";
+import type { RolSeriesPoint } from "../hooks/useCommercialRolSeries";
 
+/** @deprecated Preferir `buildRolSeriesPayload` + `exportTableFormat`. */
 export function downloadRolSeriesCsv(
-  filename: string,
-  points: {
-    periodo: string;
-    rolMatrix: number;
-    rolBranch: number;
-  }[]
+  _filename: string,
+  points: RolSeriesPoint[],
 ): void {
   if (points.length === 0) return;
 
-  downloadCsv(
-    filename,
-    [
-      "Período",
-      COMMERCIAL_ROL_SERIES_LABELS.filial01,
-      COMMERCIAL_ROL_SERIES_LABELS.filial02,
-    ],
-    points.map((point) => [
-      point.periodo,
-      String(point.rolMatrix),
-      String(point.rolBranch),
-    ])
-  );
+  exportTableFormat(buildRolSeriesPayload(points), "csv");
 }

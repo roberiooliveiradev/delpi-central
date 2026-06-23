@@ -19,6 +19,13 @@ import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { DataTable } from "../components/table";
 import { COMMERCIAL_ROUTES } from "../constants/routes";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  buildHistoryPayload,
+  buildProductsPayload,
+  buildProductStructuresPayload,
+  CommercialExportButtons,
+  type DetailExportContext,
+} from "../export";
 import { useCommercialDetailRequestScope } from "../hooks/useCommercialDetailRequestScope";
 import { useCommercialProductStructures } from "../hooks/useCommercialProductStructures";
 import { useCommercialProposalDetail } from "../hooks/useCommercialProposalDetail";
@@ -52,6 +59,34 @@ export function CommercialDetailPage({
   const periodLabel = useMemo(
     () => formatPeriodLabel(requestScope.dateStart, requestScope.dateEnd),
     [requestScope.dateEnd, requestScope.dateStart]
+  );
+
+  const detailExportContext = useMemo<DetailExportContext | null>(() => {
+    if (!detail.data) return null;
+
+    return {
+      documentTitle: `ov-${detail.data.proposal_number}`,
+      periodLabel,
+      detail: detail.data,
+      products: detail.data.list_products ?? [],
+      history: detail.data.list_history ?? [],
+      structureEntries: productStructures.entries,
+    };
+  }, [detail.data, periodLabel, productStructures.entries]);
+
+  const productsExportPayload = useMemo(
+    () => buildProductsPayload(detail.data?.list_products ?? []),
+    [detail.data?.list_products],
+  );
+
+  const structuresExportPayload = useMemo(
+    () => buildProductStructuresPayload(productStructures.entries),
+    [productStructures.entries],
+  );
+
+  const historyExportPayload = useMemo(
+    () => buildHistoryPayload(detail.data?.list_history ?? []),
+    [detail.data?.list_history],
   );
 
   const handleBack = () => {
@@ -100,6 +135,7 @@ export function CommercialDetailPage({
 
   const data = detail.data;
   const historyItems = data.list_history ?? [];
+  const products = data.list_products ?? [];
 
   return (
     <div className="dashboard-commercial dashboard-page dc-detail-page">
@@ -122,6 +158,14 @@ export function CommercialDetailPage({
           </p>
         </div>
         <div className="dc-header-actions dc-no-print">
+          <div className="dc-header-action">
+            {detailExportContext ? (
+              <CommercialExportButtons
+                variant="detail"
+                context={detailExportContext}
+              />
+            ) : null}
+          </div>
           <div className="dc-header-action">
             <button
               type="button"
@@ -288,13 +332,21 @@ export function CommercialDetailPage({
         <DetailCard
           title="Produtos"
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.productsSection}
-          hint={`${data.list_products?.length ?? 0} item(ns) vinculado(s)`}
+          hint={`${products.length} item(ns) vinculado(s)`}
           icon={<Building2 size={20} aria-hidden />}
           className="dc-detail-card--full"
+          headerActions={
+            <CommercialExportButtons
+              variant="table"
+              payload={productsExportPayload}
+              disabled={products.length === 0}
+              className="dc-export-actions dc-export-actions--compact"
+            />
+          }
         >
           <DataTable
             columns={commercialProductColumns}
-            rows={data.list_products ?? []}
+            rows={products}
             rowKey={(row) => row.code || row.description || "product"}
             emptyMessage="Nenhum produto vinculado."
           />
@@ -304,6 +356,14 @@ export function CommercialDetailPage({
           <CommercialProductStructuresSection
             entries={productStructures.entries}
             loading={productStructures.loading}
+            exportActions={
+              <CommercialExportButtons
+                variant="table"
+                payload={structuresExportPayload}
+                disabled={productStructures.entries.length === 0}
+                className="dc-export-actions dc-export-actions--compact"
+              />
+            }
           />
         ) : null}
 
@@ -313,6 +373,14 @@ export function CommercialDetailPage({
           icon={<History size={20} />}
           hint="Eventos AIJ010 — processo e estágio"
           className="dc-detail-card--full"
+          headerActions={
+            <CommercialExportButtons
+              variant="table"
+              payload={historyExportPayload}
+              disabled={historyItems.length === 0}
+              className="dc-export-actions dc-export-actions--compact"
+            />
+          }
         >
           <CommercialProposalHistorySection
             items={historyItems}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../../hooks/useClientPagination";
@@ -60,6 +60,7 @@ export type DataTableSectionProps<T> = {
   clientSort?: ClientSortConfig;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
+  headerActions?: ReactNode;
 };
 
 export function DataTableSection<T>({
@@ -81,6 +82,7 @@ export function DataTableSection<T>({
   clientSort,
   onRowClick,
   getRowClassName,
+  headerActions,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -155,6 +157,9 @@ export function DataTableSection<T>({
           <span className="dc-table-section__meta">
             {paginationTotal} registro(s)
           </span>
+          {headerActions ? (
+            <div className="dc-table-section__actions dc-no-print">{headerActions}</div>
+          ) : null}
         </div>
       </div>
 

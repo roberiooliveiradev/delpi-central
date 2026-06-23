@@ -9,6 +9,7 @@ type DetailCardProps = {
   icon?: ReactNode;
   children: ReactNode;
   className?: string;
+  headerActions?: ReactNode;
 };
 
 export function DetailCard({
@@ -18,6 +19,7 @@ export function DetailCard({
   icon,
   children,
   className,
+  headerActions,
 }: DetailCardProps) {
   const cardClass = ["dc-card", "dc-detail-card", className]
     .filter(Boolean)
@@ -27,7 +29,7 @@ export function DetailCard({
     <section className={cardClass}>
       <header className="dc-detail-card__header">
         {icon ? <div className="dc-detail-card__icon">{icon}</div> : null}
-        <div>
+        <div className="dc-detail-card__heading">
           <h2 className="dc-detail-card__title">
             {title}
             {titleHint ? (
@@ -40,6 +42,9 @@ export function DetailCard({
           </h2>
           {hint ? <p className="dc-detail-card__hint">{hint}</p> : null}
         </div>
+        {headerActions ? (
+          <div className="dc-detail-card__actions dc-no-print">{headerActions}</div>
+        ) : null}
       </header>
       <div className="dc-detail-card__body">{children}</div>
     </section>
