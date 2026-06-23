@@ -21,6 +21,24 @@ def _repository() -> LMPQueryRepository:
     )
 
 
+def _anchor_repository() -> LMPQueryRepository:
+    return LMPQueryRepository(
+        settings=LMPQuerySettings(
+            min_engineering_residence_minutes=30,
+            period_inclusion_policy="anchor_in_period",
+        ),
+    )
+
+
+def _work_month_repository() -> LMPQueryRepository:
+    return LMPQueryRepository(
+        settings=LMPQuerySettings(
+            min_engineering_residence_minutes=30,
+            period_inclusion_policy="work_month_lmp",
+        ),
+    )
+
+
 def test_listing_anchor_marker_prioritizes_lmp_over_sample() -> None:
     repo = _repository()
 
@@ -92,7 +110,7 @@ def test_history_events_lmp_queries_aij010_for_single_ov() -> None:
 
 
 def test_historico_uses_period_revision_measurement_when_listing() -> None:
-    repo = _repository()
+    repo = _anchor_repository()
 
     sql, _params = repo._sql_historico_ov_cte(
         scope_cte_name="CandidateLMPs",
@@ -106,6 +124,39 @@ def test_historico_uses_period_revision_measurement_when_listing() -> None:
     assert "MINUTOS_REVISAO DESC" in sql
     assert "SCOPE_A.AD1_NROPOR = A.AIJ_NROPOR" in sql
     assert "SCOPE_A.AD1_REVISA = A.AIJ_REVISA" not in sql
+
+
+def test_historico_uses_candidate_revision_when_work_month_lmp() -> None:
+    repo = _work_month_repository()
+
+    sql, _params = repo._sql_historico_ov_cte(
+        scope_cte_name="CandidateLMPs",
+        requested_branch=None,
+        date_start="20260601",
+        date_end="20260608",
+        per_candidate_revision=True,
+    )
+
+    assert "SCOPE_A.AD1_REVISA = A.AIJ_REVISA" in sql
+    assert "FROM CandidateLMPs S" in sql
+
+
+def test_historico_uses_candidate_revision_when_homolog_cycles() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(period_inclusion_policy="homolog_cycles_in_period"),
+    )
+
+    sql, _params = repo._sql_historico_ov_cte(
+        scope_cte_name="CandidateLMPs",
+        requested_branch=None,
+        date_start="20260601",
+        date_end="20260608",
+        per_candidate_revision=True,
+    )
+
+    assert "EngenhariaMinutosPorRevisao" not in sql
+    assert "SCOPE_A.AD1_REVISA = A.AIJ_REVISA" in sql
+    assert "FROM CandidateLMPs S" in sql
 
 
 def test_eng_support_reference_uses_current_revision() -> None:
@@ -169,7 +220,7 @@ def test_effective_listing_kind_skips_reclass_when_lmp_finalized() -> None:
 
 
 def test_candidate_lmps_exposes_has_lmp_finalized_from_finalized_anchor() -> None:
-    repo = _repository()
+    repo = _anchor_repository()
     request = ListLMPRequest(date_start="20260601", date_end="20260630")
 
     candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(
@@ -179,6 +230,24 @@ def test_candidate_lmps_exposes_has_lmp_finalized_from_finalized_anchor() -> Non
 
     assert "HAS_LMP_FINALIZED" in candidate_sql
     assert "LmpFinalizedAnchorChosen LF" in candidate_sql
+
+
+def test_homolog_cycles_candidates_track_revision_homolog_history() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(period_inclusion_policy="homolog_cycles_in_period"),
+    )
+    request = ListLMPRequest(date_start="20260601", date_end="20260630")
+
+    candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(
+        request,
+        lmp_only=False,
+    )
+
+    assert "HomologByRevisionRaw AS" in candidate_sql
+    assert "HomologCyclesInPeriod AS" in candidate_sql
+    assert "CYCLE_INDEX" in candidate_sql
+    assert "ListingAnchorEventos" not in candidate_sql
+    assert "1 AS HAS_LMP_FINALIZED" in candidate_sql
 
 
 def test_get_lmp_candidate_scope_exposes_has_lmp_finalized() -> None:
@@ -216,8 +285,8 @@ def test_candidate_period_filter_or_first_engineering_arrival() -> None:
     assert " OR " in where_sql
 
 
-def test_candidate_period_filter_anchor_in_period_default() -> None:
-    repo = _repository()
+def test_candidate_period_filter_anchor_in_period() -> None:
+    repo = _anchor_repository()
     request = ListLMPRequest(date_start="20260501", date_end="20260531")
 
     where_sql, _params = repo._sql_candidate_period_where_clause(
@@ -247,7 +316,7 @@ def test_candidate_lmps_includes_first_engineering_arrival_cte() -> None:
 
 
 def test_header_lmp_uses_listing_anchor_start_with_period() -> None:
-    repo = _repository()
+    repo = _anchor_repository()
     request = GetLMPRequest(
         sale_number="003578",
         date_start="20260501",
@@ -308,7 +377,7 @@ def test_paged_batch_passes_residence_filter_for_count_and_rows() -> None:
 
 
 def test_listing_type_filter_uses_effective_kind_not_anchor() -> None:
-    repo = _repository()
+    repo = _anchor_repository()
     request = ListLMPRequest(
         date_start="20260601",
         date_end="20260608",
@@ -486,8 +555,8 @@ def test_candidate_period_other_branch_homolog_policy_uses_eng_support_date() ->
     assert "LF.ANCHOR_START_DATE" not in where_sql
 
 
-def test_candidate_lmps_skips_first_eng_cte_when_anchor_in_period_default() -> None:
-    repo = _repository()
+def test_candidate_lmps_skips_first_eng_cte_when_anchor_in_period() -> None:
+    repo = _anchor_repository()
     request = ListLMPRequest(date_start="20260501", date_end="20260531")
 
     candidate_sql, _params = repo._sql_candidate_lmps_cte(request, lmp_only=False)
@@ -534,8 +603,21 @@ def test_strict_residence_filter_drops_sample_bypass() -> None:
     assert "TEMPO_TOTAL_MINUTOS_ENG" in sql
 
 
+def test_work_month_lmp_candidates_union_revision_and_anchor() -> None:
+    repo = _work_month_repository()
+    request = ListLMPRequest(date_start="20260601", date_end="20260630")
+
+    candidate_sql, _params = repo._sql_candidate_lmps_cte(request, lmp_only=True)
+
+    assert "WorkMonthRevisionsInPeriod AS" in candidate_sql
+    assert "WorkMonthRevisionKeys AS" in candidate_sql
+    assert "ListingAnchorEventos" in candidate_sql
+    assert " UNION " in candidate_sql
+    assert "CYCLE_INDEX" in candidate_sql
+
+
 def test_dashboard_summary_select_exposes_revision_fields() -> None:
-    repo = _repository()
+    repo = _anchor_repository()
 
     sql = repo._staged_final_select(include_qtd_pi=True, order_by=False, summary_only=True)
 
@@ -543,3 +625,24 @@ def test_dashboard_summary_select_exposes_revision_fields() -> None:
     assert "measurement_revision" in sql
     assert "homolog_date" in sql
     assert "cycle_index" in sql
+    assert "1 AS cycle_index" in sql
+
+
+def test_dashboard_summary_select_cycle_index_when_per_revision_policy() -> None:
+    repo = _work_month_repository()
+
+    sql = repo._staged_final_select(include_qtd_pi=True, order_by=False, summary_only=True)
+
+    assert "C.CYCLE_INDEX" in sql
+    assert "H.MEASUREMENT_REVISION = C.AD1_REVISA" in sql
+
+
+def test_dashboard_summary_select_cycle_index_when_homolog_cycles() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(period_inclusion_policy="homolog_cycles_in_period"),
+    )
+
+    sql = repo._staged_final_select(include_qtd_pi=True, order_by=False, summary_only=True)
+
+    assert "C.CYCLE_INDEX" in sql
+    assert "H.MEASUREMENT_REVISION = C.AD1_REVISA" in sql

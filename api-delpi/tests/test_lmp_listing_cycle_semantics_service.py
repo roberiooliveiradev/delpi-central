@@ -12,7 +12,9 @@ from app.domain.services.lmp_listing_kind_semantics_service import (
 from app.domain.services.lmp_period_inclusion_semantics_service import (
     ANCHOR_IN_PERIOD,
     ANCHOR_OR_FIRST_ENG,
+    HOMOLOG_CYCLES_IN_PERIOD,
     HOMOLOG_IN_PERIOD,
+    WORK_MONTH_LMP,
     LmpPeriodInclusionSemanticsService,
 )
 from tests.fixtures.lmp_listing_cycle_regression_cases import (
@@ -20,6 +22,16 @@ from tests.fixtures.lmp_listing_cycle_regression_cases import (
     MAY_2026_RAW_CYCLES,
     Q2_061_CYCLES,
 )
+
+
+def test_normalize_policy_defaults_to_work_month_lmp() -> None:
+    assert (
+        LmpPeriodInclusionSemanticsService.normalize_policy(None)
+        == WORK_MONTH_LMP
+    )
+    assert LmpPeriodInclusionSemanticsService.uses_per_revision_candidate_listing(
+        WORK_MONTH_LMP,
+    )
 
 
 def test_period_predicate_anchor_in_period_uses_listing_anchor_only() -> None:

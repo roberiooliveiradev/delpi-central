@@ -6,9 +6,17 @@ from app.application.dto.lmp.list_lmp_request import ListLMPRequest
 ANCHOR_IN_PERIOD = "anchor_in_period"
 ANCHOR_OR_FIRST_ENG = "anchor_or_first_eng"
 HOMOLOG_IN_PERIOD = "homolog_in_period"
+HOMOLOG_CYCLES_IN_PERIOD = "homolog_cycles_in_period"
+WORK_MONTH_LMP = "work_month_lmp"
 
 SUPPORTED_POLICIES = frozenset(
-    {ANCHOR_IN_PERIOD, ANCHOR_OR_FIRST_ENG, HOMOLOG_IN_PERIOD},
+    {
+        ANCHOR_IN_PERIOD,
+        ANCHOR_OR_FIRST_ENG,
+        HOMOLOG_IN_PERIOD,
+        HOMOLOG_CYCLES_IN_PERIOD,
+        WORK_MONTH_LMP,
+    },
 )
 
 
@@ -16,15 +24,34 @@ class LmpPeriodInclusionSemanticsService:
     @staticmethod
     def normalize_policy(raw: str | None) -> str:
         if raw is None or str(raw).strip() == "":
-            return ANCHOR_IN_PERIOD
+            return WORK_MONTH_LMP
         normalized = str(raw).strip().lower()
         if normalized not in SUPPORTED_POLICIES:
             raise ValueError(
                 "period_inclusion_policy inválida. "
-                f"Valores aceitos: {ANCHOR_IN_PERIOD}, "
-                f"{ANCHOR_OR_FIRST_ENG}, {HOMOLOG_IN_PERIOD}."
+                f"Valores aceitos: {WORK_MONTH_LMP}, {ANCHOR_IN_PERIOD}, "
+                f"{HOMOLOG_CYCLES_IN_PERIOD}, {ANCHOR_OR_FIRST_ENG}, {HOMOLOG_IN_PERIOD}."
             )
         return normalized
+
+    @staticmethod
+    def uses_homolog_cycle_listing(policy: str) -> bool:
+        return (
+            LmpPeriodInclusionSemanticsService.normalize_policy(policy)
+            == HOMOLOG_CYCLES_IN_PERIOD
+        )
+
+    @staticmethod
+    def uses_per_revision_candidate_listing(policy: str) -> bool:
+        resolved = LmpPeriodInclusionSemanticsService.normalize_policy(policy)
+        return resolved in (HOMOLOG_CYCLES_IN_PERIOD, WORK_MONTH_LMP)
+
+    @staticmethod
+    def uses_work_month_lmp_listing(policy: str) -> bool:
+        return (
+            LmpPeriodInclusionSemanticsService.normalize_policy(policy)
+            == WORK_MONTH_LMP
+        )
 
     @staticmethod
     def requires_first_eng_join(policy: str) -> bool:
@@ -43,7 +70,7 @@ class LmpPeriodInclusionSemanticsService:
     ) -> str:
         """Monta predicado SQL já parametrizado (cláusulas WHERE do QueryBuilder)."""
         resolved = LmpPeriodInclusionSemanticsService.normalize_policy(policy)
-        if resolved == ANCHOR_IN_PERIOD:
+        if resolved in (ANCHOR_IN_PERIOD, WORK_MONTH_LMP):
             if not where_anchor:
                 return "1=0"
             return where_anchor

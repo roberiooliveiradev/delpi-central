@@ -437,19 +437,87 @@ print(json.dumps(uc.execute_summary(dto, status_filter='Todos'), indent=2))
 
 ---
 
-## 10. Pendências
+## 10. Gate — testar políticas no SQL antes de alterar o repositório
 
-- [ ] Homologar **abril/2026** (16 pastas vs 21 dashboard — mencionado no playbook).
-- [x] Repetir cruzamento `--dashboard-only` para **mai/2026** — ver §5.2 do doc de auditoria.
-- [ ] Repetir cruzamento `--dashboard-only` para **jan–abr/2026**.
-- [ ] Validar OVs ⚠ (026, 033, 047, …) no Word.
-- [ ] Medir impacto de `homolog_in_period` + `strict_residence_after_homolog=True` vs planilha.
-- [ ] Fase 2: múltiplas linhas por ciclo homolog (ex.: `000061`×3, `003562`×2) no dashboard.
-- [ ] Decidir se contagem oficial do MFE deve ser **pastas** (RQ) ou **OVs** (Protheus) — produto.
+**Regra:** nenhuma mudança em `LMPQueryRepository` / `period_inclusion_policy` sem rodar o gate e comparar com RQ-060.
+
+| Artefato | Função |
+|----------|--------|
+| `scripts/sql/lmp_period_policy_gate_compare.sql` | Simula 4 políticas no TOTVS (sem deploy) |
+| `scripts/validate_lmp_period_policies_vs_rq060.py` | Cruza totais + OVs com RQ e dashboard atual |
+| `scripts/investigate_lmp_period_vs_rq060.py` | Auditoria mês a mês (RQ ↔ API) |
+| `scripts/simulate_lmp_period_by_revision.py` | Variante via `/data/sql` (token) |
+
+```bash
+docker exec -w /app delpi-api-delpi python scripts/validate_lmp_period_policies_vs_rq060.py --month 2026-06
+docker exec -w /app delpi-api-delpi python scripts/validate_lmp_period_policies_vs_rq060.py --month 2026-05 --json
+```
+
+### Políticas simuladas no gate (jun/2026, RQ=12 OVs)
+
+| Política | Critério de mês | OVs vs RQ (interseção) | Observação |
+|----------|-----------------|------------------------|------------|
+| **dashboard_atual** (`anchor_in_period`) | Âncora LMP na revisão atual | **12/12** ✓ | Padrão após revert |
+| `anchor_in_period_ov` | Idem (SQL simplificado) | 10/12 | Aproximação — dashboard real bate 12 |
+| `homolog_rev_in_period` | Homolog 000012 no mês | 8/12 | Desalinha mês da pasta (jun) |
+| `eng_rev_work_month` | ≥30 min eng + first_eng ou âncora na revisão no mês | 7/12 | Candidata futura multi-revisão |
+| `eng_rev_first_eng_only` | ≥30 min + first_eng no mês (sem exigir homolog) | — | Só investigação; infla demais |
+
+**Conclusão (jun/2026):** manter **`anchor_in_period`** para alinhamento mensal com controle. Próxima evolução: **`eng_rev_work_month`** (várias revisões, ≥30 min, mês do trabalho) — só implementar após gate fechar abr/mai/jun com critério de aceite (ex.: interseção ≥15/16 em mai).
 
 ---
 
-## 11. Referências
+## 11. Histórico da OV sem pesar o banco
+
+Princípio: **listagem leve**, **histórico sob demanda**, **investigação offline**.
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Dashboard / listagem mensal                                 │
+│  • Candidatos do período → #temp (batch único)               │
+│  • AIJ010 só para OVs/revisões candidatas                    │
+│  • Sem varrer histórico completo do banco                    │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ clique / drill-down
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│  GET …/lmps/{ov}/history/events  (+ revision opcional)       │
+│  • WHERE AIJ_NROPOR = ?  (+ AIJ_REVISA = ?)                  │
+│  • Índice natural: filial + OV — custo O(eventos da OV)      │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ análise / auditoria
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Scripts SQL (gate, investigate_*) — fora do request path    │
+│  • Não entram no pipeline do dashboard                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| Camada | Custo | Quando usar |
+|--------|-------|-------------|
+| Listagem | Baixo — escopo por período + temp tables | Painel mensal |
+| `history/events` | Baixo — 1 OV por request | Rastrear revisões, reaberturas, status |
+| `history/flow` | Baixo — 1 OV, eventos de fluxo | Linha do tempo simplificada |
+| Gate SQL | Médio — manual/CI, não em produção | Validar filtro antes de codar |
+
+**Futuro (se listagem multi-revisão exigir):** snapshot materializado `LmpRevisionCycle` (filial, OV, revisão, first_eng, homolog_date, eng_minutes, cycle_index) atualizado por job noturno — listagem lê snapshot; histórico bruto continua em `history/events`.
+
+**O que não fazer:** JOIN em `AIJ010` sem filtro de OV no batch do dashboard; replicar histórico completo em cada linha da listagem.
+
+---
+
+## 12. Pendências
+
+- [ ] Rodar gate para **jan–abr/2026** e fixar critério de aceite (interseção RQ vs política).
+- [ ] Prototipar **`eng_rev_work_month`** no gate; só codar se mai/jun dentro do aceite.
+- [ ] Homologar **abril/2026** (16 pastas vs 12 dashboard — ver gate `eng_rev_work_month` 11/16).
+- [x] Jun/2026 1:1 com `anchor_in_period` (revert `homolog_cycles` como padrão).
+- [ ] Fase 2: múltiplas linhas por revisão qualificada (≥30 min) sem perder mês do controle.
+- [ ] Decidir contagem oficial MFE: **pastas** (RQ) vs **linhas** (revisão/ciclo).
+
+---
+
+## 13. Referências
 
 - [playbook_correcao_lmp_repositorio_settings.md](../roadmaps/playbook_correcao_lmp_repositorio_settings.md) — regras de listagem, residence, tipo efetivo
 - Rotas OpenAPI: `/engineering/lmps`, `/engineering/lmps/dashboard/items`

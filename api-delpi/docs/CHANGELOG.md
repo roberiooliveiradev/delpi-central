@@ -1,6 +1,30 @@
 # CHANGELOG — api-delpi
 
-**Código:** `LmpPeriodInclusionSemanticsService`, `period_inclusion_policy` — default **`anchor_in_period`** (jun/2026); legado `anchor_or_first_eng`; opt-in `homolog_in_period`.
+**Código:** `LmpPeriodInclusionSemanticsService`, `period_inclusion_policy` — default **`work_month_lmp`**.
+
+---
+
+## 2026-06 — Modelo `work_month_lmp` (padrão)
+
+Listagem por **revisão com trabalho LMP no mês** (`first_eng` ou âncora na revisão) + **fallback âncora OV** (`anchor_in_period`) para não perder OVs do controle.
+
+| Métrica | Jan–Jun/2026 vs RQ-060 |
+|---------|-------------------------|
+| Recall | **79/93 (84,9%)** |
+| Jun/2026 | **12/12** interseção, 0 só-RQ |
+| Abr/2026 | 12/16 (antes 8/16 com só âncora) |
+
+Gate antes de merge: `scripts/validate_lmp_period_policies_vs_rq060.py`.
+
+**Módulo:** `LMPQueryRepository._sql_work_month_lmp_candidates_cte`.
+
+---
+
+Implementação de listagem **por ciclo de homologação 000012** (`cycle_index`, revisão do ciclo). **Não** é o padrão: filtra pelo **mês da homolog** no Protheus, o que desalinha do controle RQ (ex.: jun/2026 8 vs 12 pastas). Padrão permanece **`anchor_in_period`** (âncora LMP no mês ≈ trabalho recebido no mês).
+
+Próximo passo alinhado ao controle: política por **revisão com ≥30 min eng** e atividade LMP **no mês** (não só data de homolog).
+
+**Módulo:** `LMPQueryRepository._sql_homolog_cycle_candidates_cte`.
 
 ---
 
