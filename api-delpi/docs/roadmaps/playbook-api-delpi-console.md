@@ -155,7 +155,7 @@ Testes automatizados: `pytest tests/test_lmp_query_repository_sql.py tests/test_
 
 | Item | Detalhe | Status |
 |------|---------|--------|
-| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por namespace (`stock-value`, `financial-rol`, `production-oee`, `production-otd`, `commercial-rol-series`, `production-*-series`, `ppm-summary`, `ppm-*-series`, LMP, `lmp-summary`) | [x] |
+| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por namespace (`stock-value`, `financial-rol`, `production-oee`, `production-oee-by-branch`, `production-otd`, `commercial-rol-series`, `production-*-series`, `ppm-summary`, `ppm-*-series`, LMP, `lmp-summary`) | [x] |
 | **Caller breakdown** | `GET /system/caller-stats` — agrega `X-Delpi-Caller-App` por request | [x] |
 | **Comparador** | `GET /system/observability-snapshot` + UI «antes/depois» com export CSV | [x] |
 | **UI Console** | Aba «Cache» com tabelas e comparador | [x] |

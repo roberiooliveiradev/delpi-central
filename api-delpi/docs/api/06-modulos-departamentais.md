@@ -94,9 +94,10 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 
 **Detalhe (`GET /production/oee/appointments/{id}`):** `oee_pct` e `time_analysis.efficiency_from_times_pct` calculados por tempos (roteiro SG2/SHY + horários); diagnóstico em `time_analysis.findings` via `production_appointment_time_analysis`.
 
-**Performance (séries OEE/OTD — jun/2026):**
+**Performance (KPI e séries OEE/OTD — jun/2026):**
 
-- `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa (`production-oee-series|…`, `production-otd-series|…`) + cache por filial/período nos repositórios (`production-oee|…`, `production-otd|…`). TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
+- `GET /production/overall_equipment_effectiveness_pct`: KPI por filial via query agrupada + `NOLOCK` (`production_fabril_oee_kpi_sql.py`); cache `production-oee` e `production-oee-by-branch`. Changelog: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7.
+- `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa (`production-oee-series|…`, `production-otd-series|…`) + cache por filial/período nos repositórios (`production-oee|…`, `production-otd|…`, `production-oee-by-branch|…`). TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
 - OTD: `WITH (NOLOCK)` em SC2/SB1. Console: `get_production_oee_series` / `get_production_otd_series` — após primeiro carregamento, polling do dashboard deve gerar hits na aba **Cache**.
 
 **Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  

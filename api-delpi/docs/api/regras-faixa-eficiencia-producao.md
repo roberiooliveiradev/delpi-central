@@ -43,6 +43,7 @@ Consumidores:
 | `production_fabril_appointment_filters.py` | `build_fabril_view_filters()` — usado por eficiência fabril **e** OEE |
 | `production_fabril_efficiency_sql.py` | `status` valid/outlier em `EFICIENCIA_PERCENTUAL` |
 | `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010) |
+| `production_fabril_oee_kpi_sql.py` | KPI agregado OEE (`NOLOCK`, `TRY_CAST`) — ver [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7 |
 | `production_fabril_ef_items_sql.py` | Listagem eficiência fabril com `appointment_id` |
 | `production_fabril_sh6010_apply.py` | `OUTER APPLY` view → SH6010 (compartilhado OEE + EF) |
 | `production_appointment_time_analysis.py` | Diagnóstico `time_analysis.findings` no detalhe do apontamento |

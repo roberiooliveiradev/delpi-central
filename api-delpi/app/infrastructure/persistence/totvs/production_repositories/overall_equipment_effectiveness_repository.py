@@ -5,8 +5,11 @@ from app.application.dto.production.production_request import ProductionRequest
 from app.application.models.page import Page
 from app.application.services.production.production_kpi_cache import (
     get_cached_production_oee,
+    get_cached_production_oee_by_branch,
+    production_oee_by_branch_cache_key,
     production_oee_cache_key,
     set_cached_production_oee,
+    set_cached_production_oee_by_branch,
 )
 from app.domain.entities.production.overall_equipment_effectiveness import (
     OverallEquipmentEffectiveness,
@@ -20,13 +23,14 @@ from app.domain.production.production_efficiency_valid_range import (
     parse_efficiency_bands,
     resolve_production_list_status_filter_clause,
 )
-from app.domain.production.production_fabril_appointment_scope import (
-    EFICIENCIA_FABRIL_VIEW,
-)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
     build_fabril_view_filters,
+)
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_kpi_sql import (
+    OEE_FABRIL_KPI_AVG_SELECT,
+    OEE_FABRIL_KPI_BY_BRANCH_SELECT,
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_sql import (
     OEE_FABRIL_APPOINTMENTS_SELECT,
@@ -83,9 +87,25 @@ class OverallEquipmentEffectivenessRepository(
             branch=request.branch,
             status_ok_only=True,
             efficiency_cap_pct=PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
-            column_prefix=None,
+            column_prefix="EF",
         )
         return where_clause, list(where_params)
+
+    def _resolve_oee_pct_for_branch(
+        self,
+        request: ProductionRequest,
+        rows: list[dict],
+    ) -> float | None:
+        target_branch = (request.branch or "").strip()
+        if not target_branch:
+            return None
+
+        for row in rows:
+            if str(row.get("branch") or "").strip() == target_branch:
+                value = row.get("oee_pct")
+                return float(value) if value is not None else None
+
+        return None
 
     @staticmethod
     def _list_filter_clause(request: GetProductionOeeRequest) -> str:
@@ -160,12 +180,27 @@ class OverallEquipmentEffectivenessRepository(
         self,
         request: ProductionRequest,
     ) -> OverallEquipmentEffectiveness:
+        if request.branch:
+            consolidated_request = ProductionRequest(
+                branch=None,
+                start_date=request.start_date,
+                end_date=request.end_date,
+            )
+            rows = self._load_overall_equipment_effectiveness_by_branch(
+                consolidated_request
+            )
+            oee_pct = self._resolve_oee_pct_for_branch(request, rows)
+            return OverallEquipmentEffectiveness(
+                branch=request.branch,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                oee_pct=oee_pct,
+            )
+
         where_clause, where_params = self._build_kpi_filters(request)
 
         sql = f"""
-            SELECT
-                ROUND(AVG(EFICIENCIA_PERCENTUAL), 2) AS oee_pct
-            FROM {EFICIENCIA_FABRIL_VIEW} EF
+            {OEE_FABRIL_KPI_AVG_SELECT}
             WHERE {where_clause}
         """
 
@@ -192,6 +227,19 @@ class OverallEquipmentEffectivenessRepository(
         self,
         request: ProductionRequest,
     ) -> list[dict]:
+        cache_key = production_oee_by_branch_cache_key(request)
+        cached = get_cached_production_oee_by_branch(cache_key)
+        if cached is not None:
+            return cached
+
+        rows = self._load_overall_equipment_effectiveness_by_branch(request)
+        set_cached_production_oee_by_branch(cache_key, rows)
+        return rows
+
+    def _load_overall_equipment_effectiveness_by_branch(
+        self,
+        request: ProductionRequest,
+    ) -> list[dict]:
         if not request.start_date or not request.end_date:
             return []
 
@@ -201,14 +249,11 @@ class OverallEquipmentEffectivenessRepository(
             branch=request.branch,
             status_ok_only=True,
             efficiency_cap_pct=PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
-            column_prefix=None,
+            column_prefix="EF",
         )
 
         sql = f"""
-            SELECT
-                RTRIM(LTRIM(EF.FILIAL)) AS branch,
-                ROUND(AVG(EF.EFICIENCIA_PERCENTUAL), 2) AS oee_pct
-            FROM {EFICIENCIA_FABRIL_VIEW} EF
+            {OEE_FABRIL_KPI_BY_BRANCH_SELECT}
             WHERE {where_clause}
               AND RTRIM(LTRIM(EF.FILIAL)) <> ''
             GROUP BY RTRIM(LTRIM(EF.FILIAL))

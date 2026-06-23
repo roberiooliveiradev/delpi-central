@@ -74,7 +74,51 @@ Páginas de **listagem** OEE/OTD e **detalhe** de apontamento **não** têm auto
 
 ---
 
-## 4. Deploy após as mudanças
+## 7. Performance KPI OEE (`get_overall_equipment_effectiveness_pct`) — jun/2026
+
+Alerta **Saúde SQL** (`slow_sql`): query com `FILIAL = ?` na view fabril levava **~14 s** (limiar 2,5 s); a variante consolidada `GROUP BY` filial rodava em **~1 s**.
+
+### Causa
+
+| Fator | Detalhe |
+|-------|---------|
+| Leitura sem `NOLOCK` | Bloqueio em dashboard / Indicadores Estratégicos |
+| Plano ruim | `AVG` com filial explícita vs. agregação por filial |
+| Repetição | `strategic-indicators-api` consulta filial 01 e 02 em sequência |
+
+### Correção (api-delpi)
+
+| Artefato | Mudança |
+|----------|---------|
+| `production_fabril_oee_kpi_sql.py` | SQL canônico KPI: `WITH (NOLOCK)`, `TRY_CAST(EF.EFICIENCIA_PERCENTUAL)` |
+| `overall_equipment_effectiveness_repository.py` | KPI por filial reutiliza query **agrupada** (`GROUP BY` filial) e extrai a filial pedida |
+| `production_kpi_cache.py` | Namespace `production-oee-by-branch` — 2ª filial no mesmo período não repete SQL |
+
+### Cache (TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s)
+
+| Chave | Uso |
+|-------|-----|
+| `production-oee\|filial\|início\|fim` | Resposta KPI por filial |
+| `production-oee-by-branch\|filial\|início\|fim` | Lista `{ branch, oee_pct }` (consolidada quando filial vazia) |
+
+### Efeito esperado
+
+- **1ª chamada** (cache frio): ~1 s em vez de ~14 s.
+- **2ª filial** (mesmo período): hit em `production-oee-by-branch`.
+- **Polling** (5 min): hits em `production-oee` e `production-oee-by-branch`.
+
+### Testes
+
+```bash
+docker exec delpi-api-delpi python -m pytest \
+  tests/test_production_oee_kpi_sql.py tests/test_chart_query_cache.py -q
+```
+
+Console: `operation_id` = `get_overall_equipment_effectiveness_pct` — hash antigo `b884554ccf71c3d2` deve desaparecer ou cair para ~1 s no frio.
+
+---
+
+## 8. Deploy após as mudanças
 
 ```bash
 cd infra
@@ -92,12 +136,13 @@ Hard refresh no navegador (`Ctrl+Shift+R`) após rebuild dos MFEs.
 
 ---
 
-## 5. Testes de regressão
+## 9. Testes de regressão
 
 ```bash
 cd api-delpi
 .venv/bin/pytest tests/test_production_appointment_time_analysis.py \
-  tests/test_production_efficiency_valid_range.py -q
+  tests/test_production_efficiency_valid_range.py \
+  tests/test_production_oee_kpi_sql.py tests/test_chart_query_cache.py -q
 ```
 
 Build dos plugins:
@@ -109,7 +154,7 @@ cd plugins/eficiencia-fabril && npm run build
 
 ---
 
-## 6. Documentação relacionada
+## 10. Documentação relacionada
 
 - [06-modulos-departamentais.md](./06-modulos-departamentais.md) — rotas `/production/*`
 - [plugins/dashboard-production/README.md](../../../plugins/dashboard-production/README.md)

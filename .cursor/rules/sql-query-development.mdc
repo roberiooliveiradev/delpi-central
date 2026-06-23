@@ -44,7 +44,7 @@ Use case **não** embute SQL nem loop N+1 por bucket/filial sem cache ou batch.
 | Evitar N+1 | Loop por bucket/filial → cache por chave ou **uma** query agregada |
 | Índices | SB9/SD3/SC2 etc. — ver docs de performance do módulo |
 
-Namespaces de cache existentes: `stock-value`, `financial-rol`, `production-oee`, `production-otd`, `commercial-rol-series`, `production-oee-series`, `production-otd-series`, `ppm-summary`, `ppm-internal-series`, `ppm-external-series`.
+Namespaces de cache existentes: `stock-value`, `financial-rol`, `production-oee`, `production-oee-by-branch`, `production-otd`, `commercial-rol-series`, `production-oee-series`, `production-otd-series`, `ppm-summary`, `ppm-internal-series`, `ppm-external-series`.
 
 ## O que NÃO fazer
 

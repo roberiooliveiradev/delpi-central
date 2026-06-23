@@ -1,0 +1,22 @@
+"""KPI OEE agregado na view fabril — leitura analítica com NOLOCK."""
+
+from app.domain.production.production_fabril_appointment_scope import (
+    EFICIENCIA_FABRIL_VIEW,
+)
+
+OEE_FABRIL_KPI_FROM = f"""
+FROM {EFICIENCIA_FABRIL_VIEW} EF WITH (NOLOCK)
+"""
+
+OEE_FABRIL_KPI_AVG_SELECT = f"""
+SELECT
+    ROUND(AVG(TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT)), 2) AS oee_pct
+{OEE_FABRIL_KPI_FROM}
+"""
+
+OEE_FABRIL_KPI_BY_BRANCH_SELECT = f"""
+SELECT
+    RTRIM(LTRIM(EF.FILIAL)) AS branch,
+    ROUND(AVG(TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT)), 2) AS oee_pct
+{OEE_FABRIL_KPI_FROM}
+"""

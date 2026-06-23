@@ -146,3 +146,64 @@ def test_production_oee_repository_reuses_cached_kpi() -> None:
     assert first.oee_pct == 75.0
     assert second.oee_pct == 75.0
     loader.assert_called_once()
+
+
+def test_production_oee_single_branch_reuses_grouped_by_branch_loader() -> None:
+    from app.infrastructure.persistence.totvs.production_repositories.overall_equipment_effectiveness_repository import (
+        OverallEquipmentEffectivenessRepository,
+    )
+
+    repository = OverallEquipmentEffectivenessRepository()
+    request = ProductionRequest(
+        branch="02",
+        start_date="2026-05-01",
+        end_date="2026-05-31",
+    )
+    rows = [
+        {"branch": "01", "oee_pct": 80.0},
+        {"branch": "02", "oee_pct": 91.5},
+    ]
+
+    with patch.object(
+        OverallEquipmentEffectivenessRepository,
+        "_load_overall_equipment_effectiveness_by_branch",
+        return_value=rows,
+    ) as loader:
+        result = repository._load_overall_equipment_effectiveness(request)
+
+    assert result.oee_pct == 91.5
+    assert loader.call_count == 1
+    consolidated_request = loader.call_args.args[0]
+    assert consolidated_request.branch is None
+
+
+def test_production_oee_by_branch_list_is_cached() -> None:
+    from app.application.services.production.production_kpi_cache import (
+        production_oee_by_branch_cache_key,
+    )
+    from app.infrastructure.persistence.totvs.production_repositories.overall_equipment_effectiveness_repository import (
+        OverallEquipmentEffectivenessRepository,
+    )
+
+    repository = OverallEquipmentEffectivenessRepository()
+    request = ProductionRequest(
+        branch=None,
+        start_date="2026-05-01",
+        end_date="2026-05-31",
+    )
+    rows = [{"branch": "01", "oee_pct": 88.0}]
+
+    with patch.object(
+        OverallEquipmentEffectivenessRepository,
+        "_load_overall_equipment_effectiveness_by_branch",
+        return_value=rows,
+    ) as loader:
+        first = repository.list_overall_equipment_effectiveness_by_branch(request)
+        second = repository.list_overall_equipment_effectiveness_by_branch(request)
+
+    assert first == rows
+    assert second == rows
+    loader.assert_called_once()
+
+    cache_key = production_oee_by_branch_cache_key(request)
+    assert build_query_cache().get(cache_key) == rows
