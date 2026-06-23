@@ -282,11 +282,17 @@
   bottom: auto;
   right: auto;
   z-index: 10000;
-  opacity: 1;
-  visibility: visible;
+  opacity: 0;
+  visibility: hidden;
   transform: none;
   pointer-events: none;
   max-width: min(280px, calc(100vw - 24px));
+  transition: opacity 0.15s ease;
+}
+
+.dashboard-commercial .dc-help-tooltip__bubble--fixed.dc-help-tooltip__bubble--ready {
+  opacity: 1;
+  visibility: visible;
 }
 
 .dashboard-commercial .dc-totvs-banner__title {
