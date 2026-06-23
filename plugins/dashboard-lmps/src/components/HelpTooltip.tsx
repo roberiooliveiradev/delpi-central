@@ -78,6 +78,13 @@ function computeBubblePosition(
   };
 }
 
+function resolvePortalContainer(anchor: HTMLElement | null): HTMLElement {
+  const dashboardRoot = anchor?.closest(
+    ".dashboard-commercial, .dashboard-lmps"
+  ) as HTMLElement | null;
+  return dashboardRoot ?? document.body;
+}
+
 export function HelpTooltip({
   content,
   ariaLabel = "Saiba mais",
@@ -211,7 +218,12 @@ export function HelpTooltip({
           <HelpCircle size={14} aria-hidden="true" />
         </button>
       )}
-      {visible ? createPortal(bubble, document.body) : null}
+      {visible
+        ? createPortal(
+            bubble,
+            resolvePortalContainer(triggerRef.current ?? rootRef.current)
+          )
+        : null}
     </span>
   );
 }
