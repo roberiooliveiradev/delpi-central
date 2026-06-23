@@ -33,16 +33,7 @@ export function Pagination({
 
   return (
     <div className="dc-pagination" role="navigation" aria-label="Paginação da tabela">
-      <div className="dc-pagination__summary">
-        <span className="dc-pagination__info">
-          Exibindo {rangeStart}–{rangeEnd} de {total} · Página {page} de {totalPages}
-          <HelpTooltip
-            content={COMMERCIAL_HELP_TOOLTIPS.pagination.info}
-            ariaLabel="Ajuda: paginação"
-            className="dc-pagination__help"
-          />
-        </span>
-
+      <div className="dc-pagination__start">
         {onPageSizeChange ? (
           <label className="dc-pagination__size">
             <span className="dc-pagination__size-label">Itens por página</span>
@@ -67,94 +58,107 @@ export function Pagination({
         ) : null}
       </div>
 
-      <div className="dc-pagination__controls">
-        <div className="dc-pagination__action">
-          <button
-            type="button"
-            className="dc-ghost-btn"
-            disabled={!canPrev}
-            onClick={() => onPageChange(page - 1)}
-          >
-            Anterior
-          </button>
+      <div className="dc-pagination__center">
+        <span className="dc-pagination__info">
+          Exibindo {rangeStart}–{rangeEnd} de {total} · Página {page} de {totalPages}
           <HelpTooltip
-            content={COMMERCIAL_HELP_TOOLTIPS.pagination.previous}
-            ariaLabel="Ajuda: página anterior"
-            className="dc-pagination__action-help"
+            content={COMMERCIAL_HELP_TOOLTIPS.pagination.info}
+            ariaLabel="Ajuda: paginação"
+            className="dc-pagination__help"
           />
-        </div>
+        </span>
 
-        {totalPages > 1 ? (
-          <div className="dc-pagination__pages" role="group" aria-label="Páginas">
-            {pageItems.map((item, index) =>
-              item === "ellipsis" ? (
-                <span
-                  key={`ellipsis-${index}`}
-                  className="dc-pagination__ellipsis"
-                  aria-hidden="true"
-                >
-                  …
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  type="button"
-                  className={
-                    item === page
-                      ? "dc-pagination__page dc-pagination__page--active"
-                      : "dc-pagination__page"
-                  }
-                  aria-current={item === page ? "page" : undefined}
-                  onClick={() => onPageChange(item)}
-                >
-                  {item}
-                </button>
-              ),
-            )}
-          </div>
-        ) : null}
-
-        {totalPages > 1 ? (
-          <label className="dc-pagination__jump">
-            <span className="dc-pagination__jump-label">Ir para</span>
-            <select
-              className="dc-pagination__jump-select"
-              value={page}
-              onChange={(event) => onPageChange(Number(event.target.value))}
-              aria-label="Ir para página"
+        <div className="dc-pagination__controls">
+          <div className="dc-pagination__action">
+            <button
+              type="button"
+              className="dc-ghost-btn"
+              disabled={!canPrev}
+              onClick={() => onPageChange(page - 1)}
             >
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-                (pageNumber) => (
-                  <option key={pageNumber} value={pageNumber}>
-                    {pageNumber}
-                  </option>
+              Anterior
+            </button>
+            <HelpTooltip
+              content={COMMERCIAL_HELP_TOOLTIPS.pagination.previous}
+              ariaLabel="Ajuda: página anterior"
+              className="dc-pagination__action-help"
+            />
+          </div>
+
+          {totalPages > 1 ? (
+            <div className="dc-pagination__pages" role="group" aria-label="Páginas">
+              {pageItems.map((item, index) =>
+                item === "ellipsis" ? (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="dc-pagination__ellipsis"
+                    aria-hidden="true"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    type="button"
+                    className={
+                      item === page
+                        ? "dc-pagination__page dc-pagination__page--active"
+                        : "dc-pagination__page"
+                    }
+                    aria-current={item === page ? "page" : undefined}
+                    onClick={() => onPageChange(item)}
+                  >
+                    {item}
+                  </button>
                 ),
               )}
-            </select>
-            <HelpTooltip
-              content={COMMERCIAL_HELP_TOOLTIPS.pagination.jump}
-              ariaLabel="Ajuda: ir para página"
-              className="dc-pagination__jump-help"
-            />
-          </label>
-        ) : null}
+            </div>
+          ) : null}
 
-        <div className="dc-pagination__action">
-          <button
-            type="button"
-            className="dc-ghost-btn"
-            disabled={!canNext}
-            onClick={() => onPageChange(page + 1)}
-          >
-            Próxima
-          </button>
-          <HelpTooltip
-            content={COMMERCIAL_HELP_TOOLTIPS.pagination.next}
-            ariaLabel="Ajuda: próxima página"
-            className="dc-pagination__action-help"
-          />
+          {totalPages > 1 ? (
+            <label className="dc-pagination__jump">
+              <span className="dc-pagination__jump-label">Ir para</span>
+              <select
+                className="dc-pagination__jump-select"
+                value={page}
+                onChange={(event) => onPageChange(Number(event.target.value))}
+                aria-label="Ir para página"
+              >
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                  (pageNumber) => (
+                    <option key={pageNumber} value={pageNumber}>
+                      {pageNumber}
+                    </option>
+                  ),
+                )}
+              </select>
+              <HelpTooltip
+                content={COMMERCIAL_HELP_TOOLTIPS.pagination.jump}
+                ariaLabel="Ajuda: ir para página"
+                className="dc-pagination__jump-help"
+              />
+            </label>
+          ) : null}
+
+          <div className="dc-pagination__action">
+            <button
+              type="button"
+              className="dc-ghost-btn"
+              disabled={!canNext}
+              onClick={() => onPageChange(page + 1)}
+            >
+              Próxima
+            </button>
+            <HelpTooltip
+              content={COMMERCIAL_HELP_TOOLTIPS.pagination.next}
+              ariaLabel="Ajuda: próxima página"
+              className="dc-pagination__action-help"
+            />
+          </div>
         </div>
       </div>
+
+      <div className="dc-pagination__end" aria-hidden="true" />
     </div>
   );
 }
