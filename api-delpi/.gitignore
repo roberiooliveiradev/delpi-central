@@ -70,6 +70,7 @@ docker-data/
 # ---- 🧾 Relatórios e Saídas ----
 reports/
 output/
+scripts/data/*_report.json
 *.csv
 *.xlsx
 *.docx
