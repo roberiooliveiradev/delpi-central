@@ -12,6 +12,7 @@ type UseCommercialProposalsResult = {
   items: CommercialProposal[];
   total: number;
   loading: boolean;
+  refreshing: boolean;
   error: string | null;
   reload: () => void;
 };
@@ -23,6 +24,7 @@ export function useCommercialProposals(
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -31,8 +33,14 @@ export function useCommercialProposals(
 
     async function run() {
       try {
-        setLoading(true);
         setError(null);
+
+        const hasPreviousData = items.length > 0;
+        if (hasPreviousData) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
         const page = await getCommercialProposals(
           {
@@ -60,6 +68,7 @@ export function useCommercialProposals(
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
+          setRefreshing(false);
         }
       }
     }
@@ -79,5 +88,5 @@ export function useCommercialProposals(
     setReloadKey((prev) => prev + 1);
   }, []);
 
-  return { items, total, loading, error, reload };
+  return { items, total, loading, refreshing, error, reload };
 }

@@ -102,10 +102,26 @@ export type CommercialProposalHistoryEvent = {
   process_label?: string | null;
   stage_label?: string | null;
   start_date?: string | null;
+  start_time?: string | null;
+  limit_date?: string | null;
+  limit_time?: string | null;
   end_date?: string | null;
+  end_time?: string | null;
+  duration_minutes?: number | null;
+  duration_display?: string | null;
   status?: string | null;
   status_label?: string | null;
-  duration_display?: string | null;
+  history_flag?: string | null;
+  is_engineering?: boolean;
+  is_engineering_flow?: boolean;
+  is_open?: boolean;
+  is_late?: boolean;
+  is_current?: boolean;
+  is_engineering_entry?: boolean;
+  flow_transition?: string | null;
+  flow_transition_label?: string | null;
+  flow_transitions?: string[];
+  flow_transition_labels?: string[];
 };
 
 export type CommercialProposalDetailData = CommercialProposalDetail & {

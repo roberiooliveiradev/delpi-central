@@ -10,14 +10,15 @@ import { ChartCard } from "../components/ChartCard";
 import { ConversionFunnelChart } from "../components/ConversionFunnelChart";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import type { DataTableColumn } from "../components/DataTable";
-import { DataTableSection } from "../components/DataTableSection";
+import type { DataTableColumn } from "../components/table";
+import { DataTableSection } from "../components/table";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { buildCommercialDetailPath } from "../constants/routes";
+import { useClientTableSort } from "../hooks/useClientTableSort";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
 import { useCommercialProposals } from "../hooks/useCommercialProposals";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
@@ -97,9 +98,15 @@ export function DashboardCommercialPage({
     items: proposals,
     total: proposalsTotal,
     loading: proposalsLoading,
+    refreshing: proposalsRefreshing,
     error: proposalsError,
     reload: reloadProposals,
   } = useCommercialProposals(apiParams, proposalStatusFilter);
+
+  const tableSort = useClientTableSort({
+    defaultSortKey: "proposal_date",
+    defaultSortDirection: "desc",
+  });
 
   useEffect(() => {
     setGranularity(suggestGranularity(dateStart, dateEnd));
@@ -177,33 +184,47 @@ export function DashboardCommercialPage({
         key: "branch",
         header: "Filial",
         render: (row) => row.branch || "—",
+        sortable: true,
+        sortValue: (row) => row.branch,
       },
       {
         key: "proposal",
         header: "Nº proposta",
         render: (row) => row.proposal_number,
+        sortable: true,
+        sortValue: (row) => row.proposal_number,
       },
       {
         key: "revision",
         header: "Rev.",
         className: "dc-table__col--numeric",
         render: (row) => row.revision || "—",
+        sortable: true,
+        sortValue: (row) => row.revision,
       },
       {
         key: "description",
         header: "Descrição",
         className: "dc-table__col--wide",
         render: (row) => row.description ?? "—",
+        sortable: true,
+        sortValue: (row) => row.description,
       },
       {
         key: "proposal_date",
         header: "Data",
+        className: "dc-table__col--numeric",
         render: (row) => formatDisplayDate(row.proposal_date),
+        sortable: true,
+        sortValue: (row) => row.proposal_date,
       },
       {
         key: "end_date",
         header: "Fim",
+        className: "dc-table__col--numeric",
         render: (row) => formatDisplayDate(row.end_date),
+        sortable: true,
+        sortValue: (row) => row.end_date,
       },
       {
         key: "status",
@@ -215,11 +236,15 @@ export function DashboardCommercialPage({
             code={row.status_code}
           />
         ),
+        sortable: true,
+        sortValue: (row) => row.status_label ?? row.status_code,
       },
       {
         key: "customer",
         header: "Cliente",
         render: (row) => row.customer_code ?? "—",
+        sortable: true,
+        sortValue: (row) => row.customer_code,
       },
     ],
     []
@@ -436,6 +461,12 @@ export function DashboardCommercialPage({
             }
             onRowClick={handleProposalRowClick}
             loading={proposalsLoading}
+            refreshing={proposalsRefreshing}
+            clientSort={{
+              sortKey: tableSort.sortKey,
+              sortDirection: tableSort.sortDirection,
+              onSortChange: tableSort.handleSortChange,
+            }}
             emptyMessage="Nenhuma proposta encontrada para os filtros selecionados."
             searchPlaceholder="Buscar proposta, descrição, status, cliente…"
             getSearchText={(row) =>
