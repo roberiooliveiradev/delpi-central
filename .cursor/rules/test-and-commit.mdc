@@ -13,6 +13,7 @@ Executar o que couber ao escopo antes de considerar a tarefa concluída:
 |--------|----------------|
 | `minha-delpi-ai-api` | `.venv/bin/python -m pytest tests/unit/... -q` |
 | `api-delpi` | `pytest api-delpi/tests/ -q` |
+| Query SQL (`api-delpi`) | Medir latência/repetição (console Saúde SQL); `pytest tests/test_*_sql.py -q` no container |
 | MFE chat | `npm run build` ou `npm test` em `plugins/minha-delpi-chat` |
 | Gates apresentação | `scripts/audit_presentation_coverage.py --check-profiles` |
 | Nova rota | Ver gates em **`new-api-route-checklist.mdc`** § 4 |

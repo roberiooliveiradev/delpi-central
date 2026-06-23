@@ -1,0 +1,60 @@
+---
+description: SQL TOTVS/SQL Server — melhores práticas, medição de peso/latência e alívio de carga
+alwaysApply: true
+---
+
+# Desenvolvimento de queries SQL
+
+## Princípio
+
+**Sempre** desenvolver e revisar SQL seguindo melhores práticas. **Antes de entregar**, validar **tempo e peso** da query (plano, repetição, impacto em polling). Preferir medidas que **não sobrecarreguem** o banco nem multipliquem round-trips.
+
+## Onde implementar
+
+| Camada | Responsabilidade |
+|--------|------------------|
+| SQL canônico | `api-delpi/app/infrastructure/persistence/totvs/**/*_sql.py`, `*_repository.py` |
+| Cache | `query_cache_composer` + `*_cache.py` em `application/services/` |
+| Observabilidade | `operation_id` estável; console **Saúde SQL** + aba **Cache** |
+
+Use case **não** embute SQL nem loop N+1 por bucket/filial sem cache ou batch.
+
+## Antes do merge (obrigatório)
+
+1. **Medir** — ambiente com TOTVS ou container `delpi-api-delpi`: tempo médio/máx, linhas lidas, repetição no polling (30 s).
+2. **Plano** — para queries > ~500 ms ou alerta `slow_sql` (> 2500 ms): plano de execução; índices (filial + data) documentados para DBA se necessário.
+3. **Testar** — `pytest tests/test_*_sql.py` ou teste de repositório que asserta SQL/parâmetros; smoke da rota quando couber.
+4. **Console** — conferir `operation_id`, hash e se cache frio vs. SQL pesado explica a latência.
+
+## Melhores práticas (SQL Server + Protheus)
+
+- Parâmetros com **bind** (`?`); filtros cedo: `D_E_L_E_T_`, filial, datas.
+- CTEs nomeadas; evitar `SELECT DISTINCT` grande quando `GROUP BY` basta.
+- Evitar funções em coluna indexada no `WHERE` (`RTRIM`, `CONVERT` em massa).
+- KPI/listagem: `TOP`, paginação, `summary_only` quando o caller não precisa do bundle completo.
+- **Uma fonte** — extrair SQL compartilhado; não duplicar CTEs entre repositórios.
+
+## Alívio de carga (usar quando aplicável)
+
+| Medida | Quando |
+|--------|--------|
+| `WITH (NOLOCK)` | Leitura analítica (dashboard, KPI, série temporal) — **não** em escrita/conciliação |
+| `query_cache` (TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s) | Mesmos parâmetros repetidos (polling, séries por bucket, `get_rol`) |
+| Cache da **série/resposta inteira** | Gráficos com auto-refresh (`*-series` no use case) |
+| Evitar N+1 | Loop por bucket/filial → cache por chave ou **uma** query agregada |
+| Índices | SB9/SD3/SC2 etc. — ver docs de performance do módulo |
+
+Namespaces de cache existentes: `stock-value`, `financial-rol`, `production-oee`, `production-otd`, `commercial-rol-series`, `production-oee-series`, `production-otd-series`.
+
+## O que NÃO fazer
+
+- Entregar SQL novo sem estimar impacto ou sem teste de regressão SQL.
+- Consolidado sem filial sem cache quando o dashboard repete a chamada.
+- `NOLOCK` em fluxo transacional ou quando consistência forte é requisito.
+- Micro-otimizar SQL ignorando repetição que cache resolveria.
+
+## Referências
+
+- `api-delpi/docs/api/06-modulos-departamentais.md` (§ Performance por módulo)
+- `api-delpi/docs/api/supplies-estoque-historico.md`
+- `api-delpi/docs/roadmaps/playbook-api-delpi-console.md` (Saúde SQL, Cache)

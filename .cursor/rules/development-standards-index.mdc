@@ -30,6 +30,7 @@ alwaysApply: true
 | Regra | Escopo |
 |-------|--------|
 | `api-delpi-response-contract.mdc` | Envelope, `meta`, `route_contract_registry`, RBAC |
+| `sql-query-development.mdc` | SQL TOTVS — práticas, medição de latência/peso, NOLOCK, cache |
 
 ## Frontend (`plugins/minha-delpi-chat`)
 
@@ -43,6 +44,7 @@ alwaysApply: true
 
 ```
 Nova rota REST          → api-delpi-response-contract → new-api-route-checklist
+Query SQL nova/alterada → sql-query-development → teste *_sql.py + Saúde SQL / Cache
 Bug apresentação chat   → presentation-operational-decoupling → centralized-rules-first → ChatPresentation*
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
