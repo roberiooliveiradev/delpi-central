@@ -49,6 +49,11 @@ Parâmetros comuns de período:
 
 **Performance (`/commercial/.../history/events`):** ver § Engenharia — histórico (`/history/events`); custo O(eventos da OV), não varredura `AllListingAnchorRaw`.
 
+**Performance (séries e ROL — jun/2026):**
+
+- `GET /commercial/rol/series`: cache da resposta completa (`commercial-rol-series|…`) + cache por bucket em `FinancialRepository.get_rol` (`financial-rol|…`). TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s). Beneficia também KPIs que reutilizam `get_rol` (CPV, custos %, etc.).
+- SQL ROL: leitura com `WITH (NOLOCK)` em SD2/SA1/SF4/SD1. Console: `operation_id=get_commercial_rol_series`; validar hit rate na aba **Cache** em polling de dashboard (30 s).
+
 ---
 
 ## RH — `/hr`
@@ -89,6 +94,11 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 
 **Detalhe (`GET /production/oee/appointments/{id}`):** `oee_pct` e `time_analysis.efficiency_from_times_pct` calculados por tempos (roteiro SG2/SHY + horários); diagnóstico em `time_analysis.findings` via `production_appointment_time_analysis`.
 
+**Performance (séries OEE/OTD — jun/2026):**
+
+- `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa (`production-oee-series|…`, `production-otd-series|…`) + cache por filial/período nos repositórios (`production-oee|…`, `production-otd|…`). TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
+- OTD: `WITH (NOLOCK)` em SC2/SB1. Console: `get_production_oee_series` / `get_production_otd_series` — após primeiro carregamento, polling do dashboard deve gerar hits na aba **Cache**.
+
 **Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  
 **Compras ranking:** `GET /purchases/top-products` — mesma doc.
 
@@ -118,6 +128,7 @@ Parâmetros adicionais:
 - SQL canônico: `supplies_repositories/stock_value_historical_sql.py` (CTE `movimentos_sd3` — uma varredura SD3010).
 - SI/IDD: `summary_only=true` → `HISTORICAL_STOCK_SUMMARY_SQL` (sem temp table).
 - Cache: `query_cache` namespace `stock-value|…` (TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+- SQL histórico: `WITH (NOLOCK)` em SB9010 e SD3010 (leitura analítica).
 - Console: `operation_id=get_supplies_stock_value`; detalhes em [supplies-estoque-historico.md](./supplies-estoque-historico.md#implementação-sql-e-performance-jun2026).
 
 ---

@@ -3,6 +3,11 @@ from app.application.dto.production.get_production_oee_request import (
 )
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.models.page import Page
+from app.application.services.production.production_kpi_cache import (
+    get_cached_production_oee,
+    production_oee_cache_key,
+    set_cached_production_oee,
+)
 from app.domain.entities.production.overall_equipment_effectiveness import (
     OverallEquipmentEffectiveness,
 )
@@ -139,6 +144,19 @@ class OverallEquipmentEffectivenessRepository(
         """
 
     def get_overall_equipment_effectiveness(
+        self,
+        request: ProductionRequest,
+    ) -> OverallEquipmentEffectiveness:
+        cache_key = production_oee_cache_key(request)
+        cached = get_cached_production_oee(cache_key)
+        if cached is not None:
+            return cached
+
+        result = self._load_overall_equipment_effectiveness(request)
+        set_cached_production_oee(cache_key, result)
+        return result
+
+    def _load_overall_equipment_effectiveness(
         self,
         request: ProductionRequest,
     ) -> OverallEquipmentEffectiveness:

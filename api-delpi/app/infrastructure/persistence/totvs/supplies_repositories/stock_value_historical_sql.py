@@ -19,7 +19,7 @@ HISTORICAL_STOCK_ITEM_CTES = f"""
             SELECT
                 B9_FILIAL AS branch,
                 MAX(B9_DATA) AS closing_base_date
-            FROM SB9010
+            FROM SB9010 WITH (NOLOCK)
             WHERE D_E_L_E_T_ = ''
               AND B9_DATA <> ''
               AND B9_DATA < ?
@@ -33,7 +33,7 @@ HISTORICAL_STOCK_ITEM_CTES = f"""
                 RTRIM(B9.B9_COD) AS product_code,
                 SUM(B9.B9_QINI) AS closing_base_quantity,
                 SUM(B9.B9_VINI1) AS closing_base_value
-            FROM SB9010 B9
+            FROM SB9010 B9 WITH (NOLOCK)
             INNER JOIN ultima_data_sb9 U
                 ON U.branch = B9.B9_FILIAL
                AND U.closing_base_date = B9.B9_DATA
@@ -82,7 +82,7 @@ HISTORICAL_STOCK_ITEM_CTES = f"""
                         ELSE 0
                     END
                 ) AS period_net_value
-            FROM SD3010 D3
+            FROM SD3010 D3 WITH (NOLOCK)
             INNER JOIN ultima_data_sb9 U
                 ON U.branch = D3.D3_FILIAL
             WHERE D3.D_E_L_E_T_ = ''

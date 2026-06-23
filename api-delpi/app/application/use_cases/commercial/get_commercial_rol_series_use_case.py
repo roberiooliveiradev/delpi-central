@@ -6,6 +6,13 @@ from app.application.dto.commercial.commercial_rol_series_response import (
     CommercialRolSeriesResponse,
 )
 from app.application.dto.financial.get_rol_request import GetRolRequest
+from app.application.services.charts.chart_series_cache_keys import (
+    commercial_rol_series_cache_key,
+)
+from app.application.services.production.production_kpi_cache import (
+    get_cached_chart_series,
+    set_cached_chart_series,
+)
 from app.application.shared.chart_period_buckets import build_period_buckets
 from app.domain.ports.financial.financial_query_repository_port import (
     FinancialQueryRepositoryPort,
@@ -21,6 +28,11 @@ class GetCommercialRolSeriesUseCase:
 
     def execute(self, request: CommercialRolSeriesRequest) -> CommercialRolSeriesResponse:
         request.validate()
+
+        cache_key = commercial_rol_series_cache_key(request)
+        cached = get_cached_chart_series(cache_key)
+        if cached is not None:
+            return self._from_cached_dict(cached)
 
         buckets_result = build_period_buckets(
             date_start=request.date_start,
@@ -59,8 +71,21 @@ class GetCommercialRolSeriesUseCase:
                 )
             )
 
-        return CommercialRolSeriesResponse(
+        response = CommercialRolSeriesResponse(
             granularity=request.granularity,
             truncated=buckets_result.truncated,
             points=points,
+        )
+        set_cached_chart_series(cache_key, response.to_dict())
+        return response
+
+    @staticmethod
+    def _from_cached_dict(cached: dict) -> CommercialRolSeriesResponse:
+        return CommercialRolSeriesResponse(
+            granularity=cached["granularity"],
+            truncated=bool(cached["truncated"]),
+            points=[
+                CommercialRolSeriesPointDto(**point)
+                for point in cached.get("points") or []
+            ],
         )

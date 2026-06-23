@@ -8,6 +8,13 @@ from app.application.dto.production.production_otd_series_response import (
     ProductionOtdSeriesResponse,
 )
 from app.application.dto.production.production_request import ProductionRequest
+from app.application.services.charts.chart_series_cache_keys import (
+    production_otd_series_cache_key,
+)
+from app.application.services.production.production_kpi_cache import (
+    get_cached_chart_series,
+    set_cached_chart_series,
+)
 from app.application.shared.chart_period_buckets import build_period_buckets
 from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.ports.production.on_time_delivery_repository_port import (
@@ -27,6 +34,11 @@ class GetProductionOtdSeriesUseCase:
 
     def execute(self, request: ProductionOtdSeriesRequest) -> ProductionOtdSeriesResponse:
         request.validate()
+
+        cache_key = production_otd_series_cache_key(request)
+        cached = get_cached_chart_series(cache_key)
+        if cached is not None:
+            return self._from_cached_dict(cached)
 
         buckets_result = build_period_buckets(
             date_start=request.date_start,
@@ -61,11 +73,25 @@ class GetProductionOtdSeriesUseCase:
                 )
             )
 
-        return ProductionOtdSeriesResponse(
+        response = ProductionOtdSeriesResponse(
             granularity=request.granularity,
             truncated=buckets_result.truncated,
             branch=request.branch,
             points=points,
+        )
+        set_cached_chart_series(cache_key, response.to_dict())
+        return response
+
+    @staticmethod
+    def _from_cached_dict(cached: dict) -> ProductionOtdSeriesResponse:
+        return ProductionOtdSeriesResponse(
+            granularity=cached["granularity"],
+            truncated=bool(cached["truncated"]),
+            branch=cached.get("branch"),
+            points=[
+                ProductionOtdSeriesPointDto(**point)
+                for point in cached.get("points") or []
+            ],
         )
 
     def _fetch_otd_pct(

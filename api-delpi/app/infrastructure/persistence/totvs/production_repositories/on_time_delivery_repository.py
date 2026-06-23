@@ -10,13 +10,18 @@ from app.application.dto.production.get_production_otd_request import (
 )
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.models.page import Page
+from app.application.services.production.production_kpi_cache import (
+    get_cached_production_otd,
+    production_otd_cache_key,
+    set_cached_production_otd,
+)
 from app.domain.entities.production.on_time_delivery import OnTimeDelivery
 from app.domain.ports.production.on_time_delivery_repository_port import (
     OnTimeDeliveryRepositoryPort,
 )
 
 _SC2_PA_JOIN = """
-    INNER JOIN SB1010 P_PA
+    INNER JOIN SB1010 P_PA WITH (NOLOCK)
         ON P_PA.B1_COD = OP.C2_PRODUTO
        AND P_PA.D_E_L_E_T_ = ''
        AND P_PA.B1_TIPO = 'PA'
@@ -143,6 +148,19 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         self,
         request: ProductionRequest,
     ) -> OnTimeDelivery:
+        cache_key = production_otd_cache_key(request)
+        cached = get_cached_production_otd(cache_key)
+        if cached is not None:
+            return cached
+
+        result = self._load_on_time_delivery(request)
+        set_cached_production_otd(cache_key, result)
+        return result
+
+    def _load_on_time_delivery(
+        self,
+        request: ProductionRequest,
+    ) -> OnTimeDelivery:
         where_clause, where_params = self._build_base_where(
             branch=request.branch,
             start_date=request.start_date,
@@ -155,7 +173,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
                     OP.C2_NUM,
                     OP.C2_DATPRF,
                     OP.C2_DATRF
-                FROM SC2010 OP
+                FROM SC2010 OP WITH (NOLOCK)
                 {_SC2_PA_JOIN}
                 WHERE {where_clause}
             )
@@ -212,7 +230,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
                     OP.C2_NUM,
                     OP.C2_DATPRF,
                     OP.C2_DATRF
-                FROM SC2010 OP
+                FROM SC2010 OP WITH (NOLOCK)
                 {_SC2_PA_JOIN}
                 WHERE {where_clause}
             )

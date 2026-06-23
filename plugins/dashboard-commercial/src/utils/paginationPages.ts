@@ -46,3 +46,40 @@ export function buildVisiblePageItems(
 
   return items;
 }
+
+export type PageJumpValidationReason =
+  | "empty"
+  | "invalid"
+  | "below_min"
+  | "above_max";
+
+export type PageJumpParseResult =
+  | { ok: true; page: number }
+  | { ok: false; reason: PageJumpValidationReason };
+
+export function parsePageJumpInput(
+  raw: string,
+  totalPages: number,
+): PageJumpParseResult {
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return { ok: false, reason: "empty" };
+  }
+
+  if (!/^\d+$/.test(trimmed)) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  const page = Number(trimmed);
+
+  if (page < 1) {
+    return { ok: false, reason: "below_min" };
+  }
+
+  if (page > totalPages) {
+    return { ok: false, reason: "above_max" };
+  }
+
+  return { ok: true, page };
+}

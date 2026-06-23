@@ -237,6 +237,8 @@ estoque_item        → LEFT JOINs; soma base + ponte + período por item
 
 Chaves de cache (`stock_value_cache_key`): incluem `branch`, datas, `top_limit` e sufixo `summary` vs `full` (TTL: `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 
+Tabelas SB9010 e SD3010 no bundle histórico usam `WITH (NOLOCK)` para reduzir contenção em leituras analíticas (jun/2026).
+
 ### Observabilidade (console Saúde SQL)
 
 Duas hashes para a mesma operação são **esperadas**:

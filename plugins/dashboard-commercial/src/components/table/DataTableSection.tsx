@@ -9,7 +9,7 @@ import {
 import { HelpTooltip } from "../HelpTooltip";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "../LoadingActivityCard";
-import { Pagination } from "../Pagination";
+import { Pagination, TablePageSizeSelect } from "../Pagination";
 import { TABLE_PAGE_SIZE_OPTIONS } from "../../utils/paginationPages";
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -194,39 +194,44 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          {!hideSearch || toolbarExtra ? (
-            <div className="dc-table-toolbar">
-              {!hideSearch ? (
-                <>
-                  <div className="dc-table-search" role="search">
-                    <Search
-                      size={16}
-                      aria-hidden="true"
-                      className="dc-table-search__icon"
-                    />
-                    <input
-                      type="search"
-                      className="dc-table-search__input"
-                      value={search}
-                      placeholder={searchPlaceholder}
-                      onChange={(event) => handleSearchChange(event.target.value)}
-                      aria-label="Filtrar registros da tabela"
-                    />
-                  </div>
-                  {searchHint ? (
-                    <HelpTooltip
-                      content={searchHint}
-                      ariaLabel="Ajuda: busca na tabela"
-                      className="dc-table-search__help"
-                    />
-                  ) : null}
-                </>
-              ) : null}
-              {toolbarExtra ? (
-                <div className="dc-table-toolbar__extra">{toolbarExtra}</div>
-              ) : null}
-            </div>
-          ) : null}
+          <div className="dc-table-toolbar">
+            <TablePageSizeSelect
+              pageSize={paginationSize}
+              pageSizeOptions={pageSizeOptions}
+              onPageSizeChange={handlePageSizeChange}
+            />
+
+            {!hideSearch ? (
+              <div className="dc-table-toolbar__search-group">
+                <div className="dc-table-search" role="search">
+                  <Search
+                    size={16}
+                    aria-hidden="true"
+                    className="dc-table-search__icon"
+                  />
+                  <input
+                    type="search"
+                    className="dc-table-search__input"
+                    value={search}
+                    placeholder={searchPlaceholder}
+                    onChange={(event) => handleSearchChange(event.target.value)}
+                    aria-label="Filtrar registros da tabela"
+                  />
+                </div>
+                {searchHint ? (
+                  <HelpTooltip
+                    content={searchHint}
+                    ariaLabel="Ajuda: busca na tabela"
+                    className="dc-table-search__help"
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
+            {toolbarExtra ? (
+              <div className="dc-table-toolbar__extra">{toolbarExtra}</div>
+            ) : null}
+          </div>
 
           <DataTable
             columns={columns}
@@ -246,8 +251,6 @@ export function DataTableSection<T>({
             pageSize={paginationSize}
             total={paginationTotal}
             onPageChange={handlePageChange}
-            pageSizeOptions={pageSizeOptions}
-            onPageSizeChange={handlePageSizeChange}
           />
         </>
       )}

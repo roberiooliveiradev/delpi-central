@@ -199,6 +199,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .dashboard-commercial .dc-header-action__help,
@@ -206,21 +208,29 @@
 .dashboard-commercial .dc-pagination__action-help,
 .dashboard-commercial .dc-chart-toolbar__action-help,
 .dashboard-commercial .dc-chart-toolbar__granularity-help,
-.dashboard-commercial .dc-totvs-banner__help {
+.dashboard-commercial .dc-totvs-banner__help,
+.dashboard-commercial .dc-table-page-size__help,
+.dashboard-commercial .dc-table-search__help,
+.dashboard-commercial .dc-table__header-help,
+.dashboard-commercial .dc-table-section__title-help {
   flex-shrink: 0;
 }
 
 .dashboard-commercial .dc-pagination__info {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .dashboard-commercial .dc-field__label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
   margin-bottom: 6px;
   font-size: var(--dc-font-sm);
   font-weight: 600;
@@ -232,6 +242,7 @@
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .dashboard-commercial .dc-help-tooltip--wrap {
@@ -383,7 +394,11 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+.dashboard-commercial .dc-table-section__header .dc-section-title {
+  flex-wrap: nowrap;
 }
 
 .dashboard-commercial .dc-detail-grid__label {
@@ -398,6 +413,12 @@
   gap: 4px;
   min-width: 0;
   flex: 1 1 auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.dashboard-commercial .dc-table__header-text {
+  white-space: nowrap;
 }
 
 .dashboard-commercial .dc-table__header-help {
@@ -510,9 +531,42 @@
 .dashboard-commercial .dc-table-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 12px;
+}
+
+.dashboard-commercial .dc-table-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: var(--dc-font-sm);
+  color: var(--dc-text-muted);
+}
+
+.dashboard-commercial .dc-table-page-size__label {
+  font-weight: 600;
+}
+
+.dashboard-commercial .dc-table-page-size__select {
+  min-width: 72px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--dc-card-border);
+  background: var(--dc-card-bg);
+  color: var(--dc-title);
+  font: inherit;
+}
+
+.dashboard-commercial .dc-table-toolbar__search-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 280px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .dashboard-commercial .dc-table-search {
@@ -1722,30 +1776,13 @@
 }
 
 .dashboard-commercial .dc-pagination {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--dc-card-border);
-}
-
-.dashboard-commercial .dc-pagination__start {
-  justify-self: start;
-}
-
-.dashboard-commercial .dc-pagination__center {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-self: center;
   gap: 10px;
-  min-width: 0;
-}
-
-.dashboard-commercial .dc-pagination__end {
-  justify-self: end;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dc-card-border);
 }
 
 .dashboard-commercial .dc-pagination__info {
@@ -1754,30 +1791,66 @@
   text-align: center;
 }
 
-.dashboard-commercial .dc-pagination__size,
 .dashboard-commercial .dc-pagination__jump {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
   font-size: var(--dc-font-sm);
   color: var(--dc-text-muted);
+  position: relative;
 }
 
-.dashboard-commercial .dc-pagination__size-label,
-.dashboard-commercial .dc-pagination__jump-label {
-  font-weight: 600;
+.dashboard-commercial .dc-pagination__jump-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   white-space: nowrap;
 }
 
-.dashboard-commercial .dc-pagination__size-select,
-.dashboard-commercial .dc-pagination__jump-select {
-  min-width: 72px;
+.dashboard-commercial .dc-pagination__jump-label {
+  font-weight: 600;
+}
+
+.dashboard-commercial .dc-pagination__jump-input {
+  width: 4.5rem;
   padding: 6px 10px;
   border-radius: 10px;
   border: 1px solid var(--dc-card-border);
   background: var(--dc-card-bg);
   color: var(--dc-title);
   font: inherit;
+  text-align: center;
+}
+
+.dashboard-commercial .dc-pagination__jump-input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--dc-accent) 45%, transparent);
+  outline-offset: 1px;
+  border-color: var(--dc-accent);
+}
+
+.dashboard-commercial .dc-pagination__jump-input--invalid {
+  border-color: #c62828;
+}
+
+.dashboard-commercial .dc-pagination__jump-error {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: max-content;
+  max-width: min(240px, 70vw);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, #c62828 35%, var(--dc-card-border));
+  background: color-mix(in srgb, #c62828 10%, var(--dc-card-bg));
+  color: #c62828;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  z-index: 2;
 }
 
 .dashboard-commercial .dc-pagination__controls {
@@ -1786,6 +1859,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  width: 100%;
 }
 
 .dashboard-commercial .dc-pagination__pages {
@@ -2036,18 +2110,13 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-commercial .dc-pagination {
-    grid-template-columns: 1fr;
-    justify-items: center;
+  .dashboard-commercial .dc-table-toolbar {
+    align-items: stretch;
   }
 
-  .dashboard-commercial .dc-pagination__start {
-    justify-self: start;
+  .dashboard-commercial .dc-table-page-size,
+  .dashboard-commercial .dc-table-toolbar__search-group {
     width: 100%;
-  }
-
-  .dashboard-commercial .dc-pagination__end {
-    display: none;
   }
 
   .dashboard-commercial .dc-filter-box--wide {

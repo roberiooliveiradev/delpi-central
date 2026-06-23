@@ -1,16 +1,31 @@
 # app/infrastructure/persistence/totvs/financial_repositories/financial_repository.py
-from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.application.dto.financial.get_rol_request import GetRolRequest
+from app.application.services.financial.financial_rol_cache import (
+    financial_rol_cache_key,
+    get_cached_financial_rol,
+    set_cached_financial_rol,
+)
 from app.domain.ports.financial.financial_query_repository_port import FinancialQueryRepositoryPort
 from app.domain.services.commercial_customer_segment_service import (
     CommercialCustomerSegmentService,
 )
+from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
 
     def get_rol(self, request: GetRolRequest) -> dict:
+        cache_key = financial_rol_cache_key(request)
+        cached = get_cached_financial_rol(cache_key)
+        if cached is not None:
+            return cached
+
+        result = self._load_rol(request)
+        set_cached_financial_rol(cache_key, result)
+        return result
+
+    def _load_rol(self, request: GetRolRequest) -> dict:
         vendas_qb = QueryBuilder()
         vendas_qb.raw("D2.D_E_L_E_T_ = ''")
         if request.branch:
@@ -63,14 +78,14 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 MIN(D2.D2_EMISSAO) AS MIN_EMISSAO,
                 MAX(D2.D2_EMISSAO) AS MAX_EMISSAO
 
-            FROM SD2010 D2
+            FROM SD2010 D2 WITH (NOLOCK)
 
-            LEFT JOIN SA1010 A1
+            LEFT JOIN SA1010 A1 WITH (NOLOCK)
                 ON  A1.D_E_L_E_T_ = ''
                 AND A1.A1_COD  = D2.D2_CLIENTE
                 AND A1.A1_LOJA = D2.D2_LOJA
 
-            LEFT JOIN SF4010 F4
+            LEFT JOIN SF4010 F4 WITH (NOLOCK)
                 ON  F4.D_E_L_E_T_ = ''
                 AND F4.F4_CODIGO = D2.D2_TES
                 AND (
@@ -106,7 +121,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                         AND D2.D2_UM  = 'MI'
                         AND EXISTS (
                             SELECT 1
-                            FROM SD1010 D1X
+                            FROM SD1010 D1X WITH (NOLOCK)
                             WHERE
                                 D1X.D_E_L_E_T_ = ''
                                 AND D1X.D1_FILIAL  = D2.D2_FILIAL
@@ -140,7 +155,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                     - ISNULL(D1.D1_VALIMP6, 0)
                 )) AS VLR_DEVOLUCAO
 
-            FROM SD1010 D1
+            FROM SD1010 D1 WITH (NOLOCK)
 
             WHERE {dev_where}
                 AND (
