@@ -9,8 +9,8 @@ import {
   AGENT_ICEBREAKER_TITLE_MAX_CHARS,
   buildIcebreakerPlaceholderToken,
   clampIcebreakerDraft,
-  clampIcebreakerHint,
-  clampIcebreakerTitle,
+  clampIcebreakerHintDraft,
+  clampIcebreakerTitleDraft,
   createEmptyIcebreakerEntry,
   createIcebreakerField,
   hasShortcutPlaceholders,
@@ -387,7 +387,7 @@ export function AgentIcebreakersEditor({
                         onChange={(event) =>
                           onChange(
                             updateEntry(entries, index, {
-                              label: clampIcebreakerTitle(event.target.value),
+                              label: clampIcebreakerTitleDraft(event.target.value),
                             }),
                           )
                         }
@@ -404,7 +404,7 @@ export function AgentIcebreakersEditor({
                         onChange={(event) =>
                           onChange(
                             updateEntry(entries, index, {
-                              hint: clampIcebreakerHint(event.target.value),
+                              hint: clampIcebreakerHintDraft(event.target.value),
                             }),
                           )
                         }
@@ -564,7 +564,7 @@ export function AgentIcebreakersEditor({
                                   onChange={(event) =>
                                     onChange(
                                       updateField(entries, index, fieldIndex, {
-                                        placeholder: event.target.value.trim() || undefined,
+                                        placeholder: event.target.value || undefined,
                                       }),
                                     )
                                   }

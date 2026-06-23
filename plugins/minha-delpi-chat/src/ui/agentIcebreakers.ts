@@ -101,6 +101,15 @@ export function clampIcebreakerHint(value: string): string {
   return clampText(value.trim(), AGENT_ICEBREAKER_HINT_MAX_CHARS);
 }
 
+/** Edição ao vivo — não faz trim (evita engolir espaço antes da próxima palavra). */
+export function clampIcebreakerTitleDraft(value: string): string {
+  return clampText(value, AGENT_ICEBREAKER_TITLE_MAX_CHARS);
+}
+
+export function clampIcebreakerHintDraft(value: string): string {
+  return clampText(value, AGENT_ICEBREAKER_HINT_MAX_CHARS);
+}
+
 function normalizeFieldId(value: string): string {
   const normalized = value
     .trim()

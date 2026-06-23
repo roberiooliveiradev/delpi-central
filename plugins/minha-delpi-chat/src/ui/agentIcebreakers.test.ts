@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   agentIcebreakersUseDefaults,
   buildIcebreakerPlaceholderToken,
+  clampIcebreakerHintDraft,
+  clampIcebreakerTitle,
+  clampIcebreakerTitleDraft,
   getIcebreakerGridDensityClass,
   icebreakerRequiresShortcutModal,
   normalizeAgentIcebreakerEntries,
@@ -77,6 +80,14 @@ describe("agentIcebreakers", () => {
 
   it("gera token de placeholder", () => {
     expect(buildIcebreakerPlaceholderToken("productCode")).toBe("{{productCode}}");
+  });
+
+  it("rascunho de título e subtítulo preserva espaços durante a digitação", () => {
+    expect(clampIcebreakerTitleDraft("matéria-prima, produto ")).toBe(
+      "matéria-prima, produto ",
+    );
+    expect(clampIcebreakerHintDraft("Estrutura, MPs, ")).toBe("Estrutura, MPs, ");
+    expect(clampIcebreakerTitle("  título  ")).toBe("título");
   });
 
   it("usa grid 2x2 para quatro sugestões", () => {
