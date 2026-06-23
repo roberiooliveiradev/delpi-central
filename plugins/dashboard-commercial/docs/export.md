@@ -18,7 +18,8 @@ import {
 |---------|----------------|
 | CSV | UTF-8 com BOM, separador `;` |
 | Excel | `xlsx` (dynamic import) |
-| PDF | HTML certificado DELPI + `window.print()` |
+| PDF | HTML certificado DELPI + `window.print()` (gráficos: imagem embutida quando `chartRoot` informado) |
+| PNG | Rasterização SVG Recharts (somente em exportação de gráfico) |
 
 ## Variantes de UI
 

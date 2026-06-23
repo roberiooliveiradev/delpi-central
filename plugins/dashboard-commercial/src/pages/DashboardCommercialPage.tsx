@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Banknote,
   PackageCheck,
@@ -80,6 +80,7 @@ export function DashboardCommercialPage({
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
   const [proposalStatusFilter, setProposalStatusFilter] =
     useState<CommercialProposalStatusFilter>("all");
+  const rolChartExportRef = useRef<HTMLDivElement>(null);
 
   const {
     headOfficeRol,
@@ -513,6 +514,7 @@ export function DashboardCommercialPage({
                 variant="table"
                 payload={rolSeriesExportPayload}
                 disabled={rolSeries.points.length === 0}
+                getChartRoot={() => rolChartExportRef.current}
                 className="dc-export-actions dc-export-actions--compact"
                 buttonClassName="dc-ghost-btn dc-chart-toolbar__export"
               />
@@ -527,11 +529,13 @@ export function DashboardCommercialPage({
 
           {!rolSeries.error &&
           (rolSeries.points.length > 0 || rolSeries.loading) ? (
-            <RolEvolutionChart
-              data={rolSeries.points}
-              loading={rolSeries.loading}
-              onDrillDown={handleChartDrillDown}
-            />
+            <div ref={rolChartExportRef}>
+              <RolEvolutionChart
+                data={rolSeries.points}
+                loading={rolSeries.loading}
+                onDrillDown={handleChartDrillDown}
+              />
+            </div>
           ) : null}
 
           {!rolSeries.error &&

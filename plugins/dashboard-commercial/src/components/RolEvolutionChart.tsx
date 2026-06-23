@@ -62,7 +62,8 @@ export function RolEvolutionChart({
   };
 
   return (
-    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+    <div className="dc-chart-export-root">
+      <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
       <LineChart
         data={data as Record<string, string | number>[]}
         onClick={handleClick}
@@ -105,5 +106,6 @@ export function RolEvolutionChart({
         />
       </LineChart>
     </ResponsiveContainer>
+    </div>
   );
 }

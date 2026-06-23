@@ -8,6 +8,8 @@ import {
   exportPayloadsToXlsx,
   exportTableFormat,
 } from "./exportUtils";
+import { exportChartPayloadToPdf } from "./pdf/tablePdfExport";
+import { rasterizeChartElement } from "./chartPngExport";
 import type { CommercialExportRequest } from "./types";
 
 const DASHBOARD_SUBTITLE = "Minha DELPI · Dashboard Comercial";
@@ -16,6 +18,12 @@ const DETAIL_SUBTITLE = "Minha DELPI · Detalhe comercial";
 export function runCommercialExport(request: CommercialExportRequest): void {
   switch (request.kind) {
     case "table":
+      if (request.format === "pdf" && request.chartRoot) {
+        void rasterizeChartElement(request.chartRoot).then((dataUrl) => {
+          exportChartPayloadToPdf(request.payload.title, request.payload, dataUrl);
+        });
+        return;
+      }
       exportTableFormat(request.payload, request.format);
       return;
     case "tables":

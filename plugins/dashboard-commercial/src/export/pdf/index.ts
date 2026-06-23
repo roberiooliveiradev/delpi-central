@@ -20,6 +20,7 @@ export {
 export { printDelpiDocumentHtml } from "./delpiDocumentPrint";
 
 export {
+  exportChartPayloadToPdf,
   exportTablePayloadToPdf,
   exportTablePayloadsToPdf,
   printDelpiDocumentSpec,

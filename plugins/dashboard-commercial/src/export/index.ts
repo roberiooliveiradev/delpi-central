@@ -55,10 +55,17 @@ export { TABULAR_EXPORT_ACTIONS } from "./types";
 
 export {
   buildDelpiDocumentHtml,
+  exportChartPayloadToPdf,
   exportTablePayloadToPdf,
   exportTablePayloadsToPdf,
   printDelpiDocumentSpec,
   resolveDelpiLogoUrl,
 } from "./pdf";
+
+export {
+  exportChartElementToPng,
+  rasterizeChartElement,
+  resolveChartExportTarget,
+} from "./chartPngExport";
 
 export type { DelpiDocumentSpec } from "./pdf";

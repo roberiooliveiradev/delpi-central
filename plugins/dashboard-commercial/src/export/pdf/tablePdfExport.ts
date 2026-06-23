@@ -23,6 +23,7 @@ function buildTableExportSpec(
   tables: DelpiDocumentTable[],
   options?: {
     subtitle?: string;
+    imageSections?: DelpiDocumentSpec["imageSections"];
     summaryLines?: DelpiDocumentSpec["summaryLines"];
   },
 ): DelpiDocumentSpec {
@@ -35,6 +36,7 @@ function buildTableExportSpec(
     summaryLines:
       options?.summaryLines || buildDefaultExportSummaryLines(recordCount),
     tables,
+    imageSections: options?.imageSections,
     footerContext: title,
   };
 }
@@ -77,6 +79,35 @@ export function exportTablePayloadsToPdf(
 
   const opened = printDelpiDocumentSpec(
     buildTableExportSpec(title, tables, { subtitle: options?.subtitle }),
+  );
+
+  if (!opened) {
+    exportAlert(
+      "Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.",
+    );
+  }
+}
+
+export function exportChartPayloadToPdf(
+  title: string,
+  payload: TableExportPayload,
+  chartDataUrl: string | null,
+): void {
+  const tables = payload.columns.length ? [toDocumentTable(payload)] : [];
+  const imageSections = chartDataUrl
+    ? [{ title: "Visualização", dataUrl: chartDataUrl, alt: title }]
+    : undefined;
+
+  if (!tables.length && !imageSections?.length) {
+    exportAlert("Não há dados para exportar em PDF.");
+    return;
+  }
+
+  const opened = printDelpiDocumentSpec(
+    buildTableExportSpec(title, tables, {
+      imageSections,
+      summaryLines: buildDefaultExportSummaryLines(payload.rows.length),
+    }),
   );
 
   if (!opened) {

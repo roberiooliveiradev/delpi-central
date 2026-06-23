@@ -1,5 +1,6 @@
-import { Download } from "lucide-react";
+import { Download, Image } from "lucide-react";
 
+import { exportChartElementToPng } from "./chartPngExport";
 import { runCommercialExport } from "./dispatch";
 import { TABULAR_EXPORT_ACTIONS } from "./types";
 import type {
@@ -9,31 +10,29 @@ import type {
   TableExportPayload,
 } from "./types";
 
-type TableExportButtonsProps = {
+type ExportButtonsBaseProps = {
+  disabled?: boolean;
+  className?: string;
+  buttonClassName?: string;
+  showIcon?: boolean;
+};
+
+type TableExportButtonsProps = ExportButtonsBaseProps & {
   variant: "table";
   payload: TableExportPayload;
-  disabled?: boolean;
-  className?: string;
-  buttonClassName?: string;
-  showIcon?: boolean;
+  chartRoot?: HTMLElement | null;
+  getChartRoot?: () => HTMLElement | null;
+  showPngExport?: boolean;
 };
 
-type DashboardExportButtonsProps = {
+type DashboardExportButtonsProps = ExportButtonsBaseProps & {
   variant: "dashboard";
   context: DashboardExportContext;
-  disabled?: boolean;
-  className?: string;
-  buttonClassName?: string;
-  showIcon?: boolean;
 };
 
-type DetailExportButtonsProps = {
+type DetailExportButtonsProps = ExportButtonsBaseProps & {
   variant: "detail";
   context: DetailExportContext;
-  disabled?: boolean;
-  className?: string;
-  buttonClassName?: string;
-  showIcon?: boolean;
 };
 
 export type CommercialExportButtonsProps =
@@ -41,12 +40,21 @@ export type CommercialExportButtonsProps =
   | DashboardExportButtonsProps
   | DetailExportButtonsProps;
 
+function resolveChartRoot(props: TableExportButtonsProps): HTMLElement | null {
+  return props.getChartRoot?.() ?? props.chartRoot ?? null;
+}
+
 function dispatchRequest(
   props: CommercialExportButtonsProps,
   format: TabularExportFormat,
 ): void {
   if (props.variant === "table") {
-    runCommercialExport({ kind: "table", payload: props.payload, format });
+    runCommercialExport({
+      kind: "table",
+      payload: props.payload,
+      format,
+      chartRoot: format === "pdf" ? resolveChartRoot(props) : undefined,
+    });
     return;
   }
 
@@ -66,6 +74,11 @@ export function CommercialExportButtons(props: CommercialExportButtonsProps) {
     showIcon = true,
   } = props;
 
+  const showPngExport =
+    props.variant === "table" &&
+    props.showPngExport !== false &&
+    (props.chartRoot != null || props.getChartRoot != null);
+
   return (
     <div className={className} role="group" aria-label="Exportar dados">
       {TABULAR_EXPORT_ACTIONS.map((action) => (
@@ -82,6 +95,24 @@ export function CommercialExportButtons(props: CommercialExportButtonsProps) {
           <span>{action.label}</span>
         </button>
       ))}
+      {showPngExport ? (
+        <button
+          type="button"
+          className={buttonClassName}
+          title="Baixar gráfico PNG"
+          aria-label="Baixar gráfico PNG"
+          disabled={disabled}
+          onClick={() =>
+            exportChartElementToPng(
+              resolveChartRoot(props as TableExportButtonsProps),
+              (props as TableExportButtonsProps).payload.title,
+            )
+          }
+        >
+          {showIcon ? <Image size={15} aria-hidden="true" /> : null}
+          <span>PNG</span>
+        </button>
+      ) : null}
     </div>
   );
 }
