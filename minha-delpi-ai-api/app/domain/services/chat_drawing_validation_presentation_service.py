@@ -8,6 +8,9 @@ from typing import Any
 from app.domain.services.chat_drawing_inspection_validation_service import (
     ChatDrawingInspectionValidationService,
 )
+from app.domain.services.chat_drawing_intermediate_semantics_service import (
+    ChatDrawingIntermediateSemanticsService,
+)
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
 )
@@ -339,6 +342,67 @@ class ChatDrawingValidationPresentationService:
 
         if inspection_lines:
             lines.extend(inspection_lines)
+
+        return lines
+
+    @classmethod
+    def format_dimensions_comparison_section(cls, package: dict[str, Any]) -> list[str]:
+        if not isinstance(package, dict):
+            return []
+
+        analysis = package.get("drawingAnalysis") if isinstance(package.get("drawingAnalysis"), dict) else {}
+        root = package.get("analyserRoot") if isinstance(package.get("analyserRoot"), dict) else {}
+        raw_items = analysis.get("items") if isinstance(analysis.get("items"), list) else []
+        cota_items = [
+            item
+            for item in cls.prepare_display_items(raw_items)
+            if str(item.get("section") or "").strip() == "Cotas"
+        ]
+        intermediate_rows = (
+            ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+            if isinstance(root, dict) and root
+            else []
+        )
+
+        if not cota_items and not intermediate_rows:
+            return []
+
+        lines = [
+            "",
+            ChatDrawingValidationContentService.get("report", "sections", "dimensions"),
+            ChatDrawingValidationContentService.get("report", "dimensionsTableHeader"),
+            ChatDrawingValidationContentService.get("report", "dimensionsTableSeparator"),
+        ]
+        row_tpl = ChatDrawingValidationContentService.get("report", "dimensionsTableRow")
+        dash = ChatDrawingValidationContentService.evidence("dash")
+
+        for item in cota_items:
+            lines.append(
+                row_tpl.format(
+                    label=str(item.get("item") or dash),
+                    pdf=cls.format_evidence_cell(item.get("pdfEvidence") or dash),
+                    api=cls.format_evidence_cell(item.get("apiEvidence") or dash),
+                    status=cls.status_display(str(item.get("status") or "")),
+                )
+            )
+
+        intermediate_tpl = ChatDrawingValidationContentService.get(
+            "report",
+            "dimensionsIntermediateRow",
+        )
+
+        for row in intermediate_rows:
+            length_mm = row.get("lengthMm")
+
+            if length_mm is None:
+                continue
+
+            lines.append(
+                intermediate_tpl.format(
+                    code=cls.format_code(row.get("code") or dash),
+                    length=str(length_mm),
+                )
+            )
 
         return lines
 

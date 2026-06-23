@@ -9,6 +9,7 @@
       "structure": "### Estrutura (SG1010)",
       "guide": "### Roteiro (SG2010)",
       "inspection": "### Inspeções (QP6 / QP7 / QP8)",
+      "dimensions": "### Cotas × estrutura (PDF × SG1010)",
       "critical": "## 4. Divergências (críticas e erros)",
       "checklist": "## 5. Checklist completo",
       "conclusion": "## 6. Conclusão"
@@ -17,6 +18,10 @@
     "noCriticalRow": "| — | Nenhuma divergência automática nesta seção | — | — | — |",
     "criticalRow": "| {section} | {item} | {status} | {pdf} | {api} | {rec} |",
     "checklistRow": "| {section} | {item} | {status} | {rec} |",
+    "dimensionsTableHeader": "| Referência | PDF | SG1010 | Status |",
+    "dimensionsTableSeparator": "|---|---|---|---|",
+    "dimensionsTableRow": "| {label} | {pdf} | {api} | {status} |",
+    "dimensionsIntermediateRow": "| Intermediário `{code}` | — | {length} mm | — |",
     "productLine": "**Produto:** {code}",
     "statusLine": "**Status:** {label}"
   },
@@ -521,6 +526,7 @@
       "decape_mismatch",
       "segment_length_pending",
       "segment_lengths_consolidated",
+      "total_length",
       "balloon_missing_codes",
       "dimension_note_ambiguous",
       "revision_pdf"
@@ -551,7 +557,8 @@
     }
   },
   "patterns": {
-    "intermediateColorSignature": "^CB\\d{2}([A-Z]{4})"
+    "intermediateColorSignature": "^CB\\d{2}([A-Z]{4})",
+    "productDescriptionLengthMm": "(\\d{1,4})\\s*MM\\b"
   },
   "statusPresentation": {
     "ok": { "label": "OK", "symbol": "✅" },

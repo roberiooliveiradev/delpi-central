@@ -1,3 +1,7 @@
+from app.composition.content_composer import configure_domain_infrastructure_ports
+
+configure_domain_infrastructure_ports()
+
 from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
@@ -56,3 +60,37 @@ def test_collect_structure_intermediates_prefers_cable_child_over_terminal_pc():
     assert rows[0]["cableCode"] == "10380013"
     assert rows[0]["cableQuantityMm"] == 240.0
     assert rows[0]["cableUnit"] == "MT"
+
+
+def test_collect_structure_intermediates_walks_nested_pi_under_pa():
+    root = {
+        "product": {
+            "code": "90260027",
+            "description": "CHICOTE PVC SINGELO 660MM",
+        },
+        "structure": {
+            "items": [
+                {
+                    "code": "90260027",
+                    "description": "CHICOTE PVC SINGELO 660MM",
+                    "type": "PA",
+                    "components": [
+                        {
+                            "code": "50220010",
+                            "description": "CA18VDAR-00653/07/06-0000-2100",
+                            "quantity": 1.0,
+                            "components": [
+                                {"code": "10020018", "quantity": 653.0, "unit": "MT"},
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+
+    rows = ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+
+    assert len(rows) == 1
+    assert rows[0]["code"] == "50220010"
+    assert rows[0]["lengthMm"] == 660.0

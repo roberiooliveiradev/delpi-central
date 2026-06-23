@@ -59,3 +59,42 @@ def test_assertion_demotes_pdf_conflicts_but_keeps_api_authoritative():
         item for item in adjusted if item.get("templateKey") == "extraction_confidence"
     )
     assert confidence_item["status"] == "pending"
+
+
+def test_assertion_demotes_total_length_when_low_confidence():
+    items = [
+        {
+            "templateKey": "total_length",
+            "section": "Cotas",
+            "item": "Comprimento total",
+            "status": "critical_error",
+            "pdfEvidence": "1.0 mm (PDF)",
+            "apiEvidence": "660.0 mm (SG1010)",
+            "rule": "total",
+            "recommendation": "Corrigir",
+        }
+    ]
+
+    adjusted, confidence = ChatDrawingValidationAssertionService.apply(
+        items=items,
+        pdf_extract={
+            "productCode": "90260027",
+            "legible": True,
+            "documentVision": {
+                "legibilityScore": 0.4,
+                "hasTitleBlock": True,
+                "stages": ["fitz_embedded"],
+            },
+            "validationScopes": {
+                "dimensions": {"available": False, "sourceKey": "unavailable"}
+            },
+            "dimensions": {"totalLengthMm": 1.0},
+        },
+    )
+
+    total_length = adjusted[1]
+
+    assert confidence is not None
+    assert confidence.meets_threshold is False
+    assert total_length["status"] == "pending"
+    assert total_length.get("validationLayer", {}).get("gate") == "extraction_confidence"

@@ -425,7 +425,7 @@ def test_total_length_within_tolerance_ok():
         "legible": True,
         "componentCodes": ["50225425"],
         "bomRows": [{"code": "50225425"}],
-        "dimensions": {"totalLengthMm": 1000.0},
+        "dimensions": {"totalLengthMm": 792.0},
     }
 
     items = ChatDrawingStructureValidationService.build_check_items(

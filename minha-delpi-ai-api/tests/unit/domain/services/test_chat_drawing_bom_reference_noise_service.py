@@ -79,7 +79,7 @@ def test_total_length_uses_cable_child_not_pi_piece_count():
 
     assert reference is not None
     assert reference.length_mm == 136.0
-    assert reference.unit_label == "MT"
+    assert reference.unit_label == "mm"
 
 
 def test_total_length_uses_pi_quantity_with_length_unit():

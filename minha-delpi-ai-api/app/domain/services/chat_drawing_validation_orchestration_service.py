@@ -397,6 +397,12 @@ class ChatDrawingValidationOrchestrationService:
         )
 
         lines.extend(
+            ChatDrawingValidationPresentationService.format_dimensions_comparison_section(
+                package
+            )
+        )
+
+        lines.extend(
             [
                 "",
                 cls._content("report", "sections", "critical"),

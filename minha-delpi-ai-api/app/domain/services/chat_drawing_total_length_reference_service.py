@@ -12,6 +12,7 @@ from app.domain.services.chat_drawing_intermediate_semantics_service import (
     ChatDrawingIntermediateSemanticsService,
 )
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+from app.domain.services.chat_drawing_tolerance_service import ChatDrawingToleranceService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -36,18 +37,35 @@ class ChatDrawingTotalLengthReferenceService:
         if not items:
             return None
 
+        pa_reference = cls._resolve_from_product_description(root)
         intermediates = ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(
             root
         )
 
         if intermediates:
-            reference = cls._resolve_from_intermediates(intermediates, items)
+            reference = cls._resolve_from_intermediates(intermediates, items, root)
+
+            if reference is not None:
+                if (
+                    pa_reference is not None
+                    and ChatDrawingToleranceService.lengths_within_tolerance(
+                        reference.length_mm,
+                        pa_reference.length_mm,
+                    )
+                    is False
+                ):
+                    return pa_reference
+
+                return reference
+
+        if pa_reference is not None:
+            return pa_reference
+
+        if len(items) == 1:
+            reference = cls._resolve_from_single_item(items[0])
 
             if reference is not None:
                 return reference
-
-        if len(items) == 1:
-            return cls._resolve_from_single_item(items[0])
 
         cable_reference = cls._resolve_from_cable_materials(root, items)
 
@@ -55,6 +73,17 @@ class ChatDrawingTotalLengthReferenceService:
             return cable_reference
 
         return None
+
+    @classmethod
+    def _resolve_from_product_description(cls, root: dict) -> DrawingTotalLengthReference | None:
+        length_mm = ChatDrawingIntermediateSemanticsService._product_description_length_mm(
+            root
+        )
+
+        if length_mm is None:
+            return None
+
+        return DrawingTotalLengthReference(length_mm=length_mm, unit_label="mm")
 
     @classmethod
     def _resolve_from_cable_materials(
@@ -105,28 +134,23 @@ class ChatDrawingTotalLengthReferenceService:
         cls,
         rows: list[dict[str, Any]],
         items: list[dict[str, Any]],
+        root: dict,
     ) -> DrawingTotalLengthReference | None:
         references: list[DrawingTotalLengthReference] = []
 
         for row in rows:
-            length = row.get("cableQuantityMm")
+            reference_mm = cls._intermediate_reference_mm(row, root)
 
-            if length is None:
-                length = row.get("lengthMm")
-
-            if length is None:
+            if reference_mm is None:
                 continue
 
             references.append(
-                DrawingTotalLengthReference(
-                    length_mm=float(length),
-                    unit_label=str(row.get("cableUnit") or "mm").strip() or "mm",
-                )
+                DrawingTotalLengthReference(length_mm=reference_mm, unit_label="mm")
             )
 
         if not references:
             for item in items:
-                reference = cls._length_from_item_quantity(item)
+                reference = cls._length_from_item_quantity(item, root)
 
                 if reference is not None:
                     references.append(reference)
@@ -139,10 +163,19 @@ class ChatDrawingTotalLengthReferenceService:
         if len(unique_lengths) != 1:
             return None
 
-        if len(items) == 1 or len(references) == 1:
-            return references[0]
-
         return references[0]
+
+    @classmethod
+    def _intermediate_reference_mm(cls, row: dict[str, Any], root: dict) -> float | None:
+        length_mm = row.get("lengthMm")
+
+        if length_mm is None:
+            return None
+
+        try:
+            return float(length_mm)
+        except (TypeError, ValueError):
+            return None
 
     @classmethod
     def _resolve_from_single_item(cls, item: dict[str, Any]) -> DrawingTotalLengthReference | None:
@@ -153,10 +186,14 @@ class ChatDrawingTotalLengthReferenceService:
         if code and ChatDrawingPatternsService.is_intermediate_family(code):
             return None
 
-        return cls._length_from_item_quantity(item)
+        return cls._length_from_item_quantity(item, {})
 
     @classmethod
-    def _length_from_item_quantity(cls, item: dict[str, Any]) -> DrawingTotalLengthReference | None:
+    def _length_from_item_quantity(
+        cls,
+        item: dict[str, Any],
+        root: dict,
+    ) -> DrawingTotalLengthReference | None:
         quantity = item.get("quantity")
 
         if quantity is None:
@@ -178,10 +215,16 @@ class ChatDrawingTotalLengthReferenceService:
             return None
 
         if unit in cable_units:
-            total_mm = ChatDrawingBomQuantitySemanticsService.quantity_to_mm(value, unit)
+            batch_scale = ChatDrawingBomQuantitySemanticsService.batch_scale_for_root(root)
+            total_mm = ChatDrawingBomQuantitySemanticsService.per_piece_length_mm(
+                quantity=value,
+                unit=unit,
+                batch_scale=batch_scale,
+                item=item,
+            )
 
             if total_mm is not None:
-                return DrawingTotalLengthReference(length_mm=total_mm, unit_label=unit)
+                return DrawingTotalLengthReference(length_mm=total_mm, unit_label="mm")
 
             return DrawingTotalLengthReference(length_mm=value, unit_label=unit)
 
