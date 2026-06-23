@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildDashboardKpisPayload,
   buildFunnelPayload,
+  buildHistoryPayload,
   buildProposalsPayload,
 } from "./commercialExportBuilders";
 import { csvCell, sanitizeFilename, sanitizeSheetName } from "./primitives";
@@ -56,6 +57,22 @@ describe("commercial export builders", () => {
     });
 
     expect(payload.rows).toHaveLength(3);
+  });
+
+  it("inclui colunas de fluxo no histórico", () => {
+    const payload = buildHistoryPayload([
+      {
+        revision: "001",
+        process_code: "01",
+        stage_code: "10",
+        flow_transition_labels: ["Entrada na engenharia"],
+        is_current: true,
+        is_open: true,
+      },
+    ]);
+
+    expect(payload.columns.some((column) => column.key === "flow")).toBe(true);
+    expect(payload.rows[0]?.flow).toContain("engenharia");
   });
 
   it("achata BOM para exportação tabular", () => {

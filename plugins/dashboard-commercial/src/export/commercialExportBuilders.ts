@@ -15,6 +15,7 @@ import {
   formatProcessStageLabel,
   isHistoryEngineeringFlow,
   resolveHistoryDuration,
+  resolveHistoryFlowLabels,
   resolveHistoryStatus,
 } from "../utils/proposalHistoryFormatting";
 import { parseProductTitle } from "../utils/commercialProductsPresentation";
@@ -198,6 +199,8 @@ export function buildHistoryPayload(
       { key: "duration", label: "Duração" },
       { key: "status", label: "Status" },
       { key: "state", label: "Situação" },
+      { key: "flow", label: "Fluxo" },
+      { key: "current", label: "Marcação" },
       { key: "engineering", label: "Eng." },
     ],
     rows: history.map((event) => ({
@@ -216,6 +219,12 @@ export function buildHistoryPayload(
         : event.is_late
           ? "Atrasado"
           : "Concluído",
+      flow: resolveHistoryFlowLabels(event).join(" · ") || "—",
+      current: event.is_current
+        ? event.is_open
+          ? "Atual (em andamento)"
+          : "Último evento"
+        : "—",
       engineering: isHistoryEngineeringFlow(event) ? "Engenharia" : "—",
     })),
   };

@@ -36,7 +36,7 @@ import {
 - `buildProposalsPayload` — tabela de propostas
 - `buildProductsPayload` — produtos da OV
 - `buildProductStructuresPayload` — BOM achatado
-- `buildHistoryPayload` — histórico AIJ010
+- `buildHistoryPayload` — histórico AIJ010 (inclui fluxo e marcação da timeline)
 - `buildDetailSummaryPayload` — cabeçalho da proposta
 
 ## Testes

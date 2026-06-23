@@ -1435,6 +1435,19 @@
   gap: 16px;
 }
 
+.dashboard-commercial .dc-history-section__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-commercial .dc-history-section__export {
+  display: inline-flex;
+  align-items: center;
+}
+
 .dashboard-commercial .dc-history-section__toggle {
   display: inline-flex;
   flex-wrap: wrap;

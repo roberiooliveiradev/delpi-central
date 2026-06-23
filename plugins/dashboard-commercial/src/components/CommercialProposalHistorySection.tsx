@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { History, Table2 } from "lucide-react";
 
 import type { CommercialProposalHistoryEvent } from "../types/commercial";
@@ -21,6 +21,7 @@ type HistoryViewMode = "timeline" | "table";
 type CommercialProposalHistorySectionProps = {
   items: CommercialProposalHistoryEvent[];
   loading?: boolean;
+  exportActions?: ReactNode;
 };
 
 function renderEngineeringBadge(event: CommercialProposalHistoryEvent) {
@@ -141,6 +142,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
 export function CommercialProposalHistorySection({
   items,
   loading = false,
+  exportActions,
 }: CommercialProposalHistorySectionProps) {
   const [viewMode, setViewMode] = useState<HistoryViewMode>("timeline");
 
@@ -155,11 +157,12 @@ export function CommercialProposalHistorySection({
 
   return (
     <div className="dc-history-section">
-      <div
-        className="dc-history-section__toggle"
-        role="tablist"
-        aria-label="Visualização do histórico"
-      >
+      <div className="dc-history-section__toolbar">
+        <div
+          className="dc-history-section__toggle"
+          role="tablist"
+          aria-label="Visualização do histórico"
+        >
         <button
           type="button"
           role="tab"
@@ -196,6 +199,10 @@ export function CommercialProposalHistorySection({
             className="dc-history-section__toggle-help"
           />
         </button>
+        </div>
+        {exportActions ? (
+          <div className="dc-history-section__export dc-no-print">{exportActions}</div>
+        ) : null}
       </div>
 
       {viewMode === "timeline" ? (

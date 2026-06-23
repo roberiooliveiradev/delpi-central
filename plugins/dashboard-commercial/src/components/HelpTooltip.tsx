@@ -100,6 +100,7 @@ export function HelpTooltip({
   const [visible, setVisible] = useState(false);
   const [bubblePosition, setBubblePosition] = useState<BubblePosition | null>(null);
   const [positioned, setPositioned] = useState(false);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement>(() => document.body);
 
   const rootClass = [
     "dc-help-tooltip",
@@ -138,6 +139,9 @@ export function HelpTooltip({
 
   useLayoutEffect(() => {
     if (!visible) return;
+
+    const anchor = triggerRef.current ?? rootRef.current;
+    setPortalContainer(resolvePortalContainer(anchor));
     updateBubblePosition();
   }, [visible, updateBubblePosition, content]);
 
@@ -218,12 +222,7 @@ export function HelpTooltip({
           <HelpCircle size={14} aria-hidden="true" />
         </button>
       )}
-      {visible
-        ? createPortal(
-            bubble,
-            resolvePortalContainer(triggerRef.current ?? rootRef.current)
-          )
-        : null}
+      {visible ? createPortal(bubble, portalContainer) : null}
     </span>
   );
 }

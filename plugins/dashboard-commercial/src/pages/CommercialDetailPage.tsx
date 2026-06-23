@@ -373,18 +373,18 @@ export function CommercialDetailPage({
           icon={<History size={20} />}
           hint="Eventos AIJ010 — processo e estágio"
           className="dc-detail-card--full"
-          headerActions={
-            <CommercialExportButtons
-              variant="table"
-              payload={historyExportPayload}
-              disabled={historyItems.length === 0}
-              className="dc-export-actions dc-export-actions--compact"
-            />
-          }
         >
           <CommercialProposalHistorySection
             items={historyItems}
             loading={detail.loading}
+            exportActions={
+              <CommercialExportButtons
+                variant="table"
+                payload={historyExportPayload}
+                disabled={historyItems.length === 0}
+                className="dc-export-actions dc-export-actions--compact"
+              />
+            }
           />
         </DetailCard>
       </div>
