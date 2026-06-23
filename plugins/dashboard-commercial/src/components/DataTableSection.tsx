@@ -1,6 +1,6 @@
 export {
   DataTableSection,
-  type ClientSortConfig,
   type DataTableSectionProps,
   type ServerPaginationConfig,
+  type ServerSortConfig,
 } from "./table";

@@ -33,6 +33,36 @@ from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
 class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositoryPort):
     _MAX_PAGE_SIZE = 200
 
+    @staticmethod
+    def _list_order_clause(request: ListCommercialProposalsRequest) -> str:
+        sort_columns = {
+            "branch": "branch",
+            "proposal": "proposal_number",
+            "proposal_number": "proposal_number",
+            "revision": "revision",
+            "description": "description",
+            "proposal_date": "proposal_date",
+            "end_date": "end_date",
+            "status": "status_code",
+            "status_code": "status_code",
+            "customer": "customer_code",
+            "customer_code": "customer_code",
+            "customer_store": "customer_store",
+        }
+        sort_key = (request.sort_by or "").strip().lower()
+        sort_column = sort_columns.get(sort_key)
+        if sort_column:
+            direction = (
+                "DESC" if str(request.sort_dir or "asc").lower() == "desc" else "ASC"
+            )
+            return f"""
+                ORDER BY {sort_column} {direction}, proposal_number ASC, revision ASC
+            """
+
+        return """
+            ORDER BY proposal_date DESC, proposal_number DESC, revision DESC
+        """
+
     def list_proposals(
         self,
         request: ListCommercialProposalsRequest,
@@ -132,7 +162,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                 AD1_STAGE AS stage
             FROM ovs_latest
             WHERE rn = 1
-            ORDER BY AD1_DATA DESC, AD1_NROPOR DESC, AD1_REVISA DESC
+            {self._list_order_clause(request)}
             OFFSET ? ROWS
             FETCH NEXT ? ROWS ONLY
         """

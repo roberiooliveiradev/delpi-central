@@ -11,3 +11,5 @@ class ListCommercialProposalsRequest:
     page: int = 1
     page_size: int = 50
     customer_segment: Optional[str] = None
+    sort_by: Optional[str] = None
+    sort_dir: str = "asc"

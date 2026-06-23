@@ -5,6 +5,10 @@ import {
   Percent,
   TrendingUp,
 } from "lucide-react";
+import {
+  getCommercialProposalsForExport,
+  resolveProposalSortApiKey,
+} from "../api/commercialApi";
 import { ChartCard } from "../components/ChartCard";
 import { ConversionFunnelChart } from "../components/ConversionFunnelChart";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -18,12 +22,12 @@ import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { buildCommercialDetailPath } from "../constants/routes";
-import { useClientTableSort } from "../hooks/useClientTableSort";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
 import { useCommercialProposals } from "../hooks/useCommercialProposals";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useCommercialFilters } from "../hooks/useCommercialFilters";
 import { useCommercialRolSeries } from "../hooks/useCommercialRolSeries";
+import { useServerTable } from "../hooks/useServerTable";
 import type { ChartGranularity } from "../types/chart";
 import type {
   CommercialProposal,
@@ -61,6 +65,8 @@ type DashboardCommercialPageProps = {
   isActive?: boolean;
 };
 
+const PROPOSALS_PAGE_SIZE = 20;
+
 export function DashboardCommercialPage({
   isActive = true,
 }: DashboardCommercialPageProps) {
@@ -81,6 +87,11 @@ export function DashboardCommercialPage({
   const [proposalStatusFilter, setProposalStatusFilter] =
     useState<CommercialProposalStatusFilter>("all");
   const rolChartExportRef = useRef<HTMLDivElement>(null);
+  const proposalsServerTable = useServerTable({
+    pageSize: PROPOSALS_PAGE_SIZE,
+    defaultSortKey: "proposal_date",
+    defaultSortDirection: "desc",
+  });
 
   const {
     headOfficeRol,
@@ -108,16 +119,28 @@ export function DashboardCommercialPage({
   const {
     items: proposals,
     total: proposalsTotal,
+    page: proposalsPage,
+    pageSize: proposalsPageSize,
     loading: proposalsLoading,
     refreshing: proposalsRefreshing,
     error: proposalsError,
     reload: reloadProposals,
-  } = useCommercialProposals(apiParams, proposalStatusFilter);
-
-  const tableSort = useClientTableSort({
-    defaultSortKey: "proposal_date",
-    defaultSortDirection: "desc",
+  } = useCommercialProposals({
+    filters: apiParams,
+    statusFilter: proposalStatusFilter,
+    tableQuery: proposalsServerTable.query,
   });
+
+  useEffect(() => {
+    proposalsServerTable.resetPage();
+  }, [
+    apiParams.branch,
+    apiParams.customer_segment,
+    apiParams.end_date,
+    apiParams.start_date,
+    proposalStatusFilter,
+    proposalsServerTable.resetPage,
+  ]);
 
   useEffect(() => {
     setGranularity(suggestGranularity(dateStart, dateEnd));
@@ -237,6 +260,54 @@ export function DashboardCommercialPage({
     () => buildProposalsPayload(proposals),
     [proposals],
   );
+
+  const proposalsExportParams = useMemo(
+    () => ({
+      ...apiParams,
+      status: proposalStatusFilter === "all" ? undefined : proposalStatusFilter,
+      total: proposalsTotal,
+      sort_by: resolveProposalSortApiKey(proposalsServerTable.query.sortKey),
+      sort_dir: proposalsServerTable.query.sortDirection,
+    }),
+    [
+      apiParams,
+      proposalStatusFilter,
+      proposalsServerTable.query.sortDirection,
+      proposalsServerTable.query.sortKey,
+      proposalsTotal,
+    ],
+  );
+
+  const resolveProposalsExportPayload = useCallback(async () => {
+    const result = await getCommercialProposalsForExport(proposalsExportParams);
+    return buildProposalsPayload(result.items);
+  }, [proposalsExportParams]);
+
+  const resolveDashboardExportContext = useCallback(async () => {
+    const proposalsResult =
+      proposalsTotal > 0
+        ? await getCommercialProposalsForExport(proposalsExportParams)
+        : { items: [] as CommercialProposal[] };
+
+    return {
+      documentTitle: "dashboard-comercial",
+      periodLabel,
+      scopeLabel: branchLabel ?? consolidatedOtherKpisLabel,
+      kpiRows: kpiExportRows,
+      rolPoints: rolSeries.points,
+      funnel: closingRate,
+      proposals: proposalsResult.items,
+    };
+  }, [
+    branchLabel,
+    closingRate,
+    consolidatedOtherKpisLabel,
+    kpiExportRows,
+    periodLabel,
+    proposalsExportParams,
+    proposalsTotal,
+    rolSeries.points,
+  ]);
 
   const rolSeriesExportPayload = useMemo(
     () => buildRolSeriesPayload(rolSeries.points),
@@ -383,6 +454,7 @@ export function DashboardCommercialPage({
           <CommercialExportButtons
             variant="dashboard"
             context={dashboardExportContext}
+            resolveContext={resolveDashboardExportContext}
             disabled={loading && !hasData}
           />
         }
@@ -584,27 +656,6 @@ export function DashboardCommercialPage({
       </section>
 
       <section className="dc-proposals-section dc-no-print">
-        <div className="dc-proposals-toolbar">
-          <label className="dc-proposals-filter dc-field">
-            <FieldLabel
-              label="Status da proposta"
-              hint={COMMERCIAL_HELP_TOOLTIPS.filters.proposalStatus}
-            />
-            <select
-              value={proposalStatusFilter}
-              onChange={(event) =>
-                setProposalStatusFilter(
-                  event.target.value as CommercialProposalStatusFilter
-                )
-              }
-            >
-              <option value="all">Todas</option>
-              <option value="won">Ganhas</option>
-              <option value="open">Em aberto</option>
-            </select>
-          </label>
-        </div>
-
         {proposalsError ? (
           <div className="dc-state dc-state--error" role="alert">
             <p>{proposalsError}</p>
@@ -620,11 +671,7 @@ export function DashboardCommercialPage({
           <DataTableSection
             title="Propostas do período"
             titleHint={COMMERCIAL_HELP_TOOLTIPS.table.section}
-            hint={`${proposalStatusHint} ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}${
-              proposalsTotal > proposals.length
-                ? ` · exibindo ${proposals.length} de ${proposalsTotal}`
-                : ""
-            }`}
+            hint={`${proposalStatusHint} ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`}
             columns={proposalColumns}
             rows={proposals}
             rowKey={(row) =>
@@ -633,11 +680,38 @@ export function DashboardCommercialPage({
             onRowClick={handleProposalRowClick}
             loading={proposalsLoading}
             refreshing={proposalsRefreshing}
-            clientSort={{
-              sortKey: tableSort.sortKey,
-              sortDirection: tableSort.sortDirection,
-              onSortChange: tableSort.handleSortChange,
+            pageSize={PROPOSALS_PAGE_SIZE}
+            serverPagination={{
+              page: proposalsPage,
+              pageSize: proposalsPageSize,
+              total: proposalsTotal,
+              onPageChange: proposalsServerTable.setPage,
             }}
+            serverSort={{
+              sortKey: proposalsServerTable.query.sortKey,
+              sortDirection: proposalsServerTable.query.sortDirection,
+              onSortChange: proposalsServerTable.handleSortChange,
+            }}
+            toolbarExtra={
+              <label className="dc-proposals-filter dc-field">
+                <FieldLabel
+                  label="Status da proposta"
+                  hint={COMMERCIAL_HELP_TOOLTIPS.filters.proposalStatus}
+                />
+                <select
+                  value={proposalStatusFilter}
+                  onChange={(event) =>
+                    setProposalStatusFilter(
+                      event.target.value as CommercialProposalStatusFilter
+                    )
+                  }
+                >
+                  <option value="all">Todas</option>
+                  <option value="won">Ganhas</option>
+                  <option value="open">Em aberto</option>
+                </select>
+              </label>
+            }
             emptyMessage="Nenhuma proposta encontrada para os filtros selecionados."
             searchPlaceholder="Buscar proposta, descrição, status, cliente…"
             searchHint={COMMERCIAL_HELP_TOOLTIPS.table.search}
@@ -660,7 +734,8 @@ export function DashboardCommercialPage({
               <CommercialExportButtons
                 variant="table"
                 payload={proposalsExportPayload}
-                disabled={proposals.length === 0}
+                resolvePayload={resolveProposalsExportPayload}
+                disabled={proposalsTotal === 0}
                 className="dc-export-actions dc-export-actions--compact"
               />
             }

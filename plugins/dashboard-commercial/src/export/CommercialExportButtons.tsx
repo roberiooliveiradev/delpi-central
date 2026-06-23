@@ -20,6 +20,7 @@ type ExportButtonsBaseProps = {
 type TableExportButtonsProps = ExportButtonsBaseProps & {
   variant: "table";
   payload: TableExportPayload;
+  resolvePayload?: () => Promise<TableExportPayload>;
   chartRoot?: HTMLElement | null;
   getChartRoot?: () => HTMLElement | null;
   showPngExport?: boolean;
@@ -28,6 +29,7 @@ type TableExportButtonsProps = ExportButtonsBaseProps & {
 type DashboardExportButtonsProps = ExportButtonsBaseProps & {
   variant: "dashboard";
   context: DashboardExportContext;
+  resolveContext?: () => Promise<DashboardExportContext>;
 };
 
 type DetailExportButtonsProps = ExportButtonsBaseProps & {
@@ -49,17 +51,27 @@ function dispatchRequest(
   format: TabularExportFormat,
 ): void {
   if (props.variant === "table") {
-    runCommercialExport({
-      kind: "table",
-      payload: props.payload,
-      format,
-      chartRoot: format === "pdf" ? resolveChartRoot(props) : undefined,
-    });
+    void (async () => {
+      const payload = props.resolvePayload
+        ? await props.resolvePayload()
+        : props.payload;
+      runCommercialExport({
+        kind: "table",
+        payload,
+        format,
+        chartRoot: format === "pdf" ? resolveChartRoot(props) : undefined,
+      });
+    })();
     return;
   }
 
   if (props.variant === "dashboard") {
-    runCommercialExport({ kind: "dashboard", context: props.context, format });
+    void (async () => {
+      const context = props.resolveContext
+        ? await props.resolveContext()
+        : props.context;
+      runCommercialExport({ kind: "dashboard", context, format });
+    })();
     return;
   }
 

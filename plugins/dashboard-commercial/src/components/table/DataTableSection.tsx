@@ -6,7 +6,6 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
-import { sortTableRows } from "../../utils/sortTableRows";
 import { HelpTooltip } from "../HelpTooltip";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "../LoadingActivityCard";
@@ -21,7 +20,7 @@ export type ServerPaginationConfig = {
   onPageChange: (page: number) => void;
 };
 
-export type ClientSortConfig = {
+export type ServerSortConfig = {
   sortKey: string | null;
   sortDirection: "asc" | "desc";
   onSortChange: (columnKey: string) => void;
@@ -57,7 +56,8 @@ export type DataTableSectionProps<T> = {
   getSearchText?: (row: T) => string;
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
-  clientSort?: ClientSortConfig;
+  serverSort?: ServerSortConfig;
+  toolbarExtra?: ReactNode;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
   headerActions?: ReactNode;
@@ -79,7 +79,8 @@ export function DataTableSection<T>({
   getSearchText,
   hideSearch = false,
   serverPagination,
-  clientSort,
+  serverSort,
+  toolbarExtra,
   onRowClick,
   getRowClassName,
   headerActions,
@@ -98,19 +99,8 @@ export function DataTableSection<T>({
     });
   }, [rows, search, columns, getSearchText]);
 
-  const sortedRows = useMemo(() => {
-    if (!clientSort) return filteredRows;
-
-    return sortTableRows(
-      filteredRows,
-      columns,
-      clientSort.sortKey,
-      clientSort.sortDirection
-    );
-  }, [filteredRows, columns, clientSort]);
-
   const { page, setPage, slice, total } = useClientPagination(
-    sortedRows,
+    filteredRows,
     pageSize
   );
 
@@ -120,7 +110,7 @@ export function DataTableSection<T>({
     }
   }, [search, serverPagination]);
 
-  const displayRows = serverPagination ? sortedRows : slice;
+  const displayRows = serverPagination ? filteredRows : slice;
   const paginationPage = serverPagination?.page ?? page;
   const paginationTotal = serverPagination?.total ?? total;
   const paginationSize = serverPagination?.pageSize ?? pageSize;
@@ -181,29 +171,36 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          {!hideSearch ? (
+          {!hideSearch || toolbarExtra ? (
             <div className="dc-table-toolbar">
-              <div className="dc-table-search" role="search">
-                <Search
-                  size={16}
-                  aria-hidden="true"
-                  className="dc-table-search__icon"
-                />
-                <input
-                  type="search"
-                  className="dc-table-search__input"
-                  value={search}
-                  placeholder={searchPlaceholder}
-                  onChange={(event) => setSearch(event.target.value)}
-                  aria-label="Filtrar registros da tabela"
-                />
-              </div>
-              {searchHint ? (
-                <HelpTooltip
-                  content={searchHint}
-                  ariaLabel="Ajuda: busca na tabela"
-                  className="dc-table-search__help"
-                />
+              {!hideSearch ? (
+                <>
+                  <div className="dc-table-search" role="search">
+                    <Search
+                      size={16}
+                      aria-hidden="true"
+                      className="dc-table-search__icon"
+                    />
+                    <input
+                      type="search"
+                      className="dc-table-search__input"
+                      value={search}
+                      placeholder={searchPlaceholder}
+                      onChange={(event) => setSearch(event.target.value)}
+                      aria-label="Filtrar registros da tabela"
+                    />
+                  </div>
+                  {searchHint ? (
+                    <HelpTooltip
+                      content={searchHint}
+                      ariaLabel="Ajuda: busca na tabela"
+                      className="dc-table-search__help"
+                    />
+                  ) : null}
+                </>
+              ) : null}
+              {toolbarExtra ? (
+                <div className="dc-table-toolbar__extra">{toolbarExtra}</div>
               ) : null}
             </div>
           ) : null}
@@ -215,9 +212,9 @@ export function DataTableSection<T>({
             emptyMessage={emptyMessage}
             onRowClick={onRowClick}
             getRowClassName={getRowClassName}
-            sortKey={clientSort?.sortKey}
-            sortDirection={clientSort?.sortDirection}
-            onSortChange={clientSort?.onSortChange}
+            sortKey={serverSort?.sortKey}
+            sortDirection={serverSort?.sortDirection}
+            onSortChange={serverSort?.onSortChange}
             layout="section"
           />
 

@@ -64,6 +64,8 @@ export type CommercialFilterParams = {
   status?: string;
   page?: number;
   page_size?: number;
+  sort_by?: string;
+  sort_dir?: "asc" | "desc";
 };
 
 export type CommercialProposalStatusCategory =

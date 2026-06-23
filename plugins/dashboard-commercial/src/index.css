@@ -543,14 +543,15 @@
   font-size: var(--dc-font-sm);
 }
 
-.dashboard-commercial .dc-proposals-section {
-  margin-bottom: var(--dc-section-gap);
+.dashboard-commercial .dc-table-toolbar__extra {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-left: auto;
 }
 
-.dashboard-commercial .dc-proposals-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
+.dashboard-commercial .dc-proposals-section {
+  margin-bottom: var(--dc-section-gap);
 }
 
 .dashboard-commercial .dc-proposals-filter {

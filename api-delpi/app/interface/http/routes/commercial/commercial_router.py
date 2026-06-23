@@ -233,6 +233,14 @@ def list_commercial_proposals(
     ),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
+    sort_by: Optional[str] = Query(
+        None,
+        description=(
+            "Coluna de ordenação: branch, proposal_number, revision, description, "
+            "proposal_date, end_date, status_code, customer_code, customer_store."
+        ),
+    ),
+    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
 ):
     try:
         use_case = build_list_commercial_proposals_use_case()
@@ -245,6 +253,8 @@ def list_commercial_proposals(
             customer_segment=parse_customer_segment(customer_segment),
             page=page,
             page_size=page_size,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
         )
 
         result = use_case.execute(request)

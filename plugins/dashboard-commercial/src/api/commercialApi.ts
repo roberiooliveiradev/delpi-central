@@ -17,6 +17,19 @@ import type {
 
 export const COMMERCIAL_API_BASE = "/apps/api-delpi/commercial";
 
+const PROPOSAL_SORT_API_KEYS: Record<string, string> = {
+  proposal: "proposal_number",
+  customer: "customer_code",
+  status: "status_code",
+};
+
+export function resolveProposalSortApiKey(
+  sortKey: string | null | undefined
+): string | undefined {
+  if (!sortKey) return undefined;
+  return PROPOSAL_SORT_API_KEYS[sortKey] ?? sortKey;
+}
+
 function buildQuery(
   params: CommercialFilterParams & { granularity?: ChartGranularity }
 ): string {
@@ -34,6 +47,8 @@ function buildQuery(
   if (params.page_size != null) {
     searchParams.set("page_size", String(params.page_size));
   }
+  if (params.sort_by) searchParams.set("sort_by", params.sort_by);
+  if (params.sort_dir) searchParams.set("sort_dir", params.sort_dir);
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
@@ -88,6 +103,25 @@ export function getCommercialProposals(
   return fetchCommercialData<CommercialProposalsPage>(
     "/proposals",
     params,
+    signal
+  );
+}
+
+export async function getCommercialProposalsForExport(
+  params: CommercialFilterParams & {
+    total: number;
+    sort_by?: string;
+    sort_dir?: "asc" | "desc";
+  },
+  signal?: AbortSignal
+): Promise<CommercialProposalsPage> {
+  const { total, ...query } = params;
+  return getCommercialProposals(
+    {
+      ...query,
+      page: 1,
+      page_size: Math.min(Math.max(total, 1), 200),
+    },
     signal
   );
 }

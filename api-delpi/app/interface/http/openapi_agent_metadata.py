@@ -852,6 +852,7 @@ COMMERCIAL_PROPOSALS = agent_route(
     description=(
         "Lista paginada de propostas comerciais com filtros de filial, período e status "
         "(ganhas, abertas ou todas). "
+        "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
         "Use para «propostas comerciais», «listar propostas», «propostas ganhas» — "
         "distinto de propostas internas PDF (/propostas-comerciais/) ou taxa de fechamento (/closing-rate)."
     ),
