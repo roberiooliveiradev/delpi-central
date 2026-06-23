@@ -40,6 +40,9 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
         status_filter = (request.status or "").strip().lower()
         if status_filter == "won":
             qb.eq("AD1.AD1_STATUS", WON_STATUS_CODE)
+            qb.raw("AD1.AD1_DTFIM IS NOT NULL")
+            qb.raw("RTRIM(CAST(AD1.AD1_DTFIM AS VARCHAR(20))) <> ''")
+            qb.date_range("AD1.AD1_DTFIM", request.start_date, request.end_date)
         elif status_filter == "open":
             qb.raw(f"AD1.AD1_STATUS <> '{WON_STATUS_CODE}'")
 

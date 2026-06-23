@@ -22,8 +22,15 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
 
         where_clause, where_params = qb.build()
 
+        won_qb = QueryBuilder()
+        won_qb.raw(f"AD1_STATUS = '{WON_STATUS_CODE}'")
+        won_qb.raw("AD1_DTFIM IS NOT NULL")
+        won_qb.raw("RTRIM(CAST(AD1_DTFIM AS VARCHAR(20))) <> ''")
+        won_qb.date_range("AD1_DTFIM", request.start_date, request.end_date)
+        won_clause, won_params = won_qb.build()
+
         sql = f"""
-            WITH ovs_base AS (
+            WITH ovs_opened AS (
                 SELECT DISTINCT
                     AD1.AD1_FILIAL,
                     AD1.AD1_NROPOR,
@@ -37,15 +44,17 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
             )
             SELECT
                 COUNT(*) AS qtd_proposals,
-                SUM(CASE WHEN AD1_STATUS = '{WON_STATUS_CODE}' THEN 1 ELSE 0 END) AS qtd_won,
+                SUM(CASE WHEN {won_clause} THEN 1 ELSE 0 END) AS qtd_won,
                 CAST(
                     CASE
                         WHEN COUNT(*) = 0 THEN 0
-                        ELSE SUM(CASE WHEN AD1_STATUS = '{WON_STATUS_CODE}' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
+                        ELSE SUM(CASE WHEN {won_clause} THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
                     END
                 AS DECIMAL(10, 2)) AS sales_conversion_rate_pct
-            FROM ovs_base
+            FROM ovs_opened
         """
+
+        where_params = tuple(where_params) + tuple(won_params) + tuple(won_params)
 
         with self:
             row = self.execute_one(sql, where_params)

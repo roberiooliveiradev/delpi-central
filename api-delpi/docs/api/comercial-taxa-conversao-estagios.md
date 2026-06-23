@@ -23,14 +23,14 @@ Implementação: `SalesConversionRateRepository` → tabela `AD1010`.
 | Conceito | Campo / critério |
 |----------|------------------|
 | Base | `AD1010` (cabeçalho da oportunidade / OV no CRM) |
-| Período | `AD1_DATA` entre `start_date` e `end_date` |
+| Período (denominador) | `AD1_DATA` entre `start_date` e `end_date` — propostas **abertas** no período |
 | Total (`qtd_proposals`) | Revisões com `AD1_DATA` no período (cada revisão conta; não colapsa na última da proposta) |
-| Ganha (`qtd_won`) | Revisões do período com `AD1_STATUS = '9'` (Ganha) — **não** exige estágio `000013` |
+| Ganha (`qtd_won`) | Revisões abertas no período com `AD1_STATUS = '9'` (Ganha) **e** `AD1_DTFIM` no mesmo intervalo |
 | Taxa | `qtd_won / qtd_proposals × 100` |
 
 Constante de domínio: `WON_STATUS_CODE = "9"` em `commercial_proposal_status.py`.
 
-A listagem `GET /commercial/proposals?status=won` usa a **mesma** regra (`AD1_STATUS = '9'`).
+A listagem `GET /commercial/proposals?status=won` usa a **mesma** regra de ganhas (`AD1_STATUS = '9'` + `AD1_DTFIM` no período), mantendo `AD1_DATA` no período para alinhar ao funil.
 
 **Não usa histórico (`AIJ010`).** O campo `AIJ_STATUS` existe na tabela de eventos, mas é outro domínio (ver § 2.1).
 
@@ -470,7 +470,7 @@ Permissão: `api-delpi.data` ou `api-delpi.access.full`. Tabelas na whitelist: `
 2. **Não** usar estágio `000013` (ENCERRADO) como critério de ganha; estágio 13 pode existir com status Aberta.
 3. Dashboard/funil: «ganha» = **status 9**, não estágio 13.
 4. Métrica de «chegou ao fim do funil» (`000013`) deve ser **indicador separado**, se necessário.
-5. `closing-rate` conta **revisões do período** (`AD1_DATA` entre `start_date` e `end_date`), não a última revisão global da proposta.
+5. `closing-rate`: denominador = revisões **abertas** no período (`AD1_DATA`); numerador = ganhas com **fechamento** no período (`AD1_DTFIM` + `AD1_STATUS = '9'`).
 
 ---
 
@@ -511,3 +511,22 @@ As OVs abaixo estão em `000013` com `AD1_STATUS = 1` — validar desfecho real 
 | jun/2026 | Trilha típica até o 13: estágios 1–12 completos; antecessor imediato = 12. |
 | jun/2026 | Regra do `closing-rate` ajustada: revisões do período (`AD1_DATA`), não última revisão global. |
 | jun/2026 | Constante `WON_STATUS_CODE` centralizada; teste `test_sales_conversion_rate_repository.py`. |
+| jun/2026 | **Filtro de conversão:** denominador permanece `AD1_DATA` (abertura); numerador passa a exigir `AD1_DTFIM` no período + `AD1_STATUS = '9'`. Listagem `proposals?status=won` alinhada. Script `scripts/validate_commercial_closing_rate_dtfim.py`. |
+
+### Validação em produção (TOTVS, jun/2026)
+
+Comando:
+
+```bash
+docker exec delpi-api-delpi python scripts/validate_commercial_closing_rate_dtfim.py \
+  --start 2026-01-01 --end 2026-06-23
+```
+
+| Período | Abertas (`AD1_DATA`) | Ganhas legado (só status 9 na cohort) | Ganhas nova (`AD1_DTFIM` + status 9) | Taxa % |
+|---------|---------------------:|--------------------------------------:|-------------------------------------:|-------:|
+| 2026-01-01 → 2026-06-23 | 331 | 46 | 46 | 13,90 |
+| 2026-05-01 → 2026-05-31 | 41 | 5 | 2 | 4,88 |
+
+**OV003446** (caso reportado pelo comercial): abertura `20260130`, fechamento `20260623`, `AD1_STATUS = 9` — entra como ganha no YTD/2026 com a nova regra; no recorte de **maio/2026** não entra no numerador (fechamento em 23/06).
+
+**Observação:** filtro «só hoje» com denominador por abertura retorna 0 propostas se nenhuma OV foi aberta na data — comportamento esperado da regra acordada (cohort aberta no período).

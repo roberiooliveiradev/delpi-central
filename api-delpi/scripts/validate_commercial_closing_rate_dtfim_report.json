@@ -1,0 +1,24 @@
+{
+  "validated_at": "2026-06-23",
+  "command": "docker exec delpi-api-delpi python scripts/validate_commercial_closing_rate_dtfim.py",
+  "periods": [
+    {
+      "start": "2026-01-01",
+      "end": "2026-06-23",
+      "qtd_proposals_opened": 331,
+      "qtd_won_legacy_by_open_date_only": 46,
+      "qtd_won_new_by_close_date": 46,
+      "sales_conversion_rate_pct": 13.9,
+      "note": "OV003446 included in sample (open 20260130, close 20260623, status 9)"
+    },
+    {
+      "start": "2026-05-01",
+      "end": "2026-05-31",
+      "qtd_proposals_opened": 41,
+      "qtd_won_legacy_by_open_date_only": 5,
+      "qtd_won_new_by_close_date": 2,
+      "sales_conversion_rate_pct": 4.88,
+      "note": "Numerador cai de 5 para 2 ao exigir AD1_DTFIM em maio"
+    }
+  ]
+}
