@@ -554,11 +554,11 @@ Princípio: **listagem leve**, **histórico sob demanda**, **investigação offl
 
 | Sintoma | Causa provável | Ação |
 |---------|----------------|------|
-| Alerta com `operation_id=get_lmp_history_events` e preview `AllListingAnchorRaw` | Telemetria usa `last_operation_id` da query; o SQL pesado é do **batch dashboard** (`work_month_lmp`), não do histórico lite (`AIJ_NROPOR = ?`) | Olhar `preview` e `query_hash`, não só `operation_id` |
-| `get_lmp_history_events` ~74 s | Improvável — rota lite filtra 1 OV | Verificar se dashboard/items ou detalhe OV com período rodou no mesmo intervalo |
+| Alerta com `operation_id=get_lmp_history_events` ou `get_commercial_proposal_history_events` e preview `AllListingAnchorRaw` | **Corrigido (jun/2026):** histórico usa `get_lmp_history_panel_context` (AD1010 lite). Se persistir, verificar regressão no use case ou outra rota no mesmo intervalo de telemetria | Confirmar `query_hash` ≠ batch dashboard; revisar `GetLmpHistoryEventsUseCase` |
+| `get_lmp_history_events` / `get_commercial_proposal_history_events` ~20 s+ | Regressão: contexto do painel voltou a chamar `_sql_header_lmp` com período | Restaurar `get_lmp_history_panel_context`; testes `test_history_panel_context_lite_*` |
 | Batch `work_month_lmp` lento | CTEs `HomologByRevisionRaw` / `RevEng*` varriam `AIJ010` inteiro | Corrigido: `OvRevisionTouchedInPeriod` + período em `AllListingAnchorRaw` |
 
-Histórico sob demanda (`/history/events`): uma query por OV + lookups de rótulo em cache por par processo/estágio — custo O(eventos da OV), não varredura global.
+Histórico sob demanda (`/history/events`, `/commercial/.../history/events`): **1× AD1010** (contexto) + **1× AIJ010** (eventos) por OV + lookups de rótulo em cache por par processo/estágio — custo O(eventos da OV), não varredura global.
 
 ---
 

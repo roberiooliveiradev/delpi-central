@@ -18,4 +18,6 @@ Permissão: `dashboard-commercial.view` ou `api-delpi.access`
 | `getNewClientsAverage` | GET | `/new-clients-average` | `start_date`, `end_date`, `branch` |
 | `getNewClientsRolPct` | GET | `/new-clients-rol-pct` | `start_date`, `end_date`, `branch` |
 
+**Histórico da proposta:** reutiliza `GetLmpHistoryEventsUseCase` (AIJ010 + enriquecimento). Contexto do painel via `get_lmp_history_panel_context` (AD1010 lite) — **não** executa batch `AllListingAnchorRaw` mesmo com `date_start`/`date_end` na URL. Ver `api-delpi/docs/api/06-modulos-departamentais.md` § Engenharia — `/history/events`.
+
 Envelope: `{ success, message, data }` — ver tipos em `src/types/commercial.ts`.

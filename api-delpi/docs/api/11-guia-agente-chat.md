@@ -107,7 +107,7 @@ Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** 
 | Gráficos do painel | `GET /engineering/lmps/dashboard/charts` | `get_lmps_dashboard_charts` |
 | Dashboard legado (tudo) | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
 | Detalhe por OV | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` — cabeçalho + produtos + KPIs; **`list_history: []`**. Use `date_start`, `date_end`, `branch` para o mesmo escopo do dashboard. |
-| Histórico AIJ010 (eventos) | `GET /engineering/lmps/{sale_number}/history/events` | `get_lmp_history_events` — timeline/tabela; enriquecimento `process_label`, `status_label`, `duration_display`, `is_open`, `is_current`, … |
+| Histórico AIJ010 (eventos) | `GET /engineering/lmps/{sale_number}/history/events` | `get_lmp_history_events` — timeline/tabela; contexto lite AD1010 + eventos AIJ010; enriquecimento `process_label`, `status_label`, `duration_display`, `is_open`, `is_current`, … |
 | Fluxo engenharia (idas/voltas) | `GET /engineering/lmps/{sale_number}/history/flow` | `get_lmp_history_flow` — `flow_transition`, `flow_transition_label`, `is_engineering_entry`, … |
 | Transforma Mais (lista) | `GET /engineering/transforma-mais/processes` | `list_transforma_mais_processes` |
 | Transforma Mais (resumo) | `GET /engineering/transforma-mais/processes/summary` | `get_transforma_mais_summary` |

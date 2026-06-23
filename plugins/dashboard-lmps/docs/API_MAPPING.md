@@ -72,16 +72,19 @@ Campos de `LmpItem` + classificação calculada (`nivel`, `dias_uteis_sla`, `dat
 
 Eventos AIJ010 para timeline/tabela. Query lite (sem LEAD/LAG por linha).
 
-Mesmos query params do detalhe + opcional `revision`.
+Mesmos query params do detalhe + opcional `revision`. `date_start`/`date_end` são repassados pelo MFE para compatibilidade; o **contexto do painel** usa AD1010 lite (`get_lmp_history_panel_context`) e **não** dispara batch `AllListingAnchorRaw`.
 
 ### Resposta `data`
 
 | Campo | Descrição |
 |-------|-----------|
 | `sale_number`, `branch` | Identificação |
-| `reference_revision`, `panel_start_date` | Contexto do painel (escopo de filtros na UI) |
+| `reference_revision` | `AD1_REVISA` da revisão solicitada ou última revisão da OV — escopo do filtro «Revisão atual» na UI |
+| `panel_start_date` | `AD1_DATA` (abertura da proposta) — metadata do painel; distinto do `start_date` âncora do dashboard LMP |
 | `items[]` | Eventos enriquecidos (`LmpHistoryEvent`) |
 | `total` | Quantidade de itens |
+
+**Performance:** 1× AD1010 + 1× AIJ010 por OV + lookups AC1010/AC2010 em cache — ver `api-delpi/docs/api/06-modulos-departamentais.md`.
 
 ### `items[]` — evento `LmpHistoryEvent`
 

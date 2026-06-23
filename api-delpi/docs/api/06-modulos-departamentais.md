@@ -41,6 +41,13 @@ Parâmetros comuns de período:
 | GET | `/commercial/new-clients-average` | Média mensal de novos clientes. |
 | GET | `/commercial/new-clients-rol-pct` | % do ROL de clientes novos. |
 | GET | `/commercial/rol/series` | Série temporal de ROL (`granularity`: day, week, month, year). |
+| GET | `/commercial/proposals` | Listagem paginada de propostas (OV). Filtros: `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment` (`weg`/`new_business`). |
+| GET | `/commercial/proposals/{proposal_number}` | Detalhe da proposta (AD1010 + cliente/vendedor). Query: `branch` (obrig.), `revision` opcional. |
+| GET | `/commercial/proposals/{proposal_number}/history/events` | Histórico AIJ010 da OV — mesmo pipeline que LMP (`get_lmp_history_events`). Query: `branch`, `revision`, `date_start`, `date_end` (período aceito pelo MFE; **não** dispara batch de listagem). |
+
+**MFE `dashboard-commercial`:** detalhe em `/apps/dashboard-commercial/proposta/{proposal_number}` consome **`GET /commercial/proposals/{proposal_number}`** + **`/history/events`** em paralelo (`useCommercialProposalDetail`).
+
+**Performance (`/commercial/.../history/events`):** ver § Engenharia — histórico (`/history/events`); custo O(eventos da OV), não varredura `AllListingAnchorRaw`.
 
 ---
 
@@ -136,9 +143,9 @@ Parâmetros adicionais:
 
 | Query (detalhe e histórico) | Descrição |
 |---|---|
-| `date_start`, `date_end` | Período — alinha candidatos ao dashboard. |
+| `date_start`, `date_end` | Período — alinha candidatos ao **detalhe** (`GET …/{sale_number}`) e listagem. Em **`/history/*`**, aceitos pelo MFE mas **não** alteram o SQL do contexto do painel (jun/2026). |
 | `branch` | Filial — recomendado quando a OV existe em mais de uma filial. |
-| `revision` | *(apenas `/history/*`)* Filtra uma revisão específica da OV. |
+| `revision` | *(apenas `/history/*`)* Filtra uma revisão específica da OV; também define `reference_revision` quando informado. |
 
 | Resposta `meta.relatedRoutes` (detalhe e histórico) | Descrição |
 |---|---|
@@ -152,9 +159,21 @@ Parâmetros adicionais:
 
 **`start_date` e lead time (dashboard com período):** `start_date`/`end_date` vêm do evento **âncora** da listagem (`ANCHOR_START_DATE`), não da primeira linha AIJ010 da OV. `lead_time_util` = dias úteis entre essas datas (`LMPBusinessRules`). `FIRST_ENG_DATE` (`OvFirstEngineeringArrival`) entra só no filtro OR de inclusão no período — usar como `start_date` inflava `avg_lead_time` em OVs reentrantes. Regressão SQL: `tests/test_lmp_query_repository_sql.py` (`test_header_lmp_uses_listing_anchor_start_with_period`, `test_candidate_period_filter_or_first_engineering_arrival`).
 
-**Resposta `data` (`/history/events` e `/history/flow`):** `sale_number`, `branch`, `reference_revision`, `panel_start_date`, `items[]`, `total`. Contexto do painel vem de `get_lmp_panel_context` (mesmo escopo do cabeçalho).
+**Resposta `data` (`/history/events` e `/history/flow`):** `sale_number`, `branch`, `reference_revision`, `panel_start_date`, `items[]`, `total`.
 
-**Enriquecimento de `items[]` em `/history/events`:** `GetLmpHistoryEventsUseCase` + `enrich_history_events()` (`lmp_history_event_enrichment.py`). SQL lite em AIJ010; rótulos AC1010/AC2010 via lookup em cache por par processo+estágio.
+**Contexto do painel (jun/2026):** `GetLmpHistoryEventsUseCase` e `GetLmpHistoryFlowUseCase` chamam `get_lmp_history_panel_context` — query **lite** em **AD1010** (`TOP 1` por filial + OV + revisão opcional). **Não** reutiliza `_sql_header_lmp` nem CTEs `AllListingAnchorRaw` (evita varredura global em AIJ010 quando o MFE envia `date_start`/`date_end`).
+
+| Campo de contexto | Origem (lite) |
+|---|---|
+| `reference_revision` | `AD1_REVISA` da revisão solicitada ou última revisão da OV |
+| `panel_start_date` | `AD1_DATA` (abertura da proposta) |
+| `branch` | `AD1_FILIAL` |
+
+O **detalhe** (`GET …/{sale_number}`) continua usando `_sql_header_lmp` com escopo de período quando aplicável. Só o contexto do histórico foi desacoplado.
+
+**Enriquecimento de `items[]` em `/history/events`:** `GetLmpHistoryEventsUseCase` + `enrich_history_events()` (`lmp_history_event_enrichment.py`). SQL lite em AIJ010 (`AIJ_NROPOR = ?`); rótulos AC1010/AC2010 via lookup em cache por par processo+estágio.
+
+**Performance (`/history/events`, `/history/flow`, `/commercial/.../history/events`):** 1× AD1010 + 1× AIJ010 por OV + lookups de rótulo — custo O(eventos da OV). Alerta `slow_sql` com preview `AllListingAnchorRaw` nessas rotas indica regressão (contexto voltou a usar `_sql_header_lmp`). Regressão SQL: `tests/test_lmp_query_repository_sql.py` (`test_history_panel_context_lite_*`).
 
 **Enriquecimento de `items[]` em `/history/flow`:** `GetLmpHistoryFlowUseCase` + `enrich_flow_transition_fields()` (`lmp_history_flow_transition.py`) — `flow_transition`, `flow_transition_label`, `is_engineering_entry`, etc.
 

@@ -145,7 +145,7 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - Listagem / dashboard: `date_start`, `date_end`, `branch`, `listing_type` (`LMP`, `Amostra`, `Outro`), `status` (ex.: `Todos`), `page`, `page_size` (itens)
 - Detalhe: `sale_number` = número da **ordem de venda (OV)** — não é código de produto; opcionalmente `date_start`, `date_end`, `branch` para alinhar ao painel/MFE `dashboard-lmps`
 - Resposta do detalhe: `list_products[]` e **`list_history: []`** (histórico em rotas `/history/events` e `/history/flow`)
-- Histórico: mesmos params do detalhe + opcional `revision`; `items[]` enriquecidos (`process_label`, `status_label`, `duration_display`, `is_open`, `is_current`, …); fluxo com `flow_transition*`
+- Histórico LMP/comercial: mesmos params do detalhe + opcional `revision`; contexto via **AD1010 lite** (`get_lmp_history_panel_context`) — `date_start`/`date_end` **não** disparam batch `AllListingAnchorRaw`; eventos em `AIJ010` por OV
 - Transforma Mais: `id`, `name_process`, `filial_id`, `sector_name`, `status`, `start_date`, `end_date`
 
 **Exemplos**
@@ -225,6 +225,8 @@ Não confundir com detalhe de LMP (`/engineering/lmps/{sale_number}`) nem vendas
 | Meta % ROL matriz | `GET /commercial/head_office_rol_target_pct` | path `head_office_rol` |
 | Meta % ROL filial | `GET /commercial/branch_rol_target_pct` | path `branch_rol_target` |
 | Propostas comerciais (listagem) | `GET /commercial/proposals` | path `commercial/proposals` |
+| Detalhe de proposta comercial | `GET /commercial/proposals/{proposal_number}` | `get_commercial_proposal` |
+| Histórico AIJ010 da proposta | `GET /commercial/proposals/{proposal_number}/history/events` | `get_commercial_proposal_history_events` — mesmo pipeline lite que LMP `/history/events` |
 
 **Parâmetros comuns:** `branch` (2 chars quando aplicável), `start_date`, `end_date`; `rol/series` exige `granularity` (`day`, `week`, `month`, `year`).
 
