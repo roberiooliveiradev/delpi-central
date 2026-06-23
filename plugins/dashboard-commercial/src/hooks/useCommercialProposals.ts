@@ -12,6 +12,7 @@ import type { ServerTableQuery } from "./useServerTable";
 type UseCommercialProposalsOptions = {
   filters: CommercialFilterParams;
   statusFilter?: CommercialProposalStatusFilter;
+  search?: string;
   tableQuery: Pick<
     ServerTableQuery,
     "page" | "pageSize" | "sortKey" | "sortDirection"
@@ -32,6 +33,7 @@ type UseCommercialProposalsResult = {
 export function useCommercialProposals({
   filters,
   statusFilter = "all",
+  search = "",
   tableQuery,
 }: UseCommercialProposalsOptions): UseCommercialProposalsResult {
   const [items, setItems] = useState<CommercialProposal[]>([]);
@@ -65,6 +67,7 @@ export function useCommercialProposals({
             page_size: tableQuery.pageSize,
             sort_by: resolveProposalSortApiKey(tableQuery.sortKey),
             sort_dir: tableQuery.sortDirection,
+            search: search.trim() || undefined,
           },
           controller.signal
         );
@@ -102,6 +105,7 @@ export function useCommercialProposals({
     filters.end_date,
     filters.start_date,
     statusFilter,
+    search,
     tableQuery.page,
     tableQuery.pageSize,
     tableQuery.sortKey,

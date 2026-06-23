@@ -24,6 +24,7 @@ import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { buildCommercialDetailPath } from "../constants/routes";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
 import { useCommercialProposals } from "../hooks/useCommercialProposals";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useCommercialFilters } from "../hooks/useCommercialFilters";
 import { useCommercialRolSeries } from "../hooks/useCommercialRolSeries";
@@ -66,6 +67,7 @@ type DashboardCommercialPageProps = {
 };
 
 const PROPOSALS_PAGE_SIZE = 20;
+const PROPOSAL_SEARCH_DEBOUNCE_MS = 350;
 
 export function DashboardCommercialPage({
   isActive = true,
@@ -86,6 +88,11 @@ export function DashboardCommercialPage({
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
   const [proposalStatusFilter, setProposalStatusFilter] =
     useState<CommercialProposalStatusFilter>("all");
+  const [proposalSearch, setProposalSearch] = useState("");
+  const debouncedProposalSearch = useDebouncedValue(
+    proposalSearch,
+    PROPOSAL_SEARCH_DEBOUNCE_MS
+  );
   const rolChartExportRef = useRef<HTMLDivElement>(null);
   const proposalsServerTable = useServerTable({
     pageSize: PROPOSALS_PAGE_SIZE,
@@ -128,6 +135,7 @@ export function DashboardCommercialPage({
   } = useCommercialProposals({
     filters: apiParams,
     statusFilter: proposalStatusFilter,
+    search: debouncedProposalSearch,
     tableQuery: proposalsServerTable.query,
   });
 
@@ -139,6 +147,7 @@ export function DashboardCommercialPage({
     apiParams.end_date,
     apiParams.start_date,
     proposalStatusFilter,
+    debouncedProposalSearch,
     proposalsServerTable.resetPage,
   ]);
 
@@ -268,9 +277,11 @@ export function DashboardCommercialPage({
       total: proposalsTotal,
       sort_by: resolveProposalSortApiKey(proposalsServerTable.query.sortKey),
       sort_dir: proposalsServerTable.query.sortDirection,
+      search: debouncedProposalSearch.trim() || undefined,
     }),
     [
       apiParams,
+      debouncedProposalSearch,
       proposalStatusFilter,
       proposalsServerTable.query.sortDirection,
       proposalsServerTable.query.sortKey,
@@ -692,6 +703,10 @@ export function DashboardCommercialPage({
               sortDirection: proposalsServerTable.query.sortDirection,
               onSortChange: proposalsServerTable.handleSortChange,
             }}
+            serverSearch={{
+              value: proposalSearch,
+              onChange: setProposalSearch,
+            }}
             toolbarExtra={
               <label className="dc-proposals-filter dc-field">
                 <FieldLabel
@@ -715,21 +730,6 @@ export function DashboardCommercialPage({
             emptyMessage="Nenhuma proposta encontrada para os filtros selecionados."
             searchPlaceholder="Buscar proposta, descrição, status, cliente…"
             searchHint={COMMERCIAL_HELP_TOOLTIPS.table.search}
-            getSearchText={(row) =>
-              [
-                row.branch,
-                row.proposal_number,
-                row.revision,
-                row.description,
-                row.status_label,
-                row.status_code,
-                row.customer_code,
-                row.customer_store,
-                row.stage,
-              ]
-                .filter(Boolean)
-                .join(" ")
-            }
             headerActions={
               <CommercialExportButtons
                 variant="table"

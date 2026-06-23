@@ -14,6 +14,9 @@ from app.domain.entities.commercial.commercial_proposal_detail import (
 from app.domain.ports.commercial.commercial_proposals_repository_port import (
     CommercialProposalsRepositoryPort,
 )
+from app.domain.services.commercial_proposal_list_search_service import (
+    CommercialProposalListSearchService,
+)
 from app.domain.services.commercial_proposal_status import (
     WON_STATUS_CODE,
     resolve_proposal_status_category,
@@ -105,6 +108,9 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
         )
 
         where_clause, where_params = qb.build()
+        search_clause, search_params = CommercialProposalListSearchService.clause_for_latest_row(
+            request.search
+        )
 
         base_cte = f"""
             WITH ovs_base AS (
@@ -151,6 +157,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             SELECT COUNT(1) AS total
             FROM ovs_latest
             WHERE rn = 1
+            {search_clause}
         """
 
         list_sql = f"""
@@ -168,15 +175,17 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                 AD1_STAGE AS stage
             FROM ovs_latest
             WHERE rn = 1
+            {search_clause}
             {self._list_order_clause(request)}
             OFFSET ? ROWS
             FETCH NEXT ? ROWS ONLY
         """
 
-        list_params = list(where_params) + [offset, page_size]
+        count_params = list(where_params) + search_params
+        list_params = count_params + [offset, page_size]
 
         with self:
-            total_row = self.execute_one(count_sql, where_params)
+            total_row = self.execute_one(count_sql, count_params)
             rows = self.execute_query(list_sql, list_params)
 
         total = int((total_row or {}).get("total") or 0)

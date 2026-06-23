@@ -241,6 +241,14 @@ def list_commercial_proposals(
         ),
     ),
     sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+    search: Optional[str] = Query(
+        None,
+        max_length=80,
+        description=(
+            "Busca textual em filial, número da proposta, revisão, descrição, "
+            "status, cliente, loja e estágio."
+        ),
+    ),
 ):
     try:
         use_case = build_list_commercial_proposals_use_case()
@@ -255,6 +263,7 @@ def list_commercial_proposals(
             page_size=page_size,
             sort_by=sort_by,
             sort_dir=sort_dir,
+            search=search,
         )
 
         result = use_case.execute(request)

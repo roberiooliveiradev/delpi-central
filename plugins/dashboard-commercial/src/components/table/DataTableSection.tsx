@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../../hooks/useClientPagination";
@@ -24,6 +24,11 @@ export type ServerSortConfig = {
   sortKey: string | null;
   sortDirection: "asc" | "desc";
   onSortChange: (columnKey: string) => void;
+};
+
+export type ServerSearchConfig = {
+  value: string;
+  onChange: (value: string) => void;
 };
 
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
@@ -57,6 +62,7 @@ export type DataTableSectionProps<T> = {
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
   serverSort?: ServerSortConfig;
+  serverSearch?: ServerSearchConfig;
   toolbarExtra?: ReactNode;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
@@ -80,14 +86,19 @@ export function DataTableSection<T>({
   hideSearch = false,
   serverPagination,
   serverSort,
+  serverSearch,
   toolbarExtra,
   onRowClick,
   getRowClassName,
   headerActions,
 }: DataTableSectionProps<T>) {
-  const [search, setSearch] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
+  const search = serverSearch?.value ?? localSearch;
+  const handleSearchChange = serverSearch?.onChange ?? setLocalSearch;
 
   const filteredRows = useMemo(() => {
+    if (serverPagination) return rows;
+
     const query = search.trim().toLowerCase();
     if (!query) return rows;
 
@@ -97,20 +108,13 @@ export function DataTableSection<T>({
       ).toLowerCase();
       return haystack.includes(query);
     });
-  }, [rows, search, columns, getSearchText]);
+  }, [rows, search, columns, getSearchText, serverPagination]);
 
   const { page, setPage, slice, total } = useClientPagination(
     filteredRows,
     pageSize
   );
-
-  useEffect(() => {
-    if (serverPagination && search.trim()) {
-      serverPagination.onPageChange(1);
-    }
-  }, [search, serverPagination]);
-
-  const displayRows = serverPagination ? filteredRows : slice;
+  const displayRows = serverPagination ? rows : slice;
   const paginationPage = serverPagination?.page ?? page;
   const paginationTotal = serverPagination?.total ?? total;
   const paginationSize = serverPagination?.pageSize ?? pageSize;
@@ -186,7 +190,7 @@ export function DataTableSection<T>({
                       className="dc-table-search__input"
                       value={search}
                       placeholder={searchPlaceholder}
-                      onChange={(event) => setSearch(event.target.value)}
+                      onChange={(event) => handleSearchChange(event.target.value)}
                       aria-label="Filtrar registros da tabela"
                     />
                   </div>

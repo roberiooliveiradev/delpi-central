@@ -49,6 +49,7 @@ function buildQuery(
   }
   if (params.sort_by) searchParams.set("sort_by", params.sort_by);
   if (params.sort_dir) searchParams.set("sort_dir", params.sort_dir);
+  if (params.search?.trim()) searchParams.set("search", params.search.trim());
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
