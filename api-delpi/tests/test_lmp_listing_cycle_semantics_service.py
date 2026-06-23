@@ -10,6 +10,7 @@ from app.domain.services.lmp_listing_kind_semantics_service import (
     LmpListingKindSemanticsService,
 )
 from app.domain.services.lmp_period_inclusion_semantics_service import (
+    ANCHOR_IN_PERIOD,
     ANCHOR_OR_FIRST_ENG,
     HOMOLOG_IN_PERIOD,
     LmpPeriodInclusionSemanticsService,
@@ -19,6 +20,19 @@ from tests.fixtures.lmp_listing_cycle_regression_cases import (
     MAY_2026_RAW_CYCLES,
     Q2_061_CYCLES,
 )
+
+
+def test_period_predicate_anchor_in_period_uses_listing_anchor_only() -> None:
+    sql = LmpPeriodInclusionSemanticsService.build_candidate_period_predicate(
+        policy=ANCHOR_IN_PERIOD,
+        anchor_date_sql="L.ANCHOR_START_DATE",
+        where_anchor="L.ANCHOR_START_DATE >= ?",
+        where_first_eng="F.FIRST_ENG_DATE >= ?",
+        where_homolog="LF.ANCHOR_START_DATE >= ?",
+    )
+    assert sql == "L.ANCHOR_START_DATE >= ?"
+    assert "FIRST_ENG" not in sql
+    assert " OR " not in sql
 
 
 def test_period_predicate_homolog_in_period_uses_homolog_only() -> None:

@@ -1,5 +1,21 @@
 # CHANGELOG — api-delpi
 
+**Código:** `LmpPeriodInclusionSemanticsService`, `period_inclusion_policy` — default **`anchor_in_period`** (jun/2026); legado `anchor_or_first_eng`; opt-in `homolog_in_period`.
+
+---
+
+## 2026-06 — Filtro LMP por âncora no período (`anchor_in_period`)
+
+Correção do dashboard/listagem LMP: o período passa a usar **âncora LMP** (`ListingAnchorEventos`) em vez de `anchor OR first_eng`, eliminando OVs que só tocaram engenharia no mês sem homologação/âncora no período.
+
+Documentação: [lmp-2026-rq060-vs-dashboard-auditoria.md](./investigation/lmp-2026-rq060-vs-dashboard-auditoria.md) §6.
+
+**Impacto:** mai/2026 23→20 OVs; jun/2026 mantém 12 (alinhado RQ-060).
+
+**Módulo:** `LmpPeriodInclusionSemanticsService` + `LMPQueryRepository._sql_candidate_period_where_clause`.
+
+---
+
 ## 2026-06 — Auditoria LMP: RQ-060 vs dashboard
 
 Investigação de divergência entre controle interno (pastas LMP Ano + RQ-060) e `GET /engineering/lmps/dashboard/items` (jan–jun/2026). Extração automatizada de OVs dos Word, scripts de cruzamento e SQL de homologação (foco mai/jun).

@@ -1043,10 +1043,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         where_period_anchor, params_period_anchor = self._sql_candidate_period_where_clause(
             request,
             anchor_date_sql="L.ANCHOR_START_DATE",
+            homolog_date_sql="LF.ANCHOR_START_DATE",
         )
         where_period_other, params_period_other = self._sql_candidate_period_where_clause(
             request,
             anchor_date_sql="R.ANCHOR_START_DATE",
+            homolog_date_sql="R.ANCHOR_START_DATE",
         )
 
         has_period = self._has_listing_period_filter(

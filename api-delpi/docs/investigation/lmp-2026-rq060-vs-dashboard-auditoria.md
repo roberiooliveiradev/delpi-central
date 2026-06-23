@@ -113,6 +113,8 @@ Scripts legados (mai/2026):
 
 | Script | Função |
 |--------|--------|
+| `investigate_lmp_period_vs_rq060.py` | Cruzamento mês a mês (`--dashboard-only` ou completo) |
+| `investigate_lmp_may2026_divergence_history.py` | Histórico AIJ das OVs divergentes de mai/2026 |
 | `investigate_lmp_may2026_divergence.py` | Investigação profunda maio (categorias A–E) |
 | `validate_lmp_period_filter_may2026.py` | Dashboard mai + OVs com âncora em junho |
 | `simulate_lmp_period_by_revision.py` | Simula políticas via HTTP + SQL |
@@ -150,22 +152,136 @@ Mapeamento 1:1 (pasta → OV RQ → âncora dashboard):
 
 **Conclusão:** com filtro `2026-06-01` → `2026-06-30`, a API reflete exatamente as OVs documentadas nos RQs de junho.
 
-### 5.2 Maio/2026 — **divergência estrutural**
+### 5.2 Maio/2026 — **divergência estrutural** (homologado 22/06/2026)
 
-| Métrica | Controle (pastas) | Dashboard API |
-|---------|-------------------|---------------|
-| Itens | **17** pastas (070–086) | **23** OVs |
-| Diferença | — | +6 OVs extras |
+Comando: `investigate_lmp_period_vs_rq060.py --month 2026-05 --dashboard-only`  
+Relatório JSON: `scripts/data/lmp_may2026_rq060_vs_dashboard_report.json`
 
-**Causas identificadas:**
+| Métrica | RQ-060 | Dashboard `listing_type=LMP` |
+|---------|--------|------------------------------|
+| Pastas / linhas | **17** (070–086) | — |
+| OVs únicas | **16** (`000090` em 072+079) | **23** |
+| Interseção (conjuntos) | — | **15** OVs |
+| Só RQ-060 | **1** (`003567`) | — |
+| Só dashboard | — | **8** OVs |
+| Pastas com OV no dashboard | **16/17** | — |
+| Pastas sem OV no dashboard | **1** (078 → `003567`) | — |
 
-1. **Unidade de contagem:** dashboard conta **OVs**; controle conta **pastas**. Uma pasta pode mapear para a mesma OV de outra (ex.: `000090` nas pastas 072 e 079).
-2. **Filtro de período legado (`anchor OR first_eng`):** OVs com âncora LMP **fora de maio** entram pelo `first_eng` no mês — ex.: `003562`, `003578`, `000120` (âncora em **jun/2026**) ainda aparecem no filtro **mai/2026**.
-3. **Múltiplas OVs Protheus vs uma pasta RQ:** pasta **073 26** — RQ cita só `000102`; Protheus também lista `000088`, `000089`, `000095` (Wanke).
-4. **OVs extras sem pasta mai:** `000087`, `003561`, `002871`, `003578`, `000120` (parte já explicada pelo item 2).
-5. **Residence &lt; 30 min** e revisão medida no período — casos pontuais analisados via SQL em `scripts/sql/lmp_may2026_*`.
+**Conclusão:** maio **não** fecha como junho. O dashboard lista **+8 OVs** que não constam no RQ de maio e **omite 1 OV** documentada no RQ (`003567`).
 
-OVs maio/2026 no RQ-060 (070–086):
+#### 5.2.1 Mapeamento pasta → OV → dashboard
+
+| Pasta | OV (RQ) | No dashboard LMP? | Âncora LMP | Observação |
+|-------|---------|-------------------|------------|------------|
+| 070 26 | 003562 | ✓ | **11/06/2026** | Entra em mai por `first_eng` 04/05; pasta mai, homolog jun |
+| 071 26 | 003403 | ✓ | 04/05/2026 | |
+| 072 26 | 000090 | ✓ | 15/05/2026 | OV compartilhada com 079 |
+| 073 26 | 000102 | ✓ | 18/05/2026 | RQ só cita esta OV; Protheus tem mais Wanke |
+| 074 26 | 003568 | ✓ | 08/05/2026 | |
+| 075 26 | 000111 | ✓ | 12/05/2026 | |
+| 076 26 | 000084 | ✓ | 13/05/2026 | |
+| 077 26 | 003571 | ✓ | 14/05/2026 | |
+| 078 26 | 003567 | **✗** | — | **Ausente** em LMP, Amostra, Outro e Todos (25 itens) |
+| 079 26 | 000090 | ✓ | 15/05/2026 | Mesma OV que 072 |
+| 080 26 | 003551 | ✓ | 19/05/2026 | |
+| 081 26 | 000054 | ✓ | 20/05/2026 | |
+| 082 26 | 000097 | ✓ | 25/05/2026 | |
+| 083 26 | 003574 | ✓ | 25/05/2026 | |
+| 084 26 | 003572 | ✓ | 25/05/2026 | |
+| 085 26 | 003573 | ✓ | 25/05/2026 | |
+| 086 26 | 000061 | ✓ | 27/05/2026 | |
+
+#### 5.2.2 As 8 OVs no dashboard sem pasta RQ em maio
+
+| OV | Âncora | Motivo provável | Categoria |
+|----|--------|-----------------|-----------|
+| 000088 | 04/05/2026 | Wanke 9048 — não citada no RQ 073 (`000102`) | **Multi-OV Wanke** |
+| 000089 | 04/05/2026 | idem | **Multi-OV Wanke** |
+| 000095 | 04/05/2026 | idem | **Multi-OV Wanke** |
+| 000087 | 04/05/2026 | LMP válida Protheus; sem pasta mai no controle | **Extra operacional** |
+| 003561 | 05/05/2026 | idem | **Extra operacional** |
+| 002871 | 27/05/2026 | idem (`first_eng` antigo 09/2025) | **Extra operacional** |
+| 000120 | **15/06/2026** | `first_eng` 27/05 → vazamento para mai | **Bleed de período** |
+| 003578 | **15/06/2026** | `first_eng` 20/05 → vazamento para mai | **Bleed de período** |
+
+> `003562` (pasta 070) **não** está nesta lista — consta no RQ de maio e no dashboard, mas com **âncora em junho** (inclusão via `first_eng`).
+
+#### 5.2.3 OV `003567` (pasta 078) — ausente totalmente
+
+Investigação pontual (`get_lmp` + histórico):
+
+| Campo | Valor |
+|-------|-------|
+| `listing_kind` efetivo | **OUTRO** (não LMP) |
+| Âncora LMP | vazia |
+| `first_eng` | 14/05/2026 (rev. 02) |
+| No dashboard mai (`Todos`=25 itens) | **Não** |
+
+Hipótese: candidata com engenharia no mês, mas **sem marcador LMP** e **fora dos critérios** de listagem como OUTRO no período (residência / revisão medida). Divergência **RQ diz LMP** vs **Protheus classifica OUTRO** — conferir RQ-060 e eventos `AIJ010` da OV.
+
+#### 5.2.4 Causas consolidadas
+
+1. **Unidade de contagem:** 17 pastas → 16 OVs únicas no RQ (`000090` duplicada).
+2. **Filtro `anchor OR first_eng`:** `003562`, `000120`, `003578` entram em mai sem âncora LMP no mês.
+3. **Multi-OV Wanke:** RQ 073 documenta `000102`; Protheus lista também `000088`, `000089`, `000095` (âncora 04/05).
+4. **Extras operacionais:** `000087`, `003561`, `002871` — LMP Protheus sem pasta no controle mai.
+5. **Classificação / exclusão:** `003567` no RQ mas **não listada** — tipo efetivo OUTRO, não passa no filtro LMP nem aparece em `Todos` no período.
+
+#### 5.2.5 Histórico AIJ010 — divergências (investigado 22/06/2026)
+
+Script: `scripts/investigate_lmp_may2026_divergence_history.py`  
+Relatório: `scripts/data/lmp_may2026_divergence_history_report.json`
+
+##### A — `003567` (pasta 078): RQ presente, dashboard ausente
+
+| Campo | Valor |
+|-------|-------|
+| Filial ativa | 01 (rev. **06**) |
+| `AD1_DESCRI` | `BUHLER - 1 ITEM` (sem marcador LMP explícito) |
+| Tipo efetivo | **OUTRO** |
+| `first_eng` | 14/05/2026 rev. 02, estágio 000003 |
+| Eventos mai | **42** linhas AIJ — ciclo completo em **14/05** (rev. 02, 04, 05): estágios 000003–000012, incl. **000008 Amostra** |
+| Homologação | 000012 em 14/05 (rev. 05 encerra 18/05) |
+| Produto ADJ | `80014553` |
+
+**Por que diverge:** o RQ-060 registra a pasta como LMP de maio, mas no Protheus a OV **não recebe classificação LMP** (sem âncora LMP utilizável; fluxo com estágio Amostra no mesmo dia). Com `listing_type=LMP` fica fora; com `Todos` também não entra — candidata **OUTRO** que não satisfaz o predicado de listagem do período (homolog/âncora medida vs. `first_eng` isolado). **Ação:** conferir se o RQ foi aberto antes da homologação LMP real ou se a OV deveria ser outra (ex. `003578`, BUHLER homologada em **junho**).
+
+##### B — Wanke: `000088`, `000089`, `000095` vs RQ `000102` (pasta 073)
+
+| OV | No RQ 073? | Âncora dashboard | Evento AIJ dominante em mai | `first_eng` |
+|----|------------|------------------|----------------------------|-------------|
+| 000102 | **Sim** | 18/05 | Eng. 07/05 → homolog **18/05** rev. 04 (fluxo completo) | 07/05 |
+| 000088 | Não | 04/05 | Só cadeia homolog **04/05** rev. 11 (estágios 000005–000013, mesmo dia) | 21/04 |
+| 000089 | Não | 04/05 | Idem rev. 06 em 04/05 | 21/04 |
+| 000095 | Não | 04/05 | Idem rev. 07 em 04/05 | 28/04 |
+
+Produtos ADJ: `000089` e `000102` compartilham **`90480113`** (família Wanke 9048). O Protheus **fragmenta o projeto em 4 OVs**; o controle interno documenta **apenas `000102`** no RQ-060 da pasta 073.
+
+**Por que diverge:** não é erro de filtro de período — são **OVs distintas** com homologação LMP em 04/05 que o controle não vinculou à pasta. A API lista cada OV com âncora no mês.
+
+##### C — Extras operacionais: `000087`, `003561`, `002871`
+
+| OV | Âncora | Histórico mai | Observação |
+|----|--------|---------------|------------|
+| 000087 | 04/05 | Homolog rev. 08 em 04/05 (1 evento) | COLORMAQ — LMP válida, sem pasta RQ |
+| 003561 | 05/05 | Eng. 04/05 + homolog 05/05 rev. 03 | FRANKLIN — LMP válida, sem pasta RQ |
+| 002871 | 27/05 | Âncora 27/05; `first_eng` **09/2025** | TRACTIAN — entra por âncora no mês |
+
+**Por que diverge:** LMP reais no Protheus **sem linha correspondente** na planilha RQ de maio (atraso de controle ou critério de pasta diferente).
+
+##### D — Bleed `first_eng`: `000120`, `003578`, `003562`
+
+| OV | Pasta RQ | Âncora LMP | `first_eng` mai | Homolog LMP no mês |
+|----|----------|------------|-----------------|-------------------|
+| 000120 | 095 (**jun**) | **15/06** | 27/05 rev. 03 | Não — só eng. pontual em mai |
+| 003578 | 094 (**jun**) | **15/06** | 20/05 rev. 03–09 (7 eventos eng.) | Não em mai |
+| 003562 | 070 (**mai**) | **11/06** | 04/05 rev. 08–09 (+ homolog 04/05 aberta) | Parcial 04/05; homolog final jun |
+
+**Por que diverge:** política atual **`anchor OR first_eng`** inclui essas OVs em **maio** porque houve engenharia no mês, **mesmo sem homologação LMP no mês de referência**. `003562` ilustra pasta de **mai** com homologação final em **junho** (também pasta 090 em jun).
+
+**Mitigação preparada:** `period_inclusion_policy=homolog_in_period` (opt-in) alinharia o dashboard ao mês da homologação LMP, não ao `first_eng`.
+
+OVs maio/2026 no RQ-060 (070–086) — referência:
 
 | Pasta | OV |
 |-------|-----|
@@ -201,28 +317,49 @@ Isso **não invalida** a listagem da API; indica limitação do controle por pas
 
 ---
 
-## 6. Código preparatório (opt-in, defaults legados)
+## 6. Correção SQL — `anchor_in_period` (jun/2026)
 
-Investigação motivou serviços de semântica **desacoplados do SQL**, ainda com default compatível com produção:
+### Problema
 
-| Serviço | Responsabilidade |
-|---------|------------------|
-| `LmpPeriodInclusionSemanticsService` | Política de inclusão no período |
+A política legada `anchor_or_first_eng` incluía OVs no mês quando **`first_eng`** caía no período, mesmo com **âncora LMP em outro mês** — bleed em mai/2026 (`000120`, `003578`, `003562`).
+
+### Solução
+
+Nova política padrão **`anchor_in_period`** em `LMPQuerySettings.period_inclusion_policy`:
+
+- Filtra candidatos só quando **`L.ANCHOR_START_DATE`** (âncora LMP em `ListingAnchorEventos`) está no intervalo.
+- Remove o CTE `OvFirstEngineeringArrival` do batch (sem JOIN `first_eng`).
+- Corrige branch OUTRO com `homolog_in_period`: usa `R.ANCHOR_START_DATE`, não `LF` sem JOIN.
+
+| Política | Comportamento |
+|----------|---------------|
+| **`anchor_in_period`** | Padrão — âncora LMP no mês |
+| `anchor_or_first_eng` | Legado — âncora **OU** first_eng |
+| `homolog_in_period` | Só homologação 000012 (`LF`) no mês |
+
+### Impacto homologado
+
+| Mês | Legado (`anchor_or_first_eng`) | `anchor_in_period` | RQ-060 pastas |
+|-----|-------------------------------|-------------------|---------------|
+| Mai/2026 | 23 OVs | **20** OVs | 17 |
+| Jun/2026 | 12 OVs | **12** OVs | 12 ✓ |
+
+Script histórico divergências: `scripts/investigate_lmp_may2026_divergence_history.py`  
+Relatórios: `scripts/data/lmp_may2026_rq060_vs_dashboard_report.json`, `lmp_may2026_divergence_history_report.json`.
+
+### Serviços e settings
+
+| Serviço / setting | Responsabilidade |
+|-------------------|------------------|
+| `LmpPeriodInclusionSemanticsService` | Predicado SQL por política |
 | `LmpListingKindSemanticsService` | Tipo efetivo LMP / Amostra / Outro |
 | `LmpListingCycleSemanticsService` | Ciclo homologação / `cycle_index` |
+| `period_inclusion_policy` | Default **`anchor_in_period`** |
+| `strict_residence_after_homolog` | Opt-in — LMP homologada com &lt; 30 min → OUTRO |
 
-**Settings novos** (`lmp_query_settings`):
+Campos adicionais no dashboard: `homolog_revision`, `measurement_revision`, `homolog_date`, `cycle_index`.
 
-| Setting | Default | Alternativa |
-|---------|---------|-------------|
-| `period_inclusion_policy` | `anchor_or_first_eng` | `homolog_in_period` |
-| `strict_residence_after_homolog` | `False` | `True` (opt-in) |
-
-Campos adicionais no dashboard (quando wiring ativo): `homolog_revision`, `measurement_revision`, `homolog_date`, `cycle_index`.
-
-Testes: `tests/test_lmp_listing_cycle_semantics_service.py`, extensões em `tests/test_lmp_query_repository_sql.py`.
-
-> **Não ativado em produção** sem homologação — usar scripts/SQL desta pasta para medir impacto antes.
+Testes: `tests/test_lmp_query_repository_sql.py`, `tests/test_lmp_listing_cycle_semantics_service.py` (42 casos no container).
 
 ---
 
@@ -303,7 +440,8 @@ print(json.dumps(uc.execute_summary(dto, status_filter='Todos'), indent=2))
 ## 10. Pendências
 
 - [ ] Homologar **abril/2026** (16 pastas vs 21 dashboard — mencionado no playbook).
-- [ ] Repetir cruzamento `--dashboard-only` para **jan–mai/2026**.
+- [x] Repetir cruzamento `--dashboard-only` para **mai/2026** — ver §5.2 do doc de auditoria.
+- [ ] Repetir cruzamento `--dashboard-only` para **jan–abr/2026**.
 - [ ] Validar OVs ⚠ (026, 033, 047, …) no Word.
 - [ ] Medir impacto de `homolog_in_period` + `strict_residence_after_homolog=True` vs planilha.
 - [ ] Fase 2: múltiplas linhas por ciclo homolog (ex.: `000061`×3, `003562`×2) no dashboard.

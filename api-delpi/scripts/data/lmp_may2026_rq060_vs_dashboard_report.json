@@ -1,0 +1,299 @@
+{
+  "period": {
+    "start": "2026-05-01",
+    "end": "2026-05-31",
+    "month": "2026-05"
+  },
+  "summary_api": {
+    "total_lmps": 23,
+    "total_items": 23,
+    "percent_dentro_prazo": 100.0,
+    "avg_lead_time": 2.3
+  },
+  "totals": {
+    "pastas_rq060": 17,
+    "ovs_unicas_rq060": 16,
+    "dashboard_lmp": 23,
+    "intersecao": 15,
+    "somente_rq060": 1,
+    "somente_dashboard": 8,
+    "ovs_duplicadas_entre_pastas": 1
+  },
+  "ovs_duplicadas_rq060": {
+    "000090": [
+      "072 26",
+      "079 26"
+    ]
+  },
+  "intersecao": [
+    "000054",
+    "000061",
+    "000084",
+    "000090",
+    "000097",
+    "000102",
+    "000111",
+    "003403",
+    "003551",
+    "003562",
+    "003568",
+    "003571",
+    "003572",
+    "003573",
+    "003574"
+  ],
+  "somente_rq060": [
+    "003567"
+  ],
+  "somente_dashboard": [
+    "000087",
+    "000088",
+    "000089",
+    "000095",
+    "000120",
+    "002871",
+    "003561",
+    "003578"
+  ],
+  "pastas_rq060": [
+    {
+      "lmp_ano": "070 26",
+      "ov_rq060": "003562",
+      "ov_duplicada_em": [
+        "070 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "11/06/2026",
+      "description": "PROJ. TRR-ITCC-0039-FLEX"
+    },
+    {
+      "lmp_ano": "071 26",
+      "ov_rq060": "003403",
+      "ov_duplicada_em": [
+        "071 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "04/05/2026",
+      "description": "CHICOTE DE LIGAÇÃO 3RHO"
+    },
+    {
+      "lmp_ano": "072 26",
+      "ov_rq060": "000090",
+      "ov_duplicada_em": [
+        "072 26",
+        "079 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "15/05/2026",
+      "description": "WEG LINHARES"
+    },
+    {
+      "lmp_ano": "073 26",
+      "ov_rq060": "000102",
+      "ov_duplicada_em": [
+        "073 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "18/05/2026",
+      "description": "REV. DES. WANKE-SECADORA"
+    },
+    {
+      "lmp_ano": "074 26",
+      "ov_rq060": "003568",
+      "ov_duplicada_em": [
+        "074 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "08/05/2026",
+      "description": "WEG MOTORES"
+    },
+    {
+      "lmp_ano": "075 26",
+      "ov_rq060": "000111",
+      "ov_duplicada_em": [
+        "075 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "12/05/2026",
+      "description": "WEG LINHARES"
+    },
+    {
+      "lmp_ano": "076 26",
+      "ov_rq060": "000084",
+      "ov_duplicada_em": [
+        "076 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "13/05/2026",
+      "description": "WEG LINHARES"
+    },
+    {
+      "lmp_ano": "077 26",
+      "ov_rq060": "003571",
+      "ov_duplicada_em": [
+        "077 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "14/05/2026",
+      "description": "WEG MOTORES"
+    },
+    {
+      "lmp_ano": "078 26",
+      "ov_rq060": "003567",
+      "ov_duplicada_em": [
+        "078 26"
+      ],
+      "status": "RQ060_SEM_DASHBOARD",
+      "anchor_start_fmt": null,
+      "description": ""
+    },
+    {
+      "lmp_ano": "079 26",
+      "ov_rq060": "000090",
+      "ov_duplicada_em": [
+        "072 26",
+        "079 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "15/05/2026",
+      "description": "WEG LINHARES"
+    },
+    {
+      "lmp_ano": "080 26",
+      "ov_rq060": "003551",
+      "ov_duplicada_em": [
+        "080 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "19/05/2026",
+      "description": "WEG MOTORES"
+    },
+    {
+      "lmp_ano": "081 26",
+      "ov_rq060": "000054",
+      "ov_duplicada_em": [
+        "081 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "20/05/2026",
+      "description": "WEG LINHARES"
+    },
+    {
+      "lmp_ano": "082 26",
+      "ov_rq060": "000097",
+      "ov_duplicada_em": [
+        "082 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "25/05/2026",
+      "description": "WEG LINHARES"
+    },
+    {
+      "lmp_ano": "083 26",
+      "ov_rq060": "003574",
+      "ov_duplicada_em": [
+        "083 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "25/05/2026",
+      "description": "WEG ENERGIA"
+    },
+    {
+      "lmp_ano": "084 26",
+      "ov_rq060": "003572",
+      "ov_duplicada_em": [
+        "084 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "25/05/2026",
+      "description": "WEG ENERGIA"
+    },
+    {
+      "lmp_ano": "085 26",
+      "ov_rq060": "003573",
+      "ov_duplicada_em": [
+        "085 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "25/05/2026",
+      "description": "WEG ENERGIA"
+    },
+    {
+      "lmp_ano": "086 26",
+      "ov_rq060": "000061",
+      "ov_duplicada_em": [
+        "086 26"
+      ],
+      "status": "ALINHADO",
+      "anchor_start_fmt": "27/05/2026",
+      "description": "WEG LINHARES"
+    }
+  ],
+  "detalhe_somente_rq060": [
+    {
+      "ov": "003567",
+      "pastas_rq060": [
+        "078 26"
+      ],
+      "status": "RQ060_SEM_DASHBOARD"
+    }
+  ],
+  "detalhe_somente_dashboard": [
+    {
+      "ov": "000087",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "04/05/2026",
+      "description": "MODIF. COLORMAQ - 2 ITENS"
+    },
+    {
+      "ov": "000088",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "04/05/2026",
+      "description": "WANKE MODIF. 6 ITENS - 9048"
+    },
+    {
+      "ov": "000089",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "04/05/2026",
+      "description": "WANKE MODIF. 3 ITENS - 9048"
+    },
+    {
+      "ov": "000095",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "04/05/2026",
+      "description": "MODIFICAÇÃO 90480094 - TN"
+    },
+    {
+      "ov": "000120",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "15/06/2026",
+      "description": "WEG LINHARES"
+    },
+    {
+      "ov": "002871",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "27/05/2026",
+      "description": "OV 2871 - TRACTIAN"
+    },
+    {
+      "ov": "003561",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "05/05/2026",
+      "description": "FRANKLIN - 1 TEM"
+    },
+    {
+      "ov": "003578",
+      "status": "DASHBOARD_SEM_RQ060",
+      "pastas_rq060": [],
+      "anchor_start_fmt": "15/06/2026",
+      "description": "BUHLER - 1 ITEM"
+    }
+  ]
+}

@@ -201,7 +201,9 @@ def test_listing_period_omits_anchor_marker_date_filter() -> None:
 
 
 def test_candidate_period_filter_or_first_engineering_arrival() -> None:
-    repo = _repository()
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(period_inclusion_policy="anchor_or_first_eng"),
+    )
     request = ListLMPRequest(date_start="20260501", date_end="20260531")
 
     where_sql, _params = repo._sql_candidate_period_where_clause(
@@ -214,8 +216,24 @@ def test_candidate_period_filter_or_first_engineering_arrival() -> None:
     assert " OR " in where_sql
 
 
-def test_candidate_lmps_includes_first_engineering_arrival_cte() -> None:
+def test_candidate_period_filter_anchor_in_period_default() -> None:
     repo = _repository()
+    request = ListLMPRequest(date_start="20260501", date_end="20260531")
+
+    where_sql, _params = repo._sql_candidate_period_where_clause(
+        request,
+        anchor_date_sql="L.ANCHOR_START_DATE",
+    )
+
+    assert where_sql.strip().startswith("L.ANCHOR_START_DATE")
+    assert "F.FIRST_ENG_DATE" not in where_sql
+    assert " OR " not in where_sql
+
+
+def test_candidate_lmps_includes_first_engineering_arrival_cte() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(period_inclusion_policy="anchor_or_first_eng"),
+    )
     request = ListLMPRequest(date_start="20260501", date_end="20260531")
 
     candidate_sql, _candidate_params = repo._sql_candidate_lmps_cte(
@@ -444,11 +462,37 @@ def test_candidate_period_filter_homolog_in_period_uses_lf_only() -> None:
     where_sql, _params = repo._sql_candidate_period_where_clause(
         request,
         anchor_date_sql="L.ANCHOR_START_DATE",
+        homolog_date_sql="LF.ANCHOR_START_DATE",
     )
 
     assert "LF.ANCHOR_START_DATE" in where_sql
     assert "FIRST_ENG" not in where_sql
     assert " OR " not in where_sql
+
+
+def test_candidate_period_other_branch_homolog_policy_uses_eng_support_date() -> None:
+    repo = LMPQueryRepository(
+        settings=LMPQuerySettings(period_inclusion_policy="homolog_in_period"),
+    )
+    request = ListLMPRequest(date_start="20260501", date_end="20260531")
+
+    where_sql, _params = repo._sql_candidate_period_where_clause(
+        request,
+        anchor_date_sql="R.ANCHOR_START_DATE",
+        homolog_date_sql="R.ANCHOR_START_DATE",
+    )
+
+    assert "R.ANCHOR_START_DATE" in where_sql
+    assert "LF.ANCHOR_START_DATE" not in where_sql
+
+
+def test_candidate_lmps_skips_first_eng_cte_when_anchor_in_period_default() -> None:
+    repo = _repository()
+    request = ListLMPRequest(date_start="20260501", date_end="20260531")
+
+    candidate_sql, _params = repo._sql_candidate_lmps_cte(request, lmp_only=False)
+
+    assert "OvFirstEngineeringArrival AS" not in candidate_sql
 
 
 def test_candidate_lmps_skips_first_eng_cte_when_homolog_policy() -> None:

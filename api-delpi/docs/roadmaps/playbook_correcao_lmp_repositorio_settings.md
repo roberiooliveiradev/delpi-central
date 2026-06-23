@@ -899,9 +899,12 @@ Registro completo da extração RQ-060 (pastas 002–098), cruzamento mês a mê
 
 Resumo rápido:
 
-| Mês | Pastas RQ-060 | Dashboard API | Status |
-|-----|---------------|---------------|--------|
-| Jun/2026 | 12 | 12 | Alinhado 1:1 |
-| Mai/2026 | 17 | 23 | Divergente — filtro `anchor OR first_eng`, multi-OV, dup OV |
+| Mês | Pastas RQ-060 | OVs únicas RQ | Dashboard LMP | Interseção | Status |
+|-----|---------------|---------------|---------------|------------|--------|
+| Jun/2026 | 12 | 12 | 12 | 12 | Alinhado 1:1 |
+| Mai/2026 (legado `anchor_or_first_eng`) | 17 | 16 | 23 | 15 | bleed `first_eng` |
+| Mai/2026 (**`anchor_in_period`**, jun/2026) | 17 | 16 | **20** | 15 | sem bleed; +5 extras Protheus vs RQ |
+
+**Correção SQL (jun/2026):** default `period_inclusion_policy=anchor_in_period` — período pela **âncora LMP**, não `first_eng`. Ver auditoria §6.
 
 Script de cruzamento: `scripts/investigate_lmp_period_vs_rq060.py --month YYYY-MM [--dashboard-only]`.
