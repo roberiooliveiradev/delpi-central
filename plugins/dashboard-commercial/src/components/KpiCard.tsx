@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 
 import type { GoalPerformanceBadge, GoalScopeBadge } from "../utils/goalDisplay";
+import { HelpTooltip } from "./HelpTooltip";
 
 type KpiCardProps = {
   title: string;
+  titleHint?: string;
   value: string;
   valueVariant?: "default" | "per-unit";
   contextLabel?: string;
@@ -20,6 +22,7 @@ type KpiCardProps = {
 
 export function KpiCard({
   title,
+  titleHint,
   value,
   valueVariant = "default",
   contextLabel,
@@ -58,7 +61,16 @@ export function KpiCard({
     <article className="dc-card dc-kpi-card">
       <div className="dc-kpi-header">
         <div>
-          <p className="dc-kpi-title">{title}</p>
+          <p className="dc-kpi-title">
+            {title}
+            {titleHint ? (
+              <HelpTooltip
+                content={titleHint}
+                ariaLabel={`Ajuda: ${title}`}
+                className="dc-kpi-title__help"
+              />
+            ) : null}
+          </p>
           <h3 className={valueClassName}>{loading ? "…" : value}</h3>
           {resolvedGoal ? (
             <p className={goalClassName}>

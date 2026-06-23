@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
+import { HelpTooltip } from "./HelpTooltip";
+
 export type DetailField = {
   label: string;
+  hint?: string;
   value: ReactNode;
   wide?: boolean;
 };
@@ -26,7 +29,17 @@ export function DetailFieldGrid({ fields }: DetailFieldGridProps) {
               : "dc-detail-grid__item"
           }
         >
-          <dt>{field.label}</dt>
+          <dt>
+            <span className="dc-detail-grid__label">
+              {field.label}
+              {field.hint ? (
+                <HelpTooltip
+                  content={field.hint}
+                  ariaLabel={`Ajuda: ${field.label}`}
+                />
+              ) : null}
+            </span>
+          </dt>
           <dd>{field.value}</dd>
         </div>
       ))}

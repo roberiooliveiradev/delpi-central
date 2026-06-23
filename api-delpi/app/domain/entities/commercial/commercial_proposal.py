@@ -16,6 +16,7 @@ class CommercialProposal:
     status_label: Optional[str] = None
     status_category: Optional[str] = None
     customer_code: Optional[str] = None
+    customer_store: Optional[str] = None
     stage: Optional[str] = None
 
     def to_dict(self) -> dict:

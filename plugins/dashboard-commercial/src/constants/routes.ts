@@ -23,6 +23,9 @@ export function buildCommercialDetailPath(
   if (state.dateStart) params.set("start_date", state.dateStart);
   if (state.dateEnd) params.set("end_date", state.dateEnd);
   if (branch) params.set("branch", branch);
+  if (state.customerSegment) {
+    params.set("customer_segment", state.customerSegment);
+  }
   if (state.revision) params.set("revision", state.revision);
 
   const query = params.toString();

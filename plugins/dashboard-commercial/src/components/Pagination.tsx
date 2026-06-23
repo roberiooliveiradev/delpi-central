@@ -1,3 +1,6 @@
+import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { HelpTooltip } from "./HelpTooltip";
+
 type PaginationProps = {
   page: number;
   pageSize: number;
@@ -21,24 +24,43 @@ export function Pagination({
     <div className="dc-pagination">
       <span className="dc-pagination__info">
         Página {page} de {totalPages} · {total} registro(s)
+        <HelpTooltip
+          content={COMMERCIAL_HELP_TOOLTIPS.pagination.info}
+          ariaLabel="Ajuda: paginação"
+          className="dc-pagination__help"
+        />
       </span>
       <div className="dc-pagination__actions">
-        <button
-          type="button"
-          className="dc-ghost-btn"
-          disabled={!canPrev}
-          onClick={() => onPageChange(page - 1)}
-        >
-          Anterior
-        </button>
-        <button
-          type="button"
-          className="dc-ghost-btn"
-          disabled={!canNext}
-          onClick={() => onPageChange(page + 1)}
-        >
-          Próxima
-        </button>
+        <div className="dc-pagination__action">
+          <button
+            type="button"
+            className="dc-ghost-btn"
+            disabled={!canPrev}
+            onClick={() => onPageChange(page - 1)}
+          >
+            Anterior
+          </button>
+          <HelpTooltip
+            content={COMMERCIAL_HELP_TOOLTIPS.pagination.previous}
+            ariaLabel="Ajuda: página anterior"
+            className="dc-pagination__action-help"
+          />
+        </div>
+        <div className="dc-pagination__action">
+          <button
+            type="button"
+            className="dc-ghost-btn"
+            disabled={!canNext}
+            onClick={() => onPageChange(page + 1)}
+          >
+            Próxima
+          </button>
+          <HelpTooltip
+            content={COMMERCIAL_HELP_TOOLTIPS.pagination.next}
+            ariaLabel="Ajuda: próxima página"
+            className="dc-pagination__action-help"
+          />
+        </div>
       </div>
     </div>
   );

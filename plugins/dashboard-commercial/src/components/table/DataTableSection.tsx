@@ -7,6 +7,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { sortTableRows } from "../../utils/sortTableRows";
+import { HelpTooltip } from "../HelpTooltip";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "../LoadingActivityCard";
 import { Pagination } from "../Pagination";
@@ -142,7 +143,11 @@ export function DataTableSection<T>({
         <h2 className="dc-section-title">
           {title}
           {titleHint ? (
-            <span className="dc-table-section__title-hint">{titleHint}</span>
+            <HelpTooltip
+              content={titleHint}
+              ariaLabel={`Ajuda: ${title}`}
+              className="dc-table-section__title-help"
+            />
           ) : null}
         </h2>
         <div className="dc-table-section__meta-group">
@@ -189,7 +194,11 @@ export function DataTableSection<T>({
                 />
               </div>
               {searchHint ? (
-                <span className="dc-table-search__hint">{searchHint}</span>
+                <HelpTooltip
+                  content={searchHint}
+                  ariaLabel="Ajuda: busca na tabela"
+                  className="dc-table-search__help"
+                />
               ) : null}
             </div>
           ) : null}

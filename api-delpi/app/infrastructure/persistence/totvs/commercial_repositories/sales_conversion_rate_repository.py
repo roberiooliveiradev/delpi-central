@@ -1,6 +1,9 @@
 from app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
 from app.domain.entities.commercial.sales_conversion_rate import SalesConversionRate
 from app.domain.ports.commercial.sales_conversion_rate_repository_port import SalesConversionRateRepositoryPort
+from app.domain.services.commercial_customer_segment_service import (
+    CommercialCustomerSegmentService,
+)
 from app.domain.services.commercial_proposal_status import WON_STATUS_CODE
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
@@ -19,6 +22,12 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
             qb.eq("AD1.AD1_FILIAL", request.branch)
 
         qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
+
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            qb,
+            "AD1.AD1_CODCLI",
+            request.customer_segment,
+        )
 
         where_clause, where_params = qb.build()
 

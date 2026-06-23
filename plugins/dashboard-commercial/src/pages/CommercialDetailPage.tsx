@@ -11,10 +11,12 @@ import {
 import { CommercialProposalHistorySection } from "../components/CommercialProposalHistorySection";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
+import { HelpTooltip } from "../components/HelpTooltip";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { COMMERCIAL_ROUTES } from "../constants/routes";
+import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useCommercialDetailRequestScope } from "../hooks/useCommercialDetailRequestScope";
 import { useCommercialProposalDetail } from "../hooks/useCommercialProposalDetail";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
@@ -105,33 +107,53 @@ export function CommercialDetailPage({
               Filial {data.branch} · Rev. {data.revision}
             </span>
           </h1>
-          <p className="dc-detail-page__subtitle">
+          <p className="dc-detail-page__subtitle dc-page-subtitle--with-help">
             {data.description ?? "Sem descrição"} · {periodLabel}
+            <HelpTooltip
+              content={COMMERCIAL_HELP_TOOLTIPS.detail.pageSubtitle}
+              ariaLabel="Ajuda: detalhe da proposta"
+              className="dc-page-subtitle__help"
+            />
           </p>
         </div>
         <div className="dc-detail-page__actions">
-          <button
-            type="button"
-            className="dc-secondary-btn"
-            onClick={detail.reload}
-          >
-            <RefreshCw size={16} aria-hidden />
-            Atualizar
-          </button>
-          <button
-            type="button"
-            className="dc-secondary-btn"
-            onClick={handleBack}
-          >
-            <ArrowLeft size={16} aria-hidden />
-            Voltar
-          </button>
+          <div className="dc-header-action">
+            <button
+              type="button"
+              className="dc-secondary-btn"
+              onClick={detail.reload}
+            >
+              <RefreshCw size={16} aria-hidden />
+              Atualizar
+            </button>
+            <HelpTooltip
+              content={COMMERCIAL_HELP_TOOLTIPS.actions.detailRefresh}
+              ariaLabel="Ajuda: atualizar detalhe"
+              className="dc-header-action__help"
+            />
+          </div>
+          <div className="dc-header-action">
+            <button
+              type="button"
+              className="dc-secondary-btn"
+              onClick={handleBack}
+            >
+              <ArrowLeft size={16} aria-hidden />
+              Voltar
+            </button>
+            <HelpTooltip
+              content={COMMERCIAL_HELP_TOOLTIPS.actions.back}
+              ariaLabel="Ajuda: voltar ao dashboard"
+              className="dc-header-action__help"
+            />
+          </div>
         </div>
       </header>
 
       <section className="dc-kpi-grid dc-detail-kpi-grid" aria-busy={detail.loading}>
         <KpiCard
           title="Status"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.statusKpi}
           value={data.status_label ?? data.status_code ?? "—"}
           contextLabel={`Estágio ${data.stage_label ?? data.stage ?? "—"}`}
           icon={<FileText size={22} />}
@@ -139,6 +161,7 @@ export function CommercialDetailPage({
         />
         <KpiCard
           title="Abertura"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.openingKpi}
           value={formatDisplayDate(data.proposal_date)}
           contextLabel="Data AD1_DATA"
           icon={<Building2 size={22} />}
@@ -146,6 +169,7 @@ export function CommercialDetailPage({
         />
         <KpiCard
           title="Fechamento"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.closingKpi}
           value={formatDisplayDate(data.end_date)}
           contextLabel="Data AD1_DTFIM"
           icon={<History size={22} />}
@@ -154,23 +178,58 @@ export function CommercialDetailPage({
       </section>
 
       <div className="dc-detail-layout">
-        <DetailCard title="Proposta" icon={<FileText size={20} />} hint="Cabeçalho AD1010">
+        <DetailCard
+          title="Proposta"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.proposalSection}
+          icon={<FileText size={20} />}
+          hint="Cabeçalho AD1010"
+        >
           <DetailFieldGrid
             fields={[
-              { label: "Filial", value: data.branch },
-              { label: "Nº proposta", value: data.proposal_number },
-              { label: "Revisão", value: data.revision },
+              {
+                label: "Filial",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalBranch,
+                value: data.branch,
+              },
+              {
+                label: "Nº proposta",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalNumber,
+                value: data.proposal_number,
+              },
+              {
+                label: "Revisão",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalRevision,
+                value: data.revision,
+              },
               {
                 label: "Descrição",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalDescription,
                 value: data.description ?? "—",
                 wide: true,
               },
-              { label: "Processo", value: data.process_label ?? data.process_code ?? "—" },
-              { label: "Estágio", value: data.stage_label ?? data.stage ?? "—" },
-              { label: "Abertura", value: formatDisplayDate(data.proposal_date) },
-              { label: "Fechamento", value: formatDisplayDate(data.end_date) },
+              {
+                label: "Processo",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalProcess,
+                value: data.process_label ?? data.process_code ?? "—",
+              },
+              {
+                label: "Estágio",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalStage,
+                value: data.stage_label ?? data.stage ?? "—",
+              },
+              {
+                label: "Abertura",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalOpening,
+                value: formatDisplayDate(data.proposal_date),
+              },
+              {
+                label: "Fechamento",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalClosing,
+                value: formatDisplayDate(data.end_date),
+              },
               {
                 label: "Status",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalStatus,
                 value: (
                   <ProposalStatusBadge
                     label={data.status_label ?? data.status_code ?? "—"}
@@ -185,22 +244,44 @@ export function CommercialDetailPage({
 
         <DetailCard
           title="Cliente e vendedor"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.customerSection}
           icon={<UserRound size={20} />}
           hint="SA1010 / SA3010"
         >
           <DetailFieldGrid
             fields={[
-              { label: "Cliente", value: data.customer_name ?? "—" },
-              { label: "Código cliente", value: data.customer_code ?? "—" },
-              { label: "Loja", value: data.customer_store ?? "—" },
-              { label: "Vendedor", value: data.seller_name ?? "—" },
-              { label: "Código vendedor", value: data.seller_code ?? "—" },
+              {
+                label: "Cliente",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.customerName,
+                value: data.customer_name ?? "—",
+              },
+              {
+                label: "Código cliente",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.customerCode,
+                value: data.customer_code ?? "—",
+              },
+              {
+                label: "Loja",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.customerStore,
+                value: data.customer_store ?? "—",
+              },
+              {
+                label: "Vendedor",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.sellerName,
+                value: data.seller_name ?? "—",
+              },
+              {
+                label: "Código vendedor",
+                hint: COMMERCIAL_HELP_TOOLTIPS.detail.sellerCode,
+                value: data.seller_code ?? "—",
+              },
             ]}
           />
         </DetailCard>
 
         <DetailCard
           title="Histórico da OV"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.historySection}
           icon={<History size={20} />}
           hint="Eventos AIJ010 — processo e estágio"
           className="dc-detail-card--wide"

@@ -10,3 +10,4 @@ class ListCommercialProposalsRequest:
     status: Optional[str] = None
     page: int = 1
     page_size: int = 50
+    customer_segment: Optional[str] = None

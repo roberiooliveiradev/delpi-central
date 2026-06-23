@@ -15,10 +15,13 @@ export function useCommercialFilters() {
     () => readCommercialFilters().dateEnd
   );
   const [branch, setBranchState] = useState(() => readCommercialFilters().branch);
+  const [customerSegment, setCustomerSegmentState] = useState(
+    () => readCommercialFilters().customerSegment
+  );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branch });
-  }, [dateStart, dateEnd, branch]);
+    writeFiltersToUrl({ dateStart, dateEnd, branch, customerSegment });
+  }, [dateStart, dateEnd, branch, customerSegment]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -26,6 +29,7 @@ export function useCommercialFilters() {
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
       setBranchState(next.branch);
+      setCustomerSegmentState(next.customerSegment);
     };
 
     window.addEventListener("popstate", onPopState);
@@ -36,17 +40,29 @@ export function useCommercialFilters() {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
     branch: branch || undefined,
+    customer_segment: customerSegment || undefined,
   };
 
-  const filterState: CommercialFilterUrlState = { dateStart, dateEnd, branch };
+  const filterState: CommercialFilterUrlState = {
+    dateStart,
+    dateEnd,
+    branch,
+    customerSegment,
+  };
 
   return {
     dateStart,
     dateEnd,
     branch,
+    customerSegment,
     setDateStart: useCallback((v: string) => setDateStartState(v), []),
     setDateEnd: useCallback((v: string) => setDateEndState(v), []),
     setBranch: useCallback((v: string) => setBranchState(v), []),
+    setCustomerSegment: useCallback(
+      (v: CommercialFilterUrlState["customerSegment"]) =>
+        setCustomerSegmentState(v),
+      []
+    ),
     apiParams,
     filterState,
   };

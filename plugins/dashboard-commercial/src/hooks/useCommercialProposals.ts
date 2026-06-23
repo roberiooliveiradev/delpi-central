@@ -78,6 +78,7 @@ export function useCommercialProposals(
     return () => controller.abort();
   }, [
     filters.branch,
+    filters.customer_segment,
     filters.end_date,
     filters.start_date,
     statusFilter,

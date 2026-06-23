@@ -19,6 +19,9 @@ from app.domain.services.commercial_proposal_status import (
     resolve_proposal_status_category,
     resolve_proposal_status_label,
 )
+from app.domain.services.commercial_customer_segment_service import (
+    CommercialCustomerSegmentService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
@@ -52,6 +55,12 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
         elif status_filter == "open":
             qb.raw(f"AD1.AD1_STATUS <> '{WON_STATUS_CODE}'")
 
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            qb,
+            "AD1.AD1_CODCLI",
+            request.customer_segment,
+        )
+
         where_clause, where_params = qb.build()
 
         base_cte = f"""
@@ -65,6 +74,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                     AD1.AD1_DTFIM,
                     AD1.AD1_STATUS,
                     AD1.AD1_CODCLI,
+                    AD1.AD1_LOJCLI,
                     AD1.AD1_STAGE
                 FROM AD1010 AD1
                 WHERE {where_clause}
@@ -79,6 +89,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                     AD1_DTFIM,
                     AD1_STATUS,
                     AD1_CODCLI,
+                    AD1_LOJCLI,
                     AD1_STAGE,
                     ROW_NUMBER() OVER (
                         PARTITION BY AD1_FILIAL, AD1_NROPOR
@@ -106,6 +117,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                 AD1_DTFIM AS end_date,
                 AD1_STATUS AS status_code,
                 AD1_CODCLI AS customer_code,
+                AD1_LOJCLI AS customer_store,
                 AD1_STAGE AS stage
             FROM ovs_latest
             WHERE rn = 1
@@ -229,8 +241,8 @@ def _row_to_detail(row: dict) -> CommercialProposalDetail:
         status_label=base.status_label,
         status_category=base.status_category,
         customer_code=base.customer_code,
+        customer_store=base.customer_store,
         stage=base.stage,
-        customer_store=(row.get("customer_store") or "").strip() or None,
         customer_name=(row.get("customer_name") or "").strip() or None,
         seller_code=(row.get("seller_code") or "").strip() or None,
         seller_name=(row.get("seller_name") or "").strip() or None,
@@ -253,6 +265,7 @@ def _row_to_entity(row: dict) -> CommercialProposal:
         status_label=resolve_proposal_status_label(status_code),
         status_category=resolve_proposal_status_category(status_code),
         customer_code=(row.get("customer_code") or "").strip() or None,
+        customer_store=(row.get("customer_store") or "").strip() or None,
         stage=(row.get("stage") or "").strip() or None,
     )
 

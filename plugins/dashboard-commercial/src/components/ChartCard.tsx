@@ -1,13 +1,22 @@
 import { useId, type ReactNode } from "react";
 
+import { HelpTooltip } from "./HelpTooltip";
+
 type ChartCardProps = {
   title: string;
+  titleHint?: string;
   children: ReactNode;
   hint?: string;
   className?: string;
 };
 
-export function ChartCard({ title, children, hint, className }: ChartCardProps) {
+export function ChartCard({
+  title,
+  titleHint,
+  children,
+  hint,
+  className,
+}: ChartCardProps) {
   const titleId = useId();
 
   return (
@@ -19,6 +28,13 @@ export function ChartCard({ title, children, hint, className }: ChartCardProps) 
       <div className="dc-chart-card__header">
         <h2 id={titleId} className="dc-chart-card__title">
           {title}
+          {titleHint ? (
+            <HelpTooltip
+              content={titleHint}
+              ariaLabel={`Ajuda: ${title}`}
+              className="dc-chart-card__title-help"
+            />
+          ) : null}
         </h2>
         {hint ? (
           <p className="dc-chart-card__hint" id={`${titleId}-hint`}>

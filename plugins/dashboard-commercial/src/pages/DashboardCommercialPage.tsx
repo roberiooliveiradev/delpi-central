@@ -13,6 +13,7 @@ import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/table";
 import { DataTableSection } from "../components/table";
 import { FilterBar } from "../components/FilterBar";
+import { HelpTooltip, FieldLabel } from "../components/HelpTooltip";
 import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
@@ -36,6 +37,7 @@ import {
   COMMERCIAL_CONSOLIDATED_BRANCH_LABELS,
   COMMERCIAL_KPI_TITLES,
 } from "../constants/commercialIndicators";
+import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { buildRolPerUnitKpiView } from "../utils/rolPerUnitPresentation";
 import {
@@ -56,9 +58,11 @@ export function DashboardCommercialPage({
     dateStart,
     dateEnd,
     branch,
+    customerSegment,
     setDateStart,
     setDateEnd,
     setBranch,
+    setCustomerSegment,
     apiParams,
     filterState,
   } = useCommercialFilters();
@@ -170,12 +174,13 @@ export function DashboardCommercialPage({
           dateStart,
           dateEnd,
           branch,
+          customerSegment,
           proposalBranch: row.branch,
           revision: row.revision,
         })
       );
     },
-    [branch, dateEnd, dateStart, isActive]
+    [branch, customerSegment, dateEnd, dateStart, isActive]
   );
 
   const proposalColumns = useMemo<DataTableColumn<CommercialProposal>[]>(
@@ -183,6 +188,7 @@ export function DashboardCommercialPage({
       {
         key: "branch",
         header: "Filial",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.branch,
         render: (row) => row.branch || "—",
         sortable: true,
         sortValue: (row) => row.branch,
@@ -190,6 +196,7 @@ export function DashboardCommercialPage({
       {
         key: "proposal",
         header: "Nº proposta",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.proposal,
         render: (row) => row.proposal_number,
         sortable: true,
         sortValue: (row) => row.proposal_number,
@@ -197,6 +204,7 @@ export function DashboardCommercialPage({
       {
         key: "revision",
         header: "Rev.",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.revision,
         className: "dc-table__col--numeric",
         render: (row) => row.revision || "—",
         sortable: true,
@@ -205,6 +213,7 @@ export function DashboardCommercialPage({
       {
         key: "description",
         header: "Descrição",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.description,
         className: "dc-table__col--wide",
         render: (row) => row.description ?? "—",
         sortable: true,
@@ -213,6 +222,7 @@ export function DashboardCommercialPage({
       {
         key: "proposal_date",
         header: "Data",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.proposalDate,
         className: "dc-table__col--numeric",
         render: (row) => formatDisplayDate(row.proposal_date),
         sortable: true,
@@ -221,6 +231,7 @@ export function DashboardCommercialPage({
       {
         key: "end_date",
         header: "Fim",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.endDate,
         className: "dc-table__col--numeric",
         render: (row) => formatDisplayDate(row.end_date),
         sortable: true,
@@ -229,6 +240,7 @@ export function DashboardCommercialPage({
       {
         key: "status",
         header: "Status",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.status,
         render: (row): ReactNode => (
           <ProposalStatusBadge
             label={row.status_label ?? row.status_code ?? "—"}
@@ -242,9 +254,20 @@ export function DashboardCommercialPage({
       {
         key: "customer",
         header: "Cliente",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.customerCode,
+        className: "dc-table__col--numeric",
         render: (row) => row.customer_code ?? "—",
         sortable: true,
         sortValue: (row) => row.customer_code,
+      },
+      {
+        key: "customer_store",
+        header: "Loja",
+        headerHint: COMMERCIAL_HELP_TOOLTIPS.table.customerStore,
+        className: "dc-table__col--numeric",
+        render: (row) => row.customer_store ?? "—",
+        sortable: true,
+        sortValue: (row) => row.customer_store,
       },
     ],
     []
@@ -257,7 +280,7 @@ export function DashboardCommercialPage({
         ? "Propostas sem fechamento ganho."
         : "Última revisão por proposta no período (data AD1_DATA).";
 
-  const chartHint =
+  const chartSubtitle =
     "Clique em um ponto para filtrar o período ao intervalo. Séries por filial 01 e 02.";
 
   return (
@@ -267,10 +290,12 @@ export function DashboardCommercialPage({
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        customerSegment={customerSegment}
         printDisabled={printDisabled}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
+        onCustomerSegmentChange={setCustomerSegment}
         onRefresh={() => {
           reload();
           reloadProposals();
@@ -318,6 +343,7 @@ export function DashboardCommercialPage({
       <section className="dc-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.rol}
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.rol}
           value={rolKpi.value}
           valueVariant={rolKpi.valueVariant}
           goalVariant={rolKpi.valueVariant}
@@ -332,6 +358,7 @@ export function DashboardCommercialPage({
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.salesOrderOtd}
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.salesOrderOtd}
           value={formatPercent(salesOrderOtd?.sales_order_otd_pct)}
           {...buildKpiGoalPresentation(
             `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
@@ -344,6 +371,7 @@ export function DashboardCommercialPage({
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.closingRate}
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.closingRate}
           value={formatPercent(closingRate?.sales_conversion_rate_pct)}
           {...buildKpiGoalPresentation(
             `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
@@ -356,6 +384,7 @@ export function DashboardCommercialPage({
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.newBusinessRol}
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.newBusinessRol}
           value={formatPercent(newBusinessRol?.new_business_rol_pct)}
           {...buildKpiGoalPresentation(
             `${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
@@ -369,7 +398,11 @@ export function DashboardCommercialPage({
       </section>
 
       <section className="dc-chart-section dc-no-print" aria-busy={isChartBusy}>
-        <ChartCard title="Evolução do ROL (R$)" hint={chartHint}>
+        <ChartCard
+          title="Evolução do ROL (R$)"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.charts.rolEvolution}
+          hint={chartSubtitle}
+        >
           <ChartToolbar
             idPrefix="rol"
             granularity={granularity}
@@ -416,10 +449,51 @@ export function DashboardCommercialPage({
         </ChartCard>
       </section>
 
+      <section className="dc-chart-section dc-no-print">
+        <ChartCard
+          title="Funil de conversão"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.charts.conversionFunnel}
+          hint="Volume de propostas, ganhas e perdas no período — alinhado ao KPI de conversão."
+          className="dc-chart-card--funnel"
+        >
+          <ConversionFunnelChart
+            data={closingRate}
+            loading={isBusy && !closingRate}
+          />
+        </ChartCard>
+      </section>
+
+      <section className="dc-summary-grid dc-no-print">
+        <article className="dc-card">
+          <div className="dc-summary-card__header">
+            <Target size={22} aria-hidden />
+            <h2 className="dc-summary-card__title">
+              Como ler os indicadores
+              <HelpTooltip
+                content={COMMERCIAL_HELP_TOOLTIPS.summary.howToRead}
+                ariaLabel="Ajuda: como ler os indicadores"
+                className="dc-summary-card__title-help"
+              />
+            </h2>
+          </div>
+          <p className="dc-summary-card__description">
+            <strong>ROL</strong> (R$ com IPI) segue o indicador{" "}
+            <code>commercial-rol</code> no SI. Com filial <strong>Todas</strong>,
+            o ROL é a <strong>soma</strong> das filiais 01 e 02; OTD, conversão e
+            % novos negócios vêm consolidados da api-delpi (todas as filiais no
+            período). Metas continuam por filial no filtro. O gráfico mantém as
+            séries 01 e 02.
+          </p>
+        </article>
+      </section>
+
       <section className="dc-proposals-section dc-no-print">
         <div className="dc-proposals-toolbar">
-          <label className="dc-proposals-filter">
-            <span>Status da proposta</span>
+          <label className="dc-proposals-filter dc-field">
+            <FieldLabel
+              label="Status da proposta"
+              hint={COMMERCIAL_HELP_TOOLTIPS.filters.proposalStatus}
+            />
             <select
               value={proposalStatusFilter}
               onChange={(event) =>
@@ -449,6 +523,7 @@ export function DashboardCommercialPage({
         ) : (
           <DataTableSection
             title="Propostas do período"
+            titleHint={COMMERCIAL_HELP_TOOLTIPS.table.section}
             hint={`${proposalStatusHint} ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}${
               proposalsTotal > proposals.length
                 ? ` · exibindo ${proposals.length} de ${proposalsTotal}`
@@ -469,6 +544,7 @@ export function DashboardCommercialPage({
             }}
             emptyMessage="Nenhuma proposta encontrada para os filtros selecionados."
             searchPlaceholder="Buscar proposta, descrição, status, cliente…"
+            searchHint={COMMERCIAL_HELP_TOOLTIPS.table.search}
             getSearchText={(row) =>
               [
                 row.branch,
@@ -478,6 +554,7 @@ export function DashboardCommercialPage({
                 row.status_label,
                 row.status_code,
                 row.customer_code,
+                row.customer_store,
                 row.stage,
               ]
                 .filter(Boolean)
@@ -485,36 +562,6 @@ export function DashboardCommercialPage({
             }
           />
         )}
-      </section>
-
-      <section className="dc-charts-grid">
-        <ChartCard
-          title="Funil de conversão"
-          hint="Volume de propostas, ganhas e perdas no período — alinhado ao KPI de conversão."
-          className="dc-chart-card--funnel"
-        >
-          <ConversionFunnelChart
-            data={closingRate}
-            loading={isBusy && !closingRate}
-          />
-        </ChartCard>
-      </section>
-
-      <section className="dc-summary-grid dc-no-print">
-        <article className="dc-card">
-          <div className="dc-summary-card__header">
-            <Target size={22} aria-hidden />
-            <h2 className="dc-summary-card__title">Como ler os indicadores</h2>
-          </div>
-          <p className="dc-summary-card__description">
-            <strong>ROL</strong> (R$ com IPI) segue o indicador{" "}
-            <code>commercial-rol</code> no SI. Com filial <strong>Todas</strong>,
-            o ROL é a <strong>soma</strong> das filiais 01 e 02; OTD, conversão e
-            % novos negócios vêm consolidados da api-delpi (todas as filiais no
-            período). Metas continuam por filial no filtro. O gráfico mantém as
-            séries 01 e 02.
-          </p>
-        </article>
       </section>
     </div>
   );

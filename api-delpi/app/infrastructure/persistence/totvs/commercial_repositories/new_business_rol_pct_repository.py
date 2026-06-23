@@ -3,23 +3,20 @@ from app.domain.entities.commercial.new_business_rol_pct import NewBusinessRolPc
 from app.domain.ports.commercial.new_business_rol_pct_repository_port import (
     NewBusinessRolPctRepositoryPort,
 )
+from app.domain.services.commercial_customer_segment_service import (
+    CommercialCustomerSegmentService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
-
-WEG_CLIENT_CODE = "000001"
 
 
 class NewBusinessRolPctRepository(BaseRepository, NewBusinessRolPctRepositoryPort):
     @staticmethod
     def _sql_is_weg_client() -> str:
+        is_weg = CommercialCustomerSegmentService.sql_is_weg_client_code("SA1.A1_COD")
         return f"""
             CASE
-                WHEN SA1.A1_COD IS NOT NULL
-                 AND (
-                        RTRIM(SA1.A1_COD) = '{WEG_CLIENT_CODE}'
-                     OR UPPER(RTRIM(SA1.A1_NOME)) LIKE '%WEG%'
-                     OR UPPER(RTRIM(SA1.A1_NREDUZ)) LIKE '%WEG%'
-                 )
+                WHEN SA1.A1_COD IS NOT NULL AND ({is_weg})
                 THEN 1
                 ELSE 0
             END
@@ -31,6 +28,11 @@ class NewBusinessRolPctRepository(BaseRepository, NewBusinessRolPctRepositoryPor
         if request.branch:
             vendas_qb.eq("D2.D2_FILIAL", request.branch)
         vendas_qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            vendas_qb,
+            "D2.D2_CLIENTE",
+            request.customer_segment,
+        )
         vendas_where, vendas_params = vendas_qb.build()
 
         exists_qb = QueryBuilder()
@@ -42,6 +44,11 @@ class NewBusinessRolPctRepository(BaseRepository, NewBusinessRolPctRepositoryPor
         if request.branch:
             dev_qb.eq("D1.D1_FILIAL", request.branch)
         dev_qb.date_range("D1.D1_DTDIGIT", request.start_date, request.end_date)
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            dev_qb,
+            "D1.D1_FORNECE",
+            request.customer_segment,
+        )
         dev_where, dev_params = dev_qb.build()
 
         is_weg_client = self._sql_is_weg_client()

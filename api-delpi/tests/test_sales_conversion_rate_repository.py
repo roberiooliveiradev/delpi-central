@@ -40,3 +40,29 @@ def test_closing_rate_counts_period_revisions_with_won_status_code() -> None:
     assert result.qtd_proposals == 41
     assert result.qtd_won == 1
     assert result.sales_conversion_rate_pct == 2.44
+
+
+def test_closing_rate_applies_customer_segment_weg_filter() -> None:
+    repository = SalesConversionRateRepository()
+    request = SalesConversionRateRequest(
+        start_date="2026-05-01",
+        end_date="2026-05-31",
+        customer_segment="weg",
+    )
+    captured: dict[str, str] = {}
+
+    def _execute_one(sql: str, params: tuple) -> dict:
+        captured["sql"] = sql
+        return {
+            "qtd_proposals": 0,
+            "qtd_won": 0,
+            "sales_conversion_rate_pct": 0,
+        }
+
+    with patch.object(SalesConversionRateRepository, "__enter__", return_value=repository):
+        with patch.object(SalesConversionRateRepository, "__exit__", return_value=False):
+            with patch.object(repository, "execute_one", side_effect=_execute_one):
+                repository.get_sales_conversion_rate(request)
+
+    assert "AD1.AD1_CODCLI" in captured["sql"]
+    assert "000001" in captured["sql"]

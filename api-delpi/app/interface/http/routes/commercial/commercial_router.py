@@ -38,6 +38,7 @@ from app.composition.engineering_composer import (
 )
 from app.interface.http.routes.commercial.commercial_route_helpers import (
     build_get_commercial_proposal_request,
+    parse_customer_segment,
 )
 from app.interface.http.routes.engineering.lmp_route_helpers import (
     build_get_lmp_history_request,
@@ -209,6 +210,10 @@ def list_commercial_proposals(
         None,
         description="Filtro: won (ganhas), open (demais) ou omitir para todas.",
     ),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
 ):
@@ -220,6 +225,7 @@ def list_commercial_proposals(
             start_date=start_date,
             end_date=end_date,
             status=status,
+            customer_segment=parse_customer_segment(customer_segment),
             page=page,
             page_size=page_size,
         )
@@ -336,6 +342,10 @@ def get_sales_conversion_rate(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
 ):
     try:
         use_case = build_get_sales_conversion_rate_use_case()
@@ -344,6 +354,7 @@ def get_sales_conversion_rate(
             branch=branch,
             start_date=start_date,
             end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
         )
 
         result = enrich_dashboard_metric(
@@ -428,6 +439,10 @@ def get_sales_order_otd(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
 ):
     try:
         use_case = build_get_sales_order_otd_use_case()
@@ -436,6 +451,7 @@ def get_sales_order_otd(
             branch=branch,
             start_date=start_date,
             end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
         )
 
         result = enrich_dashboard_metric(
@@ -477,6 +493,10 @@ def get_new_business_rol_pct(
     branch: Optional[str] = Query(None, min_length=2, max_length=2),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
 ):
     try:
         use_case = build_get_new_business_rol_pct_use_case()
@@ -485,6 +505,7 @@ def get_new_business_rol_pct(
             branch=branch,
             start_date=start_date,
             end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
         )
 
         result = enrich_dashboard_metric(

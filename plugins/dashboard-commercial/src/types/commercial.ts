@@ -54,10 +54,13 @@ export type NewBusinessRolPctData = DashboardGoalFields & {
   new_business_rol_pct: number | null;
 };
 
+export type CommercialCustomerSegment = "weg" | "new_business";
+
 export type CommercialFilterParams = {
   start_date?: string;
   end_date?: string;
   branch?: string;
+  customer_segment?: CommercialCustomerSegment;
   status?: string;
   page?: number;
   page_size?: number;
@@ -82,11 +85,11 @@ export type CommercialProposal = {
   status_label?: string | null;
   status_category?: CommercialProposalStatusCategory | null;
   customer_code?: string | null;
+  customer_store?: string | null;
   stage?: string | null;
 };
 
 export type CommercialProposalDetail = CommercialProposal & {
-  customer_store?: string | null;
   customer_name?: string | null;
   seller_code?: string | null;
   seller_name?: string | null;

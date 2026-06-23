@@ -10,8 +10,10 @@ import {
   resolveHistoryDuration,
   resolveHistoryStatus,
 } from "../utils/proposalHistoryFormatting";
+import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { CommercialProposalTimeline } from "./CommercialProposalTimeline";
 import { DataTable, type DataTableColumn } from "./table";
+import { HelpTooltip } from "./HelpTooltip";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 
 type HistoryViewMode = "timeline" | "table";
@@ -51,6 +53,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "revision",
     header: "Revisão",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyRevision,
     render: (row) => row.revision || "—",
     sortable: true,
     sortValue: (row) => row.revision,
@@ -58,6 +61,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "process",
     header: "Processo",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyProcess,
     className: "dc-table__col--wide",
     render: (row) =>
       formatProcessStageLabel(row.process_code, row.process_label),
@@ -67,6 +71,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "stage",
     header: "Estágio",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyStage,
     className: "dc-table__col--wide",
     render: (row) => formatProcessStageLabel(row.stage_code, row.stage_label),
     sortable: true,
@@ -75,6 +80,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "start",
     header: "Início",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyStart,
     className: "dc-table__col--numeric",
     render: (row) => formatHistoryDateTime(row.start_date, row.start_time),
     sortable: true,
@@ -83,6 +89,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "limit",
     header: "Limite",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyLimit,
     className: "dc-table__col--numeric",
     render: (row) => formatHistoryDateTime(row.limit_date, row.limit_time),
     sortable: true,
@@ -91,6 +98,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "end",
     header: "Encerramento",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyEnd,
     className: "dc-table__col--numeric",
     render: (row) =>
       row.is_open
@@ -102,6 +110,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "duration",
     header: "Duração",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyDuration,
     className: "dc-table__col--numeric",
     render: (row) => resolveHistoryDuration(row),
     sortable: true,
@@ -110,6 +119,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "status",
     header: "Status",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyStatus,
     render: (row) => resolveHistoryStatus(row),
     sortable: true,
     sortValue: (row) => resolveHistoryStatus(row),
@@ -117,11 +127,13 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
   {
     key: "state",
     header: "Situação",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyState,
     render: (row) => renderEventState(row),
   },
   {
     key: "engineering",
     header: "Eng.",
+    headerHint: COMMERCIAL_HELP_TOOLTIPS.detail.historyEngineering,
     render: (row) => renderEngineeringBadge(row),
   },
 ];
@@ -161,6 +173,11 @@ export function CommercialProposalHistorySection({
         >
           <History size={16} aria-hidden />
           Linha do tempo
+          <HelpTooltip
+            content={COMMERCIAL_HELP_TOOLTIPS.detail.historyTimelineView}
+            ariaLabel="Ajuda: linha do tempo"
+            className="dc-history-section__toggle-help"
+          />
         </button>
         <button
           type="button"
@@ -173,6 +190,11 @@ export function CommercialProposalHistorySection({
         >
           <Table2 size={16} aria-hidden />
           Tabela
+          <HelpTooltip
+            content={COMMERCIAL_HELP_TOOLTIPS.detail.historyTableView}
+            ariaLabel="Ajuda: tabela"
+            className="dc-history-section__toggle-help"
+          />
         </button>
       </div>
 

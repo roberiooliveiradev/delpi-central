@@ -25,6 +25,9 @@ function buildQuery(
   if (params.start_date) searchParams.set("start_date", params.start_date);
   if (params.end_date) searchParams.set("end_date", params.end_date);
   if (params.branch) searchParams.set("branch", params.branch);
+  if (params.customer_segment) {
+    searchParams.set("customer_segment", params.customer_segment);
+  }
   if (params.granularity) searchParams.set("granularity", params.granularity);
   if (params.status) searchParams.set("status", params.status);
   if (params.page != null) searchParams.set("page", String(params.page));

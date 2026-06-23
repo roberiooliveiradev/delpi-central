@@ -119,7 +119,8 @@ export function ConversionFunnelChart({
         ) : null}
       </div>
 
-      <div className="dc-funnel__stages">
+      <div className="dc-funnel__visual">
+        <div className="dc-funnel__stages">
         {stages.map((stage, index) => (
           <div key={stage.key} className="dc-funnel__stage-wrap">
             {index > 0 ? (
@@ -159,12 +160,13 @@ export function ConversionFunnelChart({
             </div>
           </div>
         ))}
-      </div>
+        </div>
 
-      <p className="dc-funnel__footnote">
-        Largura das etapas proporcional ao volume; números absolutos em cada faixa.
-        Ganhas = propostas com status TOTVS <code>9</code>.
-      </p>
+        <p className="dc-funnel__footnote">
+          Largura das etapas proporcional ao volume; números absolutos em cada faixa.
+          Ganhas = propostas com status TOTVS <code>9</code>.
+        </p>
+      </div>
     </div>
   );
 }

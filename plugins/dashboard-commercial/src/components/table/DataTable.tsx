@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { HelpTooltip } from "../HelpTooltip";
+
 export type DataTableColumn<T> = {
   key: string;
   header: string;
@@ -25,6 +27,22 @@ type DataTableProps<T> = {
   onSortChange?: (columnKey: string) => void;
   layout?: "section" | "embedded";
 };
+
+function renderColumnHeader<T>(column: DataTableColumn<T>) {
+  return (
+    <span className="dc-table__header-label">
+      <span className="dc-table__header-text">{column.header}</span>
+      {column.headerHint ? (
+        <HelpTooltip
+          content={column.headerHint}
+          ariaLabel={`Ajuda: ${column.header}`}
+          fixed
+          className="dc-table__header-help"
+        />
+      ) : null}
+    </span>
+  );
+}
 
 export function DataTable<T>({
   columns,
@@ -118,13 +136,13 @@ export function DataTable<T>({
                       onClick={() => onSortChange(column.key)}
                       aria-label={`Ordenar por ${column.header}`}
                     >
-                      <span className="dc-table__header-text">{column.header}</span>
+                      {renderColumnHeader(column)}
                       <span className="dc-table__sort-indicator" aria-hidden="true">
                         {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
                       </span>
                     </button>
                   ) : (
-                    <span className="dc-table__header-text">{column.header}</span>
+                    renderColumnHeader(column)
                   )}
                 </th>
               );

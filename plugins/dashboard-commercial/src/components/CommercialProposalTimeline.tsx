@@ -1,4 +1,5 @@
 import type { CommercialProposalHistoryEvent } from "../types/commercial";
+import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   formatHistoryDateTime,
   formatProcessStageLabel,
@@ -179,7 +180,7 @@ export function CommercialProposalTimeline({
       ))}
 
       <p className="dc-history-timeline__footnote">
-        Eventos do fluxo AIJ010 — datas e durações conforme registro no TOTVS.
+        {COMMERCIAL_HELP_TOOLTIPS.detail.historyTimelineFootnote}
       </p>
     </div>
   );

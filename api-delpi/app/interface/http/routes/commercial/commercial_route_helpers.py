@@ -5,6 +5,13 @@ from typing import Optional
 from app.application.dto.commercial.get_commercial_proposal_request import (
     GetCommercialProposalRequest,
 )
+from app.domain.services.commercial_customer_segment_service import (
+    CommercialCustomerSegmentService,
+)
+
+
+def parse_customer_segment(value: Optional[str]) -> Optional[str]:
+    return CommercialCustomerSegmentService.normalize_customer_segment(value)
 
 
 def build_get_commercial_proposal_request(

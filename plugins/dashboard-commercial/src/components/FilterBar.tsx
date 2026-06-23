@@ -7,10 +7,14 @@ type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
   branch: string;
+  customerSegment: CommercialFilterUrlState["customerSegment"];
   printDisabled?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
+  onCustomerSegmentChange: (
+    value: CommercialFilterUrlState["customerSegment"]
+  ) => void;
   onRefresh: () => void;
   refreshing?: boolean;
 };
@@ -20,10 +24,12 @@ export function FilterBar({
   dateStart,
   dateEnd,
   branch,
+  customerSegment,
   printDisabled = false,
   onDateStartChange,
   onDateEndChange,
   onBranchChange,
+  onCustomerSegmentChange,
   onRefresh,
   refreshing = false,
 }: FilterBarProps) {
@@ -40,9 +46,11 @@ export function FilterBar({
         dateStart={dateStart}
         dateEnd={dateEnd}
         branch={branch}
+        customerSegment={customerSegment}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchChange={onBranchChange}
+        onCustomerSegmentChange={onCustomerSegmentChange}
       />
     </>
   );

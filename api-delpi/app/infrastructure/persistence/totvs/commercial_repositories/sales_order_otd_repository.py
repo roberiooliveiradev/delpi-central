@@ -1,6 +1,9 @@
 from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
 from app.domain.entities.commercial.sales_order_otd import SalesOrderOtd
 from app.domain.ports.commercial.sales_order_otd_repository_port import SalesOrderOtdRepositoryPort
+from app.domain.services.commercial_customer_segment_service import (
+    CommercialCustomerSegmentService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -23,6 +26,12 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             qb.eq("C6.C6_FILIAL", request.branch)
 
         qb.date_range("C6.C6_ENTREG", request.start_date, request.end_date)
+
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            qb,
+            "C5.C5_CLIENTE",
+            request.customer_segment,
+        )
 
         where_clause, where_params = qb.build()
 

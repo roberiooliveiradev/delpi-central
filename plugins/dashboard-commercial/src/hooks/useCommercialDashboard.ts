@@ -146,6 +146,7 @@ export function useCommercialDashboard(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     branchParams.branch,
+    branchParams.customer_segment,
     branchParams.end_date,
     branchParams.start_date,
     reloadKey,
