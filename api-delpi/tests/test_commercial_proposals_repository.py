@@ -12,7 +12,7 @@ from app.infrastructure.persistence.totvs.commercial_repositories.commercial_pro
 )
 
 
-def test_list_proposals_won_filters_by_close_date_and_open_date() -> None:
+def test_list_proposals_won_filters_by_acceptance_date() -> None:
     repository = CommercialProposalsRepository()
     request = ListCommercialProposalsRequest(
         start_date="2026-01-01",
@@ -41,8 +41,8 @@ def test_list_proposals_won_filters_by_close_date_and_open_date() -> None:
 
     sql = captured["list_sql"]
     assert "AD1.AD1_DATA" in sql
-    assert "AD1.AD1_DTFIM" in sql
-    assert "AD1_LOJCLI AS customer_store" in sql
+    assert "AD1.AD1_DTASSI" in sql
+    assert "proposal_acceptance_date" in sql
     assert f"AD1.AD1_STATUS = '{WON_STATUS_CODE}'" in sql or (
         f"AD1.AD1_STATUS = ?" in sql
     )

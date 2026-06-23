@@ -171,7 +171,7 @@ export function CommercialDetailPage({
           title="Fechamento"
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.closingKpi}
           value={formatDisplayDate(data.end_date)}
-          contextLabel="Data AD1_DTFIM"
+          contextLabel="Data de aceite (AD1_DTASSI)"
           icon={<History size={22} />}
           loading={false}
         />

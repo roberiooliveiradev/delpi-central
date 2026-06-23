@@ -275,7 +275,7 @@ export function DashboardCommercialPage({
 
   const proposalStatusHint =
     proposalStatusFilter === "won"
-      ? "Somente propostas ganhas (status 9)."
+      ? "Somente propostas ganhas (status 9) com aceite (AD1_DTASSI) no período."
       : proposalStatusFilter === "open"
         ? "Propostas sem fechamento ganho."
         : "Última revisão por proposta no período (data AD1_DATA).";

@@ -5,6 +5,9 @@ from app.domain.services.commercial_customer_segment_service import (
     CommercialCustomerSegmentService,
 )
 from app.domain.services.commercial_proposal_status import WON_STATUS_CODE
+from app.domain.services.commercial_proposal_acceptance_date_service import (
+    CommercialProposalAcceptanceDateService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -31,11 +34,16 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
 
         where_clause, where_params = qb.build()
 
+        acceptance_expr = CommercialProposalAcceptanceDateService.sql_acceptance_date_expression(
+            "AD1_DTASSI",
+            "AD1_DTFIM",
+        )
+
         won_qb = QueryBuilder()
         won_qb.raw(f"AD1_STATUS = '{WON_STATUS_CODE}'")
-        won_qb.raw("AD1_DTFIM IS NOT NULL")
-        won_qb.raw("RTRIM(CAST(AD1_DTFIM AS VARCHAR(20))) <> ''")
-        won_qb.date_range("AD1_DTFIM", request.start_date, request.end_date)
+        won_qb.raw(f"({acceptance_expr}) IS NOT NULL")
+        won_qb.raw(f"RTRIM(CAST(({acceptance_expr}) AS VARCHAR(20))) <> ''")
+        won_qb.date_range(f"({acceptance_expr})", request.start_date, request.end_date)
         won_clause, won_params = won_qb.build()
 
         sql = f"""
@@ -46,6 +54,7 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
                     AD1.AD1_REVISA,
                     AD1.AD1_DESCRI,
                     AD1.AD1_DATA,
+                    AD1.AD1_DTASSI,
                     AD1.AD1_DTFIM,
                     AD1.AD1_STATUS
                 FROM AD1010 AD1

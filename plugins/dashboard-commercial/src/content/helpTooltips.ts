@@ -9,7 +9,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     customerSegment:
       "WEG = cliente código 000001 (todas as lojas). Novos negócios = demais clientes. Afeta conversão, OTD, % novos negócios e tabela de propostas.",
     proposalStatus:
-      "Filtra a tabela de propostas: todas, somente ganhas (status 9 com fechamento no período) ou em aberto.",
+      "Filtra a tabela: todas (abertura AD1_DATA no período), ganhas (status 9 com aceite AD1_DTASSI no período) ou em aberto.",
   },
   actions: {
     pageSubtitle:
@@ -35,7 +35,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     salesOrderOtd:
       "Percentual de linhas de pedido de venda entregues no prazo (data de faturamento ≤ data de entrega prometida).",
     closingRate:
-      "Taxa de conversão: propostas ganhas (status 9, fechamento AD1_DTFIM no período) sobre propostas abertas (AD1_DATA no período).",
+      "Taxa de conversão: propostas ganhas (status 9, aceite AD1_DTASSI no período) sobre propostas abertas (AD1_DATA no período).",
     newBusinessRol:
       "Participação do ROL de clientes não-WEG no ROL total do período (vendas SD2 menos devoluções).",
   },
@@ -57,7 +57,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     revision: "Revisão da proposta no AD1010 (AD1_REVISA).",
     description: "Descrição comercial resumida da proposta (AD1_DESCRI).",
     proposalDate: "Data de abertura da proposta no TOTVS (AD1_DATA).",
-    endDate: "Data de fechamento quando informada (AD1_DTFIM).",
+    endDate: "Data de aceite da proposta (Dt.Ass.Prop. / AD1_DTASSI), com fallback para AD1_DTFIM.",
     status: "Status TOTVS da proposta (ex.: aberta, ganha status 9).",
     customerCode: "Código do cliente vinculado à OV (AD1_CODCLI / SA1).",
     customerStore: "Loja do cliente no cadastro TOTVS (AD1_LOJCLI).",
@@ -72,7 +72,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     pageSubtitle: "Detalhe da proposta comercial com cabeçalho AD1010 e histórico AIJ010.",
     statusKpi: "Status e estágio atual da proposta no fluxo comercial TOTVS.",
     openingKpi: "Data de abertura registrada no campo AD1_DATA.",
-    closingKpi: "Data de fechamento registrada no campo AD1_DTFIM (quando ganha ou encerrada).",
+    closingKpi: "Data de aceite da proposta ganha (AD1_DTASSI), alinhada ao TOTVS.",
     proposalSection:
       "Cabeçalho da OV: filial, revisão, processo, estágio, datas e status no AD1010.",
     customerSection:
@@ -86,7 +86,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     proposalProcess: "Processo do fluxo (código e rótulo AC1010).",
     proposalStage: "Estágio atual dentro do processo (AC2010).",
     proposalOpening: "Data de abertura (AD1_DATA).",
-    proposalClosing: "Data de fechamento (AD1_DTFIM).",
+    proposalClosing: "Data de aceite da proposta (Dt.Ass.Prop. / AD1_DTASSI).",
     proposalStatus: "Status TOTVS da proposta.",
     customerName: "Razão social ou nome do cliente.",
     customerCode: "Código do cliente no SA1.",

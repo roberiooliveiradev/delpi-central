@@ -25,12 +25,12 @@ Implementação: `SalesConversionRateRepository` → tabela `AD1010`.
 | Base | `AD1010` (cabeçalho da oportunidade / OV no CRM) |
 | Período (denominador) | `AD1_DATA` entre `start_date` e `end_date` — propostas **abertas** no período |
 | Total (`qtd_proposals`) | Revisões com `AD1_DATA` no período (cada revisão conta; não colapsa na última da proposta) |
-| Ganha (`qtd_won`) | Revisões abertas no período com `AD1_STATUS = '9'` (Ganha) **e** `AD1_DTFIM` no mesmo intervalo |
+| Ganha (`qtd_won`) | Revisões abertas no período com `AD1_STATUS = '9'` (Ganha) **e** data de aceite (`AD1_DTASSI`, fallback `AD1_DTFIM`) no mesmo intervalo |
 | Taxa | `qtd_won / qtd_proposals × 100` |
 
 Constante de domínio: `WON_STATUS_CODE = "9"` em `commercial_proposal_status.py`.
 
-A listagem `GET /commercial/proposals?status=won` usa a **mesma** regra de ganhas (`AD1_STATUS = '9'` + `AD1_DTFIM` no período), mantendo `AD1_DATA` no período para alinhar ao funil.
+A listagem `GET /commercial/proposals?status=won` filtra por **aceite** (`AD1_DTASSI`, fallback `AD1_DTFIM`) no período. A coluna **Fim** exibe essa mesma data. Filtro «todas» / «em aberto» continua por abertura (`AD1_DATA`).
 
 **Não usa histórico (`AIJ010`).** O campo `AIJ_STATUS` existe na tabela de eventos, mas é outro domínio (ver § 2.1).
 

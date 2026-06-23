@@ -19,6 +19,9 @@ from app.domain.services.commercial_proposal_status import (
     resolve_proposal_status_category,
     resolve_proposal_status_label,
 )
+from app.domain.services.commercial_proposal_acceptance_date_service import (
+    CommercialProposalAcceptanceDateService,
+)
 from app.domain.services.commercial_customer_segment_service import (
     CommercialCustomerSegmentService,
 )
@@ -44,16 +47,20 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
         if request.branch:
             qb.eq("AD1.AD1_FILIAL", request.branch)
 
-        qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
-
         status_filter = (request.status or "").strip().lower()
+        acceptance_expr = CommercialProposalAcceptanceDateService.sql_acceptance_date_for_alias(
+            "AD1"
+        )
+
         if status_filter == "won":
             qb.eq("AD1.AD1_STATUS", WON_STATUS_CODE)
-            qb.raw("AD1.AD1_DTFIM IS NOT NULL")
-            qb.raw("RTRIM(CAST(AD1.AD1_DTFIM AS VARCHAR(20))) <> ''")
-            qb.date_range("AD1.AD1_DTFIM", request.start_date, request.end_date)
-        elif status_filter == "open":
-            qb.raw(f"AD1.AD1_STATUS <> '{WON_STATUS_CODE}'")
+            qb.raw(f"({acceptance_expr}) IS NOT NULL")
+            qb.raw(f"RTRIM(CAST(({acceptance_expr}) AS VARCHAR(20))) <> ''")
+            qb.date_range(f"({acceptance_expr})", request.start_date, request.end_date)
+        else:
+            qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
+            if status_filter == "open":
+                qb.raw(f"AD1.AD1_STATUS <> '{WON_STATUS_CODE}'")
 
         CommercialCustomerSegmentService.apply_segment_to_query_builder(
             qb,
@@ -71,7 +78,9 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                     AD1.AD1_REVISA,
                     AD1.AD1_DESCRI,
                     AD1.AD1_DATA,
+                    AD1.AD1_DTASSI,
                     AD1.AD1_DTFIM,
+                    {acceptance_expr} AS proposal_acceptance_date,
                     AD1.AD1_STATUS,
                     AD1.AD1_CODCLI,
                     AD1.AD1_LOJCLI,
@@ -86,7 +95,9 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                     AD1_REVISA,
                     AD1_DESCRI,
                     AD1_DATA,
+                    AD1_DTASSI,
                     AD1_DTFIM,
+                    proposal_acceptance_date,
                     AD1_STATUS,
                     AD1_CODCLI,
                     AD1_LOJCLI,
@@ -114,7 +125,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                 AD1_REVISA AS revision,
                 AD1_DESCRI AS description,
                 AD1_DATA AS proposal_date,
-                AD1_DTFIM AS end_date,
+                proposal_acceptance_date AS end_date,
                 AD1_STATUS AS status_code,
                 AD1_CODCLI AS customer_code,
                 AD1_LOJCLI AS customer_store,
@@ -157,6 +168,9 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
 
         where_clause, where_params = qb.build()
         revision_order = "" if revision else "ORDER BY AD1.AD1_REVISA DESC"
+        acceptance_expr = CommercialProposalAcceptanceDateService.sql_acceptance_date_for_alias(
+            "AD1"
+        )
 
         sql = f"""
             SELECT TOP 1
@@ -165,7 +179,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                 AD1.AD1_REVISA AS revision,
                 AD1.AD1_DESCRI AS description,
                 AD1.AD1_DATA AS proposal_date,
-                AD1.AD1_DTFIM AS end_date,
+                {acceptance_expr} AS end_date,
                 AD1.AD1_STATUS AS status_code,
                 AD1.AD1_CODCLI AS customer_code,
                 AD1.AD1_LOJCLI AS customer_store,
