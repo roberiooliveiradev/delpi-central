@@ -1,8 +1,24 @@
 # Minha DELPI — Consumo de plugins no Portal
 
 > **Arquivo:** `docs/06-portal-frontend/consumo-de-plugins.md`  
-> **Status:** documentação oficial  
-> **Implementação:** `portal/src/ui/AppHost.tsx`, `portal/src/ui/App.tsx`
+> **Status:** documentação oficial (estado **atual** + evolução planejada)  
+> **Implementação:** `portal/src/ui/AppHost.tsx`, `portal/src/ui/App.tsx`  
+> **Evolução plugin/módulo:** [../05-plugin-system/portal-alteracoes.md](../05-plugin-system/portal-alteracoes.md)
+
+---
+
+## 0. Estado atual vs planejado (jun/2026)
+
+| Capacidade | Hoje | Planejado (manifest 1.1.0) |
+|---|---|---|
+| Tipos consumidos | `microfrontend`, `iframe`, `backend-only` | + `plugin`, `module` (aliases legados mantidos) |
+| Rotas React | Wildcard `basePath/*` → `AppHost` | Idem + `RouteDelegate` para `target.kind: plugin` |
+| `routes[].entry` http em federated | `alternateEntry` (não redirect) | `target` declarativo substitui workaround |
+| `menuGroup` | Ignorado | Agrupamento no sidebar |
+| `routes[].target` | Não existe | `local` \| `plugin` \| `iframe` \| `external` \| `redirect` |
+| Módulos (`type: module`) | Comportam-se como microfrontend | `@delpi/module-runtime` no MFE + props do host |
+
+**POC prioritário:** `strategic-indicators` `/departments/commercial` → navegar para `dashboard-commercial` via `target.kind: plugin`.
 
 ---
 
@@ -151,3 +167,6 @@ Se a rota atual deixar de existir após reload, redirecionar para `/` (comportam
 - [app-authorization.md](./app-authorization.md)
 - [../05-plugin-system/microfrontends.md](../05-plugin-system/microfrontends.md)
 - [../05-plugin-system/iframe.md](../05-plugin-system/iframe.md)
+- [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/plugin-vs-module.md)
+- [../05-plugin-system/portal-alteracoes.md](../05-plugin-system/portal-alteracoes.md)
+- [../05-plugin-system/roadmap-implementacao-plugin-modulo.md](../05-plugin-system/roadmap-implementacao-plugin-modulo.md)

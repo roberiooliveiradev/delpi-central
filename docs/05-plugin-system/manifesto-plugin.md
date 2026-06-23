@@ -57,7 +57,7 @@ Sem manifesto válido, o plugin não deve ser registrado na Minha DELPI.
 
 ## 3. Versão suportada
 
-A versão de schema atualmente suportada é:
+### 3.1 Schema vigente em produção (`1.0.0`)
 
 ```json
 {
@@ -65,7 +65,7 @@ A versão de schema atualmente suportada é:
 }
 ```
 
-Qualquer manifesto com outra versão deve ser rejeitado pelo resolvedor de versão.
+Qualquer manifesto com outra versão **não listada abaixo** deve ser rejeitado pelo resolvedor de versão.
 
 Regra atual:
 
@@ -73,11 +73,23 @@ Regra atual:
 schemaVersion = 1.0.0 → v1
 ```
 
+### 3.2 Evolução planejada (`1.1.0`)
+
+A especificação **1.1.0** formaliza tipos `plugin` / `module`, `routes[].target`, `menuGroup` e `ui.module`. **Ainda não implementada** na Core API nem no Portal.
+
+| Documento | Conteúdo |
+|---|---|
+| [manifest-schema-1.1.0.md](./manifest-schema-1.1.0.md) | Contrato JSON completo |
+| [plugin-vs-module.md](./plugin-vs-module.md) | Visão arquitetural |
+| [roadmap-implementacao-plugin-modulo.md](./roadmap-implementacao-plugin-modulo.md) | Fases de implementação |
+
+Manifests `1.0.0` **não** exigem migração imediata. Aliases `microfrontend` / `iframe` continuam válidos até adoção do 1.1.0.
+
 ---
 
 ## 4. Tipos de plugin suportados
 
-A Minha DELPI suporta três tipos de plugin:
+### 4.1 Tipos em produção (`1.0.0`)
 
 ```text
 microfrontend
@@ -90,6 +102,16 @@ backend-only
 | `microfrontend` | Plugin frontend carregado de forma integrada ao Portal |
 | `iframe` | Aplicação externa ou interna renderizada via iframe |
 | `backend-only` | Plugin sem UI, usado para registrar permissões/backend/integração |
+
+### 4.2 Tipos planejados (`1.1.0`)
+
+| `type` | Descrição |
+|---|---|
+| `plugin` | App autônomo (substitui semanticamente `microfrontend` / `iframe`) |
+| `module` | Shell agregador com `routes[].target` |
+| `backend-only` | Inalterado |
+
+Ver [plugin-vs-module.md](./plugin-vs-module.md) §2.
 
 ---
 

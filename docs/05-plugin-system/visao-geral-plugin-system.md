@@ -24,6 +24,8 @@ O Plugin System é o mecanismo que permite registrar módulos plugáveis na plat
 
 Este documento é uma visão panorâmica. Detalhes específicos estão nos documentos individuais da pasta `docs/05-plugin-system`.
 
+**Evolução jun/2026:** distinção formal **plugin** (app autônomo) vs **módulo** (shell agregador) — ver [plugin-vs-module.md](./plugin-vs-module.md) e [roadmap-implementacao-plugin-modulo.md](./roadmap-implementacao-plugin-modulo.md).
+
 ---
 
 ## 2. Conceito

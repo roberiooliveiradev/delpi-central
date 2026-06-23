@@ -121,7 +121,7 @@ api-delpi
 
 O campo `apps.type` deve refletir o tipo declarado no manifesto.
 
-Tipos suportados:
+### 6.1 Tipos em produção (`schemaVersion: 1.0.0`)
 
 ```text
 microfrontend
@@ -134,6 +134,16 @@ backend-only
 | `microfrontend` | Plugin frontend integrado ao Portal |
 | `iframe` | App renderizado por URL HTTP/HTTPS |
 | `backend-only` | Serviço sem UI, usado para governança de backend/permissões |
+
+### 6.2 Tipos planejados (`schemaVersion: 1.1.0`)
+
+| Tipo | Descrição |
+|---|---|
+| `plugin` | App autônomo (evolução de `microfrontend` / `iframe`) |
+| `module` | Shell agregador com `routes[].target` no manifesto |
+| `backend-only` | Inalterado |
+
+A coluna `apps.type` é `String(50)` — **sem migration obrigatória** para novos valores. Detalhes: [manifest-schema-1.1.0.md](../05-plugin-system/manifest-schema-1.1.0.md).
 
 ---
 
@@ -188,6 +198,24 @@ Campos principais:
 | `created_at` | datetime | Data de criação |
 | `updated_at` | datetime | Data de atualização |
 
+### 8.1 Campos planejados (Fase 5 — manifest 1.1.0)
+
+Persistência relacional **opcional**; na Fase 1–4 a fonte de `target` e `menuGroup` é `app_manifests.manifest`.
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `menu_group` | `VARCHAR(100)` | Agrupamento no sidebar (`routes[].menuGroup`) |
+| `target_json` | `JSONB` | Destino da rota (`routes[].target`) |
+
+Migration proposta:
+
+```sql
+ALTER TABLE app_routes ADD COLUMN IF NOT EXISTS menu_group VARCHAR(100);
+ALTER TABLE app_routes ADD COLUMN IF NOT EXISTS target_json JSONB;
+```
+
+Ver [core-api-alteracoes.md](../05-plugin-system/core-api-alteracoes.md) §6.3 e [roadmap-implementacao-plugin-modulo.md](../05-plugin-system/roadmap-implementacao-plugin-modulo.md) Fase 5.
+
 Relacionamentos:
 
 ```text
@@ -210,6 +238,8 @@ icon
 order
 show_in_menu
 permission_id
+menu_group    (planejado — Fase 3/5)
+target_json   (planejado — Fase 5; leitura via manifest na Fase 1)
 ```
 
 Regra:
@@ -594,7 +624,7 @@ Core API filtra por autorização
 Portal recebe DTO normalizado
 ```
 
-O DTO contém:
+O DTO contém (hoje):
 
 ```text
 id
@@ -606,6 +636,16 @@ entryUrl
 renderMode
 routes[]
 ```
+
+Campos planejados em `/me/apps` (manifest 1.1.0):
+
+```text
+routes[].menuGroup
+routes[].target
+moduleConfig   (de ui.module)
+```
+
+Ver [core-api-alteracoes.md](../05-plugin-system/core-api-alteracoes.md) §5.
 
 ---
 

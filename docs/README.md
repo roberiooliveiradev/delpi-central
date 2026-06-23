@@ -25,7 +25,7 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | [02-infraestrutura/](./02-infraestrutura/) | — | Docker, gateway, env, bancos |
 | [03-autenticacao-autorizacao/](./03-autenticacao-autorizacao/) | — | Keycloak, JWT, RBAC |
 | [04-core-api/](./04-core-api/) | [README](./04-core-api/README.md) | Governança Flask |
-| [05-plugin-system/](./05-plugin-system/) | [README](./05-plugin-system/README.md) | Manifestos |
+| [05-plugin-system/](./05-plugin-system/) | [README](./05-plugin-system/README.md) | Manifestos · [plugin vs módulo](./05-plugin-system/plugin-vs-module.md) (jun/2026) |
 | [06-portal-frontend/](./06-portal-frontend/) | [README](./06-portal-frontend/README.md) | Portal React |
 | [07-api-delpi/](./07-api-delpi/) | [README](./07-api-delpi/README.md) | Visão API operacional |
 | [08-plugins/](./08-plugins/) | [README](./08-plugins/README.md) | Inventário plugins |

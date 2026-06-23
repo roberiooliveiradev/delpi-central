@@ -19,6 +19,15 @@ Manifesto JSON (delpi.manifest.json)
 
 Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).
 
+### Classificação plugin vs módulo (planejado)
+
+| Papel | Descrição | Exemplos no monorepo |
+|---|---|---|
+| **Plugin** | App autônomo, tile no launcher, `remoteEntry` próprio | `dashboard-*`, `minha-delpi-chat`, `eficiencia-fabril`, … |
+| **Módulo** | Shell agregador; rotas com `target` para views locais ou outros plugins | `strategic-indicators`, `maintenance` |
+
+Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/plugin-vs-module.md) · Roadmap: [../05-plugin-system/roadmap-implementacao-plugin-modulo.md](../05-plugin-system/roadmap-implementacao-plugin-modulo.md).
+
 **CI (build):**
 
 - `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
@@ -41,22 +50,34 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 
 ## 2. Inventário no repositório
 
-| Pasta | `id` (manifesto) | Tipo | `basePath` | Container Docker (dev) |
-|---|---|---|---|---|
-| `plugins/strategic-indicators` | `strategic-indicators` | microfrontend | `/apps/strategic-indicators` | `delpi-strategic-indicators` |
-| `plugins/minha-delpi-chat` | `minha-delpi-chat` | microfrontend | `/apps/minha-delpi-chat` | `delpi-minha-delpi-chat` |
-| `plugins/dashboard-lmps` | `dash-lmps` | iframe | `/dash-lmps` | `delpi-dashboard-lmps` |
-| `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
-| `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
-| `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
-| `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
-| `plugins/cadastro-kaizen` | `cadastro-kaizen` | microfrontend | `/apps/cadastro-kaizen` | `delpi-cadastro-kaizen` |
-| `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
-| `plugins/central-agendamento` | `central-agendamento` | microfrontend | `/apps/central-agendamento` | `delpi-central-agendamento` |
-| `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
-| `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
-| `plugins/api-delpi-console` | `api-delpi-console` | microfrontend | `/apps/api-delpi-console` | `delpi-api-delpi-console` |
-| `plugins/idd_production` | (ver manifesto) | — | — | Avaliar registro na Core API |
+**Legenda `papel`:** `plugin` = autônomo · `módulo` = shell agregador (alvo após manifest 1.1.0) · `—` = avaliar registro.
+
+| Pasta | `id` (manifesto) | Tipo (hoje) | Papel (alvo) | `basePath` | Container Docker (dev) |
+|---|---|---|---|---|---|
+| `plugins/strategic-indicators` | `strategic-indicators` | microfrontend | **módulo** | `/apps/strategic-indicators` | `delpi-strategic-indicators` |
+| `plugins/maintenance` | `maintenance` | microfrontend | **módulo** | `/apps/maintenance` | `delpi-maintenance` |
+| `plugins/dashboard-commercial` | `dashboard-commercial` | microfrontend | plugin | `/apps/dashboard-commercial` | `delpi-dashboard-commercial` |
+| `plugins/dashboard-production` | `dashboard-production` | microfrontend | plugin | `/apps/dashboard-production` | `delpi-dashboard-production` |
+| `plugins/dashboard-financial` | `dashboard-financial` | microfrontend | plugin | `/apps/dashboard-financial` | `delpi-dashboard-financial` |
+| `plugins/dashboard-hr` | `dashboard-hr` | microfrontend | plugin | `/apps/dashboard-hr` | `delpi-dashboard-hr` |
+| `plugins/dashboard-supplies` | `dashboard-supplies` | microfrontend | plugin | `/apps/dashboard-supplies` | `delpi-dashboard-supplies` |
+| `plugins/dashboard-engineering` | `dashboard-engineering` | microfrontend | plugin | `/apps/dashboard-engineering` | `delpi-dashboard-engineering` |
+| `plugins/minha-delpi-chat` | `minha-delpi-chat` | microfrontend | plugin | `/apps/minha-delpi-chat` | `delpi-minha-delpi-chat` |
+| `plugins/dashboard-lmps` | `dash-lmps` | iframe | plugin | `/dash-lmps` | `delpi-dashboard-lmps` |
+| `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | plugin | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
+| `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | plugin | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
+| `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | plugin | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
+| `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | plugin | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
+| `plugins/cadastro-kaizen` | `cadastro-kaizen` | microfrontend | plugin | `/apps/cadastro-kaizen` | `delpi-cadastro-kaizen` |
+| `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
+| `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
+| `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | plugin | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
+| `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
+| `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
+| `plugins/transformometro` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
+| `plugins/helpdesk` | (ver manifesto) | — | — | — | Pode ser externo / legado |
+| `plugins/api-delpi-console` | `api-delpi-console` | microfrontend | plugin | `/apps/api-delpi-console` | `delpi-api-delpi-console` |
+| `plugins/idd_production` | (ver manifesto) | — | — | — | Avaliar registro na Core API |
 
 **Atenção:** o `id` na URL de assets (`/apps/{id}/`) deve coincidir com o sufixo do container `delpi-{id}` no Nginx. Manifestos com `basePath` fora de `/apps/...` ainda precisam de rotas React no Portal compatíveis com o path registrado na Core API.
 
@@ -159,8 +180,8 @@ Lista completa: seed + manifestos em `plugins/*/`.
 
 ## 7. Criar novo plugin
 
-1. Copiar estrutura de `plugins/strategic-indicators` ou `minha-delpi-chat`.
-2. Definir `delpi.manifest.json` (schema `1.0.0`).
+1. Copiar estrutura de um **plugin** (`dashboard-commercial`, `minha-delpi-chat`) ou de um **módulo** (`maintenance`) conforme o papel desejado — ver [plugin-vs-module.md](../05-plugin-system/plugin-vs-module.md).
+2. Definir `delpi.manifest.json` (schema `1.0.0` hoje; `1.1.0` quando a Fase 0 do roadmap estiver em produção).
 3. Build → registrar na Core API.
 4. Adicionar serviço `delpi-<id>` no `docker-compose.dev.yml`.
 5. Validar `remoteEntry.js` via gateway.
