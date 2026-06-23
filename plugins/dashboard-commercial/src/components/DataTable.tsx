@@ -10,9 +10,10 @@ export type DataTableColumn<T> = {
 type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
   rows: T[];
-  rowKey: (row: T) => string;
+  rowKey: (row: T, index?: number) => string;
   emptyMessage?: string;
   loading?: boolean;
+  onRowClick?: (row: T) => void;
 };
 
 export function DataTable<T>({
@@ -21,10 +22,11 @@ export function DataTable<T>({
   rowKey,
   emptyMessage = "Nenhum registro encontrado.",
   loading = false,
+  onRowClick,
 }: DataTableProps<T>) {
   return (
     <div className="dc-table-wrap">
-      <table className="dc-table">
+      <table className={`dc-table${onRowClick ? " dc-table--clickable" : ""}`}>
         <thead>
           <tr>
             {columns.map((column) => (
@@ -48,8 +50,22 @@ export function DataTable<T>({
               </td>
             </tr>
           ) : (
-            rows.map((row) => (
-              <tr key={rowKey(row)}>
+            rows.map((row, index) => (
+              <tr
+                key={rowKey(row, index)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
+              >
                 {columns.map((column) => (
                   <td key={column.key} className={column.className}>
                     {column.render(row)}

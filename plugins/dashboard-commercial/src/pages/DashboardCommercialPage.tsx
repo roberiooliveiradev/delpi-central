@@ -17,6 +17,7 @@ import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
+import { buildCommercialDetailPath } from "../constants/routes";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
 import { useCommercialProposals } from "../hooks/useCommercialProposals";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
@@ -41,8 +42,15 @@ import {
   formatCurrency,
   formatPercent,
 } from "../utils/format";
+import { navigateCommercial } from "../utils/navigation";
 
-export function DashboardCommercialPage() {
+type DashboardCommercialPageProps = {
+  isActive?: boolean;
+};
+
+export function DashboardCommercialPage({
+  isActive = true,
+}: DashboardCommercialPageProps) {
   const {
     dateStart,
     dateEnd,
@@ -146,6 +154,22 @@ export function DashboardCommercialPage() {
   const handleExportChartCsv = useCallback(() => {
     downloadRolSeriesCsv("rol-evolucao.csv", rolSeries.points);
   }, [rolSeries.points]);
+
+  const handleProposalRowClick = useCallback(
+    (row: CommercialProposal) => {
+      if (!isActive) return;
+      navigateCommercial(
+        buildCommercialDetailPath(row.proposal_number, {
+          dateStart,
+          dateEnd,
+          branch,
+          proposalBranch: row.branch,
+          revision: row.revision,
+        })
+      );
+    },
+    [branch, dateEnd, dateStart, isActive]
+  );
 
   const proposalColumns = useMemo<DataTableColumn<CommercialProposal>[]>(
     () => [
@@ -410,6 +434,7 @@ export function DashboardCommercialPage() {
             rowKey={(row) =>
               `${row.branch}-${row.proposal_number}-${row.revision}`
             }
+            onRowClick={handleProposalRowClick}
             loading={proposalsLoading}
             emptyMessage="Nenhuma proposta encontrada para os filtros selecionados."
             searchPlaceholder="Buscar proposta, descrição, status, cliente…"

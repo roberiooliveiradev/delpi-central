@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from app.application.dto.commercial.get_commercial_proposal_request import (
+    GetCommercialProposalRequest,
+)
 from app.application.dto.commercial.list_commercial_proposals_request import (
     ListCommercialProposalsRequest,
 )
 from app.application.models.page import Page
 from app.domain.entities.commercial.commercial_proposal import CommercialProposal
+from app.domain.entities.commercial.commercial_proposal_detail import (
+    CommercialProposalDetail,
+)
 from app.domain.ports.commercial.commercial_proposals_repository_port import (
     CommercialProposalsRepositoryPort,
 )
@@ -123,6 +129,115 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             page=page,
             page_size=page_size,
         )
+
+    def get_proposal(
+        self,
+        request: GetCommercialProposalRequest,
+    ) -> CommercialProposalDetail | None:
+        qb = QueryBuilder()
+        qb.raw("AD1.D_E_L_E_T_ = ''")
+        qb.eq("AD1.AD1_FILIAL", request.branch.strip())
+        qb.eq("AD1.AD1_NROPOR", request.proposal_number.strip())
+
+        revision = (request.revision or "").strip()
+        if revision:
+            qb.eq("AD1.AD1_REVISA", revision)
+
+        where_clause, where_params = qb.build()
+        revision_order = "" if revision else "ORDER BY AD1.AD1_REVISA DESC"
+
+        sql = f"""
+            SELECT TOP 1
+                AD1.AD1_FILIAL AS branch,
+                AD1.AD1_NROPOR AS proposal_number,
+                AD1.AD1_REVISA AS revision,
+                AD1.AD1_DESCRI AS description,
+                AD1.AD1_DATA AS proposal_date,
+                AD1.AD1_DTFIM AS end_date,
+                AD1.AD1_STATUS AS status_code,
+                AD1.AD1_CODCLI AS customer_code,
+                AD1.AD1_LOJCLI AS customer_store,
+                AD1.AD1_STAGE AS stage,
+                AD1.AD1_PROVEN AS process_code,
+                AD1.AD1_VEND AS seller_code,
+                LTRIM(RTRIM(SA1.A1_NOME)) AS customer_name,
+                LTRIM(RTRIM(SA3.A3_NOME)) AS seller_name,
+                LTRIM(RTRIM(STG.stage_label)) AS stage_label,
+                LTRIM(RTRIM(PRC.process_label)) AS process_label
+            FROM AD1010 AD1
+            LEFT JOIN SA1010 SA1
+                ON SA1.D_E_L_E_T_ = ''
+               AND SA1.A1_COD = AD1.AD1_CODCLI
+               AND SA1.A1_LOJA = AD1.AD1_LOJCLI
+            LEFT JOIN SA3010 SA3
+                ON SA3.D_E_L_E_T_ = ''
+               AND SA3.A3_COD = AD1.AD1_VEND
+            OUTER APPLY (
+                SELECT TOP 1 LTRIM(RTRIM(AC2.AC2_DESCRI)) AS stage_label
+                FROM AC2010 AC2
+                WHERE AC2.D_E_L_E_T_ = ''
+                  AND AC2.AC2_PROVEN = AD1.AD1_PROVEN
+                  AND AC2.AC2_STAGE = AD1.AD1_STAGE
+                  AND (
+                        RTRIM(ISNULL(AC2.AC2_FILIAL, '')) = ''
+                     OR AC2.AC2_FILIAL = AD1.AD1_FILIAL
+                  )
+                ORDER BY
+                    CASE
+                        WHEN AC2.AC2_FILIAL = AD1.AD1_FILIAL THEN 0
+                        ELSE 1
+                    END
+            ) STG
+            OUTER APPLY (
+                SELECT TOP 1 LTRIM(RTRIM(AC1.AC1_DESCRI)) AS process_label
+                FROM AC1010 AC1
+                WHERE AC1.D_E_L_E_T_ = ''
+                  AND AC1.AC1_PROVEN = AD1.AD1_PROVEN
+                  AND (
+                        RTRIM(ISNULL(AC1.AC1_FILIAL, '')) = ''
+                     OR AC1.AC1_FILIAL = AD1.AD1_FILIAL
+                  )
+                ORDER BY
+                    CASE
+                        WHEN AC1.AC1_FILIAL = AD1.AD1_FILIAL THEN 0
+                        ELSE 1
+                    END
+            ) PRC
+            WHERE {where_clause}
+            {revision_order}
+        """
+
+        with self:
+            row = self.execute_one(sql, where_params)
+
+        if not row:
+            return None
+
+        return _row_to_detail(row)
+
+
+def _row_to_detail(row: dict) -> CommercialProposalDetail:
+    base = _row_to_entity(row)
+    return CommercialProposalDetail(
+        branch=base.branch,
+        proposal_number=base.proposal_number,
+        revision=base.revision,
+        description=base.description,
+        proposal_date=base.proposal_date,
+        end_date=base.end_date,
+        status_code=base.status_code,
+        status_label=base.status_label,
+        status_category=base.status_category,
+        customer_code=base.customer_code,
+        stage=base.stage,
+        customer_store=(row.get("customer_store") or "").strip() or None,
+        customer_name=(row.get("customer_name") or "").strip() or None,
+        seller_code=(row.get("seller_code") or "").strip() or None,
+        seller_name=(row.get("seller_name") or "").strip() or None,
+        process_code=(row.get("process_code") or "").strip() or None,
+        process_label=(row.get("process_label") or "").strip() or None,
+        stage_label=(row.get("stage_label") or "").strip() or None,
+    )
 
 
 def _row_to_entity(row: dict) -> CommercialProposal:

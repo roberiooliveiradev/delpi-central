@@ -4,7 +4,7 @@ from typing import Optional
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import KPI_COMMERCIAL_ACCESS
-from app.core.responses import error_response
+from app.core.responses import error_response, not_found_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -26,11 +26,21 @@ from app.composition.commercial_composer import (
     build_get_branch_rol_target_pct_use_case,
     build_get_sales_conversion_rate_use_case,
     build_list_commercial_proposals_use_case,
+    build_get_commercial_proposal_use_case,
     build_get_new_clients_average_use_case,
     build_get_new_clients_rol_pct_use_case,
     build_get_commercial_rol_series_use_case,
     build_get_sales_order_otd_use_case,
     build_get_new_business_rol_pct_use_case,
+)
+from app.composition.engineering_composer import (
+    build_engineering_get_lmp_history_events_use_case,
+)
+from app.interface.http.routes.commercial.commercial_route_helpers import (
+    build_get_commercial_proposal_request,
+)
+from app.interface.http.routes.engineering.lmp_route_helpers import (
+    build_get_lmp_history_request,
 )
 from app.interface.http.kpi_field_labels import (
     COMMERCIAL_CONVERSION_FIELD_LABELS,
@@ -39,7 +49,11 @@ from app.interface.http.kpi_field_labels import (
     kpi_fields,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
-from app.interface.http.openapi_agent_metadata import COMMERCIAL_PROPOSALS
+from app.interface.http.openapi_agent_metadata import (
+    COMMERCIAL_PROPOSAL_DETAIL,
+    COMMERCIAL_PROPOSAL_HISTORY_EVENTS,
+    COMMERCIAL_PROPOSALS,
+)
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 
 
@@ -226,6 +240,86 @@ def list_commercial_proposals(
         log_error(f"Error while listing commercial proposals: {exc}")
         return error_response(
             "Internal error while listing commercial proposals.",
+            status_code=500,
+        )
+
+
+@router.get("/proposals/{proposal_number}", **COMMERCIAL_PROPOSAL_DETAIL)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_proposal(
+    proposal_number: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    revision: Optional[str] = Query(None, min_length=1, max_length=2),
+):
+    try:
+        request = build_get_commercial_proposal_request(
+            proposal_number,
+            branch=branch,
+            revision=revision,
+        )
+        use_case = build_get_commercial_proposal_use_case()
+        result = use_case.execute(request)
+
+        return api_delpi_success(
+            result,
+            operation_id="get_commercial_proposal",
+            message="Commercial proposal loaded successfully.",
+        )
+
+    except ValueError as exc:
+        message = str(exc)
+        if "não encontrada" in message.lower():
+            return not_found_response(message)
+        log_error(f"Validation error while loading commercial proposal: {exc}")
+        return error_response(message, status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while loading commercial proposal: {exc}")
+        return error_response(
+            "Internal error while loading commercial proposal.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/proposals/{proposal_number}/history/events",
+    **COMMERCIAL_PROPOSAL_HISTORY_EVENTS,
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_proposal_history_events(
+    proposal_number: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    revision: Optional[str] = Query(None, min_length=1, max_length=2),
+    date_start: Optional[str] = Query(None),
+    date_end: Optional[str] = Query(None),
+):
+    try:
+        dto = build_get_lmp_history_request(
+            proposal_number,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            revision=revision,
+        )
+        use_case = build_engineering_get_lmp_history_events_use_case()
+        result = use_case.execute(dto)
+
+        return api_delpi_success(
+            result,
+            operation_id="get_commercial_proposal_history_events",
+            message="Commercial proposal history events loaded successfully.",
+        )
+
+    except ValueError as exc:
+        log_error(
+            f"Validation error while loading commercial proposal history: {exc}"
+        )
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while loading commercial proposal history: {exc}")
+        return error_response(
+            "Internal error while loading commercial proposal history.",
             status_code=500,
         )
 

@@ -11,6 +11,8 @@ Permissão: `dashboard-commercial.view` ou `api-delpi.access`
 | `getCommercialRolSeries` | GET | `/rol-series` | `start_date`, `end_date`, `granularity` — séries `rol_matrix` / `rol_branch` (01/02) |
 | `getClosingRate` | GET | `/closing-rate` | `start_date`, `end_date`, `branch` |
 | `getCommercialProposals` | GET | `/proposals` | `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `page`, `page_size` |
+| `getCommercialProposalByNumber` | GET | `/proposals/{proposal_number}` | `branch` (obrig.), `revision` |
+| `getCommercialProposalHistoryEvents` | GET | `/proposals/{proposal_number}/history/events` | `branch`, `revision`, `date_start`, `date_end` |
 | `getSalesOrderOtd` | GET | `/sales-order-otd` | `start_date`, `end_date`, `branch` |
 | `getNewBusinessRolPct` | GET | `/new-business-rol-pct` | `start_date`, `end_date`, `branch` |
 | `getNewClientsAverage` | GET | `/new-clients-average` | `start_date`, `end_date`, `branch` |

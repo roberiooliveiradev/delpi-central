@@ -85,6 +85,33 @@ export type CommercialProposal = {
   stage?: string | null;
 };
 
+export type CommercialProposalDetail = CommercialProposal & {
+  customer_store?: string | null;
+  customer_name?: string | null;
+  seller_code?: string | null;
+  seller_name?: string | null;
+  process_code?: string | null;
+  process_label?: string | null;
+  stage_label?: string | null;
+};
+
+export type CommercialProposalHistoryEvent = {
+  revision: string;
+  process_code: string;
+  stage_code: string;
+  process_label?: string | null;
+  stage_label?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  status?: string | null;
+  status_label?: string | null;
+  duration_display?: string | null;
+};
+
+export type CommercialProposalDetailData = CommercialProposalDetail & {
+  list_history?: CommercialProposalHistoryEvent[];
+};
+
 export type CommercialProposalsPage = {
   items: CommercialProposal[];
   page: number;

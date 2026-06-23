@@ -857,3 +857,21 @@ COMMERCIAL_PROPOSALS = agent_route(
     ),
     operation_id="list_commercial_proposals",
 )
+
+COMMERCIAL_PROPOSAL_DETAIL = agent_route(
+    summary="Detalhe da proposta comercial (OV)",
+    description=(
+        "Cabeçalho da OV no TOTVS (AD1010) por filial, número e revisão. "
+        "Use para detalhar proposta comercial do dashboard — distinto da listagem paginada."
+    ),
+    operation_id="get_commercial_proposal",
+)
+
+COMMERCIAL_PROPOSAL_HISTORY_EVENTS = agent_route(
+    summary="Histórico de estágios da proposta comercial",
+    description=(
+        "Eventos AIJ010 da OV (processo/estágio/status) para o painel comercial. "
+        "Mesmo domínio do histórico LMP, exposto sob /commercial para o dashboard comercial."
+    ),
+    operation_id="get_commercial_proposal_history_events",
+)

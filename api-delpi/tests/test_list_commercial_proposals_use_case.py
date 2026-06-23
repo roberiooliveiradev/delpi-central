@@ -41,3 +41,40 @@ def test_list_commercial_proposals_use_case_returns_page_dict() -> None:
     assert result["total"] == 1
     assert result["items"][0]["proposal_number"] == "000123"
     assert result["items"][0]["status_label"] == "Ganha"
+
+
+def test_get_commercial_proposal_use_case_returns_detail_dict() -> None:
+    from app.application.dto.commercial.get_commercial_proposal_request import (
+        GetCommercialProposalRequest,
+    )
+    from app.application.use_cases.commercial.get_commercial_proposal_use_case import (
+        GetCommercialProposalUseCase,
+    )
+    from app.domain.entities.commercial.commercial_proposal_detail import (
+        CommercialProposalDetail,
+    )
+
+    repository = MagicMock()
+    repository.get_proposal.return_value = CommercialProposalDetail(
+        branch="01",
+        proposal_number="003446",
+        revision="08",
+        description="OV teste",
+        status_code="9",
+        status_label="Ganha",
+        status_category="won",
+        customer_name="Cliente X",
+    )
+
+    use_case = GetCommercialProposalUseCase(repository)
+    result = use_case.execute(
+        GetCommercialProposalRequest(
+            branch="01",
+            proposal_number="003446",
+            revision="08",
+        )
+    )
+
+    repository.get_proposal.assert_called_once()
+    assert result["proposal_number"] == "003446"
+    assert result["customer_name"] == "Cliente X"

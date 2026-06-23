@@ -33,6 +33,7 @@ export type DataTableSectionProps<T> = {
   pageSize?: number;
   searchPlaceholder?: string;
   getSearchText?: (row: T) => string;
+  onRowClick?: (row: T) => void;
 };
 
 export function DataTableSection<T>({
@@ -46,6 +47,7 @@ export function DataTableSection<T>({
   pageSize = DEFAULT_PAGE_SIZE,
   searchPlaceholder = "Buscar na tabela…",
   getSearchText,
+  onRowClick,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
 
@@ -107,6 +109,7 @@ export function DataTableSection<T>({
             rowKey={rowKey}
             loading={loading && rows.length === 0}
             emptyMessage={emptyMessage}
+            onRowClick={onRowClick}
           />
 
           <Pagination

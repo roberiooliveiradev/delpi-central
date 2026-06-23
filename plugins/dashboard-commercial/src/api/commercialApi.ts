@@ -4,6 +4,8 @@ import type { ChartGranularity } from "../types/chart";
 import type {
   ClosingRateData,
   CommercialFilterParams,
+  CommercialProposalDetail,
+  CommercialProposalHistoryEvent,
   CommercialProposalsPage,
   CommercialRolSeriesData,
   NewClientsAverageData,
@@ -84,6 +86,64 @@ export function getCommercialProposals(
     "/proposals",
     params,
     signal
+  );
+}
+
+export function getCommercialProposalByNumber(
+  proposalNumber: string,
+  params: {
+    branch: string;
+    revision?: string;
+  },
+  signal?: AbortSignal
+) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("branch", params.branch);
+  if (params.revision) searchParams.set("revision", params.revision);
+
+  const encoded = encodeURIComponent(proposalNumber.trim());
+  const query = searchParams.toString();
+
+  return httpGet<ApiSuccessResponse<CommercialProposalDetail>>(
+    `${COMMERCIAL_API_BASE}/proposals/${encoded}${query ? `?${query}` : ""}`,
+    { signal }
+  ).then((response) =>
+    unwrapApiDelpiEnvelope(response, "Erro ao carregar detalhe da proposta")
+  );
+}
+
+export function getCommercialProposalHistoryEvents(
+  proposalNumber: string,
+  params: {
+    branch: string;
+    revision?: string;
+    start_date?: string;
+    end_date?: string;
+  },
+  signal?: AbortSignal
+) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("branch", params.branch);
+  if (params.revision) searchParams.set("revision", params.revision);
+  if (params.start_date) searchParams.set("date_start", params.start_date);
+  if (params.end_date) searchParams.set("date_end", params.end_date);
+
+  const encoded = encodeURIComponent(proposalNumber.trim());
+  const query = searchParams.toString();
+
+  return httpGet<
+    ApiSuccessResponse<{
+      items: CommercialProposalHistoryEvent[];
+      total: number;
+      reference_revision?: string | null;
+    }>
+  >(
+    `${COMMERCIAL_API_BASE}/proposals/${encoded}/history/events${
+      query ? `?${query}` : ""
+    }`,
+    { signal }
+  ).then((response) =>
+    unwrapApiDelpiEnvelope(response, "Erro ao carregar histórico da proposta")
   );
 }
 
