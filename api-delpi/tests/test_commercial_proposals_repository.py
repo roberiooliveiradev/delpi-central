@@ -105,6 +105,7 @@ def test_list_proposals_applies_sort_by_on_server() -> None:
 
     sql = captured["list_sql"]
     assert "ORDER BY proposal_number ASC" in sql
+    assert "proposal_number ASC, proposal_number ASC" not in sql
 
 
 def test_get_proposal_loads_header_with_customer_and_stage_labels() -> None:

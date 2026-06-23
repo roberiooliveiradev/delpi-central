@@ -55,8 +55,14 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             direction = (
                 "DESC" if str(request.sort_dir or "asc").lower() == "desc" else "ASC"
             )
+            tie_columns = [
+                column
+                for column in ("branch", "proposal_number", "revision")
+                if column != sort_column
+            ]
+            tie_sql = ", ".join(f"{column} ASC" for column in tie_columns)
             return f"""
-                ORDER BY {sort_column} {direction}, proposal_number ASC, revision ASC
+                ORDER BY {sort_column} {direction}, {tie_sql}
             """
 
         return """
