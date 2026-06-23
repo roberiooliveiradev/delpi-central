@@ -611,9 +611,23 @@ def test_work_month_lmp_candidates_union_revision_and_anchor() -> None:
 
     assert "WorkMonthRevisionsInPeriod AS" in candidate_sql
     assert "WorkMonthRevisionKeys AS" in candidate_sql
+    assert "OvRevisionTouchedInPeriod AS" in candidate_sql
+    assert "INNER JOIN OvRevisionTouchedInPeriod K" in candidate_sql
     assert "ListingAnchorEventos" in candidate_sql
+    assert "AllListingAnchorRaw AS" in candidate_sql
     assert " UNION " in candidate_sql
     assert "CYCLE_INDEX" in candidate_sql
+
+
+def test_work_month_lmp_listing_anchor_marker_uses_dashboard_period() -> None:
+    repo = _work_month_repository()
+    request = ListLMPRequest(date_start="20260601", date_end="20260630")
+
+    candidate_sql, params = repo._sql_candidate_lmps_cte(request, lmp_only=True)
+
+    assert "A.AIJ_DTINIC" in candidate_sql
+    assert "20260601" in params
+    assert "20260630" in params
 
 
 def test_dashboard_summary_select_exposes_revision_fields() -> None:

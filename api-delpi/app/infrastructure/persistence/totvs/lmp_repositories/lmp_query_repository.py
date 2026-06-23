@@ -1134,10 +1134,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", request.branch)
 
+        where_period_touch, params_period_touch = self._sql_aij_period_filter_clause(
+            "A.AIJ_DTINIC",
+            request.date_start,
+            request.date_end,
+        )
         cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
             request.branch,
-            None,
-            None,
+            request.date_start,
+            request.date_end,
         )
         where_period_anchor, params_period_anchor = self._sql_candidate_period_where_clause(
             request,
@@ -1215,6 +1220,22 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """
 
         sql = f"""
+            OvRevisionTouchedInPeriod AS (
+                SELECT DISTINCT
+                    A.AIJ_FILIAL,
+                    A.AIJ_NROPOR,
+                    A.AIJ_REVISA
+                FROM AIJ010 A
+                WHERE {where_aij_base}
+                  {where_period_touch}
+                  AND (
+                      ({where_eng_support_a})
+                      OR ({where_lmp_anchor_a})
+                      OR ({where_lmp_finalized})
+                      OR ({where_sample_anchor})
+                  )
+            ),
+
             HomologByRevisionRaw AS (
                 SELECT
                     A.AIJ_FILIAL,
@@ -1228,6 +1249,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                         END
                     ) AS HOMOLOG_END_DATE
                 FROM AIJ010 A
+                INNER JOIN OvRevisionTouchedInPeriod K
+                    ON K.AIJ_FILIAL = A.AIJ_FILIAL
+                   AND K.AIJ_NROPOR = A.AIJ_NROPOR
+                   AND K.AIJ_REVISA = A.AIJ_REVISA
                 WHERE {where_aij_base}
                   AND {where_lmp_finalized}
                 GROUP BY
@@ -1243,6 +1268,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_REVISA,
                     MIN(A.AIJ_DTINIC) AS REV_FIRST_ENG
                 FROM AIJ010 A
+                INNER JOIN OvRevisionTouchedInPeriod K
+                    ON K.AIJ_FILIAL = A.AIJ_FILIAL
+                   AND K.AIJ_NROPOR = A.AIJ_NROPOR
+                   AND K.AIJ_REVISA = A.AIJ_REVISA
                 WHERE {where_aij_base}
                   AND {where_eng_support_a}
                 GROUP BY
@@ -1258,6 +1287,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_REVISA,
                     MIN(A.AIJ_DTINIC) AS ANCHOR_DATE
                 FROM AIJ010 A
+                INNER JOIN OvRevisionTouchedInPeriod K
+                    ON K.AIJ_FILIAL = A.AIJ_FILIAL
+                   AND K.AIJ_NROPOR = A.AIJ_NROPOR
+                   AND K.AIJ_REVISA = A.AIJ_REVISA
                 WHERE {where_aij_base}
                   AND {where_lmp_anchor_a}
                 GROUP BY
@@ -1317,6 +1350,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_NROPOR,
                     A.AIJ_REVISA
                 FROM AIJ010 A
+                INNER JOIN OvRevisionTouchedInPeriod K
+                    ON K.AIJ_FILIAL = A.AIJ_FILIAL
+                   AND K.AIJ_NROPOR = A.AIJ_NROPOR
+                   AND K.AIJ_REVISA = A.AIJ_REVISA
                 WHERE {where_aij_base}
                   AND {where_sample_anchor}
             ),
@@ -1333,6 +1370,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """
 
         params: list = [
+            *params_aij_base,
+            *params_period_touch,
+            *params_eng_support_a,
+            *params_lmp_anchor_a,
+            *params_lmp_finalized,
+            *params_sample_anchor,
             *params_aij_base,
             *params_lmp_finalized,
             *params_aij_base,
