@@ -2,8 +2,22 @@ const BRANCH_ORDER = ["01", "02"] as const;
 
 export type BranchCode = (typeof BRANCH_ORDER)[number];
 
-export function resolveActiveBranches(activeBranch?: string): BranchCode[] {
-  const branch = (activeBranch ?? "").trim();
+export function resolveActiveBranches(
+  selectedBranches: string[] = [],
+  legacySingleBranch?: string,
+): BranchCode[] {
+  if (selectedBranches.length === 1) {
+    const code = selectedBranches[0];
+    if (code === "01" || code === "02") {
+      return [code];
+    }
+  }
+
+  if (selectedBranches.length > 1) {
+    return selectedBranches.filter((code): code is BranchCode => code === "01" || code === "02");
+  }
+
+  const branch = (legacySingleBranch ?? "").trim();
   if (branch === "01" || branch === "02") {
     return [branch];
   }
@@ -17,7 +31,7 @@ export function formatPerUnitBranchMetric(
   activeBranch?: string,
   fallback = "—",
 ): string {
-  const branches = resolveActiveBranches(activeBranch);
+  const branches = resolveActiveBranches([], activeBranch);
   const parts = branches
     .map((code) => {
       const raw = values[code];

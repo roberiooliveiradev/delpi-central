@@ -4,14 +4,14 @@ export type PrintReportSummaryProps = {
   title: string;
   dateStart: string;
   dateEnd: string;
-  branch?: string;
+  branchLabel?: string;
 };
 
 export function PrintReportSummary({
   title,
   dateStart,
   dateEnd,
-  branch,
+  branchLabel,
 }: PrintReportSummaryProps) {
   const printedAt = new Date().toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -30,7 +30,7 @@ export function PrintReportSummary({
         </div>
         <div>
           <dt>Filial</dt>
-          <dd>{branch?.trim() ? branch : "Todas"}</dd>
+          <dd>{branchLabel?.trim() ? branchLabel : "Todas"}</dd>
         </div>
         <div>
           <dt>Emitido em</dt>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { inputDateToApi } from "../utils/dates";
+import { resolveCommercialApiBranch } from "../utils/commercialClientFilters";
 import {
   readCommercialFilters,
   writeFiltersToUrl,
@@ -14,21 +15,23 @@ export function useCommercialFilters() {
   const [dateEnd, setDateEndState] = useState(
     () => readCommercialFilters().dateEnd
   );
-  const [branch, setBranchState] = useState(() => readCommercialFilters().branch);
+  const [branches, setBranchesState] = useState(
+    () => readCommercialFilters().branches
+  );
   const [customerSegment, setCustomerSegmentState] = useState(
     () => readCommercialFilters().customerSegment
   );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branch, customerSegment });
-  }, [dateStart, dateEnd, branch, customerSegment]);
+    writeFiltersToUrl({ dateStart, dateEnd, branches, customerSegment });
+  }, [dateStart, dateEnd, branches, customerSegment]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = readCommercialFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
-      setBranchState(next.branch);
+      setBranchesState(next.branches);
       setCustomerSegmentState(next.customerSegment);
     };
 
@@ -39,25 +42,25 @@ export function useCommercialFilters() {
   const apiParams: CommercialFilterParams = {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
-    branch: branch || undefined,
+    branch: resolveCommercialApiBranch(branches),
     customer_segment: customerSegment || undefined,
   };
 
   const filterState: CommercialFilterUrlState = {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     customerSegment,
   };
 
   return {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     customerSegment,
     setDateStart: useCallback((v: string) => setDateStartState(v), []),
     setDateEnd: useCallback((v: string) => setDateEndState(v), []),
-    setBranch: useCallback((v: string) => setBranchState(v), []),
+    setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     setCustomerSegment: useCallback(
       (v: CommercialFilterUrlState["customerSegment"]) =>
         setCustomerSegmentState(v),

@@ -1,15 +1,17 @@
+import { COMMERCIAL_BRANCH_OPTIONS } from "../constants/filterOptions";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FieldLabel } from "./HelpTooltip";
+import { MultiSelectField } from "./MultiSelectField";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 
 type CommercialFiltersProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   customerSegment: CommercialFilterUrlState["customerSegment"];
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onCustomerSegmentChange: (
     value: CommercialFilterUrlState["customerSegment"]
   ) => void;
@@ -19,11 +21,11 @@ type CommercialFiltersProps = {
 export function CommercialFilters({
   dateStart,
   dateEnd,
-  branch,
+  branches,
   customerSegment,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onCustomerSegmentChange,
   className = "",
 }: CommercialFiltersProps) {
@@ -56,21 +58,15 @@ export function CommercialFilters({
           onChange={(e) => onDateEndChange(e.target.value)}
         />
       </label>
-      <label className="dc-filter-box dc-field">
-        <FieldLabel
-          label="Filial (indicadores)"
-          hint={COMMERCIAL_HELP_TOOLTIPS.filters.branch}
-        />
-        <select
-          id="dc-branch"
-          value={branch}
-          onChange={(e) => onBranchChange(e.target.value)}
-        >
-          <option value="">Todas</option>
-          <option value="01">01 — Filial 01</option>
-          <option value="02">02 — Filial 02</option>
-        </select>
-      </label>
+      <MultiSelectField
+        label="Filial (indicadores)"
+        labelHint={COMMERCIAL_HELP_TOOLTIPS.filters.branch}
+        options={COMMERCIAL_BRANCH_OPTIONS}
+        selectedValues={branches}
+        onChange={onBranchesChange}
+        emptyLabel="Todas"
+        searchable
+      />
       <label className="dc-filter-box dc-field">
         <FieldLabel
           label="Clientes"

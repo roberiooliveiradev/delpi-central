@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ListFilter, TrendingUp } from "lucide-react";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
+import { formatCommercialBranchPrintLabel } from "../utils/commercialClientFilters";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { HelpTooltip } from "./HelpTooltip";
 import { PrintReportSummary } from "./PrintReportSummary";
@@ -24,7 +25,7 @@ export function CommercialPageHeader({
         title="Dashboard Comercial"
         dateStart={filterState.dateStart}
         dateEnd={filterState.dateEnd}
-        branch={filterState.branch}
+        branchLabel={formatCommercialBranchPrintLabel(filterState.branches)}
       />
 
       <header className="dc-page-header dc-screen-only">

@@ -7,12 +7,12 @@ type FilterBarProps = {
   filterState: CommercialFilterUrlState;
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   customerSegment: CommercialFilterUrlState["customerSegment"];
   exportActions?: ReactNode;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onCustomerSegmentChange: (
     value: CommercialFilterUrlState["customerSegment"]
   ) => void;
@@ -24,12 +24,12 @@ export function FilterBar({
   filterState,
   dateStart,
   dateEnd,
-  branch,
+  branches,
   customerSegment,
   exportActions,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onCustomerSegmentChange,
   onRefresh,
   refreshing = false,
@@ -46,11 +46,11 @@ export function FilterBar({
         className="dc-no-print"
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         customerSegment={customerSegment}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
-        onBranchChange={onBranchChange}
+        onBranchesChange={onBranchesChange}
         onCustomerSegmentChange={onCustomerSegmentChange}
       />
     </>

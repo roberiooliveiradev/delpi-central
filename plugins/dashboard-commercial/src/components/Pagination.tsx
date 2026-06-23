@@ -65,15 +65,6 @@ export function Pagination({
 
   return (
     <div className="dc-pagination" role="navigation" aria-label="Paginação da tabela">
-      <span className="dc-pagination__info">
-        Exibindo {rangeStart}–{rangeEnd} de {total} · Página {page} de {totalPages}
-        <HelpTooltip
-          content={COMMERCIAL_HELP_TOOLTIPS.pagination.info}
-          ariaLabel="Ajuda: paginação"
-          className="dc-pagination__help"
-        />
-      </span>
-
       <div className="dc-pagination__controls">
         <div className="dc-pagination__action">
           <button
@@ -81,6 +72,7 @@ export function Pagination({
             className="dc-ghost-btn"
             disabled={!canPrev}
             onClick={() => onPageChange(page - 1)}
+            aria-disabled={!canPrev}
           >
             Anterior
           </button>
@@ -135,6 +127,7 @@ export function Pagination({
             className="dc-ghost-btn"
             disabled={!canNext}
             onClick={() => onPageChange(page + 1)}
+            aria-disabled={!canNext}
           >
             Próxima
           </button>
@@ -145,6 +138,15 @@ export function Pagination({
           />
         </div>
       </div>
+
+      <span className="dc-pagination__info">
+        Exibindo {rangeStart}–{rangeEnd} de {total} · Página {page} de {totalPages}
+        <HelpTooltip
+          content={COMMERCIAL_HELP_TOOLTIPS.pagination.info}
+          ariaLabel="Ajuda: paginação"
+          className="dc-pagination__help"
+        />
+      </span>
     </div>
   );
 }

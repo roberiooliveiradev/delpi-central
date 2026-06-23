@@ -58,6 +58,10 @@ import {
 } from "../utils/format";
 import { navigateCommercial } from "../utils/navigation";
 import {
+  formatCommercialBranchFilterLabel,
+  resolveCommercialApiBranch,
+} from "../utils/commercialClientFilters";
+import {
   appendCustomerSegmentToLabel,
   formatNewBusinessRolContextLine,
 } from "../utils/customerSegmentLabel";
@@ -75,11 +79,11 @@ export function DashboardCommercialPage({
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     customerSegment,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     setCustomerSegment,
     apiParams,
     filterState,
@@ -161,11 +165,13 @@ export function DashboardCommercialPage({
     [dateStart, dateEnd]
   );
 
-  const branchLabel = branch ? `Filial ${branch}` : null;
+  const activeApiBranch = resolveCommercialApiBranch(branches);
+
+  const branchLabel = formatCommercialBranchFilterLabel(branches);
 
   const rolContextLabel = appendCustomerSegmentToLabel(
-    branch
-      ? `Filial ${branch} · ${periodLabel}`
+    activeApiBranch
+      ? `Filial ${activeApiBranch} · ${periodLabel}`
       : `${COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.sum} · ${periodLabel}`,
     customerSegment
   );
@@ -182,9 +188,9 @@ export function DashboardCommercialPage({
         branchRol,
         rolContextLabel,
         formatCurrency,
-        branch,
+        activeApiBranch,
       ),
-    [branch, branchRol, headOfficeRol, rolContextLabel],
+    [activeApiBranch, branchRol, headOfficeRol, rolContextLabel],
   );
 
   const isBusy = loading || refreshing;
@@ -341,14 +347,14 @@ export function DashboardCommercialPage({
         buildCommercialDetailPath(row.proposal_number, {
           dateStart,
           dateEnd,
-          branch,
+          branches,
           customerSegment,
           proposalBranch: row.branch,
           revision: row.revision,
         })
       );
     },
-    [branch, customerSegment, dateEnd, dateStart, isActive]
+    [branches, customerSegment, dateEnd, dateStart, isActive]
   );
 
   const proposalColumns = useMemo<DataTableColumn<CommercialProposal>[]>(
@@ -457,7 +463,7 @@ export function DashboardCommercialPage({
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         customerSegment={customerSegment}
         exportActions={
           <CommercialExportButtons
@@ -469,7 +475,7 @@ export function DashboardCommercialPage({
         }
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onCustomerSegmentChange={setCustomerSegment}
         onRefresh={() => {
           reload();
