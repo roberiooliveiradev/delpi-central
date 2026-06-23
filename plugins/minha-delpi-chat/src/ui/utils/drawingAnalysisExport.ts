@@ -114,7 +114,6 @@ function resolveExportTables(
     return tables;
   }
 
-  const statusLabels = resolveStatusLabels(exportPayload);
   const exportLabels = resolveExportLabels(exportPayload);
   const tables: DrawingExportTable[] = [];
   const nonConformityRows = exportPayload.spreadsheetRows ?? [];
