@@ -3,7 +3,6 @@ import {
   Banknote,
   PackageCheck,
   Percent,
-  Target,
   TrendingUp,
 } from "lucide-react";
 import { ChartCard } from "../components/ChartCard";
@@ -13,7 +12,7 @@ import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/table";
 import { DataTableSection } from "../components/table";
 import { FilterBar } from "../components/FilterBar";
-import { HelpTooltip, FieldLabel } from "../components/HelpTooltip";
+import { FieldLabel } from "../components/HelpTooltip";
 import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
@@ -461,30 +460,6 @@ export function DashboardCommercialPage({
             loading={isBusy && !closingRate}
           />
         </ChartCard>
-      </section>
-
-      <section className="dc-summary-grid dc-no-print">
-        <article className="dc-card">
-          <div className="dc-summary-card__header">
-            <Target size={22} aria-hidden />
-            <h2 className="dc-summary-card__title">
-              Como ler os indicadores
-              <HelpTooltip
-                content={COMMERCIAL_HELP_TOOLTIPS.summary.howToRead}
-                ariaLabel="Ajuda: como ler os indicadores"
-                className="dc-summary-card__title-help"
-              />
-            </h2>
-          </div>
-          <p className="dc-summary-card__description">
-            <strong>ROL</strong> (R$ com IPI) segue o indicador{" "}
-            <code>commercial-rol</code> no SI. Com filial <strong>Todas</strong>,
-            o ROL é a <strong>soma</strong> das filiais 01 e 02; OTD, conversão e
-            % novos negócios vêm consolidados da api-delpi (todas as filiais no
-            período). Metas continuam por filial no filtro. O gráfico mantém as
-            séries 01 e 02.
-          </p>
-        </article>
       </section>
 
       <section className="dc-proposals-section dc-no-print">

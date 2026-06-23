@@ -18,64 +18,97 @@ class SalesConversionRateRepository(BaseRepository, SalesConversionRateRepositor
         self,
         request: SalesConversionRateRequest
     ) -> SalesConversionRate:
-        qb = QueryBuilder()
-        qb.raw("AD1.D_E_L_E_T_ = ''")
+        opened_qb = QueryBuilder()
+        opened_qb.raw("AD1.D_E_L_E_T_ = ''")
 
         if request.branch:
-            qb.eq("AD1.AD1_FILIAL", request.branch)
+            opened_qb.eq("AD1.AD1_FILIAL", request.branch)
 
-        qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
+        opened_qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
 
         CommercialCustomerSegmentService.apply_segment_to_query_builder(
-            qb,
+            opened_qb,
             "AD1.AD1_CODCLI",
             request.customer_segment,
         )
 
-        where_clause, where_params = qb.build()
+        opened_where, opened_params = opened_qb.build()
 
-        acceptance_expr = CommercialProposalAcceptanceDateService.sql_acceptance_date_expression(
-            "AD1_DTASSI",
-            "AD1_DTFIM",
+        acceptance_expr = CommercialProposalAcceptanceDateService.sql_acceptance_date_for_alias(
+            "AD1"
         )
 
         won_qb = QueryBuilder()
-        won_qb.raw(f"AD1_STATUS = '{WON_STATUS_CODE}'")
+        won_qb.raw("AD1.D_E_L_E_T_ = ''")
+
+        if request.branch:
+            won_qb.eq("AD1.AD1_FILIAL", request.branch)
+
+        won_qb.eq("AD1.AD1_STATUS", WON_STATUS_CODE)
         won_qb.raw(f"({acceptance_expr}) IS NOT NULL")
         won_qb.raw(f"RTRIM(CAST(({acceptance_expr}) AS VARCHAR(20))) <> ''")
         won_qb.date_range(f"({acceptance_expr})", request.start_date, request.end_date)
-        won_clause, won_params = won_qb.build()
+
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            won_qb,
+            "AD1.AD1_CODCLI",
+            request.customer_segment,
+        )
+
+        won_where, won_params = won_qb.build()
 
         sql = f"""
             WITH ovs_opened AS (
                 SELECT DISTINCT
                     AD1.AD1_FILIAL,
                     AD1.AD1_NROPOR,
-                    AD1.AD1_REVISA,
-                    AD1.AD1_DESCRI,
-                    AD1.AD1_DATA,
-                    AD1.AD1_DTASSI,
-                    AD1.AD1_DTFIM,
-                    AD1.AD1_STATUS
+                    AD1.AD1_REVISA
                 FROM AD1010 AD1
-                WHERE {where_clause}
+                WHERE {opened_where}
+            ),
+            ovs_won_accepted AS (
+                SELECT DISTINCT
+                    AD1.AD1_FILIAL,
+                    AD1.AD1_NROPOR,
+                    AD1.AD1_REVISA
+                FROM AD1010 AD1
+                WHERE {won_where}
+            ),
+            ovs_won_latest AS (
+                SELECT
+                    AD1_FILIAL,
+                    AD1_NROPOR,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY AD1_FILIAL, AD1_NROPOR
+                        ORDER BY AD1_REVISA DESC
+                    ) AS rn
+                FROM ovs_won_accepted
+            ),
+            metrics AS (
+                SELECT
+                    (SELECT COUNT(*) FROM ovs_opened) AS qtd_proposals,
+                    (
+                        SELECT COUNT(*)
+                        FROM ovs_won_latest
+                        WHERE rn = 1
+                    ) AS qtd_won
             )
             SELECT
-                COUNT(*) AS qtd_proposals,
-                SUM(CASE WHEN {won_clause} THEN 1 ELSE 0 END) AS qtd_won,
+                qtd_proposals,
+                qtd_won,
                 CAST(
                     CASE
-                        WHEN COUNT(*) = 0 THEN 0
-                        ELSE SUM(CASE WHEN {won_clause} THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
+                        WHEN qtd_proposals = 0 THEN 0
+                        ELSE qtd_won * 100.0 / qtd_proposals
                     END
                 AS DECIMAL(10, 2)) AS sales_conversion_rate_pct
-            FROM ovs_opened
+            FROM metrics
         """
 
-        where_params = tuple(where_params) + tuple(won_params) + tuple(won_params)
+        params = tuple(opened_params) + tuple(won_params)
 
         with self:
-            row = self.execute_one(sql, where_params)
+            row = self.execute_one(sql, params)
 
         if row:
             return SalesConversionRate(

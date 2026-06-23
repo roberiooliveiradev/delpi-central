@@ -35,7 +35,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     salesOrderOtd:
       "Percentual de linhas de pedido de venda entregues no prazo (data de faturamento ≤ data de entrega prometida).",
     closingRate:
-      "Taxa de conversão: propostas ganhas (status 9, aceite AD1_DTASSI no período) sobre propostas abertas (AD1_DATA no período).",
+      "Taxa de conversão: ganhas com aceite (AD1_DTASSI) no período sobre propostas abertas (AD1_DATA) no período.",
     newBusinessRol:
       "Participação do ROL de clientes não-WEG no ROL total do período (vendas SD2 menos devoluções).",
   },

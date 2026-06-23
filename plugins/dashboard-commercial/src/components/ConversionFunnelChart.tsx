@@ -34,7 +34,7 @@ function buildStages(proposals: number, won: number): FunnelStage[] {
     },
     {
       key: "won",
-      label: "Ganhas (status 9)",
+      label: "Ganhas (aceite no período)",
       value: won,
       sharePct: wonShare,
       widthPct: proposals > 0 ? Math.max(32, Math.min(100, wonShare)) : 0,
@@ -164,7 +164,8 @@ export function ConversionFunnelChart({
 
         <p className="dc-funnel__footnote">
           Largura das etapas proporcional ao volume; números absolutos em cada faixa.
-          Ganhas = propostas com status TOTVS <code>9</code>.
+          Ganhas = propostas com status TOTVS <code>9</code> e aceite (
+          <code>AD1_DTASSI</code>) no período filtrado.
         </p>
       </div>
     </div>

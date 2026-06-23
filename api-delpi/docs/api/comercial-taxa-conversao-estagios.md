@@ -25,8 +25,8 @@ Implementação: `SalesConversionRateRepository` → tabela `AD1010`.
 | Base | `AD1010` (cabeçalho da oportunidade / OV no CRM) |
 | Período (denominador) | `AD1_DATA` entre `start_date` e `end_date` — propostas **abertas** no período |
 | Total (`qtd_proposals`) | Revisões com `AD1_DATA` no período (cada revisão conta; não colapsa na última da proposta) |
-| Ganha (`qtd_won`) | Revisões abertas no período com `AD1_STATUS = '9'` (Ganha) **e** data de aceite (`AD1_DTASSI`, fallback `AD1_DTFIM`) no mesmo intervalo |
-| Taxa | `qtd_won / qtd_proposals × 100` |
+| Ganha (`qtd_won`) | Última revisão por OV com `AD1_STATUS = '9'` e data de aceite (`AD1_DTASSI`, fallback `AD1_DTFIM`) no intervalo — **independente** da data de abertura |
+| Taxa | `qtd_won / qtd_proposals × 100` (ganhas com aceite no período ÷ revisões abertas no período) |
 
 Constante de domínio: `WON_STATUS_CODE = "9"` em `commercial_proposal_status.py`.
 
