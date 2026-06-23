@@ -85,20 +85,65 @@ describe("commercial export builders", () => {
             description: "Raiz",
             type: "PI",
             quantity: 1,
-            components: [
-              {
-                code: "MP-001",
-                description: "Componente",
-                type: "MP",
-                quantity: 2,
-              },
-            ],
           },
+          items: [
+            {
+              code: "MP-001",
+              description: "Componente",
+              type: "MP",
+              quantity: 2,
+            },
+          ],
         },
       },
     ]);
 
     expect(payload.rows.length).toBeGreaterThanOrEqual(2);
     expect(payload.rows.some((row) => row.code === "MP-001")).toBe(true);
+    expect(payload.rows.find((row) => row.code === "MP-001")?.level).toBe(1);
+  });
+
+  it("achata BOM no formato api-delpi (root + items aninhados)", () => {
+    const payload = buildProductStructuresPayload([
+      {
+        product: { code: "90269001", description: "PRODUTO FICTICIO PA" },
+        structure: {
+          root: {
+            code: "90269001",
+            description: "PRODUTO FICTICIO PA",
+            type: "PA",
+            unit: "UN",
+            quantity: 1,
+          },
+          items: [
+            {
+              code: "50219001",
+              description: "INTERMEDIARIO FICTICIO",
+              type: "PI",
+              unit: "UN",
+              quantity: 2,
+              components: [
+                {
+                  code: "10019001",
+                  description: "MATERIA-PRIMA FICTICIA",
+                  type: "MP",
+                  unit: "KG",
+                  quantity: 0.5,
+                  components: [],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(payload.rows.map((row) => row.code)).toEqual([
+      "90269001",
+      "50219001",
+      "10019001",
+    ]);
+    expect(payload.rows.map((row) => row.type)).toEqual(["PA", "PI", "MP"]);
+    expect(payload.rows.map((row) => row.level)).toEqual([0, 1, 2]);
   });
 });

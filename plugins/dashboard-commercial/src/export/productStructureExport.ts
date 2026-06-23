@@ -3,6 +3,8 @@ import type {
   ProductStructureData,
   ProductStructureNode,
 } from "../types/productStructure";
+import type { RichTreeNode } from "../types/richTree";
+import { buildProductStructureTree } from "../utils/productStructureTree";
 import { formatDecimal } from "../utils/format";
 import { parseProductTitle } from "../utils/commercialProductsPresentation";
 import type { TableExportPayload } from "./types";
@@ -50,14 +52,51 @@ function flattenStructureNode(
   });
 }
 
+function flattenRichTreeNode(
+  node: RichTreeNode,
+  rootProduct: string,
+  level: number,
+  rows: Record<string, unknown>[],
+): void {
+  if (node.id === "structure-root") {
+    for (const child of node.children ?? []) {
+      flattenRichTreeNode(child, rootProduct, level, rows);
+    }
+    return;
+  }
+
+  rows.push({
+    root_product: rootProduct,
+    level,
+    code: node.label || "—",
+    description: node.subtitle ?? "—",
+    type: node.badge ?? "—",
+    quantity: node.metaCaption ?? "—",
+  });
+
+  for (const child of node.children ?? []) {
+    flattenRichTreeNode(child, rootProduct, level + 1, rows);
+  }
+}
+
 function flattenStructureData(
   rootProduct: string,
   structure: ProductStructureData,
 ): Record<string, unknown>[] {
+  const tree = buildProductStructureTree(structure);
+  if (tree) {
+    const rows: Record<string, unknown>[] = [];
+    flattenRichTreeNode(tree, rootProduct, 0, rows);
+    return rows;
+  }
+
   const rows: Record<string, unknown>[] = [];
 
   if (structure.root) {
     flattenStructureNode(structure.root, rootProduct, 0, rows);
+    for (const item of structure.items ?? []) {
+      flattenStructureNode(item, rootProduct, 1, rows);
+    }
     return rows;
   }
 

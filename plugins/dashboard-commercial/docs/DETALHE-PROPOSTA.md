@@ -107,6 +107,7 @@ Comportamento:
 1. Deduplica códigos de `list_products`.
 2. Carrega estruturas em paralelo (`Promise.allSettled`); aborta ao desmontar.
 3. Renderiza a seção só se houver estrutura renderizável (`hasRenderableProductStructure`) ou enquanto carrega.
+4. **Exportação tabular** (`buildProductStructuresPayload`) usa o mesmo `buildProductStructureTree` da UI — a API retorna `root` (PA) e `items[]` (componentes de 1º nível com `components` aninhados); não achatar só `root`.
 4. Árvore expandível (profundidade inicial 1), legenda código/descrição/tipo/quantidade.
 
 ---
