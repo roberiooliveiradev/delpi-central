@@ -110,18 +110,22 @@ Injetados em `docker-compose.dev.yml` e `docker-compose.yml` quando ausentes no 
 
 | Variável | Default compose | Papel |
 |----------|-----------------|-------|
-| `OLLAMA_MODEL` | `qwen2.5:1.5b` | Modelo base (turnos fora dos modos) |
+| `OLLAMA_MODEL` | `qwen2.5:1.5b` | `qwen2.5:1.5b` (igual dev; override no `.env` se srv-api usar 3b) |
 | `CHAT_LLM_LATENCY_PROFILE` | `operational_cpu` | Preset 320 tokens / ctx 1024 |
 | `LLM_MAX_TOKENS` | `320` | Teto global (override do preset) |
+| `LLM_TEMPERATURE` | `0.2` | Igual dev |
 | `OLLAMA_NUM_CTX` | `1024` | Contexto global |
+| `MAX_CONTEXT_CHUNKS` / `MAX_CONTEXT_CHARS` | `6` / `9000` | Igual dev (menos RAG = menos latência) |
+| `CHAT_FAST_PATH_MAX_CHARS` | `48` | Igual dev |
+| `CHAT_DIRECT_RESPONSE_STREAM_*` | `4` chars / `0` ms | Sem delay artificial (prod antigo: 2/45) |
 | `CHAT_RESPONSE_MODES_ENABLED` | `true` | Seletor Rápida/Normal/Pensador |
-| `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida (fallback LLM; prosa usual via commentary direct — ver `chat-response-modes.md`) |
-| `CHAT_RESPONSE_MODE_NORMAL_*` | 320 tok / ctx 1024 | Modo Normal |
-| `CHAT_RESPONSE_MODE_THINKER_*` | 512 tok / ctx 1536 | Modo Pensador |
+| `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida |
+| `CHAT_RESPONSE_MODE_NORMAL_*` | 1.5b, 256 tok, ctx 1536 | Modo Normal |
+| `CHAT_RESPONSE_MODE_THINKER_*` | 3b, 512 tok, ctx 2048 | Modo Pensador |
 
 Documentação: [`chat-response-modes.md`](../minha-delpi-ai-api/docs/architecture/chat-response-modes.md), changelog [`2026-06-playbook-19-prosa-latencia-analyser.md`](../minha-delpi-ai-api/docs/changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
 
-**Prod srv-api:** `.env` com `OLLAMA_MODEL=3b` e ctx 2048 **não** herda estes defaults — atualizar explicitamente ou aceitar latência maior. Após mudança: `docker compose … up -d --force-recreate minha-delpi-ai-api`.
+**Prod srv-api:** defaults de `docker-compose.yml` alinhados ao dev (jun/2026). `.env` de produção: só overrides (R16, paths, secrets) — **remover** bloco IA legado com `3b`/ctx alto se ainda existir. Após mudança: `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d --force-recreate minha-delpi-ai-api`.
 
 Backend `docling` e OCR regional `easyocr` exigem `requirements-vision.txt` na imagem (dev já inclui). Verificação: `python3 scripts/check_vision_profile_deps.py` dentro do container.
 

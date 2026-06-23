@@ -140,3 +140,9 @@ cd plugins/minha-delpi-chat && npm run test -- chatAttachmentPreview
 **Testes:** `test_chat_drawing_report_export_service.py`, `drawingAnalysisExport.test.ts`.
 
 **Cenário manual:** após análise de desenho → exportar PDF (impressão com layout DELPI), CSV e XLSX com todas as tabelas operacionais.
+
+---
+
+## 6 — Cotas × estrutura e referência de comprimento (jun/2026)
+
+Ver changelog dedicado: [`2026-06-drawing-cotas-estrutura-relatorio.md`](./2026-06-drawing-cotas-estrutura-relatorio.md) (`ea98f90d`).

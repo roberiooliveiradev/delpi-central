@@ -51,6 +51,20 @@
 | V3 | Tolerâncias fixas (±10% QTD, mm) | JSON `drawing_validation.json` | Declarativo |
 | V4 | Vigência BOM (`G1_FIM`) | Desenho antigo × estrutura vigente | **Implementado** — `structure.bom_validity` + checklist `structure_bom_validity` |
 | V5 | LLM **não** reclassifica checklist | Render-only | Intencional |
+| V6 | Código cabo **CA\*** (`00653`) confundido com comprimento do chicote | Falso crítico `653 MT` × PDF | **Implementado** — âncora `660MM` na descrição do PA + referência em mm (`90260027`) |
+| V7 | `total_length` crítico com OCR de cotas ruim | Reprovação indevida | **Implementado** — `total_length` em `pdfDependentTemplateKeys` (gate ≥ 95%) |
+
+---
+
+## Apresentação do relatório (chat)
+
+| Item | Onde | Notas |
+|------|------|--------|
+| Outline SG1010 | Markdown seção 3 (`format_analyser_detail_sections`) | Árvore interativa do `/analyser` suprimida no MFE — `assistantProseRendering.ts` |
+| Cotas × estrutura | Markdown seção 4 (`format_dimensions_comparison_section`) | Tabela PDF × SG1010 + linhas por intermediário |
+| Export completo | `drawingAnalysisExport` | PDF/CSV/XLSX com tabelas operacionais |
+
+Changelog: [`../changelog/2026-06-drawing-cotas-estrutura-relatorio.md`](../changelog/2026-06-drawing-cotas-estrutura-relatorio.md).
 
 ---
 
@@ -67,13 +81,15 @@
 - Aviso explícito de vigência BOM no checklist (`ChatDrawingStructureValidityNoticeService`)
 - Ingest RAG: `ChatDrawingAgentKnowledgeCoverageService` + `sync_drawing_agent_knowledge.py`
 - **16/16** regras com regressão por categoria (`drawing_validation_rules.json`)
+- **Cotas × estrutura** no relatório markdown + referência de comprimento em mm (jun/2026 — `90260027`)
+- PI aninhado sob PA na coleta de intermediários; gate `total_length` com confiança OCR
 
 ---
 
 ## Roadmap residual (prioridade)
 
 1. **Rodar ingest** em ambiente com DB: `sync_drawing_agent_knowledge.py --ingest` (atualizar `manifest.json`)
-2. **OCR hierárquico** fases 14.5–14.6 (cotas/BOM) — qualidade de extração
+2. **OCR hierárquico** fases 14.5–14.6 (cotas/BOM) — qualidade de extração da região `dimensions`
 3. Cadastro Protheus: preencher `B1_CONV` onde o fator real ≠ default 1000
 4. Estrutura **histórica** por data de revisão do PDF (hoje só vigente + aviso)
 
@@ -86,3 +102,5 @@
 - Playbook api-delpi: [`../../../api-delpi/docs/roadmaps/playbook-conversao-unidades-protheus.md`](../../../api-delpi/docs/roadmaps/playbook-conversao-unidades-protheus.md)
 - Desacoplamento skill: [`../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md`](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md)
 - Inteligência chat base (desenho): [`chat-intelligence-base.md`](./chat-intelligence-base.md)
+- Cotas e estrutura no relatório: [`../changelog/2026-06-drawing-cotas-estrutura-relatorio.md`](../changelog/2026-06-drawing-cotas-estrutura-relatorio.md)
+- Infra prod (latência LLM): [`../../../infra/README-ambiente.md`](../../../infra/README-ambiente.md) § LLM chat
