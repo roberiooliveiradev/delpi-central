@@ -41,7 +41,7 @@ Parâmetros comuns de período:
 | GET | `/commercial/new-clients-average` | Média mensal de novos clientes. |
 | GET | `/commercial/new-clients-rol-pct` | % do ROL de clientes novos. |
 | GET | `/commercial/rol/series` | Série temporal de ROL (`granularity`: day, week, month, year). |
-| GET | `/commercial/proposals` | Listagem paginada de propostas (OV). Filtros: `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment` (`weg`/`new_business`). |
+| GET | `/commercial/proposals` | Listagem paginada de propostas (OV). Filtros: `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment` (`weg`/`new_business`), `page`, `page_size`, `sort_by`, `sort_dir`, `search`. Ver `plugins/dashboard-commercial/docs/PROPOSTAS-PERIODO.md`. |
 | GET | `/commercial/proposals/{proposal_number}` | Detalhe da proposta (AD1010 + cliente/vendedor + **`list_products[]`** ADJ010). Query: `branch` (obrig.), `revision` opcional. Produtos via `LMPQueryRepository.list_ov_products` (SQL compartilhado com LMP). |
 | GET | `/commercial/proposals/{proposal_number}/history/events` | Histórico AIJ010 da OV — mesmo pipeline que LMP (`get_lmp_history_events`). Query: `branch`, `revision`, `date_start`, `date_end` (período aceito pelo MFE; **não** dispara batch de listagem). |
 

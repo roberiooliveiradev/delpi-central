@@ -25,6 +25,8 @@ Gráficos: evolução do ROL (filiais 01 e 02) e funil propostas × ganhas.
 
 **Detalhe da proposta:** clique na linha da tabela abre `/proposta/{proposal_number}` — cabeçalho, produtos ADJ010, estrutura BOM e histórico AIJ010. Ver [DETALHE-PROPOSTA.md](./DETALHE-PROPOSTA.md).
 
+**Tabela «Propostas do período»:** ordenação, busca e paginação no servidor; filtro de status dentro do card. Ver [PROPOSTAS-PERIODO.md](./PROPOSTAS-PERIODO.md).
+
 Catálogo SI: um indicador `commercial-rol` (`per_unit`, curva R$); `commercial-rol-matrix` e `commercial-rol-branch` ficam inativos.
 
 ## Filtros

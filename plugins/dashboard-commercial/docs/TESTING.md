@@ -45,6 +45,32 @@ export TOKEN="<jwt>"
 - [ ] Exportação por seção: KPIs, ROL, funil, propostas
 - [ ] Detalhe OV: exportação completa inclui BOM quando disponível
 
+### Tabela «Propostas do período»
+
+Ver [PROPOSTAS-PERIODO.md](./PROPOSTAS-PERIODO.md).
+
+| Área | O que validar |
+|------|----------------|
+| Status | Dropdown **dentro do card** (Todas / Ganhas / Em aberto) |
+| Busca | Digitar termo (ex.: `weg`, `ganha`, número) — debounce e nova requisição; total atualiza |
+| Ordenação | Clicar coluna — ordem vem do backend (não só da página visível) |
+| Paginação | 20 por página; total global no rodapé |
+| Exportação | CSV/Excel/PDF da tabela respeita busca, status e ordenação atuais |
+| Navegação | Clique na linha abre detalhe com filial e revisão corretas |
+
+#### Testes automatizados
+
+```bash
+# MFE
+cd plugins/dashboard-commercial && npm run ci
+
+# api-delpi (container)
+docker exec delpi-api-delpi python -m pytest \
+  tests/test_commercial_proposal_list_search_service.py \
+  tests/test_commercial_proposals_repository.py \
+  tests/test_list_commercial_proposals_use_case.py -q
+```
+
 ### Detalhe da proposta (`/proposta/{proposal_number}`)
 
 Ver [DETALHE-PROPOSTA.md](./DETALHE-PROPOSTA.md).

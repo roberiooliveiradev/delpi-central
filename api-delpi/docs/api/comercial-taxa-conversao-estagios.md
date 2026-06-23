@@ -32,6 +32,8 @@ Constante de domínio: `WON_STATUS_CODE = "9"` em `commercial_proposal_status.py
 
 A listagem `GET /commercial/proposals?status=won` filtra por **aceite** (`AD1_DTASSI`, fallback `AD1_DTFIM`) no período. A coluna **Fim** exibe essa mesma data. Filtro «todas» / «em aberto» continua por abertura (`AD1_DATA`).
 
+**Listagem paginada (jun/2026):** `sort_by` / `sort_dir` ordenam no SQL; `search` filtra filial, número, descrição, status (código e rótulo), cliente, loja e estágio após deduplicar a última revisão. Serviço: `CommercialProposalListSearchService`. Documentação MFE: `plugins/dashboard-commercial/docs/PROPOSTAS-PERIODO.md`.
+
 **Não usa histórico (`AIJ010`).** O campo `AIJ_STATUS` existe na tabela de eventos, mas é outro domínio (ver § 2.1).
 
 ---

@@ -25,8 +25,8 @@ import {
 
 | `variant` | Escopo |
 |-----------|--------|
-| `table` | Uma tabela (`TableExportPayload`) |
-| `dashboard` | Indicadores + ROL + funil + propostas |
+| `table` | Uma tabela (`TableExportPayload`); suporta `resolvePayload` assíncrono |
+| `dashboard` | Indicadores + ROL + funil + propostas; suporta `resolveContext` assíncrono |
 | `detail` | Resumo OV + produtos + BOM + histórico |
 
 ## Builders
@@ -34,7 +34,7 @@ import {
 - `buildDashboardKpisPayload` — indicadores do dashboard
 - `buildRolSeriesPayload` — série do gráfico ROL
 - `buildFunnelPayload` — funil de conversão
-- `buildProposalsPayload` — tabela de propostas
+- `buildProposalsPayload` — tabela de propostas (exportação busca até 200 linhas com filtros ativos via `getCommercialProposalsForExport`)
 - `buildProductsPayload` — produtos da OV
 - `buildProductStructuresPayload` — BOM achatado
 - `buildHistoryPayload` — histórico AIJ010 (inclui fluxo e marcação da timeline)
