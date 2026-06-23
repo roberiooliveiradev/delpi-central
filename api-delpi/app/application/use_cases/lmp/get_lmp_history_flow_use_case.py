@@ -1,5 +1,4 @@
 from app.application.dto.lmp.get_lmp_history_request import GetLmpHistoryRequest
-from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
 from app.domain.services.lmp_history_event_enrichment import (
     resolve_process_label,
@@ -14,14 +13,7 @@ class GetLmpHistoryFlowUseCase:
         self._repository = repository
 
     def execute(self, request: GetLmpHistoryRequest) -> dict:
-        panel_context = self._repository.get_lmp_panel_context(
-            GetLMPRequest(
-                sale_number=request.sale_number,
-                date_start=request.date_start,
-                date_end=request.date_end,
-                branch=request.branch,
-            )
-        )
+        panel_context = self._repository.get_lmp_history_panel_context(request)
         flow_events = self._repository.get_lmp_history_flow(request)
         items = [
             self._serialize_flow_event(event.to_dict())

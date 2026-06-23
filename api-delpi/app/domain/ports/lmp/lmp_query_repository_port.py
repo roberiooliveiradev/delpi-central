@@ -37,6 +37,10 @@ class LMPQueryRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_lmp_history_panel_context(self, request: GetLmpHistoryRequest) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_lmp_history_events(
         self,
         request: GetLmpHistoryRequest,

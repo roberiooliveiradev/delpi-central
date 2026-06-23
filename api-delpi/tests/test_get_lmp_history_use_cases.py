@@ -12,7 +12,7 @@ from app.domain.entities.lmp.lmp_history_event import LMPHistoryEvent
 
 def test_get_lmp_history_events_use_case_enriches_items():
     repository = MagicMock()
-    repository.get_lmp_panel_context.return_value = {
+    repository.get_lmp_history_panel_context.return_value = {
         "branch": "01",
         "reference_revision": "03",
         "panel_start_date": "20260615",
@@ -49,7 +49,7 @@ def test_get_lmp_history_events_use_case_enriches_items():
 
 def test_get_lmp_history_flow_use_case_detects_transition():
     repository = MagicMock()
-    repository.get_lmp_panel_context.return_value = {
+    repository.get_lmp_history_panel_context.return_value = {
         "branch": "01",
         "reference_revision": "03",
         "panel_start_date": "20260615",

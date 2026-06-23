@@ -90,6 +90,39 @@ def test_header_lmp_exposes_reference_and_measurement_revision() -> None:
     assert "UltimaRevisaoMedicaoEngenharia MREV" in sql
 
 
+def test_history_panel_context_lite_queries_single_ad1010_row() -> None:
+    repo = _repository()
+
+    sql, params = repo._sql_history_panel_context_lite(
+        sale_number="000121",
+        requested_branch="02",
+        revision="04",
+    )
+
+    assert "FROM AD1010 AD1" in sql
+    assert "AllListingAnchorRaw" not in sql
+    assert "ListingAnchorEventos" not in sql
+    assert "AD1.AD1_NROPOR = ?" in sql
+    assert "AD1.AD1_REVISA = ?" in sql
+    assert "reference_revision" in sql
+    assert "panel_start_date" in sql
+    assert "02" in params
+    assert "000121" in params
+    assert "04" in params
+
+
+def test_history_panel_context_lite_uses_latest_revision_when_unspecified() -> None:
+    repo = _repository()
+
+    sql, _params = repo._sql_history_panel_context_lite(
+        sale_number="000121",
+        requested_branch="02",
+    )
+
+    assert "ORDER BY AD1.AD1_REVISA DESC" in sql
+    assert "AD1.AD1_REVISA = ?" not in sql
+
+
 def test_history_events_lmp_queries_aij010_for_single_ov() -> None:
     repo = _repository()
 

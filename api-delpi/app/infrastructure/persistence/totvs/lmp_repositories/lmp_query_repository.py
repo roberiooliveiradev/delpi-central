@@ -3744,6 +3744,62 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             list_history=[],
         )
 
+    def _sql_history_panel_context_lite(
+        self,
+        *,
+        sale_number: str,
+        requested_branch: str | None = None,
+        revision: str | None = None,
+    ) -> Tuple[str, tuple]:
+        where_ad1, params_ad1 = self._build_filter_sql(
+            lambda qb: (
+                self._active_filter(qb, "AD1.D_E_L_E_T_"),
+                self._branch_filter(qb, "AD1.AD1_FILIAL", requested_branch),
+                qb.eq("AD1.AD1_NROPOR", sale_number.strip()),
+            )
+        )
+        revision_filter = ""
+        revision_params: tuple = ()
+        normalized_revision = str(revision or "").strip()
+        if normalized_revision:
+            revision_filter = "AND AD1.AD1_REVISA = ?"
+            revision_params = (normalized_revision,)
+        revision_order = "" if normalized_revision else "ORDER BY AD1.AD1_REVISA DESC"
+
+        sql = f"""
+            SELECT TOP 1
+                AD1.AD1_FILIAL AS branch,
+                AD1.AD1_REVISA AS reference_revision,
+                AD1.AD1_DATA AS panel_start_date
+            FROM AD1010 AD1
+            WHERE {where_ad1}
+              {revision_filter}
+            {revision_order}
+        """
+        return sql, (*params_ad1, *revision_params)
+
+    def get_lmp_history_panel_context(self, request: GetLmpHistoryRequest) -> dict:
+        requested_branch = self._get_request_branch(request)
+        sql, params = self._sql_history_panel_context_lite(
+            sale_number=request.sale_number,
+            requested_branch=requested_branch,
+            revision=request.revision,
+        )
+
+        with self as repo:
+            header_row = repo.execute_one(sql, params)
+
+        if not header_row:
+            raise ValueError(
+                f"OV não encontrada na listagem de engenharia: {request.sale_number}"
+            )
+
+        return {
+            "branch": header_row.get("branch"),
+            "reference_revision": header_row.get("reference_revision"),
+            "panel_start_date": header_row.get("panel_start_date"),
+        }
+
     def get_lmp_panel_context(self, request: GetLMPRequest) -> dict:
         sql_header, params_header = self._sql_header_lmp(request)
 
