@@ -15,7 +15,10 @@ export type RolSeriesPoint = {
 };
 
 type UseCommercialRolSeriesParams = {
-  filters: Pick<CommercialFilterParams, "start_date" | "end_date">;
+  filters: Pick<
+    CommercialFilterParams,
+    "start_date" | "end_date" | "customer_segment"
+  >;
   granularity: ChartGranularity;
 };
 
@@ -36,6 +39,7 @@ export function useCommercialRolSeries({
     granularity,
     filters.start_date ?? "",
     filters.end_date ?? "",
+    filters.customer_segment ?? "",
   ].join(":");
 
   const { data, loading, error, reload } = useCommercialResource(
@@ -44,11 +48,12 @@ export function useCommercialRolSeries({
         {
           start_date: filters.start_date,
           end_date: filters.end_date,
+          customer_segment: filters.customer_segment,
           granularity,
         },
         signal
       ),
-    [granularity, filters.start_date, filters.end_date],
+    [granularity, filters.start_date, filters.end_date, filters.customer_segment],
     { cacheKey, cacheTtlMs: 60_000 }
   );
 

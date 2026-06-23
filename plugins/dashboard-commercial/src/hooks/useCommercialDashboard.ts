@@ -61,12 +61,7 @@ export function useCommercialDashboard(
     EMPTY_REQUEST_PROGRESS
   );
 
-  const periodParams = {
-    start_date: filters.start_date,
-    end_date: filters.end_date,
-  };
-
-  const branchParams = filters;
+  const indicatorParams = filters;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -88,11 +83,11 @@ export function useCommercialDashboard(
 
         const results = await runParallelWithProgress(
           [
-            (signal) => getHeadOfficeRolTarget(periodParams, signal),
-            (signal) => getBranchRolTarget(periodParams, signal),
-            (signal) => getClosingRate(branchParams, signal),
-            (signal) => getSalesOrderOtd(branchParams, signal),
-            (signal) => getNewBusinessRolPct(branchParams, signal),
+            (signal) => getHeadOfficeRolTarget(indicatorParams, signal),
+            (signal) => getBranchRolTarget(indicatorParams, signal),
+            (signal) => getClosingRate(indicatorParams, signal),
+            (signal) => getSalesOrderOtd(indicatorParams, signal),
+            (signal) => getNewBusinessRolPct(indicatorParams, signal),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -145,10 +140,10 @@ export function useCommercialDashboard(
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    branchParams.branch,
-    branchParams.customer_segment,
-    branchParams.end_date,
-    branchParams.start_date,
+    indicatorParams.branch,
+    indicatorParams.customer_segment,
+    indicatorParams.end_date,
+    indicatorParams.start_date,
     reloadKey,
   ]);
 

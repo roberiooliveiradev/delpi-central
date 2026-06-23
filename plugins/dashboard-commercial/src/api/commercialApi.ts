@@ -53,7 +53,7 @@ async function fetchCommercialData<T>(
 }
 
 export function getHeadOfficeRolTarget(
-  params: Pick<CommercialFilterParams, "start_date" | "end_date">,
+  params: CommercialFilterParams,
   signal?: AbortSignal
 ) {
   return fetchCommercialData<RolTargetData>(
@@ -64,7 +64,7 @@ export function getHeadOfficeRolTarget(
 }
 
 export function getBranchRolTarget(
-  params: Pick<CommercialFilterParams, "start_date" | "end_date">,
+  params: CommercialFilterParams,
   signal?: AbortSignal
 ) {
   return fetchCommercialData<RolTargetData>(
@@ -195,7 +195,10 @@ export function getNewClientsRolPct(
 }
 
 export function getCommercialRolSeries(
-  params: Pick<CommercialFilterParams, "start_date" | "end_date"> & {
+  params: Pick<
+    CommercialFilterParams,
+    "start_date" | "end_date" | "customer_segment"
+  > & {
     granularity: ChartGranularity;
   },
   signal?: AbortSignal

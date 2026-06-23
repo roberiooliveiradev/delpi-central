@@ -45,6 +45,10 @@ import {
   formatPercent,
 } from "../utils/format";
 import { navigateCommercial } from "../utils/navigation";
+import {
+  appendCustomerSegmentToLabel,
+  formatNewBusinessRolContextLine,
+} from "../utils/customerSegmentLabel";
 
 type DashboardCommercialPageProps = {
   isActive?: boolean;
@@ -84,16 +88,12 @@ export function DashboardCommercialPage({
     reload,
   } = useCommercialDashboard(apiParams);
 
-  const periodParams = useMemo(
-    () => ({
+  const rolSeries = useCommercialRolSeries({
+    filters: {
       start_date: apiParams.start_date,
       end_date: apiParams.end_date,
-    }),
-    [apiParams.end_date, apiParams.start_date]
-  );
-
-  const rolSeries = useCommercialRolSeries({
-    filters: periodParams,
+      customer_segment: apiParams.customer_segment,
+    },
     granularity,
   });
 
@@ -122,12 +122,17 @@ export function DashboardCommercialPage({
 
   const branchLabel = branch ? `Filial ${branch}` : null;
 
-  const rolContextLabel = branch
-    ? `Filial ${branch} · ${periodLabel}`
-    : `${COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.sum} · ${periodLabel}`;
+  const rolContextLabel = appendCustomerSegmentToLabel(
+    branch
+      ? `Filial ${branch} · ${periodLabel}`
+      : `${COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.sum} · ${periodLabel}`,
+    customerSegment
+  );
 
-  const consolidatedOtherKpisLabel =
-    COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.allBranches;
+  const consolidatedOtherKpisLabel = appendCustomerSegmentToLabel(
+    COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.allBranches,
+    customerSegment
+  );
 
   const rolKpi = useMemo(
     () =>
@@ -386,7 +391,7 @@ export function DashboardCommercialPage({
           titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.newBusinessRol}
           value={formatPercent(newBusinessRol?.new_business_rol_pct)}
           {...buildKpiGoalPresentation(
-            `${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
+            `${formatNewBusinessRolContextLine(newBusinessRol, customerSegment, formatCurrency)} · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             newBusinessRol,
             formatPercent,
             { realizedValue: newBusinessRol?.new_business_rol_pct },

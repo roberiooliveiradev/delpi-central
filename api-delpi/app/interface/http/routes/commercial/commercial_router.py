@@ -72,6 +72,10 @@ router = APIRouter(prefix="/commercial", tags=["Comercial"])
 def get_head_office_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
 ):
     try:
         use_case = build_get_head_office_rol_target_pct_use_case()
@@ -80,6 +84,7 @@ def get_head_office_rol_target_pct(
             branch="01",
             start_date=start_date,
             end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
         )
 
         result = enrich_dashboard_metric(
@@ -121,6 +126,10 @@ def get_head_office_rol_target_pct(
 def get_branch_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
 ):
     try:
         use_case = build_get_branch_rol_target_pct_use_case()
@@ -129,6 +138,7 @@ def get_branch_rol_target_pct(
             branch="02",
             start_date=start_date,
             end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
         )
 
         result = enrich_dashboard_metric(
@@ -171,13 +181,20 @@ def get_commercial_rol_series(
     granularity: str = Query(..., min_length=3, max_length=10),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = Query(
+        None,
+        description="Segmento de cliente: weg ou new_business.",
+    ),
 ):
     try:
         request = CommercialRolSeriesRequest(
             granularity=granularity,
             date_start=start_date,
             date_end=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
         )
+
+        request.validate()
 
         use_case = build_get_commercial_rol_series_use_case()
         result = use_case.execute(request)

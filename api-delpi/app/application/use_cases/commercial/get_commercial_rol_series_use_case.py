@@ -36,6 +36,7 @@ class GetCommercialRolSeriesUseCase:
                     branch=HEAD_OFFICE_BRANCH,
                     start_date=bucket.date_start,
                     end_date=bucket.date_end,
+                    customer_segment=request.customer_segment,
                 )
             )
             branch_rol = self._financial_query_repository.get_rol(
@@ -43,6 +44,7 @@ class GetCommercialRolSeriesUseCase:
                     branch=BRANCH_OFFICE_BRANCH,
                     start_date=bucket.date_start,
                     end_date=bucket.date_end,
+                    customer_segment=request.customer_segment,
                 )
             )
 

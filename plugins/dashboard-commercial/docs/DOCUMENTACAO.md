@@ -30,7 +30,8 @@ Catálogo SI: um indicador `commercial-rol` (`per_unit`, curva R$); `commercial-
 | Campo | Query API |
 |-------|-----------|
 | Data inicial / final | `start_date`, `end_date` (YYYY-MM-DD) |
-| Filial | `branch` — afeta conversão, OTD e novos negócios; cards de ROL sempre exibem 01 e 02 |
+| Filial | `branch` — afeta conversão, OTD, ROL, novos negócios e gráfico de ROL |
+| Clientes | `customer_segment` — `weg` ou `new_business`; afeta todos os KPIs e propostas |
 
 Persistência: URL (`start_date`, `end_date`, `branch`) + `sessionStorage` (`delpi.dashboard-commercial.filters`).
 

@@ -2,6 +2,9 @@
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.domain.ports.financial.financial_query_repository_port import FinancialQueryRepositoryPort
+from app.domain.services.commercial_customer_segment_service import (
+    CommercialCustomerSegmentService,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
@@ -13,6 +16,11 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         if request.branch:
             vendas_qb.eq("D2.D2_FILIAL", request.branch)
         vendas_qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            vendas_qb,
+            "D2.D2_CLIENTE",
+            request.customer_segment,
+        )
         vendas_where, vendas_params = vendas_qb.build()
 
         exists_qb = QueryBuilder()
@@ -24,6 +32,11 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         if request.branch:
             dev_qb.eq("D1.D1_FILIAL", request.branch)
         dev_qb.date_range("D1.D1_DTDIGIT", request.start_date, request.end_date)
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            dev_qb,
+            "D1.D1_FORNECE",
+            request.customer_segment,
+        )
         dev_where, dev_params = dev_qb.build()
 
         sql = f"""

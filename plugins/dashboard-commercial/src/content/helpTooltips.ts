@@ -5,9 +5,9 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     dateEnd:
       "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Filial TOTVS para conversão, OTD e % novos negócios. Vazio = consolidado de todas as filiais. O gráfico de ROL mantém séries 01 e 02.",
+      "Filial TOTVS para conversão, OTD, ROL e % novos negócios. Vazio = consolidado de todas as filiais.",
     customerSegment:
-      "WEG = cliente código 000001 (todas as lojas). Novos negócios = demais clientes. Afeta conversão, OTD, % novos negócios e tabela de propostas.",
+      "WEG = cliente código 000001 (todas as lojas). Novos negócios = demais clientes. Afeta ROL, conversão, OTD, % novos negócios, gráfico de ROL e tabela de propostas.",
     proposalStatus:
       "Filtra a tabela: todas (abertura AD1_DATA no período), ganhas (status 9 com aceite AD1_DTASSI no período) ou em aberto.",
   },
