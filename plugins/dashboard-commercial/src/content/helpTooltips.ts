@@ -109,5 +109,22 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     historyStatus: "Status do evento no workflow.",
     historyState: "Situação derivada: concluído, em andamento ou atrasado.",
     historyEngineering: "Indica fluxo de engenharia quando aplicável.",
+    productsSection:
+      "Produtos vinculados à OV no ADJ010 — código, descrição, grupo, tipo e quantidade PI.",
+    productCode: "Código do produto no cadastro SB1 (B1_COD).",
+    productDescription: "Descrição comercial do item na proposta.",
+    productGroup: "Grupo de produtos (B1_GRUPO) no cadastro TOTVS.",
+    productType:
+      "Tipo do produto: PA (acabado), PI (intermediário), MP (matéria-prima), etc.",
+    productQtdPi: "Quantidade de produto intermediário (PI) na linha da OV.",
+    productStructureSection:
+      "Estrutura analítica (BOM) de cada produto PI/PA da proposta, carregada via api-delpi.",
+    structureCode: "Código do componente na estrutura.",
+    structureDescription: "Descrição do item na estrutura analítica.",
+    structureType: "Tipo do produto na estrutura (PA, PI, MP, etc.).",
+    structureQuantity: "Quantidade prevista na estrutura para o componente.",
+    structureTreeCode: "Código do nó na árvore de estrutura",
+    structureTreeDescription: "Descrição do componente na árvore",
+    structureTreeQuantity: "Quantidade e unidade de medida na estrutura",
   },
 } as const;

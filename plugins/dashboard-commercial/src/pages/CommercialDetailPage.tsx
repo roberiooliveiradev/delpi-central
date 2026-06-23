@@ -8,6 +8,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { CommercialProductStructuresSection } from "../components/CommercialProductStructuresSection";
 import { CommercialProposalHistorySection } from "../components/CommercialProposalHistorySection";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
@@ -15,15 +16,18 @@ import { HelpTooltip } from "../components/HelpTooltip";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
+import { DataTable } from "../components/table";
 import { COMMERCIAL_ROUTES } from "../constants/routes";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useCommercialDetailRequestScope } from "../hooks/useCommercialDetailRequestScope";
+import { useCommercialProductStructures } from "../hooks/useCommercialProductStructures";
 import { useCommercialProposalDetail } from "../hooks/useCommercialProposalDetail";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { EMPTY_REQUEST_PROGRESS } from "../utils/loadingProgress";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { readCommercialFilters } from "../utils/filterUrl";
 import { navigateCommercialBack } from "../utils/navigation";
+import { commercialProductColumns } from "../utils/commercialProductsPresentation";
 
 type CommercialDetailPageProps = {
   proposalNumber: string;
@@ -43,6 +47,7 @@ export function CommercialDetailPage({
   );
   const detail = useCommercialProposalDetail(proposalNumber, requestScope);
   const loadingProgress = useLoadingProgress(detail.loading, EMPTY_REQUEST_PROGRESS);
+  const productStructures = useCommercialProductStructures(detail.data?.list_products);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(requestScope.dateStart, requestScope.dateEnd),
@@ -279,6 +284,28 @@ export function CommercialDetailPage({
             ]}
           />
         </DetailCard>
+
+        <DetailCard
+          title="Produtos"
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.productsSection}
+          hint={`${data.list_products?.length ?? 0} item(ns) vinculado(s)`}
+          icon={<Building2 size={20} />}
+          className="dc-detail-card--wide"
+        >
+          <DataTable
+            columns={commercialProductColumns}
+            rows={data.list_products ?? []}
+            rowKey={(row) => row.code || row.description || "product"}
+            emptyMessage="Nenhum produto vinculado."
+          />
+        </DetailCard>
+
+        {productStructures.shouldRender ? (
+          <CommercialProductStructuresSection
+            entries={productStructures.entries}
+            loading={productStructures.loading}
+          />
+        ) : null}
 
         <DetailCard
           title="Histórico da OV"

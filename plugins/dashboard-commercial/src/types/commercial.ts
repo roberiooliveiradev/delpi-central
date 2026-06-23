@@ -89,6 +89,14 @@ export type CommercialProposal = {
   stage?: string | null;
 };
 
+export type CommercialProduct = {
+  code: string;
+  description?: string | null;
+  group_code?: string | null;
+  type?: string | null;
+  qtd_pi?: number | null;
+};
+
 export type CommercialProposalDetail = CommercialProposal & {
   customer_name?: string | null;
   seller_code?: string | null;
@@ -129,6 +137,7 @@ export type CommercialProposalHistoryEvent = {
 
 export type CommercialProposalDetailData = CommercialProposalDetail & {
   list_history?: CommercialProposalHistoryEvent[];
+  list_products?: CommercialProduct[];
 };
 
 export type CommercialProposalsPage = {

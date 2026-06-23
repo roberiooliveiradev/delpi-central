@@ -28,6 +28,9 @@ from app.infrastructure.persistence.totvs.commercial_repositories.new_business_r
 from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_repository import (
     SalesOrderOtdRepository,
 )
+from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository import (
+    LMPQueryRepository,
+)
 DEFAULT_HEAD_OFFICE_TARGET = 1.0
 DEFAULT_BRANCH_TARGET = 1.0
 
@@ -62,7 +65,8 @@ def build_list_commercial_proposals_use_case() -> ListCommercialProposalsUseCase
 
 def build_get_commercial_proposal_use_case() -> GetCommercialProposalUseCase:
     return GetCommercialProposalUseCase(
-        commercial_proposals_repository=CommercialProposalsRepository()
+        commercial_proposals_repository=CommercialProposalsRepository(),
+        lmp_query_repository=LMPQueryRepository(),
     )
 
 

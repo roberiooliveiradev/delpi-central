@@ -3744,6 +3744,37 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             list_history=[],
         )
 
+    def list_ov_products(
+        self,
+        *,
+        sale_number: str,
+        requested_branch: str | None = None,
+    ) -> list[LMPProduct]:
+        sql_products, params_products = self._sql_products_lmp(
+            requested_branch=requested_branch,
+            sale_number=sale_number,
+        )
+
+        with self as repo:
+            product_rows = repo.execute_query(
+                sql_products,
+                params_products,
+            )
+
+        return [
+            LMPProduct(
+                code=str(row.get("code") or "").strip(),
+                description=str(row.get("description") or "").strip(),
+                group_code=row.get("group_code"),
+                type=row.get("type"),
+                qtd_pi=int(row["qtd_pi"])
+                if row.get("qtd_pi") not in (None, "")
+                else None,
+            )
+            for row in product_rows
+            if str(row.get("code") or "").strip()
+        ]
+
     def _sql_history_panel_context_lite(
         self,
         *,

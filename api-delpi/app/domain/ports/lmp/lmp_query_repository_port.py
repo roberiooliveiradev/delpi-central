@@ -7,6 +7,7 @@ from app.application.dto.lmp.list_lmp_request import ListLMPRequest
 from app.application.models.page import Page
 from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_history_event import LMPHistoryEvent
+from app.domain.entities.lmp.lmp_product import LMPProduct
 
 
 class LMPQueryRepositoryPort(ABC):
@@ -30,6 +31,15 @@ class LMPQueryRepositoryPort(ABC):
         self,
         request: GetLMPRequest
     ) -> LMP:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_ov_products(
+        self,
+        *,
+        sale_number: str,
+        requested_branch: str | None = None,
+    ) -> list[LMPProduct]:
         raise NotImplementedError
 
     @abstractmethod

@@ -53,6 +53,7 @@ def test_get_commercial_proposal_use_case_returns_detail_dict() -> None:
     from app.domain.entities.commercial.commercial_proposal_detail import (
         CommercialProposalDetail,
     )
+    from app.domain.entities.lmp.lmp_product import LMPProduct
 
     repository = MagicMock()
     repository.get_proposal.return_value = CommercialProposalDetail(
@@ -66,7 +67,18 @@ def test_get_commercial_proposal_use_case_returns_detail_dict() -> None:
         customer_name="Cliente X",
     )
 
-    use_case = GetCommercialProposalUseCase(repository)
+    lmp_repository = MagicMock()
+    lmp_repository.list_ov_products.return_value = [
+        LMPProduct(
+            code="90123456",
+            description="Produto teste (REF-01)",
+            group_code="100",
+            type="PI",
+            qtd_pi=2,
+        )
+    ]
+
+    use_case = GetCommercialProposalUseCase(repository, lmp_repository)
     result = use_case.execute(
         GetCommercialProposalRequest(
             branch="01",
@@ -76,5 +88,12 @@ def test_get_commercial_proposal_use_case_returns_detail_dict() -> None:
     )
 
     repository.get_proposal.assert_called_once()
+    lmp_repository.list_ov_products.assert_called_once_with(
+        sale_number="003446",
+        requested_branch="01",
+    )
     assert result["proposal_number"] == "003446"
     assert result["customer_name"] == "Cliente X"
+    assert len(result["list_products"]) == 1
+    assert result["list_products"][0]["code"] == "90123456"
+    assert result["list_products"][0]["qtd_pi"] == 2
