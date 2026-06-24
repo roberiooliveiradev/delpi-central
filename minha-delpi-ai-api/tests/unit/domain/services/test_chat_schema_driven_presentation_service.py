@@ -27,17 +27,9 @@ def test_should_apply_for_kpi_entity_and_generic_path():
         path="/commercial/closing-rate",
         entity="sales_conversion_rate",
     )
-    assert not ChatSchemaDrivenPresentationService.should_apply(
+    assert ChatSchemaDrivenPresentationService.should_apply(
         path="/products/90260144/stock",
         entity="product_stock",
-    )
-    assert not ChatSchemaDrivenPresentationService.should_apply(
-        path="/products/10080001/purchase-price-history",
-        entity="product_purchase_price_history",
-    )
-    assert not ChatSchemaDrivenPresentationService.should_apply(
-        path="/products/10080001/purchase-budget-history",
-        entity="product_purchase_budget_history",
     )
 
 

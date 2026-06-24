@@ -278,26 +278,8 @@
       "stock",
       "tree_hierarchy"
     ],
-    "legacyPresentationProfiles": [
-      "analyser",
-      "stock",
-      "tree_hierarchy",
-      "factory_status",
-      "production_status",
-      "shipping_status",
-      "structure_exclusivity",
-      "raw_material_price_intelligence",
-      "cost_impact_simulation",
-      "sale_pricing",
-      "purchase_price_history",
-      "purchase_budget_history",
-      "playbook_report",
-      "directives"
-    ],
-    "schemaFirstMigratedProfiles": [
-      "purchase_list",
-      "last_purchase"
-    ],
+    "legacyPresentationProfiles": [],
+    "schemaFirstMigratedProfiles": [],
     "presentationTableAssemblyEntities": [
       "product_factory_status",
       "product_production_status",

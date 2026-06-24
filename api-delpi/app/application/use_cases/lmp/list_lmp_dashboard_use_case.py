@@ -1,5 +1,5 @@
 # app/application/use_cases/lmp/list_lmp_dashboard_use_case.py
-from dataclasses import asdict, replace
+from dataclasses import asdict, fields, replace
 from datetime import date
 from typing import Any, Dict, List, Optional
 
@@ -21,6 +21,7 @@ from app.domain.entities.lmp.lmp import LMP
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
 
 DEFAULT_DASHBOARD_PAGE_SIZE = 50
+_SUMMARY_ROWS_CACHE_SUFFIX = "|summary-rows|pi1"
 
 
 class ListLMPDashboardUseCase:
@@ -177,15 +178,30 @@ class ListLMPDashboardUseCase:
             "avg_lead_time": round(avg_lead_time, 2),
         }
 
+    def _summary_rows_cache_key(self, request: ListLMPRequest) -> str:
+        return self._build_base_cache_key(request, "Todos") + _SUMMARY_ROWS_CACHE_SUFFIX
+
+    def _deserialize_dashboard_items(
+        self,
+        rows: list[dict[str, Any]],
+    ) -> List[LMPDashboardItem]:
+        allowed = {field.name for field in fields(LMPDashboardItem)}
+        return [
+            LMPDashboardItem(**{key: row[key] for key in allowed if key in row})
+            for row in rows
+        ]
+
     def _load_summary_rows(
         self,
         request: ListLMPRequest,
     ) -> List[LMPDashboardItem]:
         """Carrega apenas os campos necessários para KPIs via query leve."""
-        cache_key = self._build_base_cache_key(request, "Todos") + "|summary-rows|pi1"
+        cache_key = self._summary_rows_cache_key(request)
         cached = get_cached_lmp_dashboard(cache_key)
-        if cached is not None:
-            return cached
+        if isinstance(cached, dict):
+            rows = cached.get("rows")
+            if isinstance(rows, list):
+                return self._deserialize_dashboard_items(rows)
 
         query_request = replace(request, include_qtd_pi=True)
         raw_rows = self._repository.get_lmp_dashboard_summary(query_request)
@@ -222,7 +238,10 @@ class ListLMPDashboardUseCase:
                 qtd_pi=int(row.get("qtd_pi") or 0),
             ))
 
-        set_cached_lmp_dashboard(cache_key, items)
+        set_cached_lmp_dashboard(
+            cache_key,
+            {"rows": [asdict(item) for item in items]},
+        )
         return items
 
     def execute_summary(
@@ -252,10 +271,17 @@ class ListLMPDashboardUseCase:
         status_filter: str = "Todos",
     ) -> Dict[str, Any]:
         """Fase 2: dados dos gráficos — reutiliza summary rows (query leve)."""
+        cache_key = self._build_base_cache_key(request, status_filter) + "|charts-response"
+        cached = get_cached_lmp_dashboard(cache_key)
+        if isinstance(cached, dict) and "levelData" in cached:
+            return cached
+
         items = self._load_summary_rows(request)
         resolved_status = resolve_dashboard_status_filter(status_filter)
         filtered = self._filter_items_by_status(items, resolved_status)
-        return self._build_charts(filtered)
+        result = self._build_charts(filtered)
+        set_cached_lmp_dashboard(cache_key, result)
+        return result
 
     def execute_items(
         self,

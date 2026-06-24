@@ -539,6 +539,14 @@ class ExternalActionResultPresenter:
         return self._text()._build_structure_text_presentation(root, path)
 
     def prepare_presentation_data(self, data, *, path: str = ""):
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
+
+        if ChatPresentationProfileService.uses_schema_first_presentation(
+            path,
+            profile.entity,
+        ):
+            return data
+
         return self._entity_route().prepare_presentation_root(data, path=path)
 
     def build_text_presentation(self, data, *, path: str = "") -> dict | None:
@@ -569,41 +577,11 @@ class ExternalActionResultPresenter:
         try:
             profile = ChatOperationalResponseProfileService.resolve(data, path=path)
 
-            if ChatPresentationProfileService.uses_schema_first_presentation(
-                path,
-                profile.entity,
-            ):
-                from app.domain.services.chat_schema_driven_presentation_service import (
-                    ChatSchemaDrivenPresentationService,
-                )
-
-                return ChatSchemaDrivenPresentationService.finish_schema_first_primary(
-                    self,
-                    data,
-                    path=path,
-                    entity=profile.entity,
-                    response_schema=response_schema,
-                )
-
-            entity_first = self._presentation_builder()._build_presentation_by_entity(
-                data,
-                path=path,
-                profile=profile,
-            )
-
-            if entity_first is not None:
-                return entity_first
-
-            legacy = self._presentation_builder()._build_presentation(data, path=path)
-
-            if legacy is not None:
-                return legacy
-
             from app.domain.services.chat_schema_driven_presentation_service import (
                 ChatSchemaDrivenPresentationService,
             )
 
-            return ChatSchemaDrivenPresentationService.build_primary(
+            return ChatSchemaDrivenPresentationService.finish_schema_first_primary(
                 self,
                 data,
                 path=path,

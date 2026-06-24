@@ -5,6 +5,7 @@ from app.application.use_cases.lmp.list_lmp_dashboard_use_case import (
     DEFAULT_DASHBOARD_PAGE_SIZE,
     ListLMPDashboardUseCase,
 )
+from app.composition.query_cache_composer import reset_query_cache_for_tests
 from app.domain.entities.lmp.lmp import LMP
 
 
@@ -94,3 +95,77 @@ def test_execute_summary_caches_response_without_second_repository_call() -> Non
     assert second == cached_response
     repository.get_lmp_dashboard_summary.assert_called_once()
     set_cache_mock.assert_called()
+
+
+def test_execute_charts_reuses_summary_rows_cache_without_second_repository_call() -> None:
+    reset_query_cache_for_tests()
+    repository = MagicMock()
+    repository.get_lmp_dashboard_summary.return_value = [
+        {
+            "branch": "01",
+            "sale_number": "OV001",
+            "sale_description": "Projeto",
+            "listing_kind": "LMP",
+            "start_date": "20260501",
+            "end_date": "20260510",
+            "engineering_status": "Finalizado",
+            "engineering_total_minutes": 60,
+            "qtd_pi": 0,
+        }
+    ]
+
+    use_case = ListLMPDashboardUseCase(repository)
+    request = ListLMPRequest(date_start="20260501", date_end="20260522")
+
+    use_case.execute_summary(request)
+    use_case.execute_charts(request)
+
+    repository.get_lmp_dashboard_summary.assert_called_once()
+
+
+def test_execute_charts_returns_cached_response_without_repository_call() -> None:
+    repository = MagicMock()
+    use_case = ListLMPDashboardUseCase(repository)
+    request = ListLMPRequest(date_start="20260501", date_end="20260522")
+
+    cached_charts = {
+        "levelData": [{"name": "Nível 1", "value": 1}],
+        "statusData": [{"name": "Pontual", "value": 1}],
+        "leadByLevel": [{"nivel": "Nível 1", "valor": 3.0}],
+    }
+
+    with patch(
+        "app.application.use_cases.lmp.list_lmp_dashboard_use_case.get_cached_lmp_dashboard",
+        side_effect=lambda key: cached_charts if key.endswith("|charts-response") else None,
+    ):
+        result = use_case.execute_charts(request)
+
+    assert result == cached_charts
+    repository.get_lmp_dashboard_summary.assert_not_called()
+
+
+def test_summary_rows_cache_hit_with_real_query_cache() -> None:
+    reset_query_cache_for_tests()
+    repository = MagicMock()
+    repository.get_lmp_dashboard_summary.return_value = [
+        {
+            "branch": "01",
+            "sale_number": "OV001",
+            "sale_description": "Projeto",
+            "listing_kind": "LMP",
+            "start_date": "20260501",
+            "end_date": "20260510",
+            "engineering_status": "Finalizado",
+            "engineering_total_minutes": 60,
+            "qtd_pi": 0,
+        }
+    ]
+
+    use_case = ListLMPDashboardUseCase(repository)
+    request = ListLMPRequest(date_start="20260501", date_end="20260522")
+
+    use_case.execute_summary(request)
+    use_case.execute_charts(request)
+    use_case.execute_items(request)
+
+    repository.get_lmp_dashboard_summary.assert_called_once()

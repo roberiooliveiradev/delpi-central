@@ -127,10 +127,11 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 
 **DoD:** query repetida de LMP/estoque aparece no painel em &lt; 1 min após reprodução.
 
-#### Validação — `get_lmps_dashboard_summary` (jun/2026)
+#### Validação — `get_lmps_dashboard_summary` / `get_lmps_dashboard_charts` (jun/2026)
 
 | Sintoma | Causa provável | Ação |
 |---------|----------------|------|
+| P95 &gt; 2500 ms, caller `dashboard-lmps` em `/charts` | Cache `|summary-rows|pi1` não reutilizado (cold path ou TTL expirado) | Após `/summary` no mesmo período, `/charts` e `/items` devem ser cache hit (&lt; 500 ms); aba Cache namespace `lmp-dashboard` |
 | P95 &gt; 2500 ms, caller `strategic-indicators-api` | Cold path sem `listing_type=lmp` ou cache miss | Confirmar deploy SI + api-delpi; segunda chamada no mesmo período deve cair para &lt; 500 ms |
 | Mesma query hash, duração variável (300 ms–5 s) | Contenção TOTVS ou cold cache | Aba Cache: hit rate `lmp-dashboard`; aguardar TTL 300s entre comparações |
 | Caller anônimo | Cliente sem `X-Delpi-Caller-App` | SI e dashboards devem enviar header; ver aba Callers |

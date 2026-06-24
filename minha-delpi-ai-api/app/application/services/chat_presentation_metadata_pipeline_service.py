@@ -34,6 +34,35 @@ class ChatPresentationMetadataPipelineService:
         action_path = action.get("path") or ""
         user_message = str(request_parameters.get("userMessage") or "").strip() or None
 
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        resolved_entity = ChatOperationalResponseProfileService.resolve(
+            sanitized_data,
+            path=resolved_path,
+        )
+
+        if ChatPresentationProfileService.uses_schema_first_presentation(
+            resolved_path,
+            resolved_entity.entity,
+        ):
+            from app.application.services.chat_presentation_api_delivered_metadata_service import (
+                ChatPresentationApiDeliveredMetadataService,
+            )
+
+            return ChatPresentationApiDeliveredMetadataService.build(
+                action=action,
+                sanitized_data=sanitized_data,
+                resolved_path=resolved_path,
+                request_parameters=request_parameters,
+                presenter=presenter,
+                extract_response_meta=extract_response_meta,
+            )
+
         from app.domain.services.chat_presentation_data_only_prose_service import (
             ChatPresentationDataOnlyProseService,
         )

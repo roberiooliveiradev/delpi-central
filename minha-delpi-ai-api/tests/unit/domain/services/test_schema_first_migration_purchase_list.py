@@ -12,13 +12,14 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
 
 
-def test_purchase_list_profile_is_schema_first_migrated():
-    assert "purchase_list" in ChatPresentationProfileService.entity_set(
-        "schemaFirstMigratedProfiles",
-    )
+def test_purchase_list_and_last_purchase_use_schema_first_by_default():
     assert ChatPresentationProfileService.uses_schema_first_presentation(
         "/products/10080001/purchases",
         "product_purchases",
+    )
+    assert ChatPresentationProfileService.uses_schema_first_presentation(
+        "/products/10080001/last-purchase",
+        "product_last_purchase",
     )
 
 

@@ -35,24 +35,12 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         path: str | None,
         entity: str | None = None,
     ) -> bool:
-        """Playbook 22 — as_delivered (schema-first) vs legacy (presenters dedicados)."""
+        """Playbook 22 — default global: API as-delivered; legacy só com flag explícita."""
         profile_key = str(cls.resolve_profile_key(path, entity)).strip()
         profile_only = cls.profile(profile_key)
         explicit = str(profile_only.get("presentationStrategy") or "").strip().lower()
 
-        if explicit == "as_delivered":
-            return True
-
-        if explicit == "legacy":
-            return False
-
-        if profile_key in cls.entity_set("legacyPresentationProfiles"):
-            return False
-
-        defaults = cls.node("defaults") or {}
-        default_strategy = str(defaults.get("presentationStrategy") or "as_delivered").strip().lower()
-
-        return default_strategy != "legacy"
+        return explicit != "legacy"
 
     @classmethod
     def is_rich_stack_profile(cls, profile_key: str | None) -> bool:

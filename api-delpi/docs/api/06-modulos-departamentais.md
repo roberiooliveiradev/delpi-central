@@ -210,12 +210,14 @@ O **detalhe** (`GET …/{sale_number}`) continua usando `_sql_header_lmp` com es
 | `status` | Filtro de status do dashboard (`Todos`, `Pontual`, `Atrasado`, …). |
 | `page`, `page_size` | Paginação (apenas `/dashboard` e `/items`). |
 
-**Performance (`/dashboard/summary`):**
+**Performance (`/dashboard/summary`, `/dashboard/charts`, `/dashboard/items`):**
 
 - Repositório: batch com temp tables, `eng_resumo_lite=True`, sem ordenação final.
 - Integradores que só precisam de KPI de LMP (ex.: Strategic Indicators) devem enviar `listing_type=lmp`.
-- Cache: resposta final em `query_cache` (namespace `lmp-dashboard`, chave `|summary-response`) + linhas em `|summary-rows` (TTL alinhado ao `QUERY_CACHE_TTL_SECONDS`, default 300s).
-- Console: `operation_id=get_lmps_dashboard_summary`; alerta `slow_sql` acima de 2500 ms — validar após deploy com caller `strategic-indicators-api` e aba Cache.
+- Cache: `query_cache` (namespace `lmp-dashboard`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300s):
+  - `|summary-rows|pi1` — linhas enriquecidas compartilhadas entre summary, charts e items (formato `{"rows": [...]}`).
+  - `|summary-response` e `|charts-response` — respostas finais por filtro de status.
+- Console: `operation_id=get_lmps_dashboard_charts` / `get_lmps_dashboard_summary`; alerta `slow_sql` acima de 2500 ms — após o primeiro carregamento do período, chamadas subsequentes devem ser cache hit (&lt; 500 ms).
 
 ### Transforma Mais
 

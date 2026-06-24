@@ -25,14 +25,11 @@ def lmp_dashboard_cache_key(
     )
 
 
-def get_cached_lmp_dashboard(key: str) -> dict[str, Any] | None:
-    cached = build_query_cache().get(key)
-    if isinstance(cached, dict):
-        return cached
-    return None
+def get_cached_lmp_dashboard(key: str) -> Any | None:
+    return build_query_cache().get(key)
 
 
-def set_cached_lmp_dashboard(key: str, value: dict[str, Any]) -> None:
+def set_cached_lmp_dashboard(key: str, value: Any) -> None:
     build_query_cache().set(key, value)
 
 

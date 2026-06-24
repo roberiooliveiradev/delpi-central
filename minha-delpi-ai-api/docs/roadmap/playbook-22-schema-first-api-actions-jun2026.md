@@ -160,17 +160,27 @@ Importador persiste extensão em `external_actions.metadata` → perfil derivado
 
 **Critério de aceite B:** rota **sem** perfil legacy → tabela/KPI/texto/JSON genérico; rotas tier A inalteradas até saírem do set legacy.
 
-### Fase C — Migração rota a rota (legacy → as-delivered)
+### Fase C — Migração em massa (ponto de conexão)
 
-Para cada entidade tier A (ordem sugerida: listagens simples → KPI → árvore → exclusividade/MP):
+**Não migrar rota a rota.** O corte é no pipeline:
 
-1. Validar payload OpenAPI + labels em `response_schema` / `meta.sections`.
-2. Remover de `legacyPresentationProfiles`.
-3. Deletar presenter dedicado.
-4. Encurtar perfil em `presentation_profiles.json` (ou remover se derivado do OpenAPI na Fase D).
-5. Regressão: fixture payload + modos Automático/Texto.
+```text
+ExecuteExternalAction
+  → ChatPresentationMetadataPipelineService.build
+       → uses_schema_first_presentation? (default: sim)
+            → ChatPresentationApiDeliveredMetadataService.build  ← NOVO
+       → (legado) pipeline rico — só se presentationStrategy: legacy no perfil
+  → ExternalActionResultPresenter.build_presentation
+       → ChatSchemaDrivenPresentationService.finish_schema_first_primary (sempre)
+```
 
-**Playbook 21 W2–W4** continua válido como **lista de débito** dentro desta fase — prioridade: eliminar frozensets e path tuples, não expandir perfis.
+| Módulo | Papel |
+|--------|-------|
+| `ChatPresentationApiDeliveredMetadataService` | Metadata mínima: tabela/texto/KPI do schema + coverage + decision + renderPlan |
+| `ChatSchemaDrivenPresentationService` | Forma dos dados (items, série, registro aninhado, JSON cru) |
+| `legacyPresentationProfiles` | **Vazio** — legacy só via `presentationStrategy: legacy` explícito |
+
+Presenters por entidade ficam **mortos** no caminho feliz; remover arquivos incrementalmente sem bloquear o switch.
 
 ### Fase D — Shape e enriquecimento na API (depois)
 
@@ -297,4 +307,4 @@ cd minha-delpi-ai-api
 | jun/2026 | Playbook 21 W1–W2 parcial (dedup, richStackProfiles, factual verdict) |
 | jun/2026 | **Playbook 22** — north star schema-first; Fase B iniciada (`presentationStrategy`, schema-first no presenter) |
 | jun/2026 | **Fase C** — `purchase_list` migrado: presenter removido, `schemaFirstMigratedProfiles`, `finish_schema_first_primary` sem fallback legacy |
-| jun/2026 | **Fase C** — `last_purchase` migrado; `singleRecordObjectKeys` em `schemaDriven` para registros aninhados |
+| jun/2026 | **Fase C** — corte em massa: `ChatPresentationApiDeliveredMetadataService` no pipeline; `legacyPresentationProfiles` vazio; `build_presentation` sempre schema-first |

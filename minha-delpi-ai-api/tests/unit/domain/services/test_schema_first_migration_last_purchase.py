@@ -15,10 +15,7 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
 
 
-def test_last_purchase_profile_is_schema_first_migrated():
-    assert "last_purchase" in ChatPresentationProfileService.entity_set(
-        "schemaFirstMigratedProfiles",
-    )
+def test_last_purchase_uses_schema_first_by_default():
     assert ChatPresentationProfileService.uses_schema_first_presentation(
         "/products/10080001/last-purchase",
         "product_last_purchase",
