@@ -196,3 +196,22 @@ def test_finalize_metadata_clears_text_and_rebuilds_render_plan():
         if segment.get("slot") == "lead"
     )
     assert lead["source"] == "assistantMessage"
+
+
+def test_apply_pipeline_marks_data_only_when_llm_narrates():
+    metadata = {
+        "path": "/products/90269002/factory-status",
+        "textPresentation": {"markdown": "### Status\n\nTemplate."},
+        "presentationDecision": {"layoutMode": "single", "selected": "table"},
+    }
+
+    applied = ChatPresentationDataOnlyProseService.apply_pipeline(
+        metadata,
+        user_message="qual o status fabril do produto hoje?",
+        path=metadata["path"],
+    )
+
+    assert applied is True
+    assert metadata.get("dataOnlyPresentation") is True
+    assert metadata.get("llmProseDecoupled") is True
+    assert metadata["textPresentation"]["markdown"] == ""

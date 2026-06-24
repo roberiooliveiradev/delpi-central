@@ -30,6 +30,7 @@ Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure
 - Multi-tabela tier A (`tablePresentations` com `role: profile|list|guide`) no pipeline — tabela genérica única.
 - Fix de formato (tabela vs gráfico) só no MFE — `presentationDecision` na API.
 - Expandir `presentation_profiles.json` para rota nova sem `x-delpi` no OpenAPI (exceção: `pathRules` + `chartPolicy` mínimos).
+- Forçar `layoutMode: stack` automático em perfis `as_delivered` — stack só com pedido «visão integrada» ou `layoutMode` já `stack` na decisão.
 
 ## O que fazer
 
@@ -43,6 +44,7 @@ Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure
 | Formato explícito (toolbar) | `ChatToolContextFormatService` → `build_bundle` schema-driven |
 | SQL | `ExternalActionSqlPresenter` (exceção legítima) |
 | Prosa LLM vs template | `ChatPresentationProseDeliveryService` no **turn completion** |
+| Data-only no pipeline | `ChatPresentationDataOnlyProseService.apply_pipeline` (pós-`finalize`) |
 | Nova rota api-delpi | `new-api-route-checklist.mdc` + Playbook 22 |
 
 ## Checklist antes de merge

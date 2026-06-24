@@ -18,6 +18,7 @@ ExecuteExternalAction
        → ChatDataInsightEnrichmentService                  (dataAnswer / dataCommentary)
        → ChatPresentationDecisionService                   (Automático)
        → ChatPresentationRenderPipelineService.finalize    (renderPlan mínimo)
+       → ChatPresentationDataOnlyProseService.apply_pipeline (quando LLM narrará)
   → MFE render-only (chatPresentation.ts)
 ```
 
@@ -54,7 +55,7 @@ O ramo legacy (~520 linhas) de `ChatPresentationMetadataPipelineService` foi **e
 | Comentário operacional | `ChatDataInsightService` → `ChatDataInsightEnrichmentService` |
 | Decisão Automático | `ChatPresentationDecisionService` + `ChatPresentationViewIntentService` |
 | Formato explícito (toolbar) | `ChatToolContextFormatService` + `ChatPresentationPrimaryViewService` |
-| Prosa template vs LLM | `ChatPresentationProseDeliveryService` (turn completion) |
+| Prosa template vs LLM | `ChatPresentationProseDeliveryService` (turn completion) + `ChatPresentationDataOnlyProseService` (pipeline) |
 | Perfis / pathRules | `ChatPresentationProfileService` + `presentation_profiles.json` |
 | Nova rota HTTP | OpenAPI import + checklist `new-api-route-checklist.md` |
 
@@ -122,7 +123,30 @@ Depreciar na Fase D: perfis por entidade → `x-delpi` no OpenAPI do provider.
 | `renderPlan` | `ChatPresentationRenderPipelineService` |
 | `availableFormats` / `preferredFormat` | `ChatPresentationApiDeliveredMetadataService` |
 
-`stackPresentationPlan` rico **não** é mais populado pelo pipeline. Vestígios (`tailVisualPolicy: legacy`) serão removidos na Fase 2 de slim do render.
+`stackPresentationPlan` rico **não** é mais populado pelo pipeline em `layoutMode: single`. Plano mínimo (`tailVisualPolicy: allowlist`) vem do pruning; stack completo só com `layoutMode: stack` (pedido «visão integrada»).
+
+---
+
+## Fase 3b — rich stack (jun/2026)
+
+| Regra | Comportamento |
+|-------|---------------|
+| `is_rich_stack_profile` | Só `presentationStrategy: legacy` |
+| `should_default_to_text_stack` | Bloqueado em schema-first; exceção: «visão integrada» |
+| `apply_visual_order` | `stackLayoutPolicy: always` ignorado em `as_delivered` |
+| `richStackProfiles` | Entity set vazio |
+
+---
+
+## Fase 4 — data-only + render mínimo (jun/2026)
+
+| Entrega | Módulo |
+|---------|--------|
+| Pipeline data-only | `ChatPresentationDataOnlyProseService.apply_pipeline` após `finalize` |
+| Flags | `dataOnlyPresentation`, `proseDeliveryMode: llm`, `llmProseDecoupled` |
+| Testes | `test_chat_presentation_data_only_pipeline.py` reativado |
+
+Turn completion (`ChatPresentationLlmProseDecouplingService`) permanece para tool calls já persistidos; o pipeline marca data-only **antes** do MFE consumir metadata.
 
 ---
 
@@ -159,3 +183,5 @@ Regressão de intenção: `tests/fixtures/chat_intelligence_regression_cases.py`
 | jun/2026 | Remoção de 12 módulos legacy + 21 presenters por entidade |
 | jun/2026 | `dataAnswer` re-ligado ao caminho as-delivered |
 | jun/2026 | Fase 3 — limpeza JSON (`visualBuilders`/`tableAssembly`), gates auditoria, stubs presenter |
+| jun/2026 | Fase 3b — rich stack automático desligado em `as_delivered`; `structure_exclusivity` → `on_demand` |
+| jun/2026 | Fase 4 — `apply_pipeline` data-only no caminho as-delivered; testes pipeline reativados |

@@ -337,6 +337,29 @@ class ChatPresentationDataOnlyProseService:
         return str(presenter._extract_product_code_from_path(path) or "").strip()
 
     @classmethod
+    def apply_pipeline(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        user_message: str | None,
+        path: str | None,
+    ) -> bool:
+        """Marca data-only e re-finaliza render quando o LLM narrará o turno."""
+        if not cls.should_apply(user_message, path=path):
+            return False
+
+        cls.mark_metadata(metadata)
+        cls.archive_and_strip_humanized(metadata)
+        metadata["llmProseDecoupled"] = True
+
+        from app.domain.services.chat_presentation_render_pipeline_service import (
+            ChatPresentationRenderPipelineService,
+        )
+
+        ChatPresentationRenderPipelineService.finalize(metadata)
+        return True
+
+    @classmethod
     def finalize_metadata(cls, metadata: dict[str, Any]) -> None:
         if not cls.is_data_only_metadata(metadata):
             return

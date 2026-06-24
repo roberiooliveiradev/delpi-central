@@ -38,7 +38,7 @@ Pasta `external_actions/presenters/` reduzida a hosts utilitários (SQL, KPI, op
 ## Testes
 
 - 462 testes `test_chat_presentation_*` passando após Fase 2.
-- `test_chat_presentation_data_only_pipeline.py` — skipped (flags legacy; revalidar no turn completion).
+- `test_chat_presentation_data_only_pipeline.py` — reativado (Fase 4).
 
 ## Fase 3b — rich stack as-delivered (jun/2026)
 
@@ -48,9 +48,13 @@ Pasta `external_actions/presenters/` reduzida a hosts utilitários (SQL, KPI, op
 - `structure_exclusivity`: `stackLayoutPolicy` → `on_demand`.
 - `entitySets.richStackProfiles` esvaziado.
 
-## Pendente (Fase 4+)
+## Fase 4 — data-only no pipeline (jun/2026)
+
+- `ChatPresentationDataOnlyProseService.apply_pipeline` ligado em `ChatPresentationApiDeliveredMetadataService` (pós-`finalize`).
+- `test_chat_presentation_data_only_pipeline.py` reativado.
+
+## Pendente (Fase 5+)
 
 - Slim `ChatPresentationDecisionService` (~2170 linhas) — extrair delegates.
-- `renderPlan` / `stackPresentationPlan` — reduzir vestígios de stack rico.
-- `test_chat_presentation_data_only_pipeline.py` — revalidar no turn completion.
+- `stackPresentationPlan` rico — omitir `narrativeOrder` quando `layoutMode: single`.
 - OpenAPI import (Playbook 22 Fase D).

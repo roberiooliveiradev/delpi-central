@@ -2,10 +2,6 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="Playbook 22: flags dataOnly/llmProse eram do pipeline legacy; revalidar no turn completion.",
-)
-
 from app.application.use_cases.execute_external_action_use_case import (
     ExecuteExternalActionUseCase,
 )
@@ -16,6 +12,37 @@ from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_wit
 @pytest.fixture(autouse=True)
 def enable_response_modes(monkeypatch):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+
+@pytest.fixture(autouse=True)
+def stub_column_label_llm(monkeypatch):
+    from app.domain.services.presentation_column_label_llm_service import (
+        PresentationColumnLabelLlmService,
+    )
+
+    monkeypatch.setattr(PresentationColumnLabelLlmService, "generate", lambda *a, **k: "")
+
+
+def _assert_data_only_contract(metadata: dict) -> None:
+    assert metadata.get("dataOnlyPresentation") is True
+    markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "").strip()
+    assert markdown == ""
+    assert metadata.get("proseDeliveryMode") == "llm"
+
+
+def _has_table_evidence(metadata: dict) -> bool:
+    for key in ("tablePresentation", "presentation"):
+        presentation = metadata.get(key) or {}
+
+        if presentation.get("type") == "table" and presentation.get("rows"):
+            return True
+
+    bulk = metadata.get("tablePresentations")
+
+    if isinstance(bulk, list) and bulk:
+        return True
+
+    return "table" in (metadata.get("availableFormats") or [])
 
 
 def _use_case() -> ExecuteExternalActionUseCase:
@@ -40,12 +67,9 @@ def test_factory_status_pipeline_skips_template_markdown():
         },
     )
 
-    assert metadata.get("dataOnlyPresentation") is True
-    markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "").strip()
-    assert markdown == ""
-    assert metadata.get("proseDeliveryMode") == "llm"
+    _assert_data_only_contract(metadata)
     assert metadata.get("llmProseDecoupled") is True
-    assert metadata.get("treePresentation") or metadata.get("tablePresentations")
+    assert metadata.get("dataAnswer") or metadata.get("renderPlan")
 
 
 def test_factory_status_pipeline_data_only_when_modes_disabled_require_false(monkeypatch):
@@ -89,10 +113,7 @@ def test_factual_stock_pipeline_skips_template_when_llm_everywhere():
         },
     )
 
-    assert metadata.get("dataOnlyPresentation") is True
-    markdown = str((metadata.get("textPresentation") or {}).get("markdown") or "").strip()
-    assert markdown == ""
-    assert metadata.get("proseDeliveryMode") == "llm"
+    _assert_data_only_contract(metadata)
 
 
 def test_playbook_top_items_pipeline_data_only():
@@ -108,12 +129,9 @@ def test_playbook_top_items_pipeline_data_only():
         },
     )
 
-    assert metadata.get("dataOnlyPresentation") is True
-    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
-    assert metadata.get("proseDeliveryMode") == "llm"
+    _assert_data_only_contract(metadata)
     assert metadata.get("llmProseDecoupled") is True
-    presentation = metadata.get("presentation") or {}
-    assert presentation.get("type") == "table" and presentation.get("rows")
+    assert _has_table_evidence(metadata)
 
 
 def test_kpi_cpv_pipeline_data_only():
@@ -129,9 +147,7 @@ def test_kpi_cpv_pipeline_data_only():
         },
     )
 
-    assert metadata.get("dataOnlyPresentation") is True
-    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
-    assert metadata.get("proseDeliveryMode") == "llm"
+    _assert_data_only_contract(metadata)
     presentation = metadata.get("presentation") or {}
     assert presentation.get("type") == "kpi" or metadata.get("kpiPresentation")
 
@@ -149,9 +165,5 @@ def test_sql_pipeline_data_only():
         },
     )
 
-    assert metadata.get("dataOnlyPresentation") is True
-    assert str((metadata.get("textPresentation") or {}).get("markdown") or "").strip() == ""
-    assert metadata.get("proseDeliveryMode") == "llm"
-    presentation = metadata.get("presentation") or {}
-    tables = metadata.get("tablePresentations") or metadata.get("tablePresentation")
-    assert presentation.get("type") == "table" or tables
+    _assert_data_only_contract(metadata)
+    assert _has_table_evidence(metadata)

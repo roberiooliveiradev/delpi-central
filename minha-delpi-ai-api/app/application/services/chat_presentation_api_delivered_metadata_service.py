@@ -216,6 +216,16 @@ class ChatPresentationApiDeliveredMetadataService:
 
         ChatPresentationRenderPipelineService.finalize(metadata)
 
+        from app.domain.services.chat_presentation_data_only_prose_service import (
+            ChatPresentationDataOnlyProseService,
+        )
+
+        ChatPresentationDataOnlyProseService.apply_pipeline(
+            metadata,
+            user_message=user_message,
+            path=resolved_path,
+        )
+
         return metadata
 
     @staticmethod
