@@ -311,3 +311,4 @@ cd minha-delpi-ai-api
 | jun/2026 | **Delivered puro** — remoção de 12 módulos legacy (visual bundle, table assembly, composite, …); doc + regra Cursor `schema-first-presentation-delivered.mdc` |
 | jun/2026 | **Fase 3b** — rich stack automático off em `as_delivered`; `richStackProfiles` vazio |
 | jun/2026 | **Fase 4** — `ChatPresentationDataOnlyProseService.apply_pipeline` no pipeline as-delivered |
+| jun/2026 | **Fase 6** — slim `ChatPresentationDecisionService` (4 delegates: score, metadata, builder, intent) |

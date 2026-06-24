@@ -58,7 +58,18 @@ Pasta `external_actions/presenters/` reduzida a hosts utilitários (SQL, KPI, op
 - `ChatPresentationPayloadPruningService` — allowlist de tail só em `layoutMode: stack`; plano single sem `narrativeOrder`/`tailVisualOrder`.
 - Testes `test_presentation_render_contract.py` alinhados ao modo texto explícito → `single`.
 
-## Pendente (Fase 6+)
+## Fase 6 — slim ChatPresentationDecisionService (jun/2026)
 
-- Slim `ChatPresentationDecisionService` (~2170 linhas) — extrair delegates.
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `ChatPresentationAutomaticScoreService` | scoring + seleção automática |
+| `ChatPresentationDecisionMetadataService` | entity, rows, slots |
+| `ChatPresentationDecisionBuilderService` | `build`, merge views, stack layout |
+| `ChatPresentationOperationalIntentDecisionService` | rich stack, árvore, narrativas por perfil |
+
+Fachada `ChatPresentationDecisionService`: ~1370 linhas (era ~2170).
+
+## Pendente (Fase 7+)
+
+- Extrair chart policy / preference / ramo genérico de `decide()`.
 - OpenAPI import (Playbook 22 Fase D).
