@@ -5,7 +5,7 @@ import { AppNav } from "../components/AppNav";
 import { PageHeader } from "../components/PageHeader";
 import { PlansTable } from "../components/PlansTable";
 import { StateAlert } from "../components/StateAlert";
-import { PLAN_SEVERITIES, PLAN_STATUSES, PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
+import { PAC_BRANCH_OPTIONS, PLAN_SEVERITIES, PLAN_STATUSES, newPlanPath } from "../constants/actionPlans";
 import type { ActionPlanSummary } from "../types/actionPlan";
 
 type Props = {
@@ -51,6 +51,11 @@ export function PlansListPage({ onNavigate }: Props) {
       <PageHeader
         title="Planos de ação"
         subtitle="Listagem consolidada para acompanhamento da liderança."
+        actions={
+          <button type="button" className="pac-primary-btn" onClick={() => onNavigate(newPlanPath())}>
+            Novo plano
+          </button>
+        }
       />
       <AppNav active="list" onNavigate={onNavigate} />
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}

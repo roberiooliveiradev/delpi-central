@@ -4,6 +4,7 @@ import { parseRoute } from "../constants/actionPlans";
 import { DashboardPage } from "./DashboardPage";
 import { OverduePage } from "./OverduePage";
 import { PlanDetailPage } from "./PlanDetailPage";
+import { PlanFormPage } from "./PlanFormPage";
 import { PlansListPage } from "./PlansListPage";
 
 type Props = {
@@ -28,6 +29,10 @@ export function ActionPlansPage({ pathname }: Props) {
 
   if (view === "detail" && planId) {
     return <PlanDetailPage planId={planId} onNavigate={handleNavigate} />;
+  }
+
+  if (view === "new") {
+    return <PlanFormPage onNavigate={handleNavigate} />;
   }
 
   if (view === "list") {

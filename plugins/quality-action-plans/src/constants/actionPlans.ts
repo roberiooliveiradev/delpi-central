@@ -35,7 +35,7 @@ export const ACTION_TYPES: Record<string, string> = {
   training: "Treinamento",
 };
 
-export type AppView = "dashboard" | "list" | "overdue" | "detail";
+export type AppView = "dashboard" | "list" | "overdue" | "detail" | "new";
 
 export function parseRoute(pathname?: string): { view: AppView; planId?: string } {
   const path = (pathname ?? APP_BASE).replace(/\/+$/, "");
@@ -44,6 +44,7 @@ export function parseRoute(pathname?: string): { view: AppView; planId?: string 
   if (detailMatch) {
     return { view: "detail", planId: detailMatch[1] };
   }
+  if (path.endsWith("/novo")) return { view: "new" };
   if (path.endsWith("/lista")) return { view: "list" };
   if (path.endsWith("/atrasados")) return { view: "overdue" };
   return { view: "dashboard" };
@@ -64,6 +65,27 @@ export function overduePath(): string {
 export function detailPath(planId: string): string {
   return `${APP_BASE}/plano/${planId}`;
 }
+
+export function newPlanPath(): string {
+  return `${APP_BASE}/novo`;
+}
+
+export const ACTION_STATUSES: Record<string, string> = {
+  pending: "Pendente",
+  in_progress: "Em andamento",
+  blocked: "Bloqueada",
+  completed: "Concluída",
+  cancelled: "Cancelada",
+  overdue: "Atrasada",
+};
+
+export const EFFECTIVENESS_STATUSES: Array<{ value: string; label: string }> = [
+  { value: "pending", label: "Pendente" },
+  { value: "effective", label: "Eficaz" },
+  { value: "partially_effective", label: "Parcialmente eficaz" },
+  { value: "ineffective", label: "Ineficaz" },
+  { value: "not_verified", label: "Não verificado" },
+];
 
 export function branchLabel(branchCode?: string | null): string {
   if (!branchCode) return "—";

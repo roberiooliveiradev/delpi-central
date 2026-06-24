@@ -95,4 +95,46 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
   return parseJson<T>(response);
 }
 
+export async function httpPost<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
+export async function httpPut<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
+export async function httpPatch<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
 export type { ApiEnvelope };

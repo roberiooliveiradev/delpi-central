@@ -4,9 +4,9 @@ Microfrontend federado para **acompanhamento de planos de ação** (PAC Qualidad
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| **Este plugin** | Dashboard, listagem, atrasados e detalhe (somente leitura) |
-| **api-delpi** | `GET /quality/action-plans/*` — dados consolidados |
-| **api-pac-quality** | Escrita e inteligência (agente GPT) |
+| **Este plugin** | Dashboard, listagem, cadastro e edição PAC |
+| **api-delpi** | `GET/POST/PATCH/PUT /quality/action-plans/*` |
+| **api-pac-quality** | Agente GPT (Actions + API key) — mesma base Postgres |
 
 ## Rotas internas
 

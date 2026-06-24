@@ -413,3 +413,60 @@
 .dashboard-quality-action-plans .pac-timeline p {
   margin: 6px 0 0;
 }
+
+.dashboard-quality-action-plans .pac-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--pac-grid-gap);
+}
+
+.dashboard-quality-action-plans .pac-filter-box--full {
+  grid-column: 1 / -1;
+}
+
+.dashboard-quality-action-plans .pac-filter-box textarea,
+.dashboard-quality-action-plans .pac-filter-box input,
+.dashboard-quality-action-plans .pac-filter-box select {
+  width: 100%;
+  min-height: var(--pac-control-height);
+  border-radius: var(--pac-control-radius);
+  border: 1px solid var(--pac-card-border);
+  padding: 8px 12px;
+  background: var(--pac-card-bg);
+  color: var(--pac-text);
+}
+
+.dashboard-quality-action-plans .pac-form-actions,
+.dashboard-quality-action-plans .pac-inline-form {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.dashboard-quality-action-plans .pac-inline-form--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.dashboard-quality-action-plans .pac-table-select {
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--pac-card-border);
+  background: var(--pac-card-bg);
+  color: var(--pac-text);
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-state--success {
+  border-color: color-mix(in srgb, var(--pac-success) 40%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-success) 10%, var(--pac-card-bg));
+  color: var(--pac-success);
+}
