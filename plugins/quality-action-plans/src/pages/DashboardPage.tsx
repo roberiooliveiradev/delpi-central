@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { fetchDashboard } from "../api/actionPlansApi";
+import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
-import { DashboardCards } from "../components/DashboardCards";
+import { DashboardCharts } from "../components/dashboard/DashboardCharts";
+import { DashboardKpis } from "../components/dashboard/DashboardKpis";
 import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
+import { SelectField } from "../components/ui/SelectField";
+import { FilterBar } from "../components/ui/FilterBar";
 import { listPath, overduePath, PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
-import type { DashboardSummary } from "../types/actionPlan";
+import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -14,6 +17,7 @@ type Props = {
 
 export function DashboardPage({ onNavigate }: Props) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [plans, setPlans] = useState<ActionPlanSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [branchCode, setBranchCode] = useState("");
@@ -22,8 +26,15 @@ export function DashboardPage({ onNavigate }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchDashboard(branchCode || undefined);
-      setSummary(data);
+      const [dashboardData, plansData] = await Promise.all([
+        fetchDashboard(branchCode || undefined),
+        fetchActionPlans({
+          branch_code: branchCode || undefined,
+          page_size: 200,
+        }),
+      ]);
+      setSummary(dashboardData);
+      setPlans(plansData.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard.");
     } finally {
@@ -34,6 +45,11 @@ export function DashboardPage({ onNavigate }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const branchOptions = [
+    { value: "", label: "Consolidado (todas)" },
+    ...PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label })),
+  ];
 
   return (
     <>
@@ -52,26 +68,27 @@ export function DashboardPage({ onNavigate }: Props) {
         }
       />
       <AppNav active="dashboard" onNavigate={onNavigate} />
-      <div className="pac-filters-row pac-filters-row--compact">
-        <div className="pac-filter-box">
-          <label htmlFor="pac-dashboard-branch">Filial</label>
-          <select
-            id="pac-dashboard-branch"
-            value={branchCode}
-            onChange={(event) => setBranchCode(event.target.value)}
-          >
-            <option value="">Consolidado</option>
-            {PAC_BRANCH_OPTIONS.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+
+      <FilterBar compact>
+        <SelectField
+          id="pac-dashboard-branch"
+          label="Filial"
+          options={branchOptions}
+          value={branchCode}
+          onChange={setBranchCode}
+          searchable
+        />
+      </FilterBar>
+
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {loading && !summary ? <p className="pac-muted">Carregando indicadores…</p> : null}
-      {summary ? <DashboardCards summary={summary} /> : null}
+
+      {summary ? (
+        <>
+          <DashboardKpis summary={summary} loading={loading} />
+          <DashboardCharts summary={summary} plans={plans} />
+        </>
+      ) : null}
     </>
   );
 }

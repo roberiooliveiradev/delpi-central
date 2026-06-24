@@ -4,6 +4,11 @@ import { Save } from "lucide-react";
 import { createActionPlan } from "../api/actionPlansApi";
 import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
+import { FormActions } from "../components/ui/FormActions";
+import { SectionCard } from "../components/ui/SectionCard";
+import { SelectField } from "../components/ui/SelectField";
+import { TextAreaField } from "../components/ui/TextAreaField";
+import { TextField } from "../components/ui/TextField";
 import {
   detailPath,
   listPath,
@@ -45,6 +50,10 @@ export function PlanFormPage({ onNavigate }: Props) {
     }
   }
 
+  const initialStatusOptions = PLAN_STATUSES.filter(
+    (item) => item.value === "draft" || item.value === "triage",
+  ).map((item) => ({ value: item.value, label: item.label }));
+
   return (
     <>
       <PageHeader
@@ -57,129 +66,99 @@ export function PlanFormPage({ onNavigate }: Props) {
         }
       />
 
-      <form className="pac-card pac-form" onSubmit={(event) => void handleSubmit(event)}>
+      <form className="pac-form" onSubmit={(event) => void handleSubmit(event)}>
         {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 
-        <div className="pac-form-grid">
-          <div className="pac-filter-box pac-filter-box--full">
-            <label htmlFor="pac-title">Título *</label>
-            <input
+        <SectionCard title="Identificação">
+          <div className="pac-form-grid">
+            <TextField
               id="pac-title"
+              label="Título"
               value={values.title}
-              onChange={(event) => updateField("title", event.target.value)}
+              onChange={(title) => updateField("title", title)}
               required
+              fullWidth
             />
-          </div>
-
-          <div className="pac-filter-box">
-            <label htmlFor="pac-branch">Filial *</label>
-            <select
+            <SelectField
               id="pac-branch"
+              label="Filial"
+              options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
               value={values.branch_code}
-              onChange={(event) => updateField("branch_code", event.target.value)}
-            >
-              {PAC_BRANCH_OPTIONS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="pac-filter-box">
-            <label htmlFor="pac-severity">Severidade</label>
-            <select
+              onChange={(branch_code) => updateField("branch_code", branch_code)}
+              required
+              searchable={false}
+            />
+            <SelectField
               id="pac-severity"
+              label="Severidade"
+              options={PLAN_SEVERITIES.map((item) => ({ value: item.value, label: item.label }))}
               value={values.severity}
-              onChange={(event) => updateField("severity", event.target.value)}
-            >
-              {PLAN_SEVERITIES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="pac-filter-box">
-            <label htmlFor="pac-status">Status inicial</label>
-            <select
+              onChange={(severity) => updateField("severity", severity)}
+              searchable
+            />
+            <SelectField
               id="pac-status"
+              label="Status inicial"
+              options={initialStatusOptions}
               value={values.status}
-              onChange={(event) => updateField("status", event.target.value)}
-            >
-              {PLAN_STATUSES.filter((item) => item.value === "draft" || item.value === "triage").map(
-                (item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ),
-              )}
-            </select>
+              onChange={(status) => updateField("status", status)}
+              searchable={false}
+            />
           </div>
+        </SectionCard>
 
-          <div className="pac-filter-box">
-            <label htmlFor="pac-customer">Cliente</label>
-            <input
+        <SectionCard title="Contexto">
+          <div className="pac-form-grid">
+            <TextField
               id="pac-customer"
+              label="Cliente"
               value={values.customer_name}
-              onChange={(event) => updateField("customer_name", event.target.value)}
+              onChange={(customer_name) => updateField("customer_name", customer_name)}
             />
-          </div>
-
-          <div className="pac-filter-box">
-            <label htmlFor="pac-product">Produto</label>
-            <input
+            <TextField
               id="pac-product"
+              label="Produto"
               value={values.product_code}
-              onChange={(event) => updateField("product_code", event.target.value)}
+              onChange={(product_code) => updateField("product_code", product_code)}
             />
-          </div>
-
-          <div className="pac-filter-box">
-            <label htmlFor="pac-batch">Lote</label>
-            <input
+            <TextField
               id="pac-batch"
+              label="Lote"
               value={values.batch_number}
-              onChange={(event) => updateField("batch_number", event.target.value)}
+              onChange={(batch_number) => updateField("batch_number", batch_number)}
             />
-          </div>
-
-          <div className="pac-filter-box">
-            <label htmlFor="pac-department">Área</label>
-            <input
+            <TextField
               id="pac-department"
+              label="Área"
               value={values.department}
-              onChange={(event) => updateField("department", event.target.value)}
+              onChange={(department) => updateField("department", department)}
             />
-          </div>
-
-          <div className="pac-filter-box">
-            <label htmlFor="pac-failure">Modo de falha</label>
-            <input
+            <TextField
               id="pac-failure"
+              label="Modo de falha"
               value={values.failure_mode}
-              onChange={(event) => updateField("failure_mode", event.target.value)}
+              onChange={(failure_mode) => updateField("failure_mode", failure_mode)}
+              fullWidth
             />
           </div>
+        </SectionCard>
 
-          <div className="pac-filter-box pac-filter-box--full">
-            <label htmlFor="pac-problem">Relato do problema</label>
-            <textarea
-              id="pac-problem"
-              rows={4}
-              value={values.reported_problem}
-              onChange={(event) => updateField("reported_problem", event.target.value)}
-            />
-          </div>
-        </div>
+        <SectionCard title="Descrição do problema">
+          <TextAreaField
+            id="pac-problem"
+            label="Relato do problema"
+            value={values.reported_problem}
+            onChange={(reported_problem) => updateField("reported_problem", reported_problem)}
+            fullWidth
+          />
+        </SectionCard>
 
-        <div className="pac-form-actions">
+        <FormActions align="end">
           <button type="submit" className="pac-primary-btn" disabled={saving}>
             <Save size={16} aria-hidden="true" />
             {saving ? "Salvando…" : "Criar plano"}
           </button>
-        </div>
+        </FormActions>
       </form>
     </>
   );

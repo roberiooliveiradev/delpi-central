@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, Save } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  Cog,
+  FlaskConical,
+  Leaf,
+  Ruler,
+  Save,
+  Users,
+  Wrench,
+} from "lucide-react";
 
 import {
   createPlanActions,
@@ -13,6 +22,12 @@ import {
 import { PageHeader } from "../components/PageHeader";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
+import { FormActions } from "../components/ui/FormActions";
+import { SectionCard } from "../components/ui/SectionCard";
+import { SelectField } from "../components/ui/SelectField";
+import { StatusPipeline } from "../components/ui/StatusPipeline";
+import { TextAreaField } from "../components/ui/TextAreaField";
+import { TextField } from "../components/ui/TextField";
 import {
   ACTION_STATUSES,
   ACTION_TYPES,
@@ -30,15 +45,6 @@ type Props = {
   planId: string;
   onNavigate: (path: string) => void;
 };
-
-function DetailSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="pac-card pac-detail-section">
-      <h2 className="pac-section-title">{title}</h2>
-      {children}
-    </section>
-  );
-}
 
 const EMPTY_ISHIKAWA: IshikawaAnalysis = {
   machine: "",
@@ -59,6 +65,15 @@ const EMPTY_FIVE_WHYS: FiveWhysAnalysis = {
   root_cause: "",
   confidence_level: "medium",
 };
+
+const ISHIKAWA_FIELDS = [
+  { key: "machine" as const, label: "Máquina", icon: Cog },
+  { key: "method_process" as const, label: "Método", icon: Wrench },
+  { key: "material" as const, label: "Material", icon: FlaskConical },
+  { key: "manpower" as const, label: "Mão de obra", icon: Users },
+  { key: "measurement" as const, label: "Medição", icon: Ruler },
+  { key: "environment" as const, label: "Meio ambiente", icon: Leaf },
+];
 
 export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
@@ -114,6 +129,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   }
 
   const plan = detail?.plan;
+  const statusOptions = PLAN_STATUSES.map((item) => ({ value: item.value, label: item.label }));
 
   return (
     <>
@@ -135,9 +151,11 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {success ? <StateAlert variant="success">{success}</StateAlert> : null}
       {loading && !detail ? <p className="pac-muted">Carregando detalhe…</p> : null}
+
       {plan ? (
         <div className="pac-detail-grid">
-          <DetailSection title="Problema">
+          <SectionCard title="Problema">
+            <StatusPipeline currentStatus={plan.status} />
             <dl className="pac-dl">
               <div>
                 <dt>Cliente</dt>
@@ -176,20 +194,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               </div>
             </dl>
             <div className="pac-inline-form">
-              <div className="pac-filter-box">
-                <label htmlFor="pac-plan-status">Atualizar status</label>
-                <select
-                  id="pac-plan-status"
-                  value={statusValue}
-                  onChange={(event) => setStatusValue(event.target.value)}
-                >
-                  {PLAN_STATUSES.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                id="pac-plan-status"
+                label="Atualizar status"
+                options={statusOptions}
+                value={statusValue}
+                onChange={setStatusValue}
+                searchable
+              />
               <button
                 type="button"
                 className="pac-primary-btn"
@@ -204,33 +216,31 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 {saving === "status" ? "Salvando…" : "Salvar status"}
               </button>
             </div>
-          </DetailSection>
+          </SectionCard>
 
-          <DetailSection title="Ishikawa">
-            <div className="pac-form-grid">
-              {(
-                [
-                  ["machine", "Máquina"],
-                  ["method_process", "Método"],
-                  ["material", "Material"],
-                  ["manpower", "Mão de obra"],
-                  ["measurement", "Medição"],
-                  ["environment", "Meio ambiente"],
-                ] as const
-              ).map(([key, label]) => (
-                <div key={key} className="pac-filter-box">
-                  <label htmlFor={`pac-ishikawa-${key}`}>{label}</label>
+          <SectionCard title="Ishikawa (6M)">
+            <div className="pac-ishikawa-grid">
+              {ISHIKAWA_FIELDS.map(({ key, label, icon: Icon }) => (
+                <div key={key} className="pac-ishikawa-item">
+                  <div className="pac-ishikawa-item__head">
+                    <span className="pac-ishikawa-item__icon" aria-hidden="true">
+                      <Icon size={16} />
+                    </span>
+                    <label htmlFor={`pac-ishikawa-${key}`}>{label}</label>
+                  </div>
                   <input
                     id={`pac-ishikawa-${key}`}
+                    className="pac-field__control"
                     value={ishikawaForm[key] ?? ""}
                     onChange={(event) =>
                       setIshikawaForm((current) => ({ ...current, [key]: event.target.value }))
                     }
+                    placeholder={`Causas relacionadas a ${label.toLowerCase()}`}
                   />
                 </div>
               ))}
             </div>
-            <div className="pac-form-actions">
+            <FormActions>
               <button
                 type="button"
                 className="pac-primary-btn"
@@ -243,35 +253,32 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               >
                 {saving === "ishikawa" ? "Salvando…" : "Salvar Ishikawa"}
               </button>
-            </div>
-          </DetailSection>
+            </FormActions>
+          </SectionCard>
 
-          <DetailSection title="5 Porquês">
-            <div className="pac-form-grid">
+          <SectionCard title="5 Porquês">
+            <ol className="pac-five-whys">
               {(["why_1", "why_2", "why_3", "why_4", "why_5"] as const).map((key, index) => (
-                <div key={key} className="pac-filter-box pac-filter-box--full">
-                  <label htmlFor={`pac-${key}`}>{index + 1}º porquê</label>
-                  <input
+                <li key={key} className="pac-five-whys__step">
+                  <span className="pac-five-whys__index">{index + 1}</span>
+                  <TextField
                     id={`pac-${key}`}
+                    label={`${index + 1}º porquê`}
                     value={fiveWhysForm[key] ?? ""}
-                    onChange={(event) =>
-                      setFiveWhysForm((current) => ({ ...current, [key]: event.target.value }))
-                    }
+                    onChange={(value) => setFiveWhysForm((current) => ({ ...current, [key]: value }))}
+                    fullWidth
                   />
-                </div>
+                </li>
               ))}
-              <div className="pac-filter-box pac-filter-box--full">
-                <label htmlFor="pac-root-cause">Causa raiz</label>
-                <input
-                  id="pac-root-cause"
-                  value={fiveWhysForm.root_cause ?? ""}
-                  onChange={(event) =>
-                    setFiveWhysForm((current) => ({ ...current, root_cause: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="pac-form-actions">
+            </ol>
+            <TextField
+              id="pac-root-cause"
+              label="Causa raiz"
+              value={fiveWhysForm.root_cause ?? ""}
+              onChange={(root_cause) => setFiveWhysForm((current) => ({ ...current, root_cause }))}
+              fullWidth
+            />
+            <FormActions>
               <button
                 type="button"
                 className="pac-primary-btn"
@@ -284,10 +291,10 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               >
                 {saving === "five-whys" ? "Salvando…" : "Salvar 5 Porquês"}
               </button>
-            </div>
-          </DetailSection>
+            </FormActions>
+          </SectionCard>
 
-          <DetailSection title="Ações">
+          <SectionCard title="Ações">
             {detail.actions.length ? (
               <div className="pac-table-wrap">
                 <table className="pac-table">
@@ -335,47 +342,36 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <p className="pac-muted">Nenhuma ação cadastrada.</p>
             )}
 
-            <div className="pac-inline-form pac-inline-form--stack">
+            <div className="pac-inline-form pac-inline-form--stack pac-new-action-form">
               <div className="pac-form-grid">
-                <div className="pac-filter-box">
-                  <label htmlFor="pac-new-action-type">Tipo</label>
-                  <select
-                    id="pac-new-action-type"
-                    value={newActionType}
-                    onChange={(event) => setNewActionType(event.target.value)}
-                  >
-                    {Object.entries(ACTION_TYPES).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="pac-filter-box">
-                  <label htmlFor="pac-new-action-responsible">Responsável</label>
-                  <input
-                    id="pac-new-action-responsible"
-                    value={newActionResponsible}
-                    onChange={(event) => setNewActionResponsible(event.target.value)}
-                  />
-                </div>
-                <div className="pac-filter-box">
-                  <label htmlFor="pac-new-action-due">Prazo</label>
-                  <input
-                    id="pac-new-action-due"
-                    type="date"
-                    value={newActionDueDate}
-                    onChange={(event) => setNewActionDueDate(event.target.value)}
-                  />
-                </div>
-                <div className="pac-filter-box pac-filter-box--full">
-                  <label htmlFor="pac-new-action-desc">Descrição</label>
-                  <input
-                    id="pac-new-action-desc"
-                    value={newActionDescription}
-                    onChange={(event) => setNewActionDescription(event.target.value)}
-                  />
-                </div>
+                <SelectField
+                  id="pac-new-action-type"
+                  label="Tipo"
+                  options={Object.entries(ACTION_TYPES).map(([value, label]) => ({ value, label }))}
+                  value={newActionType}
+                  onChange={setNewActionType}
+                  searchable={false}
+                />
+                <TextField
+                  id="pac-new-action-responsible"
+                  label="Responsável"
+                  value={newActionResponsible}
+                  onChange={setNewActionResponsible}
+                />
+                <TextField
+                  id="pac-new-action-due"
+                  label="Prazo"
+                  type="date"
+                  value={newActionDueDate}
+                  onChange={setNewActionDueDate}
+                />
+                <TextField
+                  id="pac-new-action-desc"
+                  label="Descrição"
+                  value={newActionDescription}
+                  onChange={setNewActionDescription}
+                  fullWidth
+                />
               </div>
               <button
                 type="button"
@@ -403,36 +399,31 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 {saving === "new-action" ? "Salvando…" : "Adicionar ação"}
               </button>
             </div>
-          </DetailSection>
+          </SectionCard>
 
-          <DetailSection title="Eficácia">
-            <div className="pac-inline-form pac-inline-form--stack">
-              <div className="pac-form-grid">
-                <div className="pac-filter-box">
-                  <label htmlFor="pac-effectiveness-status">Resultado</label>
-                  <select
-                    id="pac-effectiveness-status"
-                    value={effectivenessStatus}
-                    onChange={(event) => setEffectivenessStatus(event.target.value)}
-                  >
-                    {EFFECTIVENESS_STATUSES.map((item) => (
-                      <option key={item.value} value={item.value}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="pac-filter-box pac-filter-box--full">
-                  <label htmlFor="pac-effectiveness-notes">Observações</label>
-                  <textarea
-                    id="pac-effectiveness-notes"
-                    rows={3}
-                    value={effectivenessNotes}
-                    onChange={(event) => setEffectivenessNotes(event.target.value)}
-                    placeholder="Evidências e conclusão da verificação de eficácia"
-                  />
-                </div>
-              </div>
+          <SectionCard title="Eficácia">
+            <div className="pac-form-grid">
+              <SelectField
+                id="pac-effectiveness-status"
+                label="Resultado"
+                options={EFFECTIVENESS_STATUSES.map((item) => ({
+                  value: item.value,
+                  label: item.label,
+                }))}
+                value={effectivenessStatus}
+                onChange={setEffectivenessStatus}
+                searchable={false}
+              />
+              <TextAreaField
+                id="pac-effectiveness-notes"
+                label="Observações"
+                value={effectivenessNotes}
+                onChange={setEffectivenessNotes}
+                placeholder="Evidências e conclusão da verificação de eficácia"
+                fullWidth
+              />
+            </div>
+            <FormActions>
               <button
                 type="button"
                 className="pac-primary-btn"
@@ -449,10 +440,10 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               >
                 {saving === "effectiveness" ? "Salvando…" : "Registrar eficácia"}
               </button>
-            </div>
-          </DetailSection>
+            </FormActions>
+          </SectionCard>
 
-          <DetailSection title="Histórico">
+          <SectionCard title="Histórico">
             {detail.history.length ? (
               <ul className="pac-timeline">
                 {detail.history.map((event) => (
@@ -466,7 +457,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             ) : (
               <p className="pac-muted">Sem eventos registrados.</p>
             )}
-          </DetailSection>
+          </SectionCard>
         </div>
       ) : null}
     </>

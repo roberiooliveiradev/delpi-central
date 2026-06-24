@@ -56,6 +56,8 @@ Todas as chamadas usam:
 
 ## Permissões RBAC
 
+As permissões são **atribuídas e verificadas pelo core-api** (não diretamente no Keycloak). O portal repassa o JWT; a api-delpi valida os códigos abaixo.
+
 | Código | Uso |
 |--------|-----|
 | `quality-action-plans.access` | Base do plugin |
@@ -64,7 +66,7 @@ Todas as chamadas usam:
 | `quality-action-plans.manage` | Leitura + escrita |
 | `api-delpi.quality.action-plans.read` | Leitura via api-delpi (opcional no perfil) |
 
-Atribua **`.read`** para liderança (somente consulta) e **`.write`** ou **`.manage`** para analistas que registram planos.
+Atribua **`.read`** para liderança (somente consulta) e **`.write`** ou **`.manage`** para analistas que registram planos — via **core-api** / perfis de aplicação.
 
 ## Desenvolvimento local
 

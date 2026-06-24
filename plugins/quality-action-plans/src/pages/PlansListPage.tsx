@@ -1,12 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchActionPlans } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
+import { PlansFilters } from "../components/filters/PlansFilters";
 import { PageHeader } from "../components/PageHeader";
 import { PlansTable } from "../components/PlansTable";
 import { StateAlert } from "../components/StateAlert";
-import { PAC_BRANCH_OPTIONS, PLAN_SEVERITIES, PLAN_STATUSES, newPlanPath } from "../constants/actionPlans";
+import { newPlanPath } from "../constants/actionPlans";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import type { ActionPlanSummary } from "../types/actionPlan";
+import {
+  applyClientPlanFilters,
+  buildListApiParams,
+  EMPTY_PLANS_FILTERS,
+  needsClientSideFilter,
+  type PlansFilterState,
+} from "../utils/planFilters";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -16,35 +25,43 @@ export function PlansListPage({ onNavigate }: Props) {
   const [items, setItems] = useState<ActionPlanSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
-  const [severity, setSeverity] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [productCode, setProductCode] = useState("");
-  const [branchCode, setBranchCode] = useState("");
+  const [filters, setFilters] = useState<PlansFilterState>(EMPTY_PLANS_FILTERS);
+
+  const debouncedCustomer = useDebouncedValue(filters.customerName);
+  const debouncedProduct = useDebouncedValue(filters.productCode);
+
+  const apiFilters = useMemo(
+    (): PlansFilterState => ({
+      ...filters,
+      customerName: debouncedCustomer,
+      productCode: debouncedProduct,
+    }),
+    [filters, debouncedCustomer, debouncedProduct],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchActionPlans({
-        status: status || undefined,
-        severity: severity || undefined,
-        customer_name: customerName || undefined,
-        product_code: productCode || undefined,
-        branch_code: branchCode || undefined,
-        page_size: 100,
-      });
+      const data = await fetchActionPlans(buildListApiParams(apiFilters));
       setItems(data.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao listar planos.");
     } finally {
       setLoading(false);
     }
-  }, [branchCode, customerName, productCode, severity, status]);
+  }, [apiFilters]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const visibleItems = useMemo(() => {
+    if (!needsClientSideFilter(apiFilters)) {
+      return items;
+    }
+    return applyClientPlanFilters(items, apiFilters);
+  }, [apiFilters, items]);
 
   return (
     <>
@@ -59,79 +76,22 @@ export function PlansListPage({ onNavigate }: Props) {
       />
       <AppNav active="list" onNavigate={onNavigate} />
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
-      <div className="pac-filters-row">
-        <div className="pac-filter-box">
-          <label htmlFor="pac-filter-status">Status</label>
-          <select
-            id="pac-filter-status"
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-          >
-            <option value="">Todos</option>
-            {PLAN_STATUSES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="pac-filter-box">
-          <label htmlFor="pac-filter-severity">Severidade</label>
-          <select
-            id="pac-filter-severity"
-            value={severity}
-            onChange={(event) => setSeverity(event.target.value)}
-          >
-            <option value="">Todas</option>
-            {PLAN_SEVERITIES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="pac-filter-box">
-          <label htmlFor="pac-filter-branch">Filial</label>
-          <select
-            id="pac-filter-branch"
-            value={branchCode}
-            onChange={(event) => setBranchCode(event.target.value)}
-          >
-            <option value="">Todas</option>
-            {PAC_BRANCH_OPTIONS.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="pac-filter-box">
-          <label htmlFor="pac-filter-customer">Cliente</label>
-          <input
-            id="pac-filter-customer"
-            value={customerName}
-            onChange={(event) => setCustomerName(event.target.value)}
-            placeholder="Filtrar por cliente"
-          />
-        </div>
-        <div className="pac-filter-box">
-          <label htmlFor="pac-filter-product">Produto</label>
-          <input
-            id="pac-filter-product"
-            value={productCode}
-            onChange={(event) => setProductCode(event.target.value)}
-            placeholder="Código do produto"
-          />
-        </div>
-        <div className="pac-filter-box pac-filter-box--action">
-          <span className="pac-filter-box__spacer" aria-hidden />
-          <button type="button" className="pac-primary-btn" onClick={() => void load()}>
-            Atualizar
-          </button>
-        </div>
-      </div>
+
+      <PlansFilters
+        filters={filters}
+        onChange={setFilters}
+        onRefresh={() => void load()}
+        loading={loading}
+      />
+
       <section className="pac-card">
-        <PlansTable items={items} loading={loading} onNavigate={onNavigate} />
+        <div className="pac-section-card__header pac-table-header">
+          <h2 className="pac-section-title">Resultados</h2>
+          <span className="pac-muted pac-table-header__count">
+            {visibleItems.length} plano(s)
+          </span>
+        </div>
+        <PlansTable items={visibleItems} loading={loading} onNavigate={onNavigate} />
       </section>
     </>
   );
