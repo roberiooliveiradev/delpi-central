@@ -312,3 +312,4 @@ cd minha-delpi-ai-api
 | jun/2026 | **Fase 3b** — rich stack automático off em `as_delivered`; `richStackProfiles` vazio |
 | jun/2026 | **Fase 4** — `ChatPresentationDataOnlyProseService.apply_pipeline` no pipeline as-delivered |
 | jun/2026 | **Fase 6** — slim `ChatPresentationDecisionService` (4 delegates: score, metadata, builder, intent) |
+| jun/2026 | **Fase 7** — preferência, chart e `GenericDecisionService` (~790 linhas na fachada) |

@@ -162,6 +162,9 @@ Delegates extraídos (score, metadata, builder, intent operacional). `ChatPresen
 | `ChatPresentationDecisionMetadataService` | inspeção de slots/metadata |
 | `ChatPresentationDecisionBuilderService` | construção de `presentationDecision` |
 | `ChatPresentationOperationalIntentDecisionService` | ramos operacionais por perfil |
+| `ChatPresentationUserFormatPreferenceService` | preferência explícita (toolbar/mensagem) |
+| `ChatPresentationChartDecisionService` | gráfico: tipo, policy, agregação |
+| `ChatPresentationGenericDecisionService` | `decide()` genérico por forma dos dados |
 
 ---
 

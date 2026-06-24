@@ -67,9 +67,19 @@ Pasta `external_actions/presenters/` reduzida a hosts utilitários (SQL, KPI, op
 | `ChatPresentationDecisionBuilderService` | `build`, merge views, stack layout |
 | `ChatPresentationOperationalIntentDecisionService` | rich stack, árvore, narrativas por perfil |
 
-Fachada `ChatPresentationDecisionService`: ~1370 linhas (era ~2170).
+Fachada `ChatPresentationDecisionService`: ~790 linhas (era ~2170).
 
-## Pendente (Fase 7+)
+## Fase 7 — preferência, gráfico e decide genérico (jun/2026)
 
-- Extrair chart policy / preference / ramo genérico de `decide()`.
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `ChatPresentationUserFormatPreferenceService` | toolbar, aliases, `build_decision` por preferência |
+| `ChatPresentationChartDecisionService` | tipo de gráfico, policy/cap, agregação |
+| `ChatPresentationGenericDecisionService` | checklist/canvas, KPI/árvore/dashboard, shape tabular |
+
+`decide()` na fachada: preferência → intent operacional → genérico.
+
+## Pendente (Fase 8+)
+
+- Slim `enrich_metadata` (recomendações, explain, text-first pós-decisão).
 - OpenAPI import (Playbook 22 Fase D).
