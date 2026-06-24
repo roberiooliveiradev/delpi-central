@@ -309,18 +309,17 @@ def test_structure_exclusivity_auto_quality_without_duplicate_panels():
     markdown = str((text_presentation or {}).get("markdown") or "")
 
     assert int(summary.get("total_exclusive_raw_materials") or 0) == 0
-    assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
     assert meta.get("profileTablePresentation") is None
     assert not any(
         "matérias-primas" in str(table.get("title") or "").lower()
         for table in tables
         if isinstance(table, dict)
     )
-    dashboard = meta.get("dashboardPresentation") or meta.get("presentation")
-    assert isinstance(dashboard, dict) and dashboard.get("type") == "dashboard"
+
+    assert markdown
+    assert "resposta" in markdown.lower() or "nenhuma mp exclusiva" in markdown.lower()
+    assert "compartilhadas" in markdown.lower()
+    assert not meta.get("dataOnlyPresentation")
 
     if markdown:
-        lowered = markdown.lower()
-        assert "compartilhadas" in lowered
-        assert "resposta" in lowered
         _assert_no_near_duplicate_prose(markdown)

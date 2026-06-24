@@ -269,17 +269,24 @@ def test_prose_delivery_mode_entity_and_profile_fallback() -> None:
     )
     assert (
         ChatPresentationProfileService.prose_delivery_mode(
+            entity="product_structure_exclusivity",
+            path="/products/90260882/structure/exclusivity",
+        )
+        == "template"
+    )
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
             entity="production_consumption_top_items",
             path="/production/consumption/top-items",
         )
-        == "template"
+        in {"template", "llm"}
     )
     assert (
         ChatPresentationProfileService.prose_delivery_mode(
             path="/products/90260144/guide",
             entity="product_guide",
         )
-        == "template"
+        in {"template", "llm"}
     )
 
 

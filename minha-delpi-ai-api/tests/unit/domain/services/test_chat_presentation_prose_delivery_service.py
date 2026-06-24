@@ -132,6 +132,22 @@ def test_resolve_mode_llm_when_response_modes_disabled_but_require_flag_false(mo
     assert mode == MODE_LLM
 
 
+def test_should_not_skip_template_prose_when_profile_uses_template_even_if_llm_everywhere(
+    monkeypatch,
+):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryService,
+        "_entity_prose_delivery_mode",
+        lambda **kwargs: MODE_TEMPLATE,
+    )
+
+    assert not ChatPresentationProseDeliveryService.should_skip_template_prose_in_pipeline(
+        "quais MPs exclusivas tem o produto 90260882?",
+        path="/products/90260882/structure/exclusivity",
+    )
+
+
 def test_should_skip_template_prose_when_modes_disabled_but_require_flag_false(monkeypatch):
     from app.domain.services.chat_presentation_prose_delivery_content_service import (
         ChatPresentationProseDeliveryContentService,

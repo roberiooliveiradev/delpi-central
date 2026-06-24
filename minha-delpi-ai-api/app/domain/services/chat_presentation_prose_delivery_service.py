@@ -360,6 +360,9 @@ class ChatPresentationProseDeliveryService:
         if not cls.llm_prose_globally_available():
             return False
 
+        if cls._entity_prose_delivery_mode(path=path) == MODE_TEMPLATE:
+            return False
+
         if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
             return bool(str(path or "").strip())
 
@@ -369,9 +372,6 @@ class ChatPresentationProseDeliveryService:
         message = str(user_message or "").strip()
 
         if not message:
-            return False
-
-        if cls._entity_prose_delivery_mode(path=path) == MODE_TEMPLATE:
             return False
 
         return ChatOperationalNarrativeSynthesisService.message_suggests_narrative_llm_synthesis(

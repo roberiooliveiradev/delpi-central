@@ -359,7 +359,8 @@
     "product_factory_status": "llm",
     "product_production_status": "llm",
     "product_shipping_status": "llm",
-    "product_stock": "llm"
+    "product_stock": "llm",
+    "product_structure_exclusivity": "template"
   },
   "proseDeliveryByEntitySet": {
     "playbookOperational": "llm",
@@ -374,7 +375,7 @@
     "sale_pricing": "llm",
     "raw_material_price_intelligence": "llm",
     "cost_impact_simulation": "llm",
-    "structure_exclusivity": "llm",
+    "structure_exclusivity": "template",
     "last_purchase": "llm",
     "purchase_price_history": "llm",
     "purchase_budget_history": "llm",
