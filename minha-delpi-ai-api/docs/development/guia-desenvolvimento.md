@@ -81,7 +81,7 @@ app/
   domain/
     services/                 # Regras de negócio (~150+ serviços)
     external_actions/
-      presenters/             # Sub-presenters por rota/perfil
+      presenters/             # Hosts utilitários (SQL, KPI, table) — sem presenter por entidade
     prompt_policies/          # *.md — instruções LLM globais
     ports/                    # ABC: repos, LLM, content
     entities/                 # ChatSession, ChatMessage, …
@@ -121,7 +121,8 @@ app/
 
 4. É execução de API externa?
    → ExternalActionSelectionService + ExecuteExternalActionUseCase
-   → presenter em domain/external_actions/presenters/
+   → apresentação: ChatPresentationApiDeliveredMetadataService + ChatSchemaDrivenPresentationService
+   → **não** criar presenter por rota — ver presentation-delivered-pure-jun2026.md
 
 5. É orquestração de turno (RAG, flags, SSE)?
    → application/services/chat_turn/
@@ -148,9 +149,11 @@ Seguir **[`docs/architecture/new-api-route-checklist.md`](../architecture/new-ap
 
 1. **api-delpi:** `api_delpi_success` + `route_contract_registry` + smoke `meta`
 2. **Registry:** `operational_route_registry.json` + `generate_operational_route_registry.py --check`
-3. **Apresentação:** `entityProfiles`, `entitySetProfileContracts`, `pathRules` (específica antes de catch-all)
-4. **Pipeline:** `ChatPresentationMetadataPipelineService` → `viewIntent` → `presentationDecision`
-5. **CI:** `audit_presentation_coverage.py --check-profiles` + teste `test_chat_presentation_view_intent_service.py`
+3. **Apresentação:** `pathRules`, `chartPolicy`, `entityProfiles` (mínimo) — **sem** `visualBuilders` / `tableAssembly`
+4. **Pipeline:** `ChatPresentationApiDeliveredMetadataService` → `ChatSchemaDrivenPresentationService` → `presentationDecision`
+5. **CI:** `audit_presentation_coverage.py --check-profiles` + teste schema-driven
+
+Doc: [`presentation-delivered-pure-jun2026.md`](../architecture/presentation-delivered-pure-jun2026.md).
 
 Detalhe api-delpi: [`api-delpi/docs/`](../api/) e playbook-10 no repositório central.
 

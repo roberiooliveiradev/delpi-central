@@ -238,18 +238,10 @@ class ChatPresentationPrimaryViewService:
             return
 
         if presenter and data is not None:
-            from app.domain.services.chat_presentation_profile_visual_bundle_service import (
-                ChatPresentationProfileVisualBundleService,
-            )
+            bundle_table = cls._schema_bundle_view(presenter, data, path=path).table
 
-            profile_table = ChatPresentationProfileVisualBundleService.build_profile_table_view(
-                presenter,
-                path=path,
-                data=data,
-            )
-
-            if profile_table and cls._presentation_type(profile_table) == "table":
-                cls._set_primary(metadata, profile_table)
+            if bundle_table and cls._presentation_type(bundle_table) == "table":
+                cls._set_primary(metadata, bundle_table)
                 return
 
             forced = presenter.build_presentation(data, path=path)
@@ -276,19 +268,10 @@ class ChatPresentationPrimaryViewService:
                 cls._set_primary(metadata, forced)
                 return
 
-            from app.domain.services.chat_presentation_profile_visual_bundle_service import (
-                ChatPresentationProfileVisualBundleService,
-            )
+            bundle_tree = cls._schema_bundle_view(presenter, data, path=path).tree
 
-            profile_tree = ChatPresentationProfileVisualBundleService.build_profile_view(
-                presenter,
-                path=path,
-                view="tree",
-                data=data,
-            )
-
-            if profile_tree and cls._presentation_type(profile_tree) == "tree":
-                cls._set_primary(metadata, profile_tree)
+            if bundle_tree and cls._presentation_type(bundle_tree) == "tree":
+                cls._set_primary(metadata, bundle_tree)
 
     @classmethod
     def _apply_dashboard_primary(cls, metadata: dict[str, Any]) -> None:
@@ -418,6 +401,30 @@ class ChatPresentationPrimaryViewService:
                 return candidate
 
         return None
+
+    @classmethod
+    def _schema_bundle_view(
+        cls,
+        presenter: ExternalActionResultPresenter,
+        data: Any,
+        *,
+        path: str,
+    ):
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+        from app.domain.services.chat_schema_driven_presentation_service import (
+            ChatSchemaDrivenPresentationService,
+        )
+
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
+
+        return ChatSchemaDrivenPresentationService.build_bundle(
+            presenter,
+            data,
+            path=path,
+            entity=profile.entity,
+        )
 
     @staticmethod
     def _presentation_type(presentation: dict[str, Any] | None) -> str:

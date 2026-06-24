@@ -1,7 +1,7 @@
 # Playbook 21 — Desacoplamento e refatoração completa (`minha-delpi-ai-api`)
 
 **Projeto:** Minha DELPI Chat IA  
-**Status:** vigente (jun/2026)  
+**Status:** **histórico** (jun/2026) — north star de apresentação migrada para [playbook-22](./playbook-22-schema-first-api-actions-jun2026.md) e [presentation-delivered-pure-jun2026.md](../architecture/presentation-delivered-pure-jun2026.md). Manter como inventário de débito pré-corte.  
 **Escopo:** revisão completa da API — o que é desacoplamento, fluxos, arquivos e ondas de refatoração pendentes  
 **Público:** backend, revisores de PR, agentes Cursor  
 
@@ -9,7 +9,7 @@
 
 - [presentation-operational-decoupling.mdc](../../../.cursor/rules/presentation-operational-decoupling.mdc) — definição canônica de desacoplamento
 - [centralized-rules-first.mdc](../../../.cursor/rules/centralized-rules-first.mdc) — mapa de módulos
-- [playbook-12-apresentacao-declarativa-refatoracao.md](./playbook-12-apresentacao-declarativa-refatoracao.md) — ondas R0–R23 (tier A concluído)
+- [playbook-22-schema-first-api-actions-jun2026.md](./playbook-22-schema-first-api-actions-jun2026.md) — **north star atual** (actions OpenAPI + delivered puro)
 - [playbook-18-prosa-template-llm-desacoplamento.md](./playbook-18-prosa-template-llm-desacoplamento.md) — template × LLM × direct
 - [playbook-20-organizacao-services-chat.md](./playbook-20-organizacao-services-chat.md) — god files e domain→application
 - [playbook-13-respostas-humanizadas-dados.md](./playbook-13-respostas-humanizadas-dados.md) — `dataAnswer` / commentary

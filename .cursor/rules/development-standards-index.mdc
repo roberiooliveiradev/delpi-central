@@ -9,6 +9,7 @@ alwaysApply: true
 
 | Regra | Quando consultar |
 |-------|------------------|
+| `schema-first-presentation-delivered.mdc` | **Apresentação** — proibir presenter por rota, visual bundle, table assembly |
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
 | `presentation-operational-decoupling.mdc` | Apresentação operacional — cobertura, consolidado, dataAnswer vs markdown; **definição de desacoplamento** |
 | `clean-code-architecture-guardrails.mdc` | Desvio de camada, patch local, contrato metadata ambíguo |
@@ -18,6 +19,7 @@ alwaysApply: true
 
 | Regra | Escopo |
 |-------|--------|
+| `schema-first-presentation-delivered.mdc` | Pipeline delivered puro — sem acoplamento por rota |
 | `chat-intelligence-base.mdc` | Pipeline, agentes, contexto, o que não duplicar no use case |
 | `presentation-operational-decoupling.mdc` | Summary playbook, banner, dataAnswer — nunca aviso no presenter |
 | `clean-architecture-chat-api.mdc` | Camadas domain/application/infrastructure/interfaces |
@@ -29,8 +31,9 @@ alwaysApply: true
 
 | Doc | Escopo |
 |-----|--------|
-| [playbook-22-schema-first-api-actions-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-22-schema-first-api-actions-jun2026.md) | **North star** — actions OpenAPI-only, apresentação as-delivered, migração legacy |
-| [playbook-21-desacoplamento-refatoracao-completa-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-21-desacoplamento-refatoracao-completa-jun2026.md) | Inventário completo de débito, fluxos e ondas W1–W4 pós–Playbook 12 |
+| [playbook-22-schema-first-api-actions-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-22-schema-first-api-actions-jun2026.md) | **North star** — actions OpenAPI-only, apresentação as-delivered |
+| [presentation-delivered-pure-jun2026.md](../minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md) | Pipeline ativo + anti-acoplamento |
+| [playbook-21-desacoplamento-refatoracao-completa-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-21-desacoplamento-refatoracao-completa-jun2026.md) | **Histórico** — inventário pré–delivered puro |
 
 ## api-delpi
 
@@ -50,9 +53,9 @@ alwaysApply: true
 ## Fluxo por tipo de tarefa
 
 ```
-Nova rota REST          → playbook-22 (schema-first) → api-delpi-response-contract → new-api-route-checklist
+Nova rota REST          → schema-first-presentation-delivered → playbook-22 → new-api-route-checklist
 Query SQL nova/alterada → sql-query-development → teste *_sql.py + Saúde SQL / Cache
-Bug apresentação chat   → presentation-operational-decoupling → centralized-rules-first → ChatPresentation*
+Bug apresentação chat   → schema-first-presentation-delivered → presentation-delivered-pure doc → ChatPresentationApiDeliveredMetadataService
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
 Nova intenção operacional → operational-api-routing → api_route_domains.json

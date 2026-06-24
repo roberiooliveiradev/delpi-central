@@ -19,7 +19,7 @@ alwaysApply: true
 | Textos PT (status, activity, respostas) | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
 | Regex, limites, thresholds, vocabulário | `assistant/*.json` → `*ContentService` / `*PatternsService` | `re.compile` e constantes em `chat_*_service.py` |
 | Prosa/markdown/título/streaming do assistente | `plugins/minha-delpi-chat` → `assistantProseRendering.ts` + `chatMarkdown.ts` | `ChatMessageList`, `ChatAssistantContent`, hooks com `if` próprio |
-| Apresentação rica (tabela/gráfico/stack) | API: `ChatPresentationMetadataPipelineService` → `ExternalActionResultPresenter` → `ChatPresentationDecisionService` · MFE: `chatPresentation.ts` + `assistantContentLayout.ts` (render-only) | `if '/analyser'` no use case, serviço paralelo de normalização, lógica de título/markdown em cada MFE |
+| Apresentação rica (tabela/gráfico/stack) | API: `ChatPresentationApiDeliveredMetadataService` → `ChatSchemaDrivenPresentationService` → `ChatPresentationDecisionService` · MFE: `chatPresentation.ts` (render-only) | `if '/analyser'` no use case, presenter por entidade, `visualBuilders`/`tableAssembly`, serviço paralelo de normalização |
 | Cobertura / incompletude / consolidado operacional | API: flags em `summary` + `pagination` · Chat: `ChatOperationalResultCompletenessService`, `ChatDataCoverageNoticeService`, `ChatOperationalSummarySemanticsService` · Textos: `data_coverage.json` | presenters (`linhas`, markdown), `presentation.incompleteNotice`, strings PT em Python |
 | Dicas visuais (tabela/árvore) | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | `tableVisualizationHint` em presenter/markdown |
 | Formato Automático (tabela vs gráfico) | `ChatPresentationDataShapeAnalyzer` (`viewIntent`) + `ChatPresentationViewIntentService` + perfis em `presentation_profiles.json` | Scoring ou default de chart só no MFE; catch-all de path sem `entityProfiles` |
@@ -42,6 +42,7 @@ Ver definição completa: `presentation-operational-decoupling.mdc`.
 - `hasMarkdownSyntax` + reveal incremental reimplementados fora de `assistantProseRendering`.
 - Novo `if (quem é vc)` em use case em vez de `resolve_skip_tool_flags` / `ChatAssistantIdentityService`.
 - Serviço de domínio nomeado pela rota para regra configurável por perfil — usar `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService`.
+- Novo `*_presenter.py` por rota ou entidade — usar `ChatSchemaDrivenPresentationService` (regra `schema-first-presentation-delivered.mdc`).
 - Fix só no agente ou só na UI quando o comportamento é transversal ao chat base.
 
 ## O que fazer

@@ -44,35 +44,39 @@ Shapes: `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierar
 
 ---
 
-## 3. Chat — apresentação (declarativo + pipeline)
+## 3. Chat — apresentação (schema-first — delivered puro)
 
-### Perfil por semântica (não por path isolado)
+**Regra obrigatória:** `schema-first-presentation-delivered.mdc`. **Não** criar presenter por entidade nem `visualBuilders` / `tableAssembly`.
 
-| Dados | Perfil | Políticas JSON |
-|-------|--------|----------------|
-| Listagem auditável | `playbook_report` / `table_list` | `table_when_available`, `chartPolicy: skip` |
-| KPI / série | `kpi_series` / `kpi_dashboard` | `kpi_when_available`, `chartPolicy: auto` |
-| Hierarquia | `tree_hierarchy` | `tree_when_available` |
-| Produto composto | `stock`, `analyser`, … | `presentation_profiles.json` |
+### Perfil mínimo (não por path isolado)
+
+| Dados | Ajuste em JSON | Pipeline |
+|-------|----------------|----------|
+| Listagem | `pathRules` + `chartPolicy: skip` | tabela genérica schema-driven |
+| KPI / série | `chartPolicy: auto` | `ChatSchemaDrivenPresentationService.build_kpi/chart` |
+| Hierarquia | `tree_hierarchy` em pathRules | árvore genérica ou `ChatProductStructurePresentationService` |
+| Qualquer rota nova | OpenAPI `meta.entity` + `meta.fields` | **sem** presenter dedicado |
 
 ### Arquivos JSON (obrigatório)
 
-- `presentation_profiles.json` — `entityProfiles`, `entitySetProfileContracts`, `pathRules` (**específica antes de catch-alls**), `noChartEntities`, hints/fallbacks
-- `presenter_content.json` + `column_labels.json` — títulos e colunas
-- `presentation_vocabulary.json` — marcadores de score/intenção (se nova heurística de mensagem)
+- `presentation_profiles.json` — `entityProfiles`, `pathRules`, `chartPolicy`, `commentaryProfileKey` (**não** `visualBuilders` / `tableAssembly`)
+- `column_labels.json` — rótulos; preferir `meta.fields` da API
+- `presentation_vocabulary.json` — scoring Automático (se nova heurística)
 
-### Pipeline canônico (domain/application — não duplicar)
+### Pipeline canônico
 
 ```
-ExecuteExternalAction → ChatPresentationMetadataPipelineService.build
-  → ExternalActionResultPresenter
-  → ChatPresentationDataShapeAnalyzer (viewIntent)
-  → ChatPresentationDecisionService.enrich_metadata
-  → ChatPresentationViewIntentService (Automático: tabela vs gráfico)
-  → metadata.presentationDecision → MFE render-only
+ExecuteExternalAction
+  → ChatPresentationMetadataPipelineService.build
+  → ChatPresentationApiDeliveredMetadataService.build
+       → ChatSchemaDrivenPresentationService
+       → ChatDataInsightEnrichmentService
+       → ChatPresentationDecisionService.enrich_metadata
+       → ChatPresentationRenderPipelineService.finalize
+  → MFE render-only
 ```
 
-**MFE:** `chatPresentation.ts` / `assistantContentLayout.ts` — consome metadata; **não** redecide formato.
+**MFE:** `chatPresentation.ts` — consome `renderPlan` / `presentationDecision`; **não** redecide formato.
 
 ---
 
@@ -102,7 +106,8 @@ Payload representativo + modo **Automático**:
 
 ## O que NÃO fazer
 
-- Endpoint sem `entityProfiles` (catch-all ex.: `/production/` → `kpi_series` em listagem).
+- Endpoint sem contrato `meta.entity` / `meta.fields` quando o chat precisa apresentar dados.
+- Presenter Python por rota, `visualBuilders`, `tableAssembly` ou stack rico no pipeline.
 - Tabela vs gráfico no MFE, prompt de agente ou `Send*`/`Stream*` duplicado.
 - Texto PT em Python/TS — `assistant-content-json.mdc`.
 - Serviço de decisão implementado mas **não** ligado ao pipeline (`clean-code-architecture-guardrails.mdc`).

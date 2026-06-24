@@ -1,0 +1,58 @@
+---
+description: Apresentação schema-first as-delivered — proibir acoplamento por rota/entidade
+alwaysApply: true
+---
+
+# Apresentação delivered puro (Playbook 22)
+
+## Princípio
+
+**Uma rota nova = OpenAPI + schema-driven.** O pipeline de metadata **não** tem ramo legacy nem presenter por entidade.
+
+```text
+ChatPresentationMetadataPipelineService
+  → ChatPresentationApiDeliveredMetadataService  (único)
+       → ChatSchemaDrivenPresentationService
+       → ChatDataInsightEnrichmentService
+       → ChatPresentationDecisionService
+       → ChatPresentationRenderPipelineService.finalize
+```
+
+Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md`.
+
+## O que NÃO fazer
+
+- Criar `*_presenter.py` por rota, entidade ou path (`product_*`, `entity_route`, `playbook_report_presenter`, …).
+- Adicionar `visualBuilders`, `tableAssembly`, `textBuilder`, `stackPlan` rico em `presentation_profiles.json`.
+- Reintroduzir `ChatPresentationVisualBundleService`, `TableAssemblyService`, `HumanizedNarrativeService`, `CompositeVisualBuilder` ou ramo `else` no pipeline.
+- `if "/products/"` / `if kpi` / `if entity ==` em use case, presenter ou MFE para apresentação.
+- Serviço de domínio nomeado pela rota (`ChatOperationalStockRouteService`) — usar `profileKey` + JSON + serviço transversal.
+- Multi-tabela tier A (`tablePresentations` com `role: profile|list|guide`) no pipeline — tabela genérica única.
+- Fix de formato (tabela vs gráfico) só no MFE — `presentationDecision` na API.
+- Expandir `presentation_profiles.json` para rota nova sem `x-delpi` no OpenAPI (exceção: `pathRules` + `chartPolicy` mínimos).
+
+## O que fazer
+
+| Necessidade | Módulo canônico |
+|-------------|-----------------|
+| Nova action | `OpenApiActionImporter` + allowed actions do agente |
+| Tabela / KPI / chart / árvore | `ChatSchemaDrivenPresentationService` |
+| Labels de coluna | `meta.fields` da API + `column_labels.json` |
+| Comentário / dataAnswer | `ChatDataInsightEnrichmentService` + `ChatOperationalDataCommentaryService` |
+| Formato Automático | `ChatPresentationViewIntentService` + `presentation_profiles.json` (`chartPolicy`, `viewOrder`) |
+| Formato explícito (toolbar) | `ChatToolContextFormatService` → `build_bundle` schema-driven |
+| SQL | `ExternalActionSqlPresenter` (exceção legítima) |
+| Prosa LLM vs template | `ChatPresentationProseDeliveryService` no **turn completion** |
+| Nova rota api-delpi | `new-api-route-checklist.mdc` + Playbook 22 |
+
+## Checklist antes de merge
+
+- [ ] Pipeline passa só por `ChatPresentationApiDeliveredMetadataService`?
+- [ ] Nenhum presenter novo por entidade?
+- [ ] Nenhuma chave `visualBuilders` / `tableAssembly` nova no JSON?
+- [ ] Teste com fixture payload real?
+- [ ] Grep zero: `visual_bundle`, `table_assembly`, `composite_visual`, `entity_route_dispatch`?
+
+## Em conflito com Playbook 12 / 09
+
+Playbook 12 (tier A declarativo) e stack rico do Playbook 09 são **históricos** para o pipeline de metadata. Em dúvida, seguir **Playbook 22** e `presentation-delivered-pure-jun2026.md`.

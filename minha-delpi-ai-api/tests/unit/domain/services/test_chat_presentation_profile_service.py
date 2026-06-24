@@ -36,7 +36,7 @@ def test_uses_schema_first_presentation_defaults_and_legacy() -> None:
         "/commercial/proposals",
         "commercial_proposals",
     )
-    assert not ChatPresentationProfileService.uses_schema_first_presentation(
+    assert ChatPresentationProfileService.uses_schema_first_presentation(
         "/products/90260144/stock",
         "product_stock",
     )

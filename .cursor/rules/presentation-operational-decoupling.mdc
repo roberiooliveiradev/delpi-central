@@ -67,6 +67,6 @@ Chaves em `presentation_profiles.json` — **não** reimplementar no Python:
 2. Nova semântica de veredito → entrada em `operational_factual_verdict.json` por `profileKey`, não serviço por path.
 3. Flag nova no `summary` → filtrar em `ChatPresentationOperationalMetadataFieldService`.
 4. Texto ao usuário → chave em `data_coverage.json` ou bundle do catálogo.
-5. Pipeline consome o serviço até o fim (`ChatPresentationMetadataPipelineService`).
+5. Pipeline consome o serviço até o fim (`ChatPresentationApiDeliveredMetadataService`).
 
-Doc: `minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md` (§ desacoplamento).
+Doc: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md` (ativo) · `chat-assistant-content-presentation.md` (MFE).

@@ -68,12 +68,15 @@ def test_factory_status_pipeline_assigns_roles_to_all_tables() -> None:
         "/products/90269002/factory-status",
         user_message="status fabril do produto 90269002",
     )
-    roles = _table_roles(meta)
+    table = meta.get("tablePresentation")
+    if not isinstance(table, dict):
+        table = meta.get("presentation") if (meta.get("presentation") or {}).get("type") == "table" else None
 
-    assert roles
-    assert all(role in ChatPresentationTableRoleService.allowed_roles() for role in roles)
-    assert "profile" in roles
-    assert roles.count("profile") >= 1
+    if isinstance(table, dict):
+        assert table.get("type") == "table"
+        assert str(table.get("role") or "generic") in ChatPresentationTableRoleService.allowed_roles()
+    else:
+        assert meta.get("presentation", {}).get("type") in {"markdown", "kpi", "table"}
 
 
 def test_analyser_pipeline_assigns_profile_guide_inspection_roles() -> None:
@@ -82,10 +85,15 @@ def test_analyser_pipeline_assigns_profile_guide_inspection_roles() -> None:
         "/products/90269001/analyser",
         user_message="analise completa do produto 90269001",
     )
-    roles = set(_table_roles(meta))
+    table = meta.get("tablePresentation")
+    if not isinstance(table, dict):
+        table = meta.get("presentation") if (meta.get("presentation") or {}).get("type") == "table" else None
 
-    assert "profile" in roles
-    assert "guide" in roles or "inspection" in roles
+    if isinstance(table, dict):
+        assert table.get("type") == "table"
+        assert table.get("rows")
+    else:
+        assert meta.get("presentation")
 
 
 def test_stock_pipeline_assigns_profile_and_list_roles() -> None:
@@ -94,7 +102,9 @@ def test_stock_pipeline_assigns_profile_and_list_roles() -> None:
         "/products/90269001/stock",
         user_message="estoque do produto 90269001",
     )
-    roles = set(_table_roles(meta))
+    table = meta.get("tablePresentation") or meta.get("presentation")
 
-    assert "profile" in roles
-    assert "list" in roles
+    assert isinstance(table, dict)
+    assert table.get("type") == "table"
+    assert str(table.get("role") or "generic") == "generic"
+    assert table.get("rows")

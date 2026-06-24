@@ -28,12 +28,13 @@ Contém o mapa completo de serviços (~200 entradas), roteamento api-delpi, stre
 
 | Documento | Assunto |
 |-----------|---------|
+| [**presentation-delivered-pure-jun2026.md**](./presentation-delivered-pure-jun2026.md) | **Pipeline ativo** — schema-first, anti-acoplamento |
 | [new-api-route-checklist.md](./new-api-route-checklist.md) | **Nova rota** — HTTP, registry, perfil, CI |
-| [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md) | `presentationDecision`, stack, multi-rota, MFE |
+| [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md) | `presentationDecision`, `renderPlan`, MFE |
 | [assistant-content-catalog.md](./assistant-content-catalog.md) | Bundles JSON e serviços loader |
 | [product-operational-content.md](./product-operational-content.md) | Escopos de produto, plural, estoque |
 | [presenter-content-migration-audit.md](./presenter-content-migration-audit.md) | Auditoria migração presenter → JSON |
-| [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md) | Narrativa pós-tool (panorama, atenção) |
+| [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md) | **Histórico** — stack narrativo (removido do pipeline) |
 | [vocabulary-centralization-jun2026.md](./vocabulary-centralization-jun2026.md) | Vocabulário SQL e intent centralizado |
 
 ### Capacidades transversais

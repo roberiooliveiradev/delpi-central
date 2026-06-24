@@ -184,6 +184,23 @@ class ChatPresentationApiDeliveredMetadataService:
             presenter=presenter,
         )
 
+        operational_root = presenter._unwrap_data(sanitized_data)
+
+        if isinstance(operational_root, dict):
+            from app.domain.services.chat_operational_commentary_enrichment_service import (
+                ChatDataInsightEnrichmentService,
+            )
+
+            ChatDataInsightEnrichmentService.enrich_metadata(
+                metadata,
+                data=operational_root,
+                format_quantity=lambda value, field_key=None: presenter._format_field_value(
+                    str(field_key or "available_quantity"),
+                    value,
+                ),
+                user_message=user_message,
+            )
+
         ChatPresentationRenderPipelineService.finalize(metadata)
 
         return metadata

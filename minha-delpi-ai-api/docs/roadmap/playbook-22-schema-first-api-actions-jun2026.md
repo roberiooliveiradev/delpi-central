@@ -10,7 +10,7 @@
 - [docie-desacoplamento-selecao-rotas-openapi.md](./docie-desacoplamento-selecao-rotas-openapi.md) — seleção de action (Fases 0–20 concluídas)
 - [playbook-10-contrato-respostas-api-delpi.md](./playbook-10-contrato-respostas-api-delpi.md) — contrato HTTP + `meta` (evolui para fonte única no OpenAPI)
 - [playbook-21-desacoplamento-refatoracao-completa-jun2026.md](./playbook-21-desacoplamento-refatoracao-completa-jun2026.md) — inventário legado e ondas W1–W4 (referência histórica)
-- [playbook-12-apresentacao-declarativa-refatoracao.md](./playbook-12-apresentacao-declarativa-refatoracao.md) — tier A concluído; perfis ricos entram em **modo legacy** até remoção
+- [playbook-12-apresentacao-declarativa-refatoracao.md](./playbook-12-apresentacao-declarativa-refatoracao.md) — tier A concluído (**histórico**); pipeline ativo = Playbook 22 delivered puro
 - [chat-intelligence-base.md](../architecture/chat-intelligence-base.md) — pipeline de turno
 
 ---
@@ -55,11 +55,11 @@ Resposta HTTP sanitizada → **`ChatSchemaDrivenPresentationService`**:
 
 **Sem** presenter dedicado, **sem** veredito operacional customizado, **sem** stack rico — até a API publicar `meta`/`x-delpi` suficiente.
 
-### 2.3 Apresentação legacy (`presentationStrategy: legacy`)
+### 2.3 Apresentação legacy (`presentationStrategy: legacy`) — **removida do runtime**
 
-Rotas tier A ainda não migradas: presenter por entidade, stack rico, `dataAnswer` template, dedup estrutural.
+O ramo legacy do pipeline foi **eliminado** (jun/2026). A flag `presentationStrategy: legacy` permanece na API de perfis apenas como guarda conceitual; **nenhuma rota a usa**. Reativar exige ADR + playbook.
 
-Marcadas em `presentation_profiles.json` → `entitySets.legacyPresentationProfiles` ou flag explícita no perfil.
+Documentação: [`presentation-delivered-pure-jun2026.md`](../architecture/presentation-delivered-pure-jun2026.md).
 
 ### 2.4 Remoção de acoplamento
 
@@ -100,18 +100,20 @@ flowchart LR
     META --> RENDER
 ```
 
-### 3.1 Pipeline de apresentação (Fase 1)
+### 3.1 Pipeline de apresentação (entregue)
 
 ```text
 ExecuteExternalAction → sanitize
-  → ChatPresentationProfileService.uses_schema_first_presentation?
-       sim → ChatSchemaDrivenPresentationService.build_primary (prioridade)
-       não → entity route / playbook / builder legacy (até remoção)
-  → ChatPresentationMetadataPipelineService.build (modos Automático/Texto)
-  → MFE
+  → ChatPresentationMetadataPipelineService.build
+  → ChatPresentationApiDeliveredMetadataService.build
+       → ChatSchemaDrivenPresentationService
+       → ChatDataInsightEnrichmentService
+       → ChatPresentationDecisionService
+       → ChatPresentationRenderPipelineService.finalize
+  → MFE render-only
 ```
 
-**Ordem invertida em relação ao legado:** schema-first **antes** de presenters acoplados quando `as_delivered`.
+**Sem** ramo legacy, visual bundle, table assembly ou presenters por entidade.
 
 ### 3.2 Contrato OpenAPI estendido (Fase 2 — futuro)
 
@@ -147,7 +149,7 @@ Importador persiste extensão em `external_actions.metadata` → perfil derivado
 
 ### Fase B — Apresentação as-delivered (default)
 
-**Status:** em andamento (jun/2026).
+**Status:** ✅ concluída (jun/2026).
 
 | # | Entrega | Módulo canônico |
 |---|---------|-----------------|
@@ -162,25 +164,23 @@ Importador persiste extensão em `external_actions.metadata` → perfil derivado
 
 ### Fase C — Migração em massa (ponto de conexão)
 
-**Não migrar rota a rota.** O corte é no pipeline:
+**Status:** ✅ concluída (jun/2026) — ver [`changelog/2026-06-presentation-delivered-pure.md`](../changelog/2026-06-presentation-delivered-pure.md).
 
 ```text
 ExecuteExternalAction
   → ChatPresentationMetadataPipelineService.build
-       → uses_schema_first_presentation? (default: sim)
-            → ChatPresentationApiDeliveredMetadataService.build  ← NOVO
-       → (legado) pipeline rico — só se presentationStrategy: legacy no perfil
+  → ChatPresentationApiDeliveredMetadataService.build
   → ExternalActionResultPresenter.build_presentation
-       → ChatSchemaDrivenPresentationService.finish_schema_first_primary (sempre)
+       → ChatSchemaDrivenPresentationService.finish_schema_first_primary
 ```
 
 | Módulo | Papel |
 |--------|-------|
-| `ChatPresentationApiDeliveredMetadataService` | Metadata mínima: tabela/texto/KPI do schema + coverage + decision + renderPlan |
+| `ChatPresentationApiDeliveredMetadataService` | Metadata mínima: schema-driven + dataAnswer + decision + renderPlan |
 | `ChatSchemaDrivenPresentationService` | Forma dos dados (items, série, registro aninhado, JSON cru) |
-| `legacyPresentationProfiles` | **Vazio** — legacy só via `presentationStrategy: legacy` explícito |
+| `legacyPresentationProfiles` | **Vazio** — ramo legacy **removido** do código |
 
-Presenters por entidade ficam **mortos** no caminho feliz; remover arquivos incrementalmente sem bloquear o switch.
+Presenters por entidade **removidos**; pasta `presenters/` só com hosts utilitários (SQL, KPI, table host).
 
 ### Fase D — Shape e enriquecimento na API (depois)
 
@@ -295,7 +295,7 @@ cd minha-delpi-ai-api
 | Execução HTTP | `ExecuteExternalActionUseCase` |
 | Estratégia apresentação | `ChatPresentationProfileService.uses_schema_first_presentation` |
 | Render genérico | `ChatSchemaDrivenPresentationService` |
-| Pipeline metadata | `ChatPresentationMetadataPipelineService` |
+| Pipeline metadata | `ChatPresentationApiDeliveredMetadataService` (via `ChatPresentationMetadataPipelineService`) |
 | MFE | `chatPresentation.ts` (render-only) |
 
 ---
@@ -308,3 +308,4 @@ cd minha-delpi-ai-api
 | jun/2026 | **Playbook 22** — north star schema-first; Fase B iniciada (`presentationStrategy`, schema-first no presenter) |
 | jun/2026 | **Fase C** — `purchase_list` migrado: presenter removido, `schemaFirstMigratedProfiles`, `finish_schema_first_primary` sem fallback legacy |
 | jun/2026 | **Fase C** — corte em massa: `ChatPresentationApiDeliveredMetadataService` no pipeline; `legacyPresentationProfiles` vazio; `build_presentation` sempre schema-first |
+| jun/2026 | **Delivered puro** — remoção de 12 módulos legacy (visual bundle, table assembly, composite, …); doc + regra Cursor `schema-first-presentation-delivered.mdc` |

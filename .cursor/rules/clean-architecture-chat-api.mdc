@@ -34,16 +34,16 @@ Guardrails gerais (avisar ao desviar): `clean-code-architecture-guardrails.mdc`.
 - Seleção: `ExternalActionRouteSelectionService`.
 - Execução: `ExecuteExternalActionUseCase` + gateway HTTP.
 
-## Apresentação
+## Apresentação (delivered puro — jun/2026)
 
-- Perfis declarativos: `presentation_profiles.json` → `ChatPresentationProfileService`.
-- Pipeline metadata: `ChatPresentationMetadataPipelineService.build` (application).
-- Forma dos dados: `ChatPresentationDataShapeAnalyzer` (`viewIntent`).
+- Pipeline: `ChatPresentationApiDeliveredMetadataService.build` (único caminho via `ChatPresentationMetadataPipelineService`).
+- Schema-driven: `ChatSchemaDrivenPresentationService` + `ExternalActionResultPresenter.finish_schema_first_primary`.
+- SQL/KPI: `ExternalActionSqlPresenter`, `ExternalActionKpiChartPresenter` (exceções legítimas).
 - Decisão Automático: `ChatPresentationViewIntentService` + `ChatPresentationDecisionService.enrich_metadata`.
-- Presenter: `ExternalActionResultPresenter` + `ExternalActionEntityRoutePresenter` (domain).
-- Vocabulário: `column_labels.json`, `presenter_content.json`, `presentation_vocabulary.json`.
-- Normalização: `ChatPresentationFieldNormalizationService`.
-- Anexos/lousa: `attachments.json` + `ChatAttachmentContentService`.
+- Comentário: `ChatDataInsightEnrichmentService` → `dataAnswer` / `dataCommentary`.
+- Formato explícito: `ChatToolContextFormatService` → `build_bundle` schema-driven.
+- Perfis: `presentation_profiles.json` — `pathRules`, `chartPolicy`; **não** `visualBuilders` / `tableAssembly`.
+- Regra obrigatória: **`schema-first-presentation-delivered.mdc`**.
 - Nova rota: checklist **`new-api-route-checklist.mdc`**.
 
 ## Ports (Fase 2)

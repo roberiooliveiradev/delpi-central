@@ -13,7 +13,7 @@ O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats c
 
 | Camada | Responsabilidade | Exemplos no código |
 |--------|-------------------|-------------------|
-| **Chat base** | Intenção, pipeline, tools, policies, contexto, apresentação | `ChatIntelligencePipelineService`, `ChatToolContextService`, `ExternalActionSelectionService`, `ChatPresentationMetadataPipelineService`, `ChatPresentationDecisionService`, `ChatPresentationViewIntentService`, `prompt_policies/*.md` |
+| **Chat base** | Intenção, pipeline, tools, policies, contexto, apresentação | `ChatIntelligencePipelineService`, `ChatToolContextService`, `ChatPresentationApiDeliveredMetadataService`, `ChatSchemaDrivenPresentationService`, `ExternalActionSelectionService`, `prompt_policies/*.md` |
 | **Agente** | Identidade, allowed actions, skills, escopo RAG | `system_prompt`, `metadata.skills`, providers/actions do agente |
 | **Projeto** | Agrupamento, prompt de projeto, agente default | `ChatWorkspaceContextService`, `projectPrompt` |
 | **Use cases** | Orquestração fina (stream/send/simulate) | Apenas **consumir** o pipeline base; sem lógica de inteligência duplicada |
@@ -36,6 +36,7 @@ Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `chat-pros
 - Agente de plataforma ou default de projeto sem escolha explícita do usuário — usar `ChatWorkspaceAgentActivationService` / `chatAgentActivation.ts`.
 - Reintroduzir `lastEntities` / `activeEntities`, seção «Entidades» na UI ou gravar produto/filial só em `upsert_entity` sem `context_item`.
 - Copiar o mesmo `if` em `SendChatMessageUseCase` e `StreamChatMessageUseCase` sem extrair para serviço base.
+- Presenter por entidade (`product_*_presenter.py`), visual bundle, table assembly ou stack rico no pipeline — ver `schema-first-presentation-delivered.mdc`.
 - Bypass do pipeline em preview/simulate sem `previous_messages` quando o histórico importa.
 
 ## O que fazer
@@ -43,7 +44,7 @@ Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `chat-pros
 1. Alterar ou estender serviços em `minha-delpi-ai-api/app/application/services/` e `app/domain/services/` usados por **todos** os chats.
 2. Novas policies em `app/domain/prompt_policies/`; registrar em `PromptPolicyService` quando for modo global (ex.: `analysis_mode`).
 3. Testes em `tests/unit/` do pacote base + casos em `tests/fixtures/chat_intelligence_regression_cases.py`.
-4. Documentar em `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`.
+4. Documentar em `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md` quando alterar apresentação.
 5. **Textos de `reason`, activity SSE e direct answers** nos delegates de route selection / turn prep → `assistant/*.json` (regra `assistant-content-json.mdc`); nunca hardcoded em lotes de clean architecture.
 
 ## Pipeline (referência)

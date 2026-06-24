@@ -36,7 +36,7 @@ Wrappers especializados (mantêm API estável):
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
 | `api_route_domains.json` | Domínios de rota operacional; **`parameterStrategies`** declarativas (bindings, patterns, granularity) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
-| `presentation_profiles.json` | Perfil `directives` (3 tabelas MPs/fornecedores/última compra; stack em Automático) | `ChatPresentationProfileService`, `ChatPresentationTableAssemblyService` |
+| `presentation_profiles.json` | Perfil `directives` — pathRules / chartPolicy (stack via `renderPlan` no MFE) | `ChatPresentationProfileService` |
 | `response_modes.json` | Modos Rápida/Normal/Pensador (rótulos, aliases, `pipelineEffects`, **`fastCommentaryDirect`**, **`normalCommentaryDirect`**, **`commentaryLead`** (profundidade por modo, perfis brief/standard/expanded), budgets LLM **`fast/normal/thinkerLlmBudget`**, **`generationLimits`**, **`latencyTargetsSec`**) | `ChatResponseModeContentService`, `ChatOperationalCommentaryLeadContentService`, `ChatResponseModeService`, `ChatOperationalLlmSynthesisBriefDirectService` |
 | `operational_narrative_synthesis.json` | Gate LLM narrativo (perfis evidence-first, policies por modo, termos factuais estreitos) | `ChatOperationalNarrativeSynthesisContentService`, `ChatOperationalNarrativeSynthesisService` |
 | `operational_factual_verdict.json` | Vereditos factuais por `profileKey` (coerência LLM, fatos, guardrails) | `ChatOperationalFactualVerdictContentService`, `ChatOperationalFactualVerdictService` |
@@ -92,12 +92,12 @@ Wrappers especializados (mantêm API estável):
 | `presentation_vocabulary.json` | Dedup estrutura/BOM, **`decisionReasons`**, insights, Playbook 12 (`tableRoles`, `tierAPipelineCases`), **`automaticScoreMarkers`** (listagem vs ranking no Automático) | `ChatPresentationVocabularyService` |
 | `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
-| `presentation_profiles.json` | `entityProfiles`, **`entitySetProfileContracts`**, `entitySets`, `pathRules`, `noChartEntities`, `chartPolicy`, `defaultViewPolicy`, visualBuilders, stackPlan | `ChatPresentationProfileService`, `ChatPresentationCoverageService` |
+| `presentation_profiles.json` | `entityProfiles`, **`entitySetProfileContracts`**, `entitySets`, `pathRules`, `chartPolicy`, `commentaryProfileKey` — **não** adicionar `visualBuilders` / `tableAssembly` (removidos do runtime) | `ChatPresentationProfileService`, `ChatPresentationCoverageService` |
 | `ChatOperationalResponseProfileService` | Roteamento `meta.entity` → perfil/presenter OpenAPI (alias legado: `ChatApiDelpiResponseProfileService`) | path hardcoded em presenters |
 | `presenter_content.json` → `schemaDriven` | Narrativa mínima para rotas tier C/B sem builder dedicado | `ChatSchemaDrivenPresentationService` |
 | `presenter_content.json` → `humanizedNarrative` | Panorama, leitura rápida, destaques, prefixos de atenção e conclusão do enriquecimento genérico | `ChatPresentationHumanizedNarrativeService`, `ChatPresentationStackOrderService` |
-| `presentation_profiles.json` → `humanizedNarrative` | `skip` ou `enrich` por perfil (ex.: stock, sale_pricing) | `ChatPresentationProfileService`, `ChatPresentationHumanizedNarrativeService` |
-| `presenter_content.json` → `stackSectionFraming` | Frases de framing por seção (`default`, `byProfile.sale_pricing`, …) | `ChatPresentationStackMarkdownService`, `ChatPresentationSectionAvailabilityService` |
+| `presentation_profiles.json` → `humanizedNarrative` | `skip` ou `enrich` por perfil — **legado**; comentário ativo via `ChatDataInsightEnrichmentService` | `ChatPresentationProfileService` |
+| `presenter_content.json` → `stackSectionFraming` | Frases de framing por seção — **legado** (MFE pode ainda consumir se presente) | `ChatPresentationStackMarkdownService` (legado) |
 | `presenter_content.json` → `routes.salePricing` | Narrativa de precificação: panorama, leitura, atenção, conclusão, KPI | `ExternalActionProductPricingPresenter` |
 | `presenter_content.json` → `generic.treeOutlineHeader` / `treeOutlineTruncated` | Cabeçalho e truncamento do outline ASCII em modo Texto (estrutura/BOM) | `ChatPresentationTreeMarkdownService` |
 | `presenter_content.json` → `compositeVisualSpecs` | Spec declarativa do quartet KPI/árvore/gráfico/dashboard por perfil (Playbook 12 R6) | `ChatPresentationCompositeVisualBuilder`, `ChatPresentationProfileCompositeVisualService` |

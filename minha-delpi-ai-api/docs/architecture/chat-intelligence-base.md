@@ -20,6 +20,8 @@ Melhorias de inteligência (comparação, insights, fast path operacional, respo
 
 **Contrato api-delpi → chat (roadmap):** [`../roadmap/playbook-10-contrato-respostas-api-delpi.md`](../roadmap/playbook-10-contrato-respostas-api-delpi.md) — padronização de `meta`, OpenAPI e presenter por perfil; a api-delpi declara o dado, o chat base apresenta.
 
+**North star apresentação (jun/2026):** [`presentation-delivered-pure-jun2026.md`](./presentation-delivered-pure-jun2026.md) — pipeline único as-delivered; Playbook 22. Playbook 12 (tier A declarativo) é **histórico**.
+
 **Clean architecture (roadmap):** [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md) — revisão de camadas, débitos, fases 0–6 e baseline [`clean-architecture-baseline.json`](./clean-architecture-baseline.json).
 
 **Organização dos services:** [`../roadmap/playbook-20-organizacao-services-chat.md`](../roadmap/playbook-20-organizacao-services-chat.md) — taxonomia domain/application, código morto, convenções; auditoria `scripts/audit_service_inventory.py`.
@@ -37,7 +39,7 @@ Mapa de navegação — não substitui a tabela completa em [§ Serviços centra
 | **Turno send/stream** | Preparação, LLM, conclusão unificados | `app/application/services/chat_turn/` · `SendChatMessageUseCase` · `StreamChatMessageUseCase` | [ADR 002](./adr/002-send-stream-turn-parity.md) · [`chat-pre-llm-layers.md`](./chat-pre-llm-layers.md) |
 | **Pipeline pré-tool** | Intenção, direct answer, memória, canvas | `ChatIntelligencePipelineService` · `ChatTurnPreparationService` + delegates `chat_turn_preparation_*` | [ADR 001](./adr/001-chat-base-intelligence.md) |
 | **Tools & actions** | Seleção, execução, contexto para LLM | `ChatToolContextService` + `chat_tool_context_*` · `ExternalActionSelectionService` + `external_action_*_route_selection_*` | [`operational-api-routing`](../../.cursor/rules/operational-api-routing.mdc) |
-| **Presenter & UI de dados** | `humanizedSummary`, tabelas, gráficos | `external_action_result_presenter.py` · `presenters/*_presenter.py` | [ADR 003](./adr/003-assistant-content-json.md) · [`presenter-content-migration-audit.md`](./presenter-content-migration-audit.md) |
+| **Presenter & UI de dados** | Schema-first + metadata mínima | `ChatPresentationApiDeliveredMetadataService` · `ChatSchemaDrivenPresentationService` · `ExternalActionResultPresenter` | [`presentation-delivered-pure-jun2026.md`](./presentation-delivered-pure-jun2026.md) · [ADR 003](./adr/003-assistant-content-json.md) |
 | **Conteúdo JSON** | Bundles PT-BR editáveis | `app/content/pt-BR/assistant/*.json` · `*ContentService` | [`assistant-content-catalog.md`](./assistant-content-catalog.md) · [vocabulário jun/2026](./vocabulary-centralization-jun2026.md) · [ADR 006](./adr/006-hardcoded-pt-strings-baseline-gate.md) |
 | **SQL avançado** | Authoring, schema, execução (com agente) | `ChatAdvancedSqlSpecialistService` · `ChatSql*Service` | Skill `sql-assistant` · policies `sql-*.md` |
 | **Anexos & lousa** | Welcome, OCR, canvas | `ChatAttachment*Service` · `ChatCanvas*Service` · `ChatDocumentVisionService` · **`ChatPdfDocumentExtractionService`** | [`playbook-05-anexos-lousa.md`](../roadmap/playbook-05-anexos-lousa.md) · [**extração PDF**](./chat-pdf-document-extraction.md) |
@@ -49,7 +51,7 @@ Mapa de navegação — não substitui a tabela completa em [§ Serviços centra
 
 **Delegates do turno (pós-refactor):** `ChatTurnPreparationIngressService`, `ChatTurnPreparationDirectAnswerService`, `ChatTurnPreparationMemoryContextService`, `ChatTurnPreparationToolRoutingService`, `ChatTurnPreparationRagService`, `ChatTurnPreparationPostToolResolutionService`, `ChatTurnPreparationResultService`, `ChatTurnPreparationPreToolContextService` — todos consumidos por `ChatTurnPreparationService.prepare()`.
 
-**Delegates do presenter (pós-refactor):** `ExternalActionProductListPresenter`, `ExternalActionProductAnalyserPresenter`, `ExternalActionKpiChartPresenter`, `ExternalActionPresentationBuilderPresenter`, `ExternalActionOperationalResponsePresenter`, … — acessados via facade `ExternalActionResultPresenter`.
+**Delegates do presenter (jun/2026):** hosts utilitários em `presenters/` — `ExternalActionKpiChartPresenter`, `ExternalActionSqlPresenter`, `ExternalActionOperationalResponsePresenter`, `presentation_table_host_service` — acessados via facade `ExternalActionResultPresenter` + `ChatSchemaDrivenPresentationService`. **Sem** presenters por entidade (`product_*_presenter.py` removidos).
 
 ---
 

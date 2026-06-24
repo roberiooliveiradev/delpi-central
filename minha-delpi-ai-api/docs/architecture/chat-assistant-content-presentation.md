@@ -1,5 +1,7 @@
 # ChatAssistantContent — apresentação rica unificada
 
+> **Atualização jun/2026:** o pipeline de metadata é **delivered puro** (schema-first). Leitura obrigatória: [`presentation-delivered-pure-jun2026.md`](./presentation-delivered-pure-jun2026.md). Seções abaixo sobre stack rico / `HumanizedNarrativeService` descrevem contrato MFE e histórico — **não** o pipeline ativo de geração.
+
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
 Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md), [new-api-route-checklist.md](./new-api-route-checklist.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [roadmap apresentação generalizada jun/2026](../roadmap/apresentacao-dados-generalizada-jun2026.md), [playbook 12 — refatoração declarativa](../roadmap/playbook-12-apresentacao-declarativa-refatoracao.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md), [changelog `summary_then_evidence` e modos](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md), [changelog P6 `renderPlan` e modos](../changelog/2026-06-p6-renderplan-modos-apresentacao.md), [changelog viewIntent](../changelog/2026-06-viewintent-apresentacao-automatica.md), [changelog P19 prosa/latência analyser](../changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
@@ -17,35 +19,32 @@ Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [humanize
 
 ---
 
-## Pipeline
+## Pipeline (ativo — jun/2026)
 
 ```
 execute_external_action
-  → ExternalActionResultPresenter (table / chart / tree / text markdown)
-  → ExecuteExternalActionUseCase._build_presentation_metadata
-       primary = tree | chart | table (prioridade: tree > chart > table)
-       tablePresentation / treePresentation / chartPresentation = secundários (se ≠ primary)
-       textPresentation = narrativa (analyser, structure, …)
-  → ChatPresentationDecisionService.enrich_metadata
-       presentationDecision.layoutMode = "stack" | "single"
-       presentationDecision.visualOrder = ["text","table","tree","chart",…]
-       presentationDecision.availableViews, selected, insight, recommendations
-       dataShape.viewIntent (via ChatPresentationDataShapeAnalyzer)
-       ChatPresentationViewIntentService — tabela vs gráfico no Automático
-  → ChatPresentationHumanizedNarrativeService.enrich_metadata
-       narrativa fina → panorama/leitura/atenção/conclusão (qualquer action com painéis)
-  → ChatPresentationStackOrderService.enrich_metadata
-       stackPresentationPlan (ordem narrativa + papéis de tabela por rota)
-  → ChatPresentationRenderPipelineService.finalize(metadata)
-       sync_render_contract_for_explicit_session → prune → renderPlan.build
+  → ChatPresentationMetadataPipelineService.build
+  → ChatPresentationApiDeliveredMetadataService.build
+       → ChatSchemaDrivenPresentationService (primary + bundle)
+       → ChatDataInsightEnrichmentService (dataAnswer / dataCommentary)
+       → ChatPresentationFieldNormalizationService
+       → ChatPresentationDecisionService.enrich_metadata
+       → ChatPresentationRenderPipelineService.finalize → renderPlan
   → toolCalls[].metadata no turno do chat
 
 MFE: buildAssistantContentSegments(content, toolCalls)
   → buildSegmentsFromRenderPlan(metadata) quando renderPlan.version === 1
-  → `resolveRenderPlanForExecution` consome só `renderPlan` v1 da API
-  → resolveAssistantContentLayout (stack | single | markers)
+  → resolveAssistantContentLayout (single | stack legado no MFE)
   → assistantContentRegistry → ChatRichTable | ChatRichTree | …
 ```
+
+### Pipeline histórico (removido)
+
+O ramo com `ChatPresentationHumanizedNarrativeService`, `ChatPresentationVisualBundleService`, `ChatPresentationTableAssemblyService` e stack rico tier A **não roda mais**. Não reintroduzir.
+
+---
+
+## Pipeline (referência histórica Playbook 12)
 
 ---
 

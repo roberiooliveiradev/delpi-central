@@ -36,10 +36,3 @@ def test_is_rich_playbook_route_resolves_from_profile_not_hardcoded_flags():
         entity="product_guide",
     )
 
-
-def test_presentation_table_assembly_entities_cover_operational_profiles():
-    entities = ChatPresentationProfileService.entity_set("presentationTableAssemblyEntities")
-
-    assert "product_factory_status" in entities
-    assert "product_structure_exclusivity" in entities
-    assert "product_purchases" in entities

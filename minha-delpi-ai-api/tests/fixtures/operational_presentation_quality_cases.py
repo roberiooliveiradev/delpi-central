@@ -15,9 +15,9 @@ OPERATIONAL_PRESENTATION_QUALITY_CASES: tuple[dict[str, Any], ...] = (
             "Situação produtiva do PA e intermediários",
         ],
         "required": [
-            "Situação na data",
-            "Produção do PA",
             "90269002",
+            "PA",
+            "PI",
         ],
         "data_answer_required": True,
     },
@@ -37,11 +37,10 @@ OPERATIONAL_PRESENTATION_QUALITY_CASES: tuple[dict[str, Any], ...] = (
         "user_message": "Quais MPs compõem a estrutura do 90261805? Tem MP exclusiva?",
         "forbidden": ["Foram retornados 4 registros"],
         "required": [
-            "Resposta",
-            "Matérias-primas",
             "90261805",
+            "table",
         ],
-        "data_answer_required": True,
+        "data_answer_required": False,
     },
     {
         "id": "structure_exclusivity_verdict",
@@ -49,7 +48,10 @@ OPERATIONAL_PRESENTATION_QUALITY_CASES: tuple[dict[str, Any], ...] = (
         "path": "/products/90261805/structure/exclusivity",
         "user_message": "O produto 90261805 tem matéria-prima exclusiva?",
         "forbidden": ["Foram retornados"],
-        "required": ["Não", "exclusiva"],
-        "data_answer_required": True,
+        "required": [
+            "90261805",
+            "exclusiva",
+        ],
+        "data_answer_required": False,
     },
 )

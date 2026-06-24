@@ -9,7 +9,7 @@ alwaysApply: true
 
 **Nunca** entregar melhoria que não esteja alinhada a clean code e clean architecture deste repositório. **Sempre** avisar o usuário **antes ou durante** a implementação quando a solução proposta ou em curso estiver fugindo disso — não corrigir silenciosamente com patch local.
 
-Regras complementares (obrigatórias): `development-standards-index.mdc`, `centralized-rules-first.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc` (rotas novas).
+Regras complementares (obrigatórias): `development-standards-index.mdc`, `centralized-rules-first.mdc`, `schema-first-presentation-delivered.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc` (rotas novas).
 
 ## O que significa «alinhado» aqui
 
@@ -32,6 +32,7 @@ Interromper ou sinalizar com **«⚠ Desvio de clean architecture»** quando:
 4. **Patch pontual** em componente/use case/prompt quando existe módulo canônico na tabela de `centralized-rules-first.mdc`.
 5. **Teste que asserta comportamento errado** só para passar CI, em vez de corrigir a regra.
 6. **Lógica de apresentação/intenção duplicada** em `Send*` e `Stream*` sem extrair para serviço base.
+7. **Acoplamento por rota** — novo `*_presenter.py`, `visualBuilders`/`tableAssembly`, ramo legacy no pipeline, ou serviço `ChatOperational{Route}*` em vez de schema-driven + `profileKey` (ver `schema-first-presentation-delivered.mdc`).
 
 Formato do aviso (obrigatório quando aplicável):
 

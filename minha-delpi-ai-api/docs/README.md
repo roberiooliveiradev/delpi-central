@@ -13,9 +13,10 @@
 | Ordem | Documento | Para quem |
 |------:|-----------|-----------|
 | 1 | [api/00-visao-geral.md](./api/00-visao-geral.md) | Auth, erros, SSE, permissões |
-| 2 | [architecture/chat-intelligence-base.md](./architecture/chat-intelligence-base.md) | Pipeline de inteligência (leitura obrigatória para backend) |
-| 3 | [development/guia-desenvolvimento.md](./development/guia-desenvolvimento.md) | Onde colocar código, testes, PR |
-| 4 | [api/README.md](./api/README.md) | Referência HTTP completa |
+| 2 | [architecture/presentation-delivered-pure-jun2026.md](./architecture/presentation-delivered-pure-jun2026.md) | Apresentação schema-first (obrigatório para rotas operacionais) |
+| 3 | [architecture/chat-intelligence-base.md](./architecture/chat-intelligence-base.md) | Pipeline de inteligência (backend) |
+| 4 | [development/guia-desenvolvimento.md](./development/guia-desenvolvimento.md) | Onde colocar código, testes, PR |
+| 5 | [api/README.md](./api/README.md) | Referência HTTP completa |
 
 ---
 
@@ -64,6 +65,7 @@ Referência baseada nas rotas reais do Flask e nos tipos do plugin `minha-delpi-
 |-----------|----------|
 | [README.md](./architecture/README.md) | Índice de arquitetura |
 | [new-api-route-checklist.md](./architecture/new-api-route-checklist.md) | **Nova rota api-delpi** — HTTP, registry, perfil, CI |
+| [**presentation-delivered-pure-jun2026.md**](./architecture/presentation-delivered-pure-jun2026.md) | **Pipeline ativo** — schema-first |
 | [chat-intelligence-base.md](./architecture/chat-intelligence-base.md) | **Núcleo** — pipeline, serviços, roteamento api-delpi |
 | [chat-pre-llm-layers.md](./architecture/chat-pre-llm-layers.md) | Fases A/B/C antes do LLM |
 | [chat-assistant-content-presentation.md](./architecture/chat-assistant-content-presentation.md) | Apresentação rica (API + contrato MFE) |
@@ -72,7 +74,7 @@ Referência baseada nas rotas reais do Flask e nos tipos do plugin `minha-delpi-
 | [intent-routing.md](./architecture/intent-routing.md) | Roteamento de intenção (Playbook 02) |
 | [product-operational-content.md](./architecture/product-operational-content.md) | Vocabulário operacional de produto |
 | [vocabulary-centralization-jun2026.md](./architecture/vocabulary-centralization-jun2026.md) | Centralização de termos SQL/intent |
-| [humanized-narrative-stack-jun2026.md](./architecture/humanized-narrative-stack-jun2026.md) | Narrativa humanizada pós-tool |
+| [humanized-narrative-stack-jun2026.md](./architecture/humanized-narrative-stack-jun2026.md) | **Histórico** — stack narrativo (removido do pipeline) |
 | [email-writing.md](./architecture/email-writing.md) | Escrita de e-mails corporativos |
 | [text-correction.md](./architecture/text-correction.md) | Correção de texto e typos |
 | [continuous-learning.md](./architecture/continuous-learning.md) | Aprendizado contínuo (roadmap) |
@@ -114,6 +116,7 @@ Documentos para **ingestão na base de conhecimento** — não confundir com có
 
 Changelogs recentes:
 
+- [2026-06-presentation-delivered-pure.md](./changelog/2026-06-presentation-delivered-pure.md)
 - [2026-06-viewintent-apresentacao-automatica.md](./changelog/2026-06-viewintent-apresentacao-automatica.md)
 - [2026-06-playbook-inteligencia.md](./changelog/2026-06-playbook-inteligencia.md)
 - [2026-06-playbook-14-corretor-digitacao-composer.md](./changelog/2026-06-playbook-14-corretor-digitacao-composer.md)

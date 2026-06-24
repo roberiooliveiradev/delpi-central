@@ -84,17 +84,8 @@ class ChatToolContextFormatService:
         if last_data is None:
             return None
 
-        from app.domain.services.chat_presentation_profile_visual_bundle_service import (
-            ChatPresentationProfileVisualBundleService,
-        )
-
         path_token = str(path or "")
-        profile_tree = ChatPresentationProfileVisualBundleService.build_profile_view(
-            self._presenter,
-            path=path_token,
-            view="tree",
-            data=last_data,
-        )
+        profile_tree = self._schema_bundle_view(last_data, path=path_token).tree
 
         if isinstance(profile_tree, dict) and profile_tree.get("type") == "tree":
             return profile_tree
@@ -131,16 +122,8 @@ class ChatToolContextFormatService:
         if last_data is None:
             return None
 
-        from app.domain.services.chat_presentation_profile_visual_bundle_service import (
-            ChatPresentationProfileVisualBundleService,
-        )
-
         path_token = str(path or "")
-        profile_table = ChatPresentationProfileVisualBundleService.build_profile_table_view(
-            self._presenter,
-            path=path_token,
-            data=last_data,
-        )
+        profile_table = self._schema_bundle_view(last_data, path=path_token).table
 
         if isinstance(profile_table, dict) and profile_table.get("type") == "table":
             return profile_table
@@ -299,43 +282,10 @@ class ChatToolContextFormatService:
         path = str(meta.get("path") or "")
         rebuilt: dict | None = None
 
-        root = self._presenter._unwrap_data(last_data)
+        generic = self._presenter.build_dashboard_presentation(last_data, path=path)
 
-        if isinstance(root, dict) and "factory-status" in path.lower():
-            rebuilt = self._presenter.build_factory_dashboard_presentation(
-                root,
-                path,
-                kpi=meta.get("kpiPresentation")
-                if isinstance(meta.get("kpiPresentation"), dict)
-                else None,
-                tree=meta.get("treePresentation")
-                if isinstance(meta.get("treePresentation"), dict)
-                else None,
-                chart=meta.get("chartPresentation")
-                if isinstance(meta.get("chartPresentation"), dict)
-                else None,
-                table=self._find_table_presentation(meta),
-            )
-
-        if not (isinstance(rebuilt, dict) and rebuilt.get("type") == "dashboard"):
-            from app.domain.services.chat_presentation_profile_visual_bundle_service import (
-                ChatPresentationProfileVisualBundleService,
-            )
-
-            profile_dashboard = ChatPresentationProfileVisualBundleService.build_profile_view(
-                self._presenter,
-                path=path,
-                view="dashboard",
-                data=last_data,
-            )
-
-            if isinstance(profile_dashboard, dict) and profile_dashboard.get("type") == "dashboard":
-                rebuilt = profile_dashboard
-            else:
-                generic = self._presenter.build_dashboard_presentation(last_data, path=path)
-
-                if isinstance(generic, dict) and generic.get("type") == "dashboard":
-                    rebuilt = generic
+        if isinstance(generic, dict) and generic.get("type") == "dashboard":
+            rebuilt = generic
 
         if rebuilt is not None:
             meta["dashboardPresentation"] = rebuilt
@@ -392,3 +342,20 @@ class ChatToolContextFormatService:
             )
 
             ChatPresentationRenderPipelineService.finalize(meta)
+
+    def _schema_bundle_view(self, data, *, path: str):
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+        from app.domain.services.chat_schema_driven_presentation_service import (
+            ChatSchemaDrivenPresentationService,
+        )
+
+        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
+
+        return ChatSchemaDrivenPresentationService.build_bundle(
+            self._presenter,
+            data,
+            path=path,
+            entity=profile.entity,
+        )

@@ -1,5 +1,7 @@
 # Narrativa humanizada em stack — qualquer action (jun/2026)
 
+> **Status histórico (jun/2026):** `ChatPresentationHumanizedNarrativeService` e stack rico tier A foram **removidos** do pipeline. Comentário operacional ativo: `ChatDataInsightEnrichmentService` → `dataAnswer`. Pipeline atual: [`presentation-delivered-pure-jun2026.md`](./presentation-delivered-pure-jun2026.md).
+
 Documentação do padrão **texto interpretativo antes dos painéis** (tabela, KPI, gráfico, árvore, dashboard) para respostas de `execute_external_action`.
 
 Relacionado: [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md), [assistant-content-catalog.md](./assistant-content-catalog.md), [perguntas-teste-chat-jun2026.md](../testing/perguntas-teste-chat-jun2026.md).
