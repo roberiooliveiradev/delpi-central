@@ -106,12 +106,11 @@ class ChatPresentationTableMarkdownService:
         if not columns:
             return ""
 
-        from app.domain.services.external_actions.presenters.product_analyser_presenter import (
-            ExternalActionProductAnalyserPresenter,
+        from app.domain.services.external_actions.presenters.presentation_table_host_service import (
+            markdown_table,
         )
 
-        presenter = ExternalActionProductAnalyserPresenter(None)
-        table_lines = presenter._markdown_table(columns, dict_rows)
+        table_lines = markdown_table(columns, dict_rows)
 
         if not table_lines:
             return ""

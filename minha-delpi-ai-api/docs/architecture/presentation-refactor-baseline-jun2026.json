@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-11T02:31:06.749958+00:00",
+  "generatedAt": "2026-06-24T16:23:24.076440+00:00",
   "playbook": "12-R0",
   "summary": {
     "auditFileCount": 4,
@@ -19,17 +19,23 @@
     "visualBundleDedicatedEnrichMax": 0,
     "useCasePathTableAssemblyElifMax": 0,
     "sectionAvailabilityRouteHandlerMax": 0,
-    "totalPathConditionalsMax": 0
+    "totalPathConditionalsMax": 0,
+    "useCaseMetadataPipelineMaxLines": 200,
+    "profileVisualBundleBuilderElifMax": 0,
+    "narrativeOrderTemplateMethodMax": 0
   },
   "profileGaps": {
     "missingVisualBuilders": [
+      "directives",
       "generic",
       "generic_kpi_series",
       "generic_list",
       "kpi_dashboard",
       "kpi_series",
       "kpi_snapshot",
+      "last_purchase",
       "playbook_report",
+      "purchase_list",
       "sql",
       "system",
       "table_list",
@@ -42,19 +48,24 @@
       "kpi_dashboard",
       "kpi_series",
       "kpi_snapshot",
+      "last_purchase",
       "playbook_report",
+      "purchase_list",
       "sql",
       "system",
       "table_list"
     ],
     "missingSectionRules": [
+      "directives",
       "generic",
       "generic_kpi_series",
       "generic_list",
       "kpi_dashboard",
       "kpi_series",
       "kpi_snapshot",
+      "last_purchase",
       "playbook_report",
+      "purchase_list",
       "sql",
       "system",
       "table_list"
@@ -68,7 +79,7 @@
   "files": [
     {
       "relativePath": "app/application/use_cases/execute_external_action_use_case.py",
-      "lineCount": 329,
+      "lineCount": 407,
       "pathConditionalCount": 0,
       "pathConditionalHits": [],
       "dedicatedEnrichMethods": [],
@@ -91,8 +102,8 @@
       "profileFlagVariables": []
     },
     {
-      "relativePath": "app/domain/services/external_actions/presenters/text_presentation_presenter.py",
-      "lineCount": 310,
+      "relativePath": "app/domain/services/external_actions/external_action_result_presenter.py",
+      "lineCount": 626,
       "pathConditionalCount": 0,
       "pathConditionalHits": [],
       "dedicatedEnrichMethods": [],

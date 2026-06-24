@@ -61,15 +61,20 @@ class ChatPresentationEntityRouteDispatchService:
         if not method_name:
             return False, None
 
-        method = getattr(host, f"_{method_name}", None)
-
-        if not callable(method):
-            return False, None
-
         payload = dict(root)
 
         if spec.get("normalizeRoot") and normalize_root is not None:
             payload = normalize_root(payload)
+
+        method = getattr(host, f"_{method_name}", None)
+
+        if not callable(method):
+            wrapped: dict[str, Any] = {"data": payload}
+
+            if entity:
+                wrapped["meta"] = {"entity": entity}
+
+            return True, host.present(wrapped, path=path)
 
         if spec.get("requiresProduct"):
             product = payload.get("product")

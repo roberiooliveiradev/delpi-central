@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.domain.services.chat_operational_response_profile_service import (
     ChatOperationalResponseProfileService,
@@ -321,3 +321,135 @@ class ExternalActionOperationalResponsePresenter:
             return merged
 
         return block
+
+    def present_visual(
+        self,
+        visual: dict,
+        *,
+        data: Any = None,
+        path: str = "",
+    ) -> dict:
+        root = self._host._unwrap_data(data) if data is not None else None
+        visual_type = str(visual.get("type") or "").strip().lower()
+        title = str(visual.get("title") or visual.get("titulo") or "").strip()
+        result: dict[str, Any] = {
+            "titulo": title or self._host._presenter_text("generic", "defaultQueryTitle"),
+            "linhas": [],
+            "dados": root,
+        }
+
+        if visual_type == "markdown":
+            markdown = str(visual.get("markdown") or "").strip()
+            result["humanizedMarkdown"] = markdown
+            result["linhas"] = [line for line in markdown.splitlines() if line.strip()][:20]
+            return result
+
+        if visual_type == "kpi":
+            linhas = self._host._kpi_cards_to_linhas(visual)
+            result["linhas"] = linhas or [
+                self._host._presenter_text(
+                    "generic",
+                    "kpiSeeData",
+                    title=result["titulo"],
+                )
+            ]
+            result["apresentacao"] = visual
+            return result
+
+        if visual_type == "table":
+            rows = visual.get("rows") or []
+            columns = visual.get("columns") or []
+            linhas: list[str] = []
+
+            if not rows:
+                result["linhas"] = [
+                    self._host._presenter_text("generic", "emptyItemsQuery")
+                ]
+            else:
+                visible_columns = [
+                    column
+                    for column in columns
+                    if isinstance(column, dict) and column.get("key")
+                ][:6]
+
+                for row in rows[:15]:
+                    if not isinstance(row, dict):
+                        continue
+
+                    if visible_columns:
+                        parts = []
+                        for column in visible_columns:
+                            key = str(column.get("key"))
+                            label = column.get("label") or self._host._humanize_key(key)
+                            value = self._host._format_field_value(key, row.get(key))
+                            parts.append(f"{label}: {value}")
+                    else:
+                        parts = [
+                            f"{self._host._humanize_key(str(key))}: "
+                            f"{self._host._format_field_value(str(key), value)}"
+                            for key, value in list(row.items())[:6]
+                        ]
+
+                    if parts:
+                        linhas.append(" · ".join(parts))
+
+                result["linhas"] = linhas
+
+            markdown_rows = [row for row in rows if isinstance(row, dict)]
+
+            if markdown_rows:
+                column_pairs = [
+                    (str(column.get("key")), str(column.get("label") or column.get("key")))
+                    for column in columns
+                    if isinstance(column, dict) and column.get("key")
+                ]
+
+                if not column_pairs and isinstance(markdown_rows[0], dict):
+                    column_pairs = [
+                        (key, self._host._humanize_key(key))
+                        for key in list(markdown_rows[0].keys())[:8]
+                    ]
+
+                if column_pairs:
+                    table_lines = self._host._markdown_table(column_pairs, markdown_rows[:12])
+                    result["humanizedMarkdown"] = "\n".join(
+                        [
+                            f"### {result['titulo']}",
+                            "",
+                            *table_lines,
+                        ]
+                    ).strip()
+
+            result["apresentacao"] = visual
+            return result
+
+        if visual_type == "tree":
+            result["linhas"] = [
+                self._host._presenter_text(
+                    "generic",
+                    "kpiSeeData",
+                    title=result["titulo"],
+                )
+            ]
+            result["apresentacao"] = visual
+            return result
+
+        if visual_type == "chart":
+            result["linhas"] = [
+                self._host._presenter_text(
+                    "generic",
+                    "kpiSeeData",
+                    title=result["titulo"],
+                )
+            ]
+            result["apresentacao"] = visual
+            return result
+
+        if isinstance(root, dict):
+            fallback = self._present_dict_fallback(root, path)
+
+            if fallback:
+                return fallback
+
+        result["linhas"] = [self._host._presenter_text("generic", "queryResultTitle")]
+        return result

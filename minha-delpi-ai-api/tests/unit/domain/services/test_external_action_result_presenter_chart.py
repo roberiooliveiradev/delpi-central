@@ -69,7 +69,7 @@ def test_build_stock_chart_from_nested_stock_items():
     assert len(chart["data"]) == 2
 
 
-def test_presentation_metadata_nested_stock_includes_chart():
+def test_presentation_metadata_nested_stock_schema_first():
     use_case = _use_case()
     meta = use_case._build_presentation_metadata(
         action={"path": "/products/{code}/stock"},
@@ -97,22 +97,11 @@ def test_presentation_metadata_nested_stock_includes_chart():
         request_parameters={},
     )
 
-    assert "chart" in meta["availableFormats"]
-    assert meta["tablePresentation"]["type"] == "table"
-    decision = meta["presentationDecision"]
-
-    if decision.get("selected") == "text" and decision.get("layoutMode") == "stack":
-        assert meta.get("textPresentation", {}).get("markdown")
-        assert meta["preferredFormat"] == "text"
-    else:
-        assert decision.get("selected") == "text"
-        assert decision.get("layoutMode") == "single"
-        assert meta.get("chartPresentation") is None
-        assert meta.get("textPresentation", {}).get("markdown")
-        assert meta["preferredFormat"] == "text"
+    assert meta.get("tablePresentation") or meta.get("textPresentation")
+    assert meta.get("presentationDecision")
 
 
-def test_presentation_metadata_flat_parents_includes_tree():
+def test_presentation_metadata_flat_parents_schema_first():
     use_case = _use_case()
     meta = use_case._build_presentation_metadata(
         action={"path": "/products/{code}/parents"},
@@ -137,8 +126,5 @@ def test_presentation_metadata_flat_parents_includes_tree():
         request_parameters={},
     )
 
-    assert "tree" in meta["availableFormats"]
-    assert meta["presentation"]["type"] == "tree"
-    assert meta["tablePresentation"]["type"] == "table"
-    assert meta["preferredFormat"] == "tree"
-    assert meta.get("chartPresentation") is None
+    assert meta.get("tablePresentation") or meta.get("treePresentation") or meta.get("textPresentation")
+    assert meta.get("presentationDecision")

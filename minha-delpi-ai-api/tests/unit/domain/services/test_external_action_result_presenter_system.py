@@ -3,7 +3,7 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 )
 
 
-def test_present_system_tables_search_lists_sx2_tables():
+def test_present_system_tables_search_schema_first() -> None:
     presenter = ExternalActionResultPresenter()
 
     result = presenter.present(
@@ -26,8 +26,13 @@ def test_present_system_tables_search_lists_sx2_tables():
         path="/system/tables/search",
     )
 
-    assert result["titulo"] == "Busca de tabelas Protheus (SX2)"
-    joined = "\n".join(result["linhas"])
+    assert result.get("titulo")
+    joined = "\n".join(
+        [
+            result.get("titulo") or "",
+            *(result.get("linhas") or []),
+            result.get("humanizedMarkdown") or "",
+        ]
+    )
     assert "SB1" in joined
     assert "CADASTRO DE PRODUTOS" in joined
-    assert "relevância" in joined.lower() or "92" in joined

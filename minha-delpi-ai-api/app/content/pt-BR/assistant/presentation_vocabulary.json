@@ -472,7 +472,7 @@
       "app/application/use_cases/execute_external_action_use_case.py",
       "app/domain/services/chat_presentation_visual_bundle_service.py",
       "app/domain/services/chat_presentation_section_availability_service.py",
-      "app/domain/services/external_actions/presenters/text_presentation_presenter.py"
+      "app/domain/services/external_actions/external_action_result_presenter.py"
     ],
     "tierAProfileKeys": [
       "analyser",
