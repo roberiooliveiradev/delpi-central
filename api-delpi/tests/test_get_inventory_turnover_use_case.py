@@ -22,14 +22,24 @@ def _build_use_case() -> GetInventoryTurnoverUseCase:
     }
 
     stock_repository = MagicMock()
-    stock_repository.get_stock_value_summary.return_value = {
-        "branch": "02",
-        "location": "all",
-        "total_stock_value": 6_554_795.0,
-        "total_stock_quantity": 1000.0,
-        "total_records": 50,
-        "total_products": 40,
-        "total_locations": 3,
+    stock_repository.get_stock_value_bundle.return_value = {
+        "summary": {
+            "branch": "02",
+            "location": "all",
+            "total_stock_value": 6_554_795.0,
+            "total_stock_quantity": 1000.0,
+            "total_records": 50,
+            "total_products": 40,
+            "total_locations": 3,
+        },
+        "stock_method_resolved": "estimated",
+        "estimation_meta": {
+            "closing_base_date": "20260228",
+            "closing_base_value": 6_554_795.0,
+            "bridge_value": 0.0,
+            "period_net_value": 0.0,
+            "official_closure_on_period_end": False,
+        },
     }
 
     return GetInventoryTurnoverUseCase(
@@ -50,8 +60,8 @@ def test_execute_uses_stock_value_repository_for_stock_context():
     )
 
     stock_repository = use_case._stock_repository
-    stock_repository.get_stock_value_summary.assert_called_once()
-    stock_request = stock_repository.get_stock_value_summary.call_args[0][0]
+    stock_repository.get_stock_value_bundle.assert_called_once()
+    stock_request = stock_repository.get_stock_value_bundle.call_args[0][0]
     assert stock_request.summary_only is True
     assert stock_request.branch == "02"
     assert stock_request.start_date == "2026-04-01"

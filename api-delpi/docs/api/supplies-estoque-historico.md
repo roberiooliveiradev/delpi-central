@@ -25,6 +25,7 @@ A resposta inclui o objeto `estimation` quando o modo histórico está ativo.
 | `end_date` | Condicional | Fim do período (inclusivo). Ex.: `2026-04-30`, `20260430`. |
 | `top_limit` | Não | Top produtos por valor (default `10`, máx. `50`). Omitido no `summary_only`. |
 | `summary_only` | Não | Quando `true`, retorna **apenas** `summary` (sem `by_branch`, `by_location`, `top_products`). Default `false`. |
+| `stock_method` | Não | `auto` (default), `estimated` ou `official_closure`. Ver [playbook](../roadmaps/playbook-correcao-estoque-supplies-inventario.md) §9. |
 
 Regras:
 
@@ -32,7 +33,21 @@ Regras:
 - `start_date` não pode ser maior que `end_date`.
 - Com datas, `location` filtra o fechamento SB9 e as movimentações SD3 por `B9_LOCAL` / `D3_LOCAL`.
 - `by_location` e `top_products` usam agregação estimada por local e por produto (SB9 + SD3) — **indisponíveis** com `summary_only=true`.
-- O **Strategic Indicators** e o **IDD** (`/inventory-turnover`) chamam sempre `summary_only=true` para o KPI consolidado.
+- O **Strategic Indicators** e o **IDD** (`/inventory-turnover`) chamam `summary_only=true` e herdam `stock_method=auto`.
+
+---
+
+## `stock_method` (jun/2026)
+
+| Valor | Comportamento |
+|-------|----------------|
+| `auto` | Fechamento SB9 na `end_date` quando existir; senão estimativa SB9+SD3 |
+| `estimated` | Sempre estimativa SB9+SD3 |
+| `official_closure` | Exige fechamento SB9 na `end_date`; erro 400 se ausente |
+
+Objeto `estimation` expõe `stock_method`, `stock_method_resolved`, breakdown (`closing_base_*`, `bridge_value`, `period_net_value`) e `data_quality_warning` quando a base SB9 é anterior ao fim do período.
+
+Script de reconciliação (W0): `api-delpi/scripts/reconcile_stock_value.py`.
 
 ---
 

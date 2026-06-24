@@ -4,6 +4,9 @@ from app.application.dto.supplies.get_inventory_turnover_request import (
     GetInventoryTurnoverRequest,
 )
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
+from app.application.services.supplies.stock_value_estimation_payload_service import (
+    build_stock_estimation_payload,
+)
 from app.domain.ports.supplies.inventory_turnover_query_repository_port import (
     InventoryTurnoverQueryRepositoryPort,
 )
@@ -113,9 +116,9 @@ class GetInventoryTurnoverUseCase:
         return average, "partial_period_monthlyized", days
 
     def execute(self, request: GetInventoryTurnoverRequest) -> dict:
-        stock_context = self._stock_repository.get_stock_value_summary(
-            self._to_stock_request(request)
-        )
+        stock_request = self._to_stock_request(request)
+        stock_bundle = self._stock_repository.get_stock_value_bundle(stock_request)
+        stock_context = stock_bundle.get("summary") or {}
         cpv_context = self._repository.get_cpv_context(request)
 
         total_stock_value = float(stock_context.get("total_stock_value") or 0)
@@ -162,8 +165,6 @@ class GetInventoryTurnoverUseCase:
             if total_stock_quantity > 0 else 0
         )
 
-        stock_request = self._to_stock_request(request)
-
         payload = {
             "branch": stock_context.get("branch") or request.branch or "consolidated",
             "location": stock_context.get("location") or request.location or "all",
@@ -199,15 +200,12 @@ class GetInventoryTurnoverUseCase:
         }
 
         if stock_request.uses_historical_estimation:
-            payload["stock_estimation"] = {
-                "enabled": True,
-                "method": "sb9_last_closure_plus_sd3_movements",
-                "start_date": start_date.strftime("%Y%m%d"),
-                "end_date_exclusive": (end_date + timedelta(days=1)).strftime("%Y%m%d"),
-                "note": (
-                    "Estoque estimado pelo mesmo método de /supplies/stock-value "
-                    "(SB9010 + SD3010)."
-                ),
-            }
+            payload["stock_estimation"] = build_stock_estimation_payload(
+                request=stock_request,
+                bundle=stock_bundle,
+                period_start=start_date.strftime("%Y%m%d"),
+                period_end=end_date.strftime("%Y%m%d"),
+                period_end_exclusive=(end_date + timedelta(days=1)).strftime("%Y%m%d"),
+            )
 
         return payload
