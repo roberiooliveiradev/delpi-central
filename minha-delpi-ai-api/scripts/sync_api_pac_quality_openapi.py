@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Reimporta OpenAPI snapshot da API PAC Qualidade e gera catálogo MD.
+"""Reimporta OpenAPI da API PAC Qualidade e gera catálogo MD.
 
 Uso (container minha-delpi-ai-api):
 
   PYTHONPATH=/app python scripts/sync_api_pac_quality_openapi.py
   PYTHONPATH=/app python scripts/sync_api_pac_quality_openapi.py \\
-      --from-file /repo/api-pac-quality/docs/openapi-snapshot-chat.json
+      --from-url https://pac-api.minhadelpi.com.br/openapi.json
 
-Pré-requisito: provider `api-pac-quality` cadastrado no agente com `authMode=user_token`
-e `baseUrl` apontando para `https://pac-api.minhadelpi.com.br`.
+Pré-requisito: provider `api-pac-quality` cadastrado no agente.
+Schema canônico: GET /openapi.json (gerado pelo FastAPI, como api-delpi).
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from urllib.request import urlopen
 
 from app.domain.services.api_delpi_openapi_catalog_service import (
     build_openapi_catalog_markdown,
@@ -24,22 +25,7 @@ from app.domain.services.api_delpi_openapi_catalog_service import (
 )
 
 DEFAULT_PROVIDER_KEY = "api-pac-quality"
-
-
-def _resolve_default_schema_file() -> Path:
-    script_dir = Path(__file__).resolve().parent
-    candidates = [
-        script_dir.parents[3] / "api-pac-quality" / "docs" / "openapi-snapshot-chat.json",
-        script_dir.parents[2] / "api-pac-quality" / "docs" / "openapi-snapshot-chat.json",
-        Path("/repo/api-pac-quality/docs/openapi-snapshot-chat.json"),
-    ]
-    for path in candidates:
-        if path.is_file():
-            return path
-    return candidates[0]
-
-
-DEFAULT_SCHEMA_FILE = _resolve_default_schema_file()
+DEFAULT_OPENAPI_URL = "https://pac-api.minhadelpi.com.br/openapi.json"
 DEFAULT_CATALOG_PATH = (
     Path(__file__).resolve().parents[1]
     / "docs"
@@ -55,6 +41,16 @@ def _load_schema_from_file(path: Path) -> dict:
 
     if not isinstance(payload, dict):
         raise ValueError("OpenAPI file must contain a JSON object")
+
+    return payload
+
+
+def _load_schema_from_url(url: str) -> dict:
+    with urlopen(url, timeout=30) as response:
+        payload = json.load(response)
+
+    if not isinstance(payload, dict):
+        raise ValueError("OpenAPI URL must return a JSON object")
 
     return payload
 
@@ -79,10 +75,14 @@ def main() -> int:
         help="Provider OpenAPI cadastrado no chat (default: api-pac-quality).",
     )
     parser.add_argument(
+        "--from-url",
+        default=DEFAULT_OPENAPI_URL,
+        help=f"URL do OpenAPI público (default: {DEFAULT_OPENAPI_URL}).",
+    )
+    parser.add_argument(
         "--from-file",
         type=Path,
-        default=DEFAULT_SCHEMA_FILE,
-        help="Schema OpenAPI local (default: api-pac-quality/docs/openapi-snapshot-chat.json).",
+        help="Schema OpenAPI local (opcional; ignora --from-url).",
     )
     parser.add_argument(
         "--skip-import",
@@ -128,7 +128,12 @@ def main() -> int:
         schema: dict | None = None
 
         if not args.skip_import:
-            schema = _load_schema_from_file(args.from_file)
+            if args.from_file:
+                schema = _load_schema_from_file(args.from_file)
+                report["schemaSource"] = str(args.from_file)
+            else:
+                schema = _load_schema_from_url(args.from_url)
+                report["schemaSource"] = args.from_url
             report["import"] = import_use_case.execute_from_json(
                 args.provider_key,
                 schema,
@@ -150,7 +155,7 @@ def main() -> int:
             catalog = build_openapi_catalog_markdown(
                 schema,
                 provider_key=args.provider_key,
-                catalog_title="API PAC Qualidade — Snapshot (Chat)",
+                catalog_title="API PAC Qualidade — OpenAPI",
             )
             args.catalog_path.parent.mkdir(parents=True, exist_ok=True)
             args.catalog_path.write_text(catalog, encoding="utf-8")
