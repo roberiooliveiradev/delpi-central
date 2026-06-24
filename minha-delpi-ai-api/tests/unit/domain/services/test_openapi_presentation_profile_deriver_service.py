@@ -34,7 +34,19 @@ def test_resolve_profile_uses_openapi_derived_for_unmapped_entity():
     assert profile["profileKey"] == "openapi:pac_inspection_lot"
 
 
-def test_resolve_profile_keeps_json_entity_profile_mapping():
+def test_resolve_profile_prefers_openapi_for_replaceable_kpi_entity():
+    profile = ChatPresentationProfileService.build_resolved_profile(
+        path="/supplies/cpv",
+        entity="supplies_cpv",
+        shape="scalar",
+    )
+
+    assert profile.get("openapiDerived") is True
+    assert profile["profileKey"] == "openapi:supplies_cpv"
+    assert profile.get("commentaryProfileKey") == "generic_kpi_series"
+
+
+def test_resolve_profile_keeps_special_json_profile_when_shape_present():
     profile = ChatPresentationProfileService.build_resolved_profile(
         path="/products/90269001/stock",
         entity="product_stock",

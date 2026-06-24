@@ -82,7 +82,7 @@ ENTITY_CONTRACT_CASES = ChatPresentationCoverageService.build_entity_contract_ca
     ids=[item["entity"] for item in ENTITY_CONTRACT_CASES],
 )
 def test_entity_resolves_registered_profile(case: dict[str, str]) -> None:
-    profile_key = ChatPresentationProfileService.resolve_profile_key(
+    profile_key = ChatPresentationProfileService.resolve_effective_profile_key(
         _resolved_path(case["path"]),
         case["entity"],
     )

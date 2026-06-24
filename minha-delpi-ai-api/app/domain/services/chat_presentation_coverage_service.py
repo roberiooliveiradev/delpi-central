@@ -13,6 +13,12 @@ from app.domain.services.chat_operational_response_profile_service import (
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
+from app.domain.services.openapi_operation_contract_service import (
+    OpenApiOperationContractService,
+)
+from app.domain.services.openapi_presentation_profile_deriver_service import (
+    OpenApiPresentationProfileDeriverService,
+)
 from app.domain.services.chat_humanized_data_response_content_service import (
     ChatHumanizedDataResponseContentService,
 )
@@ -271,8 +277,17 @@ class ChatPresentationCoverageService:
         entity, routed_by = cls.resolve_entity_for_path(path)
         tier = cls.classify_tier(entity=entity, path=path)
         entity_routed = ChatOperationalResponseProfileService.is_entity_routed_for_present(entity)
-        profile_key = cls.resolve_profile_key(path=path, entity=entity)
-        profile = ChatPresentationProfileService.profile(profile_key)
+        profile_key = ChatPresentationProfileService.resolve_effective_profile_key(
+            path,
+            entity,
+            operation_id=operation_id,
+        )
+        profile = ChatPresentationProfileService.build_resolved_profile(
+            path=path,
+            entity=entity,
+            shape=OpenApiOperationContractService.shape_for_operation(operation_id)
+            or OpenApiOperationContractService.shape_for_entity(entity),
+        )
         commentary_profile_key = ChatPresentationProfileService.commentary_profile_key(
             profile_key,
             path=path,
@@ -426,6 +441,9 @@ class ChatPresentationCoverageService:
                 )
 
             if row.tier == "A" and row.profile_key == "generic":
+                if OpenApiPresentationProfileDeriverService.is_openapi_backed_entity(row.entity):
+                    continue
+
                 gaps.append(
                     PresentationCoverageGap(
                         kind="tier_a_generic_profile",
@@ -452,7 +470,10 @@ class ChatPresentationCoverageService:
 
             for entity in sorted(entity_set):
                 path = ChatPresentationProfileService.entity_path_hint(entity) or None
-                resolved = ChatPresentationProfileService.resolve_profile_key(path, entity)
+                resolved = ChatPresentationProfileService.resolve_effective_profile_key(
+                    path,
+                    entity,
+                )
                 operation_id = str(entity)
                 path_label = path or f"entity:{entity}"
 
@@ -489,7 +510,10 @@ class ChatPresentationCoverageService:
                     )
 
                 if path and contract.get("validatePathWithoutEntity"):
-                    path_only = ChatPresentationProfileService.resolve_profile_key(path, None)
+                    path_only = ChatPresentationProfileService.resolve_effective_profile_key(
+                        path,
+                        ChatPresentationProfileService.resolve_entity_from_path(path),
+                    )
 
                     if path_only in disallowed:
                         gaps.append(
@@ -601,6 +625,9 @@ class ChatPresentationCoverageService:
                 )
 
             if row.tier == "A" and row.profile_key == "generic":
+                if OpenApiPresentationProfileDeriverService.is_openapi_backed_entity(row.entity):
+                    continue
+
                 gaps.append(
                     PresentationCoverageGap(
                         kind="new_operation_generic_profile",

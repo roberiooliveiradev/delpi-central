@@ -53,10 +53,10 @@ O ramo legacy (~520 linhas) de `ChatPresentationMetadataPipelineService` foi **e
 | KPI / chart | `ExternalActionKpiChartPresenter` |
 | Tabela genérica | `presentation_table_host_service` + `ChatPresentationOperationalTableService` |
 | Comentário operacional | `ChatDataInsightService` → `ChatDataInsightEnrichmentService` |
-| Decisão Automático | `ChatPresentationDecisionService` (fachada ~500 linhas) → delegates score/metadata/builder/intent/enrich |
+| Decisão Automático | `ChatPresentationDecisionService` (fachada ~85 linhas) → delegates |
 | Formato explícito (toolbar) | `ChatToolContextFormatService` + `ChatPresentationPrimaryViewService` |
 | Prosa template vs LLM | `ChatPresentationProseDeliveryService` (turn completion) + `ChatPresentationDataOnlyProseService` (pipeline) |
-| Perfis / pathRules | `ChatPresentationProfileService` + `presentation_profiles.json` |
+| Perfis / pathRules | `ChatPresentationProfileService` + `presentation_profiles.json` + `OpenApiPresentationProfileDeriverService` |
 | Nova rota HTTP | OpenAPI import + checklist `new-api-route-checklist.md` |
 
 ---
@@ -103,11 +103,29 @@ Ainda presentes (runtime parcial ou histórico):
 
 Manter e evoluir:
 
-- `entityProfiles`, `pathRules`, `entitySetProfileContracts`
+- `entityProfiles` — **só perfis especiais** (stock, analyser, factory_status, …); KPI/lista/playbook via OpenAPI (Fase 12)
+- `pathRules` — fallback quando `meta.entity` ausente; sem catch-alls `/supplies/`, `/financial/`, `/commercial/`
+- `openapiReplaceableProfileKeys`, `openapiShapeDefaults` — perfil derivado por `entity` + `shape`
+- `entitySetProfileContracts`
 - `chartPolicy`, `viewOrder`, `commentaryProfileKey`
 - `defaults.presentationStrategy: as_delivered`
 
-Depreciar na Fase D: perfis por entidade → `x-delpi` no OpenAPI do provider.
+**Fase 12 (jun/2026):** entidades com perfil `kpi_series` / `table_list` / `playbook_report` / `kpi_snapshot` saíram de `entityProfiles`; resolução via `OpenApiPresentationProfileDeriverService` quando `apiDelpiResponseMeta` + `x-delpi` trazem `entity` e `shape`. Gates: `scripts/audit_openapi_profile_pruning.py --check`, `scripts/sync_openapi_route_contract_shapes.py --check`.
+
+### Resolução de perfil (Fase 12)
+
+```text
+resolve_profile_key(path, entity)
+  → entityProfiles[entity] se especial (stock, analyser, …)
+  → generic se entity openapi-backed (fora de entityProfiles)
+  → pathRules pontuais (sem catch-alls de domínio)
+
+resolve_effective_profile_key(path, entity, shape?)
+  → shape de openapi_operation_contracts.json quando omitido
+  → build_resolved_profile → openapiShapeProfileEquivalents (gates/CI)
+```
+
+`openapi_operation_contracts.json` é gerado do `route_contract_registry` do api-delpi e mantido em sync pelo script `sync_openapi_route_contract_shapes.py`.
 
 ---
 
@@ -179,6 +197,15 @@ Delegates extraídos (score, metadata, builder, intent operacional). `ChatPresen
 | `OpenApiPresentationProfileDeriverService` | perfil `as_delivered` por entity/shape |
 | `openapiShapeDefaults` | hints declarativos em `presentation_profiles.json` |
 | `delpi_metadata` | coluna JSONB em `ai_external_actions` |
+
+### Fase 12 — poda JSON manual (jun/2026)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Prioridade OpenAPI | `build_resolved_profile` usa deriver quando perfil JSON ∈ `openapiReplaceableProfileKeys` |
+| `entityProfiles` | 75 entradas removidas (KPI, listas, playbook) — **29** perfis especiais mantidos |
+| `pathRules` | Removidos catch-alls `/supplies/`, `/financial/`, `/commercial/` → `kpi_series` |
+| Gate CI | `scripts/audit_openapi_profile_pruning.py --check` |
 
 ---
 

@@ -29,7 +29,8 @@ Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure
 - Serviço de domínio nomeado pela rota (`ChatOperationalStockRouteService`) — usar `profileKey` + JSON + serviço transversal.
 - Multi-tabela tier A (`tablePresentations` com `role: profile|list|guide`) no pipeline — tabela genérica única.
 - Fix de formato (tabela vs gráfico) só no MFE — `presentationDecision` na API.
-- Expandir `presentation_profiles.json` para rota nova sem `x-delpi` no OpenAPI (exceção: `pathRules` + `chartPolicy` mínimos).
+- Expandir `presentation_profiles.json` para rota nova sem `x-delpi` no OpenAPI (exceção: perfis especiais em `entityProfiles` + `pathRules` pontuais).
+- Duplicar em `entityProfiles` entradas cobertas por `openapiReplaceableProfileKeys` — gate `audit_openapi_profile_pruning.py --check`.
 - Forçar `layoutMode: stack` automático em perfis `as_delivered` — stack só com pedido «visão integrada» ou `layoutMode` já `stack` na decisão.
 
 ## O que fazer
@@ -40,12 +41,12 @@ Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure
 | Tabela / KPI / chart / árvore | `ChatSchemaDrivenPresentationService` |
 | Labels de coluna | `meta.fields` da API + `column_labels.json` |
 | Comentário / dataAnswer | `ChatDataInsightEnrichmentService` + `ChatOperationalDataCommentaryService` |
-| Formato Automático | `ChatPresentationViewIntentService` + `presentation_profiles.json` (`chartPolicy`, `viewOrder`) |
+| Formato Automático | `ChatPresentationViewIntentService` + `openapiShapeDefaults` / perfis especiais JSON |
 | Formato explícito (toolbar) | `ChatToolContextFormatService` → `build_bundle` schema-driven |
 | SQL | `ExternalActionSqlPresenter` (exceção legítima) |
 | Prosa LLM vs template | `ChatPresentationProseDeliveryService` no **turn completion** |
 | Data-only no pipeline | `ChatPresentationDataOnlyProseService.apply_pipeline` (pós-`finalize`) |
-| Nova rota api-delpi | `new-api-route-checklist.mdc` + Playbook 22 |
+| Nova rota api-delpi | `new-api-route-checklist.mdc` + Playbook 22 + `audit_openapi_profile_pruning.py --check` + `sync_openapi_route_contract_shapes.py --check` |
 
 ## Checklist antes de merge
 
@@ -54,6 +55,8 @@ Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure
 - [ ] Nenhuma chave `visualBuilders` / `tableAssembly` nova no JSON?
 - [ ] Teste com fixture payload real?
 - [ ] Grep zero: `visual_bundle`, `table_assembly`, `composite_visual`, `entity_route_dispatch`?
+- [ ] `audit_openapi_profile_pruning.py --check` verde (sem `entityProfiles` substituível duplicado)?
+- [ ] `sync_openapi_route_contract_shapes.py --check` verde (`openapi_operation_contracts.json` alinhado ao api-delpi)?
 
 ## Em conflito com Playbook 12 / 09
 

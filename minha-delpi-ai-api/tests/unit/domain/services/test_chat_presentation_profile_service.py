@@ -17,10 +17,10 @@ from app.domain.services.chat_presentation_stack_order_service import (
         ("/products/90260144/structure", "tree_hierarchy"),
         ("/products/90260144/stock", "stock"),
         ("/products/90260144/analyser", "analyser"),
-        ("/products/90260144/guide", "table_list"),
-        ("/supplies/cpv", "kpi_series"),
-        ("/supplies/stock-value", "kpi_series"),
-        ("/production/oee/series", "kpi_series"),
+        ("/products/90260144/guide", "generic"),
+        ("/supplies/cpv", "generic"),
+        ("/supplies/stock-value", "generic"),
+        ("/production/oee/series", "generic"),
         ("/production/oee", "kpi_dashboard"),
         ("/production/otd", "kpi_dashboard"),
         ("/system/tables/search", "system"),
@@ -118,7 +118,7 @@ def test_production_oee_appointment_entity_maps_to_dashboard() -> None:
 
 
 def test_production_schedule_today_entity_maps_to_playbook_report() -> None:
-    key = ChatPresentationProfileService.resolve_profile_key(
+    key = ChatPresentationProfileService.resolve_effective_profile_key(
         "/production/schedule/today",
         "production_schedule_today",
     )
@@ -127,22 +127,36 @@ def test_production_schedule_today_entity_maps_to_playbook_report() -> None:
 
 
 def test_production_schedule_path_without_entity_maps_to_playbook_report() -> None:
-    key = ChatPresentationProfileService.resolve_profile_key(
+    entity = ChatPresentationProfileService.resolve_entity_from_path(
         "/production/schedule/today",
-        None,
+    )
+    key = ChatPresentationProfileService.resolve_effective_profile_key(
+        "/production/schedule/today",
+        entity,
     )
 
     assert key == "playbook_report"
 
 
-def test_playbook_report_profile_skips_chart_policy() -> None:
-    profile = ChatPresentationProfileService.resolve_profile(
+def test_production_schedule_json_profile_key_is_openapi_backed_generic() -> None:
+    key = ChatPresentationProfileService.resolve_profile_key(
         "/production/schedule/today",
         "production_schedule_today",
     )
 
+    assert key == "generic"
+
+
+def test_playbook_report_profile_skips_chart_policy() -> None:
+    profile = ChatPresentationProfileService.build_resolved_profile(
+        path="/production/schedule/today",
+        entity="production_schedule_today",
+        shape="playbook_report",
+    )
+
     assert profile.get("chartPolicy") == "skip"
     assert profile.get("defaultViewPolicy") == "table_when_available"
+    assert profile.get("openapiDerived") is True
 
 
 def test_production_schedule_today_is_no_chart_entity() -> None:

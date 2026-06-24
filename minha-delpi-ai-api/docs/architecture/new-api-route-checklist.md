@@ -154,7 +154,7 @@ Exemplo: `tests/unit/domain/services/test_chat_presentation_view_intent_service.
 
 | Erro | Consequência |
 |------|--------------|
-| Endpoint sem `entityProfiles` | Catch-all de path (ex.: `/production/` → `kpi_series`) em listagem |
+| Endpoint sem `entityProfiles` especial | Perfil derivado OpenAPI quando `x-delpi` + shape; catch-all de path proibido (gate pruning) |
 | Gráfico default no MFE ou prompt de agente | Divergência send/stream; regressão Automático |
 | Texto PT hardcoded em Python | Viola ADR 003 e gate de strings |
 | Serviço de decisão não ligado ao pipeline | Implementação «morta» — ver guardrails clean architecture |
@@ -166,7 +166,9 @@ Exemplo: `tests/unit/domain/services/test_chat_presentation_view_intent_service.
 
 - [ ] api-delpi: `api_delpi_success` + registry + teste meta
 - [ ] `operational_route_registry.json` + `--check`
-- [ ] `entityProfiles` + contrato entitySet (se aplicável)
+- [ ] `entityProfiles` só se perfil **não** substituível por `openapiShapeDefaults` (stock, analyser, …)
+- [ ] `audit_openapi_profile_pruning.py --check` verde
+- [ ] `sync_openapi_route_contract_shapes.py --check` verde
 - [ ] `pathRules` específica antes de catch-all do domínio
 - [ ] Títulos/colunas em JSON
 - [ ] Regressão intenção + apresentação Automático

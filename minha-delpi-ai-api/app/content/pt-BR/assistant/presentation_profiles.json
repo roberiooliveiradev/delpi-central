@@ -24,19 +24,24 @@
   "openapiShapeDefaults": {
     "scalar": {
       "defaultViewPolicy": "kpi_when_available",
-      "chartPolicy": "auto"
+      "chartPolicy": "auto",
+      "commentaryProfileKey": "generic_kpi_series",
+      "narrativePolicy": "generic_data_summary"
     },
     "paged_list": {
       "defaultViewPolicy": "table_when_available",
-      "chartPolicy": "skip"
+      "chartPolicy": "skip",
+      "commentaryProfileKey": "generic_list"
     },
     "playbook_report": {
       "defaultViewPolicy": "table_when_available",
-      "chartPolicy": "skip"
+      "chartPolicy": "skip",
+      "commentaryProfileKey": "generic_list"
     },
     "list": {
       "defaultViewPolicy": "table_when_available",
-      "chartPolicy": "skip"
+      "chartPolicy": "skip",
+      "commentaryProfileKey": "generic_list"
     },
     "hierarchy": {
       "defaultViewPolicy": "tree_when_available",
@@ -56,8 +61,23 @@
       "chartPolicy": "skip"
     }
   },
+  "openapiShapeProfileEquivalents": {
+    "scalar": "kpi_series",
+    "paged_list": "table_list",
+    "playbook_report": "playbook_report",
+    "list": "table_list",
+    "product_snapshot": "table_list",
+    "hierarchy": "tree_hierarchy",
+    "composite_analysis": "analyser",
+    "document_export": "generic"
+  },
+  "openapiReplaceableProfileKeys": [
+    "kpi_series",
+    "kpi_snapshot",
+    "table_list",
+    "playbook_report"
+  ],
   "entityProfiles": {
-    "product": "table_list",
     "product_analyser": "analyser",
     "product_stock": "stock",
     "product_structure": "tree_hierarchy",
@@ -72,95 +92,21 @@
     "product_directives": "directives",
     "product_purchase_price_history": "purchase_price_history",
     "product_purchase_budget_history": "purchase_budget_history",
-    "product_guide": "table_list",
-    "product_inspection": "table_list",
-    "product_search": "table_list",
     "product_pricing": "sale_pricing",
     "product_purchases": "purchase_list",
-    "product_suppliers": "table_list",
-    "product_customers": "table_list",
-    "product_sales": "table_list",
-    "product_open_orders": "table_list",
-    "product_billing": "table_list",
-    "product_internal_movements": "table_list",
-    "product_inbound_invoice_items": "table_list",
-    "product_outbound_invoice_items": "table_list",
-    "exclusive_raw_materials_catalog": "table_list",
-    "supplies_cpv": "kpi_series",
-    "supplies_otd": "kpi_series",
-    "supplies_stock_value": "kpi_series",
-    "supplies_inventory_turnover": "kpi_series",
-    "supplies_negotiation_savings": "kpi_snapshot",
-    "financial_rol": "kpi_series",
-    "financial_ebitda_pct": "kpi_series",
-    "financial_fixed_cost_pct": "kpi_series",
-    "financial_pmr": "kpi_series",
-    "commercial_rol_target": "kpi_series",
-    "commercial_rol_series": "kpi_series",
-    "sales_conversion_rate": "kpi_series",
-    "new_clients_average": "kpi_series",
-    "sales_order_otd": "kpi_series",
-    "new_business_rol_pct": "kpi_series",
-    "new_clients_rol_pct": "kpi_series",
-    "commercial_proposal": "table_list",
-    "direct_labor_cost_pct": "kpi_series",
-    "production_cost_pct": "kpi_series",
-    "depreciation_pct": "kpi_series",
-    "production_oee_series": "kpi_series",
     "production_oee_detail": "kpi_dashboard",
     "production_oee_appointment": "kpi_dashboard",
-    "production_otd_series": "kpi_series",
-    "overall_equipment_effectiveness": "kpi_series",
-    "production_otd": "kpi_series",
     "production_otd_detail": "kpi_dashboard",
     "eficiencia_fabril_dashboard": "kpi_dashboard",
-    "eficiencia_fabril_appointment": "table_list",
-    "hr_branch": "table_list",
-    "hr_snapshot": "kpi_snapshot",
-    "hr_active_pdi_count": "kpi_snapshot",
-    "hr_performance_reviews_completion": "kpi_snapshot",
-    "quality_branch": "table_list",
-    "nonconformity_series": "kpi_series",
-    "kaizen_summary": "kpi_snapshot",
     "kaizen": "kpi_dashboard",
-    "audit_5s_summary": "kpi_snapshot",
-    "ppm_internal_summary": "kpi_snapshot",
-    "ppm_external_summary": "kpi_snapshot",
-    "ppm_internal_series": "kpi_series",
-    "ppm_external_series": "kpi_series",
-    "lmp": "table_list",
     "lmp_dashboard": "kpi_dashboard",
-    "lmp_dashboard_summary": "kpi_snapshot",
-    "lmp_dashboard_items": "table_list",
     "lmp_dashboard_charts": "kpi_dashboard",
-    "transforma_mais_process": "table_list",
-    "transforma_mais_summary": "kpi_snapshot",
-    "sale_order": "table_list",
     "sql_result": "sql",
     "protheus_table": "system",
     "protheus_column": "system",
     "protheus_index": "system",
     "protheus_relation": "system",
-    "protheus_table_schema": "system",
-    "production_allocation_gaps": "playbook_report",
-    "production_consumption_by_item": "playbook_report",
-    "production_consumption_top_items": "playbook_report",
-    "production_consumption_top_items_by_work_center": "playbook_report",
-    "production_consumption_top_items_validated": "playbook_report",
-    "production_losses_records": "playbook_report",
-    "production_losses_top_materials": "playbook_report",
-    "production_orders_finished": "playbook_report",
-    "production_orders_finished_without_consumption": "playbook_report",
-    "production_orders_open": "playbook_report",
-    "production_planned_vs_real_time": "playbook_report",
-    "production_schedule_today": "playbook_report",
-    "production_work_center_average_planned_time": "playbook_report",
-    "production_work_center_order_summary": "playbook_report",
-    "production_order_detail": "playbook_report",
-    "open_sales_order": "playbook_report",
-    "open_production_order": "playbook_report",
-    "commercial_proposal_document": "table_list",
-    "purchases_top_products": "playbook_report"
+    "protheus_table_schema": "system"
   },
   "entitySetProfileContracts": {
     "playbookOperational": {
@@ -253,8 +199,6 @@
       "production_work_center_average_planned_time",
       "production_work_center_order_summary",
       "production_order_detail",
-      "open_sales_order",
-      "open_production_order",
       "purchases_top_products"
     ],
     "profilePresent": [
@@ -598,18 +542,6 @@
     {
       "contains": "/purchase-budget-history",
       "profile": "purchase_budget_history"
-    },
-    {
-      "contains": "/supplies/",
-      "profile": "kpi_series"
-    },
-    {
-      "contains": "/financial/",
-      "profile": "kpi_series"
-    },
-    {
-      "contains": "/commercial/",
-      "profile": "kpi_series"
     },
     {
       "contains": "/stock",

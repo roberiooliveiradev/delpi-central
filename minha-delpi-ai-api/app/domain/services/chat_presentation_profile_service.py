@@ -10,6 +10,9 @@ from app.domain.services.chat_assistant_vocabulary_service import (
 from app.domain.services.openapi_presentation_profile_deriver_service import (
     OpenApiPresentationProfileDeriverService,
 )
+from app.domain.services.openapi_operation_contract_service import (
+    OpenApiOperationContractService,
+)
 
 
 class ChatPresentationProfileService(ChatAssistantVocabularyService):
@@ -335,13 +338,16 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
 
     @classmethod
     def resolve_profile_key(cls, path: str | None, entity: str | None = None) -> str:
-        entity_token = str(entity or "").strip()
+        entity_token = str(entity or "").strip() or cls.resolve_entity_from_path(path)
 
         if entity_token:
             mapped = cls.mapping("entityProfiles").get(entity_token)
 
             if mapped:
                 return str(mapped)
+
+            if OpenApiPresentationProfileDeriverService.is_openapi_backed_entity(entity_token):
+                return "generic"
 
         lowered = cls.path_lowered(path)
 
@@ -461,8 +467,6 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         if OpenApiPresentationProfileDeriverService.should_use_derived_profile(
             profile_key=key,
             entity=entity_token,
-        ) and OpenApiPresentationProfileDeriverService.can_derive(
-            entity=entity_token,
             shape=shape,
             delpi_metadata=delpi_metadata,
         ):
@@ -497,6 +501,37 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             shape=shape,
             delpi_metadata=metadata.get("delpiMetadata"),
         )
+
+    @classmethod
+    def resolve_effective_profile_key(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+        *,
+        shape: str | None = None,
+        operation_id: str | None = None,
+    ) -> str:
+        entity_token = str(entity or "").strip() or None
+        shape_token = str(shape or "").strip() or None
+
+        if not shape_token and operation_id:
+            shape_token = OpenApiOperationContractService.shape_for_operation(operation_id)
+
+        if not shape_token and entity_token:
+            shape_token = OpenApiOperationContractService.shape_for_entity(entity_token)
+
+        profile = cls.build_resolved_profile(
+            path=path,
+            entity=entity_token,
+            shape=shape_token,
+        )
+
+        if profile.get("openapiDerived"):
+            return OpenApiPresentationProfileDeriverService.json_profile_equivalent_for_shape(
+                str(profile.get("openapiShape") or shape_token or ""),
+            )
+
+        return str(profile.get("profileKey") or cls.resolve_profile_key(path, entity_token))
 
     @classmethod
     def flags(cls, path: str | None, entity: str | None = None) -> frozenset[str]:

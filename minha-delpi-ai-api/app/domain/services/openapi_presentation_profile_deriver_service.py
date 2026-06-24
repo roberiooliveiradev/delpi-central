@@ -13,6 +13,15 @@ class OpenApiPresentationProfileDeriverService(ChatAssistantVocabularyService):
     BUNDLE = "presentation_profiles"
 
     @classmethod
+    def replaceable_profile_keys(cls) -> frozenset[str]:
+        raw = cls.node("openapiReplaceableProfileKeys")
+
+        if not isinstance(raw, list):
+            return frozenset()
+
+        return frozenset(str(item).strip() for item in raw if str(item).strip())
+
+    @classmethod
     def can_derive(
         cls,
         *,
@@ -69,12 +78,40 @@ class OpenApiPresentationProfileDeriverService(ChatAssistantVocabularyService):
         *,
         profile_key: str,
         entity: str | None,
+        shape: str | None = None,
+        delpi_metadata: dict[str, Any] | None = None,
     ) -> bool:
-        key = str(profile_key or "").strip() or "generic"
-
-        if key != "generic":
+        if not cls.can_derive(
+            entity=entity,
+            shape=shape,
+            delpi_metadata=delpi_metadata,
+        ):
             return False
 
+        key = str(profile_key or "").strip() or "generic"
+
+        if key in cls.replaceable_profile_keys():
+            return True
+
+        entity_token = str(entity or "").strip()
+
+        if key != "generic" or not entity_token:
+            return False
+
+        return entity_token not in cls.mapping("entityProfiles")
+
+    @classmethod
+    def json_profile_equivalent_for_shape(cls, shape: str | None) -> str:
+        token = str(shape or "").strip()
+        equivalents = cls.node("openapiShapeProfileEquivalents") or {}
+
+        if not token or not isinstance(equivalents, dict):
+            return "generic"
+
+        return str(equivalents.get(token) or "generic").strip() or "generic"
+
+    @classmethod
+    def is_openapi_backed_entity(cls, entity: str | None) -> bool:
         entity_token = str(entity or "").strip()
 
         if not entity_token:

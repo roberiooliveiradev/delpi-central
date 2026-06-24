@@ -110,8 +110,20 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 
 `custom_openapi()` injeta `x-delpi` em cada operação publicada a partir de `route_contract_registry.py` (`entity`, `shape`, `presentation.strategy: as_delivered`). O import no chat (Fase 10) persiste em `delpi_metadata`.
 
-## Pendente (Fase 12+)
+## Fase 12 — poda JSON manual (jun/2026)
 
-- ~~api-delpi publicar `x-delpi` em todas as rotas~~ — **feito** (jun/2026): `openapi_delpi_extension_injector` no `custom_openapi`.
-- Reduzir `entityProfiles` / `pathRules` conforme cobertura OpenAPI crescer.
+- `openapiReplaceableProfileKeys`: `kpi_series`, `kpi_snapshot`, `table_list`, `playbook_report`.
+- **75** entradas removidas de `entityProfiles` (29 perfis especiais mantidos: stock, analyser, factory_status, …).
+- Catch-alls removidos de `pathRules`: `/supplies/`, `/financial/`, `/commercial/`.
+- `resolve_profile_key`: entidades openapi-backed (fora de `entityProfiles`) → `generic` no JSON; perfil efetivo via OpenAPI.
+- `resolve_effective_profile_key` + `build_resolved_profile`: priorizam perfil derivado quando `entity` + `shape` disponíveis.
+- `openapi_operation_contracts.json` (180 operações) espelha `route_contract_registry` do api-delpi; sync: `scripts/sync_openapi_route_contract_shapes.py --check`.
+- `playbookOperational`: removidos `open_sales_order` / `open_production_order` (shape `composite_analysis` → `analyser`, não `playbook_report`).
+- Gates: `audit_openapi_profile_pruning.py --check`, `sync_openapi_route_contract_shapes.py --check`, `audit_presentation_coverage.py --check-profiles`.
+- Testes: 221 em profile/coverage/OpenAPI deriver; CI coverage verde.
+
+## Pendente (Fase 13+)
+
 - Re-sync OpenAPI (`sync_api_delpi_openapi.py`) para popular `delpi_metadata` no banco.
+- Espelhar `x-delpi` no **api-pac-quality**.
+- Podar `pathEntityFallbacks` redundantes quando `meta.entity` for obrigatório em todas as rotas.

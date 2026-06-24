@@ -1,0 +1,722 @@
+{
+  "search_products": {
+    "entity": "product_search",
+    "shape": "paged_list"
+  },
+  "get_product_detail": {
+    "entity": "product",
+    "shape": "product_snapshot"
+  },
+  "get_product_summary": {
+    "entity": "product",
+    "shape": "product_snapshot"
+  },
+  "get_product_structure": {
+    "entity": "product_structure",
+    "shape": "hierarchy"
+  },
+  "get_product_structure_exclusivity": {
+    "entity": "product_structure_exclusivity",
+    "shape": "playbook_report"
+  },
+  "list_exclusive_raw_materials_catalog": {
+    "entity": "exclusive_raw_materials_catalog",
+    "shape": "playbook_report"
+  },
+  "get_product_production_status": {
+    "entity": "product_production_status",
+    "shape": "playbook_report"
+  },
+  "get_product_shipping_status": {
+    "entity": "product_shipping_status",
+    "shape": "playbook_report"
+  },
+  "get_product_factory_status": {
+    "entity": "product_factory_status",
+    "shape": "composite_analysis"
+  },
+  "get_product_cost_impact_simulation": {
+    "entity": "product_cost_impact_simulation",
+    "shape": "composite_analysis"
+  },
+  "get_product_last_purchase": {
+    "entity": "product_last_purchase",
+    "shape": "playbook_report"
+  },
+  "get_product_purchase_price_history": {
+    "entity": "product_purchase_price_history",
+    "shape": "playbook_report"
+  },
+  "get_product_purchase_budget_history": {
+    "entity": "product_purchase_budget_history",
+    "shape": "playbook_report"
+  },
+  "get_product_raw_material_price_intelligence": {
+    "entity": "product_raw_material_price_intelligence",
+    "shape": "composite_analysis"
+  },
+  "get_product_directives": {
+    "entity": "product_directives",
+    "shape": "composite_analysis"
+  },
+  "get_product_stock": {
+    "entity": "product_stock",
+    "shape": "paged_list"
+  },
+  "get_product_analyser": {
+    "entity": "product_analyser",
+    "shape": "composite_analysis"
+  },
+  "get_product_drawing": {
+    "entity": "product_drawing",
+    "shape": "scalar"
+  },
+  "get_product_drawing_pdf": {
+    "entity": "product_drawing",
+    "shape": "document_export"
+  },
+  "list_product_drawings": {
+    "entity": "product_drawing_catalog",
+    "shape": "paged_list"
+  },
+  "get_product_parents": {
+    "entity": "product_parents",
+    "shape": "hierarchy"
+  },
+  "get_product_suppliers": {
+    "entity": "product_suppliers",
+    "shape": "paged_list"
+  },
+  "get_product_customers": {
+    "entity": "product_customers",
+    "shape": "paged_list"
+  },
+  "get_product_inspection": {
+    "entity": "product_inspection",
+    "shape": "paged_list"
+  },
+  "get_product_guide": {
+    "entity": "product_guide",
+    "shape": "paged_list"
+  },
+  "get_product_internal_movements": {
+    "entity": "product_internal_movements",
+    "shape": "paged_list"
+  },
+  "get_product_inbound_invoice_items": {
+    "entity": "product_inbound_invoice_items",
+    "shape": "paged_list"
+  },
+  "get_product_outbound_invoice_items": {
+    "entity": "product_outbound_invoice_items",
+    "shape": "paged_list"
+  },
+  "get_product_purchases": {
+    "entity": "product_purchases",
+    "shape": "paged_list"
+  },
+  "get_product_sales_summary": {
+    "entity": "product_sales",
+    "shape": "scalar"
+  },
+  "get_product_sales_open_orders": {
+    "entity": "product_open_orders",
+    "shape": "paged_list"
+  },
+  "get_product_sales_billing": {
+    "entity": "product_billing",
+    "shape": "scalar"
+  },
+  "get_product_pricing": {
+    "entity": "product_pricing",
+    "shape": "scalar"
+  },
+  "get_supplies_cpv": {
+    "entity": "supplies_cpv",
+    "shape": "scalar"
+  },
+  "get_supplies_otd": {
+    "entity": "supplies_otd",
+    "shape": "scalar"
+  },
+  "get_supplies_stock_value": {
+    "entity": "supplies_stock_value",
+    "shape": "scalar"
+  },
+  "get_supplies_inventory_turnover": {
+    "entity": "supplies_inventory_turnover",
+    "shape": "scalar"
+  },
+  "get_supplies_negotiation_savings_summary": {
+    "entity": "supplies_negotiation_savings",
+    "shape": "scalar"
+  },
+  "list_lmps": {
+    "entity": "lmp",
+    "shape": "paged_list"
+  },
+  "list_lmps_dashboard": {
+    "entity": "lmp_dashboard",
+    "shape": "composite_analysis"
+  },
+  "get_lmps_dashboard_summary": {
+    "entity": "lmp_dashboard_summary",
+    "shape": "scalar"
+  },
+  "list_lmps_dashboard_items": {
+    "entity": "lmp_dashboard_items",
+    "shape": "paged_list"
+  },
+  "get_lmps_dashboard_charts": {
+    "entity": "lmp_dashboard_charts",
+    "shape": "scalar"
+  },
+  "get_lmp_by_sale_number": {
+    "entity": "lmp",
+    "shape": "product_snapshot"
+  },
+  "get_lmp_history_events": {
+    "entity": "lmp_history",
+    "shape": "paged_list"
+  },
+  "get_lmp_history_flow": {
+    "entity": "lmp_history_flow",
+    "shape": "list"
+  },
+  "list_transforma_mais_processes": {
+    "entity": "transforma_mais_process",
+    "shape": "paged_list"
+  },
+  "get_transforma_mais_summary": {
+    "entity": "transforma_mais_summary",
+    "shape": "scalar"
+  },
+  "list_mini_applicators_ferramentas": {
+    "entity": "mini_applicators_ferramenta",
+    "shape": "paged_list"
+  },
+  "get_mini_applicators_ferramenta": {
+    "entity": "mini_applicators_ferramenta",
+    "shape": "scalar"
+  },
+  "list_mini_applicators_pecas": {
+    "entity": "mini_applicators_peca",
+    "shape": "list"
+  },
+  "get_mini_applicators_golpes": {
+    "entity": "mini_applicators_golpes",
+    "shape": "scalar"
+  },
+  "list_mini_applicators_componentes": {
+    "entity": "mini_applicators_componente",
+    "shape": "list"
+  },
+  "list_sale_orders": {
+    "entity": "sale_order",
+    "shape": "paged_list"
+  },
+  "execute_readonly_sql": {
+    "entity": "sql_result",
+    "shape": "paged_list"
+  },
+  "get_financial_rol": {
+    "entity": "financial_rol",
+    "shape": "scalar"
+  },
+  "get_financial_ebitda_pct": {
+    "entity": "financial_ebitda_pct",
+    "shape": "scalar"
+  },
+  "get_financial_fixed_cost_pct": {
+    "entity": "financial_fixed_cost_pct",
+    "shape": "scalar"
+  },
+  "get_financial_pmr": {
+    "entity": "financial_pmr",
+    "shape": "scalar"
+  },
+  "get_head_office_rol_target_pct": {
+    "entity": "commercial_rol_target",
+    "shape": "scalar"
+  },
+  "get_branch_rol_target_pct": {
+    "entity": "commercial_rol_target",
+    "shape": "scalar"
+  },
+  "get_commercial_rol_series": {
+    "entity": "commercial_rol_series",
+    "shape": "scalar"
+  },
+  "list_commercial_proposals": {
+    "entity": "commercial_proposal",
+    "shape": "paged_list"
+  },
+  "get_commercial_proposal": {
+    "entity": "commercial_proposal",
+    "shape": "product_snapshot"
+  },
+  "get_commercial_proposal_history_events": {
+    "entity": "commercial_proposal_history",
+    "shape": "paged_list"
+  },
+  "get_sales_conversion_rate": {
+    "entity": "sales_conversion_rate",
+    "shape": "scalar"
+  },
+  "get_new_clients_average": {
+    "entity": "new_clients_average",
+    "shape": "scalar"
+  },
+  "get_sales_order_otd": {
+    "entity": "sales_order_otd",
+    "shape": "scalar"
+  },
+  "get_new_business_rol_pct": {
+    "entity": "new_business_rol_pct",
+    "shape": "scalar"
+  },
+  "get_new_clients_rol_pct": {
+    "entity": "new_clients_rol_pct",
+    "shape": "scalar"
+  },
+  "get_direct_labor_cost_pct": {
+    "entity": "direct_labor_cost_pct",
+    "shape": "scalar"
+  },
+  "get_production_cost_pct": {
+    "entity": "production_cost_pct",
+    "shape": "scalar"
+  },
+  "get_depreciation_pct": {
+    "entity": "depreciation_pct",
+    "shape": "scalar"
+  },
+  "get_production_oee_series": {
+    "entity": "production_oee_series",
+    "shape": "scalar"
+  },
+  "get_production_oee": {
+    "entity": "production_oee_detail",
+    "shape": "paged_list"
+  },
+  "get_production_oee_appointment_by_id": {
+    "entity": "production_oee_appointment",
+    "shape": "composite_analysis"
+  },
+  "get_production_otd_series": {
+    "entity": "production_otd_series",
+    "shape": "scalar"
+  },
+  "get_overall_equipment_effectiveness_pct": {
+    "entity": "overall_equipment_effectiveness",
+    "shape": "scalar"
+  },
+  "get_on_time_delivery_pct": {
+    "entity": "production_otd",
+    "shape": "scalar"
+  },
+  "get_production_otd": {
+    "entity": "production_otd",
+    "shape": "paged_list"
+  },
+  "get_production_consumption_top_items": {
+    "entity": "production_consumption_top_items",
+    "shape": "playbook_report"
+  },
+  "get_production_losses_records": {
+    "entity": "production_losses_records",
+    "shape": "playbook_report"
+  },
+  "get_production_losses_top_materials": {
+    "entity": "production_losses_top_materials",
+    "shape": "playbook_report"
+  },
+  "get_production_schedule_today": {
+    "entity": "production_schedule_today",
+    "shape": "playbook_report"
+  },
+  "get_production_orders_open": {
+    "entity": "production_orders_open",
+    "shape": "playbook_report"
+  },
+  "get_production_order_by_op": {
+    "entity": "production_order_detail",
+    "shape": "playbook_report"
+  },
+  "get_production_orders_finished": {
+    "entity": "production_orders_finished",
+    "shape": "playbook_report"
+  },
+  "get_production_work_center_order_summary": {
+    "entity": "production_work_center_order_summary",
+    "shape": "playbook_report"
+  },
+  "get_production_consumption_top_items_by_work_center": {
+    "entity": "production_consumption_top_items_by_work_center",
+    "shape": "playbook_report"
+  },
+  "get_production_consumption_top_items_validated": {
+    "entity": "production_consumption_top_items_validated",
+    "shape": "playbook_report"
+  },
+  "get_production_allocation_gaps": {
+    "entity": "production_allocation_gaps",
+    "shape": "playbook_report"
+  },
+  "get_production_orders_finished_without_consumption": {
+    "entity": "production_orders_finished_without_consumption",
+    "shape": "playbook_report"
+  },
+  "get_production_work_center_average_planned_time": {
+    "entity": "production_work_center_average_planned_time",
+    "shape": "playbook_report"
+  },
+  "get_production_consumption_by_item": {
+    "entity": "production_consumption_by_item",
+    "shape": "playbook_report"
+  },
+  "get_production_planned_vs_real_time": {
+    "entity": "production_planned_vs_real_time",
+    "shape": "playbook_report"
+  },
+  "get_purchases_top_products": {
+    "entity": "purchases_top_products",
+    "shape": "playbook_report"
+  },
+  "get_eficiencia_fabril_dashboard": {
+    "entity": "eficiencia_fabril_dashboard",
+    "shape": "composite_analysis"
+  },
+  "get_inspecoes_entrada_resumo": {
+    "entity": "inspecoes_entrada_resumo",
+    "shape": "scalar"
+  },
+  "get_inspecoes_entrada_pendentes": {
+    "entity": "inspecoes_entrada_pendentes",
+    "shape": "paged_list"
+  },
+  "get_inspecoes_entrada_pendentes_fornecedor": {
+    "entity": "inspecoes_entrada_pendentes_fornecedor",
+    "shape": "list"
+  },
+  "get_inspecoes_entrada_rejeitadas_ensaiador": {
+    "entity": "inspecoes_entrada_rejeitadas_ensaiador",
+    "shape": "list"
+  },
+  "get_inspecoes_entrada_rejeitadas_produto": {
+    "entity": "inspecoes_entrada_rejeitadas_produto",
+    "shape": "list"
+  },
+  "get_inspecoes_entrada_historico": {
+    "entity": "inspecoes_entrada_historico",
+    "shape": "paged_list"
+  },
+  "get_inspecoes_entrada_historico_detalhe": {
+    "entity": "inspecoes_entrada_historico_detalhe",
+    "shape": "object"
+  },
+  "list_pedidos_venda_abertos": {
+    "entity": "open_sales_order",
+    "shape": "composite_analysis"
+  },
+  "list_ops_abertas_pedidos_venda": {
+    "entity": "open_production_order",
+    "shape": "composite_analysis"
+  },
+  "list_propostas_comerciais": {
+    "entity": "commercial_proposal_document",
+    "shape": "paged_list"
+  },
+  "get_proposta_comercial": {
+    "entity": "commercial_proposal_document",
+    "shape": "composite_analysis"
+  },
+  "export_proposta_comercial_pdf": {
+    "entity": "commercial_proposal_document",
+    "shape": "document_export"
+  },
+  "list_eficiencia_fabril_appointments": {
+    "entity": "eficiencia_fabril_appointment",
+    "shape": "paged_list"
+  },
+  "list_quality_branches": {
+    "entity": "quality_branch",
+    "shape": "scalar"
+  },
+  "get_nonconformity_series": {
+    "entity": "nonconformity_series",
+    "shape": "scalar"
+  },
+  "list_nonconformities": {
+    "entity": "nonconformity",
+    "shape": "paged_list"
+  },
+  "get_kaizen_summary": {
+    "entity": "kaizen_summary",
+    "shape": "scalar"
+  },
+  "get_kaizen_by_id": {
+    "entity": "kaizen",
+    "shape": "scalar"
+  },
+  "list_kaizen_records": {
+    "entity": "kaizen_record",
+    "shape": "paged_list"
+  },
+  "create_kaizen_record": {
+    "entity": "kaizen_record",
+    "shape": "scalar"
+  },
+  "get_kaizen_record": {
+    "entity": "kaizen_record",
+    "shape": "scalar"
+  },
+  "update_kaizen_record": {
+    "entity": "kaizen_record",
+    "shape": "scalar"
+  },
+  "delete_kaizen_record": {
+    "entity": "kaizen_record",
+    "shape": "scalar"
+  },
+  "import_kaizens_from_sheet": {
+    "entity": "kaizen_record_import",
+    "shape": "scalar"
+  },
+  "get_quality_action_plans_dashboard": {
+    "entity": "quality_action_plan_dashboard",
+    "shape": "scalar"
+  },
+  "list_quality_action_plans_overdue": {
+    "entity": "quality_action_plan",
+    "shape": "paged_list"
+  },
+  "list_quality_action_plans": {
+    "entity": "quality_action_plan",
+    "shape": "paged_list"
+  },
+  "get_quality_action_plan_detail": {
+    "entity": "quality_action_plan",
+    "shape": "composite_analysis"
+  },
+  "create_quality_action_plan": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "update_quality_action_plan_status": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "upsert_quality_action_plan_ishikawa": {
+    "entity": "quality_action_plan_ishikawa",
+    "shape": "scalar"
+  },
+  "upsert_quality_action_plan_five_whys": {
+    "entity": "quality_action_plan_five_whys",
+    "shape": "scalar"
+  },
+  "create_quality_action_plan_actions": {
+    "entity": "quality_action_plan_action",
+    "shape": "paged_list"
+  },
+  "update_quality_action_plan_action": {
+    "entity": "quality_action_plan_action",
+    "shape": "scalar"
+  },
+  "record_quality_action_plan_effectiveness": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "get_audit_5s_summary": {
+    "entity": "audit_5s_summary",
+    "shape": "scalar"
+  },
+  "get_ppm_internal_summary": {
+    "entity": "ppm_internal_summary",
+    "shape": "scalar"
+  },
+  "get_ppm_external_summary": {
+    "entity": "ppm_external_summary",
+    "shape": "scalar"
+  },
+  "get_ppm_internal_series": {
+    "entity": "ppm_internal_series",
+    "shape": "scalar"
+  },
+  "get_ppm_external_series": {
+    "entity": "ppm_external_series",
+    "shape": "scalar"
+  },
+  "list_ppm_internal": {
+    "entity": "ppm_internal",
+    "shape": "paged_list"
+  },
+  "list_ppm_external": {
+    "entity": "ppm_external",
+    "shape": "paged_list"
+  },
+  "get_produced_quantity": {
+    "entity": "produced_quantity",
+    "shape": "playbook_report"
+  },
+  "list_audit_5s_areas": {
+    "entity": "audit_5s_area",
+    "shape": "paged_list"
+  },
+  "create_audit_5s_area": {
+    "entity": "audit_5s_area",
+    "shape": "scalar"
+  },
+  "list_audit_5s_criteria": {
+    "entity": "audit_5s_criterion",
+    "shape": "paged_list"
+  },
+  "list_audit_5s_audits": {
+    "entity": "audit_5s_audit",
+    "shape": "paged_list"
+  },
+  "create_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "get_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "delete_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "join_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "upsert_audit_5s_response": {
+    "entity": "audit_5s_response",
+    "shape": "scalar"
+  },
+  "complete_audit_5s_evaluation": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "list_audit_5s_nc_candidates": {
+    "entity": "audit_5s_nc_candidate",
+    "shape": "paged_list"
+  },
+  "list_audit_5s_nonconformities": {
+    "entity": "audit_5s_nonconformity",
+    "shape": "paged_list"
+  },
+  "create_audit_5s_nonconformity": {
+    "entity": "audit_5s_nonconformity",
+    "shape": "scalar"
+  },
+  "update_audit_5s_nonconformity": {
+    "entity": "audit_5s_nonconformity",
+    "shape": "scalar"
+  },
+  "list_audit_5s_nc_actions": {
+    "entity": "audit_5s_nc_action",
+    "shape": "paged_list"
+  },
+  "create_audit_5s_nc_action": {
+    "entity": "audit_5s_nc_action",
+    "shape": "scalar"
+  },
+  "list_audit_5s_nc_attachments": {
+    "entity": "audit_5s_attachment",
+    "shape": "paged_list"
+  },
+  "list_audit_5s_audit_nc_attachments": {
+    "entity": "audit_5s_attachment",
+    "shape": "paged_list"
+  },
+  "attach_audit_5s_evidence": {
+    "entity": "audit_5s_attachment",
+    "shape": "scalar"
+  },
+  "complete_audit_5s_nc_action": {
+    "entity": "audit_5s_nc_action",
+    "shape": "scalar"
+  },
+  "get_audit_5s_analytics_dashboard": {
+    "entity": "audit_5s_analytics",
+    "shape": "composite_analysis"
+  },
+  "close_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "list_hr_branches": {
+    "entity": "hr_branch",
+    "shape": "scalar"
+  },
+  "get_hr_snapshot": {
+    "entity": "hr_snapshot",
+    "shape": "composite_analysis"
+  },
+  "get_hr_active_pdi_count": {
+    "entity": "hr_active_pdi_count",
+    "shape": "scalar"
+  },
+  "get_hr_performance_reviews_completion": {
+    "entity": "hr_performance_reviews_completion",
+    "shape": "scalar"
+  },
+  "list_scheduling_resources": {
+    "entity": "scheduling_resource",
+    "shape": "paged_list"
+  },
+  "create_scheduling_resource": {
+    "entity": "scheduling_resource",
+    "shape": "scalar"
+  },
+  "update_scheduling_resource": {
+    "entity": "scheduling_resource",
+    "shape": "scalar"
+  },
+  "list_scheduling_bookings": {
+    "entity": "scheduling_booking",
+    "shape": "paged_list"
+  },
+  "create_scheduling_booking": {
+    "entity": "scheduling_booking",
+    "shape": "scalar"
+  },
+  "cancel_scheduling_booking": {
+    "entity": "scheduling_booking",
+    "shape": "scalar"
+  },
+  "search_tables_by_description": {
+    "entity": "protheus_table",
+    "shape": "paged_list"
+  },
+  "get_protheus_table": {
+    "entity": "protheus_table",
+    "shape": "scalar"
+  },
+  "list_protheus_table_columns": {
+    "entity": "protheus_column",
+    "shape": "paged_list"
+  },
+  "get_protheus_table_indexes": {
+    "entity": "protheus_index",
+    "shape": "scalar"
+  },
+  "get_protheus_table_relations": {
+    "entity": "protheus_relation",
+    "shape": "scalar"
+  },
+  "get_protheus_table_schema": {
+    "entity": "protheus_table_schema",
+    "shape": "composite_analysis"
+  },
+  "search_protheus_columns_in_table": {
+    "entity": "protheus_column",
+    "shape": "paged_list"
+  },
+  "search_protheus_columns_by_description": {
+    "entity": "protheus_column",
+    "shape": "paged_list"
+  }
+}

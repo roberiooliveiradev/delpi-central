@@ -182,12 +182,16 @@ ExecuteExternalAction
 
 Presenters por entidade **removidos**; pasta `presenters/` só com hosts utilitários (SQL, KPI, table host).
 
-### Fase D — Shape e enriquecimento na API (depois)
+### Fase D — Shape e enriquecimento na API
 
-1. api-delpi publica `x-delpi` / `meta.entity` / `meta.shape` consistentes.
-2. Importador gera perfil mínimo automaticamente.
-3. Reintroduzir stack rico **só** onde `presentation.strategy: enriched` no OpenAPI.
-4. `presentation_profiles.json` reduzido a defaults + exceções NL.
+**Status:** ✅ parcial (jun/2026) — Fases 10–12 em [`changelog/2026-06-presentation-delivered-pure.md`](../changelog/2026-06-presentation-delivered-pure.md).
+
+1. ✅ api-delpi publica `x-delpi` (`openapi_delpi_extension_injector` no `custom_openapi`).
+2. ✅ Importador persiste `delpi_metadata`; `OpenApiPresentationProfileDeriverService` deriva perfil.
+3. Pendente: stack rico **só** onde `presentation.strategy: enriched` no OpenAPI.
+4. ✅ `entityProfiles` podado (75 entradas); mantidos 29 perfis especiais + `openapiReplaceableProfileKeys`.
+5. ✅ `resolve_effective_profile_key` + `openapi_operation_contracts.json` para gates CI sem payload runtime.
+6. ✅ `playbookOperational` alinhado a shapes `playbook_report` (entidades `composite_analysis` excluídas do contrato).
 
 ---
 
@@ -255,7 +259,10 @@ cd minha-delpi-ai-api
 
 # Rotas OpenAPI
 .venv/bin/python scripts/generate_operational_route_registry.py --check
-.venv/bin/python scripts/sync_api_delpi_openapi.py --dry-run   # quando aplicável
+.venv/bin/python scripts/audit_openapi_profile_pruning.py --check
+.venv/bin/python scripts/sync_openapi_route_contract_shapes.py --check
+.venv/bin/python scripts/audit_presentation_coverage.py --check-profiles
+.venv/bin/python scripts/sync_api_delpi_openapi.py --skip-import --skip-reindex   # catálogo local
 
 # Tier A ainda legacy — suite dedicada até migrar
 .venv/bin/python -m pytest tests/unit/domain/services/test_operational_route_table_presenters.py -q
@@ -269,7 +276,7 @@ cd minha-delpi-ai-api
 
 - Adicionar presenter Python para **rota nova** — usar as-delivered + OpenAPI.
 - Duplicar rota no registry se já importada e rankeável semanticamente.
-- Expandir `presentation_profiles.json` para nova rota sem `x-delpi` (Fase D).
+- Expandir `presentation_profiles.json` com `entityProfiles` substituível — usar `x-delpi` + gate `audit_openapi_profile_pruning.py --check`.
 - Fix de UI no Trato de sintoma quando API pode entregar `meta` melhor.
 - Manter `lastEntities` / chips product/branch (regra chat base jun/2026).
 
