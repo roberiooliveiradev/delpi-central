@@ -845,6 +845,20 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             method_plan=method_plan,
         )
 
+    @staticmethod
+    def _current_bundle_query_params(
+        request: GetStockValueRequest,
+        *,
+        branch_label: str,
+        location_label: str,
+        filter_params: tuple,
+    ) -> tuple:
+        summary_params = (branch_label, location_label) + filter_params
+        if request.summary_only:
+            return summary_params
+        # Cada SELECT subsequente reutiliza apenas os filtros SB2.
+        return summary_params + filter_params + filter_params + filter_params
+
     def _fetch_current_bundle(self, request: GetStockValueRequest) -> dict:
         where_clause, params = self._build_filters(request)
         branch_label, location_label = self._labels(request)
@@ -909,7 +923,12 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                 ORDER BY total_stock_value DESC, product_code;
             """
 
-        final_params = (branch_label, location_label) + params
+        final_params = self._current_bundle_query_params(
+            request,
+            branch_label=branch_label,
+            location_label=location_label,
+            filter_params=params,
+        )
 
         with self as repo:
             resultsets = repo.execute_query_multiple(sql, final_params)

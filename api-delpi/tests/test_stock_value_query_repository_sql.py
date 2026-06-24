@@ -184,6 +184,30 @@ def test_current_summary_only_sql_uses_single_select() -> None:
     assert "GROUP BY SB2.B2_FILIAL" not in sql
 
 
+def test_current_full_bundle_repeats_filter_params_per_select() -> None:
+    repo = StockValueQueryRepository()
+    request = GetStockValueRequest(branch="01", top_limit=5, summary_only=False)
+
+    with patch.object(
+        StockValueQueryRepository,
+        "execute_query_multiple",
+        return_value=[
+            {"data": [{"total_stock_value": 1.0, "total_stock_quantity": 1.0}]},
+            {"data": []},
+            {"data": []},
+            {"data": []},
+        ],
+    ) as execute_mock:
+        with patch.object(StockValueQueryRepository, "__enter__", return_value=repo):
+            with patch.object(StockValueQueryRepository, "__exit__", return_value=False):
+                repo._fetch_current_bundle(request)
+
+    sql, params = execute_mock.call_args[0]
+    marker_count = sql.count("?")
+    assert marker_count == len(params)
+    assert params == ("01", "all", "01", "01", "01", "01")
+
+
 def test_summary_only_uses_distinct_cache_key() -> None:
     full = GetStockValueRequest(start_date="2026-04-01", end_date="2026-04-30")
     lite = GetStockValueRequest(
