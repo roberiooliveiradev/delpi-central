@@ -7,6 +7,7 @@ import { SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
 import {
   actionTypeLabel,
+  branchLabel,
   dashboardPath,
   listPath,
 } from "../constants/actionPlans";
@@ -77,6 +78,10 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <div>
                 <dt>Cliente</dt>
                 <dd>{plan.customer_name ?? "—"}</dd>
+              </div>
+              <div>
+                <dt>Filial</dt>
+                <dd>{branchLabel(plan.branch_code)}</dd>
               </div>
               <div>
                 <dt>Produto</dt>

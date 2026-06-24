@@ -21,6 +21,7 @@ PLAN_SELECT = """
            p.status,
            p.created_by_user_id,
            p.owner_user_id,
+           p.branch_code,
            p.department,
            p.problem_category,
            p.symptom_tags,

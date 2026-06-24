@@ -1,5 +1,10 @@
 import type { PlanSeverity, PlanStatus } from "../types/actionPlan";
 
+export const PAC_BRANCH_OPTIONS = [
+  { value: "01", label: "Filial 01" },
+  { value: "02", label: "Filial 02" },
+] as const;
+
 export const APP_BASE = "/apps/quality-action-plans";
 
 export const PLAN_STATUSES: Array<{ value: PlanStatus; label: string }> = [
@@ -58,6 +63,11 @@ export function overduePath(): string {
 
 export function detailPath(planId: string): string {
   return `${APP_BASE}/plano/${planId}`;
+}
+
+export function branchLabel(branchCode?: string | null): string {
+  if (!branchCode) return "—";
+  return PAC_BRANCH_OPTIONS.find((item) => item.value === branchCode)?.label ?? branchCode;
 }
 
 export function statusLabel(status: string): string {

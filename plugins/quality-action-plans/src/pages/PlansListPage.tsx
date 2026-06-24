@@ -5,7 +5,7 @@ import { AppNav } from "../components/AppNav";
 import { PageHeader } from "../components/PageHeader";
 import { PlansTable } from "../components/PlansTable";
 import { StateAlert } from "../components/StateAlert";
-import { PLAN_SEVERITIES, PLAN_STATUSES } from "../constants/actionPlans";
+import { PLAN_SEVERITIES, PLAN_STATUSES, PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
 import type { ActionPlanSummary } from "../types/actionPlan";
 
 type Props = {
@@ -20,6 +20,7 @@ export function PlansListPage({ onNavigate }: Props) {
   const [severity, setSeverity] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [productCode, setProductCode] = useState("");
+  const [branchCode, setBranchCode] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -30,6 +31,7 @@ export function PlansListPage({ onNavigate }: Props) {
         severity: severity || undefined,
         customer_name: customerName || undefined,
         product_code: productCode || undefined,
+        branch_code: branchCode || undefined,
         page_size: 100,
       });
       setItems(data.items);
@@ -38,7 +40,7 @@ export function PlansListPage({ onNavigate }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [customerName, productCode, severity, status]);
+  }, [branchCode, customerName, productCode, severity, status]);
 
   useEffect(() => {
     void load();
@@ -77,6 +79,21 @@ export function PlansListPage({ onNavigate }: Props) {
           >
             <option value="">Todas</option>
             {PLAN_SEVERITIES.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="pac-filter-box">
+          <label htmlFor="pac-filter-branch">Filial</label>
+          <select
+            id="pac-filter-branch"
+            value={branchCode}
+            onChange={(event) => setBranchCode(event.target.value)}
+          >
+            <option value="">Todas</option>
+            {PAC_BRANCH_OPTIONS.map((item) => (
               <option key={item.value} value={item.value}>
                 {item.label}
               </option>

@@ -1,6 +1,6 @@
 import { Eye } from "lucide-react";
 
-import { detailPath } from "../constants/actionPlans";
+import { branchLabel, detailPath } from "../constants/actionPlans";
 import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
 import { SeverityBadge, StatusBadge } from "./StatusBadge";
@@ -29,6 +29,7 @@ export function PlansTable({ items, loading, emptyMessage, onNavigate }: Props) 
             <th>Código</th>
             <th>Título</th>
             <th>Cliente</th>
+            <th>Filial</th>
             <th>Produto</th>
             <th>Severidade</th>
             <th>Status</th>
@@ -42,6 +43,7 @@ export function PlansTable({ items, loading, emptyMessage, onNavigate }: Props) 
               <td>{plan.code ?? "—"}</td>
               <td>{plan.title}</td>
               <td>{plan.customer_name ?? "—"}</td>
+              <td>{branchLabel(plan.branch_code)}</td>
               <td>{plan.product_code ?? "—"}</td>
               <td>
                 <SeverityBadge severity={plan.severity} />

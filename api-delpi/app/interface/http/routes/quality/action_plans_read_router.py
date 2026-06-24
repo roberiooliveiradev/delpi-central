@@ -16,11 +16,13 @@ router = APIRouter(prefix="/action-plans", tags=["PAC Qualidade — leitura"])
 
 @router.get("/dashboard")
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
-def get_action_plans_dashboard():
+def get_action_plans_dashboard(
+    branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
+):
     try:
         repo = build_quality_action_plan_read_repository()
         return api_delpi_success(
-            repo.get_dashboard_summary(),
+            repo.get_dashboard_summary(branch_code=branch_code),
             operation_id="get_quality_action_plans_dashboard",
             message="Dashboard PAC carregado.",
         )
@@ -32,13 +34,14 @@ def get_action_plans_dashboard():
 @router.get("/overdue")
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_overdue_action_plans(
+    branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
         return api_delpi_success(
-            repo.list_overdue_plans(page=page, page_size=page_size),
+            repo.list_overdue_plans(branch_code=branch_code, page=page, page_size=page_size),
             operation_id="list_quality_action_plans_overdue",
         )
     except PluginsRepositoryError as exc:
@@ -54,6 +57,7 @@ def list_action_plans(
     product_code: str | None = Query(default=None),
     customer_name: str | None = Query(default=None),
     owner_user_id: str | None = Query(default=None),
+    branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -66,6 +70,7 @@ def list_action_plans(
                 product_code=product_code,
                 customer_name=customer_name,
                 owner_user_id=owner_user_id,
+                branch_code=branch_code,
                 page=page,
                 page_size=page_size,
             ),

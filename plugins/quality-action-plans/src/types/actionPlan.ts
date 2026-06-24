@@ -17,6 +17,7 @@ export type ActionPlanSummary = {
   title: string;
   customer_name?: string | null;
   product_code?: string | null;
+  branch_code?: string | null;
   severity: PlanSeverity;
   status: PlanStatus;
   owner_user_id?: string | null;
@@ -43,6 +44,12 @@ export type DashboardSummary = {
   completed_this_month: number;
   overdue_actions: number;
   overdue_plans: number;
+  branch_code?: string;
+  by_branch?: Array<{
+    branch_code: string;
+    open_plans: number;
+    critical_open: number;
+  }>;
 };
 
 export type IshikawaAnalysis = {

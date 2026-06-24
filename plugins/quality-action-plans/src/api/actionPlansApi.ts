@@ -12,6 +12,7 @@ type ListParams = {
   severity?: string;
   product_code?: string;
   customer_name?: string;
+  branch_code?: string;
   page?: number;
   page_size?: number;
 };
@@ -22,14 +23,16 @@ function buildQuery(params: ListParams): string {
   if (params.severity) search.set("severity", params.severity);
   if (params.product_code) search.set("product_code", params.product_code);
   if (params.customer_name) search.set("customer_name", params.customer_name);
+  if (params.branch_code) search.set("branch_code", params.branch_code);
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));
   const query = search.toString();
   return query ? `?${query}` : "";
 }
 
-export async function fetchDashboard(): Promise<DashboardSummary> {
-  const envelope = await httpGet<ApiEnvelope<DashboardSummary>>(`${API_BASE}/dashboard`);
+export async function fetchDashboard(branchCode?: string): Promise<DashboardSummary> {
+  const query = branchCode ? `?branch_code=${encodeURIComponent(branchCode)}` : "";
+  const envelope = await httpGet<ApiEnvelope<DashboardSummary>>(`${API_BASE}/dashboard${query}`);
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar dashboard PAC.");
 }
 

@@ -69,6 +69,14 @@
   }
 }
 
+.dashboard-quality-action-plans .pac-filters-row--compact {
+  margin-bottom: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-branch-summary {
+  margin-top: var(--pac-section-gap);
+}
+
 .dashboard-quality-action-plans .pac-page-header {
   display: flex;
   justify-content: space-between;

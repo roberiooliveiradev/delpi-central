@@ -5,7 +5,7 @@ import { AppNav } from "../components/AppNav";
 import { DashboardCards } from "../components/DashboardCards";
 import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
-import { listPath, overduePath } from "../constants/actionPlans";
+import { listPath, overduePath, PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
 import type { DashboardSummary } from "../types/actionPlan";
 
 type Props = {
@@ -16,19 +16,20 @@ export function DashboardPage({ onNavigate }: Props) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [branchCode, setBranchCode] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchDashboard();
+      const data = await fetchDashboard(branchCode || undefined);
       setSummary(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [branchCode]);
 
   useEffect(() => {
     void load();
@@ -51,6 +52,23 @@ export function DashboardPage({ onNavigate }: Props) {
         }
       />
       <AppNav active="dashboard" onNavigate={onNavigate} />
+      <div className="pac-filters-row pac-filters-row--compact">
+        <div className="pac-filter-box">
+          <label htmlFor="pac-dashboard-branch">Filial</label>
+          <select
+            id="pac-dashboard-branch"
+            value={branchCode}
+            onChange={(event) => setBranchCode(event.target.value)}
+          >
+            <option value="">Consolidado</option>
+            {PAC_BRANCH_OPTIONS.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {loading && !summary ? <p className="pac-muted">Carregando indicadores…</p> : null}
       {summary ? <DashboardCards summary={summary} /> : null}
