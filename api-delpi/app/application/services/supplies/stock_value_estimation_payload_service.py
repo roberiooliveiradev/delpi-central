@@ -3,7 +3,9 @@ from __future__ import annotations
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
 from app.application.services.supplies.stock_value_method_service import (
     STOCK_METHOD_RESOLVED_OFFICIAL,
+    STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT,
 )
+from app.application.services.supplies.stock_value_hybrid_content_service import note
 
 
 def build_stock_estimation_payload(
@@ -17,21 +19,19 @@ def build_stock_estimation_payload(
     estimation_meta = bundle.get("estimation_meta") or {}
     stock_method_resolved = bundle.get("stock_method_resolved") or "estimated"
     stock_method_requested = (request.stock_method or "auto").strip().lower()
+    register_snapshot = estimation_meta.get("register_snapshot") or {}
 
     if stock_method_resolved == STOCK_METHOD_RESOLVED_OFFICIAL:
         method = "sb9_closure_on_end_date"
-        note = (
-            "Valor do fechamento oficial SB9010 na data final do período. "
-            "Corresponde ao inventário contábil quando registrado na SB9."
-        )
+        note_text = note("officialClosure")
         data_quality_warning = None
+    elif stock_method_resolved == STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT:
+        method = "sb2_register_snapshot"
+        note_text = note("registerSnapshot")
+        data_quality_warning = estimation_meta.get("data_quality_warning")
     else:
         method = "sb9_last_closure_plus_sd3_movements"
-        note = (
-            "Valor estimado a partir do último fechamento real em SB9010 "
-            "somado às movimentações líquidas em SD3010 (entrada se D3_TM < '500', "
-            "saída caso contrário). Não substitui fechamento oficial da SB9."
-        )
+        note_text = note("estimatedKardex")
         data_quality_warning = None
         stale_closure = False
         if period_end and estimation_meta.get("closing_base_date"):
@@ -60,8 +60,22 @@ def build_stock_estimation_payload(
         "official_closure_on_period_end": estimation_meta.get(
             "official_closure_on_period_end", False
         ),
-        "note": note,
+        "note": note_text,
     }
     if data_quality_warning:
         payload["data_quality_warning"] = data_quality_warning
+    if register_snapshot:
+        payload["inventory_register"] = register_snapshot
+        wip_value = float(register_snapshot.get("em_processo_proxy_value") or 0)
+        if wip_value > 0:
+            payload["wip_proxy"] = {
+                "enabled": True,
+                "total_wip_value": wip_value,
+                "method": register_snapshot.get("em_processo_proxy_method"),
+                "process_locations": register_snapshot.get("process_locations") or [],
+                "note": note(
+                    "wipProxy",
+                    locations=", ".join(register_snapshot.get("process_locations") or []),
+                ),
+            }
     return payload

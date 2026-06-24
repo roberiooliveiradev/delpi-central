@@ -59,3 +59,34 @@ def test_build_stock_estimation_payload_official_closure() -> None:
 
     assert payload["method"] == "sb9_closure_on_end_date"
     assert "data_quality_warning" not in payload
+
+
+def test_build_stock_estimation_payload_register_snapshot() -> None:
+    request = GetStockValueRequest(
+        start_date="2026-05-01",
+        end_date="2026-05-31",
+        stock_method="hybrid",
+    )
+    payload = build_stock_estimation_payload(
+        request=request,
+        bundle={
+            "stock_method_resolved": "register_snapshot",
+            "estimation_meta": {
+                "data_quality_warning": "Período sem fechamento SB9.",
+                "register_snapshot": {
+                    "em_estoque_value": 3_565_738.0,
+                    "em_processo_proxy_value": 262_319.0,
+                    "em_processo_proxy_method": "sb2_process_locations",
+                    "process_locations": ["99", "50", "98"],
+                    "total_geral_proxy_value": 3_828_057.0,
+                },
+            },
+        },
+        period_start="20260501",
+        period_end="20260531",
+        period_end_exclusive="20260601",
+    )
+
+    assert payload["method"] == "sb2_register_snapshot"
+    assert payload["inventory_register"]["em_estoque_value"] == 3_565_738.0
+    assert payload["wip_proxy"]["total_wip_value"] == 262_319.0

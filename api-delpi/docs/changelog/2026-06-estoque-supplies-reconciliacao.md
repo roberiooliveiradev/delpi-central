@@ -1,8 +1,9 @@
-# Changelog — estoque Suprimentos (jun/2026)
+# Estoque Suprimentos — reconciliação e alinhamento MATR460 (jun/2026)
 
-## Contexto
+Gap entre dashboard `GET /supplies/stock-value` e Registro de Inventário TOTVS (filiais 01/02, maio/2026).
 
-Gap entre dashboard `GET /supplies/stock-value` e Registro de Inventário TOTVS (filiais 01/02, maio/2026). Playbook: `docs/roadmaps/playbook-correcao-estoque-supplies-inventario.md`.
+**Resumo executivo:** [estoque-supplies-matr460-resumo-jun2026.md](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md)  
+**Playbook:** [playbook-correcao-estoque-supplies-inventario.md](../roadmaps/playbook-correcao-estoque-supplies-inventario.md)
 
 ## W0 — Reconciliação
 
@@ -28,7 +29,21 @@ Gap entre dashboard `GET /supplies/stock-value` e Registro de Inventário TOTVS 
 - `stock_value_estimation_payload_service.py` — montagem única de `estimation` / `stock_estimation`
 - `GET /supplies/inventory-turnover` herda o mesmo contrato de estoque (`stock_method=auto`)
 
+## Investigação MATR460 no TOTVS (24/jun/2026)
+
+- Script `scripts/investigate_matr460_inventory.py` + SQL `scripts/sql/investigate_matr460_inventory.sql`
+- Evidências: `docs/roadmaps/evidencias/matr460-investigacao-totvs.{md,json}`
+- Resumo executivo: `docs/roadmaps/estoque-supplies-matr460-resumo-jun2026.md`
+- Achados: sem SB9 em 31/05/2026; SB2 ≈ EM ESTOQUE MATR460; proxy SC2 WIP << EM PROCESSO; sem view SQL do MATR460
+
+## W5 — Modo híbrido (`register_snapshot`)
+
+- `auto` / `hybrid`: sem SB9 na `end_date` → SB2 + proxy EM PROCESSO (locais 99/50/98)
+- `estimated` mantém Kardex para análise
+- Doc: [estoque-supplies-modo-hibrido.md](../roadmaps/estoque-supplies-modo-hibrido.md)
+
 ## Pendente
 
-- **W3** EM PROCESSO — decisão de negócio
+- **W3** EM PROCESSO — decisão de negócio; investigação TOTVS indica SC2 não basta (ver [resumo MATR460](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md))
 - Fechamentos SB9 mar–mai/2026 na Controladoria para validar `auto` em produção
+- Script `investigate_matr460_inventory.py` + evidências `matr460-investigacao-totvs.*`

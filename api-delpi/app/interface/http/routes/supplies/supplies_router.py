@@ -156,7 +156,7 @@ def get_stock_value(
     ),
     stock_method: str = Query(
         default="auto",
-        description="Método do estoque histórico: auto, estimated ou official_closure.",
+        description="Método do estoque histórico: auto, hybrid, estimated ou official_closure.",
     ),
 ):
     try:

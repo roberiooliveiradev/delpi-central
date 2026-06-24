@@ -143,6 +143,27 @@ export type StockValueEstimation = {
   official_closure_value?: number | null;
   official_closure_on_period_end?: boolean;
   data_quality_warning?: string;
+  inventory_register?: {
+    em_estoque_value?: number;
+    em_processo_proxy_value?: number;
+    em_processo_proxy_method?: string;
+    process_locations?: string[];
+    total_geral_proxy_value?: number;
+    snapshot_at_query_time?: boolean;
+    period_end_requested?: string;
+    by_branch?: Array<{
+      branch?: string;
+      em_estoque_value?: number;
+      em_processo_proxy_value?: number;
+    }>;
+  };
+  wip_proxy?: {
+    enabled: boolean;
+    total_wip_value?: number;
+    method?: string;
+    process_locations?: string[];
+    note?: string;
+  };
 };
 
 export type StockValueData = {

@@ -70,6 +70,10 @@ export function StockPage({ pathname }: StockPageProps) {
     data?.estimation?.method === "sb9_closure_on_end_date" ||
     data?.estimation?.stock_method_resolved === "official_closure";
 
+  const isRegisterSnapshot =
+    data?.estimation?.method === "sb2_register_snapshot" ||
+    data?.estimation?.stock_method_resolved === "register_snapshot";
+
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const locationLabel = location ? `Local ${location}` : "Todas";
 
@@ -156,7 +160,9 @@ export function StockPage({ pathname }: StockPageProps) {
                   /^(\d{4})(\d{2})(\d{2})$/,
                   "$3/$2/$1"
                 ) ?? "fim do período"}`
-              : "Valor estimado no período (SB9 + movimentações SD3)"
+              : isRegisterSnapshot
+                ? "Snapshot SB2 (alinhado ao Registro de Inventário quando não há fechamento SB9)"
+                : "Estimativa Kardex SB9+SD3 (modo analítico)"
             : "Posição atual por filial e localização (SB2)"
         }
         currentPath={pathname ?? SUPPLIES_ROUTES.stock}
@@ -180,7 +186,9 @@ export function StockPage({ pathname }: StockPageProps) {
             className={
               isOfficialClosure
                 ? "ds-stock-estimation__official-banner"
-                : "ds-state-box"
+                : isRegisterSnapshot
+                  ? "ds-stock-estimation__register-banner"
+                  : "ds-state-box"
             }
             role="status"
           >

@@ -29,6 +29,10 @@ export function StockEstimationBreakdown({
       estimation.bridge_value != null ||
       estimation.period_net_value != null);
 
+  const register = estimation.inventory_register;
+  const showRegister =
+    estimation.method === "sb2_register_snapshot" && register != null;
+
   return (
     <section className="ds-stock-estimation" aria-label="Composição da estimativa de estoque">
       {estimation.data_quality_warning ? (
@@ -37,7 +41,28 @@ export function StockEstimationBreakdown({
         </div>
       ) : null}
 
-      {showConsolidated ? (
+      {showRegister ? (
+        <dl className="ds-stock-estimation__grid">
+          <div>
+            <dt>EM ESTOQUE (SB2)</dt>
+            <dd>{formatCurrency(register.em_estoque_value)}</dd>
+          </div>
+          <div>
+            <dt>EM PROCESSO (proxy)</dt>
+            <dd>{formatCurrency(register.em_processo_proxy_value)}</dd>
+          </div>
+          <div>
+            <dt>TOTAL GERAL (proxy)</dt>
+            <dd>{formatCurrency(register.total_geral_proxy_value)}</dd>
+          </div>
+          <div>
+            <dt>Armazéns de processo</dt>
+            <dd>{(register.process_locations ?? []).join(", ") || "—"}</dd>
+          </div>
+        </dl>
+      ) : null}
+
+      {showConsolidated && !showRegister ? (
         <dl className="ds-stock-estimation__grid">
           <div>
             <dt>Base SB9</dt>

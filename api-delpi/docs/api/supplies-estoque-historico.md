@@ -25,7 +25,7 @@ A resposta inclui o objeto `estimation` quando o modo histórico está ativo.
 | `end_date` | Condicional | Fim do período (inclusivo). Ex.: `2026-04-30`, `20260430`. |
 | `top_limit` | Não | Top produtos por valor (default `10`, máx. `50`). Omitido no `summary_only`. |
 | `summary_only` | Não | Quando `true`, retorna **apenas** `summary` (sem `by_branch`, `by_location`, `top_products`). Default `false`. |
-| `stock_method` | Não | `auto` (default), `estimated` ou `official_closure`. Ver [playbook](../roadmaps/playbook-correcao-estoque-supplies-inventario.md) §9. |
+| `stock_method` | Não | `auto` (default), `hybrid`, `estimated` ou `official_closure`. Ver [modo híbrido](../roadmaps/estoque-supplies-modo-hibrido.md). |
 
 Regras:
 
@@ -41,9 +41,11 @@ Regras:
 
 | Valor | Comportamento |
 |-------|----------------|
-| `auto` | Fechamento SB9 na `end_date` quando existir; senão estimativa SB9+SD3 |
-| `estimated` | Sempre estimativa SB9+SD3 |
+| `auto` / `hybrid` | Fechamento SB9 na `end_date` quando existir; senão **snapshot SB2** (`register_snapshot`) |
+| `estimated` | Kardex SB9+SD3 (analítico) |
 | `official_closure` | Exige fechamento SB9 na `end_date`; erro 400 se ausente |
+
+Documentação completa: [estoque-supplies-modo-hibrido.md](../roadmaps/estoque-supplies-modo-hibrido.md).
 
 Objeto `estimation` expõe `stock_method`, `stock_method_resolved`, breakdown (`closing_base_*`, `bridge_value`, `period_net_value`) e `data_quality_warning` quando a base SB9 é anterior ao fim do período.
 
@@ -213,7 +215,7 @@ Campos de auditoria (W1, jun/2026): `closing_base_*`, `bridge_value`, `period_ne
 ## Limitações
 
 - Resultado de **análise gerencial**, não substitui fechamento contábil oficial na SB9.
-- Comparação com **Registro de Inventário** (MATR460): ver plano de correção em [playbook-correcao-estoque-supplies-inventario.md](../roadmaps/playbook-correcao-estoque-supplies-inventario.md) (ondas W0–W4, modo fechamento oficial, EM PROCESSO).
+- Comparação com **Registro de Inventário** (MATR460): [resumo executivo](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md) · [playbook W0–W4](../roadmaps/playbook-correcao-estoque-supplies-inventario.md) · investigação TOTVS: `scripts/investigate_matr460_inventory.py`
 - Detalhamento por produto/local é estimado (não replica saldo SB2 linha a linha).
 - Depende da consistência das movimentações SD3 e do último fechamento SB9 disponível.
 

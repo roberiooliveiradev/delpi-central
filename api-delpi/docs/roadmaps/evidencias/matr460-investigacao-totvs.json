@@ -1,0 +1,671 @@
+{
+  "generated_at": "2026-06-24T19:37:30.409056Z",
+  "reference": {
+    "01": {
+      "em_estoque": 3598312.4,
+      "em_processo": 263790.57,
+      "total_geral": 3862102.97
+    },
+    "02": {
+      "em_estoque": 9737043.62,
+      "em_processo": 311465.89,
+      "total_geral": 10048509.51
+    }
+  },
+  "analysis": {
+    "alignment": [
+      {
+        "branch": "01",
+        "matr460_em_estoque": 3598312.4,
+        "matr460_em_processo": 263790.57,
+        "matr460_total_geral": 3862102.97,
+        "sb9_feb28": 3474907.5759999924,
+        "sb9_on_end_date": null,
+        "sb2_current": 3565793.2910000063,
+        "sc2_wip_proxy": 39292.8333,
+        "sb2_vs_em_estoque_pct": 99.1,
+        "sb9_feb_vs_em_estoque_pct": 96.57,
+        "sb2_plus_wip_vs_total_pct": 93.35,
+        "wip_proxy_vs_em_processo_pct": 14.9
+      },
+      {
+        "branch": "02",
+        "matr460_em_estoque": 9737043.62,
+        "matr460_em_processo": 311465.89,
+        "matr460_total_geral": 10048509.51,
+        "sb9_feb28": 9635115.443999987,
+        "sb9_on_end_date": null,
+        "sb2_current": 10158352.057000015,
+        "sc2_wip_proxy": 117966.53264285713,
+        "sb2_vs_em_estoque_pct": 104.33,
+        "sb9_feb_vs_em_estoque_pct": 98.95,
+        "sb2_plus_wip_vs_total_pct": 102.27,
+        "wip_proxy_vs_em_processo_pct": 37.87
+      }
+    ],
+    "findings": [
+      "SB9010 **não possui** fechamento em `20260531` — MATR460 EM ESTOQUE de maio/2026 não está refletido como SB9 nessa data.",
+      "Filial 01: último fechamento SB9 em 2026 é **20260228** (anterior a maio/2026).",
+      "Filial 02: último fechamento SB9 em 2026 é **20260228** (anterior a maio/2026).",
+      "Filial 01: **SB2 atual** (R$ 3.565.793,29) ≈ MATR460 EM ESTOQUE (R$ 3.598.312,40) — saldo corrente é boa referência quando SB9 de maio ausente.",
+      "Filial 01: proxy SC2 WIP (R$ 39.292,83) **subestima** EM PROCESSO (R$ 263.790,57) — MATR460 usa outra fonte além de SC2 simples.",
+      "Filial 02: **SB2 atual** (R$ 10.158.352,06) ≈ MATR460 EM ESTOQUE (R$ 9.737.043,62) — saldo corrente é boa referência quando SB9 de maio ausente.",
+      "Filial 02: proxy SC2 WIP (R$ 117.966,53) **subestima** EM PROCESSO (R$ 311.465,89) — MATR460 usa outra fonte além de SC2 simples.",
+      "Encontradas 2 view(s) customizadas relacionadas a inventário — revisar com DBA/Protheus antes de W3."
+    ],
+    "max_sb9_date_2026_by_branch": {
+      "01": "20260228",
+      "02": "20260228"
+    }
+  },
+  "raw": {
+    "sb9_closure_dates_2026": [
+      {
+        "branch": "01",
+        "closure_date": "20260228",
+        "record_count": 4435,
+        "closure_value": 3474907.5759999924,
+        "location_count": 7,
+        "product_count": 3675
+      },
+      {
+        "branch": "01",
+        "closure_date": "20260131",
+        "record_count": 4372,
+        "closure_value": 3468259.858999992,
+        "location_count": 7,
+        "product_count": 3645
+      },
+      {
+        "branch": "02",
+        "closure_date": "20260228",
+        "record_count": 3097,
+        "closure_value": 9635115.443999987,
+        "location_count": 8,
+        "product_count": 2589
+      },
+      {
+        "branch": "02",
+        "closure_date": "20260131",
+        "record_count": 2938,
+        "closure_value": 9699692.567999987,
+        "location_count": 8,
+        "product_count": 2493
+      }
+    ],
+    "sb9_value_by_date": [
+      {
+        "branch": "01",
+        "closure_date": "20260131",
+        "total_value": 3468259.858999992,
+        "total_qty": 6014121.013999996
+      },
+      {
+        "branch": "01",
+        "closure_date": "20260228",
+        "total_value": 3474907.5759999924,
+        "total_qty": 6030145.681999974
+      },
+      {
+        "branch": "02",
+        "closure_date": "20260131",
+        "total_value": 9699692.567999987,
+        "total_qty": 38097817.55500008
+      },
+      {
+        "branch": "02",
+        "closure_date": "20260228",
+        "total_value": 9635115.443999987,
+        "total_qty": 38452159.53300008
+      }
+    ],
+    "sb9_vs_sb2_vs_ref": [
+      {
+        "branch": "01",
+        "sb9_feb28_value": 3474907.5759999924,
+        "sb9_on_end_date_value": "",
+        "sb9_max_le_end_value": 3474907.5759999924,
+        "sb2_current_value": 3565793.2910000063
+      },
+      {
+        "branch": "02",
+        "sb9_feb28_value": 9635115.443999987,
+        "sb9_on_end_date_value": "",
+        "sb9_max_le_end_value": 9635115.443999987,
+        "sb2_current_value": 10158352.057000015
+      }
+    ],
+    "sb9_by_local_feb28": [
+      {
+        "branch": "01",
+        "location": "01",
+        "records": 3635,
+        "total_value": 3234339.693999992
+      },
+      {
+        "branch": "01",
+        "location": "99",
+        "records": 670,
+        "total_value": 178817.74500000023
+      },
+      {
+        "branch": "01",
+        "location": "50",
+        "records": 6,
+        "total_value": 52705.202000000005
+      },
+      {
+        "branch": "01",
+        "location": "25",
+        "records": 27,
+        "total_value": 6825.553
+      },
+      {
+        "branch": "01",
+        "location": "98",
+        "records": 95,
+        "total_value": 2130.21
+      },
+      {
+        "branch": "01",
+        "location": "0",
+        "records": 1,
+        "total_value": 56.0
+      },
+      {
+        "branch": "01",
+        "location": "03",
+        "records": 1,
+        "total_value": 33.172
+      },
+      {
+        "branch": "02",
+        "location": "01",
+        "records": 2420,
+        "total_value": 8966954.736999998
+      },
+      {
+        "branch": "02",
+        "location": "99",
+        "records": 333,
+        "total_value": 276711.46800000017
+      },
+      {
+        "branch": "02",
+        "location": "50",
+        "records": 61,
+        "total_value": 197490.4770000001
+      },
+      {
+        "branch": "02",
+        "location": "0",
+        "records": 1,
+        "total_value": 79194.01
+      },
+      {
+        "branch": "02",
+        "location": "03",
+        "records": 21,
+        "total_value": 65279.030000000006
+      },
+      {
+        "branch": "02",
+        "location": "25",
+        "records": 189,
+        "total_value": 42496.907000000014
+      },
+      {
+        "branch": "02",
+        "location": "98",
+        "records": 68,
+        "total_value": 6090.661
+      },
+      {
+        "branch": "02",
+        "location": "00",
+        "records": 4,
+        "total_value": 898.154
+      }
+    ],
+    "sb2_by_local_current": [
+      {
+        "branch": "01",
+        "location": "01",
+        "records": 36572,
+        "total_value": 3221546.221000004
+      },
+      {
+        "branch": "01",
+        "location": "99",
+        "records": 7634,
+        "total_value": 262374.1899999999
+      },
+      {
+        "branch": "01",
+        "location": "50",
+        "records": 992,
+        "total_value": 52369.984000000004
+      },
+      {
+        "branch": "01",
+        "location": "98",
+        "records": 385,
+        "total_value": 30262.36
+      },
+      {
+        "branch": "01",
+        "location": "0",
+        "records": 6,
+        "total_value": 56.0
+      },
+      {
+        "branch": "01",
+        "location": "03",
+        "records": 132,
+        "total_value": 33.172
+      },
+      {
+        "branch": "01",
+        "location": "02",
+        "records": 5,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "0",
+        "records": 9,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "0.",
+        "records": 4,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": ",",
+        "records": 8,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "1",
+        "records": 20,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "00",
+        "records": 10,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "L-",
+        "records": 2,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "31",
+        "records": 3,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "9",
+        "records": 2,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "V",
+        "records": 1,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "22",
+        "records": 1,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "",
+        "records": 176,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "1",
+        "records": 15,
+        "total_value": 0.0
+      },
+      {
+        "branch": "01",
+        "location": "25",
+        "records": 312,
+        "total_value": -848.636
+      },
+      {
+        "branch": "02",
+        "location": "01",
+        "records": 20320,
+        "total_value": 9024974.061
+      },
+      {
+        "branch": "02",
+        "location": "98",
+        "records": 232,
+        "total_value": 707868.17
+      },
+      {
+        "branch": "02",
+        "location": "99",
+        "records": 4965,
+        "total_value": 273545.34600000014
+      },
+      {
+        "branch": "02",
+        "location": "50",
+        "records": 266,
+        "total_value": 85523.71199999998
+      },
+      {
+        "branch": "02",
+        "location": "03",
+        "records": 68,
+        "total_value": 65279.03
+      },
+      {
+        "branch": "02",
+        "location": "00",
+        "records": 7,
+        "total_value": 898.05
+      },
+      {
+        "branch": "02",
+        "location": "25",
+        "records": 214,
+        "total_value": 263.688
+      },
+      {
+        "branch": "02",
+        "location": "",
+        "records": 19,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "1",
+        "records": 2,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "0",
+        "records": 3,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "9",
+        "records": 3,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "0",
+        "records": 9,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "1",
+        "records": 2,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": ",",
+        "records": 6,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "97",
+        "records": 6,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "31",
+        "records": 1,
+        "total_value": 0.0
+      },
+      {
+        "branch": "02",
+        "location": "02",
+        "records": 6,
+        "total_value": 0.0
+      }
+    ],
+    "sd3_bridge_period_summary": [
+      {
+        "branch": "01",
+        "movement_side": "saida",
+        "tm_prefix": "999",
+        "movement_count": 28537,
+        "net_value": -4817751.476999939
+      },
+      {
+        "branch": "01",
+        "movement_side": "saida",
+        "tm_prefix": "502",
+        "movement_count": 2606,
+        "net_value": -2373387.5089999917
+      },
+      {
+        "branch": "01",
+        "movement_side": "saida",
+        "tm_prefix": "503",
+        "movement_count": 479,
+        "net_value": -233252.78600000002
+      },
+      {
+        "branch": "01",
+        "movement_side": "saida",
+        "tm_prefix": "600",
+        "movement_count": 5,
+        "net_value": -1267.0
+      },
+      {
+        "branch": "01",
+        "movement_side": "entrada",
+        "tm_prefix": "102",
+        "movement_count": 1,
+        "net_value": 144.685
+      },
+      {
+        "branch": "01",
+        "movement_side": "entrada",
+        "tm_prefix": "010",
+        "movement_count": 3774,
+        "net_value": 1361457.9499999976
+      },
+      {
+        "branch": "01",
+        "movement_side": "entrada",
+        "tm_prefix": "499",
+        "movement_count": 1854,
+        "net_value": 2870639.954000002
+      },
+      {
+        "branch": "02",
+        "movement_side": "saida",
+        "tm_prefix": "999",
+        "movement_count": 57025,
+        "net_value": -14099707.566999944
+      },
+      {
+        "branch": "02",
+        "movement_side": "saida",
+        "tm_prefix": "502",
+        "movement_count": 3995,
+        "net_value": -4121887.1970000076
+      },
+      {
+        "branch": "02",
+        "movement_side": "saida",
+        "tm_prefix": "503",
+        "movement_count": 962,
+        "net_value": -335495.71900000033
+      },
+      {
+        "branch": "02",
+        "movement_side": "saida",
+        "tm_prefix": "600",
+        "movement_count": 17,
+        "net_value": -3638.2999999999993
+      },
+      {
+        "branch": "02",
+        "movement_side": "entrada",
+        "tm_prefix": "102",
+        "movement_count": 2,
+        "net_value": 71995.54000000001
+      },
+      {
+        "branch": "02",
+        "movement_side": "entrada",
+        "tm_prefix": "499",
+        "movement_count": 2346,
+        "net_value": 5834300.418999999
+      },
+      {
+        "branch": "02",
+        "movement_side": "entrada",
+        "tm_prefix": "010",
+        "movement_count": 8676,
+        "net_value": 7930608.969000031
+      }
+    ],
+    "sc2_open_orders_wip_proxy": [
+      {
+        "branch": "01",
+        "open_order_count": 1374,
+        "open_quantity": 468.86999999999705,
+        "open_value_proxy": 39292.8333
+      },
+      {
+        "branch": "02",
+        "open_order_count": 4471,
+        "open_quantity": 23269.101999999795,
+        "open_value_proxy": 117966.53264285713
+      }
+    ],
+    "inventory_related_objects": [
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "BKPSB9_01_20210127"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "ESTOQUEF01_202402"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "ESTOQUEF02_202402"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_201902"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_20201218_FL01"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_20201218_FL01_02"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_20230906"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_BKPGDA_201907"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_BKP_20210115"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_BKP_20220224"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_BKP_GDA20220524"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9010_TTAT_LOG"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9030"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9040"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9040_BKP_202010"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9050"
+      },
+      {
+        "object_type": "USER_TABLE",
+        "schema_name": "dbo",
+        "object_name": "SB9122013"
+      },
+      {
+        "object_type": "VIEW",
+        "schema_name": "dbo",
+        "object_name": "VW_PBI_ESTOQUE_OBSOLETO_MP_FIL02"
+      },
+      {
+        "object_type": "VIEW",
+        "schema_name": "dbo",
+        "object_name": "VW_PBI_ESTOQUE_OBSOLETO_PA_FIL02"
+      }
+    ]
+  }
+}

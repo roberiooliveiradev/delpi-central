@@ -1,0 +1,10 @@
+{
+  "processWarehouseLocations": ["99", "50", "98"],
+  "notes": {
+    "registerSnapshot": "Saldo SB2 atual (posição corrente). Aproxima o EM ESTOQUE do MATR460 quando não há fechamento SB9 na data final; não substitui histórico contábil.",
+    "registerSnapshotHistoricalWarning": "Período solicitado sem fechamento SB9 na data final: valor exibido é snapshot SB2 na consulta, não posição em {period_end}. Para histórico contábil, use fechamento SB9 ou stock_method=estimated.",
+    "officialClosure": "Valor do fechamento oficial SB9010 na data final do período.",
+    "estimatedKardex": "Estimativa SB9+SD3 (Kardex). Modo analítico; pode divergir do Registro de Inventário sem fechamentos intermediários.",
+    "wipProxy": "Proxy EM PROCESSO: soma SB2 nos armazéns de processo ({locations}). Referência MATR460; não é histórico confiável para datas passadas."
+  }
+}

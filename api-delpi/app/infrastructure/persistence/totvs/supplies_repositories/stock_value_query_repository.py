@@ -12,7 +12,14 @@ from app.application.services.supplies.stock_value_method_service import (
     STOCK_METHOD_RESOLVED_ESTIMATED,
     STOCK_METHOD_RESOLVED_MIXED,
     STOCK_METHOD_RESOLVED_OFFICIAL,
+    STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT,
     resolve_stock_method_plan,
+)
+from app.application.services.supplies.stock_value_hybrid_content_service import (
+    process_warehouse_locations,
+)
+from app.application.services.supplies.stock_value_register_snapshot_service import (
+    build_register_snapshot_estimation_meta,
 )
 from app.domain.ports.supplies.stock_value_query_repository_port import (
     StockValueQueryRepositoryPort,
@@ -201,6 +208,15 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             for bundle in branch_bundles
             for row in (bundle.get("estimation_meta") or {}).get("by_branch_breakdown") or []
         ]
+        stock_method_resolved = self._resolve_consolidated_stock_method(branch_bundles)
+        if stock_method_resolved == STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT:
+            estimation_meta = self._merge_register_snapshot_estimation_meta(
+                branch_bundles,
+                breakdown_rows,
+            )
+        else:
+            estimation_meta = self._build_estimation_meta(breakdown_rows)
+
         by_branch: list[dict] = []
         for bundle in branch_bundles:
             by_branch.extend(bundle.get("by_branch") or [])
@@ -246,9 +262,36 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             "by_branch": by_branch,
             "by_location": [],
             "top_products": [],
-            "estimation_meta": self._build_estimation_meta(breakdown_rows),
-            "stock_method_resolved": self._resolve_consolidated_stock_method(branch_bundles),
+            "estimation_meta": estimation_meta,
+            "stock_method_resolved": stock_method_resolved,
         }
+
+    def _merge_register_snapshot_estimation_meta(
+        self,
+        branch_bundles: list[dict],
+        breakdown_rows: list[dict],
+    ) -> dict:
+        snapshots = [
+            (bundle.get("estimation_meta") or {}).get("register_snapshot") or {}
+            for bundle in branch_bundles
+        ]
+        period_end = str(snapshots[0].get("period_end_requested") or "") if snapshots else ""
+        em_estoque_value = sum(float(s.get("em_estoque_value") or 0) for s in snapshots)
+        em_processo_proxy_value = sum(
+            float(s.get("em_processo_proxy_value") or 0) for s in snapshots
+        )
+        by_branch_wip = [
+            row
+            for snapshot in snapshots
+            for row in (snapshot.get("by_branch") or [])
+        ]
+        return build_register_snapshot_estimation_meta(
+            period_end=period_end,
+            breakdown_rows=breakdown_rows,
+            em_estoque_value=em_estoque_value,
+            em_processo_proxy_value=em_processo_proxy_value,
+            by_branch_wip=by_branch_wip,
+        )
 
     def _resolve_consolidated_stock_method(self, branch_bundles: list[dict]) -> str:
         resolved_methods = {
@@ -256,10 +299,12 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             for bundle in branch_bundles
             if bundle.get("stock_method_resolved")
         }
-        if STOCK_METHOD_RESOLVED_OFFICIAL in resolved_methods and len(resolved_methods) > 1:
+        if len(resolved_methods) > 1:
             return STOCK_METHOD_RESOLVED_MIXED
         if resolved_methods == {STOCK_METHOD_RESOLVED_OFFICIAL}:
             return STOCK_METHOD_RESOLVED_OFFICIAL
+        if resolved_methods == {STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT}:
+            return STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT
         return STOCK_METHOD_RESOLVED_ESTIMATED
 
     def _merge_consolidated_full_bundle(
@@ -294,10 +339,12 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             for bundle in branch_bundles
             if bundle.get("stock_method_resolved")
         }
-        if STOCK_METHOD_RESOLVED_OFFICIAL in resolved_methods and len(resolved_methods) > 1:
+        if len(resolved_methods) > 1:
             stock_method_resolved = STOCK_METHOD_RESOLVED_MIXED
         elif resolved_methods == {STOCK_METHOD_RESOLVED_OFFICIAL}:
             stock_method_resolved = STOCK_METHOD_RESOLVED_OFFICIAL
+        elif resolved_methods == {STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT}:
+            stock_method_resolved = STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT
         else:
             stock_method_resolved = STOCK_METHOD_RESOLVED_ESTIMATED
 
@@ -470,6 +517,89 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
 
         bundle["stock_method_resolved"] = STOCK_METHOD_RESOLVED_ESTIMATED
         bundle["stock_method_plan"] = method_plan
+        return bundle
+
+    def _fetch_wip_proxy_rows(self, request: GetStockValueRequest) -> list[dict]:
+        locations = process_warehouse_locations()
+        if not locations:
+            return []
+
+        location_literals = ", ".join(f"'{loc}'" for loc in locations)
+        where_clause, params = self._build_filters(request)
+        sql = f"""
+            SELECT
+                SB2.B2_FILIAL AS branch,
+                ISNULL(SUM(SB2.B2_VATU1), 0) AS em_estoque_value,
+                ISNULL(
+                    SUM(
+                        CASE
+                            WHEN RTRIM(SB2.B2_LOCAL) IN ({location_literals})
+                            THEN SB2.B2_VATU1
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS em_processo_proxy_value
+            FROM SB2010 SB2 WITH (NOLOCK)
+            WHERE {where_clause}
+            GROUP BY SB2.B2_FILIAL
+            ORDER BY SB2.B2_FILIAL
+        """
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+        return [
+            {
+                "branch": str(row.get("branch") or "").strip(),
+                "em_estoque_value": float(row.get("em_estoque_value") or 0),
+                "em_processo_proxy_value": float(row.get("em_processo_proxy_value") or 0),
+            }
+            for row in rows
+        ]
+
+    def _fetch_register_snapshot_bundle(
+        self,
+        request: GetStockValueRequest,
+        *,
+        period_end: str,
+        method_plan: dict,
+        breakdown_rows: list[dict] | None = None,
+    ) -> dict:
+        breakdown_rows = breakdown_rows or self._fetch_historical_breakdown_rows(request)
+        bundle = self._fetch_current_bundle(request)
+        wip_rows = self._fetch_wip_proxy_rows(request)
+        wip_by_branch = {row["branch"]: row for row in wip_rows}
+
+        summary = bundle.get("summary") or {}
+        em_estoque_value = float(summary.get("total_stock_value") or 0)
+        em_processo_proxy_value = sum(
+            row.get("em_processo_proxy_value") or 0 for row in wip_rows
+        )
+
+        by_branch_wip = []
+        for row in bundle.get("by_branch") or []:
+            branch = str(row.get("branch") or "").strip()
+            wip = wip_by_branch.get(branch) or {}
+            by_branch_wip.append(
+                {
+                    "branch": branch,
+                    "em_estoque_value": float(
+                        wip.get("em_estoque_value") or row.get("total_stock_value") or 0
+                    ),
+                    "em_processo_proxy_value": float(
+                        wip.get("em_processo_proxy_value") or 0
+                    ),
+                }
+            )
+
+        bundle["stock_method_resolved"] = STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT
+        bundle["stock_method_plan"] = method_plan
+        bundle["estimation_meta"] = build_register_snapshot_estimation_meta(
+            period_end=period_end,
+            breakdown_rows=breakdown_rows,
+            em_estoque_value=em_estoque_value,
+            em_processo_proxy_value=em_processo_proxy_value,
+            by_branch_wip=by_branch_wip,
+        )
         return bundle
 
     def _build_filters(self, request: GetStockValueRequest):
@@ -700,6 +830,14 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                 request,
                 period_end=period_end,
                 method_plan=method_plan,
+            )
+
+        if method_plan["resolved"] == STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT:
+            return self._fetch_register_snapshot_bundle(
+                request,
+                period_end=period_end,
+                method_plan=method_plan,
+                breakdown_rows=breakdown_rows,
             )
 
         return self._fetch_estimated_historical_bundle(

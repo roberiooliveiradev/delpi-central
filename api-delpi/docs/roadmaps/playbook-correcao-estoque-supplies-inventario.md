@@ -361,6 +361,8 @@ Preferir estender `/supplies/stock-value` com `include_wip` antes de criar rota 
 
 Pendente (bloqueado por dados TOTVS): casos de regressão no chat quando existir fechamento SB9 real em `end_date`.
 
+Investigação MATR460 (jun/2026): [estoque-supplies-matr460-resumo-jun2026.md](./estoque-supplies-matr460-resumo-jun2026.md) · `scripts/investigate_matr460_inventory.py`
+
 ### 11.1 Documentação
 
 - Atualizar [supplies-estoque-historico.md](../api/supplies-estoque-historico.md) com modos `auto` / `official_closure` / `estimated`.
