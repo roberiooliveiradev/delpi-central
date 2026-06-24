@@ -125,7 +125,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 - Cache: resposta completa em `query_cache` (namespace `supplies-otd`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 - Console: `operation_id=get_supplies_otd`; caller `strategic-indicators-api` — após o primeiro load do período, polling deve gerar cache hit (&lt; 500 ms).
 
-| GET | `/supplies/stock-value` | Valor total de estoque (atual, histórico estimado SB9+SD3 ou fechamento SB9 na `end_date`). Parâmetro `stock_method=auto|estimated|official_closure`. Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md). Reconciliação: [playbook](../roadmaps/playbook-correcao-estoque-supplies-inventario.md). |
+| GET | `/supplies/stock-value` | Valor de estoque (SB2 atual, fechamento SB9 na `end_date` ou modo híbrido `register_snapshot`). `stock_method=auto|hybrid|estimated|official_closure`. Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md) e [modo híbrido](../roadmaps/estoque-supplies-modo-hibrido.md). |
 | GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). Herda `stock_method=auto` e expõe `stock_estimation` quando o período é histórico. |
 | GET | `/supplies/negotiation-savings/summary` | Economia em negociações de compras (Google Sheets `idd_suprimentos`). |
 
@@ -135,7 +135,7 @@ Parâmetros adicionais:
 |---|---|
 | `/cpv`, `/otd` | `top_limit` (default `5`, máx. `20`) |
 | `/otd` | `details_limit` (default `20`, máx. `100`) |
-| `/stock-value` | `start_date`, `end_date` (histórico; ambos obrigatórios juntos), `location`, `top_limit`, `summary_only`, `stock_method` (`auto` default, `estimated`, `official_closure`) |
+| `/stock-value` | `start_date`, `end_date`, `location`, `top_limit`, `summary_only`, `stock_method` (`auto`/`hybrid` default, `estimated`, `official_closure`) |
 | `/inventory-turnover` | `location`, `strict_idd_period` (bool); estoque via mesmo `stock_method=auto` internamente |
 
 **Performance (`/supplies/stock-value` histórico):**

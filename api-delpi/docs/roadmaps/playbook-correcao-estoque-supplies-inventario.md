@@ -258,7 +258,9 @@ Documento gerado automaticamente:
 
 ## 9. Onda W2 — Modo fechamento oficial na `end_date` ✅ (jun/2026)
 
-**Entregue:** `stock_method=auto|estimated|official_closure`, SQL SB9 na `end_date`, fan-out consolidado histórico, MFE com banner oficial.
+**Entregue:** `stock_method=auto|hybrid|estimated|official_closure`, SQL SB9 na `end_date`, fan-out consolidado histórico, MFE com banner oficial.
+
+**Nota (pós-W5):** `auto`/`hybrid` sem SB9 na `end_date` resolvem para `register_snapshot` (SB2), não mais Kardex por default.
 
 **Objetivo:** quando o inventário já foi fechado na SB9 na data fim do período, o dashboard mostra esse valor.
 
@@ -270,18 +272,19 @@ closure_end = MAX(B9_DATA) WHERE B9_DATA <= end_date AND B9_DATA <> ''
 SE closure_end existe E usuário não forçou estimativa:
   method = sb9_closure_on_end_date
   total = SUM(B9_VINI1) WHERE B9_DATA = closure_end
-SENÃO:
-  method = sb9_last_closure_plus_sd3_movements  (atual)
+SENÃO (W5 — sem SB9 na end_date):
+  method = sb2_register_snapshot  (SB2 + proxy EM PROCESSO)
+  (use stock_method=estimated para sb9_last_closure_plus_sd3_movements)
 ```
 
 ### 9.2 Parâmetro opcional (query)
 
 | Query | Valores | Default |
 |-------|---------|---------|
-| `stock_method` | `auto` \| `estimated` \| `official_closure` | `auto` |
+| `stock_method` | `auto` \| `hybrid` \| `estimated` \| `official_closure` | `auto` |
 
-- `auto`: W2 acima.
-- `estimated`: força SB9+SD3 (comportamento atual).
+- `auto` / `hybrid`: fechamento SB9 na `end_date` se existir; senão **register_snapshot** (SB2) — W5.
+- `estimated`: força SB9+SD3 (Kardex analítico).
 - `official_closure`: exige fechamento; erro amigável se ausente.
 
 ### 9.3 Implementação SQL
@@ -363,19 +366,32 @@ Pendente (bloqueado por dados TOTVS): casos de regressão no chat quando existir
 
 Investigação MATR460 (jun/2026): [estoque-supplies-matr460-resumo-jun2026.md](./estoque-supplies-matr460-resumo-jun2026.md) · `scripts/investigate_matr460_inventory.py`
 
-### 11.1 Documentação
+---
 
-- Atualizar [supplies-estoque-historico.md](../api/supplies-estoque-historico.md) com modos `auto` / `official_closure` / `estimated`.
-- Atualizar [06-modulos-departamentais.md](../api/06-modulos-departamentais.md) § Suprimentos.
-- Changelog: `api-delpi/docs/changelog/2026-06-estoque-supplies-reconciliacao.md`.
+## 12. Onda W5 — Modo híbrido (`register_snapshot`) ✅ (jun/2026)
 
-### 11.2 Chat (`minha-delpi-ai-api`)
+- `auto` / `hybrid`: sem SB9 na `end_date` → snapshot **SB2** + proxy EM PROCESSO (locais 99/50/98)
+- `estimated` mantém Kardex para análise
+- Doc canônica: [estoque-supplies-modo-hibrido.md](./estoque-supplies-modo-hibrido.md)
+- Config: `app/content/supplies_stock_hybrid.json`
+- Smoke maio/2026 filial 01: ~99% do EM ESTOQUE MATR460 (vs. ~8% com Kardex)
+
+**Limitação:** `register_snapshot` não é histórico contábil — snapshot na consulta.
+
+### 12.1 Documentação ✅
+
+- [x] [supplies-estoque-historico.md](../api/supplies-estoque-historico.md) — modos `auto`/`hybrid`/`register_snapshot`/`estimated`/`official_closure`
+- [x] [06-modulos-departamentais.md](../api/06-modulos-departamentais.md) § Suprimentos
+- [x] Changelog: `api-delpi/docs/changelog/2026-06-estoque-supplies-reconciliacao.md` (§ W5)
+- [x] Doc canônica: [estoque-supplies-modo-hibrido.md](./estoque-supplies-modo-hibrido.md)
+
+### 12.2 Chat (`minha-delpi-ai-api`) — pendente
 
 - Se comportamento mudar: caso em `chat_intelligence_regression_cases.py` ou `operational_presentation_quality_cases.py`.
 - Textos de `reason` / notas → `assistant/*.json` (`assistant-content-json.mdc`).
 - Apresentação: perfil existente de KPI/série — **sem presenter por rota**.
 
-### 11.3 Gates CI
+### 12.3 Gates CI
 
 ```bash
 cd api-delpi

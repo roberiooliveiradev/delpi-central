@@ -1,15 +1,18 @@
-# Estoque histórico estimado — `GET /supplies/stock-value`
+# Estoque — `GET /supplies/stock-value`
 
 ## Visão geral
 
-A rota `GET /supplies/stock-value` possui dois modos:
+A rota `GET /supplies/stock-value` possui três modos:
 
 | Modo | Quando | Fonte |
 |---|---|---|
 | **Atual** | Sem `start_date` e sem `end_date` | `SB2010` — saldo corrente (`B2_VATU1`, `B2_QATU`) |
-| **Histórico estimado** | Com `start_date` **e** `end_date` | `SB9010` + `SD3010` — ver método abaixo |
+| **Histórico com datas** | Com `start_date` **e** `end_date` | Depende de `stock_method` — ver abaixo |
+| **Padrão (`auto`/`hybrid`)** | Histórico sem SB9 na `end_date` | **SB2 snapshot** (`register_snapshot`) — alinhado ao MATR460 |
+| **Kardex (`estimated`)** | Histórico explícito | `SB9010` + `SD3010` |
+| **Fechamento (`official_closure` / `auto` com SB9)** | SB9 em `B9_DATA = end_date` | `SUM(B9_VINI1)` |
 
-O modo histórico responde perguntas como *“qual era o valor do estoque em abril/2026?”* quando **não existe fechamento oficial** na `SB9010` para aquela data.
+Com `stock_method=auto` (default), períodos **sem** fechamento SB9 na data final usam **snapshot SB2**, não Kardex. Use `estimated` só para análise SB9+SD3.
 
 A resposta inclui o objeto `estimation` quando o modo histórico está ativo.
 
@@ -47,7 +50,7 @@ Regras:
 
 Documentação completa: [estoque-supplies-modo-hibrido.md](../roadmaps/estoque-supplies-modo-hibrido.md).
 
-Objeto `estimation` expõe `stock_method`, `stock_method_resolved`, breakdown (`closing_base_*`, `bridge_value`, `period_net_value`) e `data_quality_warning` quando a base SB9 é anterior ao fim do período.
+Objeto `estimation` expõe `stock_method`, `stock_method_resolved`, breakdown Kardex (`closing_base_*`, …), `inventory_register` / `wip_proxy` no modo `register_snapshot`, e `data_quality_warning` quando aplicável.
 
 Script de reconciliação (W0): `api-delpi/scripts/reconcile_stock_value.py`.
 
@@ -215,7 +218,7 @@ Campos de auditoria (W1, jun/2026): `closing_base_*`, `bridge_value`, `period_ne
 ## Limitações
 
 - Resultado de **análise gerencial**, não substitui fechamento contábil oficial na SB9.
-- Comparação com **Registro de Inventário** (MATR460): [resumo executivo](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md) · [playbook W0–W4](../roadmaps/playbook-correcao-estoque-supplies-inventario.md) · investigação TOTVS: `scripts/investigate_matr460_inventory.py`
+- Comparação com **Registro de Inventário** (MATR460): [resumo](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md) · [modo híbrido](../roadmaps/estoque-supplies-modo-hibrido.md) · [playbook W0–W5](../roadmaps/playbook-correcao-estoque-supplies-inventario.md)
 - Detalhamento por produto/local é estimado (não replica saldo SB2 linha a linha).
 - Depende da consistência das movimentações SD3 e do último fechamento SB9 disponível.
 
@@ -227,7 +230,7 @@ Referência de validação interna: documento *Método de Cálculo do Valor de E
 
 A rota `GET /supplies/inventory-turnover` reutiliza **o mesmo estoque** de `/supplies/stock-value`:
 
-- Com `start_date` e `end_date`: estimativa SB9010 + SD3010 (fim do período).
+- Com `start_date` e `end_date`: herda `stock_method=auto` (SB9 na data, senão snapshot SB2; use `estimated` para Kardex).
 - Sem datas no estoque: saldo atual SB2010 (o IDD ainda exige datas para o CPV).
 
 Fórmulas do IDD (inalteradas):
