@@ -30,6 +30,27 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         )
 
     @classmethod
+    def is_rich_stack_profile(cls, profile_key: str | None) -> bool:
+        key = str(profile_key or "").strip()
+
+        if not key:
+            return False
+
+        if key in cls.entity_set("richStackProfiles"):
+            return True
+
+        merged = dict(cls.node("defaults") or {})
+        merged.update(cls.profile(key))
+
+        return str(merged.get("stackLayoutPolicy") or "on_demand").strip().lower() == "always"
+
+    @classmethod
+    def uses_presentation_table_assembly(cls, entity: str | None) -> bool:
+        token = str(entity or "").strip()
+
+        return bool(token) and token in cls.entity_set("presentationTableAssemblyEntities")
+
+    @classmethod
     def entity_routed_for_present(cls) -> frozenset[str]:
         merged: set[str] = set()
 

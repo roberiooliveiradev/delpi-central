@@ -11,6 +11,12 @@ from app.domain.services.chat_operational_response_profile_service import (
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as _OpsTable,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
+from app.domain.services.chat_presentation_table_assembly_service import (
+    ChatPresentationTableAssemblyService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -64,85 +70,13 @@ class ExternalActionPresentationBuilderPresenter:
             if entity in ChatOperationalResponseProfileService.PLAYBOOK_OPERATIONAL_ENTITIES:
                 return self._host._build_playbook_report_table(root, path, entity=entity)
 
-            if entity == "product_factory_status":
-                tables = self._host.build_factory_status_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-                return self._build_factory_status_table(root, path)
-
-            if entity == "product_production_status":
-                tables = self._host.build_production_status_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-                return self._host._build_playbook_report_table(root, path, entity=entity)
-
-            if entity == "product_shipping_status":
-                tables = self._host.build_shipping_status_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-                return self._host._build_playbook_report_table(root, path, entity=entity)
-
-            if entity == "product_structure_exclusivity":
-                tables = self._host.build_structure_exclusivity_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-                return self._host._build_playbook_report_table(root, path, entity=entity)
-
-            if entity == "product_directives":
-                tables = self._host.build_product_directives_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-            if entity == "product_raw_material_price_intelligence":
-                tables = self._host.build_raw_material_price_intelligence_table_presentations(
+            if ChatPresentationProfileService.uses_presentation_table_assembly(entity):
+                return ChatPresentationTableAssemblyService.try_build_presentation_table(
+                    self._host,
                     root,
                     path,
+                    entity=entity,
                 )
-
-                if tables:
-                    return tables[0]
-
-            if entity == "product_cost_impact_simulation":
-                tables = self._host.build_cost_impact_simulation_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-            if entity == "product_pricing":
-                tables = self._host.build_product_pricing_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-            if entity == "product_last_purchase":
-                tables = self._host.build_last_purchase_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-            if entity in {
-                "product_purchase_price_history",
-                "product_purchase_budget_history",
-            }:
-                tables = self._host.build_purchase_history_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
-
-            if entity == "product_purchases":
-                tables = self._host.build_purchases_table_presentations(root, path)
-
-                if tables:
-                    return tables[0]
 
             product = root.get("product")
 
@@ -219,12 +153,6 @@ class ExternalActionPresentationBuilderPresenter:
                         path=path,
                         entity=entity,
                     )
-
-            if entity in {
-                "product_shipping_status",
-                "product_structure_exclusivity",
-            }:
-                return self._host._build_playbook_report_table(root, path, entity=entity)
 
             return self._build_presentation_entity_extensions(
                 root,

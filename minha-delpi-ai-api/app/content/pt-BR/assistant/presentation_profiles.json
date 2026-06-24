@@ -269,6 +269,32 @@
       "production_work_center_order_summary",
       "purchases_top_products"
     ],
+    "richStackProfiles": [
+      "analyser",
+      "factory_status",
+      "structure_exclusivity",
+      "raw_material_price_intelligence",
+      "cost_impact_simulation",
+      "sale_pricing",
+      "production_status",
+      "shipping_status",
+      "stock",
+      "tree_hierarchy"
+    ],
+    "presentationTableAssemblyEntities": [
+      "product_factory_status",
+      "product_production_status",
+      "product_shipping_status",
+      "product_structure_exclusivity",
+      "product_directives",
+      "product_raw_material_price_intelligence",
+      "product_cost_impact_simulation",
+      "product_pricing",
+      "product_last_purchase",
+      "product_purchase_price_history",
+      "product_purchase_budget_history",
+      "product_purchases"
+    ],
     "productListPresent": [
       "product_customers",
       "product_inbound_invoice_items",
@@ -997,7 +1023,8 @@
         "builder": "build_factory_status_table_presentations",
         "layout": "profile_primary",
         "profileTableIndex": 0,
-        "primaryTableIndex": 1
+        "primaryTableIndex": 1,
+        "presentationFallback": "legacy_factory_table"
       },
       "textBuilder": "build_factory_status_text",
       "textBuildOptions": {
@@ -1041,7 +1068,8 @@
         "builder": "build_production_status_table_presentations",
         "layout": "profile_primary",
         "profileTableIndex": 0,
-        "primaryTableIndex": 1
+        "primaryTableIndex": 1,
+        "presentationFallback": "playbook_report"
       },
       "textBuilder": "build_production_status_text",
       "textBuildOptions": {
@@ -1085,7 +1113,8 @@
         "builder": "build_shipping_status_table_presentations",
         "layout": "profile_primary",
         "profileTableIndex": 0,
-        "primaryTableIndex": 1
+        "primaryTableIndex": 1,
+        "presentationFallback": "playbook_report"
       },
       "textBuilder": "build_shipping_status_text",
       "textBuildOptions": {
@@ -1129,7 +1158,8 @@
         "builder": "build_structure_exclusivity_table_presentations",
         "layout": "profile_primary",
         "profileTableIndex": 0,
-        "primaryTableIndex": 1
+        "primaryTableIndex": 1,
+        "presentationFallback": "playbook_report"
       },
       "textBuilder": "build_structure_exclusivity_text",
       "textBuildOptions": {

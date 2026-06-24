@@ -321,3 +321,47 @@ class ChatPresentationTableAssemblyService:
             return structure_table
 
         return None
+
+    @classmethod
+    def try_build_presentation_table(
+        cls,
+        presenter: ExternalActionResultPresenter,
+        root_payload: dict[str, Any],
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Primeira tabela para slot ``presentation`` — declarativo via ``tableAssembly``."""
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        config = cls.table_assembly_config(profile)
+        builder_name = str(config.get("builder") or "").strip()
+
+        if not builder_name:
+            return None
+
+        builder = cls.builder_registry(presenter).get(builder_name)
+
+        if not callable(builder):
+            return None
+
+        tables = [
+            table for table in builder(presenter, root_payload, path) if isinstance(table, dict)
+        ]
+
+        if tables:
+            return tables[0]
+
+        raw_fallback = config.get("presentationFallback")
+
+        if raw_fallback is None:
+            return None
+
+        fallback = str(raw_fallback).strip().lower()
+
+        if fallback == "legacy_factory_table":
+            return presenter._build_factory_status_table(root_payload, path)
+
+        if fallback == "playbook_report":
+            return presenter._build_playbook_report_table(root_payload, path, entity=entity)
+
+        return None

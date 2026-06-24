@@ -633,3 +633,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W1b — `commentaryProfiles` em `humanized_data_response.json`; exclusividade com `templateProseCommentary: skip` |
 | jun/2026 | W1c — `profilePresentDispatch` / `entityPresentOverrides`; dispatch declarativo no `EntityRoutePresenter` |
 | jun/2026 | W2 (parcial) — unifica path markers de exclusividade: `operational_factual_verdict` + maps `factualProfileSynthesisKinds` / `narrativePolicySynthesisKinds` |
+| jun/2026 | W2 — `richStackProfiles` + `is_rich_stack_profile`; `presentationTableAssemblyEntities` + `try_build_presentation_table` no builder |

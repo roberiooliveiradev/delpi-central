@@ -19,43 +19,13 @@ _VISUAL_SLOTS: dict[str, str] = {
     "table": "tablePresentation",
 }
 
-_RICH_PROFILE_FLAGS = (
-    "analyser",
-    "factory_status",
-    "structure_exclusivity",
-    "raw_material_price_intelligence",
-    "cost_impact_simulation",
-    "sale_pricing",
-    "production_status",
-    "shipping_status",
-    "stock",
-    "tree",
-)
-
 
 class ChatPresentationRichStackPolicyService:
     @classmethod
     def is_rich_playbook_route(cls, path: str | None, *, entity: str | None = None) -> bool:
         profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
 
-        if profile_key in {
-            "analyser",
-            "factory_status",
-            "structure_exclusivity",
-            "raw_material_price_intelligence",
-            "cost_impact_simulation",
-            "sale_pricing",
-            "production_status",
-            "shipping_status",
-            "stock",
-            "tree_hierarchy",
-        }:
-            return True
-
-        return any(
-            ChatPresentationProfileService.has_flag(path, flag, entity=entity)
-            for flag in _RICH_PROFILE_FLAGS
-        )
+        return ChatPresentationProfileService.is_rich_stack_profile(profile_key)
 
     @classmethod
     def has_rich_text_narrative(cls, metadata: dict[str, Any]) -> bool:
