@@ -44,7 +44,8 @@ Referências cruzadas:
 | 3 | OpenAPI alinhado | `operation_id` idêntico no decorator e no registry |
 | 4 | Chat-critical | `openapi_agent_metadata.agent_route()` |
 | 5 | RBAC | `api_delpi_permissions.py` — sem strings literais no router |
-| 6 | Teste | Smoke em `api-delpi/tests/` — `meta.operationId`, `meta.entity` |
+| 6 | `x-delpi` no OpenAPI | `route_contract_registry` → `openapi_delpi_extension_injector` (automático no `custom_openapi`) |
+| 7 | Teste | Smoke em `api-delpi/tests/` — `meta.operationId`, `meta.entity`, `x-delpi` |
 
 **Shapes comuns:** `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` (playbook-10 § 4.3).
 

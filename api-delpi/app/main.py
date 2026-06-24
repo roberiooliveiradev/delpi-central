@@ -122,6 +122,10 @@ def custom_openapi():
 
     openapi_schema["security"] = [{"BearerAuth": []}]
 
+    from app.interface.http.openapi_delpi_extension_injector import inject_delpi_extensions
+
+    inject_delpi_extensions(openapi_schema)
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 

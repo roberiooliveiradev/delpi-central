@@ -106,7 +106,12 @@ Fachada pública: só `decide`, `enrich_metadata`, `compute_scores` (~85 linhas)
 
 Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity}`) quando `apiDelpiResponseMeta` traz entity+shape.
 
-## Pendente (Fase 11+)
+### Fase 11 — x-delpi no api-delpi (jun/2026)
 
-- api-delpi publicar `x-delpi` em todas as rotas (hoje: inferência parcial via example).
+`custom_openapi()` injeta `x-delpi` em cada operação publicada a partir de `route_contract_registry.py` (`entity`, `shape`, `presentation.strategy: as_delivered`). O import no chat (Fase 10) persiste em `delpi_metadata`.
+
+## Pendente (Fase 12+)
+
+- ~~api-delpi publicar `x-delpi` em todas as rotas~~ — **feito** (jun/2026): `openapi_delpi_extension_injector` no `custom_openapi`.
 - Reduzir `entityProfiles` / `pathRules` conforme cobertura OpenAPI crescer.
+- Re-sync OpenAPI (`sync_api_delpi_openapi.py`) para popular `delpi_metadata` no banco.
