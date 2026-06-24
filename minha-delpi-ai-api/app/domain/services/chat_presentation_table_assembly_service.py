@@ -50,7 +50,6 @@ class ChatPresentationTableAssemblyService:
             "build_product_pricing_table_presentations": lambda p, root, path: p.build_product_pricing_table_presentations(root, path),
             "build_last_purchase_table_presentations": lambda p, root, path: p.build_last_purchase_table_presentations(root, path),
             "build_purchase_history_table_presentations": lambda p, root, path: p.build_purchase_history_table_presentations(root, path),
-            "build_purchases_table_presentations": lambda p, root, path: p.build_purchases_table_presentations(root, path),
             "build_product_directives_table_presentations": (
                 lambda p, root, path: p.build_product_directives_table_presentations(root, path)
             ),

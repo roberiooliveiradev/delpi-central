@@ -296,3 +296,4 @@ cd minha-delpi-ai-api
 |------|--------|
 | jun/2026 | Playbook 21 W1–W2 parcial (dedup, richStackProfiles, factual verdict) |
 | jun/2026 | **Playbook 22** — north star schema-first; Fase B iniciada (`presentationStrategy`, schema-first no presenter) |
+| jun/2026 | **Fase C** — `purchase_list` migrado: presenter removido, `schemaFirstMigratedProfiles`, `finish_schema_first_primary` sem fallback legacy |

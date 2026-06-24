@@ -175,7 +175,6 @@
       "product_production_status",
       "product_purchase_budget_history",
       "product_purchase_price_history",
-      "product_purchases",
       "product_raw_material_price_intelligence",
       "product_sales",
       "product_search",
@@ -245,7 +244,6 @@
       "product_production_status",
       "product_purchase_budget_history",
       "product_purchase_price_history",
-      "product_purchases",
       "product_raw_material_price_intelligence",
       "product_sales",
       "product_search",
@@ -293,12 +291,14 @@
       "raw_material_price_intelligence",
       "cost_impact_simulation",
       "sale_pricing",
-      "purchase_list",
       "last_purchase",
       "purchase_price_history",
       "purchase_budget_history",
       "playbook_report",
       "directives"
+    ],
+    "schemaFirstMigratedProfiles": [
+      "purchase_list"
     ],
     "presentationTableAssemblyEntities": [
       "product_factory_status",
@@ -311,8 +311,7 @@
       "product_pricing",
       "product_last_purchase",
       "product_purchase_price_history",
-      "product_purchase_budget_history",
-      "product_purchases"
+      "product_purchase_budget_history"
     ],
     "productListPresent": [
       "product_customers",
@@ -320,7 +319,6 @@
       "product_internal_movements",
       "product_open_orders",
       "product_outbound_invoice_items",
-      "product_purchases",
       "product_suppliers"
     ],
     "kpiPresent": [
@@ -493,9 +491,6 @@
       },
       "purchase_budget_history": {
         "presenterMethod": "present_product_purchase_budget_history"
-      },
-      "purchase_list": {
-        "presenterMethod": "present_product_purchases"
       },
       "tree_hierarchy": {
         "presenterMethod": "present_product_structure",
@@ -1442,40 +1437,15 @@
       "narrativePolicy": "generic_data_summary"
     },
     "purchase_list": {
+      "presentationStrategy": "as_delivered",
       "defaultViewPolicy": "table_when_available",
       "viewOrder": [
-        "text",
         "table",
+        "text",
         "chart",
-        "tree",
-        "kpi",
-        "dashboard"
+        "kpi"
       ],
-      "stackPlan": "purchase_list",
-      "flags": [
-        "purchase_list"
-      ],
-      "chartPolicy": "skip",
-      "visualBundle": {
-        "dashboardListRole": "list"
-      },
-      "visualBuilders": {
-        "kpi": "build_purchases_kpi",
-        "tree": "build_purchases_tree",
-        "chart": "build_purchases_chart",
-        "dashboard": "build_purchases_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_purchases_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1
-      },
-      "textBuilder": "build_purchases_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "purchase_list",
+      "chartPolicy": "auto",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },

@@ -131,40 +131,28 @@ def test_visual_bundle_enriches_purchase_budget_history_with_auxiliary_slots():
     _assert_visual_bundle(metadata)
 
 
-def test_purchases_table_presentations_assign_stack_roles():
-    presenter = ExternalActionResultPresenter()
-    envelope = load_api_delpi_fixture_with_meta("product_purchases_10080001.json")
-    path = "/products/10080001/purchases"
-    tables = presenter.build_purchases_table_presentations(envelope["data"], path)
-
-    assert len(tables) >= 2
-    assert tables[0].get("role") == "profile"
-    assert any(table.get("role") == "list" for table in tables)
-
-
-def test_visual_bundle_enriches_purchases_with_auxiliary_slots():
-    presenter = ExternalActionResultPresenter()
-    envelope = load_api_delpi_fixture_with_meta("product_purchases_10080001.json")
-    path = "/products/10080001/purchases"
-    tables = presenter.build_purchases_table_presentations(envelope["data"], path)
-    text = presenter._build_purchases_text_presentation(envelope["data"], path)
-
-    metadata = {
-        "presentation": tables[1] if len(tables) > 1 else tables[0],
-        "tablePresentations": tables,
-        "tablePresentation": tables[1] if len(tables) > 1 else tables[0],
-        "profileTablePresentation": tables[0],
-        "textPresentation": text,
-        "availableFormats": ["text", "table"],
-    }
-
-    ChatPresentationVisualBundleService.enrich_metadata(
-        metadata,
-        path=path,
-        data=envelope,
-        presenter=presenter,
+def test_product_purchases_schema_first_metadata_table():
+    from app.application.use_cases.execute_external_action_use_case import (
+        ExecuteExternalActionUseCase,
     )
 
-    _assert_visual_bundle(metadata)
-    assert metadata.get("chartPresentation", {}).get("type") == "chart"
-    assert metadata.get("treePresentation", {}).get("type") == "tree"
+    use_case = ExecuteExternalActionUseCase(
+        repository=None,
+        gateway=None,
+        policy=None,
+        audit_repository=None,
+    )
+    envelope = load_api_delpi_fixture_with_meta("product_purchases_10080001.json")
+    path = "/products/10080001/purchases"
+
+    meta = use_case._build_presentation_metadata(
+        action={"path": path},
+        sanitized_data=envelope["data"],
+        resolved_path=path,
+        request_parameters={},
+    )
+
+    table = meta.get("tablePresentation") or meta.get("presentation")
+    assert isinstance(table, dict)
+    assert table.get("type") == "table"
+    assert len(table.get("rows") or []) == 2

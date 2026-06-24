@@ -185,6 +185,35 @@ class ChatSchemaDrivenPresentationService:
         return None
 
     @classmethod
+    def finish_schema_first_primary(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        data: Any,
+        *,
+        path: str = "",
+        entity: str | None = None,
+        response_schema: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Playbook 22 — apresentação as-delivered sem fallback para presenters legacy."""
+        primary = cls.build_primary(
+            host,
+            data,
+            path=path,
+            entity=entity,
+            response_schema=response_schema,
+        )
+
+        if primary is not None:
+            return primary
+
+        root = host._unwrap_data(data)
+
+        if root is None:
+            return None
+
+        return cls.build_raw_payload_markdown(host, root, path=path)
+
+    @classmethod
     def build_table(
         cls,
         host: SchemaDrivenPresenterHost,

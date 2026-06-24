@@ -40,7 +40,6 @@ class ChatPresentationProfileTextBuilderService:
             "build_product_pricing_text": lambda p, root, path: p._build_product_pricing_text_presentation(root, path),
             "build_last_purchase_text": lambda p, root, path: p._build_last_purchase_text_presentation(root, path),
             "build_purchase_history_text": lambda p, root, path: p._build_purchase_history_text_presentation(root, path),
-            "build_purchases_text": lambda p, root, path: p._build_purchases_text_presentation(root, path),
             "build_tree_hierarchy_text": lambda p, root, path: text_presenter.build_tree_hierarchy_text(root, path),
         }
 

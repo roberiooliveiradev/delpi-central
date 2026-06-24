@@ -148,12 +148,14 @@ def test_stock_table_uses_product_position_columns():
     assert "available_quantity" in _column_keys(detail)
 
 
-def test_purchases_table_uses_purchase_order_columns():
+def test_product_purchases_schema_first_table_columns():
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_purchases_10080001.json")
     path = "/products/10080001/purchases"
-    tables = presenter.build_purchases_table_presentations(envelope["data"], path)
-    detail = next(table for table in tables if table.get("role") == "list")
+    table = presenter.build_presentation(envelope["data"], path=path)
 
-    assert "order_number" in _column_keys(detail)
-    assert "supplier_name" in _column_keys(detail)
+    assert isinstance(table, dict)
+    assert table.get("type") == "table"
+    column_keys = _column_keys(table)
+    assert "order_number" in column_keys
+    assert "supplier_name" in column_keys

@@ -73,10 +73,6 @@ class ChatPresentationProfileVisualBundleService:
             "build_purchase_history_tree": presenter.build_purchase_history_tree_presentation,
             "build_purchase_history_chart": presenter.build_purchase_history_chart_presentation,
             "build_purchase_history_dashboard": presenter.build_purchase_history_dashboard_presentation,
-            "build_purchases_kpi": presenter.build_purchases_kpi_presentation,
-            "build_purchases_tree": presenter.build_purchases_tree_presentation,
-            "build_purchases_chart": presenter.build_purchases_chart_presentation,
-            "build_purchases_dashboard": presenter.build_purchases_dashboard_presentation,
         }
 
     @classmethod
