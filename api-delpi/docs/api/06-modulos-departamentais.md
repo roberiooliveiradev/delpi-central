@@ -111,6 +111,14 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 |---|---|---|
 | GET | `/supplies/cpv` | Custo de produto vendido (top fornecedores). |
 | GET | `/supplies/otd` | On-Time Delivery compras. |
+
+**Performance (`/supplies/otd`):**
+
+- Use case: summary derivado do `monthly_breakdown` (uma varredura em `VW_PONTUALIDADE_FORNECEDORES_MENSAL` em vez de duas).
+- Views com `WITH (NOLOCK)` (leitura analítica).
+- Cache: resposta completa em `query_cache` (namespace `supplies-otd`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+- Console: `operation_id=get_supplies_otd`; caller `strategic-indicators-api` — após o primeiro load do período, polling deve gerar cache hit (&lt; 500 ms).
+
 | GET | `/supplies/stock-value` | Valor total de estoque (atual ou histórico estimado). Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md). |
 | GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). |
 | GET | `/supplies/negotiation-savings/summary` | Economia em negociações de compras (Google Sheets `idd_suprimentos`). |

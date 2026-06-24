@@ -44,7 +44,7 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                         2
                     )
                 END AS otd_percentage
-            FROM VW_PONTUALIDADE_FORNECEDORES_MENSAL
+            FROM VW_PONTUALIDADE_FORNECEDORES_MENSAL WITH (NOLOCK)
             WHERE {where_clause}
         """
 
@@ -77,7 +77,7 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                 LINHAS_NO_PRAZO AS on_time_lines,
                 LINHAS_EM_ATRASO AS late_lines,
                 PERCENTUAL_ATENDIMENTO AS otd_percentage
-            FROM VW_PONTUALIDADE_FORNECEDORES_MENSAL
+            FROM VW_PONTUALIDADE_FORNECEDORES_MENSAL WITH (NOLOCK)
             WHERE {where_clause}
             ORDER BY ANO DESC, MES DESC, FILIAL
         """
@@ -104,7 +104,7 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                     ) / NULLIF(COUNT(*), 0),
                     2
                 ) AS otd_percentage
-            FROM VW_PONTUALIDADE_FORNECEDORES
+            FROM VW_PONTUALIDADE_FORNECEDORES WITH (NOLOCK)
             WHERE {where_clause}
             GROUP BY FORNECEDOR, LOJA
             HAVING SUM(CASE WHEN DIAS < 0 THEN 1 ELSE 0 END) > 0
@@ -136,7 +136,7 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                 CONVERT(VARCHAR(10), DT_DIGITACAO, 23) AS receipt_entry_date,
                 CONVERT(VARCHAR(10), DT_EMISSAO_NF, 23) AS invoice_issue_date,
                 DIAS AS days_diff
-            FROM VW_PONTUALIDADE_FORNECEDORES
+            FROM VW_PONTUALIDADE_FORNECEDORES WITH (NOLOCK)
             WHERE {where_clause}
               AND DIAS < 0
             ORDER BY DT_ENTREGA DESC, DIAS ASC, FORNECEDOR, NUMERO_PEDIDO, ITEM_PEDIDO

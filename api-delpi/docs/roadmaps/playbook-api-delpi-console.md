@@ -136,6 +136,13 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 | Mesma query hash, duração variável (300 ms–5 s) | Contenção TOTVS ou cold cache | Aba Cache: hit rate `lmp-dashboard`; aguardar TTL 300s entre comparações |
 | Caller anônimo | Cliente sem `X-Delpi-Caller-App` | SI e dashboards devem enviar header; ver aba Callers |
 
+#### Validação — `get_supplies_otd` (jun/2026)
+
+| Sintoma | Causa provável | Ação |
+|---------|----------------|------|
+| P95 &gt; 2500 ms, caller `strategic-indicators-api` | Cold path (3 queries nas views de pontualidade) ou TTL expirado | 2ª chamada no mesmo período deve ser cache hit namespace `supplies-otd` (&lt; 500 ms) |
+| Query hash `c2da978a…` (summary agregado) | Deploy anterior com dupla varredura mensal | Após deploy: summary derivado do breakdown — hash de summary some do painel |
+
 Teste manual pós-deploy:
 
 ```bash
@@ -156,7 +163,7 @@ Testes automatizados: `pytest tests/test_lmp_query_repository_sql.py tests/test_
 
 | Item | Detalhe | Status |
 |------|---------|--------|
-| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por namespace (`stock-value`, `financial-rol`, `production-oee`, `production-oee-by-branch`, `production-otd`, `commercial-rol-series`, `production-*-series`, `ppm-summary`, `ppm-*-series`, LMP, `lmp-summary`) | [x] |
+| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por namespace (`stock-value`, `supplies-otd`, `financial-rol`, `production-oee`, `production-oee-by-branch`, `production-otd`, `commercial-rol-series`, `production-*-series`, `ppm-summary`, `ppm-*-series`, LMP, `lmp-summary`) | [x] |
 | **Caller breakdown** | `GET /system/caller-stats` — agrega `X-Delpi-Caller-App` por request | [x] |
 | **Comparador** | `GET /system/observability-snapshot` + UI «antes/depois» com export CSV | [x] |
 | **UI Console** | Aba «Cache» com tabelas e comparador | [x] |
