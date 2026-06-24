@@ -682,6 +682,21 @@ services:
     networks:
       - delpi-network
 
+  quality-action-plans:
+    build:
+      context: ../plugins/quality-action-plans
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-quality-action-plans
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   inspecoes-entrada:
     build:
       context: ../plugins/inspecoes-entrada
@@ -1108,6 +1123,7 @@ services:
       - propostas-comerciais
       - auditoria-5s
       - cadastro-kaizen
+      - quality-action-plans
       - inspecoes-entrada
       - central-agendamento
       - dashboard-supplies

@@ -1,0 +1,407 @@
+.dashboard-quality-action-plans,
+.dashboard-quality-action-plans * {
+  box-sizing: border-box;
+}
+
+.dashboard-quality-action-plans {
+  --pac-page-padding: 24px;
+  --pac-section-gap: 20px;
+  --pac-grid-gap: 16px;
+  --pac-card-radius: 18px;
+  --pac-card-padding: 20px;
+  --pac-filter-radius: 16px;
+  --pac-control-radius: 12px;
+  --pac-control-height: 42px;
+  --pac-title: var(--secundary, #003866);
+  --pac-text: var(--text, #111111);
+  --pac-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --pac-card-bg: var(--surface, #ffffff);
+  --pac-card-border: var(--border, #e6e6e6);
+  --pac-accent: var(--primary, #089bdb);
+  --pac-danger: var(--danger, #b42318);
+  --pac-warning: #b54708;
+  --pac-success: var(--success, #067647);
+  --pac-font-xs: 12px;
+  --pac-font-sm: 13px;
+  --pac-font-md: 14px;
+  --pac-font-hero: clamp(24px, 2vw, 36px);
+}
+
+.dashboard-quality-action-plans button,
+.dashboard-quality-action-plans input,
+.dashboard-quality-action-plans select {
+  font: inherit;
+}
+
+.dashboard-quality-action-plans.dashboard-page {
+  width: 100%;
+  min-height: 100%;
+  padding: var(--pac-page-padding);
+  color: var(--pac-text);
+  background-color: var(--app-canvas, var(--bg, #ffffff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary, #089bdb) 5%, var(--app-canvas, var(--bg, #ffffff))),
+    var(--app-canvas, var(--bg, #ffffff)) 280px
+  );
+}
+
+:root[data-theme="dark"] .dashboard-quality-action-plans {
+  --pac-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --pac-text: rgba(255, 255, 255, 0.88);
+  --pac-text-muted: rgba(255, 255, 255, 0.72);
+  --pac-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --pac-card-border: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-quality-action-plans .pac-app-shell {
+  animation: pac-view-fade-in 0.18s ease-out;
+}
+
+@keyframes pac-view-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-quality-action-plans .pac-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--pac-grid-gap);
+  margin-bottom: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-page-header__brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-header__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pac-accent) 12%, transparent);
+  color: var(--pac-accent);
+  flex-shrink: 0;
+}
+
+.dashboard-quality-action-plans .pac-eyebrow {
+  margin: 0 0 4px;
+  color: var(--pac-accent);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: var(--pac-font-xs);
+}
+
+.dashboard-quality-action-plans .pac-page-header h1 {
+  margin: 0;
+  font-size: var(--pac-font-hero);
+  line-height: 1.15;
+  color: var(--pac-title);
+}
+
+.dashboard-quality-action-plans .pac-page-subtitle {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--pac-text-muted);
+  font-size: var(--pac-font-md);
+}
+
+.dashboard-quality-action-plans .pac-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-quality-action-plans .pac-primary-btn,
+.dashboard-quality-action-plans .pac-ghost-btn {
+  min-height: var(--pac-control-height);
+  border-radius: var(--pac-control-radius);
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-primary-btn {
+  border: none;
+  background: var(--pac-accent);
+  color: #fff;
+}
+
+.dashboard-quality-action-plans .pac-ghost-btn {
+  border: 1px solid var(--pac-card-border);
+  background: transparent;
+  color: var(--pac-text);
+}
+
+.dashboard-quality-action-plans .pac-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-nav__item {
+  border: 1px solid var(--pac-card-border);
+  background: var(--pac-card-bg);
+  color: var(--pac-text);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-nav__item--active {
+  border-color: color-mix(in srgb, var(--pac-accent) 40%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-accent) 12%, var(--pac-card-bg));
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--pac-grid-gap);
+}
+
+.dashboard-quality-action-plans .pac-metric-card {
+  background: var(--pac-card-bg);
+  border: 1px solid var(--pac-card-border);
+  border-radius: var(--pac-card-radius);
+  padding: var(--pac-card-padding);
+}
+
+.dashboard-quality-action-plans .pac-metric-card__label {
+  margin: 0 0 8px;
+  color: var(--pac-text-muted);
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-metric-card__value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--pac-title);
+}
+
+.dashboard-quality-action-plans .pac-metric-card--danger .pac-metric-card__value {
+  color: var(--pac-danger);
+}
+
+.dashboard-quality-action-plans .pac-metric-card--warning .pac-metric-card__value {
+  color: var(--pac-warning);
+}
+
+.dashboard-quality-action-plans .pac-metric-card--success .pac-metric-card__value {
+  color: var(--pac-success);
+}
+
+.dashboard-quality-action-plans .pac-filters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--pac-grid-gap);
+  margin-bottom: var(--pac-section-gap);
+  padding: 14px;
+  border-radius: var(--pac-filter-radius);
+  border: 1px solid var(--pac-card-border);
+  background: var(--pac-card-bg);
+}
+
+.dashboard-quality-action-plans .pac-filter-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-quality-action-plans .pac-filter-box label {
+  font-size: var(--pac-font-sm);
+  font-weight: 600;
+  color: var(--pac-text-muted);
+}
+
+.dashboard-quality-action-plans .pac-filter-box input,
+.dashboard-quality-action-plans .pac-filter-box select {
+  min-height: var(--pac-control-height);
+  border-radius: var(--pac-control-radius);
+  border: 1px solid var(--pac-card-border);
+  padding: 8px 12px;
+  background: var(--surface, #fff);
+  color: var(--pac-text);
+}
+
+.dashboard-quality-action-plans .pac-filter-box--action {
+  justify-content: flex-end;
+}
+
+.dashboard-quality-action-plans .pac-filter-box__spacer {
+  min-height: 20px;
+}
+
+.dashboard-quality-action-plans .pac-card {
+  background: var(--pac-card-bg);
+  border: 1px solid var(--pac-card-border);
+  border-radius: var(--pac-card-radius);
+  padding: var(--pac-card-padding);
+}
+
+.dashboard-quality-action-plans .pac-section-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: var(--pac-title);
+}
+
+.dashboard-quality-action-plans .pac-table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-quality-action-plans .pac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-table th,
+.dashboard-quality-action-plans .pac-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--pac-card-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dashboard-quality-action-plans .pac-table th {
+  color: var(--pac-text-muted);
+  font-weight: 700;
+}
+
+.dashboard-quality-action-plans .pac-icon-btn {
+  border: 1px solid var(--pac-card-border);
+  background: transparent;
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: var(--pac-font-xs);
+  font-weight: 700;
+}
+
+.dashboard-quality-action-plans .pac-badge--severity-critical,
+.dashboard-quality-action-plans .pac-badge--status-cancelled {
+  background: color-mix(in srgb, var(--pac-danger) 12%, transparent);
+  color: var(--pac-danger);
+}
+
+.dashboard-quality-action-plans .pac-badge--severity-high {
+  background: color-mix(in srgb, var(--pac-warning) 12%, transparent);
+  color: var(--pac-warning);
+}
+
+.dashboard-quality-action-plans .pac-badge--severity-medium {
+  background: color-mix(in srgb, var(--pac-accent) 12%, transparent);
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-badge--severity-low,
+.dashboard-quality-action-plans .pac-badge--status-completed {
+  background: color-mix(in srgb, var(--pac-success) 12%, transparent);
+  color: var(--pac-success);
+}
+
+.dashboard-quality-action-plans .pac-state {
+  margin-bottom: var(--pac-section-gap);
+  padding: 12px 14px;
+  border-radius: var(--pac-control-radius);
+  border: 1px solid var(--pac-card-border);
+  background: var(--pac-card-bg);
+}
+
+.dashboard-quality-action-plans .pac-state--error {
+  border-color: color-mix(in srgb, var(--pac-danger) 35%, var(--pac-card-border));
+  color: var(--pac-danger);
+}
+
+.dashboard-quality-action-plans .pac-muted {
+  color: var(--pac-text-muted);
+}
+
+.dashboard-quality-action-plans .pac-detail-grid {
+  display: grid;
+  gap: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.dashboard-quality-action-plans .pac-dl div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-quality-action-plans .pac-dl__full {
+  grid-column: 1 / -1;
+}
+
+.dashboard-quality-action-plans .pac-dl dt {
+  font-size: var(--pac-font-xs);
+  font-weight: 700;
+  color: var(--pac-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-quality-action-plans .pac-dl dd {
+  margin: 0;
+}
+
+.dashboard-quality-action-plans .pac-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-timeline li {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pac-card-border);
+}
+
+.dashboard-quality-action-plans .pac-timeline span {
+  display: block;
+  margin-top: 4px;
+  color: var(--pac-text-muted);
+  font-size: var(--pac-font-xs);
+}
+
+.dashboard-quality-action-plans .pac-timeline p {
+  margin: 6px 0 0;
+}

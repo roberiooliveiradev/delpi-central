@@ -656,6 +656,21 @@ services:
     networks:
       - delpi-network
 
+  quality-action-plans:
+    build:
+      context: ../plugins/quality-action-plans
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-quality-action-plans
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   central-agendamento:
     build:
       context: ../plugins/central-agendamento

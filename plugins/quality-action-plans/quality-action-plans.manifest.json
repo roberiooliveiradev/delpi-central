@@ -37,11 +37,12 @@
   "routes": [
     {
       "path": "/apps/quality-action-plans",
-      "label": "Planos de Ação Qualidade",
+      "label": "PAC Qualidade",
       "permission": "quality-action-plans.read",
       "icon": "clipboard-list-icon",
       "order": 18,
-      "showInMenu": false
+      "showInMenu": true,
+      "menuGroup": "Qualidade"
     }
   ],
   "ui": {
