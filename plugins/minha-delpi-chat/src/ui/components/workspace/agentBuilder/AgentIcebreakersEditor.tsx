@@ -17,6 +17,7 @@ import {
   ICEBREAKER_FIELD_TYPE_OPTIONS,
   reorderIcebreakerEntries,
   resolveIcebreakerCardPresentation,
+  syncIcebreakerEntryFields,
   type AgentIcebreakerEntry,
   type IcebreakerFieldConfig,
 } from "../../../agentIcebreakers";
@@ -192,9 +193,23 @@ export function AgentIcebreakersEditor({
     setDropIndex(null);
   }
 
-  function insertPlaceholder(entryIndex: number, fieldId: string) {
+  function patchEntry(
+    baseEntries: AgentIcebreakerEntry[],
+    entryIndex: number,
+    patch: Partial<AgentIcebreakerEntry>,
+  ): AgentIcebreakerEntry[] {
+    return baseEntries.map((item, itemIndex) =>
+      itemIndex === entryIndex ? syncIcebreakerEntryFields({ ...item, ...patch }) : item,
+    );
+  }
+
+  function insertPlaceholder(
+    entryIndex: number,
+    fieldId: string,
+    baseEntries: AgentIcebreakerEntry[] = entries,
+  ) {
     const token = buildIcebreakerPlaceholderToken(fieldId);
-    const entry = entries[entryIndex];
+    const entry = baseEntries[entryIndex];
     const input = templateRefs.current[entryIndex];
     const start = input?.selectionStart ?? entry.template.length;
     const end = input?.selectionEnd ?? entry.template.length;
@@ -202,7 +217,7 @@ export function AgentIcebreakersEditor({
       `${entry.template.slice(0, start)}${token}${entry.template.slice(end)}`,
     );
 
-    onChange(updateEntry(entries, entryIndex, { template: nextTemplate }));
+    onChange(patchEntry(baseEntries, entryIndex, { template: nextTemplate }));
 
     requestAnimationFrame(() => {
       const nextInput = templateRefs.current[entryIndex];
@@ -225,14 +240,21 @@ export function AgentIcebreakersEditor({
     const nextField = createIcebreakerField(fields.length, fieldType);
 
     fields.push(nextField);
-    onChange(updateEntry(entries, entryIndex, { fields }));
-    insertPlaceholder(entryIndex, nextField.id);
+    const nextEntries = patchEntry(entries, entryIndex, { fields });
+    insertPlaceholder(entryIndex, nextField.id, nextEntries);
   }
 
   function removeField(entryIndex: number, fieldIndex: number) {
     const entry = entries[entryIndex];
-    const fields = (entry.fields ?? []).filter((_, index) => index !== fieldIndex);
-    onChange(updateEntry(entries, entryIndex, { fields }));
+    const field = entry.fields?.[fieldIndex];
+    let template = entry.template;
+
+    if (field) {
+      const token = buildIcebreakerPlaceholderToken(field.id);
+      template = clampIcebreakerDraft(template.split(token).join(""));
+    }
+
+    onChange(patchEntry(entries, entryIndex, { template }));
   }
 
   return (
@@ -425,7 +447,7 @@ export function AgentIcebreakersEditor({
                       placeholder="Ex.: qual o status fabril hoje do produto {{productCode}}?"
                       onChange={(event) =>
                         onChange(
-                          updateEntry(entries, index, {
+                          patchEntry(entries, index, {
                             template: clampIcebreakerDraft(event.target.value),
                           }),
                         )

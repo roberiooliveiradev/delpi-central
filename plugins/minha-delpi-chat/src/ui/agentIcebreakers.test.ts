@@ -16,6 +16,7 @@ import {
   resolveAgentIcebreakerEntriesForEditor,
   resolveAgentIcebreakersForDisplay,
   resolveIcebreakerPromptOptions,
+  syncIcebreakerEntryFields,
 } from "./agentIcebreakers";
 import { DEFAULT_AGENT_ICEBREAKERS } from "./chatHomeStarters";
 
@@ -130,6 +131,48 @@ describe("agentIcebreakers", () => {
 
     expect(saved).toHaveLength(1);
     expect(saved[0]?.label).toBe("Título");
+  });
+
+  it("sincroniza campos a partir dos placeholders do template", () => {
+    expect(
+      syncIcebreakerEntryFields({
+        template: "código do produto {{campo1}}",
+        label: "Consultar",
+        fields: [],
+      }),
+    ).toEqual({
+      template: "código do produto {{campo1}}",
+      label: "Consultar",
+      fields: [
+        {
+          id: "campo1",
+          label: "Texto curto",
+          fieldType: "text",
+          required: true,
+        },
+      ],
+    });
+
+    expect(
+      syncIcebreakerEntryFields({
+        template: "me fale do produto {{productCode}}",
+        fields: [
+          {
+            id: "productCode",
+            label: "Código do produto",
+            fieldType: "productCode",
+            required: true,
+          },
+        ],
+      }).fields,
+    ).toEqual([
+      {
+        id: "productCode",
+        label: "Código do produto",
+        fieldType: "productCode",
+        required: true,
+      },
+    ]);
   });
 
   it("resolve opções do diálogo a partir da entrada configurada", () => {

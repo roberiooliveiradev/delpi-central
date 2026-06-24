@@ -183,27 +183,42 @@ function normalizeIcebreakerField(value: unknown): IcebreakerFieldConfig | null 
   };
 }
 
-function inferFieldsFromTemplate(template: string): IcebreakerFieldConfig[] {
-  return listShortcutFieldIds(template).map((fieldId) => ({
-    id: fieldId,
-    label: defaultLabelForFieldType(inferFieldTypeFromId(fieldId)),
-    fieldType: inferFieldTypeFromId(fieldId),
-    required: true,
-  }));
+/** Alinha `fields` aos placeholders `{{id}}` presentes no template. */
+export function syncIcebreakerEntryFields(entry: AgentIcebreakerEntry): AgentIcebreakerEntry {
+  const placeholderIds = listShortcutFieldIds(entry.template);
+
+  if (placeholderIds.length === 0) {
+    return { ...entry, fields: [] };
+  }
+
+  const existingById = new Map((entry.fields ?? []).map((field) => [field.id, field]));
+
+  const fields = placeholderIds.map((fieldId) => {
+    const existing = existingById.get(fieldId);
+
+    if (existing) {
+      return existing;
+    }
+
+    const fieldType = inferFieldTypeFromId(fieldId);
+
+    return {
+      id: fieldId,
+      label: defaultLabelForFieldType(fieldType),
+      fieldType,
+      required: true,
+    };
+  });
+
+  return { ...entry, fields };
 }
 
 function enrichIcebreakerEntry(entry: AgentIcebreakerEntry): AgentIcebreakerEntry {
-  const fields =
-    entry.fields && entry.fields.length > 0
-      ? entry.fields
-      : inferFieldsFromTemplate(entry.template);
-
-  return {
+  return syncIcebreakerEntryFields({
     ...entry,
     label: entry.label?.trim() || undefined,
     hint: entry.hint?.trim() || undefined,
-    fields,
-  };
+  });
 }
 
 function normalizeIcebreakerEntry(value: unknown): AgentIcebreakerEntry | null {
