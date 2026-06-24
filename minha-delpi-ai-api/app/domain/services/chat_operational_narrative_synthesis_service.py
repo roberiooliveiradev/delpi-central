@@ -50,11 +50,15 @@ class ChatOperationalNarrativeSynthesisService:
         if cls._tool_calls_match_path_markers(tool_calls, cls._content().sql_path_markers()):
             return _SYNTHESIS_SQL_RESULT
 
-        if cls._tool_calls_match_path_markers(
-            tool_calls,
-            cls._content().structure_exclusivity_path_markers(),
-        ):
-            return _SYNTHESIS_STRUCTURE_EXCLUSIVITY
+        factual_profile_kind = cls._resolve_factual_profile_synthesis_kind(tool_calls)
+
+        if factual_profile_kind:
+            return factual_profile_kind
+
+        narrative_policy_kind = cls._resolve_narrative_policy_synthesis_kind(tool_calls)
+
+        if narrative_policy_kind:
+            return narrative_policy_kind
 
         if cls._tool_calls_match_path_markers(
             tool_calls,
@@ -346,11 +350,15 @@ class ChatOperationalNarrativeSynthesisService:
     @classmethod
     def _resolve_policy_kind(cls, kind: str, tool_calls: list | None) -> str:
         if kind == _SYNTHESIS_OPERATIONAL_DATA:
-            if cls._tool_calls_match_path_markers(
-                tool_calls,
-                cls._content().structure_exclusivity_path_markers(),
-            ):
-                return _SYNTHESIS_STRUCTURE_EXCLUSIVITY
+            factual_profile_kind = cls._resolve_factual_profile_synthesis_kind(tool_calls)
+
+            if factual_profile_kind:
+                return factual_profile_kind
+
+            narrative_policy_kind = cls._resolve_narrative_policy_synthesis_kind(tool_calls)
+
+            if narrative_policy_kind:
+                return narrative_policy_kind
 
             if cls._tool_calls_match_path_markers(
                 tool_calls,
@@ -361,6 +369,76 @@ class ChatOperationalNarrativeSynthesisService:
             return _SYNTHESIS_PLAYBOOK_DATA
 
         return kind
+
+    @classmethod
+    def _resolve_factual_profile_synthesis_kind(cls, tool_calls: list | None) -> str | None:
+        from app.domain.services.chat_operational_factual_verdict_content_service import (
+            ChatOperationalFactualVerdictContentService,
+        )
+        from app.domain.services.chat_operational_factual_verdict_service import (
+            ChatOperationalFactualVerdictService,
+        )
+
+        for profile_key in ChatOperationalFactualVerdictContentService.profile_keys():
+            synthesis_kind = cls._content().synthesis_kind_for_factual_profile(profile_key)
+
+            if not synthesis_kind:
+                continue
+
+            for metadata in cls._successful_tool_metadata(tool_calls):
+                path = str(metadata.get("path") or "")
+
+                if ChatOperationalFactualVerdictService.profile_applies_to_path(
+                    profile_key,
+                    path,
+                ):
+                    return synthesis_kind
+
+        return None
+
+    @classmethod
+    def _resolve_narrative_policy_synthesis_kind(cls, tool_calls: list | None) -> str | None:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        for metadata in cls._successful_tool_metadata(tool_calls):
+            path = str(metadata.get("path") or "").strip() or None
+            api_meta = metadata.get("apiDelpiResponseMeta")
+            entity = (
+                str(api_meta.get("entity") or "").strip()
+                if isinstance(api_meta, dict)
+                else None
+            ) or None
+            profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+            profile = ChatPresentationProfileService.profile(profile_key)
+            narrative_policy = str(profile.get("narrativePolicy") or "").strip()
+            synthesis_kind = cls._content().synthesis_kind_for_narrative_policy(
+                narrative_policy,
+            )
+
+            if synthesis_kind:
+                return synthesis_kind
+
+        return None
+
+    @classmethod
+    def _successful_tool_metadata(cls, tool_calls: list | None) -> list[dict[str, Any]]:
+        if not isinstance(tool_calls, list):
+            return []
+
+        collected: list[dict[str, Any]] = []
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if isinstance(metadata, dict) and metadata.get("ok"):
+                collected.append(metadata)
+
+        return collected
 
     @classmethod
     def _tool_calls_match_path_markers(

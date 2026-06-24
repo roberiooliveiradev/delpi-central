@@ -620,7 +620,7 @@ W4   Path literals residuais por domínio
 | Synthesis dataAnswer | `ChatOperationalUserQuestionSynthesisService` | OK (W1a) |
 | Commentary | `commentaryProfiles` + `ChatOperationalCommentaryProfileService` | OK (W1b) |
 | Entity dispatch | `ChatPresentationEntityRouteDispatchService` + `profilePresentDispatch` | OK (W1c) |
-| JSON path duplicado | narrative_synthesis vs factual_verdict | **Pendente W2** |
+| JSON path duplicado | narrative_synthesis vs factual_verdict | **OK (W2)** — pathMarkers só em `operational_factual_verdict`; kind via `factualProfileSynthesisKinds` + `narrativePolicySynthesisKinds` |
 
 ---
 
@@ -632,3 +632,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W1a — gate synthesis/dataAnswer para perfis `template` + `preserve_template` |
 | jun/2026 | W1b — `commentaryProfiles` em `humanized_data_response.json`; exclusividade com `templateProseCommentary: skip` |
 | jun/2026 | W1c — `profilePresentDispatch` / `entityPresentOverrides`; dispatch declarativo no `EntityRoutePresenter` |
+| jun/2026 | W2 (parcial) — unifica path markers de exclusividade: `operational_factual_verdict` + maps `factualProfileSynthesisKinds` / `narrativePolicySynthesisKinds` |

@@ -12,9 +12,12 @@
     "product_shipping_status": "shipping_status",
     "product_structure_exclusivity": "structure_exclusivity"
   },
-  "structureExclusivityPathMarkers": [
-    "/structure/exclusivity"
-  ],
+  "factualProfileSynthesisKinds": {
+    "structure_exclusivity": "structure_exclusivity"
+  },
+  "narrativePolicySynthesisKinds": {
+    "operational_structure_exclusivity_summary": "structure_exclusivity"
+  },
   "pathMarkers": [
     "/stock",
     "/factory-status",

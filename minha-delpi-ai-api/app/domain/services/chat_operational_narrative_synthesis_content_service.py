@@ -46,8 +46,41 @@ class ChatOperationalNarrativeSynthesisContentService:
         return tuple(ChatAssistantContentService.list(_BUNDLE, "kpiPathMarkers"))
 
     @classmethod
-    def structure_exclusivity_path_markers(cls) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, "structureExclusivityPathMarkers"))
+    def factual_profile_synthesis_kinds(cls) -> dict[str, str]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "factualProfileSynthesisKinds")
+
+        if not isinstance(node, dict):
+            return {}
+
+        return {
+            str(key).strip(): str(value).strip()
+            for key, value in node.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
+    def narrative_policy_synthesis_kinds(cls) -> dict[str, str]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "narrativePolicySynthesisKinds")
+
+        if not isinstance(node, dict):
+            return {}
+
+        return {
+            str(key).strip(): str(value).strip()
+            for key, value in node.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
+    def synthesis_kind_for_factual_profile(cls, profile_key: str) -> str:
+        return cls.factual_profile_synthesis_kinds().get(str(profile_key or "").strip(), "")
+
+    @classmethod
+    def synthesis_kind_for_narrative_policy(cls, narrative_policy: str) -> str:
+        return cls.narrative_policy_synthesis_kinds().get(
+            str(narrative_policy or "").strip(),
+            "",
+        )
 
     @classmethod
     def narrative_markers(cls) -> tuple[str, ...]:
