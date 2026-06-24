@@ -619,7 +619,7 @@ W4   Path literals residuais por domínio
 | LLM coerência | `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService` | OK |
 | Synthesis dataAnswer | `ChatOperationalUserQuestionSynthesisService` | OK (W1a) |
 | Commentary | `commentaryProfiles` + `ChatOperationalCommentaryProfileService` | OK (W1b) |
-| Entity dispatch | `entity_route_presenter` | **Pendente W1** |
+| Entity dispatch | `ChatPresentationEntityRouteDispatchService` + `profilePresentDispatch` | OK (W1c) |
 | JSON path duplicado | narrative_synthesis vs factual_verdict | **Pendente W2** |
 
 ---
@@ -631,3 +631,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | Playbook criado após auditoria completa pós-fix exclusividade MPs e diretrizes `.cursor` |
 | jun/2026 | W1a — gate synthesis/dataAnswer para perfis `template` + `preserve_template` |
 | jun/2026 | W1b — `commentaryProfiles` em `humanized_data_response.json`; exclusividade com `templateProseCommentary: skip` |
+| jun/2026 | W1c — `profilePresentDispatch` / `entityPresentOverrides`; dispatch declarativo no `EntityRoutePresenter` |

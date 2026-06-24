@@ -8,6 +8,9 @@ from app.domain.services.chat_operational_response_profile_service import (
     OperationalResponseProfile,
     ChatOperationalResponseProfileService,
 )
+from app.domain.services.chat_presentation_entity_route_dispatch_service import (
+    ChatPresentationEntityRouteDispatchService,
+)
 
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
@@ -86,73 +89,17 @@ class ExternalActionEntityRoutePresenter:
                 if playbook:
                     return playbook
 
-            if entity == "product_analyser" and isinstance(root, dict):
-                root = self._normalize_root_for_entity(root, profile)
-                product = root.get("product")
+            handled, dispatched = ChatPresentationEntityRouteDispatchService.try_present(
+                self._host,
+                root,
+                path=path,
+                entity=entity,
+                profile=profile,
+                normalize_root=lambda payload: self._normalize_root_for_entity(payload, profile),
+            )
 
-                if isinstance(product, dict):
-                    effective_path = ChatOperationalResponseProfileService.presentation_path(
-                        path=path,
-                        entity=entity,
-                    )
-                    return self._host._present_product_analyser(
-                        root,
-                        self._host._normalize_api_section(product),
-                        effective_path,
-                    )
-
-            if entity == "product_factory_status" and isinstance(root, dict):
-                return self._host._present_product_factory_status(root, path)
-
-            if entity == "product_production_status" and isinstance(root, dict):
-                return self._host._present_product_production_status(root, path)
-
-            if entity == "product_shipping_status" and isinstance(root, dict):
-                return self._host._present_product_shipping_status(root, path)
-
-            if entity == "product_structure_exclusivity" and isinstance(root, dict):
-                return self._host._present_product_structure_exclusivity(root, path)
-
-            if entity == "product_directives" and isinstance(root, dict):
-                return self._host._present_product_directives(root, path)
-
-            if entity == "product_raw_material_price_intelligence" and isinstance(root, dict):
-                return self._host._present_product_raw_material_price_intelligence(root, path)
-
-            if entity == "product_cost_impact_simulation" and isinstance(root, dict):
-                return self._host._present_product_cost_impact_simulation(root, path)
-
-            if entity == "product_last_purchase" and isinstance(root, dict):
-                return self._host._present_product_last_purchase(root, path)
-
-            if entity == "product_pricing" and isinstance(root, dict):
-                return self._host._present_product_pricing(root, path)
-
-            if entity == "product_purchase_price_history" and isinstance(root, dict):
-                return self._host._present_product_purchase_price_history(root, path)
-
-            if entity == "product_purchase_budget_history" and isinstance(root, dict):
-                return self._host._present_product_purchase_budget_history(root, path)
-
-            if entity == "product_purchases" and isinstance(root, dict):
-                return self._host._present_product_purchases(root, path)
-
-            if entity == "product_structure" and isinstance(root, dict):
-                structure_result = self._host._present_product_structure(root, path)
-
-                if structure_result:
-                    return structure_result
-
-            if entity == "product_parents" and isinstance(root, dict):
-                structure_result = self._host._present_product_structure(root, path)
-
-                if structure_result:
-                    return structure_result
-
-            product = root.get("product") if isinstance(root, dict) else None
-
-            if entity == "product" and isinstance(product, dict):
-                return self._host._present_product(root, self._host._normalize_api_section(product))
+            if handled and dispatched is not None:
+                return dispatched
 
             if isinstance(root, dict):
                 items = root.get("items")
