@@ -143,6 +143,13 @@ Complementa o middleware HTTP já existente (`request_observability_middleware`)
 | P95 &gt; 2500 ms, caller `strategic-indicators-api` | Cold path (3 queries nas views de pontualidade) ou TTL expirado | 2ª chamada no mesmo período deve ser cache hit namespace `supplies-otd` (&lt; 500 ms) |
 | Query hash `c2da978a…` (summary agregado) | Deploy anterior com dupla varredura mensal | Após deploy: summary derivado do breakdown — hash de summary some do painel |
 
+#### Validação — `list_eficiencia_fabril_appointments` (jun/2026)
+
+| Sintoma | Causa provável | Ação |
+|---------|----------------|------|
+| P95 &gt; 2500 ms, caller `eficiencia-fabril` | Cold path (view + SH6010) ou TTL expirado | 2ª chamada no mesmo período/filtros → cache hit namespace `eficiencia-fabril-appointments` (&lt; 500 ms) |
+| Hash `bf4b47a3…` com `OUTER APPLY` | Deploy anterior | Após deploy: SQL usa `H6_RANKED` CTE — duração cold deve cair |
+
 Teste manual pós-deploy:
 
 ```bash
@@ -163,7 +170,7 @@ Testes automatizados: `pytest tests/test_lmp_query_repository_sql.py tests/test_
 
 | Item | Detalhe | Status |
 |------|---------|--------|
-| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por namespace (`stock-value`, `supplies-otd`, `financial-rol`, `production-oee`, `production-oee-by-branch`, `production-otd`, `commercial-rol-series`, `production-*-series`, `ppm-summary`, `ppm-*-series`, LMP, `lmp-summary`) | [x] |
+| **Cache inspector** | `GET /system/query-cache/stats` — hits/miss por namespace (`stock-value`, `supplies-otd`, `eficiencia-fabril-appointments`, `financial-rol`, `production-oee`, `production-oee-by-branch`, `production-otd`, `commercial-rol-series`, `production-*-series`, `ppm-summary`, `ppm-*-series`, LMP, `lmp-summary`) | [x] |
 | **Caller breakdown** | `GET /system/caller-stats` — agrega `X-Delpi-Caller-App` por request | [x] |
 | **Comparador** | `GET /system/observability-snapshot` + UI «antes/depois» com export CSV | [x] |
 | **UI Console** | Aba «Cache» com tabelas e comparador | [x] |

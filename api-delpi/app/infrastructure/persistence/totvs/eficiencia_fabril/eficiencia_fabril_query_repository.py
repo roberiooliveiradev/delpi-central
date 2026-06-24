@@ -22,10 +22,12 @@ from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_qu
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
     build_fabril_view_filters,
+    _normalize_fabril_filter_date,
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_ef_items_sql import (
     EF_FABRIL_ITEMS_FROM,
     EF_FABRIL_ITEMS_SELECT,
+    build_ef_fabril_items_list_sql,
 )
 
 
@@ -162,18 +164,13 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             )
 
             item_rows = self.execute_query(
-                f"""
-                SELECT
-                    {EF_FABRIL_ITEMS_SELECT}
-                {EF_FABRIL_ITEMS_FROM}
-                WHERE {items_where}
-                ORDER BY
-                    EF.DATA_PRODUCAO DESC,
-                    EF.HORA_INICIO DESC,
-                    EF.HORA_FINAL DESC
-                OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-                """,
-                items_params + (offset, request.page_size),
+                *self._build_items_list_sql(
+                    request,
+                    items_where,
+                    items_params,
+                    offset=offset,
+                    limit=request.page_size,
+                ),
             )
 
         summary = self._map_summary(summary_row, invalid_row)
@@ -210,20 +207,30 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
 
         with self:
             rows = self.execute_query(
-                f"""
-                SELECT
-                    {EF_FABRIL_ITEMS_SELECT}
-                {EF_FABRIL_ITEMS_FROM}
-                WHERE {where}
-                ORDER BY
-                    EF.DATA_PRODUCAO DESC,
-                    EF.HORA_INICIO DESC,
-                    EF.HORA_FINAL DESC
-                """,
-                params,
+                *self._build_items_list_sql(request, where, params),
             )
 
         return [self._map_item(row) for row in rows]
+
+    def _build_items_list_sql(
+        self,
+        request: GetEficienciaFabrilDashboardRequest,
+        where_clause: str,
+        where_params: tuple,
+        *,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[str, tuple]:
+        return build_ef_fabril_items_list_sql(
+            where_clause=where_clause,
+            where_params=where_params,
+            date_start=_normalize_fabril_filter_date(request.date_start),
+            date_end=_normalize_fabril_filter_date(request.date_end),
+            branch=request.branch,
+            branches=tuple(self.settings.branches),
+            offset=offset,
+            limit=limit,
+        )
 
     def _build_filters(
         self,
@@ -273,19 +280,19 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
 
         return EficienciaFabrilDashboardItem(
             appointment_id=_to_int(row.get("appointment_id")),
-            filial=row.get("FILIAL"),
-            op=row.get("OP"),
-            produto=row.get("PRODUTO"),
-            descricao_produto=row.get("DESCRICAO_PRODUTO") or None,
-            unidade=row.get("UNIDADE") or None,
-            centro_trabalho=row.get("CENTRO_TRABALHO"),
-            operacao=row.get("OPERACAO"),
-            cod_operador=row.get("COD_OPERADOR"),
-            login_operador=row.get("LOGIN_OPERADOR"),
-            nome_operador=row.get("NOME_OPERADOR"),
+            filial=_strip_str(row.get("FILIAL")),
+            op=_strip_str(row.get("OP")),
+            produto=_strip_str(row.get("PRODUTO")),
+            descricao_produto=_strip_str(row.get("DESCRICAO_PRODUTO")),
+            unidade=_strip_str(row.get("UNIDADE")),
+            centro_trabalho=_strip_str(row.get("CENTRO_TRABALHO")),
+            operacao=_strip_str(row.get("OPERACAO")),
+            cod_operador=_strip_str(row.get("COD_OPERADOR")),
+            login_operador=_strip_str(row.get("LOGIN_OPERADOR")),
+            nome_operador=_strip_str(row.get("NOME_OPERADOR")),
             data_producao=data_producao,
-            hora_inicio=row.get("HORA_INICIO"),
-            hora_final=row.get("HORA_FINAL"),
+            hora_inicio=_strip_str(row.get("HORA_INICIO")),
+            hora_final=_strip_str(row.get("HORA_FINAL")),
             qtd_apontada=_to_float(row.get("QTD_APONTADA")),
             tempo_real_horas=_to_float(row.get("TEMPO_REAL_HORAS")),
             tempo_previsto_horas=_to_float(row.get("TEMPO_PREVISTO_HORAS")),
@@ -295,8 +302,8 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             resultado_mod=_to_float(row.get("RESULTADO_MOD")),
             lucro_mod=_to_float(row.get("LUCRO_MOD")),
             prejuizo_mod=_to_float(row.get("PREJUIZO_MOD")),
-            status_resultado_mod=row.get("STATUS_RESULTADO_MOD"),
-            status_registro=row.get("STATUS_REGISTRO"),
+            status_resultado_mod=_strip_str(row.get("STATUS_RESULTADO_MOD")),
+            status_registro=_strip_str(row.get("STATUS_REGISTRO")),
         )
 
     @staticmethod
@@ -311,6 +318,13 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                     item[key] = value
             serialized.append(item)
         return serialized
+
+
+def _strip_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _to_int(value: Any) -> int | None:

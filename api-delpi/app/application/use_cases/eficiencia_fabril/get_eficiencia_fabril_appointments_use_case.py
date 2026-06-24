@@ -3,6 +3,11 @@ from typing import Optional
 from app.application.dto.eficiencia_fabril.get_eficiencia_fabril_dashboard_request import (
     GetEficienciaFabrilDashboardRequest,
 )
+from app.application.services.eficiencia_fabril.eficiencia_fabril_appointments_cache import (
+    eficiencia_fabril_appointments_cache_key,
+    get_cached_eficiencia_fabril_appointments,
+    set_cached_eficiencia_fabril_appointments,
+)
 from app.domain.ports.eficiencia_fabril.eficiencia_fabril_query_repository_port import (
     EficienciaFabrilQueryRepositoryPort,
 )
@@ -54,7 +59,6 @@ class GetEficienciaFabrilAppointmentsUseCase:
                 f"branch inválida. Valores aceitos: {', '.join(self._settings.branches)}."
             )
 
-        # Reuso do request existente para aplicar os mesmos filtros de domínio.
         request = GetEficienciaFabrilDashboardRequest(
             date_start=parsed_start,
             date_end=parsed_end,
@@ -67,6 +71,15 @@ class GetEficienciaFabrilAppointmentsUseCase:
             page_size=1,
         )
 
-        items = self._repository.get_appointments(request, status_ok_only=status_ok_only)
-        return [item.to_dict() for item in items]
+        cache_key = eficiencia_fabril_appointments_cache_key(
+            request,
+            status_ok_only=status_ok_only,
+        )
+        cached = get_cached_eficiencia_fabril_appointments(cache_key)
+        if cached is not None:
+            return cached
 
+        items = self._repository.get_appointments(request, status_ok_only=status_ok_only)
+        result = [item.to_dict() for item in items]
+        set_cached_eficiencia_fabril_appointments(cache_key, result)
+        return result

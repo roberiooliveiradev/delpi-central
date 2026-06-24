@@ -84,6 +84,12 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/oee/series` | Série temporal de OEE por filial. |
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
 | GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; `appointment_id` para detalhe). |
+
+**Performance (`/production/eficiencia-fabril/appointments`):**
+
+- SQL: CTE `H6_RANKED` (uma varredura em SH6010 por período) + join na view — evita `OUTER APPLY` correlacionado em bulk.
+- Cache: resposta completa em `query_cache` (namespace `eficiencia-fabril-appointments`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+- Console: `operation_id=list_eficiencia_fabril_appointments`; caller `eficiencia-fabril` — após o primeiro load do período, recargas devem ser cache hit (&lt; 500 ms).
 | GET | `/production/on_time_delivery_pct` | OTD produção (%) — apenas OPs de PA (`SB1010.B1_TIPO = 'PA'`). |
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs de PA e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
