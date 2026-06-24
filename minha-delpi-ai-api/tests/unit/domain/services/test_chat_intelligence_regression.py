@@ -337,7 +337,13 @@ def test_presenter_humanized_summary_regression(case):
 
     presenter = ExternalActionResultPresenter()
     humanized = presenter.present(case["payload"], path=case["path"])
-    joined = "\n".join(humanized.get("linhas") or []).lower()
+    joined = "\n".join(
+        [
+            str(humanized.get("titulo") or ""),
+            *(humanized.get("linhas") or []),
+            str(humanized.get("humanizedMarkdown") or ""),
+        ]
+    ).lower()
 
     for token in case["must_contain"]:
         assert token.lower() in joined, f"faltou «{token}» em {case['label']}"

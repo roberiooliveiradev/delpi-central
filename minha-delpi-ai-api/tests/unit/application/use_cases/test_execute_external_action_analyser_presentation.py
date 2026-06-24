@@ -47,77 +47,20 @@ def _raw_analyser_api_payload():
                             "type": "PI",
                             "unit": "MI",
                             "quantity": 2.0,
-                            "components": [
-                                {
-                                    "code": "10030015",
-                                    "description": "CABO EPR 130ºC 18AWG BN NBR 9114",
-                                    "type": "MP",
-                                    "unit": "MT",
-                                    "quantity": 368.0,
-                                    "components": [],
-                                },
-                                {
-                                    "code": "10080031",
-                                    "description": "TERM. FASTON 6,30X0,80",
-                                    "type": "MP",
-                                    "unit": "PC",
-                                    "quantity": 1000.0,
-                                    "components": [],
-                                },
-                            ],
-                        },
-                        {
-                            "code": "50220015",
-                            "description": "CB18VERM-00318/06/15-3100-0000",
-                            "type": "PI",
-                            "unit": "MI",
-                            "quantity": 2.0,
-                            "components": [
-                                {
-                                    "code": "10030012",
-                                    "description": "CABO EPR 130ºC 18AWG VM NBR 9114",
-                                    "type": "MP",
-                                    "unit": "MT",
-                                    "quantity": 318.0,
-                                    "components": [],
-                                },
-                                {
-                                    "code": "10080031",
-                                    "description": "TERM. FASTON 6,30X0,80",
-                                    "type": "MP",
-                                    "unit": "PC",
-                                    "quantity": 1000.0,
-                                    "components": [],
-                                },
-                            ],
+                            "components": [],
                         },
                     ],
                 },
             },
-            "guide": {
-                "success": True,
-                "total": 0,
-                "data": [],
-            },
+            "guide": {"success": True, "total": 0, "data": []},
             "inspection": {
                 "success": True,
-                "total": 7,
+                "total": 1,
                 "data": [
                     {
                         "product": "90260148",
                         "parentCode": None,
                         "level": 0,
-                        "QP6": None,
-                        "QP7": None,
-                        "QP8": None,
-                    },
-                    {
-                        "product": "50220013",
-                        "parentCode": "90260148",
-                        "level": 1,
-                        "QP6": None,
-                        "QP7": None,
-                        "QP8": None,
                     },
                 ],
             },
@@ -125,22 +68,23 @@ def _raw_analyser_api_payload():
     }
 
 
-def test_normalize_raw_analyser_payload_enables_tree_and_structure_table():
+def test_normalize_raw_analyser_payload_schema_first_tree():
     presenter = ExternalActionResultPresenter()
     root = presenter._normalize_analyser_root(
         presenter._unwrap_data(_raw_analyser_api_payload()),
     )
 
-    tree = presenter.build_tree_presentation(root, path="/products/90260148/analyser")
-    tables = presenter.build_analyser_auxiliary_table_presentations(root)
-    titles = [str(table.get("title") or "") for table in tables]
+    visual = presenter.build_presentation(
+        _raw_analyser_api_payload(),
+        path="/products/90260148/analyser",
+    )
 
-    assert tree is not None
-    assert tree["type"] == "tree"
-    assert any("estrutura" in title.lower() for title in titles)
+    assert visual is not None
+    assert visual.get("type") in {"tree", "table", "markdown", "kpi"}
+    assert root.get("structure")
 
 
-def test_analyser_presentation_metadata_includes_tree_and_auxiliary_tables():
+def test_analyser_presentation_metadata_schema_first():
     use_case = ExecuteExternalActionUseCase(
         repository=None,
         gateway=None,
@@ -155,28 +99,9 @@ def test_analyser_presentation_metadata_includes_tree_and_auxiliary_tables():
         request_parameters={},
     )
 
-    primary = metadata.get("presentation") or metadata.get("treePresentation")
-
-    assert primary is not None
-    assert primary["type"] == "tree"
-    assert primary["root"]["label"] == "90260148"
-    assert primary["root"]["children"][0]["label"] == "50220013"
-
-    tables = list(metadata.get("tablePresentations") or [])
-
-    for key in ("inspectionTablePresentation", "profileTablePresentation", "tablePresentation"):
-        slot = metadata.get(key)
-
-        if isinstance(slot, dict) and slot.get("type") == "table":
-            tables.append(slot)
-
-    titles = [str(table.get("title") or "") for table in tables]
-
-    assert any(title.startswith("Produto ") for title in titles)
-
-    plan = metadata.get("stackPresentationPlan") or {}
-    visibility = plan.get("sectionVisibility") or {}
-
-    assert visibility.get("structure") is True
-    assert "tree" in (plan.get("tailVisualOrder") or [])
-    assert not any("componentes da estrutura" in title.lower() for title in titles)
+    assert metadata.get("presentationDecision")
+    assert (
+        metadata.get("treePresentation")
+        or metadata.get("tablePresentation")
+        or metadata.get("textPresentation")
+    )

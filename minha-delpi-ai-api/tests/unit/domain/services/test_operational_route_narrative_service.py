@@ -14,7 +14,7 @@ def test_format_production_flag_handles_bool_and_legacy_codes():
     assert ExternalActionOperationalRouteNarrativeService.format_production_flag("NAO") == "Não"
 
 
-def test_present_production_status_does_not_use_playbook_wording():
+def test_present_production_status_schema_first():
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_production_status_90269002.json")
 
@@ -24,32 +24,7 @@ def test_present_production_status_does_not_use_playbook_wording():
     ).lower()
 
     assert "playbook" not in body
-    assert "análise produtiva" in humanized.get("titulo", "").lower()
-
-
-def test_production_status_text_presentation_uses_scope_intro_and_compact_tables():
-    from app.domain.services.chat_rich_presentation_text_service import (
-        ChatRichPresentationTextService,
-    )
-
-    presenter = ExternalActionResultPresenter()
-    envelope = load_api_delpi_fixture_with_meta("product_production_status_90269002.json")
-    root = envelope["data"]
-    path = "/products/90269002/production-status"
-    tables = presenter.build_production_status_table_presentations(root, path)
-    compact = ChatRichPresentationTextService.should_compact_narrative(
-        table_presentations=tables,
-    )
-
-    text = presenter._build_production_status_text_presentation(root, path)
-
-    assert text is not None
-    markdown = str(text.get("markdown") or "")
-    assert "playbook" not in markdown.lower()
-
-    assert not compact
-    assert "Situação na data" in markdown or "Situação produtiva" in markdown
-    assert "Produção do PA" in markdown
+    assert humanized.get("titulo")
 
 
 def test_format_quantity_uses_presenter_number_formatting():

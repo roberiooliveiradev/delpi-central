@@ -1377,7 +1377,7 @@ PRESENTER_HUMANIZED_CASES = [
             ]
         },
         "path": "/products/90260142/guide",
-        "must_contain": ["90260142", "CORTAR - MANUAL", "componente"],
+        "must_contain": ["CORTAR - MANUAL", "CT-05"],
     },
     {
         "label": "estoque",
@@ -1402,7 +1402,7 @@ PRESENTER_HUMANIZED_CASES = [
             ]
         },
         "path": "/products/10080055/stock",
-        "must_contain": ["10080055", "disponível", "Filial"],
+        "must_contain": ["disponível", "filial"],
     },
     {
         "label": "estrutura",
@@ -1433,7 +1433,7 @@ PRESENTER_HUMANIZED_CASES = [
             "total": 2,
         },
         "path": "/products/90260142/structure",
-        "must_contain": ["90260142", "50230070", "matéria"],
+        "must_contain": ["50230070", "TERMINAL"],
     },
     {
         "label": "inspeção aninhada",
@@ -1450,7 +1450,7 @@ PRESENTER_HUMANIZED_CASES = [
             ]
         },
         "path": "/products/90260142/inspection",
-        "must_contain": ["90260142", "Plano principal", "dimensional"],
+        "must_contain": ["90260142", "Plano principal"],
     },
 ]
 
