@@ -4,12 +4,27 @@
 
 Corte definitivo do pipeline rico legado. Toda metadata de `execute_external_action` passa por **schema-first as-delivered**.
 
-## Código
+## Fase 1 — pipeline (commit `aaabe746`)
 
 - `ChatPresentationMetadataPipelineService` — delegação única a `ChatPresentationApiDeliveredMetadataService` (~35 linhas).
 - `ChatDataInsightEnrichmentService` re-ligado no caminho as-delivered (`dataAnswer` / `dataCommentary`).
 - `ChatToolContextFormatService` e `ChatPresentationPrimaryViewService` — `ChatSchemaDrivenPresentationService.build_bundle` (sem visual bundle).
 - **Removidos** 12 módulos: visual bundle, table assembly, humanized narrative, composite visual, entity route dispatch, hierarchy tree, story, prose quality, dashboard assembly, profile text/visual builders.
+
+## Fase 2 — decisão e contrato (commit `f058a363`)
+
+- Decisão automática só escolhe visuais presentes no payload.
+- Estoque e listas `as_delivered` priorizam tabela; texto-first não força perfis `table_when_available`.
+- Modo texto explícito → `layoutMode: single` (sem stack forçado por `stackLayoutPolicy: always`).
+- Entity resolvida pelo path quando falta `apiDelpiResponseMeta`.
+- SQL com `rows`/`items` + `sessionResponseFormat=table` promove tabela via `apply_session_preference`.
+
+## Fase 3 — declarativo e presenter (jun/2026)
+
+- `presentation_profiles.json`: removidas 67 chaves mortas (`visualBuilders`, `tableAssembly`, `textBuilder`, `visualBundle`, `compositeVisualSpec`, …) de perfis `as_delivered`.
+- `entitySets.presentationTableAssemblyEntities` esvaziado; `defaults.presentationStrategy` = `as_delivered`.
+- Gates `audit_presentation_coverage` / `refactor_baseline`: exigem `visualBuilders`/`tableAssembly` **somente** em perfis `presentationStrategy: legacy`.
+- Stubs `build_*_table_presentations` removidos de `ExternalActionResultPresenter`.
 
 ## Presenters
 
@@ -17,17 +32,17 @@ Pasta `external_actions/presenters/` reduzida a hosts utilitários (SQL, KPI, op
 
 ## Documentação
 
-- Novo: `docs/architecture/presentation-delivered-pure-jun2026.md`
-- Atualizados: playbook-22, chat-assistant-content-presentation, chat-intelligence-base, guia-desenvolvimento, índices
-- Regra Cursor: `.cursor/rules/schema-first-presentation-delivered.mdc`
+- `docs/architecture/presentation-delivered-pure-jun2026.md`
+- Playbook 22, chat-assistant-content-presentation, regra Cursor `schema-first-presentation-delivered.mdc`
 
 ## Testes
 
-- Casos de qualidade operacional alinhados ao contrato as-delivered.
+- 462 testes `test_chat_presentation_*` passando após Fase 2.
 - `test_chat_presentation_data_only_pipeline.py` — skipped (flags legacy; revalidar no turn completion).
 
-## Pendente (Fase 2+)
+## Pendente (Fase 3b+)
 
-- Limpar `visualBuilders` / `tableAssembly` / `richStackProfiles` de `presentation_profiles.json`.
-- Slim `ChatPresentationDecisionService` e `tailVisualPolicy` no render.
+- Slim `ChatPresentationDecisionService` e `ChatPresentationRichStackPolicyService` (`richStackProfiles` ainda ativo).
+- `renderPlan` / `stackPresentationPlan` — reduzir vestígios de stack rico.
 - `dataAnswer` para `structure_exclusivity` e demais perfis sem commentary.
+- OpenAPI import (Playbook 22 Fase D).

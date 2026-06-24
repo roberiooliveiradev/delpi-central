@@ -146,9 +146,20 @@ class ChatPresentationRefactorBaselineService:
         missing_assembly: list[str] = []
         missing_section_rules: list[str] = []
 
+        defaults = ChatPresentationProfileService.node("defaults") or {}
+
         for key in sorted(profiles):
             profile = profiles.get(key) or {}
             if not isinstance(profile, dict):
+                continue
+
+            strategy = str(
+                profile.get("presentationStrategy")
+                or defaults.get("presentationStrategy")
+                or "as_delivered"
+            ).strip().lower()
+
+            if strategy != "legacy":
                 continue
 
             if not profile.get("visualBuilders"):

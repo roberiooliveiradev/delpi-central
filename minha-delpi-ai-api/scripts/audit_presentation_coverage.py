@@ -68,7 +68,7 @@ def main() -> int:
     parser.add_argument(
         "--check-visual-builders",
         action="store_true",
-        help="Alerta se perfil declarar viewOrder kpi/tree/chart/dashboard sem visualBuilders",
+        help="Alerta se perfil legacy declarar viewOrder kpi/tree/chart/dashboard sem visualBuilders",
     )
     parser.add_argument(
         "--check-interactivity-chips",

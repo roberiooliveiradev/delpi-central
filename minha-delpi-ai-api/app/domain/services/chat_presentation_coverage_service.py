@@ -660,6 +660,8 @@ class ChatPresentationCoverageService:
         if not isinstance(profiles, dict):
             return warnings
 
+        defaults = ChatPresentationProfileService.node("defaults") or {}
+
         for profile_key in sorted(profiles):
             if profile_key not in tier_a_keys:
                 continue
@@ -667,6 +669,15 @@ class ChatPresentationCoverageService:
             profile = profiles.get(profile_key)
 
             if not isinstance(profile, dict):
+                continue
+
+            strategy = str(
+                profile.get("presentationStrategy")
+                or defaults.get("presentationStrategy")
+                or "as_delivered"
+            ).strip().lower()
+
+            if strategy != "legacy":
                 continue
 
             view_order = profile.get("viewOrder") or []

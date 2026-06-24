@@ -59,9 +59,8 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
 
     @classmethod
     def uses_presentation_table_assembly(cls, entity: str | None) -> bool:
-        token = str(entity or "").strip()
-
-        return bool(token) and token in cls.entity_set("presentationTableAssemblyEntities")
+        """Deprecated — table assembly removido; mantido para compat de gates legados."""
+        return False
 
     @classmethod
     def entity_routed_for_present(cls) -> frozenset[str]:

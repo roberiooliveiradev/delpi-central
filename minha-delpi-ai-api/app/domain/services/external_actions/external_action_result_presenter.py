@@ -532,60 +532,6 @@ class ExternalActionResultPresenter:
     def _route_presentation(self, route: str, key: str, **values: str) -> str:
         return self._presenter_content()._route_presentation(route, key, **values)
 
-    # Stubs legados — pipeline rico removido; schema-first cobre o happy path.
-    def build_stock_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_factory_status_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_production_status_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_shipping_status_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_structure_exclusivity_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_structure_exclusivity_text_embed_table_presentations(
-        self,
-        root: dict,
-        path: str,
-    ) -> list[dict]:
-        return []
-
-    def build_raw_material_price_intelligence_table_presentations(
-        self,
-        root: dict,
-        path: str,
-    ) -> list[dict]:
-        return []
-
-    def build_cost_impact_simulation_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_product_pricing_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_purchase_history_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_product_directives_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return []
-
-    def build_analyser_auxiliary_table_presentations(self, root: dict) -> list[dict]:
-        return []
-
-    def _build_stock_text_presentation(self, root: dict, path: str) -> dict | None:
-        return None
-
-    def _build_factory_status_text_presentation(self, root: dict, path: str) -> dict | None:
-        return None
-
-    def _build_factory_status_table(self, root: dict, path: str) -> dict | None:
-        return None
-
     def _present_kpi_response(
         self,
         root: dict,

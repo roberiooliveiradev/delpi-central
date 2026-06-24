@@ -85,9 +85,19 @@ O ramo legacy (~520 linhas) de `ChatPresentationMetadataPipelineService` foi **e
 
 ---
 
-## JSON — estado e limpeza pendente
+## JSON — estado (jun/2026, Fase 3)
 
-`presentation_profiles.json` ainda contém chaves **históricas** (`visualBuilders`, `tableAssembly`, `richStackProfiles`) sem efeito no runtime. **Não adicionar** novas entradas nessas chaves.
+Chaves **removidas** dos perfis `as_delivered` (sem efeito no runtime desde Fase 1):
+
+- `visualBuilders`, `tableAssembly`, `textBuilder`, `textBuildOptions`, `visualBundle`, `compositeVisualSpec`
+
+`entitySets.presentationTableAssemblyEntities` — esvaziado.
+
+Ainda presentes (runtime parcial ou histórico):
+
+- `richStackProfiles` — usado por `ChatPresentationRichStackPolicyService` (slim Fase 3b)
+- `visualBundlePolicy`, `humanizedNarrative` — texto-first / prosa no turn completion
+- `stackPlans`, `sectionRules` — comentário e markdown embed
 
 Manter e evoluir:
 
@@ -147,4 +157,4 @@ Regressão de intenção: `tests/fixtures/chat_intelligence_regression_cases.py`
 | jun/2026 | Playbook 22 Fase C — `ChatPresentationApiDeliveredMetadataService` único caminho |
 | jun/2026 | Remoção de 12 módulos legacy + 21 presenters por entidade |
 | jun/2026 | `dataAnswer` re-ligado ao caminho as-delivered |
-| jun/2026 | Documentação e regras Cursor atualizadas (`schema-first-presentation-delivered.mdc`) |
+| jun/2026 | Fase 3 — limpeza JSON (`visualBuilders`/`tableAssembly`), gates auditoria, stubs presenter |

@@ -280,18 +280,7 @@
     ],
     "legacyPresentationProfiles": [],
     "schemaFirstMigratedProfiles": [],
-    "presentationTableAssemblyEntities": [
-      "product_factory_status",
-      "product_production_status",
-      "product_shipping_status",
-      "product_structure_exclusivity",
-      "product_directives",
-      "product_raw_material_price_intelligence",
-      "product_cost_impact_simulation",
-      "product_pricing",
-      "product_purchase_price_history",
-      "product_purchase_budget_history"
-    ],
+    "presentationTableAssemblyEntities": [],
     "productListPresent": [
       "product_customers",
       "product_inbound_invoice_items",
@@ -816,24 +805,6 @@
       "chartPolicy": "auto",
       "textEmbedChartsInMarkdown": true,
       "textEmbedChartFormat": "auto",
-      "visualBundle": {
-        "dashboardListRole": "guide"
-      },
-      "visualBuilders": {
-        "tree": "build_analyser_tree",
-        "chart": "build_analyser_chart",
-        "kpi": "build_analyser_kpi",
-        "dashboard": "build_analyser_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_analyser_auxiliary_table_presentations",
-        "layout": "analyser_slots",
-        "requiresProduct": true
-      },
-      "textBuilder": "build_analyser_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
       "commentaryProfileKey": "analyser",
       "presentationDecision": {
         "defaultTextStack": true
@@ -858,32 +829,11 @@
       "chartPolicy": "skip",
       "textEmbedChartsInMarkdown": true,
       "textEmbedChartFormat": "mermaid",
-      "visualBundle": {
-        "requiresItems": true,
-        "dashboardListRole": "list"
-      },
       "operationalRoot": {
         "itemsKey": "items",
         "wrapperKeys": [
           "stock"
         ]
-      },
-      "visualBuilders": {
-        "kpi": "build_stock_kpi",
-        "tree": "build_stock_tree",
-        "chart": "build_stock_chart",
-        "dashboard": "build_stock_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_stock_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1,
-        "requiresItems": true
-      },
-      "textBuilder": "build_stock_text",
-      "textBuildOptions": {
-        "requiresItems": true
       },
       "presentationDecision": {
         "narrativeFirstMaxRows": 6,
@@ -907,12 +857,6 @@
       "flags": [
         "tree"
       ],
-      "textBuilder": "build_tree_hierarchy_text",
-      "tableAssembly": {
-        "builder": "build_tree_hierarchy_table_presentations",
-        "layout": "single_table",
-        "requiresItems": true
-      },
       "humanizedNarrative": "skip",
       "textEmbedTreeOutline": true,
       "textEmbedTablesInMarkdown": true,
@@ -999,28 +943,6 @@
       "textEmbedTablesInMarkdown": true,
       "textEmbedChartsInMarkdown": true,
       "textEmbedChartFormat": "auto",
-      "visualBundle": {
-        "dashboardListRole": "stock",
-        "dashboardIncludeTree": true
-      },
-      "visualBuilders": {
-        "kpi": "build_factory_kpi",
-        "tree": "build_factory_tree",
-        "chart": "build_factory_chart",
-        "dashboard": "build_factory_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_factory_status_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1,
-        "presentationFallback": "legacy_factory_table"
-      },
-      "textBuilder": "build_factory_status_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "factory_status",
       "commentaryProfileKey": "factory_status",
       "narrativePolicy": "operational_factory_summary"
     },
@@ -1045,27 +967,6 @@
       "textEmbedTablesInMarkdown": true,
       "textEmbedChartsInMarkdown": true,
       "textEmbedChartFormat": "auto",
-      "visualBundle": {
-        "dashboardListRole": "list"
-      },
-      "visualBuilders": {
-        "kpi": "build_production_status_kpi",
-        "tree": "build_production_status_tree",
-        "chart": "build_production_status_chart",
-        "dashboard": "build_production_status_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_production_status_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1,
-        "presentationFallback": "playbook_report"
-      },
-      "textBuilder": "build_production_status_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "production_status",
       "commentaryProfileKey": "production_status",
       "narrativePolicy": "operational_production_summary"
     },
@@ -1090,27 +991,6 @@
       "textEmbedTablesInMarkdown": true,
       "textEmbedChartsInMarkdown": true,
       "textEmbedChartFormat": "auto",
-      "visualBundle": {
-        "dashboardListRole": "list"
-      },
-      "visualBuilders": {
-        "kpi": "build_shipping_status_kpi",
-        "tree": "build_shipping_status_tree",
-        "chart": "build_shipping_status_chart",
-        "dashboard": "build_shipping_status_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_shipping_status_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1,
-        "presentationFallback": "playbook_report"
-      },
-      "textBuilder": "build_shipping_status_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "shipping_status",
       "commentaryProfileKey": "shipping_status",
       "narrativePolicy": "operational_shipping_summary"
     },
@@ -1134,28 +1014,6 @@
       "chartPolicy": "skip",
       "textEmbedTreeOutline": true,
       "textEmbedTablesInMarkdown": true,
-      "visualBundle": {
-        "dashboardListRole": "structure",
-        "dashboardIncludeTree": true
-      },
-      "visualBuilders": {
-        "kpi": "build_structure_exclusivity_kpi",
-        "tree": "build_structure_exclusivity_tree",
-        "chart": "build_structure_exclusivity_chart",
-        "dashboard": "build_structure_exclusivity_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_structure_exclusivity_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1,
-        "presentationFallback": "playbook_report"
-      },
-      "textBuilder": "build_structure_exclusivity_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "structure_exclusivity",
       "commentaryProfileKey": "structure_exclusivity",
       "narrativePolicy": "operational_structure_exclusivity_summary",
       "humanizedNarrative": "skip",
@@ -1176,24 +1034,6 @@
         "raw_material_price_intelligence"
       ],
       "chartPolicy": "skip",
-      "visualBundle": {
-        "dashboardListRole": "profile"
-      },
-      "visualBuilders": {
-        "kpi": "build_raw_material_price_kpi",
-        "tree": "build_raw_material_price_tree",
-        "chart": "build_raw_material_price_chart",
-        "dashboard": "build_raw_material_price_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_raw_material_price_intelligence_table_presentations",
-        "layout": "profile_only"
-      },
-      "textBuilder": "build_raw_material_price_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "raw_material_price_intelligence",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },
@@ -1212,24 +1052,6 @@
         "cost_impact_simulation"
       ],
       "chartPolicy": "skip",
-      "visualBundle": {
-        "dashboardListRole": "profile"
-      },
-      "visualBuilders": {
-        "kpi": "build_cost_impact_kpi",
-        "tree": "build_cost_impact_tree",
-        "chart": "build_cost_impact_chart",
-        "dashboard": "build_cost_impact_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_cost_impact_simulation_table_presentations",
-        "layout": "profile_only"
-      },
-      "textBuilder": "build_cost_impact_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "cost_impact_simulation",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },
@@ -1248,31 +1070,11 @@
         "sale_pricing"
       ],
       "chartPolicy": "skip",
-      "visualBundle": {
-        "dashboardListRole": "profile"
-      },
-      "visualBuilders": {
-        "kpi": "build_product_pricing_kpi",
-        "tree": "build_product_pricing_tree",
-        "chart": "build_product_pricing_chart",
-        "dashboard": "build_product_pricing_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_product_pricing_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1
-      },
-      "textBuilder": "build_product_pricing_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
       "commentaryProfileKey": "sale_pricing",
       "presentationDecision": {
         "narrativeFirstMaxRows": 12
       },
       "humanizedNarrative": "skip",
-      "compositeVisualSpec": "sale_pricing",
       "narrativePolicy": "generic_data_summary"
     },
     "directives": {
@@ -1288,12 +1090,6 @@
         "directives"
       ],
       "chartPolicy": "skip",
-      "tableAssembly": {
-        "builder": "build_product_directives_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1
-      },
       "humanizedNarrative": "skip",
       "commentaryProfileKey": "directives",
       "narrativePolicy": "generic_data_summary"
@@ -1325,26 +1121,6 @@
         "purchase_price_history"
       ],
       "chartPolicy": "skip",
-      "visualBundle": {
-        "dashboardListRole": "list"
-      },
-      "visualBuilders": {
-        "kpi": "build_purchase_history_kpi",
-        "tree": "build_purchase_history_tree",
-        "chart": "build_purchase_history_chart",
-        "dashboard": "build_purchase_history_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_purchase_history_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1
-      },
-      "textBuilder": "build_purchase_history_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "purchase_price_history",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },
@@ -1363,26 +1139,6 @@
         "purchase_budget_history"
       ],
       "chartPolicy": "skip",
-      "visualBundle": {
-        "dashboardListRole": "list"
-      },
-      "visualBuilders": {
-        "kpi": "build_purchase_history_kpi",
-        "tree": "build_purchase_history_tree",
-        "chart": "build_purchase_history_chart",
-        "dashboard": "build_purchase_history_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_purchase_history_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1
-      },
-      "textBuilder": "build_purchase_history_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "purchase_budget_history",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },
