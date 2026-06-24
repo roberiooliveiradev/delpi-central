@@ -125,8 +125,8 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 - Cache: resposta completa em `query_cache` (namespace `supplies-otd`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 - Console: `operation_id=get_supplies_otd`; caller `strategic-indicators-api` — após o primeiro load do período, polling deve gerar cache hit (&lt; 500 ms).
 
-| GET | `/supplies/stock-value` | Valor total de estoque (atual ou histórico estimado). Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md). Reconciliação com inventário oficial: [playbook-correcao-estoque-supplies-inventario.md](../roadmaps/playbook-correcao-estoque-supplies-inventario.md). |
-| GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). |
+| GET | `/supplies/stock-value` | Valor total de estoque (atual, histórico estimado SB9+SD3 ou fechamento SB9 na `end_date`). Parâmetro `stock_method=auto|estimated|official_closure`. Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md). Reconciliação: [playbook](../roadmaps/playbook-correcao-estoque-supplies-inventario.md). |
+| GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). Herda `stock_method=auto` e expõe `stock_estimation` quando o período é histórico. |
 | GET | `/supplies/negotiation-savings/summary` | Economia em negociações de compras (Google Sheets `idd_suprimentos`). |
 
 Parâmetros adicionais:
@@ -135,14 +135,14 @@ Parâmetros adicionais:
 |---|---|
 | `/cpv`, `/otd` | `top_limit` (default `5`, máx. `20`) |
 | `/otd` | `details_limit` (default `20`, máx. `100`) |
-| `/stock-value` | `start_date`, `end_date` (histórico estimado SB9+SD3; ambos obrigatórios juntos), `location` (histórico e atual), `top_limit`, `summary_only` (apenas `summary`; usado pelo SI/IDD) |
-| `/inventory-turnover` | `location`, `strict_idd_period` (bool) |
+| `/stock-value` | `start_date`, `end_date` (histórico; ambos obrigatórios juntos), `location`, `top_limit`, `summary_only`, `stock_method` (`auto` default, `estimated`, `official_closure`) |
+| `/inventory-turnover` | `location`, `strict_idd_period` (bool); estoque via mesmo `stock_method=auto` internamente |
 
 **Performance (`/supplies/stock-value` histórico):**
 
-- SQL canônico: `supplies_repositories/stock_value_historical_sql.py` (CTE `movimentos_sd3` — uma varredura SD3010).
-- SI/IDD: `summary_only=true` → `HISTORICAL_STOCK_SUMMARY_SQL` (sem temp table).
-- Cache: `query_cache` namespace `stock-value|…` (TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
+- SQL canônico histórico: `stock_value_historical_sql.py`; fechamento oficial: `stock_value_official_closure_sql.py`.
+- SI/IDD: `summary_only=true` + `stock_method=auto`.
+- Cache: `query_cache` namespace `stock-value|…` (inclui `stock_method` na chave).
 - `summary_only=true`: rollup `item_totals` (sem `estoque_item`); consolidado sem filial → fan-out filiais `01`/`02` com cache por filial.
 - SQL histórico: `WITH (NOLOCK)` em SB9010 e SD3010 (leitura analítica).
 - Console: `operation_id=get_supplies_stock_value`; detalhes em [supplies-estoque-historico.md](./supplies-estoque-historico.md#implementação-sql-e-performance-jun2026).

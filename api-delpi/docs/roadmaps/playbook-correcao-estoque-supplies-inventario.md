@@ -351,14 +351,15 @@ Preferir estender `/supplies/stock-value` com `include_wip` antes de criar rota 
 
 ---
 
-## 11. Onda W4 — Chat, SI, documentação e gates ✅ (jun/2026 — parcial)
+## 11. Onda W4 — Chat, SI, documentação e gates ✅ (jun/2026)
 
 - Payload compartilhado `stock_value_estimation_payload_service.py`
 - IDD herda `stock_estimation` alinhado a `/stock-value`
 - Changelog `docs/changelog/2026-06-estoque-supplies-reconciliacao.md`
-- Doc `supplies-estoque-historico.md` § `stock_method`
+- Doc `supplies-estoque-historico.md` e `06-modulos-departamentais.md` § `stock_method`
+- Gates: 29 testes `stock_value` / `inventory_turnover` verdes
 
-Pendente: casos de regressão no chat (`minha-delpi-ai-api`) quando houver fechamento SB9 real.
+Pendente (bloqueado por dados TOTVS): casos de regressão no chat quando existir fechamento SB9 real em `end_date`.
 
 ### 11.1 Documentação
 
