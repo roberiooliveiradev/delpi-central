@@ -1,46 +1,17 @@
-"""Apresentação genérica orientada a schema e forma dos dados — Fase 3."""
+"""Apresentação genérica orientada a schema e forma dos dados — Playbook 22 Fase B."""
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from app.domain.services.chat_operational_response_profile_service import (
-    ChatOperationalResponseProfileService,
-)
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_presentation_data_shape_analyzer import (
     ChatPresentationDataShapeAnalyzer,
 )
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
-)
-
-_RICH_PROFILE_KEYS = frozenset(
-    {
-        "analyser",
-        "stock",
-        "tree_hierarchy",
-        "factory_status",
-        "production_status",
-        "shipping_status",
-        "structure_exclusivity",
-        "raw_material_price_intelligence",
-        "cost_impact_simulation",
-        "sale_pricing",
-        "purchase_list",
-        "last_purchase",
-        "purchase_price_history",
-        "purchase_budget_history",
-    }
-)
-
-_KPI_PROFILE_KEYS = frozenset(
-    {
-        "kpi_series",
-        "kpi_snapshot",
-        "kpi_dashboard",
-    }
 )
 
 _CHART_VIEW_TOKENS = frozenset(
@@ -89,29 +60,7 @@ class SchemaPresentationBundle:
 class ChatSchemaDrivenPresentationService:
     @classmethod
     def should_apply(cls, *, path: str, entity: str | None = None) -> bool:
-        profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
-
-        if profile_key in _RICH_PROFILE_KEYS:
-            return False
-
-        if entity and ChatOperationalResponseProfileService.is_kpi_entity(entity):
-            return True
-
-        if profile_key in _KPI_PROFILE_KEYS:
-            return True
-
-        if profile_key in {"generic", "sql", "system"}:
-            return True
-
-        if profile_key == "table_list":
-            token = str(entity or "").strip()
-
-            if token.startswith("product_"):
-                return False
-
-            return True
-
-        return False
+        return ChatPresentationProfileService.uses_schema_first_presentation(path, entity)
 
     @classmethod
     def build_from_openapi_schema(
@@ -203,6 +152,9 @@ class ChatSchemaDrivenPresentationService:
         ]
 
         for view in view_order:
+            if view == "text" and isinstance(bundle.text, dict):
+                return bundle.text
+
             if view == "kpi" and isinstance(bundle.kpi, dict):
                 return bundle.kpi
 
@@ -226,6 +178,9 @@ class ChatSchemaDrivenPresentationService:
 
         if isinstance(bundle.tree, dict):
             return bundle.tree
+
+        if isinstance(bundle.text, dict):
+            return bundle.text
 
         return None
 
@@ -384,7 +339,7 @@ class ChatSchemaDrivenPresentationService:
                 metricCount=str(metric_count),
             )
         else:
-            return None
+            return cls.build_raw_payload_markdown(host, root, path=path)
 
         has_panels = bool(safe_rows) or cls.build_kpi(host, root, path=path, entity=entity) is not None
 
@@ -403,6 +358,42 @@ class ChatSchemaDrivenPresentationService:
             lead = f"{lead}\n\n{hint}".strip()
 
         markdown = f"### {title}\n\n<!-- section:scope -->\n\n{lead}".strip()
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": markdown,
+        }
+
+    @classmethod
+    def build_raw_payload_markdown(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        root: Any,
+        *,
+        path: str,
+    ) -> dict[str, Any] | None:
+        if root is None:
+            return None
+
+        title = (
+            str(host._fallback_title(path) or "").strip()
+            or cls._text("tableTitleFallback")
+        )
+
+        if isinstance(root, dict) and not root:
+            lead = cls._text("rawPayloadEmpty", title=title)
+            markdown = f"### {title}\n\n{lead}".strip()
+
+            return {
+                "type": "markdown",
+                "title": title,
+                "markdown": markdown,
+            }
+
+        payload = json.dumps(root, ensure_ascii=False, indent=2, default=str)
+        lead = cls._text("rawPayloadLead", title=title)
+        markdown = f"### {title}\n\n{lead}\n\n```json\n{payload}\n```".strip()
 
         return {
             "type": "markdown",

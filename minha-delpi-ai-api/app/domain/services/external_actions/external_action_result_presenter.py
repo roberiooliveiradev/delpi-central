@@ -14,6 +14,9 @@ from app.domain.services.chat_operational_response_profile_service import (
     OperationalResponseProfile,
     ChatOperationalResponseProfileService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.external_actions.presenters.kpi_chart_presenter import (
     ExternalActionKpiChartPresenter,
 )
@@ -581,6 +584,26 @@ class ExternalActionResultPresenter:
 
         try:
             profile = ChatOperationalResponseProfileService.resolve(data, path=path)
+
+            if ChatPresentationProfileService.uses_schema_first_presentation(
+                path,
+                profile.entity,
+            ):
+                from app.domain.services.chat_schema_driven_presentation_service import (
+                    ChatSchemaDrivenPresentationService,
+                )
+
+                schema_first = ChatSchemaDrivenPresentationService.build_primary(
+                    self,
+                    data,
+                    path=path,
+                    entity=profile.entity,
+                    response_schema=response_schema,
+                )
+
+                if schema_first is not None:
+                    return schema_first
+
             entity_first = self._presentation_builder()._build_presentation_by_entity(
                 data,
                 path=path,

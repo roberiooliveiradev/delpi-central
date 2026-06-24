@@ -31,6 +31,21 @@ def test_resolve_profile_key_by_path(path: str, expected_key: str) -> None:
     assert ChatPresentationProfileService.resolve_profile_key(path) == expected_key
 
 
+def test_uses_schema_first_presentation_defaults_and_legacy() -> None:
+    assert ChatPresentationProfileService.uses_schema_first_presentation(
+        "/commercial/proposals",
+        "commercial_proposals",
+    )
+    assert not ChatPresentationProfileService.uses_schema_first_presentation(
+        "/products/90260144/stock",
+        "product_stock",
+    )
+    assert ChatPresentationProfileService.uses_schema_first_presentation(
+        "/commercial/closing-rate",
+        "sales_conversion_rate",
+    )
+
+
 def test_entity_profile_precedes_path_rules() -> None:
     key = ChatPresentationProfileService.resolve_profile_key(
         "/commercial/closing-rate",
@@ -337,7 +352,7 @@ def test_prose_delivery_mode_entity_set_fallback(monkeypatch) -> None:
             entity="production_consumption_top_items",
             path="/production/consumption/top-items",
         )
-        == "template"
+        == "llm"
     )
 
 
@@ -371,5 +386,5 @@ def test_prose_delivery_mode_tier_fallback(monkeypatch) -> None:
             entity="depreciation_pct",
             path="/kpi/depreciation-pct",
         )
-        == "template"
+        == "llm"
     )

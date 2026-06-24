@@ -29,6 +29,7 @@ alwaysApply: true
 
 | Doc | Escopo |
 |-----|--------|
+| [playbook-22-schema-first-api-actions-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-22-schema-first-api-actions-jun2026.md) | **North star** — actions OpenAPI-only, apresentação as-delivered, migração legacy |
 | [playbook-21-desacoplamento-refatoracao-completa-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-21-desacoplamento-refatoracao-completa-jun2026.md) | Inventário completo de débito, fluxos e ondas W1–W4 pós–Playbook 12 |
 
 ## api-delpi
@@ -49,7 +50,7 @@ alwaysApply: true
 ## Fluxo por tipo de tarefa
 
 ```
-Nova rota REST          → api-delpi-response-contract → new-api-route-checklist
+Nova rota REST          → playbook-22 (schema-first) → api-delpi-response-contract → new-api-route-checklist
 Query SQL nova/alterada → sql-query-development → teste *_sql.py + Saúde SQL / Cache
 Bug apresentação chat   → presentation-operational-decoupling → centralized-rules-first → ChatPresentation*
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery

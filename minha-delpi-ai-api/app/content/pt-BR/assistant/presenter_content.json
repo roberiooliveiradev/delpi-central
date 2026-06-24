@@ -256,7 +256,9 @@
     "kpiLead": "{title}: **{metricCount}** métrica(s) em destaque nos cartões abaixo. Use o texto para contexto e os painéis para conferência.",
     "emptyQuery": "A consulta não retornou dados tabulares para exibir.",
     "singleRecordLead": "{title}: registro único com **{columns}** campo(s). Detalhes no painel tabular abaixo.",
-    "panelsBelowHint": "Painéis e tabelas abaixo complementam este resumo."
+    "panelsBelowHint": "Painéis e tabelas abaixo complementam este resumo.",
+    "rawPayloadLead": "{title}: dados retornados pela API (formato original). Use tabelas ou painéis auxiliares quando disponíveis.",
+    "rawPayloadEmpty": "{title}: a consulta não retornou conteúdo."
   },
   "stackSectionFraming": {
     "default": {

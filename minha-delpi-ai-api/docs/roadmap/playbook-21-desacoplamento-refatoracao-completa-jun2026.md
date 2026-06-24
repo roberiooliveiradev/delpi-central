@@ -19,6 +19,8 @@
 
 ## 1. Objetivo
 
+> **North star (jun/2026):** ver **[Playbook 22 — Schema-first](./playbook-22-schema-first-api-actions-jun2026.md)** — actions 100% OpenAPI, apresentação as-delivered por padrão, remoção progressiva de presenters legados.
+
 Documentar **o que falta refatorar** na `minha-delpi-ai-api` após a onda Playbook 12 (tier A) e o fix de exclusividade de MPs (jun/2026), com:
 
 1. Definição operacional de **desacoplamento** (vs. centralização vs. presenter por entidade).

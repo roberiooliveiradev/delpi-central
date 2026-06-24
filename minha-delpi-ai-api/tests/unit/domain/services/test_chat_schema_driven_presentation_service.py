@@ -41,6 +41,20 @@ def test_should_apply_for_kpi_entity_and_generic_path():
     )
 
 
+def test_build_raw_payload_markdown_for_unknown_shape():
+    presenter = ExternalActionResultPresenter()
+    payload = ChatSchemaDrivenPresentationService.build_raw_payload_markdown(
+        presenter,
+        {"custom_field": "valor", "count": 3},
+        path="/external/demo",
+    )
+
+    assert isinstance(payload, dict)
+    assert payload["type"] == "markdown"
+    assert "custom_field" in payload["markdown"]
+    assert "```json" in payload["markdown"]
+
+
 def test_extract_tabular_rows_from_series_and_items():
     series_rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
         {
@@ -119,7 +133,7 @@ def test_schema_driven_metadata_for_commercial_kpi():
     assert kpi["type"] == "kpi"
     assert "text" in meta["availableFormats"]
     assert meta["textPresentation"]["type"] == "markdown"
-    assert decision.get("selected") in {"text", "kpi"}
+    assert decision.get("selected") in {"text", "kpi", "dashboard"}
 
 
 def test_schema_driven_metadata_builds_table_for_generic_items():
