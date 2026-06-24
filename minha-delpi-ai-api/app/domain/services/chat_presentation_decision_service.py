@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.domain.services.chat_presentation_insight_service import (
-    ChatPresentationInsightService,
-)
 from app.domain.services.chat_presentation_automatic_score_service import (
     ChatPresentationAutomaticScoreService,
 )
@@ -27,6 +24,12 @@ from app.domain.services.chat_presentation_generic_decision_service import (
 )
 from app.domain.services.chat_presentation_user_format_preference_service import (
     ChatPresentationUserFormatPreferenceService,
+)
+from app.domain.services.chat_presentation_decision_enrichment_service import (
+    ChatPresentationDecisionEnrichmentService,
+)
+from app.domain.services.chat_presentation_route_visual_policy_service import (
+    ChatPresentationRouteVisualPolicyService,
 )
 from app.domain.services.chat_presentation_vocabulary_service import (
     ChatPresentationVocabularyService,
@@ -293,249 +296,13 @@ class ChatPresentationDecisionService:
         user_preference: str | None = None,
         axis_user_message: str | None = None,
     ) -> dict[str, Any]:
-        primary_presentation = metadata.get("presentation")
-        tree_presentation = cls._effective_tree_presentation(
-            tree_presentation=metadata.get("treePresentation"),
-            primary_presentation=primary_presentation,
-        )
-
-        path = str(metadata.get("path") or "").strip()
-        effective_preference = cls._resolve_effective_user_preference(
+        return ChatPresentationDecisionEnrichmentService.enrich(
             metadata,
-            user_preference,
-        )
-
-        decision = cls.decide(
             intent=intent,
-            rows=cls._rows_from_metadata_tables(metadata),
             user_message=user_message,
-            user_preference=effective_preference,
-            primary_presentation=primary_presentation,
-            table_presentation=metadata.get("tablePresentation"),
-            chart_presentation=metadata.get("chartPresentation"),
-            tree_presentation=tree_presentation,
-            dashboard_presentation=cls._resolve_dashboard_presentation(metadata),
-            text_presentation=metadata.get("textPresentation"),
-            available_formats=metadata.get("availableFormats"),
-            path=path or None,
-            metadata=metadata,
+            user_preference=user_preference,
+            axis_user_message=axis_user_message,
         )
-
-        table_rows = cls._rows_from_metadata_tables(metadata)
-        entity = None
-        api_meta = metadata.get("apiDelpiResponseMeta")
-
-        if isinstance(api_meta, dict):
-            raw_entity = api_meta.get("entity")
-
-            if isinstance(raw_entity, str) and raw_entity.strip():
-                entity = raw_entity.strip()
-
-        if not entity and path:
-            from app.domain.services.chat_operational_response_profile_service import (
-                ChatOperationalResponseProfileService,
-            )
-
-            resolved_entity = str(
-                ChatOperationalResponseProfileService.resolve(metadata, path=path).entity or ""
-            ).strip()
-
-            if resolved_entity:
-                entity = resolved_entity
-
-        cls._attach_scores_and_reading_layers(
-            decision,
-            metadata=metadata,
-            table_rows=table_rows,
-            user_message=user_message,
-        )
-        cls._apply_automatic_score_selection(
-            decision,
-            metadata=metadata,
-            effective_preference=effective_preference,
-            user_message=user_message,
-            path=path or None,
-            entity=entity,
-        )
-        cls._ensure_purpose(
-            decision,
-            metadata=metadata,
-            user_message=user_message,
-        )
-        shape = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
-        narrative_markdown = ""
-
-        if isinstance(metadata.get("textPresentation"), dict):
-            narrative_markdown = str(metadata["textPresentation"].get("markdown") or "").strip()
-
-        insight_shape = {
-            **shape,
-            "labelKey": shape.get("labelKey"),
-            "treeNodes": cls._tree_node_count(tree_presentation),
-            "hasNarrative": bool(narrative_markdown),
-        }
-
-        decision["insight"] = ChatPresentationInsightService.build_with_metadata(
-            selected=str(decision.get("selected") or ""),
-            rows=table_rows,
-            data_shape=insight_shape,
-            reason=str(decision.get("reason") or ""),
-            metadata=metadata,
-        )
-
-        if str(decision.get("layoutMode") or "") == "stack" and narrative_markdown:
-            commentary_insight = cls._stack_commentary_insight(metadata)
-
-            decision["insight"] = commentary_insight
-
-        policy_notice = cls._apply_chart_policy_to_metadata(
-            metadata,
-            decision,
-            user_message=axis_user_message or user_message,
-        )
-
-        if policy_notice:
-            decision["policyNotice"] = policy_notice
-            decision["insight"] = f"{decision['insight']} {policy_notice}".strip()
-
-        chart_presentation = metadata.get("chartPresentation") or metadata.get("presentation")
-
-        if (
-            isinstance(chart_presentation, dict)
-            and chart_presentation.get("type") == "chart"
-        ):
-            from app.domain.services.chat_presentation_chart_explain_service import (
-                ChatPresentationChartExplainService,
-            )
-
-            explanation = ChatPresentationChartExplainService.build(
-                presentation=chart_presentation,
-                decision=decision,
-                insight=str(decision.get("insight") or ""),
-                path=str(path or metadata.get("sourcePath") or "").strip(),
-            )
-
-            if explanation:
-                decision["chartExplanation"] = explanation
-
-        dashboard_presentation = metadata.get("presentation")
-
-        if (
-            isinstance(dashboard_presentation, dict)
-            and dashboard_presentation.get("type") == "dashboard"
-        ):
-            from app.domain.services.chat_presentation_dashboard_explain_service import (
-                ChatPresentationDashboardExplainService,
-            )
-
-            ChatPresentationDashboardExplainService.enrich_panel_charts(
-                dashboard_presentation,
-                decision=decision,
-            )
-
-            dashboard_explanation = ChatPresentationDashboardExplainService.build(
-                presentation=dashboard_presentation,
-                decision=decision,
-                insight=str(decision.get("insight") or ""),
-            )
-
-            if dashboard_explanation:
-                decision["dashboardExplanation"] = dashboard_explanation
-
-        from app.domain.services.chat_presentation_recommendation_service import (
-            ChatPresentationRecommendationService,
-        )
-
-        recommendations = ChatPresentationRecommendationService.build(
-            decision=decision,
-            user_message=axis_user_message or user_message,
-            metadata=metadata,
-        )
-
-        if recommendations:
-            decision["recommendations"] = recommendations
-
-        ChatPresentationRecommendationService.prune_for_selected(decision)
-
-        cls._apply_chart_category_aggregation(metadata)
-
-        cls._apply_route_visual_policy(metadata, decision)
-
-        from app.domain.services.chat_presentation_text_first_policy_service import (
-            ChatPresentationTextFirstPolicyService,
-        )
-
-        if ChatPresentationTextFirstPolicyService.should_default_to_text_only(
-            path=path or None,
-            entity=entity,
-            explicit_format=effective_preference,
-            user_message=user_message,
-        ):
-            latent = ChatPresentationTextFirstPolicyService.latent_available_views(
-                path=path or None,
-                entity=entity,
-                has_text=bool(metadata.get("textPresentation")),
-            )
-            merged_views = cls._merge_views(metadata.get("availableFormats"), latent)
-            decision["selected"] = "text"
-            decision["layoutMode"] = "single"
-            decision["visualOrder"] = ["text"] if "text" in merged_views else merged_views[:1]
-            decision["availableViews"] = merged_views
-            if not str(decision.get("reason") or "").strip():
-                decision["reason"] = cls._reason("textFirstDefault")
-
-        if (
-            not effective_preference
-            and ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
-                user_message,
-            )
-        ):
-            merged_views = cls._merge_views(
-                metadata.get("availableFormats"),
-                decision.get("availableViews"),
-            )
-
-            if len(merged_views) >= 2:
-                decision["selected"] = "text"
-                decision["availableViews"] = merged_views
-                decision["layoutMode"] = "stack"
-                decision["visualOrder"] = cls._visual_order_for_stack(merged_views)
-                decision["reason"] = cls._reason("integratedStack")
-
-        ChatPresentationRecommendationService.prune_for_selected(decision)
-
-        from app.domain.services.chat_presentation_structure_dedup_service import (
-            ChatPresentationStructureDedupService,
-        )
-
-        views = decision.get("availableViews")
-
-        if isinstance(views, list):
-            decision["availableViews"] = ChatPresentationStructureDedupService.prune_available_views(
-                views,
-                metadata,
-            )
-
-        from app.domain.services.chat_presentation_text_mode_service import (
-            ChatPresentationTextModeService,
-        )
-
-        if str(metadata.get("explicitSessionFormat") or "").strip():
-            ChatPresentationTextModeService.align_explicit_session_decision(metadata)
-
-        metadata["presentationDecision"] = decision
-
-        legacy = cls._legacy_preferred_format(decision.get("selected"))
-
-        if legacy:
-            metadata["preferredFormat"] = legacy
-
-        views = decision.get("availableViews") or []
-
-        if views:
-            metadata["availableFormats"] = cls._legacy_available_formats(views)
-
-        return metadata
 
     @classmethod
     def _build(
@@ -683,63 +450,7 @@ class ChatPresentationDecisionService:
         metadata: dict[str, Any],
         decision: dict[str, Any],
     ) -> None:
-        from app.domain.services.chat_presentation_route_policy_service import (
-            ChatPresentationRoutePolicyService,
-        )
-
-        path = str(metadata.get("path") or "")
-        views = list(decision.get("availableViews") or [])
-
-        if views:
-            ChatPresentationRoutePolicyService.apply_visual_order(
-                decision,
-                path=path,
-                metadata=metadata,
-            )
-
-        has_tree = bool(
-            cls._effective_tree_presentation(
-                tree_presentation=metadata.get("treePresentation"),
-                primary_presentation=metadata.get("presentation"),
-            )
-        )
-
-        preferred = str(metadata.get("preferredFormat") or "").strip().lower()
-
-        if (
-            has_tree
-            and preferred == "tree"
-            and ChatPresentationRoutePolicyService.is_tree_route(path)
-            and not ChatPresentationRoutePolicyService.is_analyser_route(path)
-            and decision.get("selected") in {None, "text", "table"}
-        ):
-            decision["selected"] = "tree"
-            decision["reason"] = cls._reason("treePrimaryView")
-
-        if (
-            ChatPresentationRoutePolicyService.is_stock_route(path)
-            and preferred in {"chart", "table", "tree"}
-            and preferred in set(views)
-            and str(decision.get("selected") or "").strip().lower() != "text"
-            and str(decision.get("layoutMode") or "").strip().lower() != "stack"
-        ):
-            decision["selected"] = preferred
-            if preferred == "chart":
-                decision["reason"] = cls._route_reason("stockChart")
-            elif preferred == "table":
-                decision["reason"] = cls._route_reason("stockTable")
-            else:
-                decision["reason"] = cls._reason("treePrimaryView")
-
-        if (
-            ChatPresentationRoutePolicyService.is_table_route(path)
-            and not ChatPresentationRoutePolicyService.is_tree_route(path)
-            and not ChatPresentationRoutePolicyService.is_analyser_route(path)
-            and preferred == "table"
-            and "table" in views
-        ):
-            decision["selected"] = "table"
-            decision["reason"] = cls._reason("operationalTableNative")
+        ChatPresentationRouteVisualPolicyService.apply(metadata, decision)
 
     @classmethod
     def _merge_views(

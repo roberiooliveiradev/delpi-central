@@ -313,3 +313,4 @@ cd minha-delpi-ai-api
 | jun/2026 | **Fase 4** — `ChatPresentationDataOnlyProseService.apply_pipeline` no pipeline as-delivered |
 | jun/2026 | **Fase 6** — slim `ChatPresentationDecisionService` (4 delegates: score, metadata, builder, intent) |
 | jun/2026 | **Fase 7** — preferência, chart e `GenericDecisionService` (~790 linhas na fachada) |
+| jun/2026 | **Fase 8** — `DecisionEnrichmentService` + `RouteVisualPolicyService` (~500 linhas na fachada) |

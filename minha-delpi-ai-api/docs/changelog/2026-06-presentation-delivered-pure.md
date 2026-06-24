@@ -79,7 +79,16 @@ Fachada `ChatPresentationDecisionService`: ~790 linhas (era ~2170).
 
 `decide()` na fachada: preferência → intent operacional → genérico.
 
-## Pendente (Fase 8+)
+## Fase 8 — enrich_metadata (jun/2026)
 
-- Slim `enrich_metadata` (recomendações, explain, text-first pós-decisão).
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `ChatPresentationDecisionEnrichmentService` | pós-`decide`: scores, insight, chart/dashboard explain, recomendações, text-first/stack |
+| `ChatPresentationRouteVisualPolicyService` | ordem visual por rota (estoque, árvore, tabela nativa) |
+
+Fachada `ChatPresentationDecisionService`: **~500 linhas** (era ~2170).
+
+## Pendente (Fase 9+)
+
 - OpenAPI import (Playbook 22 Fase D).
+- Consolidar delegates restantes na fachada (thin wrappers opcionais).

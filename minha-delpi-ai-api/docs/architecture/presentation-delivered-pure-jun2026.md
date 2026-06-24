@@ -53,7 +53,7 @@ O ramo legacy (~520 linhas) de `ChatPresentationMetadataPipelineService` foi **e
 | KPI / chart | `ExternalActionKpiChartPresenter` |
 | Tabela genérica | `presentation_table_host_service` + `ChatPresentationOperationalTableService` |
 | Comentário operacional | `ChatDataInsightService` → `ChatDataInsightEnrichmentService` |
-| Decisão Automático | `ChatPresentationDecisionService` (fachada) → score / metadata / builder / intent operacional |
+| Decisão Automático | `ChatPresentationDecisionService` (fachada ~500 linhas) → delegates score/metadata/builder/intent/enrich |
 | Formato explícito (toolbar) | `ChatToolContextFormatService` + `ChatPresentationPrimaryViewService` |
 | Prosa template vs LLM | `ChatPresentationProseDeliveryService` (turn completion) + `ChatPresentationDataOnlyProseService` (pipeline) |
 | Perfis / pathRules | `ChatPresentationProfileService` + `presentation_profiles.json` |
@@ -165,6 +165,8 @@ Delegates extraídos (score, metadata, builder, intent operacional). `ChatPresen
 | `ChatPresentationUserFormatPreferenceService` | preferência explícita (toolbar/mensagem) |
 | `ChatPresentationChartDecisionService` | gráfico: tipo, policy, agregação |
 | `ChatPresentationGenericDecisionService` | `decide()` genérico por forma dos dados |
+| `ChatPresentationDecisionEnrichmentService` | `enrich_metadata` — insight, explains, recomendações |
+| `ChatPresentationRouteVisualPolicyService` | política visual por rota no enrich |
 
 ---
 
