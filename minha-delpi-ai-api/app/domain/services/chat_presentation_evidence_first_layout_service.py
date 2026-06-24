@@ -49,6 +49,9 @@ class ChatPresentationEvidenceFirstLayoutService:
         if not isinstance(metadata, dict):
             return False
 
+        if cls._has_template_prose_evidence_lead(metadata):
+            return True
+
         data_answer = metadata.get("dataAnswer")
 
         if not isinstance(data_answer, dict):
@@ -77,6 +80,48 @@ class ChatPresentationEvidenceFirstLayoutService:
             return False
 
         return True
+
+    @classmethod
+    def _has_template_prose_evidence_lead(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        if not ChatPresentationProseDeliveryService._profile_preserves_template_data_answer(
+            metadata,
+        ):
+            return False
+
+        text_presentation = metadata.get("textPresentation")
+
+        if not isinstance(text_presentation, dict):
+            return False
+
+        markdown = str(text_presentation.get("markdown") or "").strip()
+
+        if not markdown:
+            return False
+
+        profile_key = ""
+        data_answer = metadata.get("dataAnswer")
+
+        if isinstance(data_answer, dict):
+            profile_key = str(data_answer.get("profileKey") or "").strip()
+
+        if not profile_key:
+            path = str(metadata.get("path") or "")
+            entity = None
+            api_meta = metadata.get("apiDelpiResponseMeta")
+
+            if isinstance(api_meta, dict):
+                entity = str(api_meta.get("entity") or "").strip() or None
+
+            profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+
+        return profile_key not in {"", "generic_list"}
 
     @classmethod
     def activate(cls, metadata: dict[str, Any]) -> bool:

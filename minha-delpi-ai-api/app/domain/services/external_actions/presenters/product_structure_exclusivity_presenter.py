@@ -354,6 +354,7 @@ class ExternalActionProductStructureExclusivityPresenter:
         _SHARED_MP_PREVIEW_MAX = 5
 
         if exclusive_count == 0 and self._items(root):
+            lines.append(self._route("mpSectionTitle"))
             lines.append(f"**{self._route('sharedMpConclusionLine')}**")
 
             shared_count = 0
@@ -522,6 +523,49 @@ class ExternalActionProductStructureExclusivityPresenter:
                 tables.append(table)
 
         return [table for table in tables if isinstance(table, dict)]
+
+    def build_structure_exclusivity_text_embed_table_presentations(
+        self,
+        root: dict,
+        path: str,
+    ) -> list[dict]:
+        """Tabelas auxiliares só para embed GFM no modo Texto explícito (sem painel duplicado no Automático)."""
+        del path
+
+        if self._exclusive_count(root) > 0:
+            return []
+
+        all_mp_items = enrich_structure_rows(
+            [
+                item
+                for item in self._items(root)
+                if isinstance(item, dict)
+                and str(item.get("component_type") or "").upper() == "MP"
+            ]
+        )
+
+        if not all_mp_items:
+            return []
+
+        shown, total = _OpsTable.limit_items(all_mp_items)
+        title = (
+            self._route(
+                "rawMaterialsTableTitleTruncated",
+                shown=str(len(shown)),
+                total=str(total),
+            )
+            if total > len(shown)
+            else self._route("rawMaterialsTableTitle")
+        )
+        mp_table = _OpsTable.build_items_table(
+            self._host.column_label_context,
+            shown,
+            profile_name="structureExclusivityDetail",
+            title=title,
+            role="structure",
+        )
+
+        return [mp_table] if isinstance(mp_table, dict) else []
 
     def _build_overview_table(self, root: dict, path: str) -> dict | None:
         summary = self._summary(root)

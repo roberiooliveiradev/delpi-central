@@ -811,6 +811,16 @@ class ExternalActionResultPresenter:
             path,
         )
 
+    def build_structure_exclusivity_text_embed_table_presentations(
+        self,
+        root: dict,
+        path: str,
+    ) -> list[dict]:
+        return self._structure_exclusivity().build_structure_exclusivity_text_embed_table_presentations(
+            root,
+            path,
+        )
+
     def build_production_status_kpi_presentation(self, root: dict, path: str) -> dict | None:
         return self._production_status().build_production_status_kpi_presentation(root, path)
 

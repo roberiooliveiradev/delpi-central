@@ -19,6 +19,25 @@ def test_activate_sets_presentation_mode_when_data_answer_has_answer():
     )
 
 
+def test_activate_sets_presentation_mode_for_template_prose_without_data_answer():
+    metadata = {
+        "path": "/products/90261805/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "dataAnswer": {
+            "profileKey": "structure_exclusivity",
+            "summary": {"answer": "", "riskLevel": "ok"},
+        },
+        "textPresentation": {
+            "markdown": "### Estrutura\n\n**Resposta:** Não — nenhuma MP exclusiva.",
+        },
+    }
+
+    assert ChatPresentationEvidenceFirstLayoutService.activate(metadata) is True
+    assert (
+        metadata["presentationDecision"]["presentationMode"] == "summary_then_evidence"
+    )
+
+
 def test_stack_plan_uses_summary_then_evidence_profile_when_mode_active():
     metadata = {
         "path": "/products/90262404/factory-status",

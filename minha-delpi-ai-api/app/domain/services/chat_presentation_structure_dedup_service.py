@@ -174,6 +174,14 @@ class ChatPresentationStructureDedupService:
         return explicit == "table"
 
     @classmethod
+    def _explicit_text_embed_session(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
+
+        return ChatPresentationTextModeService.is_user_explicit_text_mode(metadata)
+
+    @classmethod
     def _prefers_table_over_tree(cls, metadata: dict[str, Any]) -> bool:
         if cls._explicit_table_session(metadata):
             return True
@@ -334,6 +342,9 @@ class ChatPresentationStructureDedupService:
 
     @classmethod
     def _suppress_redundant_summary_profile_tables(cls, metadata: dict[str, Any]) -> None:
+        if cls._explicit_text_embed_session(metadata):
+            return
+
         if not cls._should_suppress_summary_profile_table(metadata):
             return
 
@@ -371,6 +382,7 @@ class ChatPresentationStructureDedupService:
 
         if (
             not cls._explicit_table_session(metadata)
+            and not cls._explicit_text_embed_session(metadata)
             and cls.metadata_has_tree(metadata)
             and (
                 cls._should_preserve_tree_for_rich_stack(metadata)
@@ -395,11 +407,12 @@ class ChatPresentationStructureDedupService:
             available = metadata.get("availableFormats")
 
             if isinstance(available, list) and cls.count_non_duplicate_tables(metadata) == 0:
-                metadata["availableFormats"] = [
-                    token
-                    for token in available
-                    if str(token).strip().lower() != "table"
-                ]
+                if not cls._tree_route_supports_table_fallback(metadata):
+                    metadata["availableFormats"] = [
+                        token
+                        for token in available
+                        if str(token).strip().lower() != "table"
+                    ]
 
             decision = metadata.get("presentationDecision")
 
@@ -436,8 +449,22 @@ class ChatPresentationStructureDedupService:
         metadata["structureDedupApplied"] = True
 
     @classmethod
+    def _tree_route_supports_table_fallback(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_route_policy_service import (
+            ChatPresentationRoutePolicyService,
+        )
+
+        path = str(metadata.get("path") or "").strip() or None
+
+        return bool(path) and ChatPresentationRoutePolicyService.is_tree_route(path)
+
+    @classmethod
     def prune_available_views(cls, views: list[str], metadata: dict[str, Any]) -> list[str]:
-        if cls.metadata_has_tree(metadata) and cls.count_non_duplicate_tables(metadata) == 0:
+        if (
+            cls.metadata_has_tree(metadata)
+            and cls.count_non_duplicate_tables(metadata) == 0
+            and not cls._tree_route_supports_table_fallback(metadata)
+        ):
             return [view for view in views if str(view).strip().lower() != "table"]
 
         return views

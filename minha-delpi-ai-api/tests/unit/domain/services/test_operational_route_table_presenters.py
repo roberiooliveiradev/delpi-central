@@ -87,7 +87,7 @@ def test_structure_exclusivity_text_includes_verdict_and_mp_section():
     markdown = text["markdown"]
 
     assert "Resposta" in markdown
-    assert "Matérias-primas da estrutura" not in markdown
+    assert "Matérias-primas da estrutura" in markdown
     assert "compartilhadas" in markdown.lower()
 
 

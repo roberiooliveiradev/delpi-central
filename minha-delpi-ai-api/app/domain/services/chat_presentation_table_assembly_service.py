@@ -143,6 +143,18 @@ class ChatPresentationTableAssemblyService:
 
         tables = [table for table in builder(presenter, root_payload, path) if isinstance(table, dict)]
 
+        if builder_name == "build_structure_exclusivity_table_presentations":
+            normalized_format = str(session_format or "").strip().lower()
+
+            if normalized_format == "text":
+                embed_tables = presenter.build_structure_exclusivity_text_embed_table_presentations(
+                    root_payload,
+                    path,
+                )
+                tables.extend(
+                    table for table in embed_tables if isinstance(table, dict)
+                )
+
         if not tables:
             return empty
 

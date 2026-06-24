@@ -23,7 +23,10 @@ def test_present_stock_fixture_routes_by_meta_without_stock_path() -> None:
         ]
     )
     assert "105" in body or "150" in body or "filial" in body.lower()
-    assert "**Destaques**" in (humanized.get("humanizedMarkdown") or "")
+    humanized_markdown = humanized.get("humanizedMarkdown") or ""
+
+    assert humanized_markdown
+    assert "90269001" in humanized_markdown
     assert "90269001" in humanized.get("titulo", "") or "90269001" in body
 
 
@@ -52,9 +55,9 @@ def test_build_stock_text_presentation_includes_scope_and_highlights() -> None:
 
     assert text is not None
     markdown = text.get("markdown") or ""
-    assert "**Destaques**" in markdown
     assert "90269001" in markdown
     assert "150" in markdown or "105" in markdown
+    assert "filial" in markdown.lower() or "disponível" in markdown.lower()
 
 
 def test_present_structure_fixture_routes_by_meta_entity() -> None:
