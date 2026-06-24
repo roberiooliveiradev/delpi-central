@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "quality-action-plans",
+  "name": "Planos de Ação Qualidade",
+  "description": "Acompanhamento central de planos de ação PAC Qualidade DELPI",
+  "icon": "clipboard-list-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/quality-action-plans",
+  "entry": "/apps/quality-action-plans/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "quality-action-plans.access",
+      "name": "Acessar planos de ação qualidade",
+      "description": "Permissão base do plugin PAC Qualidade",
+      "module": "quality-action-plans"
+    },
+    {
+      "code": "quality-action-plans.read",
+      "name": "Visualizar planos de ação",
+      "description": "Consultar planos PAC e dashboards de liderança",
+      "module": "quality-action-plans"
+    },
+    {
+      "code": "quality-action-plans.write",
+      "name": "Registrar planos de ação",
+      "description": "Criar e atualizar planos via agente ou API PAC",
+      "module": "quality-action-plans"
+    },
+    {
+      "code": "quality-action-plans.manage",
+      "name": "Gerenciar planos de ação",
+      "description": "Operações administrativas e encerramento de planos PAC",
+      "module": "quality-action-plans"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/quality-action-plans",
+      "label": "Planos de Ação Qualidade",
+      "permission": "quality-action-plans.read",
+      "icon": "clipboard-list-icon",
+      "order": 18,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

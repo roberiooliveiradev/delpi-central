@@ -23,6 +23,13 @@ DASHBOARD_LMPS_VIEW = "dashboard-lmps.view"
 CADASTRO_KAIZEN_VIEW = "cadastro-kaizen.view"
 CADASTRO_KAIZEN_MANAGE = "cadastro-kaizen.manage"
 
+# --- planos de ação PAC qualidade ---
+QUALITY_ACTION_PLANS_ACCESS = "quality-action-plans.access"
+QUALITY_ACTION_PLANS_READ = "quality-action-plans.read"
+QUALITY_ACTION_PLANS_WRITE = "quality-action-plans.write"
+QUALITY_ACTION_PLANS_MANAGE = "quality-action-plans.manage"
+API_DELPI_QUALITY_ACTION_PLANS_READ = "api-delpi.quality.action-plans.read"
+
 # --- auditoria 5S ---
 AUDITORIA_5S_VIEW_FILIAL_01 = "auditoria-5s.view.filial-01"
 AUDITORIA_5S_VIEW_FILIAL_02 = "auditoria-5s.view.filial-02"
@@ -98,6 +105,16 @@ KAIZEN_RECORDS_WRITE_PERMISSIONS = [
     API_DELPI_ACCESS,
     API_DELPI_QUALITY_ACCESS,
     CADASTRO_KAIZEN_MANAGE,
+]
+
+QUALITY_ACTION_PLANS_READ_PERMISSIONS = [
+    API_DELPI_ACCESS,
+    API_DELPI_QUALITY_ACCESS,
+    API_DELPI_QUALITY_ACTION_PLANS_READ,
+    DASHBOARD_QUALITY_VIEW,
+    QUALITY_ACTION_PLANS_ACCESS,
+    QUALITY_ACTION_PLANS_READ,
+    QUALITY_ACTION_PLANS_MANAGE,
 ]
 
 SCHEDULING_READ_PERMISSIONS = [

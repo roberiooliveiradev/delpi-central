@@ -248,6 +248,16 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "update_kaizen_record": RouteContract("kaizen_record", "scalar"),
     "delete_kaizen_record": RouteContract("kaizen_record", "scalar"),
     "import_kaizens_from_sheet": RouteContract("kaizen_record_import", "scalar"),
+    "get_quality_action_plans_dashboard": RouteContract(
+        "quality_action_plan_dashboard", "scalar"
+    ),
+    "list_quality_action_plans_overdue": RouteContract(
+        "quality_action_plan", "paged_list"
+    ),
+    "list_quality_action_plans": RouteContract("quality_action_plan", "paged_list"),
+    "get_quality_action_plan_detail": RouteContract(
+        "quality_action_plan", "composite_analysis"
+    ),
     "get_audit_5s_summary": RouteContract("audit_5s_summary", "scalar"),
     "get_ppm_internal_summary": RouteContract("ppm_internal_summary", "scalar"),
     "get_ppm_external_summary": RouteContract("ppm_external_summary", "scalar"),
