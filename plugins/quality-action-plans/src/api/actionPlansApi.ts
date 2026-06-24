@@ -25,6 +25,7 @@ type ListParams = {
   product_code?: string;
   customer_name?: string;
   branch_code?: string;
+  nonconformity_scope?: string;
   page?: number;
   page_size?: number;
 };
@@ -36,14 +37,21 @@ function buildQuery(params: ListParams): string {
   if (params.product_code) search.set("product_code", params.product_code);
   if (params.customer_name) search.set("customer_name", params.customer_name);
   if (params.branch_code) search.set("branch_code", params.branch_code);
+  if (params.nonconformity_scope) search.set("nonconformity_scope", params.nonconformity_scope);
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));
   const query = search.toString();
   return query ? `?${query}` : "";
 }
 
-export async function fetchDashboard(branchCode?: string): Promise<DashboardSummary> {
-  const query = branchCode ? `?branch_code=${encodeURIComponent(branchCode)}` : "";
+export async function fetchDashboard(
+  branchCode?: string,
+  nonconformityScope?: string,
+): Promise<DashboardSummary> {
+  const search = new URLSearchParams();
+  if (branchCode) search.set("branch_code", branchCode);
+  if (nonconformityScope) search.set("nonconformity_scope", nonconformityScope);
+  const query = search.toString() ? `?${search.toString()}` : "";
   const envelope = await httpGet<ApiEnvelope<DashboardSummary>>(`${API_BASE}/dashboard${query}`);
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar dashboard PAC.");
 }

@@ -11,6 +11,8 @@ export type PlanStatus =
 
 export type PlanSeverity = "low" | "medium" | "high" | "critical";
 
+export type NonconformityScope = "internal" | "external";
+
 export type ActionPlanSummary = {
   id: string;
   code?: string;
@@ -18,6 +20,7 @@ export type ActionPlanSummary = {
   customer_name?: string | null;
   product_code?: string | null;
   branch_code?: string | null;
+  nonconformity_scope?: NonconformityScope;
   severity: PlanSeverity;
   status: PlanStatus;
   owner_user_id?: string | null;
@@ -45,8 +48,16 @@ export type DashboardSummary = {
   overdue_actions: number;
   overdue_plans: number;
   branch_code?: string;
+  nonconformity_scope?: NonconformityScope;
+  open_internal?: number;
+  open_external?: number;
   by_branch?: Array<{
     branch_code: string;
+    open_plans: number;
+    critical_open: number;
+  }>;
+  by_scope?: Array<{
+    nonconformity_scope: NonconformityScope;
     open_plans: number;
     critical_open: number;
   }>;

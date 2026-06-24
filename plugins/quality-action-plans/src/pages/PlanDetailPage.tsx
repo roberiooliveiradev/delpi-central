@@ -20,7 +20,7 @@ import {
   upsertIshikawa,
 } from "../api/actionPlansApi";
 import { PageHeader } from "../components/PageHeader";
-import { SeverityBadge, StatusBadge } from "../components/StatusBadge";
+import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
 import { FormActions } from "../components/ui/FormActions";
 import { SectionCard } from "../components/ui/SectionCard";
@@ -175,6 +175,12 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <div>
                 <dt>Lote</dt>
                 <dd>{plan.batch_number ?? "—"}</dd>
+              </div>
+              <div>
+                <dt>Escopo NC</dt>
+                <dd>
+                  <ScopeBadge scope={plan.nonconformity_scope} />
+                </dd>
               </div>
               <div>
                 <dt>Severidade</dt>

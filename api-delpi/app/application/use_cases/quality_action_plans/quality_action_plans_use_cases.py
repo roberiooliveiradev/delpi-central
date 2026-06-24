@@ -7,6 +7,9 @@ from app.domain.services.quality_action_plans.pac_quality_branch_service import 
     build_recurrence_key,
     validate_branch_code,
 )
+from app.domain.services.quality_action_plans.pac_quality_nonconformity_scope_service import (
+    validate_nonconformity_scope,
+)
 
 
 class QualityActionPlanRepository(Protocol):
@@ -30,6 +33,7 @@ class CreateQualityActionPlanRequest:
     created_by_user_id: str
     customer_name: str | None = None
     customer_contact: str | None = None
+    nonconformity_scope: str | None = None
     source_type: str | None = None
     source_reference: str | None = None
     product_code: str | None = None
@@ -59,6 +63,7 @@ class CreateQualityActionPlanUseCase:
             raise ValueError("title é obrigatório.")
 
         branch_code = validate_branch_code(request.branch_code, required=True)
+        nonconformity_scope = validate_nonconformity_scope(request.nonconformity_scope)
         recurrence_key = build_recurrence_key(
             branch_code=branch_code,
             product_code=request.product_code,
@@ -72,6 +77,7 @@ class CreateQualityActionPlanUseCase:
                 "created_by_user_id": request.created_by_user_id,
                 "customer_name": request.customer_name,
                 "customer_contact": request.customer_contact,
+                "nonconformity_scope": nonconformity_scope,
                 "source_type": request.source_type,
                 "source_reference": request.source_reference,
                 "product_code": request.product_code,

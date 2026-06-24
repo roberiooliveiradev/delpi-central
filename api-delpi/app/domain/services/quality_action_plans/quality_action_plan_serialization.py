@@ -9,6 +9,7 @@ PLAN_SELECT = """
            p.title,
            p.customer_name,
            p.customer_contact,
+           p.nonconformity_scope,
            p.source_type,
            p.source_reference,
            p.product_code,

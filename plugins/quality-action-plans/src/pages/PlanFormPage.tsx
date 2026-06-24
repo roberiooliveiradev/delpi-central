@@ -13,6 +13,7 @@ import {
   detailPath,
   listPath,
   PAC_BRANCH_OPTIONS,
+  PAC_NONCONFORMITY_SCOPES,
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
@@ -86,6 +87,14 @@ export function PlanFormPage({ onNavigate }: Props) {
               value={values.branch_code}
               onChange={(branch_code) => updateField("branch_code", branch_code)}
               required
+              searchable={false}
+            />
+            <SelectField
+              id="pac-scope"
+              label="Escopo da não conformidade"
+              options={PAC_NONCONFORMITY_SCOPES.map((item) => ({ value: item.value, label: item.label }))}
+              value={values.nonconformity_scope}
+              onChange={(nonconformity_scope) => updateField("nonconformity_scope", nonconformity_scope)}
               searchable={false}
             />
             <SelectField

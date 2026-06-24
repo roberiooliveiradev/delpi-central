@@ -1,6 +1,7 @@
 export type PlanFormValues = {
   title: string;
   branch_code: string;
+  nonconformity_scope: string;
   severity: string;
   status: string;
   customer_name: string;
@@ -14,6 +15,7 @@ export type PlanFormValues = {
 export type CreatePlanPayload = {
   title: string;
   branch_code: string;
+  nonconformity_scope: string;
   severity: string;
   status: string;
   customer_name?: string;
@@ -28,6 +30,7 @@ export function emptyPlanFormValues(): PlanFormValues {
   return {
     title: "",
     branch_code: "01",
+    nonconformity_scope: "external",
     severity: "medium",
     status: "triage",
     customer_name: "",
@@ -43,6 +46,7 @@ export function formValuesToPayload(values: PlanFormValues): CreatePlanPayload {
   return {
     title: values.title.trim(),
     branch_code: values.branch_code,
+    nonconformity_scope: values.nonconformity_scope,
     severity: values.severity,
     status: values.status,
     customer_name: values.customer_name.trim() || undefined,

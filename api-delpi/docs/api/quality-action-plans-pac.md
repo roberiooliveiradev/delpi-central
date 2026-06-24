@@ -4,7 +4,7 @@ CRUD e leitura consolidada de **planos de ação central de qualidade** (PAC), p
 
 **Plugin consumidor:** `plugins/quality-action-plans`  
 **Agente GPT (escrita alternativa):** `api-pac-quality` em `pac-api.minhadelpi.com.br` — mesma base Postgres, autenticação por API key.  
-**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V004)
+**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V005)
 
 **Formato:** envelope `{ success, message, data, meta }` (Playbook 10).
 
@@ -39,7 +39,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 ### GET `/quality/action-plans/dashboard`
 
-**Query:** `branch_code` (`01` \| `02`, opcional)
+**Query:** `branch_code` (`01` \| `02`, opcional), `nonconformity_scope` (`internal` \| `external`, opcional)
 
 **`data` (consolidado):**
 
@@ -51,12 +51,16 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | `completed_this_month` | int | Concluídos no mês corrente |
 | `overdue_actions` | int | Ações vencidas |
 | `overdue_plans` | int | Planos com ação vencida |
-| `by_branch` | array | `{ branch_code, open_plans, critical_open }` — só sem filtro de filial |
+| `by_branch` | array | `{ branch_code, open_plans, critical_open }` — só sem filtro de filial/escopo |
+| `by_scope` | array | `{ nonconformity_scope, open_plans, critical_open }` — só consolidado |
+| `open_internal` | int | Abertos com escopo `internal` |
+| `open_external` | int | Abertos com escopo `external` |
 | `branch_code` | string | Presente quando filtrado por filial |
+| `nonconformity_scope` | string | Presente quando filtrado por escopo |
 
 ### GET `/quality/action-plans` e `/overdue`
 
-**Query comum:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `page`, `page_size`
+**Query comum:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`
 
 **`data`:** `{ items: [...], pagination: { page, page_size, total, total_pages } }`
 
@@ -80,6 +84,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 {
   "title": "Reclamação cliente — cabo X",
   "branch_code": "01",
+  "nonconformity_scope": "external",
   "severity": "high",
   "status": "triage",
   "customer_name": "Cliente ABC",
@@ -88,6 +93,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 ```
 
 - `branch_code`: `01` ou `02` (obrigatório)
+- `nonconformity_scope`: `internal` ou `external` (obrigatório; default `external`)
 - `status` inicial: `draft` ou `triage`
 - Código gerado automaticamente: `PAC-YYYY-####` (sequência `quality_action_plan`)
 

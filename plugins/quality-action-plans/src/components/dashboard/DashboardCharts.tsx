@@ -17,6 +17,7 @@ import type { ActionPlanSummary, DashboardSummary } from "../../types/actionPlan
 import {
   buildBranchChartData,
   buildOverviewChartData,
+  buildScopeChartData,
   buildSeverityDistribution,
   buildStatusDistribution,
 } from "../../utils/chartData";
@@ -36,9 +37,11 @@ export function DashboardCharts({ summary, plans }: Props) {
   const branchData = buildBranchChartData(summary);
   const statusData = buildStatusDistribution(plans);
   const severityData = buildSeverityDistribution(plans);
+  const scopeData = buildScopeChartData(summary);
 
   const hasOverview = overviewData.some((entry) => entry.value > 0);
   const hasBranch = branchData.length > 0;
+  const hasScope = scopeData.length > 0;
   const hasStatus = statusData.length > 0;
   const hasSeverity = severityData.length > 0;
 
@@ -92,6 +95,41 @@ export function DashboardCharts({ summary, plans }: Props) {
           </ResponsiveContainer>
         </ChartCard>
       ) : null}
+
+      <ChartCard title="Planos abertos por escopo" hint="Interna (processo/área) vs externa (cliente/fornecedor).">
+        {hasScope ? (
+          <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+            <PieChart>
+              <Pie
+                data={scopeData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={58}
+                outerRadius={96}
+                paddingAngle={2}
+                stroke="var(--pac-card-bg)"
+                strokeWidth={2}
+              >
+                {scopeData.map((entry) => (
+                  <Cell key={entry.name} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: "1px solid var(--pac-card-border)",
+                  background: "var(--pac-card-bg)",
+                }}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart message="Sem planos abertos por escopo no recorte." />
+        )}
+      </ChartCard>
 
       <ChartCard title="Distribuição por status" hint="Baseado nos planos carregados para análise.">
         {hasStatus ? (

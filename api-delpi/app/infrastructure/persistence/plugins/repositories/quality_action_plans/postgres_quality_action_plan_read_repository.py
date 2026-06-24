@@ -26,6 +26,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         customer_name: str | None = None,
         owner_user_id: str | None = None,
         branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -50,6 +51,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if branch_code:
             filters.append("p.branch_code = %s")
             params.append(branch_code)
+        if nonconformity_scope:
+            filters.append("p.nonconformity_scope = %s")
+            params.append(nonconformity_scope)
 
         where_clause = " AND ".join(filters)
         count_row = self.fetch_one(
@@ -141,12 +145,21 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             ],
         }
 
-    def get_dashboard_summary(self, *, branch_code: str | None = None) -> dict[str, Any]:
+    def get_dashboard_summary(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+    ) -> dict[str, Any]:
         branch_filter = ""
+        scope_filter = ""
         params: list[Any] = []
         if branch_code:
             branch_filter = " AND branch_code = %s"
-            params = [branch_code]
+            params.append(branch_code)
+        if nonconformity_scope:
+            scope_filter = " AND nonconformity_scope = %s"
+            params.append(nonconformity_scope)
 
         row = self.fetch_one(
             f"""
@@ -164,10 +177,19 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 COUNT(*) FILTER (
                     WHERE status = 'completed'
                       AND closed_at >= date_trunc('month', NOW())
-                ) AS completed_this_month
+                ) AS completed_this_month,
+                COUNT(*) FILTER (
+                    WHERE status NOT IN ('completed', 'cancelled')
+                      AND nonconformity_scope = 'internal'
+                ) AS open_internal,
+                COUNT(*) FILTER (
+                    WHERE status NOT IN ('completed', 'cancelled')
+                      AND nonconformity_scope = 'external'
+                ) AS open_external
               FROM quality.quality_action_plans
              WHERE deleted_at IS NULL
                {branch_filter}
+               {scope_filter}
             """,
             tuple(params),
         )
@@ -180,6 +202,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                AND a.status NOT IN ('completed', 'cancelled')
                AND a.due_date < CURRENT_DATE
                {branch_filter.replace("branch_code", "p.branch_code") if branch_filter else ""}
+               {scope_filter.replace("nonconformity_scope", "p.nonconformity_scope") if scope_filter else ""}
             """,
             tuple(params),
         )
@@ -193,6 +216,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                AND a.status NOT IN ('completed', 'cancelled')
                AND a.due_date < CURRENT_DATE
                {branch_filter.replace("branch_code", "p.branch_code") if branch_filter else ""}
+               {scope_filter.replace("nonconformity_scope", "p.nonconformity_scope") if scope_filter else ""}
             """,
             tuple(params),
         )
@@ -203,9 +227,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "completed_this_month": int((row or {}).get("completed_this_month") or 0),
             "overdue_actions": int((overdue_row or {}).get("overdue_actions") or 0),
             "overdue_plans": int((overdue_plans_row or {}).get("overdue_plans") or 0),
+            "open_internal": int((row or {}).get("open_internal") or 0),
+            "open_external": int((row or {}).get("open_external") or 0),
         }
         if branch_code:
             result["branch_code"] = branch_code
+        if nonconformity_scope:
+            result["nonconformity_scope"] = nonconformity_scope
+        if branch_code or nonconformity_scope:
             return result
 
         by_branch_rows = self.fetch_all(
@@ -234,16 +263,50 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             for row in by_branch_rows
             if row.get("branch_code")
         ]
+        by_scope_rows = self.fetch_all(
+            """
+            SELECT nonconformity_scope,
+                   COUNT(*) FILTER (
+                       WHERE status NOT IN ('completed', 'cancelled')
+                   ) AS open_plans,
+                   COUNT(*) FILTER (
+                       WHERE status NOT IN ('completed', 'cancelled')
+                         AND severity = 'critical'
+                   ) AS critical_open
+              FROM quality.quality_action_plans
+             WHERE deleted_at IS NULL
+             GROUP BY nonconformity_scope
+             ORDER BY nonconformity_scope
+            """
+        )
+        result["by_scope"] = [
+            {
+                "nonconformity_scope": row["nonconformity_scope"],
+                "open_plans": int(row.get("open_plans") or 0),
+                "critical_open": int(row.get("critical_open") or 0),
+            }
+            for row in by_scope_rows
+            if row.get("nonconformity_scope")
+        ]
         return result
 
     def list_overdue_plans(
-        self, *, branch_code: str | None = None, page: int = 1, page_size: int = 50
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
     ) -> dict[str, Any]:
         branch_filter = ""
+        scope_filter = ""
         params: list[Any] = []
         if branch_code:
             branch_filter = " AND p.branch_code = %s"
             params.append(branch_code)
+        if nonconformity_scope:
+            scope_filter = " AND p.nonconformity_scope = %s"
+            params.append(nonconformity_scope)
 
         count_row = self.fetch_one(
             f"""
@@ -255,6 +318,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                AND a.status NOT IN ('completed', 'cancelled')
                AND a.due_date < CURRENT_DATE
                {branch_filter}
+               {scope_filter}
             """,
             tuple(params),
         )
@@ -264,7 +328,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             f"""
             SELECT DISTINCT ON (p.id)
                    p.id, p.code, p.title, p.customer_name, p.product_code,
-                   p.branch_code, p.severity, p.status, p.owner_user_id, p.created_at, p.updated_at
+                   p.branch_code, p.nonconformity_scope, p.severity, p.status,
+                   p.owner_user_id, p.created_at, p.updated_at
               FROM quality.quality_action_plans p
               JOIN quality.quality_actions a ON a.plan_id = p.id
              WHERE p.deleted_at IS NULL
@@ -272,6 +337,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                AND a.status NOT IN ('completed', 'cancelled')
                AND a.due_date < CURRENT_DATE
                {branch_filter}
+               {scope_filter}
              ORDER BY p.id, p.updated_at DESC
              LIMIT %s OFFSET %s
             """,
@@ -318,14 +384,15 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         row = self.execute_returning_one(
             """
             INSERT INTO quality.quality_action_plans (
-                code, title, customer_name, customer_contact, source_type, source_reference,
+                code, title, customer_name, customer_contact, nonconformity_scope,
+                source_type, source_reference,
                 product_code, product_description, batch_number, reported_problem,
                 detected_at, reported_at, severity, status, created_by_user_id, owner_user_id,
                 branch_code, department, problem_category, symptom_tags, root_cause_category,
                 failure_mode, recurrence_key
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             RETURNING id, code, status
             """,
@@ -334,6 +401,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields["title"],
                 fields.get("customer_name"),
                 fields.get("customer_contact"),
+                fields.get("nonconformity_scope", "external"),
                 fields.get("source_type"),
                 fields.get("source_reference"),
                 fields.get("product_code"),

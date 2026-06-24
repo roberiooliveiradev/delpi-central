@@ -56,6 +56,10 @@ class CreateActionPlanBody(BaseModel):
     status: str = Field(default="triage", pattern="^(draft|triage)$")
     owner_user_id: str | None = Field(default=None, max_length=100)
     branch_code: str = Field(..., pattern="^(01|02)$")
+    nonconformity_scope: str = Field(
+        default="external",
+        pattern="^(internal|external)$",
+    )
     department: str | None = Field(default=None, max_length=200)
     problem_category: str | None = Field(default=None, max_length=200)
     symptom_tags: list[str] | None = None
@@ -145,11 +149,15 @@ def _current_user_id() -> str:
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_action_plans_dashboard(
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
+    nonconformity_scope: str | None = Query(default=None, pattern="^(internal|external)$"),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
         return api_delpi_success(
-            repo.get_dashboard_summary(branch_code=branch_code),
+            repo.get_dashboard_summary(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+            ),
             operation_id="get_quality_action_plans_dashboard",
             message="Dashboard PAC carregado.",
         )
@@ -162,13 +170,19 @@ def get_action_plans_dashboard(
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_overdue_action_plans(
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
+    nonconformity_scope: str | None = Query(default=None, pattern="^(internal|external)$"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
         return api_delpi_success(
-            repo.list_overdue_plans(branch_code=branch_code, page=page, page_size=page_size),
+            repo.list_overdue_plans(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+                page=page,
+                page_size=page_size,
+            ),
             operation_id="list_quality_action_plans_overdue",
         )
     except PluginsRepositoryError as exc:
@@ -198,6 +212,7 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
                 status=body.status,
                 owner_user_id=body.owner_user_id,
                 branch_code=body.branch_code,
+                nonconformity_scope=body.nonconformity_scope,
                 department=body.department,
                 problem_category=body.problem_category,
                 symptom_tags=body.symptom_tags,
@@ -227,6 +242,7 @@ def list_action_plans(
     customer_name: str | None = Query(default=None),
     owner_user_id: str | None = Query(default=None),
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
+    nonconformity_scope: str | None = Query(default=None, pattern="^(internal|external)$"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -240,6 +256,7 @@ def list_action_plans(
                 customer_name=customer_name,
                 owner_user_id=owner_user_id,
                 branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
                 page=page,
                 page_size=page_size,
             ),

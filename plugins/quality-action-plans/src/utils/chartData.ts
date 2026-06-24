@@ -1,4 +1,4 @@
-import { PLAN_SEVERITIES, PLAN_STATUSES, statusLabel, severityLabel } from "../constants/actionPlans";
+import { PLAN_SEVERITIES, PLAN_STATUSES, PAC_NONCONFORMITY_SCOPES, statusLabel, severityLabel } from "../constants/actionPlans";
 import { CHART_COLORS } from "../constants/chartColors";
 import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
 
@@ -54,4 +54,20 @@ export function statusDistributionLabel(status: string): string {
 
 export function severityDistributionLabel(severity: string): string {
   return severityLabel(severity);
+}
+
+export function buildScopeChartData(summary: DashboardSummary) {
+  if (summary.by_scope?.length) {
+    return summary.by_scope.map((entry, index) => ({
+      name: PAC_NONCONFORMITY_SCOPES.find((item) => item.value === entry.nonconformity_scope)?.label
+        ?? entry.nonconformity_scope,
+      value: entry.open_plans,
+      fill: CHART_COLORS[index % CHART_COLORS.length],
+    }));
+  }
+
+  return [
+    { name: "Interna", value: summary.open_internal ?? 0, fill: CHART_COLORS[1] },
+    { name: "Externa", value: summary.open_external ?? 0, fill: CHART_COLORS[0] },
+  ].filter((entry) => entry.value > 0);
 }

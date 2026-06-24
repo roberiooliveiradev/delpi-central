@@ -5,6 +5,11 @@ export const PAC_BRANCH_OPTIONS = [
   { value: "02", label: "Filial 02" },
 ] as const;
 
+export const PAC_NONCONFORMITY_SCOPES = [
+  { value: "external", label: "Externa" },
+  { value: "internal", label: "Interna" },
+] as const;
+
 export const APP_BASE = "/apps/quality-action-plans";
 
 export const PLAN_STATUSES: Array<{ value: PlanStatus; label: string }> = [
@@ -98,6 +103,10 @@ export function statusLabel(status: string): string {
 
 export function severityLabel(severity: string): string {
   return PLAN_SEVERITIES.find((item) => item.value === severity)?.label ?? severity;
+}
+
+export function nonconformityScopeLabel(scope?: string | null): string {
+  return PAC_NONCONFORMITY_SCOPES.find((item) => item.value === scope)?.label ?? scope ?? "—";
 }
 
 export function actionTypeLabel(actionType: string): string {

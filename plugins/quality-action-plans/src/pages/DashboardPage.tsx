@@ -8,7 +8,7 @@ import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { SelectField } from "../components/ui/SelectField";
 import { FilterBar } from "../components/ui/FilterBar";
-import { listPath, overduePath, PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
+import { listPath, overduePath, PAC_BRANCH_OPTIONS, PAC_NONCONFORMITY_SCOPES } from "../constants/actionPlans";
 import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
 
 type Props = {
@@ -21,15 +21,17 @@ export function DashboardPage({ onNavigate }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [branchCode, setBranchCode] = useState("");
+  const [scope, setScope] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [dashboardData, plansData] = await Promise.all([
-        fetchDashboard(branchCode || undefined),
+        fetchDashboard(branchCode || undefined, scope || undefined),
         fetchActionPlans({
           branch_code: branchCode || undefined,
+          nonconformity_scope: scope || undefined,
           page_size: 200,
         }),
       ]);
@@ -40,7 +42,7 @@ export function DashboardPage({ onNavigate }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [branchCode]);
+  }, [branchCode, scope]);
 
   useEffect(() => {
     void load();
@@ -49,6 +51,11 @@ export function DashboardPage({ onNavigate }: Props) {
   const branchOptions = [
     { value: "", label: "Consolidado (todas)" },
     ...PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label })),
+  ];
+
+  const scopeOptions = [
+    { value: "", label: "Todos os escopos" },
+    ...PAC_NONCONFORMITY_SCOPES.map((item) => ({ value: item.value, label: item.label })),
   ];
 
   return (
@@ -77,6 +84,14 @@ export function DashboardPage({ onNavigate }: Props) {
           value={branchCode}
           onChange={setBranchCode}
           searchable
+        />
+        <SelectField
+          id="pac-dashboard-scope"
+          label="Escopo NC"
+          options={scopeOptions}
+          value={scope}
+          onChange={setScope}
+          searchable={false}
         />
       </FilterBar>
 

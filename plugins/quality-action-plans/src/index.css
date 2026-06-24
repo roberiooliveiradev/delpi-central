@@ -465,6 +465,16 @@
   font-size: var(--pac-font-sm);
 }
 
+.dashboard-quality-action-plans .pac-badge--scope-internal {
+  background: color-mix(in srgb, var(--pac-accent) 12%, transparent);
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-badge--scope-external {
+  background: color-mix(in srgb, var(--pac-warning) 12%, transparent);
+  color: var(--pac-warning);
+}
+
 .dashboard-quality-action-plans .pac-state--success {
   border-color: color-mix(in srgb, var(--pac-success) 40%, var(--pac-card-border));
   background: color-mix(in srgb, var(--pac-success) 10%, var(--pac-card-bg));

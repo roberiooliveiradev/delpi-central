@@ -2,6 +2,7 @@ import { RefreshCw } from "lucide-react";
 
 import {
   PAC_BRANCH_OPTIONS,
+  PAC_NONCONFORMITY_SCOPES,
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../../constants/actionPlans";
@@ -34,6 +35,15 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
         </>
       }
     >
+      <MultiSelectField
+        id="pac-filter-scope"
+        label="Escopo NC"
+        options={PAC_NONCONFORMITY_SCOPES.map((item) => ({ value: item.value, label: item.label }))}
+        selectedValues={filters.scopes}
+        onChange={(scopes) => patch({ scopes })}
+        emptyLabel="Todos"
+        searchable={false}
+      />
       <MultiSelectField
         id="pac-filter-status"
         label="Status"
