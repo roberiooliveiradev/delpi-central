@@ -4,6 +4,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import {
   createPlanActions,
   fetchActionPlanDetail,
+  recordEffectivenessReview,
   updatePlanAction,
   updatePlanStatus,
   upsertFiveWhys,
@@ -18,6 +19,7 @@ import {
   actionTypeLabel,
   branchLabel,
   dashboardPath,
+  EFFECTIVENESS_STATUSES,
   listPath,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
@@ -70,6 +72,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [newActionDescription, setNewActionDescription] = useState("");
   const [newActionResponsible, setNewActionResponsible] = useState("");
   const [newActionDueDate, setNewActionDueDate] = useState("");
+  const [effectivenessStatus, setEffectivenessStatus] = useState("pending");
+  const [effectivenessNotes, setEffectivenessNotes] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -81,6 +85,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       setStatusValue(data.plan.status);
       setIshikawaForm({ ...EMPTY_ISHIKAWA, ...(data.ishikawa ?? {}) });
       setFiveWhysForm({ ...EMPTY_FIVE_WHYS, ...(data.five_whys ?? {}) });
+      setEffectivenessStatus(data.plan.effectiveness_status ?? "pending");
+      setEffectivenessNotes("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar plano.");
     } finally {
@@ -395,6 +401,53 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 }
               >
                 {saving === "new-action" ? "Salvando…" : "Adicionar ação"}
+              </button>
+            </div>
+          </DetailSection>
+
+          <DetailSection title="Eficácia">
+            <div className="pac-inline-form pac-inline-form--stack">
+              <div className="pac-form-grid">
+                <div className="pac-filter-box">
+                  <label htmlFor="pac-effectiveness-status">Resultado</label>
+                  <select
+                    id="pac-effectiveness-status"
+                    value={effectivenessStatus}
+                    onChange={(event) => setEffectivenessStatus(event.target.value)}
+                  >
+                    {EFFECTIVENESS_STATUSES.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="pac-filter-box pac-filter-box--full">
+                  <label htmlFor="pac-effectiveness-notes">Observações</label>
+                  <textarea
+                    id="pac-effectiveness-notes"
+                    rows={3}
+                    value={effectivenessNotes}
+                    onChange={(event) => setEffectivenessNotes(event.target.value)}
+                    placeholder="Evidências e conclusão da verificação de eficácia"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                className="pac-primary-btn"
+                disabled={saving === "effectiveness"}
+                onClick={() =>
+                  void runSave("effectiveness", async () => {
+                    await recordEffectivenessReview(
+                      planId,
+                      effectivenessStatus,
+                      effectivenessNotes.trim() || undefined,
+                    );
+                  })
+                }
+              >
+                {saving === "effectiveness" ? "Salvando…" : "Registrar eficácia"}
               </button>
             </div>
           </DetailSection>
