@@ -617,8 +617,8 @@ W4   Path literals residuais por domínio
 | Perfil | `structure_exclusivity` em `presentation_profiles.json` | OK |
 | Prosa gate | `dataAnswerLeadAlignment`, `ChatPresentationProseDeliveryService` | OK |
 | LLM coerência | `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService` | OK |
-| Synthesis dataAnswer | `ChatOperationalUserQuestionSynthesisService` | **Pendente W1** |
-| Commentary | `_build_structure_exclusivity_commentary` | **Pendente W1** |
+| Synthesis dataAnswer | `ChatOperationalUserQuestionSynthesisService` | OK (W1a) |
+| Commentary | `commentaryProfiles` + `ChatOperationalCommentaryProfileService` | OK (W1b) |
 | Entity dispatch | `entity_route_presenter` | **Pendente W1** |
 | JSON path duplicado | narrative_synthesis vs factual_verdict | **Pendente W2** |
 
@@ -629,3 +629,5 @@ W4   Path literals residuais por domínio
 | Data | Nota |
 |------|------|
 | jun/2026 | Playbook criado após auditoria completa pós-fix exclusividade MPs e diretrizes `.cursor` |
+| jun/2026 | W1a — gate synthesis/dataAnswer para perfis `template` + `preserve_template` |
+| jun/2026 | W1b — `commentaryProfiles` em `humanized_data_response.json`; exclusividade com `templateProseCommentary: skip` |

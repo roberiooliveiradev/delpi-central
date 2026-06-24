@@ -63,7 +63,7 @@ Wrappers especializados (mantêm API estável):
 | `capabilities.json` | Catálogo de capacidades; `llmSynthesis` para prosa LLM | `ChatCapabilitiesService`, `ChatCapabilitiesContentService` |
 | `identity.json` | Identidade do assistente; `llmSynthesis` para prosa LLM | `ChatAssistantIdentityService`, `ChatAssistantIdentityContentService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
-| `humanized_data_response.json` | Templates de resumo, alertLevel, limitações, próximas ações e camadas de leitura (Playbook 13) | `ChatHumanizedDataResponseContentService`, `ChatHumanizedDataResponseService` |
+| `humanized_data_response.json` | Templates de resumo, alertLevel, limitações, próximas ações, camadas de leitura e `commentaryProfiles` (Playbook 13 / W1b) | `ChatHumanizedDataResponseContentService`, `ChatHumanizedDataResponseService`, `ChatOperationalCommentaryProfileService` |
 | `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
 | `tool_context.json` | Roteador, paginação, drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
 | `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados; **`directAnswers.projectSources`** — inventário de fontes do projeto) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService`, `ChatProjectSourcesIntentService` |

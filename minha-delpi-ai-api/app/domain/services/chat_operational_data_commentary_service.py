@@ -8,6 +8,9 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 from app.domain.services.chat_humanized_data_response_service import (
     ChatHumanizedDataResponseService,
 )
+from app.domain.services.chat_operational_commentary_profile_service import (
+    ChatOperationalCommentaryProfileService,
+)
 from app.domain.services.chat_presentation_operational_table_service import (
     ChatPresentationOperationalTableService as _OpsTable,
 )
@@ -98,6 +101,13 @@ class ChatOperationalDataCommentaryService:
 
         if not builder:
             return None
+
+        metadata_only = ChatOperationalCommentaryProfileService.try_build_metadata_only(
+            str(profile_key).strip(),
+        )
+
+        if metadata_only is not None:
+            return metadata_only
 
         commentary = builder(data, format_quantity=format_quantity)
 
@@ -798,75 +808,22 @@ class ChatOperationalDataCommentaryService:
     ) -> dict[str, Any] | None:
         _ = format_quantity
 
-        summary = root.get("summary") if isinstance(root.get("summary"), dict) else {}
-        items = root.get("items") if isinstance(root.get("items"), list) else []
-        product = root.get("product") if isinstance(root.get("product"), dict) else {}
-        code = str(product.get("product_code") or product.get("code") or "").strip()
-        description = str(product.get("description") or "").strip()
+        profile_key = "structure_exclusivity"
+        highlights = ChatOperationalCommentaryProfileService.build_highlight_rules(
+            profile_key,
+            root,
+            format_line=cls._presenter_format,
+        )
+        visual_hints = ChatOperationalCommentaryProfileService.visual_hints(profile_key)
 
-        exclusive_count = int(summary.get("total_exclusive_raw_materials") or 0)
-        mp_count = int(summary.get("total_raw_materials") or 0)
-        highlights: list[str] = []
-
-        if exclusive_count > 0:
-            highlights.append(
-                cls._presenter_format(
-                    "structureExclusivity",
-                    "exclusivityVerdictYes",
-                    count=str(exclusive_count),
-                )
-            )
-        elif items or mp_count > 0:
-            highlights.append(
-                cls._presenter_format(
-                    "structureExclusivity",
-                    "exclusivityVerdictNo",
-                    count=str(mp_count),
-                )
-            )
-
-        if description and code:
-            intro_key = (
-                "introWithDescription"
-                if exclusive_count > 0
-                else "introWithDescriptionNeutral"
-            )
-            highlights.append(
-                cls._presenter_format(
-                    "structureExclusivity",
-                    intro_key,
-                    code=code,
-                    description=description,
-                )
-            )
-        elif code:
-            highlights.append(
-                cls._presenter_format(
-                    "structureExclusivity",
-                    "introCodeOnly",
-                    code=code,
-                )
-            )
-
-        if summary:
-            highlights.append(
-                cls._presenter_format(
-                    "structureExclusivity",
-                    "componentsLine",
-                    total=str(summary.get("total_components") or 0),
-                    intermediates=str(summary.get("total_intermediates") or 0),
-                    rawMaterials=str(mp_count),
-                )
-            )
-
-        if not highlights:
+        if not highlights and not visual_hints:
             return None
 
         return {
-            "profileKey": "structure_exclusivity",
+            "profileKey": profile_key,
             "highlights": highlights,
             "summaryLines": highlights[:4],
-            "visualHints": ["tree", "table"],
+            "visualHints": visual_hints or ["tree", "table"],
         }
 
     @staticmethod

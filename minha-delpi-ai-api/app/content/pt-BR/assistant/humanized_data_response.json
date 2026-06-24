@@ -313,5 +313,96 @@
     "dataCommentary": "dataCommentary",
     "presentationDecision": "presentationDecision",
     "humanizedSummary": "humanizedSummary"
+  },
+  "commentaryProfiles": {
+    "structure_exclusivity": {
+      "templateProseCommentary": "skip",
+      "visualHints": ["tree", "table"],
+      "highlightRules": [
+        {
+          "whenAll": [
+            { "path": "summary.total_exclusive_raw_materials", "op": "gt", "value": 0 }
+          ],
+          "presenter": {
+            "section": "structureExclusivity",
+            "key": "exclusivityVerdictYes"
+          },
+          "values": {
+            "count": "{summary.total_exclusive_raw_materials}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "summary.total_exclusive_raw_materials", "op": "eq", "value": 0 },
+            {
+              "op": "or_nonempty",
+              "paths": ["items", "summary.total_raw_materials"]
+            }
+          ],
+          "presenter": {
+            "section": "structureExclusivity",
+            "key": "exclusivityVerdictNo"
+          },
+          "values": {
+            "count": "{summary.total_raw_materials}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "summary.total_exclusive_raw_materials", "op": "gt", "value": 0 },
+            { "path": "product.product_code", "op": "present" },
+            { "path": "product.description", "op": "present" }
+          ],
+          "presenter": {
+            "section": "structureExclusivity",
+            "key": "introWithDescription"
+          },
+          "values": {
+            "code": "{product.product_code}",
+            "description": "{product.description}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "summary.total_exclusive_raw_materials", "op": "eq", "value": 0 },
+            { "path": "product.product_code", "op": "present" },
+            { "path": "product.description", "op": "present" }
+          ],
+          "presenter": {
+            "section": "structureExclusivity",
+            "key": "introWithDescriptionNeutral"
+          },
+          "values": {
+            "code": "{product.product_code}",
+            "description": "{product.description}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "product.product_code", "op": "present" },
+            { "path": "product.description", "op": "absent" }
+          ],
+          "presenter": {
+            "section": "structureExclusivity",
+            "key": "introCodeOnly"
+          },
+          "values": {
+            "code": "{product.product_code}"
+          }
+        },
+        {
+          "whenAll": [{ "path": "summary", "op": "present" }],
+          "presenter": {
+            "section": "structureExclusivity",
+            "key": "componentsLine"
+          },
+          "values": {
+            "total": "{summary.total_components}",
+            "intermediates": "{summary.total_intermediates}",
+            "rawMaterials": "{summary.total_raw_materials}"
+          }
+        }
+      ]
+    }
   }
 }

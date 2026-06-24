@@ -18,12 +18,8 @@ def test_structure_exclusivity_commentary_uses_verdict_not_row_count():
     commentary = ChatOperationalDataCommentaryService.build("structure_exclusivity", root)
 
     assert commentary
-    combined = "\n".join(commentary.get("highlights") or [])
-
-    assert "Resposta" in combined
-    assert "Não" in combined or "nenhuma MP exclusiva" in combined.lower()
-    assert "12 componente" in combined or "Composição" in combined
-    assert "4 registros" not in combined
+    assert commentary.get("metadataOnly") is True
+    assert commentary.get("highlights") == []
     assert commentary.get("profileKey") == "structure_exclusivity"
 
 
