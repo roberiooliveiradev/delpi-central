@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, GripVertical, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, GripVertical, Plus, X } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
 
 import {
@@ -13,6 +13,7 @@ import {
   clampIcebreakerTitleDraft,
   createEmptyIcebreakerEntry,
   createIcebreakerField,
+  duplicateIcebreakerEntry,
   hasShortcutPlaceholders,
   ICEBREAKER_FIELD_TYPE_OPTIONS,
   reorderIcebreakerEntries,
@@ -52,6 +53,23 @@ function updateField(
   fields[fieldIndex] = { ...fields[fieldIndex], ...patch };
 
   return updateEntry(entries, entryIndex, { fields });
+}
+
+function adjustExpandedIndicesForDuplicate(indices: Set<number>, sourceIndex: number): Set<number> {
+  const next = new Set<number>();
+
+  indices.forEach((index) => {
+    if (index <= sourceIndex) {
+      next.add(index);
+      return;
+    }
+
+    next.add(index + 1);
+  });
+
+  next.add(sourceIndex + 1);
+
+  return next;
 }
 
 function adjustExpandedIndices(indices: Set<number>, removedIndex: number): Set<number> {
@@ -121,6 +139,11 @@ export function AgentIcebreakersEditor({
       next.add(nextIndex);
       return next;
     });
+  }
+
+  function duplicateEntry(index: number) {
+    onChange(duplicateIcebreakerEntry(entries, index));
+    setExpandedIndices((current) => adjustExpandedIndicesForDuplicate(current, index));
   }
 
   function moveEntry(fromIndex: number, toIndex: number) {
@@ -382,6 +405,15 @@ export function AgentIcebreakersEditor({
                       </button>
                     </>
                   ) : null}
+                  <button
+                    type="button"
+                    className="mdc-agent-icebreakers-editor__icon-btn"
+                    onClick={() => duplicateEntry(index)}
+                    aria-label={`Duplicar ${cardTitle}`}
+                    title="Duplicar quebra-gelo"
+                  >
+                    <Copy size={15} aria-hidden="true" />
+                  </button>
                   <button
                     type="button"
                     className="mdc-agent-icebreakers-editor__icon-btn mdc-agent-icebreakers-editor__icon-btn--danger"

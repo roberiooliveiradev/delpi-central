@@ -380,6 +380,52 @@ export function reorderIcebreakerEntries(
   return next;
 }
 
+const ICEBREAKER_COPY_LABEL_SUFFIX = " (cópia)";
+
+function cloneIcebreakerLabel(label: string | undefined): string | undefined {
+  const trimmed = label?.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const suffix = ICEBREAKER_COPY_LABEL_SUFFIX;
+  const maxBase = AGENT_ICEBREAKER_TITLE_MAX_CHARS - suffix.length;
+  const base =
+    maxBase > 0 && trimmed.length > maxBase
+      ? trimmed.slice(0, maxBase).trimEnd()
+      : trimmed;
+
+  return clampIcebreakerTitle(`${base}${suffix}`);
+}
+
+/** Cópia profunda de uma entrada para duplicar no builder. */
+export function cloneIcebreakerEntry(entry: AgentIcebreakerEntry): AgentIcebreakerEntry {
+  const synced = syncIcebreakerEntryFields(entry);
+
+  return {
+    template: synced.template,
+    label: cloneIcebreakerLabel(synced.label),
+    hint: synced.hint,
+    fields: (synced.fields ?? []).map((field) => ({ ...field })),
+  };
+}
+
+/** Insere cópia da entrada logo após o índice informado. */
+export function duplicateIcebreakerEntry(
+  entries: readonly AgentIcebreakerEntry[],
+  index: number,
+): AgentIcebreakerEntry[] {
+  if (index < 0 || index >= entries.length) {
+    return [...entries];
+  }
+
+  const next = [...entries];
+  next.splice(index + 1, 0, cloneIcebreakerEntry(entries[index]));
+
+  return next;
+}
+
 export function resolveIcebreakerShortcutFields(
   entry: AgentIcebreakerEntry,
 ): ShortcutFieldDefinition[] {

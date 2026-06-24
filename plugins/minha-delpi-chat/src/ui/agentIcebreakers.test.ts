@@ -6,6 +6,8 @@ import {
   clampIcebreakerHintDraft,
   clampIcebreakerTitle,
   clampIcebreakerTitleDraft,
+  cloneIcebreakerEntry,
+  duplicateIcebreakerEntry,
   getIcebreakerGridDensityClass,
   icebreakerRequiresShortcutModal,
   normalizeAgentIcebreakerEntries,
@@ -101,6 +103,35 @@ describe("agentIcebreakers", () => {
     const many = Array.from({ length: 8 }, (_, index) => `sugestão ${index + 1}`);
 
     expect(resolveAgentIcebreakersForDisplay({ icebreakers: many })).toEqual(many);
+  });
+
+  it("duplica entrada com cópia profunda e sufixo no título", () => {
+    const source = {
+      template: "qual o estoque do produto {{productCode}}?",
+      label: "Estoque",
+      hint: "Por filial",
+      fields: [
+        {
+          id: "productCode",
+          label: "Código do produto",
+          fieldType: "productCode",
+          required: true,
+        },
+      ],
+    };
+
+    const duplicated = duplicateIcebreakerEntry([source, { template: "outro", label: "Outro" }], 0);
+
+    expect(duplicated).toHaveLength(3);
+    expect(duplicated[1]).toEqual({
+      template: source.template,
+      label: "Estoque (cópia)",
+      hint: source.hint,
+      fields: source.fields,
+    });
+    expect(duplicated[1]).not.toBe(source);
+    expect(duplicated[1]?.fields?.[0]).not.toBe(source.fields[0]);
+    expect(cloneIcebreakerEntry(source).label).toBe("Estoque (cópia)");
   });
 
   it("reordena entradas preservando conteúdo", () => {
