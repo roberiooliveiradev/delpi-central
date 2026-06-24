@@ -50,6 +50,19 @@ class ChatOperationalUserQuestionSynthesisService:
         if not message:
             return commentary
 
+        meta = metadata if isinstance(metadata, dict) else {}
+
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if ChatPresentationProseDeliveryService.should_skip_question_synthesis_verdict(meta):
+            commentary["questionSynthesis"] = {
+                "applied": False,
+                "skipped": "template_profile_verdict",
+            }
+            return commentary
+
         profile = str(profile_key or commentary.get("profileKey") or "").strip()
         entity = cls._resolve_entity(metadata, data)
         synthesis = cls.try_synthesize(

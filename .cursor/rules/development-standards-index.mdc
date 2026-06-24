@@ -25,6 +25,12 @@ alwaysApply: true
 | `operational-api-routing.mdc` | Seleção de action api-delpi (`OperationalApiRouteSpec`) |
 | `new-api-route-checklist.mdc` | **Nova rota** — HTTP + registry + perfil + CI |
 
+## Chat e API (`minha-delpi-ai-api`) — roadmap
+
+| Doc | Escopo |
+|-----|--------|
+| [playbook-21-desacoplamento-refatoracao-completa-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-21-desacoplamento-refatoracao-completa-jun2026.md) | Inventário completo de débito, fluxos e ondas W1–W4 pós–Playbook 12 |
+
 ## api-delpi
 
 | Regra | Escopo |

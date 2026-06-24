@@ -46,6 +46,8 @@ Relacionado:
 | **R22** | Cobertura KV — `path` + `profile_name` em todos os presenters | ✅ Concluído |
 | **R23** | Resíduos onda 2 — path ativo, builder com perfil, serviços transversais | ✅ Concluído |
 
+**Pós-R23:** débito residual e ondas W1–W4 — ver [playbook-21-desacoplamento-refatoracao-completa-jun2026.md](./playbook-21-desacoplamento-refatoracao-completa-jun2026.md).
+
 Atualizar a coluna **Status** ao concluir cada fase (`⬜` → `✅`).
 
 ### R15 — Colunas dinâmicas (jun/2026)

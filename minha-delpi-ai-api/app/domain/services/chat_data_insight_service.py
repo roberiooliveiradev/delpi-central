@@ -136,6 +136,15 @@ class ChatDataInsightService:
             data=data,
         )
 
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        commentary = ChatPresentationProseDeliveryService.strip_template_duplicated_commentary_prose(
+            commentary,
+            metadata,
+        )
+
         data_answer = ChatHumanizedDataResponseService.to_data_answer(commentary)
 
         if not data_answer:

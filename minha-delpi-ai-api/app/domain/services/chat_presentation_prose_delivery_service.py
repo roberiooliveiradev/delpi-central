@@ -387,11 +387,10 @@ class ChatPresentationProseDeliveryService:
         )
 
     @classmethod
-    def should_preserve_template_markdown_over_data_answer(
-        cls,
-        markdown: str,
-        metadata: dict[str, Any],
-    ) -> bool:
+    def _profile_preserves_template_data_answer(cls, metadata: dict[str, Any]) -> bool:
+        if not isinstance(metadata, dict):
+            return False
+
         api_meta = metadata.get("apiDelpiResponseMeta")
         entity = (
             str(api_meta.get("entity") or "").strip()
@@ -404,6 +403,49 @@ class ChatPresentationProseDeliveryService:
             return False
 
         return ChatPresentationProfileService.prose_delivery_mode(entity=entity, path=path) == MODE_TEMPLATE
+
+    @classmethod
+    def should_preserve_template_markdown_over_data_answer(
+        cls,
+        markdown: str,
+        metadata: dict[str, Any],
+    ) -> bool:
+        del markdown
+        return cls._profile_preserves_template_data_answer(metadata)
+
+    @classmethod
+    def should_skip_question_synthesis_verdict(cls, metadata: dict[str, Any] | None) -> bool:
+        if not isinstance(metadata, dict):
+            return False
+
+        return cls._profile_preserves_template_data_answer(metadata)
+
+    @classmethod
+    def strip_template_duplicated_commentary_prose(
+        cls,
+        commentary: dict[str, Any],
+        metadata: dict[str, Any],
+    ) -> dict[str, Any]:
+        if not isinstance(commentary, dict):
+            return commentary
+
+        if not cls._profile_preserves_template_data_answer(metadata):
+            return commentary
+
+        cleaned = dict(commentary)
+        for key in (
+            "summary",
+            "interpretation",
+            "narrativeInsight",
+            "facts",
+            "analysis",
+            "recommendations",
+            "nextAction",
+        ):
+            cleaned.pop(key, None)
+        cleaned["highlights"] = []
+        cleaned["summaryLines"] = []
+        return cleaned
 
     @classmethod
     def _qualifies_llm_prose(

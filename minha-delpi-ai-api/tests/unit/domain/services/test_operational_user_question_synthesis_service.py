@@ -1,4 +1,5 @@
 from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.domain.services.chat_data_insight_service import ChatDataInsightService
 from app.domain.services.chat_operational_user_question_synthesis_service import (
     ChatOperationalUserQuestionSynthesisService,
 )
@@ -170,3 +171,62 @@ def test_membership_service_aligns_with_synthesis():
     assert report is not None
     assert synthesis is not None
     assert report["linhas"][0] in synthesis["summary"] or synthesis["summary"] in report["linhas"][0]
+
+
+def test_apply_skips_verdict_for_template_structure_exclusivity_profile():
+    metadata = {
+        "path": "/products/90261805/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "userMessage": "quais MPs exclusivas tem o produto 90261805?",
+    }
+    data = {
+        "product": {"product_code": "90261805", "description": "CHICOTE"},
+        "summary": {
+            "total_components": 3,
+            "total_intermediates": 1,
+            "total_raw_materials": 2,
+            "total_exclusive_raw_materials": 0,
+        },
+        "items": [],
+    }
+    commentary = {
+        "profileKey": "structure_exclusivity",
+        "highlights": ["Resposta original do commentary"],
+    }
+
+    result = ChatOperationalUserQuestionSynthesisService.apply(
+        commentary,
+        data=data,
+        metadata=metadata,
+        user_message=metadata["userMessage"],
+        profile_key="structure_exclusivity",
+    )
+
+    assert result["highlights"] == ["Resposta original do commentary"]
+    assert result.get("summary") is None
+    assert result["questionSynthesis"]["applied"] is False
+    assert result["questionSynthesis"]["skipped"] == "template_profile_verdict"
+
+
+def test_data_insight_omits_verdict_summary_for_template_structure_exclusivity():
+    metadata = {
+        "path": "/products/90261805/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "userMessage": "quais MPs exclusivas tem o produto 90261805?",
+    }
+    data = {
+        "product": {"product_code": "90261805", "description": "CHICOTE"},
+        "summary": {
+            "total_components": 3,
+            "total_intermediates": 1,
+            "total_raw_materials": 2,
+            "total_exclusive_raw_materials": 0,
+        },
+        "items": [],
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert data_answer is not None
+    assert not str((data_answer.get("summary") or {}).get("answer") or "").strip()
+    assert data_answer.get("profileKey") == "structure_exclusivity"

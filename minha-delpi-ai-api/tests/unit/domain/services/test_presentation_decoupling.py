@@ -36,6 +36,37 @@ def test_data_answer_lead_preserved_when_profile_declares_template_alignment():
         "**Resposta:** Não — nenhuma MP exclusiva.",
         metadata,
     )
+    assert ChatPresentationProseDeliveryService.should_skip_question_synthesis_verdict(metadata)
+
+
+def test_strip_template_duplicated_commentary_prose_clears_verdict_channels():
+    metadata = {
+        "path": "/products/90260882/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+    }
+    commentary = {
+        "profileKey": "structure_exclusivity",
+        "summary": "Resposta duplicada",
+        "interpretation": "Composição duplicada",
+        "highlights": ["Resposta duplicada", "Composição duplicada"],
+        "summaryLines": ["Resposta duplicada"],
+        "attention": ["Ponto operacional"],
+        "limitations": ["Lista truncada"],
+    }
+
+    cleaned = ChatPresentationProseDeliveryService.strip_template_duplicated_commentary_prose(
+        commentary,
+        metadata,
+    )
+
+    assert cleaned.get("summary") is None
+    assert cleaned.get("interpretation") is None
+    assert cleaned.get("narrativeInsight") is None
+    assert cleaned.get("facts") is None
+    assert cleaned.get("highlights") == []
+    assert cleaned.get("summaryLines") == []
+    assert cleaned.get("attention") == ["Ponto operacional"]
+    assert cleaned.get("limitations") == ["Lista truncada"]
 
 
 def test_operational_metadata_field_service_filters_technical_keys():
