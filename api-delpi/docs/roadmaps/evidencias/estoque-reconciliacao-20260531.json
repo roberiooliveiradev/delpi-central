@@ -1,0 +1,232 @@
+{
+  "generated_at": "2026-06-24T18:36:34.868076Z",
+  "period": {
+    "start": "2026-05-01",
+    "end": "2026-05-31",
+    "start_protheus": "20260501",
+    "end_protheus": "20260531"
+  },
+  "branches": [
+    {
+      "branch": "01",
+      "label": "Matriz",
+      "period": {
+        "start": "2026-05-01",
+        "end": "2026-05-31"
+      },
+      "sql_estimated": {
+        "closing_base_date": "20260228",
+        "closing_base_value": 3474907.576,
+        "bridge_value": -1756147.2529999986,
+        "period_net_value": -1437268.9299999983,
+        "total": 281491.39300000295
+      },
+      "api_estimated_total": 281491.39299999975,
+      "api_matches_sql": true,
+      "official_sb9_le_end_date": {
+        "closure_date": "20260228",
+        "value": 3474907.5759999924
+      },
+      "official_sb9_on_end_date": {
+        "closure_date": "20260531",
+        "value": null
+      },
+      "sb2_current": 3554743.7310000057,
+      "inventory_reference_print": {
+        "em_estoque": 3598312.4,
+        "em_processo": 263790.57,
+        "total_geral": 3862102.97,
+        "label": "Matriz"
+      },
+      "gaps": {
+        "api_vs_em_estoque_ref_pct": 7.82,
+        "api_vs_total_geral_ref_pct": 7.29,
+        "sb9_on_end_vs_em_estoque_ref_pct": null,
+        "sb9_le_end_vs_em_estoque_ref_pct": 96.57
+      },
+      "diagnosis": [
+        "Sem fechamento SB9 na data exata end_date — estimativa SB9+SD3 é esperada; validar closing_base_date e ponte SD3.",
+        "Estimativa API < 50% do EM ESTOQUE oficial — gap estrutural (ponte/período SD3 ou base SB9 antiga)."
+      ]
+    },
+    {
+      "branch": "02",
+      "label": "UES",
+      "period": {
+        "start": "2026-05-01",
+        "end": "2026-05-31"
+      },
+      "sql_estimated": {
+        "closing_base_date": "20260228",
+        "closing_base_value": 9635115.444000002,
+        "bridge_value": -3090429.487999997,
+        "period_net_value": -1633394.366999999,
+        "total": 4911291.589000006
+      },
+      "api_estimated_total": 4911291.589000001,
+      "api_matches_sql": true,
+      "official_sb9_le_end_date": {
+        "closure_date": "20260228",
+        "value": 9635115.443999987
+      },
+      "official_sb9_on_end_date": {
+        "closure_date": "20260531",
+        "value": null
+      },
+      "sb2_current": 10162314.038000017,
+      "inventory_reference_print": {
+        "em_estoque": 9737043.62,
+        "em_processo": 311465.89,
+        "total_geral": 10048509.51,
+        "label": "UES"
+      },
+      "gaps": {
+        "api_vs_em_estoque_ref_pct": 50.44,
+        "api_vs_total_geral_ref_pct": 48.88,
+        "sb9_on_end_vs_em_estoque_ref_pct": null,
+        "sb9_le_end_vs_em_estoque_ref_pct": 98.95
+      },
+      "diagnosis": [
+        "Sem fechamento SB9 na data exata end_date — estimativa SB9+SD3 é esperada; validar closing_base_date e ponte SD3."
+      ]
+    }
+  ],
+  "raw_resultsets": {
+    "estimated_by_branch": [
+      {
+        "branch": "01",
+        "closing_base_date": "20260228",
+        "closing_base_value": 3474907.576,
+        "bridge_value": -1756147.2529999986,
+        "period_net_value": -1437268.9299999983,
+        "estimated_total_value": 281491.39300000295,
+        "estimated_item_totals_check": 281491.39300000016
+      },
+      {
+        "branch": "02",
+        "closing_base_date": "20260228",
+        "closing_base_value": 9635115.444000002,
+        "bridge_value": -3090429.487999997,
+        "period_net_value": -1633394.366999999,
+        "estimated_total_value": 4911291.589000006,
+        "estimated_item_totals_check": 4911291.588999996
+      }
+    ],
+    "official_closure_le_end": [
+      {
+        "branch": "01",
+        "closure_date": "20260228",
+        "official_closure_value": 3474907.5759999924,
+        "locations": 7,
+        "products": 3675
+      },
+      {
+        "branch": "02",
+        "closure_date": "20260228",
+        "official_closure_value": 9635115.443999987,
+        "locations": 8,
+        "products": 2589
+      }
+    ],
+    "official_closure_on_end": [],
+    "sb2_current": [
+      {
+        "branch": "01",
+        "sb2_total_value": 3554743.7310000057,
+        "sb2_total_quantity": 6291808.653999982,
+        "locations": 20,
+        "products": 36747
+      },
+      {
+        "branch": "02",
+        "sb2_total_value": 10162314.038000017,
+        "sb2_total_quantity": 38748007.47100003,
+        "locations": 17,
+        "products": 20345
+      }
+    ],
+    "recent_sb9_dates": [
+      {
+        "branch": "01",
+        "closure_date": "20260228",
+        "closure_value": 3474907.5759999924
+      },
+      {
+        "branch": "01",
+        "closure_date": "20260131",
+        "closure_value": 3468259.858999992
+      },
+      {
+        "branch": "01",
+        "closure_date": "20251231",
+        "closure_value": 3475073.282999996
+      },
+      {
+        "branch": "01",
+        "closure_date": "20251130",
+        "closure_value": 3178316.570999998
+      },
+      {
+        "branch": "01",
+        "closure_date": "20251031",
+        "closure_value": 3258349.4189999932
+      },
+      {
+        "branch": "01",
+        "closure_date": "20250930",
+        "closure_value": 3148514.5299999993
+      },
+      {
+        "branch": "01",
+        "closure_date": "20250831",
+        "closure_value": 3142913.500999995
+      },
+      {
+        "branch": "01",
+        "closure_date": "20250731",
+        "closure_value": 3304441.8070000014
+      },
+      {
+        "branch": "02",
+        "closure_date": "20260228",
+        "closure_value": 9635115.443999987
+      },
+      {
+        "branch": "02",
+        "closure_date": "20260131",
+        "closure_value": 9699692.567999987
+      },
+      {
+        "branch": "02",
+        "closure_date": "20251231",
+        "closure_value": 9225527.912000008
+      },
+      {
+        "branch": "02",
+        "closure_date": "20251130",
+        "closure_value": 9488084.107999964
+      },
+      {
+        "branch": "02",
+        "closure_date": "20251031",
+        "closure_value": 9388121.66999998
+      },
+      {
+        "branch": "02",
+        "closure_date": "20250930",
+        "closure_value": 10066345.591999996
+      },
+      {
+        "branch": "02",
+        "closure_date": "20250831",
+        "closure_value": 10680295.109999973
+      },
+      {
+        "branch": "02",
+        "closure_date": "20250731",
+        "closure_value": 11775663.869999962
+      }
+    ]
+  },
+  "playbook_next_step": "SB9010 sem fechamento após fev/2026 — estimativa SD3 não confiável para maio. Escalar Controladoria (fechamentos SB9 mar–mai) antes de W2; avaliar fallback SB2 ou MAX(B9_DATA)<=end_date quando inventário oficial existir sem SB9 na data."
+}

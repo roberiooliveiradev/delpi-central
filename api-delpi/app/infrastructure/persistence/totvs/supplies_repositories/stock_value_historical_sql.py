@@ -97,6 +97,82 @@ HISTORICAL_STOCK_BASE_CTES = f"""
         )
 """
 
+HISTORICAL_STOCK_META_CTES = """,
+        branch_breakdown AS (
+            SELECT
+                U.branch,
+                U.closing_base_date,
+                COALESCE(FB.closing_base_value, 0) AS closing_base_value,
+                COALESCE(M.bridge_value, 0) AS bridge_value,
+                COALESCE(M.period_net_value, 0) AS period_net_value
+            FROM ultima_data_sb9 U
+            LEFT JOIN (
+                SELECT branch, SUM(closing_base_value) AS closing_base_value
+                FROM fechamento_base
+                GROUP BY branch
+            ) FB
+                ON FB.branch = U.branch
+            LEFT JOIN (
+                SELECT
+                    branch,
+                    SUM(bridge_value) AS bridge_value,
+                    SUM(period_net_value) AS period_net_value
+                FROM movimentos_sd3
+                GROUP BY branch
+            ) M
+                ON M.branch = U.branch
+        ),
+        official_closure_latest AS (
+            SELECT
+                B9.B9_FILIAL AS branch,
+                MAX(B9.B9_DATA) AS official_closure_date
+            FROM SB9010 B9 WITH (NOLOCK)
+            WHERE B9.D_E_L_E_T_ = ''
+              AND B9.B9_DATA <> ''
+              AND B9.B9_DATA <= ?
+              {sb9_branch_filter_official}
+            GROUP BY B9.B9_FILIAL
+        ),
+        official_closure_values AS (
+            SELECT
+                L.branch,
+                L.official_closure_date,
+                SUM(B9.B9_VINI1) AS official_closure_value
+            FROM official_closure_latest L
+            INNER JOIN SB9010 B9 WITH (NOLOCK)
+                ON B9.B9_FILIAL = L.branch
+               AND B9.B9_DATA = L.official_closure_date
+               AND B9.D_E_L_E_T_ = ''
+            GROUP BY L.branch, L.official_closure_date
+        )
+"""
+
+HISTORICAL_STOCK_BRANCH_BREAKDOWN_SELECT = """
+        SELECT
+            B.branch,
+            B.closing_base_date,
+            B.closing_base_value,
+            B.bridge_value,
+            B.period_net_value,
+            O.official_closure_date,
+            O.official_closure_value,
+            CASE
+                WHEN O.official_closure_date IS NOT NULL
+                 AND RTRIM(O.official_closure_date) <> ''
+                THEN 1
+                ELSE 0
+            END AS official_closure_available,
+            CASE
+                WHEN O.official_closure_date = ?
+                THEN 1
+                ELSE 0
+            END AS official_closure_on_period_end
+        FROM branch_breakdown B
+        LEFT JOIN official_closure_values O
+            ON O.branch = B.branch
+        ORDER BY B.branch
+"""
+
 HISTORICAL_STOCK_ESTOQUE_ITEM_CTES = """,
         item_keys AS (
             SELECT branch, location, product_code FROM fechamento_base
@@ -167,6 +243,12 @@ HISTORICAL_STOCK_SUMMARY_SQL = (
             COUNT(DISTINCT location) AS total_locations
         FROM item_totals
     """
+)
+
+HISTORICAL_STOCK_BREAKDOWN_ONLY_SQL = (
+    HISTORICAL_STOCK_BASE_CTES
+    + HISTORICAL_STOCK_META_CTES
+    + HISTORICAL_STOCK_BRANCH_BREAKDOWN_SELECT
 )
 
 HISTORICAL_STOCK_ITEM_CTES = HISTORICAL_STOCK_BASE_CTES + HISTORICAL_STOCK_ESTOQUE_ITEM_CTES
@@ -312,6 +394,7 @@ HISTORICAL_STOCK_BUNDLE_BATCH_SQL = (
 class HistoricalStockFilterClauses:
     sb9_branch_filter: str
     sb9_branch_filter_b9: str
+    sb9_branch_filter_official: str
     sb9_location_filter: str
     d3_branch_filter: str
     d3_location_filter: str
@@ -326,6 +409,7 @@ def format_historical_stock_sql(
     placeholders = {
         "sb9_branch_filter": filters.sb9_branch_filter,
         "sb9_branch_filter_b9": filters.sb9_branch_filter_b9,
+        "sb9_branch_filter_official": filters.sb9_branch_filter_official,
         "sb9_location_filter": filters.sb9_location_filter,
         "d3_branch_filter": filters.d3_branch_filter,
         "d3_location_filter": filters.d3_location_filter,
@@ -339,17 +423,32 @@ def format_historical_stock_sql(
     return template.format(**placeholders)
 
 
+def format_historical_breakdown_sql(*, filters: HistoricalStockFilterClauses) -> str:
+    placeholders = {
+        "sb9_branch_filter": filters.sb9_branch_filter,
+        "sb9_branch_filter_b9": filters.sb9_branch_filter_b9,
+        "sb9_branch_filter_official": filters.sb9_branch_filter_official,
+        "sb9_location_filter": filters.sb9_location_filter,
+        "d3_branch_filter": filters.d3_branch_filter,
+        "d3_location_filter": filters.d3_location_filter,
+    }
+    return HISTORICAL_STOCK_BREAKDOWN_ONLY_SQL.format(**placeholders)
+
+
 def build_historical_stock_params(
     *,
     period_start: str,
+    period_end: str,
     period_end_exclusive: str,
     sb9_params: tuple,
     sb9_b9_params: tuple,
+    sb9_official_params: tuple,
     sb9_loc_params: tuple,
     d3_params: tuple,
     d3_loc_params: tuple,
+    include_breakdown_select: bool = False,
 ) -> tuple:
-    """Ordem alinhada aos placeholders de `HISTORICAL_STOCK_ITEM_CTES`."""
+    """Ordem alinhada aos placeholders do SQL histórico compartilhado."""
     movement_dates = (
         period_start,
         period_start,
@@ -359,12 +458,16 @@ def build_historical_stock_params(
         period_end_exclusive,
         period_end_exclusive,
     )
-    return (
-        (period_start,)
-        + sb9_params
-        + sb9_b9_params
-        + sb9_loc_params
-        + movement_dates
-        + d3_params
-        + d3_loc_params
-    )
+    movement_tail = movement_dates + d3_params + d3_loc_params
+    if include_breakdown_select:
+        return (
+            (period_start,)
+            + sb9_params
+            + sb9_b9_params
+            + sb9_loc_params
+            + movement_tail
+            + (period_end,)
+            + sb9_official_params
+            + (period_end,)
+        )
+    return (period_start,) + sb9_params + sb9_b9_params + sb9_loc_params + movement_tail

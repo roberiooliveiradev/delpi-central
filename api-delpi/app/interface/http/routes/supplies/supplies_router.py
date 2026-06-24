@@ -154,6 +154,10 @@ def get_stock_value(
         default=False,
         description="Quando true, retorna apenas o resumo consolidado (sem breakdown por filial/local/produto).",
     ),
+    stock_method: str = Query(
+        default="auto",
+        description="Método do estoque histórico: auto, estimated ou official_closure.",
+    ),
 ):
     try:
         use_case = build_get_stock_value_use_case()
@@ -165,6 +169,7 @@ def get_stock_value(
             end_date=end_date,
             top_limit=top_limit,
             summary_only=summary_only,
+            stock_method=stock_method,
         )
 
         result = enrich_dashboard_metric(

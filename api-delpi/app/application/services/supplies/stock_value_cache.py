@@ -4,6 +4,7 @@ from typing import Any
 
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
 from app.composition.query_cache_composer import build_query_cache
+from app.application.services.supplies.stock_value_method_service import normalize_stock_method
 
 
 def stock_value_cache_key(request: GetStockValueRequest) -> str:
@@ -16,6 +17,7 @@ def stock_value_cache_key(request: GetStockValueRequest) -> str:
             request.end_date or "",
             str(request.top_limit or 10),
             "summary" if request.summary_only else "full",
+            normalize_stock_method(request.stock_method),
         ]
     )
 

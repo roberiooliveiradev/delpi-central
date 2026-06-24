@@ -148,7 +148,11 @@ GET /supplies/stock-value?branch=02&location=01
       "closing_base_date": "20260228",
       "closing_base_value": 3474907.576,
       "bridge_value": -900946.94,
-      "period_net_value": -855519.157
+      "period_net_value": -855519.157,
+      "official_closure_date": "20260228",
+      "official_closure_value": 3474907.576,
+      "official_closure_available": true,
+      "official_closure_on_period_end": false
     }
   ],
   "by_location": [
@@ -171,17 +175,30 @@ GET /supplies/stock-value?branch=02&location=01
     "enabled": true,
     "method": "sb9_last_closure_plus_sd3_movements",
     "start_date": "20260401",
+    "end_date": "20260430",
     "end_date_exclusive": "20260501",
+    "closing_base_date": "20260228",
+    "closing_base_value": 3474907.576,
+    "bridge_value": -900946.94,
+    "period_net_value": -855519.157,
+    "official_closure_available": true,
+    "official_closure_date": "20260228",
+    "official_closure_value": 3474907.576,
+    "official_closure_on_period_end": false,
+    "data_quality_warning": "Último fechamento SB9 anterior ao fim do período; ...",
     "note": "Valor estimado a partir do último fechamento real em SB9010..."
   }
 }
 ```
+
+Campos de auditoria (W1, jun/2026): `closing_base_*`, `bridge_value`, `period_net_value`, `official_closure_*` e `data_quality_warning` quando a base SB9 é anterior a `end_date` sem fechamento na data do inventário.
 
 ---
 
 ## Limitações
 
 - Resultado de **análise gerencial**, não substitui fechamento contábil oficial na SB9.
+- Comparação com **Registro de Inventário** (MATR460): ver plano de correção em [playbook-correcao-estoque-supplies-inventario.md](../roadmaps/playbook-correcao-estoque-supplies-inventario.md) (ondas W0–W4, modo fechamento oficial, EM PROCESSO).
 - Detalhamento por produto/local é estimado (não replica saldo SB2 linha a linha).
 - Depende da consistência das movimentações SD3 e do último fechamento SB9 disponível.
 

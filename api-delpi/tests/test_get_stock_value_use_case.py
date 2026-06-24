@@ -38,6 +38,30 @@ def test_execute_without_dates_does_not_include_estimation():
 
 def test_execute_with_dates_includes_estimation_metadata():
     use_case = _build_use_case()
+    use_case._repository.get_stock_value_bundle.return_value = {
+        "summary": {
+            "branch": "consolidated",
+            "location": "all",
+            "total_stock_value": 100.0,
+            "total_stock_quantity": 10.0,
+            "total_records": 1,
+            "total_products": 1,
+            "total_locations": 1,
+        },
+        "by_branch": [],
+        "by_location": [],
+        "top_products": [],
+        "estimation_meta": {
+            "closing_base_date": "20260228",
+            "closing_base_value": 200.0,
+            "bridge_value": -50.0,
+            "period_net_value": -50.0,
+            "official_closure_available": True,
+            "official_closure_date": "20260228",
+            "official_closure_value": 200.0,
+            "official_closure_on_period_end": False,
+        },
+    }
 
     result = use_case.execute(
         GetStockValueRequest(
@@ -48,7 +72,12 @@ def test_execute_with_dates_includes_estimation_metadata():
 
     assert result["estimation"]["enabled"] is True
     assert result["estimation"]["start_date"] == "20260401"
+    assert result["estimation"]["end_date"] == "20260430"
     assert result["estimation"]["end_date_exclusive"] == "20260501"
+    assert result["estimation"]["closing_base_date"] == "20260228"
+    assert result["estimation"]["bridge_value"] == -50.0
+    assert result["estimation"]["official_closure_available"] is True
+    assert "data_quality_warning" in result["estimation"]
 
 
 def test_execute_requires_both_dates_for_historical_mode():

@@ -747,6 +747,87 @@
   font-size: var(--ds-font-sm);
 }
 
+.dashboard-supplies .ds-stock-estimation__official-banner {
+  margin-bottom: var(--ds-section-gap);
+  padding: 12px 16px;
+  border-radius: var(--ds-control-radius);
+  border: 1px solid color-mix(in srgb, #16a34a 35%, var(--ds-card-border));
+  background: color-mix(in srgb, #16a34a 10%, var(--ds-card-bg));
+  color: var(--ds-text);
+  font-size: var(--ds-font-sm);
+  line-height: 1.45;
+}
+
+.dashboard-supplies .ds-stock-estimation {
+  margin-bottom: var(--ds-section-gap);
+  padding: 16px 18px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-card-radius);
+  background: var(--ds-card-bg);
+}
+
+.dashboard-supplies .ds-stock-estimation__warning {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--ds-control-radius);
+  background: color-mix(in srgb, #f59e0b 14%, var(--ds-card-bg));
+  color: var(--ds-text);
+  font-size: var(--ds-font-sm);
+  line-height: 1.45;
+}
+
+.dashboard-supplies .ds-stock-estimation__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.dashboard-supplies .ds-stock-estimation__grid dt {
+  margin: 0 0 4px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-text-muted);
+}
+
+.dashboard-supplies .ds-stock-estimation__grid dd {
+  margin: 0;
+  font-size: var(--ds-font-md);
+  color: var(--ds-text);
+}
+
+.dashboard-supplies .ds-stock-estimation__table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-supplies .ds-stock-estimation__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ds-font-sm);
+}
+
+.dashboard-supplies .ds-stock-estimation__table th,
+.dashboard-supplies .ds-stock-estimation__table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ds-card-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dashboard-supplies .ds-stock-estimation__table th {
+  font-size: var(--ds-font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-text-muted);
+}
+
+.dashboard-supplies .ds-stock-estimation__muted {
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-xs);
+}
+
 .dashboard-supplies .ds-table-wrap {
   overflow-x: auto;
   margin-bottom: 12px;

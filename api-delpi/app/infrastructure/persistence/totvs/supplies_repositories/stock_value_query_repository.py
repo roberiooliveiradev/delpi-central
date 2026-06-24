@@ -8,13 +8,25 @@ from app.application.services.supplies.stock_value_cache import (
     set_cached_stock_value_bundle,
     stock_value_cache_key,
 )
+from app.application.services.supplies.stock_value_method_service import (
+    STOCK_METHOD_RESOLVED_ESTIMATED,
+    STOCK_METHOD_RESOLVED_MIXED,
+    STOCK_METHOD_RESOLVED_OFFICIAL,
+    resolve_stock_method_plan,
+)
 from app.domain.ports.supplies.stock_value_query_repository_port import (
     StockValueQueryRepositoryPort,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
     HistoricalStockFilterClauses,
     build_historical_stock_params,
+    format_historical_breakdown_sql,
     format_historical_stock_sql,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_official_closure_sql import (
+    OfficialClosureFilterClauses,
+    build_official_closure_params,
+    format_official_closure_sql,
 )
 
 _DEFAULT_STOCK_BRANCHES = ("01", "02")
@@ -28,7 +40,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
     def _resolve_historical_period(
         self,
         request: GetStockValueRequest,
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str, str]:
         qb = QueryBuilder()
         period_start = qb.convert_date_to_protheus(request.start_date)
         period_end = qb.convert_date_to_protheus(request.end_date)
@@ -40,7 +52,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
 
         end_date = datetime.strptime(period_end, "%Y%m%d").date()
         period_end_exclusive = (end_date + timedelta(days=1)).strftime("%Y%m%d")
-        return period_start, period_end_exclusive
+        return period_start, period_end, period_end_exclusive
 
     def _branch_filter_clause(self, column: str, branch: str | None) -> tuple[str, tuple]:
         if branch:
@@ -56,12 +68,16 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
     def _historical_filter_clauses(
         self,
         request: GetStockValueRequest,
-    ) -> tuple[HistoricalStockFilterClauses, tuple, tuple, tuple, tuple, tuple]:
+    ) -> tuple[HistoricalStockFilterClauses, tuple, tuple, tuple, tuple, tuple, tuple]:
         branch = request.branch
         location = (request.location or "").strip() or None
 
         sb9_filter, sb9_params = self._branch_filter_clause("B9_FILIAL", branch)
         sb9_b9_filter, sb9_b9_params = self._branch_filter_clause("B9.B9_FILIAL", branch)
+        sb9_official_filter, sb9_official_params = self._branch_filter_clause(
+            "B9.B9_FILIAL",
+            branch,
+        )
         sb9_loc_filter, sb9_loc_params = self._location_filter_clause("B9.B9_LOCAL", location)
         d3_filter, d3_params = self._branch_filter_clause("D3.D3_FILIAL", branch)
         d3_loc_filter, d3_loc_params = self._location_filter_clause("D3.D3_LOCAL", location)
@@ -69,20 +85,35 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         filters = HistoricalStockFilterClauses(
             sb9_branch_filter=sb9_filter,
             sb9_branch_filter_b9=sb9_b9_filter,
+            sb9_branch_filter_official=sb9_official_filter,
             sb9_location_filter=sb9_loc_filter,
             d3_branch_filter=d3_filter,
             d3_location_filter=d3_loc_filter,
         )
-        return filters, sb9_params, sb9_b9_params, sb9_loc_params, d3_params, d3_loc_params
+        return (
+            filters,
+            sb9_params,
+            sb9_b9_params,
+            sb9_official_params,
+            sb9_loc_params,
+            d3_params,
+            d3_loc_params,
+        )
 
     def _format_historical_bundle_sql(
         self,
         request: GetStockValueRequest,
     ) -> tuple[str, tuple]:
-        period_start, period_end_exclusive = self._resolve_historical_period(request)
-        filters, sb9_params, sb9_b9_params, sb9_loc_params, d3_params, d3_loc_params = (
-            self._historical_filter_clauses(request)
-        )
+        period_start, period_end, period_end_exclusive = self._resolve_historical_period(request)
+        (
+            filters,
+            sb9_params,
+            sb9_b9_params,
+            sb9_official_params,
+            sb9_loc_params,
+            d3_params,
+            d3_loc_params,
+        ) = self._historical_filter_clauses(request)
 
         sql = format_historical_stock_sql(
             summary_only=request.summary_only,
@@ -91,23 +122,56 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         )
         params = build_historical_stock_params(
             period_start=period_start,
+            period_end=period_end,
             period_end_exclusive=period_end_exclusive,
             sb9_params=sb9_params,
             sb9_b9_params=sb9_b9_params,
+            sb9_official_params=sb9_official_params,
             sb9_loc_params=sb9_loc_params,
             d3_params=d3_params,
             d3_loc_params=d3_loc_params,
+            include_breakdown_select=False,
         )
         return sql, params
 
-    def _should_fan_out_consolidated_summary(self, request: GetStockValueRequest) -> bool:
-        if not request.summary_only:
-            return False
+    def _format_historical_breakdown_sql(
+        self,
+        request: GetStockValueRequest,
+    ) -> tuple[str, tuple]:
+        period_start, period_end, period_end_exclusive = self._resolve_historical_period(request)
+        (
+            filters,
+            sb9_params,
+            sb9_b9_params,
+            sb9_official_params,
+            sb9_loc_params,
+            d3_params,
+            d3_loc_params,
+        ) = self._historical_filter_clauses(request)
+
+        sql = format_historical_breakdown_sql(filters=filters)
+        params = build_historical_stock_params(
+            period_start=period_start,
+            period_end=period_end,
+            period_end_exclusive=period_end_exclusive,
+            sb9_params=sb9_params,
+            sb9_b9_params=sb9_b9_params,
+            sb9_official_params=sb9_official_params,
+            sb9_loc_params=sb9_loc_params,
+            d3_params=d3_params,
+            d3_loc_params=d3_loc_params,
+            include_breakdown_select=True,
+        )
+        return sql, params
+
+    def _should_fan_out_consolidated(self, request: GetStockValueRequest) -> bool:
         if (request.branch or "").strip():
             return False
         if (request.location or "").strip():
             return False
-        return True
+        if self._uses_historical_estimation(request):
+            return True
+        return request.summary_only
 
     def _branch_stock_request(
         self,
@@ -120,7 +184,8 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             start_date=request.start_date,
             end_date=request.end_date,
             top_limit=request.top_limit,
-            summary_only=True,
+            summary_only=request.summary_only,
+            stock_method=request.stock_method,
         )
 
     def _merge_consolidated_summary_bundle(
@@ -131,18 +196,32 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         location_label: str,
     ) -> dict:
         summaries = [bundle.get("summary") or {} for bundle in branch_bundles]
-        by_branch = [
-            {
-                "branch": summary.get("branch"),
-                "total_stock_value": float(summary.get("total_stock_value") or 0),
-                "total_stock_quantity": float(summary.get("total_stock_quantity") or 0),
-                "total_records": int(summary.get("total_records") or 0),
-                "total_products": int(summary.get("total_products") or 0),
-                "total_locations": int(summary.get("total_locations") or 0),
-            }
-            for summary in summaries
-            if summary.get("branch")
+        breakdown_rows = [
+            row
+            for bundle in branch_bundles
+            for row in (bundle.get("estimation_meta") or {}).get("by_branch_breakdown") or []
         ]
+        by_branch: list[dict] = []
+        for bundle in branch_bundles:
+            by_branch.extend(bundle.get("by_branch") or [])
+        if not by_branch:
+            by_branch = self._merge_branch_with_breakdown(
+                [
+                    {
+                        "branch": summary.get("branch"),
+                        "total_stock_value": float(summary.get("total_stock_value") or 0),
+                        "total_stock_quantity": float(
+                            summary.get("total_stock_quantity") or 0
+                        ),
+                        "total_records": int(summary.get("total_records") or 0),
+                        "total_products": int(summary.get("total_products") or 0),
+                        "total_locations": int(summary.get("total_locations") or 0),
+                    }
+                    for summary in summaries
+                    if summary.get("branch")
+                ],
+                breakdown_rows,
+            )
 
         return {
             "summary": {
@@ -167,9 +246,88 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             "by_branch": by_branch,
             "by_location": [],
             "top_products": [],
+            "estimation_meta": self._build_estimation_meta(breakdown_rows),
+            "stock_method_resolved": self._resolve_consolidated_stock_method(branch_bundles),
         }
 
-    def _fetch_branch_summary_bundle(self, request: GetStockValueRequest) -> dict:
+    def _resolve_consolidated_stock_method(self, branch_bundles: list[dict]) -> str:
+        resolved_methods = {
+            bundle.get("stock_method_resolved")
+            for bundle in branch_bundles
+            if bundle.get("stock_method_resolved")
+        }
+        if STOCK_METHOD_RESOLVED_OFFICIAL in resolved_methods and len(resolved_methods) > 1:
+            return STOCK_METHOD_RESOLVED_MIXED
+        if resolved_methods == {STOCK_METHOD_RESOLVED_OFFICIAL}:
+            return STOCK_METHOD_RESOLVED_OFFICIAL
+        return STOCK_METHOD_RESOLVED_ESTIMATED
+
+    def _merge_consolidated_full_bundle(
+        self,
+        branch_bundles: list[dict],
+        *,
+        branch_label: str,
+        location_label: str,
+        top_limit: int,
+    ) -> dict:
+        summary_bundle = self._merge_consolidated_summary_bundle(
+            branch_bundles,
+            branch_label=branch_label,
+            location_label=location_label,
+        )
+        by_location: list[dict] = []
+        top_products: list[dict] = []
+        for bundle in branch_bundles:
+            by_location.extend(bundle.get("by_location") or [])
+            top_products.extend(bundle.get("top_products") or [])
+
+        top_products = sorted(
+            top_products,
+            key=lambda row: (
+                -float(row.get("total_stock_value") or 0),
+                str(row.get("product_code") or ""),
+            ),
+        )[: max(1, top_limit)]
+
+        resolved_methods = {
+            bundle.get("stock_method_resolved")
+            for bundle in branch_bundles
+            if bundle.get("stock_method_resolved")
+        }
+        if STOCK_METHOD_RESOLVED_OFFICIAL in resolved_methods and len(resolved_methods) > 1:
+            stock_method_resolved = STOCK_METHOD_RESOLVED_MIXED
+        elif resolved_methods == {STOCK_METHOD_RESOLVED_OFFICIAL}:
+            stock_method_resolved = STOCK_METHOD_RESOLVED_OFFICIAL
+        else:
+            stock_method_resolved = STOCK_METHOD_RESOLVED_ESTIMATED
+
+        return {
+            **summary_bundle,
+            "by_location": by_location,
+            "top_products": top_products,
+            "stock_method_resolved": stock_method_resolved,
+        }
+
+    def _fetch_consolidated_bundle(self, request: GetStockValueRequest) -> dict:
+        branch_bundles = [
+            self._fetch_branch_bundle(self._branch_stock_request(request, branch))
+            for branch in _DEFAULT_STOCK_BRANCHES
+        ]
+        branch_label, location_label = self._labels(request)
+        if request.summary_only:
+            return self._merge_consolidated_summary_bundle(
+                branch_bundles,
+                branch_label=branch_label,
+                location_label=location_label,
+            )
+        return self._merge_consolidated_full_bundle(
+            branch_bundles,
+            branch_label=branch_label,
+            location_label=location_label,
+            top_limit=max(1, int(getattr(request, "top_limit", 10) or 10)),
+        )
+
+    def _fetch_branch_bundle(self, request: GetStockValueRequest) -> dict:
         cache_key = stock_value_cache_key(request)
         cached = get_cached_stock_value_bundle(cache_key)
         if cached is not None:
@@ -183,18 +341,136 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         set_cached_stock_value_bundle(cache_key, bundle)
         return bundle
 
-    def _fetch_consolidated_summary_bundle(self, request: GetStockValueRequest) -> dict:
-        branch_bundles = [
-            self._fetch_branch_summary_bundle(self._branch_stock_request(request, branch))
-            for branch in _DEFAULT_STOCK_BRANCHES
-        ]
+    def _official_filter_clauses(
+        self,
+        request: GetStockValueRequest,
+    ) -> tuple[OfficialClosureFilterClauses, tuple, tuple]:
+        branch = request.branch
+        location = (request.location or "").strip() or None
+        sb9_b9_filter, sb9_b9_params = self._branch_filter_clause("B9.B9_FILIAL", branch)
+        sb9_loc_filter, sb9_loc_params = self._location_filter_clause("B9.B9_LOCAL", location)
+        return (
+            OfficialClosureFilterClauses(
+                sb9_branch_filter_b9=sb9_b9_filter,
+                sb9_location_filter=sb9_loc_filter,
+            ),
+            sb9_b9_params,
+            sb9_loc_params,
+        )
 
+    def _format_official_closure_bundle_sql(
+        self,
+        request: GetStockValueRequest,
+    ) -> tuple[str, tuple]:
+        _period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
+            request
+        )
+        filters, sb9_b9_params, sb9_loc_params = self._official_filter_clauses(request)
+        sql = format_official_closure_sql(
+            summary_only=request.summary_only,
+            filters=filters,
+            top_limit=max(1, int(getattr(request, "top_limit", 10) or 10)),
+        )
+        params = build_official_closure_params(
+            period_end=period_end,
+            sb9_b9_params=sb9_b9_params,
+            sb9_loc_params=sb9_loc_params,
+        )
+        return sql, params
+
+    def _build_official_estimation_meta(
+        self,
+        *,
+        period_end: str,
+        summary: dict,
+    ) -> dict:
+        total_value = float(summary.get("total_stock_value") or 0)
+        return {
+            "closing_base_date": None,
+            "closing_base_value": None,
+            "bridge_value": None,
+            "period_net_value": None,
+            "official_closure_available": True,
+            "official_closure_date": period_end,
+            "official_closure_value": total_value,
+            "official_closure_on_period_end": True,
+            "by_branch_breakdown": [],
+        }
+
+    def _fetch_official_closure_bundle(
+        self,
+        request: GetStockValueRequest,
+        *,
+        period_end: str,
+        method_plan: dict,
+    ) -> dict:
+        sql, params = self._format_official_closure_bundle_sql(request)
         branch_label, location_label = self._labels(request)
-        return self._merge_consolidated_summary_bundle(
-            branch_bundles,
+
+        with self as repo:
+            resultsets = repo.execute_query_multiple(sql, params)
+
+        bundle = self._bundle_from_resultsets(
+            resultsets,
             branch_label=branch_label,
             location_label=location_label,
         )
+        bundle["stock_method_resolved"] = STOCK_METHOD_RESOLVED_OFFICIAL
+        bundle["stock_method_plan"] = method_plan
+        bundle["estimation_meta"] = self._build_official_estimation_meta(
+            period_end=period_end,
+            summary=bundle.get("summary") or {},
+        )
+        return bundle
+
+    def _fetch_estimated_historical_bundle(
+        self,
+        request: GetStockValueRequest,
+        *,
+        method_plan: dict,
+    ) -> dict:
+        sql, params = self._format_historical_bundle_sql(request)
+        branch_label, location_label = self._labels(request)
+        breakdown_rows = self._fetch_historical_breakdown_rows(request)
+
+        with self as repo:
+            resultsets = repo.execute_query_multiple(sql, params)
+
+        datasets = [item.get("data") or [] for item in resultsets]
+        summary_row = datasets[0][0] if datasets and datasets[0] else {}
+
+        if request.summary_only:
+            by_branch_seed: list[dict] = []
+            if breakdown_rows and request.branch:
+                by_branch_seed = [
+                    {
+                        "branch": request.branch,
+                        "total_stock_value": float(summary_row.get("total_stock_value") or 0),
+                        "total_stock_quantity": float(
+                            summary_row.get("total_stock_quantity") or 0
+                        ),
+                        "total_records": int(summary_row.get("total_records") or 0),
+                        "total_products": int(summary_row.get("total_products") or 0),
+                        "total_locations": int(summary_row.get("total_locations") or 0),
+                    }
+                ]
+            bundle = self._bundle_from_resultsets(
+                [{"data": [summary_row]}, {"data": by_branch_seed}],
+                branch_label=branch_label,
+                location_label=location_label,
+                breakdown_rows=breakdown_rows,
+            )
+        else:
+            bundle = self._bundle_from_resultsets(
+                resultsets,
+                branch_label=branch_label,
+                location_label=location_label,
+                breakdown_rows=breakdown_rows,
+            )
+
+        bundle["stock_method_resolved"] = STOCK_METHOD_RESOLVED_ESTIMATED
+        bundle["stock_method_plan"] = method_plan
+        return bundle
 
     def _build_filters(self, request: GetStockValueRequest):
         qb = QueryBuilder()
@@ -229,6 +505,86 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             "total_locations": int(row.get("total_locations") or 0),
         }
 
+    def _normalize_branch_breakdown_row(self, row: dict) -> dict:
+        return {
+            "branch": row.get("branch"),
+            "closing_base_date": row.get("closing_base_date") or None,
+            "closing_base_value": float(row.get("closing_base_value") or 0),
+            "bridge_value": float(row.get("bridge_value") or 0),
+            "period_net_value": float(row.get("period_net_value") or 0),
+            "official_closure_date": row.get("official_closure_date") or None,
+            "official_closure_value": float(row.get("official_closure_value") or 0)
+            if row.get("official_closure_value") not in (None, "")
+            else None,
+            "official_closure_available": bool(int(row.get("official_closure_available") or 0)),
+            "official_closure_on_period_end": bool(
+                int(row.get("official_closure_on_period_end") or 0)
+            ),
+        }
+
+    def _merge_branch_with_breakdown(
+        self,
+        branch_rows: list[dict],
+        breakdown_rows: list[dict],
+    ) -> list[dict]:
+        breakdown_by_branch = {
+            str(row.get("branch") or "").strip(): row for row in breakdown_rows
+        }
+        merged: list[dict] = []
+        seen: set[str] = set()
+
+        for row in branch_rows:
+            branch = str(row.get("branch") or "").strip()
+            seen.add(branch)
+            breakdown = breakdown_by_branch.get(branch) or {}
+            merged.append({**row, **{k: v for k, v in breakdown.items() if k != "branch"}})
+
+        for branch, breakdown in breakdown_by_branch.items():
+            if branch in seen:
+                continue
+            merged.append(
+                {
+                    "branch": branch,
+                    "total_stock_value": 0.0,
+                    "total_stock_quantity": 0.0,
+                    "total_records": 0,
+                    "total_products": 0,
+                    "total_locations": 0,
+                    **{k: v for k, v in breakdown.items() if k != "branch"},
+                }
+            )
+
+        return sorted(merged, key=lambda item: str(item.get("branch") or ""))
+
+    def _build_estimation_meta(self, breakdown_rows: list[dict]) -> dict:
+        if not breakdown_rows:
+            return {}
+
+        normalized = [self._normalize_branch_breakdown_row(row) for row in breakdown_rows]
+        official_rows = [row for row in normalized if row.get("official_closure_available")]
+
+        return {
+            "closing_base_date": normalized[0].get("closing_base_date")
+            if len(normalized) == 1
+            else None,
+            "closing_base_value": sum(row.get("closing_base_value") or 0 for row in normalized),
+            "bridge_value": sum(row.get("bridge_value") or 0 for row in normalized),
+            "period_net_value": sum(row.get("period_net_value") or 0 for row in normalized),
+            "official_closure_available": bool(official_rows),
+            "official_closure_date": official_rows[0].get("official_closure_date")
+            if len(official_rows) == 1
+            else None,
+            "official_closure_value": sum(
+                row.get("official_closure_value") or 0 for row in official_rows
+            )
+            if official_rows
+            else None,
+            "official_closure_on_period_end": any(
+                row.get("official_closure_on_period_end") for row in normalized
+            ),
+            "by_branch_breakdown": normalized,
+        }
+
     def _normalize_branch_rows(self, rows: list[dict]) -> list[dict]:
         return [
             {
@@ -238,6 +594,20 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                 "total_records": int(row.get("total_records") or 0),
                 "total_products": int(row.get("total_products") or 0),
                 "total_locations": int(row.get("total_locations") or 0),
+                **{
+                    key: row.get(key)
+                    for key in (
+                        "closing_base_date",
+                        "closing_base_value",
+                        "bridge_value",
+                        "period_net_value",
+                        "official_closure_date",
+                        "official_closure_value",
+                        "official_closure_available",
+                        "official_closure_on_period_end",
+                    )
+                    if key in row
+                },
             }
             for row in rows
         ]
@@ -276,6 +646,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         *,
         branch_label: str,
         location_label: str,
+        breakdown_rows: list[dict] | None = None,
     ) -> dict:
         datasets = [item.get("data") or [] for item in resultsets]
         summary_row = datasets[0][0] if datasets and datasets[0] else {}
@@ -283,28 +654,57 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         by_location_rows = datasets[2] if len(datasets) > 2 else []
         top_product_rows = datasets[3] if len(datasets) > 3 else []
 
-        return {
+        normalized_breakdown = [
+            self._normalize_branch_breakdown_row(row) for row in (breakdown_rows or [])
+        ]
+        merged_by_branch = self._merge_branch_with_breakdown(
+            self._normalize_branch_rows(by_branch_rows),
+            normalized_breakdown,
+        )
+
+        bundle = {
             "summary": self._normalize_summary_row(
                 summary_row,
                 branch_label=branch_label,
                 location_label=location_label,
             ),
-            "by_branch": self._normalize_branch_rows(by_branch_rows),
+            "by_branch": merged_by_branch
+            if merged_by_branch
+            else self._normalize_branch_rows(by_branch_rows),
             "by_location": self._normalize_location_rows(by_location_rows),
             "top_products": self._normalize_top_product_rows(top_product_rows),
         }
+        if normalized_breakdown:
+            bundle["estimation_meta"] = self._build_estimation_meta(normalized_breakdown)
+        return bundle
+
+    def _fetch_historical_breakdown_rows(self, request: GetStockValueRequest) -> list[dict]:
+        sql, params = self._format_historical_breakdown_sql(request)
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+        return [self._normalize_branch_breakdown_row(row) for row in rows]
 
     def _fetch_historical_bundle(self, request: GetStockValueRequest) -> dict:
-        sql, params = self._format_historical_bundle_sql(request)
-        branch_label, location_label = self._labels(request)
+        _period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
+            request
+        )
+        breakdown_rows = self._fetch_historical_breakdown_rows(request)
+        method_plan = resolve_stock_method_plan(
+            request,
+            breakdown_rows,
+            period_end=period_end,
+        )
 
-        with self as repo:
-            resultsets = repo.execute_query_multiple(sql, params)
+        if method_plan["resolved"] == STOCK_METHOD_RESOLVED_OFFICIAL:
+            return self._fetch_official_closure_bundle(
+                request,
+                period_end=period_end,
+                method_plan=method_plan,
+            )
 
-        return self._bundle_from_resultsets(
-            resultsets,
-            branch_label=branch_label,
-            location_label=location_label,
+        return self._fetch_estimated_historical_bundle(
+            request,
+            method_plan=method_plan,
         )
 
     def _fetch_current_bundle(self, request: GetStockValueRequest) -> dict:
@@ -388,8 +788,8 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         if cached is not None:
             return cached
 
-        if self._should_fan_out_consolidated_summary(request):
-            bundle = self._fetch_consolidated_summary_bundle(request)
+        if self._should_fan_out_consolidated(request):
+            bundle = self._fetch_consolidated_bundle(request)
         elif self._uses_historical_estimation(request):
             bundle = self._fetch_historical_bundle(request)
         else:

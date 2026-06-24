@@ -18,6 +18,7 @@ import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import { StockEstimationBreakdown } from "../components/StockEstimationBreakdown";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
 import { CHART_COLORS } from "../constants/chartColors";
 import { SUPPLIES_ROUTES } from "../constants/routes";
@@ -64,6 +65,10 @@ export function StockPage({ pathname }: StockPageProps) {
     stockParams.start_date && stockParams.end_date
   );
   const isEstimatedStock = Boolean(data?.estimation?.enabled);
+
+  const isOfficialClosure =
+    data?.estimation?.method === "sb9_closure_on_end_date" ||
+    data?.estimation?.stock_method_resolved === "official_closure";
 
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const locationLabel = location ? `Local ${location}` : "Todas";
@@ -146,7 +151,12 @@ export function StockPage({ pathname }: StockPageProps) {
         title="Estoque"
         subtitle={
           hasHistoricalPeriod
-            ? "Valor estimado no período (SB9 + movimentações SD3)"
+            ? isOfficialClosure
+              ? `Fechamento oficial SB9 em ${data?.estimation?.end_date?.replace(
+                  /^(\d{4})(\d{2})(\d{2})$/,
+                  "$3/$2/$1"
+                ) ?? "fim do período"}`
+              : "Valor estimado no período (SB9 + movimentações SD3)"
             : "Posição atual por filial e localização (SB2)"
         }
         currentPath={pathname ?? SUPPLIES_ROUTES.stock}
@@ -164,11 +174,26 @@ export function StockPage({ pathname }: StockPageProps) {
         refreshing={refreshing}
       />
       <DataSourceBanner />
-      {isEstimatedStock ? (
-        <div className="ds-state-box" role="status">
-          {data?.estimation?.note ??
-            "Valor estimado; não substitui fechamento oficial da SB9."}
-        </div>
+      {isEstimatedStock && data?.estimation ? (
+        <>
+          <div
+            className={
+              isOfficialClosure
+                ? "ds-stock-estimation__official-banner"
+                : "ds-state-box"
+            }
+            role="status"
+          >
+            {data.estimation.note ??
+              "Valor estimado; não substitui fechamento oficial da SB9."}
+          </div>
+          {!isOfficialClosure ? (
+            <StockEstimationBreakdown
+              estimation={data.estimation}
+              byBranch={data.by_branch}
+            />
+          ) : null}
+        </>
       ) : null}
       <SuppliesStatusAlerts
         error={error}

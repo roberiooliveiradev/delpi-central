@@ -107,6 +107,14 @@ export type StockValueByLocation = {
   branch?: string;
   total_stock_value?: number;
   total_stock_quantity?: number;
+  closing_base_date?: string | null;
+  closing_base_value?: number;
+  bridge_value?: number;
+  period_net_value?: number;
+  official_closure_date?: string | null;
+  official_closure_value?: number | null;
+  official_closure_available?: boolean;
+  official_closure_on_period_end?: boolean;
 };
 
 export type StockTopProduct = {
@@ -120,9 +128,21 @@ export type StockTopProduct = {
 export type StockValueEstimation = {
   enabled: boolean;
   method: string;
+  stock_method?: string;
+  stock_method_resolved?: string;
   start_date: string;
+  end_date?: string;
   end_date_exclusive: string;
   note: string;
+  closing_base_date?: string | null;
+  closing_base_value?: number;
+  bridge_value?: number;
+  period_net_value?: number;
+  official_closure_available?: boolean;
+  official_closure_date?: string | null;
+  official_closure_value?: number | null;
+  official_closure_on_period_end?: boolean;
+  data_quality_warning?: string;
 };
 
 export type StockValueData = {

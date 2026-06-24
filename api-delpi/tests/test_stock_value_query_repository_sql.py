@@ -5,6 +5,7 @@ from app.application.services.supplies.stock_value_cache import stock_value_cach
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
     HistoricalStockFilterClauses,
     build_historical_stock_params,
+    format_historical_breakdown_sql,
     format_historical_stock_sql,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_query_repository import (
@@ -14,6 +15,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_quer
 _EMPTY_FILTERS = HistoricalStockFilterClauses(
     sb9_branch_filter="",
     sb9_branch_filter_b9="",
+    sb9_branch_filter_official="",
     sb9_location_filter="",
     d3_branch_filter="",
     d3_location_filter="",
@@ -71,15 +73,36 @@ def test_historical_params_apply_d3_filters_once() -> None:
     assert params.count("01") == 3
 
 
+def test_historical_summary_only_sql_skips_breakdown_ctes() -> None:
+    repo = StockValueQueryRepository()
+    request = GetStockValueRequest(
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        summary_only=True,
+    )
+
+    sql, _params = repo._format_historical_bundle_sql(request)
+
+    assert "branch_breakdown" not in sql
+    assert "FROM item_totals" in sql
+
+    breakdown_sql = format_historical_breakdown_sql(filters=_EMPTY_FILTERS)
+    assert "branch_breakdown" in breakdown_sql
+    assert "official_closure_on_period_end" in breakdown_sql
+
+
 def test_build_historical_stock_params_matches_cte_placeholder_order() -> None:
     params = build_historical_stock_params(
         period_start="20260401",
+        period_end="20260430",
         period_end_exclusive="20260501",
         sb9_params=("01",),
         sb9_b9_params=("01",),
+        sb9_official_params=("01",),
         sb9_loc_params=("A1",),
         d3_params=("01",),
         d3_loc_params=("A1",),
+        include_breakdown_select=False,
     )
 
     assert params == (
@@ -97,6 +120,25 @@ def test_build_historical_stock_params_matches_cte_placeholder_order() -> None:
         "01",
         "A1",
     )
+
+
+def test_build_historical_breakdown_params_include_period_end() -> None:
+    params = build_historical_stock_params(
+        period_start="20260401",
+        period_end="20260430",
+        period_end_exclusive="20260501",
+        sb9_params=("01",),
+        sb9_b9_params=("01",),
+        sb9_official_params=("01",),
+        sb9_loc_params=(),
+        d3_params=("01",),
+        d3_loc_params=(),
+        include_breakdown_select=True,
+    )
+
+    assert params[-1] == "20260430"
+    assert params[-3] == "20260430"
+    assert params.count("01") == 4
 
 
 def test_movimentos_sd3_uses_single_range_filter() -> None:
@@ -200,22 +242,21 @@ def test_consolidated_summary_only_fans_out_per_branch() -> None:
 
     with patch.object(
         StockValueQueryRepository,
-        "_fetch_branch_summary_bundle",
+        "_fetch_branch_bundle",
         side_effect=fake_branch_bundle,
     ):
-        bundle = repo._fetch_consolidated_summary_bundle(request)
+        bundle = repo._fetch_consolidated_bundle(request)
 
     assert branch_calls == ["01", "02"]
     assert bundle["summary"]["total_stock_value"] == 200.0
     assert len(bundle["by_branch"]) == 2
 
 
-def test_get_stock_value_bundle_uses_fan_out_for_consolidated_summary() -> None:
+def test_get_stock_value_bundle_uses_fan_out_for_consolidated_historical() -> None:
     repo = StockValueQueryRepository()
     request = GetStockValueRequest(
         start_date="2026-04-01",
         end_date="2026-04-30",
-        summary_only=True,
     )
     expected = {
         "summary": {"branch": "consolidated", "total_stock_value": 1.0},
@@ -226,7 +267,7 @@ def test_get_stock_value_bundle_uses_fan_out_for_consolidated_summary() -> None:
 
     with patch.object(
         StockValueQueryRepository,
-        "_fetch_consolidated_summary_bundle",
+        "_fetch_consolidated_bundle",
         return_value=expected,
     ) as fan_out_mock:
         with patch.object(
