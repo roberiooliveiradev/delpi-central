@@ -53,7 +53,7 @@ O ramo legacy (~520 linhas) de `ChatPresentationMetadataPipelineService` foi **e
 | KPI / chart | `ExternalActionKpiChartPresenter` |
 | Tabela genérica | `presentation_table_host_service` + `ChatPresentationOperationalTableService` |
 | Comentário operacional | `ChatDataInsightService` → `ChatDataInsightEnrichmentService` |
-| Decisão Automático | `ChatPresentationDecisionService` + `ChatPresentationViewIntentService` |
+| Decisão Automático | `ChatPresentationDecisionService` (fachada) → score / metadata / builder / intent operacional |
 | Formato explícito (toolbar) | `ChatToolContextFormatService` + `ChatPresentationPrimaryViewService` |
 | Prosa template vs LLM | `ChatPresentationProseDeliveryService` (turn completion) + `ChatPresentationDataOnlyProseService` (pipeline) |
 | Perfis / pathRules | `ChatPresentationProfileService` + `presentation_profiles.json` |
@@ -151,6 +151,17 @@ Turn completion (`ChatPresentationLlmProseDecouplingService`) permanece para too
 ### Fase 5 — pruning single (jun/2026)
 
 Em `layoutMode: single`, o pruning **não** aplica allowlist de tail do stack; `stackPresentationPlan` fica mínimo (`layoutMode: single`, `renderHints` apenas).
+
+### Fase 6 — slim decisão (jun/2026)
+
+Delegates extraídos (score, metadata, builder, intent operacional). `ChatPresentationDecisionService` = fachada; lógica nova vai nos módulos da tabela abaixo.
+
+| Módulo | Papel |
+|--------|-------|
+| `ChatPresentationAutomaticScoreService` | scoring Automático |
+| `ChatPresentationDecisionMetadataService` | inspeção de slots/metadata |
+| `ChatPresentationDecisionBuilderService` | construção de `presentationDecision` |
+| `ChatPresentationOperationalIntentDecisionService` | ramos operacionais por perfil |
 
 ---
 
