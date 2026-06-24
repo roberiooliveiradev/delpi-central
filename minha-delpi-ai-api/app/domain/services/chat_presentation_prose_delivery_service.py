@@ -387,6 +387,25 @@ class ChatPresentationProseDeliveryService:
         )
 
     @classmethod
+    def should_preserve_template_markdown_over_data_answer(
+        cls,
+        markdown: str,
+        metadata: dict[str, Any],
+    ) -> bool:
+        api_meta = metadata.get("apiDelpiResponseMeta")
+        entity = (
+            str(api_meta.get("entity") or "").strip()
+            if isinstance(api_meta, dict)
+            else None
+        ) or None
+        path = str(metadata.get("path") or "")
+
+        if ChatPresentationProfileService.data_answer_lead_alignment(path, entity) != "preserve_template":
+            return False
+
+        return ChatPresentationProfileService.prose_delivery_mode(entity=entity, path=path) == MODE_TEMPLATE
+
+    @classmethod
     def _qualifies_llm_prose(
         cls,
         message: str | None,

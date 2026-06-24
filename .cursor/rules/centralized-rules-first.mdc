@@ -24,6 +24,16 @@ alwaysApply: true
 | Dicas visuais (tabela/árvore) | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | `tableVisualizationHint` em presenter/markdown |
 | Formato Automático (tabela vs gráfico) | `ChatPresentationDataShapeAnalyzer` (`viewIntent`) + `ChatPresentationViewIntentService` + perfis em `presentation_profiles.json` | Scoring ou default de chart só no MFE; catch-all de path sem `entityProfiles` |
 | Nova rota api-delpi (contrato + perfil + CI) | **`new-api-route-checklist.mdc`** + `operational_route_registry.json` | Endpoint só na api-delpi sem registry, contrato entitySet ou gate `--check-profiles` |
+| Veredito factual / coerência síntese LLM | `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService` (por `profileKey`) | Serviço `*RouteName*` ou `if path` em enrichment/quality |
+| Prosa template vs lead `dataAnswer` | `presentation_profiles` → `dataAnswerLeadAlignment` + `ChatPresentationProseDeliveryService` | Heurística de markdown no `ChatRichPresentationTextService` |
+
+## Desacoplamento vs. centralização
+
+- **Desacoplamento:** separar camadas (presenter / pipeline / MFE) e contratos (`metadata`, perfil JSON); código transversal sem nome de rota.
+- **Centralização:** uma fonte de verdade (DRY) — necessária, mas **não substitui** perfil declarativo nem serviço transversal.
+- **Anti-padrão:** `ChatOperational{RouteName}Service` para comportamento que deveria ser `profileKey` + JSON + serviço genérico.
+
+Ver definição completa: `presentation-operational-decoupling.mdc`.
 
 ## O que NÃO fazer
 
@@ -31,6 +41,7 @@ alwaysApply: true
 - `getPresentationTitle` + `stripLeadingMarkdownTitle` copiados em novo componente.
 - `hasMarkdownSyntax` + reveal incremental reimplementados fora de `assistantProseRendering`.
 - Novo `if (quem é vc)` em use case em vez de `resolve_skip_tool_flags` / `ChatAssistantIdentityService`.
+- Serviço de domínio nomeado pela rota para regra configurável por perfil — usar `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService`.
 - Fix só no agente ou só na UI quando o comportamento é transversal ao chat base.
 
 ## O que fazer

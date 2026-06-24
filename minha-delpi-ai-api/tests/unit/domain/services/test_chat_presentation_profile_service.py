@@ -149,6 +149,23 @@ def test_humanized_narrative_mode_from_profile() -> None:
     )
 
 
+def test_data_answer_lead_alignment_from_profile() -> None:
+    assert (
+        ChatPresentationProfileService.data_answer_lead_alignment(
+            "/products/90260882/structure/exclusivity",
+            "product_structure_exclusivity",
+        )
+        == "preserve_template"
+    )
+    assert (
+        ChatPresentationProfileService.data_answer_lead_alignment(
+            "/products/90260144/stock",
+            "product_stock",
+        )
+        == "inject"
+    )
+
+
 def test_resolve_default_preferred_format_stock_text() -> None:
     preferred = ChatPresentationProfileService.resolve_default_preferred_format(
         path="/products/90260144/stock",

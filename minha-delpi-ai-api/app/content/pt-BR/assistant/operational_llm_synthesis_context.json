@@ -2,7 +2,6 @@
   "title": "Fatos já consultados (responda com base neles — não peça acesso):",
   "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, gráfico). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta.",
   "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta». **Vereditos Sim/Não:** quando os fatos trouxerem resposta direta (ex.: MPs exclusivas = 0), reproduza o veredito sem contradizê-lo.",
-  "structureExclusivityFidelityRule": "**Exclusividade de MPs:** MP exclusiva = usada em **apenas 1 PA**. Se KPI ou fatos indicarem **0 MPs exclusivas**, responda **Não** — as MPs são **compartilhadas** com outros PAs. **Proibido** afirmar «tem exclusividade» ou «exclusividade definida por MPs compartilhadas». **Proibido** usar «exclusiva» e «compartilhada» na mesma conclusão.",
   "maxChars": 480,
   "maxBriefProseChars": 220,
   "maxNormalProseChars": 520,
@@ -37,36 +36,6 @@
       "foram retornadas operações",
       "não retornadas nesta consulta",
       "não foram retornadas"
-    ],
-    "exclusivityContradictionTriggers": [
-      "exclusividade definida por",
-      "tem a exclusividade",
-      "tem exclusividade definida",
-      "exclusividade e representada",
-      "exclusividade é representada",
-      "mps exclusivas compartilhadas",
-      "matérias-primas exclusivas compartilhadas",
-      "materias-primas exclusivas compartilhadas",
-      "exclusividade por matérias-primas compartilhadas",
-      "exclusividade por mps compartilhadas"
-    ],
-    "exclusivityPositiveMarkers": [
-      "exclusiva",
-      "exclusivo",
-      "exclusividade"
-    ],
-    "exclusivitySharedMarkers": [
-      "compartilhada",
-      "compartilhado",
-      "compartilhadas",
-      "compartilhados"
-    ],
-    "exclusivityVerdictNoMarkers": [
-      "nenhuma mp exclusiva",
-      "não há mp exclusiva",
-      "nao ha mp exclusiva",
-      "0 mp exclusiva",
-      "0 mps exclusivas"
     ],
     "hallucinationMarkers": [
       "insumo farmaceutico",

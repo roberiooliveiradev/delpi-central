@@ -10,7 +10,7 @@ alwaysApply: true
 | Regra | Quando consultar |
 |-------|------------------|
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
-| `presentation-operational-decoupling.mdc` | Apresentação operacional — cobertura, consolidado, dataAnswer vs markdown |
+| `presentation-operational-decoupling.mdc` | Apresentação operacional — cobertura, consolidado, dataAnswer vs markdown; **definição de desacoplamento** |
 | `clean-code-architecture-guardrails.mdc` | Desvio de camada, patch local, contrato metadata ambíguo |
 | `test-and-commit.mdc` | Ao concluir alteração de código — testes; commit só se pedido |
 

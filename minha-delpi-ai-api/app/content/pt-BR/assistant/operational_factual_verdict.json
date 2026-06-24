@@ -1,0 +1,50 @@
+{
+  "profiles": {
+    "structure_exclusivity": {
+      "pathMarkers": ["/structure/exclusivity"],
+      "fidelityRule": "**Exclusividade de MPs:** MP exclusiva = usada em **apenas 1 PA**. Se KPI ou fatos indicarem **0 MPs exclusivas**, responda **Não** — as MPs são **compartilhadas** com outros PAs. **Proibido** afirmar «tem exclusividade» ou «exclusividade definida por MPs compartilhadas». **Proibido** usar «exclusiva» e «compartilhada» na mesma conclusão.",
+      "scalarFromKpi": {
+        "labelMarkers": ["mps exclusivas", "mp exclusiva"]
+      },
+      "llmFacts": {
+        "verdictNo": "Veredito canônico: Não — nenhuma MP exclusiva (0 MPs exclusivas no KPI).",
+        "verdictYes": "Veredito canônico: Sim — {count} MP(s) exclusiva(s) na estrutura.",
+        "markdownVerdictLinePrefix": "**resposta:**"
+      },
+      "factualCoherence": {
+        "contradictionTriggers": [
+          "exclusividade definida por",
+          "tem a exclusividade",
+          "tem exclusividade definida",
+          "exclusividade e representada",
+          "exclusividade é representada",
+          "mps exclusivas compartilhadas",
+          "matérias-primas exclusivas compartilhadas",
+          "materias-primas exclusivas compartilhadas",
+          "exclusividade por matérias-primas compartilhadas",
+          "exclusividade por mps compartilhadas"
+        ],
+        "positiveMarkers": ["exclusiva", "exclusivo", "exclusividade"],
+        "sharedMarkers": [
+          "compartilhada",
+          "compartilhado",
+          "compartilhadas",
+          "compartilhados"
+        ],
+        "verdictNoMarkers": [
+          "nenhuma mp exclusiva",
+          "não há mp exclusiva",
+          "nao ha mp exclusiva",
+          "0 mp exclusiva",
+          "0 mps exclusivas"
+        ],
+        "definedWithSharedMarker": "definida",
+        "gapDetails": {
+          "positiveAndShared": "exclusiva + compartilhada na mesma resposta",
+          "definedWithShared": "exclusividade definida com MPs compartilhadas"
+        }
+      },
+      "qualityGapKey": "exclusivityContradiction"
+    }
+  }
+}

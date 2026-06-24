@@ -228,45 +228,6 @@ class ChatResponseModeSynthesisQualityContentService:
         return cls.coherence_limit_int("ungroundedGroupClaimMinTokenLength", default=4)
 
     @classmethod
-    def exclusivity_contradiction_triggers(cls) -> tuple[str, ...]:
-        raw = cls._coherence_checks_node().get("exclusivityContradictionTriggers")
-
-        if not isinstance(raw, list):
-            return ()
-
-        return tuple(
-            ChatMessageNormalizationService.normalize_for_matching(str(item))
-            for item in raw
-            if str(item or "").strip()
-        )
-
-    @classmethod
-    def exclusivity_positive_markers(cls) -> tuple[str, ...]:
-        raw = cls._coherence_checks_node().get("exclusivityPositiveMarkers")
-
-        if not isinstance(raw, list):
-            return ()
-
-        return tuple(
-            ChatMessageNormalizationService.normalize_for_matching(str(item))
-            for item in raw
-            if str(item or "").strip()
-        )
-
-    @classmethod
-    def exclusivity_shared_markers(cls) -> tuple[str, ...]:
-        raw = cls._coherence_checks_node().get("exclusivitySharedMarkers")
-
-        if not isinstance(raw, list):
-            return ()
-
-        return tuple(
-            ChatMessageNormalizationService.normalize_for_matching(str(item))
-            for item in raw
-            if str(item or "").strip()
-        )
-
-    @classmethod
     def numbered_run_min_dots(cls) -> int:
         return max(2, cls.coherence_limit_int("numberedRunMinDots", default=3))
 

@@ -165,25 +165,6 @@
       "componentes eletricos",
       "componentes elétricos"
     ],
-    "ungroundedGroupClaimMinTokenLength": 4,
-    "exclusivityContradictionTriggers": [
-      "exclusividade definida por",
-      "tem a exclusividade",
-      "tem exclusividade definida",
-      "exclusividade e representada",
-      "mps exclusivas compartilhadas",
-      "matérias-primas exclusivas compartilhadas"
-    ],
-    "exclusivityPositiveMarkers": [
-      "exclusiva",
-      "exclusivo",
-      "exclusividade"
-    ],
-    "exclusivitySharedMarkers": [
-      "compartilhada",
-      "compartilhado",
-      "compartilhadas",
-      "compartilhados"
-    ]
+    "ungroundedGroupClaimMinTokenLength": 4
   }
 }

@@ -69,7 +69,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
 
         body = cls._strip_sparse_list_items(body)
         body = cls._strip_contradictory_claims(body, tool_calls)
-        body = cls._strip_exclusivity_contradictory_claims(body, tool_calls)
+        body = cls._strip_profile_factual_verdict_claims(body, tool_calls)
         body = cls._strip_hallucination_markers(body)
         body = cls._strip_deflection_markers(body)
         body = cls._strip_ungrounded_sentences(body, tool_calls)
@@ -339,98 +339,15 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         return " ".join(kept).strip()
 
     @classmethod
-    def _strip_exclusivity_contradictory_claims(cls, answer: str, tool_calls: list | None) -> str:
-        exclusive_count = cls._resolve_exclusive_raw_material_count(tool_calls)
-
-        if exclusive_count is None:
-            return answer
-
-        triggers = [
-            ChatMessageNormalizationService.normalize_for_matching(pattern)
-            for pattern in ChatOperationalLlmSynthesisContextContentService.exclusivity_contradiction_triggers()
-            if str(pattern or "").strip()
-        ]
-        positive_markers = [
-            ChatMessageNormalizationService.normalize_for_matching(marker)
-            for marker in ChatOperationalLlmSynthesisContextContentService.exclusivity_positive_markers()
-            if str(marker or "").strip()
-        ]
-        shared_markers = [
-            ChatMessageNormalizationService.normalize_for_matching(marker)
-            for marker in ChatOperationalLlmSynthesisContextContentService.exclusivity_shared_markers()
-            if str(marker or "").strip()
-        ]
-        verdict_no_markers = [
-            ChatMessageNormalizationService.normalize_for_matching(marker)
-            for marker in ChatOperationalLlmSynthesisContextContentService.exclusivity_verdict_no_markers()
-            if str(marker or "").strip()
-        ]
-
-        sentences = cls._SENTENCE_SPLIT_RE.split(answer.strip())
-        kept: list[str] = []
-
-        for sentence in sentences:
-            text = str(sentence or "").strip()
-
-            if not text:
-                continue
-
-            normalized = ChatMessageNormalizationService.normalize_for_matching(text)
-
-            if any(trigger in normalized for trigger in triggers):
-                continue
-
-            if exclusive_count == 0:
-                has_positive = any(marker in normalized for marker in positive_markers)
-                has_shared = any(marker in normalized for marker in shared_markers)
-
-                if has_positive and has_shared:
-                    continue
-
-                if has_positive and "definida" in normalized:
-                    continue
-
-            if exclusive_count > 0 and any(marker in normalized for marker in verdict_no_markers):
-                continue
-
-            kept.append(text)
-
-        if not kept:
-            return ""
-
-        return " ".join(kept).strip()
-
-    @classmethod
-    def _resolve_exclusive_raw_material_count(cls, tool_calls: list | None) -> int | None:
-        if not isinstance(tool_calls, list):
-            return None
-
-        from app.domain.services.chat_operational_llm_synthesis_context_service import (
-            ChatOperationalLlmSynthesisContextService,
+    def _strip_profile_factual_verdict_claims(cls, answer: str, tool_calls: list | None) -> str:
+        from app.domain.services.chat_operational_factual_verdict_service import (
+            ChatOperationalFactualVerdictService,
         )
 
-        for tool_call in tool_calls:
-            if str(tool_call.get("name") or "") != "execute_external_action":
-                continue
-
-            metadata = tool_call.get("metadata")
-
-            if not isinstance(metadata, dict) or not metadata.get("ok"):
-                continue
-
-            path = str(metadata.get("path") or "").lower()
-
-            if "/structure/exclusivity" not in path:
-                continue
-
-            count = ChatOperationalLlmSynthesisContextService._exclusive_raw_material_count_from_metadata(
-                metadata,
-            )
-
-            if count is not None:
-                return count
-
-        return None
+        return ChatOperationalFactualVerdictService.strip_contradictory_claims_for_tool_calls(
+            answer,
+            tool_calls,
+        )
 
     @classmethod
     def _strip_hallucination_markers(cls, answer: str) -> str:

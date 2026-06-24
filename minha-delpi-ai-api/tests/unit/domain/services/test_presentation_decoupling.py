@@ -21,6 +21,23 @@ from app.domain.services.chat_product_pricing_insight_service import (
 )
 
 
+from app.domain.services.chat_presentation_prose_delivery_service import (
+    ChatPresentationProseDeliveryService,
+)
+
+
+def test_data_answer_lead_preserved_when_profile_declares_template_alignment():
+    metadata = {
+        "path": "/products/90260882/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+    }
+
+    assert ChatPresentationProseDeliveryService.should_preserve_template_markdown_over_data_answer(
+        "**Resposta:** Não — nenhuma MP exclusiva.",
+        metadata,
+    )
+
+
 def test_operational_metadata_field_service_filters_technical_keys():
     filtered = ChatPresentationOperationalMetadataFieldService.filter_summary(
         {

@@ -625,6 +625,20 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         return "enrich"
 
     @classmethod
+    def data_answer_lead_alignment(
+        cls,
+        path: str | None,
+        entity: str | None = None,
+    ) -> str:
+        profile = cls.resolve_profile(path, entity)
+        mode = str(profile.get("dataAnswerLeadAlignment") or "inject").strip().lower()
+
+        if mode in {"inject", "preserve_template"}:
+            return mode
+
+        return "inject"
+
+    @classmethod
     def should_auto_force_chart(
         cls,
         path: str | None,

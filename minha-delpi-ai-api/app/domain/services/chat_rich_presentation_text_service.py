@@ -406,7 +406,14 @@ class ChatRichPresentationTextService:
         if not isinstance(data_answer, dict):
             return markdown
 
-        if cls._should_preserve_template_markdown_over_data_answer(markdown, metadata):
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if ChatPresentationProseDeliveryService.should_preserve_template_markdown_over_data_answer(
+            markdown,
+            metadata,
+        ):
             return cls._strip_operational_presenter_summary_paragraphs(markdown)
 
         lead = cls._resolve_data_answer_lead(data_answer)
@@ -417,43 +424,6 @@ class ChatRichPresentationTextService:
         body = cls._strip_operational_presenter_summary_paragraphs(markdown)
 
         return cls._inject_data_answer_lead_in_scope(body, lead)
-
-    @classmethod
-    def _should_preserve_template_markdown_over_data_answer(
-        cls,
-        markdown: str,
-        metadata: dict[str, Any],
-    ) -> bool:
-        from app.domain.services.chat_message_normalization_service import (
-            ChatMessageNormalizationService,
-        )
-        from app.domain.services.chat_presentation_profile_service import (
-            ChatPresentationProfileService,
-        )
-        from app.domain.services.chat_presentation_prose_delivery_service import (
-            MODE_TEMPLATE,
-        )
-
-        api_meta = metadata.get("apiDelpiResponseMeta")
-        entity = (
-            str(api_meta.get("entity") or "").strip()
-            if isinstance(api_meta, dict)
-            else None
-        ) or None
-        path = str(metadata.get("path") or "")
-
-        if ChatPresentationProfileService.prose_delivery_mode(entity=entity, path=path) != MODE_TEMPLATE:
-            return False
-
-        normalized = ChatMessageNormalizationService.normalize_for_matching(markdown)
-
-        if "resposta" in normalized and "exclusiv" in normalized:
-            return True
-
-        if "nenhuma mp exclusiva" in normalized:
-            return True
-
-        return False
 
     @classmethod
     def _strip_embedded_visual_sections_for_stack(cls, markdown: str) -> str:
