@@ -316,6 +316,17 @@ class ChatSchemaDrivenPresentationService:
         child_key = cls._detect_child_key(root)
 
         if child_key:
+            if child_key == "items" and cls.extract_tabular_rows(root):
+                first_item = root.get("items")
+
+                if (
+                    isinstance(first_item, list)
+                    and first_item
+                    and isinstance(first_item[0], dict)
+                    and not cls._detect_child_key(first_item[0])
+                ):
+                    return None
+
             return cls._build_tree_from_node(
                 root,
                 title=str(host._fallback_title(path) or cls._text("tableTitleFallback")),

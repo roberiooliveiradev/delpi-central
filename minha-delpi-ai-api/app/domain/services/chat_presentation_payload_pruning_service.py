@@ -69,7 +69,7 @@ class ChatPresentationPayloadPruningService:
             plan["tailVisualPolicy"] = "allowlist"
             return
 
-        plan["tailVisualPolicy"] = "legacy"
+        plan["tailVisualPolicy"] = "allowlist"
 
     @classmethod
     def _prune_table_primary_dashboard(
@@ -314,5 +314,5 @@ class ChatPresentationPayloadPruningService:
             hints = {}
             plan["renderHints"] = hints
 
-        hints["tailVisualPolicy"] = str(plan.get("tailVisualPolicy") or "legacy")
+        hints["tailVisualPolicy"] = str(plan.get("tailVisualPolicy") or "allowlist")
         hints["textRenderMode"] = cls._resolve_text_render_mode(metadata)

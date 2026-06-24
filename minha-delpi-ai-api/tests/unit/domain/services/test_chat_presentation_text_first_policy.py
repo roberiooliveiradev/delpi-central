@@ -3,8 +3,8 @@ from app.domain.services.chat_presentation_text_first_policy_service import (
 )
 
 
-def test_stock_simple_question_defaults_to_text_only_without_visual_bundle():
-    assert ChatPresentationTextFirstPolicyService.should_default_to_text_only(
+def test_stock_simple_question_keeps_table_primary_without_visual_bundle():
+    assert not ChatPresentationTextFirstPolicyService.should_default_to_text_only(
         path="/products/10080001/stock",
         entity="product_stock",
         user_message="estoque do produto 10080001",
@@ -59,7 +59,7 @@ def test_apply_text_primary_keeps_tree_for_structure_text_outline():
     assert metadata.get("treePresentation", {}).get("type") == "tree"
 
 
-def test_apply_text_primary_strips_auxiliary_presentations_for_stock():
+def test_apply_text_primary_skips_stock_when_table_is_primary():
     metadata = {
         "textPresentation": {"type": "markdown", "markdown": "### Estoque\n\n- Filial 01"},
         "presentation": {"type": "table", "rows": [{"branch": "01"}]},
@@ -75,9 +75,6 @@ def test_apply_text_primary_strips_auxiliary_presentations_for_stock():
         user_message="estoque do produto 10080001",
     )
 
-    assert applied is True
-    assert metadata.get("presentation") is None
-    assert "explicitSessionFormat" not in metadata
-    assert "treePresentation" not in metadata
-    assert metadata.get("tablePresentation", {}).get("type") == "table"
+    assert applied is False
+    assert metadata.get("presentation", {}).get("type") == "table"
     assert metadata.get("chartPresentation", {}).get("type") == "chart"

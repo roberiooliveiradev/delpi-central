@@ -142,6 +142,19 @@ class ChatPresentationApiDeliveredMetadataService:
             "apiDelpiResponseMeta": extract_response_meta(sanitized_data),
         }
 
+        if session_format:
+            from app.domain.services.chat_presentation_primary_view_service import (
+                ChatPresentationPrimaryViewService,
+            )
+
+            ChatPresentationPrimaryViewService.apply_session_preference(
+                metadata,
+                session_format,
+                data=sanitized_data,
+                path=resolved_path,
+                presenter=presenter,
+            )
+
         schema_labels = presenter._column_labels.merge_meta_field_labels(
             presenter._column_labels.resolve_schema_labels(response_schema),
             sanitized_data,

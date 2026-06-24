@@ -21,8 +21,8 @@ def test_enforce_single_text_decision_for_explicit_session():
 
     decision = metadata["presentationDecision"]
 
-    assert decision["layoutMode"] == "stack"
-    assert "table" in decision["visualOrder"]
+    assert decision["layoutMode"] == "single"
+    assert decision["visualOrder"] == ["text"]
     assert metadata.get("tablePresentations") is not None
     assert metadata.get("treePresentation") is not None
 
@@ -60,7 +60,7 @@ def test_finalize_explicit_text_mode_preserves_payload_after_embed():
     assert metadata.get("tablePresentations") is not None
     assert metadata.get("treePresentation") is not None
     assert metadata.get("kpiPresentation") is not None
-    assert metadata["presentationDecision"]["layoutMode"] == "stack"
+    assert metadata["presentationDecision"]["layoutMode"] == "single"
     assert metadata["presentationDecision"]["selected"] == "text"
 
 

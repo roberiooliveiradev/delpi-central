@@ -190,7 +190,7 @@ def test_data_answer_lead_alignment_from_profile() -> None:
     )
 
 
-def test_resolve_default_preferred_format_stock_text() -> None:
+def test_resolve_default_preferred_format_stock_table() -> None:
     preferred = ChatPresentationProfileService.resolve_default_preferred_format(
         path="/products/90260144/stock",
         has_table=True,
@@ -198,7 +198,7 @@ def test_resolve_default_preferred_format_stock_text() -> None:
         has_text=True,
     )
 
-    assert preferred == "text"
+    assert preferred == "table"
 
 
 def test_resolve_default_preferred_format_structure_tree() -> None:

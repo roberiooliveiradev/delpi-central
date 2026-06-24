@@ -329,7 +329,23 @@ class ChatPresentationDecisionService:
         ):
             return True
 
-        entity = cls._entity_from_metadata(metadata)
+        resolved_entity = entity or cls._entity_from_metadata(metadata)
+
+        if not resolved_entity and path:
+            from app.domain.services.chat_operational_response_profile_service import (
+                ChatOperationalResponseProfileService,
+            )
+
+            profile_entity = str(
+                ChatOperationalResponseProfileService.resolve(
+                    metadata if isinstance(metadata, dict) else {},
+                    path=path,
+                ).entity
+                or ""
+            ).strip()
+
+            if profile_entity:
+                resolved_entity = profile_entity
 
         from app.domain.services.chat_presentation_view_intent_service import (
             ChatPresentationViewIntentService,
@@ -337,7 +353,7 @@ class ChatPresentationDecisionService:
 
         if ChatPresentationViewIntentService.prefers_table_for_automatic(
             path=path,
-            entity=entity,
+            entity=resolved_entity,
             data_shape=(
                 decision.get("dataShape")
                 if isinstance(decision, dict) and isinstance(decision.get("dataShape"), dict)
@@ -401,6 +417,14 @@ class ChatPresentationDecisionService:
             if bucket == "chart"
             else best_view
         )
+
+        if not cls._view_has_presentation(metadata, selected):
+            for view in ranked:
+                if view != selected and cls._view_has_presentation(metadata, view):
+                    selected = view
+                    bucket = cls._score_bucket_for_view(view)
+                    break
+
         fallback_candidates = [view for view in ranked if view != best_view]
         fallback = fallback_candidates[0] if fallback_candidates else str(decision.get("fallback") or "text")
 
@@ -432,6 +456,74 @@ class ChatPresentationDecisionService:
             return raw_entity.strip()
 
         return None
+
+    @classmethod
+    def _view_has_presentation(cls, metadata: dict[str, Any], view: str) -> bool:
+        token = str(view or "").strip().lower()
+
+        if token in {"", "canvas", "checklist"}:
+            return True
+
+        if token == "text":
+            text_presentation = metadata.get("textPresentation")
+
+            return isinstance(text_presentation, dict) and bool(
+                str(text_presentation.get("markdown") or "").strip()
+            )
+
+        slot_by_view = {
+            "table": "tablePresentation",
+            "tree": "treePresentation",
+            "chart": "chartPresentation",
+            "kpi": "kpiPresentation",
+            "dashboard": "dashboardPresentation",
+        }
+        slot_key = slot_by_view.get(token)
+        presentation = metadata.get(slot_key) if slot_key else None
+
+        if presentation is None and (
+            token in set(_CHART_TYPE_TO_SELECTED.values()) or token == "chart"
+        ):
+            presentation = metadata.get("chartPresentation")
+
+        if isinstance(presentation, dict):
+            presentation_type = str(presentation.get("type") or "").strip().lower()
+
+            if token in set(_CHART_TYPE_TO_SELECTED.values()) or token == "chart":
+                return presentation_type in {
+                    "chart",
+                    "line_chart",
+                    "bar_chart",
+                    "horizontal_bar",
+                    "donut",
+                    "area_chart",
+                }
+
+            return presentation_type == token or (
+                token == "table" and presentation_type == "table"
+            )
+
+        primary = metadata.get("presentation")
+
+        if isinstance(primary, dict):
+            presentation_type = str(primary.get("type") or "").strip().lower()
+
+            if token == "table":
+                return presentation_type == "table"
+
+            if token in _CHART_TYPE_TO_SELECTED.values() or token == "chart":
+                return presentation_type == "chart"
+
+            return presentation_type == token
+
+        if token == "table":
+            bundled = metadata.get("tablePresentations")
+
+            return isinstance(bundled, list) and any(
+                isinstance(item, dict) and item.get("type") == "table" for item in bundled
+            )
+
+        return False
 
     @classmethod
     def _metadata_has_visual(cls, metadata: dict[str, Any]) -> bool:
@@ -638,6 +730,7 @@ class ChatPresentationDecisionService:
             chart_presentation=chart_presentation,
             path=path,
             metadata=metadata,
+            user_preference=user_preference,
         )
 
         if intent_decision:
@@ -741,6 +834,22 @@ class ChatPresentationDecisionService:
 
         entity = cls._entity_from_metadata(metadata if isinstance(metadata, dict) else None)
 
+        if not entity and path:
+            from app.domain.services.chat_operational_response_profile_service import (
+                ChatOperationalResponseProfileService,
+            )
+
+            resolved_entity = str(
+                ChatOperationalResponseProfileService.resolve(
+                    metadata if isinstance(metadata, dict) else {},
+                    path=path,
+                ).entity
+                or ""
+            ).strip()
+
+            if resolved_entity:
+                entity = resolved_entity
+
         from app.domain.services.chat_presentation_view_intent_service import (
             ChatPresentationViewIntentService,
         )
@@ -752,6 +861,20 @@ class ChatPresentationDecisionService:
             user_message=message,
             has_table=bool(table_rows),
         )
+
+        if prefer_table:
+            return cls._build(
+                selected="table",
+                fallback="text",
+                reason=cls._reason("auditableList"),
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["table", "chart", "text", "kpi"],
+                ),
+                rows=table_rows,
+                intent=intent,
+                data_shape=shape,
+            )
 
         if (chart_presentation or (
             primary_presentation and primary_presentation.get("type") == "chart"
@@ -780,6 +903,20 @@ class ChatPresentationDecisionService:
             )
 
         if shape["rows"] == 1 and shape["hasNumeric"] and len(shape.get("numericKeys") or []) == 1:
+            if prefer_table:
+                return cls._build(
+                    selected="table",
+                    fallback="text",
+                    reason=cls._reason("auditableList"),
+                    available_views=cls._merge_views(
+                        available_formats,
+                        ["table", "chart", "text", "kpi"],
+                    ),
+                    rows=table_rows,
+                    intent=intent,
+                    data_shape=shape,
+                )
+
             return cls._build(
                 selected="kpi",
                 fallback="table",
@@ -1018,6 +1155,18 @@ class ChatPresentationDecisionService:
 
             if isinstance(raw_entity, str) and raw_entity.strip():
                 entity = raw_entity.strip()
+
+        if not entity and path:
+            from app.domain.services.chat_operational_response_profile_service import (
+                ChatOperationalResponseProfileService,
+            )
+
+            resolved_entity = str(
+                ChatOperationalResponseProfileService.resolve(metadata, path=path).entity or ""
+            ).strip()
+
+            if resolved_entity:
+                entity = resolved_entity
 
         cls._attach_scores_and_reading_layers(
             decision,
@@ -1417,6 +1566,7 @@ class ChatPresentationDecisionService:
         chart_presentation: dict[str, Any] | None,
         path: str | None = None,
         metadata: dict[str, Any] | None = None,
+        user_preference: str | None = None,
     ) -> dict[str, Any] | None:
         from app.domain.services.chat_presentation_rich_stack_policy_service import (
             ChatPresentationRichStackPolicyService,
@@ -1450,7 +1600,7 @@ class ChatPresentationDecisionService:
             path=path,
             metadata=rich_metadata,
             entity=entity,
-            user_preference=None,
+            user_preference=user_preference,
             user_message=message,
         ):
             table_rows = rows or cls._rows_from_metadata_tables(rich_metadata) or cls._rows_from_presentation(
@@ -1489,7 +1639,7 @@ class ChatPresentationDecisionService:
         if cls._should_default_analyser_stack_to_text(
             path=path,
             text_presentation=text_presentation,
-            user_preference=None,
+            user_preference=user_preference,
         ):
             table_rows = rows or cls._rows_from_metadata_tables(rich_metadata) or cls._rows_from_presentation(
                 table_presentation
@@ -1551,6 +1701,26 @@ class ChatPresentationDecisionService:
             )
         )
         row_count = len(table_rows or [])
+
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        if (
+            text_presentation
+            and ChatProductOverviewIntentService.is_product_overview_message(message)
+        ):
+            return cls._build(
+                selected="text",
+                fallback="table",
+                reason=cls._reason("productOverviewNarrative"),
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["text", "table", "tree", "chart"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
 
         if ChatPresentationOperationalDecisionService.should_prefer_pricing_narrative(
             path=path,
@@ -1626,26 +1796,6 @@ class ChatPresentationDecisionService:
                 available_views=cls._merge_views(
                     available_formats,
                     ["table", "chart", "text"],
-                ),
-                rows=table_rows,
-                intent=intent,
-            )
-
-        from app.domain.services.chat_product_overview_intent_service import (
-            ChatProductOverviewIntentService,
-        )
-
-        if (
-            text_presentation
-            and ChatProductOverviewIntentService.is_product_overview_message(message)
-        ):
-            return cls._build(
-                selected="text",
-                fallback="table",
-                reason=cls._reason("productOverviewNarrative"),
-                available_views=cls._merge_views(
-                    available_formats,
-                    ["text", "table", "tree", "chart"],
                 ),
                 rows=table_rows,
                 intent=intent,

@@ -288,10 +288,24 @@ class ChatPresentationDataOnlyProseService:
                 if ChatOperationalResponseProfileService.is_playbook_operational_entity(
                     entity,
                 ):
-                    return presenter._playbook_report()._playbook_entity_title(
-                        entity,
-                        table=False,
+                    from app.domain.services.chat_assistant_content_service import (
+                        ChatAssistantContentService,
                     )
+
+                    title = str(
+                        ChatAssistantContentService.get(
+                            "presenter_content",
+                            "playbookReports",
+                            "entities",
+                            entity,
+                            "textTitle",
+                            default="",
+                        )
+                        or ""
+                    ).strip()
+
+                    if title:
+                        return title
 
         fragment = presenter._presenter_content()._path_fragment_title(
             path.rstrip("/").rsplit("/", 1)[-1],

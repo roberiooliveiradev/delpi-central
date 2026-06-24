@@ -842,7 +842,7 @@
       "humanizedNarrative": "enrich"
     },
     "stock": {
-      "defaultViewPolicy": "text_when_available",
+      "defaultViewPolicy": "table_when_available",
       "viewOrder": [
         "text",
         "table",

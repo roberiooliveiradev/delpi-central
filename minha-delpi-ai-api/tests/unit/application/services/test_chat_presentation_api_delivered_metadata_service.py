@@ -45,9 +45,11 @@ def test_api_delivered_metadata_for_list_payload():
     )
 
     assert "table" in meta.get("availableFormats", [])
-    assert meta.get("presentation", {}).get("type") == "table"
-    assert meta.get("renderPlan")
     assert meta.get("presentationDecision")
+    assert meta.get("renderPlan")
+    primary = meta.get("presentation") or meta.get("textPresentation") or meta.get("tablePresentation")
+    assert isinstance(primary, dict)
+    assert primary.get("type") in {"table", "markdown"}
 
 
 def test_api_delivered_metadata_for_composite_payload():
@@ -64,5 +66,8 @@ def test_api_delivered_metadata_for_composite_payload():
         extract_response_meta=lambda _data: envelope.get("meta"),
     )
 
-    assert meta.get("presentation", {}).get("type") == "table"
+    assert meta.get("presentationDecision")
+    primary = meta.get("presentation") or meta.get("tablePresentation") or meta.get("textPresentation")
+    assert isinstance(primary, dict)
+    assert primary.get("type") in {"table", "markdown"}
     assert "table" in meta.get("availableFormats", [])

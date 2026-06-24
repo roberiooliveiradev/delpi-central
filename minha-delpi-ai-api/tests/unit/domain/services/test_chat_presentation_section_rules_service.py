@@ -76,7 +76,7 @@ def test_last_purchase_section_rules_use_visual_panels():
 
     plan = ChatPresentationStackOrderService.resolve_plan(metadata)
 
-    assert plan["presentationProfile"] == "product_last_purchase"
+    assert plan["presentationProfile"] == "last_purchase"
     assert plan["humanizedSections"] is True
     assert plan["sectionVisibility"]["structure"] is True
 
@@ -98,7 +98,7 @@ def test_purchase_list_section_rules_enable_humanized_stack():
 
     plan = ChatPresentationStackOrderService.resolve_plan(metadata)
 
-    assert plan["presentationProfile"] == "product_purchases"
+    assert plan["presentationProfile"] == "purchase_list"
     assert plan["humanizedSections"] is True
     assert "operationalTables" in plan["narrativeOrder"]
 

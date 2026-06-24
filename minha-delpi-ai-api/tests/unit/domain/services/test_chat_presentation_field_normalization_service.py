@@ -93,11 +93,15 @@ def test_presentation_metadata_includes_normalized_chart_labels():
         request_parameters={},
     )
 
-    chart = meta.get("chartPresentation") or meta.get("presentation")
+    table = meta.get("tablePresentation") or meta.get("presentation")
 
-    assert chart is not None
-    assert chart["type"] == "chart"
-    assert chart["config"]["fieldLabels"]["ordered_quantity"] == "Qtd. pedida"
+    assert table is not None
+    assert table["type"] == "table"
+    assert any(
+        column.get("label") == "Qtd. pedida"
+        for column in (table.get("columns") or [])
+        if column.get("key") == "ordered_quantity"
+    )
 
 
 def test_normalize_kpi_presentation_adds_data_type_to_cards():

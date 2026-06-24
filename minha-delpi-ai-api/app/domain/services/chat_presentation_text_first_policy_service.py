@@ -131,6 +131,11 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
 
         if not normalized and profile_key in _TEXT_FIRST_PROFILES:
+            strategy = str(profile.get("presentationStrategy") or "").strip().lower()
+
+            if strategy == "as_delivered":
+                return str(profile.get("defaultViewPolicy") or "").strip().lower() == "text_when_available"
+
             return True
 
         policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()

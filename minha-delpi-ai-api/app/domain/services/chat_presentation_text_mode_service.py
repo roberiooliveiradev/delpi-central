@@ -62,9 +62,9 @@ class ChatPresentationTextModeService:
 
         token = str(decision.get("selected") or "").strip().lower()
 
-        if token in _EXPLICIT_NATIVE_SINGLE:
+        if token in _EXPLICIT_NATIVE_SINGLE or token == "text":
             decision["layoutMode"] = "single"
-            decision["visualOrder"] = [token]
+            decision["visualOrder"] = [token] if token in merged_views else ["text"]
             if merged_views:
                 decision["availableViews"] = merged_views
             return

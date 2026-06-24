@@ -529,11 +529,13 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()
         flags = cls.flags(path, entity)
 
-        if policy == "text_when_available":
-            if has_text:
+        if policy == "text_when_available" and has_text and "stock" not in flags:
+            return "text"
+
+        if policy == "stock" or "stock" in flags:
+            if policy == "text_when_available" and has_text:
                 return "text"
 
-        if policy == "stock" or ("stock" in flags and policy != "text_when_available"):
             if has_chart and not has_table:
                 return "chart"
 
@@ -604,11 +606,20 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
         force_stack = stack_policy == "always" and len(ordered) >= 2
 
-        if len(ordered) >= 2 and (force_stack or str(decision.get("layoutMode") or "") != "single"):
-            from app.domain.services.chat_presentation_text_mode_service import (
-                ChatPresentationTextModeService,
-            )
+        from app.domain.services.chat_presentation_text_mode_service import (
+            ChatPresentationTextModeService,
+        )
 
+        if (
+            isinstance(metadata, dict)
+            and ChatPresentationTextModeService.is_user_explicit_text_mode(metadata)
+        ):
+            decision["layoutMode"] = "single"
+            decision["visualOrder"] = ordered
+            decision["presentationProfileKey"] = profile.get("profileKey")
+            return
+
+        if len(ordered) >= 2 and (force_stack or str(decision.get("layoutMode") or "") != "single"):
             selected = str(decision.get("selected") or "").strip().lower()
 
             if (

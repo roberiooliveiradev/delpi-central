@@ -140,6 +140,7 @@ def test_heatmap_falls_back_to_markdown_table():
 def test_embed_charts_in_text_presentation_when_text_selected():
     metadata = {
         "path": "/products/90269001/analyser",
+        "explicitSessionFormat": "text",
         "textPresentation": {
             "type": "markdown",
             "markdown": "### Analyser\n\nResumo.",

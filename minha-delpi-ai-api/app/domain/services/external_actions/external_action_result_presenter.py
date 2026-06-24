@@ -128,6 +128,21 @@ class ExternalActionResultPresenter:
                 if sql_result:
                     return sql_result
 
+                rows = root.get("rows") if isinstance(root.get("rows"), list) else None
+
+                if rows is None:
+                    rows = self._sql()._coerce_sql_row_list(root)
+
+                if isinstance(rows, list) and rows:
+                    sql_result = self._sql()._present_sql_rows(rows)
+
+                    if sql_result:
+                        if isinstance(sql_result, dict):
+                            sql_result.setdefault("dados", root)
+                            sql_result.setdefault("sqlRows", rows)
+
+                        return sql_result
+
             if isinstance(root, list) and root:
                 sql_result = self._sql()._present_sql_rows(root)
 
@@ -210,11 +225,11 @@ class ExternalActionResultPresenter:
             profile = ChatOperationalResponseProfileService.resolve(data, path=path)
             root = self._unwrap_data(data)
 
-            if isinstance(root, dict) and isinstance(root.get("resultsets"), list):
-                from app.domain.services.external_actions.external_action_sql_capability_service import (
-                    ExternalActionSqlCapabilityService,
-                )
+            from app.domain.services.external_actions.external_action_sql_capability_service import (
+                ExternalActionSqlCapabilityService,
+            )
 
+            if isinstance(root, dict) and isinstance(root.get("resultsets"), list):
                 if ExternalActionSqlCapabilityService.is_sql_result_payload(
                     root
                 ) or ExternalActionSqlCapabilityService.is_sql_execution_context(path=path):
@@ -233,6 +248,19 @@ class ExternalActionResultPresenter:
 
                     if rows:
                         return self._build_items_table(rows, title=title, path=path)
+
+            if isinstance(root, dict) and ExternalActionSqlCapabilityService.is_sql_execution_context(
+                path=path,
+            ):
+                rows = root.get("rows") if isinstance(root.get("rows"), list) else None
+
+                if rows is None:
+                    rows = self._sql()._coerce_sql_row_list(root)
+
+                if isinstance(rows, list) and rows and isinstance(rows[0], dict):
+                    title = self._sql()._sql_result_title(root, path)
+
+                    return self._build_items_table(rows, title=title, path=path)
 
             from app.domain.services.chat_schema_driven_presentation_service import (
                 ChatSchemaDrivenPresentationService,
@@ -357,6 +385,9 @@ class ExternalActionResultPresenter:
 
     def _normalize_api_section(self, block, *, _depth: int = 0):
         return self._operational_response()._normalize_api_section(block, _depth=_depth)
+
+    def _extract_product_code_from_path(self, path: str) -> str:
+        return self._operational_response()._extract_product_code_from_path(path)
 
     def _normalize_analyser_root(self, root: dict) -> dict:
         normalized = dict(root)
@@ -497,6 +528,9 @@ class ExternalActionResultPresenter:
 
     def _presenter_root_format(self, key: str, **values: str) -> str:
         return self._presenter_content()._presenter_root_format(key, **values)
+
+    def _route_presentation(self, route: str, key: str, **values: str) -> str:
+        return self._presenter_content()._route_presentation(route, key, **values)
 
     # Stubs legados — pipeline rico removido; schema-first cobre o happy path.
     def build_stock_table_presentations(self, root: dict, path: str) -> list[dict]:

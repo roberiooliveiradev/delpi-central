@@ -31,10 +31,10 @@ class ChatPresentationRenderPlanService:
             return
 
         decision = metadata.get("presentationDecision")
-        layout_mode = "stack"
+        layout_mode = "single"
 
         if isinstance(decision, dict):
-            layout_mode = str(decision.get("layoutMode") or "stack").strip() or "stack"
+            layout_mode = str(decision.get("layoutMode") or "single").strip() or "single"
 
         stack_plan = cls._resolve_stack_plan(metadata)
         segments: list[dict[str, Any]] = []
