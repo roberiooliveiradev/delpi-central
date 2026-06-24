@@ -31,6 +31,7 @@ _SYNTHESIS_PLAYBOOK_DATA = "playbook_data"
 _SYNTHESIS_KPI_DATA = "kpi_data"
 _SYNTHESIS_SQL_RESULT = "sql_result"
 _SYNTHESIS_ERROR_RECOVERY = "error_recovery"
+_SYNTHESIS_STRUCTURE_EXCLUSIVITY = "structure_exclusivity"
 
 
 class ChatOperationalNarrativeSynthesisService:
@@ -48,6 +49,12 @@ class ChatOperationalNarrativeSynthesisService:
 
         if cls._tool_calls_match_path_markers(tool_calls, cls._content().sql_path_markers()):
             return _SYNTHESIS_SQL_RESULT
+
+        if cls._tool_calls_match_path_markers(
+            tool_calls,
+            cls._content().structure_exclusivity_path_markers(),
+        ):
+            return _SYNTHESIS_STRUCTURE_EXCLUSIVITY
 
         if cls._tool_calls_match_path_markers(
             tool_calls,
@@ -89,12 +96,21 @@ class ChatOperationalNarrativeSynthesisService:
         )
         from app.domain.services.chat_presentation_prose_delivery_service import (
             ChatPresentationProseDeliveryService,
+            MODE_TEMPLATE,
         )
 
         if (
             ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
             and ChatPresentationProseDeliveryService.llm_prose_globally_available()
         ):
+            if (
+                ChatPresentationProseDeliveryService._entity_prose_delivery_mode(
+                    tool_calls=tool_calls,
+                )
+                == MODE_TEMPLATE
+            ):
+                return False
+
             if ChatPresentationProseDeliveryService._has_successful_external_action(
                 tool_calls,
             ):
@@ -330,6 +346,12 @@ class ChatOperationalNarrativeSynthesisService:
     @classmethod
     def _resolve_policy_kind(cls, kind: str, tool_calls: list | None) -> str:
         if kind == _SYNTHESIS_OPERATIONAL_DATA:
+            if cls._tool_calls_match_path_markers(
+                tool_calls,
+                cls._content().structure_exclusivity_path_markers(),
+            ):
+                return _SYNTHESIS_STRUCTURE_EXCLUSIVITY
+
             if cls._tool_calls_match_path_markers(
                 tool_calls,
                 cls._content().kpi_path_markers(),

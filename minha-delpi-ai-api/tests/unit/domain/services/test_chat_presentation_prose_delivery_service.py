@@ -148,6 +148,41 @@ def test_should_not_skip_template_prose_when_profile_uses_template_even_if_llm_e
     )
 
 
+def test_resolve_mode_structure_exclusivity_uses_template_even_with_llm_everywhere(
+    monkeypatch,
+):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260882/structure/exclusivity",
+                "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+                "textPresentation": {
+                    "type": "markdown",
+                    "markdown": (
+                        "**Resposta:** Não — nenhuma MP exclusiva; "
+                        "as **3** matérias-primas são compartilhadas com outros PAs."
+                    ),
+                },
+                "presentationDecision": {
+                    "layoutMode": "stack",
+                    "selected": "text",
+                },
+            },
+        }
+    ]
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "quais MPs exclusivas tem o produto 90260882?",
+        tool_calls,
+    )
+
+    assert mode == MODE_TEMPLATE
+
+
 def test_should_skip_template_prose_when_modes_disabled_but_require_flag_false(monkeypatch):
     from app.domain.services.chat_presentation_prose_delivery_content_service import (
         ChatPresentationProseDeliveryContentService,
@@ -313,7 +348,7 @@ def test_entity_template_profile_uses_llm_when_everywhere(monkeypatch):
     assert mode == MODE_LLM
 
 
-def test_playbook_entity_uses_llm_when_template_fallback_disabled(monkeypatch):
+def test_explicit_template_profile_wins_even_when_playbook_entity(monkeypatch):
     from app.domain.services.chat_presentation_prose_delivery_content_service import (
         ChatPresentationProseDeliveryContentService,
     )
@@ -328,6 +363,48 @@ def test_playbook_entity_uses_llm_when_template_fallback_disabled(monkeypatch):
         ChatPresentationProseDeliveryService,
         "_entity_prose_delivery_mode",
         lambda **kwargs: MODE_TEMPLATE,
+    )
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/production/consumption/top-items",
+                "apiDelpiResponseMeta": {
+                    "entity": "production_consumption_top_items",
+                },
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                },
+            },
+        }
+    ]
+
+    mode = ChatPresentationProseDeliveryService.resolve_mode(
+        "quais os top itens de consumo na producao?",
+        tool_calls,
+    )
+
+    assert mode == MODE_TEMPLATE
+
+
+def test_playbook_entity_uses_llm_when_template_fallback_disabled(monkeypatch):
+    from app.domain.services.chat_presentation_prose_delivery_content_service import (
+        ChatPresentationProseDeliveryContentService,
+    )
+
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryContentService,
+        "llm_prose_everywhere",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        ChatPresentationProseDeliveryService,
+        "_entity_prose_delivery_mode",
+        lambda **kwargs: MODE_LLM,
     )
 
     tool_calls = [

@@ -89,6 +89,7 @@ class ChatResponseModeSynthesisQualityService:
         gaps.extend(cls._evaluate_numbered_runs_in_line(content))
         gaps.extend(cls._evaluate_llm_boilerplate_sections(content))
         gaps.extend(cls._evaluate_repeated_sentences(content))
+        gaps.extend(cls._evaluate_structure_exclusivity_factual_coherence(content, tool_calls))
 
         return gaps
 
@@ -772,6 +773,67 @@ class ChatResponseModeSynthesisQualityService:
                     sample=sample,
                 ),
             ]
+
+        return []
+
+    @classmethod
+    def _evaluate_structure_exclusivity_factual_coherence(
+        cls,
+        content: str,
+        tool_calls: list[dict[str, Any]] | None,
+    ) -> list[str]:
+        from app.domain.services.chat_operational_llm_synthesis_answer_enrichment_service import (
+            ChatOperationalLlmSynthesisAnswerEnrichmentService,
+        )
+
+        exclusive_count = (
+            ChatOperationalLlmSynthesisAnswerEnrichmentService._resolve_exclusive_raw_material_count(
+                tool_calls,
+            )
+        )
+
+        if exclusive_count is None:
+            return []
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(content)
+        triggers = ChatResponseModeSynthesisQualityContentService.exclusivity_contradiction_triggers()
+        positive_markers = ChatResponseModeSynthesisQualityContentService.exclusivity_positive_markers()
+        shared_markers = ChatResponseModeSynthesisQualityContentService.exclusivity_shared_markers()
+
+        for trigger in triggers:
+            if trigger and trigger in normalized:
+                return [
+                    ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                        "exclusivityContradiction",
+                        default=f"contradição factual de exclusividade de MPs ({trigger})",
+                    ),
+                ]
+
+        if exclusive_count == 0:
+            has_positive = any(marker in normalized for marker in positive_markers)
+            has_shared = any(marker in normalized for marker in shared_markers)
+
+            if has_positive and has_shared:
+                return [
+                    ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                        "exclusivityContradiction",
+                        default=(
+                            "contradição factual de exclusividade de MPs "
+                            "(exclusiva + compartilhada na mesma resposta)"
+                        ),
+                    ),
+                ]
+
+            if has_positive and "definida" in normalized and has_shared:
+                return [
+                    ChatResponseModeSynthesisQualityContentService.coherence_gap(
+                        "exclusivityContradiction",
+                        default=(
+                            "contradição factual de exclusividade de MPs "
+                            "(exclusividade definida com MPs compartilhadas)"
+                        ),
+                    ),
+                ]
 
         return []
 

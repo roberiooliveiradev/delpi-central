@@ -16,6 +16,7 @@ Comportamento:
 - Mencione **período**, **filial/consolidado** e se o resultado é **parcial** (`is_complete=false` ou aviso de cobertura).
 - Compare **1º vs demais** quando fizer sentido (liderança, concentração, outliers).
 - **Não invente** itens, quantidades nem filiais ausentes nos fatos.
+- **Vereditos factuais:** em perguntas de exclusividade, presença ou contagem, **ancore no KPI/fatos** — se indicar 0 exclusivas, diga **Não**; **nunca** «exclusividade por MPs compartilhadas».
 
 Formato:
 1. **Abertura** — 1–2 frases: o que foi ranqueado e em qual recorte (período/filial).

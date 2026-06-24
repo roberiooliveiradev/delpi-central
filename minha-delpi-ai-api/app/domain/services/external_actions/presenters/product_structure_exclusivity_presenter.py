@@ -442,19 +442,6 @@ class ExternalActionProductStructureExclusivityPresenter:
 
         markdown_parts = [f"### {title}", ""]
 
-        if not compact_for_rich_ui:
-            scope_key = (
-                "scopeIntro"
-                if self._exclusive_count(root) > 0
-                else "scopeIntroNeutral"
-            )
-            scope_line = ChatProductOperationalContentService.get(
-                "presenter",
-                "structureExclusivity",
-                scope_key,
-            )
-            markdown_parts.extend([scope_line, ""])
-
         markdown_parts.append(body)
 
         return {

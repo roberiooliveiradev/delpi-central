@@ -320,6 +320,11 @@ def test_structure_exclusivity_auto_quality_without_duplicate_panels():
     assert "resposta" in markdown.lower() or "nenhuma mp exclusiva" in markdown.lower()
     assert "compartilhadas" in markdown.lower()
     assert not meta.get("dataOnlyPresentation")
+    assert str(meta.get("proseDeliveryMode") or "") != "llm"
+    assert not meta.get("llmProseDecoupled")
 
     if markdown:
         _assert_no_near_duplicate_prose(markdown)
+        assert markdown.lower().count("resposta") <= 1, (
+            "veredito canônico não deve repetir no markdown"
+        )

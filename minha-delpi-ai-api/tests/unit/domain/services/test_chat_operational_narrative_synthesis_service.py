@@ -90,6 +90,35 @@ def test_factual_narrow_stock_forces_llm_when_everywhere():
     )
 
 
+def test_structure_exclusivity_skips_llm_synthesis_when_profile_is_template():
+    metadata = {
+        "ok": True,
+        "path": "/products/90260882/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": (
+                "**Resposta:** Não — nenhuma MP exclusiva; "
+                "as **3** matérias-primas são compartilhadas com outros PAs."
+            ),
+        },
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "stack",
+        },
+    }
+
+    assert not ChatOperationalNarrativeSynthesisService.should_force_llm_synthesis(
+        "quais MPs exclusivas tem o produto 90260882?",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": metadata,
+            }
+        ],
+    )
+
+
 def test_factual_narrow_stock_skips_synthesis_when_everywhere_off(monkeypatch):
     from app.domain.services.chat_presentation_prose_delivery_content_service import (
         ChatPresentationProseDeliveryContentService,
@@ -185,6 +214,40 @@ def test_playbook_path_uses_playbook_domain_policy():
 
     assert "ranking / playbook operacional" in addon
     assert "Anti-deflexão" in addon or "informações adicionais" in addon
+
+
+def test_structure_exclusivity_path_uses_dedicated_policy():
+    kind = ChatOperationalNarrativeSynthesisService.resolve_synthesis_kind(
+        "quais MPs exclusivas tem o produto 90260882?",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/90260882/structure/exclusivity",
+                },
+            }
+        ],
+    )
+
+    assert kind == "structure_exclusivity"
+
+    addon = ChatOperationalNarrativeSynthesisService.build_prompt_policy_addon(
+        "quais MPs exclusivas tem o produto 90260882?",
+        response_mode="normal",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/90260882/structure/exclusivity",
+                },
+            }
+        ],
+    )
+
+    assert "exclusividade de MPs" in addon
+    assert "compartilhada" in addon.lower()
 
 
 def test_kpi_path_uses_kpi_domain_policy():

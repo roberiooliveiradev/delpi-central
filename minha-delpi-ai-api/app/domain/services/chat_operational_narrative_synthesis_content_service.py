@@ -46,6 +46,10 @@ class ChatOperationalNarrativeSynthesisContentService:
         return tuple(ChatAssistantContentService.list(_BUNDLE, "kpiPathMarkers"))
 
     @classmethod
+    def structure_exclusivity_path_markers(cls) -> tuple[str, ...]:
+        return tuple(ChatAssistantContentService.list(_BUNDLE, "structureExclusivityPathMarkers"))
+
+    @classmethod
     def narrative_markers(cls) -> tuple[str, ...]:
         return tuple(ChatAssistantContentService.list(_BUNDLE, "narrativeMarkers"))
 

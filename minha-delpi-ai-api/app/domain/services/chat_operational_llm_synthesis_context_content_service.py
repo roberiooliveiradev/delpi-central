@@ -29,6 +29,17 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def structure_exclusivity_fidelity_rule(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "structureExclusivityFidelityRule",
+                default="",
+            )
+            or ""
+        ).strip()
+
+    @classmethod
     def max_chars(cls) -> int:
         raw = ChatAssistantContentService.get(_BUNDLE, "maxChars", default="1200")
 
@@ -118,6 +129,42 @@ class ChatOperationalLlmSynthesisContextContentService:
     @classmethod
     def contradiction_patterns(cls) -> list[str]:
         raw = cls.answer_enrichment_node().get("contradictionPatterns")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def exclusivity_contradiction_triggers(cls) -> list[str]:
+        raw = cls.answer_enrichment_node().get("exclusivityContradictionTriggers")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def exclusivity_positive_markers(cls) -> list[str]:
+        raw = cls.answer_enrichment_node().get("exclusivityPositiveMarkers")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def exclusivity_shared_markers(cls) -> list[str]:
+        raw = cls.answer_enrichment_node().get("exclusivitySharedMarkers")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def exclusivity_verdict_no_markers(cls) -> list[str]:
+        raw = cls.answer_enrichment_node().get("exclusivityVerdictNoMarkers")
 
         if not isinstance(raw, list):
             return []

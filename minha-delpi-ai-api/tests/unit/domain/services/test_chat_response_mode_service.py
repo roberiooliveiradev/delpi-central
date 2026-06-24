@@ -235,6 +235,44 @@ def test_apply_turn_direct_answer_policy_stock_factual_uses_llm_when_everywhere(
     assert effect == "llm_synthesis"
 
 
+def test_apply_turn_direct_answer_policy_structure_exclusivity_keeps_template_direct(
+    monkeypatch,
+):
+    monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
+
+    authorized = (
+        "**Resposta:** Não — nenhuma MP exclusiva; "
+        "as **3** matérias-primas são compartilhadas com outros PAs."
+    )
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260882/structure/exclusivity",
+                "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+                "textPresentation": {"type": "markdown", "markdown": authorized},
+                "presentationDecision": {
+                    "layoutMode": "stack",
+                    "selected": "text",
+                },
+            },
+        }
+    ]
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="quais MPs exclusivas tem o produto 90260882?",
+        response_mode="normal",
+        direct_answer=authorized,
+        skip_rag=True,
+        tool_calls=tool_calls,
+    )
+
+    assert direct == authorized
+    assert skip_rag is True
+    assert effect == "operational_direct"
+
+
 def test_apply_turn_direct_answer_policy_stock_stays_operational_direct_when_everywhere_off(
     monkeypatch,
 ):

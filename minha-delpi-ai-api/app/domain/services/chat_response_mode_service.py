@@ -120,7 +120,9 @@ class ChatResponseModeService:
 
         from app.domain.services.chat_presentation_prose_delivery_service import (
             ChatPresentationProseDeliveryService,
+            MODE_DIRECT,
             MODE_LLM,
+            MODE_TEMPLATE,
         )
 
         mode = ChatPresentationProseDeliveryService.resolve_mode(
@@ -128,6 +130,9 @@ class ChatResponseModeService:
             tool_calls,
             response_mode=response_mode,
         )
+
+        if mode in {MODE_TEMPLATE, MODE_DIRECT}:
+            return direct_answer, skip_rag, "operational_direct" if direct_answer else None
 
         if mode == MODE_LLM:
             effect = cls.resolve_synthesis_effect(response_mode)

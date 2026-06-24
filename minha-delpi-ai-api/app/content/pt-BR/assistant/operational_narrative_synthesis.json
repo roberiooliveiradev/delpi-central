@@ -9,8 +9,12 @@
     "product_stock": "stock",
     "product_factory_status": "factory_status",
     "product_production_status": "production_status",
-    "product_shipping_status": "shipping_status"
+    "product_shipping_status": "shipping_status",
+    "product_structure_exclusivity": "structure_exclusivity"
   },
+  "structureExclusivityPathMarkers": [
+    "/structure/exclusivity"
+  ],
   "pathMarkers": [
     "/stock",
     "/factory-status",
@@ -59,7 +63,17 @@
     "somente a tabela",
     "só a tabela",
     "so a tabela",
-    "linha a linha"
+    "linha a linha",
+    "mp exclusiva",
+    "mps exclusivas",
+    "materia-prima exclusiva",
+    "matéria-prima exclusiva",
+    "materias-primas exclusivas",
+    "matérias-primas exclusivas",
+    "exclusiva na estrutura",
+    "exclusivas na estrutura",
+    "exclusivas tem o produto",
+    "exclusivas tem o pa"
   ],
   "synthesisPolicies": {
     "product_overview": {
@@ -96,6 +110,11 @@
       "fast": "operational-synthesis-error-fast.md",
       "normal": "operational-synthesis-error.md",
       "thinker": "operational-synthesis-error-thinker.md"
+    },
+    "structure_exclusivity": {
+      "fast": "operational-synthesis-structure-exclusivity-fast.md",
+      "normal": "operational-synthesis-structure-exclusivity.md",
+      "thinker": "operational-synthesis-structure-exclusivity-thinker.md"
     }
   }
 }

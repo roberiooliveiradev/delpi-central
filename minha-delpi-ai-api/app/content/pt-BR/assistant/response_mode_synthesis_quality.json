@@ -137,7 +137,8 @@
       "repeatedSentences": "resposta com frases repetidas",
       "sparseNumberedList": "lista numerada com itens vazios ou esparsos",
       "numberedRunInLine": "lista numerada esparsa em linha única",
-      "llmBoilerplateSection": "seção boilerplate do LLM sem conteúdo ancorado ({section})"
+      "llmBoilerplateSection": "seção boilerplate do LLM sem conteúdo ancorado ({section})",
+      "exclusivityContradiction": "contradição factual de exclusividade de MPs ({detail})"
     },
     "repeatedSentenceMinChars": 48,
     "repeatedSentenceKeyChars": 160,
@@ -164,6 +165,25 @@
       "componentes eletricos",
       "componentes elétricos"
     ],
-    "ungroundedGroupClaimMinTokenLength": 4
+    "ungroundedGroupClaimMinTokenLength": 4,
+    "exclusivityContradictionTriggers": [
+      "exclusividade definida por",
+      "tem a exclusividade",
+      "tem exclusividade definida",
+      "exclusividade e representada",
+      "mps exclusivas compartilhadas",
+      "matérias-primas exclusivas compartilhadas"
+    ],
+    "exclusivityPositiveMarkers": [
+      "exclusiva",
+      "exclusivo",
+      "exclusividade"
+    ],
+    "exclusivitySharedMarkers": [
+      "compartilhada",
+      "compartilhado",
+      "compartilhadas",
+      "compartilhados"
+    ]
   }
 }

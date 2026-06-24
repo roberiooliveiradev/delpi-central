@@ -826,10 +826,15 @@ class ChatOperationalDataCommentaryService:
             )
 
         if description and code:
+            intro_key = (
+                "introWithDescription"
+                if exclusive_count > 0
+                else "introWithDescriptionNeutral"
+            )
             highlights.append(
                 cls._presenter_format(
                     "structureExclusivity",
-                    "introWithDescription",
+                    intro_key,
                     code=code,
                     description=description,
                 )

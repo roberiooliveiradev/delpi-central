@@ -281,6 +281,34 @@ def test_rejects_hallucination_markers():
     assert any("alucinação" in gap for gap in gaps)
 
 
+def test_rejects_structure_exclusivity_contradiction():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260882/structure/exclusivity",
+                "kpiPresentation": {
+                    "metrics": [
+                        {"label": "MPs exclusivas", "value": "0"},
+                    ],
+                },
+            },
+        }
+    ]
+    gaps = ChatResponseModeSynthesisQualityService.evaluate_synthesis_coherence(
+        mode="normal",
+        question="quais MPs exclusivas tem o produto 90260882?",
+        content=(
+            "O produto 90260882 tem a exclusividade definida por 3 matérias-primas "
+            "compartilhadas com outros PAs."
+        ),
+        tool_calls=tool_calls,
+    )
+
+    assert any("exclusividade" in gap.lower() for gap in gaps)
+
+
 def test_rejects_fabricated_group_claim():
     gaps = ChatResponseModeSynthesisQualityService.evaluate_synthesis_coherence(
         mode="thinker",

@@ -35,6 +35,14 @@ class ChatPresentationProseDeliveryService:
     ) -> str:
         del response_mode
 
+        entity_mode = cls._entity_prose_delivery_mode(tool_calls=tool_calls)
+
+        if entity_mode == MODE_TEMPLATE:
+            return MODE_TEMPLATE
+
+        if entity_mode == MODE_DIRECT:
+            return MODE_DIRECT
+
         if (
             ChatPresentationProseDeliveryContentService.llm_prose_everywhere()
             and cls.llm_prose_globally_available()

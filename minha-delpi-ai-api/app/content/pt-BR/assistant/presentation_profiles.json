@@ -1084,7 +1084,8 @@
       },
       "compositeVisualSpec": "structure_exclusivity",
       "commentaryProfileKey": "structure_exclusivity",
-      "narrativePolicy": "operational_structure_exclusivity_summary"
+      "narrativePolicy": "operational_structure_exclusivity_summary",
+      "humanizedNarrative": "skip"
     },
     "raw_material_price_intelligence": {
       "defaultViewPolicy": "generic",

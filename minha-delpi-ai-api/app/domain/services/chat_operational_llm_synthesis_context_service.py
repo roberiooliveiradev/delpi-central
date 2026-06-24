@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
 from app.domain.services.chat_operational_llm_synthesis_context_content_service import (
     ChatOperationalLlmSynthesisContextContentService,
 )
@@ -43,6 +46,16 @@ class ChatOperationalLlmSynthesisContextService:
 
             if fidelity_rule and cls._tool_calls_use_prose_panel(tool_calls):
                 result = f"{result}\n\n{fidelity_rule}" if result else f"\n\n{fidelity_rule}"
+
+            exclusivity_rule = (
+                ChatOperationalLlmSynthesisContextContentService.structure_exclusivity_fidelity_rule()
+            )
+
+            if exclusivity_rule and cls._tool_calls_match_path_markers(
+                tool_calls,
+                "/structure/exclusivity",
+            ):
+                result = f"{result}\n\n{exclusivity_rule}" if result else f"\n\n{exclusivity_rule}"
 
         return result
 
@@ -156,6 +169,8 @@ class ChatOperationalLlmSynthesisContextService:
 
         if path:
             facts.append(f"Rota consultada: {path}")
+
+        cls._append_unique_lines(facts, cls._facts_from_structure_exclusivity_summary(metadata))
 
         cls._append_unique_lines(facts, cls._facts_from_api_sections(metadata))
 
@@ -552,6 +567,112 @@ class ChatOperationalLlmSynthesisContextService:
     @classmethod
     def _normalize_key(cls, text: str) -> str:
         return " ".join(str(text or "").lower().split())
+
+    @classmethod
+    def _facts_from_structure_exclusivity_summary(cls, metadata: dict[str, Any]) -> list[str]:
+        path = str(metadata.get("path") or "").lower()
+
+        if "/structure/exclusivity" not in path:
+            return []
+
+        facts: list[str] = []
+        exclusive_count = cls._exclusive_raw_material_count_from_metadata(metadata)
+
+        if exclusive_count is not None:
+            if exclusive_count == 0:
+                facts.append(
+                    "Veredito canônico: Não — nenhuma MP exclusiva (0 MPs exclusivas no KPI)."
+                )
+            else:
+                facts.append(
+                    f"Veredito canônico: Sim — {exclusive_count} MP(s) exclusiva(s) na estrutura."
+                )
+
+        text_presentation = metadata.get("textPresentation")
+
+        if isinstance(text_presentation, dict):
+            markdown = str(text_presentation.get("markdown") or "").strip()
+
+            for line in markdown.splitlines():
+                text = line.strip()
+
+                if text.lower().startswith("**resposta:**"):
+                    facts.append(text.replace("**", "").strip())
+                    break
+
+        return facts
+
+    @classmethod
+    def _exclusive_raw_material_count_from_metadata(
+        cls,
+        metadata: dict[str, Any],
+    ) -> int | None:
+        kpi = metadata.get("kpiPresentation")
+
+        if isinstance(kpi, dict):
+            for metric in kpi.get("metrics") or []:
+                if not isinstance(metric, dict):
+                    continue
+
+                label = ChatMessageNormalizationService.normalize_for_matching(
+                    str(metric.get("label") or metric.get("name") or ""),
+                )
+
+                if "mps exclusivas" not in label and "mp exclusiva" not in label:
+                    continue
+
+                raw_value = str(metric.get("value") or metric.get("formattedValue") or "").strip()
+
+                try:
+                    return int(float(raw_value.replace(",", ".").split()[0]))
+                except (TypeError, ValueError, IndexError):
+                    continue
+
+        data_answer = metadata.get("dataAnswer")
+
+        if isinstance(data_answer, dict):
+            highlights = data_answer.get("highlights")
+
+            if isinstance(highlights, list):
+                for item in highlights:
+                    text = ChatMessageNormalizationService.normalize_for_matching(
+                        cls._stringify(item),
+                    )
+
+                    if any(
+                        marker in text
+                        for marker in ChatOperationalLlmSynthesisContextContentService.exclusivity_verdict_no_markers()
+                    ):
+                        return 0
+
+        return None
+
+    @classmethod
+    def _tool_calls_match_path_markers(
+        cls,
+        tool_calls: list | None,
+        marker: str,
+    ) -> bool:
+        token = str(marker or "").strip().lower()
+
+        if not token or not isinstance(tool_calls, list):
+            return False
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+
+            if token in path:
+                return True
+
+        return False
 
     @classmethod
     def _tool_calls_use_prose_panel(cls, tool_calls: list | None) -> bool:

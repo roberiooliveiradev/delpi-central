@@ -499,6 +499,39 @@ def test_build_scope_only_narrative_keeps_framing_and_guide():
     assert "Saldo de MPs frente à necessidade." in compact
 
 
+def test_prepare_evidence_first_skips_data_answer_lead_for_template_structure_exclusivity():
+    metadata = {
+        "path": "/products/90260882/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "presentationDecision": {
+            "presentationMode": "summary_then_evidence",
+            "layoutMode": "stack",
+        },
+        "dataAnswer": {
+            "profileKey": "structure_exclusivity",
+            "summary": {
+                "answer": "**Não** — nenhuma MP exclusiva; as **3** matérias-primas são compartilhadas.",
+                "meaning": "A estrutura tem **5** componentes.",
+            },
+        },
+        "textPresentation": {
+            "markdown": (
+                "### Estrutura com exclusividade — 90260882\n\n"
+                "<!-- section:scope -->\n\n"
+                "**Resposta:** Não — nenhuma MP exclusiva; as **3** matérias-primas são compartilhadas.\n"
+                "BOM vigente do produto **90260882** (PROTETOR).\n"
+                "Composição: **5** componente(s) · **2** PI · **3** MP"
+            ),
+        },
+    }
+
+    ChatRichPresentationTextService.prepare_evidence_first_chat_narrative(metadata)
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert markdown.lower().count("nenhuma mp exclusiva") == 1
+    assert "A estrutura tem **5** componentes" not in markdown
+
+
 def test_strip_highlights_block_removes_destaques_section():
     markdown = (
         "### Status fabril\n\n"

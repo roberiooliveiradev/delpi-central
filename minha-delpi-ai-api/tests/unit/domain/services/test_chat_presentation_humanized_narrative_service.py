@@ -72,6 +72,28 @@ def test_enrich_metadata_skips_stock_profile():
     assert "**Panorama**" not in metadata["textPresentation"]["markdown"]
 
 
+def test_enrich_metadata_skips_structure_exclusivity_profile():
+    metadata = {
+        "path": "/products/90260882/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "textPresentation": {
+            "markdown": (
+                "### Estrutura com exclusividade — 90260882\n\n"
+                "**Resposta:** Não — nenhuma MP exclusiva."
+            ),
+        },
+        "kpiPresentation": {
+            "type": "kpi",
+            "cards": [{"label": "MPs exclusivas", "value": 0, "unit": "MP"}],
+        },
+        "tablePresentations": [{"type": "table", "role": "profile", "rows": [{"campo": "x", "valor": "y"}]}],
+    }
+
+    ChatPresentationHumanizedNarrativeService.enrich_metadata(metadata)
+
+    assert "**Panorama**" not in metadata["textPresentation"]["markdown"]
+
+
 def test_enrich_metadata_skips_conclusion_for_pagination_only_kpi():
     metadata = {
         "path": "/products/10080001/structure",

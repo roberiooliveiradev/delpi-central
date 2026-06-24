@@ -168,3 +168,34 @@ def test_dedupes_repeated_markdown_sections_for_thinker():
 
     assert enriched.count("### Destaques") == 1
     assert "### Pontos de atenção" in enriched
+
+
+def test_strips_exclusivity_contradiction_when_zero_exclusive_mps():
+    answer = (
+        "O produto 90260882 tem a exclusividade definida por 3 matérias-primas "
+        "compartilhadas com outros PAs."
+    )
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260882/structure/exclusivity",
+                "kpiPresentation": {
+                    "metrics": [
+                        {"label": "MPs exclusivas", "value": "0"},
+                    ],
+                },
+            },
+        }
+    ]
+
+    enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+        answer,
+        message="quais MPs exclusivas tem o produto 90260882?",
+        tool_calls=tool_calls,
+        response_mode_effect="llm_synthesis",
+        response_mode="normal",
+    )
+
+    assert enriched == "" or "exclusividade definida" not in enriched.lower()
