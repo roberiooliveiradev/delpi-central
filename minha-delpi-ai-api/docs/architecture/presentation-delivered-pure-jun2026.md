@@ -167,6 +167,9 @@ Delegates extraídos (score, metadata, builder, intent operacional). `ChatPresen
 | `ChatPresentationGenericDecisionService` | `decide()` genérico por forma dos dados |
 | `ChatPresentationDecisionEnrichmentService` | `enrich_metadata` — insight, explains, recomendações |
 | `ChatPresentationRouteVisualPolicyService` | política visual por rota no enrich |
+| `ChatPresentationDecideService` | orquestração `decide()` |
+
+`ChatPresentationDecisionService` = fachada pública (~85 linhas): `decide`, `enrich_metadata`, `compute_scores`.
 
 ---
 

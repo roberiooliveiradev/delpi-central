@@ -1,3 +1,6 @@
+from app.domain.services.chat_presentation_automatic_score_service import (
+    ChatPresentationAutomaticScoreService,
+)
 from app.domain.services.chat_presentation_decision_service import (
     ChatPresentationDecisionService,
 )
@@ -54,14 +57,14 @@ def test_attach_scores_and_reading_layers_from_data_answer():
         },
     }
 
-    ChatPresentationDecisionService._attach_scores_and_reading_layers(
+    ChatPresentationAutomaticScoreService.attach_scores_and_reading_layers(
         decision,
         metadata=metadata,
         table_rows=metadata["tablePresentation"]["rows"],
         user_message="estoque do produto",
     )
 
-    ChatPresentationDecisionService._ensure_purpose(
+    ChatPresentationAutomaticScoreService.ensure_purpose(
         decision,
         metadata=metadata,
         user_message="estoque do produto",
@@ -118,7 +121,7 @@ def test_apply_automatic_score_selection_keeps_table_for_playbook_report():
         "chartPresentation": {"type": "chart", "chartType": "heatmap", "data": []},
     }
 
-    ChatPresentationDecisionService._apply_automatic_score_selection(
+    ChatPresentationAutomaticScoreService.apply_automatic_score_selection(
         decision,
         metadata=metadata,
         effective_preference=None,
@@ -179,7 +182,7 @@ def test_apply_automatic_score_selection_picks_chart_for_categorical_rows():
         "chartPresentation": {"type": "chart", "chartType": "horizontal_bar", "data": []},
     }
 
-    ChatPresentationDecisionService._apply_automatic_score_selection(
+    ChatPresentationAutomaticScoreService.apply_automatic_score_selection(
         decision,
         metadata=metadata,
         effective_preference=None,
@@ -201,7 +204,7 @@ def test_apply_automatic_score_selection_skips_with_explicit_preference():
         "scores": {"text": 10, "table": 20, "chart": 95},
     }
 
-    ChatPresentationDecisionService._apply_automatic_score_selection(
+    ChatPresentationAutomaticScoreService.apply_automatic_score_selection(
         decision,
         metadata={},
         effective_preference="table",
@@ -222,7 +225,7 @@ def test_ensure_purpose_uses_user_message_when_data_answer_missing():
         }
     }
 
-    ChatPresentationDecisionService._ensure_purpose(
+    ChatPresentationAutomaticScoreService.ensure_purpose(
         decision,
         metadata=metadata,
         user_message="estoque do produto 90269001",

@@ -3,6 +3,9 @@ import pytest
 from app.domain.services.chat_presentation_data_shape_analyzer import (
     ChatPresentationDataShapeAnalyzer,
 )
+from app.domain.services.chat_presentation_decision_builder_service import (
+    ChatPresentationDecisionBuilderService,
+)
 from app.domain.services.chat_presentation_decision_service import (
     ChatPresentationDecisionService,
 )
@@ -89,7 +92,7 @@ def test_enrich_metadata_adds_insight_and_syncs_chart_type():
 
 
 def test_decision_stack_layout_when_multiple_views():
-    decision = ChatPresentationDecisionService._build(
+    decision = ChatPresentationDecisionBuilderService.build(
         selected="checklist",
         fallback="text",
         reason="visão combinada",
@@ -104,7 +107,7 @@ def test_decision_stack_layout_when_multiple_views():
 
 
 def test_decision_text_selected_uses_single_layout():
-    decision = ChatPresentationDecisionService._build(
+    decision = ChatPresentationDecisionBuilderService.build(
         selected="text",
         fallback="table",
         reason="texto-first",

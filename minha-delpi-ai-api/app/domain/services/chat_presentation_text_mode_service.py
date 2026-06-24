@@ -48,14 +48,14 @@ class ChatPresentationTextModeService:
         metadata: dict[str, Any],
         decision: dict[str, Any],
     ) -> None:
-        from app.domain.services.chat_presentation_decision_service import (
-            ChatPresentationDecisionService,
+        from app.domain.services.chat_presentation_decision_builder_service import (
+            ChatPresentationDecisionBuilderService,
         )
         from app.domain.services.chat_presentation_primary_view_service import (
             _EXPLICIT_NATIVE_SINGLE,
         )
 
-        merged_views = ChatPresentationDecisionService._merge_views(
+        merged_views = ChatPresentationDecisionBuilderService.merge_views(
             metadata.get("availableFormats"),
             decision.get("availableViews"),
         )
@@ -71,7 +71,7 @@ class ChatPresentationTextModeService:
 
         if len(merged_views) >= 2:
             decision["layoutMode"] = "stack"
-            decision["visualOrder"] = ChatPresentationDecisionService._visual_order_for_stack(
+            decision["visualOrder"] = ChatPresentationDecisionBuilderService.visual_order_for_stack(
                 merged_views,
             )
             decision["availableViews"] = merged_views

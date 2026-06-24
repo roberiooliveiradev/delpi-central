@@ -88,7 +88,14 @@ Fachada `ChatPresentationDecisionService`: ~790 linhas (era ~2170).
 
 Fachada `ChatPresentationDecisionService`: **~500 linhas** (era ~2170).
 
-## Pendente (Fase 9+)
+## Fase 9 — fachada mínima (jun/2026)
+
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `ChatPresentationDecideService` | orquestração `decide()` — preferência → intent → genérico |
+
+Fachada pública: só `decide`, `enrich_metadata`, `compute_scores` (~85 linhas). Wrappers `_*` removidos; consumidores usam delegates canônicos.
+
+## Pendente (Fase 10+)
 
 - OpenAPI import (Playbook 22 Fase D).
-- Consolidar delegates restantes na fachada (thin wrappers opcionais).
