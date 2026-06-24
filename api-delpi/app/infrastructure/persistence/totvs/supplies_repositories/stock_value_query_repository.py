@@ -9,10 +9,12 @@ from app.application.services.supplies.stock_value_cache import (
     stock_value_cache_key,
 )
 from app.application.services.supplies.stock_value_method_service import (
+    STOCK_METHOD_ESTIMATED,
     STOCK_METHOD_RESOLVED_ESTIMATED,
     STOCK_METHOD_RESOLVED_MIXED,
     STOCK_METHOD_RESOLVED_OFFICIAL,
     STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT,
+    normalize_stock_method,
     resolve_stock_method_plan,
 )
 from app.application.services.supplies.stock_value_hybrid_content_service import (
@@ -26,8 +28,10 @@ from app.domain.ports.supplies.stock_value_query_repository_port import (
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
     HistoricalStockFilterClauses,
+    build_historical_method_breakdown_params,
     build_historical_stock_params,
     format_historical_breakdown_sql,
+    format_historical_method_breakdown_sql,
     format_historical_stock_sql,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_official_closure_sql import (
@@ -168,6 +172,33 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             d3_params=d3_params,
             d3_loc_params=d3_loc_params,
             include_breakdown_select=True,
+        )
+        return sql, params
+
+    def _format_historical_method_breakdown_sql(
+        self,
+        request: GetStockValueRequest,
+    ) -> tuple[str, tuple]:
+        period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
+            request
+        )
+        (
+            filters,
+            sb9_params,
+            sb9_b9_params,
+            _sb9_official_params,
+            sb9_loc_params,
+            _d3_params,
+            _d3_loc_params,
+        ) = self._historical_filter_clauses(request)
+
+        sql = format_historical_method_breakdown_sql(filters=filters)
+        params = build_historical_method_breakdown_params(
+            period_start=period_start,
+            period_end=period_end,
+            sb9_params=sb9_params,
+            sb9_b9_params=sb9_b9_params,
+            sb9_loc_params=sb9_loc_params,
         )
         return sql, params
 
@@ -475,10 +506,12 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         request: GetStockValueRequest,
         *,
         method_plan: dict,
+        breakdown_rows: list[dict] | None = None,
     ) -> dict:
         sql, params = self._format_historical_bundle_sql(request)
         branch_label, location_label = self._labels(request)
-        breakdown_rows = self._fetch_historical_breakdown_rows(request)
+        if breakdown_rows is None:
+            breakdown_rows = self._fetch_historical_breakdown_rows(request)
 
         with self as repo:
             resultsets = repo.execute_query_multiple(sql, params)
@@ -808,8 +841,16 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             bundle["estimation_meta"] = self._build_estimation_meta(normalized_breakdown)
         return bundle
 
-    def _fetch_historical_breakdown_rows(self, request: GetStockValueRequest) -> list[dict]:
-        sql, params = self._format_historical_breakdown_sql(request)
+    def _fetch_historical_breakdown_rows(
+        self,
+        request: GetStockValueRequest,
+        *,
+        full_kardex: bool = True,
+    ) -> list[dict]:
+        if full_kardex:
+            sql, params = self._format_historical_breakdown_sql(request)
+        else:
+            sql, params = self._format_historical_method_breakdown_sql(request)
         with self as repo:
             rows = repo.execute_query(sql, params)
         return [self._normalize_branch_breakdown_row(row) for row in rows]
@@ -818,7 +859,13 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         _period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
             request
         )
-        breakdown_rows = self._fetch_historical_breakdown_rows(request)
+        use_full_breakdown = (
+            normalize_stock_method(request.stock_method) == STOCK_METHOD_ESTIMATED
+        )
+        breakdown_rows = self._fetch_historical_breakdown_rows(
+            request,
+            full_kardex=use_full_breakdown,
+        )
         method_plan = resolve_stock_method_plan(
             request,
             breakdown_rows,
@@ -843,6 +890,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         return self._fetch_estimated_historical_bundle(
             request,
             method_plan=method_plan,
+            breakdown_rows=breakdown_rows if use_full_breakdown else None,
         )
 
     @staticmethod
