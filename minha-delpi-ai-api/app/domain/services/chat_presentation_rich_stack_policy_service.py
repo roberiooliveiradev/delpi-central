@@ -316,6 +316,19 @@ class ChatPresentationRichStackPolicyService:
         return False
 
     @classmethod
+    def _metadata_has_dashboard(cls, metadata: dict[str, Any]) -> bool:
+        for key in ("dashboardPresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if (
+                isinstance(presentation, dict)
+                and str(presentation.get("type") or "").strip().lower() == "dashboard"
+            ):
+                return True
+
+        return False
+
+    @classmethod
     def _should_use_dashboard_only_tail(
         cls,
         metadata: dict[str, Any],
@@ -326,9 +339,7 @@ class ChatPresentationRichStackPolicyService:
         if tail_policy != "dashboard_only":
             return False
 
-        dashboard = metadata.get("dashboardPresentation")
-
-        return isinstance(dashboard, dict) and str(dashboard.get("type") or "").strip().lower() == "dashboard"
+        return cls._metadata_has_dashboard(metadata)
 
     @classmethod
     def stack_reason_for_route(cls, path: str | None, *, entity: str | None = None) -> str:

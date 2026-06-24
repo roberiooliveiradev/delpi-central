@@ -31,6 +31,16 @@ def test_shipping_status_table_uses_operational_columns():
     assert "work_center" in _column_keys(detail)
 
 
+def test_structure_exclusivity_table_omits_mp_list_when_no_exclusive():
+    presenter = ExternalActionResultPresenter()
+    envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90261805.json")
+    path = "/products/90261805/structure/exclusivity"
+    tables = presenter.build_structure_exclusivity_table_presentations(envelope["data"], path)
+
+    assert tables[0].get("role") == "profile"
+    assert not any(table.get("role") == "structure" for table in tables)
+
+
 def test_structure_exclusivity_table_uses_operational_columns():
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_structure_exclusivity_90269002.json")
@@ -77,10 +87,8 @@ def test_structure_exclusivity_text_includes_verdict_and_mp_section():
     markdown = text["markdown"]
 
     assert "Resposta" in markdown
-    assert "Matérias-primas da estrutura" in markdown
-    assert "10020053" in markdown
-    assert "10080185" in markdown
-    assert "exclusiva" in markdown.lower()
+    assert "Matérias-primas da estrutura" not in markdown
+    assert "compartilhadas" in markdown.lower()
 
 
 def test_structure_exclusivity_text_names_exclusive_mp_in_verdict():

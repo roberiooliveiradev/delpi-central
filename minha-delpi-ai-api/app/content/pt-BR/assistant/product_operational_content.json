@@ -193,7 +193,8 @@
       "scopeIntro": "Expedição e inspeção final do PA — quantidades expedidas e perdas no período consultado."
     },
     "structureExclusivity": {
-      "scopeIntro": "Estrutura vigente (BOM) com flag de matéria-prima exclusiva por componente."
+      "scopeIntro": "Estrutura vigente (BOM) com flag de matéria-prima exclusiva por componente.",
+      "scopeIntroNeutral": "Estrutura vigente (BOM) do produto consultado."
     },
     "factoryStatus": {
       "scopeIntro": "Visão integrada na fábrica — estrutura, estoque de MP, produção e expedição no mesmo panorama."

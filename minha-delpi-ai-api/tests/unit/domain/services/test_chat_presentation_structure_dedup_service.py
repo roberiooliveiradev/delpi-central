@@ -151,3 +151,34 @@ def test_dedupe_removes_exclusivity_table_when_tree_present():
     assert metadata["presentation"]["type"] == "tree"
     assert metadata["tablePresentation"] is None
     assert len(metadata["tablePresentations"]) == 1
+
+
+OVERVIEW_PROFILE_TABLE = {
+    "type": "table",
+    "title": "Resumo da estrutura",
+    "role": "profile",
+    "columns": [{"key": "campo", "label": "Campo"}, {"key": "valor", "label": "Valor"}],
+    "rows": [{"campo": "Total componentes", "valor": "5"}],
+}
+
+
+def test_dedupe_removes_overview_profile_table_when_dashboard_embeds_kpi():
+    metadata = {
+        "path": "/products/90260882/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "treePresentation": TREE,
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "title": "Painel de exclusividade",
+            "panels": [{"id": "summary", "presentation": {"type": "kpi", "cards": []}}],
+        },
+        "tablePresentations": [OVERVIEW_PROFILE_TABLE, EXCLUSIVITY_TABLE],
+        "profileTablePresentation": OVERVIEW_PROFILE_TABLE,
+        "availableFormats": ["text", "table", "tree", "dashboard"],
+        "preferredFormat": "tree",
+    }
+
+    ChatPresentationStructureDedupService.dedupe_metadata(metadata)
+
+    assert metadata["profileTablePresentation"] is None
+    assert OVERVIEW_PROFILE_TABLE not in (metadata.get("tablePresentations") or [])

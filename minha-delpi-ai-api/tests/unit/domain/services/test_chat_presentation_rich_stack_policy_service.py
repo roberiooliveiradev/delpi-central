@@ -97,6 +97,30 @@ def test_stock_route_does_not_default_to_text_stack_without_user_preference():
     )
 
 
+def test_structure_exclusivity_tail_uses_dashboard_only_when_panel_present():
+    metadata = {
+        "path": "/products/90261805/structure/exclusivity",
+        "apiDelpiResponseMeta": {"entity": "product_structure_exclusivity"},
+        "textPresentation": {"type": "markdown", "markdown": "Resumo"},
+        "kpiPresentation": {"type": "kpi", "title": "KPI", "cards": []},
+        "treePresentation": {"type": "tree", "title": "BOM", "root": {"id": "root", "children": []}},
+        "chartPresentation": {"type": "chart", "title": "Chart", "data": []},
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "title": "Painel de exclusividade",
+            "panels": [{"id": "summary", "presentation": {"type": "kpi", "cards": []}}],
+        },
+    }
+
+    order = ChatPresentationRichStackPolicyService.resolve_tail_visual_order(
+        metadata,
+        path=metadata["path"],
+        entity="product_structure_exclusivity",
+    )
+
+    assert order == ["dashboard"]
+
+
 def test_tail_visual_order_follows_profile_view_order():
     metadata = {
         "path": "/products/90261805/structure/exclusivity",

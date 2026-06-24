@@ -20,6 +20,10 @@ _STOCK_FIXTURE = "product_stock_90269001.json"
 _STOCK_PATH = "/products/90269001/stock"
 _STOCK_MESSAGE = "estoque do produto 90269001"
 
+_STRUCTURE_EXCLUSIVITY_FIXTURE = "product_structure_exclusivity_90261805.json"
+_STRUCTURE_EXCLUSIVITY_PATH = "/products/90261805/structure/exclusivity"
+_STRUCTURE_EXCLUSIVITY_MESSAGE = "quais MPs exclusivas tem o produto 90261805?"
+
 
 def _use_case() -> ExecuteExternalActionUseCase:
     return ExecuteExternalActionUseCase(
@@ -289,3 +293,34 @@ def test_stock_text_first_quality_preserves_lazy_table_and_narrative():
         isinstance(table, dict) and table.get("role") == "list"
         for table in (meta.get("tablePresentations") or [])
     ), "tabela lazy list deve permanecer para refinamento «ver como tabela»"
+
+
+def test_structure_exclusivity_auto_quality_without_duplicate_panels():
+    envelope = load_api_delpi_fixture_with_meta(_STRUCTURE_EXCLUSIVITY_FIXTURE)
+    summary = (envelope.get("data") or {}).get("summary") or {}
+    meta = _build(
+        _STRUCTURE_EXCLUSIVITY_FIXTURE,
+        _STRUCTURE_EXCLUSIVITY_PATH,
+        user_message=_STRUCTURE_EXCLUSIVITY_MESSAGE,
+    )
+    plan = meta.get("stackPresentationPlan") or {}
+    tables = meta.get("tablePresentations") or []
+    text_presentation = meta.get("textPresentation")
+    markdown = str((text_presentation or {}).get("markdown") or "")
+
+    assert int(summary.get("total_exclusive_raw_materials") or 0) == 0
+    assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
+    assert meta.get("profileTablePresentation") is None
+    assert not any(
+        "matérias-primas" in str(table.get("title") or "").lower()
+        for table in tables
+        if isinstance(table, dict)
+    )
+    dashboard = meta.get("dashboardPresentation") or meta.get("presentation")
+    assert isinstance(dashboard, dict) and dashboard.get("type") == "dashboard"
+
+    if markdown:
+        lowered = markdown.lower()
+        assert "compartilhadas" in lowered
+        assert "resposta" in lowered
+        _assert_no_near_duplicate_prose(markdown)

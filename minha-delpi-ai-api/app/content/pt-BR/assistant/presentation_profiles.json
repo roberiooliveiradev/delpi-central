@@ -1044,6 +1044,7 @@
     "structure_exclusivity": {
       "defaultViewPolicy": "tree_when_available",
       "stackLayoutPolicy": "always",
+      "stackTailPolicy": "dashboard_only",
       "viewOrder": [
         "text",
         "tree",

@@ -253,12 +253,121 @@ class ChatPresentationStructureDedupService:
         return f"{title}::{keys}::{row_count}"
 
     @classmethod
+    def _is_summary_profile_table(cls, presentation: dict[str, Any] | None) -> bool:
+        if not isinstance(presentation, dict) or presentation.get("type") != "table":
+            return False
+
+        if str(presentation.get("role") or "").strip().lower() == "profile":
+            return True
+
+        columns = presentation.get("columns") or []
+        keys = {
+            str(column.get("key") or "").strip().lower()
+            for column in columns
+            if isinstance(column, dict)
+        }
+
+        return keys.issubset({"campo", "valor", "field", "value"}) and bool(keys)
+
+    @classmethod
+    def _resolve_dashboard_presentation(
+        cls,
+        metadata: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        for key in ("dashboardPresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if (
+                isinstance(presentation, dict)
+                and str(presentation.get("type") or "").strip().lower() == "dashboard"
+            ):
+                return presentation
+
+        return None
+
+    @classmethod
+    def _metadata_has_dashboard(cls, metadata: dict[str, Any]) -> bool:
+        return cls._resolve_dashboard_presentation(metadata) is not None
+
+    @classmethod
+    def _dashboard_embeds_kpi(cls, metadata: dict[str, Any]) -> bool:
+        dashboard = cls._resolve_dashboard_presentation(metadata)
+
+        if not isinstance(dashboard, dict):
+            return False
+
+        panels = dashboard.get("panels")
+
+        if not isinstance(panels, list):
+            return False
+
+        return any(
+            isinstance(panel, dict)
+            and isinstance(panel.get("presentation"), dict)
+            and str(panel["presentation"].get("type") or "").strip().lower() == "kpi"
+            for panel in panels
+        )
+
+    @classmethod
+    def _should_suppress_summary_profile_table(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        path = str(metadata.get("path") or "").strip() or None
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        tail_policy = str(profile.get("stackTailPolicy") or "").strip().lower()
+
+        if tail_policy != "dashboard_only":
+            return False
+
+        return cls._dashboard_embeds_kpi(metadata)
+
+    @classmethod
+    def _suppress_redundant_summary_profile_tables(cls, metadata: dict[str, Any]) -> None:
+        if not cls._should_suppress_summary_profile_table(metadata):
+            return
+
+        bundled = metadata.get("tablePresentations")
+
+        if isinstance(bundled, list):
+            filtered = [
+                item
+                for item in bundled
+                if not (
+                    isinstance(item, dict)
+                    and cls._is_summary_profile_table(item)
+                )
+            ]
+            metadata["tablePresentations"] = filtered or None
+
+        profile_table = metadata.get("profileTablePresentation")
+
+        if cls._is_summary_profile_table(profile_table):
+            metadata["profileTablePresentation"] = None
+
+        presentation = metadata.get("presentation")
+
+        if cls._is_summary_profile_table(presentation):
+            metadata["presentation"] = None
+
+    @classmethod
     def dedupe_metadata(cls, metadata: dict[str, Any]) -> None:
         """Árvore e tabela plana da mesma hierarquia não coexistem na mesma resposta."""
         if not isinstance(metadata, dict):
             return
 
         cls._normalize_auxiliary_table_slots(metadata)
+        cls._suppress_redundant_summary_profile_tables(metadata)
 
         if (
             not cls._explicit_table_session(metadata)
