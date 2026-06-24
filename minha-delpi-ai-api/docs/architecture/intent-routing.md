@@ -20,6 +20,8 @@ Mensagem → normalização → segurança → classificação (classify)
 | `ChatIntentRouterService` | `classify` (pré-turno), `resolve_executed` (pós-prep) |
 | `ChatIntentRouterMetricsService` | `intentRouting` + `intentRouterMetrics`; agregação admin via audit |
 | `ChatIntentDisambiguationService` | Resposta direta + chips quando `ambiguous` com código de produto |
+| `ChatOperationalSubIntentService` | Sub-intenção operacional (`router.operationalSubIntentPipeline`) |
+| `ChatOperationalAmbiguityService` | Escopo ambíguo vs. consulta específica (`operationalAmbiguityExclusionPredicates`) |
 | `ChatIntentDisambiguationFollowUpService` | `metadata.routingDisambiguationSuggestions` |
 | `ChatActivePendingService` | Pendências (`clarification`) |
 | `ChatReferenceResolutionService` / memória | Follow-up e `resolvedParams` |

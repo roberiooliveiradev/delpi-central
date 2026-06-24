@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -1173,161 +1172,11 @@ class ChatIntentRouterService:
         message: str,
         resolved_params: dict[str, str] | None,
     ) -> tuple[bool, tuple[str, ...]]:
-        from app.domain.services.chat_message_normalization_service import (
-            ChatMessageNormalizationService,
-        )
-        from app.domain.services.chat_product_query_intent_service import (
-            ChatProductQueryIntentService,
+        from app.domain.services.chat_operational_ambiguity_service import (
+            ChatOperationalAmbiguityService,
         )
 
-        code = (resolved_params or {}).get("productCode") or ChatProductQueryIntentService.extract_product_code(
-            message
-        )
-
-        if not code:
-            return False, ()
-
-        lowered = message.lower()
-
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-            ProductionOperationalIntentKind,
-        )
-
-        if (
-            ChatProductionOperationalIntentService.resolve(message)
-            == ProductionOperationalIntentKind.SCHEDULE_TODAY
-        ):
-            return False, ()
-
-        sub_intent = ChatIntentRouterService._operational_sub_intent(message)
-
-        if sub_intent and sub_intent != "product_lookup":
-            return False, ()
-
-        if sub_intent == "product_lookup" and any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms(
-                "operationalAmbiguityProductLookupExcludes"
-            )
-        ):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_full_analyser_question(lowered):
-            return False, ()
-
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        if ChatProductQueryIntentService._looks_like_stock_question(normalized):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_billing_question(normalized):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_cost_impact_simulation_question(
-            normalized
-        ):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
-            normalized
-        ):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_last_purchase_question(normalized):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_purchase_price_history_question(
-            normalized
-        ):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_purchase_budget_history_question(
-            normalized
-        ):
-            return False, ()
-
-        if ChatProductQueryIntentService._looks_like_sale_pricing_question(normalized):
-            return False, ()
-
-        if (
-            any(
-                term in lowered
-                for term in ChatIntentRouterService._operational_scope_terms()
-            )
-            or ChatIntentRouterService._mentions_supplier(lowered)
-            or ChatIntentRouterService._mentions_outbound_invoice(lowered)
-        ):
-            return False, ()
-
-        if "produto" not in lowered and code not in message:
-            return False, ()
-
-        candidates = (
-            "product_lookup",
-            "stock_lookup",
-            "supplier_lookup",
-            "structure_lookup",
-            "sales_lookup",
-            "purchase_lookup",
-        )
-
-        return True, candidates
-
-    @staticmethod
-    def _operational_scope_terms() -> tuple[str, ...]:
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
-        )
-
-        return tuple(
-            ChatAssistantContentService.list(
-                "product_query_intent",
-                "operationalAmbiguityScopeTerms",
-            )
-        )
-
-    @staticmethod
-    def _mentions_supplier(lowered: str) -> bool:
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms("supplierMentionTerms")
-        ):
-            return True
-
-        return bool(re.search(r"\bfornece", lowered))
-
-    @staticmethod
-    def _mentions_outbound_invoice(lowered: str) -> bool:
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms(
-                "invoiceOutbound",
-                "inboundExcludePhrases",
-            )
-        ):
-            return False
-
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms(
-                "invoiceOutbound",
-                "outboundPhrases",
-            )
-        ):
-            return True
-
-        if "notas fiscais" in lowered and (
-            "saída" in lowered or "saida" in lowered or "venda" in lowered
-        ):
-            return True
-
-        return bool(re.search(r"\bnf(?:e)?\b", lowered)) and (
-            "saída" in lowered or "saida" in lowered
-        )
+        return ChatOperationalAmbiguityService.resolve(message, resolved_params)
 
     @staticmethod
     def _resolve_department_kpi(message: str):
@@ -1348,127 +1197,11 @@ class ChatIntentRouterService:
 
     @staticmethod
     def _operational_sub_intent(message: str) -> str | None:
-        from app.domain.services.chat_message_normalization_service import (
-            ChatMessageNormalizationService,
-        )
-        from app.domain.services.chat_product_query_intent_service import (
-            ChatProductQueryIntentService,
+        from app.domain.services.chat_operational_sub_intent_service import (
+            ChatOperationalSubIntentService,
         )
 
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        lowered = message.lower()
-
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-            ProductionOperationalIntentKind,
-        )
-
-        if (
-            ChatProductionOperationalIntentService.resolve(message)
-            == ProductionOperationalIntentKind.SCHEDULE_TODAY
-        ):
-            return "schedule_today_lookup"
-
-        if ChatProductQueryIntentService._looks_like_factory_status_question(normalized):
-            return "factory_status_lookup"
-
-        if ChatProductQueryIntentService._looks_like_production_status_question(normalized):
-            return "production_status_lookup"
-
-        if ChatProductQueryIntentService._looks_like_shipping_status_question(normalized):
-            return "shipping_status_lookup"
-
-        if ChatProductQueryIntentService._looks_like_stock_question(normalized):
-            return "stock_lookup"
-
-        if ChatProductQueryIntentService._looks_like_billing_question(normalized):
-            return "billing_lookup"
-
-        if ChatProductQueryIntentService._looks_like_cost_impact_simulation_question(
-            normalized
-        ):
-            return "cost_impact_lookup"
-
-        if ChatProductQueryIntentService._looks_like_raw_material_price_intelligence_question(
-            normalized
-        ):
-            return "raw_material_price_lookup"
-
-        if ChatProductQueryIntentService._looks_like_last_purchase_question(normalized):
-            return "last_purchase_lookup"
-
-        if ChatProductQueryIntentService._looks_like_purchase_price_history_question(
-            normalized
-        ):
-            return "purchase_price_history_lookup"
-
-        if ChatProductQueryIntentService._looks_like_purchase_budget_history_question(
-            normalized
-        ):
-            return "purchase_budget_history_lookup"
-
-        if ChatProductQueryIntentService._looks_like_sale_pricing_question(normalized):
-            return "price_lookup"
-
-        if ChatIntentRouterService._mentions_outbound_invoice(lowered):
-            return "sales_lookup"
-
-        if ChatProductQueryIntentService._looks_like_sales_question(normalized):
-            return "sales_lookup"
-
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms("purchaseTerms")
-        ):
-            return "purchase_lookup"
-
-        if ChatIntentRouterService._mentions_supplier(lowered):
-            return "supplier_lookup"
-
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms("priceTerms")
-        ):
-            return "price_lookup"
-
-        if ChatProductQueryIntentService._looks_like_full_analyser_question(lowered):
-            return "product_lookup"
-
-        if ChatProductQueryIntentService._looks_like_structure_question(normalized):
-            return "structure_lookup"
-
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms("guideTerms")
-        ):
-            return "guide_lookup"
-
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms("inspectionTerms")
-        ):
-            return "inspection_lookup"
-
-        if ChatProductQueryIntentService._looks_like_parents_question(normalized):
-            return "parents_lookup"
-
-        if any(
-            term in lowered
-            for term in ChatIntentRouterService._product_router_terms(
-                "systemMetadataTableTerms"
-            )
-        ) and any(
-            phrase in lowered
-            for phrase in ChatIntentRouterService._product_router_terms(
-                "systemMetadataQuestionPhrases"
-            )
-        ):
-            return "system_metadata"
-
-        if "produto" in lowered:
-            return "product_lookup"
-
-        return None
+        return ChatOperationalSubIntentService.resolve(message)
 
     @staticmethod
     def _looks_rag_document(message: str) -> bool:

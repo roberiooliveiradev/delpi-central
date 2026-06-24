@@ -105,6 +105,20 @@ def test_try_build_not_ambiguous_for_schedule_today_with_group_filter():
     ) is None
 
 
+def test_try_build_not_ambiguous_for_exclusive_raw_materials_with_product():
+    assert ChatIntentDisambiguationService.try_build(
+        "quais MPs exclusivas tem o produto 90260882?",
+        allowed_action_ids=["action-1"],
+    ) is None
+
+
+def test_try_build_not_ambiguous_for_structure_exclusivity_phrase():
+    assert ChatIntentDisambiguationService.try_build(
+        "Quais matérias-primas exclusivas existem na estrutura do produto 90269002?",
+        allowed_action_ids=["action-1"],
+    ) is None
+
+
 def test_try_build_not_ambiguous_for_schedule_membership_with_pa():
     assert ChatIntentDisambiguationService.try_build(
         "O produto 90260255 está na programação de hoje? Qual OP e quantidade?",

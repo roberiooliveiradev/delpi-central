@@ -772,6 +772,28 @@ SELECTION_CASES = [
         "expected_action_id": "structure-exclusivity",
     },
     {
+        "message": "quais MPs exclusivas tem o produto 90260882?",
+        "actions": [
+            {
+                "actionId": "structure-exclusivity",
+                "method": "GET",
+                "path": "/products/{code}/structure/exclusivity",
+                "operationId": "get_product_structure_exclusivity",
+                "summary": "Estrutura com exclusividade",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "structure-exclusivity",
+    },
+    {
         "message": "Quais matérias-primas são exclusivas?",
         "actions": [
             {

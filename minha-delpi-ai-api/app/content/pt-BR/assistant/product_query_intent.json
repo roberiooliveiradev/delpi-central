@@ -1563,6 +1563,68 @@
       "buscar tabela",
       "pesquisar tabela",
       "schema da tabela"
+    ],
+    "operationalSubIntentPipeline": [
+      { "probe": "productionScheduleToday", "subIntent": "schedule_today_lookup" },
+      { "predicate": "factoryStatus", "subIntent": "factory_status_lookup" },
+      { "predicate": "productionStatus", "subIntent": "production_status_lookup" },
+      { "predicate": "shippingStatus", "subIntent": "shipping_status_lookup" },
+      { "predicate": "stockQuestion", "subIntent": "stock_lookup" },
+      { "predicate": "billingRoute", "subIntent": "billing_lookup" },
+      { "predicate": "costImpactSimulation", "subIntent": "cost_impact_lookup" },
+      {
+        "predicate": "rawMaterialPriceIntelligence",
+        "subIntent": "raw_material_price_lookup"
+      },
+      { "predicate": "lastPurchase", "subIntent": "last_purchase_lookup" },
+      {
+        "predicate": "purchasePriceHistory",
+        "subIntent": "purchase_price_history_lookup"
+      },
+      {
+        "predicate": "purchaseBudgetHistory",
+        "subIntent": "purchase_budget_history_lookup"
+      },
+      { "predicate": "salePricingRoute", "subIntent": "price_lookup" },
+      { "probe": "outboundInvoice", "subIntent": "sales_lookup" },
+      { "predicate": "salesQuestion", "subIntent": "sales_lookup" },
+      { "termsAny": "purchaseTerms", "subIntent": "purchase_lookup" },
+      { "probe": "supplierMention", "subIntent": "supplier_lookup" },
+      { "termsAny": "priceTerms", "subIntent": "price_lookup" },
+      { "probe": "fullAnalyserQuestion", "subIntent": "product_lookup" },
+      {
+        "predicate": "structureExclusivity",
+        "subIntent": "structure_exclusivity_lookup"
+      },
+      { "predicate": "structureQuestion", "subIntent": "structure_lookup" },
+      { "termsAny": "guideTerms", "subIntent": "guide_lookup" },
+      { "termsAny": "inspectionTerms", "subIntent": "inspection_lookup" },
+      { "predicate": "parentsQuestion", "subIntent": "parents_lookup" },
+      { "probe": "systemMetadataQuestion", "subIntent": "system_metadata" },
+      { "messageContains": "produto", "subIntent": "product_lookup" }
+    ],
+    "operationalAmbiguityExclusionPredicates": [
+      "stockQuestion",
+      "billingRoute",
+      "factoryStatus",
+      "productionStatus",
+      "shippingStatus",
+      "costImpactSimulation",
+      "rawMaterialPriceIntelligence",
+      "lastPurchase",
+      "purchasePriceHistory",
+      "purchaseBudgetHistory",
+      "salePricingRoute",
+      "structureExclusivity"
+    ],
+    "operationalAmbiguityProbes": ["fullAnalyserQuestion"],
+    "operationalAmbiguityCandidates": [
+      "product_lookup",
+      "stock_lookup",
+      "supplier_lookup",
+      "structure_lookup",
+      "sales_lookup",
+      "purchase_lookup"
     ]
   }
 }

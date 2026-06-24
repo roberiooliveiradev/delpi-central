@@ -17,6 +17,7 @@ ${PYTEST_BIN} \
   tests/unit/domain/services/test_intent_router.py \
   tests/unit/domain/services/test_chat_intent_router_service.py \
   tests/unit/domain/services/test_chat_intent_disambiguation_service.py \
+  tests/unit/domain/services/test_chat_operational_sub_intent_service.py \
   tests/unit/application/services/test_chat_intent_router_metrics_service.py \
   tests/unit/application/services/test_chat_active_pending_service.py \
   tests/unit/application/use_cases/test_get_admin_intent_routing_summary_use_case.py \
