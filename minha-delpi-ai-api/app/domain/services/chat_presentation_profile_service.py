@@ -49,11 +49,22 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         if not key:
             return False
 
+        profile_only = cls.profile(key)
+        defaults = cls.node("defaults") or {}
+        strategy = str(
+            profile_only.get("presentationStrategy")
+            or defaults.get("presentationStrategy")
+            or "as_delivered"
+        ).strip().lower()
+
+        if strategy != "legacy":
+            return False
+
         if key in cls.entity_set("richStackProfiles"):
             return True
 
-        merged = dict(cls.node("defaults") or {})
-        merged.update(cls.profile(key))
+        merged = dict(defaults)
+        merged.update(profile_only)
 
         return str(merged.get("stackLayoutPolicy") or "on_demand").strip().lower() == "always"
 
@@ -603,7 +614,8 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
                 ordered.append(view)
 
         stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
-        force_stack = stack_policy == "always" and len(ordered) >= 2
+        schema_first = cls.uses_schema_first_presentation(path, entity)
+        force_stack = stack_policy == "always" and len(ordered) >= 2 and not schema_first
 
         from app.domain.services.chat_presentation_text_mode_service import (
             ChatPresentationTextModeService,
@@ -646,7 +658,7 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
                 decision["presentationProfileKey"] = profile.get("profileKey")
                 return
 
-            if stack_policy == "always":
+            if stack_policy == "always" and not schema_first:
                 decision["layoutMode"] = "stack"
             elif selected != "text":
                 decision["layoutMode"] = "stack"

@@ -266,18 +266,7 @@
       "production_work_center_order_summary",
       "purchases_top_products"
     ],
-    "richStackProfiles": [
-      "analyser",
-      "factory_status",
-      "structure_exclusivity",
-      "raw_material_price_intelligence",
-      "cost_impact_simulation",
-      "sale_pricing",
-      "production_status",
-      "shipping_status",
-      "stock",
-      "tree_hierarchy"
-    ],
+    "richStackProfiles": [],
     "legacyPresentationProfiles": [],
     "schemaFirstMigratedProfiles": [],
     "presentationTableAssemblyEntities": [],
@@ -996,7 +985,7 @@
     },
     "structure_exclusivity": {
       "defaultViewPolicy": "tree_when_available",
-      "stackLayoutPolicy": "always",
+      "stackLayoutPolicy": "on_demand",
       "stackTailPolicy": "dashboard_only",
       "viewOrder": [
         "text",

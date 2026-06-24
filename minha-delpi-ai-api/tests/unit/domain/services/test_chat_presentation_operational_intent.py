@@ -116,8 +116,8 @@ def test_enrich_metadata_analyser_puts_tree_before_table_in_visual_order():
     order = metadata["presentationDecision"]["visualOrder"]
 
     assert order.index("table") < order.index("tree")
-    assert metadata["presentationDecision"]["selected"] == "text"
-    assert "stack" in metadata["presentationDecision"]["reason"].lower()
+    assert metadata["presentationDecision"]["selected"] == "table"
+    assert metadata["presentationDecision"]["layoutMode"] != "stack"
 
 
 def test_enrich_metadata_analyser_honors_explicit_tree_preference():

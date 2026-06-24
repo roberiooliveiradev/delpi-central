@@ -129,6 +129,21 @@ class ChatPresentationRichStackPolicyService:
         if ChatPresentationRoutePolicyService.is_stock_route(path):
             return False
 
+        entity_for_strategy = entity
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if not entity_for_strategy and isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity_for_strategy = raw_entity.strip()
+
+        if ChatPresentationProfileService.uses_schema_first_presentation(path, entity_for_strategy):
+            if not ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+                user_message,
+            ):
+                return False
+
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
         stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
 

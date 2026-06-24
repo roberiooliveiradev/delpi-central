@@ -239,7 +239,7 @@ def test_apply_visual_order_uses_profile_priority() -> None:
     assert decision["presentationProfileKey"] == "stock"
 
 
-def test_apply_visual_order_forces_stack_when_policy_always() -> None:
+def test_apply_visual_order_keeps_single_for_as_delivered_even_with_stack_policy_always() -> None:
     decision = {
         "selected": "text",
         "layoutMode": "single",
@@ -251,7 +251,7 @@ def test_apply_visual_order_forces_stack_when_policy_always() -> None:
         path="/products/90260609/structure/exclusivity",
     )
 
-    assert decision["layoutMode"] == "stack"
+    assert decision["layoutMode"] == "single"
     assert decision["visualOrder"][:3] == ["text", "tree", "table"]
 
 

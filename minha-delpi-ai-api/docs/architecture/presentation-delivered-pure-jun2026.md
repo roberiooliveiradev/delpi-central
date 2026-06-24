@@ -95,9 +95,10 @@ Chaves **removidas** dos perfis `as_delivered` (sem efeito no runtime desde Fase
 
 Ainda presentes (runtime parcial ou histórico):
 
-- `richStackProfiles` — usado por `ChatPresentationRichStackPolicyService` (slim Fase 3b)
+- `richStackProfiles` — **vazio**; reservado para perfis `presentationStrategy: legacy` (Fase 3b)
 - `visualBundlePolicy`, `humanizedNarrative` — texto-first / prosa no turn completion
 - `stackPlans`, `sectionRules` — comentário e markdown embed
+- `stackLayoutPolicy: always` em alguns perfis — **ignorado** para auto-stack quando `as_delivered`; stack só com pedido «visão integrada»
 
 Manter e evoluir:
 
