@@ -258,7 +258,10 @@
     "singleRecordLead": "{title}: registro único com **{columns}** campo(s). Detalhes no painel tabular abaixo.",
     "panelsBelowHint": "Painéis e tabelas abaixo complementam este resumo.",
     "rawPayloadLead": "{title}: dados retornados pela API (formato original). Use tabelas ou painéis auxiliares quando disponíveis.",
-    "rawPayloadEmpty": "{title}: a consulta não retornou conteúdo."
+    "rawPayloadEmpty": "{title}: a consulta não retornou conteúdo.",
+    "singleRecordObjectKeys": [
+      "last_purchase"
+    ]
   },
   "stackSectionFraming": {
     "default": {

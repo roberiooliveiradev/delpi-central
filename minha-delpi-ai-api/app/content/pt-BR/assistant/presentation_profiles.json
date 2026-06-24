@@ -167,7 +167,6 @@
       "product_inbound_invoice_items",
       "product_inspection",
       "product_internal_movements",
-      "product_last_purchase",
       "product_open_orders",
       "product_outbound_invoice_items",
       "product_parents",
@@ -236,7 +235,6 @@
       "product_inbound_invoice_items",
       "product_inspection",
       "product_internal_movements",
-      "product_last_purchase",
       "product_open_orders",
       "product_outbound_invoice_items",
       "product_parents",
@@ -291,14 +289,14 @@
       "raw_material_price_intelligence",
       "cost_impact_simulation",
       "sale_pricing",
-      "last_purchase",
       "purchase_price_history",
       "purchase_budget_history",
       "playbook_report",
       "directives"
     ],
     "schemaFirstMigratedProfiles": [
-      "purchase_list"
+      "purchase_list",
+      "last_purchase"
     ],
     "presentationTableAssemblyEntities": [
       "product_factory_status",
@@ -309,7 +307,6 @@
       "product_raw_material_price_intelligence",
       "product_cost_impact_simulation",
       "product_pricing",
-      "product_last_purchase",
       "product_purchase_price_history",
       "product_purchase_budget_history"
     ],
@@ -479,9 +476,6 @@
       },
       "cost_impact_simulation": {
         "presenterMethod": "present_product_cost_impact_simulation"
-      },
-      "last_purchase": {
-        "presenterMethod": "present_product_last_purchase"
       },
       "sale_pricing": {
         "presenterMethod": "present_product_pricing"
@@ -1323,40 +1317,14 @@
       "narrativePolicy": "generic_data_summary"
     },
     "last_purchase": {
-      "defaultViewPolicy": "generic",
+      "presentationStrategy": "as_delivered",
+      "defaultViewPolicy": "table_when_available",
       "viewOrder": [
-        "text",
         "table",
-        "chart",
-        "tree",
-        "kpi",
-        "dashboard"
+        "text",
+        "kpi"
       ],
-      "stackPlan": "last_purchase",
-      "flags": [
-        "last_purchase"
-      ],
-      "chartPolicy": "skip",
-      "visualBundle": {
-        "dashboardListRole": "list"
-      },
-      "visualBuilders": {
-        "kpi": "build_last_purchase_kpi",
-        "tree": "build_last_purchase_tree",
-        "chart": "build_last_purchase_chart",
-        "dashboard": "build_last_purchase_dashboard"
-      },
-      "tableAssembly": {
-        "builder": "build_last_purchase_table_presentations",
-        "layout": "profile_primary",
-        "profileTableIndex": 0,
-        "primaryTableIndex": 1
-      },
-      "textBuilder": "build_last_purchase_text",
-      "textBuildOptions": {
-        "requiresProduct": true
-      },
-      "compositeVisualSpec": "last_purchase",
+      "chartPolicy": "auto",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },

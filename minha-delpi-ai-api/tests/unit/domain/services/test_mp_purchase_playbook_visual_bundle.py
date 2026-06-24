@@ -15,43 +15,32 @@ def _assert_visual_bundle(metadata: dict) -> None:
     assert "dashboard" in available
 
 
-def test_last_purchase_table_presentations_assign_stack_roles():
-    presenter = ExternalActionResultPresenter()
-    envelope = load_api_delpi_fixture_with_meta("product_last_purchase_10080001.json")
-    path = "/products/10080001/last-purchase"
-    tables = presenter.build_last_purchase_table_presentations(envelope["data"], path)
-
-    assert len(tables) >= 2
-    assert tables[0].get("role") == "profile"
-    assert any(table.get("role") == "list" for table in tables)
-
-
-def test_visual_bundle_enriches_last_purchase_with_auxiliary_slots():
-    presenter = ExternalActionResultPresenter()
-    envelope = load_api_delpi_fixture_with_meta("product_last_purchase_10080001.json")
-    path = "/products/10080001/last-purchase"
-    tables = presenter.build_last_purchase_table_presentations(envelope["data"], path)
-    text = presenter._build_last_purchase_text_presentation(envelope["data"], path)
-
-    metadata = {
-        "presentation": tables[1] if len(tables) > 1 else tables[0],
-        "tablePresentations": tables,
-        "tablePresentation": tables[1] if len(tables) > 1 else tables[0],
-        "profileTablePresentation": tables[0],
-        "textPresentation": text,
-        "availableFormats": ["text", "table"],
-    }
-
-    ChatPresentationVisualBundleService.enrich_metadata(
-        metadata,
-        path=path,
-        data=envelope,
-        presenter=presenter,
+def test_last_purchase_schema_first_metadata_table():
+    from app.application.use_cases.execute_external_action_use_case import (
+        ExecuteExternalActionUseCase,
     )
 
-    _assert_visual_bundle(metadata)
-    assert metadata.get("chartPresentation", {}).get("type") == "chart"
-    assert metadata.get("treePresentation", {}).get("type") == "tree"
+    use_case = ExecuteExternalActionUseCase(
+        repository=None,
+        gateway=None,
+        policy=None,
+        audit_repository=None,
+    )
+    envelope = load_api_delpi_fixture_with_meta("product_last_purchase_10080001.json")
+    path = "/products/10080001/last-purchase"
+
+    meta = use_case._build_presentation_metadata(
+        action={"path": path},
+        sanitized_data=envelope["data"],
+        resolved_path=path,
+        request_parameters={},
+    )
+
+    table = meta.get("tablePresentation") or meta.get("presentation")
+    assert isinstance(table, dict)
+    assert table.get("type") == "table"
+    keys = [column["key"] for column in table.get("columns") or []]
+    assert "unit_price" in keys
 
 
 def test_purchase_price_history_table_presentations_assign_stack_roles():

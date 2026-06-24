@@ -455,7 +455,26 @@ class ChatSchemaDrivenPresentationService:
         if isinstance(nested_data, list):
             return [row for row in nested_data if isinstance(row, dict)]
 
+        for key in cls._single_record_object_keys():
+            candidate = root.get(key)
+
+            if isinstance(candidate, dict) and candidate:
+                return [candidate]
+
         return []
+
+    @classmethod
+    def _single_record_object_keys(cls) -> tuple[str, ...]:
+        raw = ChatAssistantContentService.list(
+            "presenter_content",
+            "schemaDriven",
+            "singleRecordObjectKeys",
+        )
+
+        if not raw:
+            return ()
+
+        return tuple(str(item).strip() for item in raw if str(item).strip())
 
     @classmethod
     def _count_scalar_metrics(cls, root: dict[str, Any]) -> int:

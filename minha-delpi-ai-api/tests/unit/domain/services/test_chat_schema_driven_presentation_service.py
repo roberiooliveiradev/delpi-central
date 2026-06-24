@@ -41,6 +41,21 @@ def test_should_apply_for_kpi_entity_and_generic_path():
     )
 
 
+def test_extract_tabular_rows_from_nested_last_purchase_object():
+    rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+        {
+            "product": {"product_code": "10080001"},
+            "last_purchase": {
+                "supplier_code": "000002",
+                "unit_price": 0.089,
+            },
+        }
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["supplier_code"] == "000002"
+
+
 def test_build_raw_payload_markdown_for_unknown_shape():
     presenter = ExternalActionResultPresenter()
     payload = ChatSchemaDrivenPresentationService.build_raw_payload_markdown(

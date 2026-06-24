@@ -497,9 +497,6 @@ class ExternalActionResultPresenter:
     def _present_product_pricing(self, root: dict, path: str) -> dict:
         return self._product_pricing()._present_product_pricing(root, path)
 
-    def _present_product_last_purchase(self, root: dict, path: str) -> dict:
-        return self._raw_material_price()._present_last_purchase(root, path)
-
     def _present_product_purchase_price_history(self, root: dict, path: str) -> dict:
         return self._purchase_history()._present_purchase_history(root, path)
 
@@ -1007,38 +1004,6 @@ class ExternalActionResultPresenter:
             table=table,
         )
 
-    def build_last_purchase_table_presentation(self, root: dict, path: str) -> dict | None:
-        return self._raw_material_price().build_last_purchase_table_presentation(root, path)
-
-    def build_last_purchase_table_presentations(self, root: dict, path: str) -> list[dict]:
-        return self._raw_material_price().build_last_purchase_table_presentations(root, path)
-
-    def build_last_purchase_kpi_presentation(self, root: dict, path: str) -> dict | None:
-        return self._raw_material_price().build_last_purchase_kpi_presentation(root, path)
-
-    def build_last_purchase_chart_presentation(self, root: dict, path: str) -> dict | None:
-        return self._raw_material_price().build_last_purchase_chart_presentation(root, path)
-
-    def build_last_purchase_tree_presentation(self, root: dict, path: str) -> dict | None:
-        return self._raw_material_price().build_last_purchase_tree_presentation(root, path)
-
-    def build_last_purchase_dashboard_presentation(
-        self,
-        root: dict,
-        path: str,
-        *,
-        kpi: dict | None = None,
-        chart: dict | None = None,
-        table: dict | None = None,
-    ) -> dict | None:
-        return self._raw_material_price().build_last_purchase_dashboard_presentation(
-            root,
-            path,
-            kpi=kpi,
-            chart=chart,
-            table=table,
-        )
-
     def build_purchase_history_table_presentations(self, root: dict, path: str) -> list[dict]:
         return self._purchase_history().build_purchase_history_table_presentations(root, path)
 
@@ -1127,9 +1092,6 @@ class ExternalActionResultPresenter:
 
     def _build_product_pricing_text_presentation(self, root: dict, path: str) -> dict | None:
         return self._product_pricing()._build_pricing_text_presentation(root, path)
-
-    def _build_last_purchase_text_presentation(self, root: dict, path: str) -> dict | None:
-        return self._raw_material_price()._build_last_purchase_text_presentation(root, path)
 
     def _build_purchase_history_text_presentation(self, root: dict, path: str) -> dict | None:
         return self._purchase_history()._build_purchase_history_text_presentation(root, path)

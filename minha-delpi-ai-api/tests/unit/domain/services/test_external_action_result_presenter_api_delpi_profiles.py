@@ -367,15 +367,13 @@ def test_present_product_pricing_fixture_by_meta_entity() -> None:
     assert "1.25" in body or "Tabela" in body
 
 
-def test_present_last_purchase_fixture_by_meta_entity() -> None:
+def test_present_last_purchase_fixture_uses_schema_first_table() -> None:
     presenter = ExternalActionResultPresenter()
     envelope = load_api_delpi_fixture_with_meta("product_last_purchase_10080001.json")
+    path = "/products/10080001/last-purchase"
 
-    humanized = presenter.present(
-        envelope,
-        path="/products/10080001/last-purchase",
-    )
+    table = presenter.build_presentation(envelope["data"], path=path)
 
-    assert "Última compra" in humanized.get("titulo", "")
-    body = "\n".join(humanized.get("linhas") or [])
-    assert "000002" in body or "0.089" in body
+    assert table.get("type") == "table"
+    keys = [column["key"] for column in table.get("columns") or []]
+    assert "unit_price" in keys or "supplier_code" in keys

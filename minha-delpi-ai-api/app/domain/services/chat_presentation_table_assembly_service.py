@@ -48,7 +48,6 @@ class ChatPresentationTableAssemblyService:
             "build_raw_material_price_intelligence_table_presentations": lambda p, root, path: p.build_raw_material_price_intelligence_table_presentations(root, path),
             "build_cost_impact_simulation_table_presentations": lambda p, root, path: p.build_cost_impact_simulation_table_presentations(root, path),
             "build_product_pricing_table_presentations": lambda p, root, path: p.build_product_pricing_table_presentations(root, path),
-            "build_last_purchase_table_presentations": lambda p, root, path: p.build_last_purchase_table_presentations(root, path),
             "build_purchase_history_table_presentations": lambda p, root, path: p.build_purchase_history_table_presentations(root, path),
             "build_product_directives_table_presentations": (
                 lambda p, root, path: p.build_product_directives_table_presentations(root, path)
