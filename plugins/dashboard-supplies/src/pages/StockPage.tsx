@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Warehouse } from "lucide-react";
+import { Info, Warehouse } from "lucide-react";
 
 import { getStockValue } from "../api/suppliesApi";
 import { ChartCard } from "../components/ChartCard";
@@ -17,6 +17,7 @@ import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
+import { InfoCard } from "../components/InfoCard";
 import { KpiCard } from "../components/KpiCard";
 import { StockEstimationBreakdown } from "../components/StockEstimationBreakdown";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
@@ -147,24 +148,32 @@ export function StockPage({ pathname }: StockPageProps) {
     []
   );
 
+  const estimationSubtitle = hasHistoricalPeriod
+    ? isOfficialClosure
+      ? `Fechamento oficial SB9 em ${data?.estimation?.end_date?.replace(
+          /^(\d{4})(\d{2})(\d{2})$/,
+          "$3/$2/$1"
+        ) ?? "fim do período"}`
+      : isRegisterSnapshot
+        ? "Snapshot SB2 (alinhado ao Registro de Inventário quando não há fechamento SB9)"
+        : data?.estimation?.enabled
+          ? "Estimativa Kardex SB9+SD3 (modo analítico)"
+          : "Período histórico — aguardando dados"
+    : "Posição atual por filial e localização (SB2)";
+
+  const estimationNoteVariant = isOfficialClosure
+    ? "success"
+    : isRegisterSnapshot
+      ? "info"
+      : "neutral";
+
   const isBusy = loading || refreshing;
 
   return (
     <div className="dashboard-supplies dashboard-page">
       <FilterBar
         title="Estoque"
-        subtitle={
-          hasHistoricalPeriod
-            ? isOfficialClosure
-              ? `Fechamento oficial SB9 em ${data?.estimation?.end_date?.replace(
-                  /^(\d{4})(\d{2})(\d{2})$/,
-                  "$3/$2/$1"
-                ) ?? "fim do período"}`
-              : isRegisterSnapshot
-                ? "Snapshot SB2 (alinhado ao Registro de Inventário quando não há fechamento SB9)"
-                : "Estimativa Kardex SB9+SD3 (modo analítico)"
-            : "Posição atual por filial e localização (SB2)"
-        }
+        subtitle={estimationSubtitle}
         currentPath={pathname ?? SUPPLIES_ROUTES.stock}
         filterState={filterState}
         dateStart={dateStart}
@@ -182,19 +191,13 @@ export function StockPage({ pathname }: StockPageProps) {
       <DataSourceBanner />
       {isEstimatedStock && data?.estimation ? (
         <>
-          <div
-            className={
-              isOfficialClosure
-                ? "ds-stock-estimation__official-banner"
-                : isRegisterSnapshot
-                  ? "ds-stock-estimation__register-banner"
-                  : "ds-state-box"
-            }
-            role="status"
+          <InfoCard
+            variant={estimationNoteVariant}
+            icon={<Info size={20} />}
           >
             {data.estimation.note ??
               "Valor estimado; não substitui fechamento oficial da SB9."}
-          </div>
+          </InfoCard>
           {!isOfficialClosure ? (
             <StockEstimationBreakdown
               estimation={data.estimation}
