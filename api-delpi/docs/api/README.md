@@ -53,6 +53,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
+| [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD e leitura de planos de ação (plugin). |
 | [11-guia-agente-chat.md](./11-guia-agente-chat.md) | Mapa intenção → rota para agentes do Minha DELPI Chat (OpenAPI). |
 | [13-producao-operacional.md](./13-producao-operacional.md) | Playbook 15 — consumo, OPs, perdas, programação, ranking de compras (sem SQL). |
 | [14-desenhos-pdf.md](./14-desenhos-pdf.md) | Biblioteca PDF de desenhos DELPI (FILESERVER) + integração chat. |
@@ -67,6 +68,8 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | `api-delpi.system` | Consulta de metadados de tabelas Protheus. |
 | `api-delpi.data` | Execução de SQL somente leitura (`POST /data/sql`). |
 | `api-delpi.quality.access` | Métricas de qualidade (PPM, kaizen, 5S, NC listagem TOTVS). |
+| `quality-action-plans.read` / `.write` / `.manage` | Plugin PAC Qualidade — planos de ação ([doc](./quality-action-plans-pac.md)). |
+| `api-delpi.quality.action-plans.read` | Leitura PAC via api-delpi (alternativa RBAC). |
 | `dashboard-lmps.view` | LMPs e Transforma Mais (alternativa a `api-delpi.access`). |
 | `strategic-indicators.view` | Leitura do plugin Indicadores Estratégicos. |
 | `strategic-indicators.trends.view` | Tendências históricas. |

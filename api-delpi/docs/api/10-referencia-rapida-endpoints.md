@@ -12,7 +12,8 @@ Legenda de permissões:
 | **D** | `api-delpi.data` |
 | **Q** | `api-delpi.quality.access` |
 | **L** | `dashboard-lmps.view` |
-| **IE** | `inspecoes-entrada.view*` ou `api-delpi.access` |
+| **PAC-R** | Leitura PAC: `quality-action-plans.read`, `.manage`, `api-delpi.quality.action-plans.read`, `dashboard-quality.view`, … |
+| **PAC-W** | Escrita PAC: `quality-action-plans.write`, `.manage` |
 ---
 
 ## Health
@@ -220,6 +221,26 @@ Legenda de permissões:
 | GET | `/quality/ppm/external/series` | Q |
 | GET | `/quality/ppm/internal` | Q |
 | GET | `/quality/ppm/external` | Q |
+
+---
+
+## PAC Qualidade — planos de ação (`/quality/action-plans`)
+
+Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/quality/action-plans/dashboard` | PAC-R |
+| GET | `/quality/action-plans` | PAC-R |
+| GET | `/quality/action-plans/overdue` | PAC-R |
+| GET | `/quality/action-plans/{plan_id}` | PAC-R |
+| POST | `/quality/action-plans` | PAC-W |
+| PATCH | `/quality/action-plans/{plan_id}/status` | PAC-W |
+| PUT | `/quality/action-plans/{plan_id}/ishikawa` | PAC-W |
+| PUT | `/quality/action-plans/{plan_id}/five-whys` | PAC-W |
+| POST | `/quality/action-plans/{plan_id}/actions` | PAC-W |
+| PATCH | `/quality/action-plans/{plan_id}/actions/{action_id}` | PAC-W |
+| POST | `/quality/action-plans/{plan_id}/effectiveness-review` | PAC-W |
 
 ---
 

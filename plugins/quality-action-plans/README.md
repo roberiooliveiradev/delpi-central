@@ -1,21 +1,70 @@
 # Plugin PAC Qualidade — Planos de Ação
 
-Microfrontend federado para **acompanhamento de planos de ação** (PAC Qualidade DELPI) pela liderança.
+Microfrontend federado para **acompanhamento e gestão** de planos de ação (PAC Qualidade DELPI).
+
+## Arquitetura
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| **Este plugin** | Dashboard, listagem, cadastro e edição PAC |
-| **api-delpi** | `GET/POST/PATCH/PUT /quality/action-plans/*` |
-| **api-pac-quality** | Agente GPT (Actions + API key) — mesma base Postgres |
+| **Este plugin (MFE)** | UI: dashboard, listagem, cadastro, detalhe e edição |
+| **api-delpi** | **Todas** as chamadas HTTP do plugin — leitura e escrita |
+| **api-pac-quality** | Agente GPT (Actions + API key) — mesma base Postgres; **não** usado pelo MFE |
+| **PostgreSQL plugins** | Schema `quality.*` — migrations em `api-delpi/migrations/plugins/quality-action-plans/` |
 
-## Rotas internas
+```
+Portal → gateway → /apps/api-delpi/quality/action-plans/*
+Plugin → /apps/quality-action-plans/* (rotas internas do MFE)
+```
+
+## Rotas do plugin (UI)
 
 | Path | Tela |
 |------|------|
-| `/apps/quality-action-plans` | Resumo executivo |
-| `/apps/quality-action-plans/lista` | Listagem com filtros |
-| `/apps/quality-action-plans/atrasados` | Planos com ações vencidas |
-| `/apps/quality-action-plans/plano/{id}` | Detalhe (Ishikawa, 5 Porquês, ações, histórico) |
+| `/apps/quality-action-plans` | Resumo executivo (filtro por filial) |
+| `/apps/quality-action-plans/lista` | Listagem com filtros + **Novo plano** |
+| `/apps/quality-action-plans/novo` | Formulário de criação |
+| `/apps/quality-action-plans/atrasados` | Planos com ações vencidas (filtro filial) |
+| `/apps/quality-action-plans/plano/{id}` | Detalhe editável: status, Ishikawa, 5 Porquês, ações, eficácia, histórico |
+
+## API consumida (api-delpi)
+
+Base: `/apps/api-delpi/quality/action-plans`
+
+| Operação | Método | Rota relativa |
+|----------|--------|---------------|
+| Dashboard | GET | `/dashboard?branch_code=01` |
+| Listar | GET | `/?status=&severity=&branch_code=&page_size=` |
+| Atrasados | GET | `/overdue?branch_code=` |
+| Detalhe | GET | `/{id}` |
+| Criar plano | POST | `/` |
+| Status | PATCH | `/{id}/status` |
+| Ishikawa | PUT | `/{id}/ishikawa` |
+| 5 Porquês | PUT | `/{id}/five-whys` |
+| Criar ações | POST | `/{id}/actions` |
+| Atualizar ação | PATCH | `/{id}/actions/{action_id}` |
+| Eficácia | POST | `/{id}/effectiveness-review` |
+
+Documentação completa: [`api-delpi/docs/api/quality-action-plans-pac.md`](../../api-delpi/docs/api/quality-action-plans-pac.md)
+
+## HTTP client
+
+Todas as chamadas usam:
+
+- `Authorization: Bearer <JWT>`
+- `X-Delpi-Caller-App: quality-action-plans`
+- Envelope `{ success, message, data }` — ver `src/api/httpClient.ts`
+
+## Permissões RBAC
+
+| Código | Uso |
+|--------|-----|
+| `quality-action-plans.access` | Base do plugin |
+| `quality-action-plans.read` | Dashboard, listagem, detalhe |
+| `quality-action-plans.write` | Criar/editar planos, Ishikawa, ações, eficácia |
+| `quality-action-plans.manage` | Leitura + escrita |
+| `api-delpi.quality.action-plans.read` | Leitura via api-delpi (opcional no perfil) |
+
+Atribua **`.read`** para liderança (somente consulta) e **`.write`** ou **`.manage`** para analistas que registram planos.
 
 ## Desenvolvimento local
 
@@ -25,19 +74,17 @@ npm install
 npm run dev
 ```
 
-Build de produção:
+Build:
 
 ```bash
 npm run ci
 ```
 
-## Deploy (stack DELPI)
-
-O serviço `quality-action-plans` está no `infra/docker-compose.yml`. Após build:
+Stack DELPI (plugin + api-delpi):
 
 ```bash
 cd infra
-docker compose up -d --build quality-action-plans
+docker compose up -d --build api-delpi quality-action-plans gateway
 ```
 
 ## Registro no Core API
@@ -46,20 +93,19 @@ docker compose up -d --build quality-action-plans
 TOKEN="<jwt-admin>" ./plugins/quality-action-plans/scripts/register-manifest.sh
 ```
 
-Permissões: `quality-action-plans.access`, `.read`, `.write`, `.manage`.
+## Migrations
 
-Atribua `quality-action-plans.read` (e `api-delpi.quality.action-plans.read` se usada no perfil) aos usuários de liderança/qualidade.
+```bash
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin quality-action-plans
+```
 
-## HTTP client
-
-Todas as chamadas usam:
-
-- `Authorization: Bearer <JWT>`
-- `X-Delpi-Caller-App: quality-action-plans`
-- Base: `/apps/api-delpi/quality/action-plans`
+Arquivos: `V001` (core), `V002` (sequência PAC), `V003` (knowledge layer), `V004` (`branch_code`).
 
 ## Documentação relacionada
 
-- Playbook: `api-pac-quality/playbook_pac_qualidade_delpi.md`
-- Agente GPT: `api-pac-quality/docs/chatgpt-especialista-qualidade.md`
-- Migrations: `api-delpi/migrations/plugins/quality-action-plans/`
+| Documento | Conteúdo |
+|-----------|----------|
+| [`api-delpi/docs/api/quality-action-plans-pac.md`](../../api-delpi/docs/api/quality-action-plans-pac.md) | Contrato HTTP api-delpi |
+| [`api-pac-quality/playbook_pac_qualidade_delpi.md`](../../../api-pac-quality/playbook_pac_qualidade_delpi.md) | Playbook do domínio PAC |
+| [`api-pac-quality/docs/chatgpt-especialista-qualidade.md`](../../../api-pac-quality/docs/chatgpt-especialista-qualidade.md) | Agente GPT (só API PAC) |
+| [`api-pac-quality/README.md`](../../../api-pac-quality/README.md) | API transacional GPT + inteligência |
