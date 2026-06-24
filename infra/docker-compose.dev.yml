@@ -1004,54 +1004,6 @@ services:
     networks:
       - delpi-network
 
-  api-pac-quality:
-    build:
-      context: ../..
-      dockerfile: api-pac-quality/Dockerfile
-
-    container_name: delpi-api-pac-quality
-    restart: unless-stopped
-
-    env_file:
-      - .env
-
-    environment:
-      API_PAC_QUALITY_PORT: "8010"
-      API_PAC_QUALITY_ENV: ${API_DELPI_ENV}
-      DELPI_AUTH_CORE_API_URL: http://core-api:8000
-      CORE_API_URL: http://core-api:8000
-
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
-      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
-      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
-      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
-      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
-      LOG_LEVEL: ${LOG_LEVEL}
-      TZ: ${TZ}
-
-      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
-      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
-      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
-      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
-      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
-      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
-      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
-
-    volumes:
-      - ../../api-pac-quality:/app
-      - ../shared:/shared
-
-    depends_on:
-      keycloak:
-        condition: service_started
-      postgres-plugins:
-        condition: service_healthy
-      core-api:
-        condition: service_started
-
-    networks:
-      - delpi-network
-
   postgres-plugins:
     image: pgvector/pgvector:pg15
     platform: linux/amd64

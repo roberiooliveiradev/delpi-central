@@ -51,6 +51,8 @@ def build_openapi_catalog_markdown(
     sync_hint = "sync_api_delpi_openapi.py"
     if provider_key == "transformometro-api":
         sync_hint = "sync_transformometro_openapi.py"
+    if provider_key == "api-pac-quality":
+        sync_hint = "sync_api_pac_quality_openapi.py"
 
     lines = [
         f"# {title}",
