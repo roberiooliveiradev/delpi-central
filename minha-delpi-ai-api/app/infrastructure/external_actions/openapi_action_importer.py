@@ -1,5 +1,9 @@
 import re
 
+from app.domain.services.openapi_delpi_extension_service import (
+    OpenApiDelpiExtensionService,
+)
+
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete"}
 
@@ -49,7 +53,9 @@ class OpenApiActionImporter:
 
         action_id = f"{provider_token}.{primary_tag}.{self._normalize_token(operation_id)}"
 
-        return {
+        delpi_metadata = OpenApiDelpiExtensionService.extract_from_operation(operation)
+
+        payload = {
             "action_id": action_id,
             "operation_id": operation_id,
             "method": method,
@@ -64,6 +70,11 @@ class OpenApiActionImporter:
             "deprecated": bool(operation.get("deprecated")),
             "enabled": True,
         }
+
+        if delpi_metadata:
+            payload["delpi_metadata"] = delpi_metadata
+
+        return payload
 
     def _operation_id_from_path(self, method: str, path: str) -> str:
         clean = re.sub(r"[{}]", "", path.strip("/"))

@@ -103,13 +103,16 @@ class ChatPresentationApiDeliveredMetadataService:
             has_kpi=bool(kpi_presentation),
         )
 
+        response_meta = extract_response_meta(sanitized_data)
+        delpi_metadata = action.get("delpiMetadata")
+
         data_coverage_notice = ChatDataCoverageNoticeService.build(
             sanitized_data,
             path=resolved_path,
             parameters=request_parameters,
             presentation=primary_presentation,
             table_presentation=table_presentation,
-            response_meta=extract_response_meta(sanitized_data),
+            response_meta=response_meta,
         )
 
         metadata: dict[str, Any] = {
@@ -139,8 +142,17 @@ class ChatPresentationApiDeliveredMetadataService:
             "preferredFormat": preferred_format,
             "dataCoverageNotice": data_coverage_notice,
             "path": resolved_path,
-            "apiDelpiResponseMeta": extract_response_meta(sanitized_data),
+            "apiDelpiResponseMeta": response_meta,
         }
+
+        if delpi_metadata:
+            metadata["delpiMetadata"] = delpi_metadata
+
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        ChatPresentationProfileService.cache_presentation_profile(metadata)
 
         if session_format:
             from app.domain.services.chat_presentation_primary_view_service import (

@@ -21,6 +21,41 @@
     "stackLayoutPolicy": "on_demand",
     "humanizedNarrative": "enrich"
   },
+  "openapiShapeDefaults": {
+    "scalar": {
+      "defaultViewPolicy": "kpi_when_available",
+      "chartPolicy": "auto"
+    },
+    "paged_list": {
+      "defaultViewPolicy": "table_when_available",
+      "chartPolicy": "skip"
+    },
+    "playbook_report": {
+      "defaultViewPolicy": "table_when_available",
+      "chartPolicy": "skip"
+    },
+    "list": {
+      "defaultViewPolicy": "table_when_available",
+      "chartPolicy": "skip"
+    },
+    "hierarchy": {
+      "defaultViewPolicy": "tree_when_available",
+      "chartPolicy": "skip"
+    },
+    "composite_analysis": {
+      "defaultViewPolicy": "text_when_available",
+      "chartPolicy": "auto",
+      "stackLayoutPolicy": "on_demand"
+    },
+    "product_snapshot": {
+      "defaultViewPolicy": "table_when_available",
+      "chartPolicy": "skip"
+    },
+    "document_export": {
+      "defaultViewPolicy": "text_when_available",
+      "chartPolicy": "skip"
+    }
+  },
   "entityProfiles": {
     "product": "table_list",
     "product_analyser": "analyser",

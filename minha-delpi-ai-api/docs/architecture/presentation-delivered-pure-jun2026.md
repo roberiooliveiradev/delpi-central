@@ -171,6 +171,15 @@ Delegates extraídos (score, metadata, builder, intent operacional). `ChatPresen
 
 `ChatPresentationDecisionService` = fachada pública (~85 linhas): `decide`, `enrich_metadata`, `compute_scores`.
 
+### Fase 10 — OpenAPI import (jun/2026)
+
+| Módulo | Papel |
+|--------|-------|
+| `OpenApiDelpiExtensionService` | `x-delpi` na operação OpenAPI |
+| `OpenApiPresentationProfileDeriverService` | perfil `as_delivered` por entity/shape |
+| `openapiShapeDefaults` | hints declarativos em `presentation_profiles.json` |
+| `delpi_metadata` | coluna JSONB em `ai_external_actions` |
+
 ---
 
 ## Testes e gates
@@ -207,4 +216,5 @@ Regressão de intenção: `tests/fixtures/chat_intelligence_regression_cases.py`
 | jun/2026 | `dataAnswer` re-ligado ao caminho as-delivered |
 | jun/2026 | Fase 3 — limpeza JSON (`visualBuilders`/`tableAssembly`), gates auditoria, stubs presenter |
 | jun/2026 | Fase 3b — rich stack automático desligado em `as_delivered`; `structure_exclusivity` → `on_demand` |
-| jun/2026 | Fase 4 — `apply_pipeline` data-only no caminho as-delivered; testes pipeline reativados |
+| jun/2026 | Fase 9 — fachada `ChatPresentationDecisionService` mínima (~85 linhas) |
+| jun/2026 | Fase 10 — `x-delpi` no import, `delpi_metadata`, perfil derivado OpenAPI |

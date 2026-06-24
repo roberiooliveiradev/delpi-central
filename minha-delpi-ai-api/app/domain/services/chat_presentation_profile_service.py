@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_assistant_vocabulary_service import (
     ChatAssistantVocabularyService,
 )
+from app.domain.services.openapi_presentation_profile_deriver_service import (
+    OpenApiPresentationProfileDeriverService,
+)
 
 
 class ChatPresentationProfileService(ChatAssistantVocabularyService):
@@ -417,12 +420,83 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         cls,
         path: str | None,
         entity: str | None = None,
+        *,
+        shape: str | None = None,
+        delpi_metadata: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        key = cls.resolve_profile_key(path, entity)
+        if isinstance(metadata, dict):
+            cached = metadata.get("presentationProfile")
+
+            if isinstance(cached, dict) and cached.get("profileKey"):
+                return dict(cached)
+
+            api_meta = metadata.get("apiDelpiResponseMeta")
+
+            if isinstance(api_meta, dict):
+                shape = shape or str(api_meta.get("shape") or "").strip() or None
+                entity = entity or str(api_meta.get("entity") or "").strip() or None
+
+            delpi_metadata = delpi_metadata or metadata.get("delpiMetadata")
+
+        return cls.build_resolved_profile(
+            path=path,
+            entity=entity,
+            shape=shape,
+            delpi_metadata=delpi_metadata,
+        )
+
+    @classmethod
+    def build_resolved_profile(
+        cls,
+        *,
+        path: str | None,
+        entity: str | None = None,
+        shape: str | None = None,
+        delpi_metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        entity_token = str(entity or "").strip() or None
+        key = cls.resolve_profile_key(path, entity_token)
+
+        if OpenApiPresentationProfileDeriverService.should_use_derived_profile(
+            profile_key=key,
+            entity=entity_token,
+        ) and OpenApiPresentationProfileDeriverService.can_derive(
+            entity=entity_token,
+            shape=shape,
+            delpi_metadata=delpi_metadata,
+        ):
+            return OpenApiPresentationProfileDeriverService.build_profile(
+                entity=entity_token,
+                shape=shape,
+                delpi_metadata=delpi_metadata,
+            )
+
         merged = dict(cls.node("defaults") or {})
         merged.update(cls.profile(key))
         merged["profileKey"] = key
+
         return merged
+
+    @classmethod
+    def cache_presentation_profile(cls, metadata: dict[str, Any]) -> None:
+        if not isinstance(metadata, dict):
+            return
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+        entity = None
+        shape = None
+
+        if isinstance(api_meta, dict):
+            entity = str(api_meta.get("entity") or "").strip() or None
+            shape = str(api_meta.get("shape") or "").strip() or None
+
+        metadata["presentationProfile"] = cls.build_resolved_profile(
+            path=metadata.get("path"),
+            entity=entity,
+            shape=shape,
+            delpi_metadata=metadata.get("delpiMetadata"),
+        )
 
     @classmethod
     def flags(cls, path: str | None, entity: str | None = None) -> frozenset[str]:

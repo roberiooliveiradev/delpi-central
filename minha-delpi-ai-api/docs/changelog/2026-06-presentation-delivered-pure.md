@@ -96,6 +96,17 @@ Fachada `ChatPresentationDecisionService`: **~500 linhas** (era ~2170).
 
 Fachada pública: só `decide`, `enrich_metadata`, `compute_scores` (~85 linhas). Wrappers `_*` removidos; consumidores usam delegates canônicos.
 
-## Pendente (Fase 10+)
+## Fase 10 — OpenAPI import (jun/2026)
 
-- OpenAPI import (Playbook 22 Fase D).
+| Módulo | Responsabilidade |
+|--------|------------------|
+| `OpenApiDelpiExtensionService` | parse `x-delpi` + inferência de `meta` em example |
+| `OpenApiPresentationProfileDeriverService` | perfil mínimo por `entity` + `shape` |
+| `ai_external_actions.delpi_metadata` | persistência no import |
+
+Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity}`) quando `apiDelpiResponseMeta` traz entity+shape.
+
+## Pendente (Fase 11+)
+
+- api-delpi publicar `x-delpi` em todas as rotas (hoje: inferência parcial via example).
+- Reduzir `entityProfiles` / `pathRules` conforme cobertura OpenAPI crescer.

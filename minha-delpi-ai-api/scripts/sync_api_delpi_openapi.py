@@ -179,6 +179,19 @@ def main() -> int:
             report["catalogPath"] = str(args.catalog_path)
             report["catalogOperations"] = len(collect_openapi_operations(schema))
 
+            from app.domain.services.openapi_delpi_extension_service import (
+                OpenApiDelpiExtensionService,
+            )
+
+            report["delpiMetadataCoverage"] = OpenApiDelpiExtensionService.summarize_schema_coverage(
+                schema,
+            )
+            report["delpiMetadataInDatabase"] = sum(
+                1
+                for action in actions
+                if isinstance(action.get("delpiMetadata"), dict) and action.get("delpiMetadata")
+            )
+
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
     if not _report_is_successful(report, skip_import=args.skip_import):

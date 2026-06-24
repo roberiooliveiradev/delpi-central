@@ -28,6 +28,7 @@ class ExternalActionModel(db.Model):
     parameters_schema = db.Column(JSONB, nullable=True)
     request_body_schema = db.Column(JSONB, nullable=True)
     response_schema = db.Column(JSONB, nullable=True)
+    delpi_metadata = db.Column(JSONB, nullable=True)
     sensitivity = db.Column(db.String(30), nullable=False, default="read", index=True)
     embedding = db.Column(Vector(Settings.EMBEDDING_DIMENSIONS), nullable=True)
     enabled = db.Column(db.Boolean, nullable=False, default=True, index=True)
