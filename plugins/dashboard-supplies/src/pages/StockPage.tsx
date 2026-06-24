@@ -9,17 +9,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Info, Warehouse } from "lucide-react";
+import { Warehouse } from "lucide-react";
 
 import { getStockValue } from "../api/suppliesApi";
 import { ChartCard } from "../components/ChartCard";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
-import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
-import { InfoCard } from "../components/InfoCard";
 import { KpiCard } from "../components/KpiCard";
-import { StockEstimationBreakdown } from "../components/StockEstimationBreakdown";
+import { StockContextCard } from "../components/StockContextCard";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
 import { CHART_COLORS } from "../constants/chartColors";
 import { SUPPLIES_ROUTES } from "../constants/routes";
@@ -33,6 +31,7 @@ import {
   formatInteger,
 } from "../utils/format";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { formatProtheusDateHuman } from "../utils/dates";
 
 const CHART_HEIGHT = 320;
 
@@ -65,7 +64,6 @@ export function StockPage({ pathname }: StockPageProps) {
   const hasHistoricalPeriod = Boolean(
     stockParams.start_date && stockParams.end_date
   );
-  const isEstimatedStock = Boolean(data?.estimation?.enabled);
 
   const isOfficialClosure =
     data?.estimation?.method === "sb9_closure_on_end_date" ||
@@ -150,22 +148,15 @@ export function StockPage({ pathname }: StockPageProps) {
 
   const estimationSubtitle = hasHistoricalPeriod
     ? isOfficialClosure
-      ? `Fechamento oficial SB9 em ${data?.estimation?.end_date?.replace(
-          /^(\d{4})(\d{2})(\d{2})$/,
-          "$3/$2/$1"
-        ) ?? "fim do período"}`
+      ? `Fechamento oficial SB9 em ${formatProtheusDateHuman(data?.estimation?.end_date)}`
       : isRegisterSnapshot
-        ? "Snapshot SB2 (alinhado ao Registro de Inventário quando não há fechamento SB9)"
+        ? "Snapshot SB2 alinhado ao Registro de Inventário (MATR460)"
         : data?.estimation?.enabled
           ? "Estimativa Kardex SB9+SD3 (modo analítico)"
           : "Período histórico — aguardando dados"
     : "Posição atual por filial e localização (SB2)";
 
-  const estimationNoteVariant = isOfficialClosure
-    ? "success"
-    : isRegisterSnapshot
-      ? "info"
-      : "neutral";
+  const primaryKpiTitle = isRegisterSnapshot ? "EM estoque (SB2)" : "Valor total";
 
   const isBusy = loading || refreshing;
 
@@ -188,24 +179,17 @@ export function StockPage({ pathname }: StockPageProps) {
         onRefresh={reload}
         refreshing={refreshing}
       />
-      <DataSourceBanner />
-      {isEstimatedStock && data?.estimation ? (
-        <>
-          <InfoCard
-            variant={estimationNoteVariant}
-            icon={<Info size={20} />}
-          >
-            {data.estimation.note ??
-              "Valor estimado; não substitui fechamento oficial da SB9."}
-          </InfoCard>
-          {!isOfficialClosure ? (
-            <StockEstimationBreakdown
-              estimation={data.estimation}
-              byBranch={data.by_branch}
-            />
-          ) : null}
-        </>
-      ) : null}
+      <StockContextCard
+        dateStart={dateStart}
+        dateEnd={dateEnd}
+        branchLabel={branchLabel}
+        locationLabel={locationLabel}
+        hasHistoricalPeriod={hasHistoricalPeriod}
+        estimation={data?.estimation}
+        isOfficialClosure={isOfficialClosure}
+        isRegisterSnapshot={isRegisterSnapshot}
+        byBranch={data?.by_branch}
+      />
       <SuppliesStatusAlerts
         error={error}
         loading={loading}
@@ -218,7 +202,7 @@ export function StockPage({ pathname }: StockPageProps) {
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
-          title="Valor total"
+          title={primaryKpiTitle}
           value={formatCurrency(data?.summary.total_stock_value)}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,

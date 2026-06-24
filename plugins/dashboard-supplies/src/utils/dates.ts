@@ -24,6 +24,67 @@ export function formatDisplayDate(value: string | null | undefined): string {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
+/** Ex.: 31 de maio de 2026 */
+export function formatDisplayDateLong(value: string | null | undefined): string {
+  const parts = parseDateParts(value);
+  if (!parts) {
+    const short = formatDisplayDate(value);
+    return short === "—" ? "—" : short;
+  }
+  const date = new Date(parts.year, parts.month - 1, parts.day);
+  if (Number.isNaN(date.getTime())) return formatDisplayDate(value);
+  return date.toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** Ex.: 1 a 31 de maio de 2026 (mesmo mês) ou 1 de abr. — 15 de mai. de 2026 */
+export function formatPeriodLabelLong(
+  dateStart?: string,
+  dateEnd?: string
+): string {
+  if (!dateStart && !dateEnd) return "Período não filtrado";
+  const startParts = parseDateParts(dateStart);
+  const endParts = parseDateParts(dateEnd);
+  if (startParts && endParts) {
+    if (
+      startParts.year === endParts.year &&
+      startParts.month === endParts.month
+    ) {
+      const monthDate = new Date(startParts.year, startParts.month - 1, 1);
+      const monthLabel = monthDate.toLocaleDateString("pt-BR", {
+        month: "long",
+        year: "numeric",
+      });
+      return `${startParts.day} a ${endParts.day} de ${monthLabel}`;
+    }
+    return `${formatDisplayDateLong(dateStart)} — ${formatDisplayDateLong(dateEnd)}`;
+  }
+  if (dateStart) return `A partir de ${formatDisplayDateLong(dateStart)}`;
+  return `Até ${formatDisplayDateLong(dateEnd)}`;
+}
+
+/** Protheus YYYYMMDD ou ISO → data por extenso em pt-BR */
+export function formatProtheusDateHuman(value?: string | null): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "—";
+  if (/^\d{8}$/.test(raw)) {
+    return formatDisplayDateLong(
+      `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`
+    );
+  }
+  return formatDisplayDateLong(raw);
+}
+
+/** Substitui tokens YYYYMMDD em textos da API por data por extenso */
+export function humanizeProtheusDatesInText(text: string): string {
+  return text.replace(/\b(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b/g, (match) =>
+    formatProtheusDateHuman(match)
+  );
+}
+
 export function monthKeyToLabel(monthKey: string): string {
   const match = monthKey.match(/^(\d{4})-(\d{2})$/);
   if (!match) return monthKey;
