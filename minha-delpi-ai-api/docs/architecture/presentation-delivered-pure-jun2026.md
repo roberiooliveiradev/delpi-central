@@ -148,6 +148,10 @@ Depreciar na Fase D: perfis por entidade → `x-delpi` no OpenAPI do provider.
 
 Turn completion (`ChatPresentationLlmProseDecouplingService`) permanece para tool calls já persistidos; o pipeline marca data-only **antes** do MFE consumir metadata.
 
+### Fase 5 — pruning single (jun/2026)
+
+Em `layoutMode: single`, o pruning **não** aplica allowlist de tail do stack; `stackPresentationPlan` fica mínimo (`layoutMode: single`, `renderHints` apenas).
+
 ---
 
 ## Testes e gates

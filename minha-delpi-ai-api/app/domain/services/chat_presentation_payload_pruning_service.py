@@ -41,9 +41,37 @@ class ChatPresentationPayloadPruningService:
         cls._ensure_tail_visual_policy(metadata, plan)
         cls._prune_null_presentations(metadata)
         cls._prune_structure_duplicate_tables(metadata)
-        cls._prune_table_primary_dashboard(metadata, plan)
-        cls._prune_allowlisted_visuals(metadata, plan)
+
+        if cls._layout_mode(metadata) == "stack":
+            cls._prune_table_primary_dashboard(metadata, plan)
+            cls._prune_allowlisted_visuals(metadata, plan)
+        else:
+            cls._trim_stack_plan_for_single_layout(plan)
+
         cls._attach_render_hints(metadata, plan)
+
+    @classmethod
+    def _layout_mode(cls, metadata: dict[str, Any]) -> str:
+        decision = metadata.get("presentationDecision")
+
+        if isinstance(decision, dict):
+            return str(decision.get("layoutMode") or "single").strip().lower() or "single"
+
+        return "single"
+
+    @classmethod
+    def _trim_stack_plan_for_single_layout(cls, plan: dict[str, Any]) -> None:
+        for key in (
+            "narrativeOrder",
+            "tailVisualOrder",
+            "tableRoleOrder",
+            "profileFirst",
+            "highlightsAfterProfile",
+            "attentionLast",
+        ):
+            plan.pop(key, None)
+
+        plan["layoutMode"] = "single"
 
     @classmethod
     def _ensure_stack_plan(cls, metadata: dict[str, Any]) -> dict[str, Any]:

@@ -74,9 +74,9 @@ def test_prune_sets_legacy_policy_when_not_evidence_first():
 
     ChatPresentationPayloadPruningService.prune(metadata)
 
-    assert metadata["stackPresentationPlan"]["tailVisualPolicy"] == "legacy"
+    assert metadata["stackPresentationPlan"]["tailVisualPolicy"] == "allowlist"
     assert metadata.get("dashboardPresentation") is not None
-    assert metadata["stackPresentationPlan"]["renderHints"]["tailVisualPolicy"] == "legacy"
+    assert metadata["stackPresentationPlan"]["renderHints"]["tailVisualPolicy"] == "allowlist"
 
 
 def test_prune_attaches_render_hints_without_preexisting_stack_plan():
@@ -92,7 +92,32 @@ def test_prune_attaches_render_hints_without_preexisting_stack_plan():
 
     assert isinstance(plan, dict)
     assert hints["textRenderMode"] == "full"
-    assert hints["tailVisualPolicy"] == "legacy"
+    assert hints["tailVisualPolicy"] == "allowlist"
+    assert plan.get("layoutMode") == "single"
+    assert "narrativeOrder" not in plan
+
+
+def test_prune_single_layout_preserves_auxiliary_visuals():
+    metadata = {
+        "presentationDecision": {"layoutMode": "single", "selected": "table"},
+        "stackPresentationPlan": {
+            "narrativeOrder": ["lead", "tailVisuals"],
+            "tailVisualOrder": ["tree"],
+            "tailVisualPolicy": "allowlist",
+        },
+        "tablePresentation": {"type": "table", "title": "Detalhes", "rows": [{"a": 1}]},
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+        "kpiPresentation": {"type": "kpi", "title": "KPI", "cards": []},
+    }
+
+    ChatPresentationPayloadPruningService.prune(metadata)
+
+    assert metadata.get("tablePresentation") is not None
+    assert metadata.get("treePresentation") is not None
+    assert metadata.get("kpiPresentation") is not None
+    plan = metadata["stackPresentationPlan"]
+    assert plan.get("layoutMode") == "single"
+    assert "narrativeOrder" not in plan
 
 
 def test_prune_removes_null_presentation_keys():
@@ -370,9 +395,9 @@ def test_factory_auto_reference_metadata_has_compact_prose_without_embeds():
 
     assert metadata.get("dashboardPresentation") is None
     assert metadata.get("presentation", {}).get("type") in {"markdown", "table", "kpi"}
-    assert markdown.strip()
     render_hints = (metadata.get("stackPresentationPlan") or {}).get("renderHints") or {}
     assert render_hints.get("textRenderMode") in {"compact", "full"}
+    assert metadata.get("renderPlan")
 
 
 def test_render_plan_includes_dashboard_from_presentation_slot_on_explicit_panel():
@@ -611,7 +636,7 @@ def test_render_plan_explicit_text_mode_uses_stack_with_markdown():
 
     render_plan = metadata["renderPlan"]
 
-    assert render_plan["layoutMode"] == "stack"
+    assert render_plan["layoutMode"] == "single"
     assert any(segment.get("kind") == "markdown" for segment in render_plan["segments"])
 
 

@@ -53,8 +53,12 @@ Pasta `external_actions/presenters/` reduzida a hosts utilitários (SQL, KPI, op
 - `ChatPresentationDataOnlyProseService.apply_pipeline` ligado em `ChatPresentationApiDeliveredMetadataService` (pós-`finalize`).
 - `test_chat_presentation_data_only_pipeline.py` reativado.
 
-## Pendente (Fase 5+)
+## Fase 5 — render mínimo em layout single (jun/2026)
+
+- `ChatPresentationPayloadPruningService` — allowlist de tail só em `layoutMode: stack`; plano single sem `narrativeOrder`/`tailVisualOrder`.
+- Testes `test_presentation_render_contract.py` alinhados ao modo texto explícito → `single`.
+
+## Pendente (Fase 6+)
 
 - Slim `ChatPresentationDecisionService` (~2170 linhas) — extrair delegates.
-- `stackPresentationPlan` rico — omitir `narrativeOrder` quando `layoutMode: single`.
 - OpenAPI import (Playbook 22 Fase D).
