@@ -3412,8 +3412,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         final_params: tuple = (),
     ) -> Tuple[str, tuple]:
         """
-        Summary do dashboard em um único WITH — sem materializar temp tables
-        (cada temp era lida uma vez; inline deixa o otimizador compor o plano).
+        Monta um único WITH encadeado (sem temp tables).
+
+        O summary do dashboard usa `_build_staged_batch` — no SQL Server, materializar
+        candidatos/engenharia em temp tables reduz o cold path (~2s vs ~9s inline).
         """
         lmp_only_candidates = self._candidate_scope_lmp_only(request)
         cte_candidates, params_candidates = self._sql_candidate_lmps_cte(
@@ -3962,14 +3964,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         if cached is not None:
             return cached
 
-        candidates_rel, eng_rel, pi_rel = self._inline_staged_relations()
         final_select = self._staged_final_select(
             include_qtd_pi=include_qtd_pi,
             order_by=False,
             summary_only=True,
-            candidates_relation=candidates_rel,
-            eng_resumo_relation=eng_rel,
-            pi_count_relation=pi_rel,
         )
         residence_params = self._staged_residence_final_params(
             residence_filter_count=1,
@@ -3980,9 +3978,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             final_select,
             residence_params,
         )
-        batch_sql, batch_params = self._build_dashboard_summary_inline_sql(
+        batch_sql, batch_params = self._build_staged_batch(
             request,
             include_qtd_pi=include_qtd_pi,
+            eng_resumo_lite=True,
             final_select=final_select,
             final_params=final_params,
         )

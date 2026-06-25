@@ -470,25 +470,22 @@ def test_dashboard_summary_batch_uses_lite_eng_resumo_without_order_by() -> None
     assert "ENGINEERING_STATUS" in batch_sql
 
 
-def test_dashboard_summary_inline_sql_skips_temp_tables() -> None:
+def test_dashboard_summary_staged_batch_materializes_temp_tables() -> None:
     repo = _work_month_repository()
     request = ListLMPRequest(
         date_start="20260601",
         date_end="20260630",
         listing_type="lmp",
     )
-    candidates_rel, eng_rel, pi_rel = repo._inline_staged_relations()
     final_select = repo._staged_final_select(
         include_qtd_pi=True,
         order_by=False,
         summary_only=True,
-        candidates_relation=candidates_rel,
-        eng_resumo_relation=eng_rel,
-        pi_count_relation=pi_rel,
     )
-    inline_sql, _params = repo._build_dashboard_summary_inline_sql(
+    batch_sql, _params = repo._build_staged_batch(
         request,
         include_qtd_pi=True,
+        eng_resumo_lite=True,
         final_select=final_select,
         final_params=repo._staged_residence_final_params(
             residence_filter_count=1,
@@ -496,14 +493,11 @@ def test_dashboard_summary_inline_sql_skips_temp_tables() -> None:
         ),
     )
 
-    assert inline_sql.startswith("WITH\n")
-    assert "#Delpi_CandidateLMPs" not in inline_sql
-    assert "#Delpi_EngResumo" not in inline_sql
-    assert "#Delpi_PICount" not in inline_sql
-    assert "SELECT * INTO" not in inline_sql
-    assert "FROM CandidateLMPs C" in inline_sql
-    assert "LEFT JOIN EngenhariaResumoUltimaRevisao H" in inline_sql
-    assert "RevCycleFacts AS" in inline_sql
+    assert "#Delpi_CandidateLMPs" in batch_sql
+    assert "#Delpi_EngResumo" in batch_sql
+    assert "SELECT * INTO #Delpi_CandidateLMPs" in batch_sql
+    assert "FROM #Delpi_CandidateLMPs C" in batch_sql
+    assert "RevCycleFacts AS" in batch_sql
 
 
 def test_lmp_only_candidate_cte_skips_eng_support_and_other_union() -> None:
@@ -710,7 +704,7 @@ def test_work_month_rev_cycle_facts_sql_param_count_matches_markers() -> None:
     assert candidate_sql.count("?") == len(params)
 
 
-def test_dashboard_summary_inline_sql_param_count_matches_markers() -> None:
+def test_dashboard_summary_staged_batch_param_count_matches_markers() -> None:
     repo = _work_month_repository()
     request = ListLMPRequest(
         date_start="20260601",
@@ -718,18 +712,15 @@ def test_dashboard_summary_inline_sql_param_count_matches_markers() -> None:
         listing_type="lmp",
         include_qtd_pi=True,
     )
-    candidates_rel, eng_rel, pi_rel = repo._inline_staged_relations()
     final_select = repo._staged_final_select(
         include_qtd_pi=True,
         order_by=False,
         summary_only=True,
-        candidates_relation=candidates_rel,
-        eng_resumo_relation=eng_rel,
-        pi_count_relation=pi_rel,
     )
-    inline_sql, params = repo._build_dashboard_summary_inline_sql(
+    batch_sql, params = repo._build_staged_batch(
         request,
         include_qtd_pi=True,
+        eng_resumo_lite=True,
         final_select=final_select,
         final_params=repo._staged_residence_final_params(
             residence_filter_count=1,
@@ -737,7 +728,7 @@ def test_dashboard_summary_inline_sql_param_count_matches_markers() -> None:
         ),
     )
 
-    assert inline_sql.count("?") == len(params)
+    assert batch_sql.count("?") == len(params)
 
 
 def test_dashboard_summary_select_exposes_revision_fields() -> None:
