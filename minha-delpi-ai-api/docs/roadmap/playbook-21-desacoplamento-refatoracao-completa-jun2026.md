@@ -369,7 +369,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `chat_product_query_intent_service.py` | ~~1164~~ **~330** | ✅ **OK (jun/2026)** — delegates `chat_product_query_intent/*` + `ChatProductQueryIntentDetectionService` |
 | `product_raw_material_price_presenter.py` | — | ✅ removido (schema-first no host; commit `1322970f3`) |
 | `chat_operational_data_commentary_service.py` | ~~933~~ **~100** | ✅ **OK (jun/2026)** — delegates `chat_operational_data_commentary/*` |
-| `chat_advanced_sql_specialist_service.py` | 1369 | Cluster SQL existente |
+| `chat_advanced_sql_specialist_service.py` | ~~1369~~ **~225** | ✅ **OK (jun/2026)** — delegates `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up) |
 
 **Domain → application (14 arquivos — zerar):**
 
@@ -483,6 +483,8 @@ chat_operational_factual_verdict_service.py               # OK — padrão
 chat_operational_factual_verdict_content_service.py
 chat_operational_data_commentary_service.py               # W1 / W3 ✅
 chat_operational_data_commentary/                         # delegates W3
+chat_advanced_sql_specialist_service.py                   # W3 ✅
+chat_advanced_sql_specialist/                             # delegates W3
 chat_operational_user_question_synthesis_service.py       # W1
 chat_humanized_data_response_service.py
 chat_operational_commentary_enrichment_service.py
@@ -648,3 +650,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ChatOperationalRefinementService` fatiado em `chat_operational_refinement/*` (heuristics, pagination, stock, metric, group-by, orchestration); fachada ~236L |
 | jun/2026 | W3 — `ChatProductQueryIntentService` fatiado em `chat_product_query_intent/*` (code, content, context, resolution, predicate, direct answer); fachada ~330L |
 | jun/2026 | W3 — `ChatOperationalDataCommentaryService` fatiado em `chat_operational_data_commentary/*` (factory, stock, status, misc, orchestration); fachada ~98L |
+| jun/2026 | W3 — `ChatAdvancedSqlSpecialistService` fatiado em `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up); fachada ~225L; expõe `SQL_AUTHORING_INTRO` na fachada |
