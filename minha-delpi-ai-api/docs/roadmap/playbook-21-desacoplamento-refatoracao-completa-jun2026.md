@@ -514,7 +514,8 @@ external_actions/presenters/operational_response_presenter.py
 ```
 chat_product_query_intent_service.py
 chat_intent_router_service.py
-chat_operational_refinement_service.py
+chat_operational_refinement_service.py                   # W3 ✅
+chat_operational_refinement/                             # delegates W3
 chat_route_context_service.py
 chat_operational_parameter_service.py
 chat_operational_sub_intent_service.py
