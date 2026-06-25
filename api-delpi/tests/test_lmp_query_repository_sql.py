@@ -701,6 +701,45 @@ def test_work_month_lmp_listing_anchor_marker_uses_dashboard_period() -> None:
     assert "20260630" in params
 
 
+def test_work_month_rev_cycle_facts_sql_param_count_matches_markers() -> None:
+    repo = _work_month_repository()
+    request = ListLMPRequest(date_start="20260601", date_end="20260625", listing_type="lmp")
+
+    candidate_sql, params = repo._sql_candidate_lmps_cte(request, lmp_only=True)
+
+    assert candidate_sql.count("?") == len(params)
+
+
+def test_dashboard_summary_inline_sql_param_count_matches_markers() -> None:
+    repo = _work_month_repository()
+    request = ListLMPRequest(
+        date_start="20260601",
+        date_end="20260625",
+        listing_type="lmp",
+        include_qtd_pi=True,
+    )
+    candidates_rel, eng_rel, pi_rel = repo._inline_staged_relations()
+    final_select = repo._staged_final_select(
+        include_qtd_pi=True,
+        order_by=False,
+        summary_only=True,
+        candidates_relation=candidates_rel,
+        eng_resumo_relation=eng_rel,
+        pi_count_relation=pi_rel,
+    )
+    inline_sql, params = repo._build_dashboard_summary_inline_sql(
+        request,
+        include_qtd_pi=True,
+        final_select=final_select,
+        final_params=repo._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        ),
+    )
+
+    assert inline_sql.count("?") == len(params)
+
+
 def test_dashboard_summary_select_exposes_revision_fields() -> None:
     repo = _anchor_repository()
 

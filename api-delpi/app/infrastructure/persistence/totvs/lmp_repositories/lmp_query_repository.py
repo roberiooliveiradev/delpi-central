@@ -46,9 +46,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         return qb.build()
 
     @staticmethod
-    def _totvs_table(table: str) -> str:
-        """Leitura analítica — evita bloqueio em tabelas Protheus (SB9, AIJ, AD1, …)."""
-        return f"{table} WITH (NOLOCK)"
+    def _totvs_from(table: str, alias: str) -> str:
+        """Leitura analítica — alias antes do hint (T-SQL: FROM Tbl X WITH (NOLOCK))."""
+        return f"{table} {alias} WITH (NOLOCK)"
 
     def _active_filter(self, qb: QueryBuilder, field: str):
         qb.eq(field, self.settings.active_delete_flag)
@@ -1176,7 +1176,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     W.HOMOLOG_END_DATE AS LMP_END_DATE,
                     W.CYCLE_INDEX AS CYCLE_INDEX
                 FROM WorkMonthRevisionsInPeriod W
-                INNER JOIN {self._totvs_table("AD1010")} AD1
+                INNER JOIN {self._totvs_from("AD1010", "AD1")}
                     ON AD1.AD1_FILIAL = W.AIJ_FILIAL
                    AND AD1.AD1_NROPOR = W.AIJ_NROPOR
                    AND AD1.AD1_REVISA = W.AIJ_REVISA
@@ -1205,7 +1205,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     L.ANCHOR_START_DATE AS LMP_START_DATE,
                     L.ANCHOR_END_DATE AS LMP_END_DATE,
                     1 AS CYCLE_INDEX
-                FROM {self._totvs_table("AD1010")} AD1
+                FROM {self._totvs_from("AD1010", "AD1")}
                 INNER JOIN ListingAnchorEventos L
                     ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND L.AIJ_NROPOR = AD1.AD1_NROPOR
@@ -1235,7 +1235,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
                     A.AIJ_REVISA
-                FROM {self._totvs_table("AIJ010")} A
+                FROM {self._totvs_from("AIJ010", "A")}
                 WHERE {where_aij_base}
                   {where_period_touch}
                   AND (
@@ -1281,7 +1281,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                             ELSE 0
                         END
                     ) AS HAS_SAMPLE
-                FROM {self._totvs_table("AIJ010")} A
+                FROM {self._totvs_from("AIJ010", "A")}
                 INNER JOIN OvRevisionTouchedInPeriod K
                     ON K.AIJ_FILIAL = A.AIJ_FILIAL
                    AND K.AIJ_NROPOR = A.AIJ_NROPOR
@@ -1359,6 +1359,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_lmp_finalized,
             *params_sample_anchor,
             *params_aij_base,
+            *params_lmp_finalized,
             *params_lmp_finalized,
             *params_eng_support_a,
             *params_lmp_anchor_a,
@@ -1896,7 +1897,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     LEAD(A.AIJ_HRINIC) OVER ({win}) AS NEXT_HRINIC,
                     LEAD(A.AIJ_DTENCE) OVER ({win}) AS NEXT_DTENCE,
                     LEAD(A.AIJ_HRENCE) OVER ({win}) AS NEXT_HRENCE
-                FROM {self._totvs_table("AIJ010")} A
+                FROM {self._totvs_from("AIJ010", "A")}
                 {scope_join_a}
                 WHERE {where_aij_base_a}
             ),
