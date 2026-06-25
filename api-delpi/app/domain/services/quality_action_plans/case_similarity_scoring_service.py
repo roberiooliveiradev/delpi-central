@@ -48,13 +48,31 @@ class CaseSimilarityScoringService:
     """Ranking por sobreposição textual e tags (MVP sem embeddings)."""
 
     def score(self, query: SimilarCaseQuery, candidate: IndexedCaseCandidate) -> float:
+        total, _factors = self.score_breakdown(query, candidate)
+        return total
+
+    def score_breakdown(
+        self,
+        query: SimilarCaseQuery,
+        candidate: IndexedCaseCandidate,
+    ) -> tuple[float, list[dict[str, Any]]]:
         score = 0.0
+        factors: list[dict[str, Any]] = []
 
         query_tokens = tokenize(query.problem_description)
         candidate_tokens = tokenize(candidate.search_text)
         if query_tokens and candidate_tokens:
             overlap = len(query_tokens & candidate_tokens) / len(query_tokens | candidate_tokens)
-            score += overlap * 0.45
+            weight = round(overlap * 0.45, 4)
+            if weight > 0:
+                score += weight
+                factors.append(
+                    {
+                        "key": "text_overlap",
+                        "weight": weight,
+                        "shared_token_count": len(query_tokens & candidate_tokens),
+                    }
+                )
 
         query_symptoms = {s.strip().lower() for s in query.symptoms if s.strip()}
         candidate_symptoms = {s.strip().lower() for s in candidate.symptom_tags if s.strip()}
@@ -62,21 +80,36 @@ class CaseSimilarityScoringService:
             symptom_overlap = len(query_symptoms & candidate_symptoms) / len(
                 query_symptoms | candidate_symptoms
             )
-            score += symptom_overlap * 0.25
+            weight = round(symptom_overlap * 0.25, 4)
+            if weight > 0:
+                score += weight
+                factors.append(
+                    {
+                        "key": "symptom_overlap",
+                        "weight": weight,
+                        "matched_symptoms": sorted(query_symptoms & candidate_symptoms),
+                    }
+                )
 
         if query.product_code and candidate.product_code:
             if query.product_code.strip() == candidate.product_code.strip():
                 score += 0.15
+                factors.append({"key": "product_match", "weight": 0.15})
 
         if query.branch_code and candidate.branch_code:
             if query.branch_code.strip() == candidate.branch_code.strip():
                 score += 0.12
+                factors.append({"key": "branch_match", "weight": 0.12})
 
         if query.failure_mode and candidate.failure_mode:
-            if query.failure_mode.strip().lower() in candidate.failure_mode.strip().lower():
+            query_fm = query.failure_mode.strip().lower()
+            candidate_fm = candidate.failure_mode.strip().lower()
+            if query_fm in candidate_fm:
                 score += 0.08
-            elif candidate.failure_mode.strip().lower() in query.failure_mode.strip().lower():
+                factors.append({"key": "failure_mode_match", "weight": 0.08})
+            elif candidate_fm in query_fm:
                 score += 0.05
+                factors.append({"key": "failure_mode_partial", "weight": 0.05})
 
         if query.root_cause_category and candidate.root_cause_category:
             if (
@@ -84,13 +117,16 @@ class CaseSimilarityScoringService:
                 == candidate.root_cause_category.strip().lower()
             ):
                 score += 0.07
+                factors.append({"key": "root_cause_category_match", "weight": 0.07})
 
         if candidate.effectiveness_status == "effective":
             score += 0.05
+            factors.append({"key": "effectiveness_effective", "weight": 0.05})
         elif candidate.effectiveness_status == "partially_effective":
             score += 0.02
+            factors.append({"key": "effectiveness_partial", "weight": 0.02})
 
-        return round(min(score, 1.0), 4)
+        return round(min(score, 1.0), 4), factors
 
     def rank_cases(
         self,

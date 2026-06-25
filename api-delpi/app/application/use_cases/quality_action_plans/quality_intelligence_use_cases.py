@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from app.domain.services.quality_action_plans.case_similarity_decision_log_service import (
+    CaseSimilarityDecisionLogService,
+)
 from app.domain.services.quality_action_plans.case_similarity_scoring_service import (
     CaseSimilarityScoringService,
     IndexedCaseCandidate,
@@ -58,9 +61,11 @@ class SearchSimilarCasesUseCase:
         self,
         repository: SimilarCasesSearchRepository,
         scoring: CaseSimilarityScoringService | None = None,
+        decision_log: CaseSimilarityDecisionLogService | None = None,
     ) -> None:
         self._repository = repository
         self._scoring = scoring or CaseSimilarityScoringService()
+        self._decision_log = decision_log or CaseSimilarityDecisionLogService(self._scoring)
 
     def execute(self, request: SimilarCasesRequest) -> dict[str, Any]:
         if not request.problem_description.strip():
@@ -104,13 +109,17 @@ class SearchSimilarCasesUseCase:
             for item in raw_candidates
         ]
 
-        similar_cases = self._scoring.rank_cases(query, candidates)
+        similar_cases = self._decision_log.enrich_ranked_cases(query, candidates)
         recurrence = self._scoring.recurrence_signals(query, candidates)
 
         return {
             "similar_cases": similar_cases,
             "recurrence_signals": recurrence,
             "suggested_focus_areas": self._scoring.suggested_focus_areas(similar_cases),
+            "similar_cases_decision_log": self._decision_log.build_from_ranked_cases(
+                query,
+                similar_cases,
+            ),
         }
 
 

@@ -89,6 +89,8 @@ def test_search_similar_cases_excludes_current_plan():
     repo.fetch_similar_case_candidates.assert_called_once()
     assert repo.fetch_similar_case_candidates.call_args.kwargs["exclude_plan_id"] == "current-uuid"
     assert len(result["similar_cases"]) == 1
+    assert result["similar_cases_decision_log"]["entries"]
+    assert result["similar_cases"][0].get("influence_factors")
 
 
 def test_get_plan_similar_cases_builds_request_from_detail():

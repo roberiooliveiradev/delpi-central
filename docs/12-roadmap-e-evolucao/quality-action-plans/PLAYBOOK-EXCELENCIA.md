@@ -211,7 +211,7 @@ Cada onda tem **objetivo**, **entregas**, **critério de aceite** e **dependênc
 | 5.2 | Upload de evidência via multipart no agente (tool documentada) | api-pac-quality | M |
 | 5.3 | Extração estruturada de PDF/e-mail (prompt + validação humana) | docs + evals | M | ✅ jun/2026 |
 | 5.4 | Suite de evals com 20 cenários anonimizados (CI opcional) | api-pac-quality/tests | L | ✅ jun/2026 |
-| 5.5 | Log de decisão: quais casos similares influenciaram sugestão | api-pac-quality | M |
+| 5.5 | Log de decisão: quais casos similares influenciaram sugestão | api-pac-quality | M | ✅ jun/2026 |
 | 5.6 | Integração: agente no **Minha DELPI Chat** (skill PAC) | minha-delpi-ai-api | L | ✅ jun/2026 |
 | 5.7 | Modo “só consulta” para liderança no chat | minha-delpi-ai-api | L | ✅ jun/2026 |
 

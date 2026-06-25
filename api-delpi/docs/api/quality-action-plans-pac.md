@@ -106,6 +106,9 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | POST | `/quality/action-plans/{plan_id}/evidences` | `attach_quality_action_plan_evidence` | Anexar arquivo (multipart) |
 | GET | `/quality/action-plans/{plan_id}/evidences/{evidence_id}/file` | — | Download do arquivo |
 | DELETE | `/quality/action-plans/{plan_id}/evidences/{evidence_id}` | `delete_quality_action_plan_evidence` | Remover evidência |
+| GET | `/quality/action-plans/{plan_id}/similar-cases` | `get_quality_action_plan_similar_cases` | Casos similares + log de decisão (Onda 5.5) |
+
+**Inteligência — `similar_cases_decision_log` (Onda 5.5):** cada resposta de casos similares traz `influence_factors` por plano e `similar_cases_decision_log.entries` com ranking explicável (`product_match`, `text_overlap`, etc.).
 
 ### POST `/quality/action-plans` — corpo mínimo
 
