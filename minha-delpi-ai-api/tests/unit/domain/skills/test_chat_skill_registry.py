@@ -6,6 +6,7 @@ def test_catalog_lists_sql_skill():
 
     assert any(item["skillKey"] == "sql" for item in catalog)
     assert any(item["skillKey"] == "company-knowledge" for item in catalog)
+    assert any(item["skillKey"] == "quality-action-plans-delpi" for item in catalog)
 
 
 def test_set_and_read_sql_skill_enabled():
@@ -112,3 +113,41 @@ def test_drawing_skill_off_when_agent_explicitly_disabled():
     )
 
     assert drawing["enabled"] is False
+
+
+def test_quality_action_plans_skill_default_when_pac_action_allowed():
+    bindings = ChatSkillRegistry.list_agent_bindings(
+        agent_metadata={},
+        allowed_action_ids=["list_quality_action_plans"],
+        has_agent=True,
+    )
+
+    pac = next(
+        item for item in bindings if item["skillKey"] == "quality-action-plans-delpi"
+    )
+
+    assert pac["enabled"] is True
+
+    resolved = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata={},
+        allowed_action_ids=["list_quality_action_plans"],
+        has_agent=True,
+    )
+
+    assert resolved["qualityActionPlans"] is True
+
+
+def test_quality_action_plans_skill_off_when_agent_explicitly_disabled():
+    bindings = ChatSkillRegistry.list_agent_bindings(
+        agent_metadata={
+            "skills": {"quality-action-plans-delpi": {"enabled": False}},
+        },
+        allowed_action_ids=["list_quality_action_plans"],
+        has_agent=True,
+    )
+
+    pac = next(
+        item for item in bindings if item["skillKey"] == "quality-action-plans-delpi"
+    )
+
+    assert pac["enabled"] is False

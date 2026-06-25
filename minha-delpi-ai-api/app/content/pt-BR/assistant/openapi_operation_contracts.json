@@ -559,6 +559,42 @@
     "entity": "quality_action_plan_similar_cases",
     "shape": "composite_analysis"
   },
+  "list_quality_action_plan_my_queue": {
+    "entity": "quality_action_plan_action",
+    "shape": "paged_list"
+  },
+  "reopen_quality_action_plan": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "submit_quality_action_plan_effectiveness_review": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "approve_quality_action_plan_effectiveness_review": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "reject_quality_action_plan_effectiveness_review": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "list_quality_action_plan_pending_effectiveness_reviews": {
+    "entity": "quality_action_plan",
+    "shape": "paged_list"
+  },
+  "list_quality_action_plan_audit_log": {
+    "entity": "quality_action_plan_audit_log",
+    "shape": "paged_list"
+  },
+  "promote_quality_action_plan_solution_pattern": {
+    "entity": "quality_solution_pattern",
+    "shape": "scalar"
+  },
+  "dispatch_quality_action_plan_notifications": {
+    "entity": "quality_action_plan_notifications",
+    "shape": "scalar"
+  },
   "get_audit_5s_summary": {
     "entity": "audit_5s_summary",
     "shape": "scalar"

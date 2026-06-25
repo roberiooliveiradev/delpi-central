@@ -90,6 +90,32 @@
         "ler carimbo do desenho"
       ],
       "sortOrder": 25
+    },
+    {
+      "key": "quality-action-plans-delpi",
+      "label": "PAC Qualidade",
+      "description": "Conduz planos de ação de não conformidade (8D, Ishikawa, 5 Porquês, ações, eficácia e evidências) via API PAC na api-delpi. Consulta histórico e dashboard; grava somente após confirmação do usuário.",
+      "policyFile": "quality-action-plans-delpi-skill.md",
+      "metadataFlag": "enabled",
+      "legacyMetadataFlag": "qualityActionPlans",
+      "executionPathHint": "/quality/action-plans",
+      "aliases": [
+        "pac",
+        "pac qualidade",
+        "plano de acao",
+        "plano de ação",
+        "nao conformidade",
+        "não conformidade",
+        "8d",
+        "rnc"
+      ],
+      "examplePrompts": [
+        "abrir plano de ação para reclamação do cliente",
+        "quais planos PAC estão atrasados?",
+        "casos similares para este defeito de oxidação",
+        "submeter eficácia do plano PAC"
+      ],
+      "sortOrder": 35
     }
   ]
 }

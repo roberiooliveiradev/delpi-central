@@ -111,6 +111,33 @@ PAC_QUALITY_SELECTION_CASES: list[dict[str, Any]] = [
         summary="Análise consolidada — casos similares plano de ação qualidade",
         extra_actions=[_PAC_LIST_DECOY],
     ),
+    _pac_case(
+        "PAC06",
+        "Quais ações PAC estão na minha fila?",
+        action_id="pac-my-queue",
+        path="/quality/action-plans/my-queue",
+        operation_id="list_quality_action_plan_my_queue",
+        summary="Lista paginada — fila pessoal plano de ação qualidade",
+        extra_actions=[_PAC_LIST_DECOY, _PAC_DASHBOARD_DECOY],
+    ),
+    _pac_case(
+        "PAC07",
+        "Liste os planos PAC aguardando aprovação de eficácia",
+        action_id="pac-pending-effectiveness",
+        path="/quality/action-plans/effectiveness-review/pending",
+        operation_id="list_quality_action_plan_pending_effectiveness_reviews",
+        summary="Lista paginada — fila eficácia pendente plano de ação qualidade",
+        extra_actions=[_PAC_LIST_DECOY, _PAC_DASHBOARD_DECOY],
+    ),
+    _pac_case(
+        "PAC08",
+        "Mostre o histórico de auditoria do plano de ação PAC",
+        action_id="pac-audit-log",
+        path="/quality/action-plans/{plan_id}/audit-log",
+        operation_id="list_quality_action_plan_audit_log",
+        summary="Lista paginada — trilha de auditoria plano de ação qualidade",
+        extra_actions=[_PAC_LIST_DECOY],
+    ),
 ]
 
 PAC_QUALITY_SELECTION_INDEX = [

@@ -158,6 +158,17 @@ class PromptPolicyService:
                 vision_policy or self._load_policy("document-vision-delpi-skill.md")
             )
 
+        if resolved_skills.get("qualityActionPlans"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                QUALITY_ACTION_PLANS_SKILL_KEY,
+            )
+
+            pac_policy = ChatSkillRegistry.get_policy_content(QUALITY_ACTION_PLANS_SKILL_KEY)
+            sections.append(
+                pac_policy or self._load_policy("quality-action-plans-delpi-skill.md")
+            )
+
         return [
             section.strip()
             for section in sections

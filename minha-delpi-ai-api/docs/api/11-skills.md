@@ -127,6 +127,14 @@ As skills ativas são aplicadas automaticamente no prompt (e no escopo RAG, quan
 
 Execução SQL no chat comum **não** é permitida via external actions.
 
+### Skill `quality-action-plans-delpi`
+
+- **Comportamento:** conduz planos de ação PAC (8D, Ishikawa, 5 Porquês, ações, eficácia, evidências) via actions `/quality/action-plans/*` na api-delpi.
+- **Ativação automática:** agente com actions PAC permitidas (ex.: `list_quality_action_plans`) liga a skill quando não há config explícita no builder — espelha `drawing-analysis-delpi`.
+- **Escritas:** policy exige confirmação do usuário antes de POST/PUT/PATCH; leituras (dashboard, fila, audit) podem ser proativas.
+- **Desativar:** `PUT /chat/agents/{id}/skills` com `skillKey: "quality-action-plans-delpi"` e `enabled: false`.
+- **Metadata legado:** `qualityActionPlans` em `resolve_runtime_flags` / prompt.
+
 ### Skill `company-knowledge`
 
 - **Comportamento:** prioriza a base documental global da empresa (políticas, diretrizes, glossário, manuais), injeta policy no prompt e controla `include_global` no escopo RAG.

@@ -47,6 +47,9 @@ ONDA1_REQUIRED_OPENAPI_PATHS = (
     "/quality/action-plans/dashboard",
     "/quality/action-plans/overdue",
     "/quality/action-plans/recurrence",
+    "/quality/action-plans/my-queue",
+    "/quality/action-plans/effectiveness-review/pending",
+    "/quality/action-plans/notifications/dispatch",
     "/quality/action-plans/{plan_id}",
     "/quality/action-plans/{plan_id}/similar-cases",
     "/quality/action-plans/{plan_id}/rnc-8d",
@@ -56,6 +59,13 @@ ONDA1_REQUIRED_OPENAPI_PATHS = (
     "/quality/action-plans/{plan_id}/five-whys",
     "/quality/action-plans/{plan_id}/actions",
     "/quality/action-plans/{plan_id}/actions/{action_id}",
+    "/quality/action-plans/{plan_id}/reopen",
+    "/quality/action-plans/{plan_id}/audit-log",
+    "/quality/action-plans/{plan_id}/effectiveness-review",
+    "/quality/action-plans/{plan_id}/effectiveness-review/submit",
+    "/quality/action-plans/{plan_id}/effectiveness-review/approve",
+    "/quality/action-plans/{plan_id}/effectiveness-review/reject",
+    "/quality/action-plans/{plan_id}/promote-solution-pattern",
 )
 
 

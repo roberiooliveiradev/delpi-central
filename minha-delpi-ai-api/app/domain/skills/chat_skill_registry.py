@@ -14,6 +14,8 @@ SQL_EXECUTION_PATH_TOKEN = "/data/sql"
 COMPANY_KNOWLEDGE_SKILL_KEY = "company-knowledge"
 DRAWING_ANALYSIS_SKILL_KEY = "drawing-analysis-delpi"
 DOCUMENT_VISION_SKILL_KEY = "document-vision-delpi"
+QUALITY_ACTION_PLANS_SKILL_KEY = "quality-action-plans-delpi"
+QUALITY_ACTION_PLANS_PATH_TOKEN = "/quality/action-plans"
 DRAWING_ANALYSER_ACTION_ID = "get_product_analyser"
 DRAWING_ANALYSER_PATH_TOKEN = "/analyser"
 
@@ -251,6 +253,12 @@ class ChatSkillRegistry:
             elif definition.key == DOCUMENT_VISION_SKILL_KEY:
                 if not cls._has_explicit_config(agent_metadata, definition):
                     enabled = ChatDomainConfigService.chat_document_vision_enabled()
+            elif (
+                definition.key == QUALITY_ACTION_PLANS_SKILL_KEY
+                and has_agent
+                and not cls._has_explicit_config(agent_metadata, definition)
+            ):
+                enabled = cls._quality_action_plans_available(allowed)
 
             derived: dict[str, bool] = {}
 
@@ -295,6 +303,7 @@ class ChatSkillRegistry:
             "companyKnowledge": False,
             "drawingAnalysis": False,
             "documentVision": False,
+            "qualityActionPlans": False,
         }
 
         for item in bindings:
@@ -309,6 +318,8 @@ class ChatSkillRegistry:
                 resolved["drawingAnalysis"] = bool(item["enabled"])
             if item["skillKey"] == DOCUMENT_VISION_SKILL_KEY:
                 resolved["documentVision"] = bool(item["enabled"])
+            if item["skillKey"] == QUALITY_ACTION_PLANS_SKILL_KEY:
+                resolved["qualityActionPlans"] = bool(item["enabled"])
 
         return resolved
 
@@ -401,6 +412,43 @@ class ChatSkillRegistry:
                 path = str(action.get("path") or "").lower()
 
                 if DRAWING_ANALYSER_PATH_TOKEN in path:
+                    return True
+        except Exception:
+            return False
+
+        return False
+
+    @classmethod
+    def _quality_action_plans_available(cls, allowed_action_ids: list[str]) -> bool:
+        if not allowed_action_ids:
+            return False
+
+        allowed_set = {str(item).strip() for item in allowed_action_ids if str(item).strip()}
+
+        pac_operation_markers = (
+            "list_quality_action_plans",
+            "get_quality_action_plans_dashboard",
+            "create_quality_action_plan",
+        )
+
+        if any(marker in action_id for action_id in allowed_set for marker in pac_operation_markers):
+            return True
+
+        repository = cls._external_action_repository
+
+        if repository is None:
+            return False
+
+        try:
+            for action in repository.list_actions():
+                action_id = str(action.get("actionId") or "").strip()
+
+                if action_id not in allowed_set:
+                    continue
+
+                path = str(action.get("path") or "").lower()
+
+                if QUALITY_ACTION_PLANS_PATH_TOKEN in path:
                     return True
         except Exception:
             return False

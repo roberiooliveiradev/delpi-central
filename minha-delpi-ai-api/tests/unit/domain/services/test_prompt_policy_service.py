@@ -287,3 +287,21 @@ def test_drawing_skill_policy_is_decoupled_from_validation_rules():
     assert "pipeline" in content
     assert "revisão divergente: erro crítico" not in content
     assert "componente faltante ou extra na bom: erro crítico" not in content
+
+
+def test_build_skill_policy_sections_includes_quality_action_plans_when_enabled():
+    service = PromptPolicyService()
+
+    sections = service.build_active_skill_policy_sections(skills={"qualityActionPlans": True})
+
+    assert sections
+    assert any("PAC" in section or "8D" in section for section in sections)
+
+
+def test_quality_action_plans_skill_policy_requires_confirmation_before_writes():
+    policy_path = PromptPolicyService.POLICY_DIR / "quality-action-plans-delpi-skill.md"
+    content = policy_path.read_text(encoding="utf-8").lower()
+
+    assert "confirmação" in content
+    assert "branch_code" in content
+    assert "nonconformity_scope" in content
