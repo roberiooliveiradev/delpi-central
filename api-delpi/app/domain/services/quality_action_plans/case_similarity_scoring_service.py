@@ -42,10 +42,11 @@ class IndexedCaseCandidate:
     closed_at: str | None
     effective_actions: list[str]
     branch_code: str | None = None
+    semantic_similarity: float | None = None
 
 
 class CaseSimilarityScoringService:
-    """Ranking por sobreposição textual e tags (MVP sem embeddings)."""
+    """Ranking híbrido: sobreposição textual/tags + similaridade semântica (pgvector)."""
 
     def score(self, query: SimilarCaseQuery, candidate: IndexedCaseCandidate) -> float:
         total, _factors = self.score_breakdown(query, candidate)
@@ -59,11 +60,24 @@ class CaseSimilarityScoringService:
         score = 0.0
         factors: list[dict[str, Any]] = []
 
+        if candidate.semantic_similarity is not None and candidate.semantic_similarity > 0:
+            weight = round(min(candidate.semantic_similarity, 1.0) * 0.4, 4)
+            if weight > 0:
+                score += weight
+                factors.append(
+                    {
+                        "key": "semantic_similarity",
+                        "weight": weight,
+                        "score": round(candidate.semantic_similarity, 4),
+                    }
+                )
+
         query_tokens = tokenize(query.problem_description)
         candidate_tokens = tokenize(candidate.search_text)
         if query_tokens and candidate_tokens:
             overlap = len(query_tokens & candidate_tokens) / len(query_tokens | candidate_tokens)
-            weight = round(overlap * 0.45, 4)
+            text_weight_cap = 0.3 if candidate.semantic_similarity else 0.45
+            weight = round(overlap * text_weight_cap, 4)
             if weight > 0:
                 score += weight
                 factors.append(

@@ -108,7 +108,9 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | DELETE | `/quality/action-plans/{plan_id}/evidences/{evidence_id}` | `delete_quality_action_plan_evidence` | Remover evidência |
 | GET | `/quality/action-plans/{plan_id}/similar-cases` | `get_quality_action_plan_similar_cases` | Casos similares + log de decisão (Onda 5.5) |
 
-**Inteligência — `similar_cases_decision_log` (Onda 5.5):** cada resposta de casos similares traz `influence_factors` por plano e `similar_cases_decision_log.entries` com ranking explicável (`product_match`, `text_overlap`, etc.).
+**Inteligência — `similar_cases_decision_log` (Onda 5.5):** cada resposta de casos similares traz `influence_factors` por plano e `similar_cases_decision_log.entries` com ranking explicável (`product_match`, `text_overlap`, `semantic_similarity`, etc.).
+
+**Busca semântica (Onda 6.2):** com `PAC_SIMILARITY_EMBEDDINGS_ENABLED=true` e Ollama (`OLLAMA_BASE_URL`, `EMBEDDING_MODEL=bge-m3`), o índice grava `search_embedding` no sync e a busca combina pgvector + filtros textuais. Sem embeddings, permanece o ranking lexical (trgm/ILIKE).
 
 ### POST `/quality/action-plans` — corpo mínimo
 

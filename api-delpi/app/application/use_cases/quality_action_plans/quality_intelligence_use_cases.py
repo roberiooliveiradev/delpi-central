@@ -6,6 +6,10 @@ from typing import Any, Protocol
 from app.domain.services.quality_action_plans.case_similarity_decision_log_service import (
     CaseSimilarityDecisionLogService,
 )
+from app.domain.services.quality_action_plans.case_similarity_embedding_service import (
+    CaseSimilarityEmbeddingPort,
+    CaseSimilarityEmbeddingService,
+)
 from app.domain.services.quality_action_plans.case_similarity_scoring_service import (
     CaseSimilarityScoringService,
     IndexedCaseCandidate,
@@ -14,7 +18,9 @@ from app.domain.services.quality_action_plans.case_similarity_scoring_service im
 
 
 class CaseSimilarityIndexRepository(Protocol):
-    def sync_case_similarity_index(self, plan_id: str) -> None: ...
+    def sync_case_similarity_index(self, plan_id: str) -> str | None: ...
+
+    def update_search_embedding(self, plan_id: str, embedding: list[float]) -> None: ...
 
 
 class SimilarCasesSearchRepository(Protocol):
@@ -27,6 +33,7 @@ class SimilarCasesSearchRepository(Protocol):
         branch_code: str | None = None,
         exclude_plan_id: str | None = None,
         limit: int = 100,
+        query_embedding: list[float] | None = None,
     ) -> list[dict[str, Any]]: ...
 
 
@@ -49,11 +56,25 @@ class SimilarCasesRequest:
 
 
 class SyncCaseSimilarityIndexUseCase:
-    def __init__(self, repository: CaseSimilarityIndexRepository) -> None:
+    def __init__(
+        self,
+        repository: CaseSimilarityIndexRepository,
+        embedding_gateway: CaseSimilarityEmbeddingPort | None = None,
+    ) -> None:
         self._repository = repository
+        self._embedding_gateway = embedding_gateway
 
     def execute(self, plan_id: str) -> None:
-        self._repository.sync_case_similarity_index(plan_id)
+        search_text = self._repository.sync_case_similarity_index(plan_id)
+        if not search_text or self._embedding_gateway is None:
+            return
+
+        embedding = CaseSimilarityEmbeddingService.embed_search_text(
+            self._embedding_gateway,
+            search_text,
+        )
+        if embedding:
+            self._repository.update_search_embedding(plan_id, embedding)
 
 
 class SearchSimilarCasesUseCase:
@@ -62,10 +83,12 @@ class SearchSimilarCasesUseCase:
         repository: SimilarCasesSearchRepository,
         scoring: CaseSimilarityScoringService | None = None,
         decision_log: CaseSimilarityDecisionLogService | None = None,
+        embedding_gateway: CaseSimilarityEmbeddingPort | None = None,
     ) -> None:
         self._repository = repository
         self._scoring = scoring or CaseSimilarityScoringService()
         self._decision_log = decision_log or CaseSimilarityDecisionLogService(self._scoring)
+        self._embedding_gateway = embedding_gateway
 
     def execute(self, request: SimilarCasesRequest) -> dict[str, Any]:
         if not request.problem_description.strip():
@@ -83,12 +106,20 @@ class SearchSimilarCasesUseCase:
             branch_code=request.branch_code,
         )
 
+        query_embedding = None
+        if self._embedding_gateway is not None:
+            query_embedding = CaseSimilarityEmbeddingService.embed_search_text(
+                self._embedding_gateway,
+                query.problem_description,
+            )
+
         raw_candidates = self._repository.fetch_similar_case_candidates(
             problem_description=query.problem_description,
             product_code=query.product_code,
             symptoms=list(query.symptoms),
             branch_code=query.branch_code,
             exclude_plan_id=request.exclude_plan_id,
+            query_embedding=query_embedding,
         )
         candidates = [
             IndexedCaseCandidate(
@@ -105,6 +136,7 @@ class SearchSimilarCasesUseCase:
                 closed_at=item.get("closed_at"),
                 effective_actions=item.get("effective_actions") or [],
                 branch_code=item.get("branch_code"),
+                semantic_similarity=item.get("semantic_similarity"),
             )
             for item in raw_candidates
         ]

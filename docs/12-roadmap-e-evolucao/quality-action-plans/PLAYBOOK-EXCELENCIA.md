@@ -228,8 +228,8 @@ Cada onda tem **objetivo**, **entregas**, **critério de aceite** e **dependênc
 
 | # | Entrega | Repo | Esforço |
 |---|---|---|---|
-| 6.1 | `pgvector` + embeddings de `search_text` | migration | L | 🔄 V009 `search_embedding` |
-| 6.2 | Busca semântica em casos e padrões | api-pac-quality | L |
+| 6.1 | `pgvector` + embeddings de `search_text` | migration | L | ✅ V009 `search_embedding` |
+| 6.2 | Busca semântica em casos e padrões | api-pac-quality + api-delpi | L | ✅ jun/2026 — híbrido trgm + pgvector |
 | 6.3 | OCR de evidências (foto NC) → tags automáticas sugeridas | minha-delpi-ai-api ou api-pac | L |
 | 6.4 | Detecção proativa de recorrência na abertura (score + alerta) | api-pac-quality | M |
 | 6.5 | Grafo “produto ↔ modo falha ↔ causa ↔ ação eficaz” | analytics | L |

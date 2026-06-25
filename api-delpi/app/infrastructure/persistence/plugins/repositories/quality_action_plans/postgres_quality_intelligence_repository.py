@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.quality_action_plans.case_similarity_embedding_service import (
+    CaseSimilarityEmbeddingService,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_serialization import serialize_row
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
@@ -10,7 +13,7 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
 
 
 class PostgresQualityIntelligenceRepository(PluginBaseRepository):
-    def sync_case_similarity_index(self, plan_id: str) -> None:
+    def sync_case_similarity_index(self, plan_id: str) -> str | None:
         row = self.fetch_one(
             """
             SELECT p.id,
@@ -33,7 +36,7 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
             (plan_id,),
         )
         if not row:
-            return
+            return None
 
         parts = [
             row.get("title"),
@@ -81,6 +84,19 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
                 row.get("branch_code"),
             ),
         )
+        return search_text
+
+    def update_search_embedding(self, plan_id: str, embedding: list[float]) -> None:
+        literal = CaseSimilarityEmbeddingService.format_pgvector_literal(embedding)
+        self.execute(
+            """
+            UPDATE quality.quality_case_similarity_index
+               SET search_embedding = %s::vector,
+                   updated_at = NOW()
+             WHERE plan_id = %s
+            """,
+            (literal, plan_id),
+        )
 
     def has_similarity_index_entry(self, plan_id: str) -> bool:
         row = self.fetch_one(
@@ -94,6 +110,39 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
         return row is not None
 
     def fetch_similar_case_candidates(
+        self,
+        *,
+        problem_description: str,
+        product_code: str | None,
+        symptoms: list[str],
+        branch_code: str | None = None,
+        exclude_plan_id: str | None = None,
+        limit: int = 100,
+        query_embedding: list[float] | None = None,
+    ) -> list[dict[str, Any]]:
+        text_rows = self._fetch_text_similar_case_candidates(
+            problem_description=problem_description,
+            product_code=product_code,
+            symptoms=symptoms,
+            branch_code=branch_code,
+            exclude_plan_id=exclude_plan_id,
+            limit=limit,
+        )
+
+        if not query_embedding:
+            return text_rows
+
+        semantic_rows = self._fetch_semantic_similar_case_candidates(
+            query_embedding=query_embedding,
+            product_code=product_code,
+            symptoms=symptoms,
+            branch_code=branch_code,
+            exclude_plan_id=exclude_plan_id,
+            limit=limit,
+        )
+        return self._merge_similar_case_candidates(text_rows, semantic_rows)
+
+    def _fetch_text_similar_case_candidates(
         self,
         *,
         problem_description: str,
@@ -188,9 +237,131 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
                     "closed_at": closed_at.isoformat() if hasattr(closed_at, "isoformat") else closed_at,
                     "effective_actions": effective_actions,
                     "branch_code": row.get("branch_code"),
+                    "semantic_similarity": None,
                 }
             )
         return results
+
+    def _fetch_semantic_similar_case_candidates(
+        self,
+        *,
+        query_embedding: list[float],
+        product_code: str | None,
+        symptoms: list[str],
+        branch_code: str | None = None,
+        exclude_plan_id: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        literal = CaseSimilarityEmbeddingService.format_pgvector_literal(query_embedding)
+        filters = [
+            "p.deleted_at IS NULL",
+            "p.status NOT IN ('draft', 'cancelled')",
+            "idx.search_embedding IS NOT NULL",
+        ]
+        params: list[Any] = [literal, literal]
+
+        if exclude_plan_id:
+            filters.append("p.id <> %s")
+            params.append(exclude_plan_id)
+
+        if product_code:
+            filters.append("idx.product_code = %s")
+            params.append(product_code)
+
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+
+        if symptoms:
+            filters.append("idx.symptom_tags && %s::text[]")
+            params.append(symptoms)
+
+        where_clause = " AND ".join(filters)
+        rows = self.fetch_all(
+            f"""
+            SELECT idx.plan_id,
+                   p.code AS plan_code,
+                   idx.search_text,
+                   idx.product_code,
+                   idx.failure_mode,
+                   idx.root_cause_category,
+                   idx.symptom_tags,
+                   p.branch_code,
+                   COALESCE(p.reported_problem, p.title) AS problem_summary,
+                   fw.root_cause,
+                   p.effectiveness_status,
+                   p.closed_at,
+                   p.title,
+                   1 - (idx.search_embedding <=> %s::vector) AS semantic_similarity
+              FROM quality.quality_case_similarity_index idx
+              JOIN quality.quality_action_plans p ON p.id = idx.plan_id
+              LEFT JOIN quality.quality_five_whys fw ON fw.plan_id = p.id
+             WHERE {where_clause}
+             ORDER BY idx.search_embedding <=> %s::vector
+             LIMIT %s
+            """,
+            tuple([*params, limit]),
+        )
+        return self._hydrate_similar_case_rows(rows)
+
+    def _hydrate_similar_case_rows(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        for row in rows:
+            plan_id = str(row["plan_id"])
+            actions = self.fetch_all(
+                """
+                SELECT description
+                  FROM quality.quality_actions
+                 WHERE plan_id = %s
+                   AND status = 'completed'
+                 ORDER BY completed_at DESC NULLS LAST
+                 LIMIT 5
+                """,
+                (plan_id,),
+            )
+            effective_actions = [a["description"] for a in actions if a.get("description")]
+            closed_at = row.get("closed_at")
+            semantic_similarity = row.get("semantic_similarity")
+            results.append(
+                {
+                    "plan_id": plan_id,
+                    "plan_code": row["plan_code"],
+                    "search_text": row.get("search_text") or "",
+                    "product_code": row.get("product_code"),
+                    "failure_mode": row.get("failure_mode"),
+                    "root_cause_category": row.get("root_cause_category"),
+                    "symptom_tags": list(row.get("symptom_tags") or []),
+                    "problem_summary": row.get("problem_summary") or row.get("title"),
+                    "root_cause": row.get("root_cause"),
+                    "effectiveness_status": row.get("effectiveness_status"),
+                    "closed_at": closed_at.isoformat() if hasattr(closed_at, "isoformat") else closed_at,
+                    "effective_actions": effective_actions,
+                    "branch_code": row.get("branch_code"),
+                    "semantic_similarity": float(semantic_similarity)
+                    if semantic_similarity is not None
+                    else None,
+                }
+            )
+        return results
+
+    @staticmethod
+    def _merge_similar_case_candidates(
+        text_rows: list[dict[str, Any]],
+        semantic_rows: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        merged: dict[str, dict[str, Any]] = {
+            str(row["plan_id"]): dict(row) for row in text_rows
+        }
+
+        for row in semantic_rows:
+            plan_id = str(row["plan_id"])
+            existing = merged.get(plan_id)
+            if existing:
+                existing["semantic_similarity"] = row.get("semantic_similarity")
+                continue
+            merged[plan_id] = dict(row)
+
+        return list(merged.values())
 
     def list_solution_patterns(
         self,

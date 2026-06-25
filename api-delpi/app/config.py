@@ -210,5 +210,15 @@ class Settings:
     )
     PAC_QUALITY_COORDINATOR_USER_IDS: str | None = _get_env("PAC_QUALITY_COORDINATOR_USER_IDS")
 
+    OLLAMA_BASE_URL: str | None = _get_env("OLLAMA_BASE_URL", default="http://ollama:11434")
+    EMBEDDING_MODEL: str = _get_env("EMBEDDING_MODEL", default="bge-m3")
+    EMBEDDING_DIMENSIONS: int = int(_get_env("EMBEDDING_DIMENSIONS", default="1024") or "1024")
+    EMBEDDING_TIMEOUT_SECONDS: float = float(
+        _get_env("EMBEDDING_TIMEOUT_SECONDS", default="30") or "30"
+    )
+    PAC_SIMILARITY_EMBEDDINGS_ENABLED: bool = (
+        _get_env("PAC_SIMILARITY_EMBEDDINGS_ENABLED", default="false").lower() == "true"
+    )
+
 
 settings = Settings()
