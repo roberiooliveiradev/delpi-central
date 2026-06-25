@@ -477,6 +477,114 @@
   margin: 6px 0 0;
 }
 
+.dashboard-quality-action-plans .pac-timeline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dashboard-quality-action-plans .pac-timeline-filters__chip {
+  border: 1px solid var(--pac-card-border);
+  background: var(--pac-card-bg);
+  color: var(--pac-text-muted);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: var(--pac-font-sm);
+  cursor: pointer;
+}
+
+.dashboard-quality-action-plans .pac-timeline-filters__chip--active {
+  border-color: color-mix(in srgb, var(--pac-accent) 40%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-accent) 10%, var(--pac-card-bg));
+  color: var(--pac-accent);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-timeline-track {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 0 28px;
+  position: relative;
+}
+
+.dashboard-quality-action-plans .pac-timeline-track::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--pac-card-border);
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry {
+  position: relative;
+  padding: 0 0 20px;
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry:last-child {
+  padding-bottom: 0;
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__marker {
+  position: absolute;
+  left: -28px;
+  top: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pac-card-bg);
+  border: 2px solid var(--pac-card-border);
+  color: var(--pac-text-muted);
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__marker--status {
+  border-color: color-mix(in srgb, var(--pac-accent) 35%, var(--pac-card-border));
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__marker--actions {
+  border-color: color-mix(in srgb, #2563eb 35%, var(--pac-card-border));
+  color: #2563eb;
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__marker--evidence {
+  border-color: color-mix(in srgb, #7c3aed 35%, var(--pac-card-border));
+  color: #7c3aed;
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__marker--effectiveness {
+  border-color: color-mix(in srgb, var(--success, #067647) 35%, var(--pac-card-border));
+  color: var(--success, #067647);
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__marker--analysis {
+  border-color: color-mix(in srgb, #d97706 35%, var(--pac-card-border));
+  color: #d97706;
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__detail {
+  margin: 6px 0 0;
+  color: var(--pac-title);
+}
+
+.dashboard-quality-action-plans .pac-timeline-entry__meta {
+  margin: 4px 0 0;
+  font-size: var(--pac-font-xs);
+}
+
 .dashboard-quality-action-plans .pac-form {
   display: flex;
   flex-direction: column;

@@ -25,6 +25,7 @@ import {
   upsertRnc8dReport,
 } from "../api/actionPlansApi";
 import { EvidencePanel } from "../components/EvidencePanel";
+import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
 import { Rnc8dReportEditor } from "../components/Rnc8dReportEditor";
@@ -52,7 +53,7 @@ import {
 import type { ActionPlanDetail, FiveWhysAnalysis, IshikawaAnalysis } from "../types/actionPlan";
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
-import { formatDate, formatDateTime } from "../utils/format";
+import { formatDate } from "../utils/format";
 import { formatSymptomTags, parseSymptomTags } from "../utils/symptomTags";
 
 type Props = {
@@ -446,6 +447,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
           <SimilarCasesPanel planId={planId} onNavigate={onNavigate} />
 
+          <PlanTimeline detail={detail} />
+
           {!isRnc8dTemplate ? (
             <SectionCard title="Template do relatório">
               <p className="pac-muted">
@@ -761,22 +764,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 </button>
               ) : null}
             </FormActions>
-          </SectionCard>
-
-          <SectionCard title="Histórico">
-            {detail.history.length ? (
-              <ul className="pac-timeline">
-                {detail.history.map((event) => (
-                  <li key={event.id}>
-                    <strong>{event.event_type}</strong>
-                    <span>{formatDateTime(event.created_at)}</span>
-                    {event.comment ? <p>{event.comment}</p> : null}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="pac-muted">Sem eventos registrados.</p>
-            )}
           </SectionCard>
         </div>
       ) : null}

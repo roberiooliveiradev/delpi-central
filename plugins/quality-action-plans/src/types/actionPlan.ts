@@ -173,6 +173,8 @@ export type PlanAction = {
   due_date?: string | null;
   status: string;
   cause_track?: string | null;
+  created_at?: string;
+  completed_at?: string;
 };
 
 export type PlanHistoryEvent = {
