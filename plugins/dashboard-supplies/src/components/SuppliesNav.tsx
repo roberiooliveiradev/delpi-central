@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { path: SUPPLIES_ROUTES.cpv, label: "CPV" },
   { path: SUPPLIES_ROUTES.otd, label: "OTD compras" },
   { path: SUPPLIES_ROUTES.stock, label: "Estoque" },
-  { path: SUPPLIES_ROUTES.inventoryTurnover, label: "Giro IDD" },
+  { path: SUPPLIES_ROUTES.inventoryTurnover, label: "Giro de estoque" },
 ] as const;
 
 function isActive(path: string, currentPath?: string): boolean {

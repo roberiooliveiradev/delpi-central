@@ -41,7 +41,7 @@ const SHORTCUTS = [
     href: SUPPLIES_ROUTES.stock,
   },
   {
-    title: "Giro IDD",
+    title: "Giro de estoque",
     description: "Giro em meses, contexto de estoque e CPV do período.",
     href: SUPPLIES_ROUTES.inventoryTurnover,
   },
@@ -157,7 +157,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           loading={isBusy && !stockValue}
         />
         <KpiCard
-          title="Giro IDD (meses)"
+          title="Giro de estoque (meses)"
           value={formatDecimal(inventoryTurnover?.summary.inventory_turnover_months, 2)}
           {...buildKpiGoalPresentation(
             periodLabel,

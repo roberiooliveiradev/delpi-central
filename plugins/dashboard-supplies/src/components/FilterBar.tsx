@@ -24,7 +24,7 @@ type FilterBarProps = {
 
 export function FilterBar({
   title = "Dashboard Suprimentos",
-  subtitle = "CPV, OTD de compras, estoque e giro (IDD)",
+  subtitle = "CPV, OTD de compras, estoque e giro de estoque",
   currentPath,
   filterState,
   dateStart,

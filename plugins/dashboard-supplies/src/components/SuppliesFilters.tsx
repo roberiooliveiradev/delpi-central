@@ -63,7 +63,7 @@ export function SuppliesFilters({
       </div>
       {showLocationFilter ? (
         <div className="ds-filter-box">
-          <label htmlFor="ds-location">Localização (estoque / IDD)</label>
+          <label htmlFor="ds-location">Localização (estoque)</label>
           <input
             id="ds-location"
             type="text"

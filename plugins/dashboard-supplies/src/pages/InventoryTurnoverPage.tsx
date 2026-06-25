@@ -2,27 +2,24 @@ import { useMemo } from "react";
 import { Package, Percent, TrendingUp, Warehouse } from "lucide-react";
 
 import { getInventoryTurnover } from "../api/suppliesApi";
-import { ChartCard } from "../components/ChartCard";
-import type { DataTableColumn } from "../components/DataTable";
-import { DataTableSection } from "../components/DataTableSection";
-import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
+import { TurnoverContextCard } from "../components/TurnoverContextCard";
 import { SUPPLIES_ROUTES } from "../constants/routes";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import { formatPeriodLabel } from "../utils/dates";
-import {
-  formatCurrency,
-  formatDecimal,
-  formatInteger,
-} from "../utils/format";
+import { formatCurrency, formatDecimal } from "../utils/format";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 
-type MetricRow = { label: string; value: string };
-
 type InventoryTurnoverPageProps = { pathname?: string };
+
+const CALC_MODE_SUBTITLE: Record<string, string> = {
+  closed_month: "Mês fechado — estoque ÷ CPV médio mensal",
+  full_month_range: "Meses completos — estoque ÷ CPV médio mensal",
+  partial_period_monthlyized: "Período parcial mensalizado — estoque ÷ CPV médio mensal",
+};
 
 export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) {
   const {
@@ -56,87 +53,26 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const locationLabel = location ? `Local ${location}` : "Todas";
 
-  const stockRows = useMemo<MetricRow[]>(
-    () =>
-      data
-        ? [
-            {
-              label: "Valor em estoque",
-              value: formatCurrency(data.stock_context.total_stock_value),
-            },
-            {
-              label: "Quantidade",
-              value: formatDecimal(data.stock_context.total_stock_quantity, 0),
-            },
-            {
-              label: "Produtos",
-              value: formatInteger(data.stock_context.total_products),
-            },
-            {
-              label: "Localizações",
-              value: formatInteger(data.stock_context.total_locations),
-            },
-            {
-              label: "Valor médio / unidade",
-              value: formatCurrency(data.stock_context.average_unit_value),
-            },
-          ]
-        : [],
-    [data]
-  );
+  const isOfficialClosure =
+    data?.stock_estimation?.method === "sb9_closure_on_end_date" ||
+    data?.stock_estimation?.stock_method_resolved === "official_closure";
 
-  const cpvRows = useMemo<MetricRow[]>(
-    () =>
-      data
-        ? [
-            {
-              label: "CPV total no período",
-              value: formatCurrency(data.cpv_context.cpv_total),
-            },
-            {
-              label: "CPV médio mensal",
-              value: formatCurrency(data.cpv_context.cpv_average_monthly),
-            },
-            {
-              label: "Movimentos",
-              value: formatInteger(data.cpv_context.total_movements),
-            },
-            {
-              label: "Quantidade movimentada",
-              value: formatDecimal(data.cpv_context.total_quantity, 0),
-            },
-          ]
-        : [],
-    [data]
-  );
+  const isRegisterSnapshot =
+    data?.stock_estimation?.method === "sb2_register_snapshot" ||
+    data?.stock_estimation?.stock_method_resolved === "register_snapshot";
 
-  const contextColumns = useMemo<DataTableColumn<MetricRow>[]>(
-    () => [
-      { key: "label", header: "Indicador", render: (row) => row.label },
-      {
-        key: "value",
-        header: "Valor",
-        className: "ds-table__col--numeric",
-        render: (row) => row.value,
-      },
-    ],
-    []
-  );
-
-  const calcModeLabel: Record<string, string> = {
-    closed_month: "Mês fechado",
-    full_month_range: "Intervalo de meses completos",
-    partial_period_monthlyized: "Período parcial (mensalizado)",
-  };
+  const subtitle =
+    (data?.calculation_context.calculation_mode &&
+      CALC_MODE_SUBTITLE[data.calculation_context.calculation_mode]) ||
+    "Estoque ÷ CPV médio mensal — em meses";
 
   const isBusy = loading || refreshing;
-  const iddValid = data?.calculation_context.idd_period_valid;
 
   return (
     <div className="dashboard-supplies dashboard-page">
       <FilterBar
-        title="Giro de estoque (IDD)"
-        subtitle="Estoque ÷ CPV médio mensal — em meses"
+        title="Giro de estoque"
+        subtitle={subtitle}
         currentPath={pathname ?? SUPPLIES_ROUTES.inventoryTurnover}
         filterState={filterState}
         dateStart={dateStart}
@@ -150,24 +86,15 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         onRefresh={reload}
         refreshing={refreshing}
       />
-      <DataSourceBanner />
-
-      {data?.stock_estimation?.enabled ? (
-        <div className="ds-state-box" role="status">
-          {data.stock_estimation.note ??
-            "Estoque estimado (SB9 + SD3), alinhado à tela de Estoque."}
-        </div>
-      ) : null}
-
-      {!iddValid && data ? (
-        <div className="ds-state ds-state--warning" role="status">
-          <p>
-            Período parcial para IDD oficial. O cálculo usa CPV mensalizado;
-            prefira mês fechado ou intervalo só com meses completos.
-          </p>
-        </div>
-      ) : null}
-
+      <TurnoverContextCard
+        dateStart={dateStart}
+        dateEnd={dateEnd}
+        branchLabel={branchLabel}
+        locationLabel={locationLabel}
+        data={data}
+        isOfficialClosure={isOfficialClosure}
+        isRegisterSnapshot={isRegisterSnapshot}
+      />
       <SuppliesStatusAlerts
         error={error}
         loading={loading}
@@ -213,45 +140,10 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         <KpiCard
           title="CPV médio mensal"
           value={formatCurrency(data?.summary.cpv_average_monthly)}
-          subtitle={
-            data
-              ? calcModeLabel[data.calculation_context.calculation_mode] ??
-                data.calculation_context.calculation_mode
-              : periodLabel
-          }
+          subtitle={periodLabel}
           icon={<Percent size={22} />}
           loading={isBusy && !data}
         />
-      </section>
-
-      <section className="ds-charts-grid ds-charts-grid--single">
-        <ChartCard
-          title="Contexto do cálculo"
-          hint={`Referência: ${data?.calculation_context.period_reference ?? "—"} · Período IDD válido: ${iddValid ? "sim" : "não"}`}
-        >
-          <div className="ds-metric-pairs">
-            <DataTableSection
-              title="Estoque"
-              columns={contextColumns}
-              rows={stockRows}
-              rowKey={(row) => `stock-${row.label}`}
-              loading={loading && stockRows.length === 0}
-              refreshing={refreshing}
-              hideSearch
-              pageSize={10}
-            />
-            <DataTableSection
-              title="CPV no período"
-              columns={contextColumns}
-              rows={cpvRows}
-              rowKey={(row) => `cpv-${row.label}`}
-              loading={loading && cpvRows.length === 0}
-              refreshing={refreshing}
-              hideSearch
-              pageSize={10}
-            />
-          </div>
-        </ChartCard>
       </section>
     </div>
   );
