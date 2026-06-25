@@ -693,3 +693,65 @@ def test_dashboard_summary_select_cycle_index_when_homolog_cycles() -> None:
 
     assert "C.CYCLE_INDEX" in sql
     assert "H.MEASUREMENT_REVISION = C.AD1_REVISA" in sql
+
+
+def test_get_lmp_dashboard_summary_reuses_repository_row_cache() -> None:
+    from unittest.mock import patch
+
+    from app.application.dto.lmp.list_lmp_request import ListLMPRequest
+    from app.application.services.lmp.lmp_dashboard_cache import (
+        lmp_dashboard_summary_rows_cache_key,
+    )
+    from app.composition.query_cache_composer import (
+        build_query_cache,
+        reset_query_cache_for_tests,
+    )
+
+    reset_query_cache_for_tests()
+    repo = LMPQueryRepository()
+    request = ListLMPRequest(
+        date_start="20260401",
+        date_end="20260501",
+        listing_type="lmp",
+        include_qtd_pi=True,
+    )
+    sample_rows = [
+        {
+            "branch": "01",
+            "sale_number": "OV001",
+            "sale_description": "Projeto",
+            "listing_kind": "LMP",
+            "start_date": "20260410",
+            "end_date": "20260420",
+            "homolog_revision": "00",
+            "measurement_revision": "00",
+            "homolog_date": "20260410",
+            "cycle_index": 1,
+            "engineering_status": "Finalizado",
+            "engineering_total_minutes": 60,
+            "qtd_pi": 1,
+        }
+    ]
+
+    with patch.object(
+        LMPQueryRepository,
+        "execute_batch_query",
+        return_value=sample_rows,
+    ) as batch_mock:
+        with patch.object(LMPQueryRepository, "__enter__", return_value=repo):
+            with patch.object(LMPQueryRepository, "__exit__", return_value=False):
+                first = repo.get_lmp_dashboard_summary(request)
+                second = repo.get_lmp_dashboard_summary(request)
+
+    assert first[0]["sale_number"] == "OV001"
+    assert second[0]["sale_number"] == "OV001"
+    batch_mock.assert_called_once()
+
+    cache_key = lmp_dashboard_summary_rows_cache_key(
+        date_start=request.date_start,
+        date_end=request.date_end,
+        branch=request.branch,
+        listing_type=request.listing_type,
+        include_qtd_pi=True,
+    )
+    assert build_query_cache().get(cache_key) is not None

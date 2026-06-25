@@ -10,6 +10,11 @@ from app.application.dto.lmp.list_lmp_request import (
     resolve_listing_type_filter,
 )
 from app.application.models.page import Page
+from app.application.services.lmp.lmp_dashboard_cache import (
+    get_cached_lmp_dashboard_summary_rows,
+    lmp_dashboard_summary_rows_cache_key,
+    set_cached_lmp_dashboard_summary_rows,
+)
 from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_history_event import LMPHistoryEvent
 from app.domain.entities.lmp.lmp_product import LMPProduct
@@ -3913,6 +3918,16 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
         include_qtd_pi = self._resolve_include_qtd_pi(request)
+        cache_key = lmp_dashboard_summary_rows_cache_key(
+            date_start=request.date_start,
+            date_end=request.date_end,
+            branch=request.branch,
+            listing_type=request.listing_type,
+            include_qtd_pi=include_qtd_pi,
+        )
+        cached = get_cached_lmp_dashboard_summary_rows(cache_key)
+        if cached is not None:
+            return cached
 
         final_select = self._staged_final_select(
             include_qtd_pi=include_qtd_pi,
@@ -3939,7 +3954,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         with self as repo:
             rows = repo.execute_batch_query(batch_sql, batch_params)
 
-        return [
+        normalized = [
             {
                 "branch": row.get("branch"),
                 "sale_number": row.get("sale_number"),
@@ -3957,3 +3972,5 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             }
             for row in rows
         ]
+        set_cached_lmp_dashboard_summary_rows(cache_key, normalized)
+        return normalized
