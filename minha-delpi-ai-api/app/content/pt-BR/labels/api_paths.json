@@ -49,7 +49,7 @@
     { "path": "/production/production_cost_pct", "label": "Custo de produção (%)" },
     { "path": "/production/depreciation_pct", "label": "Depreciação (%) — produção" },
     { "path": "/production/oee/series", "label": "Série histórica de OEE (produção)" },
-    { "path": "/production/oee/appointments/", "label": "Detalhe do apontamento OEE — roteiro, estrutura e tempos" },
+    { "path": "/production/oee/appointments/{id}", "label": "Detalhe do apontamento OEE — roteiro, estrutura e tempos" },
     { "path": "/production/oee", "label": "OEE produção — resumo e apontamentos (SH6010)" },
     { "path": "/production/otd/series", "label": "Série histórica de OTD (produção)" },
     { "path": "/production/otd", "label": "OTD produção — resumo e ordens (SC2010)" },

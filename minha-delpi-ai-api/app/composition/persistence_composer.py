@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from app.domain.services.chat_feedback_issue_service import ChatFeedbackIssueService
+from app.domain.services.chat_attachment_document_selection_service import (
+    ChatAttachmentDocumentSelectionService,
+)
 from app.domain.services.chat_project_conversation_context_service import (
     ChatProjectConversationContextService,
 )
@@ -71,7 +74,11 @@ def configure_domain_persistence_ports() -> None:
     from app.application.services.chat_capabilities_service import (
         configure_external_action_repository_loader,
     )
-    from app.composition.repository_composer import make_external_action_repository
+    from app.composition.repository_composer import (
+        make_chat_attachment_repository,
+        make_external_action_repository,
+    )
 
+    ChatAttachmentDocumentSelectionService.configure(make_chat_attachment_repository)
     configure_external_action_repository_loader(make_external_action_repository)
     _PERSISTENCE_CONFIGURED = True

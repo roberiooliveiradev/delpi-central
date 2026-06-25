@@ -18,6 +18,10 @@ from app.domain.services.presentation_column_label_web_search_service import (
     PresentationColumnLabelWebSearchService,
 )
 from app.composition.llm_composer import make_llm_gateway
+from app.domain.services.chat_attachment_document_selection_service import (
+    ChatAttachmentDocumentSelectionService,
+)
+from app.domain.services.chat_label_content_service import ChatLabelContentService
 from app.domain.services.chat_runtime_intelligence_settings_service import (
     ChatRuntimeIntelligenceSettingsService,
 )
@@ -86,6 +90,11 @@ def configure_domain_infrastructure_ports() -> None:
         InfrastructureLanguageToolSpellCheckAdapter()
     )
     PresentationColumnLabelLlmService.configure(make_llm_gateway())
+    from app.infrastructure.content.content_service import ContentService
+
+    ChatLabelContentService.configure(
+        lambda bundle: ContentService.load_json(f"labels/{bundle}")
+    )
     _configure_typo_correction_rules()
     _CONFIGURED = True
 

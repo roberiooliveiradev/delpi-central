@@ -126,11 +126,11 @@ class ChatDrawingProductCodeResolutionService:
         if not attachment_ids:
             return None
 
-        from app.application.services.chat_document_vision_service import (
-            ChatDocumentVisionService,
+        from app.domain.services.chat_attachment_document_selection_service import (
+            ChatAttachmentDocumentSelectionService,
         )
 
-        attachment = ChatDocumentVisionService._resolve_first_document_attachment(
+        attachment = ChatAttachmentDocumentSelectionService.resolve_first_document_attachment(
             user_id=user_id,
             session_id=session_id,
             attachment_ids=attachment_ids,

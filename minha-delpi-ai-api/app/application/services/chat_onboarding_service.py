@@ -144,39 +144,14 @@ class ChatOnboardingService:
         agent_name: str | None,
         agent_category: str | None = None,
     ) -> str | None:
-        category = ChatMessageNormalizationService.normalize_for_matching(
-            str(agent_category or "")
+        from app.domain.services.chat_onboarding_profile_service import (
+            ChatOnboardingProfileService,
         )
-        name = ChatMessageNormalizationService.normalize_for_matching(str(agent_name or ""))
-        haystack = f"{category} {name}".strip()
 
-        if not haystack:
-            return None
-
-        for preset in cls._profile_presets_raw():
-            profile_id = str(preset.get("id") or "").strip()
-            match = preset.get("match")
-
-            if not profile_id or not isinstance(match, dict):
-                continue
-
-            categories = match.get("categories") or []
-
-            for item in categories:
-                token = ChatMessageNormalizationService.normalize_for_matching(str(item))
-
-                if token and token in category:
-                    return profile_id
-
-            name_tokens = match.get("nameTokens") or []
-
-            for item in name_tokens:
-                token = ChatMessageNormalizationService.normalize_for_matching(str(item))
-
-                if token and token in haystack:
-                    return profile_id
-
-        return None
+        return ChatOnboardingProfileService.infer_profile_from_agent(
+            agent_name=agent_name,
+            agent_category=agent_category,
+        )
 
     @classmethod
     def starter_cards(

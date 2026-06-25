@@ -384,29 +384,15 @@ class ChatDocumentVisionAttachmentService:
         session_id: str | None,
         attachment_ids: list | None,
     ):
-        attachments = vision_service()._list_attachments(
+        from app.domain.services.chat_attachment_document_selection_service import (
+            ChatAttachmentDocumentSelectionService,
+        )
+
+        return ChatAttachmentDocumentSelectionService.resolve_first_document_attachment(
             user_id=user_id,
             session_id=session_id,
             attachment_ids=attachment_ids,
         )
-
-        if not attachments:
-            return None
-
-        pdf_match = None
-        image_match = None
-
-        for attachment in attachments:
-            name = str(attachment.original_filename or "").lower()
-            content_type = str(attachment.content_type or "").lower()
-
-            if content_type == "application/pdf" or name.endswith(".pdf"):
-                return attachment
-
-            if image_match is None and ChatDocumentVisionConfigService.is_image(content_type, name):
-                image_match = attachment
-
-        return image_match
 
     @classmethod
     def list_attachments(
@@ -416,26 +402,12 @@ class ChatDocumentVisionAttachmentService:
         session_id: str | None,
         attachment_ids: list | None,
     ):
-        if not user_id or not session_id or not attachment_ids:
-            return []
+        from app.domain.services.chat_attachment_document_selection_service import (
+            ChatAttachmentDocumentSelectionService,
+        )
 
-        try:
-            repository = default_attachment_repository()
-            ids = []
-
-            for raw in attachment_ids:
-                try:
-                    ids.append(UUID(str(raw)))
-                except (TypeError, ValueError):
-                    continue
-
-            if not ids:
-                return []
-
-            return repository.list_attachments_by_ids(
-                user_id=UUID(str(user_id)),
-                session_id=UUID(str(session_id)),
-                attachment_ids=ids,
-            )
-        except Exception:
-            return []
+        return ChatAttachmentDocumentSelectionService.list_attachments(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )

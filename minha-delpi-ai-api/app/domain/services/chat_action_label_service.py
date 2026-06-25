@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_label_content_service import ChatLabelContentService
 
 _ENGLISH_SUMMARY_PREFIXES = (
     "get ",
@@ -24,7 +24,7 @@ _ENGLISH_SUMMARY_PREFIXES = (
 
 @lru_cache(maxsize=1)
 def _path_labels() -> tuple[tuple[str, str], ...]:
-    data = ContentService.load_json("labels/api_paths")
+    data = ChatLabelContentService.load("api_paths")
     items = data.get("pathLabels") or []
     return tuple(
         (str(item["path"]), str(item["label"]))
@@ -35,7 +35,7 @@ def _path_labels() -> tuple[tuple[str, str], ...]:
 
 @lru_cache(maxsize=1)
 def _english_exact_summaries() -> dict[str, str]:
-    data = ContentService.load_json("labels/api_paths")
+    data = ChatLabelContentService.load("api_paths")
     raw = data.get("englishSummaries") or {}
     if not isinstance(raw, dict):
         return {}
@@ -44,7 +44,7 @@ def _english_exact_summaries() -> dict[str, str]:
 
 @lru_cache(maxsize=1)
 def _default_authorized_query_label() -> str:
-    data = ContentService.load_json("labels/api_paths")
+    data = ChatLabelContentService.load("api_paths")
     defaults = data.get("defaults") or {}
     if isinstance(defaults, dict) and defaults.get("authorizedQuery"):
         return str(defaults["authorizedQuery"])

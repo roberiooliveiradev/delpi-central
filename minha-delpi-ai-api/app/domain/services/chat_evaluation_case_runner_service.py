@@ -121,11 +121,11 @@ class ChatEvaluationCaseRunnerService:
         from app.domain.services.chat_assistant_identity_service import (
             ChatAssistantIdentityService,
         )
+        from app.domain.services.chat_capabilities_catalog_answer_service import (
+            ChatCapabilitiesCatalogAnswerService,
+        )
         from app.domain.services.chat_capabilities_detection_service import (
             ChatCapabilitiesDetectionService,
-        )
-        from app.application.services.chat_capabilities_service import (
-            ChatCapabilitiesService,
         )
         from app.domain.services.chat_small_talk_service import ChatSmallTalkService
         from app.domain.services.chat_utility_direct_answer_service import (
@@ -154,7 +154,7 @@ class ChatEvaluationCaseRunnerService:
             return str(answer or "")
 
         if ChatCapabilitiesDetectionService.is_capabilities_question(message):
-            answer = ChatCapabilitiesService.build_direct_answer(
+            answer = ChatCapabilitiesCatalogAnswerService.build_direct_answer(
                 workspace_context=workspace,
             )
             return str(answer or "")

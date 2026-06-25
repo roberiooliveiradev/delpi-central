@@ -4,6 +4,9 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
+from app.domain.services.chat_attachment_document_selection_service import (
+    ChatAttachmentDocumentSelectionService,
+)
 from app.infrastructure.config.settings import Settings
 
 _VISION_RUNTIME_STUB = {
@@ -210,8 +213,8 @@ def test_resolve_first_document_attachment_prefers_pdf_then_image():
     image.storage_path = "/tmp/b.png"
 
     with patch.object(
-        ChatDocumentVisionService,
-        "_list_attachments",
+        ChatAttachmentDocumentSelectionService,
+        "list_attachments",
         return_value=[image, pdf],
     ):
         chosen = ChatDocumentVisionService._resolve_first_document_attachment(
@@ -223,8 +226,8 @@ def test_resolve_first_document_attachment_prefers_pdf_then_image():
     assert chosen is pdf
 
     with patch.object(
-        ChatDocumentVisionService,
-        "_list_attachments",
+        ChatAttachmentDocumentSelectionService,
+        "list_attachments",
         return_value=[image],
     ):
         chosen_image = ChatDocumentVisionService._resolve_first_document_attachment(
