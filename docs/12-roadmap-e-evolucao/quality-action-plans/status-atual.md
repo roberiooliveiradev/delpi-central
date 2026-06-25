@@ -13,7 +13,7 @@
 | API consolidada (`api-delpi`) | Média-alta | **Canônica** para plugin + homologação local (V007) |
 | Plugin MFE | Média | Fluxo analista ok; imagem `delpi-quality-action-plans` reconstruída |
 | Agente GPT | Média-alta | OpenAPI **produção** reimportado pelo usuário (jun/2026) |
-| Homologação formal | Baixa | Smoke automatizado disponível; H1–H3 manual pendente |
+| Homologação formal | Média | H1/H3 smoke OK; H2 GPT pendente |
 | Integrações (TOTVS, notificações) | Não iniciado | Previsto onda 4+ |
 
 **Estimativa global:** ~55% do caminho até excelência operacional.
@@ -79,6 +79,7 @@
 3. Documentação `quality-action-plans-pac.md` atualizada (V006/V007 + rotas 8D/evidências).
 4. ~~Agente sem rotas de evidência e 8D.~~ Paridade API PAC — OpenAPI reimportado em **produção** (validar com `check-pac-api-server.sh`).
 5. Indicadores executivos do playbook (tempo médio, reincidência, eficácia por tipo) ausentes no dashboard.
+6. ~~Índice `quality_case_similarity_index` não atualizado pela api-delpi.~~ Sincronizado em create / 5 Porquês / eficácia (paridade api-pac).
 
 ---
 

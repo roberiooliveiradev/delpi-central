@@ -110,7 +110,14 @@ export function PlanFormPage({ onNavigate }: Props) {
               label="Escopo da não conformidade"
               options={PAC_NONCONFORMITY_SCOPES.map((item) => ({ value: item.value, label: item.label }))}
               value={values.nonconformity_scope}
-              onChange={(nonconformity_scope) => updateField("nonconformity_scope", nonconformity_scope)}
+              onChange={(nonconformity_scope) =>
+                setValues((current) => ({
+                  ...current,
+                  nonconformity_scope,
+                  customer_template:
+                    nonconformity_scope === "internal" ? "generic" : current.customer_template,
+                }))
+              }
               searchable={false}
             />
             <SelectField
@@ -132,7 +139,11 @@ export function PlanFormPage({ onNavigate }: Props) {
             <SelectField
               id="pac-template"
               label="Template do relatório"
-              options={CUSTOMER_TEMPLATE_OPTIONS}
+              options={
+                values.nonconformity_scope === "internal"
+                  ? CUSTOMER_TEMPLATE_OPTIONS.filter((item) => item.value === "generic")
+                  : CUSTOMER_TEMPLATE_OPTIONS
+              }
               value={values.customer_template}
               onChange={(customer_template) => updateField("customer_template", customer_template)}
               searchable={false}

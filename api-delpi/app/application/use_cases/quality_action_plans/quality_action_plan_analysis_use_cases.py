@@ -102,13 +102,18 @@ class UpsertIshikawaUseCase:
 
 
 class UpsertFiveWhysUseCase:
-    def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
+    def __init__(
+        self,
+        repository: QualityActionPlanAnalysisRepository,
+        intelligence_sync: Any | None = None,
+    ) -> None:
         self._repository = repository
+        self._intelligence_sync = intelligence_sync
 
     def execute(self, plan_id: str, request: UpsertFiveWhysRequest, *, updated_by: str):
         if request.confidence_level and request.confidence_level not in {"low", "medium", "high"}:
             raise ValueError("confidence_level inválido.")
-        return self._repository.upsert_five_whys(
+        result = self._repository.upsert_five_whys(
             plan_id,
             {
                 "why_1": request.why_1,
@@ -126,6 +131,9 @@ class UpsertFiveWhysUseCase:
             },
             updated_by=updated_by,
         )
+        if result and self._intelligence_sync:
+            self._intelligence_sync.execute(plan_id)
+        return result
 
 
 class CreatePlanActionsUseCase:
@@ -175,8 +183,13 @@ class CreatePlanActionsUseCase:
 
 
 class RecordEffectivenessReviewUseCase:
-    def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
+    def __init__(
+        self,
+        repository: QualityActionPlanAnalysisRepository,
+        intelligence_sync: Any | None = None,
+    ) -> None:
         self._repository = repository
+        self._intelligence_sync = intelligence_sync
 
     def execute(
         self,
@@ -187,7 +200,7 @@ class RecordEffectivenessReviewUseCase:
     ):
         if request.effectiveness_status not in VALID_EFFECTIVENESS:
             raise ValueError("effectiveness_status inválido.")
-        return self._repository.record_effectiveness_review(
+        plan = self._repository.record_effectiveness_review(
             plan_id,
             {
                 "effectiveness_status": request.effectiveness_status,
@@ -195,6 +208,9 @@ class RecordEffectivenessReviewUseCase:
             },
             updated_by=updated_by,
         )
+        if plan and self._intelligence_sync:
+            self._intelligence_sync.execute(plan_id)
+        return plan
 
 
 class UpdatePlanActionUseCase:

@@ -98,7 +98,7 @@ Cria plano `[H1-SMOKE]`, preenche 8D, evidências com `action_id`, exporta Excel
 | Data | Ambiente | Executor | Cenários | Resultado | Observações |
 |---|---|---|---|---|---|
 | 2026-06-24 | local (api-delpi) | agente CI | H1 | OK | `run_h1_api_smoke.py` — plano PAC-2026-0003; 680 KB export xlsx; token interno |
-| 2026-06-24 | local (api-delpi) | agente CI | H3 | OK | `--h3` no smoke — plano PAC-2026-0004 fechado com eficácia effective |
+| 2026-06-24 | local (api-delpi) | agente CI | H3 | OK | `--h3` — PAC-2026-0004/0005; índice `quality_case_similarity_index` validado |
 | | | | H2 (GPT prod) | pendente | requer `PAC_QUALITY_API_KEY` + deploy api-pac |
 
 ---

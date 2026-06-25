@@ -57,8 +57,13 @@ class CreateQualityActionPlanRequest:
 
 
 class CreateQualityActionPlanUseCase:
-    def __init__(self, repository: QualityActionPlanRepository) -> None:
+    def __init__(
+        self,
+        repository: QualityActionPlanRepository,
+        intelligence_sync: Any | None = None,
+    ) -> None:
         self._repository = repository
+        self._intelligence_sync = intelligence_sync
 
     def execute(self, request: CreateQualityActionPlanRequest) -> dict[str, Any]:
         if not request.title.strip():
@@ -73,7 +78,7 @@ class CreateQualityActionPlanUseCase:
             explicit=request.recurrence_key,
         )
 
-        return self._repository.create_plan(
+        plan = self._repository.create_plan(
             {
                 "title": request.title.strip(),
                 "created_by_user_id": request.created_by_user_id,
@@ -100,6 +105,9 @@ class CreateQualityActionPlanUseCase:
                 "recurrence_key": recurrence_key,
             }
         )
+        if self._intelligence_sync and plan.get("id"):
+            self._intelligence_sync.execute(str(plan["id"]))
+        return plan
 
 
 @dataclass(frozen=True)

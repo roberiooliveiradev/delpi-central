@@ -10,6 +10,7 @@ from app.application.use_cases.quality_action_plans.quality_action_plans_use_cas
     UpdateQualityActionPlanStatusUseCase,
     UpdateQualityActionPlanUseCase,
 )
+from app.composition.quality_intelligence_composer import build_sync_case_similarity_index_use_case
 from app.infrastructure.persistence.plugins.repositories.quality_action_plans.postgres_quality_action_plan_read_repository import (
     PostgresQualityActionPlanRepository,
 )
@@ -24,7 +25,10 @@ def build_quality_action_plan_read_repository() -> PostgresQualityActionPlanRepo
 
 
 def build_create_quality_action_plan_use_case() -> CreateQualityActionPlanUseCase:
-    return CreateQualityActionPlanUseCase(build_quality_action_plan_repository())
+    return CreateQualityActionPlanUseCase(
+        build_quality_action_plan_repository(),
+        intelligence_sync=build_sync_case_similarity_index_use_case(),
+    )
 
 
 def build_update_quality_action_plan_status_use_case() -> UpdateQualityActionPlanStatusUseCase:
@@ -40,7 +44,10 @@ def build_upsert_ishikawa_use_case() -> UpsertIshikawaUseCase:
 
 
 def build_upsert_five_whys_use_case() -> UpsertFiveWhysUseCase:
-    return UpsertFiveWhysUseCase(build_quality_action_plan_repository())
+    return UpsertFiveWhysUseCase(
+        build_quality_action_plan_repository(),
+        intelligence_sync=build_sync_case_similarity_index_use_case(),
+    )
 
 
 def build_create_plan_actions_use_case() -> CreatePlanActionsUseCase:
@@ -52,4 +59,7 @@ def build_update_plan_action_use_case() -> UpdatePlanActionUseCase:
 
 
 def build_record_effectiveness_review_use_case() -> RecordEffectivenessReviewUseCase:
-    return RecordEffectivenessReviewUseCase(build_quality_action_plan_repository())
+    return RecordEffectivenessReviewUseCase(
+        build_quality_action_plan_repository(),
+        intelligence_sync=build_sync_case_similarity_index_use_case(),
+    )

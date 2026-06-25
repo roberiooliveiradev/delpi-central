@@ -348,6 +348,46 @@ def _run_h3_closure(api: str, plan_id: str, token: str, action_items: list[dict]
     assert plan_status == "completed", detail
     print("  OK detalhe confirma completed")
 
+    print("[H3] Índice de similaridade…")
+    _verify_similarity_index(plan_id)
+    print("  OK quality_case_similarity_index")
+
+
+def _verify_similarity_index(plan_id: str) -> None:
+    import subprocess
+    from pathlib import Path
+
+    db_user = "plugins_user"
+    db_name = "plugins_hub"
+    env_file = Path(__file__).resolve().parents[2] / "infra" / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if line.startswith("PLUGINS_DB_USER="):
+                db_user = line.split("=", 1)[1].strip()
+            elif line.startswith("PLUGINS_DB_NAME="):
+                db_name = line.split("=", 1)[1].strip()
+
+    cmd = [
+        "docker",
+        "exec",
+        "delpi-postgres-plugins",
+        "psql",
+        "-U",
+        db_user,
+        "-d",
+        db_name,
+        "-tAc",
+        f"SELECT 1 FROM quality.quality_case_similarity_index WHERE plan_id = '{plan_id}'",
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=15)
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        raise RuntimeError(f"Não foi possível verificar índice de similaridade: {exc}") from exc
+    if result.stdout.strip() != "1":
+        raise RuntimeError(
+            f"Entrada ausente em quality_case_similarity_index para plan_id={plan_id}"
+        )
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Smoke H1 PAC via api-delpi")
