@@ -251,62 +251,106 @@ HISTORICAL_STOCK_BREAKDOWN_ONLY_SQL = (
     + HISTORICAL_STOCK_BRANCH_BREAKDOWN_SELECT
 )
 
-# Breakdown SB9-only: uma varredura SB9010 (window) — roteamento auto/hybrid/register_snapshot.
-HISTORICAL_STOCK_METHOD_BREAKDOWN_SQL = """
-        WITH enriched AS (
-            SELECT
-                B9.B9_FILIAL AS branch,
-                B9.B9_DATA,
-                B9.B9_VINI1,
-                MAX(CASE WHEN B9.B9_DATA < ? THEN B9.B9_DATA END)
-                    OVER (PARTITION BY B9.B9_FILIAL) AS closing_base_date,
-                MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END)
-                    OVER (PARTITION BY B9.B9_FILIAL) AS official_closure_date
-            FROM SB9010 B9 WITH (NOLOCK)
-            WHERE B9.D_E_L_E_T_ = ''
-              AND B9.B9_DATA <> ''
-              {sb9_branch_filter}
-        )
+# Breakdown SB9-only: GROUP BY datas + join seletivo (sem window em toda SB9).
+HISTORICAL_STOCK_METHOD_ROUTING_SQL = """
         SELECT
-            E.branch,
-            MAX(E.closing_base_date) AS closing_base_date,
-            COALESCE(
-                SUM(
-                    CASE
-                        WHEN E.B9_DATA = E.closing_base_date THEN E.B9_VINI1
-                        ELSE 0
-                    END
-                ),
-                0
-            ) AS closing_base_value,
+            B9.B9_FILIAL AS branch,
+            MAX(CASE WHEN B9.B9_DATA < ? THEN B9.B9_DATA END) AS closing_base_date,
+            CAST(0 AS DECIMAL(18, 6)) AS closing_base_value,
             CAST(0 AS DECIMAL(18, 6)) AS bridge_value,
             CAST(0 AS DECIMAL(18, 6)) AS period_net_value,
-            MAX(E.official_closure_date) AS official_closure_date,
-            COALESCE(
-                SUM(
-                    CASE
-                        WHEN E.B9_DATA = E.official_closure_date THEN E.B9_VINI1
-                        ELSE 0
-                    END
-                ),
-                0
-            ) AS official_closure_value,
+            MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) AS official_closure_date,
+            CAST(NULL AS DECIMAL(18, 6)) AS official_closure_value,
             CASE
-                WHEN MAX(E.official_closure_date) IS NOT NULL
-                 AND RTRIM(MAX(E.official_closure_date)) <> ''
+                WHEN MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) IS NOT NULL
+                 AND RTRIM(MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END)) <> ''
                 THEN 1
                 ELSE 0
             END AS official_closure_available,
             CASE
-                WHEN MAX(E.official_closure_date) = ?
+                WHEN MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) = ?
                 THEN 1
                 ELSE 0
             END AS official_closure_on_period_end
-        FROM enriched E
-        WHERE 1 = 1
-          {sb9_location_filter}
-        GROUP BY E.branch
-        ORDER BY E.branch
+        FROM SB9010 B9 WITH (NOLOCK)
+        WHERE B9.D_E_L_E_T_ = ''
+          AND B9.B9_DATA <> ''
+          AND B9.B9_DATA <= ?
+          {sb9_branch_filter}
+        GROUP BY B9.B9_FILIAL
+        ORDER BY B9.B9_FILIAL
+"""
+
+HISTORICAL_STOCK_METHOD_BREAKDOWN_SQL = """
+        WITH branch_dates AS (
+            SELECT
+                B9.B9_FILIAL AS branch,
+                MAX(CASE WHEN B9.B9_DATA < ? THEN B9.B9_DATA END) AS closing_base_date,
+                MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) AS official_closure_date
+            FROM SB9010 B9 WITH (NOLOCK)
+            WHERE B9.D_E_L_E_T_ = ''
+              AND B9.B9_DATA <> ''
+              AND B9.B9_DATA <= ?
+              {sb9_branch_filter}
+            GROUP BY B9.B9_FILIAL
+        ),
+        branch_values AS (
+            SELECT
+                B9.B9_FILIAL AS branch,
+                SUM(
+                    CASE
+                        WHEN D.closing_base_date IS NOT NULL
+                         AND B9.B9_DATA = D.closing_base_date
+                        THEN B9.B9_VINI1
+                        ELSE 0
+                    END
+                ) AS closing_base_value,
+                SUM(
+                    CASE
+                        WHEN D.official_closure_date IS NOT NULL
+                         AND B9.B9_DATA = D.official_closure_date
+                        THEN B9.B9_VINI1
+                        ELSE 0
+                    END
+                ) AS official_closure_value
+            FROM SB9010 B9 WITH (NOLOCK)
+            INNER JOIN branch_dates D
+                ON D.branch = B9.B9_FILIAL
+            WHERE B9.D_E_L_E_T_ = ''
+              AND (
+                  (D.closing_base_date IS NOT NULL AND B9.B9_DATA = D.closing_base_date)
+                  OR (
+                      D.official_closure_date IS NOT NULL
+                      AND B9.B9_DATA = D.official_closure_date
+                  )
+              )
+              {sb9_branch_filter_b9}
+              {sb9_location_filter}
+            GROUP BY B9.B9_FILIAL
+        )
+        SELECT
+            D.branch,
+            D.closing_base_date,
+            COALESCE(V.closing_base_value, 0) AS closing_base_value,
+            CAST(0 AS DECIMAL(18, 6)) AS bridge_value,
+            CAST(0 AS DECIMAL(18, 6)) AS period_net_value,
+            D.official_closure_date,
+            V.official_closure_value,
+            CASE
+                WHEN D.official_closure_date IS NOT NULL
+                 AND RTRIM(D.official_closure_date) <> ''
+                THEN 1
+                ELSE 0
+            END AS official_closure_available,
+            CASE
+                WHEN D.official_closure_date = ?
+                THEN 1
+                ELSE 0
+            END AS official_closure_on_period_end
+        FROM branch_dates D
+        LEFT JOIN branch_values V
+            ON V.branch = D.branch
+        ORDER BY D.branch
 """
 
 HISTORICAL_STOCK_ITEM_CTES = HISTORICAL_STOCK_BASE_CTES + HISTORICAL_STOCK_ESTOQUE_ITEM_CTES
@@ -493,15 +537,41 @@ def format_historical_breakdown_sql(*, filters: HistoricalStockFilterClauses) ->
     return HISTORICAL_STOCK_BREAKDOWN_ONLY_SQL.format(**placeholders)
 
 
-def format_historical_method_breakdown_sql(*, filters: HistoricalStockFilterClauses) -> str:
-    location_filter = filters.sb9_location_filter.replace(
-        "B9.B9_LOCAL", "E.B9_LOCAL"
-    )
+def format_historical_method_breakdown_sql(
+    *,
+    filters: HistoricalStockFilterClauses,
+    routing_only: bool = False,
+) -> str:
+    if routing_only:
+        placeholders = {
+            "sb9_branch_filter": filters.sb9_branch_filter,
+        }
+        return HISTORICAL_STOCK_METHOD_ROUTING_SQL.format(**placeholders)
+
     placeholders = {
         "sb9_branch_filter": filters.sb9_branch_filter,
-        "sb9_location_filter": location_filter,
+        "sb9_branch_filter_b9": filters.sb9_branch_filter_b9,
+        "sb9_location_filter": filters.sb9_location_filter,
     }
     return HISTORICAL_STOCK_METHOD_BREAKDOWN_SQL.format(**placeholders)
+
+
+def build_historical_method_routing_params(
+    *,
+    period_start: str,
+    period_end: str,
+    sb9_params: tuple,
+) -> tuple:
+    """Somente datas SB9 — roteamento auto/hybrid (summary_only / SI)."""
+    return (
+        period_start,
+        period_end,
+        period_end,
+        period_end,
+        period_end,
+        period_end,
+        period_end,
+    ) + sb9_params
 
 
 def build_historical_method_breakdown_params(
@@ -509,10 +579,17 @@ def build_historical_method_breakdown_params(
     period_start: str,
     period_end: str,
     sb9_params: tuple,
+    sb9_b9_params: tuple,
     sb9_loc_params: tuple,
 ) -> tuple:
-    """SB9010 only — sem SD3010 (roteamento auto/hybrid/register_snapshot)."""
-    return (period_start, period_end) + sb9_params + sb9_loc_params + (period_end,)
+    """SB9010 com valores — bundle completo do dashboard."""
+    return (
+        (period_start, period_end, period_end)
+        + sb9_params
+        + sb9_b9_params
+        + sb9_loc_params
+        + (period_end,)
+    )
 
 
 def build_historical_stock_params(

@@ -5,6 +5,7 @@ from app.application.services.supplies.stock_value_cache import stock_value_cach
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
     HistoricalStockFilterClauses,
     build_historical_method_breakdown_params,
+    build_historical_method_routing_params,
     build_historical_stock_params,
     format_historical_breakdown_sql,
     format_historical_method_breakdown_sql,
@@ -287,11 +288,22 @@ def test_historical_method_breakdown_sql_skips_sd3() -> None:
 
     assert "FROM SD3010" not in sql
     assert "movimentos_sd3" not in sql
-    assert "fechamento_base AS" not in sql
-    assert "enriched AS" in sql
-    assert sql.count("FROM SB9010") == 1
-    assert "OVER (PARTITION BY B9.B9_FILIAL)" in sql
+    assert "branch_dates AS" in sql
+    assert "branch_values AS" in sql
+    assert "OVER (PARTITION BY" not in sql
+    assert sql.count("FROM SB9010") == 2
     assert "official_closure_on_period_end" in sql
+
+
+def test_historical_method_routing_sql_single_sb9_scan() -> None:
+    sql = format_historical_method_breakdown_sql(
+        filters=_EMPTY_FILTERS,
+        routing_only=True,
+    )
+
+    assert sql.count("FROM SB9010") == 1
+    assert "branch_values" not in sql
+    assert "B9.B9_DATA <=" in sql
 
 
 def test_build_historical_method_breakdown_params_matches_placeholders() -> None:
@@ -299,6 +311,7 @@ def test_build_historical_method_breakdown_params_matches_placeholders() -> None
         period_start="20260601",
         period_end="20260624",
         sb9_params=("02",),
+        sb9_b9_params=("02",),
         sb9_loc_params=(),
     )
 
@@ -316,9 +329,68 @@ def test_build_historical_method_breakdown_params_matches_placeholders() -> None
     assert params == (
         "20260601",
         "20260624",
+        "20260624",
+        "02",
         "02",
         "20260624",
     )
+
+
+def test_build_historical_method_routing_params_matches_placeholders() -> None:
+    params = build_historical_method_routing_params(
+        period_start="20260601",
+        period_end="20260624",
+        sb9_params=("02",),
+    )
+    sql = format_historical_method_breakdown_sql(
+        filters=HistoricalStockFilterClauses(
+            sb9_branch_filter=" AND B9_FILIAL = ?",
+            sb9_branch_filter_b9="",
+            sb9_branch_filter_official="",
+            sb9_location_filter="",
+            d3_branch_filter="",
+            d3_location_filter="",
+        ),
+        routing_only=True,
+    )
+    assert sql.count("?") == len(params)
+    assert params == (
+        "20260601",
+        "20260624",
+        "20260624",
+        "20260624",
+        "20260624",
+        "20260624",
+        "20260624",
+        "02",
+    )
+
+
+def test_fetch_historical_breakdown_uses_routing_only_for_summary_auto() -> None:
+    repo = StockValueQueryRepository()
+    request = GetStockValueRequest(
+        start_date="2026-06-01",
+        end_date="2026-06-24",
+        summary_only=True,
+        stock_method="auto",
+    )
+
+    with patch.object(
+        StockValueQueryRepository,
+        "_format_historical_method_breakdown_sql",
+        return_value=("SELECT 1", ()),
+    ) as format_mock:
+        with patch.object(StockValueQueryRepository, "__enter__", return_value=repo):
+            with patch.object(StockValueQueryRepository, "__exit__", return_value=False):
+                with patch.object(
+                    StockValueQueryRepository,
+                    "execute_query",
+                    return_value=[],
+                ):
+                    repo._fetch_historical_breakdown_rows(request, full_kardex=False)
+
+    format_mock.assert_called_once()
+    assert format_mock.call_args.kwargs.get("routing_only") is True
 
 
 def test_fetch_historical_bundle_uses_light_breakdown_for_auto() -> None:

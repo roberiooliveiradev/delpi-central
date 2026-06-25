@@ -32,6 +32,7 @@ from app.domain.ports.supplies.stock_value_query_repository_port import (
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
     HistoricalStockFilterClauses,
     build_historical_method_breakdown_params,
+    build_historical_method_routing_params,
     build_historical_stock_params,
     format_historical_breakdown_sql,
     format_historical_method_breakdown_sql,
@@ -181,6 +182,8 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
     def _format_historical_method_breakdown_sql(
         self,
         request: GetStockValueRequest,
+        *,
+        routing_only: bool = False,
     ) -> tuple[str, tuple]:
         period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
             request
@@ -188,20 +191,31 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         (
             filters,
             sb9_params,
-            _sb9_b9_params,
+            sb9_b9_params,
             _sb9_official_params,
             sb9_loc_params,
             _d3_params,
             _d3_loc_params,
         ) = self._historical_filter_clauses(request)
 
-        sql = format_historical_method_breakdown_sql(filters=filters)
-        params = build_historical_method_breakdown_params(
-            period_start=period_start,
-            period_end=period_end,
-            sb9_params=sb9_params,
-            sb9_loc_params=sb9_loc_params,
+        sql = format_historical_method_breakdown_sql(
+            filters=filters,
+            routing_only=routing_only,
         )
+        if routing_only:
+            params = build_historical_method_routing_params(
+                period_start=period_start,
+                period_end=period_end,
+                sb9_params=sb9_params,
+            )
+        else:
+            params = build_historical_method_breakdown_params(
+                period_start=period_start,
+                period_end=period_end,
+                sb9_params=sb9_params,
+                sb9_b9_params=sb9_b9_params,
+                sb9_loc_params=sb9_loc_params,
+            )
         return sql, params
 
     def _resolve_breakdown_rows_for_branch(
@@ -889,7 +903,12 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         *,
         full_kardex: bool = True,
     ) -> list[dict]:
-        cache_key = stock_value_breakdown_cache_key(request, full_kardex=full_kardex)
+        routing_only = not full_kardex and request.summary_only
+        cache_key = stock_value_breakdown_cache_key(
+            request,
+            full_kardex=full_kardex,
+            routing_only=routing_only,
+        )
         cached = get_cached_stock_value_breakdown(cache_key)
         if cached is not None:
             return cached
@@ -897,7 +916,10 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         if full_kardex:
             sql, params = self._format_historical_breakdown_sql(request)
         else:
-            sql, params = self._format_historical_method_breakdown_sql(request)
+            sql, params = self._format_historical_method_breakdown_sql(
+                request,
+                routing_only=routing_only,
+            )
         with self as repo:
             rows = repo.execute_query(sql, params)
         normalized = [self._normalize_branch_breakdown_row(row) for row in rows]

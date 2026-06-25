@@ -26,6 +26,7 @@ def stock_value_breakdown_cache_key(
     request: GetStockValueRequest,
     *,
     full_kardex: bool,
+    routing_only: bool = False,
 ) -> str:
     return "|".join(
         [
@@ -35,6 +36,7 @@ def stock_value_breakdown_cache_key(
             request.start_date or "",
             request.end_date or "",
             "kardex" if full_kardex else "sb9",
+            "routing" if routing_only else "values",
         ]
     )
 
