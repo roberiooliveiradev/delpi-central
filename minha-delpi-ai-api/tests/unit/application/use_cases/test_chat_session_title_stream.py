@@ -87,6 +87,14 @@ def _build_stream_use_case(*, session: ChatSession):
     ), chat_repository
 
 
+from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
+
+
+@pytest.fixture(autouse=True)
+def patch_intelligence_runtime(monkeypatch):
+    patch_resolve_chat_intelligence_runtime(monkeypatch)
+
+
 @pytest.fixture(autouse=True)
 def patch_chat_settings(monkeypatch):
     from app.infrastructure.config.settings import Settings

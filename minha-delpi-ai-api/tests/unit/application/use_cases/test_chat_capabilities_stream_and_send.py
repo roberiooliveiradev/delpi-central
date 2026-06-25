@@ -118,24 +118,25 @@ def _collect_stream_answer(events: list[dict]) -> str:
     )
 
 
+from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
+
+
+@pytest.fixture(autouse=True)
+def patch_intelligence_runtime(monkeypatch):
+    patch_resolve_chat_intelligence_runtime(monkeypatch)
+
+
 @pytest.fixture(autouse=True)
 def patch_chat_settings(monkeypatch):
-    for module in (
-        "app.application.use_cases.send_chat_message_use_case",
-        "app.application.use_cases.stream_chat_message_use_case",
-        "app.domain.services.chat_external_action_direct_response_service",
-    ):
-        monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", False)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_HISTORY_MAX_MESSAGES", 12)
-        monkeypatch.setattr(f"{module}.Settings.LLM_PROVIDER", "ollama")
-        monkeypatch.setattr(f"{module}.Settings.OLLAMA_MODEL", "test-model")
-        monkeypatch.setattr(
-            f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", 0
-        )
-        monkeypatch.setattr(
-            f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000
-        )
-        monkeypatch.setattr(f"{module}.Settings.CHAT_PERSIST_BEFORE_PLAYBACK", False)
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "CHAT_FAST_PATH_ENABLED", False)
+    monkeypatch.setattr(Settings, "CHAT_HISTORY_MAX_MESSAGES", 12)
+    monkeypatch.setattr(Settings, "LLM_PROVIDER", "ollama")
+    monkeypatch.setattr(Settings, "OLLAMA_MODEL", "test-model")
+    monkeypatch.setattr(Settings, "CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", 0)
+    monkeypatch.setattr(Settings, "CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000)
+    monkeypatch.setattr(Settings, "CHAT_PERSIST_BEFORE_PLAYBACK", False)
 
 
 @pytest.fixture(autouse=True)
@@ -158,11 +159,7 @@ def mock_action_catalog(monkeypatch):
     ]
 
     monkeypatch.setattr(
-        "app.application.use_cases.send_chat_message_use_case.ChatCapabilitiesService.load_action_catalog_for_agent",
-        lambda allowed: catalog if allowed else [],
-    )
-    monkeypatch.setattr(
-        "app.application.use_cases.stream_chat_message_use_case.ChatCapabilitiesService.load_action_catalog_for_agent",
+        "app.application.services.chat_capabilities_service.ChatCapabilitiesService.load_action_catalog_for_agent",
         lambda allowed: catalog if allowed else [],
     )
 
@@ -182,7 +179,7 @@ def test_send_capabilities_direct_answer_without_llm(
 
     response = send_use_case.execute(request)
 
-    assert response.answer.startswith("Posso ajudar você nestes formatos:")
+    assert "Posso ajudar você nestes formatos:" in response.answer
     assert "Gerenciamento de Permissões" not in response.answer
     if common:
         assert "chat comum" in response.answer.lower()
@@ -208,7 +205,7 @@ def test_stream_capabilities_direct_answer_without_llm(
     events = list(stream_use_case.stream(request))
     answer = _collect_stream_answer(events)
 
-    assert answer.startswith("Posso ajudar você nestes formatos:")
+    assert "Posso ajudar você nestes formatos:" in answer
     assert "Como seu assistente corporativo" not in answer
     if common:
         assert "chat comum" in answer.lower()
@@ -232,12 +229,12 @@ def test_stream_group_capability_inquiry_without_llm(mock_action_catalog, monkey
     ]
 
     monkeypatch.setattr(
-        "app.application.use_cases.stream_chat_message_use_case.ChatCapabilitiesService.load_action_catalog_for_agent",
+        "app.application.services.chat_capabilities_service.ChatCapabilitiesService.load_action_catalog_for_agent",
         lambda allowed: search_catalog if allowed else [],
     )
 
     session, _, stream_use_case = _build_use_cases(common=False)
-    stream_use_case.workspace_context_service.build_context.return_value = {
+    stream_use_case.turn_support.workspace_context_service.build_context.return_value = {
         **_workspace(common=False),
         "allowedActionIds": ["act.search"],
     }

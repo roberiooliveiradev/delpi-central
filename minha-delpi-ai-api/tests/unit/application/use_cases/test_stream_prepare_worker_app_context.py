@@ -6,6 +6,7 @@ import pytest
 from flask import Flask, has_app_context
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
+from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
 from tests.unit.application.use_cases.test_chat_assistant_identity_stream_and_send import (
     _build_use_cases,
     _collect_stream_answer,
@@ -15,7 +16,12 @@ from tests.unit.application.use_cases.test_chat_assistant_identity_stream_and_se
 
 
 @pytest.fixture(autouse=True)
-def _settings(patch_chat_settings, patch_llm_cost):
+def patch_intelligence_runtime(monkeypatch):
+    patch_resolve_chat_intelligence_runtime(monkeypatch)
+
+
+@pytest.fixture(autouse=True)
+def _settings(patch_chat_settings, patch_llm_cost, patch_intelligence_runtime):
     return None
 
 
@@ -33,7 +39,7 @@ def test_stream_prepare_history_runs_inside_app_context():
         return "", []
 
     chat_history_summary_service.prepare_history.side_effect = _prepare_history
-    stream_use_case.chat_history_summary_service = chat_history_summary_service
+    stream_use_case.turn_support.chat_history_summary_service = chat_history_summary_service
 
     request = SendChatMessageRequest(
         user_id=str(session.user_id),

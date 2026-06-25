@@ -144,24 +144,25 @@ def _collect_stream_answer(events: list[dict]) -> str:
     return streamed
 
 
+from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
+
+
+@pytest.fixture(autouse=True)
+def patch_intelligence_runtime(monkeypatch):
+    patch_resolve_chat_intelligence_runtime(monkeypatch)
+
+
 @pytest.fixture(autouse=True)
 def patch_chat_settings(monkeypatch):
-    for module in (
-        "app.application.use_cases.send_chat_message_use_case",
-        "app.application.use_cases.stream_chat_message_use_case",
-        "app.domain.services.chat_external_action_direct_response_service",
-    ):
-        monkeypatch.setattr(f"{module}.Settings.CHAT_FAST_PATH_ENABLED", False)
-        monkeypatch.setattr(f"{module}.Settings.CHAT_HISTORY_MAX_MESSAGES", 12)
-        monkeypatch.setattr(f"{module}.Settings.LLM_PROVIDER", "ollama")
-        monkeypatch.setattr(f"{module}.Settings.OLLAMA_MODEL", "test-model")
-        monkeypatch.setattr(
-            f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", 0
-        )
-        monkeypatch.setattr(
-            f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000
-        )
-        monkeypatch.setattr(f"{module}.Settings.CHAT_PERSIST_BEFORE_PLAYBACK", False)
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "CHAT_FAST_PATH_ENABLED", False)
+    monkeypatch.setattr(Settings, "CHAT_HISTORY_MAX_MESSAGES", 12)
+    monkeypatch.setattr(Settings, "LLM_PROVIDER", "ollama")
+    monkeypatch.setattr(Settings, "OLLAMA_MODEL", "test-model")
+    monkeypatch.setattr(Settings, "CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", 0)
+    monkeypatch.setattr(Settings, "CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000)
+    monkeypatch.setattr(Settings, "CHAT_PERSIST_BEFORE_PLAYBACK", False)
 
 
 @pytest.fixture(autouse=True)

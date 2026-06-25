@@ -28,17 +28,25 @@ def _session() -> ChatSession:
 @pytest.fixture(autouse=True)
 def patch_chat_settings(monkeypatch):
     monkeypatch.setattr(
-        "app.application.use_cases.stream_chat_message_use_case.Settings.CHAT_PERSIST_BEFORE_PLAYBACK",
+        "app.application.services.chat_turn.chat_stream_turn_execution_service.Settings.CHAT_PERSIST_BEFORE_PLAYBACK",
         True,
     )
     monkeypatch.setattr(
-        "app.application.use_cases.stream_chat_message_use_case.Settings.CHAT_FAST_PATH_ENABLED",
+        "app.application.services.chat_turn.chat_stream_turn_execution_service.Settings.CHAT_FAST_PATH_ENABLED",
         False,
     )
     monkeypatch.setattr(
         "app.application.services.chat_turn.chat_turn_completion_service.ChatTurnCompletionService._estimate_cost",
         lambda self, **kwargs: None,
     )
+
+
+from tests.support.chat_intelligence_runtime import patch_resolve_chat_intelligence_runtime
+
+
+@pytest.fixture(autouse=True)
+def patch_intelligence_runtime(monkeypatch):
+    patch_resolve_chat_intelligence_runtime(monkeypatch)
 
 
 def test_stream_emits_user_persisted_before_prepare_activity(monkeypatch):
@@ -50,7 +58,7 @@ def test_stream_emits_user_persisted_before_prepare_activity(monkeypatch):
 
     chat_repository = MagicMock()
     chat_repository.get_session_by_id.return_value = session
-    chat_repository.list_messages_by_session.return_value = []
+    chat_repository.list_all_messages_by_session.return_value = []
     chat_repository.create_message.side_effect = [user_message, assistant_message]
     chat_repository.update_assistant_message.return_value = assistant_message
 

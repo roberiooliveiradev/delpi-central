@@ -558,7 +558,8 @@ chat_presentation_llm_prose_decoupling_service.py
 ```
 use_cases/execute_external_action_use_case.py              # OK (pipeline fino)
 use_cases/send_chat_message_use_case.py
-use_cases/stream_chat_message_use_case.py
+use_cases/stream_chat_message_use_case.py                  # ~115L ✅ (ChatStreamTurnExecutionService)
+services/chat_turn/chat_stream_turn_execution_service.py   # orquestração SSE stream
 services/chat_presentation_metadata_pipeline_service.py    # OK orquestrador
 services/chat_turn/chat_turn_preparation_service.py
 services/chat_turn/chat_turn_completion_service.py         # W3
@@ -664,3 +665,6 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ChatPresentationDecisionService` já era fachada ~86L (`Decide` / `Enrichment` / `AutomaticScore`); playbook atualizado |
 | jun/2026 | W3 — `ChatOperationalParameterService` fatiado em `chat_operational_parameter/*` (product_code, tool_skip, period, date); fachada ~101L |
 | jun/2026 | W3 — `ExternalActionResultPresenter` extrai `present` / `build_presentation` / `apply_schema_driven_auxiliaries` para `external_action_result_orchestration/*`; fachada ~408L |
+| jun/2026 | W3 concluído — `domainApplicationImports` **0** (`ChatCapabilitiesCatalogAnswerService`, `ChatAttachmentDocumentSelectionService`, `ChatActionLabelService`→domain, etc.) |
+| jun/2026 | W3 — `StreamChatMessageUseCase` fatiado: orquestração SSE em `chat_turn/chat_stream_turn_execution_service.py`; use case ~115L (ratchet `sendStreamUseCaseLinesMax`) |
+| jun/2026 | Regressão — `preserveDirectAnswerStages` inclui `capabilities` (evita LLM em self-help quando `pre_capability_answer` já resolve o turno) |

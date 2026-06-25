@@ -5,7 +5,7 @@
     "chat_routes.py": 5,
     "chat_tool_context_service.py": 683,
     "send_chat_message_use_case.py": 331,
-    "stream_chat_message_use_case.py": 533,
+    "stream_chat_message_use_case.py": 115,
     "chat_turn_preparation_service.py": 396
   },
   "domainInfrastructureImports": {
@@ -22,7 +22,7 @@
     "domainInfrastructureImportsMax": 0,
     "domainApplicationImportsMax": 0,
     "interfacesPostgresFilesMax": 0,
-    "sendStreamUseCaseLinesMax": 533
+    "sendStreamUseCaseLinesMax": 115
   },
-  "notes": "jun/2026: domain→infra zerado; domain→application em ratchet (27, W3). Reduzir count no baseline ao eliminar imports."
+  "notes": "jun/2026: domain→infra e domain→application zerados (W3). stream_chat_message_use_case ~115L (ChatStreamTurnExecutionService)."
 }
