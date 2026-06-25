@@ -360,7 +360,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 
 | Arquivo | Linhas ~ | Ação |
 |---------|----------|------|
-| `chat_presentation_decision_service.py` | 2017 | Delegates por política (Automático, chart, text-first) |
+| `chat_presentation_decision_service.py` | ~~2017~~ **~86** | ✅ **OK (jun/2026)** — fachada → `ChatPresentationDecideService`, `ChatPresentationDecisionEnrichmentService`, `ChatPresentationAutomaticScoreService` |
 | `chat_intent_router_service.py` | ~~1235~~ **~124** | ✅ **OK (jun/2026)** — delegates `ChatIntentRouter{Classify,Executed,Heuristics,EntityResolution,Support}Service` |
 | `chat_document_vision_service.py` | ~~2141~~ **~295** | ✅ **OK (jun/2026)** — fachada + `chat_document_vision/*` (config, pipeline, stage, attachment, drawing_merge, runtime) |
 | `chat_operational_refinement_service.py` | ~~1208~~ **~236** | ✅ **OK (jun/2026)** — delegates `chat_operational_refinement/*` (heuristics, pagination, stock, metric, group-by, orchestration) |
@@ -372,6 +372,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `chat_advanced_sql_specialist_service.py` | ~~1369~~ **~225** | ✅ **OK (jun/2026)** — delegates `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up) |
 | `kpi_chart_presenter.py` | ~~1068~~ **~154** | ✅ **OK (jun/2026)** — delegates `presenters/kpi_chart/*` (cards, build, dashboard, orchestration, row_chart, specialized) |
 | `chat_presentation_profile_service.py` | ~~1035~~ **~429** | ✅ **OK (jun/2026)** — delegates `chat_presentation_profile/*` (entity, path, resolve, openapi, stack, decision, contract, prose) |
+| `chat_operational_parameter_service.py` | ~~502~~ **~100** | ✅ **OK (jun/2026)** — delegates `chat_operational_parameter/*` (product_code, tool_skip, period, date); imports application pendentes (gate) |
 
 **Domain → application (14 arquivos — zerar):**
 
@@ -657,3 +658,5 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ChatAdvancedSqlSpecialistService` fatiado em `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up); fachada ~225L; expõe `SQL_AUTHORING_INTRO` na fachada |
 | jun/2026 | W3 — `ExternalActionKpiChartPresenter` fatiado em `presenters/kpi_chart/*` (cards, build, dashboard, orchestration, row_chart, specialized); fachada ~154L |
 | jun/2026 | W3 — `ChatPresentationProfileService` fatiado em `chat_presentation_profile/*` (entity, path, resolve, openapi, stack, decision, contract, prose); fachada ~429L; `node`/`mapping` permanecem na fachada para patches de teste |
+| jun/2026 | W3 — `ChatPresentationDecisionService` já era fachada ~86L (`Decide` / `Enrichment` / `AutomaticScore`); playbook atualizado |
+| jun/2026 | W3 — `ChatOperationalParameterService` fatiado em `chat_operational_parameter/*` (product_code, tool_skip, period, date); fachada ~101L |
