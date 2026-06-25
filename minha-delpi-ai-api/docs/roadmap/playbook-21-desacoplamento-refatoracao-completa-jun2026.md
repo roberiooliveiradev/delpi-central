@@ -370,6 +370,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `product_raw_material_price_presenter.py` | — | ✅ removido (schema-first no host; commit `1322970f3`) |
 | `chat_operational_data_commentary_service.py` | ~~933~~ **~100** | ✅ **OK (jun/2026)** — delegates `chat_operational_data_commentary/*` |
 | `chat_advanced_sql_specialist_service.py` | ~~1369~~ **~225** | ✅ **OK (jun/2026)** — delegates `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up) |
+| `kpi_chart_presenter.py` | ~~1068~~ **~154** | ✅ **OK (jun/2026)** — delegates `presenters/kpi_chart/*` (cards, build, dashboard, orchestration, row_chart, specialized) |
 
 **Domain → application (14 arquivos — zerar):**
 
@@ -651,3 +652,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ChatProductQueryIntentService` fatiado em `chat_product_query_intent/*` (code, content, context, resolution, predicate, direct answer); fachada ~330L |
 | jun/2026 | W3 — `ChatOperationalDataCommentaryService` fatiado em `chat_operational_data_commentary/*` (factory, stock, status, misc, orchestration); fachada ~98L |
 | jun/2026 | W3 — `ChatAdvancedSqlSpecialistService` fatiado em `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up); fachada ~225L; expõe `SQL_AUTHORING_INTRO` na fachada |
+| jun/2026 | W3 — `ExternalActionKpiChartPresenter` fatiado em `presenters/kpi_chart/*` (cards, build, dashboard, orchestration, row_chart, specialized); fachada ~154L |
