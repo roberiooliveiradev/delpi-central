@@ -20,7 +20,6 @@ def test_validate_onda1_detects_missing_8d_and_evidences():
     schema = {
         "paths": {
             "/quality/action-plans": {},
-            "/quality/action-plans/intelligence/similar-cases": {},
             "/quality/action-plans/{plan_id}": {},
         }
     }

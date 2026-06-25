@@ -2,6 +2,7 @@ import {
   dashboardPath,
   listPath,
   overduePath,
+  recurrencePath,
   type AppView,
 } from "../constants/actionPlans";
 
@@ -14,6 +15,7 @@ const TABS: Array<{ view: AppView; label: string; path: string }> = [
   { view: "dashboard", label: "Resumo", path: dashboardPath() },
   { view: "list", label: "Planos", path: listPath() },
   { view: "overdue", label: "Atrasados", path: overduePath() },
+  { view: "recurrence", label: "Recorrência", path: recurrencePath() },
 ];
 
 export function AppNav({ active, onNavigate }: Props) {

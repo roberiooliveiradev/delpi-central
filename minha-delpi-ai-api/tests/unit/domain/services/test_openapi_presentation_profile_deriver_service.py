@@ -11,16 +11,16 @@ configure_domain_infrastructure_ports()
 
 def test_build_profile_from_entity_and_shape():
     profile = OpenApiPresentationProfileDeriverService.build_profile(
-        entity="pac_inspection_lot",
+        entity="quality_action_plan",
         shape="paged_list",
     )
 
     assert profile["openapiDerived"] is True
-    assert profile["openapiEntity"] == "pac_inspection_lot"
+    assert profile["openapiEntity"] == "quality_action_plan"
     assert profile["openapiShape"] == "paged_list"
     assert profile["presentationStrategy"] == "as_delivered"
     assert profile["defaultViewPolicy"] == "table_when_available"
-    assert profile["profileKey"] == "openapi:pac_inspection_lot"
+    assert profile["profileKey"] == "openapi:quality_action_plan"
 
 
 def test_build_profile_enriched_merges_json_entity_profile():
@@ -41,13 +41,13 @@ def test_build_profile_enriched_merges_json_entity_profile():
 
 def test_resolve_profile_uses_openapi_derived_for_unmapped_entity():
     profile = ChatPresentationProfileService.build_resolved_profile(
-        path="/api-pac-quality/v1/lots",
-        entity="pac_inspection_lot",
+        path="/quality/action-plans",
+        entity="quality_action_plan",
         shape="paged_list",
     )
 
     assert profile.get("openapiDerived") is True
-    assert profile["profileKey"] == "openapi:pac_inspection_lot"
+    assert profile["profileKey"] == "openapi:quality_action_plan"
 
 
 def test_resolve_profile_prefers_openapi_for_replaceable_kpi_entity():
@@ -98,9 +98,9 @@ def test_resolve_profile_stamps_enriched_from_delpi_metadata():
 
 def test_cache_presentation_profile_on_metadata():
     metadata = {
-        "path": "/api-pac-quality/v1/lots",
+        "path": "/quality/action-plans/abc",
         "apiDelpiResponseMeta": {
-            "entity": "pac_inspection_lot",
+            "entity": "quality_action_plan",
             "shape": "paged_list",
         },
     }

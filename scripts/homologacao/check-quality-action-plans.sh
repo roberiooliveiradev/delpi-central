@@ -23,6 +23,7 @@ required = [
     '/quality/action-plans/{plan_id}/ishikawa',
     '/quality/action-plans/{plan_id}/five-whys',
     '/quality/action-plans/{plan_id}/similar-cases',
+    '/quality/action-plans/recurrence',
 ]
 for path in required:
     assert path in paths, f'missing path {path}'

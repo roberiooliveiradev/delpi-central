@@ -40,7 +40,7 @@ export const ACTION_TYPES: Record<string, string> = {
   training: "Treinamento",
 };
 
-export type AppView = "dashboard" | "list" | "overdue" | "detail" | "new";
+export type AppView = "dashboard" | "list" | "overdue" | "recurrence" | "detail" | "new";
 
 export function parseRoute(pathname?: string): { view: AppView; planId?: string } {
   const path = (pathname ?? APP_BASE).replace(/\/+$/, "");
@@ -52,6 +52,7 @@ export function parseRoute(pathname?: string): { view: AppView; planId?: string 
   if (path.endsWith("/novo")) return { view: "new" };
   if (path.endsWith("/lista")) return { view: "list" };
   if (path.endsWith("/atrasados")) return { view: "overdue" };
+  if (path.endsWith("/recorrencia")) return { view: "recurrence" };
   return { view: "dashboard" };
 }
 
@@ -65,6 +66,10 @@ export function listPath(): string {
 
 export function overduePath(): string {
   return `${APP_BASE}/atrasados`;
+}
+
+export function recurrencePath(): string {
+  return `${APP_BASE}/recorrencia`;
 }
 
 export function detailPath(planId: string): string {

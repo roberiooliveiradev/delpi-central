@@ -18,6 +18,7 @@ import type {
 import type { CreatePlanPayload, UpdatePlanPayload } from "../types/planForm";
 import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
 import type { PlanSimilarCasesResult } from "../types/similarCases";
+import type { PagedRecurrenceResponse } from "../types/recurrence";
 
 const API_BASE = "/apps/api-delpi/quality/action-plans";
 
@@ -70,6 +71,30 @@ export async function fetchOverduePlans(params: ListParams = {}): Promise<PagedP
     `${API_BASE}/overdue${buildQuery(params)}`,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao listar planos atrasados.");
+}
+
+type RecurrenceParams = {
+  branch_code?: string;
+  nonconformity_scope?: string;
+  min_plans?: number;
+  page?: number;
+  page_size?: number;
+};
+
+export async function fetchRecurrenceGroups(
+  params: RecurrenceParams = {},
+): Promise<PagedRecurrenceResponse> {
+  const search = new URLSearchParams();
+  if (params.branch_code) search.set("branch_code", params.branch_code);
+  if (params.nonconformity_scope) search.set("nonconformity_scope", params.nonconformity_scope);
+  if (params.min_plans) search.set("min_plans", String(params.min_plans));
+  if (params.page) search.set("page", String(params.page));
+  if (params.page_size) search.set("page_size", String(params.page_size));
+  const query = search.toString() ? `?${search.toString()}` : "";
+  const envelope = await httpGet<ApiEnvelope<PagedRecurrenceResponse>>(
+    `${API_BASE}/recurrence${query}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao listar recorrência de planos.");
 }
 
 export async function fetchActionPlanDetail(planId: string): Promise<ActionPlanDetail> {

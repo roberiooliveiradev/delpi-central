@@ -145,8 +145,15 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 
 ## Pendente (pós-Fase 14)
 
-- Provider `api-pac-quality`: cadastrar provider + `sync_api_pac_quality_openapi.py` após deploy PAC.
 - Remover fallbacks de produto quando `meta.entity` for garantido em 100% das respostas.
+
+## PAC Qualidade — api-delpi (jun/2026)
+
+- Rotas `/quality/action-plans/*` expostas pela **api-delpi** (sem provider `api-pac-quality` separado).
+- `openapi_operation_contracts.json` sincronizado com `route_contract_registry` (187 contratos).
+- `entityPathHints` + matching `{plan_id}` para apresentação schema-first.
+- Gate `scripts/audit_api_delpi_pac_onda1.py --check` (Onda 1: 8D, evidências, casos similares).
+- Pós-deploy: `sync_api_delpi_openapi.py` (mesmo provider `api-delpi`).
 
 ## Playbook 22 Fase D — enriched (jun/2026)
 

@@ -74,6 +74,12 @@
       "parameterStrategy": "semantic",
       "method": "GET"
     },
+    "quality_action_plans": {
+      "label": "PAC — planos de ação",
+      "pathMarkers": ["/quality/action-plans/"],
+      "parameterStrategy": "semantic",
+      "method": "GET"
+    },
     "department_kpi": {
       "label": "KPI departamental",
       "pathMarkers": [
@@ -90,7 +96,8 @@
         "/production/orders/",
         "/production/work-centers/",
         "/production/allocation-gaps",
-        "/production/planned-vs-real-time"
+        "/production/planned-vs-real-time",
+        "/quality/action-plans/"
       ],
       "parameterStrategy": "date_branch",
       "method": "GET"

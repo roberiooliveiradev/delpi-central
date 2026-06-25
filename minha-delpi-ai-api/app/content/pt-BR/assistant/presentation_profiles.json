@@ -99,6 +99,14 @@
     "production_otd_detail": "kpi_dashboard",
     "eficiencia_fabril_dashboard": "kpi_dashboard",
     "kaizen": "kpi_dashboard",
+    "quality_action_plan_dashboard": "kpi_dashboard",
+    "quality_action_plan": "table_list",
+    "quality_action_plan_similar_cases": "playbook_report",
+    "quality_action_plan_ishikawa": "table_list",
+    "quality_action_plan_five_whys": "table_list",
+    "quality_action_plan_action": "table_list",
+    "quality_action_plan_evidence": "table_list",
+    "quality_action_plan_export": "table_list",
     "lmp_dashboard": "kpi_dashboard",
     "lmp_dashboard_charts": "kpi_dashboard",
     "sql_result": "sql",
@@ -722,6 +730,14 @@
     {
       "contains": "/quality/ppm",
       "profile": "kpi_series"
+    },
+    {
+      "contains": "/quality/action-plans/dashboard",
+      "profile": "kpi_dashboard"
+    },
+    {
+      "contains": "/quality/action-plans/",
+      "profile": "table_list"
     },
     {
       "contains": "/quality/",
@@ -2009,7 +2025,15 @@
     "open_sales_order": "/pedidos-venda-abertos/",
     "open_production_order": "/pedidos-venda-abertos/ops-abertas",
     "commercial_proposal_document": "/propostas-comerciais/",
-    "purchases_top_products": "/purchases/top-products"
+    "purchases_top_products": "/purchases/top-products",
+    "quality_action_plan_dashboard": "/quality/action-plans/dashboard",
+    "quality_action_plan": "/quality/action-plans/0",
+    "quality_action_plan_similar_cases": "/quality/action-plans/0/similar-cases",
+    "quality_action_plan_ishikawa": "/quality/action-plans/0/ishikawa",
+    "quality_action_plan_five_whys": "/quality/action-plans/0/five-whys",
+    "quality_action_plan_action": "/quality/action-plans/0/actions",
+    "quality_action_plan_evidence": "/quality/action-plans/0/evidences",
+    "quality_action_plan_export": "/quality/action-plans/0/export/rnc-8d"
   },
   "pathEntityFallbacks": [
     {

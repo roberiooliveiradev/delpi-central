@@ -6,6 +6,7 @@ import { OverduePage } from "./OverduePage";
 import { PlanDetailPage } from "./PlanDetailPage";
 import { PlanFormPage } from "./PlanFormPage";
 import { PlansListPage } from "./PlansListPage";
+import { RecurrencePage } from "./RecurrencePage";
 
 type Props = {
   pathname?: string;
@@ -41,6 +42,10 @@ export function ActionPlansPage({ pathname }: Props) {
 
   if (view === "overdue") {
     return <OverduePage onNavigate={handleNavigate} />;
+  }
+
+  if (view === "recurrence") {
+    return <RecurrencePage onNavigate={handleNavigate} />;
   }
 
   return <DashboardPage onNavigate={handleNavigate} />;

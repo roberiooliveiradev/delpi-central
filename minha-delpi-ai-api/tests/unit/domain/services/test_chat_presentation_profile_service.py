@@ -74,6 +74,30 @@ def test_resolve_entity_from_path_json_hints_and_fallbacks() -> None:
     )
     assert (
         ChatPresentationProfileService.resolve_entity_from_path(
+            "/quality/action-plans"
+        )
+        == "quality_action_plan"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/quality/action-plans/dashboard"
+        )
+        == "quality_action_plan_dashboard"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/quality/action-plans/550e8400-e29b-41d4-a716-446655440000/rnc-8d"
+        )
+        == "quality_action_plan"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/quality/action-plans/550e8400-e29b-41d4-a716-446655440000/similar-cases"
+        )
+        == "quality_action_plan_similar_cases"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
             "/commercial/branch_rol_target_pct"
         )
         == "commercial_rol_target"

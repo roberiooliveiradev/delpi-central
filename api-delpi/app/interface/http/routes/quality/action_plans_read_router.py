@@ -42,11 +42,21 @@ from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import
     collect_image_annexes_for_export,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.core.responses import error_response, not_found_response
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/action-plans", tags=["PAC Qualidade — planos de ação"])
+
+_PAC_BASE = "/quality/action-plans"
+
+
+def _pac_openapi(operation_id: str, subpath: str) -> dict:
+    return OpenApiAgentMetadataBuilder.from_contract(
+        operation_id,
+        path=f"{_PAC_BASE}{subpath}",
+    )
 
 
 class CreateActionPlanBody(BaseModel):
@@ -215,7 +225,7 @@ def _current_user_id() -> str:
     return str(getattr(user, "id", "unknown"))
 
 
-@router.get("/dashboard")
+@router.get("/dashboard", **_pac_openapi("get_quality_action_plans_dashboard", "/dashboard"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_action_plans_dashboard(
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
@@ -236,7 +246,7 @@ def get_action_plans_dashboard(
         return error_response("Erro ao carregar dashboard de planos de ação.", status_code=500)
 
 
-@router.get("/overdue")
+@router.get("/overdue", **_pac_openapi("list_quality_action_plans_overdue", "/overdue"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_overdue_action_plans(
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
@@ -260,7 +270,33 @@ def list_overdue_action_plans(
         return error_response("Erro ao listar planos atrasados.", status_code=500)
 
 
-@router.post("")
+@router.get("/recurrence", **_pac_openapi("list_quality_action_plans_recurrence", "/recurrence"))
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def list_action_plans_recurrence(
+    branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
+    nonconformity_scope: str | None = Query(default=None, pattern="^(internal|external)$"),
+    min_plans: int = Query(default=2, ge=2, le=100),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        return api_delpi_success(
+            repo.list_recurrence_groups(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+                min_plans=min_plans,
+                page=page,
+                page_size=page_size,
+            ),
+            operation_id="list_quality_action_plans_recurrence",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar recorrência PAC: {exc}")
+        return error_response("Erro ao listar recorrência de planos de ação.", status_code=500)
+
+
+@router.post("", **_pac_openapi("create_quality_action_plan", ""))
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def create_action_plan(body: CreateActionPlanBody = Body(...)):
     try:
@@ -303,7 +339,7 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
         return error_response(str(exc), status_code=500)
 
 
-@router.get("")
+@router.get("", **_pac_openapi("list_quality_action_plans", ""))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_action_plans(
     status: str | None = Query(default=None),
@@ -337,7 +373,10 @@ def list_action_plans(
         return error_response("Erro ao listar planos de ação.", status_code=500)
 
 
-@router.get("/{plan_id}/similar-cases")
+@router.get(
+    "/{plan_id}/similar-cases",
+    **_pac_openapi("get_quality_action_plan_similar_cases", "/{plan_id}/similar-cases"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_plan_similar_cases(plan_id: str):
     try:
@@ -356,7 +395,7 @@ def get_plan_similar_cases(plan_id: str):
         return error_response("Erro ao consultar casos similares.", status_code=500)
 
 
-@router.get("/{plan_id}")
+@router.get("/{plan_id}", **_pac_openapi("get_quality_action_plan_detail", "/{plan_id}"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_action_plan_detail(plan_id: str):
     try:
@@ -373,7 +412,7 @@ def get_action_plan_detail(plan_id: str):
         return error_response("Erro ao consultar plano de ação.", status_code=500)
 
 
-@router.patch("/{plan_id}")
+@router.patch("/{plan_id}", **_pac_openapi("update_quality_action_plan", "/{plan_id}"))
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
     try:
@@ -407,7 +446,10 @@ def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
         return error_response("Erro ao atualizar plano.", status_code=500)
 
 
-@router.patch("/{plan_id}/status")
+@router.patch(
+    "/{plan_id}/status",
+    **_pac_openapi("update_quality_action_plan_status", "/{plan_id}/status"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = Body(...)):
     try:
@@ -431,7 +473,10 @@ def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = B
         return error_response("Erro ao atualizar status do plano.", status_code=500)
 
 
-@router.put("/{plan_id}/ishikawa")
+@router.put(
+    "/{plan_id}/ishikawa",
+    **_pac_openapi("upsert_quality_action_plan_ishikawa", "/{plan_id}/ishikawa"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def upsert_ishikawa(plan_id: str, body: IshikawaBody = Body(...)):
     try:
@@ -452,7 +497,10 @@ def upsert_ishikawa(plan_id: str, body: IshikawaBody = Body(...)):
         return error_response("Erro ao registrar Ishikawa.", status_code=500)
 
 
-@router.put("/{plan_id}/five-whys")
+@router.put(
+    "/{plan_id}/five-whys",
+    **_pac_openapi("upsert_quality_action_plan_five_whys", "/{plan_id}/five-whys"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def upsert_five_whys(plan_id: str, body: FiveWhysBody = Body(...)):
     try:
@@ -475,7 +523,10 @@ def upsert_five_whys(plan_id: str, body: FiveWhysBody = Body(...)):
         return error_response("Erro ao registrar 5 Porquês.", status_code=500)
 
 
-@router.post("/{plan_id}/actions")
+@router.post(
+    "/{plan_id}/actions",
+    **_pac_openapi("create_quality_action_plan_actions", "/{plan_id}/actions"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def create_plan_actions(plan_id: str, body: CreateActionsBody = Body(...)):
     try:
@@ -499,7 +550,10 @@ def create_plan_actions(plan_id: str, body: CreateActionsBody = Body(...)):
         return error_response("Erro ao registrar ações.", status_code=500)
 
 
-@router.patch("/{plan_id}/actions/{action_id}")
+@router.patch(
+    "/{plan_id}/actions/{action_id}",
+    **_pac_openapi("update_quality_action_plan_action", "/{plan_id}/actions/{action_id}"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def update_plan_action(plan_id: str, action_id: str, body: UpdateActionBody = Body(...)):
     try:
@@ -524,7 +578,10 @@ def update_plan_action(plan_id: str, action_id: str, body: UpdateActionBody = Bo
         return error_response("Erro ao atualizar ação.", status_code=500)
 
 
-@router.post("/{plan_id}/effectiveness-review")
+@router.post(
+    "/{plan_id}/effectiveness-review",
+    **_pac_openapi("record_quality_action_plan_effectiveness", "/{plan_id}/effectiveness-review"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Body(...)):
     try:
@@ -550,7 +607,10 @@ def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Bo
         return error_response("Erro ao registrar eficácia.", status_code=500)
 
 
-@router.put("/{plan_id}/rnc-8d")
+@router.put(
+    "/{plan_id}/rnc-8d",
+    **_pac_openapi("upsert_quality_action_plan_rnc_8d", "/{plan_id}/rnc-8d"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
     try:
@@ -585,7 +645,10 @@ def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
         return error_response("Erro ao salvar relatório 8D.", status_code=500)
 
 
-@router.get("/{plan_id}/export/rnc-8d")
+@router.get(
+    "/{plan_id}/export/rnc-8d",
+    **_pac_openapi("export_quality_action_plan_rnc_8d", "/{plan_id}/export/rnc-8d"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def export_rnc_8d_spreadsheet(plan_id: str):
     try:
@@ -615,7 +678,10 @@ def export_rnc_8d_spreadsheet(plan_id: str):
         return error_response("Erro ao gerar planilha 8D.", status_code=500)
 
 
-@router.get("/{plan_id}/evidences")
+@router.get(
+    "/{plan_id}/evidences",
+    **_pac_openapi("list_quality_action_plan_evidences", "/{plan_id}/evidences"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_plan_evidences(plan_id: str):
     try:
@@ -631,7 +697,10 @@ def list_plan_evidences(plan_id: str):
         return error_response("Erro ao listar evidências.", status_code=500)
 
 
-@router.post("/{plan_id}/evidences")
+@router.post(
+    "/{plan_id}/evidences",
+    **_pac_openapi("attach_quality_action_plan_evidence", "/{plan_id}/evidences"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 async def upload_plan_evidence(
     plan_id: str,
@@ -720,7 +789,10 @@ def download_plan_evidence(plan_id: str, evidence_id: str):
         return error_response("Erro interno ao baixar evidência.", status_code=500)
 
 
-@router.delete("/{plan_id}/evidences/{evidence_id}")
+@router.delete(
+    "/{plan_id}/evidences/{evidence_id}",
+    **_pac_openapi("delete_quality_action_plan_evidence", "/{plan_id}/evidences/{evidence_id}"),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def delete_plan_evidence(plan_id: str, evidence_id: str):
     try:

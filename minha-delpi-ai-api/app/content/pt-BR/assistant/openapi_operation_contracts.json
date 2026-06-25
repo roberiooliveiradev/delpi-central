@@ -491,6 +491,10 @@
     "entity": "quality_action_plan",
     "shape": "paged_list"
   },
+  "list_quality_action_plans_recurrence": {
+    "entity": "quality_action_plan_recurrence",
+    "shape": "paged_list"
+  },
   "list_quality_action_plans": {
     "entity": "quality_action_plan",
     "shape": "paged_list"
@@ -500,6 +504,10 @@
     "shape": "composite_analysis"
   },
   "create_quality_action_plan": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "update_quality_action_plan": {
     "entity": "quality_action_plan",
     "shape": "scalar"
   },
@@ -526,6 +534,30 @@
   "record_quality_action_plan_effectiveness": {
     "entity": "quality_action_plan",
     "shape": "scalar"
+  },
+  "upsert_quality_action_plan_rnc_8d": {
+    "entity": "quality_action_plan",
+    "shape": "composite_analysis"
+  },
+  "export_quality_action_plan_rnc_8d": {
+    "entity": "quality_action_plan_export",
+    "shape": "scalar"
+  },
+  "list_quality_action_plan_evidences": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "paged_list"
+  },
+  "attach_quality_action_plan_evidence": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "scalar"
+  },
+  "delete_quality_action_plan_evidence": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "scalar"
+  },
+  "get_quality_action_plan_similar_cases": {
+    "entity": "quality_action_plan_similar_cases",
+    "shape": "composite_analysis"
   },
   "get_audit_5s_summary": {
     "entity": "audit_5s_summary",

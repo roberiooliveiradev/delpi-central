@@ -42,3 +42,24 @@ def build_recurrence_key(
     if failure_mode:
         parts.append(f"falha:{failure_mode.strip()}")
     return "|".join(parts) if parts else None
+
+
+def parse_recurrence_key(recurrence_key: str | None) -> dict[str, str | None]:
+    if not recurrence_key or not recurrence_key.strip():
+        return {"branch_code": None, "product_code": None, "failure_mode": None}
+    branch_code: str | None = None
+    product_code: str | None = None
+    failure_mode: str | None = None
+    for part in recurrence_key.split("|"):
+        segment = part.strip()
+        if segment.startswith("filial:"):
+            branch_code = segment[7:].strip() or None
+        elif segment.startswith("produto:"):
+            product_code = segment[8:].strip() or None
+        elif segment.startswith("falha:"):
+            failure_mode = segment[6:].strip() or None
+    return {
+        "branch_code": branch_code,
+        "product_code": product_code,
+        "failure_mode": failure_mode,
+    }

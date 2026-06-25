@@ -387,6 +387,100 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
         }
 
+    def list_recurrence_groups(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        min_plans: int = 2,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        filters = ["p.deleted_at IS NULL", "p.recurrence_key IS NOT NULL"]
+        params: list[Any] = []
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+        if nonconformity_scope:
+            filters.append("p.nonconformity_scope = %s")
+            params.append(nonconformity_scope)
+        where_clause = " AND ".join(filters)
+
+        count_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*) AS total
+              FROM (
+                    SELECT p.recurrence_key
+                      FROM quality.quality_action_plans p
+                     WHERE {where_clause}
+                     GROUP BY p.recurrence_key
+                    HAVING COUNT(*) >= %s
+                   ) grouped
+            """,
+            tuple([*params, min_plans]),
+        )
+        total = int((count_row or {}).get("total") or 0)
+        offset = max(page - 1, 0) * page_size
+
+        rows = self.fetch_all(
+            f"""
+            SELECT p.recurrence_key,
+                   COUNT(*)::int AS total_plans,
+                   COUNT(*) FILTER (
+                       WHERE p.status NOT IN ('completed', 'cancelled')
+                   )::int AS open_plans,
+                   COUNT(*) FILTER (
+                       WHERE p.status NOT IN ('completed', 'cancelled')
+                         AND p.severity = 'critical'
+                   )::int AS critical_open,
+                   MAX(p.created_at) AS last_opened_at,
+                   (array_agg(p.code ORDER BY p.created_at DESC))[1] AS last_plan_code,
+                   (array_agg(p.id::text ORDER BY p.created_at DESC))[1] AS last_plan_id,
+                   (array_agg(p.branch_code ORDER BY p.created_at DESC))[1] AS branch_code,
+                   (array_agg(p.product_code ORDER BY p.created_at DESC))[1] AS product_code,
+                   (array_agg(p.failure_mode ORDER BY p.created_at DESC))[1] AS failure_mode
+              FROM quality.quality_action_plans p
+             WHERE {where_clause}
+             GROUP BY p.recurrence_key
+            HAVING COUNT(*) >= %s
+             ORDER BY open_plans DESC, total_plans DESC, last_opened_at DESC
+             LIMIT %s OFFSET %s
+            """,
+            tuple([*params, min_plans, page_size, offset]),
+        )
+
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            last_opened = row.get("last_opened_at")
+            items.append(
+                {
+                    "recurrence_key": row["recurrence_key"],
+                    "branch_code": row.get("branch_code"),
+                    "product_code": row.get("product_code"),
+                    "failure_mode": row.get("failure_mode"),
+                    "total_plans": int(row.get("total_plans") or 0),
+                    "open_plans": int(row.get("open_plans") or 0),
+                    "critical_open": int(row.get("critical_open") or 0),
+                    "last_plan_code": row.get("last_plan_code"),
+                    "last_plan_id": row.get("last_plan_id"),
+                    "last_opened_at": (
+                        last_opened.isoformat()
+                        if hasattr(last_opened, "isoformat")
+                        else last_opened
+                    ),
+                }
+            )
+
+        return {
+            "items": items,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "total_pages": max((total + page_size - 1) // page_size, 1) if total else 1,
+            },
+        }
+
     def next_plan_code(self) -> str:
         row = self.execute_returning_one(
             """

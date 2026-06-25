@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-"""Reimporta OpenAPI da API PAC Qualidade e gera catálogo MD.
+"""Valida rotas PAC Onda 1 no OpenAPI da api-delpi (provider único).
+
+As rotas PAC vivem em `/quality/action-plans/*` na **api-delpi**. Não há provider
+`api-pac-quality` separado no chat — use `sync_api_delpi_openapi.py` após deploy.
 
 Uso (container minha-delpi-ai-api):
 
-  PYTHONPATH=/app python scripts/sync_api_pac_quality_openapi.py
-  PYTHONPATH=/app python scripts/sync_api_pac_quality_openapi.py \\
-      --from-url https://pac-api.minhadelpi.com.br/openapi.json
+  PYTHONPATH=/app python scripts/audit_api_delpi_pac_onda1.py --check
+  PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py
 
-Pré-requisito: provider `api-pac-quality` cadastrado no agente.
-Schema canônico: GET /openapi.json (gerado pelo FastAPI, como api-delpi).
+Este script legado valida o mesmo OpenAPI (útil em CI/homolog):
+
+  PYTHONPATH=/app python scripts/sync_api_pac_quality_openapi.py \\
+      --from-url http://api-delpi:8000/openapi.json --check-onda1 --skip-import
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from urllib.request import urlopen
@@ -24,8 +29,11 @@ from app.domain.services.api_delpi_openapi_catalog_service import (
     collect_openapi_operations,
 )
 
-DEFAULT_PROVIDER_KEY = "api-pac-quality"
-DEFAULT_OPENAPI_URL = "https://pac-api.minhadelpi.com.br/openapi.json"
+DEFAULT_PROVIDER_KEY = "api-delpi"
+DEFAULT_OPENAPI_URL = os.environ.get(
+    "API_DELPI_OPENAPI_URL",
+    "http://api-delpi:8000/openapi.json",
+)
 DEFAULT_CATALOG_PATH = (
     Path(__file__).resolve().parents[1]
     / "docs"
@@ -36,14 +44,17 @@ DEFAULT_CATALOG_PATH = (
 
 ONDA1_REQUIRED_OPENAPI_PATHS = (
     "/quality/action-plans",
-    "/quality/action-plans/intelligence/similar-cases",
+    "/quality/action-plans/dashboard",
+    "/quality/action-plans/overdue",
     "/quality/action-plans/{plan_id}",
+    "/quality/action-plans/{plan_id}/similar-cases",
     "/quality/action-plans/{plan_id}/rnc-8d",
     "/quality/action-plans/{plan_id}/export/rnc-8d",
     "/quality/action-plans/{plan_id}/evidences",
     "/quality/action-plans/{plan_id}/ishikawa",
     "/quality/action-plans/{plan_id}/five-whys",
     "/quality/action-plans/{plan_id}/actions",
+    "/quality/action-plans/{plan_id}/actions/{action_id}",
 )
 
 
@@ -163,7 +174,7 @@ def main() -> int:
                 print(
                     json.dumps(
                         {
-                            "error": "OpenAPI sem rotas Onda 1 — faça deploy api-pac no srv-api antes do sync.",
+                            "error": "OpenAPI api-delpi sem rotas PAC Onda 1 — reinicie api-delpi e rode sync_api_delpi_openapi.py.",
                             "missingPaths": missing_paths,
                             "schemaSource": report["schemaSource"],
                         },

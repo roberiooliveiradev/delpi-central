@@ -372,13 +372,7 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         )
 
     @classmethod
-    def _matches_entity_path_hint(cls, path_lower: str, hint_lower: str) -> bool:
-        if not hint_lower:
-            return False
-
-        if path_lower == hint_lower or path_lower.endswith(hint_lower):
-            return True
-
+    def _matches_product_path_hint(cls, path_lower: str, hint_lower: str) -> bool:
         marker = "/products/"
 
         if marker not in hint_lower or marker not in path_lower:
@@ -401,11 +395,70 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         return path_parts[1:] == hint_parts[1:]
 
     @classmethod
+    def _matches_quality_action_plan_path_hint(cls, path_lower: str, hint_lower: str) -> bool:
+        marker = "/quality/action-plans/"
+
+        if marker not in hint_lower or marker not in path_lower:
+            return False
+
+        path_tail = path_lower.split(marker, 1)[1]
+        hint_tail = hint_lower.split(marker, 1)[1]
+        path_parts = [part for part in path_tail.split("/") if part]
+        hint_parts = [part for part in hint_tail.split("/") if part]
+
+        if not path_parts or not hint_parts:
+            return False
+
+        if hint_parts[0] not in {"0", "{plan_id}"}:
+            return False
+
+        plan_segment = path_parts[0]
+
+        if plan_segment in {"dashboard", "overdue"}:
+            return False
+
+        if plan_segment in {"0", "{plan_id}"}:
+            return path_parts[1:] == hint_parts[1:]
+
+        return bool(plan_segment) and path_parts[1:] == hint_parts[1:]
+
+    @classmethod
+    def _matches_entity_path_hint(cls, path_lower: str, hint_lower: str) -> bool:
+        if not hint_lower:
+            return False
+
+        if path_lower == hint_lower or path_lower.endswith(hint_lower):
+            return True
+
+        if cls._matches_product_path_hint(path_lower, hint_lower):
+            return True
+
+        return cls._matches_quality_action_plan_path_hint(path_lower, hint_lower)
+
+    @classmethod
+    def _resolve_quality_action_plan_entity_from_path(cls, lowered: str) -> str | None:
+        if lowered == "/quality/action-plans":
+            return "quality_action_plan"
+
+        if lowered == "/quality/action-plans/overdue":
+            return "quality_action_plan"
+
+        if lowered == "/quality/action-plans/dashboard":
+            return "quality_action_plan_dashboard"
+
+        return None
+
+    @classmethod
     def resolve_entity_from_path(cls, path: str | None) -> str | None:
         lowered = cls.path_lowered(path).rstrip("/")
 
         if not lowered:
             return None
+
+        quality_entity = cls._resolve_quality_action_plan_entity_from_path(lowered)
+
+        if quality_entity:
+            return quality_entity
 
         for entity, hint in cls.entity_path_hints().items():
             hint_lower = str(hint or "").lower().rstrip("/")

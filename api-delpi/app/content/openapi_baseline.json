@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 174,
+  "operation_count": 206,
   "operations": [
     {
       "method": "GET",
@@ -70,6 +70,26 @@
       "path": "/commercial/proposals",
       "operationId": "list_commercial_proposals",
       "summary": "Propostas comerciais (carteira Totvs)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/proposals/{proposal_number}",
+      "operationId": "get_commercial_proposal",
+      "summary": "Detalhe da proposta comercial (OV)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/proposals/{proposal_number}/history/events",
+      "operationId": "get_commercial_proposal_history_events",
+      "summary": "Histórico de estágios da proposta comercial",
       "tags": [
         "Comercial"
       ],
@@ -373,9 +393,79 @@
     },
     {
       "method": "GET",
+      "path": "/inspecoes-entrada/historico",
+      "operationId": "get_inspecoes_entrada_historico",
+      "summary": "Lista paginada — Inspecoes entrada historico",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/inspecoes-entrada/historico/detalhe",
+      "operationId": "get_inspecoes_entrada_historico_detalhe",
+      "summary": "Consulta — Inspecoes entrada historico detalhe",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/inspecoes-entrada/pendentes",
+      "operationId": "get_inspecoes_entrada_pendentes",
+      "summary": "Lista paginada — Inspecoes entrada pendentes",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/inspecoes-entrada/pendentes-fornecedor",
+      "operationId": "get_inspecoes_entrada_pendentes_fornecedor",
+      "summary": "Lista — Inspecoes entrada pendentes fornecedor",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/inspecoes-entrada/rejeitadas-ensaiador",
+      "operationId": "get_inspecoes_entrada_rejeitadas_ensaiador",
+      "summary": "Lista — Inspecoes entrada rejeitadas ensaiador",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/inspecoes-entrada/rejeitadas-produto",
+      "operationId": "get_inspecoes_entrada_rejeitadas_produto",
+      "summary": "Lista — Inspecoes entrada rejeitadas produto",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/inspecoes-entrada/resumo",
+      "operationId": "get_inspecoes_entrada_resumo",
+      "summary": "Indicador — Inspecoes entrada resumo",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/pedidos-venda-abertos/",
-      "operationId": "list_pedidos_venda_abertos_route_pedidos_venda_abertos__get",
-      "summary": "List Pedidos Venda Abertos Route",
+      "operationId": "list_pedidos_venda_abertos",
+      "summary": "Análise consolidada — Pedidos de venda em aberto",
       "tags": [
         "Pedidos de Venda em Aberto"
       ],
@@ -384,8 +474,8 @@
     {
       "method": "GET",
       "path": "/pedidos-venda-abertos/ops-abertas",
-      "operationId": "list_ops_abertas_route_pedidos_venda_abertos_ops_abertas_get",
-      "summary": "List Ops Abertas Route",
+      "operationId": "list_ops_abertas_pedidos_venda",
+      "summary": "Análise consolidada — Ops abertas (pedidos de venda)",
       "tags": [
         "Pedidos de Venda em Aberto"
       ],
@@ -673,6 +763,16 @@
     },
     {
       "method": "GET",
+      "path": "/products/drawings",
+      "operationId": "list_product_drawings",
+      "summary": "Catálogo de desenhos PDF da biblioteca",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/products/exclusive-raw-materials/catalog",
       "operationId": "list_exclusive_raw_materials_catalog",
       "summary": "Catálogo global de matérias-primas exclusivas",
@@ -726,6 +826,26 @@
       "path": "/products/{code}/customers",
       "operationId": "get_product_customers",
       "summary": "Clientes do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/drawing",
+      "operationId": "get_product_drawing",
+      "summary": "Metadados do desenho PDF do produto",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/drawing/pdf",
+      "operationId": "get_product_drawing_pdf",
+      "summary": "Download do desenho PDF do produto",
       "tags": [
         "products"
       ],
@@ -974,8 +1094,8 @@
     {
       "method": "GET",
       "path": "/propostas-comerciais/",
-      "operationId": "list_propostas_comerciais_route_propostas_comerciais__get",
-      "summary": "List Propostas Comerciais Route",
+      "operationId": "list_propostas_comerciais",
+      "summary": "Lista paginada — Proposta comercial interna (pdf/totvs)",
       "tags": [
         "Propostas Comerciais"
       ],
@@ -984,8 +1104,8 @@
     {
       "method": "GET",
       "path": "/propostas-comerciais/{proposta_interna}",
-      "operationId": "get_proposta_comercial_route_propostas_comerciais__proposta_interna__get",
-      "summary": "Get Proposta Comercial Route",
+      "operationId": "get_proposta_comercial",
+      "summary": "Análise consolidada — Proposta comercial interna (pdf/totvs)",
       "tags": [
         "Propostas Comerciais"
       ],
@@ -1018,6 +1138,226 @@
       "summary": "Produtos mais comprados no período",
       "tags": [
         "Compras operacionais"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans",
+      "operationId": "list_quality_action_plans",
+      "summary": "Lista paginada — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans",
+      "operationId": "create_quality_action_plan",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/dashboard",
+      "operationId": "get_quality_action_plans_dashboard",
+      "summary": "Indicador — Quality action plan dashboard",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/overdue",
+      "operationId": "list_quality_action_plans_overdue",
+      "summary": "Lista paginada — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/recurrence",
+      "operationId": "list_quality_action_plans_recurrence",
+      "summary": "Lista paginada — Quality action plan recurrence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}",
+      "operationId": "get_quality_action_plan_detail",
+      "summary": "Análise consolidada — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}",
+      "operationId": "update_quality_action_plan",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/actions",
+      "operationId": "create_quality_action_plan_actions",
+      "summary": "Lista paginada — Quality action plan action",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}/actions/{action_id}",
+      "operationId": "update_quality_action_plan_action",
+      "summary": "Indicador — Quality action plan action",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review",
+      "operationId": "record_quality_action_plan_effectiveness",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/evidences",
+      "operationId": "list_quality_action_plan_evidences",
+      "summary": "Lista paginada — Quality action plan evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/evidences",
+      "operationId": "attach_quality_action_plan_evidence",
+      "summary": "Indicador — Quality action plan evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}",
+      "operationId": "delete_quality_action_plan_evidence",
+      "summary": "Indicador — Quality action plan evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/file",
+      "operationId": "download_plan_evidence_quality_action_plans__plan_id__evidences__evidence_id__file_get",
+      "summary": "Download Plan Evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/export/rnc-8d",
+      "operationId": "export_quality_action_plan_rnc_8d",
+      "summary": "Indicador — Quality action plan export",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/action-plans/{plan_id}/five-whys",
+      "operationId": "upsert_quality_action_plan_five_whys",
+      "summary": "Indicador — Quality action plan five whys",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/action-plans/{plan_id}/ishikawa",
+      "operationId": "upsert_quality_action_plan_ishikawa",
+      "summary": "Indicador — Quality action plan ishikawa",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/action-plans/{plan_id}/rnc-8d",
+      "operationId": "upsert_quality_action_plan_rnc_8d",
+      "summary": "Análise consolidada — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/similar-cases",
+      "operationId": "get_quality_action_plan_similar_cases",
+      "summary": "Análise consolidada — Quality action plan similar cases",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}/status",
+      "operationId": "update_quality_action_plan_status",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
       ],
       "deprecated": false
     },

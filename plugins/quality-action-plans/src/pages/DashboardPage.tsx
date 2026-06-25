@@ -8,7 +8,7 @@ import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { SelectField } from "../components/ui/SelectField";
 import { FilterBar } from "../components/ui/FilterBar";
-import { listPath, overduePath, PAC_BRANCH_OPTIONS, PAC_NONCONFORMITY_SCOPES } from "../constants/actionPlans";
+import { listPath, overduePath, recurrencePath, PAC_BRANCH_OPTIONS, PAC_NONCONFORMITY_SCOPES } from "../constants/actionPlans";
 import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
 
 type Props = {
@@ -70,6 +70,9 @@ export function DashboardPage({ onNavigate }: Props) {
             </button>
             <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(overduePath())}>
               Ver atrasados
+            </button>
+            <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(recurrencePath())}>
+              Ver recorrência
             </button>
           </>
         }
