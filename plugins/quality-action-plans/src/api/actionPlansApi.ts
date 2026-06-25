@@ -226,6 +226,21 @@ export async function updatePlanStatus(
   return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar status do plano.");
 }
 
+export async function reopenPlan(
+  planId: string,
+  reason: string,
+  targetStatus?: string,
+): Promise<ActionPlanSummary> {
+  const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
+    `${API_BASE}/${planId}/reopen`,
+    {
+      reason: reason.trim(),
+      target_status: targetStatus || undefined,
+    },
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao reabrir plano.");
+}
+
 export async function upsertIshikawa(
   planId: string,
   body: IshikawaAnalysis,

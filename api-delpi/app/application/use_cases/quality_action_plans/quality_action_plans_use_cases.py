@@ -26,6 +26,15 @@ class QualityActionPlanRepository(Protocol):
         comment: str | None = None,
     ) -> dict[str, Any] | None: ...
 
+    def reopen_plan(
+        self,
+        plan_id: str,
+        *,
+        target_status: str,
+        reason: str,
+        updated_by: str,
+    ) -> dict[str, Any] | None: ...
+
     def update_plan(self, plan_id: str, fields: dict[str, Any]) -> dict[str, Any] | None: ...
 
 
@@ -180,6 +189,7 @@ class UpdateQualityActionPlanStatusUseCase:
         "completed",
         "cancelled",
     }
+    TERMINAL_STATUSES = frozenset({"completed", "cancelled"})
 
     def __init__(self, repository: QualityActionPlanRepository) -> None:
         self._repository = repository
@@ -194,9 +204,71 @@ class UpdateQualityActionPlanStatusUseCase:
     ) -> dict[str, Any] | None:
         if status not in self.VALID_STATUSES:
             raise ValueError(f"status inválido: {status}")
+
+        current = self._repository.get_plan_by_id(plan_id)
+        if not current:
+            return None
+
+        previous_status = current.get("status")
+        if previous_status in self.TERMINAL_STATUSES:
+            raise ValueError(
+                "Plano concluído ou cancelado deve ser reaberto pelo fluxo de reabertura."
+            )
+
         return self._repository.update_plan_status(
             plan_id,
             status=status,
             updated_by=updated_by,
             comment=comment,
+        )
+
+
+class ReopenQualityActionPlanUseCase:
+    REOPEN_TARGET_STATUSES = frozenset(
+        {
+            "triage",
+            "containment",
+            "root_cause_analysis",
+            "action_plan_defined",
+            "in_progress",
+            "waiting_validation",
+        }
+    )
+    DEFAULT_TARGET_BY_PREVIOUS = {
+        "completed": "in_progress",
+        "cancelled": "triage",
+    }
+
+    def __init__(self, repository: QualityActionPlanRepository) -> None:
+        self._repository = repository
+
+    def execute(
+        self,
+        plan_id: str,
+        *,
+        reason: str,
+        target_status: str | None = None,
+        updated_by: str,
+    ) -> dict[str, Any] | None:
+        normalized_reason = (reason or "").strip()
+        if len(normalized_reason) < 5:
+            raise ValueError("Informe o motivo da reabertura (mínimo 5 caracteres).")
+
+        current = self._repository.get_plan_by_id(plan_id)
+        if not current:
+            return None
+
+        previous_status = current.get("status")
+        resolved_target = target_status or self.DEFAULT_TARGET_BY_PREVIOUS.get(
+            previous_status,
+            "in_progress",
+        )
+        if resolved_target not in self.REOPEN_TARGET_STATUSES:
+            raise ValueError(f"status alvo inválido: {resolved_target}")
+
+        return self._repository.reopen_plan(
+            plan_id,
+            target_status=resolved_target,
+            reason=normalized_reason,
+            updated_by=updated_by,
         )

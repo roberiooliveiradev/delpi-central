@@ -67,6 +67,7 @@ export type DashboardSummary = {
   breakdowns?: DashboardBreakdowns;
   rankings?: DashboardRankings;
   recurrence_alert?: DashboardRecurrenceAlert;
+  stalled_alert?: DashboardStalledAlert;
   effectiveness_by_action_type?: DashboardEffectivenessByActionType;
 };
 
@@ -119,6 +120,23 @@ export type DashboardRecurrenceAlert = {
   plans_in_window: number;
   open_plans_in_recurrence: number;
   top_groups: DashboardRecurrenceGroupAlert[];
+};
+
+export type DashboardStalledPlanAlert = {
+  id: string;
+  code?: string | null;
+  title?: string | null;
+  branch_code?: string | null;
+  status?: string | null;
+  updated_at?: string | null;
+  days_without_update: number;
+};
+
+export type DashboardStalledAlert = {
+  stall_days: number;
+  severity: string;
+  stalled_plans: number;
+  top_plans: DashboardStalledPlanAlert[];
 };
 
 export type DashboardEffectivenessBucket = {

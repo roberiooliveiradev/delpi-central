@@ -4,6 +4,7 @@ import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
 import { DashboardEffectivenessCharts } from "../components/dashboard/DashboardEffectivenessCharts";
 import { DashboardRecurrenceAlertCard } from "../components/dashboard/DashboardRecurrenceAlertCard";
+import { DashboardStalledAlertCard } from "../components/dashboard/DashboardStalledAlertCard";
 import { DashboardRankingCharts } from "../components/dashboard/DashboardRankingCharts";
 import { DashboardBreakdownCharts } from "../components/dashboard/DashboardBreakdownCharts";
 import { DashboardCharts } from "../components/dashboard/DashboardCharts";
@@ -112,6 +113,11 @@ export function DashboardPage({ onNavigate }: Props) {
           <DashboardTimingKpis timing={summary.timing} loading={loading} />
           <DashboardRecurrenceAlertCard
             alert={summary.recurrence_alert}
+            loading={loading}
+            onNavigate={onNavigate}
+          />
+          <DashboardStalledAlertCard
+            alert={summary.stalled_alert}
             loading={loading}
             onNavigate={onNavigate}
           />

@@ -14,6 +14,9 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
 )
 
+_TERMINAL_PLAN_STATUSES = frozenset({"completed", "cancelled"})
+_STALL_DAYS_CRITICAL = 7
+
 
 class PostgresQualityActionPlanRepository(PluginBaseRepository):
     """Leitura e escrita PAC Qualidade (plugin + agente GPT via api-pac-quality)."""
@@ -321,6 +324,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 nonconformity_scope=nonconformity_scope,
                 months=months,
             )
+            result["stalled_alert"] = self._fetch_stalled_alert(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+            )
             return result
 
         by_branch_rows = self.fetch_all(
@@ -398,6 +405,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             branch_code=branch_code,
             nonconformity_scope=nonconformity_scope,
             months=months,
+        )
+        result["stalled_alert"] = self._fetch_stalled_alert(
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
         )
         return result
 
@@ -737,6 +748,79 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     "plans_in_window": int(row.get("plans_in_window") or 0),
                     "total_plans": int(row.get("total_plans") or 0),
                     "open_plans": int(row.get("open_plans") or 0),
+                }
+                for row in top_rows
+            ],
+        }
+
+    def _fetch_stalled_alert(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        stall_days: int = _STALL_DAYS_CRITICAL,
+        limit: int = 8,
+    ) -> dict[str, Any]:
+        filters = [
+            "p.deleted_at IS NULL",
+            "p.status NOT IN ('completed', 'cancelled')",
+            "p.severity = 'critical'",
+            "p.updated_at < NOW() - make_interval(days => %s)",
+        ]
+        params: list[Any] = [stall_days]
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+        if nonconformity_scope:
+            filters.append("p.nonconformity_scope = %s")
+            params.append(nonconformity_scope)
+        where_clause = " AND ".join(filters)
+
+        summary_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*)::int AS stalled_plans
+              FROM quality.quality_action_plans p
+             WHERE {where_clause}
+            """,
+            tuple(params),
+        )
+
+        top_rows = self.fetch_all(
+            f"""
+            SELECT p.id,
+                   p.code,
+                   p.title,
+                   p.branch_code,
+                   p.status,
+                   p.updated_at,
+                   EXTRACT(
+                       DAY FROM (NOW() - p.updated_at)
+                   )::int AS days_without_update
+              FROM quality.quality_action_plans p
+             WHERE {where_clause}
+             ORDER BY p.updated_at ASC, p.code ASC
+             LIMIT %s
+            """,
+            tuple([*params, limit]),
+        )
+
+        return {
+            "stall_days": stall_days,
+            "severity": "critical",
+            "stalled_plans": int((summary_row or {}).get("stalled_plans") or 0),
+            "top_plans": [
+                {
+                    "id": str(row["id"]),
+                    "code": row.get("code"),
+                    "title": row.get("title"),
+                    "branch_code": row.get("branch_code"),
+                    "status": row.get("status"),
+                    "updated_at": (
+                        row["updated_at"].isoformat()
+                        if isinstance(row.get("updated_at"), datetime)
+                        else row.get("updated_at")
+                    ),
+                    "days_without_update": int(row.get("days_without_update") or 0),
                 }
                 for row in top_rows
             ],
@@ -1278,7 +1362,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if not current:
             return None
 
-        closed_at_sql = ", closed_at = NOW()" if status == "completed" else ""
+        previous_status = current.get("status")
+        closed_at_sql = ""
+        if status in _TERMINAL_PLAN_STATUSES:
+            closed_at_sql = ", closed_at = NOW()"
+
         self.execute(
             f"""
             UPDATE quality.quality_action_plans
@@ -1288,13 +1376,84 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             (status, plan_id),
             auto_commit=False,
         )
+        history_event = (
+            "plan_closed" if status in _TERMINAL_PLAN_STATUSES else "status_changed"
+        )
         self.append_history(
             plan_id=plan_id,
-            event_type="status_changed",
+            event_type=history_event,
             created_by=updated_by,
-            old_value=current.get("status"),
+            old_value=previous_status,
             new_value=status,
             comment=comment,
+            auto_commit=False,
+        )
+        if status in _TERMINAL_PLAN_STATUSES:
+            self.append_audit_log(
+                entity_type="quality_action_plan",
+                entity_id=plan_id,
+                event_type="plan_closed",
+                actor_user_id=updated_by,
+                payload={
+                    "previous_status": previous_status,
+                    "status": status,
+                    "comment": comment,
+                },
+                auto_commit=False,
+            )
+        self.commit()
+        return self.get_plan_by_id(plan_id)
+
+    def reopen_plan(
+        self,
+        plan_id: str,
+        *,
+        target_status: str,
+        reason: str,
+        updated_by: str,
+    ) -> dict[str, Any] | None:
+        current = self.get_plan_by_id(plan_id)
+        if not current:
+            return None
+
+        previous_status = current.get("status")
+        if previous_status not in _TERMINAL_PLAN_STATUSES:
+            raise ValueError(
+                "Somente planos concluídos ou cancelados podem ser reabertos."
+            )
+        if target_status in _TERMINAL_PLAN_STATUSES:
+            raise ValueError("Status alvo inválido para reabertura.")
+
+        self.execute(
+            """
+            UPDATE quality.quality_action_plans
+               SET status = %s,
+                   closed_at = NULL,
+                   updated_at = NOW()
+             WHERE id = %s AND deleted_at IS NULL
+            """,
+            (target_status, plan_id),
+            auto_commit=False,
+        )
+        self.append_history(
+            plan_id=plan_id,
+            event_type="plan_reopened",
+            created_by=updated_by,
+            old_value=previous_status,
+            new_value=target_status,
+            comment=reason,
+            auto_commit=False,
+        )
+        self.append_audit_log(
+            entity_type="quality_action_plan",
+            entity_id=plan_id,
+            event_type="plan_reopened",
+            actor_user_id=updated_by,
+            payload={
+                "previous_status": previous_status,
+                "target_status": target_status,
+                "reason": reason,
+            },
             auto_commit=False,
         )
         self.commit()
@@ -1318,6 +1477,32 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             ) VALUES (%s, %s, %s, %s, %s, %s)
             """,
             (plan_id, event_type, old_value, new_value, comment, created_by),
+            auto_commit=auto_commit,
+        )
+
+    def append_audit_log(
+        self,
+        *,
+        entity_type: str,
+        entity_id: str,
+        event_type: str,
+        actor_user_id: str,
+        payload: dict[str, Any] | None = None,
+        auto_commit: bool = True,
+    ) -> None:
+        self.execute(
+            """
+            INSERT INTO quality.quality_audit_log (
+                entity_type, entity_id, event_type, payload, actor_user_id
+            ) VALUES (%s, %s, %s, %s::jsonb, %s)
+            """,
+            (
+                entity_type,
+                entity_id,
+                event_type,
+                json.dumps(payload or {}),
+                actor_user_id,
+            ),
             auto_commit=auto_commit,
         )
 
@@ -1576,6 +1761,17 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             created_by=updated_by,
             new_value=fields["effectiveness_status"],
             comment=fields.get("notes"),
+            auto_commit=False,
+        )
+        self.append_audit_log(
+            entity_type="quality_action_plan",
+            entity_id=plan_id,
+            event_type="effectiveness_reviewed",
+            actor_user_id=updated_by,
+            payload={
+                "effectiveness_status": fields["effectiveness_status"],
+                "notes": fields.get("notes"),
+            },
             auto_commit=False,
         )
         self.commit()

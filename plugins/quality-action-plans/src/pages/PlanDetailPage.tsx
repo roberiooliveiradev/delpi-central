@@ -19,6 +19,7 @@ import {
   fetchActionPlanDetail,
   promoteSolutionPattern,
   recordEffectivenessReview,
+  reopenPlan,
   updateActionPlan,
   updatePlanAction,
   updatePlanStatus,
@@ -119,6 +120,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [rnc8dForm, setRnc8dForm] = useState<Rnc8dReportPayload>({});
   const [effectivenessStatus, setEffectivenessStatus] = useState("pending");
   const [effectivenessNotes, setEffectivenessNotes] = useState("");
+  const [reopenReason, setReopenReason] = useState("");
+  const [reopenTargetStatus, setReopenTargetStatus] = useState("in_progress");
   const [saving, setSaving] = useState<string | null>(null);
   const [identificationForm, setIdentificationForm] = useState({
     title: "",
@@ -144,6 +147,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       const data = await fetchActionPlanDetail(planId);
       setDetail(data);
       setStatusValue(data.plan.status);
+      setReopenTargetStatus(
+        data.plan.status === "cancelled" ? "triage" : "in_progress",
+      );
       setIshikawaForm({ ...EMPTY_ISHIKAWA, ...(data.ishikawa ?? {}) });
       setFiveWhysForm({ ...EMPTY_FIVE_WHYS, ...(data.five_whys ?? {}) });
       setRnc8dForm({
@@ -207,7 +213,12 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   }
 
   const plan = detail?.plan;
+  const terminalStatuses = new Set(["completed", "cancelled"]);
+  const isTerminalPlan = plan ? terminalStatuses.has(plan.status) : false;
   const statusOptions = PLAN_STATUSES.map((item) => ({ value: item.value, label: item.label }));
+  const reopenStatusOptions = PLAN_STATUSES.filter(
+    (item) => !terminalStatuses.has(item.value) && item.value !== "draft",
+  ).map((item) => ({ value: item.value, label: item.label }));
   const isRnc8dTemplate = plan?.customer_template === "rnc_8d";
 
   async function handleExportRnc8d() {
@@ -453,27 +464,66 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               </div>
             </dl>
             <div className="pac-inline-form">
-              <SelectField
-                id="pac-plan-status"
-                label="Atualizar status"
-                options={statusOptions}
-                value={statusValue}
-                onChange={setStatusValue}
-                searchable
-              />
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "status"}
-                onClick={() =>
-                  void runSave("status", async () => {
-                    await updatePlanStatus(planId, statusValue);
-                  })
-                }
-              >
-                <Save size={16} />
-                {saving === "status" ? "Salvando…" : "Salvar status"}
-              </button>
+              {isTerminalPlan ? (
+                <>
+                  <label className="pac-field pac-field--full">
+                    <span className="pac-field__label">Motivo da reabertura</span>
+                    <textarea
+                      className="pac-field__control pac-field__control--textarea"
+                      rows={3}
+                      value={reopenReason}
+                      onChange={(event) => setReopenReason(event.target.value)}
+                      placeholder="Descreva por que o plano precisa ser reaberto…"
+                    />
+                  </label>
+                  <SelectField
+                    id="pac-plan-reopen-status"
+                    label="Retomar em"
+                    options={reopenStatusOptions}
+                    value={reopenTargetStatus}
+                    onChange={setReopenTargetStatus}
+                    searchable={false}
+                  />
+                  <button
+                    type="button"
+                    className="pac-primary-btn"
+                    disabled={saving === "reopen" || reopenReason.trim().length < 5}
+                    onClick={() =>
+                      void runSave("reopen", async () => {
+                        await reopenPlan(planId, reopenReason, reopenTargetStatus);
+                        setReopenReason("");
+                      })
+                    }
+                  >
+                    <Save size={16} />
+                    {saving === "reopen" ? "Reabrindo…" : "Reabrir plano"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <SelectField
+                    id="pac-plan-status"
+                    label="Atualizar status"
+                    options={statusOptions}
+                    value={statusValue}
+                    onChange={setStatusValue}
+                    searchable
+                  />
+                  <button
+                    type="button"
+                    className="pac-primary-btn"
+                    disabled={saving === "status"}
+                    onClick={() =>
+                      void runSave("status", async () => {
+                        await updatePlanStatus(planId, statusValue);
+                      })
+                    }
+                  >
+                    <Save size={16} />
+                    {saving === "status" ? "Salvando…" : "Salvar status"}
+                  </button>
+                </>
+              )}
             </div>
           </SectionCard>
 

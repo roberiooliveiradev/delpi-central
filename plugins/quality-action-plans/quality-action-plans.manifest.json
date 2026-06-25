@@ -32,6 +32,24 @@
       "name": "Gerenciar planos de ação",
       "description": "Operações administrativas e encerramento de planos PAC",
       "module": "quality-action-plans"
+    },
+    {
+      "code": "quality-action-plans.close",
+      "name": "Encerrar e reabrir planos",
+      "description": "Concluir, cancelar ou reabrir planos PAC com trilha auditada",
+      "module": "quality-action-plans"
+    },
+    {
+      "code": "quality-action-plans.validate-effectiveness",
+      "name": "Validar eficácia",
+      "description": "Registrar revisão de eficácia de planos PAC",
+      "module": "quality-action-plans"
+    },
+    {
+      "code": "quality-action-plans.admin",
+      "name": "Administrar PAC Qualidade",
+      "description": "Configuração e governança do módulo PAC Qualidade",
+      "module": "quality-action-plans"
     }
   ],
   "routes": [

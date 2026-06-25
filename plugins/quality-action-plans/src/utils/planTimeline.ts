@@ -52,6 +52,14 @@ function titleForHistoryEvent(event: PlanHistoryEvent): string {
       return event.old_value && event.new_value
         ? `Status: ${statusLabel(event.old_value)} → ${statusLabel(event.new_value)}`
         : "Status atualizado";
+    case "plan_closed":
+      return event.new_value
+        ? `Plano encerrado (${statusLabel(event.new_value)})`
+        : "Plano encerrado";
+    case "plan_reopened":
+      return event.old_value && event.new_value
+        ? `Plano reaberto: ${statusLabel(event.old_value)} → ${statusLabel(event.new_value)}`
+        : "Plano reaberto";
     case "action_created":
       return "Ação registrada";
     case "action_completed":

@@ -36,6 +36,7 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
         "partially_effective_plans": 0,
         "ineffective_plans": 0,
       },
+      {"stalled_plans": 0},
     ]
   )
   repo.fetch_all = MagicMock(return_value=[])
@@ -194,6 +195,7 @@ def test_dashboard_summary_with_branch_and_scope_invokes_recurrence_with_filters
                 "partially_effective_plans": 0,
                 "ineffective_plans": 0,
             },
+            {"stalled_plans": 0},
         ]
     )
     repo.fetch_all = MagicMock(return_value=[])
@@ -204,6 +206,7 @@ def test_dashboard_summary_with_branch_and_scope_invokes_recurrence_with_filters
     assert result["nonconformity_scope"] == "external"
     recurrence_call = repo.fetch_one.call_args_list[4]
     assert recurrence_call[0][1] == (12, "01", "external", 12)
+    assert "stalled_alert" in result
 
 
 def test_dashboard_effectiveness_by_action_type_maps_rows():

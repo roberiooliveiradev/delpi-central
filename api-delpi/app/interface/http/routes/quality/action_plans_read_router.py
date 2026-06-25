@@ -5,10 +5,13 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
 from delpi_auth.authorization import require_any_permission
+from delpi_auth.authz_core import has_any_permission
 from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
+    QUALITY_ACTION_PLANS_CLOSE_PERMISSIONS,
     QUALITY_ACTION_PLANS_READ_PERMISSIONS,
+    QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS,
     QUALITY_ACTION_PLANS_WRITE_PERMISSIONS,
 )
 from app.application.services.quality_action_plans.pac_evidence_storage import (
@@ -30,6 +33,7 @@ from app.composition.quality_action_plans_composer import (
     build_create_quality_action_plan_use_case,
     build_quality_action_plan_read_repository,
     build_record_effectiveness_review_use_case,
+    build_reopen_quality_action_plan_use_case,
     build_update_plan_action_use_case,
     build_update_quality_action_plan_status_use_case,
     build_update_quality_action_plan_use_case,
@@ -142,6 +146,17 @@ class UpdateActionPlanStatusBody(BaseModel):
     comment: str | None = None
 
 
+class ReopenActionPlanBody(BaseModel):
+    reason: str = Field(..., min_length=5, max_length=2000)
+    target_status: str | None = Field(
+        default=None,
+        pattern=(
+            "^(triage|containment|root_cause_analysis|action_plan_defined|"
+            "in_progress|waiting_validation)$"
+        ),
+    )
+
+
 class IshikawaBody(BaseModel):
     machine: str | None = None
     method_process: str | None = None
@@ -232,6 +247,20 @@ def _current_user_id() -> str:
     if user is None:
         return "unknown"
     return str(getattr(user, "id", "unknown"))
+
+
+def _permission_denied_if_missing(permission_codes: list[str]):
+    user = get_current_user()
+    if user is None:
+        return error_response("Não autenticado.", status_code=401)
+    if getattr(user, "is_superadmin", False):
+        return None
+    if not has_any_permission(user, permission_codes):
+        return error_response("Sem permissão para esta operação.", status_code=403)
+    return None
+
+
+_TERMINAL_PLAN_STATUSES = frozenset({"completed", "cancelled"})
 
 
 @router.get("/dashboard", **_pac_openapi("get_quality_action_plans_dashboard", "/dashboard"))
@@ -567,6 +596,10 @@ def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
 )
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = Body(...)):
+    if body.status in _TERMINAL_PLAN_STATUSES:
+        denied = _permission_denied_if_missing(QUALITY_ACTION_PLANS_CLOSE_PERMISSIONS)
+        if denied is not None:
+            return denied
     try:
         plan = build_update_quality_action_plan_status_use_case().execute(
             plan_id,
@@ -586,6 +619,33 @@ def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = B
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar status do plano PAC {plan_id}: {exc}")
         return error_response("Erro ao atualizar status do plano.", status_code=500)
+
+
+@router.post(
+    "/{plan_id}/reopen",
+    **_pac_openapi("reopen_quality_action_plan", "/{plan_id}/reopen"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_CLOSE_PERMISSIONS)
+def reopen_action_plan(plan_id: str, body: ReopenActionPlanBody = Body(...)):
+    try:
+        plan = build_reopen_quality_action_plan_use_case().execute(
+            plan_id,
+            reason=body.reason,
+            target_status=body.target_status,
+            updated_by=_current_user_id(),
+        )
+        if not plan:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            plan,
+            operation_id="reopen_quality_action_plan",
+            message="Plano reaberto com sucesso.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao reabrir plano PAC {plan_id}: {exc}")
+        return error_response("Erro ao reabrir plano.", status_code=500)
 
 
 @router.put(
@@ -697,7 +757,7 @@ def update_plan_action(plan_id: str, action_id: str, body: UpdateActionBody = Bo
     "/{plan_id}/effectiveness-review",
     **_pac_openapi("record_quality_action_plan_effectiveness", "/{plan_id}/effectiveness-review"),
 )
-@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+@require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
 def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Body(...)):
     try:
         result = build_record_effectiveness_review_use_case().execute(
