@@ -127,6 +127,24 @@ Valida: dois planos com mesma `recurrence_key` aparecem em `GET /recurrence`; `G
 | H10 | Notificação de ação vencendo em 48 h | 4 |
 | H11 | Aprovação de eficácia (submit → approve/reject) | 4 |
 | H12 | Chat Minha DELPI — skill PAC + modo só consulta | 5 |
+| H13 | Evals agente GPT — 20 cenários anonimizados (≥ 90%) | 5 |
+
+### H13 — Evals agente GPT (Onda 5.4)
+
+| Passo | Ação | Esperado |
+|---|---|---|
+| 1 | CI: catálogo válido | `run_pac_agent_eval.py --check-catalog` exit 0 |
+| 2 | Rodar EVAL01–EVAL20 no Custom GPT (produção) | Salvar respostas em `eval_responses.json` |
+| 3 | Pontuar | `run_pac_agent_eval.py --score-file eval_responses.json --min-pass-rate 0.9` |
+| 4 | Verificar `similar_cases_decision_log` | Agente cita `influence_factors` ao usar histórico |
+
+```bash
+cd api-pac-quality
+.venv/bin/python scripts/run_pac_agent_eval.py --check-catalog
+.venv/bin/pytest tests/unit/test_pac_agent_eval_cases.py tests/unit/test_run_pac_agent_eval_script.py -q
+```
+
+---
 
 ### H12 — Chat Minha DELPI (skill PAC, Onda 5.6–5.7)
 
