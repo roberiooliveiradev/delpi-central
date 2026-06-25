@@ -24,7 +24,6 @@ from app.infrastructure.ocr.pac_evidence_image_ocr_service import PacEvidenceIma
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
-from app.utils.logger import log_error
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +101,7 @@ def get_quality_knowledge_graph(
             operation_id="get_quality_action_plan_knowledge_graph",
         )
     except PluginsRepositoryError:
-        log_error(logger, "Erro ao montar grafo de conhecimento PAC.")
+        logger.exception("Erro ao montar grafo de conhecimento PAC.")
         return error_response(
             "Erro ao consultar grafo de conhecimento.",
             status_code=500,
@@ -139,7 +138,7 @@ def assess_recurrence_on_opening(body: RecurrenceOpeningAssessmentBody = Body(..
     except ValueError as exc:
         return error_response(str(exc), status_code=400)
     except PluginsRepositoryError:
-        log_error(logger, "Erro ao avaliar recorrência na abertura PAC.")
+        logger.exception("Erro ao avaliar recorrência na abertura PAC.")
         return error_response(
             "Erro ao avaliar recorrência histórica.",
             status_code=500,

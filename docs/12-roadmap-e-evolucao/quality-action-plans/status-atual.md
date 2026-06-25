@@ -8,7 +8,7 @@
 
 | Camada | Maturidade | Nota |
 |---|---|---|
-| Modelo de dados + migrations | Alta | V001–V009 no plugin `quality-action-plans` |
+| Modelo de dados + migrations | Alta | V001–V011 no plugin `quality-action-plans` |
 | API PAC (`api-pac-quality`) | Média-alta | **Produção** (agente GPT); paridade de escrita — validar localmente só na **api-delpi** |
 | API consolidada (`api-delpi`) | Média-alta | **Canônica** para plugin + homologação local (V007) |
 | Plugin MFE | Média | Fluxo analista ok; imagem `delpi-quality-action-plans` reconstruída |
@@ -31,8 +31,10 @@
 | V005 | `nonconformity_scope` | Implementada |
 | V006 | `rnc_8d`, evidências com arquivo, equipe, trilha detecção | APLICADA (local + prod) |
 | V007 | `action_id` em evidências (vínculo com ação do plano) | APLICADA (local + prod) |
-| V008 | Audit log PAC (`quality_audit_log`) | Implementada |
-| V009 | `search_embedding` pgvector (busca semântica) | Implementada |
+| V008 | Audit log PAC (`quality_audit_log`) | APLICADA |
+| V009 | `quality_notification_dispatches` (dedup alertas) | APLICADA |
+| V010 | Workflow aprovação de eficácia | APLICADA |
+| V011 | `search_embedding` pgvector (busca semântica) | APLICADA |
 
 ---
 

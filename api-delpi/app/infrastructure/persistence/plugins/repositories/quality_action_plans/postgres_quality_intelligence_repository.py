@@ -443,7 +443,8 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
                 ON a.plan_id = p.id
                AND a.status = 'completed'
              WHERE {where_clause}
-             GROUP BY p.product_code, p.failure_mode, root_cause, a.description
+             GROUP BY p.product_code, p.failure_mode,
+                      COALESCE(fw.root_cause, p.root_cause_category), a.description
             HAVING COUNT(DISTINCT p.id) >= 1
              ORDER BY plan_count DESC, effective_plan_count DESC, p.product_code
              LIMIT %s

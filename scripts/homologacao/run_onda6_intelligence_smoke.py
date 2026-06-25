@@ -75,8 +75,17 @@ def main() -> int:
     )
     assert tags.get("success"), tags
     tag_data = tags.get("data") or {}
-    assert "suggested_tags" in tag_data, tag_data
-    print(f"OK suggest-evidence-tags count={len(tag_data.get('suggested_tags') or [])}")
+    has_tags = any(
+        tag_data.get(key)
+        for key in (
+            "suggested_tags",
+            "suggested_symptom_tags",
+            "suggested_failure_modes",
+            "suggested_product_codes",
+        )
+    )
+    assert has_tags, tag_data
+    print("OK suggest-evidence-tags")
 
     print("Onda 6 intelligence smoke OK")
     return 0
