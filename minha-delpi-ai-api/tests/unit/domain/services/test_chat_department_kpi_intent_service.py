@@ -109,3 +109,22 @@ def test_resolve_production_oee_apontamentos():
     assert match is not None
     assert match.path_token == "oee"
     assert match.domain_prefix == "/production/"
+
+
+def test_resolve_commercial_branch_rol_target_meta_percentual_filial():
+    match = ChatDepartmentKpiIntentService.resolve(
+        "Qual é a meta percentual de ROL da filial?"
+    )
+
+    assert match is not None
+    assert match.path_token == "branch_rol_target"
+    assert match.domain_prefix == "/commercial/"
+
+
+def test_branch_rol_target_question_is_not_capability_inquiry():
+    from app.application.services.chat_capabilities_service import ChatCapabilitiesService
+
+    message = "Qual é a meta percentual de ROL da filial?"
+
+    assert ChatDepartmentKpiIntentService.resolve(message) is not None
+    assert ChatCapabilitiesService.is_capability_inquiry(message) is False

@@ -298,6 +298,8 @@
       "\\bqual\\s+(o|a)\\s+otd\\b",
       "\\bqual\\s+(o|a)\\s+pmr\\b",
       "\\bqual\\s+(o|a)\\s+rol\\b",
+      "\\bqual\\s+.{0,40}\\bmeta\\b.{0,30}\\brol\\b",
+      "\\bmeta\\s+percentual.{0,20}\\brol\\b",
       "\\bqual\\s+(o|a)\\s+ebitda\\b",
       "\\bqual\\s+(o|a)\\s+giro\\b",
       "\\bquem\\s+fornece\\b",

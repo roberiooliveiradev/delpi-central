@@ -84,7 +84,9 @@
       "keywords": [
         "meta rol matriz",
         "rol matriz",
-        "meta da matriz"
+        "meta da matriz",
+        "meta percentual de rol da matriz",
+        "meta percentual rol da matriz"
       ],
       "excludes": [
         "filial"
@@ -96,7 +98,11 @@
       "pathToken": "branch_rol_target",
       "keywords": [
         "meta rol filial",
-        "rol filial meta"
+        "rol filial meta",
+        "meta percentual de rol da filial",
+        "meta percentual rol da filial",
+        "percentual de rol da filial",
+        "meta de rol da filial"
       ],
       "excludes": [
         "matriz"
