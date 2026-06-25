@@ -366,7 +366,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `chat_operational_refinement_service.py` | ~~1208~~ **~236** | ✅ **OK (jun/2026)** — delegates `chat_operational_refinement/*` (heuristics, pagination, stock, metric, group-by, orchestration) |
 | `external_action_operational_route_selection_service.py` | ~~1079~~ **~279** | ✅ **OK (jun/2026)** — delegates `operational_route_selection/*` |
 | `chat_turn_completion_service.py` | ~~1071~~ **~200** | ✅ **OK (jun/2026)** — delegates `ChatTurnCompletionFinalize/Intelligence/Metadata/AuditService` |
-| `chat_product_query_intent_service.py` | 1164 | Predicates → `product_query_intent.json` |
+| `chat_product_query_intent_service.py` | ~~1164~~ **~330** | ✅ **OK (jun/2026)** — delegates `chat_product_query_intent/*` + `ChatProductQueryIntentDetectionService` |
 | `product_raw_material_price_presenter.py` | 1503 | Split por sub-entidade |
 | `chat_operational_data_commentary_service.py` | 976 | Após W1 registry |
 | `chat_advanced_sql_specialist_service.py` | 1369 | Cluster SQL existente |
@@ -512,7 +512,8 @@ external_actions/presenters/operational_response_presenter.py
 **Intent / roteamento (W2–W3):**
 
 ```
-chat_product_query_intent_service.py
+chat_product_query_intent_service.py                   # W3 ✅
+chat_product_query_intent/                             # delegates W3
 chat_intent_router_service.py
 chat_operational_refinement_service.py                   # W3 ✅
 chat_operational_refinement/                             # delegates W3
@@ -644,3 +645,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ExternalActionOperationalRouteSelectionService` fatiado em `operational_route_selection/*` (resolver, vocabulary, domain, auto tier C); fachada ~279L |
 | jun/2026 | W3 — `ChatDocumentVisionService` fatiado em `chat_document_vision/*` (config, pipeline, stage, attachment, drawing_merge); fachada ~295L |
 | jun/2026 | W3 — `ChatOperationalRefinementService` fatiado em `chat_operational_refinement/*` (heuristics, pagination, stock, metric, group-by, orchestration); fachada ~236L |
+| jun/2026 | W3 — `ChatProductQueryIntentService` fatiado em `chat_product_query_intent/*` (code, content, context, resolution, predicate, direct answer); fachada ~330L |
