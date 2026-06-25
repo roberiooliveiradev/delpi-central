@@ -70,7 +70,15 @@ export function computeRnc8dDisciplineProgress(detail: ActionPlanDetail): Rnc8dD
         hasText(fiveWhys?.why_5) ||
         Boolean(
           ishikawa &&
-            Object.values(ishikawa).some((value) => typeof value === "string" && value.trim()),
+            (hasText(ishikawa.notes) ||
+              [
+                ishikawa.machine,
+                ishikawa.method_process,
+                ishikawa.material,
+                ishikawa.manpower,
+                ishikawa.measurement,
+                ishikawa.environment,
+              ].some((value) => Array.isArray(value) && value.some((item) => hasText(item)))),
         ),
       hint: "5 Porquês ou Ishikawa preenchidos.",
     },

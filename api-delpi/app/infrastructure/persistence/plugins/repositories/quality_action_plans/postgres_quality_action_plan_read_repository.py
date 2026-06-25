@@ -4,6 +4,10 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from app.domain.services.quality_action_plans.ishikawa_causes_service import (
+    ishikawa_causes_json,
+    serialize_ishikawa_row,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_serialization import (
     PLAN_SELECT,
     serialize_plan_row,
@@ -198,7 +202,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
 
         return {
             "plan": serialize_plan_row(plan_row),
-            "ishikawa": serialize_row(ishikawa, id_keys=("id", "plan_id")),
+            "ishikawa": serialize_ishikawa_row(ishikawa),
             "five_whys": serialize_row(five_whys, id_keys=("id", "plan_id")),
             "team_members": [
                 serialize_row(row, id_keys=("id", "plan_id")) for row in team_members if row
@@ -1858,11 +1862,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if not self._plan_exists(plan_id):
             return None
 
+        causes_json = ishikawa_causes_json(fields)
         row = self.execute_returning_one(
             """
             INSERT INTO quality.quality_ishikawa_analysis (
                 plan_id, machine, method_process, material, manpower, measurement, environment, notes
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s)
             ON CONFLICT (plan_id) DO UPDATE SET
                 machine = EXCLUDED.machine,
                 method_process = EXCLUDED.method_process,
@@ -1877,12 +1882,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             """,
             (
                 plan_id,
-                fields.get("machine"),
-                fields.get("method_process"),
-                fields.get("material"),
-                fields.get("manpower"),
-                fields.get("measurement"),
-                fields.get("environment"),
+                causes_json["machine"],
+                causes_json["method_process"],
+                causes_json["material"],
+                causes_json["manpower"],
+                causes_json["measurement"],
+                causes_json["environment"],
                 fields.get("notes"),
             ),
             auto_commit=False,
@@ -1894,7 +1899,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             auto_commit=False,
         )
         self.commit()
-        return serialize_row(row, id_keys=("id", "plan_id"))
+        return serialize_ishikawa_row(row)
 
     def upsert_five_whys(
         self, plan_id: str, fields: dict[str, Any], *, updated_by: str

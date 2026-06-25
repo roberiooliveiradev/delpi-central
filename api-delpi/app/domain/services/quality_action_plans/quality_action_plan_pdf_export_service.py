@@ -10,6 +10,9 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.domain.services.quality_action_plans.ishikawa_causes_service import (
+    ishikawa_category_lines,
+)
 from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
     SUPPLIER_BY_BRANCH,
     _material_label,
@@ -207,15 +210,16 @@ def _plan_identification_rows(plan: dict[str, Any]) -> list[tuple[str, str]]:
         ("Registrado em", _format_date(plan.get("created_at"))),
     ]
 
-
 def _ishikawa_items(ishikawa: dict[str, Any] | None) -> list[str]:
     if not ishikawa:
         return []
     items: list[str] = []
     for key, label in ISHAKAWA_LABELS.items():
-        value = ishikawa.get(key)
-        if value and str(value).strip():
-            items.append(f"{label}: {value}")
+        for cause in ishikawa_category_lines(ishikawa.get(key)):
+            items.append(f"{label}: {cause}")
+    notes = ishikawa.get("notes")
+    if notes and str(notes).strip():
+        items.append(f"Observações: {notes}")
     return items
 
 

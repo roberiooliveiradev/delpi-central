@@ -1247,7 +1247,267 @@
   font-weight: 700;
 }
 
-/* ——— Ishikawa e 5 Porquês ——— */
+/* ——— Ishikawa (espinha de peixe) e 5 Porquês ——— */
+.dashboard-quality-action-plans .pac-fishbone {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__diagram {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, 260px);
+  grid-template-rows: minmax(0, 1fr) 44px minmax(0, 1fr);
+  column-gap: 14px;
+  row-gap: 0;
+  min-height: 360px;
+  padding: 4px 0;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__spine {
+  grid-column: 1 / 4;
+  grid-row: 2;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  align-self: center;
+  width: 100%;
+  height: 44px;
+  pointer-events: none;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__tail {
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  margin-right: 2px;
+  border-top: 13px solid transparent;
+  border-bottom: 13px solid transparent;
+  border-right: 18px solid var(--pac-card-border);
+}
+
+.dashboard-quality-action-plans .pac-fishbone__spine-track {
+  flex: 1;
+  height: 3px;
+  background: var(--pac-card-border);
+  border-radius: 999px;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__spine-arrow {
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+  border-left: 14px solid var(--pac-card-border);
+}
+
+.dashboard-quality-action-plans .pac-fishbone__column {
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__column:nth-child(2) {
+  grid-column: 1;
+  grid-row: 1 / 4;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__column:nth-child(3) {
+  grid-column: 2;
+  grid-row: 1 / 4;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__column:nth-child(4) {
+  grid-column: 3;
+  grid-row: 1 / 4;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__branch-slot {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__branch-slot--top {
+  justify-content: flex-end;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__branch-slot--bottom {
+  justify-content: flex-start;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__rib {
+  width: 2px;
+  height: 24px;
+  margin-inline: auto;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--branch-color, var(--pac-card-border)) 60%, var(--pac-card-border));
+}
+
+.dashboard-quality-action-plans .pac-fishbone__rib--down {
+  margin-top: 8px;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__rib--up {
+  margin-bottom: 8px;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__joint {
+  position: relative;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.dashboard-quality-action-plans .pac-fishbone__joint::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pac-card-bg);
+  border: 2px solid var(--pac-card-border);
+  transform: translate(-50%, -50%);
+}
+
+.dashboard-quality-action-plans .pac-fishbone__head {
+  grid-column: 4;
+  grid-row: 1 / 4;
+  z-index: 2;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 120px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--pac-text-muted) 18%, var(--pac-card-bg));
+  border: 2px solid color-mix(in srgb, var(--pac-accent) 35%, var(--pac-card-border));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--pac-text) 8%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-fishbone__head-kicker {
+  display: block;
+  font-size: var(--pac-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-fishbone__head-text {
+  margin: 8px 0 0;
+  font-size: var(--pac-font-sm);
+  font-weight: 600;
+  color: var(--pac-text);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--pac-control-radius);
+  border: 1px solid color-mix(in srgb, var(--branch-color) 35%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--branch-color) 8%, var(--pac-card-bg));
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--branch-color) 22%, transparent);
+  color: var(--branch-color);
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__label {
+  font-size: var(--pac-font-sm);
+  font-weight: 700;
+  color: var(--pac-title);
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__causes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__cause {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--pac-card-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pac-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__remove:hover:not(:disabled) {
+  color: var(--pac-danger);
+  border-color: color-mix(in srgb, var(--pac-danger) 40%, var(--pac-card-border));
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--branch-color);
+  font-size: var(--pac-font-xs);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.dashboard-quality-action-plans .pac-fishbone-branch__add:hover {
+  text-decoration: underline;
+}
+
 .dashboard-quality-action-plans .pac-ishikawa-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1467,6 +1727,38 @@
 
   .dashboard-quality-action-plans .pac-ishikawa-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-quality-action-plans .pac-fishbone__diagram {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 12px;
+  }
+
+  .dashboard-quality-action-plans .pac-fishbone__spine {
+    display: none;
+  }
+
+  .dashboard-quality-action-plans .pac-fishbone__head {
+    order: -1;
+    min-height: 0;
+  }
+
+  .dashboard-quality-action-plans .pac-fishbone__column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dashboard-quality-action-plans .pac-fishbone__branch-slot--top,
+  .dashboard-quality-action-plans .pac-fishbone__branch-slot--bottom {
+    justify-content: flex-start;
+  }
+
+  .dashboard-quality-action-plans .pac-fishbone__rib,
+  .dashboard-quality-action-plans .pac-fishbone__joint {
+    display: none;
   }
 }
 

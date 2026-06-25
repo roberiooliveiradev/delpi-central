@@ -26,7 +26,7 @@ def _sample_detail() -> dict:
             "effectiveness_status": "pending",
             "created_at": "2026-06-01T10:00:00+00:00",
         },
-        "ishikawa": {"method_process": "Parâmetro de forno incorreto"},
+        "ishikawa": {"method_process": ["Parâmetro de forno incorreto"]},
         "five_whys": {"why_1": "Pintura descascando", "root_cause": "Tempo de cura insuficiente"},
         "actions": [
             {

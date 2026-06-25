@@ -183,12 +183,12 @@ export type DashboardEffectivenessByActionType = {
 };
 
 export type IshikawaAnalysis = {
-  machine?: string | null;
-  method_process?: string | null;
-  material?: string | null;
-  manpower?: string | null;
-  measurement?: string | null;
-  environment?: string | null;
+  machine?: string[] | null;
+  method_process?: string[] | null;
+  material?: string[] | null;
+  manpower?: string[] | null;
+  measurement?: string[] | null;
+  environment?: string[] | null;
   notes?: string | null;
 };
 

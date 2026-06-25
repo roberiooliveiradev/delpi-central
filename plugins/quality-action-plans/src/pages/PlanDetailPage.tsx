@@ -1,14 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
-  Cog,
   Download,
-  FlaskConical,
-  Leaf,
-  Ruler,
   Save,
-  Users,
-  Wrench,
 } from "lucide-react";
 
 import {
@@ -32,6 +26,7 @@ import {
   upsertRnc8dReport,
 } from "../api/actionPlansApi";
 import { EvidencePanel } from "../components/EvidencePanel";
+import { IshikawaFishboneDiagram } from "../components/IshikawaFishboneDiagram";
 import { KaizenLinkField } from "../components/KaizenLinkField";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
@@ -64,28 +59,23 @@ import {
 import type {
   ActionPlanDetail,
   FiveWhysAnalysis,
-  IshikawaAnalysis,
   PlanAuditLogEntry,
 } from "../types/actionPlan";
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
 import { buildActivateRnc8dPayload } from "../utils/rnc8dPayload";
 import { formatDate, formatDateTime } from "../utils/format";
+import {
+  emptyIshikawaCausesForm,
+  parseIshikawaCausesForm,
+  serializeIshikawaCausesForm,
+  type IshikawaCausesForm,
+} from "../utils/ishikawaCauses";
 import { formatSymptomTags, parseSymptomTags } from "../utils/symptomTags";
 
 type Props = {
   planId: string;
   onNavigate: (path: string) => void;
-};
-
-const EMPTY_ISHIKAWA: IshikawaAnalysis = {
-  machine: "",
-  method_process: "",
-  material: "",
-  manpower: "",
-  measurement: "",
-  environment: "",
-  notes: "",
 };
 
 const EMPTY_FIVE_WHYS: FiveWhysAnalysis = {
@@ -120,22 +110,16 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   effectiveness_approval_rejected: "Submissão rejeitada",
 };
 
-const ISHIKAWA_FIELDS = [
-  { key: "machine" as const, label: "Máquina", icon: Cog },
-  { key: "method_process" as const, label: "Método", icon: Wrench },
-  { key: "material" as const, label: "Material", icon: FlaskConical },
-  { key: "manpower" as const, label: "Mão de obra", icon: Users },
-  { key: "measurement" as const, label: "Medição", icon: Ruler },
-  { key: "environment" as const, label: "Meio ambiente", icon: Leaf },
-];
-
 export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [statusValue, setStatusValue] = useState("");
-  const [ishikawaForm, setIshikawaForm] = useState<IshikawaAnalysis>(EMPTY_ISHIKAWA);
+  const [ishikawaCausesForm, setIshikawaCausesForm] = useState<IshikawaCausesForm>(
+    emptyIshikawaCausesForm(),
+  );
+  const [ishikawaNotes, setIshikawaNotes] = useState("");
   const [fiveWhysForm, setFiveWhysForm] = useState<FiveWhysAnalysis>(EMPTY_FIVE_WHYS);
   const [newActionType, setNewActionType] = useState("corrective");
   const [newActionDescription, setNewActionDescription] = useState("");
@@ -182,7 +166,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       setReopenTargetStatus(
         data.plan.status === "cancelled" ? "triage" : "in_progress",
       );
-      setIshikawaForm({ ...EMPTY_ISHIKAWA, ...(data.ishikawa ?? {}) });
+      setIshikawaCausesForm(parseIshikawaCausesForm(data.ishikawa));
+      setIshikawaNotes(data.ishikawa?.notes ?? "");
       setFiveWhysForm({ ...EMPTY_FIVE_WHYS, ...(data.five_whys ?? {}) });
       setRnc8dForm({
         client_nc_registry: data.plan.client_nc_registry ?? "",
@@ -709,41 +694,22 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           />
 
           <SectionCard title="Ishikawa (6M)">
-            <div className="pac-ishikawa-grid">
-              {ISHIKAWA_FIELDS.map(({ key, label, icon: Icon }) => (
-                <div key={key} className="pac-ishikawa-item">
-                  <div className="pac-ishikawa-item__head">
-                    <span className="pac-ishikawa-item__icon" aria-hidden="true">
-                      <Icon size={16} />
-                    </span>
-                    <label htmlFor={`pac-ishikawa-${key}`}>{label}</label>
-                  </div>
-                  <input
-                    id={`pac-ishikawa-${key}`}
-                    className="pac-field__control"
-                    value={ishikawaForm[key] ?? ""}
-                    onChange={(event) =>
-                      setIshikawaForm((current) => ({ ...current, [key]: event.target.value }))
-                    }
-                    placeholder={`Causas relacionadas a ${label.toLowerCase()}`}
-                  />
-                </div>
-              ))}
-            </div>
-            <FormActions>
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "ishikawa"}
-                onClick={() =>
-                  void runSave("ishikawa", async () => {
-                    await upsertIshikawa(planId, ishikawaForm);
-                  })
-                }
-              >
-                {saving === "ishikawa" ? "Salvando…" : "Salvar Ishikawa"}
-              </button>
-            </FormActions>
+            <IshikawaFishboneDiagram
+              problem={plan.reported_problem || plan.title}
+              causes={ishikawaCausesForm}
+              notes={ishikawaNotes}
+              onChange={setIshikawaCausesForm}
+              onNotesChange={setIshikawaNotes}
+              saving={saving === "ishikawa"}
+              onSave={() =>
+                void runSave("ishikawa", async () => {
+                  await upsertIshikawa(
+                    planId,
+                    serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+                  );
+                })
+              }
+            />
           </SectionCard>
 
           <SectionCard title="4. Estudo de causa — 5 Porquês (Ocorrência)">

@@ -240,8 +240,8 @@ def run_h2_smoke(
         f"{pac_api}/{plan_id}/ishikawa",
         api_key=api_key,
         data={
-            "machine": "Equipamento — hipótese H2",
-            "material": "Matéria-prima — hipótese H2",
+            "machine": ["Equipamento — hipótese H2"],
+            "material": ["Matéria-prima — hipótese H2"],
         },
     )
     _pac_request(

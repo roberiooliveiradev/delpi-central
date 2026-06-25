@@ -163,9 +163,9 @@ def run_smoke(base_url: str, token: str, *, complete_h3: bool = False) -> str:
         f"{api}/{plan_id}/ishikawa",
         token=token,
         data={
-            "machine": "Equipamento de corte — hipótese teste",
-            "material": "Matéria-prima — hipótese teste",
-            "method_process": "Sequência operacional — hipótese teste",
+            "machine": ["Equipamento de corte — hipótese teste"],
+            "material": ["Matéria-prima — hipótese teste"],
+            "method_process": ["Sequência operacional — hipótese teste"],
         },
     )
     _request(
