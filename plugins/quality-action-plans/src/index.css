@@ -1544,33 +1544,131 @@
   color: var(--pac-accent);
 }
 
-.dashboard-quality-action-plans .pac-five-whys {
-  list-style: none;
-  margin: 0 0 var(--pac-grid-gap);
-  padding: 0;
-  display: grid;
+.dashboard-quality-action-plans .pac-whys-flow {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  margin-bottom: var(--pac-grid-gap);
 }
 
-.dashboard-quality-action-plans .pac-five-whys__step {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 12px;
-  align-items: start;
+.dashboard-quality-action-plans .pac-whys-flow__track-title {
+  margin: 0;
+  font-size: var(--pac-font-sm);
+  font-weight: 700;
+  color: var(--pac-text);
 }
 
-.dashboard-quality-action-plans .pac-five-whys__index {
+.dashboard-quality-action-plans .pac-whys-flow__track-scroll {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__track {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: min-content;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__segment {
   display: flex;
   align-items: center;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  gap: 2px;
+  width: 72px;
+  flex-shrink: 0;
+  color: var(--pac-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__therefore {
+  color: color-mix(in srgb, var(--pac-text) 70%, transparent);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__pq {
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__arrow {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__arrow--back {
+  transform: scaleX(-1);
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(240px, 42vw);
+  min-height: 140px;
+  padding: 10px;
+  border: 1px dashed color-mix(in srgb, var(--pac-text) 28%, var(--pac-card-border));
+  border-radius: var(--pac-control-radius);
+  background: color-mix(in srgb, var(--pac-card-bg) 92%, var(--pac-accent) 8%);
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--pac-accent) 14%, transparent);
   color: var(--pac-accent);
   font-weight: 700;
   font-size: var(--pac-font-sm);
-  margin-top: 22px;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__input {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  border: 1px solid var(--pac-card-border);
+  border-radius: var(--pac-control-radius);
+  background: var(--pac-card-bg);
+  color: var(--pac-text);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  min-height: 140px;
+  margin-left: 12px;
+  padding: 12px 14px;
+  border: 1px dashed var(--pac-card-border);
+  border-radius: var(--pac-control-radius);
+  background: transparent;
+  color: var(--pac-accent);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__footer {
+  margin-top: 8px;
 }
 
 .dashboard-quality-action-plans .pac-new-action-form {
@@ -1602,6 +1700,50 @@
 
 .dashboard-quality-action-plans .pac-new-action-form .pac-checkbox-field input[type="checkbox"] {
   margin-top: 2px;
+}
+
+.dashboard-quality-action-plans .pac-new-action-form--editing {
+  border-color: color-mix(in srgb, var(--pac-accent) 35%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-accent) 6%, var(--pac-card-bg));
+}
+
+.dashboard-quality-action-plans .pac-new-action-form__banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--pac-font-sm);
+  font-weight: 600;
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-table-row--editing td {
+  background: color-mix(in srgb, var(--pac-accent) 8%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-ghost-btn--icon {
+  min-height: 32px;
+  padding: 6px 8px;
+}
+
+.dashboard-quality-action-plans .pac-ghost-btn--danger {
+  border-color: color-mix(in srgb, var(--pac-danger, #c0392b) 40%, var(--pac-card-border));
+  color: var(--pac-danger, #c0392b);
+}
+
+.dashboard-quality-action-plans .pac-evidence-chip__label--static {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--pac-font-sm);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--pac-text) 8%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-evidence-chip__label--required.pac-evidence-chip__label--static {
+  background: color-mix(in srgb, var(--pac-accent) 14%, transparent);
+  color: var(--pac-accent);
 }
 
 .dashboard-quality-action-plans .pac-save-banner {

@@ -4,6 +4,10 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from app.domain.services.quality_action_plans.five_whys_service import (
+    five_whys_json,
+    serialize_five_whys_row,
+)
 from app.domain.services.quality_action_plans.ishikawa_causes_service import (
     ishikawa_causes_json,
     serialize_ishikawa_row,
@@ -149,9 +153,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         five_whys = self.fetch_one(
             """
-            SELECT id, plan_id, why_1, why_2, why_3, why_4, why_5,
-                   detection_why_1, detection_why_2, detection_why_3,
-                   detection_why_4, detection_why_5,
+            SELECT id, plan_id, occurrence_whys, detection_whys,
                    root_cause, confidence_level, created_at, updated_at
               FROM quality.quality_five_whys WHERE plan_id = %s
             """,
@@ -203,7 +205,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return {
             "plan": serialize_plan_row(plan_row),
             "ishikawa": serialize_ishikawa_row(ishikawa),
-            "five_whys": serialize_row(five_whys, id_keys=("id", "plan_id")),
+            "five_whys": serialize_five_whys_row(five_whys),
             "team_members": [
                 serialize_row(row, id_keys=("id", "plan_id")) for row in team_members if row
             ],
@@ -1907,41 +1909,25 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if not self._plan_exists(plan_id):
             return None
 
+        whys_json = five_whys_json(fields)
         row = self.execute_returning_one(
             """
             INSERT INTO quality.quality_five_whys (
-                plan_id, why_1, why_2, why_3, why_4, why_5,
-                detection_why_1, detection_why_2, detection_why_3, detection_why_4, detection_why_5,
-                root_cause, confidence_level
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                plan_id, occurrence_whys, detection_whys, root_cause, confidence_level
+            ) VALUES (%s, %s::jsonb, %s::jsonb, %s, %s)
             ON CONFLICT (plan_id) DO UPDATE SET
-                why_1 = EXCLUDED.why_1, why_2 = EXCLUDED.why_2, why_3 = EXCLUDED.why_3,
-                why_4 = EXCLUDED.why_4, why_5 = EXCLUDED.why_5,
-                detection_why_1 = EXCLUDED.detection_why_1,
-                detection_why_2 = EXCLUDED.detection_why_2,
-                detection_why_3 = EXCLUDED.detection_why_3,
-                detection_why_4 = EXCLUDED.detection_why_4,
-                detection_why_5 = EXCLUDED.detection_why_5,
+                occurrence_whys = EXCLUDED.occurrence_whys,
+                detection_whys = EXCLUDED.detection_whys,
                 root_cause = EXCLUDED.root_cause,
                 confidence_level = EXCLUDED.confidence_level,
                 updated_at = NOW()
-            RETURNING id, plan_id, why_1, why_2, why_3, why_4, why_5,
-                      detection_why_1, detection_why_2, detection_why_3,
-                      detection_why_4, detection_why_5,
+            RETURNING id, plan_id, occurrence_whys, detection_whys,
                       root_cause, confidence_level, created_at, updated_at
             """,
             (
                 plan_id,
-                fields.get("why_1"),
-                fields.get("why_2"),
-                fields.get("why_3"),
-                fields.get("why_4"),
-                fields.get("why_5"),
-                fields.get("detection_why_1"),
-                fields.get("detection_why_2"),
-                fields.get("detection_why_3"),
-                fields.get("detection_why_4"),
-                fields.get("detection_why_5"),
+                whys_json["occurrence_whys"],
+                whys_json["detection_whys"],
                 fields.get("root_cause"),
                 fields.get("confidence_level"),
             ),
@@ -1966,7 +1952,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             auto_commit=False,
         )
         self.commit()
-        return serialize_row(row, id_keys=("id", "plan_id"))
+        return serialize_five_whys_row(row)
 
     def create_actions(
         self, plan_id: str, actions: list[dict[str, Any]], *, created_by: str
@@ -2018,6 +2004,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self, plan_id: str, action_id: str, fields: dict[str, Any], *, updated_by: str
     ) -> dict[str, Any] | None:
         allowed = {
+            "action_type",
             "description",
             "responsible_user_id",
             "responsible_name",
@@ -2027,7 +2014,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "evidence_required",
             "cause_track",
         }
-        updates = {key: value for key, value in fields.items() if key in allowed and value is not None}
+        updates = {
+            key: value
+            for key, value in fields.items()
+            if key in allowed and (value is not None or key == "cause_track")
+        }
         if not updates:
             row = self.fetch_one(
                 """
@@ -2073,6 +2064,38 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         self.commit()
         return serialize_row(row, id_keys=("id", "plan_id"))
+
+    def delete_action(
+        self, plan_id: str, action_id: str, *, updated_by: str
+    ) -> dict[str, Any] | None:
+        if not self.action_belongs_to_plan(plan_id, action_id):
+            return None
+
+        row = self.fetch_one(
+            """
+            SELECT id, description
+              FROM quality.quality_actions
+             WHERE id = %s AND plan_id = %s
+            """,
+            (action_id, plan_id),
+        )
+        if not row:
+            return None
+
+        self.execute(
+            "DELETE FROM quality.quality_actions WHERE id = %s AND plan_id = %s",
+            (action_id, plan_id),
+            auto_commit=False,
+        )
+        self.append_history(
+            plan_id=plan_id,
+            event_type="action_deleted",
+            created_by=updated_by,
+            old_value=(row.get("description") or "")[:200],
+            auto_commit=False,
+        )
+        self.commit()
+        return {"id": str(action_id), "deleted": True}
 
     def submit_effectiveness_review(
         self, plan_id: str, fields: dict[str, Any], *, updated_by: str

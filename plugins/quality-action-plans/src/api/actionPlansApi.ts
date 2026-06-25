@@ -1,4 +1,5 @@
 import {
+  httpDelete,
   httpGet,
   httpPatch,
   httpPost,
@@ -289,6 +290,7 @@ export async function createPlanActions(
 }
 
 export type UpdatePlanActionPayload = {
+  action_type?: string;
   description?: string;
   responsible_name?: string;
   department?: string;
@@ -308,6 +310,16 @@ export async function updatePlanAction(
     body,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar ação.");
+}
+
+export async function deletePlanAction(
+  planId: string,
+  actionId: string,
+): Promise<{ id: string; deleted: boolean }> {
+  const envelope = await httpDelete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${API_BASE}/${planId}/actions/${actionId}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao remover ação.");
 }
 
 export async function recordEffectivenessReview(

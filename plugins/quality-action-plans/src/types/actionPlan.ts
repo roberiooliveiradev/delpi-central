@@ -193,18 +193,22 @@ export type IshikawaAnalysis = {
 };
 
 export type FiveWhysAnalysis = {
+  occurrence_whys?: string[] | null;
+  detection_whys?: string[] | null;
+  root_cause?: string | null;
+  confidence_level?: string | null;
+  /** @deprecated legado — use occurrence_whys */
   why_1?: string | null;
   why_2?: string | null;
   why_3?: string | null;
   why_4?: string | null;
   why_5?: string | null;
+  /** @deprecated legado — use detection_whys */
   detection_why_1?: string | null;
   detection_why_2?: string | null;
   detection_why_3?: string | null;
   detection_why_4?: string | null;
   detection_why_5?: string | null;
-  root_cause?: string | null;
-  confidence_level?: string | null;
 };
 
 export type PlanAction = {

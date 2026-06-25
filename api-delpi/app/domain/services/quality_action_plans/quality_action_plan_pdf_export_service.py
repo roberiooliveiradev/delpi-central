@@ -10,6 +10,9 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.domain.services.quality_action_plans.five_whys_service import (
+    five_whys_track_lines,
+)
 from app.domain.services.quality_action_plans.ishikawa_causes_service import (
     ishikawa_category_lines,
 )
@@ -227,13 +230,12 @@ def _five_whys_items(five_whys: dict[str, Any] | None) -> list[str]:
     if not five_whys:
         return []
     items: list[str] = []
-    for index in range(1, 6):
-        occurrence = five_whys.get(f"why_{index}")
-        if occurrence and str(occurrence).strip():
-            items.append(f"Ocorrência — Por quê {index}: {occurrence}")
-        detection = five_whys.get(f"detection_why_{index}")
-        if detection and str(detection).strip():
-            items.append(f"Detecção — Por quê {index}: {detection}")
+    items.extend(
+        five_whys_track_lines(five_whys.get("occurrence_whys"), track_label="Ocorrência")
+    )
+    items.extend(
+        five_whys_track_lines(five_whys.get("detection_whys"), track_label="Detecção")
+    )
     root = five_whys.get("root_cause")
     if root and str(root).strip():
         items.append(f"Causa raiz: {root}")

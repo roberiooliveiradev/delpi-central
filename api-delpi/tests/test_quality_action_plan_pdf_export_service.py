@@ -27,7 +27,10 @@ def _sample_detail() -> dict:
             "created_at": "2026-06-01T10:00:00+00:00",
         },
         "ishikawa": {"method_process": ["Parâmetro de forno incorreto"]},
-        "five_whys": {"why_1": "Pintura descascando", "root_cause": "Tempo de cura insuficiente"},
+        "five_whys": {
+            "occurrence_whys": ["Pintura descascando"],
+            "root_cause": "Tempo de cura insuficiente",
+        },
         "actions": [
             {
                 "action_type": "corrective",

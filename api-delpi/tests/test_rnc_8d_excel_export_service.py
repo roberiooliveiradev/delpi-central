@@ -43,7 +43,7 @@ def test_build_rnc_8d_workbook_fills_registry_cell():
             },
         },
         "five_whys": {
-            "why_1": "Falha na impressão",
+            "occurrence_whys": ["Falha na impressão"],
         },
         "team_members": [
             {"member_name": "Rodrigo J. Cozer", "department": "Qualidade", "is_leader": True},

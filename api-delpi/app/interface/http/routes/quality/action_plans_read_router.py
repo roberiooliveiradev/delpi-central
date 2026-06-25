@@ -48,6 +48,7 @@ from app.composition.quality_action_plans_composer import (
     build_reopen_quality_action_plan_use_case,
     build_submit_effectiveness_review_use_case,
     build_update_plan_action_use_case,
+    build_delete_plan_action_use_case,
     build_update_quality_action_plan_status_use_case,
     build_update_quality_action_plan_use_case,
     build_upsert_five_whys_use_case,
@@ -196,6 +197,10 @@ class IshikawaBody(BaseModel):
 
 
 class FiveWhysBody(BaseModel):
+    occurrence_whys: list[str] | None = None
+    detection_whys: list[str] | None = None
+    root_cause: str | None = None
+    confidence_level: str | None = Field(default=None, pattern="^(low|medium|high)$")
     why_1: str | None = None
     why_2: str | None = None
     why_3: str | None = None
@@ -206,8 +211,6 @@ class FiveWhysBody(BaseModel):
     detection_why_3: str | None = None
     detection_why_4: str | None = None
     detection_why_5: str | None = None
-    root_cause: str | None = None
-    confidence_level: str | None = Field(default=None, pattern="^(low|medium|high)$")
 
 
 class ActionItemBody(BaseModel):
@@ -230,6 +233,10 @@ class CreateActionsBody(BaseModel):
 
 
 class UpdateActionBody(BaseModel):
+    action_type: str | None = Field(
+        default=None,
+        pattern="^(containment|corrective|preventive|verification|standardization|training)$",
+    )
     description: str | None = Field(default=None, min_length=3)
     responsible_user_id: str | None = None
     responsible_name: str | None = None
@@ -884,6 +891,30 @@ def update_plan_action(plan_id: str, action_id: str, body: UpdateActionBody = Bo
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar ação {action_id}: {exc}")
         return error_response("Erro ao atualizar ação.", status_code=500)
+
+
+@router.delete(
+    "/{plan_id}/actions/{action_id}",
+    **_pac_openapi("delete_quality_action_plan_action", "/{plan_id}/actions/{action_id}"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def delete_plan_action(plan_id: str, action_id: str):
+    try:
+        result = build_delete_plan_action_use_case().execute(
+            plan_id,
+            action_id,
+            updated_by=_current_user_id(),
+        )
+        if not result:
+            return not_found_response("Ação não encontrada.")
+        return api_delpi_success(
+            result,
+            operation_id="delete_quality_action_plan_action",
+            message="Ação removida.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao remover ação {action_id}: {exc}")
+        return error_response("Erro ao remover ação.", status_code=500)
 
 
 @router.post(

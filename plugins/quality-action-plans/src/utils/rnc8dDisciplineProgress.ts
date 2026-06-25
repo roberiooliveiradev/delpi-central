@@ -1,5 +1,6 @@
 import type { ActionPlanDetail, PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
+import { hasFilledWhysTrack } from "./fiveWhys";
 
 export type Rnc8dDiscipline = {
   id: string;
@@ -67,7 +68,8 @@ export function computeRnc8dDisciplineProgress(detail: ActionPlanDetail): Rnc8dD
       label: "Causa raiz",
       complete:
         hasText(fiveWhys?.root_cause) ||
-        hasText(fiveWhys?.why_5) ||
+        hasFilledWhysTrack(fiveWhys?.occurrence_whys) ||
+        hasFilledWhysTrack(fiveWhys?.detection_whys) ||
         Boolean(
           ishikawa &&
             (hasText(ishikawa.notes) ||
@@ -80,7 +82,7 @@ export function computeRnc8dDisciplineProgress(detail: ActionPlanDetail): Rnc8dD
                 ishikawa.environment,
               ].some((value) => Array.isArray(value) && value.some((item) => hasText(item)))),
         ),
-      hint: "5 Porquês ou Ishikawa preenchidos.",
+      hint: "Porquês ou Ishikawa preenchidos.",
     },
     {
       id: "D5",

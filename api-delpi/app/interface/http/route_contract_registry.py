@@ -307,6 +307,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "upsert_quality_action_plan_five_whys": RouteContract("quality_action_plan_five_whys", "scalar"),
     "create_quality_action_plan_actions": RouteContract("quality_action_plan_action", "paged_list"),
     "update_quality_action_plan_action": RouteContract("quality_action_plan_action", "scalar"),
+    "delete_quality_action_plan_action": RouteContract("quality_action_plan_action", "scalar"),
     "record_quality_action_plan_effectiveness": RouteContract("quality_action_plan", "scalar"),
     "submit_quality_action_plan_effectiveness_review": RouteContract(
         "quality_action_plan", "scalar"

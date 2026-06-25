@@ -242,14 +242,16 @@ def build_rnc_8d_workbook(
             ws[f"M{row}"] = containment_date
 
     occurrence_cols = ["E", "G", "I", "K", "M"]
+    occurrence_whys = five_whys.get("occurrence_whys") or []
     for index, col in enumerate(occurrence_cols):
-        key = f"why_{index + 1}"
-        _set(ws, f"{col}44", five_whys.get(key))
+        value = occurrence_whys[index] if index < len(occurrence_whys) else None
+        _set(ws, f"{col}44", value)
 
     detection_cols = ["E", "G", "I", "K", "M"]
+    detection_whys = five_whys.get("detection_whys") or []
     for index, col in enumerate(detection_cols):
-        key = f"detection_why_{index + 1}"
-        _set(ws, f"{col}49", five_whys.get(key))
+        value = detection_whys[index] if index < len(detection_whys) else None
+        _set(ws, f"{col}49", value)
 
     corrective_actions = [
         a for a in actions if a.get("action_type") == "corrective" or a.get("cause_track")

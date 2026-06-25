@@ -9,6 +9,7 @@ from app.application.use_cases.quality_action_plans.quality_action_plan_analysis
     RejectEffectivenessReviewUseCase,
     SubmitEffectivenessReviewUseCase,
     UpdatePlanActionUseCase,
+    DeletePlanActionUseCase,
     UpsertFiveWhysUseCase,
     UpsertIshikawaUseCase,
 )
@@ -72,6 +73,10 @@ def build_create_plan_actions_use_case() -> CreatePlanActionsUseCase:
 
 def build_update_plan_action_use_case() -> UpdatePlanActionUseCase:
     return UpdatePlanActionUseCase(build_quality_action_plan_repository())
+
+
+def build_delete_plan_action_use_case() -> DeletePlanActionUseCase:
+    return DeletePlanActionUseCase(build_quality_action_plan_repository())
 
 
 def build_record_effectiveness_review_use_case() -> RecordEffectivenessReviewUseCase:

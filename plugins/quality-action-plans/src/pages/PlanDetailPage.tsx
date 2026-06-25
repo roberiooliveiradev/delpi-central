@@ -7,7 +7,6 @@ import {
 
 import {
   approveEffectivenessReview,
-  createPlanActions,
   exportPlanPdf,
   exportRnc8dPdf,
   exportRnc8dSpreadsheet,
@@ -19,20 +18,19 @@ import {
   reopenPlan,
   submitEffectivenessReview,
   updateActionPlan,
-  updatePlanAction,
   updatePlanStatus,
-  upsertFiveWhys,
   upsertIshikawa,
   upsertRnc8dReport,
 } from "../api/actionPlansApi";
 import { EvidencePanel } from "../components/EvidencePanel";
+import { FiveWhysFlowPanel } from "../components/FiveWhysFlowPanel";
+import { PlanActionsPanel } from "../components/PlanActionsPanel";
 import { IshikawaFishboneDiagram } from "../components/IshikawaFishboneDiagram";
 import { KaizenLinkField } from "../components/KaizenLinkField";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
 import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
-import { RequiredEvidenceAlert } from "../components/RequiredEvidenceAlert";
 import { Rnc8dReportEditor } from "../components/Rnc8dReportEditor";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { SaveStatusBanner } from "../components/SaveStatusBanner";
@@ -43,9 +41,6 @@ import { StatusPipeline } from "../components/ui/StatusPipeline";
 import { TextAreaField } from "../components/ui/TextAreaField";
 import { TextField } from "../components/ui/TextField";
 import {
-  ACTION_STATUSES,
-  ACTION_TYPES,
-  actionTypeLabel,
   branchLabel,
   dashboardPath,
   EFFECTIVENESS_STATUSES,
@@ -58,46 +53,29 @@ import {
 } from "../constants/actionPlans";
 import type {
   ActionPlanDetail,
-  FiveWhysAnalysis,
   PlanAuditLogEntry,
 } from "../types/actionPlan";
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
 import { buildActivateRnc8dPayload } from "../utils/rnc8dPayload";
-import { formatDate, formatDateTime } from "../utils/format";
+import { formatDateTime } from "../utils/format";
 import {
   emptyIshikawaCausesForm,
   parseIshikawaCausesForm,
   serializeIshikawaCausesForm,
   type IshikawaCausesForm,
 } from "../utils/ishikawaCauses";
+import {
+  emptyFiveWhysForm,
+  parseFiveWhysForm,
+  type FiveWhysForm,
+} from "../utils/fiveWhys";
 import { formatSymptomTags, parseSymptomTags } from "../utils/symptomTags";
 
 type Props = {
   planId: string;
   onNavigate: (path: string) => void;
 };
-
-const EMPTY_FIVE_WHYS: FiveWhysAnalysis = {
-  why_1: "",
-  why_2: "",
-  why_3: "",
-  why_4: "",
-  why_5: "",
-  detection_why_1: "",
-  detection_why_2: "",
-  detection_why_3: "",
-  detection_why_4: "",
-  detection_why_5: "",
-  root_cause: "",
-  confidence_level: "medium",
-};
-
-const CAUSE_TRACK_OPTIONS = [
-  { value: "", label: "—" },
-  { value: "occurrence", label: "Ocorrência" },
-  { value: "detection", label: "Detecção" },
-];
 
 const AUDIT_EVENT_LABELS: Record<string, string> = {
   plan_created: "Plano criado",
@@ -120,13 +98,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     emptyIshikawaCausesForm(),
   );
   const [ishikawaNotes, setIshikawaNotes] = useState("");
-  const [fiveWhysForm, setFiveWhysForm] = useState<FiveWhysAnalysis>(EMPTY_FIVE_WHYS);
-  const [newActionType, setNewActionType] = useState("corrective");
-  const [newActionDescription, setNewActionDescription] = useState("");
-  const [newActionResponsible, setNewActionResponsible] = useState("");
-  const [newActionDueDate, setNewActionDueDate] = useState("");
-  const [newActionCauseTrack, setNewActionCauseTrack] = useState("");
-  const [newActionEvidenceRequired, setNewActionEvidenceRequired] = useState(false);
+  const [fiveWhysForm, setFiveWhysForm] = useState<FiveWhysForm>(emptyFiveWhysForm());
   const [rnc8dForm, setRnc8dForm] = useState<Rnc8dReportPayload>({});
   const [effectivenessStatus, setEffectivenessStatus] = useState("pending");
   const [effectivenessNotes, setEffectivenessNotes] = useState("");
@@ -168,7 +140,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       );
       setIshikawaCausesForm(parseIshikawaCausesForm(data.ishikawa));
       setIshikawaNotes(data.ishikawa?.notes ?? "");
-      setFiveWhysForm({ ...EMPTY_FIVE_WHYS, ...(data.five_whys ?? {}) });
+      setFiveWhysForm(parseFiveWhysForm(data.five_whys));
       setRnc8dForm({
         client_nc_registry: data.plan.client_nc_registry ?? "",
         customer_name: data.plan.customer_name ?? "",
@@ -712,226 +684,24 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             />
           </SectionCard>
 
-          <SectionCard title="4. Estudo de causa — 5 Porquês (Ocorrência)">
-            <ol className="pac-five-whys">
-              {(["why_1", "why_2", "why_3", "why_4", "why_5"] as const).map((key, index) => (
-                <li key={key} className="pac-five-whys__step">
-                  <span className="pac-five-whys__index">{index + 1}</span>
-                  <TextField
-                    id={`pac-${key}`}
-                    label={`${index + 1}º porquê (ocorrência)`}
-                    value={fiveWhysForm[key] ?? ""}
-                    onChange={(value) => setFiveWhysForm((current) => ({ ...current, [key]: value }))}
-                    fullWidth
-                  />
-                </li>
-              ))}
-            </ol>
-            <h3 className="pac-subsection-title">Trilha de detecção</h3>
-            <ol className="pac-five-whys">
-                {(
-                  [
-                    "detection_why_1",
-                    "detection_why_2",
-                    "detection_why_3",
-                    "detection_why_4",
-                    "detection_why_5",
-                  ] as const
-                ).map((key, index) => (
-                  <li key={key} className="pac-five-whys__step">
-                    <span className="pac-five-whys__index">{index + 1}</span>
-                    <TextField
-                      id={`pac-${key}`}
-                      label={`${index + 1}º porquê (detecção)`}
-                      value={fiveWhysForm[key] ?? ""}
-                      onChange={(value) => setFiveWhysForm((current) => ({ ...current, [key]: value }))}
-                      fullWidth
-                    />
-                  </li>
-                ))}
-              </ol>
-            <TextField
-              id="pac-root-cause"
-              label="Causa raiz"
-              value={fiveWhysForm.root_cause ?? ""}
-              onChange={(root_cause) => setFiveWhysForm((current) => ({ ...current, root_cause }))}
-              fullWidth
+          <SectionCard title="4. Estudo de causa — Porquês">
+            <FiveWhysFlowPanel
+              planId={planId}
+              form={fiveWhysForm}
+              saving={saving}
+              onChange={setFiveWhysForm}
+              onSave={runSave}
             />
-            <FormActions>
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "five-whys"}
-                onClick={() =>
-                  void runSave("five-whys", async () => {
-                    await upsertFiveWhys(planId, fiveWhysForm);
-                  })
-                }
-              >
-                {saving === "five-whys" ? "Salvando…" : "Salvar 5 Porquês"}
-              </button>
-            </FormActions>
           </SectionCard>
 
           <SectionCard title="5. Ações corretivas e plano">
-            <RequiredEvidenceAlert actions={detail.actions} evidences={detail.evidences ?? []} />
-            {detail.actions.length ? (
-              <div className="pac-table-wrap">
-                <table className="pac-table">
-                  <thead>
-                    <tr>
-                      <th>Tipo</th>
-                      <th>Ocorr./Det.</th>
-                      <th>Descrição</th>
-                      <th>Responsável</th>
-                      <th>Prazo</th>
-                      <th>Evidência</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detail.actions.map((action) => (
-                      <tr key={action.id}>
-                        <td>{actionTypeLabel(action.action_type)}</td>
-                        <td>{action.cause_track === "detection" ? "Detecção" : action.cause_track === "occurrence" ? "Ocorrência" : "—"}</td>
-                        <td>{action.description}</td>
-                        <td>{action.responsible_name ?? "—"}</td>
-                        <td>{formatDate(action.due_date)}</td>
-                        <td className="pac-table-cell--evidence">
-                          <label
-                            className={`pac-evidence-chip${action.evidence_required ? " pac-evidence-chip--required" : ""}`}
-                            title={
-                              action.evidence_required
-                                ? "Evidência obrigatória para concluir"
-                                : "Marcar evidência como obrigatória"
-                            }
-                          >
-                            <input
-                              type="checkbox"
-                              className="pac-evidence-chip__input"
-                              checked={Boolean(action.evidence_required)}
-                              disabled={Boolean(saving?.startsWith("action-evidence-"))}
-                              onChange={(event) =>
-                                void runSave(`action-evidence-${action.id}`, async () => {
-                                  await updatePlanAction(planId, action.id, {
-                                    evidence_required: event.target.checked,
-                                  });
-                                })
-                              }
-                            />
-                            <span className="pac-evidence-chip__label">
-                              {action.evidence_required ? "Obrigatória" : "Opcional"}
-                            </span>
-                          </label>
-                        </td>
-                        <td>
-                          <select
-                            className="pac-table-select"
-                            value={action.status}
-                            onChange={(event) =>
-                              void runSave(`action-${action.id}`, async () => {
-                                await updatePlanAction(planId, action.id, {
-                                  status: event.target.value,
-                                });
-                              })
-                            }
-                          >
-                            {Object.entries(ACTION_STATUSES).map(([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="pac-muted">Nenhuma ação cadastrada.</p>
-            )}
-
-            <div className="pac-new-action-form">
-              <div className="pac-form-grid pac-new-action-form__meta">
-                <SelectField
-                  id="pac-new-action-type"
-                  label="Tipo"
-                  options={Object.entries(ACTION_TYPES).map(([value, label]) => ({ value, label }))}
-                  value={newActionType}
-                  onChange={setNewActionType}
-                  searchable={false}
-                />
-                <SelectField
-                  id="pac-new-action-track"
-                  label="Ocorrência / Detecção"
-                  options={CAUSE_TRACK_OPTIONS}
-                  value={newActionCauseTrack}
-                  onChange={setNewActionCauseTrack}
-                  searchable={false}
-                />
-                <TextField
-                  id="pac-new-action-responsible"
-                  label="Responsável"
-                  value={newActionResponsible}
-                  onChange={setNewActionResponsible}
-                />
-                <TextField
-                  id="pac-new-action-due"
-                  label="Prazo"
-                  type="date"
-                  value={newActionDueDate}
-                  onChange={setNewActionDueDate}
-                />
-              </div>
-              <TextAreaField
-                id="pac-new-action-desc"
-                label="Descrição"
-                value={newActionDescription}
-                onChange={setNewActionDescription}
-                rows={3}
-                fullWidth
-              />
-              <label className="pac-checkbox-field">
-                <input
-                  type="checkbox"
-                  checked={newActionEvidenceRequired}
-                  onChange={(event) => setNewActionEvidenceRequired(event.target.checked)}
-                />
-                <span>Exigir evidência anexada para concluir esta ação</span>
-              </label>
-              <FormActions>
-                <button
-                  type="button"
-                  className="pac-primary-btn"
-                  disabled={saving === "new-action"}
-                  onClick={() =>
-                    void runSave("new-action", async () => {
-                      if (!newActionDescription.trim()) {
-                        throw new Error("Informe a descrição da ação.");
-                      }
-                      await createPlanActions(planId, [
-                        {
-                          action_type: newActionType,
-                          description: newActionDescription.trim(),
-                          responsible_name: newActionResponsible.trim() || undefined,
-                          due_date: newActionDueDate || undefined,
-                          cause_track: newActionCauseTrack || undefined,
-                          evidence_required: newActionEvidenceRequired,
-                        },
-                      ]);
-                      setNewActionDescription("");
-                      setNewActionResponsible("");
-                      setNewActionDueDate("");
-                      setNewActionCauseTrack("");
-                      setNewActionEvidenceRequired(false);
-                    })
-                  }
-                >
-                  {saving === "new-action" ? "Salvando…" : "Adicionar ação"}
-                </button>
-              </FormActions>
-            </div>
+            <PlanActionsPanel
+              planId={planId}
+              actions={detail.actions}
+              evidences={detail.evidences ?? []}
+              saving={saving}
+              onSave={runSave}
+            />
           </SectionCard>
 
           <SectionCard title="Eficácia">
