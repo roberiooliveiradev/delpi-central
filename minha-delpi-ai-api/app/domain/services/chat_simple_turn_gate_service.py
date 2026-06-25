@@ -122,7 +122,7 @@ class ChatSimpleTurnGateService:
         from app.application.services.chat_capabilities_service import (
             ChatCapabilitiesService,
         )
-        from app.application.services.chat_utility_direct_answer_service import (
+        from app.domain.services.chat_utility_direct_answer_service import (
             ChatUtilityDirectAnswerService,
         )
         from app.domain.services.chat_small_talk_pattern_service import (

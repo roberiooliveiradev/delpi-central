@@ -207,3 +207,13 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
         return str(
             os.getenv("CHAT_ATTACHMENT_STORAGE_PATH", "") or ""
         ).strip()
+
+    def chat_utility_direct_enabled(self) -> bool:
+        return bool(Settings.CHAT_UTILITY_DIRECT_ENABLED)
+
+    def chat_utility_timezone(self) -> str:
+        import os
+
+        return str(
+            Settings.CHAT_UTILITY_TIMEZONE or os.getenv("TZ") or "America/Sao_Paulo"
+        ).strip()

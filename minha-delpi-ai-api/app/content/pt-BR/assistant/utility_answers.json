@@ -247,6 +247,30 @@
     "consulte"
   ],
   "timezoneLabel": "horário de Brasília",
+  "monthNames": [
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro"
+  ],
+  "dayNotes": {
+    "weekend": "É fim de semana.",
+    "weekdayUtility": "Não é fim de semana — de segunda a sexta considero dia útil (sem calendário de feriados).",
+    "businessDay": "É dia útil (segunda a sexta).",
+    "notBusinessDay": "Não é dia útil — cai em fim de semana."
+  },
+  "dayOffsets": {
+    "tomorrow_date": 1,
+    "yesterday_date": -1
+  },
   "responses": {
     "current_time": "Agora são **{time}** ({timezone_label}).",
     "current_date": "Hoje é **{weekday}**, **{date}** ({timezone_label}).",

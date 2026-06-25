@@ -210,3 +210,11 @@ class ChatDomainConfigService:
     @classmethod
     def chat_attachment_storage_path(cls) -> str:
         return cls._require_config().chat_attachment_storage_path()
+
+    @classmethod
+    def chat_utility_direct_enabled(cls) -> bool:
+        return cls._require_config().chat_utility_direct_enabled()
+
+    @classmethod
+    def chat_utility_timezone(cls) -> str:
+        return cls._require_config().chat_utility_timezone()

@@ -552,7 +552,7 @@ class ChatIntentRouterClassifyService:
                 reason="greeting_or_thanks",
             )
 
-        from app.application.services.chat_utility_direct_answer_service import (
+        from app.domain.services.chat_utility_direct_answer_service import (
             ChatUtilityDirectAnswerService,
         )
 

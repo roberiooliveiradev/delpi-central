@@ -205,3 +205,11 @@ class AppConfigPort(ABC):
     @abstractmethod
     def chat_attachment_storage_path(self) -> str:
         raise NotImplementedError
+
+    @abstractmethod
+    def chat_utility_direct_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_utility_timezone(self) -> str:
+        raise NotImplementedError
