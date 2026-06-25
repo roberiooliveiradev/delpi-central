@@ -125,6 +125,29 @@ Valida: dois planos com mesma `recurrence_key` aparecem em `GET /recurrence`; `G
 | H8 | Filtro por responsável + atrasados | 3 |
 | H9 | Reabrir plano cancelado com motivo | 4 |
 | H10 | Notificação de ação vencendo em 48 h | 4 |
+| H11 | Aprovação de eficácia (submit → approve/reject) | 4 |
+| H12 | Chat Minha DELPI — skill PAC + modo só consulta | 5 |
+
+### H12 — Chat Minha DELPI (skill PAC, Onda 5.6–5.7)
+
+Pré-requisitos: agente com provider `api-delpi` habilitado; OpenAPI reimportado (`sync_api_delpi_openapi.py`).
+
+| Passo | Ação | Esperado |
+|---|---|---|
+| 1 | Agente analista: `allowRead` + `allowWrite` no provider | Skill `quality-action-plans-delpi` ativa; writes após confirmação |
+| 2 | Perguntar «dashboard dos planos PAC» | Action `get_quality_action_plans_dashboard` |
+| 3 | Agente liderança: `allowRead` only (`allowWrite: false`) | `qualityActionPlansReadOnly`; sem tools POST |
+| 4 | Pedir «criar plano PAC» no agente liderança | Recusa orientando plugin/analista |
+
+Gates CI (minha-delpi-ai-api):
+
+```bash
+cd minha-delpi-ai-api
+.venv/bin/python scripts/audit_api_delpi_pac_onda1.py --check
+.venv/bin/python -m pytest tests/unit/domain/skills/test_chat_skill_registry.py \
+  tests/unit/domain/services/test_chat_quality_action_plans_access_service.py \
+  tests/unit/application/services/test_pac_quality_auto_tier_c_selection.py -q
+```
 
 ---
 
