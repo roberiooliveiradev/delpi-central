@@ -23,7 +23,9 @@ required = [
     '/quality/action-plans/{plan_id}/ishikawa',
     '/quality/action-plans/{plan_id}/five-whys',
     '/quality/action-plans/{plan_id}/similar-cases',
+    '/quality/action-plans/{plan_id}/audit-log',
     '/quality/action-plans/recurrence',
+    '/quality/action-plans/effectiveness-review/pending',
     '/quality/solution-patterns',
     '/quality/action-plans/evidences/search',
 ]
@@ -42,7 +44,7 @@ import json, sys
 body = json.load(sys.stdin)
 assert body.get('success'), body
 data = body.get('data') or {}
-for key in ('open_plans', 'critical_open', 'overdue_actions'):
+for key in ('open_plans', 'critical_open', 'overdue_actions', 'effectiveness_pending_alert'):
     assert key in data, f'missing {key}'
 print('OK dashboard', data.get('open_plans'), 'abertos')
 "

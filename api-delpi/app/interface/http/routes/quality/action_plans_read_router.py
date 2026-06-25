@@ -638,6 +638,31 @@ def get_action_plan_detail(plan_id: str):
         return error_response("Erro ao consultar plano de ação.", status_code=500)
 
 
+@router.get(
+    "/{plan_id}/audit-log",
+    **_pac_openapi("list_quality_action_plan_audit_log", "/{plan_id}/audit-log"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
+def list_plan_audit_log(
+    plan_id: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        if not repo.get_plan_by_id(plan_id):
+            return not_found_response("Plano de ação não encontrado.")
+        result = repo.list_plan_audit_log(plan_id, page=page, page_size=page_size)
+        return api_delpi_success(
+            result,
+            operation_id="list_quality_action_plan_audit_log",
+            message="Trilha de auditoria do plano.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar auditoria do plano PAC {plan_id}: {exc}")
+        return error_response("Erro ao consultar auditoria.", status_code=500)
+
+
 @router.patch("/{plan_id}", **_pac_openapi("update_quality_action_plan", "/{plan_id}"))
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):

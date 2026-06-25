@@ -48,6 +48,7 @@ export type AppView =
   | "solutions"
   | "evidences"
   | "my-queue"
+  | "effectiveness-pending"
   | "detail"
   | "new";
 
@@ -65,6 +66,7 @@ export function parseRoute(pathname?: string): { view: AppView; planId?: string 
   if (path.endsWith("/solucoes")) return { view: "solutions" };
   if (path.endsWith("/evidencias")) return { view: "evidences" };
   if (path.endsWith("/minha-fila")) return { view: "my-queue" };
+  if (path.endsWith("/aprovacoes-eficacia")) return { view: "effectiveness-pending" };
   return { view: "dashboard" };
 }
 
@@ -94,6 +96,10 @@ export function evidencesSearchPath(): string {
 
 export function myQueuePath(): string {
   return `${APP_BASE}/minha-fila`;
+}
+
+export function effectivenessPendingPath(): string {
+  return `${APP_BASE}/aprovacoes-eficacia`;
 }
 
 export function detailPath(planId: string): string {

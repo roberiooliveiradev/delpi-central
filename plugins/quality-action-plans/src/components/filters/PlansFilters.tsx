@@ -135,15 +135,17 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
         placeholder="Categoria ou texto da causa"
         type="search"
       />
-      <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-filter-overdue">
-        <input
-          id="pac-filter-overdue"
-          type="checkbox"
-          checked={filters.overdueOnly}
-          onChange={(event) => patch({ overdueOnly: event.target.checked })}
-        />
-        Somente com ações atrasadas
-      </label>
+      <div className="pac-filter-box pac-filter-box--checkbox">
+        <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-filter-overdue">
+          <input
+            id="pac-filter-overdue"
+            type="checkbox"
+            checked={filters.overdueOnly}
+            onChange={(event) => patch({ overdueOnly: event.target.checked })}
+          />
+          <span>Somente com ações atrasadas</span>
+        </label>
+      </div>
     </FilterBar>
   );
 }

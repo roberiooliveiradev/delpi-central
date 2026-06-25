@@ -97,6 +97,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review/approve` | `approve_quality_action_plan_effectiveness_review` | Aprovar submissão de eficácia |
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review/reject` | `reject_quality_action_plan_effectiveness_review` | Rejeitar submissão de eficácia |
 | GET | `/quality/action-plans/effectiveness-review/pending` | `list_quality_action_plan_pending_effectiveness_reviews` | Fila de eficácia pendente |
+| GET | `/quality/action-plans/{plan_id}/audit-log` | `list_quality_action_plan_audit_log` | Trilha de auditoria do plano |
 | PUT | `/quality/action-plans/{plan_id}/rnc-8d` | `upsert_quality_action_plan_rnc_8d` | Salvar relatório 8D |
 | GET | `/quality/action-plans/{plan_id}/export/rnc-8d` | `export_quality_action_plan_rnc_8d` | Exportar planilha Excel |
 | GET | `/quality/action-plans/{plan_id}/export/pdf` | `export_quality_action_plan_pdf` | Exportar resumo do plano em PDF |

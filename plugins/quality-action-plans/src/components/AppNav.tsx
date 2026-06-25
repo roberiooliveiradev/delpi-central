@@ -6,6 +6,7 @@ import {
   solutionsPath,
   evidencesSearchPath,
   myQueuePath,
+  effectivenessPendingPath,
   type AppView,
 } from "../constants/actionPlans";
 
@@ -18,6 +19,7 @@ const TABS: Array<{ view: AppView; label: string; path: string }> = [
   { view: "dashboard", label: "Resumo", path: dashboardPath() },
   { view: "list", label: "Planos", path: listPath() },
   { view: "my-queue", label: "Minha fila", path: myQueuePath() },
+  { view: "effectiveness-pending", label: "Aprovações", path: effectivenessPendingPath() },
   { view: "overdue", label: "Atrasados", path: overduePath() },
   { view: "recurrence", label: "Recorrência", path: recurrencePath() },
   { view: "solutions", label: "Soluções", path: solutionsPath() },

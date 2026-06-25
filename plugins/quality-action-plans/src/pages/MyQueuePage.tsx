@@ -82,15 +82,17 @@ export function MyQueuePage({ onNavigate }: Props) {
           emptyLabel="Todas"
           searchable={false}
         />
-        <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-queue-overdue">
-          <input
-            id="pac-queue-overdue"
-            type="checkbox"
-            checked={overdueOnly}
-            onChange={(event) => setOverdueOnly(event.target.checked)}
-          />
-          Somente atrasadas
-        </label>
+        <div className="pac-filter-box pac-filter-box--checkbox">
+          <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-queue-overdue">
+            <input
+              id="pac-queue-overdue"
+              type="checkbox"
+              checked={overdueOnly}
+              onChange={(event) => setOverdueOnly(event.target.checked)}
+            />
+            <span>Somente atrasadas</span>
+          </label>
+        </div>
         </FilterBar>
 
         <section className="pac-card">

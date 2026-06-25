@@ -82,6 +82,7 @@
 .dashboard-quality-action-plans .pac-page-stack > .pac-dashboard-grid--timing,
 .dashboard-quality-action-plans .pac-page-stack > .pac-recurrence-alert,
 .dashboard-quality-action-plans .pac-page-stack > .pac-stalled-alert,
+.dashboard-quality-action-plans .pac-page-stack > .pac-effectiveness-pending-alert,
 .dashboard-quality-action-plans .pac-page-stack > .pac-charts-grid,
 .dashboard-quality-action-plans .pac-page-stack > .pac-effectiveness-section,
 .dashboard-quality-action-plans .pac-page-stack > .pac-dashboard-grid--queue-summary,
@@ -365,15 +366,22 @@
   width: 100%;
 }
 
-.dashboard-quality-action-plans .pac-filters-row .pac-checkbox,
-.dashboard-quality-action-plans .pac-filters-row .pac-filter-checkbox {
-  margin-top: 0;
-  align-self: end;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.dashboard-quality-action-plans .pac-filter-box--checkbox {
+  justify-content: flex-end;
+}
+
+.dashboard-quality-action-plans .pac-filter-box--checkbox .pac-checkbox {
   min-height: var(--pac-control-height);
-  white-space: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-filter-box input:not([type="checkbox"]):not([type="radio"]),
+.dashboard-quality-action-plans .pac-filter-box select {
+  min-height: var(--pac-control-height);
+  border-radius: var(--pac-control-radius);
+  border: 1px solid var(--pac-card-border);
+  padding: 8px 12px;
+  background: var(--surface, #fff);
+  color: var(--pac-text);
 }
 
 .dashboard-quality-action-plans .pac-filter-box {
@@ -382,20 +390,10 @@
   gap: 6px;
 }
 
-.dashboard-quality-action-plans .pac-filter-box label {
+.dashboard-quality-action-plans .pac-filter-box > label:not(.pac-checkbox) {
   font-size: var(--pac-font-sm);
   font-weight: 600;
   color: var(--pac-text-muted);
-}
-
-.dashboard-quality-action-plans .pac-filter-box input,
-.dashboard-quality-action-plans .pac-filter-box select {
-  min-height: var(--pac-control-height);
-  border-radius: var(--pac-control-radius);
-  border: 1px solid var(--pac-card-border);
-  padding: 8px 12px;
-  background: var(--surface, #fff);
-  color: var(--pac-text);
 }
 
 .dashboard-quality-action-plans .pac-filter-box--action {
@@ -711,7 +709,7 @@
 }
 
 .dashboard-quality-action-plans .pac-filter-box textarea,
-.dashboard-quality-action-plans .pac-filter-box input,
+.dashboard-quality-action-plans .pac-filter-box input:not([type="checkbox"]):not([type="radio"]),
 .dashboard-quality-action-plans .pac-filter-box select {
   width: 100%;
   min-height: var(--pac-control-height);
@@ -923,21 +921,76 @@
   line-height: 1.25;
 }
 
+.dashboard-quality-action-plans label.pac-multi-select__option {
+  flex-direction: row;
+}
+
 .dashboard-quality-action-plans .pac-multi-select__option:hover {
   background: color-mix(in srgb, var(--pac-accent) 8%, transparent);
 }
 
-.dashboard-quality-action-plans .pac-multi-select__option input[type="checkbox"] {
+.dashboard-quality-action-plans label.pac-checkbox,
+.dashboard-quality-action-plans .pac-filters-row label.pac-checkbox {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  font-size: var(--pac-font-sm);
+  font-weight: 500;
+  color: var(--pac-text);
+  line-height: 1.35;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.dashboard-quality-action-plans label.pac-checkbox span {
+  white-space: normal;
+}
+
+.dashboard-quality-action-plans .pac-filter-checkbox {
+  align-self: end;
+}
+
+.dashboard-quality-action-plans label.pac-checkbox input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
   width: 16px;
   height: 16px;
   min-width: 16px;
   min-height: 16px;
+  max-width: 16px;
+  max-height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--pac-card-border);
+  border-radius: 4px;
+  background: var(--pac-card-bg);
+  accent-color: var(--pac-accent);
+  box-shadow: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.dashboard-quality-action-plans .pac-multi-select__option input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  max-width: 16px;
+  max-height: 16px;
   flex: 0 0 16px;
   margin: 0;
   padding: 0;
   border: none;
   box-shadow: none;
   accent-color: var(--pac-accent);
+  cursor: pointer;
 }
 
 .dashboard-quality-action-plans .pac-multi-select__option span {
@@ -1265,19 +1318,6 @@
   display: flex;
   gap: 4px;
   white-space: nowrap;
-}
-
-.dashboard-quality-action-plans .pac-checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 0;
-  font-size: var(--pac-font-sm);
-}
-
-.dashboard-quality-action-plans .pac-filter-checkbox {
-  align-self: end;
-  min-height: 42px;
 }
 
 /* ——— Responsivo ——— */

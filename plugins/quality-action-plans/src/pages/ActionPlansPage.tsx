@@ -9,6 +9,7 @@ import { PlanFormPage } from "./PlanFormPage";
 import { PlansListPage } from "./PlansListPage";
 import { RecurrencePage } from "./RecurrencePage";
 import { SolutionPatternsPage } from "./SolutionPatternsPage";
+import { EffectivenessPendingPage } from "./EffectivenessPendingPage";
 import { EvidencesSearchPage } from "./EvidencesSearchPage";
 
 type Props = {
@@ -49,6 +50,10 @@ export function ActionPlansPage({ pathname }: Props) {
 
   if (view === "my-queue") {
     return <MyQueuePage onNavigate={handleNavigate} />;
+  }
+
+  if (view === "effectiveness-pending") {
+    return <EffectivenessPendingPage onNavigate={handleNavigate} />;
   }
 
   if (view === "recurrence") {

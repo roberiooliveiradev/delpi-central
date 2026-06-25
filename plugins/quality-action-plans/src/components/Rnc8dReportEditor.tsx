@@ -267,7 +267,7 @@ export function Rnc8dReportEditor({ value, onChange, onSave, saving }: Props) {
                     onChange({ ...value, team_members: next });
                   }}
                 />
-                Líder da equipe
+                <span>Líder da equipe</span>
               </label>
             </div>
           ))}

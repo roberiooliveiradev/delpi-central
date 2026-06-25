@@ -32,6 +32,10 @@ export type ActionPlanSummary = {
   days_without_update?: number;
   sla_warning_days?: number;
   sla_breach_days?: number;
+  effectiveness_approval_status?: "pending_review" | "approved" | "rejected" | null;
+  effectiveness_proposed_status?: string | null;
+  effectiveness_submitted_at?: string | null;
+  effectiveness_submitted_by?: string | null;
 };
 
 export type Pagination = {
@@ -72,6 +76,7 @@ export type DashboardSummary = {
   rankings?: DashboardRankings;
   recurrence_alert?: DashboardRecurrenceAlert;
   stalled_alert?: DashboardStalledAlert;
+  effectiveness_pending_alert?: DashboardEffectivenessPendingAlert;
   effectiveness_by_action_type?: DashboardEffectivenessByActionType;
 };
 
@@ -143,6 +148,22 @@ export type DashboardStalledAlert = {
   top_plans: DashboardStalledPlanAlert[];
 };
 
+export type DashboardEffectivenessPendingPlanAlert = {
+  id: string;
+  code?: string | null;
+  title?: string | null;
+  branch_code?: string | null;
+  severity?: string | null;
+  effectiveness_proposed_status?: string | null;
+  effectiveness_submitted_at?: string | null;
+  effectiveness_submitted_by?: string | null;
+};
+
+export type DashboardEffectivenessPendingAlert = {
+  pending_plans: number;
+  top_plans: DashboardEffectivenessPendingPlanAlert[];
+};
+
 export type DashboardEffectivenessBucket = {
   reviewed_plans: number;
   effective_plans: number;
@@ -207,6 +228,19 @@ export type PlanHistoryEvent = {
   comment?: string | null;
   created_by?: string | null;
   created_at?: string;
+};
+
+export type PlanAuditLogEntry = {
+  id: string;
+  event_type: string;
+  payload?: Record<string, unknown>;
+  actor_user_id?: string | null;
+  created_at?: string;
+};
+
+export type PagedAuditLogResponse = {
+  items: PlanAuditLogEntry[];
+  pagination: Pagination;
 };
 
 export type ActionPlanDetail = {

@@ -334,6 +334,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 branch_code=branch_code,
                 nonconformity_scope=nonconformity_scope,
             )
+            result["effectiveness_pending_alert"] = self._fetch_effectiveness_pending_alert(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+            )
             return result
 
         by_branch_rows = self.fetch_all(
@@ -413,6 +417,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             months=months,
         )
         result["stalled_alert"] = self._fetch_stalled_alert(
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+        )
+        result["effectiveness_pending_alert"] = self._fetch_effectiveness_pending_alert(
             branch_code=branch_code,
             nonconformity_scope=nonconformity_scope,
         )
@@ -827,6 +835,74 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                         else row.get("updated_at")
                     ),
                     "days_without_update": int(row.get("days_without_update") or 0),
+                }
+                for row in top_rows
+            ],
+        }
+
+    def _fetch_effectiveness_pending_alert(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        limit: int = 8,
+    ) -> dict[str, Any]:
+        filters = [
+            "p.deleted_at IS NULL",
+            "p.effectiveness_approval_status = 'pending_review'",
+        ]
+        params: list[Any] = []
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+        if nonconformity_scope:
+            filters.append("p.nonconformity_scope = %s")
+            params.append(nonconformity_scope)
+        where_clause = " AND ".join(filters)
+
+        summary_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*)::int AS pending_plans
+              FROM quality.quality_action_plans p
+             WHERE {where_clause}
+            """,
+            tuple(params),
+        )
+
+        top_rows = self.fetch_all(
+            f"""
+            SELECT p.id,
+                   p.code,
+                   p.title,
+                   p.branch_code,
+                   p.severity,
+                   p.effectiveness_proposed_status,
+                   p.effectiveness_submitted_at,
+                   p.effectiveness_submitted_by
+              FROM quality.quality_action_plans p
+             WHERE {where_clause}
+             ORDER BY p.effectiveness_submitted_at ASC NULLS LAST, p.code ASC
+             LIMIT %s
+            """,
+            tuple([*params, limit]),
+        )
+
+        return {
+            "pending_plans": int((summary_row or {}).get("pending_plans") or 0),
+            "top_plans": [
+                {
+                    "id": str(row["id"]),
+                    "code": row.get("code"),
+                    "title": row.get("title"),
+                    "branch_code": row.get("branch_code"),
+                    "severity": row.get("severity"),
+                    "effectiveness_proposed_status": row.get("effectiveness_proposed_status"),
+                    "effectiveness_submitted_at": (
+                        row["effectiveness_submitted_at"].isoformat()
+                        if isinstance(row.get("effectiveness_submitted_at"), datetime)
+                        else row.get("effectiveness_submitted_at")
+                    ),
+                    "effectiveness_submitted_by": row.get("effectiveness_submitted_by"),
                 }
                 for row in top_rows
             ],
@@ -1397,6 +1473,20 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             comment="Plano de ação criado via api-delpi.",
             auto_commit=False,
         )
+        self.append_audit_log(
+            entity_type="quality_action_plan",
+            entity_id=plan_id,
+            event_type="plan_created",
+            actor_user_id=fields["created_by_user_id"],
+            payload={
+                "code": code,
+                "severity": fields.get("severity", "medium"),
+                "status": fields.get("status", "triage"),
+                "nonconformity_scope": fields.get("nonconformity_scope", "external"),
+                "branch_code": fields.get("branch_code"),
+            },
+            auto_commit=False,
+        )
         self.commit()
         plan = self.get_plan_by_id(plan_id)
         if not plan:
@@ -1456,6 +1546,15 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             event_type="plan_updated",
             created_by=fields.get("updated_by_user_id", "system"),
             comment="Plano atualizado via api-delpi.",
+            auto_commit=False,
+        )
+        actor = str(fields.get("updated_by_user_id") or "system")
+        self.append_audit_log(
+            entity_type="quality_action_plan",
+            entity_id=plan_id,
+            event_type="plan_updated",
+            actor_user_id=actor,
+            payload={"fields": sorted(updates.keys())},
             auto_commit=False,
         )
         self.commit()
@@ -1626,6 +1725,80 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             ),
             auto_commit=auto_commit,
         )
+
+    def list_plan_audit_log(
+        self,
+        plan_id: str,
+        *,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        if not self._plan_exists(plan_id):
+            return {
+                "items": [],
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total": 0,
+                    "total_pages": 1,
+                },
+            }
+
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+        count_row = self.fetch_one(
+            """
+            SELECT COUNT(*)::int AS total
+              FROM quality.quality_audit_log
+             WHERE entity_type = 'quality_action_plan'
+               AND entity_id = %s
+            """,
+            (plan_id,),
+        )
+        total = int((count_row or {}).get("total") or 0)
+        offset = (page - 1) * page_size
+        rows = self.fetch_all(
+            """
+            SELECT id,
+                   entity_type,
+                   entity_id,
+                   event_type,
+                   payload,
+                   actor_user_id,
+                   created_at
+              FROM quality.quality_audit_log
+             WHERE entity_type = 'quality_action_plan'
+               AND entity_id = %s
+             ORDER BY created_at DESC
+             LIMIT %s OFFSET %s
+            """,
+            (plan_id, page_size, offset),
+        )
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            created_at = row.get("created_at")
+            items.append(
+                {
+                    "id": str(row["id"]),
+                    "event_type": row.get("event_type"),
+                    "payload": row.get("payload") or {},
+                    "actor_user_id": row.get("actor_user_id"),
+                    "created_at": (
+                        created_at.isoformat()
+                        if isinstance(created_at, datetime)
+                        else created_at
+                    ),
+                }
+            )
+        return {
+            "items": items,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "total_pages": max((total + page_size - 1) // page_size, 1),
+            },
+        }
 
     def _plan_exists(self, plan_id: str) -> bool:
         row = self.fetch_one(

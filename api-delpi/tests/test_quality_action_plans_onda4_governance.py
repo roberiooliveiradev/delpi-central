@@ -168,3 +168,29 @@ def test_stalled_alert_maps_rows():
     assert alert["top_plans"][0]["code"] == "PAC-2026-0001"
     assert repo.fetch_one.call_args[0][1] == (5, "01")
     assert repo.fetch_all.call_args[0][1] == (5, "01", 8)
+
+
+def test_effectiveness_pending_alert_maps_rows():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(return_value={"pending_plans": 3})
+    repo.fetch_all = MagicMock(
+        return_value=[
+            {
+                "id": "plan-2",
+                "code": "PAC-2026-0002",
+                "title": "Retrabalho",
+                "branch_code": "02",
+                "severity": "high",
+                "effectiveness_proposed_status": "effective",
+                "effectiveness_submitted_at": None,
+                "effectiveness_submitted_by": "user-a",
+            }
+        ]
+    )
+
+    alert = repo._fetch_effectiveness_pending_alert(branch_code="02")
+
+    assert alert["pending_plans"] == 3
+    assert alert["top_plans"][0]["effectiveness_proposed_status"] == "effective"
+    assert repo.fetch_one.call_args[0][1] == ("02",)
+    assert repo.fetch_all.call_args[0][1] == ("02", 8)

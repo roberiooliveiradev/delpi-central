@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
 import { DashboardEffectivenessCharts } from "../components/dashboard/DashboardEffectivenessCharts";
+import { DashboardEffectivenessPendingCard } from "../components/dashboard/DashboardEffectivenessPendingCard";
 import { DashboardRecurrenceAlertCard } from "../components/dashboard/DashboardRecurrenceAlertCard";
 import { DashboardStalledAlertCard } from "../components/dashboard/DashboardStalledAlertCard";
 import { DashboardRankingCharts } from "../components/dashboard/DashboardRankingCharts";
@@ -118,6 +119,11 @@ export function DashboardPage({ onNavigate }: Props) {
           />
           <DashboardStalledAlertCard
             alert={summary.stalled_alert}
+            loading={loading}
+            onNavigate={onNavigate}
+          />
+          <DashboardEffectivenessPendingCard
+            alert={summary.effectiveness_pending_alert}
             loading={loading}
             onNavigate={onNavigate}
           />

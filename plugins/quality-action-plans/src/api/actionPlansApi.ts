@@ -12,6 +12,7 @@ import type {
   DashboardSummary,
   FiveWhysAnalysis,
   IshikawaAnalysis,
+  PagedAuditLogResponse,
   PagedPlansResponse,
   PlanAction,
 } from "../types/actionPlan";
@@ -365,6 +366,17 @@ export async function fetchPendingEffectivenessReviews(
     `${API_BASE}/effectiveness-review/pending?page=${page}&page_size=${pageSize}`,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar fila de eficácia pendente.");
+}
+
+export async function fetchPlanAuditLog(
+  planId: string,
+  page = 1,
+  pageSize = 50,
+): Promise<PagedAuditLogResponse> {
+  const envelope = await httpGet<ApiEnvelope<PagedAuditLogResponse>>(
+    `${API_BASE}/${planId}/audit-log?page=${page}&page_size=${pageSize}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar auditoria do plano.");
 }
 
 export async function upsertRnc8dReport(

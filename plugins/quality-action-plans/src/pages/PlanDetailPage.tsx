@@ -18,6 +18,7 @@ import {
   exportRnc8dPdf,
   exportRnc8dSpreadsheet,
   fetchActionPlanDetail,
+  fetchPlanAuditLog,
   promoteSolutionPattern,
   recordEffectivenessReview,
   rejectEffectivenessReview,
@@ -56,10 +57,15 @@ import {
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
-import type { ActionPlanDetail, FiveWhysAnalysis, IshikawaAnalysis } from "../types/actionPlan";
+import type {
+  ActionPlanDetail,
+  FiveWhysAnalysis,
+  IshikawaAnalysis,
+  PlanAuditLogEntry,
+} from "../types/actionPlan";
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
-import { formatDate } from "../utils/format";
+import { formatDate, formatDateTime } from "../utils/format";
 import { formatSymptomTags, parseSymptomTags } from "../utils/symptomTags";
 
 type Props = {
@@ -98,6 +104,17 @@ const CAUSE_TRACK_OPTIONS = [
   { value: "detection", label: "Detecção" },
 ];
 
+const AUDIT_EVENT_LABELS: Record<string, string> = {
+  plan_created: "Plano criado",
+  plan_updated: "Identificação atualizada",
+  plan_closed: "Plano encerrado",
+  plan_reopened: "Plano reaberto",
+  effectiveness_submitted: "Eficácia submetida",
+  effectiveness_approved: "Eficácia aprovada",
+  effectiveness_reviewed: "Eficácia registrada",
+  effectiveness_approval_rejected: "Submissão rejeitada",
+};
+
 const ISHIKAWA_FIELDS = [
   { key: "machine" as const, label: "Máquina", icon: Cog },
   { key: "method_process" as const, label: "Método", icon: Wrench },
@@ -127,6 +144,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [reopenReason, setReopenReason] = useState("");
   const [reopenTargetStatus, setReopenTargetStatus] = useState("in_progress");
   const [saving, setSaving] = useState<string | null>(null);
+  const [auditLog, setAuditLog] = useState<PlanAuditLogEntry[]>([]);
   const [identificationForm, setIdentificationForm] = useState({
     title: "",
     customer_name: "",
@@ -195,6 +213,12 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         nonconformity_scope: data.plan.nonconformity_scope ?? "external",
         client_nc_registry: data.plan.client_nc_registry ?? "",
       });
+      try {
+        const audit = await fetchPlanAuditLog(planId);
+        setAuditLog(audit.items);
+      } catch {
+        setAuditLog([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar plano.");
     } finally {
@@ -545,6 +569,26 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           <SimilarCasesPanel planId={planId} onNavigate={onNavigate} />
 
           <PlanTimeline detail={detail} />
+
+          {auditLog.length > 0 ? (
+            <SectionCard title="Auditoria (governança)">
+              <ol className="pac-timeline-track">
+                {auditLog.map((entry) => (
+                  <li key={entry.id} className="pac-timeline-entry">
+                    <div className="pac-timeline-entry__header">
+                      <strong>
+                        {AUDIT_EVENT_LABELS[entry.event_type] ?? entry.event_type}
+                      </strong>
+                      <span className="pac-muted">{formatDateTime(entry.created_at)}</span>
+                    </div>
+                    <p className="pac-timeline-entry__meta pac-muted">
+                      {entry.actor_user_id ? `Por ${entry.actor_user_id}` : null}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </SectionCard>
+          ) : null}
 
           {!isRnc8dTemplate ? (
             <SectionCard title="Template do relatório">
