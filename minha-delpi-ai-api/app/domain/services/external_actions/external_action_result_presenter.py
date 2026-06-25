@@ -4,14 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.domain.services.chat_operational_response_profile_service import (
-    ChatOperationalResponseProfileService,
-)
 from app.domain.services.chat_presentation_column_label_context import (
     ExternalActionColumnLabelContext,
-)
-from app.domain.services.chat_presentation_profile_service import (
-    ChatPresentationProfileService,
 )
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
@@ -33,6 +27,15 @@ from app.domain.services.external_actions.presenters.presenter_content_presenter
 )
 from app.domain.services.external_actions.presenters.sql_presenter import (
     ExternalActionSqlPresenter,
+)
+from app.domain.services.external_actions.external_action_result_orchestration.external_action_result_build_service import (
+    ExternalActionResultBuildService,
+)
+from app.domain.services.external_actions.external_action_result_orchestration.external_action_result_present_service import (
+    ExternalActionResultPresentService,
+)
+from app.domain.services.external_actions.external_action_result_orchestration.external_action_result_schema_auxiliary_service import (
+    ExternalActionResultSchemaAuxiliaryService,
 )
 
 
@@ -87,117 +90,7 @@ class ExternalActionResultPresenter:
         return self._sql_presenter
 
     def present(self, data, *, path: str = "") -> dict:
-        previous_labels = self._active_schema_labels
-        previous_formats = self._active_schema_formats
-        previous_path = self._active_presentation_path
-        self._active_presentation_path = str(path or "").strip()
-        self._active_schema_labels = self._column_labels.merge_meta_field_labels({}, data)
-        self._active_schema_formats = self._column_labels.merge_meta_field_formats({}, data)
-
-        try:
-            error = self._detect_api_error(data, path=path)
-
-            if error:
-                return error
-
-            root = self._unwrap_data(data)
-            profile = ChatOperationalResponseProfileService.resolve(data, path=path)
-
-            empty_operational = self._present_empty_operational_result(path=path, root=root)
-
-            if empty_operational:
-                return empty_operational
-
-            if isinstance(root, dict) and self._looks_like_kpi_response(
-                root,
-                path,
-                entity=profile.entity,
-            ):
-                kpi_result = self._kpi_chart().present_kpi_response(
-                    root,
-                    path,
-                    entity=profile.entity,
-                )
-
-                if kpi_result:
-                    return kpi_result
-
-            if isinstance(root, dict):
-                sql_result = self._sql()._present_sql_resultsets(root, path)
-
-                if sql_result:
-                    return sql_result
-
-                rows = root.get("rows") if isinstance(root.get("rows"), list) else None
-
-                if rows is None:
-                    rows = self._sql()._coerce_sql_row_list(root)
-
-                if isinstance(rows, list) and rows:
-                    sql_result = self._sql()._present_sql_rows(rows)
-
-                    if sql_result:
-                        if isinstance(sql_result, dict):
-                            sql_result.setdefault("dados", root)
-                            sql_result.setdefault("sqlRows", rows)
-
-                        return sql_result
-
-            if isinstance(root, list) and root:
-                sql_result = self._sql()._present_sql_rows(root)
-
-                if sql_result:
-                    return sql_result
-
-            from app.domain.services.chat_schema_driven_presentation_service import (
-                ChatSchemaDrivenPresentationService,
-            )
-
-            bundle = ChatSchemaDrivenPresentationService.build_bundle(
-                self,
-                data,
-                path=path,
-                entity=profile.entity,
-            )
-
-            for visual in (
-                bundle.table,
-                bundle.kpi,
-                bundle.chart,
-                bundle.tree,
-                bundle.text,
-            ):
-                if isinstance(visual, dict):
-                    return self._operational_response().present_visual(
-                        visual,
-                        data=data,
-                        path=path,
-                    )
-
-            visual = self.build_presentation(data, path=path)
-
-            if visual:
-                return self._operational_response().present_visual(
-                    visual,
-                    data=data,
-                    path=path,
-                )
-
-            if isinstance(root, dict):
-                fallback = self._present_dict_fallback(root, path)
-
-                if fallback:
-                    return fallback
-
-            return {
-                "titulo": self._presenter_text("generic", "defaultQueryTitle"),
-                "linhas": [self._presenter_text("generic", "queryResultTitle")],
-                "dados": root,
-            }
-        finally:
-            self._active_schema_labels = previous_labels
-            self._active_schema_formats = previous_formats
-            self._active_presentation_path = previous_path
+        return ExternalActionResultPresentService.present(self, data, path=path)
 
     def prepare_presentation_data(self, data, *, path: str = ""):
         return data
@@ -209,74 +102,12 @@ class ExternalActionResultPresenter:
         path: str = "",
         response_schema: dict | None = None,
     ) -> dict | None:
-        schema_labels = self._column_labels.resolve_schema_labels(response_schema)
-        previous_path = self._active_presentation_path
-        self._active_presentation_path = str(path or "").strip()
-        self._active_schema_labels = self._column_labels.merge_meta_field_labels(
-            schema_labels,
+        return ExternalActionResultBuildService.build_presentation(
+            self,
             data,
+            path=path,
+            response_schema=response_schema,
         )
-        self._active_schema_formats = self._column_labels.merge_meta_field_formats(
-            {},
-            data,
-        )
-
-        try:
-            profile = ChatOperationalResponseProfileService.resolve(data, path=path)
-            root = self._unwrap_data(data)
-
-            from app.domain.services.external_actions.external_action_sql_capability_service import (
-                ExternalActionSqlCapabilityService,
-            )
-
-            if isinstance(root, dict) and isinstance(root.get("resultsets"), list):
-                if ExternalActionSqlCapabilityService.is_sql_result_payload(
-                    root
-                ) or ExternalActionSqlCapabilityService.is_sql_execution_context(path=path):
-                    rows = self._collect_sql_resultset_rows(root.get("resultsets"))
-                    title = self._sql_result_title(root, path)
-
-                    if not rows:
-                        empty_table = self._sql()._build_sql_resultset_empty_table(
-                            root,
-                            title=title,
-                            path=path,
-                        )
-
-                        if empty_table:
-                            return empty_table
-
-                    if rows:
-                        return self._build_items_table(rows, title=title, path=path)
-
-            if isinstance(root, dict) and ExternalActionSqlCapabilityService.is_sql_execution_context(
-                path=path,
-            ):
-                rows = root.get("rows") if isinstance(root.get("rows"), list) else None
-
-                if rows is None:
-                    rows = self._sql()._coerce_sql_row_list(root)
-
-                if isinstance(rows, list) and rows and isinstance(rows[0], dict):
-                    title = self._sql()._sql_result_title(root, path)
-
-                    return self._build_items_table(rows, title=title, path=path)
-
-            from app.domain.services.chat_schema_driven_presentation_service import (
-                ChatSchemaDrivenPresentationService,
-            )
-
-            return ChatSchemaDrivenPresentationService.finish_schema_first_primary(
-                self,
-                data,
-                path=path,
-                entity=profile.entity,
-                response_schema=response_schema,
-            )
-        finally:
-            self._active_schema_labels = None
-            self._active_schema_formats = None
-            self._active_presentation_path = previous_path
 
     def build_text_presentation(self, data, *, path: str = "") -> dict | None:
         return None
@@ -301,68 +132,26 @@ class ExternalActionResultPresenter:
         chart_presentation: dict | None = None,
         kpi_presentation: dict | None = None,
     ) -> dict[str, dict | None]:
-        from app.domain.services.chat_schema_driven_presentation_service import (
-            ChatSchemaDrivenPresentationService,
-        )
-
-        profile = ChatOperationalResponseProfileService.resolve(data, path=path)
-
-        if not ChatSchemaDrivenPresentationService.should_apply(
-            path=path,
-            entity=profile.entity,
-        ):
-            return {
-                "text_presentation": text_presentation,
-                "tree_presentation": tree_presentation,
-                "table_presentation": table_presentation,
-                "chart_presentation": chart_presentation,
-                "kpi_presentation": kpi_presentation,
-            }
-
-        bundle = ChatSchemaDrivenPresentationService.build_bundle(
+        return ExternalActionResultSchemaAuxiliaryService.apply_schema_driven_auxiliaries(
             self,
             data,
             path=path,
-            entity=profile.entity,
+            text_presentation=text_presentation,
+            tree_presentation=tree_presentation,
+            table_presentation=table_presentation,
+            chart_presentation=chart_presentation,
+            kpi_presentation=kpi_presentation,
         )
-
-        return {
-            "text_presentation": self._merge_schema_text_presentation(
-                text_presentation,
-                bundle.text,
-            ),
-            "tree_presentation": tree_presentation or bundle.tree,
-            "table_presentation": table_presentation or bundle.table,
-            "chart_presentation": chart_presentation or bundle.chart,
-            "kpi_presentation": kpi_presentation or bundle.kpi,
-        }
 
     @staticmethod
     def _merge_schema_text_presentation(
         existing: dict | None,
         schema_text: dict | None,
     ) -> dict | None:
-        if not isinstance(schema_text, dict):
-            return existing
-
-        if not isinstance(existing, dict):
-            return schema_text
-
-        existing_md = str(existing.get("markdown") or "").strip()
-        schema_md = str(schema_text.get("markdown") or "").strip()
-
-        if not schema_md:
-            return existing
-
-        if "<!-- section:scope -->" in schema_md and (
-            not existing_md or existing_md.count("\n") < 2
-        ):
-            return schema_text
-
-        if len(schema_md) > len(existing_md) + 24:
-            return schema_text
-
-        return existing
+        return ExternalActionResultSchemaAuxiliaryService.merge_schema_text_presentation(
+            existing,
+            schema_text,
+        )
 
     def _fallback_title(self, path: str) -> str | None:
         return self._operational_response()._fallback_title(path)

@@ -373,6 +373,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `kpi_chart_presenter.py` | ~~1068~~ **~154** | ✅ **OK (jun/2026)** — delegates `presenters/kpi_chart/*` (cards, build, dashboard, orchestration, row_chart, specialized) |
 | `chat_presentation_profile_service.py` | ~~1035~~ **~429** | ✅ **OK (jun/2026)** — delegates `chat_presentation_profile/*` (entity, path, resolve, openapi, stack, decision, contract, prose) |
 | `chat_operational_parameter_service.py` | ~~502~~ **~100** | ✅ **OK (jun/2026)** — delegates `chat_operational_parameter/*` (product_code, tool_skip, period, date); imports application pendentes (gate) |
+| `external_action_result_presenter.py` | ~~619~~ **~408** | ✅ **OK (jun/2026)** — orquestração em `external_action_result_orchestration/*` (present, build, schema_auxiliary); sub-presenters em `presenters/` |
 
 **Domain → application (14 arquivos — zerar):**
 
@@ -661,3 +662,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ChatPresentationProfileService` fatiado em `chat_presentation_profile/*` (entity, path, resolve, openapi, stack, decision, contract, prose); fachada ~429L; `node`/`mapping` permanecem na fachada para patches de teste |
 | jun/2026 | W3 — `ChatPresentationDecisionService` já era fachada ~86L (`Decide` / `Enrichment` / `AutomaticScore`); playbook atualizado |
 | jun/2026 | W3 — `ChatOperationalParameterService` fatiado em `chat_operational_parameter/*` (product_code, tool_skip, period, date); fachada ~101L |
+| jun/2026 | W3 — `ExternalActionResultPresenter` extrai `present` / `build_presentation` / `apply_schema_driven_auxiliaries` para `external_action_result_orchestration/*`; fachada ~408L |
