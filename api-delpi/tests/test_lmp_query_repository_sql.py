@@ -470,6 +470,42 @@ def test_dashboard_summary_batch_uses_lite_eng_resumo_without_order_by() -> None
     assert "ENGINEERING_STATUS" in batch_sql
 
 
+def test_dashboard_summary_inline_sql_skips_temp_tables() -> None:
+    repo = _work_month_repository()
+    request = ListLMPRequest(
+        date_start="20260601",
+        date_end="20260630",
+        listing_type="lmp",
+    )
+    candidates_rel, eng_rel, pi_rel = repo._inline_staged_relations()
+    final_select = repo._staged_final_select(
+        include_qtd_pi=True,
+        order_by=False,
+        summary_only=True,
+        candidates_relation=candidates_rel,
+        eng_resumo_relation=eng_rel,
+        pi_count_relation=pi_rel,
+    )
+    inline_sql, _params = repo._build_dashboard_summary_inline_sql(
+        request,
+        include_qtd_pi=True,
+        final_select=final_select,
+        final_params=repo._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        ),
+    )
+
+    assert inline_sql.startswith("WITH\n")
+    assert "#Delpi_CandidateLMPs" not in inline_sql
+    assert "#Delpi_EngResumo" not in inline_sql
+    assert "#Delpi_PICount" not in inline_sql
+    assert "SELECT * INTO" not in inline_sql
+    assert "FROM CandidateLMPs C" in inline_sql
+    assert "LEFT JOIN EngenhariaResumoUltimaRevisao H" in inline_sql
+    assert "RevCycleFacts AS" in inline_sql
+
+
 def test_lmp_only_candidate_cte_skips_eng_support_and_other_union() -> None:
     repo = _repository()
     request = ListLMPRequest(
@@ -645,11 +681,13 @@ def test_work_month_lmp_candidates_union_revision_and_anchor() -> None:
     assert "WorkMonthRevisionsInPeriod AS" in candidate_sql
     assert "WorkMonthRevisionKeys AS" in candidate_sql
     assert "OvRevisionTouchedInPeriod AS" in candidate_sql
+    assert "RevCycleFacts AS" in candidate_sql
     assert "INNER JOIN OvRevisionTouchedInPeriod K" in candidate_sql
     assert "ListingAnchorEventos" in candidate_sql
     assert "AllListingAnchorRaw AS" in candidate_sql
     assert " UNION " in candidate_sql
     assert "CYCLE_INDEX" in candidate_sql
+    assert "HomologByRevisionRaw AS" not in candidate_sql
 
 
 def test_work_month_lmp_listing_anchor_marker_uses_dashboard_period() -> None:

@@ -45,6 +45,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         callback(qb)
         return qb.build()
 
+    @staticmethod
+    def _totvs_table(table: str) -> str:
+        """Leitura analítica — evita bloqueio em tabelas Protheus (SB9, AIJ, AD1, …)."""
+        return f"{table} WITH (NOLOCK)"
+
     def _active_filter(self, qb: QueryBuilder, field: str):
         qb.eq(field, self.settings.active_delete_flag)
 
@@ -1171,7 +1176,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     W.HOMOLOG_END_DATE AS LMP_END_DATE,
                     W.CYCLE_INDEX AS CYCLE_INDEX
                 FROM WorkMonthRevisionsInPeriod W
-                INNER JOIN AD1010 AD1
+                INNER JOIN {self._totvs_table("AD1010")} AD1
                     ON AD1.AD1_FILIAL = W.AIJ_FILIAL
                    AND AD1.AD1_NROPOR = W.AIJ_NROPOR
                    AND AD1.AD1_REVISA = W.AIJ_REVISA
@@ -1200,7 +1205,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     L.ANCHOR_START_DATE AS LMP_START_DATE,
                     L.ANCHOR_END_DATE AS LMP_END_DATE,
                     1 AS CYCLE_INDEX
-                FROM AD1010 AD1
+                FROM {self._totvs_table("AD1010")} AD1
                 INNER JOIN ListingAnchorEventos L
                     ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                    AND L.AIJ_NROPOR = AD1.AD1_NROPOR
@@ -1230,7 +1235,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
                     A.AIJ_REVISA
-                FROM AIJ010 A
+                FROM {self._totvs_table("AIJ010")} A
                 WHERE {where_aij_base}
                   {where_period_touch}
                   AND (
@@ -1241,63 +1246,47 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                   )
             ),
 
-            HomologByRevisionRaw AS (
+            RevCycleFacts AS (
                 SELECT
                     A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
                     A.AIJ_REVISA,
-                    MIN(A.AIJ_DTINIC) AS HOMOLOG_DATE,
+                    MIN(
+                        CASE
+                            WHEN ({where_lmp_finalized}) THEN A.AIJ_DTINIC
+                        END
+                    ) AS HOMOLOG_DATE,
                     MAX(
                         CASE
-                            WHEN ISNULL(A.AIJ_DTENCE, '') <> '' THEN A.AIJ_DTENCE
-                            ELSE A.AIJ_DTINIC
+                            WHEN ({where_lmp_finalized}) THEN
+                                CASE
+                                    WHEN ISNULL(A.AIJ_DTENCE, '') <> '' THEN A.AIJ_DTENCE
+                                    ELSE A.AIJ_DTINIC
+                                END
                         END
-                    ) AS HOMOLOG_END_DATE
-                FROM AIJ010 A
+                    ) AS HOMOLOG_END_DATE,
+                    MIN(
+                        CASE
+                            WHEN ({where_eng_support_a}) THEN A.AIJ_DTINIC
+                        END
+                    ) AS REV_FIRST_ENG,
+                    MIN(
+                        CASE
+                            WHEN ({where_lmp_anchor_a}) THEN A.AIJ_DTINIC
+                        END
+                    ) AS ANCHOR_DATE,
+                    MAX(
+                        CASE
+                            WHEN ({where_sample_anchor}) THEN 1
+                            ELSE 0
+                        END
+                    ) AS HAS_SAMPLE
+                FROM {self._totvs_table("AIJ010")} A
                 INNER JOIN OvRevisionTouchedInPeriod K
                     ON K.AIJ_FILIAL = A.AIJ_FILIAL
                    AND K.AIJ_NROPOR = A.AIJ_NROPOR
                    AND K.AIJ_REVISA = A.AIJ_REVISA
                 WHERE {where_aij_base}
-                  AND {where_lmp_finalized}
-                GROUP BY
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA
-            ),
-
-            RevEngMinutes AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA,
-                    MIN(A.AIJ_DTINIC) AS REV_FIRST_ENG
-                FROM AIJ010 A
-                INNER JOIN OvRevisionTouchedInPeriod K
-                    ON K.AIJ_FILIAL = A.AIJ_FILIAL
-                   AND K.AIJ_NROPOR = A.AIJ_NROPOR
-                   AND K.AIJ_REVISA = A.AIJ_REVISA
-                WHERE {where_aij_base}
-                  AND {where_eng_support_a}
-                GROUP BY
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA
-            ),
-
-            RevAnchor AS (
-                SELECT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA,
-                    MIN(A.AIJ_DTINIC) AS ANCHOR_DATE
-                FROM AIJ010 A
-                INNER JOIN OvRevisionTouchedInPeriod K
-                    ON K.AIJ_FILIAL = A.AIJ_FILIAL
-                   AND K.AIJ_NROPOR = A.AIJ_NROPOR
-                   AND K.AIJ_REVISA = A.AIJ_REVISA
-                WHERE {where_aij_base}
-                  AND {where_lmp_anchor_a}
                 GROUP BY
                     A.AIJ_FILIAL,
                     A.AIJ_NROPOR,
@@ -1306,22 +1295,15 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
             RevCycleRows AS (
                 SELECT
-                    RH.AIJ_FILIAL,
-                    RH.AIJ_NROPOR,
-                    RH.AIJ_REVISA,
-                    RH.HOMOLOG_DATE,
-                    RH.HOMOLOG_END_DATE,
-                    REM.REV_FIRST_ENG,
-                    RA.ANCHOR_DATE
-                FROM HomologByRevisionRaw RH
-                LEFT JOIN RevEngMinutes REM
-                    ON REM.AIJ_FILIAL = RH.AIJ_FILIAL
-                   AND REM.AIJ_NROPOR = RH.AIJ_NROPOR
-                   AND REM.AIJ_REVISA = RH.AIJ_REVISA
-                LEFT JOIN RevAnchor RA
-                    ON RA.AIJ_FILIAL = RH.AIJ_FILIAL
-                   AND RA.AIJ_NROPOR = RH.AIJ_NROPOR
-                   AND RA.AIJ_REVISA = RH.AIJ_REVISA
+                    F.AIJ_FILIAL,
+                    F.AIJ_NROPOR,
+                    F.AIJ_REVISA,
+                    F.HOMOLOG_DATE,
+                    F.HOMOLOG_END_DATE,
+                    F.REV_FIRST_ENG,
+                    F.ANCHOR_DATE
+                FROM RevCycleFacts F
+                WHERE F.HOMOLOG_DATE IS NOT NULL
             ),
 
             WorkMonthRevisionsInPeriod AS (
@@ -1350,17 +1332,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             ),
 
             SampleOnRevision AS (
-                SELECT DISTINCT
-                    A.AIJ_FILIAL,
-                    A.AIJ_NROPOR,
-                    A.AIJ_REVISA
-                FROM AIJ010 A
-                INNER JOIN OvRevisionTouchedInPeriod K
-                    ON K.AIJ_FILIAL = A.AIJ_FILIAL
-                   AND K.AIJ_NROPOR = A.AIJ_NROPOR
-                   AND K.AIJ_REVISA = A.AIJ_REVISA
-                WHERE {where_aij_base}
-                  AND {where_sample_anchor}
+                SELECT
+                    F.AIJ_FILIAL,
+                    F.AIJ_NROPOR,
+                    F.AIJ_REVISA
+                FROM RevCycleFacts F
+                WHERE F.HAS_SAMPLE = 1
             ),
 
             {cte_marker},
@@ -1383,13 +1360,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_sample_anchor,
             *params_aij_base,
             *params_lmp_finalized,
-            *params_aij_base,
             *params_eng_support_a,
-            *params_aij_base,
             *params_lmp_anchor_a,
-            *params_work_month,
-            *params_aij_base,
             *params_sample_anchor,
+            *params_work_month,
             *params_marker,
             LISTING_KIND_LMP,
             *params_ad1,
@@ -1922,7 +1896,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     LEAD(A.AIJ_HRINIC) OVER ({win}) AS NEXT_HRINIC,
                     LEAD(A.AIJ_DTENCE) OVER ({win}) AS NEXT_DTENCE,
                     LEAD(A.AIJ_HRENCE) OVER ({win}) AS NEXT_HRENCE
-                FROM AIJ010 A
+                FROM {self._totvs_table("AIJ010")} A
                 {scope_join_a}
                 WHERE {where_aij_base_a}
             ),
@@ -3425,16 +3399,74 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
 
         return "\n".join(parts), tuple(all_params)
 
+    def _inline_staged_relations(self) -> tuple[str, str, str]:
+        return "CandidateLMPs", "EngenhariaResumoUltimaRevisao", "PI_COUNT_BY_OV"
+
+    def _build_dashboard_summary_inline_sql(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+        final_select: str,
+        final_params: tuple = (),
+    ) -> Tuple[str, tuple]:
+        """
+        Summary do dashboard em um único WITH — sem materializar temp tables
+        (cada temp era lida uma vez; inline deixa o otimizador compor o plano).
+        """
+        lmp_only_candidates = self._candidate_scope_lmp_only(request)
+        cte_candidates, params_candidates = self._sql_candidate_lmps_cte(
+            request,
+            lmp_only=lmp_only_candidates,
+        )
+        cte_hist, params_hist = self._sql_historico_ov_cte(
+            scope_cte_name="CandidateLMPs",
+            requested_branch=request.branch,
+            date_start=request.date_start,
+            date_end=request.date_end,
+            eng_resumo_lite=True,
+            per_candidate_revision=(
+                self._uses_per_revision_candidate_listing()
+                and self._has_listing_period_filter(
+                    request.date_start,
+                    request.date_end,
+                )
+            ),
+        )
+
+        ctes = [cte_candidates, cte_hist]
+        all_params: list = [*params_candidates, *params_hist]
+
+        if include_qtd_pi:
+            cte_prod, params_prod = self._sql_produtos_lmp_cte(
+                scope_cte_name="CandidateLMPs",
+                requested_branch=request.branch,
+            )
+            cte_pi, params_pi = self._sql_pi_total_by_ov_ctes_from_produtos_lmp()
+            ctes.extend([cte_prod, cte_pi])
+            all_params.extend([*params_prod, *params_pi])
+
+        all_params.extend(final_params)
+        cte_block = ",\n".join(ctes)
+        sql = f"WITH\n{cte_block}\n{final_select}"
+        return sql, tuple(all_params)
+
     def _staged_final_select(
         self,
         *,
         include_qtd_pi: bool,
         order_by: bool,
         summary_only: bool = False,
+        candidates_relation: str | None = None,
+        eng_resumo_relation: str | None = None,
+        pi_count_relation: str | None = None,
     ) -> str:
+        candidates = candidates_relation or self._TEMP_CANDIDATES
+        eng_resumo = eng_resumo_relation or self._TEMP_ENG_RESUMO
+        pi_count = pi_count_relation or self._TEMP_PI_COUNT
         qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
         qtd_pi_join = f"""
-            LEFT JOIN {self._TEMP_PI_COUNT} PI
+            LEFT JOIN {pi_count} PI
                 ON PI.ADJ_FILIAL = C.AD1_FILIAL
                AND PI.ADJ_NROPOR = C.AD1_NROPOR
                AND PI.ADJ_REVISA = C.AD1_REVISA
@@ -3467,8 +3499,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     H.ENGINEERING_STATUS AS engineering_status,
                     H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
                     {qtd_pi_select}
-                FROM {self._TEMP_CANDIDATES} C
-                LEFT JOIN {self._TEMP_ENG_RESUMO} H
+                FROM {candidates} C
+                LEFT JOIN {eng_resumo} H
                     ON H.AIJ_FILIAL = C.AD1_FILIAL
                    AND H.AIJ_NROPOR = C.AD1_NROPOR
                    {eng_join_revision}
@@ -3508,8 +3540,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 H.QTD_RETORNOU_ENG AS qtd_returned_from_engineering,
                 H.TEMPO_TOTAL_MINUTOS_ENG AS engineering_total_minutes,
                 {qtd_pi_select}
-            FROM {self._TEMP_CANDIDATES} C
-            LEFT JOIN {self._TEMP_ENG_RESUMO} H
+            FROM {candidates} C
+            LEFT JOIN {eng_resumo} H
                 ON H.AIJ_FILIAL = C.AD1_FILIAL
                AND H.AIJ_NROPOR = C.AD1_NROPOR
                {eng_join_revision}
@@ -3929,10 +3961,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         if cached is not None:
             return cached
 
+        candidates_rel, eng_rel, pi_rel = self._inline_staged_relations()
         final_select = self._staged_final_select(
             include_qtd_pi=include_qtd_pi,
             order_by=False,
             summary_only=True,
+            candidates_relation=candidates_rel,
+            eng_resumo_relation=eng_rel,
+            pi_count_relation=pi_rel,
         )
         residence_params = self._staged_residence_final_params(
             residence_filter_count=1,
@@ -3943,10 +3979,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             final_select,
             residence_params,
         )
-        batch_sql, batch_params = self._build_staged_batch(
+        batch_sql, batch_params = self._build_dashboard_summary_inline_sql(
             request,
             include_qtd_pi=include_qtd_pi,
-            eng_resumo_lite=True,
             final_select=final_select,
             final_params=final_params,
         )
