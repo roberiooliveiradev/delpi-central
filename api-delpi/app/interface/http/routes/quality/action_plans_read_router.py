@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, File, Form, Query, UploadFile
+from fastapi import APIRouter, Body, File, Form, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
@@ -8,7 +8,10 @@ from delpi_auth.authorization import require_any_permission
 from delpi_auth.authz_core import has_any_permission
 from delpi_auth.request_context import get_current_user
 
+from delpi_auth.service_token import request_has_valid_internal_service_token
+
 from app.application.security.api_delpi_permissions import (
+    QUALITY_ACTION_PLANS_ADMIN_DISPATCH_PERMISSIONS,
     QUALITY_ACTION_PLANS_CLOSE_PERMISSIONS,
     QUALITY_ACTION_PLANS_READ_PERMISSIONS,
     QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS,
@@ -31,6 +34,7 @@ from app.application.use_cases.quality_action_plans.quality_action_plans_use_cas
 from app.composition.quality_action_plans_composer import (
     build_create_plan_actions_use_case,
     build_create_quality_action_plan_use_case,
+    build_dispatch_pac_quality_notifications_use_case,
     build_quality_action_plan_read_repository,
     build_record_effectiveness_review_use_case,
     build_reopen_quality_action_plan_use_case,
@@ -284,6 +288,41 @@ def get_action_plans_dashboard(
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao carregar dashboard PAC: {exc}")
         return error_response("Erro ao carregar dashboard de planos de ação.", status_code=500)
+
+
+@router.post(
+    "/notifications/dispatch",
+    **_pac_openapi(
+        "dispatch_quality_action_plan_notifications",
+        "/notifications/dispatch",
+    ),
+)
+def dispatch_quality_action_plan_notifications(
+    request: Request,
+    dry_run: bool = Query(default=False),
+):
+    if not request_has_valid_internal_service_token(request):
+        denied = _permission_denied_if_missing(QUALITY_ACTION_PLANS_ADMIN_DISPATCH_PERMISSIONS)
+        if denied is not None:
+            return denied
+    try:
+        result = build_dispatch_pac_quality_notifications_use_case().execute(dry_run=dry_run)
+        return api_delpi_success(
+            {
+                "enabled": result.enabled,
+                "dry_run": result.dry_run,
+                "candidates": result.candidates,
+                "sent": result.sent,
+                "skipped_duplicate": result.skipped_duplicate,
+                "skipped_no_recipient": result.skipped_no_recipient,
+                "failed": result.failed,
+            },
+            operation_id="dispatch_quality_action_plan_notifications",
+            message="Notificações PAC processadas.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao despachar notificações PAC: {exc}")
+        return error_response("Erro ao despachar notificações PAC.", status_code=500)
 
 
 @router.get("/overdue", **_pac_openapi("list_quality_action_plans_overdue", "/overdue"))

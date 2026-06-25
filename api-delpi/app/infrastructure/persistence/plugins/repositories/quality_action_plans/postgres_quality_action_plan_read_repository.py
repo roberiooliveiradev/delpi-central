@@ -1103,6 +1103,113 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
         }
 
+    def list_actions_due_within_days(self, *, days_ahead: int = 2) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            """
+            SELECT a.id AS action_id,
+                   a.plan_id,
+                   a.description,
+                   a.due_date,
+                   a.responsible_user_id,
+                   p.code AS plan_code,
+                   p.title AS plan_title
+              FROM quality.quality_actions a
+              JOIN quality.quality_action_plans p ON p.id = a.plan_id
+             WHERE p.deleted_at IS NULL
+               AND a.status NOT IN ('completed', 'cancelled')
+               AND a.due_date IS NOT NULL
+               AND a.due_date > CURRENT_DATE
+               AND a.due_date <= CURRENT_DATE + make_interval(days => %s)
+               AND a.responsible_user_id IS NOT NULL
+               AND trim(a.responsible_user_id) <> ''
+             ORDER BY a.due_date ASC, p.code ASC
+            """,
+            (days_ahead,),
+        )
+        result: list[dict[str, Any]] = []
+        for row in rows:
+            due_date = row.get("due_date")
+            result.append(
+                {
+                    "action_id": str(row["action_id"]),
+                    "plan_id": str(row["plan_id"]),
+                    "description": row.get("description"),
+                    "due_date": due_date,
+                    "responsible_user_id": row.get("responsible_user_id"),
+                    "plan_code": row.get("plan_code"),
+                    "plan_title": row.get("plan_title"),
+                }
+            )
+        return result
+
+    def list_stalled_critical_plans(self, *, stall_days: int = 7) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            """
+            SELECT p.id,
+                   p.code,
+                   p.title,
+                   p.owner_user_id,
+                   p.status,
+                   p.updated_at,
+                   EXTRACT(DAY FROM (NOW() - p.updated_at))::int AS days_without_update
+              FROM quality.quality_action_plans p
+             WHERE p.deleted_at IS NULL
+               AND p.status NOT IN ('completed', 'cancelled')
+               AND p.severity = 'critical'
+               AND p.updated_at < NOW() - make_interval(days => %s)
+             ORDER BY p.updated_at ASC, p.code ASC
+            """,
+            (stall_days,),
+        )
+        return [
+            {
+                "id": str(row["id"]),
+                "code": row.get("code"),
+                "title": row.get("title"),
+                "owner_user_id": row.get("owner_user_id"),
+                "status": row.get("status"),
+                "updated_at": row.get("updated_at"),
+                "days_without_update": int(row.get("days_without_update") or 0),
+            }
+            for row in rows
+        ]
+
+    def notification_already_sent(self, notification_key: str) -> bool:
+        row = self.fetch_one(
+            """
+            SELECT 1 AS found
+              FROM quality.quality_notification_dispatches
+             WHERE notification_key = %s
+            """,
+            (notification_key,),
+        )
+        return row is not None
+
+    def record_notification_dispatch(
+        self,
+        *,
+        notification_key: str,
+        event_type: str,
+        recipient_user_id: str | None,
+        entity_type: str | None,
+        entity_id: str | None,
+    ) -> None:
+        self.execute(
+            """
+            INSERT INTO quality.quality_notification_dispatches (
+                notification_key, event_type, recipient_user_id, entity_type, entity_id
+            ) VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (notification_key) DO NOTHING
+            """,
+            (
+                notification_key,
+                event_type,
+                recipient_user_id,
+                entity_type,
+                entity_id,
+            ),
+        )
+
     def list_recurrence_groups(
         self,
         *,

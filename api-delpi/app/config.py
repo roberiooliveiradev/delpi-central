@@ -196,5 +196,19 @@ class Settings:
         _get_env("CONSOLE_ALERT_PORTAL_ENABLED", default="true").lower() == "true"
     )
 
+    # ==========================
+    # PAC Qualidade — notificações in-app (Onda 4.1)
+    # ==========================
+    PAC_QUALITY_NOTIFICATIONS_ENABLED: bool = (
+        _get_env("PAC_QUALITY_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
+    )
+    PAC_QUALITY_ACTION_DUE_DAYS_AHEAD: int = int(
+        _get_env("PAC_QUALITY_ACTION_DUE_DAYS_AHEAD", default="2") or "2"
+    )
+    PAC_QUALITY_STALL_DAYS: int = int(
+        _get_env("PAC_QUALITY_STALL_DAYS", default="7") or "7"
+    )
+    PAC_QUALITY_COORDINATOR_USER_IDS: str | None = _get_env("PAC_QUALITY_COORDINATOR_USER_IDS")
+
 
 settings = Settings()

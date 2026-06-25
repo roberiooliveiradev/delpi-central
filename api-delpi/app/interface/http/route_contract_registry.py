@@ -283,6 +283,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_quality_action_plans_dashboard": RouteContract(
         "quality_action_plan_dashboard", "scalar"
     ),
+    "dispatch_quality_action_plan_notifications": RouteContract(
+        "quality_action_plan_notifications", "scalar"
+    ),
     "list_quality_action_plans_overdue": RouteContract(
         "quality_action_plan", "paged_list"
     ),

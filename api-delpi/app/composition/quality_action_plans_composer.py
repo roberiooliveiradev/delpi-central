@@ -1,3 +1,6 @@
+from app.application.use_cases.quality_action_plans.dispatch_pac_quality_notifications_use_case import (
+    DispatchPacQualityNotificationsUseCase,
+)
 from app.application.use_cases.quality_action_plans.quality_action_plan_analysis_use_cases import (
     CreatePlanActionsUseCase,
     RecordEffectivenessReviewUseCase,
@@ -38,6 +41,10 @@ def build_update_quality_action_plan_status_use_case() -> UpdateQualityActionPla
 
 def build_reopen_quality_action_plan_use_case() -> ReopenQualityActionPlanUseCase:
     return ReopenQualityActionPlanUseCase(build_quality_action_plan_repository())
+
+
+def build_dispatch_pac_quality_notifications_use_case() -> DispatchPacQualityNotificationsUseCase:
+    return DispatchPacQualityNotificationsUseCase(build_quality_action_plan_repository())
 
 
 def build_update_quality_action_plan_use_case() -> UpdateQualityActionPlanUseCase:
