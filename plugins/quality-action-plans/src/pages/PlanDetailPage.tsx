@@ -852,7 +852,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <p className="pac-muted">Nenhuma ação cadastrada.</p>
             )}
 
-            <div className="pac-inline-form pac-inline-form--stack pac-new-action-form">
+            <div className="pac-new-action-form">
               <div className="pac-form-grid pac-new-action-form__meta">
                 <SelectField
                   id="pac-new-action-type"
@@ -884,14 +884,15 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   onChange={setNewActionDueDate}
                 />
               </div>
-              <TextField
+              <TextAreaField
                 id="pac-new-action-desc"
                 label="Descrição"
                 value={newActionDescription}
                 onChange={setNewActionDescription}
+                rows={3}
                 fullWidth
               />
-              <label className="pac-checkbox-field pac-checkbox-field--block">
+              <label className="pac-checkbox-field">
                 <input
                   type="checkbox"
                   checked={newActionEvidenceRequired}
