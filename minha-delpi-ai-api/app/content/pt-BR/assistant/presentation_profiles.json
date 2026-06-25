@@ -2012,82 +2012,6 @@
       "entity": "exclusive_raw_materials_catalog"
     },
     {
-      "contains": "/production/planned-vs-real-time",
-      "entity": "production_planned_vs_real_time"
-    },
-    {
-      "contains": "/production/allocation-gaps",
-      "entity": "production_allocation_gaps"
-    },
-    {
-      "contains": "/production/orders/finished-without-consumption",
-      "entity": "production_orders_finished_without_consumption"
-    },
-    {
-      "contains": "/production/work-centers/average-planned-time",
-      "entity": "production_work_center_average_planned_time"
-    },
-    {
-      "contains": "/production/consumption/by-item/",
-      "entity": "production_consumption_by_item"
-    },
-    {
-      "contains": "/production/consumption/top-items-by-work-center",
-      "entity": "production_consumption_top_items_by_work_center"
-    },
-    {
-      "contains": "/production/consumption/top-items-validated",
-      "entity": "production_consumption_top_items_validated"
-    },
-    {
-      "contains": "/production/consumption/top-items",
-      "entity": "production_consumption_top_items"
-    },
-    {
-      "contains": "/production/orders/open",
-      "entity": "production_orders_open"
-    },
-    {
-      "contains": "/production/orders/by-op/",
-      "entity": "production_order_detail"
-    },
-    {
-      "contains": "/pedidos-venda-abertos/ops-abertas",
-      "entity": "open_production_order"
-    },
-    {
-      "contains": "/pedidos-venda-abertos",
-      "entity": "open_sales_order"
-    },
-    {
-      "contains": "/propostas-comerciais",
-      "entity": "commercial_proposal_document"
-    },
-    {
-      "contains": "/production/orders/finished",
-      "entity": "production_orders_finished"
-    },
-    {
-      "contains": "/production/work-centers/order-summary",
-      "entity": "production_work_center_order_summary"
-    },
-    {
-      "contains": "/production/losses/top-materials",
-      "entity": "production_losses_top_materials"
-    },
-    {
-      "contains": "/production/losses/records",
-      "entity": "production_losses_records"
-    },
-    {
-      "contains": "/production/schedule/today",
-      "entity": "production_schedule_today"
-    },
-    {
-      "contains": "/purchases/top-products",
-      "entity": "purchases_top_products"
-    },
-    {
       "contains": "/production-status",
       "entity": "product_production_status"
     },
@@ -2210,10 +2134,6 @@
     {
       "contains": "/engineering/lmps/",
       "entity": "lmp"
-    },
-    {
-      "contains": "/quality/audit-5s/summary",
-      "entity": "audit_5s_summary"
     }
   ]
 }

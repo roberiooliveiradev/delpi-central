@@ -190,8 +190,9 @@ Presenters por entidade **removidos**; pasta `presenters/` só com hosts utilit�
 2. ✅ Importador persiste `delpi_metadata`; `OpenApiPresentationProfileDeriverService` deriva perfil.
 3. Pendente: stack rico **só** onde `presentation.strategy: enriched` no OpenAPI.
 4. ✅ `entityProfiles` podado (75 entradas); mantidos 29 perfis especiais + `openapiReplaceableProfileKeys`.
-5. ✅ `resolve_effective_profile_key` + `openapi_operation_contracts.json` para gates CI sem payload runtime.
-6. ✅ `playbookOperational` alinhado a shapes `playbook_report` (entidades `composite_analysis` excluídas do contrato).
+5. ✅ `entityPathHints` priorizado; `pathEntityFallbacks` podado (20 entradas redundantes).
+6. ✅ Gates `audit_openapi_delpi_metadata.py` + `audit_path_entity_fallback_pruning.py`.
+7. ✅ api-pac-quality publica `x-delpi` com `operation_id` estável `pac_*`.
 
 ---
 
@@ -260,6 +261,8 @@ cd minha-delpi-ai-api
 # Rotas OpenAPI
 .venv/bin/python scripts/generate_operational_route_registry.py --check
 .venv/bin/python scripts/audit_openapi_profile_pruning.py --check
+.venv/bin/python scripts/audit_openapi_delpi_metadata.py --check
+.venv/bin/python scripts/audit_path_entity_fallback_pruning.py --check
 .venv/bin/python scripts/sync_openapi_route_contract_shapes.py --check
 .venv/bin/python scripts/audit_presentation_coverage.py --check-profiles
 .venv/bin/python scripts/sync_api_delpi_openapi.py --skip-import --skip-reindex   # catálogo local

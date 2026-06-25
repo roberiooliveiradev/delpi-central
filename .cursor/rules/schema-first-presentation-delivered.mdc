@@ -56,7 +56,8 @@ Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure
 - [ ] Teste com fixture payload real?
 - [ ] Grep zero: `visual_bundle`, `table_assembly`, `composite_visual`, `entity_route_dispatch`?
 - [ ] `audit_openapi_profile_pruning.py --check` verde (sem `entityProfiles` substituível duplicado)?
-- [ ] `sync_openapi_route_contract_shapes.py --check` verde (`openapi_operation_contracts.json` alinhado ao api-delpi)?
+- [ ] `audit_openapi_delpi_metadata.py --check` verde (x-delpi em todas as operações)?
+- [ ] `audit_path_entity_fallback_pruning.py --check` verde?
 
 ## Em conflito com Playbook 12 / 09
 

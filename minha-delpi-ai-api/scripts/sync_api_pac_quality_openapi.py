@@ -162,8 +162,49 @@ def main() -> int:
             report["catalogPath"] = str(args.catalog_path)
             report["catalogOperations"] = len(collect_openapi_operations(schema))
 
+            from app.domain.services.openapi_delpi_extension_service import (
+                OpenApiDelpiExtensionService,
+            )
+
+            report["delpiMetadataCoverage"] = OpenApiDelpiExtensionService.summarize_schema_coverage(
+                schema,
+            )
+            report["delpiMetadataInDatabase"] = sum(
+                1
+                for action in actions
+                if isinstance(action.get("delpiMetadata"), dict) and action.get("delpiMetadata")
+            )
+
     print(json.dumps(report, ensure_ascii=False, indent=2))
+
+    if not _report_is_successful(report, skip_import=args.skip_import):
+        return 1
+
     return 0
+
+
+def _report_is_successful(report: dict, *, skip_import: bool) -> bool:
+    if int(report.get("actionsInDatabase") or 0) <= 0 and not skip_import:
+        return False
+
+    if skip_import:
+        return True
+
+    import_result = report.get("import")
+
+    if isinstance(import_result, dict) and import_result.get("found") is False:
+        return False
+
+    coverage = report.get("delpiMetadataCoverage")
+
+    if isinstance(coverage, dict):
+        operations = int(coverage.get("operations") or 0)
+        with_delpi = int(coverage.get("withDelpiMetadata") or 0)
+
+        if operations > 0 and with_delpi < operations:
+            return False
+
+    return True
 
 
 if __name__ == "__main__":

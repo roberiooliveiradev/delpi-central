@@ -31,6 +31,15 @@ def test_report_fails_when_provider_missing():
     assert _report_is_successful(report, skip_import=False) is False
 
 
+def test_report_fails_when_delpi_metadata_incomplete():
+    report = {
+        "import": {"found": True, "actionsImported": 42},
+        "actionsInDatabase": 42,
+        "delpiMetadataCoverage": {"operations": 10, "withDelpiMetadata": 8},
+    }
+    assert _report_is_successful(report, skip_import=False) is False
+
+
 def test_report_successful_when_skip_import_and_actions_exist():
     report = {"actionsInDatabase": 10}
     assert _report_is_successful(report, skip_import=True) is True

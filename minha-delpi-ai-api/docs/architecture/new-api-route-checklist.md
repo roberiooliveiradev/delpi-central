@@ -168,7 +168,8 @@ Exemplo: `tests/unit/domain/services/test_chat_presentation_view_intent_service.
 - [ ] `operational_route_registry.json` + `--check`
 - [ ] `entityProfiles` só se perfil **não** substituível por `openapiShapeDefaults` (stock, analyser, …)
 - [ ] `audit_openapi_profile_pruning.py --check` verde
-- [ ] `sync_openapi_route_contract_shapes.py --check` verde
+- [ ] `audit_openapi_delpi_metadata.py --check` verde
+- [ ] `audit_path_entity_fallback_pruning.py --check` verde
 - [ ] `pathRules` específica antes de catch-all do domínio
 - [ ] Títulos/colunas em JSON
 - [ ] Regressão intenção + apresentação Automático

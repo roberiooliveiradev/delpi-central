@@ -122,8 +122,16 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 - Gates: `audit_openapi_profile_pruning.py --check`, `sync_openapi_route_contract_shapes.py --check`, `audit_presentation_coverage.py --check-profiles`.
 - Testes: 221 em profile/coverage/OpenAPI deriver; CI coverage verde.
 
-## Pendente (Fase 13+)
+## Fase 13 — sync OpenAPI e poda de fallbacks (jun/2026)
 
-- Re-sync OpenAPI (`sync_api_delpi_openapi.py`) para popular `delpi_metadata` no banco.
-- Espelhar `x-delpi` no **api-pac-quality**.
-- Podar `pathEntityFallbacks` redundantes quando `meta.entity` for obrigatório em todas as rotas.
+- Gate `audit_openapi_delpi_metadata.py --check`: todas as operações publicadas (exceto `/health`) com `x-delpi` extraível.
+- `sync_api_delpi_openapi.py` / `sync_api_pac_quality_openapi.py`: relatório `delpiMetadataCoverage` + falha se cobertura incompleta no import.
+- **api-pac-quality**: `route_contract_registry` + `openapi_delpi_extension_injector` no `build_openapi_schema`; `operation_id` estável `pac_*`.
+- **20** entradas removidas de `pathEntityFallbacks` (redundantes com `entityPathHints`); gate `audit_path_entity_fallback_pruning.py --check`.
+- Perfis de produto (`/products/{code}/…`) mantêm fallbacks por fragmento.
+
+## Pendente (Fase 14+)
+
+- Rodar `sync_api_delpi_openapi.py` em homolog/prod pós-deploy para popular `delpi_metadata` no banco.
+- Provider `api-pac-quality`: reimport após deploy com `sync_api_pac_quality_openapi.py`.
+- Remover fallbacks de produto quando `meta.entity` for garantido em 100% das respostas.

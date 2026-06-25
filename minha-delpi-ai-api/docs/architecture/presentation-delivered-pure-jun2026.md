@@ -104,13 +104,15 @@ Ainda presentes (runtime parcial ou histórico):
 Manter e evoluir:
 
 - `entityProfiles` — **só perfis especiais** (stock, analyser, factory_status, …); KPI/lista/playbook via OpenAPI (Fase 12)
-- `pathRules` — fallback quando `meta.entity` ausente; sem catch-alls `/supplies/`, `/financial/`, `/commercial/`
+- `entityPathHints` — resolução canônica por path completo
+- `pathRules` — fallback de perfil quando `meta.entity` ausente; sem catch-alls de domínio (Fase 12)
+- `pathEntityFallbacks` — só fragmentos de produto e rotas sem hint completo (Fase 13)
 - `openapiReplaceableProfileKeys`, `openapiShapeDefaults` — perfil derivado por `entity` + `shape`
 - `entitySetProfileContracts`
 - `chartPolicy`, `viewOrder`, `commentaryProfileKey`
 - `defaults.presentationStrategy: as_delivered`
 
-**Fase 12 (jun/2026):** entidades com perfil `kpi_series` / `table_list` / `playbook_report` / `kpi_snapshot` saíram de `entityProfiles`; resolução via `OpenApiPresentationProfileDeriverService` quando `apiDelpiResponseMeta` + `x-delpi` trazem `entity` e `shape`. Gates: `scripts/audit_openapi_profile_pruning.py --check`, `scripts/sync_openapi_route_contract_shapes.py --check`.
+**Fase 13 (jun/2026):** gates `audit_openapi_delpi_metadata.py` e `audit_path_entity_fallback_pruning.py`; sync scripts reportam cobertura `delpiMetadata`; api-pac-quality publica `x-delpi`; fallbacks de produto mantidos.
 
 ### Resolução de perfil (Fase 12)
 

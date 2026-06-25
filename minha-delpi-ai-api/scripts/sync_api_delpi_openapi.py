@@ -221,6 +221,15 @@ def _report_is_successful(report: dict, *, skip_import: bool) -> bool:
     if actions_imported is not None and int(actions_imported) <= 0:
         return False
 
+    coverage = report.get("delpiMetadataCoverage")
+
+    if isinstance(coverage, dict):
+        operations = int(coverage.get("operations") or 0)
+        with_delpi = int(coverage.get("withDelpiMetadata") or 0)
+
+        if operations > 0 and with_delpi < operations:
+            return False
+
     return True
 
 
