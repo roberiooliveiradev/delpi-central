@@ -526,7 +526,8 @@ chat_intent_router_service.py
 chat_operational_refinement_service.py                   # W3 ✅
 chat_operational_refinement/                             # delegates W3
 chat_route_context_service.py
-chat_operational_parameter_service.py
+chat_operational_parameter_service.py                   # W3 ✅
+chat_operational_parameter/                             # delegates W3
 chat_operational_sub_intent_service.py
 chat_operational_follow_up_routing_service.py
 chat_follow_up_intent_service.py
