@@ -367,8 +367,8 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `external_action_operational_route_selection_service.py` | ~~1079~~ **~279** | ✅ **OK (jun/2026)** — delegates `operational_route_selection/*` |
 | `chat_turn_completion_service.py` | ~~1071~~ **~200** | ✅ **OK (jun/2026)** — delegates `ChatTurnCompletionFinalize/Intelligence/Metadata/AuditService` |
 | `chat_product_query_intent_service.py` | ~~1164~~ **~330** | ✅ **OK (jun/2026)** — delegates `chat_product_query_intent/*` + `ChatProductQueryIntentDetectionService` |
-| `product_raw_material_price_presenter.py` | 1503 | Split por sub-entidade |
-| `chat_operational_data_commentary_service.py` | 976 | Após W1 registry |
+| `product_raw_material_price_presenter.py` | — | ✅ removido (schema-first no host; commit `1322970f3`) |
+| `chat_operational_data_commentary_service.py` | ~~933~~ **~100** | ✅ **OK (jun/2026)** — delegates `chat_operational_data_commentary/*` |
 | `chat_advanced_sql_specialist_service.py` | 1369 | Cluster SQL existente |
 
 **Domain → application (14 arquivos — zerar):**
@@ -481,7 +481,8 @@ chat_rich_presentation_text_service.py
 chat_product_structure_presentation_service.py
 chat_operational_factual_verdict_service.py               # OK — padrão
 chat_operational_factual_verdict_content_service.py
-chat_operational_data_commentary_service.py               # W1
+chat_operational_data_commentary_service.py               # W1 / W3 ✅
+chat_operational_data_commentary/                         # delegates W3
 chat_operational_user_question_synthesis_service.py       # W1
 chat_humanized_data_response_service.py
 chat_operational_commentary_enrichment_service.py
@@ -646,3 +647,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ChatDocumentVisionService` fatiado em `chat_document_vision/*` (config, pipeline, stage, attachment, drawing_merge); fachada ~295L |
 | jun/2026 | W3 — `ChatOperationalRefinementService` fatiado em `chat_operational_refinement/*` (heuristics, pagination, stock, metric, group-by, orchestration); fachada ~236L |
 | jun/2026 | W3 — `ChatProductQueryIntentService` fatiado em `chat_product_query_intent/*` (code, content, context, resolution, predicate, direct answer); fachada ~330L |
+| jun/2026 | W3 — `ChatOperationalDataCommentaryService` fatiado em `chat_operational_data_commentary/*` (factory, stock, status, misc, orchestration); fachada ~98L |
