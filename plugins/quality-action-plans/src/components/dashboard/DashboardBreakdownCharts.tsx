@@ -10,6 +10,11 @@ import {
 } from "recharts";
 
 import { CHART_HEIGHT } from "../../constants/chartColors";
+import {
+  CHART_AXIS_TICK,
+  CHART_AXIS_TICK_SM,
+  CHART_TOOLTIP_PROPS,
+} from "../../constants/chartTheme";
 import type { DashboardBreakdowns } from "../../types/actionPlan";
 import {
   buildActionTypeBreakdownData,
@@ -33,18 +38,14 @@ function BreakdownBarChart({ data }: { data: ChartPoint[] }) {
     <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
       <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--pac-card-border)" />
-        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-        <YAxis type="category" dataKey="name" width={132} tick={{ fontSize: 11 }} />
+        <XAxis type="number" allowDecimals={false} tick={CHART_AXIS_TICK} />
+        <YAxis type="category" dataKey="name" width={132} tick={CHART_AXIS_TICK_SM} />
         <Tooltip
           formatter={(value, _name, item) => [
             value ?? 0,
             (item?.payload as ChartPoint | undefined)?.fullName ?? "Quantidade",
           ]}
-          contentStyle={{
-            borderRadius: 12,
-            border: "1px solid var(--pac-card-border)",
-            background: "var(--pac-card-bg)",
-          }}
+          {...CHART_TOOLTIP_PROPS}
         />
         <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={18}>
           {data.map((entry) => (

@@ -12,6 +12,11 @@ import {
 import { CheckCircle2 } from "lucide-react";
 
 import { CHART_HEIGHT } from "../../constants/chartColors";
+import {
+  CHART_AXIS_TICK,
+  CHART_AXIS_TICK_SM,
+  CHART_TOOLTIP_PROPS,
+} from "../../constants/chartTheme";
 import type { DashboardEffectivenessByActionType } from "../../types/actionPlan";
 import { buildEffectivenessByActionTypeData } from "../../utils/chartData";
 import { ChartCard } from "../ui/ChartCard";
@@ -89,9 +94,9 @@ export function DashboardEffectivenessCharts({ effectiveness, loading = false }:
                 type="number"
                 domain={[0, 100]}
                 tickFormatter={(value) => `${value}%`}
-                tick={{ fontSize: 12 }}
+                tick={CHART_AXIS_TICK}
               />
-              <YAxis type="category" dataKey="name" width={132} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" width={132} tick={CHART_AXIS_TICK_SM} />
               <Tooltip
                 formatter={(value, _name, item) => {
                   const payload = item?.payload as ChartPoint | undefined;
@@ -102,11 +107,7 @@ export function DashboardEffectivenessCharts({ effectiveness, loading = false }:
                       : "Taxa",
                   ];
                 }}
-                contentStyle={{
-                  borderRadius: 12,
-                  border: "1px solid var(--pac-card-border)",
-                  background: "var(--pac-card-bg)",
-                }}
+                {...CHART_TOOLTIP_PROPS}
               />
               <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={18}>
                 {chartData.map((entry) => (

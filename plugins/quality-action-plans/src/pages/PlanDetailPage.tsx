@@ -40,7 +40,7 @@ import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
 import { RequiredEvidenceAlert } from "../components/RequiredEvidenceAlert";
 import { Rnc8dReportEditor } from "../components/Rnc8dReportEditor";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
-import { StateAlert } from "../components/StateAlert";
+import { SaveStatusBanner } from "../components/SaveStatusBanner";
 import { FormActions } from "../components/ui/FormActions";
 import { SectionCard } from "../components/ui/SectionCard";
 import { SelectField } from "../components/ui/SelectField";
@@ -69,6 +69,7 @@ import type {
 } from "../types/actionPlan";
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
+import { buildActivateRnc8dPayload } from "../utils/rnc8dPayload";
 import { formatDate, formatDateTime } from "../utils/format";
 import { formatSymptomTags, parseSymptomTags } from "../utils/symptomTags";
 
@@ -243,6 +244,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!success) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setSuccess(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [success]);
+
   async function runSave(key: string, action: () => Promise<void>) {
     setSaving(key);
     setError(null);
@@ -336,8 +345,15 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           </>
         }
       />
-      {error ? <StateAlert variant="error">{error}</StateAlert> : null}
-      {success ? <StateAlert variant="success">{success}</StateAlert> : null}
+      <SaveStatusBanner
+        saving={saving ? "Salvando alterações…" : null}
+        success={success}
+        error={error}
+        onDismiss={() => {
+          setSuccess(null);
+          setError(null);
+        }}
+      />
       {loading && !detail ? <p className="pac-muted">Carregando detalhe…</p> : null}
 
       {plan ? (
@@ -658,10 +674,12 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 disabled={saving === "activate-rnc-8d"}
                 onClick={() =>
                   void runSave("activate-rnc-8d", async () => {
-                    await upsertRnc8dReport(planId, {
-                      ...rnc8dForm,
-                      template_payload: rnc8dForm.template_payload ?? emptyRnc8dPayload(),
-                    });
+                    await upsertRnc8dReport(
+                      planId,
+                      buildActivateRnc8dPayload({
+                        template_payload: rnc8dForm.template_payload ?? emptyRnc8dPayload(),
+                      }),
+                    );
                   })
                 }
               >
@@ -813,11 +831,20 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         <td>{action.description}</td>
                         <td>{action.responsible_name ?? "—"}</td>
                         <td>{formatDate(action.due_date)}</td>
-                        <td>
-                          <label className="pac-checkbox-inline">
+                        <td className="pac-table-cell--evidence">
+                          <label
+                            className={`pac-evidence-chip${action.evidence_required ? " pac-evidence-chip--required" : ""}`}
+                            title={
+                              action.evidence_required
+                                ? "Evidência obrigatória para concluir"
+                                : "Marcar evidência como obrigatória"
+                            }
+                          >
                             <input
                               type="checkbox"
+                              className="pac-evidence-chip__input"
                               checked={Boolean(action.evidence_required)}
+                              disabled={Boolean(saving?.startsWith("action-evidence-"))}
                               onChange={(event) =>
                                 void runSave(`action-evidence-${action.id}`, async () => {
                                   await updatePlanAction(planId, action.id, {
@@ -826,7 +853,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                                 })
                               }
                             />
-                            Obrigatória
+                            <span className="pac-evidence-chip__label">
+                              {action.evidence_required ? "Obrigatória" : "Opcional"}
+                            </span>
                           </label>
                         </td>
                         <td>
@@ -858,7 +887,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             )}
 
             <div className="pac-inline-form pac-inline-form--stack pac-new-action-form">
-              <div className="pac-form-grid">
+              <div className="pac-form-grid pac-new-action-form__meta">
                 <SelectField
                   id="pac-new-action-type"
                   label="Tipo"
@@ -888,51 +917,53 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   value={newActionDueDate}
                   onChange={setNewActionDueDate}
                 />
-                <TextField
-                  id="pac-new-action-desc"
-                  label="Descrição"
-                  value={newActionDescription}
-                  onChange={setNewActionDescription}
-                  fullWidth
-                />
-                <label className="pac-checkbox-field">
-                  <input
-                    type="checkbox"
-                    checked={newActionEvidenceRequired}
-                    onChange={(event) => setNewActionEvidenceRequired(event.target.checked)}
-                  />
-                  Exigir evidência anexada para concluir esta ação
-                </label>
               </div>
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "new-action"}
-                onClick={() =>
-                  void runSave("new-action", async () => {
-                    if (!newActionDescription.trim()) {
-                      throw new Error("Informe a descrição da ação.");
-                    }
-                    await createPlanActions(planId, [
-                      {
-                        action_type: newActionType,
-                        description: newActionDescription.trim(),
-                        responsible_name: newActionResponsible.trim() || undefined,
-                        due_date: newActionDueDate || undefined,
-                        cause_track: newActionCauseTrack || undefined,
-                        evidence_required: newActionEvidenceRequired,
-                      },
-                    ]);
-                    setNewActionDescription("");
-                    setNewActionResponsible("");
-                    setNewActionDueDate("");
-                    setNewActionCauseTrack("");
-                    setNewActionEvidenceRequired(false);
-                  })
-                }
-              >
-                {saving === "new-action" ? "Salvando…" : "Adicionar ação"}
-              </button>
+              <TextField
+                id="pac-new-action-desc"
+                label="Descrição"
+                value={newActionDescription}
+                onChange={setNewActionDescription}
+                fullWidth
+              />
+              <label className="pac-checkbox-field pac-checkbox-field--block">
+                <input
+                  type="checkbox"
+                  checked={newActionEvidenceRequired}
+                  onChange={(event) => setNewActionEvidenceRequired(event.target.checked)}
+                />
+                <span>Exigir evidência anexada para concluir esta ação</span>
+              </label>
+              <FormActions>
+                <button
+                  type="button"
+                  className="pac-primary-btn"
+                  disabled={saving === "new-action"}
+                  onClick={() =>
+                    void runSave("new-action", async () => {
+                      if (!newActionDescription.trim()) {
+                        throw new Error("Informe a descrição da ação.");
+                      }
+                      await createPlanActions(planId, [
+                        {
+                          action_type: newActionType,
+                          description: newActionDescription.trim(),
+                          responsible_name: newActionResponsible.trim() || undefined,
+                          due_date: newActionDueDate || undefined,
+                          cause_track: newActionCauseTrack || undefined,
+                          evidence_required: newActionEvidenceRequired,
+                        },
+                      ]);
+                      setNewActionDescription("");
+                      setNewActionResponsible("");
+                      setNewActionDueDate("");
+                      setNewActionCauseTrack("");
+                      setNewActionEvidenceRequired(false);
+                    })
+                  }
+                >
+                  {saving === "new-action" ? "Salvando…" : "Adicionar ação"}
+                </button>
+              </FormActions>
             </div>
           </SectionCard>
 

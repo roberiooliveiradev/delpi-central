@@ -18,6 +18,7 @@ import type {
 } from "../types/actionPlan";
 import type { CreatePlanPayload, UpdatePlanPayload } from "../types/planForm";
 import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
+import { sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
 import type { PlanSimilarCasesResult } from "../types/similarCases";
 import type { PagedRecurrenceResponse } from "../types/recurrence";
 import type { PagedSolutionPatternsResponse } from "../types/solutionPattern";
@@ -385,7 +386,7 @@ export async function upsertRnc8dReport(
 ): Promise<ActionPlanDetail> {
   const envelope = await httpPut<ApiEnvelope<ActionPlanDetail>>(
     `${API_BASE}/${planId}/rnc-8d`,
-    body,
+    sanitizeRnc8dReportPayload(body),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao salvar relatório 8D.");
 }
