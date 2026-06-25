@@ -1,7 +1,7 @@
 # Playbook 21 — Desacoplamento e refatoração completa (`minha-delpi-ai-api`)
 
 **Projeto:** Minha DELPI Chat IA  
-**Status:** **histórico** (jun/2026) — north star de apresentação migrada para [playbook-22](./playbook-22-schema-first-api-actions-jun2026.md) e [presentation-delivered-pure-jun2026.md](../architecture/presentation-delivered-pure-jun2026.md). Manter como inventário de débito pré-corte.  
+**Status:** **histórico / backlog** (jun/2026) — ondas W1–W3 **concluídas**; foco atual em bugs e qualidade de resposta. Ver **[chat-refactor-status-jun2026.md](../architecture/chat-refactor-status-jun2026.md)**. North star de apresentação: [playbook-22](./playbook-22-schema-first-api-actions-jun2026.md) e [presentation-delivered-pure-jun2026.md](../architecture/presentation-delivered-pure-jun2026.md).  
 **Escopo:** revisão completa da API — o que é desacoplamento, fluxos, arquivos e ondas de refatoração pendentes  
 **Público:** backend, revisores de PR, agentes Cursor  
 
@@ -14,6 +14,7 @@
 - [playbook-20-organizacao-services-chat.md](./playbook-20-organizacao-services-chat.md) — god files e domain→application
 - [playbook-13-respostas-humanizadas-dados.md](./playbook-13-respostas-humanizadas-dados.md) — `dataAnswer` / commentary
 - [chat-intelligence-base.md](../architecture/chat-intelligence-base.md) — pipeline de turno
+- [chat-refactor-status-jun2026.md](../architecture/chat-refactor-status-jun2026.md) — **status W1–W3 + backlog + foco atual**
 
 ---
 
@@ -336,17 +337,17 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 
 **Objetivo:** eliminar frozensets e path literals onde já existe `presentation_profiles.json`.
 
-| # | Arquivo | Ação |
-|---|---------|------|
-| 1 | `chat_presentation_rich_stack_policy_service.py` | `_RICH_PROFILE_FLAGS` → `stackPlan` / flags no perfil |
-| 2 | `chat_presentation_text_first_policy_service.py` | Lista hardcoded → perfil |
-| 3 | `chat_schema_driven_presentation_service.py` | `_RICH_PROFILE_KEYS`, `_KPI_PROFILE_KEYS` → vocabulary / perfil |
-| 4 | `chat_presentation_coverage_service.py` | `_RICH_PRODUCT_PATH_TOKENS` → `pathRules` |
-| 5 | `chat_operational_refinement_service.py` | Tuplas de path → `operational_route_registry.json` |
-| 6 | `chat_operational_narrative_synthesis.json` | Unificar `structureExclusivityPathMarkers` com `operational_factual_verdict.json` |
-| 7 | `chat_presentation_visual_ui_hint_service.py` | Mapa profile → seção: só JSON |
-| 8 | `chat_presentation_table_profile_inference_service.py` | entity → tableProfile: declarar no perfil |
-| 9 | `operational_route_registry.json` + `api_route_domains.json` | Vocabulário unificado (P15) |
+| # | Arquivo | Ação | Status |
+|---|---------|------|--------|
+| 1 | `chat_presentation_rich_stack_policy_service.py` | `_RICH_PROFILE_FLAGS` → `stackPlan` / flags no perfil | Parcial (`richStackProfiles` vazio) |
+| 2 | `chat_presentation_text_first_policy_service.py` | Lista hardcoded → perfil | ✅ |
+| 3 | `chat_schema_driven_presentation_service.py` | `_RICH_PROFILE_KEYS`, `_KPI_PROFILE_KEYS` → vocabulary / perfil | Pendente |
+| 4 | `chat_presentation_coverage_service.py` | `_RICH_PRODUCT_PATH_TOKENS` → `pathRules` | ✅ |
+| 5 | `chat_operational_refinement_service.py` | Tuplas de path → `operational_route_registry.json` | ✅ (`refinementVocabulary`) |
+| 6 | `chat_operational_narrative_synthesis.json` | Unificar `structureExclusivityPathMarkers` com `operational_factual_verdict.json` | ✅ |
+| 7 | `chat_presentation_visual_ui_hint_service.py` | Mapa profile → seção: só JSON | ✅ (`routeNamespace`) |
+| 8 | `chat_presentation_table_profile_inference_service.py` | entity → tableProfile: declarar no perfil | ✅ (`entityTableProfiles`) |
+| 9 | `operational_route_registry.json` + `api_route_domains.json` | Vocabulário unificado (P15) | **Backlog** — ver [chat-refactor-status-jun2026.md](../architecture/chat-refactor-status-jun2026.md) §4.2 |
 
 **Bundles JSON a consolidar (`structure_exclusivity` como modelo):**
 
@@ -675,3 +676,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | Regressão — `preserveDirectAnswerStages` inclui `capabilities` (evita LLM em self-help quando `pre_capability_answer` já resolve o turno) |
 | jun/2026 | **W1 concluída** — `commentaryProfiles` para 8 perfis operacionais + `builderStrategy`; `ChatOperationalCommentaryBuilderRegistryService`; gate `audit_commentary_profiles_registry`; `questionSynthesisStrategy` declarativo |
 | jun/2026 | **W2 concluída** — `textFirstProfiles`, `tierAProfileKeys`, `entityTableProfiles`, `routeNamespace` nos perfis; `refinementVocabulary` no registry; `ChatPresentationProfileDeclarativeService`; gate `audit_presentation_profile_declarative_w2` |
+| jun/2026 | **Pausa arquitetural** — doc [chat-refactor-status-jun2026.md](../architecture/chat-refactor-status-jun2026.md); foco em bugs e qualidade de resposta ao usuário |

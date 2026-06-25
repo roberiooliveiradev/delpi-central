@@ -210,6 +210,8 @@ cd minha-delpi-ai-api && .venv/bin/pytest \
 
 ## Pendências conhecidas (próximas rodadas)
 
+> **Arquitetura W4+ e registry:** ver [chat-refactor-status-jun2026.md](./chat-refactor-status-jun2026.md) §4 — adiado em favor de bugs e qualidade de resposta.
+
 1. **Filtro família/prefixo** no `ChatSqlProductionQueryService` (`LIKE '9026%'` quando token é prefixo).
 2. **Regex temporais** (`_TODAY_PATTERNS`, etc.) — candidatos a JSON ou builder a partir de termos.
 3. **`ChatPresentationChartExplainService`** — tokens de eficiência ainda inline.
