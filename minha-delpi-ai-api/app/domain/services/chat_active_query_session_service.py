@@ -56,7 +56,7 @@ class ChatActiveQuerySessionService:
         *,
         previous_messages: list[Any] | None = None,
     ) -> str:
-        from app.application.services.chat_active_pending_service import (
+        from app.domain.services.chat_active_pending_service import (
             ChatActivePendingService,
         )
 
@@ -428,7 +428,7 @@ class ChatActiveQuerySessionService:
         cls,
         previous_messages: list[Any] | None,
     ) -> dict[str, str] | None:
-        from app.application.services.chat_active_pending_service import (
+        from app.domain.services.chat_active_pending_service import (
             ChatActivePendingService,
         )
 

@@ -52,7 +52,7 @@ class ChatIntentRouterClassifyService:
                 reason="empty_message",
             )
 
-        from app.application.services.chat_active_pending_service import (
+        from app.domain.services.chat_active_pending_service import (
             ChatActivePendingService,
         )
 

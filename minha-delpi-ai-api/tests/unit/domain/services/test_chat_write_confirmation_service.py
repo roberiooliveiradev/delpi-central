@@ -41,3 +41,23 @@ def test_read_action_not_blocked():
             "sensitivity": "read",
         },
     )
+
+
+def test_pac_create_plan_requires_confirmation_before_write():
+    action = {
+        "method": "POST",
+        "path": "/quality/action-plans",
+        "operationId": "create_quality_action_plan",
+        "sensitivity": "write",
+        "summary": "Criar plano de ação qualidade",
+    }
+
+    assert ChatWriteConfirmationService.should_block_execution(
+        message="crie um plano PAC para NC externa na filial 01",
+        action=action,
+    )
+
+    assert not ChatWriteConfirmationService.should_block_execution(
+        message="confirmo. crie o plano PAC para NC externa na filial 01",
+        action=action,
+    )

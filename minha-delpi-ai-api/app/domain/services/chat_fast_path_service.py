@@ -97,7 +97,7 @@ class ChatFastPathService:
         *,
         previous_messages: list,
     ) -> bool:
-        from app.application.services.chat_active_pending_service import (
+        from app.domain.services.chat_active_pending_service import (
             ChatActivePendingService,
         )
         from app.domain.services.chat_active_query_session_service import (
