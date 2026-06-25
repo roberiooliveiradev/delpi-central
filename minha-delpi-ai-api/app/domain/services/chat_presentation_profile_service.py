@@ -36,6 +36,76 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         )
 
     @classmethod
+    def is_enriched_openapi_presentation(
+        cls,
+        *,
+        delpi_metadata: dict[str, Any] | None = None,
+        profile: dict[str, Any] | None = None,
+    ) -> bool:
+        if isinstance(profile, dict):
+            if str(profile.get("openapiPresentationStrategy") or "").strip().lower() == "enriched":
+                return True
+
+        if not isinstance(delpi_metadata, dict):
+            return False
+
+        presentation = delpi_metadata.get("presentation")
+
+        if not isinstance(presentation, dict):
+            return False
+
+        return str(presentation.get("strategy") or "").strip().lower() == "enriched"
+
+    @classmethod
+    def allows_automatic_rich_stack(
+        cls,
+        *,
+        path: str | None,
+        entity: str | None = None,
+        delpi_metadata: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        if isinstance(metadata, dict):
+            cached = metadata.get("presentationProfile")
+
+            if isinstance(cached, dict) and cls.is_enriched_openapi_presentation(profile=cached):
+                profile = cached
+            else:
+                profile = cls.resolve_profile(
+                    path,
+                    entity,
+                    delpi_metadata=delpi_metadata or metadata.get("delpiMetadata"),
+                    metadata=metadata,
+                )
+        else:
+            profile = cls.resolve_profile(
+                path,
+                entity,
+                delpi_metadata=delpi_metadata,
+            )
+
+        if not cls.is_enriched_openapi_presentation(
+            delpi_metadata=delpi_metadata,
+            profile=profile,
+        ):
+            return False
+
+        stack_policy = str(profile.get("stackLayoutPolicy") or "on_demand").strip().lower()
+
+        return stack_policy == "always"
+
+    @classmethod
+    def _stamp_openapi_presentation_strategy(
+        cls,
+        profile: dict[str, Any],
+        delpi_metadata: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        if cls.is_enriched_openapi_presentation(delpi_metadata=delpi_metadata):
+            profile["openapiPresentationStrategy"] = "enriched"
+
+        return profile
+
+    @classmethod
     def uses_schema_first_presentation(
         cls,
         path: str | None,
@@ -470,17 +540,19 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
             shape=shape,
             delpi_metadata=delpi_metadata,
         ):
-            return OpenApiPresentationProfileDeriverService.build_profile(
+            profile = OpenApiPresentationProfileDeriverService.build_profile(
                 entity=entity_token,
                 shape=shape,
                 delpi_metadata=delpi_metadata,
             )
 
+            return cls._stamp_openapi_presentation_strategy(profile, delpi_metadata)
+
         merged = dict(cls.node("defaults") or {})
         merged.update(cls.profile(key))
         merged["profileKey"] = key
 
-        return merged
+        return cls._stamp_openapi_presentation_strategy(merged, delpi_metadata)
 
     @classmethod
     def cache_presentation_profile(cls, metadata: dict[str, Any]) -> None:

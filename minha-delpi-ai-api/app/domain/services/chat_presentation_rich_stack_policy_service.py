@@ -139,7 +139,11 @@ class ChatPresentationRichStackPolicyService:
                 entity_for_strategy = raw_entity.strip()
 
         if ChatPresentationProfileService.uses_schema_first_presentation(path, entity_for_strategy):
-            if not ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+            if not ChatPresentationProfileService.allows_automatic_rich_stack(
+                path=path,
+                entity=entity_for_strategy,
+                metadata=metadata,
+            ) and not ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
                 user_message,
             ):
                 return False

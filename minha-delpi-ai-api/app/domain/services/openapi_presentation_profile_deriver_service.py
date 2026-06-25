@@ -66,6 +66,17 @@ class OpenApiPresentationProfileDeriverService(ChatAssistantVocabularyService):
 
         if strategy_token == "enriched":
             merged["openapiPresentationStrategy"] = "enriched"
+            entity_profiles = cls.mapping("entityProfiles")
+            profile_key = str(entity_profiles.get(entity_token) or "").strip()
+
+            if profile_key:
+                from app.domain.services.chat_presentation_profile_service import (
+                    ChatPresentationProfileService,
+                )
+
+                json_profile = ChatPresentationProfileService.profile(profile_key)
+                merged.update(json_profile)
+                merged["profileKey"] = profile_key
 
         if presentation_block:
             merged["openapiPresentation"] = presentation_block

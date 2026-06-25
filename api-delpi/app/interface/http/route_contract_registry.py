@@ -11,6 +11,38 @@ class RouteContract:
     shape: str
 
 
+# Playbook 22 Fase D — stack rico só onde OpenAPI declara strategy enriched.
+ENRICHED_PRESENTATION_ENTITIES = frozenset(
+    {
+        "product_analyser",
+        "product_stock",
+        "product_structure",
+        "product_parents",
+        "product_factory_status",
+        "product_production_status",
+        "product_shipping_status",
+        "product_structure_exclusivity",
+        "product_raw_material_price_intelligence",
+        "product_cost_impact_simulation",
+        "product_last_purchase",
+        "product_directives",
+        "product_purchase_price_history",
+        "product_purchase_budget_history",
+        "product_pricing",
+        "product_purchases",
+    }
+)
+
+
+def presentation_strategy_for_entity(entity: str | None) -> str:
+    token = str(entity or "").strip()
+
+    if token in ENRICHED_PRESENTATION_ENTITIES:
+        return "enriched"
+
+    return "as_delivered"
+
+
 ROUTE_CONTRACTS: dict[str, RouteContract] = {
     # Produtos
     "search_products": RouteContract("product_search", "paged_list"),

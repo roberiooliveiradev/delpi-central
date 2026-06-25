@@ -139,6 +139,11 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 
 ## Pendente (Fase 14+)
 
-- Rodar `sync_api_delpi_openapi.py` em homolog/prod pós-deploy para popular `delpi_metadata` no banco.
+- Rodar `sync_api_delpi_openapi.py` em homolog/prod pós-deploy para popular `delpi_metadata` no banco (inclui `presentation.strategy`).
 - Provider `api-pac-quality`: reimport após deploy com `sync_api_pac_quality_openapi.py`.
 - Remover fallbacks de produto quando `meta.entity` for garantido em 100% das respostas.
+
+## Playbook 22 Fase D — enriched (jun/2026)
+
+- api-delpi: `ENRICHED_PRESENTATION_ENTITIES` + `presentation_strategy_for_entity` no injector `x-delpi`.
+- Chat: `openapiPresentationStrategy` propagado via `delpiMetadata`; stack automático quando `enriched` + `stackLayoutPolicy: always`.

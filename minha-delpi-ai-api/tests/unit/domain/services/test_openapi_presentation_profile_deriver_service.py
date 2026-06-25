@@ -23,6 +23,22 @@ def test_build_profile_from_entity_and_shape():
     assert profile["profileKey"] == "openapi:pac_inspection_lot"
 
 
+def test_build_profile_enriched_merges_json_entity_profile():
+    profile = OpenApiPresentationProfileDeriverService.build_profile(
+        entity="product_analyser",
+        shape="composite_analysis",
+        delpi_metadata={
+            "entity": "product_analyser",
+            "shape": "composite_analysis",
+            "presentation": {"strategy": "enriched"},
+        },
+    )
+
+    assert profile["openapiPresentationStrategy"] == "enriched"
+    assert profile["profileKey"] == "analyser"
+    assert profile.get("stackLayoutPolicy") == "always"
+
+
 def test_resolve_profile_uses_openapi_derived_for_unmapped_entity():
     profile = ChatPresentationProfileService.build_resolved_profile(
         path="/api-pac-quality/v1/lots",
@@ -55,6 +71,29 @@ def test_resolve_profile_keeps_special_json_profile_when_shape_present():
 
     assert profile.get("openapiDerived") is not True
     assert profile["profileKey"] == "stock"
+
+
+def test_resolve_profile_stamps_enriched_from_delpi_metadata():
+    profile = ChatPresentationProfileService.build_resolved_profile(
+        path="/products/90269001/analyser",
+        entity="product_analyser",
+        shape="composite_analysis",
+        delpi_metadata={
+            "entity": "product_analyser",
+            "shape": "composite_analysis",
+            "presentation": {"strategy": "enriched"},
+        },
+    )
+
+    assert profile["profileKey"] == "analyser"
+    assert profile.get("openapiPresentationStrategy") == "enriched"
+    assert ChatPresentationProfileService.allows_automatic_rich_stack(
+        path="/products/90269001/analyser",
+        entity="product_analyser",
+        delpi_metadata={
+            "presentation": {"strategy": "enriched"},
+        },
+    )
 
 
 def test_cache_presentation_profile_on_metadata():

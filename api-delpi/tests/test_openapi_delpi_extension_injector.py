@@ -13,6 +13,16 @@ def test_build_x_delpi_extension_from_route_contract():
     assert extension == {
         "entity": "product_stock",
         "shape": "paged_list",
+        "presentation": {"strategy": "enriched"},
+    }
+
+
+def test_build_x_delpi_extension_scalar_stays_as_delivered():
+    extension = build_x_delpi_extension("get_supplies_cpv")
+
+    assert extension == {
+        "entity": "supplies_cpv",
+        "shape": "scalar",
         "presentation": {"strategy": "as_delivered"},
     }
 

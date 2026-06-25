@@ -81,6 +81,27 @@ def test_generic_table_list_defaults_to_text_stack_with_narrative_and_table():
     )
 
 
+def test_enriched_openapi_allows_automatic_text_stack_without_integrated_request():
+    metadata = {
+        "path": "/products/90269002/factory-status",
+        "apiDelpiResponseMeta": {"entity": "product_factory_status"},
+        "delpiMetadata": {
+            "entity": "product_factory_status",
+            "shape": "composite_analysis",
+            "presentation": {"strategy": "enriched"},
+        },
+        "textPresentation": {"type": "markdown", "markdown": "### Status fabril\n\nResumo."},
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "90269002", "children": []}},
+        "kpiPresentation": {"type": "kpi", "title": "KPI", "cards": []},
+    }
+
+    assert ChatPresentationRichStackPolicyService.should_default_to_text_stack(
+        path=metadata["path"],
+        metadata=metadata,
+        entity="product_factory_status",
+    )
+
+
 def test_stock_route_does_not_default_to_text_stack_without_user_preference():
     metadata = {
         "path": "/products/90269001/stock",

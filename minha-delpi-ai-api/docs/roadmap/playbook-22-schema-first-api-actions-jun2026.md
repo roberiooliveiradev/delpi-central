@@ -188,11 +188,11 @@ Presenters por entidade **removidos**; pasta `presenters/` só com hosts utilit�
 
 1. ✅ api-delpi publica `x-delpi` (`openapi_delpi_extension_injector` no `custom_openapi`).
 2. ✅ Importador persiste `delpi_metadata`; `OpenApiPresentationProfileDeriverService` deriva perfil.
-3. Pendente: stack rico **só** onde `presentation.strategy: enriched` no OpenAPI.
-4. ✅ `entityProfiles` podado (75 entradas); mantidos 29 perfis especiais + `openapiReplaceableProfileKeys`.
-5. ✅ `entityPathHints` priorizado; `pathEntityFallbacks` podado (20 entradas redundantes).
-6. ✅ Gates `audit_openapi_delpi_metadata.py` + `audit_path_entity_fallback_pruning.py`.
-7. ✅ api-pac-quality publica `x-delpi` com `operation_id` estável `pac_*`.
+3. ✅ `entityProfiles` podado (75 entradas); mantidos 29 perfis especiais + `openapiReplaceableProfileKeys`.
+4. ✅ `entityPathHints` priorizado; `pathEntityFallbacks` podado (20 entradas redundantes).
+5. ✅ Gates `audit_openapi_delpi_metadata.py` + `audit_path_entity_fallback_pruning.py`.
+6. ✅ api-pac-quality publica `x-delpi` com `operation_id` estável `pac_*`.
+7. ✅ `presentation.strategy: enriched` no OpenAPI (api-delpi) para rotas de produto com perfil JSON dedicado; consumo em `ChatPresentationProfileService` + `ChatPresentationRichStackPolicyService`.
 
 ---
 

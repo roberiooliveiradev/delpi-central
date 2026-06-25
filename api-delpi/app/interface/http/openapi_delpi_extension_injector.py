@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.interface.http.route_contract_registry import ROUTE_CONTRACTS, resolve_contract
+from app.interface.http.route_contract_registry import (
+    ROUTE_CONTRACTS,
+    presentation_strategy_for_entity,
+    resolve_contract,
+)
 
 HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
 
@@ -17,10 +21,12 @@ def build_x_delpi_extension(operation_id: str) -> dict[str, Any]:
     else:
         entity, shape = resolve_contract(operation_id)
 
+    strategy = presentation_strategy_for_entity(entity)
+
     return {
         "entity": entity,
         "shape": shape,
-        "presentation": {"strategy": "as_delivered"},
+        "presentation": {"strategy": strategy},
     }
 
 
