@@ -311,7 +311,7 @@ class ChatDrawingValidationOrchestrationService:
         if not isinstance(pdf_extract, dict) or not pdf_extract:
             return pdf_extract
 
-        from app.application.services.chat_drawing_bom_vision_refinement_service import (
+        from app.domain.services.chat_drawing_bom_vision_refinement_service import (
             ChatDrawingBomVisionRefinementService,
         )
 

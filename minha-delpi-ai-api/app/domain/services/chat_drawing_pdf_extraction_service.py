@@ -276,7 +276,7 @@ class ChatDrawingPdfExtractionService:
                 payload["pagesProcessed"] = count
                 break
 
-        from app.application.services.chat_drawing_bom_vision_refinement_service import (
+        from app.domain.services.chat_drawing_bom_vision_refinement_service import (
             ChatDrawingBomVisionRefinementService,
         )
 

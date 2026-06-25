@@ -102,8 +102,8 @@ class ChatOperationalParameterToolSkipService:
         if not tool_context:
             return False
 
-        from app.application.services.chat_tool_context_service import (
-            ChatToolContextService,
+        from app.domain.services.chat_tool_context_presentation_service import (
+            ChatToolContextPresentationService,
         )
 
         tool_calls = tool_context.get("toolCalls") or []
@@ -129,7 +129,7 @@ class ChatOperationalParameterToolSkipService:
         ).strip():
             return True
 
-        if ChatToolContextService.should_answer_with_presentation_only(tool_calls):
+        if ChatToolContextPresentationService.should_answer_with_presentation_only(tool_calls):
             return True
 
         from app.domain.services.chat_product_overview_intent_service import (
@@ -167,11 +167,11 @@ class ChatOperationalParameterToolSkipService:
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             return True
 
-        from app.application.services.chat_playbook_product_action_readiness_service import (
-            ChatPlaybookProductActionReadinessService,
+        from app.domain.services.chat_playbook_product_intent_service import (
+            ChatPlaybookProductIntentService,
         )
 
-        if ChatPlaybookProductActionReadinessService.matches_playbook_product_intent(
+        if ChatPlaybookProductIntentService.matches_playbook_product_intent(
             message
         ):
             return True

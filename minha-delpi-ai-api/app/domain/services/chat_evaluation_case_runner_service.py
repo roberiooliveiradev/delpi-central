@@ -155,7 +155,6 @@ class ChatEvaluationCaseRunnerService:
 
         if ChatCapabilitiesDetectionService.is_capabilities_question(message):
             answer = ChatCapabilitiesService.build_direct_answer(
-                message=message,
                 workspace_context=workspace,
             )
             return str(answer or "")
