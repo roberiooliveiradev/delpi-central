@@ -73,6 +73,22 @@
   margin-bottom: var(--pac-section-gap);
 }
 
+.dashboard-quality-action-plans .pac-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-page-stack > .pac-dashboard-grid--timing,
+.dashboard-quality-action-plans .pac-page-stack > .pac-recurrence-alert,
+.dashboard-quality-action-plans .pac-page-stack > .pac-charts-grid,
+.dashboard-quality-action-plans .pac-page-stack > .pac-effectiveness-section,
+.dashboard-quality-action-plans .pac-page-stack > .pac-dashboard-grid--queue-summary,
+.dashboard-quality-action-plans .pac-page-stack > .pac-filters-row {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .dashboard-quality-action-plans .pac-branch-summary {
   margin-top: var(--pac-section-gap);
 }
@@ -191,7 +207,9 @@
 }
 
 .dashboard-quality-action-plans .pac-recurrence-alert {
-  margin-top: var(--pac-grid-gap);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pac-grid-gap);
 }
 
 .dashboard-quality-action-plans .pac-recurrence-alert__list {
@@ -301,13 +319,31 @@
 
 .dashboard-quality-action-plans .pac-filters-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 280px));
   gap: var(--pac-grid-gap);
+  align-items: end;
   margin-bottom: var(--pac-section-gap);
   padding: 14px;
   border-radius: var(--pac-filter-radius);
   border: 1px solid var(--pac-card-border);
   background: var(--pac-card-bg);
+}
+
+.dashboard-quality-action-plans .pac-filters-row > .pac-field,
+.dashboard-quality-action-plans .pac-filters-row > .pac-filter-box {
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-quality-action-plans .pac-filters-row .pac-checkbox,
+.dashboard-quality-action-plans .pac-filters-row .pac-filter-checkbox {
+  margin-top: 0;
+  align-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--pac-control-height);
+  white-space: nowrap;
 }
 
 .dashboard-quality-action-plans .pac-filter-box {
@@ -737,11 +773,19 @@
   min-height: var(--pac-control-height);
   border-radius: var(--pac-control-radius);
   border: 1px solid var(--pac-card-border);
-  padding: 8px 12px;
-  background: var(--surface, var(--pac-card-bg));
+  padding: 0 12px;
+  background: var(--pac-card-bg);
   color: var(--pac-text);
   cursor: pointer;
   text-align: left;
+  font: inherit;
+  appearance: none;
+}
+
+.dashboard-quality-action-plans .pac-multi-select__trigger svg,
+.dashboard-quality-action-plans .pac-select__trigger svg {
+  flex-shrink: 0;
+  color: var(--pac-text-muted);
 }
 
 .dashboard-quality-action-plans .pac-multi-select__trigger:disabled,
@@ -752,10 +796,12 @@
 
 .dashboard-quality-action-plans .pac-multi-select__trigger-label,
 .dashboard-quality-action-plans .pac-select__trigger-label {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  line-height: 1.2;
 }
 
 .dashboard-quality-action-plans .pac-multi-select--open .pac-multi-select__trigger,
@@ -1173,10 +1219,10 @@
 }
 
 .dashboard-quality-action-plans .pac-checkbox {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 28px;
+  margin-top: 0;
   font-size: var(--pac-font-sm);
 }
 

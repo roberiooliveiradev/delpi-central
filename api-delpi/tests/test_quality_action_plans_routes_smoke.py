@@ -64,6 +64,35 @@ def test_dashboard_route_returns_operation_id(mock_build) -> None:
 
 
 @patch(
+    "app.interface.http.routes.quality.action_plans_read_router.build_quality_action_plan_read_repository"
+)
+def test_dashboard_route_passes_branch_and_scope_filters(mock_build) -> None:
+    from app.interface.http.routes.quality.action_plans_read_router import (
+        get_action_plans_dashboard,
+    )
+
+    mock_repo = MagicMock()
+    mock_repo.get_dashboard_summary.return_value = {
+        "open_plans": 1,
+        "branch_code": "01",
+        "nonconformity_scope": "external",
+    }
+    mock_build.return_value = mock_repo
+
+    response = get_action_plans_dashboard(
+        branch_code="01",
+        nonconformity_scope="external",
+    )
+    body = _body(response)
+
+    assert body.get("success") is True
+    mock_repo.get_dashboard_summary.assert_called_once()
+    call_kwargs = mock_repo.get_dashboard_summary.call_args.kwargs
+    assert call_kwargs["branch_code"] == "01"
+    assert call_kwargs["nonconformity_scope"] == "external"
+
+
+@patch(
     "app.interface.http.routes.quality.action_plans_read_router.build_create_quality_action_plan_use_case"
 )
 @patch("app.interface.http.routes.quality.action_plans_read_router.get_current_user")

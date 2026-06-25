@@ -133,7 +133,7 @@ def test_dashboard_recurrence_alert_maps_rows():
         ]
     )
 
-    alert = repo._fetch_recurrence_alert(months=12, limit=5)
+    alert = repo._fetch_recurrence_alert(branch_code="01", months=12, limit=5)
 
     assert alert["window_months"] == 12
     assert alert["groups_detected"] == 2
@@ -141,6 +141,69 @@ def test_dashboard_recurrence_alert_maps_rows():
     assert alert["open_plans_in_recurrence"] == 3
     assert alert["top_groups"][0]["product_code"] == "90261805"
     assert alert["top_groups"][0]["plans_in_window"] == 3
+    summary_params = repo.fetch_one.call_args[0][1]
+    assert summary_params == (12, "01", 12)
+    top_params = repo.fetch_all.call_args[0][1]
+    assert top_params == (12, "01", 12, 5)
+
+
+def test_dashboard_recurrence_alert_scope_params_order():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(return_value={"groups_detected": 0, "plans_in_window": 0, "open_plans_in_recurrence": 0})
+    repo.fetch_all = MagicMock(return_value=[])
+
+    repo._fetch_recurrence_alert(
+        branch_code="01",
+        nonconformity_scope="external",
+        months=6,
+        limit=3,
+    )
+
+    assert repo.fetch_one.call_args[0][1] == (6, "01", "external", 6)
+    assert repo.fetch_all.call_args[0][1] == (6, "01", "external", 6, 3)
+
+
+def test_dashboard_summary_with_branch_and_scope_invokes_recurrence_with_filters():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(
+        side_effect=[
+            {
+                "open_plans": 1,
+                "critical_open": 0,
+                "waiting_validation": 0,
+                "completed_this_month": 0,
+                "open_internal": 0,
+                "open_external": 1,
+            },
+            {"overdue_actions": 0},
+            {"overdue_plans": 0},
+            {
+                "avg_closure_days": None,
+                "closure_sample_size": 0,
+                "avg_time_to_effectiveness_days": None,
+                "effectiveness_sample_size": 0,
+            },
+            {
+                "groups_detected": 0,
+                "plans_in_window": 0,
+                "open_plans_in_recurrence": 0,
+            },
+            {
+                "reviewed_plans": 0,
+                "effective_plans": 0,
+                "partially_effective_plans": 0,
+                "ineffective_plans": 0,
+            },
+        ]
+    )
+    repo.fetch_all = MagicMock(return_value=[])
+
+    result = repo.get_dashboard_summary(branch_code="01", nonconformity_scope="external")
+
+    assert result["branch_code"] == "01"
+    assert result["nonconformity_scope"] == "external"
+    recurrence_call = repo.fetch_one.call_args_list[4]
+    assert recurrence_call[0][1] == (12, "01", "external", 12)
 
 
 def test_dashboard_effectiveness_by_action_type_maps_rows():

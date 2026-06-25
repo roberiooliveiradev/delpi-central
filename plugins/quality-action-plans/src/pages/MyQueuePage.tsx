@@ -58,20 +58,21 @@ export function MyQueuePage({ onNavigate }: Props) {
       <AppNav active="my-queue" onNavigate={onNavigate} />
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 
-      {summary ? (
-        <div className="pac-dashboard-grid pac-dashboard-grid--queue-summary">
-          <article className="pac-metric-card">
-            <p className="pac-metric-card__label">Ações abertas</p>
-            <p className="pac-metric-card__value">{summary.open_actions}</p>
-          </article>
-          <article className="pac-metric-card pac-metric-card--danger">
-            <p className="pac-metric-card__label">Atrasadas</p>
-            <p className="pac-metric-card__value">{summary.overdue_actions}</p>
-          </article>
-        </div>
-      ) : null}
+      <div className="pac-page-stack">
+        {summary ? (
+          <div className="pac-dashboard-grid pac-dashboard-grid--queue-summary">
+            <article className="pac-metric-card">
+              <p className="pac-metric-card__label">Ações abertas</p>
+              <p className="pac-metric-card__value">{summary.open_actions}</p>
+            </article>
+            <article className="pac-metric-card pac-metric-card--danger">
+              <p className="pac-metric-card__label">Atrasadas</p>
+              <p className="pac-metric-card__value">{summary.overdue_actions}</p>
+            </article>
+          </div>
+        ) : null}
 
-      <FilterBar compact>
+        <FilterBar compact>
         <MultiSelectField
           id="pac-queue-branch"
           label="Filial"
@@ -90,26 +91,27 @@ export function MyQueuePage({ onNavigate }: Props) {
           />
           Somente atrasadas
         </label>
-      </FilterBar>
+        </FilterBar>
 
-      <section className="pac-card">
-        <div className="pac-section-card__header pac-table-header">
-          <h2 className="pac-section-title">Suas ações</h2>
-          <span className="pac-muted pac-table-header__count">
-            {visibleItems.length} ação(ões)
-          </span>
-        </div>
-        <MyQueueTable
-          items={visibleItems}
-          loading={loading}
-          emptyMessage={
-            overdueOnly
-              ? "Nenhuma ação atrasada atribuída a você."
-              : "Nenhuma ação pendente atribuída a você."
-          }
-          onNavigate={onNavigate}
-        />
-      </section>
+        <section className="pac-card">
+          <div className="pac-section-card__header pac-table-header">
+            <h2 className="pac-section-title">Suas ações</h2>
+            <span className="pac-muted pac-table-header__count">
+              {visibleItems.length} ação(ões)
+            </span>
+          </div>
+          <MyQueueTable
+            items={visibleItems}
+            loading={loading}
+            emptyMessage={
+              overdueOnly
+                ? "Nenhuma ação atrasada atribuída a você."
+                : "Nenhuma ação pendente atribuída a você."
+            }
+            onNavigate={onNavigate}
+          />
+        </section>
+      </div>
     </>
   );
 }

@@ -107,7 +107,7 @@ export function DashboardPage({ onNavigate }: Props) {
       {loading && !summary ? <p className="pac-muted">Carregando indicadores…</p> : null}
 
       {summary ? (
-        <>
+        <div className="pac-page-stack">
           <DashboardKpis summary={summary} loading={loading} />
           <DashboardTimingKpis timing={summary.timing} loading={loading} />
           <DashboardRecurrenceAlertCard
@@ -122,7 +122,7 @@ export function DashboardPage({ onNavigate }: Props) {
           />
           <DashboardRankingCharts rankings={summary.rankings} />
           <DashboardCharts summary={summary} plans={plans} />
-        </>
+        </div>
       ) : null}
     </>
   );

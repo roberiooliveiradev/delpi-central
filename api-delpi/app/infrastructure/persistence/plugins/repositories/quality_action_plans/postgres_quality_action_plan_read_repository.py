@@ -658,14 +658,17 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         limit: int = 5,
     ) -> dict[str, Any]:
         filters = ["p.deleted_at IS NULL", "p.recurrence_key IS NOT NULL"]
-        params: list[Any] = [months, months]
+        filter_params: list[Any] = []
         if branch_code:
             filters.append("p.branch_code = %s")
-            params.append(branch_code)
+            filter_params.append(branch_code)
         if nonconformity_scope:
             filters.append("p.nonconformity_scope = %s")
-            params.append(nonconformity_scope)
+            filter_params.append(nonconformity_scope)
         where_clause = " AND ".join(filters)
+        # Placeholders aparecem na ordem: janela no SELECT, filtros no WHERE, janela no HAVING.
+        summary_params = [months, *filter_params, months]
+        top_params = [months, *filter_params, months, limit]
 
         summary_row = self.fetch_one(
             f"""
@@ -690,7 +693,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    COALESCE(SUM(open_plans), 0)::int AS open_plans_in_recurrence
               FROM grouped
             """,
-            tuple(params),
+            tuple(summary_params),
         )
 
         top_rows = self.fetch_all(
@@ -715,7 +718,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
              ORDER BY plans_in_window DESC, open_plans DESC, total_plans DESC
              LIMIT %s
             """,
-            tuple([*params, limit]),
+            tuple(top_params),
         )
 
         return {
