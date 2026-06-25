@@ -62,13 +62,13 @@ def redundant_fallbacks() -> list[dict[str, str]]:
 
 def validate() -> dict:
     violations = redundant_fallbacks()
+    remaining = ChatPresentationProfileService.path_entity_fallbacks()
 
     return {
-        "ok": not violations,
+        "ok": not violations and not remaining,
         "redundantFallbackCount": len(violations),
         "redundantFallbacks": violations,
-        "remainingFallbackCount": len(ChatPresentationProfileService.path_entity_fallbacks())
-            - len(violations),
+        "remainingFallbackCount": len(remaining),
     }
 
 

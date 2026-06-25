@@ -136,16 +136,16 @@ Importador persiste extensão em `external_actions.metadata` → perfil derivado
 
 ### Fase A — Actions OpenAPI-only (seleção)
 
-**Status:** DOCIE Fases 0–20 concluídas para api-delpi.
+**Status:** ✅ concluída (jun/2026) — DOCIE Fases 0–20 + poda registry manual PAC.
 
 | # | Entrega | Done quando |
 |---|---------|-------------|
 | A1 | Sync OpenAPI periódico / CI | `sync_api_delpi_openapi.py` verde |
-| A2 | `autoTierCRoutes` cobre rotas sem registry manual | diff registry vs OpenAPI → plano de remoção |
+| A2 | `autoTierCRoutes` cobre rotas sem registry manual | `generate_operational_route_registry.py --check` verde |
 | A3 | Provider genérico (`api_externa`, futuros) | import + allowed_action_ids por agente |
-| A4 | Depreciar entradas manuais duplicadas | checklist por rota removida do JSON |
+| A4 | Depreciar entradas manuais duplicadas | rotas PAC sem `pacQuality*` no registry manual |
 
-**Arquivos candidatos à remoção (incremental):** entradas órfãs em `operational_route_registry.json`, predicates Python residuais, serviços `select_*` por path.
+**Jun/2026:** removidas entradas `pacQuality*` duplicadas; PAC01–PAC05 via `autoTierCRoutes` + ranker semântico; `_manual_route_covers` exige **todos** os `pathMarkers` (evita falso positivo LMP × PAC dashboard).
 
 ### Fase B — Apresentação as-delivered (default)
 
@@ -184,15 +184,15 @@ Presenters por entidade **removidos**; pasta `presenters/` só com hosts utilit�
 
 ### Fase D — Shape e enriquecimento na API
 
-**Status:** ✅ parcial (jun/2026) — Fases 10–12 em [`changelog/2026-06-presentation-delivered-pure.md`](../changelog/2026-06-presentation-delivered-pure.md).
+**Status:** ✅ concluída (jun/2026) — Fases 10–14 em [`changelog/2026-06-presentation-delivered-pure.md`](../changelog/2026-06-presentation-delivered-pure.md).
 
 1. ✅ api-delpi publica `x-delpi` (`openapi_delpi_extension_injector` no `custom_openapi`).
 2. ✅ Importador persiste `delpi_metadata`; `OpenApiPresentationProfileDeriverService` deriva perfil.
 3. ✅ `entityProfiles` podado (75 entradas); mantidos 29 perfis especiais + `openapiReplaceableProfileKeys`.
-4. ✅ `entityPathHints` priorizado; `pathEntityFallbacks` podado (20 entradas redundantes).
+4. ✅ `entityPathHints` + `entityPathHintAliases`; `pathEntityFallbacks` **vazio** (gate exige zero).
 5. ✅ Gates `audit_openapi_delpi_metadata.py` + `audit_path_entity_fallback_pruning.py`.
-6. ✅ api-pac-quality publica `x-delpi` com `operation_id` estável `pac_*`.
-7. ✅ `presentation.strategy: enriched` no OpenAPI (api-delpi) para rotas de produto com perfil JSON dedicado; consumo em `ChatPresentationProfileService` + `ChatPresentationRichStackPolicyService`.
+6. ✅ Rotas PAC na api-delpi com `x-delpi` estável (`get_quality_action_plans_*`).
+7. ✅ `presentation.strategy: enriched` no OpenAPI (api-delpi) para rotas de produto com perfil JSON dedicado.
 
 ---
 

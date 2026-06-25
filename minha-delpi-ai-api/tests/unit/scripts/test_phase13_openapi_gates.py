@@ -22,6 +22,7 @@ def test_path_entity_fallback_pruning_gate_passes():
 
     assert report["ok"] is True
     assert report["redundantFallbackCount"] == 0
+    assert report["remainingFallbackCount"] == 0
 
 
 def test_openapi_delpi_metadata_gate_passes_on_api_delpi_schema():

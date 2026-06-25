@@ -111,6 +111,49 @@ def test_resolve_entity_from_path_json_hints_and_fallbacks() -> None:
     assert ChatPresentationProfileService.entity_path_hint("supplies_cpv") == "/supplies/cpv"
 
 
+def test_resolve_entity_from_path_without_path_entity_fallbacks() -> None:
+    assert ChatPresentationProfileService.path_entity_fallbacks() == ()
+
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/products/exclusive-raw-materials/catalog"
+        )
+        == "exclusive_raw_materials_catalog"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/engineering/lmps/123456"
+        )
+        == "lmp"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/financial/rol"
+        )
+        == "financial_rol"
+    )
+
+
+def test_path_lowered_normalizes_finacial_typo() -> None:
+    assert (
+        ChatPresentationProfileService.path_lowered("/finacial/rol")
+        == "/financial/rol"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path("/finacial/rol")
+        == "financial_rol"
+    )
+
+
+def test_entity_path_hint_aliases_resolve_branch_rol_target() -> None:
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/commercial/branch_rol_target_pct"
+        )
+        == "commercial_rol_target"
+    )
+
+
 def test_entity_sets_loaded_from_json() -> None:
     critical = ChatPresentationProfileService.entity_set("chatCritical")
     routed = ChatPresentationProfileService.entity_routed_for_present()

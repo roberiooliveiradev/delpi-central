@@ -343,6 +343,27 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         }
 
     @classmethod
+    def entity_path_hint_pairs(cls) -> list[tuple[str, str]]:
+        pairs = list(cls.entity_path_hints().items())
+        aliases = cls.node("entityPathHintAliases") or {}
+
+        if isinstance(aliases, dict):
+            for entity, paths in aliases.items():
+                entity_token = str(entity or "").strip()
+
+                if not entity_token or not isinstance(paths, list):
+                    continue
+
+                for path in paths:
+                    path_token = str(path or "").strip()
+
+                    if path_token:
+                        pairs.append((entity_token, path_token))
+
+        pairs.sort(key=lambda item: len(item[1]), reverse=True)
+        return pairs
+
+    @classmethod
     def entity_path_hint(cls, entity: str | None) -> str:
         token = str(entity or "").strip()
 
@@ -412,6 +433,12 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         if hint_parts[0] not in {"0", "{plan_id}"}:
             return False
 
+        if len(hint_parts) == 1:
+            if path_parts[0] in {"dashboard", "overdue", "recurrence"}:
+                return False
+
+            return bool(path_parts[0])
+
         plan_segment = path_parts[0]
 
         if plan_segment in {"dashboard", "overdue"}:
@@ -427,7 +454,10 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         if not hint_lower:
             return False
 
-        if path_lower == hint_lower or path_lower.endswith(hint_lower):
+        if path_lower == hint_lower or path_lower.startswith(f"{hint_lower}/"):
+            return True
+
+        if path_lower.endswith(hint_lower):
             return True
 
         if cls._matches_product_path_hint(path_lower, hint_lower):
@@ -463,7 +493,7 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         if quality_entity:
             return quality_entity
 
-        for entity, hint in cls.entity_path_hints().items():
+        for entity, hint in cls.entity_path_hint_pairs():
             hint_lower = str(hint or "").lower().rstrip("/")
 
             if cls._matches_entity_path_hint(lowered, hint_lower):
@@ -486,7 +516,9 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
 
     @classmethod
     def path_lowered(cls, path: str | None) -> str:
-        return str(path or "").strip().lower()
+        lowered = str(path or "").strip().lower()
+
+        return lowered.replace("/finacial/", "/financial/")
 
     @classmethod
     def resolve_profile_key(cls, path: str | None, entity: str | None = None) -> str:

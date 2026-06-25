@@ -82,6 +82,7 @@ def test_manual_registry_covers_product_routes_not_auto_tier_c() -> None:
         if row.tier == "A"
         and row.method == "GET"
         and "/products/" in row.path
+        and "{code}" in row.path
     ]
 
     assert product_rows
@@ -105,3 +106,20 @@ def test_route_by_operation_id_resolves_auto_entry() -> None:
 
     assert resolved is not None
     assert resolved["id"] == sample["id"]
+
+
+def test_manual_route_path_markers_require_all_fragments() -> None:
+    lmp_route = OperationalRouteRegistryService.route_by_id("engineeringLmpDashboard")
+    assert lmp_route is not None
+
+    assert OperationalRouteRegistryGeneratorService._manual_route_covers(
+        lmp_route,
+        "get_quality_action_plans_dashboard",
+        "/quality/action-plans/dashboard",
+    ) is False
+
+    assert OperationalRouteRegistryGeneratorService._manual_route_covers(
+        lmp_route,
+        "list_lmps_dashboard",
+        "/engineering/lmps/dashboard",
+    ) is True

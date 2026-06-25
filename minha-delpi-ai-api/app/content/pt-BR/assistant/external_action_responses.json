@@ -197,49 +197,6 @@
     ],
     "qualityKaizenDetailPath": "/quality/kaizens/",
     "qualityKaizenDetailOperationId": "get_kaizen_by_id",
-    "pacQualityContextTerms": [
-      "plano de acao",
-      "planos de acao",
-      "plano de ação",
-      "planos de ação",
-      "pac qualidade",
-      " pac ",
-      "qualidade pac",
-      "planos pac"
-    ],
-    "pacQualityDashboardTerms": [
-      "dashboard",
-      "painel",
-      "cards",
-      "indicadores"
-    ],
-    "pacQualityListTerms": [
-      "listar",
-      "liste",
-      "listagem",
-      "quais planos",
-      "planos abertos",
-      "abertos"
-    ],
-    "pacQualityOverdueTerms": [
-      "atrasad",
-      "vencid",
-      "em atraso",
-      "acoes atrasadas",
-      "ações atrasadas"
-    ],
-    "pacQualityRecurrenceTerms": [
-      "recorren",
-      "reincid",
-      "repet",
-      "modo de falha",
-      "modos de falha"
-    ],
-    "pacQualitySimilarCasesTerms": [
-      "casos similares",
-      "caso similar",
-      "similar"
-    ],
     "productionEficienciaFabrilTerms": [
       "eficiencia fabril",
       "eficiência fabril",
@@ -666,47 +623,6 @@
         { "termsFrom": "external_action_responses.actionSelection.lmpRanking.chartTerms" },
         { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardTerms" }
       ]
-    },
-    "pacQualitySimilarCases": {
-      "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.pacQualitySimilarCasesTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityContextTerms" }
-      ]
-    },
-    "pacQualityRecurrence": {
-      "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityRecurrenceTerms" },
-        {
-          "anyOf": [
-            { "termsFrom": "external_action_responses.actionSelection.pacQualityContextTerms" },
-            { "terms": ["plano de acao", "planos de acao", "plano de ação", "planos de ação"] }
-          ]
-        }
-      ]
-    },
-    "pacQualityOverdue": {
-      "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityOverdueTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityContextTerms" }
-      ]
-    },
-    "pacQualityDashboard": {
-      "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityDashboardTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityContextTerms" }
-      ]
-    },
-    "pacQualityList": {
-      "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityListTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityContextTerms" }
-      ],
-      "noneOf": [
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityDashboardTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityOverdueTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.pacQualityRecurrenceTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.pacQualitySimilarCasesTerms" }
-      ]
     }
   },
   "systemPredicates": {
@@ -836,11 +752,6 @@
     "productAnalyser": "A pergunta solicita análise completa do produto (cadastro, estrutura, roteiro e inspeção).",
     "productStockBranchRefinement": "A mensagem refina o estoque do produto {product_code} para a filial {branch_code}.",
     "kpiCpv": "A pergunta solicita o indicador CPV de suprimentos.",
-    "pacQualityDashboard": "A pergunta solicita o dashboard executivo dos planos de ação PAC via OpenAPI.",
-    "pacQualityList": "A pergunta solicita listagem de planos de ação de qualidade via OpenAPI.",
-    "pacQualityOverdue": "A pergunta solicita planos PAC com ações atrasadas via OpenAPI.",
-    "pacQualityRecurrence": "A pergunta solicita agrupamento de recorrência nos planos de ação via OpenAPI.",
-    "pacQualitySimilarCases": "A pergunta solicita casos similares de um plano de ação PAC via OpenAPI.",
     "kpiOtd": "A pergunta solicita o indicador OTD de suprimentos.",
     "kpiProductionOtdDetail": "A pergunta solicita OTD de produção com resumo e listagem de ordens finalizadas (SC2010).",
     "kpiProductionOeeDetail": "A pergunta solicita OEE de produção com resumo e listagem de apontamentos (view fabril).",

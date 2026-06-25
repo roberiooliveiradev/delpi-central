@@ -2030,6 +2030,7 @@
     "open_sales_order": "/pedidos-venda-abertos/",
     "open_production_order": "/pedidos-venda-abertos/ops-abertas",
     "commercial_proposal_document": "/propostas-comerciais/",
+    "exclusive_raw_materials_catalog": "/products/exclusive-raw-materials/catalog",
     "purchases_top_products": "/purchases/top-products",
     "quality_action_plan_dashboard": "/quality/action-plans/dashboard",
     "quality_action_plan_recurrence": "/quality/action-plans/recurrence",
@@ -2041,34 +2042,10 @@
     "quality_action_plan_evidence": "/quality/action-plans/0/evidences",
     "quality_action_plan_export": "/quality/action-plans/0/export/rnc-8d"
   },
-  "pathEntityFallbacks": [
-    {
-      "contains": "/exclusive-raw-materials/catalog",
-      "entity": "exclusive_raw_materials_catalog"
-    },
-    {
-      "contains": "/branch_rol_target_pct",
-      "entity": "commercial_rol_target"
-    },
-    {
-      "contains": "/finacial/rol",
-      "entity": "financial_rol"
-    },
-    {
-      "contains": "/finacial/ebitda_pct",
-      "entity": "financial_ebitda_pct"
-    },
-    {
-      "contains": "/finacial/fixed_cost_pct",
-      "entity": "financial_fixed_cost_pct"
-    },
-    {
-      "contains": "/finacial/pmr",
-      "entity": "financial_pmr"
-    },
-    {
-      "contains": "/engineering/lmps/",
-      "entity": "lmp"
-    }
-  ]
+  "entityPathHintAliases": {
+    "commercial_rol_target": [
+      "/commercial/branch_rol_target_pct"
+    ]
+  },
+  "pathEntityFallbacks": []
 }

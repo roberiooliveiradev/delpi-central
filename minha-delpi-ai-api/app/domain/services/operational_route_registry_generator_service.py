@@ -239,9 +239,11 @@ class OperationalRouteRegistryGeneratorService:
             if str(marker).strip()
         ]
 
-        for marker in path_markers:
-            if marker in path:
-                return True
+        if path_markers:
+            if not all(marker in path for marker in path_markers):
+                return False
+
+            return True
 
         path_suffix = str(route_spec.get("pathSuffix") or "").strip().lower()
 

@@ -23,7 +23,6 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
-from tests.fixtures.pac_quality_regression_cases import PAC_QUALITY_SELECTION_CASES
 from tests.fixtures.production_operational_regression_cases import (
     PRODUCTION_OPERATIONAL_SELECTION_CASES,
 )
@@ -192,7 +191,6 @@ def test_agentic_skip_on_follow_up_chip_query():
     "case",
     SELECTION_CASES
     + PRODUCTION_OPERATIONAL_SELECTION_CASES
-    + PAC_QUALITY_SELECTION_CASES
     + OPERATIONAL_QUALITY_JUN2026_CASES
     + STOCK_REFINEMENT_SELECTION_CASES
     + METRIC_REFINEMENT_SELECTION_CASES

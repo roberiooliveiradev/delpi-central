@@ -141,19 +141,18 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 ## Pós-Fase 14 — entityPathHints produto (jun/2026)
 
 - `_matches_entity_path_hint` resolve `/products/{code}/…` a partir de hints `/products/0/…`.
-- `pathEntityFallbacks` reduzido a 7 entradas não cobertas por hint (branch ROL, typos financeiros, catálogo MP, LMP).
-
-## Pendente (pós-Fase 14)
-
-- Remover fallbacks de produto quando `meta.entity` for garantido em 100% das respostas.
+- `entityPathHintAliases` (ex.: `commercial_rol_target` → `/commercial/branch_rol_target_pct`).
+- `path_lowered` normaliza typo legado `/finacial/` → `/financial/`.
+- `pathEntityFallbacks`: **[]** — gate `audit_path_entity_fallback_pruning.py` exige lista vazia.
 
 ## PAC Qualidade — api-delpi (jun/2026)
 
 - Rotas `/quality/action-plans/*` expostas pela **api-delpi** (sem provider `api-pac-quality` separado).
-- `openapi_operation_contracts.json` sincronizado com `route_contract_registry` (188 contratos).
+- `openapi_operation_contracts.json` sincronizado com `route_contract_registry`.
 - `entityPathHints` + matching `{plan_id}` para apresentação schema-first.
 - Gate `scripts/audit_api_delpi_pac_onda1.py --check` (Onda 1 + recorrência 2.3).
-- Regressão de seleção: `tests/fixtures/pac_quality_regression_cases.py` (PAC01–PAC05).
+- Seleção: **autoTierCRoutes** + ranker semântico (`test_pac_quality_auto_tier_c_selection.py`); sem registry manual `pacQuality*`.
+- `_manual_route_covers`: todos os `pathMarkers` obrigatórios (PAC dashboard não bloqueado por rota LMP).
 - Pós-deploy: `sync_api_delpi_openapi.py` (mesmo provider `api-delpi`).
 
 ## Playbook 22 Fase D — enriched (jun/2026)
