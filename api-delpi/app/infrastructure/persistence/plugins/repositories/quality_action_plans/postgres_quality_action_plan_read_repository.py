@@ -28,6 +28,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         owner_user_id: str | None = None,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        department: str | None = None,
+        root_cause_category: str | None = None,
+        overdue_only: bool = False,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -55,6 +58,34 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if nonconformity_scope:
             filters.append("p.nonconformity_scope = %s")
             params.append(nonconformity_scope)
+        if department:
+            filters.append("p.department ILIKE %s")
+            params.append(f"%{department.strip()}%")
+        if root_cause_category:
+            root_term = f"%{root_cause_category.strip()}%"
+            filters.append(
+                """(
+                    p.root_cause_category ILIKE %s
+                    OR EXISTS (
+                        SELECT 1
+                          FROM quality.quality_five_whys fw
+                         WHERE fw.plan_id = p.id
+                           AND fw.root_cause ILIKE %s
+                    )
+                )"""
+            )
+            params.extend([root_term, root_term])
+        if overdue_only:
+            filters.append("p.status NOT IN ('completed', 'cancelled')")
+            filters.append(
+                """EXISTS (
+                    SELECT 1
+                      FROM quality.quality_actions a
+                     WHERE a.plan_id = p.id
+                       AND a.status NOT IN ('completed', 'cancelled')
+                       AND a.due_date < CURRENT_DATE
+                )"""
+            )
 
         where_clause = " AND ".join(filters)
         count_row = self.fetch_one(

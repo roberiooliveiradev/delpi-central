@@ -30,8 +30,12 @@ type ListParams = {
   severity?: string;
   product_code?: string;
   customer_name?: string;
+  owner_user_id?: string;
   branch_code?: string;
   nonconformity_scope?: string;
+  department?: string;
+  root_cause_category?: string;
+  overdue_only?: boolean;
   page?: number;
   page_size?: number;
 };
@@ -42,8 +46,12 @@ function buildQuery(params: ListParams): string {
   if (params.severity) search.set("severity", params.severity);
   if (params.product_code) search.set("product_code", params.product_code);
   if (params.customer_name) search.set("customer_name", params.customer_name);
+  if (params.owner_user_id) search.set("owner_user_id", params.owner_user_id);
   if (params.branch_code) search.set("branch_code", params.branch_code);
   if (params.nonconformity_scope) search.set("nonconformity_scope", params.nonconformity_scope);
+  if (params.department) search.set("department", params.department);
+  if (params.root_cause_category) search.set("root_cause_category", params.root_cause_category);
+  if (params.overdue_only) search.set("overdue_only", "true");
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));
   const query = search.toString();

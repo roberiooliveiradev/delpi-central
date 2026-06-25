@@ -29,14 +29,27 @@ export function PlansListPage({ onNavigate }: Props) {
 
   const debouncedCustomer = useDebouncedValue(filters.customerName);
   const debouncedProduct = useDebouncedValue(filters.productCode);
+  const debouncedOwner = useDebouncedValue(filters.ownerUserId);
+  const debouncedDepartment = useDebouncedValue(filters.department);
+  const debouncedRootCause = useDebouncedValue(filters.rootCauseCategory);
 
   const apiFilters = useMemo(
     (): PlansFilterState => ({
       ...filters,
       customerName: debouncedCustomer,
       productCode: debouncedProduct,
+      ownerUserId: debouncedOwner,
+      department: debouncedDepartment,
+      rootCauseCategory: debouncedRootCause,
     }),
-    [filters, debouncedCustomer, debouncedProduct],
+    [
+      filters,
+      debouncedCustomer,
+      debouncedProduct,
+      debouncedOwner,
+      debouncedDepartment,
+      debouncedRootCause,
+    ],
   );
 
   const load = useCallback(async () => {

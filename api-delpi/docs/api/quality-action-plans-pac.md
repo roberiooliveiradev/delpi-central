@@ -70,7 +70,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 ### GET `/quality/action-plans` e `/overdue`
 
-**Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`
+**Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `department`, `root_cause_category`, `overdue_only` (bool), `page`, `page_size`
 
 ---
 

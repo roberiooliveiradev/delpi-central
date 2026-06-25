@@ -1048,6 +1048,11 @@
   font-size: var(--pac-font-sm);
 }
 
+.dashboard-quality-action-plans .pac-filter-checkbox {
+  align-self: end;
+  min-height: 42px;
+}
+
 /* ——— Responsivo ——— */
 @media (max-width: 1100px) {
   .dashboard-quality-action-plans .pac-charts-grid {

@@ -7,6 +7,10 @@ export type PlansFilterState = {
   scopes: string[];
   customerName: string;
   productCode: string;
+  ownerUserId: string;
+  department: string;
+  rootCauseCategory: string;
+  overdueOnly: boolean;
 };
 
 export const EMPTY_PLANS_FILTERS: PlansFilterState = {
@@ -16,6 +20,10 @@ export const EMPTY_PLANS_FILTERS: PlansFilterState = {
   scopes: [],
   customerName: "",
   productCode: "",
+  ownerUserId: "",
+  department: "",
+  rootCauseCategory: "",
+  overdueOnly: false,
 };
 
 export function applyClientPlanFilters(
@@ -48,6 +56,10 @@ export function buildListApiParams(filters: PlansFilterState) {
     nonconformity_scope: filters.scopes.length === 1 ? filters.scopes[0] : undefined,
     customer_name: filters.customerName.trim() || undefined,
     product_code: filters.productCode.trim() || undefined,
+    owner_user_id: filters.ownerUserId.trim() || undefined,
+    department: filters.department.trim() || undefined,
+    root_cause_category: filters.rootCauseCategory.trim() || undefined,
+    overdue_only: filters.overdueOnly || undefined,
     page_size: 200,
   };
 }
