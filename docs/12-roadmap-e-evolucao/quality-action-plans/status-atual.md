@@ -35,6 +35,7 @@
 | V009 | `quality_notification_dispatches` (dedup alertas) | APLICADA |
 | V010 | Workflow aprovação de eficácia | APLICADA |
 | V011 | `search_embedding` pgvector (busca semântica) | APLICADA |
+| V012 | `linked_kaizen_id` → `quality.kaizens` (Onda 7.2) | APLICADA |
 
 ---
 
