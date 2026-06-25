@@ -228,6 +228,14 @@ class ChatPresentationProseDeliveryService:
         return str(metadata.get("proseDeliveryMode") or "").strip().lower() == MODE_LLM
 
     @classmethod
+    def should_omit_legacy_tool_context_direct_answer(
+        cls,
+        metadata: dict[str, Any] | None,
+    ) -> bool:
+        """Não gravar directAnswer legado no tool_context quando a prosa vem de dataCommentary."""
+        return cls.is_llm_decoupled_metadata(metadata)
+
+    @classmethod
     def resolve_effective_humanized_summary(
         cls,
         metadata: dict[str, Any] | None,

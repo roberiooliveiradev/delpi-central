@@ -130,6 +130,13 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 - **20** entradas removidas de `pathEntityFallbacks` (redundantes com `entityPathHints`); gate `audit_path_entity_fallback_pruning.py --check`.
 - Perfis de produto (`/products/{code}/…`) mantêm fallbacks por fragmento.
 
+## Prosa operacional — commentary direct Normal (jun/2026)
+
+- `normalCommentaryDirect.enabled: true` em `response_modes.json`.
+- `apply_turn_direct_answer_policy` prioriza `dataCommentary` antes de `directAnswer` legado no `tool_context`.
+- `should_omit_legacy_tool_context_direct_answer` no pipeline de tools (evita presenter legado quando `llmProseDecoupled`).
+- Regressão: `PROSE_COMMENTARY_DIRECT_CASES` + `test_chat_prose_commentary_direct_regression.py` (meta ROL filial).
+
 ## Pendente (Fase 14+)
 
 - Rodar `sync_api_delpi_openapi.py` em homolog/prod pós-deploy para popular `delpi_metadata` no banco.

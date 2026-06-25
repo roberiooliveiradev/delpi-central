@@ -108,7 +108,7 @@ class ChatToolContextResultAssemblyService:
                 ChatPresentationProseDeliveryService,
             )
 
-            if not ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(
+            if not ChatPresentationProseDeliveryService.should_omit_legacy_tool_context_direct_answer(
                 action_metadata,
             ):
                 direct_answer = host._auxiliary_service._build_direct_answer(

@@ -64,18 +64,25 @@ Preset global quando variáveis explícitas não estão no `.env`: `CHAT_LLM_LAT
 Tool execute_external_action (ok ou falha)
     │
     ├─ llmProseEverywhere → proseDeliveryMode=llm + pipeline data-only
-    ├─ fast + commentary direct elegível → direct answer (sem Ollama) — **só Rápida**
+    ├─ fast/normal + commentary direct elegível → direct answer (sem Ollama)
     ├─ fast     → commentary direct ou llm_synthesis_brief (fallback LLM)
-    ├─ normal   → llm_synthesis (`qwen2.5:1.5b`, temp 0.1)
+    ├─ normal   → commentary direct ou llm_synthesis (`qwen2.5:1.5b`, temp 0.1)
     └─ thinker  → llm_synthesis (`qwen2.5:3b`, temp 0.15)
 
 Rollback template (offline)
     └─ modos OFF + allowTemplateProseFallback + llmProseEverywhere=false
 ```
 
-### Modo Normal — síntese LLM (`qwen2.5:1.5b`)
+### Modo Normal — commentary direct ou síntese LLM (`qwen2.5:1.5b`)
 
-`normalCommentaryDirect.enabled` está **`false`**: o Normal passa pelo Ollama com foco em assertividade (`generationLimits.normal`: 256 tokens / ctx 1536 / temp **0.1**; `normalLlmBudget.maxFactsChars`: 520).
+Quando `response_modes.json` → `normalCommentaryDirect.enabled: true` e a tool operacional retorna metadata **decoupled** (`llmProseDecoupled`), o turno **prioriza** lead a partir de `dataCommentary` / `dataAnswer` — **sem Ollama** quando o lead enriquecido ≥ `normalCommentaryDirect.minAnswerChars` (default 40).
+
+1. `ChatResponseModeService.apply_turn_direct_answer_policy` tenta `ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer` **antes** de preservar `directAnswer` legado do `tool_context` (ex.: presenter com `humanizedSummary.linhas` vazio).
+2. Lead com profundidade `standard` (`commentaryLead.depthByMode.normal`) via `ChatOperationalCommentaryLeadService`.
+3. Flag `commentaryBriefDirect` no `tool_context`; `ChatTurnLlmAssemblyService` não limpa o direct answer para síntese LLM pendente.
+4. `ChatPresentationProseDeliveryService.should_omit_legacy_tool_context_direct_answer` evita gravar `directAnswer` obsoleto no tool context quando `llmProseDecoupled`.
+
+**Fallback LLM** (quando commentary direct não qualifica): síntese com foco em assertividade (`generationLimits.normal`: 256 tokens / ctx 1536 / temp **0.1**; `normalLlmBudget.maxFactsChars`: 520).
 
 Pós-processamento anti-alucinação: `ChatOperationalLlmSynthesisAnswerEnrichmentService` (marcadores em `operational_llm_synthesis_context.json` → `hallucinationMarkers`, grounding por overlap de âncoras, dedupe de parágrafos).
 
@@ -213,8 +220,8 @@ cd minha-delpi-ai-api
 |-------|---------|-------|
 | `fastCommentaryDirect.enabled` | `true` | Ativa prosa Rápida sem segunda passagem LLM |
 | `fastCommentaryDirect.minAnswerChars` | `40` | Mínimo de caracteres no lead enriquecido |
-| `normalCommentaryDirect.enabled` | `false` | Normal usa LLM (não commentary direct) |
-| `normalCommentaryDirect.minAnswerChars` | `40` | Mínimo se reativar commentary direct no Normal |
+| `normalCommentaryDirect.enabled` | `true` | Normal usa commentary direct quando `llmProseDecoupled` + lead ≥ min chars |
+| `normalCommentaryDirect.minAnswerChars` | `40` | Mínimo de caracteres no lead enriquecido (modo Normal) |
 | `fastLlmBudget.maxFactsChars` | `380` | Cap de fatos no prompt quando cai no fallback LLM |
 | `fastLlmBudget.skipProsePanelRules` | `true` | Omite regras de painel no addon de fatos (Rápida) |
 | `normalLlmBudget.maxFactsChars` | `400` | Cap de fatos no prompt Normal |

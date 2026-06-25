@@ -150,19 +150,6 @@ class ChatResponseModeService:
             if failure_direct:
                 return failure_direct, skip_rag, "operational_direct"
 
-        from app.domain.services.chat_presentation_prose_delivery_service import (
-            ChatPresentationProseDeliveryService,
-            MODE_DIRECT,
-            MODE_LLM,
-            MODE_TEMPLATE,
-        )
-
-        mode = ChatPresentationProseDeliveryService.resolve_mode(
-            message,
-            tool_calls,
-            response_mode=response_mode,
-        )
-
         if mode in {MODE_TEMPLATE, MODE_DIRECT}:
             return direct_answer, skip_rag, "operational_direct" if direct_answer else None
 
@@ -182,10 +169,6 @@ class ChatResponseModeService:
             return direct_answer, resolved_skip, effect
 
         if direct_answer:
-            from app.domain.services.chat_presentation_prose_delivery_content_service import (
-                ChatPresentationProseDeliveryContentService,
-            )
-
             if ChatPresentationProseDeliveryContentService.llm_prose_everywhere():
                 effect = cls.resolve_synthesis_effect(response_mode)
                 resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(

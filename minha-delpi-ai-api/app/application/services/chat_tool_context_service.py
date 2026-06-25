@@ -416,7 +416,9 @@ class ChatToolContextService:
             ChatPresentationProseDeliveryService,
         )
 
-        if ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(safe_metadata):
+        if ChatPresentationProseDeliveryService.should_omit_legacy_tool_context_direct_answer(
+            safe_metadata,
+        ):
             direct_answer = None
 
         requested_format = self._resolve_consolidation_format(raw_message, previous_messages)

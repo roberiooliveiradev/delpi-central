@@ -552,6 +552,28 @@ SELECTION_CASES = [
         "expected_action_id": "closing",
     },
     {
+        "message": "Qual é a meta percentual de ROL da filial?",
+        "actions": [
+            {
+                "actionId": "commercial-branch-rol-target",
+                "method": "GET",
+                "path": "/commercial/branch_rol_target_pct",
+                "operationId": "get_branch_rol_target_pct",
+                "summary": "Meta % ROL filial",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "capabilities",
+                "method": "GET",
+                "path": "/capabilities",
+                "operationId": "get_capabilities",
+                "summary": "Capacidades",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "commercial-branch-rol-target",
+    },
+    {
         "message": "Qual o OTD de compras da empresa?",
         "actions": [
             {
@@ -2362,6 +2384,31 @@ OPERATIONAL_QUALITY_JUN2026_CASES = [
 OPERATIONAL_QUALITY_JUN2026_INDEX = [
     {"id": case["id"], "message": case["message"], "expected_action_id": case["expected_action_id"]}
     for case in OPERATIONAL_QUALITY_JUN2026_CASES
+]
+
+# Prosa operacional — commentary direct no modo Normal (jun/2026, meta ROL filial).
+PROSE_COMMENTARY_DIRECT_CASES = [
+    {
+        "id": "commercial_branch_rol_target_normal",
+        "message": "maio de 2026",
+        "response_mode": "normal",
+        "stale_direct_answer": "Olá! Eu sou o assistente corporativo Minha DELPI Chat.",
+        "pipeline_stages": ["ingress", "tools", "post_tool", "direct_answer"],
+        "tool_metadata": {
+            "ok": True,
+            "llmProseDecoupled": True,
+            "path": "/commercial/branch_rol_target_pct",
+            "dataCommentary": {
+                "highlights": [
+                    "**rol:** R$ 3.717.926,47",
+                    "**Meta:** 3.466.000",
+                    "**% meta ROL:** 107,27%",
+                ],
+            },
+        },
+        "expected_snippets": ["107,27%", "3.717.926", "3.466.000"],
+        "forbidden_snippets": ["assistente corporativo", "equipe de suporte"],
+    },
 ]
 
 # treinamento-agente-interacoes-jun2026.md — consultas operacionais (não capabilities).
