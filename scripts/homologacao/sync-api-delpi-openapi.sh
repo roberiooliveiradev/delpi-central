@@ -97,7 +97,7 @@ run_sync_in_container() {
   echo "[3/5] Executando sync_api_delpi_openapi.py (provider=${PROVIDER_KEY})"
 
   # shellcheck disable=SC2086
-  docker exec "$CHAT_API_CONTAINER" python3 scripts/sync_api_delpi_openapi.py \
+  docker exec -e PYTHONPATH=/app "$CHAT_API_CONTAINER" python3 scripts/sync_api_delpi_openapi.py \
     --provider-key "$PROVIDER_KEY" \
     $SYNC_EXTRA_ARGS \
     > "$REPORT_FILE"
@@ -160,7 +160,7 @@ run_sync_in_container
 validate_report
 
 echo "[5/5] Readiness operacional (Playbook 16)"
-docker exec "$CHAT_API_CONTAINER" python3 scripts/check_operational_action_readiness.py
+docker exec -e PYTHONPATH=/app "$CHAT_API_CONTAINER" python3 scripts/check_operational_action_readiness.py
 
 ok "Pós-deploy sync-api-delpi-openapi concluído."
 echo

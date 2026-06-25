@@ -86,14 +86,49 @@ def validate_schema(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def _load_api_delpi_schema() -> dict[str, Any]:
+    import os
+    import urllib.error
+    import urllib.request
+
+    url = os.environ.get(
+        "API_DELPI_OPENAPI_URL",
+        "http://api-delpi:8000/openapi.json",
+    ).strip()
+
+    if url:
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+
+            if isinstance(payload, dict):
+                return payload
+        except (OSError, urllib.error.URLError, json.JSONDecodeError, ValueError):
+            pass
+
     api_delpi_root = Path(__file__).resolve().parents[2] / "api-delpi"
 
-    if str(api_delpi_root) not in sys.path:
-        sys.path.insert(0, str(api_delpi_root))
+    if not api_delpi_root.is_dir():
+        raise ValueError(
+            "Não foi possível carregar OpenAPI da api-delpi "
+            f"(URL={url!r} e checkout ausente em {api_delpi_root})",
+        )
 
-    from app.main import app
+    api_delpi_path = str(api_delpi_root)
+    removed = sys.path.pop(0) if sys.path and sys.path[0] == str(ROOT) else None
 
-    schema = app.openapi()
+    if api_delpi_path not in sys.path:
+        sys.path.insert(0, api_delpi_path)
+
+    try:
+        from app.main import app as api_delpi_app
+
+        schema = api_delpi_app.openapi()
+    finally:
+        if sys.path and sys.path[0] == api_delpi_path:
+            sys.path.pop(0)
+
+        if removed is not None:
+            sys.path.insert(0, removed)
 
     if not isinstance(schema, dict):
         raise ValueError("api-delpi OpenAPI inválido")

@@ -90,6 +90,8 @@ BASE_URL=https://seu-dominio ./scripts/homologacao/sync-api-delpi-openapi.sh
 
 CI manual: `.github/workflows/sync-api-delpi-openapi.yml` (Environment `homolog` / `prod` com secrets SSH).
 
+**Importante:** após deploy da api-delpi, reinicie o processo/container antes do sync — o OpenAPI (`x-delpi`, `presentation.strategy`) fica em cache no worker até o restart. Sem isso o chat pode persistir `delpiMetadata` desatualizado.
+
 Procedimento completo: `api-delpi/docs/api/12-procedimento-reimport-openapi.md`.
 
 ---

@@ -137,13 +137,19 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 - `should_omit_legacy_tool_context_direct_answer` no pipeline de tools (evita presenter legado quando `llmProseDecoupled`).
 - Regressão: `PROSE_COMMENTARY_DIRECT_CASES` + `test_chat_prose_commentary_direct_regression.py` (meta ROL filial).
 
-## Pendente (Fase 14+)
+## Pendente (pós-Fase 14)
 
-- Rodar `sync_api_delpi_openapi.py` em homolog/prod pós-deploy para popular `delpi_metadata` no banco (inclui `presentation.strategy`).
-- Provider `api-pac-quality`: reimport após deploy com `sync_api_pac_quality_openapi.py`.
+- Provider `api-pac-quality`: cadastrar provider + `sync_api_pac_quality_openapi.py` após deploy PAC.
 - Remover fallbacks de produto quando `meta.entity` for garantido em 100% das respostas.
 
 ## Playbook 22 Fase D — enriched (jun/2026)
 
 - api-delpi: `ENRICHED_PRESENTATION_ENTITIES` + `presentation_strategy_for_entity` no injector `x-delpi`.
 - Chat: `openapiPresentationStrategy` propagado via `delpiMetadata`; stack automático quando `enriched` + `stackLayoutPolicy: always`.
+
+## Fase 14 — sync OpenAPI local (jun/2026)
+
+- `sync_api_delpi_openapi.py` executado no container: 204 actions, 16 com `presentation.strategy: enriched`.
+- `audit_openapi_delpi_metadata.py --check` verde (fetch HTTP `api-delpi:8000/openapi.json`).
+- Homolog script: `PYTHONPATH=/app` nos `docker exec`.
+- **Homolog/prod:** reiniciar api-delpi após deploy antes do sync (OpenAPI em cache no processo).
