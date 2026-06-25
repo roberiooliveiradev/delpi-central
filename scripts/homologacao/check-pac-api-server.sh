@@ -36,6 +36,53 @@ if missing:
 print('OK openapi Onda 1', len(required), 'rotas obrigatórias')
 "
 
+echo "[check] OpenAPI — fluxo analista (24 operações, máx. 30)"
+curl -fsS "${PAC_API_URL}/openapi.json" | python3 -c "
+import json, sys
+schema = json.load(sys.stdin)
+paths = schema.get('paths') or {}
+ops = []
+for path_item in paths.values():
+    if not isinstance(path_item, dict):
+        continue
+    for operation in path_item.values():
+        if isinstance(operation, dict):
+            op_id = str(operation.get('operationId') or '').strip()
+            if op_id:
+                ops.append(op_id)
+max_ops = 30
+expected = 24
+if len(ops) > max_ops:
+    print(f'ERRO: OpenAPI tem {len(ops)} operações (máx {max_ops})', file=sys.stderr)
+    sys.exit(1)
+if len(ops) != expected:
+    print(f'ERRO: esperado {expected} operações analista; obteve {len(ops)}', file=sys.stderr)
+    sys.exit(1)
+if '/health' in paths:
+    print('ERRO: /health não deve aparecer no OpenAPI GPT', file=sys.stderr)
+    sys.exit(1)
+required = {
+    'pac_create_action_plan',
+    'pac_search_similar_cases',
+    'pac_submit_effectiveness_review',
+    'pac_download_plan_evidence',
+}
+missing = sorted(required - set(ops))
+if missing:
+    print('FALTANDO no openapi.json:', ', '.join(missing), file=sys.stderr)
+    sys.exit(1)
+forbidden = {
+    'pac_approve_effectiveness_review',
+    'pac_dispatch_notifications',
+    'pac_get_quality_knowledge_graph',
+}
+present = sorted(forbidden & set(ops))
+if present:
+    print('ERRO: operações plugin-only no OpenAPI PAC:', ', '.join(present), file=sys.stderr)
+    sys.exit(1)
+print('OK openapi.json analista', len(ops), 'operações')
+"
+
 if [ -n "${PAC_QUALITY_API_KEY:-}" ]; then
   echo "[check] POST similar-cases (auth API key)"
   curl -fsS -X POST "${PAC_API_URL}/quality/action-plans/intelligence/similar-cases" \
