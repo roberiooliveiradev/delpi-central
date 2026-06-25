@@ -52,6 +52,7 @@ export type UpdatePlanPayload = {
   client_nc_registry?: string;
   customer_template?: string;
   linked_kaizen_id?: string | null;
+  linked_audit_5s_nc_id?: string | null;
 };
 
 export function emptyPlanFormValues(): PlanFormValues {

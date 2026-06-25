@@ -36,6 +36,7 @@
 | V010 | Workflow aprovação de eficácia | APLICADA |
 | V011 | `search_embedding` pgvector (busca semântica) | APLICADA |
 | V012 | `linked_kaizen_id` → `quality.kaizens` (Onda 7.2) | APLICADA |
+| V013 | `linked_audit_5s_nc_id` → `quality.audit_5s_nonconformities` (Onda 7.3) | APLICADA |
 
 ---
 
@@ -52,6 +53,7 @@
 | Inteligência (similaridade, padrões) | GET `/similar-cases`, GET `/recurrence` | Parcial (Onda 2.1–2.3) |
 | Inteligência Onda 6 | GET `/intelligence/knowledge-graph`, POST recorrência/tags | Sim (smoke `run_onda6_intelligence_smoke.py`) |
 | Vínculo Kaizen (Onda 7.2) | `linked_kaizen_id` no PATCH/detalhe + seletor no plugin | Sim |
+| Vínculo NC Auditoria 5S (Onda 7.3) | `linked_audit_5s_nc_id` no PATCH/detalhe + campo UUID no plugin | Sim |
 
 ### api-pac-quality
 
@@ -94,7 +96,7 @@
 
 **Onda 6 — concluída (jun/2026):** busca semântica, OCR tags, recorrência na abertura, grafo de conhecimento.
 
-**Próximo foco:** H13 evals agente GPT (≥ 90% nos 20 cenários) + início Onda 7 (ecossistema DELPI).
+**Próximo foco:** H13 evals agente GPT (≥ 90% nos 20 cenários) + Onda 7.1 (link NC TOTVS `QI2010`).
 
 ### Stack local (canônico — plugin + api-delpi)
 

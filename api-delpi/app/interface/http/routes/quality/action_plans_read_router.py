@@ -142,6 +142,7 @@ class UpdateActionPlanBody(BaseModel):
     )
     client_nc_registry: str | None = Field(default=None, max_length=100)
     linked_kaizen_id: str | None = Field(default=None, max_length=36)
+    linked_audit_5s_nc_id: str | None = Field(default=None, max_length=36)
     status: str = Field(
         ...,
         pattern=(

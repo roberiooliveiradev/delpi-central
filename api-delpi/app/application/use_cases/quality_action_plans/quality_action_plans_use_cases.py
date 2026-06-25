@@ -11,6 +11,8 @@ from app.domain.services.quality_action_plans.pac_quality_nonconformity_scope_se
     validate_nonconformity_scope,
 )
 
+_NULLABLE_PLAN_LINK_FIELDS = frozenset({"linked_kaizen_id", "linked_audit_5s_nc_id"})
+
 
 class QualityActionPlanRepository(Protocol):
     def create_plan(self, fields: dict[str, Any]) -> dict[str, Any]: ...
@@ -145,6 +147,7 @@ class UpdateQualityActionPlanRequest:
     customer_template: str | None = None
     client_nc_registry: str | None = None
     linked_kaizen_id: str | None = None
+    linked_audit_5s_nc_id: str | None = None
 
 
 class UpdateQualityActionPlanUseCase:
@@ -162,11 +165,11 @@ class UpdateQualityActionPlanUseCase:
         explicit = explicit_fields or frozenset()
         fields: dict[str, Any] = {}
         for key, value in request.__dict__.items():
-            if key == "linked_kaizen_id" and key in explicit:
+            if key in _NULLABLE_PLAN_LINK_FIELDS and key in explicit:
                 if value is None or not str(value).strip():
-                    fields["linked_kaizen_id"] = None
+                    fields[key] = None
                 else:
-                    fields["linked_kaizen_id"] = str(value).strip()
+                    fields[key] = str(value).strip()
                 continue
             if value is not None:
                 fields[key] = value
@@ -181,11 +184,13 @@ class UpdateQualityActionPlanUseCase:
             "rnc_8d",
         }:
             raise ValueError("customer_template inválido.")
-        if request.linked_kaizen_id is not None and "linked_kaizen_id" not in explicit:
-            kaizen_id = str(request.linked_kaizen_id).strip()
-            if not kaizen_id:
-                raise ValueError("linked_kaizen_id inválido.")
-            fields["linked_kaizen_id"] = kaizen_id
+        for link_field in _NULLABLE_PLAN_LINK_FIELDS:
+            value = getattr(request, link_field, None)
+            if value is not None and link_field not in explicit:
+                normalized = str(value).strip()
+                if not normalized:
+                    raise ValueError(f"{link_field} inválido.")
+                fields[link_field] = normalized
         fields["updated_by_user_id"] = updated_by
         return self._repository.update_plan(plan_id, fields)
 

@@ -162,6 +162,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     nonconformity_scope: "external",
     client_nc_registry: "",
     linked_kaizen_id: "",
+    linked_audit_5s_nc_id: "",
   });
 
   const load = useCallback(async () => {
@@ -215,6 +216,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         nonconformity_scope: data.plan.nonconformity_scope ?? "external",
         client_nc_registry: data.plan.client_nc_registry ?? "",
         linked_kaizen_id: data.plan.linked_kaizen_id ?? "",
+        linked_audit_5s_nc_id: data.plan.linked_audit_5s_nc_id ?? "",
       });
       try {
         const audit = await fetchPlanAuditLog(planId);
@@ -446,6 +448,15 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 }
                 disabled={saving === "identification"}
               />
+              <TextField
+                id="pac-detail-linked-audit-5s-nc"
+                label="NC Auditoria 5S (UUID)"
+                value={identificationForm.linked_audit_5s_nc_id}
+                onChange={(linked_audit_5s_nc_id) =>
+                  setIdentificationForm((c) => ({ ...c, linked_audit_5s_nc_id }))
+                }
+                placeholder="UUID da NC em quality.audit_5s_nonconformities"
+              />
               <TextAreaField
                 id="pac-detail-problem"
                 label="Relato do problema"
@@ -483,6 +494,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       client_nc_registry: identificationForm.client_nc_registry.trim() || undefined,
                       linked_kaizen_id: identificationForm.linked_kaizen_id.trim()
                         ? identificationForm.linked_kaizen_id.trim()
+                        : null,
+                      linked_audit_5s_nc_id: identificationForm.linked_audit_5s_nc_id.trim()
+                        ? identificationForm.linked_audit_5s_nc_id.trim()
                         : null,
                     });
                   })
