@@ -18,3 +18,8 @@ def test_oee_kpi_sql_uses_nolock_on_fabril_view() -> None:
 def test_oee_kpi_sql_uses_try_cast_on_efficiency() -> None:
     assert "TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT)" in OEE_FABRIL_KPI_AVG_SELECT
     assert "TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT)" in OEE_FABRIL_KPI_BY_BRANCH_SELECT
+
+
+def test_oee_kpi_by_branch_groups_on_raw_filial_column() -> None:
+    assert "GROUP BY EF.FILIAL" not in OEE_FABRIL_KPI_BY_BRANCH_SELECT
+    assert "RTRIM(LTRIM(EF.FILIAL)) AS branch" in OEE_FABRIL_KPI_BY_BRANCH_SELECT

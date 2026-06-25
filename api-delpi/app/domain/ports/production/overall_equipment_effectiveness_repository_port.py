@@ -28,6 +28,13 @@ class OverallEquipmentEffectivenessRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_oee_appointments_bundle(
+        self,
+        request: GetProductionOeeRequest,
+    ) -> tuple[dict, Page[dict]]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_oee_appointment_summary(
         self,
         request: GetProductionOeeRequest,

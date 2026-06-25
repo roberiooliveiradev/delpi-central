@@ -5,10 +5,13 @@ from app.application.dto.production.production_request import ProductionRequest
 from app.application.models.page import Page
 from app.application.services.production.production_kpi_cache import (
     get_cached_production_oee,
+    get_cached_production_oee_appointments_bundle,
     get_cached_production_oee_by_branch,
+    production_oee_appointments_bundle_cache_key,
     production_oee_by_branch_cache_key,
     production_oee_cache_key,
     set_cached_production_oee,
+    set_cached_production_oee_appointments_bundle,
     set_cached_production_oee_by_branch,
 )
 from app.domain.entities.production.overall_equipment_effectiveness import (
@@ -28,12 +31,12 @@ from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
     build_fabril_view_filters,
 )
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_appointments_batch_sql import (
+    format_oee_appointments_batch_sql,
+)
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_kpi_sql import (
     OEE_FABRIL_KPI_AVG_SELECT,
     OEE_FABRIL_KPI_BY_BRANCH_SELECT,
-)
-from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_sql import (
-    OEE_FABRIL_APPOINTMENTS_SELECT,
 )
 from app.infrastructure.persistence.totvs.production_repositories.production_oee_sql import (
     OEE_APPOINTMENT_DETAIL_SELECT,
@@ -256,7 +259,7 @@ class OverallEquipmentEffectivenessRepository(
             {OEE_FABRIL_KPI_BY_BRANCH_SELECT}
             WHERE {where_clause}
               AND RTRIM(LTRIM(EF.FILIAL)) <> ''
-            GROUP BY RTRIM(LTRIM(EF.FILIAL))
+            GROUP BY EF.FILIAL
             ORDER BY branch
         """
 
@@ -265,80 +268,85 @@ class OverallEquipmentEffectivenessRepository(
 
         return rows or []
 
-    def get_oee_appointment_summary(
+    def get_oee_appointments_bundle(
         self,
         request: GetProductionOeeRequest,
-    ) -> dict:
-        where_clause, where_params = self._build_appointment_filters(request)
-        status_clause = self._list_filter_clause(request)
-
-        sql = f"""
-            WITH APONTAMENTOS_OEE AS (
-                {OEE_FABRIL_APPOINTMENTS_SELECT}
-                WHERE {where_clause}
+    ) -> tuple[dict, Page[dict]]:
+        cache_key = production_oee_appointments_bundle_cache_key(request)
+        cached = get_cached_production_oee_appointments_bundle(cache_key)
+        if cached is not None:
+            summary = cached.get("summary") or {}
+            page_payload = cached.get("page") or {}
+            return summary, Page(
+                items=page_payload.get("items") or [],
+                total=int(page_payload.get("total") or 0),
+                page=int(page_payload.get("page") or 1),
+                page_size=int(page_payload.get("page_size") or 20),
             )
-            SELECT
-                COUNT(*) AS total_appointments,
-                SUM(CASE WHEN status = 'valid' THEN 1 ELSE 0 END) AS valid_appointments,
-                SUM(CASE WHEN status = 'outlier' THEN 1 ELSE 0 END) AS outlier_appointments,
-                ROUND(AVG(CASE WHEN status = 'valid' THEN oee_pct END), 2) AS avg_oee_pct
-            FROM APONTAMENTOS_OEE
-            {status_clause}
-        """
 
-        with self:
-            row = self.execute_one(sql, where_params)
+        summary, page = self._load_oee_appointments_bundle(request)
+        set_cached_production_oee_appointments_bundle(
+            cache_key,
+            {
+                "summary": summary,
+                "page": page.to_dict(),
+            },
+        )
+        return summary, page
 
-        return row or {
-            "total_appointments": 0,
-            "valid_appointments": 0,
-            "outlier_appointments": 0,
-        }
-
-    def list_oee_appointments(
+    def _load_oee_appointments_bundle(
         self,
         request: GetProductionOeeRequest,
-    ) -> Page[dict]:
+    ) -> tuple[dict, Page[dict]]:
         paging = paginate(request.page, request.page_size)
         where_clause, where_params = self._build_appointment_filters(request)
         status_clause = self._list_filter_clause(request)
         order_clause = self._list_order_clause(request)
 
-        count_sql = f"""
-            WITH APONTAMENTOS_OEE AS (
-                {OEE_FABRIL_APPOINTMENTS_SELECT}
-                WHERE {where_clause}
-            )
-            SELECT COUNT(*) AS total
-            FROM APONTAMENTOS_OEE
-            {status_clause}
-        """
-
-        list_sql = f"""
-            WITH APONTAMENTOS_OEE AS (
-                {OEE_FABRIL_APPOINTMENTS_SELECT}
-                WHERE {where_clause}
-            )
-            SELECT *
-            FROM APONTAMENTOS_OEE
-            {status_clause}
-            {order_clause}
-            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-        """
-
-        list_params = where_params + [paging["offset"], paging["page_size"]]
+        sql = format_oee_appointments_batch_sql(
+            where_clause=where_clause,
+            status_clause=status_clause,
+            order_clause=order_clause,
+        )
+        list_params = tuple(where_params) + (
+            paging["offset"],
+            paging["page_size"],
+        )
 
         with self:
-            total_row = self.execute_one(count_sql, where_params)
-            total = int(total_row.get("total") or 0) if total_row else 0
-            rows = self.execute_query(list_sql, list_params) or []
+            resultsets = self.execute_query_multiple(sql, list_params)
 
-        return Page(
+        summary_row = (resultsets[0].get("data") or [{}])[0] if resultsets else {}
+        total_row = (resultsets[1].get("data") or [{}])[0] if len(resultsets) > 1 else {}
+        rows = resultsets[2].get("data") or [] if len(resultsets) > 2 else []
+
+        summary = summary_row or {
+            "total_appointments": 0,
+            "valid_appointments": 0,
+            "outlier_appointments": 0,
+        }
+        total = int(total_row.get("total") or 0) if total_row else 0
+
+        return summary, Page(
             items=rows,
             total=total,
             page=paging["page"],
             page_size=paging["page_size"],
         )
+
+    def get_oee_appointment_summary(
+        self,
+        request: GetProductionOeeRequest,
+    ) -> dict:
+        summary, _page = self.get_oee_appointments_bundle(request)
+        return summary
+
+    def list_oee_appointments(
+        self,
+        request: GetProductionOeeRequest,
+    ) -> Page[dict]:
+        _summary, page = self.get_oee_appointments_bundle(request)
+        return page
 
     def get_oee_appointment_by_id(
         self,

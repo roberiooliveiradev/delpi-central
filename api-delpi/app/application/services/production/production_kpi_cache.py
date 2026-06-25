@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.application.dto.production.get_production_oee_request import (
+    GetProductionOeeRequest,
+)
 from app.application.dto.production.production_request import ProductionRequest
 from app.composition.query_cache_composer import build_query_cache
 from app.domain.entities.production.on_time_delivery import OnTimeDelivery
@@ -73,6 +76,45 @@ def production_oee_by_branch_cache_key(request: ProductionRequest) -> str:
             request.end_date or "",
         ]
     )
+
+
+def production_oee_appointments_bundle_cache_key(
+    request: GetProductionOeeRequest,
+) -> str:
+    return "|".join(
+        [
+            "production-oee-appointments",
+            request.branch or "",
+            request.start_date or "",
+            request.end_date or "",
+            request.status or "",
+            request.efficiency_bands or "",
+            request.work_center or "",
+            request.production_order or "",
+            request.operator_code or "",
+            request.product_type or "",
+            str(request.page or 1),
+            str(request.page_size or 20),
+            request.sort_by or "",
+            request.sort_dir or "asc",
+        ]
+    )
+
+
+def get_cached_production_oee_appointments_bundle(
+    key: str,
+) -> dict[str, Any] | None:
+    cached = build_query_cache().get(key)
+    if isinstance(cached, dict):
+        return cached
+    return None
+
+
+def set_cached_production_oee_appointments_bundle(
+    key: str,
+    value: dict[str, Any],
+) -> None:
+    build_query_cache().set(key, value)
 
 
 def get_cached_production_oee_by_branch(key: str) -> list[dict] | None:

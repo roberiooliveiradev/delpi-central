@@ -43,7 +43,9 @@ class GetProductionOeeUseCase:
             end_date=request.end_date,
         )
 
-        appointment_summary = self._repository.get_oee_appointment_summary(request)
+        appointment_summary, appointments_page = (
+            self._repository.get_oee_appointments_bundle(request)
+        )
         total_appointments = int(appointment_summary.get("total_appointments") or 0)
         valid_appointments = int(appointment_summary.get("valid_appointments") or 0)
         outlier_appointments = int(
@@ -80,7 +82,6 @@ class GetProductionOeeUseCase:
             else:
                 oee_pct = None
 
-        appointments_page = self._repository.list_oee_appointments(request)
         appointments_payload = appointments_page.to_dict()
         appointments_payload["items"] = ProductionOperationalQuantityService.normalize_items(
             appointments_payload.get("items") or []

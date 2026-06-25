@@ -22,23 +22,25 @@ def test_get_production_oee_use_case_returns_summary_and_appointments():
             oee_pct=72.5,
         )
     )
-    repository.get_oee_appointment_summary.return_value = {
-        "total_appointments": 100,
-        "valid_appointments": 95,
-        "outlier_appointments": 5,
-    }
-    repository.list_oee_appointments.return_value = Page(
-        items=[
-            {
-                "branch": "01",
-                "production_order": "000123",
-                "status": "valid",
-                "oee_pct": 80.0,
-            }
-        ],
-        total=1,
-        page=1,
-        page_size=20,
+    repository.get_oee_appointments_bundle.return_value = (
+        {
+            "total_appointments": 100,
+            "valid_appointments": 95,
+            "outlier_appointments": 5,
+        },
+        Page(
+            items=[
+                {
+                    "branch": "01",
+                    "production_order": "000123",
+                    "status": "valid",
+                    "oee_pct": 80.0,
+                }
+            ],
+            total=1,
+            page=1,
+            page_size=20,
+        ),
     )
 
     use_case = GetProductionOeeUseCase(repository)
@@ -59,21 +61,24 @@ def test_get_production_oee_use_case_returns_summary_and_appointments():
     assert result["summary"]["outlier_percentage"] == 5.0
     assert result["appointments"]["total"] == 1
     assert result["appointments"]["items"][0]["status"] == "valid"
+    repository.get_oee_appointments_bundle.assert_called_once()
 
 
 def test_get_production_oee_use_case_uses_filtered_average_when_scope_filters():
     repository = MagicMock()
-    repository.get_oee_appointment_summary.return_value = {
-        "total_appointments": 3,
-        "valid_appointments": 2,
-        "outlier_appointments": 1,
-        "avg_oee_pct": 61.25,
-    }
-    repository.list_oee_appointments.return_value = Page(
-        items=[],
-        total=0,
-        page=1,
-        page_size=20,
+    repository.get_oee_appointments_bundle.return_value = (
+        {
+            "total_appointments": 3,
+            "valid_appointments": 2,
+            "outlier_appointments": 1,
+            "avg_oee_pct": 61.25,
+        },
+        Page(
+            items=[],
+            total=0,
+            page=1,
+            page_size=20,
+        ),
     )
 
     use_case = GetProductionOeeUseCase(repository)
@@ -90,3 +95,4 @@ def test_get_production_oee_use_case_uses_filtered_average_when_scope_filters():
 
     assert result["summary"]["oee_pct"] == 61.25
     repository.get_overall_equipment_effectiveness.assert_not_called()
+    repository.get_oee_appointments_bundle.assert_called_once()
