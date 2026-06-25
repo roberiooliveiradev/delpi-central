@@ -119,8 +119,8 @@ class ChatSimpleTurnGateService:
         from app.domain.services.chat_assistant_identity_service import (
             ChatAssistantIdentityService,
         )
-        from app.application.services.chat_capabilities_service import (
-            ChatCapabilitiesService,
+        from app.domain.services.chat_capabilities_detection_service import (
+            ChatCapabilitiesDetectionService,
         )
         from app.domain.services.chat_utility_direct_answer_service import (
             ChatUtilityDirectAnswerService,
@@ -144,7 +144,7 @@ class ChatSimpleTurnGateService:
         if utility_category:
             return cls._matched("utility", utility_category)
 
-        if ChatCapabilitiesService.is_capabilities_question(text):
+        if ChatCapabilitiesDetectionService.is_capabilities_question(text):
             return cls._matched("capabilities", None)
 
         unclear_category = ChatUnclearRequestService.classify(

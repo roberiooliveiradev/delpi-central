@@ -13,6 +13,13 @@
     "resultado operacional",
     "consulta"
   ],
+  "pathTitles": {
+    "guide": "Roteiro do produto",
+    "stock": "Estoque do produto",
+    "structure": "Estrutura do produto",
+    "inspection": "Inspeção do produto",
+    "default": "Consulta operacional"
+  },
   "resumeIntro": "Resumo do que já consultamos sobre **{title}**:",
   "explainIntro": "Interpretação dos dados de **{title}**:",
   "toolContextCommentaryRule": "Quando existir `dataCommentary`, comente os dados com base nos destaques e pontos de atenção — interprete riscos, cobertura e situação operacional. **Não** repita tabelas, listas extensas nem cadastro campo a campo: tabela, árvore e gráfico são exibidos no painel junto com sua prosa.",

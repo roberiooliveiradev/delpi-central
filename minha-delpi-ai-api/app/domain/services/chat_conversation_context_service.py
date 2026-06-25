@@ -184,11 +184,11 @@ class ChatConversationContextService:
 
     @classmethod
     def _rehydrate_tool_summary(cls, tool_meta: dict) -> dict | None:
-        from app.application.services.chat_data_interpretation_answer_service import (
-            ChatDataInterpretationAnswerService,
+        from app.domain.services.chat_operational_tool_summary_resolution_service import (
+            ChatOperationalToolSummaryResolutionService,
         )
 
-        return ChatDataInterpretationAnswerService._resolve_tool_summary(tool_meta)
+        return ChatOperationalToolSummaryResolutionService.resolve_tool_summary(tool_meta)
 
     @classmethod
     def _tool_calls_snippet(cls, message, *, max_preview_chars: int) -> str:

@@ -342,34 +342,11 @@ class ChatCapabilitiesService:
 
     @classmethod
     def is_capabilities_question(cls, message: str) -> bool:
-        detection = _detection()
-        max_length = int(detection.get("maxMessageLength") or 280)
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        from app.domain.services.chat_capabilities_detection_service import (
+            ChatCapabilitiesDetectionService,
+        )
 
-        if len(normalized) > max_length:
-            return False
-
-        question_terms = tuple(str(item) for item in (detection.get("questionTerms") or ()))
-        if ChatMessageNormalizationService.contains_any(message, question_terms):
-            return True
-
-        short_help = tuple(str(item) for item in (detection.get("shortHelp") or ()))
-        if normalized in short_help:
-            return True
-
-        help_prefix_max = int(detection.get("helpPrefixMaxLength") or 80)
-        if (
-            normalized.startswith(("ajuda ", "help "))
-            and len(normalized) < help_prefix_max
-            and not cls.is_help_about_topic_inquiry(message)
-        ):
-            return True
-
-        capaz_tokens = tuple(str(item) for item in (detection.get("capazTokens") or ()))
-        if "capaz" in normalized and any(token in normalized for token in capaz_tokens):
-            return True
-
-        return False
+        return ChatCapabilitiesDetectionService.is_capabilities_question(message)
 
     @classmethod
     def _is_feature_capability_inquiry(cls, message: str) -> bool:
@@ -800,16 +777,11 @@ class ChatCapabilitiesService:
 
     @classmethod
     def is_help_about_topic_inquiry(cls, message: str) -> bool:
-        detection = _detection()
-        max_length = int(detection.get("helpAboutMaxLength") or 120)
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        from app.domain.services.chat_capabilities_detection_service import (
+            ChatCapabilitiesDetectionService,
+        )
 
-        if not normalized or len(normalized) > max_length:
-            return False
-
-        prefixes = tuple(str(item) for item in (detection.get("helpAboutPrefixes") or ()))
-
-        return any(normalized.startswith(prefix) for prefix in prefixes)
+        return ChatCapabilitiesDetectionService.is_help_about_topic_inquiry(message)
 
     @classmethod
     def extract_help_about_topic(cls, message: str) -> str:

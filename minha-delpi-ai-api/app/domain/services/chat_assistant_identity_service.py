@@ -73,12 +73,12 @@ class ChatAssistantIdentityService:
 
     @classmethod
     def classify(cls, message: str) -> str | None:
-        from app.application.services.chat_capabilities_service import (
-            ChatCapabilitiesService,
+        from app.domain.services.chat_capabilities_detection_service import (
+            ChatCapabilitiesDetectionService,
         )
 
         # Catálogo de capacidades tem prioridade sobre identidade/papel genérico.
-        if ChatCapabilitiesService.is_capabilities_question(message):
+        if ChatCapabilitiesDetectionService.is_capabilities_question(message):
             return None
 
         content = _identity_content()
