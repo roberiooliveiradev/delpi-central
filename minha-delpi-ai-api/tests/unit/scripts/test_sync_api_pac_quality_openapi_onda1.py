@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def _load_sync_module():
-    path = Path(__file__).resolve().parents[2] / "scripts" / "sync_api_pac_quality_openapi.py"
+    path = Path(__file__).resolve().parents[3] / "scripts" / "sync_api_pac_quality_openapi.py"
     spec = importlib.util.spec_from_file_location("sync_api_pac_quality_openapi", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
