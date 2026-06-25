@@ -141,9 +141,7 @@ class UpdateActionPlanBody(BaseModel):
         pattern="^(generic|rnc_8d)$",
     )
     client_nc_registry: str | None = Field(default=None, max_length=100)
-
-
-class UpdateActionPlanStatusBody(BaseModel):
+    linked_kaizen_id: str | None = Field(default=None, max_length=36)
     status: str = Field(
         ...,
         pattern=(

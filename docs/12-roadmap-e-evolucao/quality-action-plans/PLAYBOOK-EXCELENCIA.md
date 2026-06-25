@@ -243,7 +243,7 @@ Cada onda tem **objetivo**, **entregas**, **critério de aceite** e **dependênc
 | # | Entrega | Esforço | Notas |
 |---|---|---|---|
 | 7.1 | Link bidirecional NC TOTVS (`QI2010`) | L | Import manual → automático |
-| 7.2 | Vínculo plano PAC ↔ Kaizen gerado | M | V012 `linked_kaizen_id` (jun/2026) |
+| 7.2 | Vínculo plano PAC ↔ Kaizen gerado | M | ✅ V012 + `linked_kaizen_id` no PATCH/detalhe (jun/2026) |
 | 7.3 | Vínculo plano ↔ Auditoria 5S (NC origem) | M | Mesmo schema `quality` |
 | 7.4 | Indicadores PAC no **strategic-indicators-api** | M | PPM, reincidência cliente |
 | 7.5 | NC fornecedor (escopo `supplier`) | L | Novo `nonconformity_scope` |

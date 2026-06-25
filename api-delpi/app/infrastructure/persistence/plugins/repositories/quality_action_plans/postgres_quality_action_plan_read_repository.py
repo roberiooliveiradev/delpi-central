@@ -1522,10 +1522,24 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "recurrence_key",
             "customer_template",
             "client_nc_registry",
+            "linked_kaizen_id",
         }
         updates = {key: value for key, value in fields.items() if key in allowed and value is not None}
         if not updates:
             return current
+
+        if updates.get("linked_kaizen_id"):
+            kaizen_row = self.fetch_one(
+                """
+                SELECT id
+                  FROM quality.kaizens
+                 WHERE id = %s
+                   AND deleted_at IS NULL
+                """,
+                (updates["linked_kaizen_id"],),
+            )
+            if not kaizen_row:
+                raise ValueError("linked_kaizen_id não encontrado ou kaizen inativo.")
 
         set_parts = [f"{column} = %s" for column in updates]
         set_parts.append("updated_at = NOW()")

@@ -144,6 +144,7 @@ class UpdateQualityActionPlanRequest:
     recurrence_key: str | None = None
     customer_template: str | None = None
     client_nc_registry: str | None = None
+    linked_kaizen_id: str | None = None
 
 
 class UpdateQualityActionPlanUseCase:
@@ -173,6 +174,11 @@ class UpdateQualityActionPlanUseCase:
             "rnc_8d",
         }:
             raise ValueError("customer_template inválido.")
+        if request.linked_kaizen_id is not None:
+            kaizen_id = str(request.linked_kaizen_id).strip()
+            if not kaizen_id:
+                raise ValueError("linked_kaizen_id inválido.")
+            fields["linked_kaizen_id"] = kaizen_id
         fields["updated_by_user_id"] = updated_by
         return self._repository.update_plan(plan_id, fields)
 
