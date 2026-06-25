@@ -45,7 +45,7 @@
     "minAnswerChars": 40
   },
   "normalCommentaryDirect": {
-    "enabled": false,
+    "enabled": true,
     "minAnswerChars": 40
   },
   "fastLlmBudget": {

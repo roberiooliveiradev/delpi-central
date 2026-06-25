@@ -157,7 +157,10 @@
       "^\\*\\*abertura:\\*\\*",
       "^\\*\\*destaques:\\*\\*",
       "^\\*\\*pontos de atencao:\\*\\*",
-      "^\\*\\*pontos de atenção:\\*\\*"
+      "^\\*\\*pontos de atenção:\\*\\*",
+      "^resumo:",
+      "^regra:",
+      "^resposta:"
     ],
     "ungroundedGroupClaimTriggers": [
       "pertence ao grupo de",

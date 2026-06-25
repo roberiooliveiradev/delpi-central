@@ -176,3 +176,45 @@ def test_post_tool_overview_fast_uses_commentary_direct_when_decoupled():
     assert "10080045" in result.direct_answer
     assert result.tool_context.get("commentaryBriefDirect") is True
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis_brief"
+
+
+def test_post_tool_rol_target_normal_uses_commentary_direct_when_decoupled():
+    result = _resolve_post_tool(
+        message="maio de 2026",
+        response_mode="normal",
+        tool_context={},
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "llmProseDecoupled": True,
+                    "path": "/commercial/branch_rol_target_pct",
+                    "dataCommentary": {
+                        "highlights": [
+                            "**rol:** R$ 3.717.926,47",
+                            "**Meta:** 3.466.000",
+                            "**% meta ROL:** 107,27%",
+                        ],
+                        "interpretation": "**Meta:** 3.466.000 **% meta ROL:** 107,27%",
+                    },
+                    "dataAnswer": {
+                        "summary": {
+                            "answer": "**rol:** R$ 3.717.926,47",
+                            "meaning": "**Meta:** 3.466.000 **% meta ROL:** 107,27%",
+                        }
+                    },
+                    "presentationDecision": {
+                        "selected": "text",
+                        "reason": "indicador único",
+                    },
+                },
+            }
+        ],
+    )
+
+    assert result.direct_answer
+    assert "% meta ROL" in result.direct_answer
+    assert "107,27%" in result.direct_answer
+    assert result.tool_context.get("commentaryBriefDirect") is True
+    assert result.tool_context.get("responseModeEffect") == "llm_synthesis"

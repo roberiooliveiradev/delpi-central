@@ -98,42 +98,55 @@ def test_apply_turn_direct_answer_policy_fast_prefers_commentary_over_composite_
     assert tool_context.get("commentaryBriefDirect") is True
 
 
-def test_normal_commentary_direct_disabled_returns_none():
+def test_normal_commentary_direct_builds_answer_when_enabled():
     metadata = {
         "ok": True,
         "llmProseDecoupled": True,
-        "path": "/products/10080045/analyser",
+        "path": "/commercial/branch_rol_target_pct",
         "dataCommentary": {
             "highlights": [
-                {"text": "O produto **10080045** está cadastrado como MP."},
+                "**rol:** R$ 3.717.926,47",
+                "**Meta:** 3.466.000",
+                "**% meta ROL:** 107,27%",
             ],
+            "interpretation": "**Meta:** 3.466.000 **% meta ROL:** 107,27%",
+        },
+        "dataAnswer": {
+            "summary": {
+                "answer": "**rol:** R$ 3.717.926,47",
+                "meaning": "**Meta:** 3.466.000 **% meta ROL:** 107,27%",
+            }
         },
     }
 
     answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
-        "me fale do produto 10080045",
+        "maio de 2026",
         _tool_calls(metadata),
         response_mode="normal",
     )
 
-    assert answer is None
+    assert answer
+    assert "% meta ROL" in answer
+    assert "107,27%" in answer or "107.27%" in answer
+    assert "3.466.000" in answer or "3466000" in answer.replace(".", "")
 
 
-def test_apply_turn_direct_answer_policy_normal_uses_llm_not_commentary_direct():
+def test_apply_turn_direct_answer_policy_normal_uses_commentary_direct():
     tool_context: dict = {}
     metadata = {
         "ok": True,
         "llmProseDecoupled": True,
-        "path": "/products/10080045/analyser",
+        "path": "/commercial/branch_rol_target_pct",
         "dataCommentary": {
             "highlights": [
-                {"text": "O produto **10080045** está cadastrado como MP."},
+                "**rol:** R$ 3.717.926,47",
+                "**% meta ROL:** 107,27%",
             ],
         },
     }
 
     direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
-        message="me fale do produto 10080045",
+        message="maio de 2026",
         response_mode="normal",
         direct_answer=None,
         skip_rag=False,
@@ -141,7 +154,8 @@ def test_apply_turn_direct_answer_policy_normal_uses_llm_not_commentary_direct()
         tool_context=tool_context,
     )
 
-    assert direct is None
+    assert direct
+    assert "107,27%" in direct or "meta ROL" in direct
     assert skip_rag is True
     assert effect == "llm_synthesis"
-    assert tool_context.get("commentaryBriefDirect") is not True
+    assert tool_context.get("commentaryBriefDirect") is True
