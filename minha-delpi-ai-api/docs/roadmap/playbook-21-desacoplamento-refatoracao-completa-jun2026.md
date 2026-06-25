@@ -381,8 +381,8 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 |---------|-------------------|
 | `chat_intent_router_service.py` | pending, small_talk, utility, identity, conversation |
 | `chat_operational_parameter_service.py` | conversation, tool_context, playbook readiness |
-| `chat_error_handling_classifier.py` | follow_up, ~~canvas~~ ✅ `ChatCanvasAmbiguityService` no domain, web_search |
-| `chat_active_query_session_service.py` | pending, web_search |
+| `chat_error_handling_classifier.py` | follow_up, ~~canvas~~ ✅ `ChatCanvasAmbiguityService` no domain, ~~web_search~~ ✅ `ChatWebSearchFollowUpService` no domain |
+| `chat_active_query_session_service.py` | pending, ~~web_search~~ ✅ `ChatWebSearchFollowUpService` no domain |
 | `chat_fast_path_service.py` | pending |
 | `chat_tool_context_presentation_service.py` | ~~tool_context_content~~ ✅ `ChatToolContextContentService` no domain |
 | `chat_pagination_consolidation_service.py` | ~~tool_context_content~~ ✅ idem |

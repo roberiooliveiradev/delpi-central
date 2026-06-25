@@ -15,6 +15,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_session_vocabulary_service import (
     ChatSessionVocabularyService,
 )
+from app.domain.services.chat_web_search_follow_up_service import (
+    ChatWebSearchFollowUpService,
+)
 
 
 class ChatActiveQuerySessionService:
@@ -158,10 +161,6 @@ class ChatActiveQuerySessionService:
         message: str,
         tool_context: dict | None,
     ) -> dict[str, Any] | None:
-        from app.application.services.chat_web_search_follow_up_service import (
-            ChatWebSearchFollowUpService,
-        )
-
         tool_calls = (tool_context or {}).get("toolCalls") or []
 
         if not ChatWebSearchFollowUpService.is_primary_web_search_turn(tool_calls):

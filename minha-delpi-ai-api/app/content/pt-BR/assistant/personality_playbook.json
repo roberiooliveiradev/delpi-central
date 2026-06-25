@@ -972,6 +972,12 @@
     "Ampliar busca": "pesquisa profunda na web sobre {{searchQuery}}",
     "Usar anexo": "compare o arquivo anexado com informações públicas sobre {{searchQuery}}"
   },
+  "webSearchFollowUpPrepend": {
+    "sourceCompare": "Comparar fontes",
+    "preferOfficial": "Só fontes oficiais",
+    "attachmentNoResults": "Usar anexo"
+  },
+  "webSearchDefaultTopic": "o tema pesquisado",
   "helpErrorFollowUpChips": [
     "Entender o erro",
     "Verificar código",

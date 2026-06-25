@@ -21,6 +21,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.application.services.chat_follow_up_suggestion_service import (
     ChatFollowUpSuggestionService,
 )
+from app.domain.services.chat_web_search_follow_up_service import (
+    ChatWebSearchFollowUpService,
+)
 
 
 @lru_cache(maxsize=1)
@@ -220,9 +223,6 @@ class ChatErrorHandlingClassifier:
 
     @classmethod
     def _resolve_empty_result_type(cls, message: str, tool_calls: list | None) -> str:
-        from app.application.services.chat_web_search_follow_up_service import (
-            ChatWebSearchFollowUpService,
-        )
         from app.domain.services.chat_sql_inventory_query_service import (
             ChatSqlInventoryQueryService,
         )
