@@ -508,7 +508,8 @@ external_actions/presenters/text_presentation_presenter.py
 external_actions/presenters/product_structure_exclusivity_presenter.py
 external_actions/presenters/product_raw_material_price_presenter.py
 external_actions/presenters/product_list_presenter.py
-external_actions/presenters/kpi_chart_presenter.py
+external_actions/presenters/kpi_chart_presenter.py                   # W3 ✅
+external_actions/presenters/kpi_chart/                             # delegates W3
 external_actions/presenters/operational_response_presenter.py
 (+ todos os presenters em presenters/ — revisar tamanho)
 ```
