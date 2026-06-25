@@ -5,14 +5,14 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 
 class ChatInteractivityContentService:
     @classmethod
     @lru_cache(maxsize=1)
     def bundle(cls) -> dict[str, Any]:
-        node = ContentService.load_json("assistant/interactivity")
+        node = ChatAssistantContentService.load_bundle("interactivity")
 
         return node if isinstance(node, dict) else {}
 

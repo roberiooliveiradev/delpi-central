@@ -8,7 +8,7 @@ from typing import Any
 from app.domain.services.chat_document_vision_content_service import (
     ChatDocumentVisionContentService,
 )
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 class ChatPdfPageTesseractOcrService:
@@ -32,7 +32,7 @@ class ChatPdfPageTesseractOcrService:
             }
 
         lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"
-        dpi = max(72, int(Settings.CHAT_DOCUMENT_VISION_DPI))
+        dpi = max(72, int(ChatDomainConfigService.chat_document_vision_dpi()))
         max_pages = page_limit or ChatDocumentVisionContentService.pdf_attachment_index_max_pages()
         max_pages = max(1, int(max_pages))
         zoom = dpi / 72.0

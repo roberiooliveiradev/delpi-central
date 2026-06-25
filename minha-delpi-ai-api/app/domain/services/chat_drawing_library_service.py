@@ -11,7 +11,7 @@ from urllib.parse import quote
 
 import requests
 
-from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
 
 @dataclass(frozen=True, slots=True)
@@ -173,7 +173,7 @@ class ChatDrawingLibraryService:
     def _cache_root(cls) -> Path:
         root = Path(
             os.getenv("CHAT_ATTACHMENT_STORAGE_PATH")
-            or getattr(Settings, "CHAT_ATTACHMENT_STORAGE_PATH", None)
+            or ChatDomainConfigService.chat_attachment_storage_path()
             or "/tmp/minha-delpi-chat-attachments"
         )
         cache = (root / cls._CACHE_SUBDIR).resolve()

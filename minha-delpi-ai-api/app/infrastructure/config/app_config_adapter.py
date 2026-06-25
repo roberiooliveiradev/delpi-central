@@ -194,3 +194,16 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
 
     def chat_presentation_column_label_cache_size(self) -> int:
         return int(Settings.CHAT_PRESENTATION_COLUMN_LABEL_CACHE_SIZE)
+
+    def chat_attachment_index_pdf_page_limit(self) -> int:
+        return int(Settings.CHAT_ATTACHMENT_INDEX_PDF_PAGE_LIMIT)
+
+    def chat_document_vision_dpi(self) -> int:
+        return int(Settings.CHAT_DOCUMENT_VISION_DPI)
+
+    def chat_attachment_storage_path(self) -> str:
+        import os
+
+        return str(
+            os.getenv("CHAT_ATTACHMENT_STORAGE_PATH", "") or ""
+        ).strip()

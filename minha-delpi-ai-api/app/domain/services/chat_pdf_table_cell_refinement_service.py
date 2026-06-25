@@ -108,10 +108,10 @@ class ChatPdfTableCellRefinementService(TableCellRefinementPort):
             float(ChatDrawingPatternsService.bom_row_refinement_rule("dpiMultiplier", 2.0) or 2.0),
         )
 
-        from app.infrastructure.config.settings import Settings
+        from app.domain.services.chat_domain_config_service import ChatDomainConfigService
         import os
 
-        base_dpi = max(72, int(Settings.CHAT_DOCUMENT_VISION_DPI))
+        base_dpi = max(72, int(ChatDomainConfigService.chat_document_vision_dpi()))
         zoom = (base_dpi / 72.0) * dpi_multiplier
         matrix = fitz.Matrix(zoom, zoom)
         lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"

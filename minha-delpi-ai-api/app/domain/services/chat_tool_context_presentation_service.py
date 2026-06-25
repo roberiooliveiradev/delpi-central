@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.application.services.chat_tool_context_content_service import (
+from app.domain.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 

@@ -198,3 +198,15 @@ class ChatDomainConfigService:
     @classmethod
     def chat_presentation_column_label_cache_size(cls) -> int:
         return cls._require_config().chat_presentation_column_label_cache_size()
+
+    @classmethod
+    def chat_attachment_index_pdf_page_limit(cls) -> int:
+        return cls._require_config().chat_attachment_index_pdf_page_limit()
+
+    @classmethod
+    def chat_document_vision_dpi(cls) -> int:
+        return cls._require_config().chat_document_vision_dpi()
+
+    @classmethod
+    def chat_attachment_storage_path(cls) -> str:
+        return cls._require_config().chat_attachment_storage_path()

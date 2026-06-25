@@ -193,3 +193,15 @@ class AppConfigPort(ABC):
     @abstractmethod
     def chat_presentation_column_label_cache_size(self) -> int:
         raise NotImplementedError
+
+    @abstractmethod
+    def chat_attachment_index_pdf_page_limit(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_document_vision_dpi(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def chat_attachment_storage_path(self) -> str:
+        raise NotImplementedError

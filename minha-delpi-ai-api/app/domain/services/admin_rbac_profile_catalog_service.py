@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.application.security.chat_permissions import (
+from app.domain.security.chat_permission_constants import (
     CHAT_ACCESS_PERMISSION,
     CHAT_ADMIN_PERMISSION,
     CHAT_HISTORY_VIEW_PERMISSION,

@@ -381,20 +381,20 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 |---------|-------------------|
 | `chat_intent_router_service.py` | pending, small_talk, utility, identity, conversation |
 | `chat_operational_parameter_service.py` | conversation, tool_context, playbook readiness |
-| `chat_error_handling_classifier.py` | follow_up, canvas, web_search |
+| `chat_error_handling_classifier.py` | follow_up, ~~canvas~~ ✅ `ChatCanvasAmbiguityService` no domain, web_search |
 | `chat_active_query_session_service.py` | pending, web_search |
 | `chat_fast_path_service.py` | pending |
-| `chat_tool_context_presentation_service.py` | tool_context_content |
-| `chat_pagination_consolidation_service.py` | tool_context_content |
+| `chat_tool_context_presentation_service.py` | ~~tool_context_content~~ ✅ `ChatToolContextContentService` no domain |
+| `chat_pagination_consolidation_service.py` | ~~tool_context_content~~ ✅ idem |
 | `chat_simple_turn_gate_service.py` | identity, capabilities, utility |
 | `chat_evaluation_case_runner_service.py` | identity, capabilities, small_talk, utility |
 | `chat_drawing_pdf_extraction_service.py` | bom vision |
 | `chat_drawing_validation_orchestration_service.py` | bom vision |
 | `chat_drawing_product_code_resolution_service.py` | document_vision |
 | `chat_text_task_service.py` | email/correction supplements |
-| `admin_rbac_profile_catalog_service.py` | security permissions |
+| `admin_rbac_profile_catalog_service.py` | ~~security permissions~~ ✅ `domain/security/chat_permission_constants.py` |
 
-Gate: `scripts/audit_clean_architecture.py`
+Gate: `scripts/audit_clean_architecture.py` — `domainInfrastructureImports` **0**; `domainApplicationImports` ratchet (**27** jun/2026, zerar em W3).
 
 ---
 

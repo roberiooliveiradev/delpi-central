@@ -10,6 +10,9 @@ from app.domain.services.external_actions.external_action_response_content_servi
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
+from app.domain.services.chat_sql_intent_vocabulary_service import (
+    ChatSqlIntentVocabularyService,
+)
 
 if TYPE_CHECKING:
     from app.domain.services.external_actions.external_action_result_presenter import (
@@ -134,7 +137,6 @@ class ExternalActionSqlPresenter:
                     return ExternalActionResponseContentService.format(
                         "productionSchedule",
                         "titleByBranchBreakdown",
-                        default=f"{schedule.title} — por filial",
                         label=schedule.label,
                     )
 
@@ -418,11 +420,13 @@ class ExternalActionSqlPresenter:
     @staticmethod
     def _looks_like_production_branch_breakdown_sql(sql: str) -> bool:
             normalized = str(sql or "").upper()
+            select_marker = ChatSqlIntentVocabularyService.production_branch_breakdown_select_marker()
+            branch_in_marker = ChatSqlIntentVocabularyService.production_branch_breakdown_branch_in_marker()
 
-            if "C2_FILIAL AS FILIAL" in normalized:
+            if select_marker and select_marker in normalized:
                 return True
 
-            return "C2_FILIAL IN (" in normalized
+            return bool(branch_in_marker and branch_in_marker in normalized)
 
     def _format_production_schedule_row(self, row: dict) -> str:
             code = str(

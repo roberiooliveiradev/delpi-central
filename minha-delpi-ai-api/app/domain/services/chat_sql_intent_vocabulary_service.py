@@ -139,3 +139,23 @@ class ChatSqlIntentVocabularyService(ChatAssistantVocabularyService):
             default=default,
             **values,
         )
+
+    @classmethod
+    def production_branch_breakdown_select_marker(cls) -> str:
+        raw = cls.node(
+            "queryRefinement",
+            "productionBranchBreakdownSqlMarkers",
+            "selectContains",
+        )
+
+        return str(raw or "").strip().upper()
+
+    @classmethod
+    def production_branch_breakdown_branch_in_marker(cls) -> str:
+        raw = cls.node(
+            "queryRefinement",
+            "productionBranchBreakdownSqlMarkers",
+            "branchInContains",
+        )
+
+        return str(raw or "").strip().upper()

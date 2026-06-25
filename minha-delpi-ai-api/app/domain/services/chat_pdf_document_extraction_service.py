@@ -15,8 +15,8 @@ from app.domain.services.chat_pdf_embedded_text_service import ChatPdfEmbeddedTe
 from app.domain.services.chat_drawing_regional_scope_service import (
     ChatDrawingRegionalScopeService,
 )
+from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 from app.domain.services.chat_pdf_text_fusion_service import ChatPdfTextFusionService
-from app.infrastructure.config.settings import Settings
 
 
 class ChatPdfDocumentExtractionService:
@@ -43,7 +43,7 @@ class ChatPdfDocumentExtractionService:
             1,
             int(
                 page_limit
-                or Settings.CHAT_ATTACHMENT_INDEX_PDF_PAGE_LIMIT
+                or ChatDomainConfigService.chat_attachment_index_pdf_page_limit()
             ),
         )
         stages: list[str] = []
@@ -395,11 +395,10 @@ class ChatPdfDocumentExtractionService:
             return {}, {}
 
         from app.domain.services.chat_drawing_region_service import ChatDrawingRegionService
-        from app.infrastructure.config.settings import Settings as AppSettings
         import os
 
         lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"
-        dpi = max(72, int(AppSettings.CHAT_DOCUMENT_VISION_DPI))
+        dpi = max(72, int(ChatDomainConfigService.chat_document_vision_dpi()))
         zoom = (dpi / 72.0) * max(1.0, float(dpi_multiplier or 1.0))
         matrix = fitz.Matrix(zoom, zoom)
 

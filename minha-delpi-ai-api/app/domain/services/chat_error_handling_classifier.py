@@ -7,10 +7,7 @@ from functools import lru_cache
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
-
-from app.application.services.chat_follow_up_suggestion_service import (
-    ChatFollowUpSuggestionService,
-)
+from app.domain.services.chat_canvas_ambiguity_service import ChatCanvasAmbiguityService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -19,6 +16,10 @@ from app.domain.services.chat_operational_parameter_service import (
 )
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
+)
+
+from app.application.services.chat_follow_up_suggestion_service import (
+    ChatFollowUpSuggestionService,
 )
 
 
@@ -64,10 +65,6 @@ class ChatErrorHandlingClassifier:
 
         if attachment_type:
             return cls._stub_classification(attachment_type)
-
-        from app.application.services.chat_canvas_ambiguity_service import (
-            ChatCanvasAmbiguityService,
-        )
 
         if ChatCanvasAmbiguityService.is_deictic_canvas_request(message):
             clarification = ChatCanvasAmbiguityService.build_clarification_answer(

@@ -1,21 +1,9 @@
-"""Textos do pipeline de tool context — bundle tool_context.json."""
+"""Compat — reexporta ChatToolContextContentService do domain."""
 
 from __future__ import annotations
 
-from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_tool_context_content_service import (
+    ChatToolContextContentService,
+)
 
-
-class ChatToolContextContentService:
-    _BUNDLE = "tool_context"
-
-    @classmethod
-    def list(cls, *path: str) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(cls._BUNDLE, *path))
-
-    @classmethod
-    def get(cls, *path: str) -> str:
-        return ChatAssistantContentService.get(cls._BUNDLE, *path)
-
-    @classmethod
-    def format(cls, *path: str, **values: str) -> str:
-        return ChatAssistantContentService.format(cls._BUNDLE, *path, **values)
+__all__ = ["ChatToolContextContentService"]

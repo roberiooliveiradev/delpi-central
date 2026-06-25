@@ -657,7 +657,7 @@ class ChatPresentationProseDeliveryService:
         from app.domain.services.chat_operational_llm_synthesis_turn_finalization_service import (
             ChatOperationalLlmSynthesisTurnFinalizationService,
         )
-        from app.infrastructure.llm.llm_request_context import get_active_config
+        from app.domain.services.chat_llm_generation_context_service import get_active_config
 
         resolved_mode = response_mode or get_active_config().response_mode
 

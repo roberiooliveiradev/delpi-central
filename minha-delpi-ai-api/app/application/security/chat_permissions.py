@@ -1,7 +1,21 @@
-CHAT_ACCESS_PERMISSION = "minha-delpi.chat.access"
-CHAT_ASK_PERMISSION = "minha-delpi.chat.ask"
-CHAT_HISTORY_VIEW_PERMISSION = "minha-delpi.chat.history.view"
-CHAT_ADMIN_PERMISSION = "minha-delpi.chat.admin"
-CHAT_KNOWLEDGE_MANAGE_PERMISSION = "minha-delpi.chat.knowledge.manage"
-CHAT_TOOLS_USE_PERMISSION = "minha-delpi.chat.tools.use"
-CHAT_TOOLS_MANAGE_PERMISSION = "minha-delpi.chat.tools.manage"
+"""Compat — reexporta constantes de permissão do domain."""
+
+from app.domain.security.chat_permission_constants import (
+    CHAT_ACCESS_PERMISSION,
+    CHAT_ADMIN_PERMISSION,
+    CHAT_ASK_PERMISSION,
+    CHAT_HISTORY_VIEW_PERMISSION,
+    CHAT_KNOWLEDGE_MANAGE_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
+
+__all__ = [
+    "CHAT_ACCESS_PERMISSION",
+    "CHAT_ADMIN_PERMISSION",
+    "CHAT_ASK_PERMISSION",
+    "CHAT_HISTORY_VIEW_PERMISSION",
+    "CHAT_KNOWLEDGE_MANAGE_PERMISSION",
+    "CHAT_TOOLS_MANAGE_PERMISSION",
+    "CHAT_TOOLS_USE_PERMISSION",
+]

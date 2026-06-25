@@ -354,6 +354,10 @@
       "limitar",
       "limita "
     ],
+    "productionBranchBreakdownSqlMarkers": {
+      "selectContains": "C2_FILIAL AS FILIAL",
+      "branchInContains": "C2_FILIAL IN ("
+    },
     "removeBranchTerms": [
       "todas as filiais",
       "todas filiais",
