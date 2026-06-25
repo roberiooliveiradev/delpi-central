@@ -86,12 +86,6 @@ class ChatOperationalDataCommentaryService:
         )
 
     @classmethod
-    def _build_structure_exclusivity_commentary(cls, *args, **kwargs):
-        return ChatOperationalDataCommentaryMiscService._build_structure_exclusivity_commentary(
-            *args, **kwargs
-        )
-
-    @classmethod
     def _build_analyser_commentary(cls, *args, **kwargs):
         return ChatOperationalDataCommentaryMiscService._build_analyser_commentary(
             *args, **kwargs

@@ -62,5 +62,8 @@ def test_structure_exclusivity_commentary_profile_configured_in_json():
     config = ChatOperationalCommentaryProfileService.profile_config("structure_exclusivity")
 
     assert config.get("templateProseCommentary") == "skip"
+    assert config.get("builderStrategy") == "highlight_rules"
+    assert config.get("contentSection") == "structureExclusivity"
+    assert config.get("questionSynthesisStrategy") == "structure_exclusivity"
     assert isinstance(config.get("highlightRules"), list)
     assert len(config.get("highlightRules") or []) >= 4

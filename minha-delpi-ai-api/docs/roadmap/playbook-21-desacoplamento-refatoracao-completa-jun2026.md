@@ -319,6 +319,8 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | 4 | `presentation_builder_presenter.py` | Idem | Playbook 12 R6 residual |
 | 5 | `external_action_result_presenter.py` | Reduzir facade; só registry para `build_*` | Delegates em `presenters/` |
 
+**Status jun/2026:** W1a/b/c entregues — registry `commentaryProfiles` + `ChatOperationalCommentaryBuilderRegistryService`; gate `audit_commentary_profiles_registry` em `audit_presentation_prose_delivery.py`.
+
 **Testes obrigatórios:**
 
 - `tests/unit/application/use_cases/test_presentation_response_quality.py`
@@ -592,10 +594,11 @@ services/chat_document_vision/                             # delegates W3
 
 **Critério de aceite por PR (W1):**
 
-- [ ] Nenhum veredito factual repetido no markdown (`count("resposta") <= 1` em fixtures tier A).
-- [ ] Perfil `template` + `preserve_template` → `dataAnswer` sem `summary.answer` redundante.
-- [ ] Nenhum serviço novo nomeado por rota (`*StructureExclusivity*` proibido para regra transversal).
-- [ ] Texto PT novo só em `assistant/*.json`.
+- [x] Nenhum veredito factual repetido no markdown (`count("resposta") <= 1` em fixtures tier A) — caso modelo exclusividade MPs.
+- [x] Perfil `template` + `preserve_template` → `dataAnswer` sem `summary.answer` redundante.
+- [x] Commentary operacional via `commentaryProfiles` + `builderStrategy` (sem mapa `builders` hardcoded).
+- [x] Nenhum serviço novo nomeado por rota (`*StructureExclusivity*` proibido para regra transversal).
+- [x] Texto PT novo só em `assistant/*.json`.
 
 ---
 
@@ -668,3 +671,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 concluído — `domainApplicationImports` **0** (`ChatCapabilitiesCatalogAnswerService`, `ChatAttachmentDocumentSelectionService`, `ChatActionLabelService`→domain, etc.) |
 | jun/2026 | W3 — `StreamChatMessageUseCase` fatiado: orquestração SSE em `chat_turn/chat_stream_turn_execution_service.py`; use case ~115L (ratchet `sendStreamUseCaseLinesMax`) |
 | jun/2026 | Regressão — `preserveDirectAnswerStages` inclui `capabilities` (evita LLM em self-help quando `pre_capability_answer` já resolve o turno) |
+| jun/2026 | **W1 concluída** — `commentaryProfiles` para 8 perfis operacionais + `builderStrategy`; `ChatOperationalCommentaryBuilderRegistryService`; gate `audit_commentary_profiles_registry`; `questionSynthesisStrategy` declarativo |

@@ -24,7 +24,6 @@ from app.domain.services.external_actions.operational_route_narrative_service im
 from app.domain.services.chat_operational_data_commentary.chat_operational_data_commentary_constants import (
     CONTENT_SECTION as _CONTENT_SECTION,
     MP_LOW_COVERAGE_PA_THRESHOLD as _MP_LOW_COVERAGE_PA_THRESHOLD,
-    PROFILE_CONTENT_MAP as _PROFILE_CONTENT_MAP,
 )
 from app.domain.services.chat_operational_data_commentary.chat_operational_data_commentary_facade_access import (
     commentary_service,
@@ -51,32 +50,6 @@ class ChatOperationalDataCommentaryMiscService:
         )
 
         return ChatProductPricingInsightService.build_commentary(root)
-
-    @classmethod
-    def _build_structure_exclusivity_commentary(cls,
-        root: dict[str, Any],
-        *,
-        format_quantity: Callable[[Any, str | None], str] | None = None,
-    ) -> dict[str, Any] | None:
-        _ = format_quantity
-
-        profile_key = "structure_exclusivity"
-        highlights = ChatOperationalCommentaryProfileService.build_highlight_rules(
-            profile_key,
-            root,
-            format_line=ChatOperationalDataCommentarySupportService._presenter_format,
-        )
-        visual_hints = ChatOperationalCommentaryProfileService.visual_hints(profile_key)
-
-        if not highlights and not visual_hints:
-            return None
-
-        return {
-            "profileKey": profile_key,
-            "highlights": highlights,
-            "summaryLines": highlights[:4],
-            "visualHints": visual_hints or ["tree", "table"],
-        }
 
     @classmethod
     def _build_analyser_commentary(cls,

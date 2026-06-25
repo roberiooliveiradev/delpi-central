@@ -316,7 +316,10 @@
   },
   "commentaryProfiles": {
     "structure_exclusivity": {
+      "contentSection": "structureExclusivity",
+      "builderStrategy": "highlight_rules",
       "templateProseCommentary": "skip",
+      "questionSynthesisStrategy": "structure_exclusivity",
       "visualHints": ["tree", "table"],
       "highlightRules": [
         {
@@ -403,6 +406,52 @@
           }
         }
       ]
+    },
+    "factory_status": {
+      "contentSection": "factoryStatus",
+      "builderStrategy": "factory_status",
+      "templateProseCommentary": "full"
+    },
+    "stock": {
+      "contentSection": "stock",
+      "builderStrategy": "stock",
+      "templateProseCommentary": "full"
+    },
+    "production_status": {
+      "contentSection": "productionStatus",
+      "builderStrategy": "production_status",
+      "templateProseCommentary": "full",
+      "questionSynthesisStrategy": "production_status"
+    },
+    "shipping_status": {
+      "contentSection": "shippingStatus",
+      "builderStrategy": "shipping_status",
+      "templateProseCommentary": "full"
+    },
+    "directives": {
+      "contentSection": "directives",
+      "builderStrategy": "directives",
+      "templateProseCommentary": "full"
+    },
+    "sale_pricing": {
+      "contentSection": "salePricing",
+      "builderStrategy": "sale_pricing_insight",
+      "templateProseCommentary": "full"
+    },
+    "analyser": {
+      "contentSection": "analyser",
+      "builderStrategy": "analyser_divergence",
+      "templateProseCommentary": "full"
+    },
+    "generic_list": {
+      "contentSection": "genericList",
+      "builderStrategy": "none",
+      "templateProseCommentary": "full"
+    },
+    "generic_kpi_series": {
+      "contentSection": "genericKpiSeries",
+      "builderStrategy": "none",
+      "templateProseCommentary": "full"
     }
   }
 }

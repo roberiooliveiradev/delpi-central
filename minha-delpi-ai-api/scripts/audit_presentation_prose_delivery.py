@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 API_APP = ROOT / "app"
 MFE_SRC = ROOT.parent / "plugins" / "minha-delpi-chat" / "src"
 PROSE_DELIVERY_JSON = API_APP / "content/pt-BR/assistant/presentation_prose_delivery.json"
+HUMANIZED_JSON = API_APP / "content/pt-BR/assistant/humanized_data_response.json"
 PROFILES_JSON = API_APP / "content/pt-BR/assistant/presentation_profiles.json"
 
 CANONICAL_GATE = "ChatPresentationProseDeliveryService"
@@ -242,6 +243,104 @@ def audit_tier_and_entity_set_config() -> list[str]:
     return issues
 
 
+def audit_commentary_profiles_registry() -> list[str]:
+    """W1b — todo commentaryProfileKey operacional deve existir em humanized_data_response."""
+    issues: list[str] = []
+    humanized = _load_json(HUMANIZED_JSON)
+    profiles = _load_json(PROFILES_JSON)
+    commentary_profiles = humanized.get("commentaryProfiles")
+
+    if not isinstance(commentary_profiles, dict):
+        issues.append("humanized_data_response.json sem commentaryProfiles")
+        return issues
+
+    registered_strategies = frozenset(
+        {
+            "none",
+            "highlight_rules",
+            "factory_status",
+            "stock",
+            "production_status",
+            "shipping_status",
+            "directives",
+            "sale_pricing_insight",
+            "analyser_divergence",
+        }
+    )
+
+    for profile_key, config in commentary_profiles.items():
+        if not isinstance(config, dict):
+            issues.append(f"commentaryProfiles.{profile_key} deve ser objeto")
+            continue
+
+        strategy = str(config.get("builderStrategy") or "").strip()
+
+        if strategy and strategy not in registered_strategies:
+            issues.append(
+                f"commentaryProfiles.{profile_key}.builderStrategy inválido: {strategy}"
+            )
+
+        content_section = str(config.get("contentSection") or "").strip()
+
+        if strategy and strategy != "none" and not content_section:
+            issues.append(
+                f"commentaryProfiles.{profile_key} sem contentSection (builderStrategy={strategy})"
+            )
+
+    entity_profiles = profiles.get("entityProfiles")
+
+    if isinstance(entity_profiles, dict):
+        referenced: set[str] = set()
+
+        for profile in entity_profiles.values():
+            if not isinstance(profile, dict):
+                continue
+
+            key = str(profile.get("commentaryProfileKey") or "").strip()
+
+            if key:
+                referenced.add(key)
+
+        operational_keys = {
+            "factory_status",
+            "stock",
+            "production_status",
+            "shipping_status",
+            "directives",
+            "structure_exclusivity",
+            "sale_pricing",
+            "analyser",
+        }
+
+        for key in sorted(referenced & operational_keys):
+            if key not in commentary_profiles:
+                issues.append(
+                    f"commentaryProfileKey «{key}» em presentation_profiles sem entrada em commentaryProfiles"
+                )
+
+    exclusivity = commentary_profiles.get("structure_exclusivity")
+
+    if not isinstance(exclusivity, dict):
+        issues.append("commentaryProfiles.structure_exclusivity ausente (caso modelo W1)")
+    elif exclusivity.get("templateProseCommentary") != "skip":
+        issues.append(
+            "commentaryProfiles.structure_exclusivity.templateProseCommentary deve ser skip (W1b)"
+        )
+
+    orchestration_path = (
+        API_APP
+        / "domain/services/chat_operational_data_commentary/chat_operational_data_commentary_orchestration_service.py"
+    )
+    orchestration_body = _read(orchestration_path)
+
+    if 'builders = {' in orchestration_body:
+        issues.append(
+            "orchestration ainda usa mapa builders hardcoded por profile_key (usar registry JSON)"
+        )
+
+    return issues
+
+
 def build_prose_delivery_metrics_report() -> dict[str, object]:
     profiles = _load_json(PROFILES_JSON)
     prose = _load_json(PROSE_DELIVERY_JSON)
@@ -290,6 +389,7 @@ def main() -> int:
         *audit_direct_humanized_linhas_reads(),
         *audit_anti_patterns(),
         *audit_tier_and_entity_set_config(),
+        *audit_commentary_profiles_registry(),
     ]
 
     if not issues:

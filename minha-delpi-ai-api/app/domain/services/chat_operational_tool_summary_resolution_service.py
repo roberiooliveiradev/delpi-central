@@ -61,11 +61,11 @@ class ChatOperationalToolSummaryResolutionService:
 
         if isinstance(effective_humanized, dict):
             title = str(effective_humanized.get("titulo") or "").strip()
-            lines = [
-                str(line).strip()
-                for line in (effective_humanized.get("linhas") or [])
-                if str(line or "").strip()
-            ]
+            lines = list(
+                ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(
+                    tool_meta,
+                )
+            )
 
             for line in commentary_lines:
                 if line not in lines:

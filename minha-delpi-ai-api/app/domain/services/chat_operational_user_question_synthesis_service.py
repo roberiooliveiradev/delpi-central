@@ -11,6 +11,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_operational_question_synthesis_content_service import (
     ChatOperationalQuestionSynthesisContentService,
 )
+from app.domain.services.chat_operational_commentary_profile_service import (
+    ChatOperationalCommentaryProfileService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -132,17 +135,29 @@ class ChatOperationalUserQuestionSynthesisService:
         if membership:
             return membership
 
-        if profile_key == "structure_exclusivity" or (
-            entity == "product_structure_exclusivity"
-            or ChatProductQueryIntentService._looks_like_structure_exclusivity_question(
-                normalized
+        synthesis_strategy = ChatOperationalCommentaryProfileService.question_synthesis_strategy(
+            profile_key
+        )
+
+        if synthesis_strategy == "structure_exclusivity" or (
+            not synthesis_strategy
+            and (
+                entity == "product_structure_exclusivity"
+                or ChatProductQueryIntentService._looks_like_structure_exclusivity_question(
+                    normalized
+                )
             )
         ):
             return cls._synthesize_structure_exclusivity(data, user_message)
 
-        if profile_key == "production_status" or (
-            entity == "product_production_status"
-            or ChatProductQueryIntentService._looks_like_production_status_question(normalized)
+        if synthesis_strategy == "production_status" or (
+            not synthesis_strategy
+            and (
+                entity == "product_production_status"
+                or ChatProductQueryIntentService._looks_like_production_status_question(
+                    normalized
+                )
+            )
         ):
             return cls._synthesize_production_status(data, user_message, normalized)
 

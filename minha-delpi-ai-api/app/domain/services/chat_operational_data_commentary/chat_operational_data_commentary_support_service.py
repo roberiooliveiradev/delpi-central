@@ -24,7 +24,6 @@ from app.domain.services.external_actions.operational_route_narrative_service im
 from app.domain.services.chat_operational_data_commentary.chat_operational_data_commentary_constants import (
     CONTENT_SECTION as _CONTENT_SECTION,
     MP_LOW_COVERAGE_PA_THRESHOLD as _MP_LOW_COVERAGE_PA_THRESHOLD,
-    PROFILE_CONTENT_MAP as _PROFILE_CONTENT_MAP,
 )
 from app.domain.services.chat_operational_data_commentary.chat_operational_data_commentary_facade_access import (
     commentary_service,
@@ -88,7 +87,7 @@ class ChatOperationalDataCommentarySupportService:
 
     @classmethod
     def _content_profile(cls, profile_key: str) -> str:
-        return _PROFILE_CONTENT_MAP.get(str(profile_key or "").strip(), profile_key)
+        return ChatOperationalCommentaryProfileService.content_section(profile_key)
 
     @classmethod
     def _text(cls, profile: str, key: str, **values: str) -> str:

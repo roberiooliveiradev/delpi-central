@@ -14,6 +14,15 @@ _TEMPLATE_PROSE_FULL = "full"
 
 class ChatOperationalCommentaryProfileService:
     @classmethod
+    def registered_profile_keys(cls) -> frozenset[str]:
+        node = ChatHumanizedDataResponseContentService.get_node("commentaryProfiles")
+
+        if not isinstance(node, dict):
+            return frozenset()
+
+        return frozenset(str(key).strip() for key in node if str(key).strip())
+
+    @classmethod
     def profile_config(cls, profile_key: str) -> dict[str, Any]:
         node = ChatHumanizedDataResponseContentService.get_node(
             "commentaryProfiles",
@@ -21,6 +30,48 @@ class ChatOperationalCommentaryProfileService:
         )
 
         return node if isinstance(node, dict) else {}
+
+    @classmethod
+    def content_section(cls, profile_key: str) -> str:
+        section = str(cls.profile_config(profile_key).get("contentSection") or "").strip()
+
+        if section:
+            return section
+
+        return str(profile_key or "").strip()
+
+    @classmethod
+    def builder_strategy(cls, profile_key: str) -> str:
+        strategy = str(cls.profile_config(profile_key).get("builderStrategy") or "").strip()
+
+        return strategy or "none"
+
+    @classmethod
+    def question_synthesis_strategy(cls, profile_key: str) -> str:
+        return str(
+            cls.profile_config(profile_key).get("questionSynthesisStrategy") or ""
+        ).strip()
+
+    @classmethod
+    def build_from_highlight_rules(
+        cls,
+        profile_key: str,
+        data: dict[str, Any],
+        *,
+        format_line: Callable[[str, str, dict[str, str]], str],
+    ) -> dict[str, Any] | None:
+        highlights = cls.build_highlight_rules(profile_key, data, format_line=format_line)
+        visual_hints = cls.visual_hints(profile_key)
+
+        if not highlights and not visual_hints:
+            return None
+
+        return {
+            "profileKey": profile_key,
+            "highlights": highlights,
+            "summaryLines": highlights[:4],
+            "visualHints": visual_hints or None,
+        }
 
     @classmethod
     def template_prose_commentary_mode(cls, profile_key: str) -> str:

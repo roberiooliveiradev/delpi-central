@@ -30,6 +30,16 @@ _INTENT_CONTENT_BUNDLE = "product_query_intent"
 
 
 class ChatProductQueryIntentDirectAnswerService:
+    @staticmethod
+    def _humanized_lines(humanized: dict) -> list[str]:
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        return ChatPresentationProseDeliveryService.resolve_humanized_lines_for_facts(
+            {"humanizedSummary": humanized},
+        )
+
     @classmethod
     def format_direct_answer(cls,
         humanized: dict,
@@ -72,11 +82,7 @@ class ChatProductQueryIntentDirectAnswerService:
                 if formatted:
                     return formatted
 
-        lines = [
-            str(line).strip()
-            for line in (humanized.get("linhas") or [])
-            if str(line).strip()
-        ]
+        lines = ChatProductQueryIntentDirectAnswerService._humanized_lines(humanized)
 
         if not lines:
             return None
@@ -115,7 +121,7 @@ class ChatProductQueryIntentDirectAnswerService:
     ) -> str | None:
         lines = [
             str(line).strip()
-            for line in (humanized.get("linhas") or [])
+            for line in ChatProductQueryIntentDirectAnswerService._humanized_lines(humanized)
             if str(line).strip() and not VOCAB.ZERO_RECORDS_RE.search(str(line).strip())
         ]
 
