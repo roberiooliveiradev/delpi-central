@@ -1,6 +1,6 @@
-import { PLAN_SEVERITIES, PLAN_STATUSES, PAC_NONCONFORMITY_SCOPES, statusLabel, severityLabel } from "../constants/actionPlans";
+import { PLAN_SEVERITIES, PLAN_STATUSES, PAC_NONCONFORMITY_SCOPES, actionTypeLabel, statusLabel, severityLabel } from "../constants/actionPlans";
 import { CHART_COLORS } from "../constants/chartColors";
-import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
+import type { ActionPlanSummary, DashboardBreakdownItem, DashboardSummary } from "../types/actionPlan";
 
 export function buildOverviewChartData(summary: DashboardSummary) {
   return [
@@ -70,4 +70,29 @@ export function buildScopeChartData(summary: DashboardSummary) {
     { name: "Interna", value: summary.open_internal ?? 0, fill: CHART_COLORS[1] },
     { name: "Externa", value: summary.open_external ?? 0, fill: CHART_COLORS[0] },
   ].filter((entry) => entry.value > 0);
+}
+
+function truncateLabel(label: string, max = 28): string {
+  const trimmed = label.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max - 1)}…`;
+}
+
+export function buildBreakdownChartData(
+  items: DashboardBreakdownItem[],
+  labelFormatter?: (label: string) => string,
+) {
+  return items.map((entry, index) => {
+    const fullLabel = labelFormatter ? labelFormatter(entry.label) : entry.label;
+    return {
+      name: truncateLabel(fullLabel),
+      fullName: fullLabel,
+      value: entry.total,
+      fill: CHART_COLORS[index % CHART_COLORS.length],
+    };
+  });
+}
+
+export function buildActionTypeBreakdownData(items: DashboardBreakdownItem[]) {
+  return buildBreakdownChartData(items, actionTypeLabel);
 }

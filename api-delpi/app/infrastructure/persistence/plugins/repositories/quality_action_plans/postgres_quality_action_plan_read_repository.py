@@ -270,6 +270,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 nonconformity_scope=nonconformity_scope,
                 months=months,
             )
+            result["breakdowns"] = self._fetch_breakdowns(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+                months=months,
+            )
             return result
 
         by_branch_rows = self.fetch_all(
@@ -324,6 +329,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             if row.get("nonconformity_scope")
         ]
         result["timing"] = self._fetch_timing_kpis(
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            months=months,
+        )
+        result["breakdowns"] = self._fetch_breakdowns(
             branch_code=branch_code,
             nonconformity_scope=nonconformity_scope,
             months=months,
@@ -400,6 +410,96 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "effectiveness_sample_size": int(
                 (row or {}).get("effectiveness_sample_size") or 0
             ),
+        }
+
+    def _fetch_breakdowns(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        months: int = 12,
+        limit: int = 8,
+    ) -> dict[str, Any]:
+        plan_filters = ["p.deleted_at IS NULL", "p.created_at >= NOW() - make_interval(months => %s)"]
+        plan_params: list[Any] = [months]
+        if branch_code:
+            plan_filters.append("p.branch_code = %s")
+            plan_params.append(branch_code)
+        if nonconformity_scope:
+            plan_filters.append("p.nonconformity_scope = %s")
+            plan_params.append(nonconformity_scope)
+        plan_where = " AND ".join(plan_filters)
+
+        root_cause_rows = self.fetch_all(
+            f"""
+            SELECT
+                COALESCE(
+                    NULLIF(trim(p.root_cause_category), ''),
+                    NULLIF(trim(fw.root_cause), ''),
+                    'Não informada'
+                ) AS label,
+                COUNT(*)::int AS total
+              FROM quality.quality_action_plans p
+              LEFT JOIN quality.quality_five_whys fw ON fw.plan_id = p.id
+             WHERE {plan_where}
+             GROUP BY 1
+             ORDER BY total DESC, label ASC
+             LIMIT %s
+            """,
+            tuple([*plan_params, limit]),
+        )
+
+        failure_mode_rows = self.fetch_all(
+            f"""
+            SELECT
+                COALESCE(NULLIF(trim(p.failure_mode), ''), 'Não informado') AS label,
+                COUNT(*)::int AS total
+              FROM quality.quality_action_plans p
+             WHERE {plan_where}
+             GROUP BY 1
+             ORDER BY total DESC, label ASC
+             LIMIT %s
+            """,
+            tuple([*plan_params, limit]),
+        )
+
+        action_filters = [
+            "p.deleted_at IS NULL",
+            "a.created_at >= NOW() - make_interval(months => %s)",
+        ]
+        action_params: list[Any] = [months]
+        if branch_code:
+            action_filters.append("p.branch_code = %s")
+            action_params.append(branch_code)
+        if nonconformity_scope:
+            action_filters.append("p.nonconformity_scope = %s")
+            action_params.append(nonconformity_scope)
+        action_where = " AND ".join(action_filters)
+
+        action_type_rows = self.fetch_all(
+            f"""
+            SELECT a.action_type AS label, COUNT(*)::int AS total
+              FROM quality.quality_actions a
+              JOIN quality.quality_action_plans p ON p.id = a.plan_id
+             WHERE {action_where}
+             GROUP BY a.action_type
+             ORDER BY total DESC, label ASC
+             LIMIT %s
+            """,
+            tuple([*action_params, limit]),
+        )
+
+        return {
+            "window_months": months,
+            "by_root_cause": [
+                {"label": row["label"], "total": int(row["total"])} for row in root_cause_rows
+            ],
+            "by_failure_mode": [
+                {"label": row["label"], "total": int(row["total"])} for row in failure_mode_rows
+            ],
+            "by_action_type": [
+                {"label": row["label"], "total": int(row["total"])} for row in action_type_rows
+            ],
         }
 
     def list_overdue_plans(

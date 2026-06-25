@@ -60,6 +60,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 **`data.timing`:** `window_months`, `avg_closure_days` (dias, `created_at`/`detected_at` → `closed_at`), `closure_sample_size`, `avg_time_to_effectiveness_days`, `effectiveness_sample_size`
 
+**`data.breakdowns`:** `window_months`, `by_root_cause[]`, `by_failure_mode[]`, `by_action_type[]` — cada item `{ label, total }` (top 8 no período)
+
 ### GET `/quality/action-plans` e `/overdue`
 
 **Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`

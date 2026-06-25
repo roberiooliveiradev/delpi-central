@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
+import { DashboardBreakdownCharts } from "../components/dashboard/DashboardBreakdownCharts";
 import { DashboardCharts } from "../components/dashboard/DashboardCharts";
 import { DashboardKpis } from "../components/dashboard/DashboardKpis";
 import { DashboardTimingKpis } from "../components/dashboard/DashboardTimingKpis";
@@ -106,6 +107,7 @@ export function DashboardPage({ onNavigate }: Props) {
         <>
           <DashboardKpis summary={summary} loading={loading} />
           <DashboardTimingKpis timing={summary.timing} loading={loading} />
+          <DashboardBreakdownCharts breakdowns={summary.breakdowns} />
           <DashboardCharts summary={summary} plans={plans} />
         </>
       ) : null}

@@ -40,6 +40,12 @@ def test_dashboard_route_returns_operation_id(mock_build) -> None:
             "avg_time_to_effectiveness_days": 15.0,
             "effectiveness_sample_size": 2,
         },
+        "breakdowns": {
+            "window_months": 12,
+            "by_root_cause": [{"label": "Método", "total": 2}],
+            "by_failure_mode": [{"label": "trinca", "total": 1}],
+            "by_action_type": [{"label": "corrective", "total": 4}],
+        },
     }
     mock_build.return_value = mock_repo
 

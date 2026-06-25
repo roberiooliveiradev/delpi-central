@@ -27,12 +27,14 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
       },
     ]
   )
+  repo.fetch_all = MagicMock(return_value=[])
 
   result = repo.get_dashboard_summary(branch_code="01")
 
   assert result["branch_code"] == "01"
   assert result["open_plans"] == 1
   assert "timing" in result
+  assert "breakdowns" in result
   main_query = repo.fetch_one.call_args_list[0][0][0]
   assert main_query.count("%s") == 1
   assert repo.fetch_one.call_args_list[0][0][1] == ("01",)
@@ -56,3 +58,21 @@ def test_dashboard_timing_kpis_rounds_days():
     assert timing["closure_sample_size"] == 5
     assert timing["avg_time_to_effectiveness_days"] == 21.2
     assert timing["effectiveness_sample_size"] == 4
+
+
+def test_dashboard_breakdowns_maps_rows():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        side_effect=[
+            [{"label": "Método", "total": 3}],
+            [{"label": "oxidacao", "total": 2}],
+            [{"label": "corrective", "total": 5}],
+        ]
+    )
+
+    breakdowns = repo._fetch_breakdowns(months=6, limit=8)
+
+    assert breakdowns["window_months"] == 6
+    assert breakdowns["by_root_cause"][0]["label"] == "Método"
+    assert breakdowns["by_failure_mode"][0]["total"] == 2
+    assert breakdowns["by_action_type"][0]["label"] == "corrective"

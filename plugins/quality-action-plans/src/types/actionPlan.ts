@@ -64,6 +64,7 @@ export type DashboardSummary = {
     critical_open: number;
   }>;
   timing?: DashboardTiming;
+  breakdowns?: DashboardBreakdowns;
 };
 
 export type DashboardTiming = {
@@ -72,6 +73,18 @@ export type DashboardTiming = {
   closure_sample_size: number;
   avg_time_to_effectiveness_days: number | null;
   effectiveness_sample_size: number;
+};
+
+export type DashboardBreakdownItem = {
+  label: string;
+  total: number;
+};
+
+export type DashboardBreakdowns = {
+  window_months: number;
+  by_root_cause: DashboardBreakdownItem[];
+  by_failure_mode: DashboardBreakdownItem[];
+  by_action_type: DashboardBreakdownItem[];
 };
 
 export type IshikawaAnalysis = {
