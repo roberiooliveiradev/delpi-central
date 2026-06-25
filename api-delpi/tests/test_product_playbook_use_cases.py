@@ -109,6 +109,9 @@ def test_production_status_use_case_uses_reference_date() -> None:
 
 
 def test_factory_status_use_case_aggregates_sections() -> None:
+    from app.composition.query_cache_composer import reset_query_cache_for_tests
+
+    reset_query_cache_for_tests()
     repository = MagicMock()
     repository.fetch_product_header.return_value = {"product_code": "90261255"}
     repository.fetch_structure_with_exclusivity.return_value = [{"component_type": "MP"}]
@@ -138,6 +141,11 @@ def test_factory_status_use_case_aggregates_sections() -> None:
     assert "production" in result
     assert "shipping" in result
     assert result["indicators"]["total_raw_materials_without_stock_for_one_pa"] == 1
+    repository.fetch_product_header.assert_called_once()
+    repository.fetch_product_header.reset_mock()
+    cached = use_case.execute(ProductPlaybookRequest(code="90261255"))
+    assert cached["factory_status"] == result["factory_status"]
+    repository.fetch_product_header.assert_not_called()
 
 
 def test_resolve_protheus_date_rejects_invalid_value() -> None:

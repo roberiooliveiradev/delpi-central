@@ -1,4 +1,9 @@
 from app.application.dto.product.product_playbook_request import ProductPlaybookRequest
+from app.application.services.product.product_factory_status_cache import (
+    get_cached_product_factory_status,
+    product_factory_status_cache_key,
+    set_cached_product_factory_status,
+)
 from app.application.services.product.product_playbook_service import (
     apply_pa_bom_reference_to_production_items,
     apply_pa_bom_reference_to_stock_items,
@@ -23,6 +28,11 @@ class GetProductFactoryStatusUseCase:
 
     def execute(self, request: ProductPlaybookRequest) -> dict:
         max_depth = request.max_depth or self.DEFAULT_MAX_DEPTH
+        cache_key = product_factory_status_cache_key(request, max_depth=max_depth)
+        cached = get_cached_product_factory_status(cache_key)
+        if cached is not None:
+            return cached
+
         reference_date = resolve_protheus_date(request.reference_date)
         date_start = resolve_protheus_date(request.date_start or reference_date)
         date_end_exclusive = resolve_exclusive_end_date(request.date_end, date_start)
@@ -71,7 +81,7 @@ class GetProductFactoryStatusUseCase:
             shipping_items=shipping_items,
         )
 
-        return attach_pa_reference(
+        result = attach_pa_reference(
             {
             "product": header,
             "reference_date": reference_date,
@@ -115,3 +125,5 @@ class GetProductFactoryStatusUseCase:
         },
             header,
         )
+        set_cached_product_factory_status(cache_key, result)
+        return result

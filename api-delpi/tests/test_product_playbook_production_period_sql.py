@@ -31,3 +31,29 @@ def test_repository_wires_period_filter_and_date_params() -> None:
     assert "DECLARE @DATA_FIM VARCHAR(8)" in source
     assert "date_start" in source
     assert "date_end_exclusive" in source
+
+
+def test_structure_exclusivity_uses_reverse_bom_for_mp_usage() -> None:
+    source = inspect.getsource(product_playbook_repository.ProductPlaybookRepository)
+
+    assert "MP_ANCESTORS AS" in source
+    assert "TODAS_ESTRUTURAS_VALIDAS" not in source
+
+
+def test_production_status_scopes_apontamentos_to_bom_scope() -> None:
+    source = inspect.getsource(
+        product_playbook_repository.ProductPlaybookRepository.fetch_production_status
+    )
+
+    assert "FROM ESCOPO_PRODUCAO" in source
+    assert "EP.product_code = H6.H6_PRODUTO" in source
+    assert "FROM SH6010 WITH (NOLOCK)\n            WHERE D_E_L_E_T_" not in source
+
+
+def test_raw_material_stock_scopes_sb2_to_bom_mps() -> None:
+    source = inspect.getsource(
+        product_playbook_repository.ProductPlaybookRepository.fetch_raw_material_stock
+    )
+
+    assert "INNER JOIN MPS MP" in source
+    assert "ON MP.raw_material_code = B2.B2_COD" in source

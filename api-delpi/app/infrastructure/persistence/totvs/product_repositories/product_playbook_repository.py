@@ -93,48 +93,44 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
             WHERE SB1.B1_TIPO = 'MP'
         ),
 
-        TODAS_ESTRUTURAS_VALIDAS AS (
+        MP_ANCESTORS AS (
             SELECT
-                PA.B1_COD  AS finished_product_code,
-                PA.B1_DESC AS finished_product_description,
-                G1.G1_COD  AS parent_code,
-                G1.G1_COMP AS component_code,
-                1          AS level
-            FROM SG1010 G1 WITH (NOLOCK)
-            INNER JOIN SB1010 PA WITH (NOLOCK)
-                ON PA.B1_COD = G1.G1_COD
-               AND PA.D_E_L_E_T_ = ''
-               AND PA.B1_TIPO = 'PA'
-               AND PA.B1_COD NOT LIKE '8000%'
-               AND PA.B1_COD NOT LIKE '8001%'
-            WHERE G1.D_E_L_E_T_ = ''
+                MP.raw_material_code,
+                G1.G1_COD AS ancestor_code,
+                1 AS level
+            FROM MATERIAS_PRIMAS_DO_PRODUTO MP
+            INNER JOIN SG1010 G1 WITH (NOLOCK)
+                ON G1.G1_COMP = MP.raw_material_code
+               AND G1.D_E_L_E_T_ = ''
               {bom_validity}
 
             UNION ALL
 
             SELECT
-                TE.finished_product_code,
-                TE.finished_product_description,
+                MA.raw_material_code,
                 G1.G1_COD,
-                G1.G1_COMP,
-                TE.level + 1
-            FROM TODAS_ESTRUTURAS_VALIDAS TE
-            INNER JOIN SG1010 G1 WITH (NOLOCK)
-                ON G1.G1_COD = TE.component_code
-               AND G1.D_E_L_E_T_ = ''
+                MA.level + 1
+            FROM SG1010 G1 WITH (NOLOCK)
+            INNER JOIN MP_ANCESTORS MA
+                ON G1.G1_COMP = MA.ancestor_code
+            WHERE G1.D_E_L_E_T_ = ''
+              AND MA.level < @MAX_DEPTH
               {bom_validity}
-            WHERE TE.level < @MAX_DEPTH
         ),
 
         USO_MP_EM_PA AS (
             SELECT
-                TE.component_code AS raw_material_code,
-                COUNT(DISTINCT TE.finished_product_code) AS total_valid_finished_products,
-                MIN(TE.finished_product_code) AS exclusive_finished_product
-            FROM TODAS_ESTRUTURAS_VALIDAS TE
-            INNER JOIN MATERIAS_PRIMAS_DO_PRODUTO MP
-                ON MP.raw_material_code = TE.component_code
-            GROUP BY TE.component_code
+                MA.raw_material_code,
+                COUNT(DISTINCT PA.B1_COD) AS total_valid_finished_products,
+                MIN(PA.B1_COD) AS exclusive_finished_product
+            FROM MP_ANCESTORS MA
+            INNER JOIN SB1010 PA WITH (NOLOCK)
+                ON PA.B1_COD = MA.ancestor_code
+               AND PA.D_E_L_E_T_ = ''
+               AND PA.B1_TIPO = 'PA'
+               AND PA.B1_COD NOT LIKE '8000%'
+               AND PA.B1_COD NOT LIKE '8001%'
+            GROUP BY MA.raw_material_code
         )
 
         SELECT
@@ -235,6 +231,8 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
                 SUM(CAST(B2.B2_RESERVA AS FLOAT)) AS reserved_quantity,
                 SUM(CAST(B2.B2_QATU - B2.B2_QEMP - B2.B2_RESERVA AS FLOAT)) AS available_quantity
             FROM SB2010 B2 WITH (NOLOCK)
+            INNER JOIN MPS MP
+                ON MP.raw_material_code = B2.B2_COD
             WHERE B2.D_E_L_E_T_ = ''
             GROUP BY B2.B2_COD, B2.B2_FILIAL, B2.B2_LOCAL
         )
@@ -385,19 +383,24 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
 
         APONTAMENTOS AS (
             SELECT
-                H6_FILIAL AS branch,
-                H6_OP AS production_order,
-                H6_PRODUTO AS product_code,
-                SUM(CAST(H6_QTDPROD AS FLOAT)) AS reported_quantity,
-                SUM(CAST(H6_QTDPERD AS FLOAT)) AS lost_quantity,
-                MIN(H6_DATAINI) AS first_start_date,
-                MIN(H6_HORAINI) AS first_start_time,
-                MAX(H6_DTAPONT) AS last_report_date,
+                H6.H6_FILIAL AS branch,
+                H6.H6_OP AS production_order,
+                H6.H6_PRODUTO AS product_code,
+                SUM(CAST(H6.H6_QTDPROD AS FLOAT)) AS reported_quantity,
+                SUM(CAST(H6.H6_QTDPERD AS FLOAT)) AS lost_quantity,
+                MIN(H6.H6_DATAINI) AS first_start_date,
+                MIN(H6.H6_HORAINI) AS first_start_time,
+                MAX(H6.H6_DTAPONT) AS last_report_date,
                 COUNT(*) AS total_reports
-            FROM SH6010 WITH (NOLOCK)
-            WHERE D_E_L_E_T_ = ''
-              AND H6_DTAPONT <= @DATA_REF
-            GROUP BY H6_FILIAL, H6_OP, H6_PRODUTO
+            FROM SH6010 H6 WITH (NOLOCK)
+            INNER JOIN (
+                SELECT DISTINCT product_code
+                FROM ESCOPO_PRODUCAO
+            ) EP
+                ON EP.product_code = H6.H6_PRODUTO
+            WHERE H6.D_E_L_E_T_ = ''
+              AND H6.H6_DTAPONT <= @DATA_REF
+            GROUP BY H6.H6_FILIAL, H6.H6_OP, H6.H6_PRODUTO
         )
 
         SELECT
