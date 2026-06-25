@@ -1993,7 +1993,17 @@
     "quality_action_plan_five_whys": "/quality/action-plans/0/five-whys",
     "quality_action_plan_action": "/quality/action-plans/0/actions",
     "quality_action_plan_evidence": "/quality/action-plans/0/evidences",
-    "quality_action_plan_export": "/quality/action-plans/0/export/rnc-8d"
+    "quality_action_plan_export": "/quality/action-plans/0/export/rnc-8d",
+    "inspecoes_entrada_resumo": "/inspecoes-entrada/resumo",
+    "inspecoes_entrada_pendentes": "/inspecoes-entrada/pendentes",
+    "inspecoes_entrada_pendentes_fornecedor": "/inspecoes-entrada/pendentes-fornecedor",
+    "inspecoes_entrada_rejeitadas_ensaiador": "/inspecoes-entrada/rejeitadas-ensaiador",
+    "inspecoes_entrada_rejeitadas_produto": "/inspecoes-entrada/rejeitadas-produto",
+    "inspecoes_entrada_historico": "/inspecoes-entrada/historico",
+    "inspecoes_entrada_historico_detalhe": "/inspecoes-entrada/historico/detalhe",
+    "product_drawing_catalog": "/products/drawings",
+    "product_drawing": "/products/0/drawing",
+    "product_drawing_pdf": "/products/0/drawing/pdf"
   },
   "entityPathHintAliases": {
     "commercial_rol_target": [
