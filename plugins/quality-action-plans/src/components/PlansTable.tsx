@@ -3,6 +3,7 @@ import { Eye } from "lucide-react";
 import { branchLabel, detailPath } from "../constants/actionPlans";
 import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
+import { PlanSlaBadge } from "./PlanSlaBadge";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "./StatusBadge";
 
 type Props = {
@@ -34,13 +35,17 @@ export function PlansTable({ items, loading, emptyMessage, onNavigate }: Props) 
             <th>Produto</th>
             <th>Severidade</th>
             <th>Status</th>
+            <th>SLA</th>
             <th>Atualizado</th>
             <th aria-label="Ações" />
           </tr>
         </thead>
         <tbody>
           {items.map((plan) => (
-            <tr key={plan.id}>
+            <tr
+              key={plan.id}
+              className={plan.sla_level === "breached" ? "pac-table__row--sla-breached" : undefined}
+            >
               <td>{plan.code ?? "—"}</td>
               <td>{plan.title}</td>
               <td>{plan.customer_name ?? "—"}</td>
@@ -54,6 +59,9 @@ export function PlansTable({ items, loading, emptyMessage, onNavigate }: Props) 
               </td>
               <td>
                 <StatusBadge status={plan.status} />
+              </td>
+              <td>
+                <PlanSlaBadge plan={plan} />
               </td>
               <td>{formatDateTime(plan.updated_at)}</td>
               <td>

@@ -55,6 +55,10 @@ export function MyQueueTable({ items, loading, emptyMessage, onNavigate }: Props
               <td>
                 {item.is_overdue ? (
                   <span className="pac-badge pac-badge--warning pac-table__overdue-badge">Atrasada</span>
+                ) : item.is_due_soon ? (
+                  <span className="pac-badge pac-badge--sla pac-badge--sla-due-soon pac-table__overdue-badge">
+                    Vence em {item.days_until_due ?? 0}d
+                  </span>
                 ) : null}
                 <span>{formatDate(item.due_date)}</span>
               </td>

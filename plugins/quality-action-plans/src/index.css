@@ -486,6 +486,25 @@
   color: var(--pac-success);
 }
 
+.dashboard-quality-action-plans .pac-badge--sla-warning {
+  background: color-mix(in srgb, var(--pac-warning) 14%, transparent);
+  color: var(--pac-warning);
+}
+
+.dashboard-quality-action-plans .pac-badge--sla-breached {
+  background: color-mix(in srgb, var(--pac-danger) 14%, transparent);
+  color: var(--pac-danger);
+}
+
+.dashboard-quality-action-plans .pac-badge--sla-due-soon {
+  background: color-mix(in srgb, var(--pac-accent) 14%, transparent);
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-table__row--sla-breached {
+  background: color-mix(in srgb, var(--pac-danger) 4%, transparent);
+}
+
 .dashboard-quality-action-plans .pac-state {
   margin-bottom: var(--pac-section-gap);
   padding: 12px 14px;

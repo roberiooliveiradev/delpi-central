@@ -14,8 +14,14 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
 )
 
+from app.domain.services.quality_action_plans.quality_action_plan_sla_service import (
+    CRITICAL_STALL_DAYS,
+    resolve_action_due_sla,
+)
+
+
 _TERMINAL_PLAN_STATUSES = frozenset({"completed", "cancelled"})
-_STALL_DAYS_CRITICAL = 7
+_STALL_DAYS_CRITICAL = CRITICAL_STALL_DAYS
 
 
 class PostgresQualityActionPlanRepository(PluginBaseRepository):
@@ -1065,6 +1071,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         items: list[dict[str, Any]] = []
         for row in rows:
             due_date = row.get("due_date")
+            due_date_value = (
+                due_date.isoformat() if hasattr(due_date, "isoformat") else due_date
+            )
+            is_overdue = bool(row.get("is_overdue"))
+            due_sla = resolve_action_due_sla(due_date=due_date, is_overdue=is_overdue)
             items.append(
                 {
                     "action_id": str(row["action_id"]),
@@ -1074,9 +1085,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     "responsible_user_id": row.get("responsible_user_id"),
                     "responsible_name": row.get("responsible_name"),
                     "department": row.get("department"),
-                    "due_date": due_date.isoformat() if hasattr(due_date, "isoformat") else due_date,
+                    "due_date": due_date_value,
                     "action_status": row.get("action_status"),
-                    "is_overdue": bool(row.get("is_overdue")),
+                    "is_overdue": is_overdue,
+                    "is_due_soon": due_sla["due_sla_level"] == "due_soon",
+                    "days_until_due": due_sla["days_until_due"],
+                    "due_sla_level": due_sla["due_sla_level"],
                     "plan_code": row.get("plan_code"),
                     "plan_title": row.get("plan_title"),
                     "plan_status": row.get("plan_status"),

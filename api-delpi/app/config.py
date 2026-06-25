@@ -206,7 +206,7 @@ class Settings:
         _get_env("PAC_QUALITY_ACTION_DUE_DAYS_AHEAD", default="2") or "2"
     )
     PAC_QUALITY_STALL_DAYS: int = int(
-        _get_env("PAC_QUALITY_STALL_DAYS", default="7") or "7"
+        _get_env("PAC_QUALITY_STALL_DAYS", default="5") or "5"
     )
     PAC_QUALITY_COORDINATOR_USER_IDS: str | None = _get_env("PAC_QUALITY_COORDINATOR_USER_IDS")
 

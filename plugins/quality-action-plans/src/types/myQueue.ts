@@ -14,6 +14,9 @@ export type MyQueueItem = {
   due_date?: string | null;
   action_status: string;
   is_overdue: boolean;
+  is_due_soon?: boolean;
+  days_until_due?: number | null;
+  due_sla_level?: "ok" | "due_soon" | "overdue";
   plan_code?: string | null;
   plan_title?: string | null;
   plan_status: string;

@@ -3,6 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from app.domain.services.quality_action_plans.quality_action_plan_sla_service import (
+    enrich_plan_row_sla,
+)
+
 PLAN_SELECT = """
     SELECT p.id,
            p.code,
@@ -68,4 +72,4 @@ def serialize_plan_row(row: dict[str, Any]) -> dict[str, Any]:
         result["symptom_tags"] = []
     if result.get("template_payload") is None:
         result["template_payload"] = {}
-    return result
+    return enrich_plan_row_sla(result)

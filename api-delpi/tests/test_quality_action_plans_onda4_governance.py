@@ -166,5 +166,5 @@ def test_stalled_alert_maps_rows():
 
     assert alert["stalled_plans"] == 2
     assert alert["top_plans"][0]["code"] == "PAC-2026-0001"
-    assert repo.fetch_one.call_args[0][1] == (7, "01")
-    assert repo.fetch_all.call_args[0][1] == (7, "01", 8)
+    assert repo.fetch_one.call_args[0][1] == (5, "01")
+    assert repo.fetch_all.call_args[0][1] == (5, "01", 8)

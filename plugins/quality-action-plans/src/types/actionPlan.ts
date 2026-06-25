@@ -28,6 +28,10 @@ export type ActionPlanSummary = {
   owner_user_id?: string | null;
   created_at?: string;
   updated_at?: string;
+  sla_level?: "ok" | "warning" | "breached";
+  days_without_update?: number;
+  sla_warning_days?: number;
+  sla_breach_days?: number;
 };
 
 export type Pagination = {
