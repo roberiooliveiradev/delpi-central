@@ -7,7 +7,7 @@
 
 ## Pré-requisitos
 
-- [ ] Migration V006 aplicada (`quality-action-plans`)
+- [ ] Migration V006 **e V007** aplicadas (`quality-action-plans`)
 - [ ] Template `rnc_8d_template.xlsx` no servidor (`PAC_EVIDENCE_UPLOAD_DIR` / pasta de templates)
 - [ ] Plugin publicado (`remoteEntry.js` 200)
 - [ ] JWT com `quality-action-plans.read` + `.write`
@@ -15,7 +15,10 @@
 
 ```bash
 docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin quality-action-plans
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin quality-action-plans  # V007 = APLICADA
+bash api-delpi/scripts/deploy_rnc_8d_template.sh
 cd plugins/quality-action-plans && npm run build
+bash scripts/homologacao/check-quality-action-plans.sh
 ```
 
 ---
@@ -33,8 +36,8 @@ cd plugins/quality-action-plans && npm run build
 | 5 | Ishikawa com ≥ 2 hipóteses por eixo relevante | GET detalhe ok |
 | 6 | 5 Porquês ocorrência + detecção | Ambas trilhas salvas |
 | 7 | Criar ações: contenção, corretiva, preventiva, verificação | `cause_track` quando aplicável |
-| 8 | Anexar ≥ 2 evidências (PDF + imagem) | Listagem + download ok |
-| 9 | Exportar planilha 8D | Arquivo `.xlsx` abre sem erro |
+| 8 | Anexar ≥ 2 evidências (PDF + imagem); vincular imagem a uma ação (`action_id`) | Listagem + download + coluna ação ok |
+| 9 | Exportar planilha 8D | Arquivo `.xlsx` abre; aba `Anexos(Evidencias)` contém a foto |
 | 10 | Avançar status até `waiting_validation` | Pipeline correto |
 
 ### H2 — Agente GPT (mesmo caso, fluxo paralelo)
