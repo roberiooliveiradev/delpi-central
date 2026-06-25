@@ -216,6 +216,15 @@ export type ActionPlanDetail = {
     failure_mode?: string | null;
     root_cause_category?: string | null;
     effectiveness_status?: string | null;
+    effectiveness_verified_at?: string | null;
+    effectiveness_notes?: string | null;
+    effectiveness_approval_status?: "pending_review" | "approved" | "rejected" | null;
+    effectiveness_proposed_status?: string | null;
+    effectiveness_submitted_at?: string | null;
+    effectiveness_submitted_by?: string | null;
+    effectiveness_reviewed_at?: string | null;
+    effectiveness_reviewed_by?: string | null;
+    effectiveness_rejection_reason?: string | null;
     symptom_tags?: string[];
     customer_template?: string;
     client_nc_registry?: string | null;

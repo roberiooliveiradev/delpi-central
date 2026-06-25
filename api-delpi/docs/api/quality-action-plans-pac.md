@@ -92,7 +92,11 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | PUT | `/quality/action-plans/{plan_id}/five-whys` | `upsert_quality_action_plan_five_whys` | 5 Porquês duplo (upsert) |
 | POST | `/quality/action-plans/{plan_id}/actions` | `create_quality_action_plan_actions` | Criar ações |
 | PATCH | `/quality/action-plans/{plan_id}/actions/{action_id}` | `update_quality_action_plan_action` | Atualizar ação |
-| POST | `/quality/action-plans/{plan_id}/effectiveness-review` | `record_quality_action_plan_effectiveness` | Registrar eficácia |
+| POST | `/quality/action-plans/{plan_id}/effectiveness-review` | `record_quality_action_plan_effectiveness` | Registrar eficácia (coordenador — direto) |
+| POST | `/quality/action-plans/{plan_id}/effectiveness-review/submit` | `submit_quality_action_plan_effectiveness_review` | Submeter eficácia para aprovação (analista) |
+| POST | `/quality/action-plans/{plan_id}/effectiveness-review/approve` | `approve_quality_action_plan_effectiveness_review` | Aprovar submissão de eficácia |
+| POST | `/quality/action-plans/{plan_id}/effectiveness-review/reject` | `reject_quality_action_plan_effectiveness_review` | Rejeitar submissão de eficácia |
+| GET | `/quality/action-plans/effectiveness-review/pending` | `list_quality_action_plan_pending_effectiveness_reviews` | Fila de eficácia pendente |
 | PUT | `/quality/action-plans/{plan_id}/rnc-8d` | `upsert_quality_action_plan_rnc_8d` | Salvar relatório 8D |
 | GET | `/quality/action-plans/{plan_id}/export/rnc-8d` | `export_quality_action_plan_rnc_8d` | Exportar planilha Excel |
 | GET | `/quality/action-plans/{plan_id}/export/pdf` | `export_quality_action_plan_pdf` | Exportar resumo do plano em PDF |

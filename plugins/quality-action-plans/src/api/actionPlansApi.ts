@@ -323,6 +323,50 @@ export async function recordEffectivenessReview(
   return unwrapApiDelpiEnvelope(envelope, "Erro ao registrar eficácia.");
 }
 
+export async function submitEffectivenessReview(
+  planId: string,
+  effectivenessStatus: string,
+  notes?: string,
+): Promise<ActionPlanSummary> {
+  const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
+    `${API_BASE}/${planId}/effectiveness-review/submit`,
+    {
+      effectiveness_status: effectivenessStatus,
+      notes: notes?.trim() || undefined,
+    },
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao submeter eficácia.");
+}
+
+export async function approveEffectivenessReview(planId: string): Promise<ActionPlanSummary> {
+  const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
+    `${API_BASE}/${planId}/effectiveness-review/approve`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao aprovar eficácia.");
+}
+
+export async function rejectEffectivenessReview(
+  planId: string,
+  reason: string,
+): Promise<ActionPlanSummary> {
+  const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
+    `${API_BASE}/${planId}/effectiveness-review/reject`,
+    { reason: reason.trim() },
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao rejeitar eficácia.");
+}
+
+export async function fetchPendingEffectivenessReviews(
+  page = 1,
+  pageSize = 20,
+): Promise<PagedPlansResponse> {
+  const envelope = await httpGet<ApiEnvelope<PagedPlansResponse>>(
+    `${API_BASE}/effectiveness-review/pending?page=${page}&page_size=${pageSize}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar fila de eficácia pendente.");
+}
+
 export async function upsertRnc8dReport(
   planId: string,
   body: Rnc8dReportPayload,

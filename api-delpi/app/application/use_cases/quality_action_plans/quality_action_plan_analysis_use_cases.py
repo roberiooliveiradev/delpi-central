@@ -25,6 +25,22 @@ class QualityActionPlanAnalysisRepository(Protocol):
         self, plan_id: str, fields: dict[str, Any], *, updated_by: str
     ) -> dict[str, Any] | None: ...
 
+    def submit_effectiveness_review(
+        self, plan_id: str, fields: dict[str, Any], *, updated_by: str
+    ) -> dict[str, Any] | None: ...
+
+    def approve_effectiveness_review(
+        self, plan_id: str, *, updated_by: str
+    ) -> dict[str, Any] | None: ...
+
+    def reject_effectiveness_review(
+        self, plan_id: str, *, reason: str, updated_by: str
+    ) -> dict[str, Any] | None: ...
+
+    def list_pending_effectiveness_reviews(
+        self, *, page: int = 1, page_size: int = 20
+    ) -> dict[str, Any]: ...
+
 
 @dataclass(frozen=True)
 class UpsertIshikawaRequest:
@@ -79,6 +95,10 @@ VALID_EFFECTIVENESS = {
     "ineffective",
     "not_verified",
 }
+
+SUBMITTABLE_EFFECTIVENESS = frozenset(
+    {"effective", "partially_effective", "ineffective"},
+)
 
 
 class UpsertIshikawaUseCase:
@@ -211,6 +231,78 @@ class RecordEffectivenessReviewUseCase:
         if plan and self._intelligence_sync:
             self._intelligence_sync.execute(plan_id)
         return plan
+
+
+class SubmitEffectivenessReviewUseCase:
+    def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
+        self._repository = repository
+
+    def execute(
+        self,
+        plan_id: str,
+        request: EffectivenessReviewRequest,
+        *,
+        updated_by: str,
+    ):
+        if request.effectiveness_status not in SUBMITTABLE_EFFECTIVENESS:
+            raise ValueError(
+                "Para submissão, informe effective, partially_effective ou ineffective."
+            )
+        return self._repository.submit_effectiveness_review(
+            plan_id,
+            {
+                "effectiveness_status": request.effectiveness_status,
+                "notes": request.notes,
+            },
+            updated_by=updated_by,
+        )
+
+
+class ApproveEffectivenessReviewUseCase:
+    def __init__(
+        self,
+        repository: QualityActionPlanAnalysisRepository,
+        intelligence_sync: Any | None = None,
+    ) -> None:
+        self._repository = repository
+        self._intelligence_sync = intelligence_sync
+
+    def execute(self, plan_id: str, *, updated_by: str):
+        plan = self._repository.approve_effectiveness_review(
+            plan_id,
+            updated_by=updated_by,
+        )
+        if plan and self._intelligence_sync:
+            self._intelligence_sync.execute(plan_id)
+        return plan
+
+
+class RejectEffectivenessReviewUseCase:
+    MIN_REASON_LENGTH = 5
+
+    def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
+        self._repository = repository
+
+    def execute(self, plan_id: str, *, reason: str, updated_by: str):
+        cleaned = (reason or "").strip()
+        if len(cleaned) < self.MIN_REASON_LENGTH:
+            raise ValueError("Informe o motivo da rejeição com ao menos 5 caracteres.")
+        return self._repository.reject_effectiveness_review(
+            plan_id,
+            reason=cleaned,
+            updated_by=updated_by,
+        )
+
+
+class ListPendingEffectivenessReviewsUseCase:
+    def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
+        self._repository = repository
+
+    def execute(self, *, page: int = 1, page_size: int = 20):
+        return self._repository.list_pending_effectiveness_reviews(
+            page=page,
+            page_size=page_size,
+        )
 
 
 class UpdatePlanActionUseCase:

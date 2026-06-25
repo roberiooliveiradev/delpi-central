@@ -35,7 +35,13 @@ function effectivenessLabel(value?: string | null): string {
 }
 
 function categoryForEventType(eventType: string): TimelineCategory {
-  if (eventType === "effectiveness_reviewed") return "effectiveness";
+  if (
+    eventType === "effectiveness_reviewed"
+    || eventType === "effectiveness_submitted"
+    || eventType === "effectiveness_approval_rejected"
+  ) {
+    return "effectiveness";
+  }
   if (eventType.startsWith("action_")) return "actions";
   if (eventType === "evidence_uploaded") return "evidence";
   if (eventType === "ishikawa_updated" || eventType === "five_whys_updated") return "analysis";
@@ -68,6 +74,10 @@ function titleForHistoryEvent(event: PlanHistoryEvent): string {
       return "Ação atualizada";
     case "effectiveness_reviewed":
       return `Eficácia: ${effectivenessLabel(event.new_value)}`;
+    case "effectiveness_submitted":
+      return `Eficácia submetida: ${effectivenessLabel(event.new_value)}`;
+    case "effectiveness_approval_rejected":
+      return `Submissão de eficácia rejeitada (${effectivenessLabel(event.new_value)})`;
     case "ishikawa_updated":
       return "Ishikawa atualizado";
     case "five_whys_updated":

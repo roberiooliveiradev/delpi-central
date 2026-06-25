@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import {
+  approveEffectivenessReview,
   createPlanActions,
   exportPlanPdf,
   exportRnc8dPdf,
@@ -19,7 +20,9 @@ import {
   fetchActionPlanDetail,
   promoteSolutionPattern,
   recordEffectivenessReview,
+  rejectEffectivenessReview,
   reopenPlan,
+  submitEffectivenessReview,
   updateActionPlan,
   updatePlanAction,
   updatePlanStatus,
@@ -120,6 +123,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [rnc8dForm, setRnc8dForm] = useState<Rnc8dReportPayload>({});
   const [effectivenessStatus, setEffectivenessStatus] = useState("pending");
   const [effectivenessNotes, setEffectivenessNotes] = useState("");
+  const [effectivenessRejectionReason, setEffectivenessRejectionReason] = useState("");
   const [reopenReason, setReopenReason] = useState("");
   const [reopenTargetStatus, setReopenTargetStatus] = useState("in_progress");
   const [saving, setSaving] = useState<string | null>(null);
@@ -168,8 +172,13 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           ? data.team_members
           : [{ member_name: "", department: "", is_leader: true }],
       });
-      setEffectivenessStatus(data.plan.effectiveness_status ?? "pending");
-      setEffectivenessNotes("");
+      setEffectivenessStatus(
+        data.plan.effectiveness_proposed_status
+          ?? data.plan.effectiveness_status
+          ?? "pending",
+      );
+      setEffectivenessNotes(data.plan.effectiveness_notes ?? "");
+      setEffectivenessRejectionReason("");
       setIdentificationForm({
         title: data.plan.title ?? "",
         customer_name: data.plan.customer_name ?? "",
@@ -220,6 +229,12 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     (item) => !terminalStatuses.has(item.value) && item.value !== "draft",
   ).map((item) => ({ value: item.value, label: item.label }));
   const isRnc8dTemplate = plan?.customer_template === "rnc_8d";
+  const effectivenessApprovalStatus = plan?.effectiveness_approval_status ?? null;
+  const isEffectivenessPendingApproval = effectivenessApprovalStatus === "pending_review";
+  const isEffectivenessRejected = effectivenessApprovalStatus === "rejected";
+  const submittableEffectivenessOptions = EFFECTIVENESS_STATUSES.filter((item) =>
+    ["effective", "partially_effective", "ineffective"].includes(item.value),
+  );
 
   async function handleExportRnc8d() {
     setError(null);
@@ -793,17 +808,41 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           </SectionCard>
 
           <SectionCard title="Eficácia">
+            {isEffectivenessPendingApproval ? (
+              <div className="pac-state" style={{ marginBottom: "0.75rem" }}>
+                <strong>Aguardando aprovação do coordenador.</strong>
+                {plan.effectiveness_proposed_status ? (
+                  <span>
+                    {" "}
+                    Resultado proposto:{" "}
+                    {EFFECTIVENESS_STATUSES.find(
+                      (item) => item.value === plan.effectiveness_proposed_status,
+                    )?.label ?? plan.effectiveness_proposed_status}
+                    .
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            {isEffectivenessRejected && plan.effectiveness_rejection_reason ? (
+              <div className="pac-state pac-state--error" style={{ marginBottom: "0.75rem" }}>
+                <strong>Submissão rejeitada:</strong> {plan.effectiveness_rejection_reason}
+              </div>
+            ) : null}
             <div className="pac-form-grid">
               <SelectField
                 id="pac-effectiveness-status"
                 label="Resultado"
-                options={EFFECTIVENESS_STATUSES.map((item) => ({
+                options={(isEffectivenessPendingApproval
+                  ? EFFECTIVENESS_STATUSES
+                  : submittableEffectivenessOptions
+                ).map((item) => ({
                   value: item.value,
                   label: item.label,
                 }))}
                 value={effectivenessStatus}
                 onChange={setEffectivenessStatus}
                 searchable={false}
+                disabled={isEffectivenessPendingApproval}
               />
               <TextAreaField
                 id="pac-effectiveness-notes"
@@ -812,13 +851,77 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 onChange={setEffectivenessNotes}
                 placeholder="Evidências e conclusão da verificação de eficácia"
                 fullWidth
+                disabled={isEffectivenessPendingApproval}
               />
             </div>
+            {isEffectivenessPendingApproval ? (
+              <TextAreaField
+                id="pac-effectiveness-rejection-reason"
+                label="Motivo da rejeição (coordenador)"
+                value={effectivenessRejectionReason}
+                onChange={setEffectivenessRejectionReason}
+                placeholder="Descreva o motivo com ao menos 5 caracteres"
+                fullWidth
+              />
+            ) : null}
             <FormActions>
+              {!isEffectivenessPendingApproval ? (
+                <button
+                  type="button"
+                  className="pac-primary-btn"
+                  disabled={saving === "effectiveness-submit"}
+                  onClick={() =>
+                    void runSave("effectiveness-submit", async () => {
+                      await submitEffectivenessReview(
+                        planId,
+                        effectivenessStatus,
+                        effectivenessNotes.trim() || undefined,
+                      );
+                    })
+                  }
+                >
+                  {saving === "effectiveness-submit"
+                    ? "Salvando…"
+                    : "Submeter para aprovação"}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="pac-primary-btn"
+                    disabled={saving === "effectiveness-approve"}
+                    onClick={() =>
+                      void runSave("effectiveness-approve", async () => {
+                        await approveEffectivenessReview(planId);
+                      })
+                    }
+                  >
+                    {saving === "effectiveness-approve" ? "Salvando…" : "Aprovar eficácia"}
+                  </button>
+                  <button
+                    type="button"
+                    className="pac-ghost-btn"
+                    disabled={
+                      saving === "effectiveness-reject"
+                      || effectivenessRejectionReason.trim().length < 5
+                    }
+                    onClick={() =>
+                      void runSave("effectiveness-reject", async () => {
+                        await rejectEffectivenessReview(
+                          planId,
+                          effectivenessRejectionReason.trim(),
+                        );
+                      })
+                    }
+                  >
+                    {saving === "effectiveness-reject" ? "Salvando…" : "Rejeitar submissão"}
+                  </button>
+                </>
+              )}
               <button
                 type="button"
-                className="pac-primary-btn"
-                disabled={saving === "effectiveness"}
+                className="pac-ghost-btn"
+                disabled={saving === "effectiveness" || isEffectivenessPendingApproval}
                 onClick={() =>
                   void runSave("effectiveness", async () => {
                     await recordEffectivenessReview(
@@ -829,7 +932,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   })
                 }
               >
-                {saving === "effectiveness" ? "Salvando…" : "Registrar eficácia"}
+                {saving === "effectiveness" ? "Salvando…" : "Registrar direto (coordenador)"}
               </button>
               {["effective", "partially_effective"].includes(plan.effectiveness_status ?? "") ? (
                 <button

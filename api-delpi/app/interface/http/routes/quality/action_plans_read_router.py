@@ -32,12 +32,16 @@ from app.application.use_cases.quality_action_plans.quality_action_plans_use_cas
     UpdateQualityActionPlanRequest,
 )
 from app.composition.quality_action_plans_composer import (
+    build_approve_effectiveness_review_use_case,
     build_create_plan_actions_use_case,
     build_create_quality_action_plan_use_case,
     build_dispatch_pac_quality_notifications_use_case,
+    build_list_pending_effectiveness_reviews_use_case,
     build_quality_action_plan_read_repository,
     build_record_effectiveness_review_use_case,
+    build_reject_effectiveness_review_use_case,
     build_reopen_quality_action_plan_use_case,
+    build_submit_effectiveness_review_use_case,
     build_update_plan_action_use_case,
     build_update_quality_action_plan_status_use_case,
     build_update_quality_action_plan_use_case,
@@ -244,6 +248,18 @@ class EffectivenessReviewBody(BaseModel):
         pattern="^(pending|effective|partially_effective|ineffective|not_verified)$",
     )
     notes: str | None = None
+
+
+class SubmitEffectivenessReviewBody(BaseModel):
+    effectiveness_status: str = Field(
+        ...,
+        pattern="^(effective|partially_effective|ineffective)$",
+    )
+    notes: str | None = None
+
+
+class RejectEffectivenessReviewBody(BaseModel):
+    reason: str = Field(..., min_length=5, max_length=2000)
 
 
 def _current_user_id() -> str:
@@ -578,6 +594,33 @@ def promote_solution_pattern(plan_id: str):
         return error_response("Erro ao promover padrão de solução.", status_code=500)
 
 
+@router.get(
+    "/effectiveness-review/pending",
+    **_pac_openapi(
+        "list_quality_action_plan_pending_effectiveness_reviews",
+        "/effectiveness-review/pending",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
+def list_pending_effectiveness_reviews(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+):
+    try:
+        result = build_list_pending_effectiveness_reviews_use_case().execute(
+            page=page,
+            page_size=page_size,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="list_quality_action_plan_pending_effectiveness_reviews",
+            message="Fila de eficácia pendente.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar eficácia pendente PAC: {exc}")
+        return error_response("Erro ao listar eficácia pendente.", status_code=500)
+
+
 @router.get("/{plan_id}", **_pac_openapi("get_quality_action_plan_detail", "/{plan_id}"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_action_plan_detail(plan_id: str):
@@ -819,6 +862,98 @@ def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Bo
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao registrar eficácia do plano {plan_id}: {exc}")
         return error_response("Erro ao registrar eficácia.", status_code=500)
+
+
+@router.post(
+    "/{plan_id}/effectiveness-review/submit",
+    **_pac_openapi(
+        "submit_quality_action_plan_effectiveness_review",
+        "/{plan_id}/effectiveness-review/submit",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def submit_effectiveness_review(plan_id: str, body: SubmitEffectivenessReviewBody = Body(...)):
+    try:
+        result = build_submit_effectiveness_review_use_case().execute(
+            plan_id,
+            EffectivenessReviewRequest(
+                effectiveness_status=body.effectiveness_status,
+                notes=body.notes,
+            ),
+            updated_by=_current_user_id(),
+        )
+        if not result:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            result,
+            operation_id="submit_quality_action_plan_effectiveness_review",
+            message="Eficácia submetida para aprovação.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao submeter eficácia do plano {plan_id}: {exc}")
+        return error_response("Erro ao submeter eficácia.", status_code=500)
+
+
+@router.post(
+    "/{plan_id}/effectiveness-review/approve",
+    **_pac_openapi(
+        "approve_quality_action_plan_effectiveness_review",
+        "/{plan_id}/effectiveness-review/approve",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
+def approve_effectiveness_review(plan_id: str):
+    try:
+        result = build_approve_effectiveness_review_use_case().execute(
+            plan_id,
+            updated_by=_current_user_id(),
+        )
+        if not result:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            result,
+            operation_id="approve_quality_action_plan_effectiveness_review",
+            message="Eficácia aprovada.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao aprovar eficácia do plano {plan_id}: {exc}")
+        return error_response("Erro ao aprovar eficácia.", status_code=500)
+
+
+@router.post(
+    "/{plan_id}/effectiveness-review/reject",
+    **_pac_openapi(
+        "reject_quality_action_plan_effectiveness_review",
+        "/{plan_id}/effectiveness-review/reject",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
+def reject_effectiveness_review(
+    plan_id: str,
+    body: RejectEffectivenessReviewBody = Body(...),
+):
+    try:
+        result = build_reject_effectiveness_review_use_case().execute(
+            plan_id,
+            reason=body.reason,
+            updated_by=_current_user_id(),
+        )
+        if not result:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            result,
+            operation_id="reject_quality_action_plan_effectiveness_review",
+            message="Submissão de eficácia rejeitada.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao rejeitar eficácia do plano {plan_id}: {exc}")
+        return error_response("Erro ao rejeitar eficácia.", status_code=500)
 
 
 @router.put(

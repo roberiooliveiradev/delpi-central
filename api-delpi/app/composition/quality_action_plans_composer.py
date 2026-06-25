@@ -2,8 +2,12 @@ from app.application.use_cases.quality_action_plans.dispatch_pac_quality_notific
     DispatchPacQualityNotificationsUseCase,
 )
 from app.application.use_cases.quality_action_plans.quality_action_plan_analysis_use_cases import (
+    ApproveEffectivenessReviewUseCase,
     CreatePlanActionsUseCase,
+    ListPendingEffectivenessReviewsUseCase,
     RecordEffectivenessReviewUseCase,
+    RejectEffectivenessReviewUseCase,
+    SubmitEffectivenessReviewUseCase,
     UpdatePlanActionUseCase,
     UpsertFiveWhysUseCase,
     UpsertIshikawaUseCase,
@@ -75,3 +79,22 @@ def build_record_effectiveness_review_use_case() -> RecordEffectivenessReviewUse
         build_quality_action_plan_repository(),
         intelligence_sync=build_sync_case_similarity_index_use_case(),
     )
+
+
+def build_submit_effectiveness_review_use_case() -> SubmitEffectivenessReviewUseCase:
+    return SubmitEffectivenessReviewUseCase(build_quality_action_plan_repository())
+
+
+def build_approve_effectiveness_review_use_case() -> ApproveEffectivenessReviewUseCase:
+    return ApproveEffectivenessReviewUseCase(
+        build_quality_action_plan_repository(),
+        intelligence_sync=build_sync_case_similarity_index_use_case(),
+    )
+
+
+def build_reject_effectiveness_review_use_case() -> RejectEffectivenessReviewUseCase:
+    return RejectEffectivenessReviewUseCase(build_quality_action_plan_repository())
+
+
+def build_list_pending_effectiveness_reviews_use_case() -> ListPendingEffectivenessReviewsUseCase:
+    return ListPendingEffectivenessReviewsUseCase(build_quality_action_plan_repository())
