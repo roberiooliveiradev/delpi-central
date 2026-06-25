@@ -367,7 +367,7 @@ Critérios adicionais úteis:
 |--------|-----|------------------|
 | Domain importa application | 14 arquivos | Extrair contrato para domain ou port; application injeta adapter |
 | God files domain | 3+ | Continuar extração de delegates (playbook 11 Fase 3) |
-| God files application | 2+ | `ChatDocumentVisionService` → sub-serviços por estágio OCR |
+| God files application | 1+ | `chat_document_vision_stage_service` (~921L) — candidato a split futuro por backend OCR |
 | Flat namespace 400+ arquivos | 1 pasta | Subpastas por cluster quando estável (§5.2) |
 | Nomes sem `_service` | ~16 domain, ~6 application | Renomear só com reexport temporário ou em lote por cluster |
 | `*ContentService` em application | 3 | Avaliar migração para domain (paridade com playbook 11) |
