@@ -19,7 +19,19 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --pl
 bash api-delpi/scripts/deploy_rnc_8d_template.sh
 cd plugins/quality-action-plans && npm run build
 bash scripts/homologacao/check-quality-action-plans.sh
+bash scripts/homologacao/check-pac-api-server.sh   # produção (pac-api.minhadelpi.com.br)
+PAC_API_URL=http://localhost:8082 bash scripts/homologacao/check-pac-api-server.sh   # local
 ```
+
+### Smoke H1 automatizado (api-delpi + JWT)
+
+```bash
+export TOKEN="<jwt quality-action-plans.read/write>"
+python3 scripts/homologacao/run_h1_api_smoke.py
+# ou: BASE_URL=https://minhadelpi.com.br python3 scripts/homologacao/run_h1_api_smoke.py
+```
+
+Cria plano `[H1-SMOKE]`, preenche 8D, evidências com `action_id`, exporta Excel e avança status. Anote `PLAN_ID` para H3 ou remova manualmente após validar no plugin.
 
 ---
 

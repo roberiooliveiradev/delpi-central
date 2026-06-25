@@ -9,11 +9,11 @@
 | Camada | Maturidade | Nota |
 |---|---|---|
 | Modelo de dados + migrations | Alta | V001–V007 no plugin `quality-action-plans` |
-| API PAC (`api-pac-quality`) | Média-alta | CRUD + inteligência + 8D/evidências (Onda 1) |
-| API consolidada (`api-delpi`) | Média-alta | Leitura + escrita + 8D + evidências (V006) |
-| Plugin MFE | Média | Fluxo analista ok; visão executiva incompleta |
-| Agente GPT | Média | Documentado; desalinhado com 8D/evidências |
-| Homologação formal | Baixa | Sem roteiro executado ponta a ponta |
+| API PAC (`api-pac-quality`) | Média-alta | CRUD + inteligência + 8D/evidências — **prod** atualizada; **local** via `docker-compose.local.yml` :8082 |
+| API consolidada (`api-delpi`) | Média-alta | Leitura + escrita + 8D + evidências (V007) — imagem local reconstruída |
+| Plugin MFE | Média | Fluxo analista ok; imagem `delpi-quality-action-plans` reconstruída |
+| Agente GPT | Média-alta | OpenAPI **produção** reimportado pelo usuário (jun/2026) |
+| Homologação formal | Baixa | Smoke automatizado disponível; H1–H3 manual pendente |
 | Integrações (TOTVS, notificações) | Não iniciado | Previsto onda 4+ |
 
 **Estimativa global:** ~55% do caminho até excelência operacional.
@@ -29,8 +29,8 @@
 | V003 | Knowledge layer (`similarity_index`, `solution_patterns`) | Implementada |
 | V004 | `branch_code` | Implementada |
 | V005 | `nonconformity_scope` | Implementada |
-| V006 | `rnc_8d`, evidências com arquivo, equipe, trilha detecção | Implementada — **confirmar em cada ambiente** |
-| V007 | `action_id` em evidências (vínculo com ação do plano) | Implementada — **confirmar em cada ambiente** |
+| V006 | `rnc_8d`, evidências com arquivo, equipe, trilha detecção | APLICADA (local + prod) |
+| V007 | `action_id` em evidências (vínculo com ação do plano) | APLICADA (local + prod) |
 
 ---
 
@@ -77,11 +77,25 @@
 1. Template Excel `rnc_8d_template.xlsx` fora do git — copiar no deploy.
 2. ~~Export 8D sem imagens na aba Anexos.~~ Imagens embutidas na aba `Anexos(Evidencias)` (requer Pillow).
 3. Documentação `quality-action-plans-pac.md` atualizada (V006/V007 + rotas 8D/evidências).
-4. ~~Agente sem rotas de evidência e 8D.~~ Paridade API PAC entregue — reimportar OpenAPI no GPT.
+4. ~~Agente sem rotas de evidência e 8D.~~ Paridade API PAC — OpenAPI reimportado em **produção** (validar com `check-pac-api-server.sh`).
 5. Indicadores executivos do playbook (tempo médio, reincidência, eficácia por tipo) ausentes no dashboard.
 
 ---
 
 ## Próxima onda recomendada
 
-**Onda 1 — Operação NC fechada:** aplicar V006+V007, homologar H1–H3 ([HOMOLOGACAO.md](./HOMOLOGACAO.md)), reimportar OpenAPI no GPT.
+**Onda 1 — fechamento:** homologar H1–H3 no plugin (`HOMOLOGACAO.md`); smoke API: `run_h1_api_smoke.py` com `TOKEN`.
+
+### Stack local (atualizar após pull)
+
+```bash
+cd infra && docker compose -f docker-compose.dev.yml build api-delpi quality-action-plans
+docker compose -f docker-compose.dev.yml up -d --force-recreate api-delpi quality-action-plans
+bash ../api-delpi/scripts/deploy_rnc_8d_template.sh
+
+# API PAC agente (porta 8082, rede infra_delpi-network)
+cd ../../api-pac-quality
+cp .env.example .env   # ou ajustar PLUGINS_DB_* conforme infra/.env
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+PAC_API_URL=http://localhost:8082 bash ../delpi-central/scripts/homologacao/check-pac-api-server.sh
+```
