@@ -26,6 +26,8 @@ class QualityActionPlanRepository(Protocol):
         comment: str | None = None,
     ) -> dict[str, Any] | None: ...
 
+    def update_plan(self, plan_id: str, fields: dict[str, Any]) -> dict[str, Any] | None: ...
+
 
 @dataclass(frozen=True)
 class CreateQualityActionPlanRequest:
@@ -98,6 +100,64 @@ class CreateQualityActionPlanUseCase:
                 "recurrence_key": recurrence_key,
             }
         )
+
+
+@dataclass(frozen=True)
+class UpdateQualityActionPlanRequest:
+    title: str | None = None
+    customer_name: str | None = None
+    customer_contact: str | None = None
+    source_type: str | None = None
+    source_reference: str | None = None
+    product_code: str | None = None
+    product_description: str | None = None
+    batch_number: str | None = None
+    reported_problem: str | None = None
+    detected_at: str | None = None
+    reported_at: str | None = None
+    severity: str | None = None
+    owner_user_id: str | None = None
+    branch_code: str | None = None
+    nonconformity_scope: str | None = None
+    department: str | None = None
+    problem_category: str | None = None
+    symptom_tags: list[str] | None = None
+    root_cause_category: str | None = None
+    failure_mode: str | None = None
+    recurrence_key: str | None = None
+    customer_template: str | None = None
+    client_nc_registry: str | None = None
+
+
+class UpdateQualityActionPlanUseCase:
+    def __init__(self, repository: QualityActionPlanRepository) -> None:
+        self._repository = repository
+
+    def execute(
+        self,
+        plan_id: str,
+        request: UpdateQualityActionPlanRequest,
+        *,
+        updated_by: str,
+    ) -> dict[str, Any] | None:
+        fields = {
+            key: value
+            for key, value in request.__dict__.items()
+            if value is not None
+        }
+        if request.branch_code is not None:
+            fields["branch_code"] = validate_branch_code(request.branch_code, required=True)
+        if request.nonconformity_scope is not None:
+            fields["nonconformity_scope"] = validate_nonconformity_scope(
+                request.nonconformity_scope
+            )
+        if request.customer_template is not None and request.customer_template not in {
+            "generic",
+            "rnc_8d",
+        }:
+            raise ValueError("customer_template inválido.")
+        fields["updated_by_user_id"] = updated_by
+        return self._repository.update_plan(plan_id, fields)
 
 
 class UpdateQualityActionPlanStatusUseCase:

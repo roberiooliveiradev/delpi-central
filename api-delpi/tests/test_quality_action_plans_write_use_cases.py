@@ -4,6 +4,8 @@ import pytest
 
 from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
     UpdateQualityActionPlanStatusUseCase,
+    UpdateQualityActionPlanUseCase,
+    UpdateQualityActionPlanRequest,
 )
 from app.domain.services.quality_action_plans.pac_quality_branch_service import (
     build_recurrence_key,
@@ -38,3 +40,39 @@ def test_update_status_rejects_invalid_status():
     use_case = UpdateQualityActionPlanStatusUseCase(_Repo())
     with pytest.raises(ValueError, match="status inválido"):
         use_case.execute("plan-id", status="invalid", updated_by="user-1")
+
+
+def test_update_plan_rejects_invalid_template():
+    class _Repo:
+        def update_plan(self, *args, **kwargs):
+            raise AssertionError("should not be called")
+
+    use_case = UpdateQualityActionPlanUseCase(_Repo())
+    with pytest.raises(ValueError, match="customer_template"):
+        use_case.execute(
+            "plan-id",
+            UpdateQualityActionPlanRequest(customer_template="invalid"),
+            updated_by="user-1",
+        )
+
+
+def test_update_plan_delegates_to_repository():
+    class _Repo:
+        def __init__(self):
+            self.called = False
+
+        def update_plan(self, plan_id, fields):
+            self.called = True
+            assert plan_id == "plan-id"
+            assert fields["title"] == "Novo título"
+            return {"id": plan_id, "title": "Novo título"}
+
+    repo = _Repo()
+    use_case = UpdateQualityActionPlanUseCase(repo)
+    result = use_case.execute(
+        "plan-id",
+        UpdateQualityActionPlanRequest(title="Novo título"),
+        updated_by="user-1",
+    )
+    assert repo.called
+    assert result["title"] == "Novo título"

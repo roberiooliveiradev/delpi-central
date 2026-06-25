@@ -85,6 +85,7 @@ export type PlanEvidence = {
   mime_type?: string | null;
   size_bytes?: number | null;
   knowledge_visible?: boolean;
+  action_id?: string | null;
   uploaded_by?: string;
   created_at?: string;
 };

@@ -15,7 +15,7 @@ import type {
   PagedPlansResponse,
   PlanAction,
 } from "../types/actionPlan";
-import type { CreatePlanPayload } from "../types/planForm";
+import type { CreatePlanPayload, UpdatePlanPayload } from "../types/planForm";
 import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
 
 const API_BASE = "/apps/api-delpi/quality/action-plans";
@@ -79,6 +79,17 @@ export async function fetchActionPlanDetail(planId: string): Promise<ActionPlanD
 export async function createActionPlan(payload: CreatePlanPayload): Promise<ActionPlanSummary> {
   const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(API_BASE, payload);
   return unwrapApiDelpiEnvelope(envelope, "Erro ao criar plano de ação.");
+}
+
+export async function updateActionPlan(
+  planId: string,
+  payload: UpdatePlanPayload,
+): Promise<ActionPlanSummary> {
+  const envelope = await httpPatch<ApiEnvelope<ActionPlanSummary>>(
+    `${API_BASE}/${planId}`,
+    payload,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar plano de ação.");
 }
 
 export async function updatePlanStatus(
@@ -210,6 +221,7 @@ export async function uploadPlanEvidence(
   options: {
     evidenceType: string;
     section?: string;
+    actionId?: string;
     description?: string;
     knowledgeVisible?: boolean;
   },
@@ -219,6 +231,7 @@ export async function uploadPlanEvidence(
   formData.append("file", file);
   formData.append("evidence_type", options.evidenceType);
   formData.append("section", options.section ?? "general");
+  if (options.actionId) formData.append("action_id", options.actionId);
   if (options.description) formData.append("description", options.description);
   formData.append("knowledge_visible", String(options.knowledgeVisible ?? true));
   const envelope = await httpPostForm<ApiEnvelope<PlanEvidence>>(

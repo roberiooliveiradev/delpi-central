@@ -117,6 +117,7 @@ export type ActionPlanDetail = {
     product_description?: string | null;
     batch_number?: string | null;
     reported_problem?: string | null;
+    department?: string | null;
     problem_category?: string | null;
     failure_mode?: string | null;
     root_cause_category?: string | null;

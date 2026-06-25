@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook
+from openpyxl.drawing.image import Image as XlImage
 
 TEMPLATE_PATH = (
     Path(__file__).resolve().parents[3]
@@ -19,6 +20,10 @@ SUPPLIER_BY_BRANCH = {
     "01": "12243 - Delpi Componentes Ltda EPP",
     "02": "12243 - Delpi Componentes Ltda EPP",
 }
+
+ANNEX_SHEET_CANDIDATES = ("Anexos(Evidencias)", "Anexos", "Attachment")
+ANNEX_IMAGE_MAX_WIDTH_PX = 480
+IMAGE_MIME_PREFIX = "image/"
 
 
 def _excel_date(value: str | date | datetime | None) -> date | None:
@@ -51,6 +56,45 @@ def _set(ws, cell: str, value: Any) -> None:
     ws[cell] = text
 
 
+def is_image_evidence(evidence: dict[str, Any]) -> bool:
+    mime = str(evidence.get("mime_type") or "").lower()
+    if mime.startswith(IMAGE_MIME_PREFIX):
+        return True
+    evidence_type = str(evidence.get("type") or "").lower()
+    return evidence_type == "image"
+
+
+def _resolve_annex_sheet(wb) -> Any | None:
+    for name in ANNEX_SHEET_CANDIDATES:
+        if name in wb.sheetnames:
+            return wb[name]
+    return None
+
+
+def _embed_annex_images(ws: Any, image_annexes: list[dict[str, Any]]) -> None:
+    row = 3
+    for item in image_annexes:
+        content = item.get("content")
+        if not content:
+            continue
+        try:
+            img = XlImage(io.BytesIO(content))
+        except Exception:
+            continue
+        if img.width > ANNEX_IMAGE_MAX_WIDTH_PX:
+            ratio = ANNEX_IMAGE_MAX_WIDTH_PX / img.width
+            img.width = int(img.width * ratio)
+            img.height = int(img.height * ratio)
+        ws.add_image(img, f"A{row}")
+        label = str(item.get("file_name") or "").strip()
+        description = str(item.get("description") or "").strip()
+        if label:
+            ws[f"D{row}"] = label
+        if description:
+            ws[f"D{row + 1}"] = description
+        row += max(12, int(img.height / 15) + 2)
+
+
 def _material_label(plan: dict[str, Any]) -> str:
     code = (plan.get("product_code") or "").strip()
     desc = (plan.get("product_description") or "").strip()
@@ -59,7 +103,38 @@ def _material_label(plan: dict[str, Any]) -> str:
     return code or desc
 
 
-def build_rnc_8d_workbook(detail: dict[str, Any]) -> bytes:
+def collect_image_annexes_for_export(
+    *,
+    plan_id: str,
+    evidences: list[dict[str, Any]],
+    storage: Any,
+) -> list[dict[str, Any]]:
+    annexes: list[dict[str, Any]] = []
+    for evidence in evidences:
+        if not is_image_evidence(evidence):
+            continue
+        stored_name = str(evidence.get("stored_name") or "").strip()
+        if not stored_name:
+            continue
+        try:
+            file_path = storage.resolve_file(plan_id=plan_id, stored_name=stored_name)
+            annexes.append(
+                {
+                    "file_name": evidence.get("file_name") or stored_name,
+                    "description": evidence.get("description"),
+                    "content": file_path.read_bytes(),
+                }
+            )
+        except Exception:
+            continue
+    return annexes
+
+
+def build_rnc_8d_workbook(
+    detail: dict[str, Any],
+    *,
+    image_annexes: list[dict[str, Any]] | None = None,
+) -> bytes:
     if not TEMPLATE_PATH.is_file():
         raise FileNotFoundError(f"Template 8D não encontrado: {TEMPLATE_PATH}")
 
@@ -203,6 +278,10 @@ def build_rnc_8d_workbook(detail: dict[str, Any]) -> bytes:
 
     closure = payload.get("client_closure_note")
     _set(ws, "D108", closure or "Conforme status da nota QM.")
+
+    annex_ws = _resolve_annex_sheet(wb)
+    if annex_ws is not None and image_annexes:
+        _embed_annex_images(annex_ws, image_annexes)
 
     buffer = io.BytesIO()
     wb.save(buffer)

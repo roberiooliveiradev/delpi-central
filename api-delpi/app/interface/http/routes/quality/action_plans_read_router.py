@@ -23,6 +23,7 @@ from app.application.use_cases.quality_action_plans.quality_action_plan_analysis
 )
 from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
     CreateQualityActionPlanRequest,
+    UpdateQualityActionPlanRequest,
 )
 from app.composition.quality_action_plans_composer import (
     build_create_plan_actions_use_case,
@@ -31,13 +32,16 @@ from app.composition.quality_action_plans_composer import (
     build_record_effectiveness_review_use_case,
     build_update_plan_action_use_case,
     build_update_quality_action_plan_status_use_case,
+    build_update_quality_action_plan_use_case,
     build_upsert_five_whys_use_case,
     build_upsert_ishikawa_use_case,
 )
 from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
     build_rnc_8d_workbook,
+    collect_image_annexes_for_export,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.core.responses import error_response, not_found_response
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
 
@@ -73,6 +77,38 @@ class CreateActionPlanBody(BaseModel):
     root_cause_category: str | None = Field(default=None, max_length=200)
     failure_mode: str | None = Field(default=None, max_length=300)
     recurrence_key: str | None = Field(default=None, max_length=500)
+
+
+class UpdateActionPlanBody(BaseModel):
+    title: str | None = Field(default=None, min_length=2, max_length=500)
+    customer_name: str | None = Field(default=None, max_length=300)
+    customer_contact: str | None = Field(default=None, max_length=300)
+    source_type: str | None = Field(
+        default=None,
+        pattern="^(email|message|spreadsheet|pdf|image|manual_text|system_reference|other)$",
+    )
+    source_reference: str | None = Field(default=None, max_length=500)
+    product_code: str | None = Field(default=None, max_length=50)
+    product_description: str | None = Field(default=None, max_length=500)
+    batch_number: str | None = Field(default=None, max_length=100)
+    reported_problem: str | None = None
+    detected_at: str | None = None
+    reported_at: str | None = None
+    severity: str | None = Field(default=None, pattern="^(low|medium|high|critical)$")
+    owner_user_id: str | None = Field(default=None, max_length=100)
+    branch_code: str | None = Field(default=None, pattern="^(01|02)$")
+    nonconformity_scope: str | None = Field(default=None, pattern="^(internal|external)$")
+    department: str | None = Field(default=None, max_length=200)
+    problem_category: str | None = Field(default=None, max_length=200)
+    symptom_tags: list[str] | None = None
+    root_cause_category: str | None = Field(default=None, max_length=200)
+    failure_mode: str | None = Field(default=None, max_length=300)
+    recurrence_key: str | None = Field(default=None, max_length=500)
+    customer_template: str | None = Field(
+        default=None,
+        pattern="^(generic|rnc_8d)$",
+    )
+    client_nc_registry: str | None = Field(default=None, max_length=100)
 
 
 class UpdateActionPlanStatusBody(BaseModel):
@@ -317,6 +353,40 @@ def get_action_plan_detail(plan_id: str):
         return error_response("Erro ao consultar plano de ação.", status_code=500)
 
 
+@router.patch("/{plan_id}")
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
+    try:
+        fields = body.model_dump(exclude_unset=True)
+        if not fields:
+            repo = build_quality_action_plan_read_repository()
+            plan = repo.get_plan_by_id(plan_id)
+            if not plan:
+                return not_found_response("Plano de ação não encontrado.")
+            return api_delpi_success(
+                plan,
+                operation_id="update_quality_action_plan",
+                message="Nenhuma alteração informada.",
+            )
+        plan = build_update_quality_action_plan_use_case().execute(
+            plan_id,
+            UpdateQualityActionPlanRequest(**fields),
+            updated_by=_current_user_id(),
+        )
+        if not plan:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            plan,
+            operation_id="update_quality_action_plan",
+            message="Plano atualizado.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao atualizar plano PAC {plan_id}: {exc}")
+        return error_response("Erro ao atualizar plano.", status_code=500)
+
+
 @router.patch("/{plan_id}/status")
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = Body(...)):
@@ -503,7 +573,13 @@ def export_rnc_8d_spreadsheet(plan_id: str):
         detail = repo.get_plan_detail(plan_id)
         if not detail:
             return not_found_response("Plano de ação não encontrado.")
-        content = build_rnc_8d_workbook(detail)
+        storage = PacEvidenceStorage()
+        image_annexes = collect_image_annexes_for_export(
+            plan_id=plan_id,
+            evidences=detail.get("evidences") or [],
+            storage=storage,
+        )
+        content = build_rnc_8d_workbook(detail, image_annexes=image_annexes)
         plan = detail.get("plan") or {}
         registry = plan.get("client_nc_registry") or plan.get("code") or plan_id[:8]
         filename = f"RNC_{registry}_8D.xlsx"
@@ -552,6 +628,7 @@ async def upload_plan_evidence(
     ),
     description: str | None = Form(default=None),
     knowledge_visible: bool = Form(default=True),
+    action_id: str | None = Form(default=None),
     file: UploadFile = File(...),
 ):
     try:
@@ -565,6 +642,9 @@ async def upload_plan_evidence(
             mime_type=file.content_type,
         )
         repo = build_quality_action_plan_read_repository()
+        if action_id and not repo.action_belongs_to_plan(plan_id, action_id):
+            storage.delete_file(plan_id=plan_id, stored_name=stored_name)
+            return error_response("Ação não pertence a este plano.", status_code=422)
         data = repo.create_evidence(
             plan_id,
             {
@@ -577,6 +657,7 @@ async def upload_plan_evidence(
                 "description": description,
                 "knowledge_visible": knowledge_visible,
                 "uploaded_by": _current_user_id(),
+                "action_id": action_id,
             },
         )
         if not data:

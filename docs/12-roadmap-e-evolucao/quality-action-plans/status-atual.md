@@ -8,7 +8,7 @@
 
 | Camada | Maturidade | Nota |
 |---|---|---|
-| Modelo de dados + migrations | Alta | V001–V006 no plugin `quality-action-plans` |
+| Modelo de dados + migrations | Alta | V001–V007 no plugin `quality-action-plans` |
 | API PAC (`api-pac-quality`) | Média-alta | CRUD + inteligência + 8D/evidências (Onda 1) |
 | API consolidada (`api-delpi`) | Média-alta | Leitura + escrita + 8D + evidências (V006) |
 | Plugin MFE | Média | Fluxo analista ok; visão executiva incompleta |
@@ -30,6 +30,7 @@
 | V004 | `branch_code` | Implementada |
 | V005 | `nonconformity_scope` | Implementada |
 | V006 | `rnc_8d`, evidências com arquivo, equipe, trilha detecção | Implementada — **confirmar em cada ambiente** |
+| V007 | `action_id` em evidências (vínculo com ação do plano) | Implementada — **confirmar em cada ambiente** |
 
 ---
 
@@ -64,18 +65,18 @@
 | Novo plano | Implementada (`customer_template` + registro NC) |
 | Detalhe (pipeline, Ishikawa, 5 Porquês, ações, histórico) | Implementada |
 | Relatório 8D + export Excel | Implementada (após ativar `rnc_8d`) |
-| Painel de evidências | Implementada |
+| Painel de evidências | Implementada (vínculo opcional com ação) |
 | Atrasados | Implementada |
 | Recorrência / soluções testadas / timeline rica | **Não** |
-| Edição completa do plano | **Não** |
+| Edição completa do plano | Implementada (PATCH identificação no detalhe) |
 
 ---
 
 ## Débitos conhecidos
 
 1. Template Excel `rnc_8d_template.xlsx` fora do git — copiar no deploy.
-2. Export 8D sem imagens na aba Anexos.
-3. Documentação `quality-action-plans-pac.md` desatualizada (pré-V006).
+2. ~~Export 8D sem imagens na aba Anexos.~~ Imagens embutidas na aba `Anexos(Evidencias)` (requer Pillow).
+3. Documentação `quality-action-plans-pac.md` atualizada (V006/V007 + rotas 8D/evidências).
 4. ~~Agente sem rotas de evidência e 8D.~~ Paridade API PAC entregue — reimportar OpenAPI no GPT.
 5. Indicadores executivos do playbook (tempo médio, reincidência, eficácia por tipo) ausentes no dashboard.
 
@@ -83,4 +84,4 @@
 
 ## Próxima onda recomendada
 
-**Onda 1 — Operação NC fechada** (ver PLAYBOOK-EXCELENCIA §4): V006 em produção, espelhar 8D/evidências na API PAC, homologar 3 casos reais.
+**Onda 1 — Operação NC fechada:** aplicar V006+V007, homologar H1–H3 ([HOMOLOGACAO.md](./HOMOLOGACAO.md)), reimportar OpenAPI no GPT.

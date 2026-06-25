@@ -28,6 +28,23 @@ export type CreatePlanPayload = {
   failure_mode?: string;
 };
 
+export type UpdatePlanPayload = {
+  title?: string;
+  customer_name?: string;
+  customer_contact?: string;
+  product_code?: string;
+  product_description?: string;
+  batch_number?: string;
+  department?: string;
+  reported_problem?: string;
+  failure_mode?: string;
+  severity?: string;
+  branch_code?: string;
+  nonconformity_scope?: string;
+  client_nc_registry?: string;
+  customer_template?: string;
+};
+
 export function emptyPlanFormValues(): PlanFormValues {
   return {
     title: "",

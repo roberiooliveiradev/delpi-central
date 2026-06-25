@@ -6,6 +6,7 @@ import {
   downloadPlanEvidenceFile,
   uploadPlanEvidence,
 } from "../api/actionPlansApi";
+import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDateTime } from "../utils/format";
 import { StateAlert } from "./StateAlert";
@@ -38,8 +39,16 @@ const EVIDENCE_SECTIONS = [
 type Props = {
   planId: string;
   evidences: PlanEvidence[];
+  actions?: PlanAction[];
   onChanged: () => void | Promise<void>;
 };
+
+function actionLabel(action: PlanAction): string {
+  const prefix = action.action_type.replace(/_/g, " ");
+  const text = action.description.trim();
+  const snippet = text.length > 48 ? `${text.slice(0, 48)}…` : text;
+  return `${prefix}: ${snippet}`;
+}
 
 function formatSize(bytes?: number | null): string {
   if (!bytes) return "—";
@@ -48,10 +57,11 @@ function formatSize(bytes?: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function EvidencePanel({ planId, evidences, onChanged }: Props) {
+export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [evidenceType, setEvidenceType] = useState("image");
   const [section, setSection] = useState("general");
+  const [actionId, setActionId] = useState("");
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +73,7 @@ export function EvidencePanel({ planId, evidences, onChanged }: Props) {
       await uploadPlanEvidence(planId, file, {
         evidenceType,
         section,
+        actionId: actionId || undefined,
         description: description.trim() || undefined,
         knowledgeVisible: true,
       });
@@ -85,6 +96,12 @@ export function EvidencePanel({ planId, evidences, onChanged }: Props) {
       setError(err instanceof Error ? err.message : "Erro ao remover evidência.");
     }
   }
+
+  const actionOptions = [
+    { value: "", label: "Nenhuma (plano geral)" },
+    ...actions.map((action) => ({ value: action.id, label: actionLabel(action) })),
+  ];
+  const actionById = new Map(actions.map((action) => [action.id, action]));
 
   return (
     <SectionCard
@@ -110,6 +127,16 @@ export function EvidencePanel({ planId, evidences, onChanged }: Props) {
           onChange={setSection}
           searchable={false}
         />
+        {actions.length ? (
+          <SelectField
+            id="pac-evidence-action"
+            label="Vincular à ação"
+            options={actionOptions}
+            value={actionId}
+            onChange={setActionId}
+            searchable={actions.length > 6}
+          />
+        ) : null}
         <TextField
           id="pac-evidence-desc"
           label="Descrição"
@@ -147,6 +174,7 @@ export function EvidencePanel({ planId, evidences, onChanged }: Props) {
                 <th>Arquivo</th>
                 <th>Tipo</th>
                 <th>Seção</th>
+                <th>Ação</th>
                 <th>Tamanho</th>
                 <th>Enviado em</th>
                 <th />
@@ -165,6 +193,11 @@ export function EvidencePanel({ planId, evidences, onChanged }: Props) {
                   </td>
                   <td>{evidence.type}</td>
                   <td>{evidence.section ?? "general"}</td>
+                  <td>
+                    {evidence.action_id
+                      ? actionById.get(evidence.action_id)?.description ?? evidence.action_id.slice(0, 8)
+                      : "—"}
+                  </td>
                   <td>{formatSize(evidence.size_bytes)}</td>
                   <td>{formatDateTime(evidence.created_at)}</td>
                   <td className="pac-table-actions">

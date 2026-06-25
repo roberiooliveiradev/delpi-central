@@ -390,6 +390,12 @@
   margin: 0;
 }
 
+.dashboard-quality-action-plans .pac-dl--compact {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pac-border, #e5e7eb);
+}
+
 .dashboard-quality-action-plans .pac-timeline {
   list-style: none;
   margin: 0;

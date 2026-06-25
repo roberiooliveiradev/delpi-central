@@ -16,6 +16,7 @@ import {
   exportRnc8dSpreadsheet,
   fetchActionPlanDetail,
   recordEffectivenessReview,
+  updateActionPlan,
   updatePlanAction,
   updatePlanStatus,
   upsertFiveWhys,
@@ -41,6 +42,9 @@ import {
   dashboardPath,
   EFFECTIVENESS_STATUSES,
   listPath,
+  PAC_BRANCH_OPTIONS,
+  PAC_NONCONFORMITY_SCOPES,
+  PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
 import type { ActionPlanDetail, FiveWhysAnalysis, IshikawaAnalysis } from "../types/actionPlan";
@@ -110,6 +114,20 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [effectivenessStatus, setEffectivenessStatus] = useState("pending");
   const [effectivenessNotes, setEffectivenessNotes] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
+  const [identificationForm, setIdentificationForm] = useState({
+    title: "",
+    customer_name: "",
+    product_code: "",
+    product_description: "",
+    batch_number: "",
+    department: "",
+    failure_mode: "",
+    reported_problem: "",
+    severity: "medium",
+    branch_code: "01",
+    nonconformity_scope: "external",
+    client_nc_registry: "",
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,6 +156,20 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       });
       setEffectivenessStatus(data.plan.effectiveness_status ?? "pending");
       setEffectivenessNotes("");
+      setIdentificationForm({
+        title: data.plan.title ?? "",
+        customer_name: data.plan.customer_name ?? "",
+        product_code: data.plan.product_code ?? "",
+        product_description: data.plan.product_description ?? "",
+        batch_number: data.plan.batch_number ?? "",
+        department: data.plan.department ?? "",
+        failure_mode: data.plan.failure_mode ?? "",
+        reported_problem: data.plan.reported_problem ?? "",
+        severity: data.plan.severity ?? "medium",
+        branch_code: data.plan.branch_code ?? "01",
+        nonconformity_scope: data.plan.nonconformity_scope ?? "external",
+        client_nc_registry: data.plan.client_nc_registry ?? "",
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar plano.");
     } finally {
@@ -209,28 +241,144 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         <div className="pac-detail-grid">
           <SectionCard title="Problema">
             <StatusPipeline currentStatus={plan.status} />
-            <dl className="pac-dl">
+            <div className="pac-form-grid">
+              <TextField
+                id="pac-detail-title"
+                label="Título"
+                value={identificationForm.title}
+                onChange={(title) => setIdentificationForm((c) => ({ ...c, title }))}
+                fullWidth
+              />
+              <TextField
+                id="pac-detail-customer"
+                label="Cliente"
+                value={identificationForm.customer_name}
+                onChange={(customer_name) =>
+                  setIdentificationForm((c) => ({ ...c, customer_name }))
+                }
+              />
+              <SelectField
+                id="pac-detail-branch"
+                label="Filial"
+                options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
+                value={identificationForm.branch_code}
+                onChange={(branch_code) => setIdentificationForm((c) => ({ ...c, branch_code }))}
+                searchable={false}
+              />
+              <SelectField
+                id="pac-detail-scope"
+                label="Escopo NC"
+                options={PAC_NONCONFORMITY_SCOPES.map((item) => ({
+                  value: item.value,
+                  label: item.label,
+                }))}
+                value={identificationForm.nonconformity_scope}
+                onChange={(nonconformity_scope) =>
+                  setIdentificationForm((c) => ({ ...c, nonconformity_scope }))
+                }
+                searchable={false}
+              />
+              <TextField
+                id="pac-detail-product"
+                label="Código produto"
+                value={identificationForm.product_code}
+                onChange={(product_code) => setIdentificationForm((c) => ({ ...c, product_code }))}
+              />
+              <TextField
+                id="pac-detail-product-desc"
+                label="Descrição produto"
+                value={identificationForm.product_description}
+                onChange={(product_description) =>
+                  setIdentificationForm((c) => ({ ...c, product_description }))
+                }
+              />
+              <TextField
+                id="pac-detail-batch"
+                label="Lote"
+                value={identificationForm.batch_number}
+                onChange={(batch_number) => setIdentificationForm((c) => ({ ...c, batch_number }))}
+              />
+              <TextField
+                id="pac-detail-department"
+                label="Área"
+                value={identificationForm.department}
+                onChange={(department) => setIdentificationForm((c) => ({ ...c, department }))}
+              />
+              <TextField
+                id="pac-detail-failure"
+                label="Modo de falha"
+                value={identificationForm.failure_mode}
+                onChange={(failure_mode) => setIdentificationForm((c) => ({ ...c, failure_mode }))}
+              />
+              <SelectField
+                id="pac-detail-severity"
+                label="Severidade"
+                options={PLAN_SEVERITIES.map((item) => ({ value: item.value, label: item.label }))}
+                value={identificationForm.severity}
+                onChange={(severity) => setIdentificationForm((c) => ({ ...c, severity }))}
+                searchable
+              />
+              {isRnc8dTemplate ? (
+                <TextField
+                  id="pac-detail-nc-registry"
+                  label="Registro NC do cliente"
+                  value={identificationForm.client_nc_registry}
+                  onChange={(client_nc_registry) =>
+                    setIdentificationForm((c) => ({ ...c, client_nc_registry }))
+                  }
+                />
+              ) : null}
+              <TextAreaField
+                id="pac-detail-problem"
+                label="Relato do problema"
+                value={identificationForm.reported_problem}
+                onChange={(reported_problem) =>
+                  setIdentificationForm((c) => ({ ...c, reported_problem }))
+                }
+                fullWidth
+              />
+            </div>
+            <FormActions align="end">
+              <button
+                type="button"
+                className="pac-primary-btn"
+                disabled={saving === "identification"}
+                onClick={() =>
+                  void runSave("identification", async () => {
+                    await updateActionPlan(planId, {
+                      title: identificationForm.title.trim() || undefined,
+                      customer_name: identificationForm.customer_name.trim() || undefined,
+                      product_code: identificationForm.product_code.trim() || undefined,
+                      product_description: identificationForm.product_description.trim() || undefined,
+                      batch_number: identificationForm.batch_number.trim() || undefined,
+                      department: identificationForm.department.trim() || undefined,
+                      failure_mode: identificationForm.failure_mode.trim() || undefined,
+                      reported_problem: identificationForm.reported_problem.trim() || undefined,
+                      severity: identificationForm.severity,
+                      branch_code: identificationForm.branch_code,
+                      nonconformity_scope: identificationForm.nonconformity_scope,
+                      client_nc_registry: identificationForm.client_nc_registry.trim() || undefined,
+                    });
+                  })
+                }
+              >
+                <Save size={16} />
+                {saving === "identification" ? "Salvando…" : "Salvar identificação"}
+              </button>
+            </FormActions>
+            <dl className="pac-dl pac-dl--compact">
               <div>
-                <dt>Cliente</dt>
-                <dd>{plan.customer_name ?? "—"}</dd>
+                <dt>Status atual</dt>
+                <dd>
+                  <StatusBadge status={plan.status} />
+                </dd>
               </div>
               <div>
                 <dt>Filial</dt>
                 <dd>{branchLabel(plan.branch_code)}</dd>
               </div>
               <div>
-                <dt>Produto</dt>
-                <dd>
-                  {plan.product_code ?? "—"}
-                  {plan.product_description ? ` — ${plan.product_description}` : ""}
-                </dd>
-              </div>
-              <div>
-                <dt>Lote</dt>
-                <dd>{plan.batch_number ?? "—"}</dd>
-              </div>
-              <div>
-                <dt>Escopo NC</dt>
+                <dt>Escopo</dt>
                 <dd>
                   <ScopeBadge scope={plan.nonconformity_scope} />
                 </dd>
@@ -240,16 +388,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 <dd>
                   <SeverityBadge severity={plan.severity} />
                 </dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>
-                  <StatusBadge status={plan.status} />
-                </dd>
-              </div>
-              <div className="pac-dl__full">
-                <dt>Relato</dt>
-                <dd>{plan.reported_problem ?? "—"}</dd>
               </div>
             </dl>
             <div className="pac-inline-form">
@@ -316,6 +454,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           <EvidencePanel
             planId={planId}
             evidences={detail.evidences ?? []}
+            actions={detail.actions ?? []}
             onChanged={load}
           />
 

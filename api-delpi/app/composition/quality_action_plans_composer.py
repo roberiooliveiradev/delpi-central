@@ -8,6 +8,7 @@ from app.application.use_cases.quality_action_plans.quality_action_plan_analysis
 from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
     CreateQualityActionPlanUseCase,
     UpdateQualityActionPlanStatusUseCase,
+    UpdateQualityActionPlanUseCase,
 )
 from app.infrastructure.persistence.plugins.repositories.quality_action_plans.postgres_quality_action_plan_read_repository import (
     PostgresQualityActionPlanRepository,
@@ -28,6 +29,10 @@ def build_create_quality_action_plan_use_case() -> CreateQualityActionPlanUseCas
 
 def build_update_quality_action_plan_status_use_case() -> UpdateQualityActionPlanStatusUseCase:
     return UpdateQualityActionPlanStatusUseCase(build_quality_action_plan_repository())
+
+
+def build_update_quality_action_plan_use_case() -> UpdateQualityActionPlanUseCase:
+    return UpdateQualityActionPlanUseCase(build_quality_action_plan_repository())
 
 
 def build_upsert_ishikawa_use_case() -> UpsertIshikawaUseCase:

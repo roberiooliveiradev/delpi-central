@@ -37,7 +37,6 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 # Plugin build
 cd plugins/quality-action-plans && npm run build
 
-# API PAC (se container ativo)
-curl -s -H "Authorization: Bearer $PAC_QUALITY_API_KEY" \
-  https://pac-api.minhadelpi.com.br/quality/action-plans?page_size=1
+# Smoke homologação (com JWT)
+TOKEN="<jwt>" bash scripts/homologacao/check-quality-action-plans.sh
 ```

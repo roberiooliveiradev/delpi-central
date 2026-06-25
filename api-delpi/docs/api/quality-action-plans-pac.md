@@ -4,7 +4,7 @@ CRUD e leitura consolidada de **planos de ação central de qualidade** (PAC), p
 
 **Plugin consumidor:** `plugins/quality-action-plans`  
 **Agente GPT (escrita alternativa):** `api-pac-quality` em `pac-api.minhadelpi.com.br` — mesma base Postgres, autenticação por API key.  
-**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V005)
+**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V006)
 
 **Formato:** envelope `{ success, message, data, meta }` (Playbook 10).
 
@@ -35,34 +35,29 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | GET | `/quality/action-plans/dashboard` | `get_quality_action_plans_dashboard` | Cards executivos |
 | GET | `/quality/action-plans` | `list_quality_action_plans` | Listagem paginada |
 | GET | `/quality/action-plans/overdue` | `list_quality_action_plans_overdue` | Planos com ações vencidas |
-| GET | `/quality/action-plans/{plan_id}` | `get_quality_action_plan_detail` | Detalhe (plano + Ishikawa + 5 Porquês + ações + histórico) |
+| GET | `/quality/action-plans/{plan_id}` | `get_quality_action_plan_detail` | Detalhe completo |
+
+### GET `/quality/action-plans/{plan_id}` — `data`
+
+| Chave | Conteúdo |
+|-------|----------|
+| `plan` | Cabeçalho do plano (incl. `customer_template`, `client_nc_registry`, `template_payload`) |
+| `ishikawa` | Análise Ishikawa ou `null` |
+| `five_whys` | 5 Porquês (ocorrência + `detection_why_*`) ou `null` |
+| `team_members` | Equipe de análise (relatório 8D) |
+| `evidences` | Evidências anexadas |
+| `actions` | Ações (`cause_track` quando aplicável) |
+| `history` | Histórico de eventos |
 
 ### GET `/quality/action-plans/dashboard`
 
 **Query:** `branch_code` (`01` \| `02`, opcional), `nonconformity_scope` (`internal` \| `external`, opcional)
 
-**`data` (consolidado):**
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `open_plans` | int | Planos abertos |
-| `critical_open` | int | Críticos abertos |
-| `waiting_validation` | int | Aguardando validação |
-| `completed_this_month` | int | Concluídos no mês corrente |
-| `overdue_actions` | int | Ações vencidas |
-| `overdue_plans` | int | Planos com ação vencida |
-| `by_branch` | array | `{ branch_code, open_plans, critical_open }` — só sem filtro de filial/escopo |
-| `by_scope` | array | `{ nonconformity_scope, open_plans, critical_open }` — só consolidado |
-| `open_internal` | int | Abertos com escopo `internal` |
-| `open_external` | int | Abertos com escopo `external` |
-| `branch_code` | string | Presente quando filtrado por filial |
-| `nonconformity_scope` | string | Presente quando filtrado por escopo |
+**`data` (consolidado):** `open_plans`, `critical_open`, `waiting_validation`, `completed_this_month`, `overdue_actions`, `overdue_plans`, `by_branch`, `by_scope`, `open_internal`, `open_external`
 
 ### GET `/quality/action-plans` e `/overdue`
 
-**Query comum:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`
-
-**`data`:** `{ items: [...], pagination: { page, page_size, total, total_pages } }`
+**Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`
 
 ---
 
@@ -70,13 +65,20 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 | Método | Rota | `operationId` | Descrição |
 |--------|------|---------------|-----------|
-| POST | `/quality/action-plans` | `create_quality_action_plan` | Criar plano (`branch_code` obrigatório) |
-| PATCH | `/quality/action-plans/{plan_id}/status` | `update_quality_action_plan_status` | Atualizar status do plano |
+| POST | `/quality/action-plans` | `create_quality_action_plan` | Criar plano |
+| PATCH | `/quality/action-plans/{plan_id}` | `update_quality_action_plan` | Atualizar identificação do plano |
+| PATCH | `/quality/action-plans/{plan_id}/status` | `update_quality_action_plan_status` | Atualizar status |
 | PUT | `/quality/action-plans/{plan_id}/ishikawa` | `upsert_quality_action_plan_ishikawa` | Ishikawa (upsert) |
-| PUT | `/quality/action-plans/{plan_id}/five-whys` | `upsert_quality_action_plan_five_whys` | 5 Porquês (upsert) |
-| POST | `/quality/action-plans/{plan_id}/actions` | `create_quality_action_plan_actions` | Criar uma ou mais ações |
+| PUT | `/quality/action-plans/{plan_id}/five-whys` | `upsert_quality_action_plan_five_whys` | 5 Porquês duplo (upsert) |
+| POST | `/quality/action-plans/{plan_id}/actions` | `create_quality_action_plan_actions` | Criar ações |
 | PATCH | `/quality/action-plans/{plan_id}/actions/{action_id}` | `update_quality_action_plan_action` | Atualizar ação |
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review` | `record_quality_action_plan_effectiveness` | Registrar eficácia |
+| PUT | `/quality/action-plans/{plan_id}/rnc-8d` | `upsert_quality_action_plan_rnc_8d` | Salvar relatório 8D |
+| GET | `/quality/action-plans/{plan_id}/export/rnc-8d` | `export_quality_action_plan_rnc_8d` | Exportar planilha Excel |
+| GET | `/quality/action-plans/{plan_id}/evidences` | `list_quality_action_plan_evidences` | Listar evidências |
+| POST | `/quality/action-plans/{plan_id}/evidences` | `attach_quality_action_plan_evidence` | Anexar arquivo (multipart) |
+| GET | `/quality/action-plans/{plan_id}/evidences/{evidence_id}/file` | — | Download do arquivo |
+| DELETE | `/quality/action-plans/{plan_id}/evidences/{evidence_id}` | `delete_quality_action_plan_evidence` | Remover evidência |
 
 ### POST `/quality/action-plans` — corpo mínimo
 
@@ -94,8 +96,31 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 - `branch_code`: `01` ou `02` (obrigatório)
 - `nonconformity_scope`: `internal` ou `external` (obrigatório; default `external`)
-- `status` inicial: `draft` ou `triage`
-- Código gerado automaticamente: `PAC-YYYY-####` (sequência `quality_action_plan`)
+- Código gerado: `PAC-YYYY-####`
+
+### PATCH `/quality/action-plans/{plan_id}`
+
+Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_contact`, `product_code`, `product_description`, `batch_number`, `reported_problem`, `severity`, `branch_code`, `nonconformity_scope`, `department`, `failure_mode`, `customer_template` (`generic` \| `rnc_8d`), `client_nc_registry`, etc.
+
+### POST evidências (multipart)
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `file` | arquivo | Obrigatório (máx. 25 MB) |
+| `evidence_type` | string | `email`, `pdf`, `image`, … |
+| `section` | string | `general`, `containment`, `root_cause`, `attachments`, … |
+| `action_id` | UUID | Opcional — vincula a uma ação do plano (V007) |
+| `description` | string | Opcional |
+| `knowledge_visible` | bool | Default `true` |
+
+**Storage:** variável `PAC_EVIDENCE_UPLOAD_DIR` (default `/app/data/pac-quality-evidences`).
+
+### Relatório 8D (V006)
+
+- `customer_template`: `generic` ou `rnc_8d`
+- `template_payload`: JSON com seções do formulário (contenção, NC, eficácia, preventiva, documentação)
+- Template Excel: `api-delpi/app/content/templates/quality/rnc_8d_template.xlsx` (copiar no deploy)
+- Export inclui imagens de evidência na aba `Anexos(Evidencias)` (tipos `image` ou `mime` `image/*`)
 
 ### Status do plano
 
@@ -103,29 +128,34 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 ### Tipos de ação
 
-`containment`, `corrective`, `preventive`, `verification`, `standardization`, `training`
+`containment`, `corrective`, `preventive`, `verification`, `standardization`, `training` — com `cause_track`: `occurrence` | `detection` quando NC 8D.
 
 ---
 
 ## Inteligência (api-pac-quality)
 
-Casos similares, padrões de solução e sugestão de ações permanecem na **api-pac-quality** (`POST /quality/action-plans/intelligence/*`), consumidos pelo agente GPT — não expostos na api-delpi nesta fase.
+Casos similares, padrões de solução e sugestão de ações: `POST /quality/action-plans/intelligence/*` na **api-pac-quality** (agente GPT). Paridade de escrita com api-delpi inclui `pac_upsert_rnc_8d`, `pac_attach_plan_evidence`, `pac_update_action_plan`.
 
 ---
 
-## Testes
+## Migrations
+
+```bash
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin quality-action-plans
+```
+
+| Versão | Conteúdo |
+|--------|----------|
+| V006 | `customer_template`, `rnc_8d`, evidências com arquivo, equipe, trilha detecção |
+
+---
+
+## Testes e smoke
 
 ```bash
 cd delpi-central
 .venv/bin/python -m pytest api-delpi/tests/test_quality_action_plans_dashboard.py \
   api-delpi/tests/test_quality_action_plans_write_use_cases.py -q
-```
 
-Smoke manual (container):
-
-```bash
-docker exec delpi-api-delpi python -c "
-from app.composition.quality_action_plans_composer import build_quality_action_plan_read_repository
-print(build_quality_action_plan_read_repository().get_dashboard_summary(branch_code='01'))
-"
+TOKEN="<jwt>" bash scripts/homologacao/check-quality-action-plans.sh
 ```
