@@ -979,6 +979,17 @@ export function shouldShowActionResults(
     return false;
   }
 
+  const externalCalls = toolCalls.filter(
+    (toolCall) => toolCall.name === "execute_external_action",
+  );
+
+  if (
+    externalCalls.length > 0 &&
+    externalCalls.every((toolCall) => toolCall.metadata?.ok === false)
+  ) {
+    return false;
+  }
+
   if (shouldShowRichPresentation(content, toolCalls)) {
     return false;
   }

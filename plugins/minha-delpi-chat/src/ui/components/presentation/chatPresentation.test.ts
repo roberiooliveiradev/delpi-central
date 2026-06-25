@@ -808,4 +808,19 @@ describe("shouldShowActionResults", () => {
 
     expect(shouldShowActionResults("", toolCalls)).toBe(false);
   });
+
+  it("oculta JSON bruto quando todas as consultas falharam", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: false,
+          statusCode: 504,
+          responsePreview: "A consulta demorou mais que o esperado",
+        },
+      },
+    ]);
+
+    expect(shouldShowActionResults("", toolCalls)).toBe(false);
+  });
 });

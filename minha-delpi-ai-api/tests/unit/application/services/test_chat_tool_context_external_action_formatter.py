@@ -69,6 +69,25 @@ def test_safe_metadata_preserves_existing_data_answer_when_enrichment_skips():
     assert safe_metadata.get("dataAnswer") == incoming_data_answer
 
 
+def test_safe_metadata_uses_friendly_preview_on_failure():
+    formatter = ChatToolContextExternalActionFormatter(ExternalActionResultPresenter())
+    safe_metadata = formatter._build_safe_tool_metadata(
+        "execute_external_action",
+        {
+            "ok": False,
+            "statusCode": 504,
+            "path": "/products/90260205/factory-status",
+            "error": "timeout",
+        },
+        {"success": False, "error": "timeout", "message": "read timed out"},
+    )
+
+    preview = str(safe_metadata.get("responsePreview") or "")
+    assert "read timed out" not in preview
+    assert "{" not in preview
+    assert preview
+
+
 def test_format_external_action_context_skips_template_linhas_when_everywhere():
     import re
 

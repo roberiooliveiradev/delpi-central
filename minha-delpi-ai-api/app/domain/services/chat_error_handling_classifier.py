@@ -464,6 +464,11 @@ class ChatErrorHandlingClassifier:
         if error_text:
             return error_text.lower()
 
+        metadata_error = str(metadata.get("error") or "").strip()
+
+        if metadata_error:
+            return metadata_error.lower()
+
         humanized = metadata.get("humanizedSummary")
 
         if isinstance(humanized, dict):
@@ -591,7 +596,7 @@ class ChatErrorHandlingClassifier:
                 elif status_code >= 500 or "unavailable" in error_text:
                     summary["api_unavailable"] = True
 
-                if "timeout" in error_text or status_code == 408:
+                if "timeout" in error_text or status_code in {408, 504}:
                     summary["timeout"] = True
 
                 continue

@@ -45,122 +45,134 @@ class ChatToolContextExternalActionFormatter:
 
             if tool_name == "execute_external_action":
                 path = str(safe_metadata.get("path") or "")
-                attached_data = self._attach_request_sql(data, None, safe_metadata)
-                preview = self._build_response_preview(attached_data)
-                safe_metadata["responsePreview"] = preview
+                tool_ok = safe_metadata.get("ok")
 
-                if "/analyser" in path.lower() and preview.endswith("\n…"):
-                    safe_metadata["authorizedResult"] = attached_data
-                operational_root = self._presenter._unwrap_data(attached_data)
-
-                if isinstance(attached_data, dict):
-                    envelope_meta = attached_data.get("meta")
-
-                    if isinstance(envelope_meta, dict) and not isinstance(
-                        safe_metadata.get("apiDelpiResponseMeta"),
-                        dict,
-                    ):
-                        safe_metadata["apiDelpiResponseMeta"] = envelope_meta
-
-                if isinstance(operational_root, dict):
-                    from app.domain.services.chat_operational_commentary_enrichment_service import (
-                        ChatOperationalCommentaryEnrichmentService,
+                if tool_ok is False:
+                    from app.domain.services.chat_security_messaging_service import (
+                        ChatSecurityMessagingService,
                     )
 
-                    ChatOperationalCommentaryEnrichmentService.enrich_metadata(
+                    safe_metadata["responsePreview"] = ChatSecurityMessagingService.resolve_api_failure(
                         safe_metadata,
-                        data=operational_root,
-                        format_quantity=lambda value, field_key=None: self._presenter._format_field_value(
-                            str(field_key or "available_quantity"),
-                            value,
-                        ),
+                        path=path,
                     )
-                    profile_key = str(
-                        (safe_metadata.get("dataAnswer") or {}).get("profileKey") or ""
-                    )
-                    data_answer = safe_metadata.get("dataAnswer")
+                else:
+                    attached_data = self._attach_request_sql(data, None, safe_metadata)
+                    preview = self._build_response_preview(attached_data)
+                    safe_metadata["responsePreview"] = preview
 
-                    if isinstance(data_answer, dict) and profile_key in {
-                        "generic_kpi_series",
-                        "kpi_series",
-                    }:
-                        from app.domain.services.chat_presentation_scalar_field_commentary_service import (
-                            ChatPresentationScalarFieldCommentaryService,
+                    if "/analyser" in path.lower() and preview.endswith("\n…"):
+                        safe_metadata["authorizedResult"] = attached_data
+                    operational_root = self._presenter._unwrap_data(attached_data)
+
+                    if isinstance(attached_data, dict):
+                        envelope_meta = attached_data.get("meta")
+
+                        if isinstance(envelope_meta, dict) and not isinstance(
+                            safe_metadata.get("apiDelpiResponseMeta"),
+                            dict,
+                        ):
+                            safe_metadata["apiDelpiResponseMeta"] = envelope_meta
+
+                    if isinstance(operational_root, dict):
+                        from app.domain.services.chat_operational_commentary_enrichment_service import (
+                            ChatOperationalCommentaryEnrichmentService,
                         )
 
-                        ChatPresentationScalarFieldCommentaryService.apply_text_presentation(
+                        ChatOperationalCommentaryEnrichmentService.enrich_metadata(
                             safe_metadata,
-                            data_answer,
+                            data=operational_root,
+                            format_quantity=lambda value, field_key=None: self._presenter._format_field_value(
+                                str(field_key or "available_quantity"),
+                                value,
+                            ),
                         )
+                        profile_key = str(
+                            (safe_metadata.get("dataAnswer") or {}).get("profileKey") or ""
+                        )
+                        data_answer = safe_metadata.get("dataAnswer")
 
-                from app.domain.services.chat_presentation_data_only_prose_service import (
-                    ChatPresentationDataOnlyProseService,
-                )
-                from app.domain.services.chat_presentation_prose_delivery_service import (
-                    ChatPresentationProseDeliveryService,
-                )
+                        if isinstance(data_answer, dict) and profile_key in {
+                            "generic_kpi_series",
+                            "kpi_series",
+                        }:
+                            from app.domain.services.chat_presentation_scalar_field_commentary_service import (
+                                ChatPresentationScalarFieldCommentaryService,
+                            )
 
-                humanized = ChatPresentationDataOnlyProseService.resolve_humanized_summary(
-                    self._presenter,
-                    attached_data,
-                    path=path,
-                    metadata=safe_metadata,
-                )
+                            ChatPresentationScalarFieldCommentaryService.apply_text_presentation(
+                                safe_metadata,
+                                data_answer,
+                            )
 
-                if isinstance(humanized, dict):
-                    linhas = [
-                        str(line).strip()
-                        for line in (humanized.get("linhas") or [])
-                        if str(line or "").strip()
-                    ]
-                    decision = safe_metadata.get("presentationDecision")
+                    from app.domain.services.chat_presentation_data_only_prose_service import (
+                        ChatPresentationDataOnlyProseService,
+                    )
+                    from app.domain.services.chat_presentation_prose_delivery_service import (
+                        ChatPresentationProseDeliveryService,
+                    )
 
-                    if (
-                        isinstance(decision, dict)
-                        and str(decision.get("selected") or "").strip().lower() == "kpi"
-                        and linhas
-                    ):
-                        titulo = str(humanized.get("titulo") or "").strip()
+                    humanized = ChatPresentationDataOnlyProseService.resolve_humanized_summary(
+                        self._presenter,
+                        attached_data,
+                        path=path,
+                        metadata=safe_metadata,
+                    )
+
+                    if isinstance(humanized, dict):
                         linhas = [
-                            titulo or "Indicadores disponíveis no painel de KPIs.",
+                            str(line).strip()
+                            for line in (humanized.get("linhas") or [])
+                            if str(line or "").strip()
                         ]
-
-                    if humanized.get("titulo") or linhas:
-                        titulo = str(humanized.get("titulo") or "").strip()
-
-                        prepared = {
-                            "titulo": titulo,
-                            "linhas": linhas,
-                        }
-
-                        if isinstance(humanized.get("linhas_detalhe"), list):
-                            prepared["linhas_detalhe"] = humanized.get("linhas_detalhe")
-
-                        prepared = ChatPresentationDataOnlyProseService.prepare_humanized_for_metadata(
-                            safe_metadata,
-                            prepared,
-                        )
-
-                        if prepared:
-                            safe_metadata["humanizedSummary"] = prepared
+                        decision = safe_metadata.get("presentationDecision")
 
                         if (
-                            not ChatPresentationDataOnlyProseService.is_data_only_metadata(
-                                safe_metadata,
-                            )
-                            and ChatPresentationProseDeliveryService.template_prose_allowed()
+                            isinstance(decision, dict)
+                            and str(decision.get("selected") or "").strip().lower() == "kpi"
+                            and linhas
                         ):
-                            self._merge_data_commentary_into_humanized_summary(safe_metadata)
+                            titulo = str(humanized.get("titulo") or "").strip()
+                            linhas = [
+                                titulo or "Indicadores disponíveis no painel de KPIs.",
+                            ]
 
-                            from app.domain.services.chat_tool_context_presentation_service import (
-                                ChatToolContextPresentationService,
-                            )
+                        if humanized.get("titulo") or linhas:
+                            titulo = str(humanized.get("titulo") or "").strip()
 
-                            ChatToolContextPresentationService.sync_text_presentation_from_humanized(
+                            prepared = {
+                                "titulo": titulo,
+                                "linhas": linhas,
+                            }
+
+                            if isinstance(humanized.get("linhas_detalhe"), list):
+                                prepared["linhas_detalhe"] = humanized.get("linhas_detalhe")
+
+                            prepared = ChatPresentationDataOnlyProseService.prepare_humanized_for_metadata(
                                 safe_metadata,
+                                prepared,
                             )
 
-            tool_ok = safe_metadata.get("ok")
+                            if prepared:
+                                safe_metadata["humanizedSummary"] = prepared
+
+                            if (
+                                not ChatPresentationDataOnlyProseService.is_data_only_metadata(
+                                    safe_metadata,
+                                )
+                                and ChatPresentationProseDeliveryService.template_prose_allowed()
+                            ):
+                                self._merge_data_commentary_into_humanized_summary(safe_metadata)
+
+                                from app.domain.services.chat_tool_context_presentation_service import (
+                                    ChatToolContextPresentationService,
+                                )
+
+                                ChatToolContextPresentationService.sync_text_presentation_from_humanized(
+                                    safe_metadata,
+                                )
+
+                tool_ok = safe_metadata.get("ok")
 
             if tool_ok is False:
                 for key, value in preserved_insight_metadata.items():

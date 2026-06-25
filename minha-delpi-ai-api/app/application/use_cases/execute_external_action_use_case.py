@@ -141,11 +141,15 @@ class ExecuteExternalActionUseCase:
             },
         )
 
-        presentation_metadata = self._build_presentation_metadata(
-            action=action,
-            sanitized_data=sanitized_data,
-            resolved_path=resolved_path,
-            request_parameters=request_parameters,
+        presentation_metadata = (
+            self._build_presentation_metadata(
+                action=action,
+                sanitized_data=sanitized_data,
+                resolved_path=resolved_path,
+                request_parameters=request_parameters,
+            )
+            if effective_ok
+            else {}
         )
 
         from app.domain.services.chat_operational_api_domain_service import (
