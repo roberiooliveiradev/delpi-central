@@ -47,6 +47,22 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
 
         raw_answer = str(answer or "").strip()
 
+        if not raw_answer:
+            fallback = ChatOperationalLlmSynthesisBriefDirectService.try_build_quality_fallback(
+                message,
+                tool_calls,
+                response_mode=normalized_mode,
+            )
+
+            if fallback:
+                return cls._finalize_body(
+                    fallback,
+                    message=message,
+                    tool_calls=tool_calls,
+                    response_mode=normalized_mode,
+                    response_mode_effect=effect,
+                )
+
         if cls._should_try_commentary_before_enrich(normalized_mode, raw_answer, message, tool_calls):
             fallback = ChatOperationalLlmSynthesisBriefDirectService.try_build_quality_fallback(
                 message,

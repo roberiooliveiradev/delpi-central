@@ -135,7 +135,13 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 - `normalCommentaryDirect.enabled: true` em `response_modes.json`.
 - `apply_turn_direct_answer_policy` prioriza `dataCommentary` antes de `directAnswer` legado no `tool_context`.
 - `should_omit_legacy_tool_context_direct_answer` no pipeline de tools (evita presenter legado quando `llmProseDecoupled`).
+- `preserveDirectAnswerStages` sem `direct_answer` genérico (evita preservar markdown stale antes da síntese LLM).
 - Regressão: `PROSE_COMMENTARY_DIRECT_CASES` + `test_chat_prose_commentary_direct_regression.py` (meta ROL filial).
+
+## Pós-Fase 14 — entityPathHints produto (jun/2026)
+
+- `_matches_entity_path_hint` resolve `/products/{code}/…` a partir de hints `/products/0/…`.
+- `pathEntityFallbacks` reduzido a 7 entradas não cobertas por hint (branch ROL, typos financeiros, catálogo MP, LMP).
 
 ## Pendente (pós-Fase 14)
 

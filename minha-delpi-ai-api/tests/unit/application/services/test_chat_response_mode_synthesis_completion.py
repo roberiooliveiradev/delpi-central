@@ -1,3 +1,8 @@
+from app.composition.content_composer import configure_domain_infrastructure_ports
+
+configure_domain_infrastructure_ports()
+
+
 def test_resolve_authorized_persisted_answer_skips_when_llm_synthesis_effect():
     from app.domain.services.chat_operational_narrative_synthesis_service import (
         ChatOperationalNarrativeSynthesisService,
@@ -53,7 +58,9 @@ def test_resolve_authorized_persisted_answer_backfills_from_data_commentary_when
                 "ok": True,
                 "llmProseDecoupled": True,
                 "dataCommentary": {
-                    "summary": "O produto **10080045** — TERM. OLHAL M6.",
+                    "highlights": [
+                        "O produto **10080045** — TERM. OLHAL M6.",
+                    ],
                     "attention": ["Plano de inspeção não cadastrado."],
                 },
             },
@@ -66,7 +73,7 @@ def test_resolve_authorized_persisted_answer_backfills_from_data_commentary_when
         message="me fale do produto 10080045",
         skip_replacement=True,
         response_mode_effect="llm_synthesis",
-        response_mode="fast",
+        response_mode="normal",
     )
 
     assert "10080045" in persisted

@@ -20,9 +20,7 @@
       "small_talk",
       "utility_direct",
       "common_chat_operational_guidance",
-      "direct_answer",
-      "meta_direct_answer",
-      "capabilities"
+      "meta_direct_answer"
     ],
     "deprecateHumanizedLinhasAsProse": true,
     "allowTemplateProseFallback": false,

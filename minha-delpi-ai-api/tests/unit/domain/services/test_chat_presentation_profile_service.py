@@ -66,6 +66,18 @@ def test_resolve_entity_from_path_json_hints_and_fallbacks() -> None:
         )
         == "product_structure"
     )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/products/90269001/stock"
+        )
+        == "product_stock"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
+            "/commercial/branch_rol_target_pct"
+        )
+        == "commercial_rol_target"
+    )
     assert ChatPresentationProfileService.entity_path_hint("supplies_cpv") == "/supplies/cpv"
 
 

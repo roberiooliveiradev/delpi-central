@@ -372,6 +372,35 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         )
 
     @classmethod
+    def _matches_entity_path_hint(cls, path_lower: str, hint_lower: str) -> bool:
+        if not hint_lower:
+            return False
+
+        if path_lower == hint_lower or path_lower.endswith(hint_lower):
+            return True
+
+        marker = "/products/"
+
+        if marker not in hint_lower or marker not in path_lower:
+            return False
+
+        path_tail = path_lower.split(marker, 1)[1]
+        hint_tail = hint_lower.split(marker, 1)[1]
+        path_parts = [part for part in path_tail.split("/") if part]
+        hint_parts = [part for part in hint_tail.split("/") if part]
+
+        if not path_parts or not hint_parts:
+            return False
+
+        if hint_parts[0] not in {"0", "{code}"}:
+            return False
+
+        if not (path_parts[0].isdigit() or path_parts[0] in {"{code}", "0"}):
+            return False
+
+        return path_parts[1:] == hint_parts[1:]
+
+    @classmethod
     def resolve_entity_from_path(cls, path: str | None) -> str | None:
         lowered = cls.path_lowered(path).rstrip("/")
 
@@ -381,10 +410,7 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         for entity, hint in cls.entity_path_hints().items():
             hint_lower = str(hint or "").lower().rstrip("/")
 
-            if not hint_lower:
-                continue
-
-            if lowered == hint_lower or lowered.endswith(hint_lower):
+            if cls._matches_entity_path_hint(lowered, hint_lower):
                 return entity
 
         for fragment, entity in cls.path_entity_fallbacks():

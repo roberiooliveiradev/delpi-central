@@ -115,6 +115,7 @@ def test_post_tool_capabilities_question_routes_to_llm_not_direct_answer():
     )
     result = _resolve_post_tool(
         message="o que você pode fazer?",
+        workspace_context={"userActivatedAgent": True, "actionsEnabled": True},
         pipeline_stages=[],
         tool_context={},
         tool_calls=[],

@@ -1908,6 +1908,23 @@
   },
   "entityPathHints": {
     "product_analyser": "/products/0/analyser",
+    "product_stock": "/products/0/stock",
+    "product_structure": "/products/0/structure",
+    "product_parents": "/products/0/parents",
+    "product_factory_status": "/products/0/factory-status",
+    "product_production_status": "/products/0/production-status",
+    "product_shipping_status": "/products/0/shipping-status",
+    "product_structure_exclusivity": "/products/0/structure/exclusivity",
+    "product_raw_material_price_intelligence": "/products/0/raw-material-price-intelligence",
+    "product_cost_impact_simulation": "/products/0/cost-impact-simulation",
+    "product_last_purchase": "/products/0/last-purchase",
+    "product_directives": "/products/0/directives",
+    "product_purchase_price_history": "/products/0/purchase-price-history",
+    "product_purchase_budget_history": "/products/0/purchase-budget-history",
+    "product_guide": "/products/0/guide",
+    "product_inspection": "/products/0/inspection",
+    "product_search": "/products/search",
+    "product": "/products/0/summary",
     "product_pricing": "/products/0/pricing",
     "product_purchases": "/products/0/purchases",
     "product_suppliers": "/products/0/suppliers",
@@ -1996,120 +2013,8 @@
   },
   "pathEntityFallbacks": [
     {
-      "contains": "/analyser",
-      "entity": "product_analyser"
-    },
-    {
-      "contains": "/factory-status",
-      "entity": "product_factory_status"
-    },
-    {
-      "contains": "/structure/exclusivity",
-      "entity": "product_structure_exclusivity"
-    },
-    {
       "contains": "/exclusive-raw-materials/catalog",
       "entity": "exclusive_raw_materials_catalog"
-    },
-    {
-      "contains": "/production-status",
-      "entity": "product_production_status"
-    },
-    {
-      "contains": "/shipping-status",
-      "entity": "product_shipping_status"
-    },
-    {
-      "contains": "/raw-material-price-intelligence",
-      "entity": "product_raw_material_price_intelligence"
-    },
-    {
-      "contains": "/cost-impact-simulation",
-      "entity": "product_cost_impact_simulation"
-    },
-    {
-      "contains": "/last-purchase",
-      "entity": "product_last_purchase"
-    },
-    {
-      "contains": "/purchase-price-history",
-      "entity": "product_purchase_price_history"
-    },
-    {
-      "contains": "/purchase-budget-history",
-      "entity": "product_purchase_budget_history"
-    },
-    {
-      "contains": "/directives/",
-      "entity": "product_directives"
-    },
-    {
-      "contains": "/structure",
-      "entity": "product_structure"
-    },
-    {
-      "contains": "/parents",
-      "entity": "product_parents"
-    },
-    {
-      "contains": "/stock",
-      "entity": "product_stock"
-    },
-    {
-      "contains": "/guide",
-      "entity": "product_guide"
-    },
-    {
-      "contains": "/inspection",
-      "entity": "product_inspection"
-    },
-    {
-      "contains": "/pricing",
-      "entity": "product_pricing"
-    },
-    {
-      "contains": "/purchases",
-      "entity": "product_purchases"
-    },
-    {
-      "contains": "/suppliers",
-      "entity": "product_suppliers"
-    },
-    {
-      "contains": "/customers",
-      "entity": "product_customers"
-    },
-    {
-      "contains": "/internal-movements",
-      "entity": "product_internal_movements"
-    },
-    {
-      "contains": "/inbound-invoice-items",
-      "entity": "product_inbound_invoice_items"
-    },
-    {
-      "contains": "/outbound-invoice-items",
-      "entity": "product_outbound_invoice_items"
-    },
-    {
-      "contains": "/open-orders",
-      "entity": "product_open_orders"
-    },
-    {
-      "contains": "/sales/billing",
-      "entity": "product_billing"
-    },
-    {
-      "contains": "/sales",
-      "entity": "product_sales"
-    },
-    {
-      "contains": "/summary",
-      "entity": "product"
-    },
-    {
-      "contains": "/search",
-      "entity": "product_search"
     },
     {
       "contains": "/branch_rol_target_pct",
