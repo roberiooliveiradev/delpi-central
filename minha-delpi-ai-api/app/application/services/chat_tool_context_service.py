@@ -412,6 +412,13 @@ class ChatToolContextService:
             operation_id=safe_metadata.get("operationId"),
         )
 
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(safe_metadata):
+            direct_answer = None
+
         requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
 
         if requested_format:

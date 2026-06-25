@@ -103,16 +103,24 @@ class ChatToolContextResultAssemblyService:
         ):
             action_metadata = safe_tool_calls[0].get("metadata") or {}
             action_arguments = safe_tool_calls[0].get("arguments") or {}
-            direct_answer = host._auxiliary_service._build_direct_answer(
-                host._attach_request_sql(
-                    last_external_action_data,
-                    action_arguments,
-                    action_metadata,
-                ),
-                message=message,
-                path=action_metadata.get("path"),
-                operation_id=action_metadata.get("operationId"),
+
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
             )
+
+            if not ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(
+                action_metadata,
+            ):
+                direct_answer = host._auxiliary_service._build_direct_answer(
+                    host._attach_request_sql(
+                        last_external_action_data,
+                        action_arguments,
+                        action_metadata,
+                    ),
+                    message=message,
+                    path=action_metadata.get("path"),
+                    operation_id=action_metadata.get("operationId"),
+                )
 
         if (
             not direct_answer

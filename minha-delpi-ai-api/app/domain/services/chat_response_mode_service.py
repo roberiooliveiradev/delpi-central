@@ -103,6 +103,38 @@ class ChatResponseModeService:
         if not cls.is_enabled():
             return direct_answer, skip_rag, None
 
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+            MODE_DIRECT,
+            MODE_LLM,
+            MODE_TEMPLATE,
+        )
+
+        from app.domain.services.chat_operational_llm_synthesis_brief_direct_service import (
+            ChatOperationalLlmSynthesisBriefDirectService,
+        )
+
+        mode = ChatPresentationProseDeliveryService.resolve_mode(
+            message,
+            tool_calls,
+            response_mode=response_mode,
+        )
+
+        if mode == MODE_LLM:
+            brief_direct = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+                message,
+                tool_calls,
+                response_mode=response_mode,
+            )
+
+            if brief_direct:
+                ChatOperationalLlmSynthesisBriefDirectService.mark_tool_context(tool_context)
+
+                effect = cls.resolve_synthesis_effect(response_mode)
+                resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(skip_rag, tool_calls)
+
+                return brief_direct, resolved_skip, effect
+
         from app.domain.services.chat_presentation_prose_delivery_content_service import (
             ChatPresentationProseDeliveryContentService,
         )
@@ -137,21 +169,6 @@ class ChatResponseModeService:
         if mode == MODE_LLM:
             effect = cls.resolve_synthesis_effect(response_mode)
             resolved_skip = cls._resolve_skip_rag_for_llm_synthesis(skip_rag, tool_calls)
-
-            from app.domain.services.chat_operational_llm_synthesis_brief_direct_service import (
-                ChatOperationalLlmSynthesisBriefDirectService,
-            )
-
-            brief_direct = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
-                message,
-                tool_calls,
-                response_mode=response_mode,
-            )
-
-            if brief_direct:
-                ChatOperationalLlmSynthesisBriefDirectService.mark_tool_context(tool_context)
-
-                return brief_direct, resolved_skip, effect
 
             if (
                 direct_answer

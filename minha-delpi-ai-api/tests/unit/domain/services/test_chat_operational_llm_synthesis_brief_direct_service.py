@@ -159,3 +159,34 @@ def test_apply_turn_direct_answer_policy_normal_uses_commentary_direct():
     assert skip_rag is True
     assert effect == "llm_synthesis"
     assert tool_context.get("commentaryBriefDirect") is True
+
+
+def test_apply_turn_direct_answer_policy_prefers_commentary_over_stale_tool_context_direct():
+    tool_context: dict = {}
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/commercial/branch_rol_target_pct",
+        "dataCommentary": {
+            "highlights": [
+                "**rol:** R$ 3.717.926,47",
+                "**% meta ROL:** 107,27%",
+            ],
+        },
+    }
+
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="maio de 2026",
+        response_mode="normal",
+        direct_answer="Olá! Eu sou o assistente corporativo Minha DELPI Chat.",
+        skip_rag=True,
+        tool_calls=_tool_calls(metadata),
+        tool_context=tool_context,
+        pipeline_stages=["ingress", "tools", "post_tool", "direct_answer"],
+    )
+
+    assert direct
+    assert "107,27%" in direct or "meta ROL" in direct
+    assert "assistente corporativo" not in direct.lower()
+    assert effect == "llm_synthesis"
+    assert tool_context.get("commentaryBriefDirect") is True
