@@ -16,6 +16,7 @@ import type {
   PlanAction,
 } from "../types/actionPlan";
 import type { CreatePlanPayload } from "../types/planForm";
+import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
 
 const API_BASE = "/apps/api-delpi/quality/action-plans";
 
@@ -122,6 +123,7 @@ export type NewPlanActionPayload = {
   due_date?: string;
   status?: string;
   evidence_required?: boolean;
+  cause_track?: string;
 };
 
 export async function createPlanActions(
@@ -143,6 +145,7 @@ export type UpdatePlanActionPayload = {
   due_date?: string;
   status?: string;
   evidence_required?: boolean;
+  cause_track?: string;
 };
 
 export async function updatePlanAction(
@@ -170,4 +173,76 @@ export async function recordEffectivenessReview(
     },
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao registrar eficácia.");
+}
+
+export async function upsertRnc8dReport(
+  planId: string,
+  body: Rnc8dReportPayload,
+): Promise<ActionPlanDetail> {
+  const envelope = await httpPut<ApiEnvelope<ActionPlanDetail>>(
+    `${API_BASE}/${planId}/rnc-8d`,
+    body,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao salvar relatório 8D.");
+}
+
+export async function exportRnc8dSpreadsheet(planId: string, filename: string): Promise<void> {
+  const { httpDownloadBlob } = await import("./httpClient");
+  const blob = await httpDownloadBlob(`${API_BASE}/${planId}/export/rnc-8d`);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function fetchPlanEvidences(planId: string): Promise<PlanEvidence[]> {
+  const envelope = await httpGet<ApiEnvelope<PlanEvidence[]>>(
+    `${API_BASE}/${planId}/evidences`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao listar evidências.");
+}
+
+export async function uploadPlanEvidence(
+  planId: string,
+  file: File,
+  options: {
+    evidenceType: string;
+    section?: string;
+    description?: string;
+    knowledgeVisible?: boolean;
+  },
+): Promise<PlanEvidence> {
+  const { httpPostForm } = await import("./httpClient");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("evidence_type", options.evidenceType);
+  formData.append("section", options.section ?? "general");
+  if (options.description) formData.append("description", options.description);
+  formData.append("knowledge_visible", String(options.knowledgeVisible ?? true));
+  const envelope = await httpPostForm<ApiEnvelope<PlanEvidence>>(
+    `${API_BASE}/${planId}/evidences`,
+    formData,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao anexar evidência.");
+}
+
+export async function deletePlanEvidence(planId: string, evidenceId: string): Promise<void> {
+  const { httpDelete } = await import("./httpClient");
+  const envelope = await httpDelete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${API_BASE}/${planId}/evidences/${evidenceId}`,
+  );
+  unwrapApiDelpiEnvelope(envelope, "Erro ao remover evidência.");
+}
+
+export async function downloadPlanEvidenceFile(planId: string, evidenceId: string, filename: string): Promise<void> {
+  const { httpDownloadBlob } = await import("./httpClient");
+  const blob = await httpDownloadBlob(`${API_BASE}/${planId}/evidences/${evidenceId}/file`);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body, File, Form, Query, UploadFile
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
 from delpi_auth.authorization import require_any_permission
@@ -9,6 +10,10 @@ from delpi_auth.request_context import get_current_user
 from app.application.security.api_delpi_permissions import (
     QUALITY_ACTION_PLANS_READ_PERMISSIONS,
     QUALITY_ACTION_PLANS_WRITE_PERMISSIONS,
+)
+from app.application.services.quality_action_plans.pac_evidence_storage import (
+    PacEvidenceStorage,
+    PacEvidenceStorageError,
 )
 from app.application.use_cases.quality_action_plans.quality_action_plan_analysis_use_cases import (
     CreateActionItemRequest,
@@ -29,7 +34,9 @@ from app.composition.quality_action_plans_composer import (
     build_upsert_five_whys_use_case,
     build_upsert_ishikawa_use_case,
 )
-from app.core.responses import error_response, not_found_response
+from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
+    build_rnc_8d_workbook,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
@@ -95,6 +102,11 @@ class FiveWhysBody(BaseModel):
     why_3: str | None = None
     why_4: str | None = None
     why_5: str | None = None
+    detection_why_1: str | None = None
+    detection_why_2: str | None = None
+    detection_why_3: str | None = None
+    detection_why_4: str | None = None
+    detection_why_5: str | None = None
     root_cause: str | None = None
     confidence_level: str | None = Field(default=None, pattern="^(low|medium|high)$")
 
@@ -111,6 +123,7 @@ class ActionItemBody(BaseModel):
     due_date: str | None = None
     status: str = Field(default="pending", pattern="^(pending|in_progress|blocked)$")
     evidence_required: bool = False
+    cause_track: str | None = Field(default=None, pattern="^(occurrence|detection)$")
 
 
 class CreateActionsBody(BaseModel):
@@ -128,6 +141,26 @@ class UpdateActionBody(BaseModel):
         pattern="^(pending|in_progress|blocked|completed|cancelled|overdue)$",
     )
     evidence_required: bool | None = None
+    cause_track: str | None = Field(default=None, pattern="^(occurrence|detection)$")
+
+
+class TeamMemberBody(BaseModel):
+    member_name: str = Field(..., min_length=1, max_length=200)
+    department: str | None = Field(default=None, max_length=200)
+    is_leader: bool = False
+    sort_order: int = 0
+
+
+class Rnc8dReportBody(BaseModel):
+    client_nc_registry: str | None = Field(default=None, max_length=100)
+    customer_name: str | None = Field(default=None, max_length=300)
+    customer_contact: str | None = Field(default=None, max_length=300)
+    product_code: str | None = Field(default=None, max_length=50)
+    product_description: str | None = Field(default=None, max_length=500)
+    batch_number: str | None = Field(default=None, max_length=100)
+    reported_problem: str | None = None
+    template_payload: dict | None = None
+    team_members: list[TeamMemberBody] | None = None
 
 
 class EffectivenessReviewBody(BaseModel):
@@ -425,3 +458,188 @@ def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Bo
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao registrar eficácia do plano {plan_id}: {exc}")
         return error_response("Erro ao registrar eficácia.", status_code=500)
+
+
+@router.put("/{plan_id}/rnc-8d")
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        result = repo.upsert_rnc_8d_report(
+            plan_id,
+            {
+                "customer_template": "rnc_8d",
+                "client_nc_registry": body.client_nc_registry,
+                "customer_name": body.customer_name,
+                "customer_contact": body.customer_contact,
+                "product_code": body.product_code,
+                "product_description": body.product_description,
+                "batch_number": body.batch_number,
+                "reported_problem": body.reported_problem,
+                "template_payload": body.template_payload,
+                "team_members": [member.model_dump() for member in body.team_members]
+                if body.team_members is not None
+                else None,
+            },
+            updated_by=_current_user_id(),
+        )
+        if not result:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            result,
+            operation_id="upsert_quality_action_plan_rnc_8d",
+            message="Relatório 8D salvo.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao salvar relatório 8D do plano {plan_id}: {exc}")
+        return error_response("Erro ao salvar relatório 8D.", status_code=500)
+
+
+@router.get("/{plan_id}/export/rnc-8d")
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def export_rnc_8d_spreadsheet(plan_id: str):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        detail = repo.get_plan_detail(plan_id)
+        if not detail:
+            return not_found_response("Plano de ação não encontrado.")
+        content = build_rnc_8d_workbook(detail)
+        plan = detail.get("plan") or {}
+        registry = plan.get("client_nc_registry") or plan.get("code") or plan_id[:8]
+        filename = f"RNC_{registry}_8D.xlsx"
+        return Response(
+            content=content,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except FileNotFoundError as exc:
+        return error_response(str(exc), status_code=500)
+    except Exception as exc:
+        log_error(f"Erro ao exportar relatório 8D do plano {plan_id}: {exc}")
+        return error_response("Erro ao gerar planilha 8D.", status_code=500)
+
+
+@router.get("/{plan_id}/evidences")
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def list_plan_evidences(plan_id: str):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        if not repo.get_plan_by_id(plan_id):
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            repo.list_evidences(plan_id),
+            operation_id="list_quality_action_plan_evidences",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar evidências do plano {plan_id}: {exc}")
+        return error_response("Erro ao listar evidências.", status_code=500)
+
+
+@router.post("/{plan_id}/evidences")
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+async def upload_plan_evidence(
+    plan_id: str,
+    evidence_type: str = Form(
+        ...,
+        pattern="^(email|message|spreadsheet|pdf|image|manual_text|system_reference|other)$",
+    ),
+    section: str = Form(
+        default="general",
+        pattern=(
+            "^(general|nc_description|containment|root_cause|corrective|"
+            "effectiveness|preventive|documentation|attachments)$"
+        ),
+    ),
+    description: str | None = Form(default=None),
+    knowledge_visible: bool = Form(default=True),
+    file: UploadFile = File(...),
+):
+    try:
+        content = await file.read()
+        storage = PacEvidenceStorage()
+        storage.validate_upload(mime_type=file.content_type, size_bytes=len(content))
+        stored_name = storage.save(
+            plan_id=plan_id,
+            original_name=file.filename or "evidence.bin",
+            content=content,
+            mime_type=file.content_type,
+        )
+        repo = build_quality_action_plan_read_repository()
+        data = repo.create_evidence(
+            plan_id,
+            {
+                "type": evidence_type,
+                "file_name": file.filename,
+                "stored_name": stored_name,
+                "mime_type": file.content_type,
+                "size_bytes": len(content),
+                "section": section,
+                "description": description,
+                "knowledge_visible": knowledge_visible,
+                "uploaded_by": _current_user_id(),
+            },
+        )
+        if not data:
+            storage.delete_file(plan_id=plan_id, stored_name=stored_name)
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            data,
+            operation_id="attach_quality_action_plan_evidence",
+            message="Evidência anexada com sucesso.",
+        )
+    except (PluginsRepositoryError, PacEvidenceStorageError) as exc:
+        return error_response(str(exc), status_code=422)
+    except Exception as exc:
+        log_error(f"Erro ao anexar evidência ao plano {plan_id}: {exc}")
+        return error_response("Erro interno ao anexar evidência.", status_code=500)
+
+
+@router.get("/{plan_id}/evidences/{evidence_id}/file")
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def download_plan_evidence(plan_id: str, evidence_id: str):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        evidence = repo.get_evidence(plan_id, evidence_id)
+        if not evidence or not evidence.get("stored_name"):
+            return not_found_response("Evidência não encontrada.")
+        storage = PacEvidenceStorage()
+        file_path = storage.resolve_file(
+            plan_id=plan_id,
+            stored_name=str(evidence["stored_name"]),
+        )
+        return FileResponse(
+            path=file_path,
+            media_type=evidence.get("mime_type") or "application/octet-stream",
+            filename=str(evidence.get("file_name") or evidence["stored_name"]),
+        )
+    except (PluginsRepositoryError, PacEvidenceStorageError) as exc:
+        return error_response(str(exc), status_code=404)
+    except Exception as exc:
+        log_error(f"Erro ao baixar evidência {evidence_id}: {exc}")
+        return error_response("Erro interno ao baixar evidência.", status_code=500)
+
+
+@router.delete("/{plan_id}/evidences/{evidence_id}")
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def delete_plan_evidence(plan_id: str, evidence_id: str):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        evidence = repo.delete_evidence(plan_id, evidence_id)
+        if not evidence:
+            return not_found_response("Evidência não encontrada.")
+        if evidence.get("stored_name"):
+            try:
+                PacEvidenceStorage().delete_file(
+                    plan_id=plan_id,
+                    stored_name=str(evidence["stored_name"]),
+                )
+            except PacEvidenceStorageError:
+                pass
+        return api_delpi_success(
+            {"id": evidence_id, "deleted": True},
+            operation_id="delete_quality_action_plan_evidence",
+            message="Evidência removida.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao remover evidência {evidence_id}: {exc}")
+        return error_response("Erro ao remover evidência.", status_code=500)

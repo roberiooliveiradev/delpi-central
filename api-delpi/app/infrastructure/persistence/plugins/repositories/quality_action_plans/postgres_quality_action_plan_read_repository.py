@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -105,6 +106,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         five_whys = self.fetch_one(
             """
             SELECT id, plan_id, why_1, why_2, why_3, why_4, why_5,
+                   detection_why_1, detection_why_2, detection_why_3,
+                   detection_why_4, detection_why_5,
                    root_cause, confidence_level, created_at, updated_at
               FROM quality.quality_five_whys WHERE plan_id = %s
             """,
@@ -114,10 +117,30 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             """
             SELECT id, plan_id, action_type, description, responsible_user_id,
                    responsible_name, department, due_date, status,
-                   evidence_required, completed_at, created_at, updated_at
+                   evidence_required, cause_track, completed_at, created_at, updated_at
               FROM quality.quality_actions
              WHERE plan_id = %s
              ORDER BY due_date NULLS LAST, created_at ASC
+            """,
+            (plan_id,),
+        )
+        team_members = self.fetch_all(
+            """
+            SELECT id, plan_id, member_name, department, is_leader, sort_order, created_at
+              FROM quality.quality_analysis_team_members
+             WHERE plan_id = %s
+             ORDER BY is_leader DESC, sort_order ASC, created_at ASC
+            """,
+            (plan_id,),
+        )
+        evidences = self.fetch_all(
+            """
+            SELECT id, plan_id, type, file_name, file_url, text_excerpt,
+                   stored_name, mime_type, size_bytes, section, description,
+                   knowledge_visible, uploaded_by, created_at
+              FROM quality.quality_problem_evidences
+             WHERE plan_id = %s
+             ORDER BY created_at DESC
             """,
             (plan_id,),
         )
@@ -137,6 +160,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "plan": serialize_plan_row(plan_row),
             "ishikawa": serialize_row(ishikawa, id_keys=("id", "plan_id")),
             "five_whys": serialize_row(five_whys, id_keys=("id", "plan_id")),
+            "team_members": [
+                serialize_row(row, id_keys=("id", "plan_id")) for row in team_members if row
+            ],
+            "evidences": [
+                serialize_row(row, id_keys=("id", "plan_id")) for row in evidences if row
+            ],
             "actions": [
                 serialize_row(row, id_keys=("id", "plan_id")) for row in actions if row
             ],
@@ -568,15 +597,24 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         row = self.execute_returning_one(
             """
             INSERT INTO quality.quality_five_whys (
-                plan_id, why_1, why_2, why_3, why_4, why_5, root_cause, confidence_level
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                plan_id, why_1, why_2, why_3, why_4, why_5,
+                detection_why_1, detection_why_2, detection_why_3, detection_why_4, detection_why_5,
+                root_cause, confidence_level
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (plan_id) DO UPDATE SET
                 why_1 = EXCLUDED.why_1, why_2 = EXCLUDED.why_2, why_3 = EXCLUDED.why_3,
                 why_4 = EXCLUDED.why_4, why_5 = EXCLUDED.why_5,
+                detection_why_1 = EXCLUDED.detection_why_1,
+                detection_why_2 = EXCLUDED.detection_why_2,
+                detection_why_3 = EXCLUDED.detection_why_3,
+                detection_why_4 = EXCLUDED.detection_why_4,
+                detection_why_5 = EXCLUDED.detection_why_5,
                 root_cause = EXCLUDED.root_cause,
                 confidence_level = EXCLUDED.confidence_level,
                 updated_at = NOW()
             RETURNING id, plan_id, why_1, why_2, why_3, why_4, why_5,
+                      detection_why_1, detection_why_2, detection_why_3,
+                      detection_why_4, detection_why_5,
                       root_cause, confidence_level, created_at, updated_at
             """,
             (
@@ -586,6 +624,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields.get("why_3"),
                 fields.get("why_4"),
                 fields.get("why_5"),
+                fields.get("detection_why_1"),
+                fields.get("detection_why_2"),
+                fields.get("detection_why_3"),
+                fields.get("detection_why_4"),
+                fields.get("detection_why_5"),
                 fields.get("root_cause"),
                 fields.get("confidence_level"),
             ),
@@ -626,11 +669,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 """
                 INSERT INTO quality.quality_actions (
                     plan_id, action_type, description, responsible_user_id,
-                    responsible_name, department, due_date, status, evidence_required
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    responsible_name, department, due_date, status, evidence_required, cause_track
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id, plan_id, action_type, description, responsible_user_id,
                           responsible_name, department, due_date, status,
-                          evidence_required, completed_at, created_at, updated_at
+                          evidence_required, cause_track, completed_at, created_at, updated_at
                 """,
                 (
                     plan_id,
@@ -642,6 +685,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     action.get("due_date"),
                     action.get("status", "pending"),
                     action.get("evidence_required", False),
+                    action.get("cause_track"),
                 ),
                 auto_commit=False,
             )
@@ -668,6 +712,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "due_date",
             "status",
             "evidence_required",
+            "cause_track",
         }
         updates = {key: value for key, value in fields.items() if key in allowed and value is not None}
         if not updates:
@@ -744,6 +789,156 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         self.commit()
         return self.get_plan_by_id(plan_id)
+
+    def upsert_rnc_8d_report(
+        self, plan_id: str, fields: dict[str, Any], *, updated_by: str
+    ) -> dict[str, Any] | None:
+        if not self._plan_exists(plan_id):
+            return None
+
+        template_payload = fields.get("template_payload") or {}
+        self.execute(
+            """
+            UPDATE quality.quality_action_plans
+               SET customer_template = COALESCE(%s, customer_template),
+                   client_nc_registry = COALESCE(%s, client_nc_registry),
+                   customer_name = COALESCE(%s, customer_name),
+                   customer_contact = COALESCE(%s, customer_contact),
+                   product_code = COALESCE(%s, product_code),
+                   product_description = COALESCE(%s, product_description),
+                   batch_number = COALESCE(%s, batch_number),
+                   reported_problem = COALESCE(%s, reported_problem),
+                   template_payload = COALESCE(%s::jsonb, template_payload),
+                   updated_at = NOW()
+             WHERE id = %s AND deleted_at IS NULL
+            """,
+            (
+                fields.get("customer_template", "rnc_8d"),
+                fields.get("client_nc_registry"),
+                fields.get("customer_name"),
+                fields.get("customer_contact"),
+                fields.get("product_code"),
+                fields.get("product_description"),
+                fields.get("batch_number"),
+                fields.get("reported_problem"),
+                json.dumps(template_payload) if template_payload else None,
+                plan_id,
+            ),
+            auto_commit=False,
+        )
+
+        team_members = fields.get("team_members")
+        if team_members is not None:
+            self.execute(
+                "DELETE FROM quality.quality_analysis_team_members WHERE plan_id = %s",
+                (plan_id,),
+                auto_commit=False,
+            )
+            for index, member in enumerate(team_members):
+                self.execute(
+                    """
+                    INSERT INTO quality.quality_analysis_team_members (
+                        plan_id, member_name, department, is_leader, sort_order
+                    ) VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (
+                        plan_id,
+                        member.get("member_name") or member.get("name"),
+                        member.get("department"),
+                        bool(member.get("is_leader")),
+                        member.get("sort_order", index),
+                    ),
+                    auto_commit=False,
+                )
+
+        self.append_history(
+            plan_id=plan_id,
+            event_type="plan_updated",
+            created_by=updated_by,
+            comment="Relatório 8D (materiais adquiridos) atualizado.",
+            auto_commit=False,
+        )
+        self.commit()
+        return self.get_plan_detail(plan_id)
+
+    def list_evidences(self, plan_id: str) -> list[dict[str, Any]]:
+        if not self._plan_exists(plan_id):
+            return []
+        rows = self.fetch_all(
+            """
+            SELECT id, plan_id, type, file_name, file_url, text_excerpt,
+                   stored_name, mime_type, size_bytes, section, description,
+                   knowledge_visible, uploaded_by, created_at
+              FROM quality.quality_problem_evidences
+             WHERE plan_id = %s
+             ORDER BY created_at DESC
+            """,
+            (plan_id,),
+        )
+        return [serialize_row(row, id_keys=("id", "plan_id")) or {} for row in rows if row]
+
+    def get_evidence(self, plan_id: str, evidence_id: str) -> dict[str, Any] | None:
+        row = self.fetch_one(
+            """
+            SELECT id, plan_id, type, file_name, file_url, text_excerpt,
+                   stored_name, mime_type, size_bytes, section, description,
+                   knowledge_visible, uploaded_by, created_at
+              FROM quality.quality_problem_evidences
+             WHERE id = %s AND plan_id = %s
+            """,
+            (evidence_id, plan_id),
+        )
+        return serialize_row(row, id_keys=("id", "plan_id")) if row else None
+
+    def create_evidence(self, plan_id: str, fields: dict[str, Any]) -> dict[str, Any] | None:
+        if not self._plan_exists(plan_id):
+            return None
+        row = self.execute_returning_one(
+            """
+            INSERT INTO quality.quality_problem_evidences (
+                plan_id, type, file_name, file_url, text_excerpt,
+                stored_name, mime_type, size_bytes, section, description,
+                knowledge_visible, uploaded_by
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, plan_id, type, file_name, file_url, text_excerpt,
+                      stored_name, mime_type, size_bytes, section, description,
+                      knowledge_visible, uploaded_by, created_at
+            """,
+            (
+                plan_id,
+                fields["type"],
+                fields.get("file_name"),
+                fields.get("file_url"),
+                fields.get("text_excerpt"),
+                fields.get("stored_name"),
+                fields.get("mime_type"),
+                fields.get("size_bytes"),
+                fields.get("section", "general"),
+                fields.get("description"),
+                fields.get("knowledge_visible", True),
+                fields["uploaded_by"],
+            ),
+            auto_commit=True,
+        )
+        return serialize_row(row, id_keys=("id", "plan_id")) if row else None
+
+    def delete_evidence(self, plan_id: str, evidence_id: str) -> dict[str, Any] | None:
+        row = self.fetch_one(
+            """
+            SELECT id, plan_id, stored_name
+              FROM quality.quality_problem_evidences
+             WHERE id = %s AND plan_id = %s
+            """,
+            (evidence_id, plan_id),
+        )
+        if not row:
+            return None
+        self.execute(
+            "DELETE FROM quality.quality_problem_evidences WHERE id = %s AND plan_id = %s",
+            (evidence_id, plan_id),
+            auto_commit=True,
+        )
+        return serialize_row(row, id_keys=("id", "plan_id"))
 
 
 PostgresQualityActionPlanReadRepository = PostgresQualityActionPlanRepository

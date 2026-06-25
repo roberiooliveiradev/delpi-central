@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   Cog,
+  Download,
   FlaskConical,
   Leaf,
   Ruler,
@@ -12,14 +13,18 @@ import {
 
 import {
   createPlanActions,
+  exportRnc8dSpreadsheet,
   fetchActionPlanDetail,
   recordEffectivenessReview,
   updatePlanAction,
   updatePlanStatus,
   upsertFiveWhys,
   upsertIshikawa,
+  upsertRnc8dReport,
 } from "../api/actionPlansApi";
+import { EvidencePanel } from "../components/EvidencePanel";
 import { PageHeader } from "../components/PageHeader";
+import { Rnc8dReportEditor } from "../components/Rnc8dReportEditor";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
 import { FormActions } from "../components/ui/FormActions";
@@ -39,6 +44,8 @@ import {
   PLAN_STATUSES,
 } from "../constants/actionPlans";
 import type { ActionPlanDetail, FiveWhysAnalysis, IshikawaAnalysis } from "../types/actionPlan";
+import type { Rnc8dReportPayload } from "../types/rnc8d";
+import { emptyRnc8dPayload } from "../types/rnc8d";
 import { formatDate, formatDateTime } from "../utils/format";
 
 type Props = {
@@ -62,9 +69,20 @@ const EMPTY_FIVE_WHYS: FiveWhysAnalysis = {
   why_3: "",
   why_4: "",
   why_5: "",
+  detection_why_1: "",
+  detection_why_2: "",
+  detection_why_3: "",
+  detection_why_4: "",
+  detection_why_5: "",
   root_cause: "",
   confidence_level: "medium",
 };
+
+const CAUSE_TRACK_OPTIONS = [
+  { value: "", label: "—" },
+  { value: "occurrence", label: "Ocorrência" },
+  { value: "detection", label: "Detecção" },
+];
 
 const ISHIKAWA_FIELDS = [
   { key: "machine" as const, label: "Máquina", icon: Cog },
@@ -87,6 +105,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [newActionDescription, setNewActionDescription] = useState("");
   const [newActionResponsible, setNewActionResponsible] = useState("");
   const [newActionDueDate, setNewActionDueDate] = useState("");
+  const [newActionCauseTrack, setNewActionCauseTrack] = useState("");
+  const [rnc8dForm, setRnc8dForm] = useState<Rnc8dReportPayload>({});
   const [effectivenessStatus, setEffectivenessStatus] = useState("pending");
   const [effectivenessNotes, setEffectivenessNotes] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
@@ -100,6 +120,22 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       setStatusValue(data.plan.status);
       setIshikawaForm({ ...EMPTY_ISHIKAWA, ...(data.ishikawa ?? {}) });
       setFiveWhysForm({ ...EMPTY_FIVE_WHYS, ...(data.five_whys ?? {}) });
+      setRnc8dForm({
+        client_nc_registry: data.plan.client_nc_registry ?? "",
+        customer_name: data.plan.customer_name ?? "",
+        customer_contact: data.plan.customer_contact ?? "",
+        product_code: data.plan.product_code ?? "",
+        product_description: data.plan.product_description ?? "",
+        batch_number: data.plan.batch_number ?? "",
+        reported_problem: data.plan.reported_problem ?? "",
+        template_payload: {
+          ...emptyRnc8dPayload(),
+          ...(data.plan.template_payload ?? {}),
+        },
+        team_members: data.team_members?.length
+          ? data.team_members
+          : [{ member_name: "", department: "", is_leader: true }],
+      });
       setEffectivenessStatus(data.plan.effectiveness_status ?? "pending");
       setEffectivenessNotes("");
     } catch (err) {
@@ -130,6 +166,17 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
   const plan = detail?.plan;
   const statusOptions = PLAN_STATUSES.map((item) => ({ value: item.value, label: item.label }));
+  const isRnc8dTemplate = plan?.customer_template === "rnc_8d";
+
+  async function handleExportRnc8d() {
+    setError(null);
+    try {
+      const registry = plan?.client_nc_registry || plan?.code || planId.slice(0, 8);
+      await exportRnc8dSpreadsheet(planId, `RNC_${registry}_8D.xlsx`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao gerar planilha.");
+    }
+  }
 
   return (
     <>
@@ -145,6 +192,12 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(dashboardPath())}>
               Resumo
             </button>
+            {isRnc8dTemplate ? (
+              <button type="button" className="pac-primary-btn" onClick={() => void handleExportRnc8d()}>
+                <Download size={16} />
+                Gerar planilha 8D
+              </button>
+            ) : null}
           </>
         }
       />
@@ -224,6 +277,48 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             </div>
           </SectionCard>
 
+          {!isRnc8dTemplate ? (
+            <SectionCard title="Template do relatório">
+              <p className="pac-muted">
+                Ative o formulário 8D (materiais adquiridos) para preenchimento manual e exportação da planilha padrão do cliente.
+              </p>
+              <button
+                type="button"
+                className="pac-primary-btn"
+                disabled={saving === "activate-rnc-8d"}
+                onClick={() =>
+                  void runSave("activate-rnc-8d", async () => {
+                    await upsertRnc8dReport(planId, {
+                      ...rnc8dForm,
+                      template_payload: rnc8dForm.template_payload ?? emptyRnc8dPayload(),
+                    });
+                  })
+                }
+              >
+                {saving === "activate-rnc-8d" ? "Ativando…" : "Ativar relatório 8D"}
+              </button>
+            </SectionCard>
+          ) : null}
+
+          {isRnc8dTemplate ? (
+            <Rnc8dReportEditor
+              value={rnc8dForm}
+              onChange={setRnc8dForm}
+              saving={saving === "rnc-8d"}
+              onSave={() =>
+                runSave("rnc-8d", async () => {
+                  await upsertRnc8dReport(planId, rnc8dForm);
+                })
+              }
+            />
+          ) : null}
+
+          <EvidencePanel
+            planId={planId}
+            evidences={detail.evidences ?? []}
+            onChanged={load}
+          />
+
           <SectionCard title="Ishikawa (6M)">
             <div className="pac-ishikawa-grid">
               {ISHIKAWA_FIELDS.map(({ key, label, icon: Icon }) => (
@@ -262,14 +357,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             </FormActions>
           </SectionCard>
 
-          <SectionCard title="5 Porquês">
+          <SectionCard title="4. Estudo de causa — 5 Porquês (Ocorrência)">
             <ol className="pac-five-whys">
               {(["why_1", "why_2", "why_3", "why_4", "why_5"] as const).map((key, index) => (
                 <li key={key} className="pac-five-whys__step">
                   <span className="pac-five-whys__index">{index + 1}</span>
                   <TextField
                     id={`pac-${key}`}
-                    label={`${index + 1}º porquê`}
+                    label={`${index + 1}º porquê (ocorrência)`}
                     value={fiveWhysForm[key] ?? ""}
                     onChange={(value) => setFiveWhysForm((current) => ({ ...current, [key]: value }))}
                     fullWidth
@@ -277,6 +372,29 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 </li>
               ))}
             </ol>
+            <h3 className="pac-subsection-title">Trilha de detecção</h3>
+            <ol className="pac-five-whys">
+                {(
+                  [
+                    "detection_why_1",
+                    "detection_why_2",
+                    "detection_why_3",
+                    "detection_why_4",
+                    "detection_why_5",
+                  ] as const
+                ).map((key, index) => (
+                  <li key={key} className="pac-five-whys__step">
+                    <span className="pac-five-whys__index">{index + 1}</span>
+                    <TextField
+                      id={`pac-${key}`}
+                      label={`${index + 1}º porquê (detecção)`}
+                      value={fiveWhysForm[key] ?? ""}
+                      onChange={(value) => setFiveWhysForm((current) => ({ ...current, [key]: value }))}
+                      fullWidth
+                    />
+                  </li>
+                ))}
+              </ol>
             <TextField
               id="pac-root-cause"
               label="Causa raiz"
@@ -300,13 +418,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             </FormActions>
           </SectionCard>
 
-          <SectionCard title="Ações">
+          <SectionCard title="5. Ações corretivas e plano">
             {detail.actions.length ? (
               <div className="pac-table-wrap">
                 <table className="pac-table">
                   <thead>
                     <tr>
                       <th>Tipo</th>
+                      <th>Ocorr./Det.</th>
                       <th>Descrição</th>
                       <th>Responsável</th>
                       <th>Prazo</th>
@@ -317,6 +436,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     {detail.actions.map((action) => (
                       <tr key={action.id}>
                         <td>{actionTypeLabel(action.action_type)}</td>
+                        <td>{action.cause_track === "detection" ? "Detecção" : action.cause_track === "occurrence" ? "Ocorrência" : "—"}</td>
                         <td>{action.description}</td>
                         <td>{action.responsible_name ?? "—"}</td>
                         <td>{formatDate(action.due_date)}</td>
@@ -358,6 +478,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   onChange={setNewActionType}
                   searchable={false}
                 />
+                <SelectField
+                  id="pac-new-action-track"
+                  label="Ocorrência / Detecção"
+                  options={CAUSE_TRACK_OPTIONS}
+                  value={newActionCauseTrack}
+                  onChange={setNewActionCauseTrack}
+                  searchable={false}
+                />
                 <TextField
                   id="pac-new-action-responsible"
                   label="Responsável"
@@ -394,11 +522,13 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         description: newActionDescription.trim(),
                         responsible_name: newActionResponsible.trim() || undefined,
                         due_date: newActionDueDate || undefined,
+                        cause_track: newActionCauseTrack || undefined,
                       },
                     ]);
                     setNewActionDescription("");
                     setNewActionResponsible("");
                     setNewActionDueDate("");
+                    setNewActionCauseTrack("");
                   })
                 }
               >

@@ -105,6 +105,10 @@ class Settings:
         "AUDIT_5S_NC_UPLOAD_DIR",
         default="/app/data/audit-5s-nc",
     )
+    PAC_EVIDENCE_UPLOAD_DIR: str = _get_env(
+        "PAC_EVIDENCE_UPLOAD_DIR",
+        default="/app/data/pac-evidences",
+    )
     DRAWING_PDF_LIBRARY_DIR: str = _get_env(
         "DRAWING_PDF_LIBRARY_DIR",
         "DESENHOS_PDF_DIR",

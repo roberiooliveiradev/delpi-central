@@ -940,6 +940,51 @@
   border-top: 1px solid var(--pac-card-border);
 }
 
+.dashboard-quality-action-plans .pac-rnc8d {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-quality-action-plans .pac-subsection-title {
+  margin: 16px 0 8px;
+  font-size: var(--pac-font-md);
+}
+
+.dashboard-quality-action-plans .pac-section-subtitle {
+  margin: 4px 0 0;
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-evidence-upload__input {
+  display: none;
+}
+
+.dashboard-quality-action-plans .pac-evidence-upload__actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.dashboard-quality-action-plans .pac-evidence-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-quality-action-plans .pac-table-actions {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  font-size: var(--pac-font-sm);
+}
+
 /* ——— Responsivo ——— */
 @media (max-width: 1100px) {
   .dashboard-quality-action-plans .pac-charts-grid {

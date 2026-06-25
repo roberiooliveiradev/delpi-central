@@ -1,3 +1,5 @@
+import type { PlanEvidence, TeamMember, Rnc8dTemplatePayload } from "./rnc8d";
+
 export type PlanStatus =
   | "draft"
   | "triage"
@@ -79,6 +81,11 @@ export type FiveWhysAnalysis = {
   why_3?: string | null;
   why_4?: string | null;
   why_5?: string | null;
+  detection_why_1?: string | null;
+  detection_why_2?: string | null;
+  detection_why_3?: string | null;
+  detection_why_4?: string | null;
+  detection_why_5?: string | null;
   root_cause?: string | null;
   confidence_level?: string | null;
 };
@@ -91,6 +98,7 @@ export type PlanAction = {
   department?: string | null;
   due_date?: string | null;
   status: string;
+  cause_track?: string | null;
 };
 
 export type PlanHistoryEvent = {
@@ -114,9 +122,14 @@ export type ActionPlanDetail = {
     root_cause_category?: string | null;
     effectiveness_status?: string | null;
     symptom_tags?: string[];
+    customer_template?: string;
+    client_nc_registry?: string | null;
+    template_payload?: Rnc8dTemplatePayload;
   };
   ishikawa?: IshikawaAnalysis | null;
   five_whys?: FiveWhysAnalysis | null;
+  team_members?: TeamMember[];
+  evidences?: PlanEvidence[];
   actions: PlanAction[];
   history: PlanHistoryEvent[];
 };

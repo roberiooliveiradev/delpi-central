@@ -137,4 +137,46 @@ export async function httpPatch<T>(
   return parseJson<T>(response);
 }
 
+export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
+export async function httpPostForm<T>(
+  url: string,
+  formData: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(),
+    body: formData,
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
+export async function httpDownloadBlob(url: string, options: RequestOptions = {}): Promise<Blob> {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      message = formatApiError(errorBody, response.status);
+    } catch {
+      // mantém mensagem padrão
+    }
+    throw new Error(message);
+  }
+  return response.blob();
+}
+
 export type { ApiEnvelope };

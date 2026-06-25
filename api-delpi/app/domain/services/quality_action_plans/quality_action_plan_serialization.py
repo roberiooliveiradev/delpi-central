@@ -10,6 +10,9 @@ PLAN_SELECT = """
            p.customer_name,
            p.customer_contact,
            p.nonconformity_scope,
+           p.customer_template,
+           p.client_nc_registry,
+           p.template_payload,
            p.source_type,
            p.source_reference,
            p.product_code,
@@ -56,4 +59,6 @@ def serialize_plan_row(row: dict[str, Any]) -> dict[str, Any]:
     result = serialize_row(row, id_keys=("id",)) or {}
     if result.get("symptom_tags") is None:
         result["symptom_tags"] = []
+    if result.get("template_payload") is None:
+        result["template_payload"] = {}
     return result

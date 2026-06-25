@@ -44,6 +44,11 @@ class UpsertFiveWhysRequest:
     why_3: str | None = None
     why_4: str | None = None
     why_5: str | None = None
+    detection_why_1: str | None = None
+    detection_why_2: str | None = None
+    detection_why_3: str | None = None
+    detection_why_4: str | None = None
+    detection_why_5: str | None = None
     root_cause: str | None = None
     confidence_level: str | None = None
 
@@ -58,6 +63,7 @@ class CreateActionItemRequest:
     due_date: str | None = None
     status: str = "pending"
     evidence_required: bool = False
+    cause_track: str | None = None
 
 
 @dataclass(frozen=True)
@@ -110,6 +116,11 @@ class UpsertFiveWhysUseCase:
                 "why_3": request.why_3,
                 "why_4": request.why_4,
                 "why_5": request.why_5,
+                "detection_why_1": request.detection_why_1,
+                "detection_why_2": request.detection_why_2,
+                "detection_why_3": request.detection_why_3,
+                "detection_why_4": request.detection_why_4,
+                "detection_why_5": request.detection_why_5,
                 "root_cause": request.root_cause,
                 "confidence_level": request.confidence_level,
             },
@@ -145,6 +156,8 @@ class CreatePlanActionsUseCase:
                 raise ValueError(f"action_type inválido: {action.action_type}")
             if not action.description.strip():
                 raise ValueError("description é obrigatória em cada ação.")
+            if action.cause_track and action.cause_track not in {"occurrence", "detection"}:
+                raise ValueError("cause_track inválido.")
             payload.append(
                 {
                     "action_type": action.action_type,
@@ -155,6 +168,7 @@ class CreatePlanActionsUseCase:
                     "due_date": action.due_date,
                     "status": action.status,
                     "evidence_required": action.evidence_required,
+                    "cause_track": action.cause_track,
                 }
             )
         return self._repository.create_actions(plan_id, payload, created_by=created_by)
