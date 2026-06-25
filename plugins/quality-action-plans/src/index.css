@@ -186,6 +186,10 @@
   gap: var(--pac-grid-gap);
 }
 
+.dashboard-quality-action-plans .pac-dashboard-grid--timing {
+  margin-top: var(--pac-grid-gap);
+}
+
 .dashboard-quality-action-plans .pac-metric-card {
   background: var(--pac-card-bg);
   border: 1px solid var(--pac-card-border);

@@ -54,9 +54,11 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 ### GET `/quality/action-plans/dashboard`
 
-**Query:** `branch_code` (`01` \| `02`, opcional), `nonconformity_scope` (`internal` \| `external`, opcional)
+**Query:** `branch_code` (`01` \| `02`, opcional), `nonconformity_scope` (`internal` \| `external`, opcional), `months` (1–36, padrão `12` — janela dos KPIs de tempo)
 
-**`data` (consolidado):** `open_plans`, `critical_open`, `waiting_validation`, `completed_this_month`, `overdue_actions`, `overdue_plans`, `by_branch`, `by_scope`, `open_internal`, `open_external`
+**`data` (consolidado):** `open_plans`, `critical_open`, `waiting_validation`, `completed_this_month`, `overdue_actions`, `overdue_plans`, `by_branch`, `by_scope`, `open_internal`, `open_external`, `timing`
+
+**`data.timing`:** `window_months`, `avg_closure_days` (dias, `created_at`/`detected_at` → `closed_at`), `closure_sample_size`, `avg_time_to_effectiveness_days`, `effectiveness_sample_size`
 
 ### GET `/quality/action-plans` e `/overdue`
 

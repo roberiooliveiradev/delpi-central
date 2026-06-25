@@ -33,6 +33,13 @@ def test_dashboard_route_returns_operation_id(mock_build) -> None:
         "open_external": 2,
         "by_branch": [],
         "by_scope": [],
+        "timing": {
+            "window_months": 12,
+            "avg_closure_days": 10.5,
+            "closure_sample_size": 3,
+            "avg_time_to_effectiveness_days": 15.0,
+            "effectiveness_sample_size": 2,
+        },
     }
     mock_build.return_value = mock_repo
 

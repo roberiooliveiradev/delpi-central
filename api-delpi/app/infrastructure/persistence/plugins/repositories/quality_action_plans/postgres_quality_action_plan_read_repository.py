@@ -179,6 +179,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        months: int = 12,
     ) -> dict[str, Any]:
         branch_filter = ""
         scope_filter = ""
@@ -264,6 +265,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if nonconformity_scope:
             result["nonconformity_scope"] = nonconformity_scope
         if branch_code or nonconformity_scope:
+            result["timing"] = self._fetch_timing_kpis(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+                months=months,
+            )
             return result
 
         by_branch_rows = self.fetch_all(
@@ -317,7 +323,84 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             for row in by_scope_rows
             if row.get("nonconformity_scope")
         ]
+        result["timing"] = self._fetch_timing_kpis(
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            months=months,
+        )
         return result
+
+    def _fetch_timing_kpis(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        months: int = 12,
+    ) -> dict[str, Any]:
+        filters = ["deleted_at IS NULL"]
+        params: list[Any] = [months, months, months, months]
+        if branch_code:
+            filters.append("branch_code = %s")
+            params.append(branch_code)
+        if nonconformity_scope:
+            filters.append("nonconformity_scope = %s")
+            params.append(nonconformity_scope)
+        where_clause = " AND ".join(filters)
+
+        row = self.fetch_one(
+            f"""
+            SELECT
+                AVG(
+                    EXTRACT(EPOCH FROM (closed_at - COALESCE(detected_at, created_at)))
+                    / 86400.0
+                ) FILTER (
+                    WHERE status = 'completed'
+                      AND closed_at IS NOT NULL
+                      AND closed_at >= NOW() - make_interval(months => %s)
+                ) AS avg_closure_days,
+                COUNT(*) FILTER (
+                    WHERE status = 'completed'
+                      AND closed_at IS NOT NULL
+                      AND closed_at >= NOW() - make_interval(months => %s)
+                ) AS closure_sample_size,
+                AVG(
+                    EXTRACT(
+                        EPOCH FROM (
+                            effectiveness_verified_at - COALESCE(detected_at, created_at)
+                        )
+                    ) / 86400.0
+                ) FILTER (
+                    WHERE effectiveness_verified_at IS NOT NULL
+                      AND effectiveness_verified_at >= NOW() - make_interval(months => %s)
+                ) AS avg_time_to_effectiveness_days,
+                COUNT(*) FILTER (
+                    WHERE effectiveness_verified_at IS NOT NULL
+                      AND effectiveness_verified_at >= NOW() - make_interval(months => %s)
+                ) AS effectiveness_sample_size
+              FROM quality.quality_action_plans
+             WHERE {where_clause}
+            """,
+            tuple(params),
+        )
+
+        avg_closure = row.get("avg_closure_days") if row else None
+        avg_effectiveness = row.get("avg_time_to_effectiveness_days") if row else None
+
+        return {
+            "window_months": months,
+            "avg_closure_days": (
+                round(float(avg_closure), 1) if avg_closure is not None else None
+            ),
+            "closure_sample_size": int((row or {}).get("closure_sample_size") or 0),
+            "avg_time_to_effectiveness_days": (
+                round(float(avg_effectiveness), 1)
+                if avg_effectiveness is not None
+                else None
+            ),
+            "effectiveness_sample_size": int(
+                (row or {}).get("effectiveness_sample_size") or 0
+            ),
+        }
 
     def list_overdue_plans(
         self,

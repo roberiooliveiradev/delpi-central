@@ -63,6 +63,15 @@ export type DashboardSummary = {
     open_plans: number;
     critical_open: number;
   }>;
+  timing?: DashboardTiming;
+};
+
+export type DashboardTiming = {
+  window_months: number;
+  avg_closure_days: number | null;
+  closure_sample_size: number;
+  avg_time_to_effectiveness_days: number | null;
+  effectiveness_sample_size: number;
 };
 
 export type IshikawaAnalysis = {

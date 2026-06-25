@@ -4,6 +4,7 @@ import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
 import { DashboardCharts } from "../components/dashboard/DashboardCharts";
 import { DashboardKpis } from "../components/dashboard/DashboardKpis";
+import { DashboardTimingKpis } from "../components/dashboard/DashboardTimingKpis";
 import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { SelectField } from "../components/ui/SelectField";
@@ -104,6 +105,7 @@ export function DashboardPage({ onNavigate }: Props) {
       {summary ? (
         <>
           <DashboardKpis summary={summary} loading={loading} />
+          <DashboardTimingKpis timing={summary.timing} loading={loading} />
           <DashboardCharts summary={summary} plans={plans} />
         </>
       ) : null}

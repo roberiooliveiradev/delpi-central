@@ -233,6 +233,7 @@ def _current_user_id() -> str:
 def get_action_plans_dashboard(
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
     nonconformity_scope: str | None = Query(default=None, pattern="^(internal|external)$"),
+    months: int = Query(default=12, ge=1, le=36),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
@@ -240,6 +241,7 @@ def get_action_plans_dashboard(
             repo.get_dashboard_summary(
                 branch_code=branch_code,
                 nonconformity_scope=nonconformity_scope,
+                months=months,
             ),
             operation_id="get_quality_action_plans_dashboard",
             message="Dashboard PAC carregado.",
