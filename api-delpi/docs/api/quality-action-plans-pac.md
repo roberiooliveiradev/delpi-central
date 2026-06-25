@@ -88,6 +88,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review` | `record_quality_action_plan_effectiveness` | Registrar eficácia |
 | PUT | `/quality/action-plans/{plan_id}/rnc-8d` | `upsert_quality_action_plan_rnc_8d` | Salvar relatório 8D |
 | GET | `/quality/action-plans/{plan_id}/export/rnc-8d` | `export_quality_action_plan_rnc_8d` | Exportar planilha Excel |
+| GET | `/quality/action-plans/{plan_id}/export/pdf` | `export_quality_action_plan_pdf` | Exportar resumo do plano em PDF |
+| GET | `/quality/action-plans/{plan_id}/export/rnc-8d/pdf` | `export_quality_action_plan_rnc_8d_pdf` | Exportar relatório 8D em PDF |
 | GET | `/quality/action-plans/{plan_id}/evidences` | `list_quality_action_plan_evidences` | Listar evidências (`q` opcional filtra no plano) |
 | POST | `/quality/action-plans/{plan_id}/evidences` | `attach_quality_action_plan_evidence` | Anexar arquivo (multipart) |
 | GET | `/quality/action-plans/{plan_id}/evidences/{evidence_id}/file` | — | Download do arquivo |

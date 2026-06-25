@@ -303,6 +303,10 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "record_quality_action_plan_effectiveness": RouteContract("quality_action_plan", "scalar"),
     "upsert_quality_action_plan_rnc_8d": RouteContract("quality_action_plan", "composite_analysis"),
     "export_quality_action_plan_rnc_8d": RouteContract("quality_action_plan_export", "scalar"),
+    "export_quality_action_plan_pdf": RouteContract("quality_action_plan_export", "document_export"),
+    "export_quality_action_plan_rnc_8d_pdf": RouteContract(
+        "quality_action_plan_export", "document_export"
+    ),
     "list_quality_action_plan_evidences": RouteContract("quality_action_plan_evidence", "paged_list"),
     "search_quality_action_plan_evidences": RouteContract(
         "quality_action_plan_evidence", "paged_list"

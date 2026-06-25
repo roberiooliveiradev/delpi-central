@@ -13,6 +13,8 @@ import {
 
 import {
   createPlanActions,
+  exportPlanPdf,
+  exportRnc8dPdf,
   exportRnc8dSpreadsheet,
   fetchActionPlanDetail,
   promoteSolutionPattern,
@@ -218,6 +220,26 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     }
   }
 
+  async function handleExportPlanPdf() {
+    setError(null);
+    try {
+      const registry = plan?.code || planId.slice(0, 8);
+      await exportPlanPdf(planId, `PAC_${registry}_resumo.pdf`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao gerar PDF do plano.");
+    }
+  }
+
+  async function handleExportRnc8dPdf() {
+    setError(null);
+    try {
+      const registry = plan?.client_nc_registry || plan?.code || planId.slice(0, 8);
+      await exportRnc8dPdf(planId, `RNC_${registry}_8D.pdf`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao gerar PDF 8D.");
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -232,11 +254,21 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(dashboardPath())}>
               Resumo
             </button>
+            <button type="button" className="pac-ghost-btn" onClick={() => void handleExportPlanPdf()}>
+              <Download size={16} />
+              PDF resumo
+            </button>
             {isRnc8dTemplate ? (
-              <button type="button" className="pac-primary-btn" onClick={() => void handleExportRnc8d()}>
-                <Download size={16} />
-                Gerar planilha 8D
-              </button>
+              <>
+                <button type="button" className="pac-primary-btn" onClick={() => void handleExportRnc8d()}>
+                  <Download size={16} />
+                  Excel 8D
+                </button>
+                <button type="button" className="pac-ghost-btn" onClick={() => void handleExportRnc8dPdf()}>
+                  <Download size={16} />
+                  PDF 8D
+                </button>
+              </>
             ) : null}
           </>
         }

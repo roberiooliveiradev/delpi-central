@@ -1307,6 +1307,28 @@
       "deprecated": false
     },
     {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/export/pdf",
+      "operationId": "export_quality_action_plan_pdf",
+      "summary": "Exportar resumo do plano em PDF",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/export/rnc-8d/pdf",
+      "operationId": "export_quality_action_plan_rnc_8d_pdf",
+      "summary": "Exportar relatório 8D em PDF",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
       "method": "PUT",
       "path": "/quality/action-plans/{plan_id}/five-whys",
       "operationId": "upsert_quality_action_plan_five_whys",

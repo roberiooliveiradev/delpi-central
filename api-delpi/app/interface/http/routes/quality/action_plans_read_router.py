@@ -40,6 +40,12 @@ from app.composition.quality_intelligence_composer import (
     build_get_plan_similar_cases_use_case,
     build_promote_solution_pattern_from_plan_use_case,
 )
+from app.domain.services.quality_action_plans.quality_action_plan_pdf_export_service import (
+    build_quality_action_plan_pdf,
+    build_rnc_8d_pdf,
+    plan_pdf_filename,
+    rnc_8d_pdf_filename,
+)
 from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
     build_rnc_8d_workbook,
     collect_image_annexes_for_export,
@@ -756,6 +762,54 @@ def export_rnc_8d_spreadsheet(plan_id: str):
     except Exception as exc:
         log_error(f"Erro ao exportar relatório 8D do plano {plan_id}: {exc}")
         return error_response("Erro ao gerar planilha 8D.", status_code=500)
+
+
+@router.get(
+    "/{plan_id}/export/pdf",
+    **_pac_openapi("export_quality_action_plan_pdf", "/{plan_id}/export/pdf"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def export_plan_pdf(plan_id: str):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        detail = repo.get_plan_detail(plan_id)
+        if not detail:
+            return not_found_response("Plano de ação não encontrado.")
+        plan = detail.get("plan") or {}
+        content = build_quality_action_plan_pdf(detail)
+        filename = plan_pdf_filename(plan)
+        return Response(
+            content=content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as exc:
+        log_error(f"Erro ao exportar PDF do plano {plan_id}: {exc}")
+        return error_response("Erro ao gerar PDF do plano.", status_code=500)
+
+
+@router.get(
+    "/{plan_id}/export/rnc-8d/pdf",
+    **_pac_openapi("export_quality_action_plan_rnc_8d_pdf", "/{plan_id}/export/rnc-8d/pdf"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def export_rnc_8d_pdf(plan_id: str):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        detail = repo.get_plan_detail(plan_id)
+        if not detail:
+            return not_found_response("Plano de ação não encontrado.")
+        plan = detail.get("plan") or {}
+        content = build_rnc_8d_pdf(detail)
+        filename = rnc_8d_pdf_filename(plan)
+        return Response(
+            content=content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as exc:
+        log_error(f"Erro ao exportar PDF 8D do plano {plan_id}: {exc}")
+        return error_response("Erro ao gerar PDF 8D.", status_code=500)
 
 
 @router.get(

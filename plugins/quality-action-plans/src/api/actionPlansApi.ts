@@ -301,8 +301,20 @@ export async function upsertRnc8dReport(
 }
 
 export async function exportRnc8dSpreadsheet(planId: string, filename: string): Promise<void> {
+  await downloadExportFile(`${API_BASE}/${planId}/export/rnc-8d`, filename);
+}
+
+export async function exportPlanPdf(planId: string, filename: string): Promise<void> {
+  await downloadExportFile(`${API_BASE}/${planId}/export/pdf`, filename);
+}
+
+export async function exportRnc8dPdf(planId: string, filename: string): Promise<void> {
+  await downloadExportFile(`${API_BASE}/${planId}/export/rnc-8d/pdf`, filename);
+}
+
+async function downloadExportFile(path: string, filename: string): Promise<void> {
   const { httpDownloadBlob } = await import("./httpClient");
-  const blob = await httpDownloadBlob(`${API_BASE}/${planId}/export/rnc-8d`);
+  const blob = await httpDownloadBlob(path);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
