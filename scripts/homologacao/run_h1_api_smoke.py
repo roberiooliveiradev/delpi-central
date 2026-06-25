@@ -389,6 +389,20 @@ def _verify_similarity_index(plan_id: str) -> None:
         )
 
 
+def resolve_delpi_homologation_token(explicit: str = "") -> str:
+    if explicit.strip():
+        return explicit.strip()
+    token = (os.environ.get("TOKEN") or "").strip()
+    if token:
+        return token
+    env_file = Path(__file__).resolve().parents[2] / "infra" / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if line.startswith("API_DELPI_INTERNAL_SERVICE_TOKEN="):
+                return line.split("=", 1)[1].strip()
+    return ""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Smoke H1 PAC via api-delpi")
     parser.add_argument("--base-url", default=os.environ.get("BASE_URL", "http://localhost"))
@@ -399,6 +413,8 @@ def main() -> int:
         help="Após H1, executar fechamento H3 (ações + eficácia + completed)",
     )
     args = parser.parse_args()
+    if not args.token:
+        args.token = resolve_delpi_homologation_token()
     if not args.token:
         print(
             "Defina TOKEN (JWT quality-action-plans.read/write ou API_DELPI_INTERNAL_SERVICE_TOKEN).",

@@ -85,7 +85,7 @@
 
 ## Próxima onda recomendada
 
-**Onda 1 — fechamento:** homologar H1–H3 no plugin (`HOMOLOGACAO.md`); smoke na **api-delpi**: `run_h1_api_smoke.py` com `TOKEN`.
+**Onda 1 — fechamento:** H1/H3/H4 smoke OK local; **H2** aguarda deploy api-pac produção + `run_h2_pac_api_smoke.py`.
 
 ### Stack local (canônico — plugin + api-delpi)
 

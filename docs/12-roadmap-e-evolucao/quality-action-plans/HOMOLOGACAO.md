@@ -38,6 +38,30 @@ python3 scripts/homologacao/run_h1_api_smoke.py --h3   # inclui fechamento H3
 
 Cria plano `[H1-SMOKE]`, preenche 8D, evidências com `action_id`, exporta Excel e avança status. Anote `PLAN_ID` para H3 ou remova manualmente após validar no plugin.
 
+### Smoke H2 — agente GPT (**api-pac-quality** produção)
+
+Pré-requisito: deploy recente no srv-api (`check-pac-api-server.sh` sem rotas faltando).
+
+```bash
+# Gate deploy (OpenAPI produção)
+bash scripts/homologacao/check-pac-api-server.sh
+
+# Fluxo automatizado (paridade plugin via api-delpi local)
+export PAC_QUALITY_API_KEY="<token do srv-api>"
+export DELPI_TOKEN="$(grep '^API_DELPI_INTERNAL_SERVICE_TOKEN=' infra/.env | cut -d= -f2)"
+python3 scripts/homologacao/run_h2_pac_api_smoke.py
+```
+
+Valida: `search_similar_cases` → criar plano PAC → visível no plugin → Ishikawa/5 Porquês/ações → evidência → 8D/export.
+
+### Smoke H4 — plano interno (api-delpi)
+
+```bash
+python3 scripts/homologacao/run_h4_internal_smoke.py
+```
+
+Cria NC `internal` sem template `rnc_8d`.
+
 ---
 
 ## Cenários obrigatórios (Onda 1)
@@ -99,7 +123,8 @@ Cria plano `[H1-SMOKE]`, preenche 8D, evidências com `action_id`, exporta Excel
 |---|---|---|---|---|---|
 | 2026-06-24 | local (api-delpi) | agente CI | H1 | OK | `run_h1_api_smoke.py` — plano PAC-2026-0003; 680 KB export xlsx; token interno |
 | 2026-06-24 | local (api-delpi) | agente CI | H3 | OK | `--h3` — PAC-2026-0004/0005; índice `quality_case_similarity_index` validado |
-| | | | H2 (GPT prod) | pendente | requer `PAC_QUALITY_API_KEY` + deploy api-pac |
+| 2026-06-25 | local (api-delpi) | agente CI | H4 | OK | `run_h4_internal_smoke.py` — PAC-2026-0007 internal |
+| | | | H2 (GPT prod) | bloqueado | OpenAPI prod sem rnc-8d/evidences; `check-pac-api-server.sh` falha — **deploy srv-api** + API key válida |
 
 ---
 
