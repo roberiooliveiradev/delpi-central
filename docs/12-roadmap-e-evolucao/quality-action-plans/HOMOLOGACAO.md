@@ -152,6 +152,11 @@ Valida: `GET /intelligence/knowledge-graph` (6.5), `POST /intelligence/recurrenc
 cd api-pac-quality
 .venv/bin/python scripts/run_pac_agent_eval.py --check-catalog
 .venv/bin/pytest tests/unit/test_pac_agent_eval_cases.py tests/unit/test_run_pac_agent_eval_script.py -q
+
+# Ou, a partir do delpi-central (gate CI):
+bash scripts/homologacao/check-pac-agent-eval.sh
+# Pontuação após homologação manual no GPT:
+PAC_EVAL_RESPONSES_FILE=/caminho/eval_responses.json bash scripts/homologacao/check-pac-agent-eval.sh
 ```
 
 ---
