@@ -9,7 +9,7 @@
 | Camada | Maturidade | Nota |
 |---|---|---|
 | Modelo de dados + migrations | Alta | V001–V006 no plugin `quality-action-plans` |
-| API PAC (`api-pac-quality`) | Média-alta | CRUD + inteligência; sem evidências/8D espelhados |
+| API PAC (`api-pac-quality`) | Média-alta | CRUD + inteligência + 8D/evidências (Onda 1) |
 | API consolidada (`api-delpi`) | Média-alta | Leitura + escrita + 8D + evidências (V006) |
 | Plugin MFE | Média | Fluxo analista ok; visão executiva incompleta |
 | Agente GPT | Média | Documentado; desalinhado com 8D/evidências |
@@ -51,7 +51,7 @@
 |---|---|---|
 | CRUD transacional | Sim | Sim |
 | Inteligência | `/intelligence/*` | Sim |
-| 8D + evidências | **Não** | **Não** |
+| 8D + evidências | Sim | Sim |
 
 ---
 
@@ -61,7 +61,7 @@
 |---|---|
 | Dashboard (KPIs + gráficos) | Implementada |
 | Lista + filtros básicos | Implementada |
-| Novo plano | Implementada (campos parciais) |
+| Novo plano | Implementada (`customer_template` + registro NC) |
 | Detalhe (pipeline, Ishikawa, 5 Porquês, ações, histórico) | Implementada |
 | Relatório 8D + export Excel | Implementada (após ativar `rnc_8d`) |
 | Painel de evidências | Implementada |
@@ -76,7 +76,7 @@
 1. Template Excel `rnc_8d_template.xlsx` fora do git — copiar no deploy.
 2. Export 8D sem imagens na aba Anexos.
 3. Documentação `quality-action-plans-pac.md` desatualizada (pré-V006).
-4. Agente sem rotas de evidência e 8D.
+4. ~~Agente sem rotas de evidência e 8D.~~ Paridade API PAC entregue — reimportar OpenAPI no GPT.
 5. Indicadores executivos do playbook (tempo médio, reincidência, eficácia por tipo) ausentes no dashboard.
 
 ---

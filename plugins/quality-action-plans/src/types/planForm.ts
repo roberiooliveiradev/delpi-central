@@ -2,6 +2,8 @@ export type PlanFormValues = {
   title: string;
   branch_code: string;
   nonconformity_scope: string;
+  customer_template: string;
+  client_nc_registry: string;
   severity: string;
   status: string;
   customer_name: string;
@@ -31,6 +33,8 @@ export function emptyPlanFormValues(): PlanFormValues {
     title: "",
     branch_code: "01",
     nonconformity_scope: "external",
+    customer_template: "generic",
+    client_nc_registry: "",
     severity: "medium",
     status: "triage",
     customer_name: "",

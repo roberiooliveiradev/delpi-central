@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Save } from "lucide-react";
 
-import { createActionPlan } from "../api/actionPlansApi";
+import { createActionPlan, upsertRnc8dReport } from "../api/actionPlansApi";
 import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { FormActions } from "../components/ui/FormActions";
@@ -18,6 +18,12 @@ import {
   PLAN_STATUSES,
 } from "../constants/actionPlans";
 import { emptyPlanFormValues, formValuesToPayload, type PlanFormValues } from "../types/planForm";
+import { emptyRnc8dPayload } from "../types/rnc8d";
+
+const CUSTOMER_TEMPLATE_OPTIONS = [
+  { value: "generic", label: "Padrão PAC" },
+  { value: "rnc_8d", label: "Relatório 8D (materiais adquiridos)" },
+];
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -43,6 +49,16 @@ export function PlanFormPage({ onNavigate }: Props) {
         throw new Error("Informe o título do plano.");
       }
       const plan = await createActionPlan(payload);
+      if (values.customer_template === "rnc_8d") {
+        await upsertRnc8dReport(plan.id, {
+          client_nc_registry: values.client_nc_registry.trim() || undefined,
+          customer_name: values.customer_name.trim() || undefined,
+          product_code: values.product_code.trim() || undefined,
+          batch_number: values.batch_number.trim() || undefined,
+          reported_problem: values.reported_problem.trim() || undefined,
+          template_payload: emptyRnc8dPayload(),
+        });
+      }
       onNavigate(detailPath(plan.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar plano.");
@@ -113,6 +129,22 @@ export function PlanFormPage({ onNavigate }: Props) {
               onChange={(status) => updateField("status", status)}
               searchable={false}
             />
+            <SelectField
+              id="pac-template"
+              label="Template do relatório"
+              options={CUSTOMER_TEMPLATE_OPTIONS}
+              value={values.customer_template}
+              onChange={(customer_template) => updateField("customer_template", customer_template)}
+              searchable={false}
+            />
+            {values.customer_template === "rnc_8d" ? (
+              <TextField
+                id="pac-nc-registry"
+                label="Registro NC do cliente"
+                value={values.client_nc_registry}
+                onChange={(client_nc_registry) => updateField("client_nc_registry", client_nc_registry)}
+              />
+            ) : null}
           </div>
         </SectionCard>
 
