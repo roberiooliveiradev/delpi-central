@@ -34,6 +34,23 @@ DEFAULT_CATALOG_PATH = (
     / "api-pac-quality-openapi-catalog.md"
 )
 
+ONDA1_REQUIRED_OPENAPI_PATHS = (
+    "/quality/action-plans",
+    "/quality/action-plans/intelligence/similar-cases",
+    "/quality/action-plans/{plan_id}",
+    "/quality/action-plans/{plan_id}/rnc-8d",
+    "/quality/action-plans/{plan_id}/export/rnc-8d",
+    "/quality/action-plans/{plan_id}/evidences",
+    "/quality/action-plans/{plan_id}/ishikawa",
+    "/quality/action-plans/{plan_id}/five-whys",
+    "/quality/action-plans/{plan_id}/actions",
+)
+
+
+def _validate_onda1_openapi_paths(schema: dict) -> list[str]:
+    paths = schema.get("paths") if isinstance(schema.get("paths"), dict) else {}
+    return [path for path in ONDA1_REQUIRED_OPENAPI_PATHS if path not in paths]
+
 
 def _load_schema_from_file(path: Path) -> dict:
     with path.open(encoding="utf-8") as handle:
@@ -105,6 +122,11 @@ def main() -> int:
         default=DEFAULT_CATALOG_PATH,
         help="Destino do catálogo markdown gerado.",
     )
+    parser.add_argument(
+        "--check-onda1",
+        action="store_true",
+        help="Falha se o OpenAPI não tiver rotas Onda 1 (8D, evidências, inteligência).",
+    )
     args = parser.parse_args()
 
     from app.application.use_cases.admin_chat_intelligence_use_cases import (
@@ -134,6 +156,24 @@ def main() -> int:
             else:
                 schema = _load_schema_from_url(args.from_url)
                 report["schemaSource"] = args.from_url
+
+            missing_paths = _validate_onda1_openapi_paths(schema)
+            report["onda1MissingPaths"] = missing_paths
+            if args.check_onda1 and missing_paths:
+                print(
+                    json.dumps(
+                        {
+                            "error": "OpenAPI sem rotas Onda 1 — faça deploy api-pac no srv-api antes do sync.",
+                            "missingPaths": missing_paths,
+                            "schemaSource": report["schemaSource"],
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    ),
+                    file=sys.stderr,
+                )
+                return 1
+
             report["import"] = import_use_case.execute_from_json(
                 args.provider_key,
                 schema,
