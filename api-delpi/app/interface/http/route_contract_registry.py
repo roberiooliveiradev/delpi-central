@@ -342,6 +342,14 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "quality_action_plan_recurrence_opening_assessment",
         "composite_analysis",
     ),
+    "suggest_quality_action_plan_evidence_tags": RouteContract(
+        "quality_action_plan_evidence_tag_suggestions",
+        "composite_analysis",
+    ),
+    "suggest_quality_action_plan_evidence_tags_from_image": RouteContract(
+        "quality_action_plan_evidence_tag_suggestions",
+        "composite_analysis",
+    ),
     "list_quality_solution_patterns": RouteContract(
         "quality_solution_pattern", "paged_list"
     ),

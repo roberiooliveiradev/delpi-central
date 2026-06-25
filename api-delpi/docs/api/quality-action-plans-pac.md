@@ -114,6 +114,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 **Recorrência na abertura (Onda 6.4):** `POST /quality/action-plans/intelligence/recurrence-opening-assessment` (`assess_quality_action_plan_recurrence_on_opening` / `pac_assess_recurrence_on_opening`) retorna `recurrence_score`, `alert_level`, `should_warn_before_opening` e preview de casos similares — chamar **antes** de `create_quality_action_plan`.
 
+**Tags de evidência (Onda 6.3):** `POST .../intelligence/suggest-evidence-tags` com `ocr_text`/`file_name`/`description`; variante `.../from-image` (multipart) com OCR opcional (`PAC_EVIDENCE_OCR_ENABLED`).
+
 ### POST `/quality/action-plans` — corpo mínimo
 
 ```json

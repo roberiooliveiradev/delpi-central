@@ -1,0 +1,26 @@
+{
+  "limits": {
+    "maxSuggestedTags": 8,
+    "ocrTextPreviewChars": 240
+  },
+  "patterns": {
+    "productCode": "\\b90\\d{6}\\b"
+  },
+  "symptomMarkers": [
+    { "tag": "oxidação", "markers": ["oxida", "oxidação", "corros", "enferruj"] },
+    { "tag": "trinca", "markers": ["trinca", "fissura", "rachad", "quebra superficial"] },
+    { "tag": "rompimento", "markers": ["rompimento", "rompeu", "quebrou", "partiu"] },
+    { "tag": "isolacao", "markers": ["isolacao", "isolação", "isolamento", "descasc"] },
+    { "tag": "cor divergente", "markers": ["cor errada", "cor divergente", "tonalidade", "manch"] },
+    { "tag": "etiqueta", "markers": ["etiqueta", "rótulo", "rotulo", "legenda"] },
+    { "tag": "dimensional", "markers": ["fora de toler", "medida", "dimensional", "mm fora"] },
+    { "tag": "contaminacao", "markers": ["contamina", "sujeira", "particula", "partícula"] }
+  ],
+  "failureModeMarkers": [
+    { "tag": "oxidação", "markers": ["oxida", "corros"] },
+    { "tag": "trinca", "markers": ["trinca", "fissura"] },
+    { "tag": "rompimento", "markers": ["rompimento", "quebra"] },
+    { "tag": "montagem", "markers": ["montagem", "parafuso", "fixação", "fixacao"] },
+    { "tag": "processo", "markers": ["parâmetro", "parametro", "setup", "processo"] }
+  ]
+}

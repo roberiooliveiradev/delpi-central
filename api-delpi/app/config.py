@@ -220,5 +220,11 @@ class Settings:
         _get_env("PAC_SIMILARITY_EMBEDDINGS_ENABLED", default="false").lower() == "true"
     )
 
+    PAC_EVIDENCE_OCR_ENABLED: bool = (
+        _get_env("PAC_EVIDENCE_OCR_ENABLED", default="false").lower() == "true"
+    )
+    PAC_EVIDENCE_OCR_LANG: str = _get_env("PAC_EVIDENCE_OCR_LANG", default="por+eng")
+    PAC_EVIDENCE_OCR_MAX_CHARS: int = int(_get_env("PAC_EVIDENCE_OCR_MAX_CHARS", default="4000") or "4000")
+
 
 settings = Settings()
