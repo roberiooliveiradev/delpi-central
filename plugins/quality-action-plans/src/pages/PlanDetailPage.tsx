@@ -24,6 +24,7 @@ import {
   upsertRnc8dReport,
 } from "../api/actionPlansApi";
 import { EvidencePanel } from "../components/EvidencePanel";
+import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
 import { Rnc8dReportEditor } from "../components/Rnc8dReportEditor";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
@@ -414,6 +415,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               </button>
             </div>
           </SectionCard>
+
+          <SimilarCasesPanel planId={planId} onNavigate={onNavigate} />
 
           {!isRnc8dTemplate ? (
             <SectionCard title="Template do relatório">

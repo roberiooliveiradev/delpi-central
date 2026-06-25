@@ -36,6 +36,7 @@ from app.composition.quality_action_plans_composer import (
     build_upsert_five_whys_use_case,
     build_upsert_ishikawa_use_case,
 )
+from app.composition.quality_intelligence_composer import build_get_plan_similar_cases_use_case
 from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
     build_rnc_8d_workbook,
     collect_image_annexes_for_export,
@@ -334,6 +335,25 @@ def list_action_plans(
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao listar planos PAC: {exc}")
         return error_response("Erro ao listar planos de ação.", status_code=500)
+
+
+@router.get("/{plan_id}/similar-cases")
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def get_plan_similar_cases(plan_id: str):
+    try:
+        result = build_get_plan_similar_cases_use_case().execute(plan_id)
+        if result is None:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            result,
+            operation_id="get_quality_action_plan_similar_cases",
+            message="Casos similares carregados.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao buscar casos similares do plano {plan_id}: {exc}")
+        return error_response("Erro ao consultar casos similares.", status_code=500)
 
 
 @router.get("/{plan_id}")

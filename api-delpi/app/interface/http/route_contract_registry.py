@@ -303,6 +303,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_quality_action_plan_evidences": RouteContract("quality_action_plan_evidence", "paged_list"),
     "attach_quality_action_plan_evidence": RouteContract("quality_action_plan_evidence", "scalar"),
     "delete_quality_action_plan_evidence": RouteContract("quality_action_plan_evidence", "scalar"),
+    "get_quality_action_plan_similar_cases": RouteContract(
+        "quality_action_plan_similar_cases", "composite_analysis"
+    ),
     "get_audit_5s_summary": RouteContract("audit_5s_summary", "scalar"),
     "get_ppm_internal_summary": RouteContract("ppm_internal_summary", "scalar"),
     "get_ppm_external_summary": RouteContract("ppm_external_summary", "scalar"),

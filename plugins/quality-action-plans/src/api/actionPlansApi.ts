@@ -17,6 +17,7 @@ import type {
 } from "../types/actionPlan";
 import type { CreatePlanPayload, UpdatePlanPayload } from "../types/planForm";
 import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
+import type { PlanSimilarCasesResult } from "../types/similarCases";
 
 const API_BASE = "/apps/api-delpi/quality/action-plans";
 
@@ -74,6 +75,13 @@ export async function fetchOverduePlans(params: ListParams = {}): Promise<PagedP
 export async function fetchActionPlanDetail(planId: string): Promise<ActionPlanDetail> {
   const envelope = await httpGet<ApiEnvelope<ActionPlanDetail>>(`${API_BASE}/${planId}`);
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar plano de ação.");
+}
+
+export async function fetchPlanSimilarCases(planId: string): Promise<PlanSimilarCasesResult> {
+  const envelope = await httpGet<ApiEnvelope<PlanSimilarCasesResult>>(
+    `${API_BASE}/${planId}/similar-cases`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar casos similares.");
 }
 
 export async function createActionPlan(payload: CreatePlanPayload): Promise<ActionPlanSummary> {
