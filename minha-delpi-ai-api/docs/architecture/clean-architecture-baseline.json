@@ -13,14 +13,14 @@
     "samples": []
   },
   "domainApplicationImports": {
-    "count": 17,
+    "count": 16,
     "samples": []
   },
   "interfacesPostgresFiles": [],
   "targets": {
     "godFileLinesMax": 1200,
     "domainInfrastructureImportsMax": 0,
-    "domainApplicationImportsMax": 17,
+    "domainApplicationImportsMax": 16,
     "interfacesPostgresFilesMax": 0,
     "sendStreamUseCaseLinesMax": 533
   },

@@ -183,7 +183,7 @@ class ChatIntentRouterClassifyService:
             normalized,
             history,
         ):
-            from app.application.services.chat_conversation_context_service import (
+            from app.domain.services.chat_conversation_context_service import (
                 ChatConversationContextService,
             )
 

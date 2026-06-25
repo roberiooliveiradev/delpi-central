@@ -10,7 +10,7 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_operational_refinement_service import (
     ChatOperationalRefinementService,
 )
-from app.application.services.chat_conversation_context_service import ChatConversationContextService
+from app.domain.services.chat_conversation_context_service import ChatConversationContextService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
