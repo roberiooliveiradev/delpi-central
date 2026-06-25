@@ -162,7 +162,7 @@ class ChatTextTaskService:
             return block or None
 
         if email_writing_mode:
-            from app.application.services.chat_email_prompt_supplement_service import (
+            from app.domain.services.chat_email_prompt_supplement_service import (
                 ChatEmailPromptSupplementService,
             )
 

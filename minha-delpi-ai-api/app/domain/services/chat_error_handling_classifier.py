@@ -18,7 +18,7 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 
-from app.application.services.chat_follow_up_suggestion_service import (
+from app.domain.services.chat_follow_up_suggestion_service import (
     ChatFollowUpSuggestionService,
 )
 from app.domain.services.chat_web_search_follow_up_service import (
