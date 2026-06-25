@@ -22,6 +22,23 @@ def stock_value_cache_key(request: GetStockValueRequest) -> str:
     )
 
 
+def stock_value_breakdown_cache_key(
+    request: GetStockValueRequest,
+    *,
+    full_kardex: bool,
+) -> str:
+    return "|".join(
+        [
+            "stock-value-breakdown",
+            request.branch or "",
+            request.location or "",
+            request.start_date or "",
+            request.end_date or "",
+            "kardex" if full_kardex else "sb9",
+        ]
+    )
+
+
 def get_cached_stock_value_bundle(key: str) -> dict[str, Any] | None:
     cached = build_query_cache().get(key)
     if isinstance(cached, dict):
@@ -30,4 +47,15 @@ def get_cached_stock_value_bundle(key: str) -> dict[str, Any] | None:
 
 
 def set_cached_stock_value_bundle(key: str, value: dict[str, Any]) -> None:
+    build_query_cache().set(key, value)
+
+
+def get_cached_stock_value_breakdown(key: str) -> list[dict[str, Any]] | None:
+    cached = build_query_cache().get(key)
+    if isinstance(cached, list):
+        return cached
+    return None
+
+
+def set_cached_stock_value_breakdown(key: str, value: list[dict[str, Any]]) -> None:
     build_query_cache().set(key, value)

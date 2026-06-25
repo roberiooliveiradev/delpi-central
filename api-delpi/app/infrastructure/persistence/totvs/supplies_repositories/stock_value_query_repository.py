@@ -4,8 +4,11 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
 from app.application.services.supplies.stock_value_cache import (
+    get_cached_stock_value_breakdown,
     get_cached_stock_value_bundle,
+    set_cached_stock_value_breakdown,
     set_cached_stock_value_bundle,
+    stock_value_breakdown_cache_key,
     stock_value_cache_key,
 )
 from app.application.services.supplies.stock_value_method_service import (
@@ -185,7 +188,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         (
             filters,
             sb9_params,
-            sb9_b9_params,
+            _sb9_b9_params,
             _sb9_official_params,
             sb9_loc_params,
             _d3_params,
@@ -197,10 +200,27 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             period_start=period_start,
             period_end=period_end,
             sb9_params=sb9_params,
-            sb9_b9_params=sb9_b9_params,
             sb9_loc_params=sb9_loc_params,
         )
         return sql, params
+
+    def _resolve_breakdown_rows_for_branch(
+        self,
+        request: GetStockValueRequest,
+        *,
+        shared_breakdown_rows: list[dict] | None,
+        full_kardex: bool,
+    ) -> list[dict]:
+        if shared_breakdown_rows is not None:
+            branch = (request.branch or "").strip()
+            if not branch:
+                return list(shared_breakdown_rows)
+            return [
+                row
+                for row in shared_breakdown_rows
+                if str(row.get("branch") or "").strip() == branch
+            ]
+        return self._fetch_historical_breakdown_rows(request, full_kardex=full_kardex)
 
     def _should_fan_out_consolidated(self, request: GetStockValueRequest) -> bool:
         if (request.branch or "").strip():
@@ -387,8 +407,22 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         }
 
     def _fetch_consolidated_bundle(self, request: GetStockValueRequest) -> dict:
+        shared_breakdown_rows = None
+        if (
+            self._uses_historical_estimation(request)
+            and not (request.branch or "").strip()
+            and normalize_stock_method(request.stock_method) != STOCK_METHOD_ESTIMATED
+        ):
+            shared_breakdown_rows = self._fetch_historical_breakdown_rows(
+                request,
+                full_kardex=False,
+            )
+
         branch_bundles = [
-            self._fetch_branch_bundle(self._branch_stock_request(request, branch))
+            self._fetch_branch_bundle(
+                self._branch_stock_request(request, branch),
+                shared_breakdown_rows=shared_breakdown_rows,
+            )
             for branch in _DEFAULT_STOCK_BRANCHES
         ]
         branch_label, location_label = self._labels(request)
@@ -405,14 +439,22 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             top_limit=max(1, int(getattr(request, "top_limit", 10) or 10)),
         )
 
-    def _fetch_branch_bundle(self, request: GetStockValueRequest) -> dict:
+    def _fetch_branch_bundle(
+        self,
+        request: GetStockValueRequest,
+        *,
+        shared_breakdown_rows: list[dict] | None = None,
+    ) -> dict:
         cache_key = stock_value_cache_key(request)
         cached = get_cached_stock_value_bundle(cache_key)
         if cached is not None:
             return cached
 
         if self._uses_historical_estimation(request):
-            bundle = self._fetch_historical_bundle(request)
+            bundle = self._fetch_historical_bundle(
+                request,
+                shared_breakdown_rows=shared_breakdown_rows,
+            )
         else:
             bundle = self._fetch_current_bundle(request)
 
@@ -847,23 +889,36 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         *,
         full_kardex: bool = True,
     ) -> list[dict]:
+        cache_key = stock_value_breakdown_cache_key(request, full_kardex=full_kardex)
+        cached = get_cached_stock_value_breakdown(cache_key)
+        if cached is not None:
+            return cached
+
         if full_kardex:
             sql, params = self._format_historical_breakdown_sql(request)
         else:
             sql, params = self._format_historical_method_breakdown_sql(request)
         with self as repo:
             rows = repo.execute_query(sql, params)
-        return [self._normalize_branch_breakdown_row(row) for row in rows]
+        normalized = [self._normalize_branch_breakdown_row(row) for row in rows]
+        set_cached_stock_value_breakdown(cache_key, normalized)
+        return normalized
 
-    def _fetch_historical_bundle(self, request: GetStockValueRequest) -> dict:
+    def _fetch_historical_bundle(
+        self,
+        request: GetStockValueRequest,
+        *,
+        shared_breakdown_rows: list[dict] | None = None,
+    ) -> dict:
         _period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
             request
         )
         use_full_breakdown = (
             normalize_stock_method(request.stock_method) == STOCK_METHOD_ESTIMATED
         )
-        breakdown_rows = self._fetch_historical_breakdown_rows(
+        breakdown_rows = self._resolve_breakdown_rows_for_branch(
             request,
+            shared_breakdown_rows=shared_breakdown_rows,
             full_kardex=use_full_breakdown,
         )
         method_plan = resolve_stock_method_plan(

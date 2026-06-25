@@ -249,7 +249,11 @@ def test_consolidated_summary_only_fans_out_per_branch() -> None:
 
     branch_calls: list[str] = []
 
-    def fake_branch_bundle(branch_request: GetStockValueRequest) -> dict:
+    def fake_branch_bundle(
+        branch_request: GetStockValueRequest,
+        *,
+        shared_breakdown_rows=None,
+    ) -> dict:
         branch_calls.append(branch_request.branch or "")
         return {
             "summary": {
@@ -284,7 +288,9 @@ def test_historical_method_breakdown_sql_skips_sd3() -> None:
     assert "FROM SD3010" not in sql
     assert "movimentos_sd3" not in sql
     assert "fechamento_base AS" not in sql
-    assert "sb9_agg AS" in sql
+    assert "enriched AS" in sql
+    assert sql.count("FROM SB9010") == 1
+    assert "OVER (PARTITION BY B9.B9_FILIAL)" in sql
     assert "official_closure_on_period_end" in sql
 
 
@@ -293,7 +299,6 @@ def test_build_historical_method_breakdown_params_matches_placeholders() -> None
         period_start="20260601",
         period_end="20260624",
         sb9_params=("02",),
-        sb9_b9_params=("02",),
         sb9_loc_params=(),
     )
 
@@ -311,8 +316,6 @@ def test_build_historical_method_breakdown_params_matches_placeholders() -> None
     assert params == (
         "20260601",
         "20260624",
-        "02",
-        "02",
         "02",
         "20260624",
     )
@@ -355,6 +358,68 @@ def test_fetch_historical_bundle_uses_light_breakdown_for_auto() -> None:
     breakdown_mock.assert_called_once()
     assert breakdown_mock.call_args.kwargs.get("full_kardex") is False
     register_mock.assert_called_once()
+
+
+def test_consolidated_historical_auto_prefetches_breakdown_once() -> None:
+    repo = StockValueQueryRepository()
+    request = GetStockValueRequest(
+        start_date="2026-06-01",
+        end_date="2026-06-24",
+        stock_method="auto",
+        summary_only=True,
+    )
+    breakdown_rows = [
+        {
+            "branch": "01",
+            "closing_base_date": "20260228",
+            "closing_base_value": 1.0,
+            "bridge_value": 0.0,
+            "period_net_value": 0.0,
+            "official_closure_date": None,
+            "official_closure_value": None,
+            "official_closure_available": False,
+            "official_closure_on_period_end": False,
+        },
+        {
+            "branch": "02",
+            "closing_base_date": "20260228",
+            "closing_base_value": 2.0,
+            "bridge_value": 0.0,
+            "period_net_value": 0.0,
+            "official_closure_date": None,
+            "official_closure_value": None,
+            "official_closure_available": False,
+            "official_closure_on_period_end": False,
+        },
+    ]
+
+    with patch.object(
+        StockValueQueryRepository,
+        "_fetch_historical_breakdown_rows",
+        return_value=breakdown_rows,
+    ) as breakdown_mock:
+        with patch.object(
+            StockValueQueryRepository,
+            "_fetch_register_snapshot_bundle",
+            side_effect=lambda req, **kwargs: {
+                "summary": {
+                    "branch": req.branch,
+                    "location": "all",
+                    "total_stock_value": 100.0,
+                    "total_stock_quantity": 1.0,
+                    "total_records": 1,
+                    "total_products": 1,
+                    "total_locations": 1,
+                },
+                "by_branch": [],
+                "by_location": [],
+                "top_products": [],
+            },
+        ):
+            repo._fetch_consolidated_bundle(request)
+
+    breakdown_mock.assert_called_once()
+    assert breakdown_mock.call_args.kwargs.get("full_kardex") is False
 
 
 def test_get_stock_value_bundle_uses_fan_out_for_consolidated_historical() -> None:
