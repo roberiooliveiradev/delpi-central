@@ -66,6 +66,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 **`data.recurrence_alert`:** `window_months`, `groups_detected`, `plans_in_window`, `open_plans_in_recurrence`, `top_groups[]` — cada grupo `{ recurrence_key, product_code, failure_mode, branch_code, plans_in_window, total_plans, open_plans }` (≥ 2 aberturas no período; top 5)
 
+**`data.effectiveness_by_action_type`:** `window_months`, `overall`, `by_action_type[]` — cada bucket `{ reviewed_plans, effective_plans, partially_effective_plans, ineffective_plans, effectiveness_rate }` (% `effective` / `reviewed`; planos com `effectiveness_verified_at` no período); itens por tipo incluem `action_type`
+
 ### GET `/quality/action-plans` e `/overdue`
 
 **Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`

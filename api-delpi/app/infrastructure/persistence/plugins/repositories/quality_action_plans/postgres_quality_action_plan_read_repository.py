@@ -285,6 +285,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 nonconformity_scope=nonconformity_scope,
                 months=months,
             )
+            result["effectiveness_by_action_type"] = self._fetch_effectiveness_by_action_type(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+                months=months,
+            )
             return result
 
         by_branch_rows = self.fetch_all(
@@ -354,6 +359,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             months=months,
         )
         result["recurrence_alert"] = self._fetch_recurrence_alert(
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            months=months,
+        )
+        result["effectiveness_by_action_type"] = self._fetch_effectiveness_by_action_type(
             branch_code=branch_code,
             nonconformity_scope=nonconformity_scope,
             months=months,
@@ -695,6 +705,95 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     "open_plans": int(row.get("open_plans") or 0),
                 }
                 for row in top_rows
+            ],
+        }
+
+    def _fetch_effectiveness_by_action_type(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        months: int = 12,
+    ) -> dict[str, Any]:
+        plan_filters = [
+            "p.deleted_at IS NULL",
+            "p.effectiveness_verified_at IS NOT NULL",
+            "p.effectiveness_verified_at >= NOW() - make_interval(months => %s)",
+            "p.effectiveness_status NOT IN ('pending', 'not_verified')",
+        ]
+        plan_params: list[Any] = [months]
+        if branch_code:
+            plan_filters.append("p.branch_code = %s")
+            plan_params.append(branch_code)
+        if nonconformity_scope:
+            plan_filters.append("p.nonconformity_scope = %s")
+            plan_params.append(nonconformity_scope)
+        plan_where = " AND ".join(plan_filters)
+
+        overall_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*)::int AS reviewed_plans,
+                   COUNT(*) FILTER (
+                       WHERE p.effectiveness_status = 'effective'
+                   )::int AS effective_plans,
+                   COUNT(*) FILTER (
+                       WHERE p.effectiveness_status = 'partially_effective'
+                   )::int AS partially_effective_plans,
+                   COUNT(*) FILTER (
+                       WHERE p.effectiveness_status = 'ineffective'
+                   )::int AS ineffective_plans
+              FROM quality.quality_action_plans p
+             WHERE {plan_where}
+            """,
+            tuple(plan_params),
+        )
+
+        action_rows = self.fetch_all(
+            f"""
+            SELECT a.action_type,
+                   COUNT(DISTINCT p.id)::int AS reviewed_plans,
+                   COUNT(DISTINCT p.id) FILTER (
+                       WHERE p.effectiveness_status = 'effective'
+                   )::int AS effective_plans,
+                   COUNT(DISTINCT p.id) FILTER (
+                       WHERE p.effectiveness_status = 'partially_effective'
+                   )::int AS partially_effective_plans,
+                   COUNT(DISTINCT p.id) FILTER (
+                       WHERE p.effectiveness_status = 'ineffective'
+                   )::int AS ineffective_plans
+              FROM quality.quality_action_plans p
+              JOIN quality.quality_actions a ON a.plan_id = p.id
+             WHERE {plan_where}
+             GROUP BY a.action_type
+             ORDER BY reviewed_plans DESC, a.action_type ASC
+            """,
+            tuple(plan_params),
+        )
+
+        def _map_bucket(row: dict[str, Any] | None) -> dict[str, Any]:
+            reviewed = int((row or {}).get("reviewed_plans") or 0)
+            effective = int((row or {}).get("effective_plans") or 0)
+            return {
+                "reviewed_plans": reviewed,
+                "effective_plans": effective,
+                "partially_effective_plans": int(
+                    (row or {}).get("partially_effective_plans") or 0
+                ),
+                "ineffective_plans": int((row or {}).get("ineffective_plans") or 0),
+                "effectiveness_rate": (
+                    round(100.0 * effective / reviewed, 1) if reviewed else None
+                ),
+            }
+
+        return {
+            "window_months": months,
+            "overall": _map_bucket(overall_row),
+            "by_action_type": [
+                {
+                    "action_type": row["action_type"],
+                    **_map_bucket(row),
+                }
+                for row in action_rows
             ],
         }
 

@@ -30,6 +30,12 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
         "plans_in_window": 0,
         "open_plans_in_recurrence": 0,
       },
+      {
+        "reviewed_plans": 0,
+        "effective_plans": 0,
+        "partially_effective_plans": 0,
+        "ineffective_plans": 0,
+      },
     ]
   )
   repo.fetch_all = MagicMock(return_value=[])
@@ -42,6 +48,7 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
   assert "breakdowns" in result
   assert "rankings" in result
   assert "recurrence_alert" in result
+  assert "effectiveness_by_action_type" in result
   main_query = repo.fetch_one.call_args_list[0][0][0]
   assert main_query.count("%s") == 1
   assert repo.fetch_one.call_args_list[0][0][1] == ("01",)
@@ -134,3 +141,41 @@ def test_dashboard_recurrence_alert_maps_rows():
     assert alert["open_plans_in_recurrence"] == 3
     assert alert["top_groups"][0]["product_code"] == "90261805"
     assert alert["top_groups"][0]["plans_in_window"] == 3
+
+
+def test_dashboard_effectiveness_by_action_type_maps_rows():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(
+        return_value={
+            "reviewed_plans": 10,
+            "effective_plans": 7,
+            "partially_effective_plans": 2,
+            "ineffective_plans": 1,
+        }
+    )
+    repo.fetch_all = MagicMock(
+        return_value=[
+            {
+                "action_type": "corrective",
+                "reviewed_plans": 6,
+                "effective_plans": 4,
+                "partially_effective_plans": 1,
+                "ineffective_plans": 1,
+            },
+            {
+                "action_type": "preventive",
+                "reviewed_plans": 4,
+                "effective_plans": 3,
+                "partially_effective_plans": 1,
+                "ineffective_plans": 0,
+            },
+        ]
+    )
+
+    effectiveness = repo._fetch_effectiveness_by_action_type(months=12)
+
+    assert effectiveness["window_months"] == 12
+    assert effectiveness["overall"]["effectiveness_rate"] == 70.0
+    assert effectiveness["by_action_type"][0]["action_type"] == "corrective"
+    assert effectiveness["by_action_type"][0]["effectiveness_rate"] == round(100.0 * 4 / 6, 1)
+    assert effectiveness["by_action_type"][1]["effective_plans"] == 3

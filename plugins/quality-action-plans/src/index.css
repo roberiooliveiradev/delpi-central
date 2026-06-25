@@ -235,6 +235,14 @@
   margin-bottom: var(--pac-grid-gap);
 }
 
+.dashboard-quality-action-plans .pac-effectiveness-section {
+  margin-bottom: var(--pac-grid-gap);
+}
+
+.dashboard-quality-action-plans .pac-dashboard-grid--effectiveness {
+  margin-bottom: var(--pac-grid-gap);
+}
+
 .dashboard-quality-action-plans .pac-metric-card {
   background: var(--pac-card-bg);
   border: 1px solid var(--pac-card-border);

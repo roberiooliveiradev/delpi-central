@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
+import { DashboardEffectivenessCharts } from "../components/dashboard/DashboardEffectivenessCharts";
 import { DashboardRecurrenceAlertCard } from "../components/dashboard/DashboardRecurrenceAlertCard";
 import { DashboardRankingCharts } from "../components/dashboard/DashboardRankingCharts";
 import { DashboardBreakdownCharts } from "../components/dashboard/DashboardBreakdownCharts";
@@ -115,6 +116,10 @@ export function DashboardPage({ onNavigate }: Props) {
             onNavigate={onNavigate}
           />
           <DashboardBreakdownCharts breakdowns={summary.breakdowns} />
+          <DashboardEffectivenessCharts
+            effectiveness={summary.effectiveness_by_action_type}
+            loading={loading}
+          />
           <DashboardRankingCharts rankings={summary.rankings} />
           <DashboardCharts summary={summary} plans={plans} />
         </>

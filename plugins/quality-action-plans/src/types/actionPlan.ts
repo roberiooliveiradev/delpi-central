@@ -67,6 +67,7 @@ export type DashboardSummary = {
   breakdowns?: DashboardBreakdowns;
   rankings?: DashboardRankings;
   recurrence_alert?: DashboardRecurrenceAlert;
+  effectiveness_by_action_type?: DashboardEffectivenessByActionType;
 };
 
 export type DashboardTiming = {
@@ -118,6 +119,24 @@ export type DashboardRecurrenceAlert = {
   plans_in_window: number;
   open_plans_in_recurrence: number;
   top_groups: DashboardRecurrenceGroupAlert[];
+};
+
+export type DashboardEffectivenessBucket = {
+  reviewed_plans: number;
+  effective_plans: number;
+  partially_effective_plans: number;
+  ineffective_plans: number;
+  effectiveness_rate: number | null;
+};
+
+export type DashboardEffectivenessByActionTypeItem = DashboardEffectivenessBucket & {
+  action_type: string;
+};
+
+export type DashboardEffectivenessByActionType = {
+  window_months: number;
+  overall: DashboardEffectivenessBucket;
+  by_action_type: DashboardEffectivenessByActionTypeItem[];
 };
 
 export type IshikawaAnalysis = {

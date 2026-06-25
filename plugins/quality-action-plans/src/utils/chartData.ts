@@ -97,6 +97,29 @@ export function buildActionTypeBreakdownData(items: DashboardBreakdownItem[]) {
   return buildBreakdownChartData(items, actionTypeLabel);
 }
 
+export function buildEffectivenessByActionTypeData(
+  items: Array<{
+    action_type: string;
+    effectiveness_rate: number | null;
+    reviewed_plans: number;
+    effective_plans: number;
+  }>,
+) {
+  return items
+    .filter((entry) => entry.reviewed_plans > 0 && entry.effectiveness_rate !== null)
+    .map((entry, index) => {
+      const fullLabel = actionTypeLabel(entry.action_type);
+      return {
+        name: truncateLabel(fullLabel),
+        fullName: fullLabel,
+        value: entry.effectiveness_rate ?? 0,
+        reviewedPlans: entry.reviewed_plans,
+        effectivePlans: entry.effective_plans,
+        fill: CHART_COLORS[index % CHART_COLORS.length],
+      };
+    });
+}
+
 export function buildRankingChartData(items: DashboardRankingItem[]) {
   return items.map((entry, index) => {
     const fullLabel = entry.label;
