@@ -10,9 +10,11 @@ from delpi_auth.authorization import require_any_permission
 from app.application.security.api_delpi_permissions import QUALITY_ACTION_PLANS_READ_PERMISSIONS
 from app.application.use_cases.quality_action_plans.quality_intelligence_use_cases import (
     AssessRecurrenceOnOpeningRequest,
+    KnowledgeGraphRequest,
 )
 from app.composition.quality_intelligence_composer import (
     build_assess_recurrence_on_opening_use_case,
+    build_get_quality_knowledge_graph_use_case,
 )
 from app.core.responses import error_response
 from app.domain.services.quality_action_plans.pac_evidence_ocr_tag_suggestion_service import (
@@ -71,6 +73,41 @@ def _build_evidence_tag_suggestion(
         "reason": "provided_text" if (ocr_text or "").strip() else "none",
     }
     return suggestion
+
+
+@router.get(
+    "/knowledge-graph",
+    **_pac_openapi(
+        "get_quality_action_plan_knowledge_graph",
+        "/intelligence/knowledge-graph",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def get_quality_knowledge_graph(
+    branch_code: str | None = None,
+    product_code: str | None = None,
+    limit: int | None = None,
+):
+    try:
+        use_case = build_get_quality_knowledge_graph_use_case()
+        result = use_case.execute(
+            KnowledgeGraphRequest(
+                branch_code=branch_code,
+                product_code=product_code,
+                limit=limit,
+            )
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_quality_action_plan_knowledge_graph",
+        )
+    except PluginsRepositoryError:
+        log_error(logger, "Erro ao montar grafo de conhecimento PAC.")
+        return error_response(
+            "Erro ao consultar grafo de conhecimento.",
+            status_code=500,
+            code="PAC_INTELLIGENCE_ERROR",
+        )
 
 
 @router.post(

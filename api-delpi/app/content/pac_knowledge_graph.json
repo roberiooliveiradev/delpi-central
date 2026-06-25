@@ -1,0 +1,7 @@
+{
+  "limits": {
+    "maxRows": 200,
+    "maxNodes": 120,
+    "maxEdges": 240
+  }
+}

@@ -116,6 +116,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 **Tags de evidência (Onda 6.3):** `POST .../intelligence/suggest-evidence-tags` com `ocr_text`/`file_name`/`description`; variante `.../from-image` (multipart) com OCR opcional (`PAC_EVIDENCE_OCR_ENABLED`).
 
+**Grafo de conhecimento (Onda 6.5):** `GET /quality/action-plans/intelligence/knowledge-graph` (`get_quality_action_plan_knowledge_graph` / `pac_get_quality_knowledge_graph`) com filtros opcionais `branch_code`, `product_code`, `limit`. Retorna `nodes` (tipos `product`, `failure_mode`, `root_cause`, `effective_action`), `edges` com `plan_count`/`effective_plan_count`, `summary` e `filters`.
+
 ### POST `/quality/action-plans` — corpo mínimo
 
 ```json

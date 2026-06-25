@@ -339,3 +339,32 @@ class AssessRecurrenceOnOpeningUseCase:
             "similar_cases_preview": (similar_result.get("similar_cases") or [])[:3],
             "similar_cases_decision_log": similar_result.get("similar_cases_decision_log"),
         }
+
+
+@dataclass(frozen=True)
+class KnowledgeGraphRequest:
+    branch_code: str | None = None
+    product_code: str | None = None
+    limit: int | None = None
+
+
+class GetQualityKnowledgeGraphUseCase:
+    def __init__(self, repository: PostgresQualityIntelligenceRepository) -> None:
+        self._repository = repository
+
+    def execute(self, request: KnowledgeGraphRequest) -> dict[str, Any]:
+        from app.domain.services.quality_action_plans.pac_quality_knowledge_graph_service import (
+            PacQualityKnowledgeGraphService,
+        )
+
+        rows = self._repository.fetch_knowledge_graph_paths(
+            branch_code=request.branch_code,
+            product_code=request.product_code,
+            limit=request.limit,
+        )
+        graph = PacQualityKnowledgeGraphService.build(rows)
+        graph["filters"] = {
+            "branch_code": request.branch_code,
+            "product_code": request.product_code,
+        }
+        return graph

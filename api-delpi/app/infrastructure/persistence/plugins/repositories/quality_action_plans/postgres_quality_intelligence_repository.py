@@ -399,6 +399,59 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
             "total_plans": int((row or {}).get("total_plans") or 0),
         }
 
+    def fetch_knowledge_graph_paths(
+        self,
+        *,
+        branch_code: str | None = None,
+        product_code: str | None = None,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        from app.domain.services.quality_action_plans.pac_knowledge_graph_content_service import (
+            PacKnowledgeGraphContentService,
+        )
+
+        row_limit = limit or PacKnowledgeGraphContentService.limit_int("maxRows", 200)
+        filters = [
+            "p.deleted_at IS NULL",
+            "p.status NOT IN ('draft', 'cancelled')",
+            "p.product_code IS NOT NULL",
+            "TRIM(p.product_code) <> ''",
+        ]
+        params: list[Any] = []
+
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+        if product_code:
+            filters.append("p.product_code = %s")
+            params.append(product_code)
+
+        where_clause = " AND ".join(filters)
+        rows = self.fetch_all(
+            f"""
+            SELECT p.product_code,
+                   p.failure_mode,
+                   COALESCE(fw.root_cause, p.root_cause_category) AS root_cause,
+                   a.description AS action_description,
+                   COUNT(DISTINCT p.id)::int AS plan_count,
+                   COUNT(DISTINCT p.id) FILTER (
+                       WHERE p.effectiveness_status IN ('effective', 'partially_effective')
+                   )::int AS effective_plan_count
+              FROM quality.quality_action_plans p
+              LEFT JOIN quality.quality_five_whys fw ON fw.plan_id = p.id
+              LEFT JOIN quality.quality_actions a
+                ON a.plan_id = p.id
+               AND a.status = 'completed'
+             WHERE {where_clause}
+             GROUP BY p.product_code, p.failure_mode, root_cause, a.description
+            HAVING COUNT(DISTINCT p.id) >= 1
+             ORDER BY plan_count DESC, effective_plan_count DESC, p.product_code
+             LIMIT %s
+            """,
+            tuple([*params, row_limit]),
+        )
+        return [dict(row) for row in rows]
+
     def list_solution_patterns(
         self,
         *,
