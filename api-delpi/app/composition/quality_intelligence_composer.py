@@ -1,4 +1,5 @@
 from app.application.use_cases.quality_action_plans.quality_intelligence_use_cases import (
+    AssessRecurrenceOnOpeningUseCase,
     GetPlanSimilarCasesUseCase,
     ListSolutionPatternsUseCase,
     PromoteSolutionPatternFromPlanUseCase,
@@ -58,3 +59,10 @@ def build_list_solution_patterns_use_case() -> ListSolutionPatternsUseCase:
 
 def build_promote_solution_pattern_from_plan_use_case() -> PromoteSolutionPatternFromPlanUseCase:
     return PromoteSolutionPatternFromPlanUseCase(build_quality_intelligence_repository())
+
+
+def build_assess_recurrence_on_opening_use_case() -> AssessRecurrenceOnOpeningUseCase:
+    return AssessRecurrenceOnOpeningUseCase(
+        build_quality_intelligence_repository(),
+        build_search_similar_cases_use_case(),
+    )

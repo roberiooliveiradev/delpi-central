@@ -135,6 +135,7 @@ Valida: dois planos com mesma `recurrence_key` aparecem em `GET /recurrence`; `G
 |---|---|---|
 | 1 | CI: catálogo válido | `run_pac_agent_eval.py --check-catalog` exit 0 |
 | 2 | Rodar EVAL01–EVAL20 no Custom GPT (produção) | Salvar respostas em `eval_responses.json` |
+| 2b | Gerar esqueleto | `run_pac_agent_eval.py --export-template eval_responses.json` |
 | 3 | Pontuar | `run_pac_agent_eval.py --score-file eval_responses.json --min-pass-rate 0.9` |
 | 4 | Verificar `similar_cases_decision_log` | Agente cita `influence_factors` ao usar histórico |
 

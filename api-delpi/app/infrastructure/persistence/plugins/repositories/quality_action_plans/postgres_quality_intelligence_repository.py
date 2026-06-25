@@ -363,6 +363,42 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
 
         return list(merged.values())
 
+    def fetch_recurrence_opening_stats(
+        self,
+        *,
+        recurrence_key: str,
+        branch_code: str | None = None,
+        window_months: int = 12,
+    ) -> dict[str, int]:
+        filters = ["p.deleted_at IS NULL", "p.recurrence_key = %s"]
+        params: list[Any] = [recurrence_key]
+
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+
+        where_clause = " AND ".join(filters)
+        row = self.fetch_one(
+            f"""
+            SELECT COUNT(*) FILTER (
+                       WHERE p.created_at >= NOW() - make_interval(months => %s)
+                   )::int AS plans_in_window,
+                   COUNT(*) FILTER (
+                       WHERE p.status NOT IN ('completed', 'cancelled')
+                   )::int AS open_plans,
+                   COUNT(*)::int AS total_plans
+              FROM quality.quality_action_plans p
+             WHERE {where_clause}
+            """,
+            tuple([window_months, *params]),
+        )
+
+        return {
+            "plans_in_window": int((row or {}).get("plans_in_window") or 0),
+            "open_plans": int((row or {}).get("open_plans") or 0),
+            "total_plans": int((row or {}).get("total_plans") or 0),
+        }
+
     def list_solution_patterns(
         self,
         *,

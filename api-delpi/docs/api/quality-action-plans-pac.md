@@ -112,6 +112,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 **Busca semântica (Onda 6.2):** com `PAC_SIMILARITY_EMBEDDINGS_ENABLED=true` e Ollama (`OLLAMA_BASE_URL`, `EMBEDDING_MODEL=bge-m3`), o índice grava `search_embedding` no sync e a busca combina pgvector + filtros textuais. Sem embeddings, permanece o ranking lexical (trgm/ILIKE).
 
+**Recorrência na abertura (Onda 6.4):** `POST /quality/action-plans/intelligence/recurrence-opening-assessment` (`assess_quality_action_plan_recurrence_on_opening` / `pac_assess_recurrence_on_opening`) retorna `recurrence_score`, `alert_level`, `should_warn_before_opening` e preview de casos similares — chamar **antes** de `create_quality_action_plan`.
+
 ### POST `/quality/action-plans` — corpo mínimo
 
 ```json

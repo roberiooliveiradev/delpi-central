@@ -15,6 +15,13 @@ from app.domain.services.quality_action_plans.case_similarity_scoring_service im
     IndexedCaseCandidate,
     SimilarCaseQuery,
 )
+from app.domain.services.quality_action_plans.pac_quality_branch_service import (
+    build_recurrence_key,
+    validate_branch_code,
+)
+from app.domain.services.quality_action_plans.pac_recurrence_proactive_alert_service import (
+    PacRecurrenceProactiveAlertService,
+)
 
 
 class CaseSimilarityIndexRepository(Protocol):
@@ -236,3 +243,99 @@ class PromoteSolutionPatternFromPlanUseCase:
 
     def execute(self, plan_id: str) -> dict[str, Any] | None:
         return self._repository.upsert_solution_pattern_from_plan(plan_id)
+
+
+class RecurrenceOpeningRepository(Protocol):
+    def fetch_recurrence_opening_stats(
+        self,
+        *,
+        recurrence_key: str,
+        branch_code: str | None = None,
+        window_months: int = 12,
+    ) -> dict[str, int]: ...
+
+
+@dataclass(frozen=True)
+class AssessRecurrenceOnOpeningRequest:
+    problem_description: str
+    product_code: str | None = None
+    failure_mode: str | None = None
+    branch_code: str | None = None
+    symptoms: list[str] | None = None
+    root_cause_category: str | None = None
+    recurrence_key: str | None = None
+
+
+class AssessRecurrenceOnOpeningUseCase:
+    def __init__(
+        self,
+        repository: RecurrenceOpeningRepository,
+        search_similar_cases: SearchSimilarCasesUseCase,
+    ) -> None:
+        self._repository = repository
+        self._search_similar_cases = search_similar_cases
+
+    def execute(self, request: AssessRecurrenceOnOpeningRequest) -> dict[str, Any]:
+        if not request.problem_description.strip():
+            raise ValueError("problem_description é obrigatório.")
+
+        branch_code = validate_branch_code(request.branch_code, required=False)
+        recurrence_key = build_recurrence_key(
+            branch_code=branch_code,
+            product_code=request.product_code,
+            failure_mode=request.failure_mode,
+            explicit=request.recurrence_key,
+        )
+
+        from app.domain.services.quality_action_plans.pac_recurrence_alert_content_service import (
+            PacRecurrenceAlertContentService,
+        )
+
+        window_months = PacRecurrenceAlertContentService.window_months()
+        stats = {"plans_in_window": 0, "open_plans": 0, "total_plans": 0}
+
+        if recurrence_key:
+            stats = self._repository.fetch_recurrence_opening_stats(
+                recurrence_key=recurrence_key,
+                branch_code=branch_code,
+                window_months=window_months,
+            )
+
+        similar_result = self._search_similar_cases.execute(
+            SimilarCasesRequest(
+                problem_description=request.problem_description.strip(),
+                product_code=request.product_code,
+                failure_mode=request.failure_mode,
+                branch_code=branch_code,
+                symptoms=request.symptoms,
+                root_cause_category=request.root_cause_category,
+            )
+        )
+        recurrence_signals = similar_result.get("recurrence_signals") or {}
+
+        if not recurrence_key and int(recurrence_signals.get("same_product") or 0) >= 2:
+            stats = {
+                **stats,
+                "plans_in_window": max(
+                    stats["plans_in_window"],
+                    int(recurrence_signals.get("same_product") or 0),
+                ),
+                "total_plans": max(
+                    stats["total_plans"],
+                    int(recurrence_signals.get("same_product") or 0),
+                ),
+            }
+
+        assessment = PacRecurrenceProactiveAlertService.build_assessment(
+            recurrence_key=recurrence_key,
+            plans_in_window=stats["plans_in_window"],
+            open_plans=stats["open_plans"],
+            total_plans=stats["total_plans"],
+            recurrence_signals=recurrence_signals,
+        )
+
+        return {
+            **assessment,
+            "similar_cases_preview": (similar_result.get("similar_cases") or [])[:3],
+            "similar_cases_decision_log": similar_result.get("similar_cases_decision_log"),
+        }

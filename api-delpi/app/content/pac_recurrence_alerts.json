@@ -1,0 +1,17 @@
+{
+  "openingAssessment": {
+    "windowMonths": 12,
+    "scoreWeights": {
+      "plansInWindow": 0.45,
+      "openPlans": 0.35,
+      "totalPlansCap": 0.2
+    },
+    "thresholds": {
+      "highMinScore": 0.75,
+      "mediumMinScore": 0.45,
+      "highMinPlansInWindow": 3,
+      "mediumMinPlansInWindow": 2
+    },
+    "totalPlansNormalizer": 6
+  }
+}

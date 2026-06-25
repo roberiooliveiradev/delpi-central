@@ -338,6 +338,10 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_quality_action_plan_similar_cases": RouteContract(
         "quality_action_plan_similar_cases", "composite_analysis"
     ),
+    "assess_quality_action_plan_recurrence_on_opening": RouteContract(
+        "quality_action_plan_recurrence_opening_assessment",
+        "composite_analysis",
+    ),
     "list_quality_solution_patterns": RouteContract(
         "quality_solution_pattern", "paged_list"
     ),
