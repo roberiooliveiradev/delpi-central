@@ -190,6 +190,19 @@ export function PlanFormPage({ onNavigate }: Props) {
               label="Modo de falha"
               value={values.failure_mode}
               onChange={(failure_mode) => updateField("failure_mode", failure_mode)}
+            />
+            <TextField
+              id="pac-problem-category"
+              label="Categoria do problema"
+              value={values.problem_category}
+              onChange={(problem_category) => updateField("problem_category", problem_category)}
+            />
+            <TextField
+              id="pac-symptom-tags"
+              label="Tags de sintoma"
+              value={values.symptom_tags_text}
+              onChange={(symptom_tags_text) => updateField("symptom_tags_text", symptom_tags_text)}
+              placeholder="oxidacao, trinca, dimensional"
               fullWidth
             />
           </div>

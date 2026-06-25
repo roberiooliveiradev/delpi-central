@@ -1,5 +1,7 @@
 from app.application.use_cases.quality_action_plans.quality_intelligence_use_cases import (
     GetPlanSimilarCasesUseCase,
+    ListSolutionPatternsUseCase,
+    PromoteSolutionPatternFromPlanUseCase,
     SearchSimilarCasesUseCase,
     SyncCaseSimilarityIndexUseCase,
 )
@@ -29,3 +31,11 @@ def build_get_plan_similar_cases_use_case() -> GetPlanSimilarCasesUseCase:
         build_quality_action_plan_read_repository(),
         build_search_similar_cases_use_case(),
     )
+
+
+def build_list_solution_patterns_use_case() -> ListSolutionPatternsUseCase:
+    return ListSolutionPatternsUseCase(build_quality_intelligence_repository())
+
+
+def build_promote_solution_pattern_from_plan_use_case() -> PromoteSolutionPatternFromPlanUseCase:
+    return PromoteSolutionPatternFromPlanUseCase(build_quality_intelligence_repository())

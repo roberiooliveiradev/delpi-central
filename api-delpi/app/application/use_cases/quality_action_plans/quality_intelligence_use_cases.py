@@ -151,3 +151,47 @@ class GetPlanSimilarCasesUseCase:
                 exclude_plan_id=plan_id,
             )
         )
+
+
+class SolutionPatternsRepository(Protocol):
+    def list_solution_patterns(
+        self,
+        *,
+        problem_category: str | None = None,
+        failure_mode: str | None = None,
+        q: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]: ...
+
+    def upsert_solution_pattern_from_plan(self, plan_id: str) -> dict[str, Any] | None: ...
+
+
+class ListSolutionPatternsUseCase:
+    def __init__(self, repository: SolutionPatternsRepository) -> None:
+        self._repository = repository
+
+    def execute(
+        self,
+        *,
+        problem_category: str | None = None,
+        failure_mode: str | None = None,
+        q: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        return self._repository.list_solution_patterns(
+            problem_category=problem_category,
+            failure_mode=failure_mode,
+            q=q,
+            page=page,
+            page_size=page_size,
+        )
+
+
+class PromoteSolutionPatternFromPlanUseCase:
+    def __init__(self, repository: SolutionPatternsRepository) -> None:
+        self._repository = repository
+
+    def execute(self, plan_id: str) -> dict[str, Any] | None:
+        return self._repository.upsert_solution_pattern_from_plan(plan_id)

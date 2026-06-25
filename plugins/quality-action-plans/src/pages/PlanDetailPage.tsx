@@ -15,6 +15,7 @@ import {
   createPlanActions,
   exportRnc8dSpreadsheet,
   fetchActionPlanDetail,
+  promoteSolutionPattern,
   recordEffectivenessReview,
   updateActionPlan,
   updatePlanAction,
@@ -52,6 +53,7 @@ import type { ActionPlanDetail, FiveWhysAnalysis, IshikawaAnalysis } from "../ty
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
 import { formatDate, formatDateTime } from "../utils/format";
+import { formatSymptomTags, parseSymptomTags } from "../utils/symptomTags";
 
 type Props = {
   planId: string;
@@ -123,6 +125,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     batch_number: "",
     department: "",
     failure_mode: "",
+    problem_category: "",
+    symptom_tags_text: "",
     reported_problem: "",
     severity: "medium",
     branch_code: "01",
@@ -165,6 +169,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         batch_number: data.plan.batch_number ?? "",
         department: data.plan.department ?? "",
         failure_mode: data.plan.failure_mode ?? "",
+        problem_category: data.plan.problem_category ?? "",
+        symptom_tags_text: formatSymptomTags(data.plan.symptom_tags),
         reported_problem: data.plan.reported_problem ?? "",
         severity: data.plan.severity ?? "medium",
         branch_code: data.plan.branch_code ?? "01",
@@ -311,6 +317,23 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 value={identificationForm.failure_mode}
                 onChange={(failure_mode) => setIdentificationForm((c) => ({ ...c, failure_mode }))}
               />
+              <TextField
+                id="pac-detail-problem-category"
+                label="Categoria do problema"
+                value={identificationForm.problem_category}
+                onChange={(problem_category) =>
+                  setIdentificationForm((c) => ({ ...c, problem_category }))
+                }
+              />
+              <TextField
+                id="pac-detail-symptom-tags"
+                label="Tags de sintoma"
+                value={identificationForm.symptom_tags_text}
+                onChange={(symptom_tags_text) =>
+                  setIdentificationForm((c) => ({ ...c, symptom_tags_text }))
+                }
+                placeholder="oxidacao, trinca"
+              />
               <SelectField
                 id="pac-detail-severity"
                 label="Severidade"
@@ -354,6 +377,11 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       batch_number: identificationForm.batch_number.trim() || undefined,
                       department: identificationForm.department.trim() || undefined,
                       failure_mode: identificationForm.failure_mode.trim() || undefined,
+                      problem_category: identificationForm.problem_category.trim() || undefined,
+                      symptom_tags: (() => {
+                        const tags = parseSymptomTags(identificationForm.symptom_tags_text);
+                        return tags.length ? tags : undefined;
+                      })(),
                       reported_problem: identificationForm.reported_problem.trim() || undefined,
                       severity: identificationForm.severity,
                       branch_code: identificationForm.branch_code,
@@ -718,6 +746,20 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               >
                 {saving === "effectiveness" ? "Salvando…" : "Registrar eficácia"}
               </button>
+              {["effective", "partially_effective"].includes(plan.effectiveness_status ?? "") ? (
+                <button
+                  type="button"
+                  className="pac-ghost-btn"
+                  disabled={saving === "promote-pattern"}
+                  onClick={() =>
+                    void runSave("promote-pattern", async () => {
+                      await promoteSolutionPattern(planId);
+                    })
+                  }
+                >
+                  {saving === "promote-pattern" ? "Promovendo…" : "Promover a padrão de solução"}
+                </button>
+              ) : null}
             </FormActions>
           </SectionCard>
 

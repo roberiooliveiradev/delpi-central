@@ -446,6 +446,9 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         if lowered == "/quality/action-plans/dashboard":
             return "quality_action_plan_dashboard"
 
+        if lowered == "/quality/action-plans/recurrence":
+            return "quality_action_plan_recurrence"
+
         return None
 
     @classmethod

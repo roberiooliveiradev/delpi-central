@@ -86,6 +86,12 @@ def test_resolve_entity_from_path_json_hints_and_fallbacks() -> None:
     )
     assert (
         ChatPresentationProfileService.resolve_entity_from_path(
+            "/quality/action-plans/recurrence"
+        )
+        == "quality_action_plan_recurrence"
+    )
+    assert (
+        ChatPresentationProfileService.resolve_entity_from_path(
             "/quality/action-plans/550e8400-e29b-41d4-a716-446655440000/rnc-8d"
         )
         == "quality_action_plan"

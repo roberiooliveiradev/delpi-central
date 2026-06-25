@@ -1309,6 +1309,122 @@
       }
     },
     {
+      "id": "pacQualitySimilarCases",
+      "domain": "domainQualityActionPlans",
+      "priority": 136,
+      "match": {
+        "customPredicate": "pacQualitySimilarCases"
+      },
+      "route": {
+        "pathMarkers": [
+          "/quality/action-plans/",
+          "/similar-cases"
+        ],
+        "operationIdMarkers": [
+          "get_quality_action_plan_similar_cases"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "semantic"
+      },
+      "presentation": {
+        "reasonKey": "pacQualitySimilarCases"
+      }
+    },
+    {
+      "id": "pacQualityRecurrence",
+      "domain": "domainQualityActionPlans",
+      "priority": 135,
+      "match": {
+        "customPredicate": "pacQualityRecurrence"
+      },
+      "route": {
+        "pathMarkers": [
+          "/quality/action-plans/recurrence"
+        ],
+        "operationIdMarkers": [
+          "list_quality_action_plans_recurrence"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "semantic"
+      },
+      "presentation": {
+        "reasonKey": "pacQualityRecurrence"
+      }
+    },
+    {
+      "id": "pacQualityOverdue",
+      "domain": "domainQualityActionPlans",
+      "priority": 134,
+      "match": {
+        "customPredicate": "pacQualityOverdue"
+      },
+      "route": {
+        "pathMarkers": [
+          "/quality/action-plans/overdue"
+        ],
+        "operationIdMarkers": [
+          "list_quality_action_plans_overdue"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "semantic"
+      },
+      "presentation": {
+        "reasonKey": "pacQualityOverdue"
+      }
+    },
+    {
+      "id": "pacQualityDashboard",
+      "domain": "domainQualityActionPlans",
+      "priority": 133,
+      "match": {
+        "customPredicate": "pacQualityDashboard"
+      },
+      "route": {
+        "pathMarkers": [
+          "/quality/action-plans/dashboard"
+        ],
+        "operationIdMarkers": [
+          "get_quality_action_plans_dashboard"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "semantic"
+      },
+      "presentation": {
+        "reasonKey": "pacQualityDashboard"
+      }
+    },
+    {
+      "id": "pacQualityList",
+      "domain": "domainQualityActionPlans",
+      "priority": 132,
+      "match": {
+        "customPredicate": "pacQualityList"
+      },
+      "route": {
+        "pathMarkers": [
+          "/quality/action-plans"
+        ],
+        "operationIdMarkers": [
+          "list_quality_action_plans"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "semantic"
+      },
+      "presentation": {
+        "reasonKey": "pacQualityList"
+      }
+    },
+    {
       "id": "suppliesCpv",
       "domain": "domainSupplies",
       "priority": 132,

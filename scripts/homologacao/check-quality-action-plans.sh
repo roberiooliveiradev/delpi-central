@@ -24,6 +24,7 @@ required = [
     '/quality/action-plans/{plan_id}/five-whys',
     '/quality/action-plans/{plan_id}/similar-cases',
     '/quality/action-plans/recurrence',
+    '/quality/solution-patterns',
 ]
 for path in required:
     assert path in paths, f'missing path {path}'
@@ -54,6 +55,18 @@ assert body.get('success'), body
 data = body.get('data') or {}
 assert 'items' in data and 'pagination' in data
 print('OK list', data['pagination'].get('total', 0), 'planos')
+"
+
+  echo "[check] recorrência PAC"
+  curl -fsS "${BASE_URL}/apps/api-delpi/quality/action-plans/recurrence?page_size=1" "${AUTH[@]}" \
+    | python3 -c "
+import json, sys
+body = json.load(sys.stdin)
+assert body.get('success'), body
+assert body.get('meta', {}).get('operationId') == 'list_quality_action_plans_recurrence', body
+data = body.get('data') or {}
+assert 'items' in data and 'pagination' in data
+print('OK recurrence', len(data.get('items') or []), 'grupos')
 "
 
   if [ -n "$PLAN_ID" ]; then

@@ -46,6 +46,7 @@ ONDA1_REQUIRED_OPENAPI_PATHS = (
     "/quality/action-plans",
     "/quality/action-plans/dashboard",
     "/quality/action-plans/overdue",
+    "/quality/action-plans/recurrence",
     "/quality/action-plans/{plan_id}",
     "/quality/action-plans/{plan_id}/similar-cases",
     "/quality/action-plans/{plan_id}/rnc-8d",
@@ -100,7 +101,7 @@ def main() -> int:
     parser.add_argument(
         "--provider-key",
         default=DEFAULT_PROVIDER_KEY,
-        help="Provider OpenAPI cadastrado no chat (default: api-pac-quality).",
+        help="Provider OpenAPI cadastrado no chat (default: api-delpi).",
     )
     parser.add_argument(
         "--from-url",

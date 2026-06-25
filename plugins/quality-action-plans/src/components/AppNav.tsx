@@ -3,6 +3,7 @@ import {
   listPath,
   overduePath,
   recurrencePath,
+  solutionsPath,
   type AppView,
 } from "../constants/actionPlans";
 
@@ -16,6 +17,7 @@ const TABS: Array<{ view: AppView; label: string; path: string }> = [
   { view: "list", label: "Planos", path: listPath() },
   { view: "overdue", label: "Atrasados", path: overduePath() },
   { view: "recurrence", label: "Recorrência", path: recurrencePath() },
+  { view: "solutions", label: "Soluções", path: solutionsPath() },
 ];
 
 export function AppNav({ active, onNavigate }: Props) {

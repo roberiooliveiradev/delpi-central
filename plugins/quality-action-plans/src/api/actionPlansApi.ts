@@ -19,8 +19,10 @@ import type { CreatePlanPayload, UpdatePlanPayload } from "../types/planForm";
 import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
 import type { PlanSimilarCasesResult } from "../types/similarCases";
 import type { PagedRecurrenceResponse } from "../types/recurrence";
+import type { PagedSolutionPatternsResponse } from "../types/solutionPattern";
 
 const API_BASE = "/apps/api-delpi/quality/action-plans";
+const SOLUTION_PATTERNS_BASE = "/apps/api-delpi/quality/solution-patterns";
 
 type ListParams = {
   status?: string;
@@ -107,6 +109,38 @@ export async function fetchPlanSimilarCases(planId: string): Promise<PlanSimilar
     `${API_BASE}/${planId}/similar-cases`,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar casos similares.");
+}
+
+type SolutionPatternParams = {
+  problem_category?: string;
+  failure_mode?: string;
+  q?: string;
+  page?: number;
+  page_size?: number;
+};
+
+export async function fetchSolutionPatterns(
+  params: SolutionPatternParams = {},
+): Promise<PagedSolutionPatternsResponse> {
+  const search = new URLSearchParams();
+  if (params.problem_category) search.set("problem_category", params.problem_category);
+  if (params.failure_mode) search.set("failure_mode", params.failure_mode);
+  if (params.q) search.set("q", params.q);
+  if (params.page) search.set("page", String(params.page));
+  if (params.page_size) search.set("page_size", String(params.page_size));
+  const query = search.toString() ? `?${search.toString()}` : "";
+  const envelope = await httpGet<ApiEnvelope<PagedSolutionPatternsResponse>>(
+    `${SOLUTION_PATTERNS_BASE}${query}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao listar padrões de solução.");
+}
+
+export async function promoteSolutionPattern(planId: string) {
+  const envelope = await httpPost<ApiEnvelope<Record<string, unknown>>>(
+    `${API_BASE}/${planId}/promote-solution-pattern`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao promover padrão de solução.");
 }
 
 export async function createActionPlan(payload: CreatePlanPayload): Promise<ActionPlanSummary> {

@@ -44,6 +44,9 @@ from app.interface.http.openapi_agent_metadata import (
 from app.interface.http.routes.quality.action_plans_read_router import (
     router as action_plans_read_router,
 )
+from app.interface.http.routes.quality.solution_patterns_router import (
+    router as solution_patterns_router,
+)
 from app.interface.http.routes.quality.audit_5s_operational_router import (
     router as audit_5s_operational_router,
 )
@@ -55,6 +58,7 @@ from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_da
 
 router = APIRouter(prefix="/quality", tags=["Qualidade"])
 router.include_router(action_plans_read_router)
+router.include_router(solution_patterns_router)
 router.include_router(audit_5s_operational_router)
 router.include_router(kaizen_records_router)
 router.include_router(ppm_router)

@@ -44,7 +44,7 @@
 | Criar plano, Ishikawa, 5 Porquês, ações, status, eficácia | POST/PUT/PATCH | Sim |
 | Relatório 8D | PUT `/rnc-8d`, GET `/export/rnc-8d` | Sim |
 | Evidências | GET/POST/DELETE `/evidences`, download arquivo | Sim |
-| Inteligência (similaridade, padrões) | GET `/similar-cases` por plano | Parcial (Onda 2.1) |
+| Inteligência (similaridade, padrões) | GET `/similar-cases`, GET `/recurrence` | Parcial (Onda 2.1–2.3) |
 
 ### api-pac-quality
 
@@ -67,7 +67,7 @@
 | Relatório 8D + export Excel | Implementada (após ativar `rnc_8d`) |
 | Painel de evidências | Implementada (vínculo opcional com ação) |
 | Atrasados | Implementada |
-| Recorrência / soluções testadas / timeline rica | **Não** (similar-cases ok) |
+| Recorrência / soluções testadas / timeline rica | Parcial (recorrência + similar-cases ok) |
 | Edição completa do plano | Implementada (PATCH identificação no detalhe) |
 
 ---

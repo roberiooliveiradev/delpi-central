@@ -36,7 +36,10 @@ from app.composition.quality_action_plans_composer import (
     build_upsert_five_whys_use_case,
     build_upsert_ishikawa_use_case,
 )
-from app.composition.quality_intelligence_composer import build_get_plan_similar_cases_use_case
+from app.composition.quality_intelligence_composer import (
+    build_get_plan_similar_cases_use_case,
+    build_promote_solution_pattern_from_plan_use_case,
+)
 from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
     build_rnc_8d_workbook,
     collect_image_annexes_for_export,
@@ -393,6 +396,31 @@ def get_plan_similar_cases(plan_id: str):
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao buscar casos similares do plano {plan_id}: {exc}")
         return error_response("Erro ao consultar casos similares.", status_code=500)
+
+
+@router.post(
+    "/{plan_id}/promote-solution-pattern",
+    **_pac_openapi(
+        "promote_quality_action_plan_solution_pattern",
+        "/{plan_id}/promote-solution-pattern",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def promote_solution_pattern(plan_id: str):
+    try:
+        pattern = build_promote_solution_pattern_from_plan_use_case().execute(plan_id)
+        if pattern is None:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            pattern,
+            operation_id="promote_quality_action_plan_solution_pattern",
+            message="Padrão de solução registrado.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao promover padrão do plano {plan_id}: {exc}")
+        return error_response("Erro ao promover padrão de solução.", status_code=500)
 
 
 @router.get("/{plan_id}", **_pac_openapi("get_quality_action_plan_detail", "/{plan_id}"))

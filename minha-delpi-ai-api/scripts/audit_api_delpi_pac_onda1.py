@@ -23,6 +23,7 @@ if str(ROOT) not in sys.path:
 ONDA1_OPERATION_IDS = (
     "get_quality_action_plans_dashboard",
     "list_quality_action_plans_overdue",
+    "list_quality_action_plans_recurrence",
     "list_quality_action_plans",
     "get_quality_action_plan_detail",
     "create_quality_action_plan",
@@ -45,6 +46,7 @@ ONDA1_REQUIRED_OPENAPI_PATHS = (
     "/quality/action-plans",
     "/quality/action-plans/dashboard",
     "/quality/action-plans/overdue",
+    "/quality/action-plans/recurrence",
     "/quality/action-plans/{plan_id}",
     "/quality/action-plans/{plan_id}/similar-cases",
     "/quality/action-plans/{plan_id}/rnc-8d",

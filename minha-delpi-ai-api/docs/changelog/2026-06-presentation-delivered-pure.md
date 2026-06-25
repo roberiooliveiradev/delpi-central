@@ -150,9 +150,10 @@ Providers sem entrada em `entityProfiles` usam perfil derivado (`openapi:{entity
 ## PAC Qualidade — api-delpi (jun/2026)
 
 - Rotas `/quality/action-plans/*` expostas pela **api-delpi** (sem provider `api-pac-quality` separado).
-- `openapi_operation_contracts.json` sincronizado com `route_contract_registry` (187 contratos).
+- `openapi_operation_contracts.json` sincronizado com `route_contract_registry` (188 contratos).
 - `entityPathHints` + matching `{plan_id}` para apresentação schema-first.
-- Gate `scripts/audit_api_delpi_pac_onda1.py --check` (Onda 1: 8D, evidências, casos similares).
+- Gate `scripts/audit_api_delpi_pac_onda1.py --check` (Onda 1 + recorrência 2.3).
+- Regressão de seleção: `tests/fixtures/pac_quality_regression_cases.py` (PAC01–PAC05).
 - Pós-deploy: `sync_api_delpi_openapi.py` (mesmo provider `api-delpi`).
 
 ## Playbook 22 Fase D — enriched (jun/2026)

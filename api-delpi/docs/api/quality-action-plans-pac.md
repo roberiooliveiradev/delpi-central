@@ -35,6 +35,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | GET | `/quality/action-plans/dashboard` | `get_quality_action_plans_dashboard` | Cards executivos |
 | GET | `/quality/action-plans` | `list_quality_action_plans` | Listagem paginada |
 | GET | `/quality/action-plans/overdue` | `list_quality_action_plans_overdue` | Planos com ações vencidas |
+| GET | `/quality/action-plans/recurrence` | `list_quality_action_plans_recurrence` | Agrupamento por `recurrence_key` (reincidência) |
 | GET | `/quality/action-plans/{plan_id}` | `get_quality_action_plan_detail` | Detalhe completo |
 
 ### GET `/quality/action-plans/{plan_id}` — `data`

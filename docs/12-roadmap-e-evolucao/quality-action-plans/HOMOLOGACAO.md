@@ -40,7 +40,9 @@ Cria plano `[H1-SMOKE]`, preenche 8D, evidências com `action_id`, exporta Excel
 
 ### Smoke H2 — agente GPT (**api-pac-quality** produção)
 
-Pré-requisito: deploy recente no srv-api (`check-pac-api-server.sh` sem rotas faltando).
+> **Adiado** até a Onda 1 estar 100% na api-delpi e o agente ser re-sincronizado. Homologação corrente é **somente api-delpi local** (H1, H3, H4, H5, H6).
+
+Pré-requisito futuro: deploy recente no srv-api (`check-pac-api-server.sh` sem rotas faltando).
 
 ```bash
 # Gate deploy (OpenAPI produção)
@@ -61,6 +63,15 @@ python3 scripts/homologacao/run_h4_internal_smoke.py
 ```
 
 Cria NC `internal` sem template `rnc_8d`.
+
+### Smoke Onda 2 — recorrência e padrões (**api-delpi**)
+
+```bash
+export TOKEN="$(grep '^API_DELPI_INTERNAL_SERVICE_TOKEN=' infra/.env | cut -d= -f2)"
+python3 scripts/homologacao/run_onda2_local_smoke.py
+```
+
+Valida: dois planos com mesma `recurrence_key` aparecem em `GET /recurrence`; `GET /solution-patterns` responde com contrato paginado.
 
 ---
 

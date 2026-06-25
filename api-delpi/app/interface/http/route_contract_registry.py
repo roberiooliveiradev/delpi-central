@@ -309,6 +309,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_quality_action_plan_similar_cases": RouteContract(
         "quality_action_plan_similar_cases", "composite_analysis"
     ),
+    "list_quality_solution_patterns": RouteContract(
+        "quality_solution_pattern", "paged_list"
+    ),
+    "promote_quality_action_plan_solution_pattern": RouteContract(
+        "quality_solution_pattern", "scalar"
+    ),
     "get_audit_5s_summary": RouteContract("audit_5s_summary", "scalar"),
     "get_ppm_internal_summary": RouteContract("ppm_internal_summary", "scalar"),
     "get_ppm_external_summary": RouteContract("ppm_external_summary", "scalar"),
