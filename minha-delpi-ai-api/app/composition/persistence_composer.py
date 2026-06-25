@@ -10,6 +10,9 @@ from app.domain.services.chat_quality_adoption_metrics_service import (
 from app.domain.services.chat_runtime_intelligence_settings_service import (
     ChatRuntimeIntelligenceSettingsService,
 )
+from app.domain.services.chat_quality_action_plans_access_service import (
+    ChatQualityActionPlansAccessService,
+)
 from app.domain.skills.chat_skill_registry import ChatSkillRegistry
 from app.infrastructure.persistence.postgres_chat_adoption_metrics_repository import (
     PostgresChatAdoptionMetricsRepository,
@@ -50,6 +53,9 @@ def configure_domain_persistence_ports() -> None:
     ChatSkillRegistry.configure(
         skill_repository=PostgresChatSkillRepository(),
         external_action_repository=PostgresExternalActionRepository(),
+    )
+    ChatQualityActionPlansAccessService.configure_external_action_repository(
+        PostgresExternalActionRepository(),
     )
     ChatProjectConversationContextService.configure(
         PostgresChatProjectPeerContextRepository()

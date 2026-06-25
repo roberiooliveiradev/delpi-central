@@ -134,6 +134,7 @@ Execução SQL no chat comum **não** é permitida via external actions.
 - **Escritas:** policy exige confirmação do usuário antes de POST/PUT/PATCH; leituras (dashboard, fila, audit) podem ser proativas.
 - **Desativar:** `PUT /chat/agents/{id}/skills` com `skillKey: "quality-action-plans-delpi"` e `enabled: false`.
 - **Metadata legado:** `qualityActionPlans` em `resolve_runtime_flags` / prompt.
+- **Modo só consulta (Onda 5.7):** provider `api-delpi` com `allowWrite: false` expõe só actions `sensitivity: read` (GET). Runtime define `qualityActionPlansReadOnly: true` e injeta policy adicional — indicadores e listagens sem gravação.
 
 ### Skill `company-knowledge`
 

@@ -169,6 +169,11 @@ class PromptPolicyService:
                 pac_policy or self._load_policy("quality-action-plans-delpi-skill.md")
             )
 
+        if resolved_skills.get("qualityActionPlansReadOnly"):
+            sections.append(
+                self._load_policy("quality-action-plans-delpi-readonly-skill.md")
+            )
+
         return [
             section.strip()
             for section in sections

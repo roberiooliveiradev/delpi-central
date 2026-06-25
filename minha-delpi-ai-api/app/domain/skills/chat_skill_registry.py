@@ -304,6 +304,7 @@ class ChatSkillRegistry:
             "drawingAnalysis": False,
             "documentVision": False,
             "qualityActionPlans": False,
+            "qualityActionPlansReadOnly": False,
         }
 
         for item in bindings:
@@ -320,6 +321,19 @@ class ChatSkillRegistry:
                 resolved["documentVision"] = bool(item["enabled"])
             if item["skillKey"] == QUALITY_ACTION_PLANS_SKILL_KEY:
                 resolved["qualityActionPlans"] = bool(item["enabled"])
+
+        if resolved["qualityActionPlans"]:
+            from app.domain.services.chat_quality_action_plans_access_service import (
+                ChatQualityActionPlansAccessService,
+            )
+
+            resolved["qualityActionPlansReadOnly"] = (
+                ChatQualityActionPlansAccessService.resolve_read_only_mode(
+                    allowed_action_ids
+                )
+            )
+        else:
+            resolved["qualityActionPlansReadOnly"] = False
 
         return resolved
 

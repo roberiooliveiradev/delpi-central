@@ -305,3 +305,19 @@ def test_quality_action_plans_skill_policy_requires_confirmation_before_writes()
     assert "confirmação" in content
     assert "branch_code" in content
     assert "nonconformity_scope" in content
+
+
+def test_build_active_skill_policy_includes_readonly_section_when_flag_set():
+    service = PromptPolicyService()
+
+    sections = service.build_active_skill_policy_sections(
+        skills={
+            "qualityActionPlans": True,
+            "qualityActionPlansReadOnly": True,
+        }
+    )
+
+    combined = "\n".join(sections).lower()
+
+    assert "modo só consulta" in combined
+    assert "allowwrite" in combined or "modo consulta" in combined
