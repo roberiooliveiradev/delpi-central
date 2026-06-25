@@ -364,7 +364,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `chat_intent_router_service.py` | ~~1235~~ **~124** | ✅ **OK (jun/2026)** — delegates `ChatIntentRouter{Classify,Executed,Heuristics,EntityResolution,Support}Service` |
 | `chat_document_vision_service.py` | 2141 | Sub-serviços por estágio OCR |
 | `chat_operational_refinement_service.py` | 1208 | Split group-by / follow-up |
-| `external_action_operational_route_selection_service.py` | 1079 | Delegates por domínio |
+| `external_action_operational_route_selection_service.py` | ~~1079~~ **~279** | ✅ **OK (jun/2026)** — delegates `operational_route_selection/*` |
 | `chat_turn_completion_service.py` | ~~1071~~ **~200** | ✅ **OK (jun/2026)** — delegates `ChatTurnCompletionFinalize/Intelligence/Metadata/AuditService` |
 | `chat_product_query_intent_service.py` | 1164 | Predicates → `product_query_intent.json` |
 | `product_raw_material_price_presenter.py` | 1503 | Split por sub-entidade |
@@ -639,3 +639,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 (parcial) — `ChatTurnCompletionService` fatiado em `chat_turn/chat_turn_completion_{finalize,intelligence,metadata,audit}_service.py`; orquestrador fino + paridade send/stream |
 | jun/2026 | Limpeza — removidos `profilePresentDispatch` / `entityPresentOverrides` (JSON legado sem consumo); gate `presentation_builder_items_table_gate` (presenter deletado) |
 | jun/2026 | W3 — `ChatIntentRouterService` fatiado em `chat_intent_router/*` (classify, executed, heuristics, entity resolution, support); fachada ~124L |
+| jun/2026 | W3 — `ExternalActionOperationalRouteSelectionService` fatiado em `operational_route_selection/*` (resolver, vocabulary, domain, auto tier C); fachada ~279L |
