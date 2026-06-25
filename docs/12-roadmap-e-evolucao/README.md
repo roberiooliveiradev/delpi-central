@@ -60,6 +60,15 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [pedidos-venda-abertos/ESPECIFICACAO-VIEW.md](./pedidos-venda-abertos/ESPECIFICACAO-VIEW.md) | Contrato da view TOTVS e campos da API |
 | [pedidos-venda-abertos/FASE0-VALIDACAO-VIEW.md](./pedidos-venda-abertos/FASE0-VALIDACAO-VIEW.md) | Template de validação TOTVS (Fase 0) |
 
+### PAC Qualidade (Planos de Ação)
+
+| Arquivo | Conteúdo |
+|---|---|
+| [quality-action-plans/README.md](./quality-action-plans/README.md) | Índice do módulo |
+| [quality-action-plans/PLAYBOOK-EXCELENCIA.md](./quality-action-plans/PLAYBOOK-EXCELENCIA.md) | **Playbook de excelência** — north star, ondas 0–7, métricas |
+| [quality-action-plans/status-atual.md](./quality-action-plans/status-atual.md) | Snapshot implementação (jun/2026) |
+| [quality-action-plans/HOMOLOGACAO.md](./quality-action-plans/HOMOLOGACAO.md) | Roteiro de homologação com casos reais |
+
 ### Inspeções de Entrada
 
 | Arquivo | Conteúdo |
