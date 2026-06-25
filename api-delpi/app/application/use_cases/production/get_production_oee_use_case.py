@@ -3,7 +3,6 @@ from __future__ import annotations
 from app.application.dto.production.get_production_oee_request import (
     GetProductionOeeRequest,
 )
-from app.application.dto.production.production_request import ProductionRequest
 from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
@@ -37,12 +36,6 @@ class GetProductionOeeUseCase:
         )
 
     def execute(self, request: GetProductionOeeRequest) -> dict:
-        production_request = ProductionRequest(
-            branch=request.branch,
-            start_date=request.start_date,
-            end_date=request.end_date,
-        )
-
         appointment_summary, appointments_page = (
             self._repository.get_oee_appointments_bundle(request)
         )
@@ -59,28 +52,22 @@ class GetProductionOeeUseCase:
 
         if self._has_appointment_scope_filters(request):
             oee_pct = to_optional_float(appointment_summary.get("avg_oee_pct"))
-        elif request.branch:
-            summary_entity = self._repository.get_overall_equipment_effectiveness(
-                production_request
-            )
-            oee_pct = to_optional_float(summary_entity.oee_pct)
         else:
-            rows = self._repository.list_overall_equipment_effectiveness_by_branch(
-                production_request
-            )
-            valid_rows = [
-                row
-                for row in rows
-                if row.get("oee_pct") is not None and row.get("branch")
-            ]
-            if valid_rows:
-                oee_pct = round(
-                    sum(float(row["oee_pct"]) for row in valid_rows)
-                    / len(valid_rows),
-                    2,
-                )
+            by_branch = appointment_summary.get("avg_oee_pct_by_branch") or {}
+            if request.branch:
+                branch_key = str(request.branch).strip()
+                oee_pct = to_optional_float(by_branch.get(branch_key))
             else:
-                oee_pct = None
+                branch_values = [
+                    float(value)
+                    for key, value in by_branch.items()
+                    if key and value is not None
+                ]
+                oee_pct = (
+                    round(sum(branch_values) / len(branch_values), 2)
+                    if branch_values
+                    else None
+                )
 
         appointments_payload = appointments_page.to_dict()
         appointments_payload["items"] = ProductionOperationalQuantityService.normalize_items(

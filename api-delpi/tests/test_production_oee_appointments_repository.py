@@ -50,6 +50,59 @@ def test_oee_appointments_bundle_uses_single_loader_and_cache() -> None:
     assert cached["summary"]["total_appointments"] == 4
 
 
+def test_oee_appointments_materialized_cache_reused_across_pages() -> None:
+    from app.composition.query_cache_composer import reset_query_cache_for_tests
+
+    reset_query_cache_for_tests()
+    repository = OverallEquipmentEffectivenessRepository()
+    base_request = GetProductionOeeRequest(
+        branch="01",
+        start_date="2026-06-01",
+        end_date="2026-06-24",
+        page=1,
+        page_size=20,
+    )
+    page_two_request = GetProductionOeeRequest(
+        branch="01",
+        start_date="2026-06-01",
+        end_date="2026-06-24",
+        page=2,
+        page_size=20,
+    )
+    rows = [
+        {
+            "appointment_id": index,
+            "status": "valid",
+            "branch": "01",
+            "oee_pct": 80.0,
+            "production_date": "2026-06-10",
+            "production_order": f"{index:05d}",
+            "operation": "01",
+        }
+        for index in range(30)
+    ]
+
+    with patch.object(
+        repository,
+        "execute_query_multiple",
+        return_value=[{"data": rows}],
+    ) as sql_mock:
+        with patch.object(repository, "__enter__", return_value=repository):
+            with patch.object(repository, "__exit__", return_value=False):
+                _first_summary, first_page = repository.get_oee_appointments_bundle(
+                    base_request
+                )
+                _second_summary, second_page = repository.get_oee_appointments_bundle(
+                    page_two_request
+                )
+
+    sql_mock.assert_called_once()
+    assert first_page.page == 1
+    assert len(first_page.items) == 20
+    assert second_page.page == 2
+    assert len(second_page.items) == 10
+
+
 def test_oee_by_branch_sql_groups_by_raw_filial_column() -> None:
     import inspect
 

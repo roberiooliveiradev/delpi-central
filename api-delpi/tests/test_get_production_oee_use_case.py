@@ -7,26 +7,16 @@ from app.application.models.page import Page
 from app.application.use_cases.production.get_production_oee_use_case import (
     GetProductionOeeUseCase,
 )
-from app.domain.entities.production.overall_equipment_effectiveness import (
-    OverallEquipmentEffectiveness,
-)
 
 
 def test_get_production_oee_use_case_returns_summary_and_appointments():
     repository = MagicMock()
-    repository.get_overall_equipment_effectiveness.return_value = (
-        OverallEquipmentEffectiveness(
-            branch="01",
-            start_date="2024-01-01",
-            end_date="2024-01-31",
-            oee_pct=72.5,
-        )
-    )
     repository.get_oee_appointments_bundle.return_value = (
         {
             "total_appointments": 100,
             "valid_appointments": 95,
             "outlier_appointments": 5,
+            "avg_oee_pct_by_branch": {"01": 72.5},
         },
         Page(
             items=[
@@ -62,6 +52,7 @@ def test_get_production_oee_use_case_returns_summary_and_appointments():
     assert result["appointments"]["total"] == 1
     assert result["appointments"]["items"][0]["status"] == "valid"
     repository.get_oee_appointments_bundle.assert_called_once()
+    repository.get_overall_equipment_effectiveness.assert_not_called()
 
 
 def test_get_production_oee_use_case_uses_filtered_average_when_scope_filters():

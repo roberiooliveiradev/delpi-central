@@ -8,11 +8,14 @@ from app.application.services.production.production_kpi_cache import (
     get_cached_production_oee_appointments_bundle,
     get_cached_production_oee_by_branch,
     production_oee_appointments_bundle_cache_key,
+    production_oee_appointments_materialized_cache_key,
     production_oee_by_branch_cache_key,
     production_oee_cache_key,
     set_cached_production_oee,
     set_cached_production_oee_appointments_bundle,
     set_cached_production_oee_by_branch,
+    get_cached_production_oee_appointments_materialized,
+    set_cached_production_oee_appointments_materialized,
 )
 from app.domain.entities.production.overall_equipment_effectiveness import (
     OverallEquipmentEffectiveness,
@@ -31,8 +34,20 @@ from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
     build_fabril_view_filters,
 )
+from app.domain.production.production_oee_listing_service import (
+    filter_production_appointment_rows,
+    paginate_production_appointment_rows,
+    sort_production_appointment_rows,
+    summarize_production_appointment_rows,
+)
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_appointments_batch_sql import (
-    format_oee_appointments_batch_sql,
+    format_oee_appointments_materialize_sql,
+)
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_sql import (
+    build_oee_fabril_appointments_select,
+)
+from app.infrastructure.persistence.totvs.production_fabril.production_fabril_sh6010_apply import (
+    build_fabril_sh6010_scoped_left_join,
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_kpi_sql import (
     OEE_FABRIL_KPI_AVG_SELECT,
@@ -268,6 +283,80 @@ class OverallEquipmentEffectivenessRepository(
 
         return rows or []
 
+    @staticmethod
+    def _protheus_period_params(
+        request: GetProductionOeeRequest,
+    ) -> tuple[str, str]:
+        qb = QueryBuilder()
+        start = qb.convert_date_to_protheus(request.start_date or "")
+        end = qb.convert_date_to_protheus(request.end_date or "")
+        if not start or not end:
+            raise ValueError("Período OEE inválido para materialização.")
+        return start, end
+
+    def _load_oee_appointments_materialized_rows(
+        self,
+        request: GetProductionOeeRequest,
+    ) -> list[dict]:
+        materialized_key = production_oee_appointments_materialized_cache_key(request)
+        cached_rows = get_cached_production_oee_appointments_materialized(materialized_key)
+        if cached_rows is not None:
+            return cached_rows
+
+        where_clause, where_params = self._build_appointment_filters(request)
+        date_start, date_end = self._protheus_period_params(request)
+        sh6010_join, sh6010_params = build_fabril_sh6010_scoped_left_join(
+            date_start_protheus=date_start,
+            date_end_protheus=date_end,
+            branch=request.branch,
+        )
+        appointments_select = build_oee_fabril_appointments_select(
+            sh6010_join_sql=sh6010_join,
+        )
+        sql = format_oee_appointments_materialize_sql(
+            appointments_select=appointments_select,
+            where_clause=where_clause,
+        )
+        query_params = tuple(list(sh6010_params) + list(where_params))
+
+        with self:
+            resultsets = self.execute_query_multiple(sql, query_params)
+
+        rows = resultsets[0].get("data") or [] if resultsets else []
+        set_cached_production_oee_appointments_materialized(materialized_key, rows)
+        return rows
+
+    def _build_oee_appointments_listing(
+        self,
+        request: GetProductionOeeRequest,
+        rows: list[dict],
+    ) -> tuple[dict, Page[dict]]:
+        paging = paginate(request.page, request.page_size)
+        filtered_rows = filter_production_appointment_rows(
+            rows,
+            status=request.status,
+            efficiency_bands=request.efficiency_bands,
+        )
+        summary = summarize_production_appointment_rows(filtered_rows)
+        sorted_rows = sort_production_appointment_rows(
+            filtered_rows,
+            sort_by=request.sort_by,
+            sort_dir=request.sort_dir,
+            status=request.status,
+            efficiency_bands=request.efficiency_bands,
+        )
+        page_rows, total = paginate_production_appointment_rows(
+            sorted_rows,
+            page=paging["page"],
+            page_size=paging["page_size"],
+        )
+        return summary, Page(
+            items=page_rows,
+            total=total,
+            page=paging["page"],
+            page_size=paging["page_size"],
+        )
+
     def get_oee_appointments_bundle(
         self,
         request: GetProductionOeeRequest,
@@ -298,41 +387,8 @@ class OverallEquipmentEffectivenessRepository(
         self,
         request: GetProductionOeeRequest,
     ) -> tuple[dict, Page[dict]]:
-        paging = paginate(request.page, request.page_size)
-        where_clause, where_params = self._build_appointment_filters(request)
-        status_clause = self._list_filter_clause(request)
-        order_clause = self._list_order_clause(request)
-
-        sql = format_oee_appointments_batch_sql(
-            where_clause=where_clause,
-            status_clause=status_clause,
-            order_clause=order_clause,
-        )
-        list_params = tuple(where_params) + (
-            paging["offset"],
-            paging["page_size"],
-        )
-
-        with self:
-            resultsets = self.execute_query_multiple(sql, list_params)
-
-        summary_row = (resultsets[0].get("data") or [{}])[0] if resultsets else {}
-        total_row = (resultsets[1].get("data") or [{}])[0] if len(resultsets) > 1 else {}
-        rows = resultsets[2].get("data") or [] if len(resultsets) > 2 else []
-
-        summary = summary_row or {
-            "total_appointments": 0,
-            "valid_appointments": 0,
-            "outlier_appointments": 0,
-        }
-        total = int(total_row.get("total") or 0) if total_row else 0
-
-        return summary, Page(
-            items=rows,
-            total=total,
-            page=paging["page"],
-            page_size=paging["page_size"],
-        )
+        rows = self._load_oee_appointments_materialized_rows(request)
+        return self._build_oee_appointments_listing(request, rows)
 
     def get_oee_appointment_summary(
         self,

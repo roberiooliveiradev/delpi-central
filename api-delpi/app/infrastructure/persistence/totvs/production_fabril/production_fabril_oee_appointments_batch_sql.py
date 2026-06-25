@@ -1,7 +1,7 @@
 """Batch OEE apontamentos — materializa view fabril uma vez (temp table)."""
 
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_sql import (
-    OEE_FABRIL_APPOINTMENTS_SELECT,
+    build_oee_fabril_appointments_select,
 )
 
 OEE_APPOINTMENTS_TEMP_TABLE = "#Delpi_OeeAppointments"
@@ -10,13 +10,20 @@ OEE_APPOINTMENTS_MATERIALIZE_SQL = f"""
         SET NOCOUNT ON;
         DROP TABLE IF EXISTS {OEE_APPOINTMENTS_TEMP_TABLE};
         WITH APONTAMENTOS_OEE AS (
-            {OEE_FABRIL_APPOINTMENTS_SELECT}
+            {{appointments_select}}
             WHERE {{where_clause}}
         )
         SELECT *
         INTO {OEE_APPOINTMENTS_TEMP_TABLE}
         FROM APONTAMENTOS_OEE;
+        CREATE CLUSTERED INDEX CX_Delpi_OeeAppointments
+            ON {OEE_APPOINTMENTS_TEMP_TABLE} (production_date DESC, production_order, operation);
         SET NOCOUNT OFF;
+"""
+
+OEE_APPOINTMENTS_ALL_ROWS_FROM_TEMP = f"""
+        SELECT *
+        FROM {OEE_APPOINTMENTS_TEMP_TABLE};
 """
 
 OEE_APPOINTMENTS_SUMMARY_FROM_TEMP = f"""
@@ -44,13 +51,29 @@ OEE_APPOINTMENTS_PAGE_FROM_TEMP = f"""
 """
 
 
+def format_oee_appointments_materialize_sql(
+    *,
+    appointments_select: str,
+    where_clause: str,
+) -> str:
+    materialize = OEE_APPOINTMENTS_MATERIALIZE_SQL.format(
+        appointments_select=appointments_select,
+        where_clause=where_clause,
+    )
+    return f"{materialize}\n{OEE_APPOINTMENTS_ALL_ROWS_FROM_TEMP}"
+
+
 def format_oee_appointments_batch_sql(
     *,
+    appointments_select: str,
     where_clause: str,
     status_clause: str,
     order_clause: str,
 ) -> str:
-    materialize = OEE_APPOINTMENTS_MATERIALIZE_SQL.format(where_clause=where_clause)
+    materialize = OEE_APPOINTMENTS_MATERIALIZE_SQL.format(
+        appointments_select=appointments_select,
+        where_clause=where_clause,
+    )
     summary = OEE_APPOINTMENTS_SUMMARY_FROM_TEMP.format(status_clause=status_clause)
     count = OEE_APPOINTMENTS_COUNT_FROM_TEMP.format(status_clause=status_clause)
     page = OEE_APPOINTMENTS_PAGE_FROM_TEMP.format(
