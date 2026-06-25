@@ -31,9 +31,10 @@ from app.domain.ports.supplies.stock_value_query_repository_port import (
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
     HistoricalStockFilterClauses,
-    build_historical_method_breakdown_params,
+    build_enrich_closing_values_params,
     build_historical_method_routing_params,
     build_historical_stock_params,
+    format_enrich_closing_values_sql,
     format_historical_breakdown_sql,
     format_historical_method_breakdown_sql,
     format_historical_stock_sql,
@@ -182,8 +183,6 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
     def _format_historical_method_breakdown_sql(
         self,
         request: GetStockValueRequest,
-        *,
-        routing_only: bool = False,
     ) -> tuple[str, tuple]:
         period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
             request
@@ -191,32 +190,64 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         (
             filters,
             sb9_params,
-            sb9_b9_params,
+            _sb9_b9_params,
             _sb9_official_params,
-            sb9_loc_params,
+            _sb9_loc_params,
             _d3_params,
             _d3_loc_params,
         ) = self._historical_filter_clauses(request)
 
         sql = format_historical_method_breakdown_sql(
             filters=filters,
-            routing_only=routing_only,
+            routing_only=True,
         )
-        if routing_only:
-            params = build_historical_method_routing_params(
-                period_start=period_start,
-                period_end=period_end,
-                sb9_params=sb9_params,
-            )
-        else:
-            params = build_historical_method_breakdown_params(
-                period_start=period_start,
-                period_end=period_end,
-                sb9_params=sb9_params,
-                sb9_b9_params=sb9_b9_params,
-                sb9_loc_params=sb9_loc_params,
-            )
+        params = build_historical_method_routing_params(
+            period_start=period_start,
+            period_end=period_end,
+            sb9_params=sb9_params,
+        )
         return sql, params
+
+    def _enrich_breakdown_closing_values(
+        self,
+        breakdown_rows: list[dict],
+        *,
+        branches: tuple[str, ...] | list[str],
+    ) -> list[dict]:
+        branch_set = {str(b).strip() for b in branches if str(b).strip()}
+        if not branch_set:
+            return breakdown_rows
+
+        pairs: list[tuple[str, str]] = []
+        for row in breakdown_rows:
+            branch = str(row.get("branch") or "").strip()
+            closing_date = str(row.get("closing_base_date") or "").strip()
+            if branch not in branch_set or not closing_date:
+                continue
+            if float(row.get("closing_base_value") or 0) > 0:
+                continue
+            pairs.append((branch, closing_date))
+
+        if not pairs:
+            return breakdown_rows
+
+        sql = format_enrich_closing_values_sql(pairs)
+        params = build_enrich_closing_values_params(pairs)
+        with self as repo:
+            value_rows = repo.execute_query(sql, params) or []
+
+        values_by_branch = {
+            str(row.get("branch") or "").strip(): float(row.get("closing_base_value") or 0)
+            for row in value_rows
+        }
+        enriched: list[dict] = []
+        for row in breakdown_rows:
+            branch = str(row.get("branch") or "").strip()
+            if branch in values_by_branch:
+                enriched.append({**row, "closing_base_value": values_by_branch[branch]})
+            else:
+                enriched.append(row)
+        return enriched
 
     def _resolve_breakdown_rows_for_branch(
         self,
@@ -431,6 +462,19 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
                 request,
                 full_kardex=False,
             )
+            _period_start, period_end, _period_end_exclusive = self._resolve_historical_period(
+                request
+            )
+            method_plan = resolve_stock_method_plan(
+                request,
+                shared_breakdown_rows,
+                period_end=period_end,
+            )
+            if method_plan.get("register_snapshot_branches"):
+                shared_breakdown_rows = self._enrich_breakdown_closing_values(
+                    shared_breakdown_rows,
+                    branches=method_plan["register_snapshot_branches"],
+                )
 
         branch_bundles = [
             self._fetch_branch_bundle(
@@ -903,7 +947,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         *,
         full_kardex: bool = True,
     ) -> list[dict]:
-        routing_only = not full_kardex and request.summary_only
+        routing_only = not full_kardex
         cache_key = stock_value_breakdown_cache_key(
             request,
             full_kardex=full_kardex,
@@ -916,10 +960,7 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
         if full_kardex:
             sql, params = self._format_historical_breakdown_sql(request)
         else:
-            sql, params = self._format_historical_method_breakdown_sql(
-                request,
-                routing_only=routing_only,
-            )
+            sql, params = self._format_historical_method_breakdown_sql(request)
         with self as repo:
             rows = repo.execute_query(sql, params)
         normalized = [self._normalize_branch_breakdown_row(row) for row in rows]
@@ -948,6 +989,12 @@ class StockValueQueryRepository(BaseRepository, StockValueQueryRepositoryPort):
             breakdown_rows,
             period_end=period_end,
         )
+
+        if method_plan.get("register_snapshot_branches"):
+            breakdown_rows = self._enrich_breakdown_closing_values(
+                breakdown_rows,
+                branches=method_plan["register_snapshot_branches"],
+            )
 
         if method_plan["resolved"] == STOCK_METHOD_RESOLVED_OFFICIAL:
             return self._fetch_official_closure_bundle(

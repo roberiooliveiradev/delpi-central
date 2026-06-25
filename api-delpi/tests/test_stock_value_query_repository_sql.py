@@ -366,12 +366,12 @@ def test_build_historical_method_routing_params_matches_placeholders() -> None:
     )
 
 
-def test_fetch_historical_breakdown_uses_routing_only_for_summary_auto() -> None:
+def test_fetch_historical_breakdown_uses_routing_for_auto_hybrid() -> None:
     repo = StockValueQueryRepository()
     request = GetStockValueRequest(
         start_date="2026-06-01",
         end_date="2026-06-24",
-        summary_only=True,
+        summary_only=False,
         stock_method="auto",
     )
 
@@ -390,7 +390,58 @@ def test_fetch_historical_breakdown_uses_routing_only_for_summary_auto() -> None
                     repo._fetch_historical_breakdown_rows(request, full_kardex=False)
 
     format_mock.assert_called_once()
-    assert format_mock.call_args.kwargs.get("routing_only") is True
+    sql = format_mock.return_value[0]
+    assert sql == "SELECT 1"
+
+
+def test_enrich_closing_values_sql_uses_values_join() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_historical_sql import (
+        build_enrich_closing_values_params,
+        format_enrich_closing_values_sql,
+    )
+
+    pairs = [("01", "20260228"), ("02", "20260228")]
+    sql = format_enrich_closing_values_sql(pairs)
+    params = build_enrich_closing_values_params(pairs)
+
+    assert "VALUES (?, ?), (?, ?)" in sql
+    assert sql.count("FROM SB9010") == 1
+    assert "branch_dates AS" not in sql
+    assert params == ("01", "20260228", "02", "20260228")
+
+
+def test_enrich_breakdown_closing_values_merges_sb9_totals() -> None:
+    repo = StockValueQueryRepository()
+    rows = [
+        {
+            "branch": "01",
+            "closing_base_date": "20260228",
+            "closing_base_value": 0.0,
+        },
+        {
+            "branch": "02",
+            "closing_base_date": "20260228",
+            "closing_base_value": 0.0,
+        },
+    ]
+
+    with patch.object(StockValueQueryRepository, "__enter__", return_value=repo):
+        with patch.object(StockValueQueryRepository, "__exit__", return_value=False):
+            with patch.object(
+                StockValueQueryRepository,
+                "execute_query",
+                return_value=[
+                    {"branch": "01", "closing_base_value": 100.0},
+                    {"branch": "02", "closing_base_value": 200.0},
+                ],
+            ):
+                enriched = repo._enrich_breakdown_closing_values(
+                    rows,
+                    branches=("01", "02"),
+                )
+
+    assert enriched[0]["closing_base_value"] == 100.0
+    assert enriched[1]["closing_base_value"] == 200.0
 
 
 def test_fetch_historical_bundle_uses_light_breakdown_for_auto() -> None:

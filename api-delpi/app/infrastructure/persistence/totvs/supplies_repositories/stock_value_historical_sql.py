@@ -353,6 +353,21 @@ HISTORICAL_STOCK_METHOD_BREAKDOWN_SQL = """
         ORDER BY D.branch
 """
 
+# Valores SB9 só nas datas de fechamento (seek por filial+data — após roteamento).
+HISTORICAL_STOCK_METHOD_CLOSING_VALUES_SQL = """
+        SELECT
+            B9.B9_FILIAL AS branch,
+            SUM(B9.B9_VINI1) AS closing_base_value
+        FROM SB9010 B9 WITH (NOLOCK)
+        INNER JOIN (
+            VALUES {values_clause}
+        ) AS D(branch, closing_base_date)
+            ON D.branch = B9.B9_FILIAL
+           AND D.closing_base_date = B9.B9_DATA
+        WHERE B9.D_E_L_E_T_ = ''
+        GROUP BY B9.B9_FILIAL
+"""
+
 HISTORICAL_STOCK_ITEM_CTES = HISTORICAL_STOCK_BASE_CTES + HISTORICAL_STOCK_ESTOQUE_ITEM_CTES
 
 HISTORICAL_STOCK_BY_BRANCH_SQL = (
@@ -554,6 +569,26 @@ def format_historical_method_breakdown_sql(
         "sb9_location_filter": filters.sb9_location_filter,
     }
     return HISTORICAL_STOCK_METHOD_BREAKDOWN_SQL.format(**placeholders)
+
+
+def format_enrich_closing_values_sql(
+    branch_date_pairs: list[tuple[str, str]],
+) -> str:
+    if not branch_date_pairs:
+        return ""
+    values_clause = ", ".join("(?, ?)" for _ in branch_date_pairs)
+    return HISTORICAL_STOCK_METHOD_CLOSING_VALUES_SQL.format(
+        values_clause=values_clause
+    )
+
+
+def build_enrich_closing_values_params(
+    branch_date_pairs: list[tuple[str, str]],
+) -> tuple:
+    flat: list[str] = []
+    for branch, closing_date in branch_date_pairs:
+        flat.extend([branch, closing_date])
+    return tuple(flat)
 
 
 def build_historical_method_routing_params(
