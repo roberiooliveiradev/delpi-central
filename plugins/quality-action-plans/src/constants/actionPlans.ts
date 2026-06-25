@@ -40,7 +40,15 @@ export const ACTION_TYPES: Record<string, string> = {
   training: "Treinamento",
 };
 
-export type AppView = "dashboard" | "list" | "overdue" | "recurrence" | "solutions" | "detail" | "new";
+export type AppView =
+  | "dashboard"
+  | "list"
+  | "overdue"
+  | "recurrence"
+  | "solutions"
+  | "evidences"
+  | "detail"
+  | "new";
 
 export function parseRoute(pathname?: string): { view: AppView; planId?: string } {
   const path = (pathname ?? APP_BASE).replace(/\/+$/, "");
@@ -54,6 +62,7 @@ export function parseRoute(pathname?: string): { view: AppView; planId?: string 
   if (path.endsWith("/atrasados")) return { view: "overdue" };
   if (path.endsWith("/recorrencia")) return { view: "recurrence" };
   if (path.endsWith("/solucoes")) return { view: "solutions" };
+  if (path.endsWith("/evidencias")) return { view: "evidences" };
   return { view: "dashboard" };
 }
 
@@ -75,6 +84,10 @@ export function recurrencePath(): string {
 
 export function solutionsPath(): string {
   return `${APP_BASE}/solucoes`;
+}
+
+export function evidencesSearchPath(): string {
+  return `${APP_BASE}/evidencias`;
 }
 
 export function detailPath(planId: string): string {

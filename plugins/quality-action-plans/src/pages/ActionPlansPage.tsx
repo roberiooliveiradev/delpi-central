@@ -8,6 +8,7 @@ import { PlanFormPage } from "./PlanFormPage";
 import { PlansListPage } from "./PlansListPage";
 import { RecurrencePage } from "./RecurrencePage";
 import { SolutionPatternsPage } from "./SolutionPatternsPage";
+import { EvidencesSearchPage } from "./EvidencesSearchPage";
 
 type Props = {
   pathname?: string;
@@ -51,6 +52,10 @@ export function ActionPlansPage({ pathname }: Props) {
 
   if (view === "solutions") {
     return <SolutionPatternsPage onNavigate={handleNavigate} />;
+  }
+
+  if (view === "evidences") {
+    return <EvidencesSearchPage onNavigate={handleNavigate} />;
   }
 
   return <DashboardPage onNavigate={handleNavigate} />;

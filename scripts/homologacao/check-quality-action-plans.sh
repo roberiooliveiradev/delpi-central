@@ -25,6 +25,7 @@ required = [
     '/quality/action-plans/{plan_id}/similar-cases',
     '/quality/action-plans/recurrence',
     '/quality/solution-patterns',
+    '/quality/action-plans/evidences/search',
 ]
 for path in required:
     assert path in paths, f'missing path {path}'

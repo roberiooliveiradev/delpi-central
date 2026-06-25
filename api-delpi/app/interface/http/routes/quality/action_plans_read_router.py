@@ -299,6 +299,50 @@ def list_action_plans_recurrence(
         return error_response("Erro ao listar recorrência de planos de ação.", status_code=500)
 
 
+@router.get(
+    "/evidences/search",
+    **_pac_openapi("search_quality_action_plan_evidences", "/evidences/search"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def search_action_plan_evidences(
+    q: str = Query(..., min_length=2),
+    plan_id: str | None = Query(default=None),
+    branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
+    section: str | None = Query(
+        default=None,
+        pattern=(
+            "^(general|nc_description|containment|root_cause|corrective|"
+            "effectiveness|preventive|documentation|attachments)$"
+        ),
+    ),
+    evidence_type: str | None = Query(
+        default=None,
+        pattern="^(email|message|spreadsheet|pdf|image|manual_text|system_reference|other)$",
+    ),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        return api_delpi_success(
+            repo.search_evidences(
+                q=q,
+                plan_id=plan_id,
+                branch_code=branch_code,
+                section=section,
+                evidence_type=evidence_type,
+                page=page,
+                page_size=page_size,
+            ),
+            operation_id="search_quality_action_plan_evidences",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro na busca de evidências PAC: {exc}")
+        return error_response("Erro ao buscar evidências.", status_code=500)
+
+
 @router.post("", **_pac_openapi("create_quality_action_plan", ""))
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def create_action_plan(body: CreateActionPlanBody = Body(...)):
@@ -711,13 +755,16 @@ def export_rnc_8d_spreadsheet(plan_id: str):
     **_pac_openapi("list_quality_action_plan_evidences", "/{plan_id}/evidences"),
 )
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
-def list_plan_evidences(plan_id: str):
+def list_plan_evidences(
+    plan_id: str,
+    q: str | None = Query(default=None, min_length=2),
+):
     try:
         repo = build_quality_action_plan_read_repository()
         if not repo.get_plan_by_id(plan_id):
             return not_found_response("Plano de ação não encontrado.")
         return api_delpi_success(
-            repo.list_evidences(plan_id),
+            repo.list_evidences(plan_id, q=q),
             operation_id="list_quality_action_plan_evidences",
         )
     except PluginsRepositoryError as exc:

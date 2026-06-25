@@ -36,6 +36,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | GET | `/quality/action-plans` | `list_quality_action_plans` | Listagem paginada |
 | GET | `/quality/action-plans/overdue` | `list_quality_action_plans_overdue` | Planos com ações vencidas |
 | GET | `/quality/action-plans/recurrence` | `list_quality_action_plans_recurrence` | Agrupamento por `recurrence_key` (reincidência) |
+| GET | `/quality/action-plans/evidences/search` | `search_quality_action_plan_evidences` | Busca textual em evidências (nome, descrição, trecho) |
+| GET | `/quality/solution-patterns` | `list_quality_solution_patterns` | Padrões de solução testados |
 | GET | `/quality/action-plans/{plan_id}` | `get_quality_action_plan_detail` | Detalhe completo |
 
 ### GET `/quality/action-plans/{plan_id}` — `data`
@@ -76,7 +78,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review` | `record_quality_action_plan_effectiveness` | Registrar eficácia |
 | PUT | `/quality/action-plans/{plan_id}/rnc-8d` | `upsert_quality_action_plan_rnc_8d` | Salvar relatório 8D |
 | GET | `/quality/action-plans/{plan_id}/export/rnc-8d` | `export_quality_action_plan_rnc_8d` | Exportar planilha Excel |
-| GET | `/quality/action-plans/{plan_id}/evidences` | `list_quality_action_plan_evidences` | Listar evidências |
+| GET | `/quality/action-plans/{plan_id}/evidences` | `list_quality_action_plan_evidences` | Listar evidências (`q` opcional filtra no plano) |
 | POST | `/quality/action-plans/{plan_id}/evidences` | `attach_quality_action_plan_evidence` | Anexar arquivo (multipart) |
 | GET | `/quality/action-plans/{plan_id}/evidences/{evidence_id}/file` | — | Download do arquivo |
 | DELETE | `/quality/action-plans/{plan_id}/evidences/{evidence_id}` | `delete_quality_action_plan_evidence` | Remover evidência |

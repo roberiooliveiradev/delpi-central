@@ -91,6 +91,11 @@ def main() -> int:
     assert "items" in solutions.get("data", {}), solutions
     print(f"OK listagem padrões ({solutions['data']['pagination'].get('total', 0)} itens)")
 
+    search = _call("GET", f"{API}/evidences/search?q=H5-SMOKE")
+    assert search.get("success"), search
+    assert "items" in search.get("data", {}), search
+    print(f"OK busca evidências (query={search['data'].get('query')})")
+
     print("[OK] run_onda2_local_smoke.py")
     return 0
 

@@ -71,7 +71,7 @@ export TOKEN="$(grep '^API_DELPI_INTERNAL_SERVICE_TOKEN=' infra/.env | cut -d= -
 python3 scripts/homologacao/run_onda2_local_smoke.py
 ```
 
-Valida: dois planos com mesma `recurrence_key` aparecem em `GET /recurrence`; `GET /solution-patterns` responde com contrato paginado.
+Valida: dois planos com mesma `recurrence_key` aparecem em `GET /recurrence`; `GET /solution-patterns` responde com contrato paginado; `GET /evidences/search?q=…` retorna envelope paginado.
 
 ---
 

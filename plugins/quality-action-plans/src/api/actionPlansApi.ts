@@ -20,6 +20,7 @@ import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
 import type { PlanSimilarCasesResult } from "../types/similarCases";
 import type { PagedRecurrenceResponse } from "../types/recurrence";
 import type { PagedSolutionPatternsResponse } from "../types/solutionPattern";
+import type { PagedEvidenceSearchResponse } from "../types/evidenceSearch";
 
 const API_BASE = "/apps/api-delpi/quality/action-plans";
 const SOLUTION_PATTERNS_BASE = "/apps/api-delpi/quality/solution-patterns";
@@ -141,6 +142,33 @@ export async function promoteSolutionPattern(planId: string) {
     {},
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao promover padrão de solução.");
+}
+
+type EvidenceSearchParams = {
+  q: string;
+  plan_id?: string;
+  branch_code?: string;
+  section?: string;
+  evidence_type?: string;
+  page?: number;
+  page_size?: number;
+};
+
+export async function searchEvidences(
+  params: EvidenceSearchParams,
+): Promise<PagedEvidenceSearchResponse> {
+  const search = new URLSearchParams();
+  search.set("q", params.q);
+  if (params.plan_id) search.set("plan_id", params.plan_id);
+  if (params.branch_code) search.set("branch_code", params.branch_code);
+  if (params.section) search.set("section", params.section);
+  if (params.evidence_type) search.set("evidence_type", params.evidence_type);
+  if (params.page) search.set("page", String(params.page));
+  if (params.page_size) search.set("page_size", String(params.page_size));
+  const envelope = await httpGet<ApiEnvelope<PagedEvidenceSearchResponse>>(
+    `${API_BASE}/evidences/search?${search.toString()}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao buscar evidências.");
 }
 
 export async function createActionPlan(payload: CreatePlanPayload): Promise<ActionPlanSummary> {

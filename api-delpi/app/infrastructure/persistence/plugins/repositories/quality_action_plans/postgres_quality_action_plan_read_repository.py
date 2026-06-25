@@ -1020,19 +1020,138 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.commit()
         return self.get_plan_detail(plan_id)
 
-    def list_evidences(self, plan_id: str) -> list[dict[str, Any]]:
+    def search_evidences(
+        self,
+        *,
+        q: str,
+        plan_id: str | None = None,
+        branch_code: str | None = None,
+        section: str | None = None,
+        evidence_type: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        term = q.strip()
+        if len(term) < 2:
+            raise ValueError("Informe ao menos 2 caracteres para buscar evidências.")
+
+        like = f"%{term}%"
+        filters = [
+            "p.deleted_at IS NULL",
+            """(
+                e.file_name ILIKE %s
+                OR e.stored_name ILIKE %s
+                OR COALESCE(e.description, '') ILIKE %s
+                OR COALESCE(e.text_excerpt, '') ILIKE %s
+            )""",
+        ]
+        params: list[Any] = [like, like, like, like]
+
+        if plan_id:
+            filters.append("e.plan_id = %s")
+            params.append(plan_id)
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+        if section:
+            filters.append("e.section = %s")
+            params.append(section)
+        if evidence_type:
+            filters.append("e.type = %s")
+            params.append(evidence_type)
+
+        where_clause = " AND ".join(filters)
+
+        count_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*) AS total
+              FROM quality.quality_problem_evidences e
+              JOIN quality.quality_action_plans p ON p.id = e.plan_id
+             WHERE {where_clause}
+            """,
+            tuple(params),
+        )
+        total = int((count_row or {}).get("total") or 0)
+        offset = max(page - 1, 0) * page_size
+
+        rows = self.fetch_all(
+            f"""
+            SELECT e.id,
+                   e.plan_id,
+                   e.type,
+                   e.file_name,
+                   e.stored_name,
+                   e.description,
+                   e.text_excerpt,
+                   e.section,
+                   e.action_id,
+                   e.mime_type,
+                   e.size_bytes,
+                   e.created_at,
+                   p.code AS plan_code,
+                   p.title AS plan_title,
+                   p.branch_code,
+                   p.product_code
+              FROM quality.quality_problem_evidences e
+              JOIN quality.quality_action_plans p ON p.id = e.plan_id
+             WHERE {where_clause}
+             ORDER BY e.created_at DESC
+             LIMIT %s OFFSET %s
+            """,
+            tuple([*params, page_size, offset]),
+        )
+
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            item = serialize_row(
+                row,
+                id_keys=("id", "plan_id", "action_id"),
+            ) or {}
+            created_at = row.get("created_at")
+            if hasattr(created_at, "isoformat"):
+                item["created_at"] = created_at.isoformat()
+            items.append(item)
+
+        return {
+            "items": items,
+            "query": term,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "total_pages": max((total + page_size - 1) // page_size, 1) if total else 1,
+            },
+        }
+
+    def list_evidences(self, plan_id: str, *, q: str | None = None) -> list[dict[str, Any]]:
         if not self._plan_exists(plan_id):
             return []
+
+        filters = ["plan_id = %s"]
+        params: list[Any] = [plan_id]
+        if q and q.strip():
+            like = f"%{q.strip()}%"
+            filters.append(
+                """(
+                    file_name ILIKE %s
+                    OR stored_name ILIKE %s
+                    OR COALESCE(description, '') ILIKE %s
+                    OR COALESCE(text_excerpt, '') ILIKE %s
+                )"""
+            )
+            params.extend([like, like, like, like])
+
+        where_clause = " AND ".join(filters)
         rows = self.fetch_all(
-            """
+            f"""
             SELECT id, plan_id, type, file_name, file_url, text_excerpt,
                    stored_name, mime_type, size_bytes, section, description,
                    knowledge_visible, uploaded_by, action_id, created_at
               FROM quality.quality_problem_evidences
-             WHERE plan_id = %s
+             WHERE {where_clause}
              ORDER BY created_at DESC
             """,
-            (plan_id,),
+            tuple(params),
         )
         return [serialize_row(row, id_keys=("id", "plan_id", "action_id")) or {} for row in rows if row]
 
