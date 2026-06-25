@@ -25,9 +25,6 @@ from tests.fixtures.presentation_kv_label_context_gate import (
 from tests.fixtures.presentation_column_vocab_gate import (
     validate_column_vocab_for_ci,
 )
-from tests.fixtures.presentation_builder_items_table_gate import (
-    validate_presentation_builder_items_table_context,
-)
 from tests.fixtures.presentation_table_column_label_gate import (
     validate_table_column_labels_for_ci,
 )
@@ -51,7 +48,6 @@ def validate_playbook12_ci_gates(
     legacy_columns = validate_no_legacy_table_columns_in_presenters()
     kv_label_context = validate_kv_label_context_in_presenters()
     column_vocab = validate_column_vocab_for_ci()
-    builder_items_table = validate_presentation_builder_items_table_context()
 
     profile_gaps = list(profile_validation.get("profileGaps") or [])
     new_operation_gaps = list(profile_validation.get("newOperationGaps") or [])
@@ -98,9 +94,6 @@ def validate_playbook12_ci_gates(
     for key in column_vocab.get("missingKeys") or []:
         blocking_issues.append(f"column_vocab:{key}")
 
-    for violation in builder_items_table.get("violations") or []:
-        blocking_issues.append(f"builder_items_table:{violation}")
-
     return {
         "ok": not blocking_issues,
         "blockingIssues": blocking_issues,
@@ -114,7 +107,6 @@ def validate_playbook12_ci_gates(
         "legacyTableColumnViolations": list(legacy_columns.get("violations") or []),
         "kvLabelContextViolations": list(kv_label_context.get("violations") or []),
         "columnVocabMissingKeys": list(column_vocab.get("missingKeys") or []),
-        "builderItemsTableViolations": list(builder_items_table.get("violations") or []),
         "entityContractCaseCount": len(
             ChatPresentationCoverageService.build_entity_contract_cases()
         ),

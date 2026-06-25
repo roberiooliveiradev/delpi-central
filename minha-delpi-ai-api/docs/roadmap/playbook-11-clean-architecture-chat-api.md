@@ -199,7 +199,11 @@ PYTHONPATH=minha-delpi-ai-api python3 scripts/audit_clean_architecture.py --writ
 
 **Entregas:**
 
-1. `ChatTurnCompletionService` (application):
+1. `ChatTurnCompletionService` (application) — orquestrador fino; delegates em `app/application/services/chat_turn/`:
+   - `ChatTurnCompletionFinalizeService` — guards, SQL, canvas, prosa autorizada
+   - `ChatTurnCompletionIntelligenceService` — métricas/tokens
+   - `ChatTurnCompletionMetadataService` — metadata transversal pós-LLM
+   - `ChatTurnCompletionAuditService` — log admin/audit
    - persistência mensagem assistant;
    - metadata (intentRouting, toolCalls, presentation);
    - memória de sessão / snapshot;

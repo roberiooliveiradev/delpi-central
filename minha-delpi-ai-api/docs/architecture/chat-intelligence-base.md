@@ -288,7 +288,16 @@ A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`)
 
 Montagem pré-LLM (web search, metadata, prompt): **`ChatTurnLlmAssemblyService`**. Efeitos colaterais no início do turno: **`ChatTurnSideEffectsService`**. Stream: **`ChatStreamTurnPrepareService`**, **`ChatStreamSessionTitleService`**, **`ChatStreamUserMessageService`**.
 
-A conclusão pós-LLM (metadata, persistência, auditoria, memória de sessão) está em **`ChatTurnCompletionService`** (`app/application/services/chat_turn/chat_turn_completion_service.py`), também compartilhada por send e stream.
+A conclusão pós-LLM (metadata, persistência, auditoria, memória de sessão) está em **`ChatTurnCompletionService`** (`app/application/services/chat_turn/`), orquestrador fino com delegates:
+
+| Delegate | Responsabilidade |
+|----------|------------------|
+| `ChatTurnCompletionFinalizeService` | Guards (email/correção), SQL, canvas, prosa autorizada |
+| `ChatTurnCompletionIntelligenceService` | Bloco `intelligence`, latência, tokens/custo |
+| `ChatTurnCompletionMetadataService` | Metadata transversal (intent, presentation, interactivity, …) |
+| `ChatTurnCompletionAuditService` | Log admin/audit pós-turno |
+
+Compartilhado por send e stream — ver [ADR 002](./adr/002-send-stream-turn-parity.md).
 
 ### Identidade do assistente (maio/2026)
 

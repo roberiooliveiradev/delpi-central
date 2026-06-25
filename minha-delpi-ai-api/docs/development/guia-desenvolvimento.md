@@ -71,8 +71,9 @@ app/
     services/
       chat_turn/              # Preparação e conclusão do turno
         chat_turn_preparation_service.py
-        chat_turn_completion_service.py
-        chat_turn_preparation_*_service.py   # delegates
+        chat_turn_completion_service.py      # orquestrador pós-LLM
+        chat_turn_completion_*_service.py  # finalize, intelligence, metadata, audit, models
+        chat_turn_preparation_*_service.py   # delegates pré-LLM
       chat_tool_context_service.py
       chat_prompt_builder_service.py
       …

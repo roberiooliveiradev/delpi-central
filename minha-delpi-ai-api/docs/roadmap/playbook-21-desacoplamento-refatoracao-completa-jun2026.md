@@ -365,7 +365,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `chat_document_vision_service.py` | 2141 | Sub-serviços por estágio OCR |
 | `chat_operational_refinement_service.py` | 1208 | Split group-by / follow-up |
 | `external_action_operational_route_selection_service.py` | 1079 | Delegates por domínio |
-| `chat_turn_completion_service.py` | 1071 | `ChatTurnCompletion*` delegates |
+| `chat_turn_completion_service.py` | ~~1071~~ **~200** | ✅ **OK (jun/2026)** — delegates `ChatTurnCompletionFinalize/Intelligence/Metadata/AuditService` |
 | `chat_product_query_intent_service.py` | 1164 | Predicates → `product_query_intent.json` |
 | `product_raw_material_price_presenter.py` | 1503 | Split por sub-entidade |
 | `chat_operational_data_commentary_service.py` | 976 | Após W1 registry |
@@ -621,7 +621,7 @@ W4   Path literals residuais por domínio
 | LLM coerência | `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService` | OK |
 | Synthesis dataAnswer | `ChatOperationalUserQuestionSynthesisService` | OK (W1a) |
 | Commentary | `commentaryProfiles` + `ChatOperationalCommentaryProfileService` | OK (W1b) |
-| Entity dispatch | `ChatPresentationEntityRouteDispatchService` + `profilePresentDispatch` | OK (W1c) |
+| Entity dispatch | `EntityRoutePresenter` + perfis em `presentation_profiles.json` | OK (W1c) |
 | JSON path duplicado | narrative_synthesis vs factual_verdict | **OK (W2)** — pathMarkers só em `operational_factual_verdict`; kind via `factualProfileSynthesisKinds` + `narrativePolicySynthesisKinds` |
 
 ---
@@ -633,6 +633,8 @@ W4   Path literals residuais por domínio
 | jun/2026 | Playbook criado após auditoria completa pós-fix exclusividade MPs e diretrizes `.cursor` |
 | jun/2026 | W1a — gate synthesis/dataAnswer para perfis `template` + `preserve_template` |
 | jun/2026 | W1b — `commentaryProfiles` em `humanized_data_response.json`; exclusividade com `templateProseCommentary: skip` |
-| jun/2026 | W1c — `profilePresentDispatch` / `entityPresentOverrides`; dispatch declarativo no `EntityRoutePresenter` |
+| jun/2026 | W1c — dispatch declarativo no `EntityRoutePresenter` (removido `profilePresentDispatch` / `entityPresentOverrides` em jun/2026) |
 | jun/2026 | W2 (parcial) — unifica path markers de exclusividade: `operational_factual_verdict` + maps `factualProfileSynthesisKinds` / `narrativePolicySynthesisKinds` |
 | jun/2026 | W2 — `richStackProfiles` + `is_rich_stack_profile`; `presentationTableAssemblyEntities` + `try_build_presentation_table` no builder |
+| jun/2026 | W3 (parcial) — `ChatTurnCompletionService` fatiado em `chat_turn/chat_turn_completion_{finalize,intelligence,metadata,audit}_service.py`; orquestrador fino + paridade send/stream |
+| jun/2026 | Limpeza — removidos `profilePresentDispatch` / `entityPresentOverrides` (JSON legado sem consumo); gate `presentation_builder_items_table_gate` (presenter deletado) |

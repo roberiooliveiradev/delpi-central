@@ -403,53 +403,6 @@
       "product_inspection": "inspection",
       "product_stock": "stock"
     },
-    "profilePresentDispatch": {
-      "factory_status": {
-        "presenterMethod": "present_product_factory_status"
-      },
-      "production_status": {
-        "presenterMethod": "present_product_production_status"
-      },
-      "shipping_status": {
-        "presenterMethod": "present_product_shipping_status"
-      },
-      "structure_exclusivity": {
-        "presenterMethod": "present_product_structure_exclusivity"
-      },
-      "directives": {
-        "presenterMethod": "present_product_directives"
-      },
-      "raw_material_price_intelligence": {
-        "presenterMethod": "present_product_raw_material_price_intelligence"
-      },
-      "cost_impact_simulation": {
-        "presenterMethod": "present_product_cost_impact_simulation"
-      },
-      "sale_pricing": {
-        "presenterMethod": "present_product_pricing"
-      },
-      "purchase_price_history": {
-        "presenterMethod": "present_product_purchase_price_history"
-      },
-      "purchase_budget_history": {
-        "presenterMethod": "present_product_purchase_budget_history"
-      },
-      "tree_hierarchy": {
-        "presenterMethod": "present_product_structure",
-        "allowEmpty": true
-      }
-    },
-    "entityPresentOverrides": {
-      "product": {
-        "presenterMethod": "present_product",
-        "requiresProduct": true
-      },
-      "product_analyser": {
-        "presenterMethod": "present_product_analyser",
-        "normalizeRoot": true,
-        "requiresProduct": true
-      }
-    },
     "noChartEntities": [
       "product_suppliers",
       "product_customers",

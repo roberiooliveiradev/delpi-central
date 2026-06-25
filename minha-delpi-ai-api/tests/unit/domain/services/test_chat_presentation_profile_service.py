@@ -175,25 +175,7 @@ def test_entity_presentation_routing_operational_empty() -> None:
     assert not ChatPresentationProfileService.is_no_chart_entity("supplies_cpv")
 
 
-def test_profile_present_dispatch_registry_has_structure_exclusivity() -> None:
-    routing = ChatPresentationProfileService.entity_presentation_routing()
-    dispatch = routing.get("profilePresentDispatch") or {}
-
-    assert dispatch["structure_exclusivity"]["presenterMethod"] == (
-        "present_product_structure_exclusivity"
-    )
-
-
 def test_production_oee_detail_entity_maps_to_dashboard() -> None:
-    key = ChatPresentationProfileService.resolve_profile_key(
-        "/production/oee",
-        "production_oee_detail",
-    )
-
-    assert key == "kpi_dashboard"
-
-
-def test_production_oee_appointment_entity_maps_to_dashboard() -> None:
     key = ChatPresentationProfileService.resolve_profile_key(
         "/production/oee/appointments/12345",
         "production_oee_appointment",

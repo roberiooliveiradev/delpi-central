@@ -201,7 +201,7 @@ Perfil dedicado para hints de rótulo/ordem em resumos, ex.: `costImpactOverview
 - [x] `_active_presentation_path` no presenter + `ColumnLabelContext.path` wired
 - [x] `_humanize_key` / gráficos / árvore / `FieldNormalization` repassam `path` à cascata de rótulos
 - [x] `ChatPresentationTableProfileInferenceService` + `_build_items_table_for_path` no builder genérico
-- [x] Gate CI: `presentation_builder_items_table_gate.py`
+- [x] ~~Gate CI: `presentation_builder_items_table_gate.py`~~ removido jun/2026 (`presentation_builder_presenter.py` deletado)
 - [x] A9 grande (SectionAvailability / visual bundle / elif use case) — **R24 onda 2 estrutural** ✅ jun/2026
 
 ##### Próxima fase (R22 — cobertura KV) ✅ jun/2026
