@@ -73,6 +73,15 @@ python3 scripts/homologacao/run_onda2_local_smoke.py
 
 Valida: dois planos com mesma `recurrence_key` aparecem em `GET /recurrence`; `GET /solution-patterns` responde com contrato paginado; `GET /evidences/search?q=…` retorna envelope paginado.
 
+### Smoke Onda 6 — inteligência avançada (**api-delpi**)
+
+```bash
+export TOKEN="$(grep '^API_DELPI_INTERNAL_SERVICE_TOKEN=' infra/.env | cut -d= -f2)"
+python3 scripts/homologacao/run_onda6_intelligence_smoke.py
+```
+
+Valida: `GET /intelligence/knowledge-graph` (6.5), `POST /intelligence/recurrence-opening-assessment` (6.4), `POST /intelligence/suggest-evidence-tags` (6.3).
+
 ---
 
 ## Cenários obrigatórios (Onda 1)

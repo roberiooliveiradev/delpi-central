@@ -8,7 +8,7 @@
 
 | Camada | Maturidade | Nota |
 |---|---|---|
-| Modelo de dados + migrations | Alta | V001–V007 no plugin `quality-action-plans` |
+| Modelo de dados + migrations | Alta | V001–V009 no plugin `quality-action-plans` |
 | API PAC (`api-pac-quality`) | Média-alta | **Produção** (agente GPT); paridade de escrita — validar localmente só na **api-delpi** |
 | API consolidada (`api-delpi`) | Média-alta | **Canônica** para plugin + homologação local (V007) |
 | Plugin MFE | Média | Fluxo analista ok; imagem `delpi-quality-action-plans` reconstruída |
@@ -16,7 +16,7 @@
 | Homologação formal | Média | H1/H3 smoke OK; H2 GPT pendente |
 | Integrações (TOTVS, notificações) | Não iniciado | Previsto onda 4+ |
 
-**Estimativa global:** ~55% do caminho até excelência operacional.
+**Estimativa global:** ~70% do caminho até excelência operacional.
 
 ---
 
@@ -31,6 +31,8 @@
 | V005 | `nonconformity_scope` | Implementada |
 | V006 | `rnc_8d`, evidências com arquivo, equipe, trilha detecção | APLICADA (local + prod) |
 | V007 | `action_id` em evidências (vínculo com ação do plano) | APLICADA (local + prod) |
+| V008 | Audit log PAC (`quality_audit_log`) | Implementada |
+| V009 | `search_embedding` pgvector (busca semântica) | Implementada |
 
 ---
 
@@ -45,6 +47,7 @@
 | Relatório 8D | PUT `/rnc-8d`, GET `/export/rnc-8d` | Sim |
 | Evidências | GET/POST/DELETE `/evidences`, download arquivo | Sim |
 | Inteligência (similaridade, padrões) | GET `/similar-cases`, GET `/recurrence` | Parcial (Onda 2.1–2.3) |
+| Inteligência Onda 6 | GET `/intelligence/knowledge-graph`, POST recorrência/tags | Sim (smoke `run_onda6_intelligence_smoke.py`) |
 
 ### api-pac-quality
 
@@ -85,7 +88,9 @@
 
 ## Próxima onda recomendada
 
-**Onda 1 — fechamento:** H1/H3/H4 smoke OK local; **H2** aguarda deploy api-pac produção + `run_h2_pac_api_smoke.py`.
+**Onda 6 — concluída (jun/2026):** busca semântica, OCR tags, recorrência na abertura, grafo de conhecimento.
+
+**Próximo foco:** H13 evals agente GPT (≥ 90% nos 20 cenários) + início Onda 7 (ecossistema DELPI).
 
 ### Stack local (canônico — plugin + api-delpi)
 

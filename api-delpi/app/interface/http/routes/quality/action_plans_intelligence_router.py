@@ -21,7 +21,7 @@ from app.domain.services.quality_action_plans.pac_evidence_ocr_tag_suggestion_se
     PacEvidenceOcrTagSuggestionService,
 )
 from app.infrastructure.ocr.pac_evidence_image_ocr_service import PacEvidenceImageOcrService
-from app.interface.http.openapi_agent_metadata import OpenApiAgentMetadataBuilder
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
