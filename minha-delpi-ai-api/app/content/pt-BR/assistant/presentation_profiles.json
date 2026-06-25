@@ -117,6 +117,23 @@
     "protheus_relation": "system",
     "protheus_table_schema": "system"
   },
+  "entityTableProfiles": {
+    "product_stock": "stockProductPositions",
+    "product_guide": "guide",
+    "product_inspection": "analyserInspection",
+    "product_search": "productSearchBasic",
+    "product_purchases": "purchaseOrderList",
+    "product_purchase_price_history": "purchaseBudgetHistoryDetail",
+    "product_purchase_budget_history": "purchaseBudgetHistoryDetail",
+    "product_production_status": "factoryProductionDetail",
+    "product_shipping_status": "shippingStatusDetail",
+    "product_structure_exclusivity": "structureExclusivityDetail",
+    "product_raw_material_price_intelligence": "mpPriceHistoryDetail",
+    "product_cost_impact_simulation": "costImpactMaterials",
+    "product_pricing": "salePricingDetail",
+    "product_last_purchase": "lastPurchaseDetail",
+    "product_factory_status": "factoryProductionDetail"
+  },
   "entitySetProfileContracts": {
     "playbookOperational": {
       "entitySetKey": "playbookOperational",
@@ -258,6 +275,46 @@
     "legacyPresentationProfiles": [],
     "schemaFirstMigratedProfiles": [],
     "presentationTableAssemblyEntities": [],
+    "textFirstProfiles": [
+      "structure_exclusivity",
+      "raw_material_price_intelligence",
+      "cost_impact_simulation",
+      "sale_pricing",
+      "last_purchase",
+      "purchase_price_history",
+      "purchase_budget_history",
+      "purchase_list"
+    ],
+    "tierAProfileKeys": [
+      "analyser",
+      "stock",
+      "factory_status",
+      "production_status",
+      "shipping_status",
+      "structure_exclusivity",
+      "raw_material_price_intelligence",
+      "cost_impact_simulation",
+      "sale_pricing",
+      "last_purchase",
+      "purchase_price_history",
+      "purchase_budget_history",
+      "purchase_list"
+    ],
+    "visualHintProfileKeys": [
+      "stock",
+      "factory_status",
+      "production_status",
+      "shipping_status",
+      "structure_exclusivity",
+      "sale_pricing",
+      "raw_material_price_intelligence",
+      "cost_impact_simulation",
+      "last_purchase",
+      "purchase_price_history",
+      "purchase_budget_history",
+      "purchase_list",
+      "directives"
+    ],
     "productListPresent": [
       "product_customers",
       "product_inbound_invoice_items",
@@ -744,6 +801,7 @@
     },
     "stock": {
       "defaultViewPolicy": "table_when_available",
+      "routeNamespace": "stock",
       "viewOrder": [
         "text",
         "table",
@@ -853,6 +911,7 @@
     },
     "factory_status": {
       "defaultViewPolicy": "tree_when_available",
+      "routeNamespace": "factoryStatus",
       "viewOrder": [
         "text",
         "tree",
@@ -878,6 +937,7 @@
     },
     "production_status": {
       "defaultViewPolicy": "generic",
+      "routeNamespace": "productionStatus",
       "viewOrder": [
         "text",
         "table",
@@ -902,6 +962,7 @@
     },
     "shipping_status": {
       "defaultViewPolicy": "generic",
+      "routeNamespace": "shippingStatus",
       "viewOrder": [
         "text",
         "table",
@@ -926,6 +987,7 @@
     },
     "structure_exclusivity": {
       "defaultViewPolicy": "tree_when_available",
+      "routeNamespace": "structureExclusivity",
       "stackLayoutPolicy": "on_demand",
       "stackTailPolicy": "dashboard_only",
       "viewOrder": [
@@ -951,6 +1013,7 @@
     },
     "raw_material_price_intelligence": {
       "defaultViewPolicy": "generic",
+      "routeNamespace": "rawMaterialPriceIntelligence",
       "viewOrder": [
         "text",
         "table",
@@ -969,6 +1032,7 @@
     },
     "cost_impact_simulation": {
       "defaultViewPolicy": "generic",
+      "routeNamespace": "costImpactSimulation",
       "viewOrder": [
         "text",
         "table",
@@ -987,6 +1051,7 @@
     },
     "sale_pricing": {
       "defaultViewPolicy": "text_when_available",
+      "routeNamespace": "salePricing",
       "viewOrder": [
         "text",
         "table",
@@ -1009,6 +1074,7 @@
     },
     "directives": {
       "defaultViewPolicy": "table_when_available",
+      "routeNamespace": "directives",
       "viewOrder": [
         "text",
         "table",
@@ -1027,6 +1093,7 @@
     "last_purchase": {
       "presentationStrategy": "as_delivered",
       "defaultViewPolicy": "table_when_available",
+      "routeNamespace": "lastPurchase",
       "viewOrder": [
         "table",
         "text",
@@ -1038,6 +1105,7 @@
     },
     "purchase_price_history": {
       "defaultViewPolicy": "generic",
+      "routeNamespace": "purchasePriceHistory",
       "viewOrder": [
         "text",
         "table",
@@ -1056,6 +1124,7 @@
     },
     "purchase_budget_history": {
       "defaultViewPolicy": "generic",
+      "routeNamespace": "purchaseBudgetHistory",
       "viewOrder": [
         "text",
         "table",
@@ -1075,6 +1144,7 @@
     "purchase_list": {
       "presentationStrategy": "as_delivered",
       "defaultViewPolicy": "table_when_available",
+      "routeNamespace": "purchaseList",
       "viewOrder": [
         "table",
         "text",

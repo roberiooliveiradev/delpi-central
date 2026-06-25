@@ -155,10 +155,28 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
 
     @classmethod
     def playbook12_tier_a_profile_keys(cls) -> tuple[str, ...]:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        keys = ChatPresentationProfileService.tier_a_profile_keys()
+
+        if keys:
+            return tuple(sorted(keys))
+
         return cls.terms("playbook12Refactor", "tierAProfileKeys")
 
     @classmethod
     def playbook12_table_assembly_path_fragments(cls) -> frozenset[str]:
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        derived = ChatPresentationProfileService.tier_a_table_assembly_path_fragments()
+
+        if derived:
+            return derived
+
         return frozenset(cls.terms("playbook12Refactor", "tableAssemblyPathFragments"))
 
     @classmethod

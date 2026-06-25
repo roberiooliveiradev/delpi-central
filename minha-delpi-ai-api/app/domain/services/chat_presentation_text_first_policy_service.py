@@ -17,20 +17,6 @@ _AUXILIARY_SLOTS = (
 )
 
 
-_TEXT_FIRST_PROFILES = frozenset(
-    {
-        "structure_exclusivity",
-        "raw_material_price_intelligence",
-        "cost_impact_simulation",
-        "sale_pricing",
-        "last_purchase",
-        "purchase_price_history",
-        "purchase_budget_history",
-        "purchase_list",
-    }
-)
-
-
 class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
     BUNDLE = "presentation_vocabulary"
     _ROOT = ("textFirstPolicy",)
@@ -99,15 +85,6 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         if cls.looks_like_integrated_stack_request(user_message):
             return True
 
-        profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
-
-        if profile_key in {
-            "factory_status",
-            "production_status",
-            "shipping_status",
-        }:
-            return True
-
         return False
 
     @classmethod
@@ -130,7 +107,7 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
         profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
 
-        if not normalized and profile_key in _TEXT_FIRST_PROFILES:
+        if not normalized and ChatPresentationProfileService.is_text_first_profile(profile_key):
             strategy = str(profile.get("presentationStrategy") or "").strip().lower()
 
             if strategy == "as_delivered":

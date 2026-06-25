@@ -332,6 +332,8 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 
 ### W2 — Perfil e JSON como única fonte (média prioridade)
 
+**Status jun/2026:** W2 entregue — `textFirstProfiles`, `tierAProfileKeys`, `entityTableProfiles`, `routeNamespace`, `visualHintProfileKeys` e `refinementVocabulary.paginatedPathFragments`; gate `audit_presentation_profile_declarative_w2`.
+
 **Objetivo:** eliminar frozensets e path literals onde já existe `presentation_profiles.json`.
 
 | # | Arquivo | Ação |
@@ -672,3 +674,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `StreamChatMessageUseCase` fatiado: orquestração SSE em `chat_turn/chat_stream_turn_execution_service.py`; use case ~115L (ratchet `sendStreamUseCaseLinesMax`) |
 | jun/2026 | Regressão — `preserveDirectAnswerStages` inclui `capabilities` (evita LLM em self-help quando `pre_capability_answer` já resolve o turno) |
 | jun/2026 | **W1 concluída** — `commentaryProfiles` para 8 perfis operacionais + `builderStrategy`; `ChatOperationalCommentaryBuilderRegistryService`; gate `audit_commentary_profiles_registry`; `questionSynthesisStrategy` declarativo |
+| jun/2026 | **W2 concluída** — `textFirstProfiles`, `tierAProfileKeys`, `entityTableProfiles`, `routeNamespace` nos perfis; `refinementVocabulary` no registry; `ChatPresentationProfileDeclarativeService`; gate `audit_presentation_profile_declarative_w2` |

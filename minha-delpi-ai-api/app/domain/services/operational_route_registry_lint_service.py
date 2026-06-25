@@ -117,6 +117,7 @@ class OperationalRouteRegistryLintService:
         cls._lint_legacy_symbols(root, report)
         cls._lint_auto_tier_c_routes(report)
         cls._lint_tier_c_coverage(report)
+        cls._lint_refinement_vocabulary(report)
 
         return report
 
@@ -631,6 +632,15 @@ class OperationalRouteRegistryLintService:
         if not ok:
             for item in drift_errors:
                 report.add_error(item)
+
+    @classmethod
+    def _lint_refinement_vocabulary(cls, report: OperationalRouteRegistryLintReport) -> None:
+        fragments = OperationalRouteRegistryService.paginated_path_fragments()
+
+        if not fragments:
+            report.add_error(
+                "refinementVocabulary.paginatedPathFragments ausente ou vazio no registry"
+            )
 
     @staticmethod
     def _selection_reason_exists(key: str) -> bool:

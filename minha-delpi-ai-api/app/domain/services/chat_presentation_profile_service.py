@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_assistant_vocabulary_service import (
     ChatAssistantVocabularyService,
 )
+from app.domain.services.chat_presentation_profile.chat_presentation_profile_declarative_service import (
+    ChatPresentationProfileDeclarativeService,
+)
 from app.domain.services.chat_presentation_profile.chat_presentation_profile_contract_service import (
     ChatPresentationProfileContractService,
 )
@@ -48,6 +51,40 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
     @classmethod
     def entity_set(cls, set_key: str) -> frozenset[str]:
         return ChatPresentationProfileEntityService.entity_set(set_key)
+
+    @classmethod
+    def text_first_profile_keys(cls) -> frozenset[str]:
+        return ChatPresentationProfileDeclarativeService.text_first_profile_keys()
+
+    @classmethod
+    def tier_a_profile_keys(cls) -> frozenset[str]:
+        return ChatPresentationProfileDeclarativeService.tier_a_profile_keys()
+
+    @classmethod
+    def is_text_first_profile(cls, profile_key: str | None) -> bool:
+        return ChatPresentationProfileDeclarativeService.is_text_first_profile(profile_key)
+
+    @classmethod
+    def tier_a_table_assembly_path_fragments(cls) -> frozenset[str]:
+        return ChatPresentationProfileDeclarativeService.tier_a_table_assembly_path_fragments()
+
+    @classmethod
+    def route_namespace(
+        cls,
+        profile_key: str | None = None,
+        *,
+        path: str | None = None,
+        entity: str | None = None,
+    ) -> str:
+        return ChatPresentationProfileDeclarativeService.route_namespace(
+            profile_key,
+            path=path,
+            entity=entity,
+        )
+
+    @classmethod
+    def table_profile_for_entity(cls, entity: str | None) -> str | None:
+        return ChatPresentationProfileDeclarativeService.table_profile_for_entity(entity)
 
     @classmethod
     def is_enriched_openapi_presentation(

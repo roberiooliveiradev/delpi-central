@@ -291,7 +291,7 @@ class ChatOperationalRefinementPaginationService:
 
                 if not any(
                     fragment in path.lower()
-                    for fragment in VOCAB.PAGINATED_PATH_FRAGMENTS
+                    for fragment in VOCAB.paginated_path_fragments()
                 ):
                     continue
 
@@ -321,7 +321,7 @@ class ChatOperationalRefinementPaginationService:
 
         context = str(conversation_context or "").lower()
 
-        for fragment in VOCAB.PAGINATED_PATH_FRAGMENTS:
+        for fragment in VOCAB.paginated_path_fragments():
             if fragment in context:
                 return {"path": fragment}
 
@@ -361,7 +361,7 @@ class ChatOperationalRefinementPaginationService:
     def _is_paginated_path(cls, path: str) -> bool:
         lowered = str(path or "").lower()
 
-        return any(fragment in lowered for fragment in VOCAB.PAGINATED_PATH_FRAGMENTS)
+        return any(fragment in lowered for fragment in VOCAB.paginated_path_fragments())
 
     @classmethod
     def _resolve_page_size_from_parameters(cls, parameters: dict) -> int | None:

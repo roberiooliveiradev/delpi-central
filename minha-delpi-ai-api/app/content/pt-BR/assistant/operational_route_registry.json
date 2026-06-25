@@ -94,6 +94,21 @@
     "policy": "sql_refinement",
     "reasonKey": "sqlRefinement"
   },
+  "refinementVocabulary": {
+    "paginatedPathFragments": [
+      "/parents",
+      "/structure",
+      "/search",
+      "/stock",
+      "/purchases",
+      "/inspection",
+      "/guide",
+      "/dashboard",
+      "/items",
+      "/columns",
+      "/system/tables"
+    ]
+  },
   "sqlReadiness": {
     "description": "Templates SQL deprecados rota a rota — SQL só quando REST não está pronto no agente",
     "productionOperationalKinds": [

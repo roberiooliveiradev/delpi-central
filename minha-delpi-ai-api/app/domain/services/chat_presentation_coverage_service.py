@@ -22,24 +22,6 @@ from app.domain.services.openapi_presentation_profile_deriver_service import (
 from app.domain.services.chat_humanized_data_response_content_service import (
     ChatHumanizedDataResponseContentService,
 )
-from app.domain.services.chat_presentation_vocabulary_service import (
-    ChatPresentationVocabularyService,
-)
-
-_RICH_PRODUCT_PATH_TOKENS: tuple[str, ...] = (
-    "/analyser",
-    "/factory-status",
-    "/production-status",
-    "/shipping-status",
-    "/structure/exclusivity",
-    "/raw-material-price-intelligence",
-    "/cost-impact-simulation",
-    "/last-purchase",
-    "/purchase-price-history",
-    "/purchase-budget-history",
-    "/pricing",
-    "/purchases",
-)
 
 _TIER_ORDER = ("A", "B", "C", "D")
 _HUMANIZED_SHAPE_IDS = frozenset(
@@ -232,8 +214,6 @@ class ChatPresentationCoverageService:
 
     @classmethod
     def classify_tier(cls, *, entity: str | None, path: str) -> str:
-        lowered = str(path or "").lower()
-
         if entity in ChatOperationalResponseProfileService.SQL_PRESENT_ENTITIES:
             return "D"
 
@@ -241,15 +221,6 @@ class ChatPresentationCoverageService:
             return "D"
 
         if entity and entity in ChatOperationalResponseProfileService.PROFILE_PRESENT_ENTITIES:
-            if any(token in lowered for token in _RICH_PRODUCT_PATH_TOKENS):
-                return "A"
-
-            if any(
-                token in lowered
-                for token in ("/stock", "/structure", "/parents", "/guide", "/inspection")
-            ):
-                return "A"
-
             return "A"
 
         if entity and (
@@ -681,7 +652,7 @@ class ChatPresentationCoverageService:
     @classmethod
     def find_visual_builder_warnings(cls) -> list[VisualBuilderWarning]:
         profiles = ChatPresentationProfileService.node("profiles") or {}
-        tier_a_keys = frozenset(ChatPresentationVocabularyService.playbook12_tier_a_profile_keys())
+        tier_a_keys = ChatPresentationProfileService.tier_a_profile_keys()
         warnings: list[VisualBuilderWarning] = []
 
         if not isinstance(profiles, dict):

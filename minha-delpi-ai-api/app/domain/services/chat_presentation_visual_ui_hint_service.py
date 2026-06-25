@@ -9,22 +9,6 @@ from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
 
-_PROFILE_ROUTE_NAMESPACE: dict[str, str] = {
-    "stock": "stock",
-    "production_status": "productionStatus",
-    "shipping_status": "shippingStatus",
-    "structure_exclusivity": "structureExclusivity",
-    "factory_status": "factoryStatus",
-    "sale_pricing": "salePricing",
-    "raw_material_price": "rawMaterialPriceIntelligence",
-    "cost_impact": "costImpactSimulation",
-    "purchase_history": "purchaseHistory",
-    "purchases": "purchases",
-    "directives": "directives",
-    "factory_production_report": "factoryProductionReport",
-}
-
-
 class ChatPresentationVisualUiHintService:
     @classmethod
     def resolve_namespace(
@@ -53,7 +37,7 @@ class ChatPresentationVisualUiHintService:
 
             key = ChatPresentationProfileService.resolve_profile_key(path, entity)
 
-        return _PROFILE_ROUTE_NAMESPACE.get(key, "")
+        return ChatPresentationProfileService.route_namespace(key)
 
     @classmethod
     def resolve_table_hint(

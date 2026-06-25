@@ -341,6 +341,63 @@ def audit_commentary_profiles_registry() -> list[str]:
     return issues
 
 
+def audit_presentation_profile_declarative_w2() -> list[str]:
+    """W2 — frozensets e mapas de perfil devem viver em presentation_profiles.json."""
+    issues: list[str] = []
+    profiles = _load_json(PROFILES_JSON)
+    entity_sets = profiles.get("entitySets") if isinstance(profiles.get("entitySets"), dict) else {}
+
+    for set_key in ("textFirstProfiles", "tierAProfileKeys"):
+        raw = entity_sets.get(set_key)
+
+        if not isinstance(raw, list) or not raw:
+            issues.append(f"entitySets.{set_key} ausente ou vazio em presentation_profiles.json")
+
+    entity_table_profiles = profiles.get("entityTableProfiles")
+
+    if not isinstance(entity_table_profiles, dict) or not entity_table_profiles:
+        issues.append("entityTableProfiles ausente ou vazio em presentation_profiles.json")
+
+    hardcoded_targets = {
+        API_APP
+        / "domain/services/chat_presentation_text_first_policy_service.py": "_TEXT_FIRST_PROFILES",
+        API_APP
+        / "domain/services/chat_presentation_visual_ui_hint_service.py": "_PROFILE_ROUTE_NAMESPACE",
+        API_APP
+        / "domain/services/chat_presentation_table_profile_inference_service.py": "_ENTITY_TABLE_PROFILES",
+        API_APP
+        / "domain/services/chat_presentation_coverage_service.py": "_RICH_PRODUCT_PATH_TOKENS",
+        API_APP
+        / "domain/services/chat_operational_refinement/chat_operational_refinement_vocabulary.py": "PAGINATED_PATH_FRAGMENTS = (",
+    }
+
+    for path, marker in hardcoded_targets.items():
+        body = _read(path)
+
+        if marker in body:
+            issues.append(f"hardcoded W2 remanescente em {path.relative_to(ROOT)}: {marker}")
+
+    profile_nodes = profiles.get("profiles") if isinstance(profiles.get("profiles"), dict) else {}
+    visual_hint_profiles = {
+        str(item).strip()
+        for item in (entity_sets.get("visualHintProfileKeys") or [])
+        if str(item).strip()
+    }
+
+    for profile_key in sorted(visual_hint_profiles):
+        profile = profile_nodes.get(profile_key)
+
+        if not isinstance(profile, dict):
+            continue
+
+        if not str(profile.get("routeNamespace") or "").strip():
+            issues.append(
+                f"profiles.{profile_key}.routeNamespace ausente (tier A exige namespace de hints)"
+            )
+
+    return issues
+
+
 def build_prose_delivery_metrics_report() -> dict[str, object]:
     profiles = _load_json(PROFILES_JSON)
     prose = _load_json(PROSE_DELIVERY_JSON)
@@ -390,6 +447,7 @@ def main() -> int:
         *audit_anti_patterns(),
         *audit_tier_and_entity_set_config(),
         *audit_commentary_profiles_registry(),
+        *audit_presentation_profile_declarative_w2(),
     ]
 
     if not issues:

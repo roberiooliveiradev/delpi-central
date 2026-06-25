@@ -3,6 +3,12 @@
 from __future__ import annotations
 
 import re
+from functools import lru_cache
+
+from app.domain.services.operational_route_registry_service import (
+    OperationalRouteRegistryService,
+)
+
 
 class ChatOperationalRefinementVocabulary:
     FILTER_TERMS = (
@@ -30,19 +36,10 @@ class ChatOperationalRefinementVocabulary:
         r"\b(?:armaz[eé]m|arm\.?|deposito|depósito)\s*[_-]?\s*(\d{1,3})\b",
         re.IGNORECASE,
     )
-    PAGINATED_PATH_FRAGMENTS = (
-        "/parents",
-        "/structure",
-        "/search",
-        "/stock",
-        "/purchases",
-        "/inspection",
-        "/guide",
-        "/dashboard",
-        "/items",
-        "/columns",
-        "/system/tables",
-    )
+    @classmethod
+    @lru_cache(maxsize=1)
+    def paginated_path_fragments(cls) -> tuple[str, ...]:
+        return OperationalRouteRegistryService.paginated_path_fragments()
     NEXT_PAGE_TERMS = (
         "proxima pagina",
         "proxima pag",

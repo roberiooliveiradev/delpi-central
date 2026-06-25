@@ -307,3 +307,21 @@ class OperationalRouteRegistryService:
             for policy in cls.fallback_policies()
             if policy.get("runBeforeSqlRefinement")
         ]
+
+    @classmethod
+    def paginated_path_fragments(cls) -> tuple[str, ...]:
+        node = _registry_content().get("refinementVocabulary")
+
+        if not isinstance(node, dict):
+            return ()
+
+        raw = node.get("paginatedPathFragments")
+
+        if not isinstance(raw, list):
+            return ()
+
+        return tuple(
+            str(fragment).strip()
+            for fragment in raw
+            if str(fragment).strip()
+        )
