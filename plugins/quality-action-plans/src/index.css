@@ -243,6 +243,30 @@
   margin-bottom: var(--pac-grid-gap);
 }
 
+.dashboard-quality-action-plans .pac-dashboard-grid--queue-summary {
+  margin-bottom: var(--pac-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.dashboard-quality-action-plans .pac-table__subline {
+  margin: 4px 0 0;
+  font-size: var(--pac-font-xs);
+}
+
+.dashboard-quality-action-plans .pac-table__row--overdue td {
+  background: color-mix(in srgb, var(--pac-danger, #b42318) 6%, var(--pac-card-bg));
+}
+
+.dashboard-quality-action-plans .pac-table__overdue-badge {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.dashboard-quality-action-plans .pac-badge--warning {
+  background: color-mix(in srgb, #f59e0b 18%, var(--pac-card-bg));
+  color: #b45309;
+}
+
 .dashboard-quality-action-plans .pac-metric-card {
   background: var(--pac-card-bg);
   border: 1px solid var(--pac-card-border);

@@ -1198,6 +1198,17 @@
     },
     {
       "method": "GET",
+      "path": "/quality/action-plans/my-queue",
+      "operationId": "list_quality_action_plan_my_queue",
+      "summary": "Fila pessoal — ações do usuário autenticado",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/quality/action-plans/{plan_id}",
       "operationId": "get_quality_action_plan_detail",
       "summary": "Análise consolidada — Quality action plan",

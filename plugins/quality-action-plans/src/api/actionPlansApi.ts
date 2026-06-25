@@ -21,6 +21,7 @@ import type { PlanSimilarCasesResult } from "../types/similarCases";
 import type { PagedRecurrenceResponse } from "../types/recurrence";
 import type { PagedSolutionPatternsResponse } from "../types/solutionPattern";
 import type { PagedEvidenceSearchResponse } from "../types/evidenceSearch";
+import type { MyQueueResponse } from "../types/myQueue";
 
 const API_BASE = "/apps/api-delpi/quality/action-plans";
 const SOLUTION_PATTERNS_BASE = "/apps/api-delpi/quality/solution-patterns";
@@ -82,6 +83,24 @@ export async function fetchOverduePlans(params: ListParams = {}): Promise<PagedP
     `${API_BASE}/overdue${buildQuery(params)}`,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao listar planos atrasados.");
+}
+
+type MyQueueParams = {
+  branch_code?: string;
+  overdue_only?: boolean;
+  page?: number;
+  page_size?: number;
+};
+
+export async function fetchMyQueue(params: MyQueueParams = {}): Promise<MyQueueResponse> {
+  const search = new URLSearchParams();
+  if (params.branch_code) search.set("branch_code", params.branch_code);
+  if (params.overdue_only) search.set("overdue_only", "true");
+  if (params.page) search.set("page", String(params.page));
+  if (params.page_size) search.set("page_size", String(params.page_size));
+  const query = search.toString() ? `?${search.toString()}` : "";
+  const envelope = await httpGet<ApiEnvelope<MyQueueResponse>>(`${API_BASE}/my-queue${query}`);
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar sua fila de ações.");
 }
 
 type RecurrenceParams = {

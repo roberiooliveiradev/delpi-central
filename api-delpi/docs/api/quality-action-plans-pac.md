@@ -36,6 +36,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | GET | `/quality/action-plans` | `list_quality_action_plans` | Listagem paginada |
 | GET | `/quality/action-plans/overdue` | `list_quality_action_plans_overdue` | Planos com ações vencidas |
 | GET | `/quality/action-plans/recurrence` | `list_quality_action_plans_recurrence` | Agrupamento por `recurrence_key` (reincidência) |
+| GET | `/quality/action-plans/my-queue` | `list_quality_action_plan_my_queue` | Fila pessoal — ações do usuário autenticado (`responsible_user_id`) |
 | GET | `/quality/action-plans/evidences/search` | `search_quality_action_plan_evidences` | Busca textual em evidências (nome, descrição, trecho) |
 | GET | `/quality/solution-patterns` | `list_quality_solution_patterns` | Padrões de solução testados |
 | GET | `/quality/action-plans/{plan_id}` | `get_quality_action_plan_detail` | Detalhe completo |
@@ -71,6 +72,12 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 ### GET `/quality/action-plans` e `/overdue`
 
 **Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `department`, `root_cause_category`, `overdue_only` (bool), `page`, `page_size`
+
+### GET `/quality/action-plans/my-queue`
+
+**Query:** `branch_code`, `overdue_only` (bool), `page`, `page_size` — usuário via JWT (`responsible_user_id` da ação)
+
+**`data`:** `user_id`, `summary` (`open_actions`, `overdue_actions`), `items[]` (ação + contexto do plano), `pagination`
 
 ---
 

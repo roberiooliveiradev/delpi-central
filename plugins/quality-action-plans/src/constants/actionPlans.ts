@@ -47,6 +47,7 @@ export type AppView =
   | "recurrence"
   | "solutions"
   | "evidences"
+  | "my-queue"
   | "detail"
   | "new";
 
@@ -63,6 +64,7 @@ export function parseRoute(pathname?: string): { view: AppView; planId?: string 
   if (path.endsWith("/recorrencia")) return { view: "recurrence" };
   if (path.endsWith("/solucoes")) return { view: "solutions" };
   if (path.endsWith("/evidencias")) return { view: "evidences" };
+  if (path.endsWith("/minha-fila")) return { view: "my-queue" };
   return { view: "dashboard" };
 }
 
@@ -88,6 +90,10 @@ export function solutionsPath(): string {
 
 export function evidencesSearchPath(): string {
   return `${APP_BASE}/evidencias`;
+}
+
+export function myQueuePath(): string {
+  return `${APP_BASE}/minha-fila`;
 }
 
 export function detailPath(planId: string): string {

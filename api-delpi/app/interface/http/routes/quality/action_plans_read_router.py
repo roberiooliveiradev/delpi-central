@@ -351,6 +351,35 @@ def search_action_plan_evidences(
         return error_response("Erro ao buscar evidências.", status_code=500)
 
 
+@router.get("/my-queue", **_pac_openapi("list_quality_action_plan_my_queue", "/my-queue"))
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def list_my_action_queue(
+    branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
+    overdue_only: bool = Query(default=False),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    user_id = _current_user_id()
+    if user_id == "unknown":
+        return error_response("Usuário não autenticado.", status_code=401)
+    try:
+        repo = build_quality_action_plan_read_repository()
+        return api_delpi_success(
+            repo.list_my_queue(
+                user_id=user_id,
+                branch_code=branch_code,
+                overdue_only=overdue_only,
+                page=page,
+                page_size=page_size,
+            ),
+            operation_id="list_quality_action_plan_my_queue",
+            message="Fila pessoal carregada.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar fila PAC do usuário {user_id}: {exc}")
+        return error_response("Erro ao carregar sua fila de ações.", status_code=500)
+
+
 @router.post("", **_pac_openapi("create_quality_action_plan", ""))
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def create_action_plan(body: CreateActionPlanBody = Body(...)):

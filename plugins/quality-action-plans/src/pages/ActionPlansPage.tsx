@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { parseRoute } from "../constants/actionPlans";
 import { DashboardPage } from "./DashboardPage";
+import { MyQueuePage } from "./MyQueuePage";
 import { OverduePage } from "./OverduePage";
 import { PlanDetailPage } from "./PlanDetailPage";
 import { PlanFormPage } from "./PlanFormPage";
@@ -44,6 +45,10 @@ export function ActionPlansPage({ pathname }: Props) {
 
   if (view === "overdue") {
     return <OverduePage onNavigate={handleNavigate} />;
+  }
+
+  if (view === "my-queue") {
+    return <MyQueuePage onNavigate={handleNavigate} />;
   }
 
   if (view === "recurrence") {

@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+from unittest.mock import MagicMock
+
+from app.infrastructure.persistence.plugins.repositories.quality_action_plans.postgres_quality_action_plan_read_repository import (
+    PostgresQualityActionPlanRepository,
+)
+
+
+def _capture_my_queue_query(**kwargs):
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(
+        side_effect=[
+            {"open_actions": 2, "overdue_actions": 1},
+            {"total": 2},
+        ]
+    )
+    repo.fetch_all = MagicMock(return_value=[])
+    repo.list_my_queue(**kwargs)
+    count_query = repo.fetch_one.call_args_list[1][0][0]
+    list_query = repo.fetch_all.call_args[0][0]
+    params = repo.fetch_all.call_args[0][1]
+    return count_query, list_query, params
+
+
+def test_list_my_queue_filters_by_responsible_user():
+    _count_query, list_query, params = _capture_my_queue_query(user_id="user-42")
+    assert "a.responsible_user_id = %s" in list_query
+    assert "user-42" in params
+
+
+def test_list_my_queue_overdue_only_filter():
+    _count_query, list_query, _params = _capture_my_queue_query(user_id="user-42", overdue_only=True)
+    assert "a.due_date < CURRENT_DATE" in list_query
+
+
+def test_list_my_queue_maps_rows():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(
+        side_effect=[
+            {"open_actions": 1, "overdue_actions": 1},
+            {"total": 1},
+        ]
+    )
+    repo.fetch_all = MagicMock(
+        return_value=[
+            {
+                "action_id": "act-1",
+                "plan_id": "plan-1",
+                "action_type": "corrective",
+                "description": "Revisar processo",
+                "responsible_user_id": "user-42",
+                "responsible_name": "Ana",
+                "department": "Qualidade",
+                "due_date": None,
+                "action_status": "in_progress",
+                "is_overdue": False,
+                "plan_code": "PAC-001",
+                "plan_title": "Oxidação",
+                "plan_status": "in_progress",
+                "plan_severity": "high",
+                "branch_code": "01",
+                "nonconformity_scope": "external",
+                "customer_name": "Cliente A",
+                "product_code": "90261805",
+            }
+        ]
+    )
+
+    result = repo.list_my_queue(user_id="user-42")
+
+    assert result["user_id"] == "user-42"
+    assert result["summary"]["open_actions"] == 1
+    assert result["items"][0]["plan_code"] == "PAC-001"
+    assert result["items"][0]["action_type"] == "corrective"

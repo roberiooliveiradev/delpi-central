@@ -896,6 +896,126 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
         }
 
+    def list_my_queue(
+        self,
+        *,
+        user_id: str,
+        branch_code: str | None = None,
+        overdue_only: bool = False,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        filters = [
+            "p.deleted_at IS NULL",
+            "p.status NOT IN ('completed', 'cancelled')",
+            "a.status NOT IN ('completed', 'cancelled')",
+            "a.responsible_user_id = %s",
+        ]
+        params: list[Any] = [user_id]
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+        if overdue_only:
+            filters.append("a.due_date < CURRENT_DATE")
+        where_clause = " AND ".join(filters)
+
+        summary_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*)::int AS open_actions,
+                   COUNT(*) FILTER (
+                       WHERE a.due_date IS NOT NULL AND a.due_date < CURRENT_DATE
+                   )::int AS overdue_actions
+              FROM quality.quality_actions a
+              JOIN quality.quality_action_plans p ON p.id = a.plan_id
+             WHERE {where_clause}
+            """,
+            tuple(params),
+        )
+
+        count_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*)::int AS total
+              FROM quality.quality_actions a
+              JOIN quality.quality_action_plans p ON p.id = a.plan_id
+             WHERE {where_clause}
+            """,
+            tuple(params),
+        )
+        total = int((count_row or {}).get("total") or 0)
+        offset = max(page - 1, 0) * page_size
+
+        rows = self.fetch_all(
+            f"""
+            SELECT a.id AS action_id,
+                   a.plan_id,
+                   a.action_type,
+                   a.description,
+                   a.responsible_user_id,
+                   a.responsible_name,
+                   a.department,
+                   a.due_date,
+                   a.status AS action_status,
+                   (a.due_date IS NOT NULL AND a.due_date < CURRENT_DATE) AS is_overdue,
+                   p.code AS plan_code,
+                   p.title AS plan_title,
+                   p.status AS plan_status,
+                   p.severity AS plan_severity,
+                   p.branch_code,
+                   p.nonconformity_scope,
+                   p.customer_name,
+                   p.product_code
+              FROM quality.quality_actions a
+              JOIN quality.quality_action_plans p ON p.id = a.plan_id
+             WHERE {where_clause}
+             ORDER BY is_overdue DESC,
+                      a.due_date NULLS LAST,
+                      a.created_at ASC
+             LIMIT %s OFFSET %s
+            """,
+            tuple([*params, page_size, offset]),
+        )
+
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            due_date = row.get("due_date")
+            items.append(
+                {
+                    "action_id": str(row["action_id"]),
+                    "plan_id": str(row["plan_id"]),
+                    "action_type": row.get("action_type"),
+                    "description": row.get("description"),
+                    "responsible_user_id": row.get("responsible_user_id"),
+                    "responsible_name": row.get("responsible_name"),
+                    "department": row.get("department"),
+                    "due_date": due_date.isoformat() if hasattr(due_date, "isoformat") else due_date,
+                    "action_status": row.get("action_status"),
+                    "is_overdue": bool(row.get("is_overdue")),
+                    "plan_code": row.get("plan_code"),
+                    "plan_title": row.get("plan_title"),
+                    "plan_status": row.get("plan_status"),
+                    "plan_severity": row.get("plan_severity"),
+                    "branch_code": row.get("branch_code"),
+                    "nonconformity_scope": row.get("nonconformity_scope"),
+                    "customer_name": row.get("customer_name"),
+                    "product_code": row.get("product_code"),
+                }
+            )
+
+        return {
+            "user_id": user_id,
+            "summary": {
+                "open_actions": int((summary_row or {}).get("open_actions") or 0),
+                "overdue_actions": int((summary_row or {}).get("overdue_actions") or 0),
+            },
+            "items": items,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "total_pages": max((total + page_size - 1) // page_size, 1),
+            },
+        }
+
     def list_recurrence_groups(
         self,
         *,
