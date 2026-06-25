@@ -62,6 +62,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 **`data.breakdowns`:** `window_months`, `by_root_cause[]`, `by_failure_mode[]`, `by_action_type[]` — cada item `{ label, total }` (top 8 no período)
 
+**`data.rankings`:** `window_months`, `by_customer[]`, `by_product[]`, `by_owner[]` — cada item `{ label, total, open_plans }` (top 8 no período)
+
 ### GET `/quality/action-plans` e `/overdue`
 
 **Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`

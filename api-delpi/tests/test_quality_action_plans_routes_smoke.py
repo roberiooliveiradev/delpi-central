@@ -46,6 +46,12 @@ def test_dashboard_route_returns_operation_id(mock_build) -> None:
             "by_failure_mode": [{"label": "trinca", "total": 1}],
             "by_action_type": [{"label": "corrective", "total": 4}],
         },
+        "rankings": {
+            "window_months": 12,
+            "by_customer": [{"label": "Cliente X", "total": 3, "open_plans": 1}],
+            "by_product": [{"label": "90261805", "total": 2, "open_plans": 1}],
+            "by_owner": [{"label": "user-1", "total": 4, "open_plans": 2}],
+        },
     }
     mock_build.return_value = mock_repo
 

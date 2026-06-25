@@ -65,6 +65,7 @@ export type DashboardSummary = {
   }>;
   timing?: DashboardTiming;
   breakdowns?: DashboardBreakdowns;
+  rankings?: DashboardRankings;
 };
 
 export type DashboardTiming = {
@@ -85,6 +86,19 @@ export type DashboardBreakdowns = {
   by_root_cause: DashboardBreakdownItem[];
   by_failure_mode: DashboardBreakdownItem[];
   by_action_type: DashboardBreakdownItem[];
+};
+
+export type DashboardRankingItem = {
+  label: string;
+  total: number;
+  open_plans: number;
+};
+
+export type DashboardRankings = {
+  window_months: number;
+  by_customer: DashboardRankingItem[];
+  by_product: DashboardRankingItem[];
+  by_owner: DashboardRankingItem[];
 };
 
 export type IshikawaAnalysis = {

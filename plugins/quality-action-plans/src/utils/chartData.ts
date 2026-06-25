@@ -1,6 +1,6 @@
 import { PLAN_SEVERITIES, PLAN_STATUSES, PAC_NONCONFORMITY_SCOPES, actionTypeLabel, statusLabel, severityLabel } from "../constants/actionPlans";
 import { CHART_COLORS } from "../constants/chartColors";
-import type { ActionPlanSummary, DashboardBreakdownItem, DashboardSummary } from "../types/actionPlan";
+import type { ActionPlanSummary, DashboardBreakdownItem, DashboardRankingItem, DashboardSummary } from "../types/actionPlan";
 
 export function buildOverviewChartData(summary: DashboardSummary) {
   return [
@@ -95,4 +95,17 @@ export function buildBreakdownChartData(
 
 export function buildActionTypeBreakdownData(items: DashboardBreakdownItem[]) {
   return buildBreakdownChartData(items, actionTypeLabel);
+}
+
+export function buildRankingChartData(items: DashboardRankingItem[]) {
+  return items.map((entry, index) => {
+    const fullLabel = entry.label;
+    return {
+      name: truncateLabel(fullLabel),
+      fullName: fullLabel,
+      value: entry.total,
+      openPlans: entry.open_plans,
+      fill: CHART_COLORS[index % CHART_COLORS.length],
+    };
+  });
 }

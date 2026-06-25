@@ -35,9 +35,28 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
   assert result["open_plans"] == 1
   assert "timing" in result
   assert "breakdowns" in result
+  assert "rankings" in result
   main_query = repo.fetch_one.call_args_list[0][0][0]
   assert main_query.count("%s") == 1
   assert repo.fetch_one.call_args_list[0][0][1] == ("01",)
+
+
+def test_dashboard_rankings_maps_rows():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        side_effect=[
+            [{"label": "Cliente A", "total": 4, "open_plans": 2}],
+            [{"label": "90261805", "total": 3, "open_plans": 1}],
+            [{"label": "user-01", "total": 5, "open_plans": 3}],
+        ]
+    )
+
+    rankings = repo._fetch_rankings(months=12, limit=8)
+
+    assert rankings["window_months"] == 12
+    assert rankings["by_customer"][0]["open_plans"] == 2
+    assert rankings["by_product"][0]["label"] == "90261805"
+    assert rankings["by_owner"][0]["total"] == 5
 
 
 def test_dashboard_timing_kpis_rounds_days():

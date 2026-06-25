@@ -275,6 +275,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 nonconformity_scope=nonconformity_scope,
                 months=months,
             )
+            result["rankings"] = self._fetch_rankings(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+                months=months,
+            )
             return result
 
         by_branch_rows = self.fetch_all(
@@ -334,6 +339,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             months=months,
         )
         result["breakdowns"] = self._fetch_breakdowns(
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            months=months,
+        )
+        result["rankings"] = self._fetch_rankings(
             branch_code=branch_code,
             nonconformity_scope=nonconformity_scope,
             months=months,
@@ -500,6 +510,92 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "by_action_type": [
                 {"label": row["label"], "total": int(row["total"])} for row in action_type_rows
             ],
+        }
+
+    def _fetch_rankings(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        months: int = 12,
+        limit: int = 8,
+    ) -> dict[str, Any]:
+        plan_filters = ["p.deleted_at IS NULL", "p.created_at >= NOW() - make_interval(months => %s)"]
+        plan_params: list[Any] = [months]
+        if branch_code:
+            plan_filters.append("p.branch_code = %s")
+            plan_params.append(branch_code)
+        if nonconformity_scope:
+            plan_filters.append("p.nonconformity_scope = %s")
+            plan_params.append(nonconformity_scope)
+        plan_where = " AND ".join(plan_filters)
+
+        def _map_ranking_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            return [
+                {
+                    "label": row["label"],
+                    "total": int(row["total"]),
+                    "open_plans": int(row.get("open_plans") or 0),
+                }
+                for row in rows
+            ]
+
+        customer_rows = self.fetch_all(
+            f"""
+            SELECT
+                COALESCE(NULLIF(trim(p.customer_name), ''), 'Sem cliente') AS label,
+                COUNT(*)::int AS total,
+                COUNT(*) FILTER (
+                    WHERE p.status NOT IN ('completed', 'cancelled')
+                )::int AS open_plans
+              FROM quality.quality_action_plans p
+             WHERE {plan_where}
+             GROUP BY 1
+             ORDER BY total DESC, open_plans DESC, label ASC
+             LIMIT %s
+            """,
+            tuple([*plan_params, limit]),
+        )
+
+        product_rows = self.fetch_all(
+            f"""
+            SELECT
+                COALESCE(NULLIF(trim(p.product_code), ''), 'Sem produto') AS label,
+                COUNT(*)::int AS total,
+                COUNT(*) FILTER (
+                    WHERE p.status NOT IN ('completed', 'cancelled')
+                )::int AS open_plans
+              FROM quality.quality_action_plans p
+             WHERE {plan_where}
+             GROUP BY 1
+             ORDER BY total DESC, open_plans DESC, label ASC
+             LIMIT %s
+            """,
+            tuple([*plan_params, limit]),
+        )
+
+        owner_rows = self.fetch_all(
+            f"""
+            SELECT
+                COALESCE(NULLIF(trim(p.owner_user_id), ''), 'Sem responsável') AS label,
+                COUNT(*)::int AS total,
+                COUNT(*) FILTER (
+                    WHERE p.status NOT IN ('completed', 'cancelled')
+                )::int AS open_plans
+              FROM quality.quality_action_plans p
+             WHERE {plan_where}
+             GROUP BY 1
+             ORDER BY total DESC, open_plans DESC, label ASC
+             LIMIT %s
+            """,
+            tuple([*plan_params, limit]),
+        )
+
+        return {
+            "window_months": months,
+            "by_customer": _map_ranking_rows(customer_rows),
+            "by_product": _map_ranking_rows(product_rows),
+            "by_owner": _map_ranking_rows(owner_rows),
         }
 
     def list_overdue_plans(
