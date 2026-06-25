@@ -1400,3 +1400,70 @@
     font-size: 9px;
   }
 }
+
+.dashboard-quality-action-plans .pac-rnc8d-progress {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--pac-card-border);
+  border-radius: var(--pac-control-radius);
+  background: color-mix(in srgb, var(--pac-accent) 4%, var(--pac-card-bg));
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--pac-card-border);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__item {
+  display: flex;
+  gap: 6px;
+  font-size: var(--pac-font-xs);
+  color: var(--pac-text-muted);
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__item--done {
+  color: var(--pac-success);
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__id {
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-checkbox-inline,
+.dashboard-quality-action-plans .pac-checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pac-font-sm);
+  white-space: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-required-evidence-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}

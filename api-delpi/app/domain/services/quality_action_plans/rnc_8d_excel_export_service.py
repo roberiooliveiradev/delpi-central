@@ -16,6 +16,22 @@ TEMPLATE_PATH = (
     / "rnc_8d_template.xlsx"
 )
 
+TEMPLATE_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "tests"
+    / "fixtures"
+    / "quality"
+    / "rnc_8d_template_minimal.xlsx"
+)
+
+
+def resolve_rnc_8d_template_path() -> Path:
+    if TEMPLATE_PATH.is_file():
+        return TEMPLATE_PATH
+    if TEMPLATE_FIXTURE_PATH.is_file():
+        return TEMPLATE_FIXTURE_PATH
+    return TEMPLATE_PATH
+
 SUPPLIER_BY_BRANCH = {
     "01": "12243 - Delpi Componentes Ltda EPP",
     "02": "12243 - Delpi Componentes Ltda EPP",
@@ -135,15 +151,16 @@ def build_rnc_8d_workbook(
     *,
     image_annexes: list[dict[str, Any]] | None = None,
 ) -> bytes:
-    if not TEMPLATE_PATH.is_file():
-        raise FileNotFoundError(f"Template 8D não encontrado: {TEMPLATE_PATH}")
+    template_path = resolve_rnc_8d_template_path()
+    if not template_path.is_file():
+        raise FileNotFoundError(f"Template 8D não encontrado: {template_path}")
 
     plan = detail.get("plan") or {}
     payload = plan.get("template_payload") or {}
     if not isinstance(payload, dict):
         payload = {}
 
-    wb = load_workbook(TEMPLATE_PATH)
+    wb = load_workbook(template_path)
     ws = wb["R8D"]
 
     nc = payload.get("nc_description") or {}

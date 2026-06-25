@@ -6,6 +6,8 @@ export type PlanFormValues = {
   nonconformity_scope: string;
   customer_template: string;
   client_nc_registry: string;
+  source_type: string;
+  source_reference: string;
   severity: string;
   status: string;
   customer_name: string;
@@ -22,6 +24,10 @@ export type CreatePlanPayload = {
   title: string;
   branch_code: string;
   nonconformity_scope: string;
+  customer_template?: string;
+  client_nc_registry?: string;
+  source_type?: string;
+  source_reference?: string;
   severity: string;
   status: string;
   customer_name?: string;
@@ -51,6 +57,8 @@ export type UpdatePlanPayload = {
   nonconformity_scope?: string;
   client_nc_registry?: string;
   customer_template?: string;
+  source_type?: string;
+  source_reference?: string;
   linked_kaizen_id?: string | null;
   linked_audit_5s_nc_id?: string | null;
 };
@@ -62,6 +70,8 @@ export function emptyPlanFormValues(): PlanFormValues {
     nonconformity_scope: "external",
     customer_template: "generic",
     client_nc_registry: "",
+    source_type: "",
+    source_reference: "",
     severity: "medium",
     status: "triage",
     customer_name: "",
@@ -83,6 +93,14 @@ export function formValuesToPayload(values: PlanFormValues): CreatePlanPayload {
     nonconformity_scope: values.nonconformity_scope,
     severity: values.severity,
     status: values.status,
+    customer_template:
+      values.nonconformity_scope === "internal" ? "generic" : values.customer_template,
+    client_nc_registry:
+      values.customer_template === "rnc_8d" && values.client_nc_registry.trim()
+        ? values.client_nc_registry.trim()
+        : undefined,
+    source_type: values.source_type.trim() || undefined,
+    source_reference: values.source_reference.trim() || undefined,
     customer_name: values.customer_name.trim() || undefined,
     product_code: values.product_code.trim() || undefined,
     batch_number: values.batch_number.trim() || undefined,

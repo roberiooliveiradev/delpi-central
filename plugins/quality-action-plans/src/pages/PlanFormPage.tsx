@@ -14,6 +14,7 @@ import {
   listPath,
   PAC_BRANCH_OPTIONS,
   PAC_NONCONFORMITY_SCOPES,
+  PAC_SOURCE_TYPES,
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
@@ -156,6 +157,27 @@ export function PlanFormPage({ onNavigate }: Props) {
                 onChange={(client_nc_registry) => updateField("client_nc_registry", client_nc_registry)}
               />
             ) : null}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Origem do relato">
+          <div className="pac-form-grid">
+            <SelectField
+              id="pac-source-type"
+              label="Canal (source_type)"
+              options={[{ value: "", label: "Não informado" }, ...PAC_SOURCE_TYPES.map((item) => ({ value: item.value, label: item.label }))]}
+              value={values.source_type}
+              onChange={(source_type) => updateField("source_type", source_type)}
+              searchable
+            />
+            <TextField
+              id="pac-source-reference"
+              label="Referência do canal"
+              value={values.source_reference}
+              onChange={(source_reference) => updateField("source_reference", source_reference)}
+              placeholder="ID do e-mail, nome do arquivo, ticket…"
+              fullWidth
+            />
           </div>
         </SectionCard>
 

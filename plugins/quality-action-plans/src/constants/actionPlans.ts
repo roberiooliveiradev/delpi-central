@@ -10,6 +10,17 @@ export const PAC_NONCONFORMITY_SCOPES = [
   { value: "internal", label: "Interna" },
 ] as const;
 
+export const PAC_SOURCE_TYPES = [
+  { value: "email", label: "E-mail" },
+  { value: "message", label: "Mensagem / chat" },
+  { value: "spreadsheet", label: "Planilha" },
+  { value: "pdf", label: "PDF" },
+  { value: "image", label: "Imagem" },
+  { value: "manual_text", label: "Texto manual" },
+  { value: "system_reference", label: "Referência de sistema" },
+  { value: "other", label: "Outro" },
+] as const;
+
 export const APP_BASE = "/apps/quality-action-plans";
 
 export const PLAN_STATUSES: Array<{ value: PlanStatus; label: string }> = [

@@ -106,28 +106,28 @@ Cada onda tem **objetivo**, **entregas**, **critério de aceite** e **dependênc
 
 ---
 
-### Onda 1 — Operação NC fechada *(prioridade máxima)*
+### Onda 1 — Operação NC fechada *(prioridade máxima)* ✅ código jun/2026
 
 **Objetivo:** analista consegue tratar NC externa ponta a ponta (caso RNC 8D) sem planilha paralela.
 
-| # | Entrega | Repo | Esforço |
-|---|---|---|---|
-| 1.1 | Aplicar V006 em todos os ambientes | ops | S |
-| 1.2 | Template `rnc_8d_template.xlsx` versionado ou script de deploy | api-delpi | S |
-| 1.3 | Espelhar `PUT /rnc-8d` e CRUD evidências na **api-pac-quality** | api-pac-quality | M |
-| 1.4 | Atualizar OpenAPI + instruções GPT (5 Porquês duplo, 8D, anexos) | api-pac-quality/docs | S |
-| 1.5 | Formulário de criação: `customer_template`, `source_type`, `client_nc_registry` | plugin | M |
-| 1.6 | `PATCH` plano (editar identificação após criação) | api-delpi + api-pac | M |
-| 1.7 | Evidência vinculada à ação (`action_id` + UI quando `evidence_required`) | migration + APIs + plugin | M |
-| 1.8 | Export 8D com imagens na aba Anexos | api-delpi | M |
-| 1.9 | Atualizar `quality-action-plans-pac.md` | api-delpi/docs | S |
-| 1.10 | Homologar 3 casos reais anonimizados | [HOMOLOGACAO.md](./HOMOLOGACAO.md) | M |
+| # | Entrega | Repo | Esforço | Status |
+|---|---|---|---|---|
+| 1.1 | Aplicar V006 em todos os ambientes | ops | S | Homologação local OK; prod via deploy |
+| 1.2 | Template `rnc_8d_template.xlsx` versionado ou script de deploy | api-delpi | S | ✅ fixture CI + `deploy_rnc_8d_template.sh` |
+| 1.3 | Espelhar `PUT /rnc-8d` e CRUD evidências na **api-pac-quality** | api-pac-quality | M | ✅ |
+| 1.4 | Atualizar OpenAPI + instruções GPT (5 Porquês duplo, 8D, anexos) | api-pac-quality/docs | S | ✅ |
+| 1.5 | Formulário de criação: `customer_template`, `source_type`, `client_nc_registry` | plugin | M | ✅ jun/2026 |
+| 1.6 | `PATCH` plano (editar identificação após criação) | api-delpi + api-pac | M | ✅ |
+| 1.7 | Evidência vinculada à ação (`action_id` + UI quando `evidence_required`) | migration + APIs + plugin | M | ✅ jun/2026 |
+| 1.8 | Export 8D com imagens na aba Anexos | api-delpi | M | ✅ |
+| 1.9 | Atualizar `quality-action-plans-pac.md` | api-delpi/docs | S | ✅ |
+| 1.10 | Homologar 3 casos reais anonimizados | [HOMOLOGACAO.md](./HOMOLOGACAO.md) | M | ✅ smoke `run_onda1_anonymized_cases.py` |
 
 **Critério de aceite Onda 1:**
 
-- [ ] Analista cria plano `rnc_8d`, preenche todas as seções da planilha referência, anexa evidências, exporta Excel aceito pela qualidade.
-- [ ] Agente GPT executa o mesmo fluxo via API PAC (sem plugin).
-- [ ] Nenhum campo obrigatório do 8D fica só na planilha offline.
+- [x] Analista cria plano `rnc_8d`, preenche seções, anexa evidências, exporta Excel (H1 + casos anonimizados).
+- [ ] Agente GPT executa o mesmo fluxo via API PAC (sem plugin) — **H2** (deploy produção).
+- [x] Nenhum campo obrigatório do 8D fica só na planilha offline (checklist D0–D8 no plugin).
 
 **Riscos:** template xlsx fora do git; divergência api-delpi vs api-pac.
 

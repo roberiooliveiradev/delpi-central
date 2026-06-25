@@ -218,6 +218,7 @@ export type PlanAction = {
   cause_track?: string | null;
   created_at?: string;
   completed_at?: string;
+  evidence_required?: boolean;
 };
 
 export type PlanHistoryEvent = {
@@ -264,6 +265,8 @@ export type ActionPlanDetail = {
     effectiveness_reviewed_by?: string | null;
     effectiveness_rejection_reason?: string | null;
     symptom_tags?: string[];
+    source_type?: string | null;
+    source_reference?: string | null;
     customer_template?: string;
     client_nc_registry?: string | null;
     template_payload?: Rnc8dTemplatePayload;

@@ -64,6 +64,16 @@ python3 scripts/homologacao/run_h4_internal_smoke.py
 
 Cria NC `internal` sem template `rnc_8d`.
 
+### Smoke Onda 1 — gate de fechamento (**api-delpi**)
+
+```bash
+chmod +x scripts/homologacao/run_onda1_gate.sh
+bash scripts/homologacao/run_onda1_gate.sh
+# Casos anonimizados (1.10) isolados:
+export TOKEN="$(grep '^API_DELPI_INTERNAL_SERVICE_TOKEN=' infra/.env | cut -d= -f2)"
+python3 scripts/homologacao/run_onda1_anonymized_cases.py
+```
+
 ### Smoke Onda 2 — recorrência e padrões (**api-delpi**)
 
 ```bash

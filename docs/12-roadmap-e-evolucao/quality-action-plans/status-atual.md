@@ -8,7 +8,7 @@
 
 | Camada | Maturidade | Nota |
 |---|---|---|
-| Modelo de dados + migrations | Alta | V001–V011 no plugin `quality-action-plans` |
+| Modelo de dados + migrations | Alta | V001–V013 no plugin `quality-action-plans` |
 | API PAC (`api-pac-quality`) | Média-alta | **Produção** (agente GPT); paridade de escrita — validar localmente só na **api-delpi** |
 | API consolidada (`api-delpi`) | Média-alta | **Canônica** para plugin + homologação local (V007) |
 | Plugin MFE | Média | Fluxo analista ok; imagem `delpi-quality-action-plans` reconstruída |
@@ -16,7 +16,9 @@
 | Homologação formal | Média | H1/H3 smoke OK; H2 GPT pendente |
 | Integrações (TOTVS, notificações) | Não iniciado | Previsto onda 4+ |
 
-**Estimativa global:** ~70% do caminho até excelência operacional.
+**Estimativa global:** ~72% do caminho até excelência operacional.
+
+**Onda 1 (operação NC):** código fechado jun/2026 — gate `run_onda1_gate.sh`; pendente assinatura **H2** (GPT produção).
 
 ---
 
@@ -96,7 +98,7 @@
 
 **Onda 6 — concluída (jun/2026):** busca semântica, OCR tags, recorrência na abertura, grafo de conhecimento.
 
-**Próximo foco:** H13 evals agente GPT (≥ 90% nos 20 cenários) + Onda 7.1 (link NC TOTVS `QI2010`).
+**Próxima onda recomendada:** fechar **H2** (deploy api-pac + smoke GPT) para declarar Onda 1 go-live; depois **Onda 2** (telas de recorrência/soluções testadas) sem pular checklist.
 
 ### Stack local (canônico — plugin + api-delpi)
 

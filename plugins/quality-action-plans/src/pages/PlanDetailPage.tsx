@@ -36,6 +36,8 @@ import { KaizenLinkField } from "../components/KaizenLinkField";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
+import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
+import { RequiredEvidenceAlert } from "../components/RequiredEvidenceAlert";
 import { Rnc8dReportEditor } from "../components/Rnc8dReportEditor";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
@@ -55,6 +57,7 @@ import {
   listPath,
   PAC_BRANCH_OPTIONS,
   PAC_NONCONFORMITY_SCOPES,
+  PAC_SOURCE_TYPES,
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
@@ -138,6 +141,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [newActionResponsible, setNewActionResponsible] = useState("");
   const [newActionDueDate, setNewActionDueDate] = useState("");
   const [newActionCauseTrack, setNewActionCauseTrack] = useState("");
+  const [newActionEvidenceRequired, setNewActionEvidenceRequired] = useState(false);
   const [rnc8dForm, setRnc8dForm] = useState<Rnc8dReportPayload>({});
   const [effectivenessStatus, setEffectivenessStatus] = useState("pending");
   const [effectivenessNotes, setEffectivenessNotes] = useState("");
@@ -161,6 +165,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     branch_code: "01",
     nonconformity_scope: "external",
     client_nc_registry: "",
+    source_type: "",
+    source_reference: "",
     linked_kaizen_id: "",
     linked_audit_5s_nc_id: "",
   });
@@ -215,6 +221,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         branch_code: data.plan.branch_code ?? "01",
         nonconformity_scope: data.plan.nonconformity_scope ?? "external",
         client_nc_registry: data.plan.client_nc_registry ?? "",
+        source_type: data.plan.source_type ?? "",
+        source_reference: data.plan.source_reference ?? "",
         linked_kaizen_id: data.plan.linked_kaizen_id ?? "",
         linked_audit_5s_nc_id: data.plan.linked_audit_5s_nc_id ?? "",
       });
@@ -336,6 +344,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         <div className="pac-detail-grid">
           <SectionCard title="Problema">
             <StatusPipeline currentStatus={plan.status} />
+            {isRnc8dTemplate && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
             <div className="pac-form-grid">
               <TextField
                 id="pac-detail-title"
@@ -430,6 +439,24 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 onChange={(severity) => setIdentificationForm((c) => ({ ...c, severity }))}
                 searchable
               />
+              <SelectField
+                id="pac-detail-source-type"
+                label="Canal (source_type)"
+                options={[{ value: "", label: "Não informado" }, ...PAC_SOURCE_TYPES.map((item) => ({ value: item.value, label: item.label }))]}
+                value={identificationForm.source_type}
+                onChange={(source_type) =>
+                  setIdentificationForm((c) => ({ ...c, source_type }))
+                }
+                searchable
+              />
+              <TextField
+                id="pac-detail-source-reference"
+                label="Referência do canal"
+                value={identificationForm.source_reference}
+                onChange={(source_reference) =>
+                  setIdentificationForm((c) => ({ ...c, source_reference }))
+                }
+              />
               {isRnc8dTemplate ? (
                 <TextField
                   id="pac-detail-nc-registry"
@@ -492,6 +519,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       branch_code: identificationForm.branch_code,
                       nonconformity_scope: identificationForm.nonconformity_scope,
                       client_nc_registry: identificationForm.client_nc_registry.trim() || undefined,
+                      source_type: identificationForm.source_type.trim() || undefined,
+                      source_reference: identificationForm.source_reference.trim() || undefined,
                       linked_kaizen_id: identificationForm.linked_kaizen_id.trim()
                         ? identificationForm.linked_kaizen_id.trim()
                         : null,
@@ -761,6 +790,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           </SectionCard>
 
           <SectionCard title="5. Ações corretivas e plano">
+            <RequiredEvidenceAlert actions={detail.actions} evidences={detail.evidences ?? []} />
             {detail.actions.length ? (
               <div className="pac-table-wrap">
                 <table className="pac-table">
@@ -771,6 +801,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       <th>Descrição</th>
                       <th>Responsável</th>
                       <th>Prazo</th>
+                      <th>Evidência</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -782,6 +813,22 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         <td>{action.description}</td>
                         <td>{action.responsible_name ?? "—"}</td>
                         <td>{formatDate(action.due_date)}</td>
+                        <td>
+                          <label className="pac-checkbox-inline">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(action.evidence_required)}
+                              onChange={(event) =>
+                                void runSave(`action-evidence-${action.id}`, async () => {
+                                  await updatePlanAction(planId, action.id, {
+                                    evidence_required: event.target.checked,
+                                  });
+                                })
+                              }
+                            />
+                            Obrigatória
+                          </label>
+                        </td>
                         <td>
                           <select
                             className="pac-table-select"
@@ -848,6 +895,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   onChange={setNewActionDescription}
                   fullWidth
                 />
+                <label className="pac-checkbox-field">
+                  <input
+                    type="checkbox"
+                    checked={newActionEvidenceRequired}
+                    onChange={(event) => setNewActionEvidenceRequired(event.target.checked)}
+                  />
+                  Exigir evidência anexada para concluir esta ação
+                </label>
               </div>
               <button
                 type="button"
@@ -865,12 +920,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         responsible_name: newActionResponsible.trim() || undefined,
                         due_date: newActionDueDate || undefined,
                         cause_track: newActionCauseTrack || undefined,
+                        evidence_required: newActionEvidenceRequired,
                       },
                     ]);
                     setNewActionDescription("");
                     setNewActionResponsible("");
                     setNewActionDueDate("");
                     setNewActionCauseTrack("");
+                    setNewActionEvidenceRequired(false);
                   })
                 }
               >

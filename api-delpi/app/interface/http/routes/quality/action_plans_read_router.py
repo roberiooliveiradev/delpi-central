@@ -109,6 +109,11 @@ class CreateActionPlanBody(BaseModel):
     root_cause_category: str | None = Field(default=None, max_length=200)
     failure_mode: str | None = Field(default=None, max_length=300)
     recurrence_key: str | None = Field(default=None, max_length=500)
+    customer_template: str | None = Field(
+        default=None,
+        pattern="^(generic|rnc_8d)$",
+    )
+    client_nc_registry: str | None = Field(default=None, max_length=100)
 
 
 class UpdateActionPlanBody(BaseModel):
@@ -492,8 +497,13 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
                 root_cause_category=body.root_cause_category,
                 failure_mode=body.failure_mode,
                 recurrence_key=body.recurrence_key,
+                customer_template=body.customer_template,
+                client_nc_registry=body.client_nc_registry,
             )
         )
+        detail = build_quality_action_plan_read_repository().get_plan_detail(str(plan["id"]))
+        if detail and detail.get("plan"):
+            plan = detail["plan"]
         return api_delpi_success(
             plan,
             operation_id="create_quality_action_plan",
