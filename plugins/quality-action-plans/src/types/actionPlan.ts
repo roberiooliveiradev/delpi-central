@@ -66,6 +66,7 @@ export type DashboardSummary = {
   timing?: DashboardTiming;
   breakdowns?: DashboardBreakdowns;
   rankings?: DashboardRankings;
+  recurrence_alert?: DashboardRecurrenceAlert;
 };
 
 export type DashboardTiming = {
@@ -99,6 +100,24 @@ export type DashboardRankings = {
   by_customer: DashboardRankingItem[];
   by_product: DashboardRankingItem[];
   by_owner: DashboardRankingItem[];
+};
+
+export type DashboardRecurrenceGroupAlert = {
+  recurrence_key: string;
+  product_code?: string | null;
+  failure_mode?: string | null;
+  branch_code?: string | null;
+  plans_in_window: number;
+  total_plans: number;
+  open_plans: number;
+};
+
+export type DashboardRecurrenceAlert = {
+  window_months: number;
+  groups_detected: number;
+  plans_in_window: number;
+  open_plans_in_recurrence: number;
+  top_groups: DashboardRecurrenceGroupAlert[];
 };
 
 export type IshikawaAnalysis = {

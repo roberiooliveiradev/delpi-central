@@ -280,6 +280,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 nonconformity_scope=nonconformity_scope,
                 months=months,
             )
+            result["recurrence_alert"] = self._fetch_recurrence_alert(
+                branch_code=branch_code,
+                nonconformity_scope=nonconformity_scope,
+                months=months,
+            )
             return result
 
         by_branch_rows = self.fetch_all(
@@ -344,6 +349,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             months=months,
         )
         result["rankings"] = self._fetch_rankings(
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            months=months,
+        )
+        result["recurrence_alert"] = self._fetch_recurrence_alert(
             branch_code=branch_code,
             nonconformity_scope=nonconformity_scope,
             months=months,
@@ -596,6 +606,96 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "by_customer": _map_ranking_rows(customer_rows),
             "by_product": _map_ranking_rows(product_rows),
             "by_owner": _map_ranking_rows(owner_rows),
+        }
+
+    def _fetch_recurrence_alert(
+        self,
+        *,
+        branch_code: str | None = None,
+        nonconformity_scope: str | None = None,
+        months: int = 12,
+        limit: int = 5,
+    ) -> dict[str, Any]:
+        filters = ["p.deleted_at IS NULL", "p.recurrence_key IS NOT NULL"]
+        params: list[Any] = [months, months]
+        if branch_code:
+            filters.append("p.branch_code = %s")
+            params.append(branch_code)
+        if nonconformity_scope:
+            filters.append("p.nonconformity_scope = %s")
+            params.append(nonconformity_scope)
+        where_clause = " AND ".join(filters)
+
+        summary_row = self.fetch_one(
+            f"""
+            WITH grouped AS (
+                SELECT p.recurrence_key,
+                       COUNT(*) FILTER (
+                           WHERE p.created_at >= NOW() - make_interval(months => %s)
+                       )::int AS plans_in_window,
+                       COUNT(*)::int AS total_plans,
+                       COUNT(*) FILTER (
+                           WHERE p.status NOT IN ('completed', 'cancelled')
+                       )::int AS open_plans
+                  FROM quality.quality_action_plans p
+                 WHERE {where_clause}
+                 GROUP BY p.recurrence_key
+                HAVING COUNT(*) FILTER (
+                           WHERE p.created_at >= NOW() - make_interval(months => %s)
+                       ) >= 2
+            )
+            SELECT COUNT(*)::int AS groups_detected,
+                   COALESCE(SUM(plans_in_window), 0)::int AS plans_in_window,
+                   COALESCE(SUM(open_plans), 0)::int AS open_plans_in_recurrence
+              FROM grouped
+            """,
+            tuple(params),
+        )
+
+        top_rows = self.fetch_all(
+            f"""
+            SELECT p.recurrence_key,
+                   COUNT(*) FILTER (
+                       WHERE p.created_at >= NOW() - make_interval(months => %s)
+                   )::int AS plans_in_window,
+                   COUNT(*)::int AS total_plans,
+                   COUNT(*) FILTER (
+                       WHERE p.status NOT IN ('completed', 'cancelled')
+                   )::int AS open_plans,
+                   (array_agg(p.product_code ORDER BY p.created_at DESC))[1] AS product_code,
+                   (array_agg(p.failure_mode ORDER BY p.created_at DESC))[1] AS failure_mode,
+                   (array_agg(p.branch_code ORDER BY p.created_at DESC))[1] AS branch_code
+              FROM quality.quality_action_plans p
+             WHERE {where_clause}
+             GROUP BY p.recurrence_key
+            HAVING COUNT(*) FILTER (
+                       WHERE p.created_at >= NOW() - make_interval(months => %s)
+                   ) >= 2
+             ORDER BY plans_in_window DESC, open_plans DESC, total_plans DESC
+             LIMIT %s
+            """,
+            tuple([*params, limit]),
+        )
+
+        return {
+            "window_months": months,
+            "groups_detected": int((summary_row or {}).get("groups_detected") or 0),
+            "plans_in_window": int((summary_row or {}).get("plans_in_window") or 0),
+            "open_plans_in_recurrence": int(
+                (summary_row or {}).get("open_plans_in_recurrence") or 0
+            ),
+            "top_groups": [
+                {
+                    "recurrence_key": row["recurrence_key"],
+                    "product_code": row.get("product_code"),
+                    "failure_mode": row.get("failure_mode"),
+                    "branch_code": row.get("branch_code"),
+                    "plans_in_window": int(row.get("plans_in_window") or 0),
+                    "total_plans": int(row.get("total_plans") or 0),
+                    "open_plans": int(row.get("open_plans") or 0),
+                }
+                for row in top_rows
+            ],
         }
 
     def list_overdue_plans(

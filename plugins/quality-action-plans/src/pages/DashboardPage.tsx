@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
+import { DashboardRecurrenceAlertCard } from "../components/dashboard/DashboardRecurrenceAlertCard";
 import { DashboardRankingCharts } from "../components/dashboard/DashboardRankingCharts";
 import { DashboardBreakdownCharts } from "../components/dashboard/DashboardBreakdownCharts";
 import { DashboardCharts } from "../components/dashboard/DashboardCharts";
@@ -108,6 +109,11 @@ export function DashboardPage({ onNavigate }: Props) {
         <>
           <DashboardKpis summary={summary} loading={loading} />
           <DashboardTimingKpis timing={summary.timing} loading={loading} />
+          <DashboardRecurrenceAlertCard
+            alert={summary.recurrence_alert}
+            loading={loading}
+            onNavigate={onNavigate}
+          />
           <DashboardBreakdownCharts breakdowns={summary.breakdowns} />
           <DashboardRankingCharts rankings={summary.rankings} />
           <DashboardCharts summary={summary} plans={plans} />

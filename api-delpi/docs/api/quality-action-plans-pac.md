@@ -64,6 +64,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 **`data.rankings`:** `window_months`, `by_customer[]`, `by_product[]`, `by_owner[]` — cada item `{ label, total, open_plans }` (top 8 no período)
 
+**`data.recurrence_alert`:** `window_months`, `groups_detected`, `plans_in_window`, `open_plans_in_recurrence`, `top_groups[]` — cada grupo `{ recurrence_key, product_code, failure_mode, branch_code, plans_in_window, total_plans, open_plans }` (≥ 2 aberturas no período; top 5)
+
 ### GET `/quality/action-plans` e `/overdue`
 
 **Query:** `status`, `severity`, `product_code`, `customer_name`, `owner_user_id`, `branch_code`, `nonconformity_scope`, `page`, `page_size`

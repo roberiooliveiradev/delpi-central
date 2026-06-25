@@ -25,6 +25,11 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
         "avg_time_to_effectiveness_days": None,
         "effectiveness_sample_size": 0,
       },
+      {
+        "groups_detected": 0,
+        "plans_in_window": 0,
+        "open_plans_in_recurrence": 0,
+      },
     ]
   )
   repo.fetch_all = MagicMock(return_value=[])
@@ -36,6 +41,7 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
   assert "timing" in result
   assert "breakdowns" in result
   assert "rankings" in result
+  assert "recurrence_alert" in result
   main_query = repo.fetch_one.call_args_list[0][0][0]
   assert main_query.count("%s") == 1
   assert repo.fetch_one.call_args_list[0][0][1] == ("01",)
@@ -95,3 +101,36 @@ def test_dashboard_breakdowns_maps_rows():
     assert breakdowns["by_root_cause"][0]["label"] == "Método"
     assert breakdowns["by_failure_mode"][0]["total"] == 2
     assert breakdowns["by_action_type"][0]["label"] == "corrective"
+
+
+def test_dashboard_recurrence_alert_maps_rows():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(
+        return_value={
+            "groups_detected": 2,
+            "plans_in_window": 5,
+            "open_plans_in_recurrence": 3,
+        }
+    )
+    repo.fetch_all = MagicMock(
+        return_value=[
+            {
+                "recurrence_key": "90261805|oxidacao",
+                "plans_in_window": 3,
+                "total_plans": 4,
+                "open_plans": 2,
+                "product_code": "90261805",
+                "failure_mode": "oxidacao",
+                "branch_code": "01",
+            }
+        ]
+    )
+
+    alert = repo._fetch_recurrence_alert(months=12, limit=5)
+
+    assert alert["window_months"] == 12
+    assert alert["groups_detected"] == 2
+    assert alert["plans_in_window"] == 5
+    assert alert["open_plans_in_recurrence"] == 3
+    assert alert["top_groups"][0]["product_code"] == "90261805"
+    assert alert["top_groups"][0]["plans_in_window"] == 3
