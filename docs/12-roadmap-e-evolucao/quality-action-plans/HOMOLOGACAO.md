@@ -19,11 +19,13 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --pl
 bash api-delpi/scripts/deploy_rnc_8d_template.sh
 cd plugins/quality-action-plans && npm run build
 bash scripts/homologacao/check-quality-action-plans.sh
-bash scripts/homologacao/check-pac-api-server.sh   # produção (pac-api.minhadelpi.com.br)
-PAC_API_URL=http://localhost:8082 bash scripts/homologacao/check-pac-api-server.sh   # local
+# Produção (agente GPT) — opcional após deploy api-pac:
+# bash scripts/homologacao/check-pac-api-server.sh
 ```
 
-### Smoke H1 automatizado (api-delpi + JWT)
+### Smoke H1 automatizado (**api-delpi** + JWT)
+
+Homologação local e plugin usam **somente** a api-delpi. A api-pac-quality é deploy de produção para o GPT.
 
 ```bash
 export TOKEN="<jwt quality-action-plans.read/write>"

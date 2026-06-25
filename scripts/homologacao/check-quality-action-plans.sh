@@ -16,8 +16,12 @@ spec = json.load(sys.stdin)
 paths = spec.get('paths') or {}
 required = [
     '/quality/action-plans/{plan_id}',
+    '/quality/action-plans/{plan_id}/rnc-8d',
     '/quality/action-plans/{plan_id}/export/rnc-8d',
     '/quality/action-plans/{plan_id}/evidences',
+    '/quality/action-plans/{plan_id}/actions',
+    '/quality/action-plans/{plan_id}/ishikawa',
+    '/quality/action-plans/{plan_id}/five-whys',
 ]
 for path in required:
     assert path in paths, f'missing path {path}'
