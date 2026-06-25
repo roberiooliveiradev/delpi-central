@@ -123,7 +123,7 @@ flowchart TB
 - `app/application/services/chat_turn/chat_turn_completion_service.py`
 - `app/application/use_cases/send_chat_message_use_case.py`
 - `app/application/use_cases/stream_chat_message_use_case.py`
-- `app/domain/services/chat_intent_router_service.py`
+- `app/domain/services/chat_intent_router_service.py` (+ delegates em `chat_intent_router/`)
 - `app/application/services/chat_tool_context_service.py`
 - `app/application/services/external_actions/external_action_route_selection_service.py`
 - `app/application/services/external_actions/external_action_operational_route_selection_service.py`
@@ -361,7 +361,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | Arquivo | Linhas ~ | Ação |
 |---------|----------|------|
 | `chat_presentation_decision_service.py` | 2017 | Delegates por política (Automático, chart, text-first) |
-| `chat_intent_router_service.py` | 1235 | Ports; remover imports `application` |
+| `chat_intent_router_service.py` | ~~1235~~ **~124** | ✅ **OK (jun/2026)** — delegates `ChatIntentRouter{Classify,Executed,Heuristics,EntityResolution,Support}Service` |
 | `chat_document_vision_service.py` | 2141 | Sub-serviços por estágio OCR |
 | `chat_operational_refinement_service.py` | 1208 | Split group-by / follow-up |
 | `external_action_operational_route_selection_service.py` | 1079 | Delegates por domínio |
@@ -638,3 +638,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W2 — `richStackProfiles` + `is_rich_stack_profile`; `presentationTableAssemblyEntities` + `try_build_presentation_table` no builder |
 | jun/2026 | W3 (parcial) — `ChatTurnCompletionService` fatiado em `chat_turn/chat_turn_completion_{finalize,intelligence,metadata,audit}_service.py`; orquestrador fino + paridade send/stream |
 | jun/2026 | Limpeza — removidos `profilePresentDispatch` / `entityPresentOverrides` (JSON legado sem consumo); gate `presentation_builder_items_table_gate` (presenter deletado) |
+| jun/2026 | W3 — `ChatIntentRouterService` fatiado em `chat_intent_router/*` (classify, executed, heuristics, entity resolution, support); fachada ~124L |

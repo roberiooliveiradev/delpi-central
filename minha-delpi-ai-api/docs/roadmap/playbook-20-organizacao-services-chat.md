@@ -44,7 +44,7 @@ Contagem de imports (`rg`, `audit_service_inventory.py`) é **apenas o primeiro 
 | Imports domain → infrastructure | **0** (gate CI) | permitido via adapters |
 | Imports domain → application | **14** (débito — ver §10) | — |
 | Imports application → infrastructure | ~75 (esperado em orquestração) | — |
-| God files (>1200 linhas) | `chat_presentation_decision_service`, `chat_intent_router_service`, presenters | `chat_document_vision_service` |
+| God files (>1200 linhas) | `chat_document_vision_service`, `external_action_operational_route_selection_service` | presenters diversos |
 
 ### 2.1 O que **não** é código morto (falsos positivos comuns)
 
