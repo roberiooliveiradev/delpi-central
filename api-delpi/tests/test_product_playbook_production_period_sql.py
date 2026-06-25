@@ -33,10 +33,11 @@ def test_repository_wires_period_filter_and_date_params() -> None:
     assert "date_end_exclusive" in source
 
 
-def test_structure_exclusivity_uses_reverse_bom_for_mp_usage() -> None:
+def test_structure_exclusivity_uses_forward_pa_bom_for_mp_usage() -> None:
     source = inspect.getsource(product_playbook_repository.ProductPlaybookRepository)
 
-    assert "MP_ANCESTORS AS" in source
+    assert "ESTRUTURA_PA AS" in source
+    assert "MP_ANCESTORS AS" not in source
     assert "TODAS_ESTRUTURAS_VALIDAS" not in source
 
 

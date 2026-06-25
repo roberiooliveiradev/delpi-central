@@ -93,44 +93,46 @@ class ProductPlaybookRepository(BaseRepository, ProductPlaybookRepositoryPort):
             WHERE SB1.B1_TIPO = 'MP'
         ),
 
-        MP_ANCESTORS AS (
+        ESTRUTURA_PA AS (
             SELECT
-                MP.raw_material_code,
-                G1.G1_COD AS ancestor_code,
+                PA.B1_COD AS finished_product_code,
+                G1.G1_COD AS parent_code,
+                G1.G1_COMP AS component_code,
                 1 AS level
-            FROM MATERIAS_PRIMAS_DO_PRODUTO MP
-            INNER JOIN SG1010 G1 WITH (NOLOCK)
-                ON G1.G1_COMP = MP.raw_material_code
-               AND G1.D_E_L_E_T_ = ''
+            FROM SG1010 G1 WITH (NOLOCK)
+            INNER JOIN SB1010 PA WITH (NOLOCK)
+                ON PA.B1_COD = G1.G1_COD
+               AND PA.D_E_L_E_T_ = ''
+               AND PA.B1_TIPO = 'PA'
+               AND PA.B1_COD NOT LIKE '8000%'
+               AND PA.B1_COD NOT LIKE '8001%'
+            WHERE G1.D_E_L_E_T_ = ''
               {bom_validity}
 
             UNION ALL
 
             SELECT
-                MA.raw_material_code,
+                EP.finished_product_code,
                 G1.G1_COD,
-                MA.level + 1
-            FROM SG1010 G1 WITH (NOLOCK)
-            INNER JOIN MP_ANCESTORS MA
-                ON G1.G1_COMP = MA.ancestor_code
-            WHERE G1.D_E_L_E_T_ = ''
-              AND MA.level < @MAX_DEPTH
+                G1.G1_COMP,
+                EP.level + 1
+            FROM ESTRUTURA_PA EP
+            INNER JOIN SG1010 G1 WITH (NOLOCK)
+                ON G1.G1_COD = EP.component_code
+               AND G1.D_E_L_E_T_ = ''
               {bom_validity}
+            WHERE EP.level < @MAX_DEPTH
         ),
 
         USO_MP_EM_PA AS (
             SELECT
-                MA.raw_material_code,
-                COUNT(DISTINCT PA.B1_COD) AS total_valid_finished_products,
-                MIN(PA.B1_COD) AS exclusive_finished_product
-            FROM MP_ANCESTORS MA
-            INNER JOIN SB1010 PA WITH (NOLOCK)
-                ON PA.B1_COD = MA.ancestor_code
-               AND PA.D_E_L_E_T_ = ''
-               AND PA.B1_TIPO = 'PA'
-               AND PA.B1_COD NOT LIKE '8000%'
-               AND PA.B1_COD NOT LIKE '8001%'
-            GROUP BY MA.raw_material_code
+                EP.component_code AS raw_material_code,
+                COUNT(DISTINCT EP.finished_product_code) AS total_valid_finished_products,
+                MIN(EP.finished_product_code) AS exclusive_finished_product
+            FROM ESTRUTURA_PA EP
+            INNER JOIN MATERIAS_PRIMAS_DO_PRODUTO MP
+                ON MP.raw_material_code = EP.component_code
+            GROUP BY EP.component_code
         )
 
         SELECT
