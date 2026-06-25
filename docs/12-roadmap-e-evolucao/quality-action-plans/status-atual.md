@@ -51,7 +51,7 @@
 | Evidências | GET/POST/DELETE `/evidences`, download arquivo | Sim |
 | Inteligência (similaridade, padrões) | GET `/similar-cases`, GET `/recurrence` | Parcial (Onda 2.1–2.3) |
 | Inteligência Onda 6 | GET `/intelligence/knowledge-graph`, POST recorrência/tags | Sim (smoke `run_onda6_intelligence_smoke.py`) |
-| Vínculo Kaizen (Onda 7.2) | `linked_kaizen_id` no PATCH/detalhe | Sim (api-delpi + api-pac-quality) |
+| Vínculo Kaizen (Onda 7.2) | `linked_kaizen_id` no PATCH/detalhe + seletor no plugin | Sim |
 
 ### api-pac-quality
 

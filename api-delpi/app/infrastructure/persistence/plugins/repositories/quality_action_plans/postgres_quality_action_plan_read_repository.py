@@ -1524,7 +1524,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "client_nc_registry",
             "linked_kaizen_id",
         }
-        updates = {key: value for key, value in fields.items() if key in allowed and value is not None}
+        updates = {
+            key: value
+            for key, value in fields.items()
+            if key in allowed and (value is not None or key == "linked_kaizen_id")
+        }
         if not updates:
             return current
 

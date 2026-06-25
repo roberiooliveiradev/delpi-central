@@ -267,6 +267,7 @@ export type ActionPlanDetail = {
     customer_template?: string;
     client_nc_registry?: string | null;
     template_payload?: Rnc8dTemplatePayload;
+    linked_kaizen_id?: string | null;
   };
   ishikawa?: IshikawaAnalysis | null;
   five_whys?: FiveWhysAnalysis | null;

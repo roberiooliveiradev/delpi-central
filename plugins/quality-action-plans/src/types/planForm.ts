@@ -51,6 +51,7 @@ export type UpdatePlanPayload = {
   nonconformity_scope?: string;
   client_nc_registry?: string;
   customer_template?: string;
+  linked_kaizen_id?: string | null;
 };
 
 export function emptyPlanFormValues(): PlanFormValues {

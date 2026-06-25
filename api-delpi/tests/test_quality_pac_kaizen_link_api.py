@@ -61,3 +61,22 @@ def test_update_plan_passes_linked_kaizen_id_to_repository():
 
     assert result["linked_kaizen_id"] == kaizen_id
     assert captured["fields"]["linked_kaizen_id"] == kaizen_id
+
+
+def test_update_plan_clears_linked_kaizen_id_when_explicit_null():
+    captured: dict = {}
+
+    class _Repo:
+        def update_plan(self, plan_id, fields):
+            captured["fields"] = fields
+            return {"id": plan_id}
+
+    use_case = UpdateQualityActionPlanUseCase(_Repo())
+    use_case.execute(
+        "plan-id",
+        UpdateQualityActionPlanRequest(linked_kaizen_id=None),
+        updated_by="user-1",
+        explicit_fields=frozenset({"linked_kaizen_id"}),
+    )
+
+    assert captured["fields"]["linked_kaizen_id"] is None

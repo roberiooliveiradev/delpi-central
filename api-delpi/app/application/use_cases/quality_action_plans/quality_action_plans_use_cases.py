@@ -157,12 +157,19 @@ class UpdateQualityActionPlanUseCase:
         request: UpdateQualityActionPlanRequest,
         *,
         updated_by: str,
+        explicit_fields: frozenset[str] | None = None,
     ) -> dict[str, Any] | None:
-        fields = {
-            key: value
-            for key, value in request.__dict__.items()
-            if value is not None
-        }
+        explicit = explicit_fields or frozenset()
+        fields: dict[str, Any] = {}
+        for key, value in request.__dict__.items():
+            if key == "linked_kaizen_id" and key in explicit:
+                if value is None or not str(value).strip():
+                    fields["linked_kaizen_id"] = None
+                else:
+                    fields["linked_kaizen_id"] = str(value).strip()
+                continue
+            if value is not None:
+                fields[key] = value
         if request.branch_code is not None:
             fields["branch_code"] = validate_branch_code(request.branch_code, required=True)
         if request.nonconformity_scope is not None:
@@ -174,7 +181,7 @@ class UpdateQualityActionPlanUseCase:
             "rnc_8d",
         }:
             raise ValueError("customer_template inválido.")
-        if request.linked_kaizen_id is not None:
+        if request.linked_kaizen_id is not None and "linked_kaizen_id" not in explicit:
             kaizen_id = str(request.linked_kaizen_id).strip()
             if not kaizen_id:
                 raise ValueError("linked_kaizen_id inválido.")

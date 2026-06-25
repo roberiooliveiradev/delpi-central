@@ -32,6 +32,7 @@ import {
   upsertRnc8dReport,
 } from "../api/actionPlansApi";
 import { EvidencePanel } from "../components/EvidencePanel";
+import { KaizenLinkField } from "../components/KaizenLinkField";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
@@ -160,6 +161,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     branch_code: "01",
     nonconformity_scope: "external",
     client_nc_registry: "",
+    linked_kaizen_id: "",
   });
 
   const load = useCallback(async () => {
@@ -212,6 +214,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         branch_code: data.plan.branch_code ?? "01",
         nonconformity_scope: data.plan.nonconformity_scope ?? "external",
         client_nc_registry: data.plan.client_nc_registry ?? "",
+        linked_kaizen_id: data.plan.linked_kaizen_id ?? "",
       });
       try {
         const audit = await fetchPlanAuditLog(planId);
@@ -435,6 +438,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   }
                 />
               ) : null}
+              <KaizenLinkField
+                branchCode={identificationForm.branch_code}
+                value={identificationForm.linked_kaizen_id}
+                onChange={(linked_kaizen_id) =>
+                  setIdentificationForm((c) => ({ ...c, linked_kaizen_id }))
+                }
+                disabled={saving === "identification"}
+              />
               <TextAreaField
                 id="pac-detail-problem"
                 label="Relato do problema"
@@ -470,6 +481,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       branch_code: identificationForm.branch_code,
                       nonconformity_scope: identificationForm.nonconformity_scope,
                       client_nc_registry: identificationForm.client_nc_registry.trim() || undefined,
+                      linked_kaizen_id: identificationForm.linked_kaizen_id.trim()
+                        ? identificationForm.linked_kaizen_id.trim()
+                        : null,
                     });
                   })
                 }

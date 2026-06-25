@@ -520,6 +520,30 @@
   color: var(--pac-text-muted);
 }
 
+.dashboard-quality-action-plans .pac-field-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.dashboard-quality-action-plans .pac-kaizen-link-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dashboard-quality-action-plans .pac-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--pac-accent);
+  text-decoration: none;
+}
+
+.dashboard-quality-action-plans .pac-inline-link:hover {
+  text-decoration: underline;
+}
+
 .dashboard-quality-action-plans .pac-detail-grid {
   display: grid;
   gap: var(--pac-section-gap);

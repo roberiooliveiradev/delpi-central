@@ -140,7 +140,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_contact`, `product_code`, `product_description`, `batch_number`, `reported_problem`, `severity`, `branch_code`, `nonconformity_scope`, `department`, `failure_mode`, `customer_template` (`generic` \| `rnc_8d`), `client_nc_registry`, `linked_kaizen_id` (UUID de `quality.kaizens`, Onda 7.2), etc.
 
-**Vínculo Kaizen (Onda 7.2):** `linked_kaizen_id` retorna no detalhe/lista do plano e pode ser definido via PATCH; o kaizen deve existir no cadastro PostgreSQL (`quality.kaizens`).
+**Vínculo Kaizen (Onda 7.2):** `linked_kaizen_id` retorna no detalhe/lista do plano e pode ser definido ou removido (`null`) via PATCH; o kaizen deve existir no cadastro PostgreSQL (`quality.kaizens`).
 
 ### POST evidências (multipart)
 
