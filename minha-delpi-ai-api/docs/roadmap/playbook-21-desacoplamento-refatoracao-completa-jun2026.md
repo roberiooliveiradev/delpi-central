@@ -371,6 +371,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `chat_operational_data_commentary_service.py` | ~~933~~ **~100** | ✅ **OK (jun/2026)** — delegates `chat_operational_data_commentary/*` |
 | `chat_advanced_sql_specialist_service.py` | ~~1369~~ **~225** | ✅ **OK (jun/2026)** — delegates `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up) |
 | `kpi_chart_presenter.py` | ~~1068~~ **~154** | ✅ **OK (jun/2026)** — delegates `presenters/kpi_chart/*` (cards, build, dashboard, orchestration, row_chart, specialized) |
+| `chat_presentation_profile_service.py` | ~~1035~~ **~429** | ✅ **OK (jun/2026)** — delegates `chat_presentation_profile/*` (entity, path, resolve, openapi, stack, decision, contract, prose) |
 
 **Domain → application (14 arquivos — zerar):**
 
@@ -465,7 +466,8 @@ chat_presentation_coverage_service.py
 chat_presentation_evidence_first_layout_service.py
 chat_presentation_format_refinement_service.py
 chat_presentation_humanized_narrative_service.py
-chat_presentation_profile_service.py                    # OK — âncora
+chat_presentation_profile_service.py                    # W3 ✅
+chat_presentation_profile/                              # delegates W3
 chat_presentation_profile_visual_bundle_service.py
 chat_presentation_profile_text_builder_service.py
 chat_presentation_prose_delivery_service.py               # OK — estender
@@ -654,3 +656,4 @@ W4   Path literals residuais por domínio
 | jun/2026 | W3 — `ChatOperationalDataCommentaryService` fatiado em `chat_operational_data_commentary/*` (factory, stock, status, misc, orchestration); fachada ~98L |
 | jun/2026 | W3 — `ChatAdvancedSqlSpecialistService` fatiado em `chat_advanced_sql_specialist/*` (activation, pipeline, schema_prefetch, prose, prompt, tool_context, follow_up); fachada ~225L; expõe `SQL_AUTHORING_INTRO` na fachada |
 | jun/2026 | W3 — `ExternalActionKpiChartPresenter` fatiado em `presenters/kpi_chart/*` (cards, build, dashboard, orchestration, row_chart, specialized); fachada ~154L |
+| jun/2026 | W3 — `ChatPresentationProfileService` fatiado em `chat_presentation_profile/*` (entity, path, resolve, openapi, stack, decision, contract, prose); fachada ~429L; `node`/`mapping` permanecem na fachada para patches de teste |
