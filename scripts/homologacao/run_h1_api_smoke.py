@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import io
 import json
 import os
@@ -15,6 +16,11 @@ try:
     from PIL import Image
 except ImportError:
     Image = None  # type: ignore[misc, assignment]
+
+# 1×1 PNG válido (fallback sem Pillow no host)
+_FALLBACK_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
 
 
 def _request(
@@ -99,14 +105,14 @@ def _download_export(url: str, *, token: str) -> bytes:
 
 
 def _png_bytes() -> bytes:
-    if Image is None:
-        raise RuntimeError("Instale Pillow: pip install Pillow")
-    buffer = io.BytesIO()
-    Image.new("RGB", (16, 16), color=(180, 50, 50)).save(buffer, format="PNG")
-    return buffer.getvalue()
+    if Image is not None:
+        buffer = io.BytesIO()
+        Image.new("RGB", (16, 16), color=(180, 50, 50)).save(buffer, format="PNG")
+        return buffer.getvalue()
+    return _FALLBACK_PNG
 
 
-def run_smoke(base_url: str, token: str) -> str:
+def run_smoke(base_url: str, token: str, *, complete_h3: bool = False) -> str:
     api = f"{base_url.rstrip('/')}/apps/api-delpi/quality/action-plans"
     print("[H1] Criar plano NC externa crítica…")
     created = _request(
@@ -289,22 +295,78 @@ def run_smoke(base_url: str, token: str) -> str:
     )
     print("  OK status")
 
+    if complete_h3:
+        _run_h3_closure(api, plan_id, token, action_items)
+
     print(f"\n[OK] H1 smoke concluído — plano {code}")
     print(f"     Detalhe: {base_url}/apps/quality-action-plans/plans/{plan_id}")
     print(f"     PLAN_ID={plan_id}")
     return plan_id
 
 
+def _run_h3_closure(api: str, plan_id: str, token: str, action_items: list[dict]) -> None:
+    """H3 — concluir ações, registrar eficácia e fechar plano."""
+    print("[H3] Concluir ações…")
+    for action in action_items:
+        action_id = action.get("id")
+        if not action_id:
+            continue
+        _request(
+            "PATCH",
+            f"{api}/{plan_id}/actions/{action_id}",
+            token=token,
+            data={"status": "completed"},
+        )
+    print(f"  OK {len(action_items)} ações")
+
+    print("[H3] Revisão de eficácia (effective)…")
+    _request(
+        "POST",
+        f"{api}/{plan_id}/effectiveness-review",
+        token=token,
+        data={
+            "effectiveness_status": "effective",
+            "notes": "H3 smoke — eficácia confirmada (dado fictício).",
+        },
+    )
+    print("  OK eficácia")
+
+    print("[H3] Fechar plano (completed)…")
+    closed = _request(
+        "PATCH",
+        f"{api}/{plan_id}/status",
+        token=token,
+        data={"status": "completed", "comment": "H3 smoke — fechamento automatizado"},
+    )
+    assert closed.get("success"), closed
+    assert closed["data"].get("status") == "completed", closed
+    print("  OK plano fechado")
+
+    detail = _request("GET", f"{api}/{plan_id}", token=token)
+    assert detail.get("success"), detail
+    plan_status = (detail["data"].get("plan") or {}).get("status")
+    assert plan_status == "completed", detail
+    print("  OK detalhe confirma completed")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Smoke H1 PAC via api-delpi")
     parser.add_argument("--base-url", default=os.environ.get("BASE_URL", "http://localhost"))
     parser.add_argument("--token", default=os.environ.get("TOKEN", ""))
+    parser.add_argument(
+        "--h3",
+        action="store_true",
+        help="Após H1, executar fechamento H3 (ações + eficácia + completed)",
+    )
     args = parser.parse_args()
     if not args.token:
-        print("Defina TOKEN (JWT com quality-action-plans.read/write).", file=sys.stderr)
+        print(
+            "Defina TOKEN (JWT quality-action-plans.read/write ou API_DELPI_INTERNAL_SERVICE_TOKEN).",
+            file=sys.stderr,
+        )
         return 1
     try:
-        run_smoke(args.base_url, args.token)
+        run_smoke(args.base_url, args.token, complete_h3=args.h3)
         return 0
     except Exception as exc:
         print(f"[FALHA] {exc}", file=sys.stderr)

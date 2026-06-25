@@ -29,7 +29,10 @@ Homologação local e plugin usam **somente** a api-delpi. A api-pac-quality é 
 
 ```bash
 export TOKEN="<jwt quality-action-plans.read/write>"
+# ou, em dev local com api-delpi:
+export TOKEN="$(grep '^API_DELPI_INTERNAL_SERVICE_TOKEN=' infra/.env | cut -d= -f2)"
 python3 scripts/homologacao/run_h1_api_smoke.py
+python3 scripts/homologacao/run_h1_api_smoke.py --h3   # inclui fechamento H3
 # ou: BASE_URL=https://minhadelpi.com.br python3 scripts/homologacao/run_h1_api_smoke.py
 ```
 
@@ -94,7 +97,9 @@ Cria plano `[H1-SMOKE]`, preenche 8D, evidências com `action_id`, exporta Excel
 
 | Data | Ambiente | Executor | Cenários | Resultado | Observações |
 |---|---|---|---|---|---|
-| | | | H1–H3 | | |
+| 2026-06-24 | local (api-delpi) | agente CI | H1 | OK | `run_h1_api_smoke.py` — plano PAC-2026-0003; 680 KB export xlsx; token interno |
+| 2026-06-24 | local (api-delpi) | agente CI | H3 | OK | `--h3` no smoke — plano PAC-2026-0004 fechado com eficácia effective |
+| | | | H2 (GPT prod) | pendente | requer `PAC_QUALITY_API_KEY` + deploy api-pac |
 
 ---
 
