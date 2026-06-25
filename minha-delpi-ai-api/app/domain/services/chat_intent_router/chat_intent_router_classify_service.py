@@ -538,7 +538,7 @@ class ChatIntentRouterClassifyService:
                 reason="identity_question",
             )
 
-        from app.application.services.chat_small_talk_service import ChatSmallTalkService
+        from app.domain.services.chat_small_talk_service import ChatSmallTalkService
 
         if ChatSmallTalkService.is_small_talk(normalized):
             return ChatIntentRouterSupportService.with_decision(
