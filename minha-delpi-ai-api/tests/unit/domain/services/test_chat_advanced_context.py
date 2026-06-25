@@ -71,6 +71,29 @@ def test_knowledge_graph_builds_nodes():
     assert graph.get("nodeCount", 0) >= 2
 
 
+def test_knowledge_graph_hides_internal_operational_focus_keys():
+    from app.domain.services.chat_memory_knowledge_graph_service import (
+        ChatMemoryKnowledgeGraphService,
+    )
+
+    graph = ChatMemoryKnowledgeGraphService.build(
+        {
+            "operationalFocus": {
+                "productCode": "90260205",
+                "productCodeSource": "tool",
+                "lastSqlSnippet": "select 1",
+            },
+            "conversationState": {"activeTopic": "structure_lookup"},
+        }
+    )
+    labels = [node.get("label") for node in graph.get("nodes") or []]
+
+    assert "90260205" in labels
+    assert not any("productCodeSource" in str(label) for label in labels)
+    assert not any("lastSqlSnippet" in str(label) for label in labels)
+    assert "structure_lookup" in labels
+
+
 def test_pipeline_includes_memory_context_debug():
     snapshot = ChatConversationMemoryService.build_pre_turn(
         message="responda em tabela",

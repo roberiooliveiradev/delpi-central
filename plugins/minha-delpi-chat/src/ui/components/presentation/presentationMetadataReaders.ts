@@ -8,7 +8,66 @@ import type {
   ChatToolCall,
 } from "../../../data/api/chatTypes";
 
+import presentationVocabulary from "../../../content/presentation_vocabulary.json";
 import { isNativeSingleViewSelection } from "../message/assistantContentLayout";
+
+const INTERNAL_INSIGHT_REASONS = new Set(
+  (
+    (presentationVocabulary as { internalDecisionReasons?: string[] })
+      .internalDecisionReasons ?? []
+  )
+    .map((key) =>
+      String(
+        (
+          presentationVocabulary as {
+            decisionReasons?: Record<string, string>;
+          }
+        ).decisionReasons?.[key] ?? "",
+      ).trim(),
+    )
+    .filter(Boolean),
+);
+
+function toolCallsHaveNarrativeContent(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+
+    if (!metadata) {
+      continue;
+    }
+
+    const textPresentation = metadata.textPresentation;
+
+    if (
+      textPresentation &&
+      typeof textPresentation === "object" &&
+      String((textPresentation as { markdown?: string }).markdown ?? "").trim()
+    ) {
+      return true;
+    }
+
+    if (metadata.dataAnswer && typeof metadata.dataAnswer === "object") {
+      return true;
+    }
+
+    const humanized = metadata.humanizedSummary;
+
+    if (
+      humanized &&
+      typeof humanized === "object" &&
+      (String((humanized as { titulo?: string }).titulo ?? "").trim() ||
+        Array.isArray((humanized as { linhas?: unknown[] }).linhas))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 export type ViewFormat = "text" | "chart" | "table" | "tree" | "kpi" | "dashboard";
 
@@ -128,6 +187,14 @@ export function getPresentationInsightFromToolCalls(
   const nativeSingle = isNativeSingleViewSelection(toolCalls);
 
   if (nativeSingle.active && nativeSingle.kind === "text") {
+    return "";
+  }
+
+  if (
+    reason &&
+    INTERNAL_INSIGHT_REASONS.has(reason) &&
+    toolCallsHaveNarrativeContent(toolCalls)
+  ) {
     return "";
   }
 

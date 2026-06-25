@@ -166,6 +166,21 @@ class ChatPresentationDecisionEnrichmentService:
         if str(metadata.get("explicitSessionFormat") or "").strip():
             ChatPresentationTextModeService.align_explicit_session_decision(metadata)
 
+        from app.domain.services.chat_presentation_generic_decision_service import (
+            ChatPresentationGenericDecisionService,
+        )
+
+        if ChatPresentationGenericDecisionService._has_narrative_payload(
+            text_presentation=metadata.get("textPresentation")
+            if isinstance(metadata.get("textPresentation"), dict)
+            else None,
+            metadata=metadata,
+        ):
+            cls._sanitize_zero_row_reason(
+                decision,
+                reason=ChatPresentationVocabularyService.decision_reason,
+            )
+
         metadata["presentationDecision"] = decision
 
         legacy = ChatPresentationDecisionBuilderService.legacy_preferred_format(
@@ -279,6 +294,26 @@ class ChatPresentationDecisionEnrichmentService:
             decision["dashboardExplanation"] = dashboard_explanation
 
     @classmethod
+    def _sanitize_zero_row_reason(
+        cls,
+        decision: dict[str, Any],
+        *,
+        reason,
+    ) -> None:
+        current = str(decision.get("reason") or "").strip()
+
+        if not current:
+            return
+
+        internal = {
+            reason("noTabularData"),
+            reason("explanatoryNoTable"),
+        }
+
+        if current in internal:
+            decision["reason"] = ""
+
+    @classmethod
     def _apply_text_first_and_integrated_stack(
         cls,
         metadata: dict[str, Any],
@@ -314,6 +349,8 @@ class ChatPresentationDecisionEnrichmentService:
             decision["layoutMode"] = "single"
             decision["visualOrder"] = ["text"] if "text" in merged_views else merged_views[:1]
             decision["availableViews"] = merged_views
+
+            cls._sanitize_zero_row_reason(decision, reason=reason)
 
             if not str(decision.get("reason") or "").strip():
                 decision["reason"] = reason("textFirstDefault")

@@ -6,6 +6,20 @@ from typing import Any
 
 
 class ChatMemoryKnowledgeGraphService:
+    _DISPLAY_ENTITY_KEYS = frozenset({"productCode", "branch", "warehouse", "period"})
+
+    @classmethod
+    def _entity_graph_label(cls, key: str, value: str) -> str:
+        token = str(value or "").strip()
+
+        if not token:
+            return ""
+
+        if key == "productCode":
+            return token
+
+        return f"{key}={token}"
+
     @classmethod
     def apply_to_snapshot(cls, snapshot: dict) -> dict:
         result = dict(snapshot)
@@ -46,11 +60,16 @@ class ChatMemoryKnowledgeGraphService:
                 edges.append({"from": "topic", "to": task_node_id, "kind": "active_task"})
 
         for key, value in entities.items():
-            if not value:
+            if key not in cls._DISPLAY_ENTITY_KEYS:
+                continue
+
+            label = cls._entity_graph_label(key, str(value))
+
+            if not label:
                 continue
 
             node_id = f"entity:{key}"
-            nodes.append({"id": node_id, "type": "entity", "label": f"{key}={value}"})
+            nodes.append({"id": node_id, "type": "entity", "label": label})
 
             if task_node_id:
                 edges.append(

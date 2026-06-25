@@ -396,6 +396,25 @@ describe("presentationDecision (Playbook 09)", () => {
 
     expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
   });
+
+  it("não expõe motivo interno quando há narrativa sem tabela", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        metadata: {
+          presentationDecision: {
+            selected: "text",
+            reason: "sem dados tabulares para visualização",
+          },
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Status fabril\n\nSituação fabril: **PA PRODUZIDO**.",
+          },
+        },
+      },
+    ]);
+
+    expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
+  });
 });
 
 describe("resolveDefaultRichViewMode", () => {

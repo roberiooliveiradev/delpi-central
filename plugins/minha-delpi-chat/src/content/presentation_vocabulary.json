@@ -160,6 +160,10 @@
     "chartComparableNumeric": "dados numéricos comparáveis",
     "scoreAutomatic": "formato com maior pontuação para a forma dos dados e a pergunta"
   },
+  "internalDecisionReasons": [
+    "noTabularData",
+    "explanatoryNoTable"
+  ],
   "purposeDefaults": {
     "text": "Entender o resumo operacional dos dados retornados",
     "table": "Conferir valores linha a linha com rastreabilidade",

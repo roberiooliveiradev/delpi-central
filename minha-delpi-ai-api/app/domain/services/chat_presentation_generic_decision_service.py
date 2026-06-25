@@ -33,6 +33,50 @@ from app.domain.services.chat_presentation_view_intent_service import (
 
 class ChatPresentationGenericDecisionService:
     @classmethod
+    def _has_narrative_payload(
+        cls,
+        *,
+        text_presentation: dict[str, Any] | None,
+        metadata: dict[str, Any] | None,
+    ) -> bool:
+        if isinstance(text_presentation, dict) and str(
+            text_presentation.get("markdown") or "",
+        ).strip():
+            return True
+
+        if not isinstance(metadata, dict):
+            return False
+
+        if isinstance(metadata.get("dataAnswer"), dict):
+            return True
+
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(humanized, dict) and (
+            str(humanized.get("titulo") or "").strip()
+            or any(str(line or "").strip() for line in (humanized.get("linhas") or []))
+        ):
+            return True
+
+        return False
+
+    @classmethod
+    def _zero_row_reason(
+        cls,
+        *,
+        text_presentation: dict[str, Any] | None,
+        metadata: dict[str, Any] | None,
+        reason,
+    ) -> str:
+        if cls._has_narrative_payload(
+            text_presentation=text_presentation,
+            metadata=metadata,
+        ):
+            return ""
+
+        return reason("noTabularData")
+
+    @classmethod
     def normalize_message(cls, user_message: str | None) -> str:
         return re.sub(r"\s+", " ", str(user_message or "").strip().lower())
 
@@ -186,7 +230,11 @@ class ChatPresentationGenericDecisionService:
             return build(
                 selected="text",
                 fallback="text",
-                reason=reason("noTabularData"),
+                reason=cls._zero_row_reason(
+                    text_presentation=text_presentation,
+                    metadata=metadata if isinstance(metadata, dict) else None,
+                    reason=reason,
+                ),
                 available_views=["text"],
                 rows=table_rows,
                 intent=intent,
