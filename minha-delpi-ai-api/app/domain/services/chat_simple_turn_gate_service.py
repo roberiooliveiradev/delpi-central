@@ -116,7 +116,7 @@ class ChatSimpleTurnGateService:
             return SimpleTurnDecision(matched=False)
 
         # Importações tardias para evitar ciclos de importação no domínio.
-        from app.application.services.chat_assistant_identity_service import (
+        from app.domain.services.chat_assistant_identity_service import (
             ChatAssistantIdentityService,
         )
         from app.application.services.chat_capabilities_service import (

@@ -118,7 +118,7 @@ class ChatEvaluationCaseRunnerService:
     def _direct_answer_snippet(cls, message: str) -> str:
         workspace: dict = {}
 
-        from app.application.services.chat_assistant_identity_service import (
+        from app.domain.services.chat_assistant_identity_service import (
             ChatAssistantIdentityService,
         )
         from app.application.services.chat_capabilities_service import (

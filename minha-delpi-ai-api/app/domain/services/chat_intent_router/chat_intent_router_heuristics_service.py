@@ -234,7 +234,7 @@ class ChatIntentRouterHeuristicsService:
 
     @staticmethod
     def looks_identity_question(message: str) -> bool:
-        from app.application.services.chat_assistant_identity_service import (
+        from app.domain.services.chat_assistant_identity_service import (
             ChatAssistantIdentityService,
         )
 

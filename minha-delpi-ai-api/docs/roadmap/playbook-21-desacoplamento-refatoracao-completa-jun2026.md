@@ -394,7 +394,7 @@ Fluxo canônico: flags API → serviços chat → metadata → MFE banner.
 | `chat_text_task_service.py` | ~~email supplements~~ ✅ `ChatEmailPromptSupplementService` no domain, correction supplements |
 | `admin_rbac_profile_catalog_service.py` | ~~security permissions~~ ✅ `domain/security/chat_permission_constants.py` |
 
-Gate: `scripts/audit_clean_architecture.py` — `domainInfrastructureImports` **0**; `domainApplicationImports` ratchet (**12** jun/2026, zerar em W3).
+Gate: `scripts/audit_clean_architecture.py` — `domainInfrastructureImports` **0**; `domainApplicationImports` ratchet (**10** jun/2026, zerar em W3).
 
 ---
 
