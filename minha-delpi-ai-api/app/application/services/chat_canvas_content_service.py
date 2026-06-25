@@ -313,38 +313,16 @@ class ChatCanvasContentService:
         previous_messages: list[Any] | None,
     ) -> tuple[str, str, str | None]:
         """Markdown, título e sourceMessageId da lousa mais recente no histórico."""
-        return cls._find_existing_canvas_from_history(previous_messages)
+        from app.domain.services.chat_canvas_history_service import ChatCanvasHistoryService
+
+        return ChatCanvasHistoryService.find_active_canvas(previous_messages)
 
     @classmethod
     def _find_existing_canvas_from_history(
         cls,
         previous_messages: list[Any] | None,
     ) -> tuple[str, str, str | None]:
-        if not previous_messages:
-            return "", ChatAttachmentContentService.canvas_default_title(), None
-
-        for message in reversed(previous_messages):
-            metadata = cls._message_metadata(message)
-            canvas_open = metadata.get("canvasOpen") if isinstance(metadata, dict) else None
-
-            if not isinstance(canvas_open, dict):
-                continue
-
-            markdown = str(canvas_open.get("markdown") or "").strip()
-
-            if not markdown:
-                continue
-
-            title = str(canvas_open.get("title") or "").strip() or cls._derive_title(markdown)
-            source_message_id = canvas_open.get("sourceMessageId") or canvas_open.get(
-                "source_message_id"
-            )
-
-            return markdown, title, (
-                str(source_message_id) if source_message_id is not None else None
-            )
-
-        return "", ChatAttachmentContentService.canvas_default_title(), None
+        return cls.find_active_canvas(previous_messages)
 
     @classmethod
     def _tool_calls_to_markdown_sections(cls, tool_calls: list[dict]) -> list[str]:

@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.application.services.chat_canvas_content_service import (
-    ChatCanvasContentService,
-    ChatCanvasOpenPayload,
-)
+from app.application.services.chat_canvas_content_service import ChatCanvasOpenPayload
 from app.application.services.chat_text_correction_answer_guard_service import (
     ChatTextCorrectionAnswerGuardService,
 )
@@ -22,7 +19,9 @@ class ChatTextCorrectionCanvasService:
         cls,
         previous_messages: list[Any] | None,
     ) -> tuple[str, str, str | None]:
-        return ChatCanvasContentService.find_active_canvas(previous_messages)
+        from app.domain.services.chat_canvas_history_service import ChatCanvasHistoryService
+
+        return ChatCanvasHistoryService.find_active_canvas(previous_messages)
 
     @classmethod
     def _canvas_enabled(cls, workspace_context: dict | None) -> bool:

@@ -148,7 +148,7 @@ class ChatTextTaskService:
         email_writing_mode: bool = False,
     ) -> str | None:
         if text_correction_mode:
-            from app.application.services.chat_text_correction_prompt_supplement_service import (
+            from app.domain.services.chat_text_correction_prompt_supplement_service import (
                 ChatTextCorrectionPromptSupplementService,
             )
 
