@@ -28,10 +28,16 @@ export type KaizenDetail = Kaizen & {
   hours_saved_per_day: number | null;
 };
 
+export type KaizenIdeasGoalBlock = DashboardGoalFields & {
+  total_kaizens?: number;
+};
+
 export type KaizenSummary = DashboardGoalFields & {
   date_start: string | null;
   date_end: string | null;
   total_kaizens: number;
   total_savings: number;
   list_kaizen: Kaizen[];
+  /** Meta de ideias/mês (catálogo SI `quality_kaizen_ideas`). */
+  ideas_goal?: KaizenIdeasGoalBlock | null;
 };

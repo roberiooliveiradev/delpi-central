@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import {
   ClipboardCheck,
   Factory,
-  Lightbulb,
   Truck,
+  Wallet,
 } from "lucide-react";
 
 import { FilterBar } from "../components/FilterBar";
@@ -24,7 +24,6 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import {
-  formatCurrency,
   formatDecimal,
   formatInteger,
   formatScore,
@@ -208,31 +207,18 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       </section>
 
       <section className="dq-summary-grid" aria-busy={isBusy}>
-        <SummaryCard
-          title="Kaizens"
-          description="Resumo de melhorias implementadas no período."
+        <KpiCard
+          title="Ganhos financeiros do kaizen"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenFinancialGains}
+          value={formatDashboardMetricValue(kaizen?.total_savings, kaizen)}
           {...buildKpiGoalPresentation(
-            periodLabel,
+            `${formatInteger(kaizen?.total_kaizens)} kaizens no período · ${periodLabel}`,
             kaizen,
             undefined,
-            { realizedValue: kaizen?.total_kaizens },
+            { realizedValue: kaizen?.total_savings },
           )}
-          icon={<Lightbulb size={22} />}
+          icon={<Wallet size={22} />}
           loading={isBusy && !kaizen}
-          metrics={[
-            {
-              label: "Total de kaizens",
-              value: formatInteger(kaizen?.total_kaizens),
-            },
-            {
-              label: "Economia acumulada",
-              value: formatCurrency(kaizen?.total_savings),
-            },
-            {
-              label: "Registros na lista",
-              value: formatInteger(kaizen?.list_kaizen.length ?? 0),
-            },
-          ]}
         />
         <SummaryCard
           title="Auditoria 5S"

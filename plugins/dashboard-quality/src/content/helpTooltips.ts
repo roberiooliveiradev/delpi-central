@@ -20,7 +20,10 @@ export const QUALITY_HELP_TOOLTIPS = {
     kaizenOpen: "Quantidade de kaizens abertos ou em andamento no recorte.",
     kaizenClosed: "Kaizens concluídos no período filtrado.",
     kaizenTotal: "Total de kaizens registrados no período conforme filtros aplicados.",
-    kaizenSavings: "Soma da economia reportada pelos kaizens no período.",
+    kaizenFinancialGains:
+      "Ganhos financeiros do kaizen no período: soma de daily_savings × dias ativos de cada melhoria implantada. Meta do indicador Ganhos Financeiros Kaizen/mês (Indicadores Estratégicos).",
+    kaizenSavings:
+      "Mesmo valor dos ganhos financeiros do kaizen — economia acumulada no período filtrado.",
     audit5sScore: "Nota média das auditorias 5S realizadas no período.",
     audit5sCount: "Quantidade de auditorias 5S registradas no recorte.",
     nonconformities: "Total de não conformidades abertas ou registradas no período.",

@@ -202,9 +202,21 @@ def get_kaizen_summary(
             date_end=date_end,
         )
 
+        summary = use_case.execute(request).to_dict()
+        summary["ideas_goal"] = {
+            "total_kaizens": summary.get("total_kaizens", 0),
+        }
         summary = enrich_dashboard_metric(
-            use_case.execute(request).to_dict(),
+            summary,
             source_key=goal_keys.QUALITY_KAIZEN_IDEAS,
+            start_date=date_start,
+            end_date=date_end,
+            branch=branch,
+            summary_key="ideas_goal",
+        )
+        summary = enrich_dashboard_metric(
+            summary,
+            source_key=goal_keys.QUALITY_KAIZEN_FINANCIAL,
             start_date=date_start,
             end_date=date_end,
             branch=branch,

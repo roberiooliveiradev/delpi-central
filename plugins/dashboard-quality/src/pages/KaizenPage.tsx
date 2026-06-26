@@ -307,10 +307,10 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         <KpiCard
           title="Total de kaizens"
           titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenTotal}
-          value={formatDashboardMetricValue(data?.total_kaizens, data)}
+          value={formatDashboardMetricValue(data?.total_kaizens, data?.ideas_goal ?? data)}
           {...buildKpiGoalPresentation(
             periodLabel,
-            data,
+            data?.ideas_goal ?? data,
             undefined,
             { realizedValue: data?.total_kaizens },
           )}
@@ -318,10 +318,15 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
           loading={loading && !data}
         />
         <KpiCard
-          title="Economia acumulada"
-          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenSavings}
-          value={formatCurrency(data?.total_savings)}
-          subtitle="Soma reportada pela API no período"
+          title="Ganhos financeiros do kaizen"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenFinancialGains}
+          value={formatDashboardMetricValue(data?.total_savings, data)}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            data,
+            undefined,
+            { realizedValue: data?.total_savings },
+          )}
           icon={<Wallet size={22} />}
           loading={loading && !data}
         />
