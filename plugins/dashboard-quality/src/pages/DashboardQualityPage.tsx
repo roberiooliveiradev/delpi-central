@@ -20,9 +20,10 @@ import { useQualityDashboard } from "../hooks/useQualityDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import {
-  buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import {
   formatDecimal,
 } from "../utils/format";
@@ -77,6 +78,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     ppmExternal,
     kaizen,
     audit5s,
+    ppmInternalBranches,
+    ppmExternalBranches,
+    kaizenIdeasBranches,
+    kaizenSavingsBranches,
+    audit5sBranches,
     loading,
     refreshing,
     requestProgress,
@@ -103,6 +109,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
+  const activeApiBranch = resolveApiBranch(selectedBranches);
 
   const isBusy = loading || refreshing;
   const hasData = ppmInternal !== null;
@@ -167,11 +174,14 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           title="PPM interno"
           titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmInternal}
           value={formatDashboardMetricValue(ppmInternal?.ppm, ppmInternal)}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${periodLabel}`,
             ppmInternal,
-            undefined,
-            { realizedValue: ppmInternal?.ppm },
+            {
+              realizedValue: ppmInternal?.ppm,
+              activeBranch: activeApiBranch,
+              branches: ppmInternalBranches,
+            },
           )}
           icon={<Factory size={22} />}
           loading={isBusy && !ppmInternal}
@@ -186,11 +196,14 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           title="PPM externo"
           titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmExternal}
           value={formatDashboardMetricValue(ppmExternal?.ppm, ppmExternal)}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${periodLabel}`,
             ppmExternal,
-            undefined,
-            { realizedValue: ppmExternal?.ppm },
+            {
+              realizedValue: ppmExternal?.ppm,
+              activeBranch: activeApiBranch,
+              branches: ppmExternalBranches,
+            },
           )}
           icon={<Truck size={22} />}
           loading={isBusy && !ppmExternal}
@@ -212,11 +225,14 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             kaizen?.total_kaizens,
             kaizen?.ideas_goal ?? kaizen,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             periodLabel,
             kaizen?.ideas_goal ?? kaizen,
-            undefined,
-            { realizedValue: kaizen?.total_kaizens },
+            {
+              realizedValue: kaizen?.total_kaizens,
+              activeBranch: activeApiBranch,
+              branches: kaizenIdeasBranches,
+            },
           )}
           icon={<Lightbulb size={22} />}
           loading={isBusy && !kaizen}
@@ -225,12 +241,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           title="Ganhos financeiros do kaizen"
           titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenFinancialGains}
           value={formatDashboardMetricValue(kaizen?.total_savings, kaizen)}
-          {...buildKpiGoalPresentation(
-            periodLabel,
-            kaizen,
-            undefined,
-            { realizedValue: kaizen?.total_savings },
-          )}
+          {...buildKpiGoalPresentationWithBranchIdd(periodLabel, kaizen, {
+            realizedValue: kaizen?.total_savings,
+            activeBranch: activeApiBranch,
+            branches: kaizenSavingsBranches,
+          })}
           icon={<Wallet size={22} />}
           loading={isBusy && !kaizen}
         />
@@ -238,12 +253,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           title="Auditoria 5S"
           titleHint={QUALITY_HELP_TOOLTIPS.kpis.audit5sScore}
           value={formatDashboardMetricValue(audit5s?.average_score, audit5s)}
-          {...buildKpiGoalPresentation(
-            periodLabel,
-            audit5s,
-            undefined,
-            { realizedValue: audit5s?.average_score },
-          )}
+          {...buildKpiGoalPresentationWithBranchIdd(periodLabel, audit5s, {
+            realizedValue: audit5s?.average_score,
+            activeBranch: activeApiBranch,
+            branches: audit5sBranches,
+          })}
           icon={<ClipboardCheck size={22} />}
           loading={isBusy && !audit5s}
         />

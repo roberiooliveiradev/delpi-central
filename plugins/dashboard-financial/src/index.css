@@ -1379,6 +1379,16 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
   outline: none;
 }
 
+/* Portal no body: layout mínimo antes de --ready (medição de largura do balão) */
+.ds-help-tooltip__bubble--fixed {
+  position: fixed;
+  z-index: 10000;
+  max-width: min(280px, calc(100vw - 24px));
+  min-width: 200px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
 .dashboard-financial .ds-help-tooltip__bubble--fixed {
   position: fixed;
   bottom: auto;

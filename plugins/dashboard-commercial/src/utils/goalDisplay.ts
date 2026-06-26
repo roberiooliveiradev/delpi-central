@@ -160,6 +160,103 @@ export function resolveConsolidatedIddScoreLabel(
   return formatIndicatorIddScore(average);
 }
 
+export type BranchMetricSlice<T extends DashboardGoalFields = DashboardGoalFields> =
+  {
+    realized: number | null | undefined;
+    goal?: T | null;
+  };
+
+export type PerBranchMetricSlices<
+  T extends DashboardGoalFields = DashboardGoalFields,
+> = {
+  filial01: BranchMetricSlice<T> | null;
+  filial02: BranchMetricSlice<T> | null;
+};
+
+const OPERATIONAL_BRANCH_FILIALS = ["01", "02"] as const;
+
+/** Injeta nota IDD consolidada (média 01+02) quando o filtro de unidade está aberto. */
+export function applyConsolidatedBranchIddScore(
+  presentation: KpiGoalPresentation,
+  options: {
+    activeBranch?: string;
+    branches?: PerBranchMetricSlices | null;
+  },
+): KpiGoalPresentation {
+  const branch = (options.activeBranch ?? "").trim();
+  if (branch || !options.branches) {
+    return presentation;
+  }
+
+  const { filial01, filial02 } = options.branches;
+  const iddScoreLabel = resolveConsolidatedIddScoreLabel([
+    { realized: filial01?.realized, goal: filial01?.goal },
+    { realized: filial02?.realized, goal: filial02?.goal },
+  ]);
+
+  if (!iddScoreLabel) {
+    return presentation;
+  }
+
+  return { ...presentation, iddScoreLabel };
+}
+
+export function buildKpiGoalPresentationWithBranchIdd<T extends DashboardGoalFields>(
+  contextLabel: string,
+  consolidatedGoal: T | null | undefined,
+  options: {
+    realizedValue?: number | null;
+    activeBranch?: string;
+    branches?: PerBranchMetricSlices<T> | null;
+    formatComparable?: (value: number) => string;
+    showGoal?: boolean;
+  },
+): KpiGoalPresentation {
+  const base = buildKpiGoalPresentation(
+    contextLabel,
+    consolidatedGoal,
+    options.formatComparable,
+    {
+      showGoal: options.showGoal,
+      realizedValue: options.realizedValue,
+    },
+  );
+
+  return applyConsolidatedBranchIddScore(base, {
+    activeBranch: options.activeBranch,
+    branches: options.branches,
+  });
+}
+
+/** Busca realizados e metas por filial 01/02 para cálculo IDD no consolidado. */
+export async function fetchPerBranchMetricSlices<T extends DashboardGoalFields>(
+  fetchMetric: (
+    branch: (typeof OPERATIONAL_BRANCH_FILIALS)[number],
+    signal?: AbortSignal,
+  ) => Promise<T>,
+  getRealized: (data: T) => number | null | undefined,
+  signal?: AbortSignal,
+  mapGoal?: (data: T) => DashboardGoalFields | null | undefined,
+): Promise<PerBranchMetricSlices<T>> {
+  const results = await Promise.allSettled(
+    OPERATIONAL_BRANCH_FILIALS.map((branch) => fetchMetric(branch, signal)),
+  );
+
+  const data01 = results[0].status === "fulfilled" ? results[0].value : null;
+  const data02 = results[1].status === "fulfilled" ? results[1].value : null;
+
+  const toSlice = (data: T | null): BranchMetricSlice<T> | null => {
+    if (!data) return null;
+    const goal = (mapGoal?.(data) ?? data) as T;
+    return { realized: getRealized(data), goal };
+  };
+
+  return {
+    filial01: toSlice(data01),
+    filial02: toSlice(data02),
+  };
+}
+
 export function formatGoalScopeLabel(
   goalScopeBranch?: string | null,
   scopeType?: string | null,

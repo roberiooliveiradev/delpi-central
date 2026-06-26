@@ -23,10 +23,10 @@ import { useFinancialDashboard } from "../hooks/useFinancialDashboard";
 import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { formatPeriodLabel } from "../utils/dates";
 import {
-  buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
-import { formatBranchFilterLabel } from "../utils/branchClientFilters";
+import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
   formatCurrency,
   formatPercent,
@@ -76,7 +76,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
     filterState,
   } = useFinancialFilters();
 
-  const { rol, ebitda, fixedCost, pmr, loading, refreshing, requestProgress, error, reload } =
+  const { rol, ebitda, fixedCost, pmr, ebitdaBranches, fixedCostBranches, pmrBranches, loading, refreshing, requestProgress, error, reload } =
     useFinancialDashboard(apiParams);
 
   const periodLabel = useMemo(
@@ -84,6 +84,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
     [dateStart, dateEnd]
   );
   const branchLabel = formatBranchFilterLabel(branches);
+  const activeApiBranch = resolveApiBranch(branches);
   const isBusy = loading || refreshing;
   const hasData =
     rol !== null || ebitda !== null || fixedCost !== null || pmr !== null;
@@ -148,13 +149,16 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
             ebitda?.ebitda_over_rol_pct,
             ebitda,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             ebitda?.ebitda_value != null
               ? `EBITDA ${formatCurrency(ebitda.ebitda_value)} · ${periodLabel}`
               : periodLabel,
             ebitda,
-            undefined,
-            { realizedValue: ebitda?.ebitda_over_rol_pct },
+            {
+              realizedValue: ebitda?.ebitda_over_rol_pct,
+              activeBranch: activeApiBranch,
+              branches: ebitdaBranches,
+            },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !ebitda}
@@ -166,13 +170,16 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
             fixedCost?.fixed_cost_over_rol_pct,
             fixedCost,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             fixedCost?.fixed_cost_value != null
               ? `Fixos ${formatCurrency(fixedCost.fixed_cost_value)} · ${periodLabel}`
               : periodLabel,
             fixedCost,
-            undefined,
-            { realizedValue: fixedCost?.fixed_cost_over_rol_pct },
+            {
+              realizedValue: fixedCost?.fixed_cost_over_rol_pct,
+              activeBranch: activeApiBranch,
+              branches: fixedCostBranches,
+            },
           )}
           icon={<Landmark size={22} />}
           loading={isBusy && !fixedCost}
@@ -181,12 +188,11 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
           title="PMR (dias)"
           titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.pmrDays}
           value={formatDashboardMetricValue(pmr?.pmr_days, pmr)}
-          {...buildKpiGoalPresentation(
-            periodLabel,
-            pmr,
-            undefined,
-            { realizedValue: pmr?.pmr_days },
-          )}
+          {...buildKpiGoalPresentationWithBranchIdd(periodLabel, pmr, {
+            realizedValue: pmr?.pmr_days,
+            activeBranch: activeApiBranch,
+            branches: pmrBranches,
+          })}
           icon={<Clock size={22} />}
           loading={isBusy && !pmr}
         />

@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -28,20 +29,48 @@ type BubblePosition = {
 
 const VIEWPORT_MARGIN = 12;
 const BUBBLE_GAP = 8;
+const BUBBLE_MAX_WIDTH = "min(280px, calc(100vw - 24px))";
 
-function clampHorizontal(left: number, width: number): number {
-  const maxLeft = window.innerWidth - width - VIEWPORT_MARGIN;
-  return Math.min(Math.max(VIEWPORT_MARGIN, left), Math.max(VIEWPORT_MARGIN, maxLeft));
+type ViewportMetrics = {
+  width: number;
+  height: number;
+  offsetLeft: number;
+  offsetTop: number;
+};
+
+function getViewportMetrics(): ViewportMetrics {
+  const visualViewport = window.visualViewport;
+  return {
+    width: visualViewport?.width ?? window.innerWidth,
+    height: visualViewport?.height ?? window.innerHeight,
+    offsetLeft: visualViewport?.offsetLeft ?? 0,
+    offsetTop: visualViewport?.offsetTop ?? 0,
+  };
+}
+
+function clampHorizontal(
+  left: number,
+  width: number,
+  viewport: ViewportMetrics
+): number {
+  const minLeft = viewport.offsetLeft + VIEWPORT_MARGIN;
+  const maxLeft =
+    viewport.offsetLeft + viewport.width - width - VIEWPORT_MARGIN;
+  return Math.min(Math.max(minLeft, left), Math.max(minLeft, maxLeft));
 }
 
 function computeBubblePosition(
   anchorRect: DOMRect,
   bubbleWidth: number,
   bubbleHeight: number,
-  preferredPlacement: "top" | "bottom"
+  preferredPlacement: "top" | "bottom",
+  viewport: ViewportMetrics
 ): BubblePosition {
-  const spaceAbove = anchorRect.top - VIEWPORT_MARGIN;
-  const spaceBelow = window.innerHeight - anchorRect.bottom - VIEWPORT_MARGIN;
+  const viewportTop = viewport.offsetTop;
+  const viewportBottom = viewport.offsetTop + viewport.height;
+
+  const spaceAbove = anchorRect.top - viewportTop - VIEWPORT_MARGIN;
+  const spaceBelow = viewportBottom - anchorRect.bottom - VIEWPORT_MARGIN;
 
   let placement = preferredPlacement;
   if (
@@ -64,8 +93,8 @@ function computeBubblePosition(
       : anchorRect.bottom + BUBBLE_GAP;
 
   top = Math.min(
-    Math.max(VIEWPORT_MARGIN, top),
-    window.innerHeight - bubbleHeight - VIEWPORT_MARGIN
+    Math.max(viewportTop + VIEWPORT_MARGIN, top),
+    viewportBottom - bubbleHeight - VIEWPORT_MARGIN
   );
 
   const centeredLeft =
@@ -73,8 +102,40 @@ function computeBubblePosition(
 
   return {
     top,
-    left: clampHorizontal(centeredLeft, bubbleWidth),
+    left: clampHorizontal(centeredLeft, bubbleWidth, viewport),
     placement,
+  };
+}
+
+function bubbleLayoutStyle(
+  position: BubblePosition | null,
+  positioned: boolean
+): CSSProperties {
+  const base: CSSProperties = {
+    position: "fixed",
+    zIndex: 10000,
+    maxWidth: BUBBLE_MAX_WIDTH,
+    minWidth: 200,
+    boxSizing: "border-box",
+    pointerEvents: "none",
+  };
+
+  if (position == null) {
+    return {
+      ...base,
+      top: -9999,
+      left: -9999,
+      visibility: "hidden",
+      opacity: 0,
+    };
+  }
+
+  return {
+    ...base,
+    top: position.top,
+    left: position.left,
+    visibility: positioned ? "visible" : "hidden",
+    opacity: positioned ? 1 : 0,
   };
 }
 
@@ -96,7 +157,9 @@ export function HelpTooltip({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const bubbleRef = useRef<HTMLSpanElement>(null);
   const [visible, setVisible] = useState(false);
-  const [bubblePosition, setBubblePosition] = useState<BubblePosition | null>(null);
+  const [bubblePosition, setBubblePosition] = useState<BubblePosition | null>(
+    null
+  );
   const [positioned, setPositioned] = useState(false);
 
   const rootClass = [
@@ -116,15 +179,23 @@ export function HelpTooltip({
     const anchorRect = anchor.getBoundingClientRect();
     const bubbleWidth = bubble.offsetWidth;
     const bubbleHeight = bubble.offsetHeight;
+    if (bubbleWidth <= 0 || bubbleHeight <= 0) return;
 
     setBubblePosition(
-      computeBubblePosition(anchorRect, bubbleWidth, bubbleHeight, placement)
+      computeBubblePosition(
+        anchorRect,
+        bubbleWidth,
+        bubbleHeight,
+        placement,
+        getViewportMetrics()
+      )
     );
     setPositioned(true);
   }, [placement]);
 
   const showTooltip = useCallback(() => {
     setPositioned(false);
+    setBubblePosition(null);
     setVisible(true);
   }, []);
 
@@ -136,8 +207,21 @@ export function HelpTooltip({
 
   useLayoutEffect(() => {
     if (!visible) return;
-    updateBubblePosition();
-  }, [visible, updateBubblePosition, content]);
+
+    setPositioned(false);
+    setBubblePosition({ top: -9999, left: -9999, placement });
+
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      updateBubblePosition();
+      raf2 = requestAnimationFrame(updateBubblePosition);
+    });
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [visible, updateBubblePosition, content, placement]);
 
   useEffect(() => {
     if (!visible) return;
@@ -149,10 +233,24 @@ export function HelpTooltip({
 
     window.addEventListener("scroll", handleReposition, true);
     window.addEventListener("resize", handleReposition);
+    window.visualViewport?.addEventListener("resize", handleReposition);
+    window.visualViewport?.addEventListener("scroll", handleReposition);
+
+    const bubble = bubbleRef.current;
+    const resizeObserver =
+      bubble && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(handleReposition)
+        : null;
+    if (bubble && resizeObserver) {
+      resizeObserver.observe(bubble);
+    }
 
     return () => {
       window.removeEventListener("scroll", handleReposition, true);
       window.removeEventListener("resize", handleReposition);
+      window.visualViewport?.removeEventListener("resize", handleReposition);
+      window.visualViewport?.removeEventListener("scroll", handleReposition);
+      resizeObserver?.disconnect();
     };
   }, [visible, updateBubblePosition]);
 
@@ -167,18 +265,13 @@ export function HelpTooltip({
     .filter(Boolean)
     .join(" ");
 
-  const bubbleStyle =
-    bubblePosition != null
-      ? { top: bubblePosition.top, left: bubblePosition.left }
-      : { top: -9999, left: -9999 };
-
   const bubble = (
     <span
       ref={bubbleRef}
       id={tooltipId}
       role="tooltip"
       className={bubbleClass}
-      style={bubbleStyle}
+      style={bubbleLayoutStyle(bubblePosition, positioned)}
     >
       {content}
     </span>
@@ -216,12 +309,7 @@ export function HelpTooltip({
           <HelpCircle size={14} aria-hidden="true" />
         </button>
       )}
-      {visible
-        ? createPortal(
-            bubble,
-            resolvePortalContainer()
-          )
-        : null}
+      {visible ? createPortal(bubble, resolvePortalContainer()) : null}
     </span>
   );
 }

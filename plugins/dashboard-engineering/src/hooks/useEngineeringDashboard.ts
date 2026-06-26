@@ -4,6 +4,10 @@ import type { EngineeringFilterParams, TransformaSummary } from "../types/engine
 import type { LmpsDashboardSummary } from "../types/lmp";
 import { formatEngineeringApiError } from "../utils/formatEngineeringApiError";
 import {
+  fetchPerBranchMetricSlices,
+  type PerBranchMetricSlices,
+} from "../utils/goalDisplay";
+import {
   EMPTY_REQUEST_PROGRESS,
   runParallelWithProgress,
   type RequestProgress,
@@ -18,6 +22,10 @@ type SectionErrors = {
 export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
   const [transforma, setTransforma] = useState<TransformaSummary | null>(null);
   const [lmpSummary, setLmpSummary] = useState<LmpsDashboardSummary | null>(null);
+  const [lmpBranches, setLmpBranches] =
+    useState<PerBranchMetricSlices<LmpsDashboardSummary> | null>(null);
+  const [transformaSavingsBranches, setTransformaSavingsBranches] =
+    useState<PerBranchMetricSlices<TransformaSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +54,37 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
           status: "Todos",
         };
 
+        const resolvedBranch = apiParams.branch ?? apiParams.filial_id;
+        const needsBranchIdd = !resolvedBranch;
+
         const results = await runParallelWithProgress(
           [
             (signal) => getTransformaSummary(apiParams, signal),
             (signal) => getLmpsDashboardSummary(lmpParams, signal),
+            ...(needsBranchIdd
+              ? [
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getLmpsDashboardSummary(
+                          { ...lmpParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.percent_dentro_prazo,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getTransformaSummary(
+                          { ...apiParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.total_gross_savings_in_period,
+                      signal,
+                    ),
+                ]
+              : []),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -73,6 +108,22 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         } else if (!controller.signal.aborted) {
           nextErrors.lmp =
             formatEngineeringApiError(results[1].reason) || "Erro ao carregar LMPs";
+        }
+
+        if (!controller.signal.aborted && needsBranchIdd) {
+          if (results[2]?.status === "fulfilled") {
+            setLmpBranches(results[2].value as PerBranchMetricSlices<LmpsDashboardSummary>);
+          }
+          if (results[3]?.status === "fulfilled") {
+            setTransformaSavingsBranches(
+              results[3].value as PerBranchMetricSlices<TransformaSummary>,
+            );
+          }
+        }
+
+        if (!controller.signal.aborted && !needsBranchIdd) {
+          setLmpBranches(null);
+          setTransformaSavingsBranches(null);
         }
 
         if (!controller.signal.aborted) {
@@ -110,6 +161,8 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
   return {
     transforma,
     lmpSummary,
+    lmpBranches,
+    transformaSavingsBranches,
     loading,
     refreshing,
     requestProgress,

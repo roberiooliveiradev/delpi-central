@@ -2,6 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import { formatQualityApiError } from "../utils/formatQualityApiError";
 import {
+  fetchPerBranchMetricSlices,
+  type PerBranchMetricSlices,
+} from "../utils/goalDisplay";
+import {
   EMPTY_REQUEST_PROGRESS,
   runParallelWithProgress,
   type RequestProgress,
@@ -35,6 +39,11 @@ type UseQualityDashboardResult = {
   ppmExternal: PpmSummary | null;
   kaizen: KaizenSummary | null;
   audit5s: Audit5sSummary | null;
+  ppmInternalBranches: PerBranchMetricSlices<PpmSummary> | null;
+  ppmExternalBranches: PerBranchMetricSlices<PpmSummary> | null;
+  kaizenIdeasBranches: PerBranchMetricSlices | null;
+  kaizenSavingsBranches: PerBranchMetricSlices<KaizenSummary> | null;
+  audit5sBranches: PerBranchMetricSlices<Audit5sSummary> | null;
   loading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
@@ -50,6 +59,16 @@ export function useQualityDashboard(
   const [ppmExternal, setPpmExternal] = useState<PpmSummary | null>(null);
   const [kaizen, setKaizen] = useState<KaizenSummary | null>(null);
   const [audit5s, setAudit5s] = useState<Audit5sSummary | null>(null);
+  const [ppmInternalBranches, setPpmInternalBranches] =
+    useState<PerBranchMetricSlices<PpmSummary> | null>(null);
+  const [ppmExternalBranches, setPpmExternalBranches] =
+    useState<PerBranchMetricSlices<PpmSummary> | null>(null);
+  const [kaizenIdeasBranches, setKaizenIdeasBranches] =
+    useState<PerBranchMetricSlices | null>(null);
+  const [kaizenSavingsBranches, setKaizenSavingsBranches] =
+    useState<PerBranchMetricSlices<KaizenSummary> | null>(null);
+  const [audit5sBranches, setAudit5sBranches] =
+    useState<PerBranchMetricSlices<Audit5sSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,12 +122,69 @@ export function useQualityDashboard(
           end_date: stableFilters.date_end,
         };
 
+        const needsBranchIdd = !stableFilters.branch;
+
         const results = await runParallelWithProgress(
           [
             (signal) => getPpmInternalSummary(ppmParams, signal),
             (signal) => getPpmExternalSummary(ppmParams, signal),
             (signal) => getKaizenSummary(kaizenParams, signal),
             (signal) => getAudit5sSummary(auditParams, signal),
+            ...(needsBranchIdd
+              ? [
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getPpmInternalSummary(
+                          { ...ppmParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.ppm,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getPpmExternalSummary(
+                          { ...ppmParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.ppm,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getKaizenSummary(
+                          { ...kaizenParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.total_kaizens,
+                      signal,
+                      (data) => data.ideas_goal ?? data,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getKaizenSummary(
+                          { ...kaizenParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.total_savings,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getAudit5sSummary(
+                          { ...auditParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.average_score,
+                      signal,
+                    ),
+                ]
+              : []),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -153,6 +229,29 @@ export function useQualityDashboard(
             "Erro ao carregar auditorias 5S";
         }
 
+        if (!controller.signal.aborted && needsBranchIdd) {
+          const branchSetters = [
+            setPpmInternalBranches,
+            setPpmExternalBranches,
+            setKaizenIdeasBranches,
+            setKaizenSavingsBranches,
+            setAudit5sBranches,
+          ];
+          results.slice(4).forEach((result, index) => {
+            if (result.status === "fulfilled") {
+              branchSetters[index]?.(result.value as never);
+            }
+          });
+        }
+
+        if (!controller.signal.aborted && !needsBranchIdd) {
+          setPpmInternalBranches(null);
+          setPpmExternalBranches(null);
+          setKaizenIdeasBranches(null);
+          setKaizenSavingsBranches(null);
+          setAudit5sBranches(null);
+        }
+
         if (!controller.signal.aborted) {
           setSectionErrors(nextErrors);
 
@@ -185,6 +284,11 @@ export function useQualityDashboard(
     ppmExternal,
     kaizen,
     audit5s,
+    ppmInternalBranches,
+    ppmExternalBranches,
+    kaizenIdeasBranches,
+    kaizenSavingsBranches,
+    audit5sBranches,
     loading,
     refreshing,
     requestProgress,

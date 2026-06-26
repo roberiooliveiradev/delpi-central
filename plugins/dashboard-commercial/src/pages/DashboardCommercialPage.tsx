@@ -50,7 +50,7 @@ import {
 } from "../constants/commercialIndicators";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
-  buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { buildRolPerUnitKpiView } from "../utils/rolPerUnitPresentation";
@@ -117,6 +117,9 @@ export function DashboardCommercialPage({
     closingRate,
     salesOrderOtd,
     newBusinessRol,
+    closingRateBranches,
+    salesOrderOtdBranches,
+    newBusinessRolBranches,
     loading,
     refreshing,
     requestProgress,
@@ -562,11 +565,14 @@ export function DashboardCommercialPage({
             salesOrderOtd?.sales_order_otd_pct,
             salesOrderOtd,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             salesOrderOtd,
-            undefined,
-            { realizedValue: salesOrderOtd?.sales_order_otd_pct },
+            {
+              realizedValue: salesOrderOtd?.sales_order_otd_pct,
+              activeBranch: activeApiBranch,
+              branches: salesOrderOtdBranches,
+            },
           )}
           icon={<PackageCheck size={22} />}
           loading={isBusy && !salesOrderOtd}
@@ -578,11 +584,14 @@ export function DashboardCommercialPage({
             closingRate?.sales_conversion_rate_pct,
             closingRate,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             closingRate,
-            undefined,
-            { realizedValue: closingRate?.sales_conversion_rate_pct },
+            {
+              realizedValue: closingRate?.sales_conversion_rate_pct,
+              activeBranch: activeApiBranch,
+              branches: closingRateBranches,
+            },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !closingRate}
@@ -594,11 +603,14 @@ export function DashboardCommercialPage({
             newBusinessRol?.new_business_rol_pct,
             newBusinessRol,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${formatNewBusinessRolContextLine(newBusinessRol, customerSegment, formatCurrency)} · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             newBusinessRol,
-            undefined,
-            { realizedValue: newBusinessRol?.new_business_rol_pct },
+            {
+              realizedValue: newBusinessRol?.new_business_rol_pct,
+              activeBranch: activeApiBranch,
+              branches: newBusinessRolBranches,
+            },
           )}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !newBusinessRol}

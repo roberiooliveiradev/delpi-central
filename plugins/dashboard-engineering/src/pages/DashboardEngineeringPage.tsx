@@ -12,9 +12,10 @@ import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { formatPeriodLabel } from "../utils/dates";
 import {
   buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
-import { formatBranchFilterLabel } from "../utils/branchClientFilters";
+import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
   formatDecimal,
   formatInteger,
@@ -56,6 +57,8 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
   const {
     transforma,
     lmpSummary,
+    lmpBranches,
+    transformaSavingsBranches,
     loading,
     refreshing,
     requestProgress,
@@ -69,6 +72,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
     [dateStart, dateEnd]
   );
   const branchLabel = formatBranchFilterLabel(branches);
+  const activeApiBranch = resolveApiBranch(branches);
   const isBusy = loading || refreshing;
   const hasData = transforma !== null || lmpSummary !== null;
 
@@ -115,11 +119,14 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
             lmpSummary?.percent_dentro_prazo,
             lmpSummary,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${branchLabel} · ${periodLabel}`,
             lmpSummary,
-            undefined,
-            { realizedValue: lmpSummary?.percent_dentro_prazo },
+            {
+              realizedValue: lmpSummary?.percent_dentro_prazo,
+              activeBranch: activeApiBranch,
+              branches: lmpBranches,
+            },
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !lmpSummary}
@@ -149,11 +156,14 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
             transforma?.total_gross_savings_in_period,
             transforma,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${branchLabel} · ${periodLabel}`,
             transforma,
-            undefined,
-            { realizedValue: transforma?.total_gross_savings_in_period },
+            {
+              realizedValue: transforma?.total_gross_savings_in_period,
+              activeBranch: activeApiBranch,
+              branches: transformaSavingsBranches,
+            },
           )}
           icon={<Coins size={22} />}
           loading={isBusy && !transforma}

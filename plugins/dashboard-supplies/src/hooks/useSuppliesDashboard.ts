@@ -16,6 +16,11 @@ import type {
 } from "../types/supplies";
 import { formatSuppliesApiError } from "../utils/formatSuppliesApiError";
 import {
+  fetchPerBranchMetricSlices,
+  type PerBranchMetricSlices,
+} from "../utils/goalDisplay";
+import type { CpvSummary, InventoryTurnoverSummary, NegotiationSavingsSummary, OtdSummary, StockValueSummary } from "../types/supplies";
+import {
   EMPTY_REQUEST_PROGRESS,
   runParallelWithProgress,
   type RequestProgress,
@@ -40,6 +45,11 @@ type UseSuppliesDashboardResult = {
   stockValue: StockValueData | null;
   inventoryTurnover: InventoryTurnoverData | null;
   negotiationSavings: NegotiationSavingsData | null;
+  cpvBranches: PerBranchMetricSlices<CpvSummary> | null;
+  otdBranches: PerBranchMetricSlices<OtdSummary> | null;
+  stockValueBranches: PerBranchMetricSlices<StockValueSummary> | null;
+  inventoryTurnoverBranches: PerBranchMetricSlices<InventoryTurnoverSummary> | null;
+  negotiationSavingsBranches: PerBranchMetricSlices<NegotiationSavingsSummary> | null;
   loading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
@@ -59,6 +69,16 @@ export function useSuppliesDashboard({
     useState<InventoryTurnoverData | null>(null);
   const [negotiationSavings, setNegotiationSavings] =
     useState<NegotiationSavingsData | null>(null);
+  const [cpvBranches, setCpvBranches] =
+    useState<PerBranchMetricSlices<CpvSummary> | null>(null);
+  const [otdBranches, setOtdBranches] =
+    useState<PerBranchMetricSlices<OtdSummary> | null>(null);
+  const [stockValueBranches, setStockValueBranches] =
+    useState<PerBranchMetricSlices<StockValueSummary> | null>(null);
+  const [inventoryTurnoverBranches, setInventoryTurnoverBranches] =
+    useState<PerBranchMetricSlices<InventoryTurnoverSummary> | null>(null);
+  const [negotiationSavingsBranches, setNegotiationSavingsBranches] =
+    useState<PerBranchMetricSlices<NegotiationSavingsSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +106,8 @@ export function useSuppliesDashboard({
         if (hasPreviousData) setRefreshing(true);
         else setLoading(true);
 
+        const needsBranchIdd = !periodParams.branch;
+
         const results = await runParallelWithProgress(
           [
             (signal) => getCpv(periodParams, signal),
@@ -101,6 +123,66 @@ export function useSuppliesDashboard({
                 },
                 signal
               ),
+            ...(needsBranchIdd
+              ? [
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      async (branch, branchSignal) =>
+                        (await getCpv(
+                          { ...periodParams, branch },
+                          branchSignal ?? signal,
+                        )).summary,
+                      (summary) => summary.cpv_percentage,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      async (branch, branchSignal) =>
+                        (await getOtd(
+                          { ...periodParams, branch },
+                          branchSignal ?? signal,
+                        )).summary,
+                      (summary) => summary.otd_percentage,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      async (branch, branchSignal) =>
+                        (await getStockValueSummary(
+                          { ...stockParams, branch },
+                          branchSignal ?? signal,
+                        )).summary,
+                      (summary) => summary.total_stock_value,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      async (branch, branchSignal) =>
+                        (await getInventoryTurnover(
+                          { ...periodParams, branch },
+                          branchSignal ?? signal,
+                        )).summary,
+                      (summary) => summary.inventory_turnover_times,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      async (branch, branchSignal) =>
+                        (
+                          await getNegotiationSavings(
+                            {
+                              start_date: periodParams.start_date,
+                              end_date: periodParams.end_date,
+                              branch,
+                            },
+                            branchSignal ?? signal,
+                          )
+                        ).summary,
+                      (summary) => summary.total_savings,
+                      signal,
+                    ),
+                ]
+              : []),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -127,16 +209,40 @@ export function useSuppliesDashboard({
         ];
 
         results.forEach((result, index) => {
-          const { key, set } = handlers[index];
-          if (result.status === "fulfilled") {
-            set(result.value);
-            successCount += 1;
-          } else if (!controller.signal.aborted) {
-            nextErrors[key] =
-              formatSuppliesApiError(result.reason) ||
-              "Erro ao carregar indicador";
+          if (index < handlers.length) {
+            const { key, set } = handlers[index];
+            if (result.status === "fulfilled") {
+              set(result.value);
+              successCount += 1;
+            } else if (!controller.signal.aborted) {
+              nextErrors[key] =
+                formatSuppliesApiError(result.reason) ||
+                "Erro ao carregar indicador";
+            }
+            return;
           }
+
+          if (controller.signal.aborted || result.status !== "fulfilled") {
+            return;
+          }
+
+          const branchSetters = [
+            setCpvBranches,
+            setOtdBranches,
+            setStockValueBranches,
+            setInventoryTurnoverBranches,
+            setNegotiationSavingsBranches,
+          ];
+          branchSetters[index - handlers.length]?.(result.value as never);
         });
+
+        if (!controller.signal.aborted && !needsBranchIdd) {
+          setCpvBranches(null);
+          setOtdBranches(null);
+          setStockValueBranches(null);
+          setInventoryTurnoverBranches(null);
+          setNegotiationSavingsBranches(null);
+        }
 
         if (!controller.signal.aborted) {
           setSectionErrors(nextErrors);
@@ -180,6 +286,11 @@ export function useSuppliesDashboard({
     stockValue,
     inventoryTurnover,
     negotiationSavings,
+    cpvBranches,
+    otdBranches,
+    stockValueBranches,
+    inventoryTurnoverBranches,
+    negotiationSavingsBranches,
     loading,
     refreshing,
     requestProgress,

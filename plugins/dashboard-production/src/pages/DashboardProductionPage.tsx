@@ -40,7 +40,7 @@ import { downloadOeeSeriesCsv, downloadOtdSeriesCsv } from "../utils/chartSeries
 import { formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
 import {
-  buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
@@ -71,6 +71,11 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
     depreciation,
     oee,
     otd,
+    directLaborBranches,
+    productionCostBranches,
+    depreciationBranches,
+    oeeBranches,
+    otdBranches,
     loading,
     refreshing,
     requestProgress,
@@ -251,11 +256,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             directLabor?.direct_labor_cost_pct,
             directLabor,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${branchLabel} · ${periodLabel}`,
             directLabor,
-            undefined,
-            { realizedValue: directLabor?.direct_labor_cost_pct },
+            {
+              realizedValue: directLabor?.direct_labor_cost_pct,
+              activeBranch: selectedBranch,
+              branches: directLaborBranches,
+            },
           )}
           icon={<Users size={22} />}
           loading={isBusy && !directLabor}
@@ -267,11 +275,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             productionCost?.production_cost_pct,
             productionCost,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${branchLabel} · ${periodLabel}`,
             productionCost,
-            undefined,
-            { realizedValue: productionCost?.production_cost_pct },
+            {
+              realizedValue: productionCost?.production_cost_pct,
+              activeBranch: selectedBranch,
+              branches: productionCostBranches,
+            },
           )}
           icon={<Coins size={22} />}
           loading={isBusy && !productionCost}
@@ -283,11 +294,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             depreciation?.depreciation_pct,
             depreciation,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${branchLabel} · ${periodLabel}`,
             depreciation,
-            undefined,
-            { realizedValue: depreciation?.depreciation_pct },
+            {
+              realizedValue: depreciation?.depreciation_pct,
+              activeBranch: selectedBranch,
+              branches: depreciationBranches,
+            },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !depreciation}
@@ -299,11 +313,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             oee?.overall_equipment_effectiveness_pct,
             oee,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             oee,
-            undefined,
-            { realizedValue: oee?.overall_equipment_effectiveness_pct },
+            {
+              realizedValue: oee?.overall_equipment_effectiveness_pct,
+              activeBranch: selectedBranch,
+              branches: oeeBranches,
+            },
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !oee}
@@ -315,11 +332,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             otd?.on_time_delivery_pct,
             otd,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             otd,
-            undefined,
-            { realizedValue: otd?.on_time_delivery_pct },
+            {
+              realizedValue: otd?.on_time_delivery_pct,
+              activeBranch: selectedBranch,
+              branches: otdBranches,
+            },
           )}
           icon={<Truck size={22} />}
           loading={isBusy && !otd}

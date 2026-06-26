@@ -16,6 +16,10 @@ import type {
 } from "../types/production";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
 import {
+  fetchPerBranchMetricSlices,
+  type PerBranchMetricSlices,
+} from "../utils/goalDisplay";
+import {
   EMPTY_REQUEST_PROGRESS,
   runParallelWithProgress,
   type RequestProgress,
@@ -35,6 +39,11 @@ type UseProductionDashboardResult = {
   depreciation: DepreciationPctData | null;
   oee: OeePctData | null;
   otd: OtdPctData | null;
+  directLaborBranches: PerBranchMetricSlices<DirectLaborCostPctData> | null;
+  productionCostBranches: PerBranchMetricSlices<ProductionCostPctData> | null;
+  depreciationBranches: PerBranchMetricSlices<DepreciationPctData> | null;
+  oeeBranches: PerBranchMetricSlices<OeePctData> | null;
+  otdBranches: PerBranchMetricSlices<OtdPctData> | null;
   loading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
@@ -56,6 +65,16 @@ export function useProductionDashboard(
   );
   const [oee, setOee] = useState<OeePctData | null>(null);
   const [otd, setOtd] = useState<OtdPctData | null>(null);
+  const [directLaborBranches, setDirectLaborBranches] =
+    useState<PerBranchMetricSlices<DirectLaborCostPctData> | null>(null);
+  const [productionCostBranches, setProductionCostBranches] =
+    useState<PerBranchMetricSlices<ProductionCostPctData> | null>(null);
+  const [depreciationBranches, setDepreciationBranches] =
+    useState<PerBranchMetricSlices<DepreciationPctData> | null>(null);
+  const [oeeBranches, setOeeBranches] =
+    useState<PerBranchMetricSlices<OeePctData> | null>(null);
+  const [otdBranches, setOtdBranches] =
+    useState<PerBranchMetricSlices<OtdPctData> | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +102,8 @@ export function useProductionDashboard(
         if (hasPreviousData) setRefreshing(true);
         else setLoading(true);
 
+        const needsBranchIdd = !filters.branch;
+
         const results = await runParallelWithProgress(
           [
             (signal) => getDirectLaborCostPct(filters, signal),
@@ -90,6 +111,60 @@ export function useProductionDashboard(
             (signal) => getDepreciationPct(filters, signal),
             (signal) => getOverallEquipmentEffectivenessPct(filters, signal),
             (signal) => getOnTimeDeliveryPct(filters, signal),
+            ...(needsBranchIdd
+              ? [
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getDirectLaborCostPct(
+                          { ...filters, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.direct_labor_cost_pct,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getProductionCostPct(
+                          { ...filters, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.production_cost_pct,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getDepreciationPct(
+                          { ...filters, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.depreciation_pct,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getOverallEquipmentEffectivenessPct(
+                          { ...filters, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.overall_equipment_effectiveness_pct,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getOnTimeDeliveryPct(
+                          { ...filters, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.on_time_delivery_pct,
+                      signal,
+                    ),
+                ]
+              : []),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -113,16 +188,41 @@ export function useProductionDashboard(
         ];
 
         results.forEach((result, index) => {
-          const { key, set } = handlers[index];
-          if (result.status === "fulfilled") {
-            set(result.value);
-            successCount += 1;
-          } else if (!controller.signal.aborted) {
-            nextErrors[key] =
-              formatProductionApiError(result.reason) ||
-              "Erro ao carregar indicador";
+          if (index < handlers.length) {
+            const { key, set } = handlers[index];
+            if (result.status === "fulfilled") {
+              set(result.value);
+              successCount += 1;
+            } else if (!controller.signal.aborted) {
+              nextErrors[key] =
+                formatProductionApiError(result.reason) ||
+                "Erro ao carregar indicador";
+            }
+            return;
           }
+
+          if (controller.signal.aborted || result.status !== "fulfilled") {
+            return;
+          }
+
+          const branchIndex = index - handlers.length;
+          const branchSetters = [
+            setDirectLaborBranches,
+            setProductionCostBranches,
+            setDepreciationBranches,
+            setOeeBranches,
+            setOtdBranches,
+          ];
+          branchSetters[branchIndex]?.(result.value as never);
         });
+
+        if (!controller.signal.aborted && !needsBranchIdd) {
+          setDirectLaborBranches(null);
+          setProductionCostBranches(null);
+          setDepreciationBranches(null);
+          setOeeBranches(null);
+          setOtdBranches(null);
+        }
 
         if (!controller.signal.aborted) {
           setSectionErrors(nextErrors);
@@ -156,6 +256,11 @@ export function useProductionDashboard(
     depreciation,
     oee,
     otd,
+    directLaborBranches,
+    productionCostBranches,
+    depreciationBranches,
+    oeeBranches,
+    otdBranches,
     loading,
     refreshing,
     requestProgress,

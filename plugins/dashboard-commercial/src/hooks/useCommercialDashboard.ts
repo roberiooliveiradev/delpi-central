@@ -8,6 +8,10 @@ import {
 } from "../api/commercialApi";
 import { formatCommercialApiError } from "../utils/formatCommercialApiError";
 import {
+  fetchPerBranchMetricSlices,
+  type PerBranchMetricSlices,
+} from "../utils/goalDisplay";
+import {
   EMPTY_REQUEST_PROGRESS,
   runParallelWithProgress,
   type RequestProgress,
@@ -34,6 +38,9 @@ type UseCommercialDashboardResult = {
   closingRate: ClosingRateData | null;
   salesOrderOtd: SalesOrderOtdData | null;
   newBusinessRol: NewBusinessRolPctData | null;
+  closingRateBranches: PerBranchMetricSlices<ClosingRateData> | null;
+  salesOrderOtdBranches: PerBranchMetricSlices<SalesOrderOtdData> | null;
+  newBusinessRolBranches: PerBranchMetricSlices<NewBusinessRolPctData> | null;
   loading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
@@ -52,6 +59,12 @@ export function useCommercialDashboard(
   const [newBusinessRol, setNewBusinessRol] = useState<NewBusinessRolPctData | null>(
     null
   );
+  const [closingRateBranches, setClosingRateBranches] =
+    useState<PerBranchMetricSlices<ClosingRateData> | null>(null);
+  const [salesOrderOtdBranches, setSalesOrderOtdBranches] =
+    useState<PerBranchMetricSlices<SalesOrderOtdData> | null>(null);
+  const [newBusinessRolBranches, setNewBusinessRolBranches] =
+    useState<PerBranchMetricSlices<NewBusinessRolPctData> | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +94,8 @@ export function useCommercialDashboard(
         if (hasPreviousData) setRefreshing(true);
         else setLoading(true);
 
+        const needsBranchIdd = !indicatorParams.branch;
+
         const results = await runParallelWithProgress(
           [
             (signal) => getHeadOfficeRolTarget(indicatorParams, signal),
@@ -88,6 +103,40 @@ export function useCommercialDashboard(
             (signal) => getClosingRate(indicatorParams, signal),
             (signal) => getSalesOrderOtd(indicatorParams, signal),
             (signal) => getNewBusinessRolPct(indicatorParams, signal),
+            ...(needsBranchIdd
+              ? [
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getClosingRate(
+                          { ...indicatorParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.sales_conversion_rate_pct,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getSalesOrderOtd(
+                          { ...indicatorParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.sales_order_otd_pct,
+                      signal,
+                    ),
+                  (signal: AbortSignal) =>
+                    fetchPerBranchMetricSlices(
+                      (branch, branchSignal) =>
+                        getNewBusinessRolPct(
+                          { ...indicatorParams, branch },
+                          branchSignal ?? signal,
+                        ),
+                      (data) => data.new_business_rol_pct,
+                      signal,
+                    ),
+                ]
+              : []),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -108,16 +157,46 @@ export function useCommercialDashboard(
         ];
 
         results.forEach((result, index) => {
-          const { key, set } = handlers[index];
-          if (result.status === "fulfilled") {
-            set(result.value);
-            successCount += 1;
-          } else if (!controller.signal.aborted) {
-            nextErrors[key] =
-              formatCommercialApiError(result.reason) ||
-              "Erro ao carregar indicador";
+          if (index < handlers.length) {
+            const { key, set } = handlers[index];
+            if (result.status === "fulfilled") {
+              set(result.value);
+              successCount += 1;
+            } else if (!controller.signal.aborted) {
+              nextErrors[key] =
+                formatCommercialApiError(result.reason) ||
+                "Erro ao carregar indicador";
+            }
+            return;
+          }
+
+          if (controller.signal.aborted || result.status !== "fulfilled") {
+            return;
+          }
+
+          const branchIndex = index - handlers.length;
+          if (branchIndex === 0) {
+            setClosingRateBranches(
+              result.value as PerBranchMetricSlices<ClosingRateData>,
+            );
+          } else if (branchIndex === 1) {
+            setSalesOrderOtdBranches(
+              result.value as PerBranchMetricSlices<SalesOrderOtdData>,
+            );
+          } else if (branchIndex === 2) {
+            setNewBusinessRolBranches(
+              result.value as PerBranchMetricSlices<NewBusinessRolPctData>,
+            );
           }
         });
+
+        if (!controller.signal.aborted) {
+          if (!needsBranchIdd) {
+            setClosingRateBranches(null);
+            setSalesOrderOtdBranches(null);
+            setNewBusinessRolBranches(null);
+          }
+        }
 
         if (!controller.signal.aborted) {
           setSectionErrors(nextErrors);
@@ -157,6 +236,9 @@ export function useCommercialDashboard(
     closingRate,
     salesOrderOtd,
     newBusinessRol,
+    closingRateBranches,
+    salesOrderOtdBranches,
+    newBusinessRolBranches,
     loading,
     refreshing,
     requestProgress,

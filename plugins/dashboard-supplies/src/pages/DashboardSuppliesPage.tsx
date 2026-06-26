@@ -17,8 +17,12 @@ import { SUPPLIES_ROUTES } from "../constants/routes";
 import { useSuppliesDashboard } from "../hooks/useSuppliesDashboard";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
-import { formatBranchFilterLabel } from "../utils/branchClientFilters";
+import {
+  buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
+import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
   formatCurrency,
   formatInteger,
@@ -75,7 +79,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     filterState,
   } = filters;
 
-  const { cpv, otd, stockValue, inventoryTurnover, negotiationSavings, loading, refreshing, requestProgress, error, reload } =
+  const { cpv, otd, stockValue, inventoryTurnover, negotiationSavings, cpvBranches, otdBranches, stockValueBranches, inventoryTurnoverBranches, negotiationSavingsBranches, loading, refreshing, requestProgress, error, reload } =
     useSuppliesDashboard({ periodParams, stockParams });
 
   const periodLabel = useMemo(
@@ -83,6 +87,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     [dateStart, dateEnd]
   );
   const branchLabel = formatBranchFilterLabel(branches);
+  const activeApiBranch = resolveApiBranch(branches);
   const locationLabel = location ? `Local ${location}` : "Todas as localizações";
   const isBusy = loading || refreshing;
   const hasData =
@@ -142,11 +147,14 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             cpv?.summary.cpv_percentage,
             cpv?.summary,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
             cpv?.summary,
-            undefined,
-            { realizedValue: cpv?.summary.cpv_percentage },
+            {
+              realizedValue: cpv?.summary.cpv_percentage,
+              activeBranch: activeApiBranch,
+              branches: cpvBranches,
+            },
           )}
           icon={<Percent size={22} />}
           loading={isBusy && !cpv}
@@ -158,11 +166,14 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             otd?.summary.otd_percentage,
             otd?.summary,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${formatInteger(otd?.summary.on_time_lines)} / ${formatInteger(otd?.summary.total_lines)} linhas`,
             otd?.summary,
-            undefined,
-            { realizedValue: otd?.summary.otd_percentage },
+            {
+              realizedValue: otd?.summary.otd_percentage,
+              activeBranch: activeApiBranch,
+              branches: otdBranches,
+            },
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy && !otd}
@@ -174,11 +185,14 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             stockValue?.summary.total_stock_value,
             stockValue?.summary,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${branchLabel} · ${locationLabel}`,
             stockValue?.summary,
-            undefined,
-            { realizedValue: stockValue?.summary.total_stock_value },
+            {
+              realizedValue: stockValue?.summary.total_stock_value,
+              activeBranch: activeApiBranch,
+              branches: stockValueBranches,
+            },
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy && !stockValue}
@@ -190,11 +204,14 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             inventoryTurnover?.summary.inventory_turnover_times,
             inventoryTurnover?.summary,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             periodLabel,
             inventoryTurnover?.summary,
-            undefined,
-            { realizedValue: inventoryTurnover?.summary.inventory_turnover_times },
+            {
+              realizedValue: inventoryTurnover?.summary.inventory_turnover_times,
+              activeBranch: activeApiBranch,
+              branches: inventoryTurnoverBranches,
+            },
           )}
           icon={<Package size={22} />}
           loading={isBusy && !inventoryTurnover}
@@ -207,14 +224,15 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               negotiationSavings?.total_savings,
             negotiationSavings?.summary,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             `${branchLabel} · ${periodLabel}`,
             negotiationSavings?.summary,
-            undefined,
             {
               realizedValue:
                 negotiationSavings?.summary.total_savings ??
                 negotiationSavings?.total_savings,
+              activeBranch: activeApiBranch,
+              branches: negotiationSavingsBranches,
             },
           )}
           icon={<HandCoins size={22} />}

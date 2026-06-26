@@ -32,9 +32,14 @@ import { useHrFilters } from "../hooks/useHrFilters";
 import type { HrBranchMetrics } from "../types/hr";
 import { formatPeriodLabel } from "../utils/dates";
 import {
-  buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
+import {
+  buildHrMetricIddSlices,
+  buildHrSatisfactionIddSlices,
+} from "../utils/hrBranchIdd";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import { averageNullable, formatDecimal, formatPercent, sumNullable } from "../utils/format";
 import { HR_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
@@ -81,7 +86,7 @@ export function DashboardHrPage() {
     apiParams,
   } = useHrFilters();
 
-  const { snapshot, branchOptions, loading, refreshing, requestProgress, error, reload } =
+  const { snapshot, branchGoalSnapshots, branchOptions, loading, refreshing, requestProgress, error, reload } =
     useHrDashboard(apiParams);
 
   const periodLabel = useMemo(
@@ -95,6 +100,62 @@ export function DashboardHrPage() {
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
   const selectedBranch =
     branches.length === 1 ? pickBranchMetrics(snapshot, branches[0]) : null;
+  const activeApiBranch = resolveApiBranch(branches);
+
+  const absenteeismBranches = useMemo(
+    () =>
+      buildHrMetricIddSlices(
+        snapshot,
+        branchGoalSnapshots,
+        "absenteeism_pct",
+        "absenteeism_pct",
+      ),
+    [snapshot, branchGoalSnapshots],
+  );
+  const turnoverBranches = useMemo(
+    () =>
+      buildHrMetricIddSlices(
+        snapshot,
+        branchGoalSnapshots,
+        "turnover_pct",
+        "turnover_pct",
+      ),
+    [snapshot, branchGoalSnapshots],
+  );
+  const satisfactionBranches = useMemo(
+    () => buildHrSatisfactionIddSlices(snapshot, branchGoalSnapshots),
+    [snapshot, branchGoalSnapshots],
+  );
+  const activePdiBranches = useMemo(
+    () =>
+      buildHrMetricIddSlices(
+        snapshot,
+        branchGoalSnapshots,
+        "active_pdi_count",
+        "active_pdi_count",
+      ),
+    [snapshot, branchGoalSnapshots],
+  );
+  const performanceReviewsBranches = useMemo(
+    () =>
+      buildHrMetricIddSlices(
+        snapshot,
+        branchGoalSnapshots,
+        "performance_reviews_completion_pct",
+        "performance_reviews_completion_pct",
+      ),
+    [snapshot, branchGoalSnapshots],
+  );
+  const trainingHoursBranches = useMemo(
+    () =>
+      buildHrMetricIddSlices(
+        snapshot,
+        branchGoalSnapshots,
+        "training_hours_per_collaborator",
+        "training_hours_per_collaborator",
+      ),
+    [snapshot, branchGoalSnapshots],
+  );
 
   const activeBranches = useMemo(() => {
     const all = snapshot?.branches ?? [];
@@ -254,11 +315,14 @@ export function DashboardHrPage() {
             absenteeism,
             snapshot?.goals_by_metric?.absenteeism_pct,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             periodLabel,
             snapshot?.goals_by_metric?.absenteeism_pct,
-            undefined,
-            { realizedValue: absenteeism },
+            {
+              realizedValue: absenteeism,
+              activeBranch: activeApiBranch,
+              branches: absenteeismBranches,
+            },
           )}
           icon={<UserMinus size={22} />}
           loading={loading}
@@ -270,11 +334,14 @@ export function DashboardHrPage() {
             turnover,
             snapshot?.goals_by_metric?.turnover_pct,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             periodLabel,
             snapshot?.goals_by_metric?.turnover_pct,
-            undefined,
-            { realizedValue: turnover },
+            {
+              realizedValue: turnover,
+              activeBranch: activeApiBranch,
+              branches: turnoverBranches,
+            },
           )}
           icon={<TrendingDown size={22} />}
           loading={loading}
@@ -286,11 +353,14 @@ export function DashboardHrPage() {
             satisfaction,
             snapshot?.goals_by_metric?.internal_satisfaction_pct,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             "Consolidado no período",
             snapshot?.goals_by_metric?.internal_satisfaction_pct,
-            undefined,
-            { realizedValue: satisfaction },
+            {
+              realizedValue: satisfaction,
+              activeBranch: activeApiBranch,
+              branches: satisfactionBranches,
+            },
           )}
           icon={<Smile size={22} />}
           loading={loading}
@@ -302,15 +372,18 @@ export function DashboardHrPage() {
             activePdiCount,
             snapshot?.goals_by_metric?.active_pdi_count,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             branches.length === 1
               ? formatOperationalUnitCode(branches[0], branches[0])
               : branches.length > 1
                 ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
                 : "Soma das unidades",
             snapshot?.goals_by_metric?.active_pdi_count,
-            undefined,
-            { realizedValue: activePdiCount },
+            {
+              realizedValue: activePdiCount,
+              activeBranch: activeApiBranch,
+              branches: activePdiBranches,
+            },
           )}
           icon={<Award size={22} />}
           loading={loading}
@@ -322,15 +395,18 @@ export function DashboardHrPage() {
             performanceReviewsCompletion,
             snapshot?.goals_by_metric?.performance_reviews_completion_pct,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             branches.length === 1
               ? formatOperationalUnitCode(branches[0], branches[0])
               : branches.length > 1
                 ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
                 : "Média das unidades",
             snapshot?.goals_by_metric?.performance_reviews_completion_pct,
-            undefined,
-            { realizedValue: performanceReviewsCompletion },
+            {
+              realizedValue: performanceReviewsCompletion,
+              activeBranch: activeApiBranch,
+              branches: performanceReviewsBranches,
+            },
           )}
           icon={<ClipboardCheck size={22} />}
           loading={loading}
@@ -342,11 +418,14 @@ export function DashboardHrPage() {
             trainingHours,
             snapshot?.goals_by_metric?.training_hours_per_collaborator,
           )}
-          {...buildKpiGoalPresentation(
+          {...buildKpiGoalPresentationWithBranchIdd(
             periodLabel,
             snapshot?.goals_by_metric?.training_hours_per_collaborator,
-            undefined,
-            { realizedValue: trainingHours },
+            {
+              realizedValue: trainingHours,
+              activeBranch: activeApiBranch,
+              branches: trainingHoursBranches,
+            },
           )}
           icon={<BookOpen size={22} />}
           loading={loading}
