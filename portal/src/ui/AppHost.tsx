@@ -693,21 +693,23 @@ export const AppHost = () => {
           </button>
         ) : null}
 
-        <iframe
-          key={`${app.id}:${iframeReloadKey}`}
-          ref={iframeRef}
-          title={route?.label || app.name}
-          src={iframeSrc}
-          className={[
-            "app-host-iframe",
-            hostContentReady ? "is-ready" : "is-loading",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          referrerPolicy="strict-origin-when-cross-origin"
-          allow="clipboard-read; clipboard-write; fullscreen"
-          onLoad={handleIframeLoad}
-        />
+        <div className="app-host-embedded__frame">
+          <iframe
+            key={`${app.id}:${iframeReloadKey}`}
+            ref={iframeRef}
+            title={route?.label || app.name}
+            src={iframeSrc}
+            className={[
+              "app-host-iframe",
+              hostContentReady ? "is-ready" : "is-loading",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="clipboard-read; clipboard-write; fullscreen"
+            onLoad={handleIframeLoad}
+          />
+        </div>
       </div>
     );
   }

@@ -569,9 +569,53 @@ html.si-settings-active .app-host-federated > div,
   min-height: 0;
 }
 
-/* QUANDO HÁ APP EMBEDDED, O SCROLL DO PORTAL SOME */
-body.portal-has-embedded-app .content {
+/*
+ * Apps embedded (iframe): preencher área útil — mesma cadeia flex que
+ * maintenance-embed-active; frame + iframe absoluto evita colapso de altura.
+ */
+body.portal-has-embedded-app .main-area {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
+}
+
+body.portal-has-embedded-app .content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.portal-has-embedded-app .content > .app-host,
+body.portal-has-embedded-app .content > .app-host-embedded {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+body.portal-has-embedded-app .app-host-embedded.app-host--loading-shell,
+body.portal-has-embedded-app .app-host-embedded {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+body.portal-has-embedded-app .app-host-embedded__frame {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+}
+
+body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
+  position: absolute;
+  inset: 0;
+  flex: none;
+  width: 100%;
+  height: 100% !important;
 }
 
 /* =========================================
@@ -737,8 +781,21 @@ body.portal-has-embedded-app .content {
   opacity: 1;
 }
 
-.app-host-iframe {
+.app-host-embedded__frame {
+  position: relative;
   flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-host-embedded__frame > .app-host-iframe {
+  position: absolute;
+  inset: 0;
+  flex: none;
+  width: 100%;
+  height: 100%;
 }
 
 .app-host-federated-error {
