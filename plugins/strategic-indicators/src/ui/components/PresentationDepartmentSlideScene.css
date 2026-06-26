@@ -244,9 +244,14 @@
 
 .si-presentation-department-slide__priority-metrics strong,
 .si-presentation-department-slide__priority-metrics--grid strong {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   color: var(--si-title);
   font-size: 0.98rem;
   line-height: 1.3;
+  overflow: visible;
 }
 
 .si-presentation-department-slide__signal-grid {

@@ -1,8 +1,11 @@
 .si-indicators-page {
   min-height: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 24px;
   color: var(--si-text);
   background: var(--app-canvas, var(--bg, #ffffff));
+  overflow-x: clip;
 }
 
 @media (max-width: 900px) {

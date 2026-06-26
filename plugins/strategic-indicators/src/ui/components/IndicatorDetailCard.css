@@ -55,7 +55,7 @@
   max-width: 100%;
   font-size: 15px;
   color: var(--si-title);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .si-indicator-card__goal-value--missing,

@@ -708,6 +708,19 @@
   font-size: 19px;
 }
 
+.si-org-chart--single-scope
+  .si-tree-indicator-card__goals
+  .si-indicator-card__goal-value:has(.si-scope-badges) {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.si-org-chart--single-scope
+  .si-tree-indicator-card__goals
+  .si-indicator-card__goal-value:not(:has(.si-scope-badges)) {
+  font-size: 19px;
+}
+
 .si-org-chart--single-scope .si-tree-indicator-card__meta {
   font-size: 13px;
 }
@@ -754,6 +767,7 @@
   width: auto;
   max-width: 100%;
   overflow: visible;
+  font-size: inherit;
 }
 
 .si-tree-indicator-card__footer {

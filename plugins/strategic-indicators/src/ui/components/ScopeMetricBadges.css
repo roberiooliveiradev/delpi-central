@@ -11,25 +11,26 @@
 .si-scope-badges__empty {
   display: inline-block;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: var(--si-scope-badge-text, var(--si-title));
+  overflow-wrap: anywhere;
 }
 
 .si-scope-badge {
   display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
   max-width: 100%;
-  min-width: 0;
+  min-width: min-content;
   padding: 6px 10px;
   border-radius: 999px;
   background: var(--si-scope-branch-01-bg, rgba(0, 116, 206, 0.08));
   border: 1px solid var(--si-scope-branch-01-border, rgba(0, 116, 206, 0.18));
   color: var(--si-scope-branch-01-text, var(--si-scope-badge-text, #0b2d4a));
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .si-scope-badge--branch-01 {
@@ -63,20 +64,20 @@
 }
 
 .si-scope-badge__key {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.3px;
   color: var(--si-scope-badge-key-text, inherit);
+  white-space: nowrap;
 }
 
 .si-scope-badge__value {
-  min-width: 0;
+  flex: 0 0 auto;
   font-size: 12px;
   font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .si-scope-badge--more {
@@ -96,40 +97,12 @@
   padding: 0 4px;
 }
 
-/* Layout compacto: células estreitas (tabela, painéis) */
+/* Pilha compacta: badge no tamanho do conteúdo (tabela, cards, árvore, alertas) */
 .si-scope-badges--compact,
 .si-indicator-card__goal-value .si-scope-badges,
 .si-indicator-table__metrics .si-scope-badges,
 .si-critical-item__metrics .si-scope-badges,
-.si-indicator-priority-item__meta .si-scope-badges {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 100%;
-  gap: 6px;
-}
-
-.si-scope-badges--compact .si-scope-badge,
-.si-indicator-card__goal-value .si-scope-badge,
-.si-indicator-table__metrics .si-scope-badge,
-.si-critical-item__metrics .si-scope-badge,
-.si-indicator-priority-item__meta .si-scope-badge {
-  width: 100%;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 5px 8px;
-}
-
-.si-scope-badges--compact .si-scope-badge__value,
-.si-indicator-card__goal-value .si-scope-badge__value,
-.si-indicator-table__metrics .si-scope-badge__value,
-.si-critical-item__metrics .si-scope-badge__value,
-.si-indicator-priority-item__meta .si-scope-badge__value {
-  flex: 1 1 auto;
-  text-align: right;
-}
-
-/* Árvore SI: badge de unidade no tamanho do conteúdo (não estica a célula pai) */
+.si-indicator-priority-item__meta .si-scope-badges,
 .si-tree-indicator-card__goals .si-scope-badges {
   display: flex;
   flex-direction: column;
@@ -139,18 +112,15 @@
   gap: 6px;
 }
 
+.si-scope-badges--compact .si-scope-badge,
+.si-indicator-card__goal-value .si-scope-badge,
+.si-indicator-table__metrics .si-scope-badge,
+.si-critical-item__metrics .si-scope-badge,
+.si-indicator-priority-item__meta .si-scope-badge,
 .si-tree-indicator-card__goals .si-scope-badge {
-  width: fit-content;
+  width: max-content;
   max-width: 100%;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 8px;
   padding: 5px 10px;
-}
-
-.si-tree-indicator-card__goals .si-scope-badge__value {
-  flex: 0 0 auto;
-  text-align: left;
-  overflow: visible;
-  text-overflow: clip;
-  white-space: nowrap;
 }

@@ -53,7 +53,7 @@
 
 .si-critical-item__metrics > span {
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
 }
 
 .si-critical-item__recommendation {
