@@ -184,6 +184,31 @@ export type InventoryTurnoverSummary = DashboardGoalFields & {
   cpv_average_monthly: number;
 };
 
+export type NegotiationSavingsSummary = DashboardGoalFields & {
+  total_savings: number | null;
+};
+
+export type NegotiationSavingsBranchItem = {
+  branch?: string;
+  total_savings?: number | null;
+};
+
+export type NegotiationSavingsEntry = {
+  branch?: string;
+  date?: string;
+  savings_amount?: number;
+};
+
+export type NegotiationSavingsData = {
+  start_date?: string;
+  end_date?: string;
+  branch?: string | null;
+  total_savings?: number | null;
+  summary: NegotiationSavingsSummary;
+  branches: NegotiationSavingsBranchItem[];
+  entries: NegotiationSavingsEntry[];
+};
+
 export type InventoryTurnoverData = {
   branch: string;
   location: string;

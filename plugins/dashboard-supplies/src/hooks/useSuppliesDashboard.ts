@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import {
   getCpv,
   getInventoryTurnover,
+  getNegotiationSavings,
   getOtd,
   getStockValueSummary,
 } from "../api/suppliesApi";
 import type {
   CpvData,
   InventoryTurnoverData,
+  NegotiationSavingsData,
   OtdData,
   StockValueData,
   SuppliesFilterParams,
@@ -24,6 +26,7 @@ type SectionErrors = {
   otd?: string;
   stockValue?: string;
   inventoryTurnover?: string;
+  negotiationSavings?: string;
 };
 
 type UseSuppliesDashboardParams = {
@@ -36,6 +39,7 @@ type UseSuppliesDashboardResult = {
   otd: OtdData | null;
   stockValue: StockValueData | null;
   inventoryTurnover: InventoryTurnoverData | null;
+  negotiationSavings: NegotiationSavingsData | null;
   loading: boolean;
   refreshing: boolean;
   requestProgress: RequestProgress;
@@ -53,6 +57,8 @@ export function useSuppliesDashboard({
   const [stockValue, setStockValue] = useState<StockValueData | null>(null);
   const [inventoryTurnover, setInventoryTurnover] =
     useState<InventoryTurnoverData | null>(null);
+  const [negotiationSavings, setNegotiationSavings] =
+    useState<NegotiationSavingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +76,8 @@ export function useSuppliesDashboard({
         cpv !== null ||
         otd !== null ||
         stockValue !== null ||
-        inventoryTurnover !== null;
+        inventoryTurnover !== null ||
+        negotiationSavings !== null;
 
       try {
         setError(null);
@@ -85,6 +92,15 @@ export function useSuppliesDashboard({
             (signal) => getOtd(periodParams, signal),
             (signal) => getStockValueSummary(stockParams, signal),
             (signal) => getInventoryTurnover(periodParams, signal),
+            (signal) =>
+              getNegotiationSavings(
+                {
+                  start_date: periodParams.start_date,
+                  end_date: periodParams.end_date,
+                  branch: periodParams.branch,
+                },
+                signal
+              ),
           ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
           controller.signal,
           setRequestProgress
@@ -103,6 +119,10 @@ export function useSuppliesDashboard({
           {
             key: "inventoryTurnover",
             set: setInventoryTurnover as (v: unknown) => void,
+          },
+          {
+            key: "negotiationSavings",
+            set: setNegotiationSavings as (v: unknown) => void,
           },
         ];
 
@@ -159,6 +179,7 @@ export function useSuppliesDashboard({
     otd,
     stockValue,
     inventoryTurnover,
+    negotiationSavings,
     loading,
     refreshing,
     requestProgress,

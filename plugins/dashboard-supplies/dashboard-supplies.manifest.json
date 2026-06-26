@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "dashboard-supplies",
   "name": "Dashboard Suprimentos",
-  "description": "Painel de suprimentos (CPV, OTD compras, estoque e giro de estoque) via api-delpi",
+  "description": "Painel de suprimentos (CPV, OTD compras, estoque, giro e economia em negociações) via api-delpi",
   "icon": "package-icon",
   "version": "0.2.0",
   "type": "microfrontend",
@@ -14,7 +14,7 @@
     {
       "code": "dashboard-supplies.view",
       "name": "Acesso ao dashboard de suprimentos",
-      "description": "Permite visualizar CPV, OTD, valor de estoque e giro de estoque",
+      "description": "Permite visualizar CPV, OTD, valor de estoque, giro de estoque e economia em negociações",
       "module": "dashboard-supplies"
     }
   ],
@@ -58,6 +58,14 @@
       "permission": "dashboard-supplies.view",
       "icon": "package-icon",
       "order": 21,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/dashboard-supplies/negotiation-savings",
+      "label": "Economia em negociações",
+      "permission": "dashboard-supplies.view",
+      "icon": "package-icon",
+      "order": 22,
       "showInMenu": false
     }
   ],

@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: SUPPLIES_ROUTES.otd, label: "OTD compras" },
   { path: SUPPLIES_ROUTES.stock, label: "Estoque" },
   { path: SUPPLIES_ROUTES.inventoryTurnover, label: "Giro de estoque" },
+  { path: SUPPLIES_ROUTES.negotiationSavings, label: "Economia negociações" },
 ] as const;
 
 function isActive(path: string, currentPath?: string): boolean {

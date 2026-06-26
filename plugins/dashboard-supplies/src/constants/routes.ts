@@ -6,4 +6,5 @@ export const SUPPLIES_ROUTES = {
   otd: `${SUPPLIES_BASE_PATH}/otd`,
   stock: `${SUPPLIES_BASE_PATH}/stock`,
   inventoryTurnover: `${SUPPLIES_BASE_PATH}/inventory-turnover`,
+  negotiationSavings: `${SUPPLIES_BASE_PATH}/negotiation-savings`,
 } as const;

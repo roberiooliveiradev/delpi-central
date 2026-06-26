@@ -4,6 +4,7 @@ import { useSuppliesRouterPath } from "./hooks/useSuppliesRouterPath";
 import { CpvPage } from "./pages/CpvPage";
 import { DashboardSuppliesPage } from "./pages/DashboardSuppliesPage";
 import { InventoryTurnoverPage } from "./pages/InventoryTurnoverPage";
+import { NegotiationSavingsPage } from "./pages/NegotiationSavingsPage";
 import { OtdPage } from "./pages/OtdPage";
 import { StockPage } from "./pages/StockPage";
 
@@ -40,6 +41,13 @@ function renderPage(path: string) {
     path.startsWith(`${SUPPLIES_ROUTES.inventoryTurnover}/`)
   ) {
     return <InventoryTurnoverPage pathname={path} />;
+  }
+
+  if (
+    path === SUPPLIES_ROUTES.negotiationSavings ||
+    path.startsWith(`${SUPPLIES_ROUTES.negotiationSavings}/`)
+  ) {
+    return <NegotiationSavingsPage pathname={path} />;
   }
 
   return <DashboardSuppliesPage pathname={path} />;

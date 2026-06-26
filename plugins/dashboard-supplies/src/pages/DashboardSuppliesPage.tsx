@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import {
   CircleGauge,
+  HandCoins,
   Package,
   Percent,
   TrendingUp,
@@ -45,6 +46,11 @@ const SHORTCUTS = [
     description: "Giro em meses, contexto de estoque e CPV do período.",
     href: SUPPLIES_ROUTES.inventoryTurnover,
   },
+  {
+    title: "Economia em negociações",
+    description: "Economia em compras por filial (planilha IDD Suprimentos).",
+    href: SUPPLIES_ROUTES.negotiationSavings,
+  },
 ] as const;
 
 type DashboardSuppliesPageProps = {
@@ -67,7 +73,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     filterState,
   } = filters;
 
-  const { cpv, otd, stockValue, inventoryTurnover, loading, refreshing, requestProgress, error, reload } =
+  const { cpv, otd, stockValue, inventoryTurnover, negotiationSavings, loading, refreshing, requestProgress, error, reload } =
     useSuppliesDashboard({ periodParams, stockParams });
 
   const periodLabel = useMemo(
@@ -78,7 +84,11 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
   const locationLabel = location ? `Local ${location}` : "Todas as localizações";
   const isBusy = loading || refreshing;
   const hasData =
-    cpv !== null || otd !== null || stockValue !== null || inventoryTurnover !== null;
+    cpv !== null ||
+    otd !== null ||
+    stockValue !== null ||
+    inventoryTurnover !== null ||
+    negotiationSavings !== null;
 
   return (
     <div className="dashboard-supplies dashboard-page">
@@ -105,7 +115,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         requestProgress={requestProgress}
         onRetry={reload}
         refreshTitle="Atualizando dashboard de suprimentos"
-        refreshDescription="Recalculando CPV, OTD, estoque e giro com os filtros selecionados."
+        refreshDescription="Recalculando CPV, OTD, estoque, giro e economia em negociações com os filtros selecionados."
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
@@ -167,6 +177,24 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           )}
           icon={<Package size={22} />}
           loading={isBusy && !inventoryTurnover}
+        />
+        <KpiCard
+          title="Economia em negociações"
+          value={formatCurrency(
+            negotiationSavings?.summary.total_savings ?? negotiationSavings?.total_savings,
+          )}
+          {...buildKpiGoalPresentation(
+            `${branchLabel} · ${periodLabel}`,
+            negotiationSavings?.summary,
+            formatCurrency,
+            {
+              realizedValue:
+                negotiationSavings?.summary.total_savings ??
+                negotiationSavings?.total_savings,
+            },
+          )}
+          icon={<HandCoins size={22} />}
+          loading={isBusy && !negotiationSavings}
         />
       </section>
       <section className="ds-shortcuts-grid">

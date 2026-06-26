@@ -115,3 +115,27 @@ export function buildOtdTrendSeries(
     };
   });
 }
+
+export function buildNegotiationSavingsTrendSeries(
+  entries: Array<{ date?: string; savings_amount?: number }>,
+  dateStart?: string,
+  dateEnd?: string
+): Array<{ name: string; savings: number }> {
+  const byMonth = new Map<string, number>();
+
+  for (const entry of entries) {
+    const key = entry.date ? dateToMonthKey(entry.date) : null;
+    if (!key) continue;
+  const startKey = dateStart ? dateToMonthKey(dateStart) : null;
+  const endKey = dateEnd ? dateToMonthKey(dateEnd) : null;
+  if (startKey && key < startKey) continue;
+  if (endKey && key > endKey) continue;
+    byMonth.set(key, (byMonth.get(key) ?? 0) + Number(entry.savings_amount ?? 0));
+  }
+
+  const { buckets } = buildPeriodBuckets(dateStart, dateEnd, "month");
+  return buckets.map((bucket) => ({
+    name: bucket.label,
+    savings: byMonth.get(bucket.key) ?? 0,
+  }));
+}

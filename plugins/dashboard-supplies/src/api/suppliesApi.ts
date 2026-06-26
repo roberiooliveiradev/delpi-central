@@ -3,6 +3,7 @@ import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   CpvData,
   InventoryTurnoverData,
+  NegotiationSavingsData,
   OtdData,
   StockValueData,
   SuppliesFilterParams,
@@ -98,6 +99,17 @@ export function getInventoryTurnover(
 ) {
   return fetchSuppliesData<InventoryTurnoverData>(
     "/inventory-turnover",
+    params,
+    signal
+  );
+}
+
+export function getNegotiationSavings(
+  params: Pick<SuppliesFilterParams, "start_date" | "end_date" | "branch">,
+  signal?: AbortSignal
+) {
+  return fetchSuppliesData<NegotiationSavingsData>(
+    "/negotiation-savings/summary",
     params,
     signal
   );
