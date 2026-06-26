@@ -24,7 +24,7 @@ class SuppliesMetricsSnapshot:
     start_date: str | None
     end_date: str | None
     cpv_pct: float
-    inventory_turnover_months: float
+    inventory_turnover_times: float
     otd_pct: float
     stock_value: float
     negotiation_savings_by_branch: dict[str, float | None] = field(default_factory=dict)
@@ -167,8 +167,8 @@ class SuppliesMetricsSnapshotService:
             start_date=start_date,
             end_date=end_date,
             cpv_pct=self._to_float(cpv_summary.get("cpv_percentage")),
-            inventory_turnover_months=self._to_float(
-                inventory_turnover_summary.get("inventory_turnover_months")
+            inventory_turnover_times=self._to_float(
+                inventory_turnover_summary.get("inventory_turnover_times")
             ),
             otd_pct=self._to_float(otd_summary.get("otd_percentage")),
             stock_value=self._to_float(stock_value_summary.get("total_stock_value")),

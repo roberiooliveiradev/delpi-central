@@ -102,7 +102,7 @@ class SuppliesIndicatorsSnapshotProvider(
                     snapshot=snapshot,
                     indicator_id="supplies-stock-turnover",
                     source="supplies_inventory_turnover",
-                    value=snapshot.inventory_turnover_months,
+                    value=snapshot.inventory_turnover_times,
                 ),
                 self._build_indicator_measurement(
                     snapshot=snapshot,
@@ -164,7 +164,7 @@ class SuppliesIndicatorsSnapshotProvider(
     def _value_attr_for_indicator(indicator_id: str) -> str:
         mapping = {
             "supplies-cpv": "cpv_pct",
-            "supplies-stock-turnover": "inventory_turnover_months",
+            "supplies-stock-turnover": "inventory_turnover_times",
             "supplies-otd": "otd_pct",
             "supplies-stock-value": "stock_value",
         }

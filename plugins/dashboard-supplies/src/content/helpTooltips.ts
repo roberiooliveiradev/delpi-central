@@ -24,7 +24,9 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     stockValue:
       "Valor total do estoque (SB9) no recorte de filial e localização selecionados.",
     inventoryTurnoverMonths:
-      "Giro de estoque em meses: relação entre saldo médio e CPV mensalizado no período.",
+      "Giro de estoque em meses de cobertura (estoque ÷ CPV médio mensal). Métrica auxiliar — o indicador oficial é em vezes.",
+    inventoryTurnoverTimes:
+      "Giro de estoque em vezes (CPV total ÷ valor de estoque). Indicador alinhado ao catálogo de Indicadores Estratégicos.",
     negotiationSavings:
       "Economia registrada em negociações de compras na planilha IDD Suprimentos (Google Sheets).",
     cpvMovements: "Quantidade de movimentos SD3 considerados no cálculo do CPV.",
@@ -32,8 +34,9 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     otd: "Percentual de pontualidade (OTD) das linhas de compra recebidas no período.",
     onTimeLines: "Linhas de compra recebidas dentro do prazo prometido.",
     lateLines: "Linhas de compra recebidas após a data prometida.",
-    turnoverMonths: "Giro de estoque expresso em meses de cobertura.",
-    turnoverTimes: "Giro em vezes: CPV total dividido pelo valor de estoque.",
+    turnoverMonths: "Giro de estoque expresso em meses de cobertura (métrica auxiliar).",
+    turnoverTimes:
+      "Giro em vezes: CPV total dividido pelo valor de estoque. Indicador oficial do IDD e dos Indicadores Estratégicos.",
     stockQuantity: "Quantidade total em estoque no recorte filtrado.",
     locations: "Quantidade de localizações com saldo registrado.",
     avgUnitValue: "Valor médio por unidade em estoque (custo unitário médio).",

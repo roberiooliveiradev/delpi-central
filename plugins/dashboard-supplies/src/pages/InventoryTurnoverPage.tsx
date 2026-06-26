@@ -18,9 +18,9 @@ import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 type InventoryTurnoverPageProps = { pathname?: string };
 
 const CALC_MODE_SUBTITLE: Record<string, string> = {
-  closed_month: "Mês fechado — estoque ÷ CPV médio mensal",
-  full_month_range: "Meses completos — estoque ÷ CPV médio mensal",
-  partial_period_monthlyized: "Período parcial mensalizado — estoque ÷ CPV médio mensal",
+  closed_month: "Mês fechado — CPV total ÷ estoque (vezes)",
+  full_month_range: "Meses completos — CPV total ÷ estoque (vezes)",
+  partial_period_monthlyized: "Período parcial — CPV total ÷ estoque (vezes)",
 };
 
 export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) {
@@ -66,7 +66,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
   const subtitle =
     (data?.calculation_context.calculation_mode &&
       CALC_MODE_SUBTITLE[data.calculation_context.calculation_mode]) ||
-    "Estoque ÷ CPV médio mensal — em meses";
+    "CPV total ÷ estoque — em vezes";
 
   const isBusy = loading || refreshing;
 
@@ -109,27 +109,27 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
-          title="Giro (meses)"
-          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.turnoverMonths}
+          title="Giro de estoque"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.turnoverTimes}
           value={formatDashboardMetricValue(
-            data?.summary.inventory_turnover_months,
+            data?.summary.inventory_turnover_times,
             data?.summary,
           )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel} · ${periodLabel}`,
             data?.summary,
             undefined,
-            { realizedValue: data?.summary.inventory_turnover_months },
+            { realizedValue: data?.summary.inventory_turnover_times },
           )}
-          icon={<Package size={22} />}
+          icon={<TrendingUp size={22} />}
           loading={isBusy && !data}
         />
         <KpiCard
-          title="Giro (vezes)"
-          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.turnoverTimes}
-          value={formatDecimal(data?.summary.inventory_turnover_times, 2)}
-          subtitle="CPV total ÷ estoque"
-          icon={<TrendingUp size={22} />}
+          title="Giro (meses)"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.turnoverMonths}
+          value={formatDecimal(data?.summary.inventory_turnover_months, 2)}
+          subtitle="Estoque ÷ CPV médio mensal"
+          icon={<Package size={22} />}
           loading={isBusy && !data}
         />
         <KpiCard

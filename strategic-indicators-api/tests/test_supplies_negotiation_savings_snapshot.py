@@ -16,13 +16,36 @@ def _snapshot(**overrides) -> SuppliesMetricsSnapshot:
         "start_date": "2026-05-01",
         "end_date": "2026-05-31",
         "cpv_pct": 0.0,
-        "inventory_turnover_months": 0.0,
+        "inventory_turnover_times": 0.0,
         "otd_pct": 0.0,
         "stock_value": 0.0,
         "negotiation_savings_by_branch": {"01": 15000.0, "02": 22000.0},
     }
     defaults.update(overrides)
     return SuppliesMetricsSnapshot(**defaults)
+
+
+def test_supplies_stock_turnover_indicator_uses_times() -> None:
+    service = MagicMock()
+    service.get_snapshot.return_value = _snapshot(inventory_turnover_times=0.17)
+
+    provider = SuppliesIndicatorsSnapshotProvider(
+        supplies_metrics_snapshot_service=service,
+    )
+    result = provider.get_supplies_indicators_snapshot(
+        start_date="2026-06-01",
+        end_date="2026-06-26",
+        branch="01",
+    )
+
+    turnover = next(
+        item
+        for item in result["items"]
+        if item["indicator_id"] == "supplies-stock-turnover"
+    )
+
+    assert turnover["source"] == "supplies_inventory_turnover"
+    assert turnover["value"] == 0.17
 
 
 def test_supplies_snapshot_exposes_negotiation_savings_with_unit_values() -> None:

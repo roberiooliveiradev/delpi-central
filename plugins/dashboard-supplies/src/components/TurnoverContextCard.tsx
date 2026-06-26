@@ -32,14 +32,14 @@ function buildTurnoverStats(data: InventoryTurnoverData): ContextStat[] {
   const mode = data.calculation_context.calculation_mode;
   return [
     {
-      label: "Giro (meses)",
-      value: formatDecimal(data.summary.inventory_turnover_months, 2),
-      hint: "Estoque ÷ CPV médio mensal",
-    },
-    {
       label: "Giro (vezes)",
       value: formatDecimal(data.summary.inventory_turnover_times, 2),
       hint: "CPV total ÷ estoque",
+    },
+    {
+      label: "Giro (meses)",
+      value: formatDecimal(data.summary.inventory_turnover_months, 2),
+      hint: "Estoque ÷ CPV médio mensal",
     },
     {
       label: "Estoque no cálculo",
@@ -102,7 +102,7 @@ export function TurnoverContextCard({
         <div className="ds-stock-context-card__intro">
           <h2 className="ds-stock-context-card__title">TOTVS Protheus</h2>
           <p className="ds-stock-context-card__sources">
-            Saldo de estoque e CPV (SD3) no período — base do giro de estoque em meses.
+            Saldo de estoque e CPV (SD3) no período — base do giro em vezes e em meses.
           </p>
         </div>
         <span

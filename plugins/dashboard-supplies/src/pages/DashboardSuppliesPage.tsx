@@ -180,17 +180,17 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           loading={isBusy && !stockValue}
         />
         <KpiCard
-          title="Giro de estoque (meses)"
-          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.inventoryTurnoverMonths}
+          title="Giro de estoque"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.turnoverTimes}
           value={formatDashboardMetricValue(
-            inventoryTurnover?.summary.inventory_turnover_months,
+            inventoryTurnover?.summary.inventory_turnover_times,
             inventoryTurnover?.summary,
           )}
           {...buildKpiGoalPresentation(
             periodLabel,
             inventoryTurnover?.summary,
             undefined,
-            { realizedValue: inventoryTurnover?.summary.inventory_turnover_months },
+            { realizedValue: inventoryTurnover?.summary.inventory_turnover_times },
           )}
           icon={<Package size={22} />}
           loading={isBusy && !inventoryTurnover}
