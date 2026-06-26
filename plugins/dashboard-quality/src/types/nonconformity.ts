@@ -15,12 +15,14 @@ export type ListNonconformitiesParams = PaginationParams & {
 export type Nonconformity = {
   branch: string;
   code: string;
+  code_display: string | null;
   revision: string;
   type_code: string;
   type_label: string | null;
   status_code: string | null;
   status_label: string | null;
   description: string | null;
+  detailed_description: string | null;
   item_code: string | null;
   op_code: string | null;
   registered_date: string | null;
@@ -31,6 +33,7 @@ export type Nonconformity = {
   destination_department: string | null;
   customer_code: string | null;
   customer_store: string | null;
+  customer_name: string | null;
   supplier_code: string | null;
   supplier_store: string | null;
   produced_quantity: number | null;

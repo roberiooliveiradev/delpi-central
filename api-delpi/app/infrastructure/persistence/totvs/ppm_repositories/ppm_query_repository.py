@@ -23,6 +23,16 @@ from app.infrastructure.persistence.totvs.ppm_repositories.ppm_inspection_sql_bu
 from app.infrastructure.persistence.totvs.ppm_repositories.ppm_nc_query import (
     build_nc_where_clause,
 )
+from app.infrastructure.persistence.totvs.quality.qi2_record_sql import (
+    qi2_detailed_description_sql,
+    qi2_from_with_customer,
+    qi2_prefix_where_clause,
+)
+from app.domain.services.quality.nonconformity_display_service import (
+    format_nonconformity_code,
+    normalize_memo_text,
+    normalize_optional_text,
+)
 from app.infrastructure.persistence.totvs.ppm_repositories.ppm_protheus_dates import (
     exclusive_end_date,
     to_protheus_date,
@@ -34,13 +44,19 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
     def _map_ppm_item(self, row: dict) -> PpmItem:
         """Mapeia linha SQL para entidade (ignora colunas extras do SELECT)."""
+        code = str(row.get("code") or "").strip()
         return PpmItem(
             branch=str(row.get("branch") or "").strip(),
             registered_date=row.get("registered_date"),
-            code=str(row.get("code") or "").strip(),
+            code=code,
+            code_display=format_nonconformity_code(code),
             revision=str(row.get("revision") or "").strip(),
-            item_code=row.get("item_code"),
-            description=row.get("description"),
+            item_code=normalize_optional_text(row.get("item_code")),
+            description=normalize_optional_text(row.get("description")),
+            detailed_description=normalize_memo_text(row.get("detailed_description")),
+            customer_code=normalize_optional_text(row.get("customer_code")),
+            customer_store=normalize_optional_text(row.get("customer_store")),
+            customer_name=normalize_optional_text(row.get("customer_name")),
             returned_quantity_original=row.get("returned_quantity_original"),
             returned_quantity_un=float(row.get("returned_quantity_un") or 0),
         )
@@ -317,8 +333,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         )
 
         base_sql = f"""
-            FROM QI2010 WITH (NOLOCK)
-            WHERE {where_clause}
+            {qi2_from_with_customer(table_alias="nc")}
+            WHERE {qi2_prefix_where_clause(where_clause, table_alias="nc")}
         """
 
         with self as repo:
@@ -330,24 +346,28 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
             select_sql = f"""
                 SELECT
-                    QI2_FILIAL AS branch,
-                    FORMAT(TRY_CONVERT(date, QI2_OCORRE, 112), 'dd/MM/yyyy') AS registered_date,
-                    QI2_FNC AS code,
-                    QI2_REV AS revision,
-                    QI2_TIPO AS ppm_type,
+                    nc.QI2_FILIAL AS branch,
+                    FORMAT(TRY_CONVERT(date, nc.QI2_OCORRE, 112), 'dd/MM/yyyy') AS registered_date,
+                    nc.QI2_FNC AS code,
+                    nc.QI2_REV AS revision,
+                    nc.QI2_TIPO AS ppm_type,
                     CASE
-                        WHEN QI2_TIPO = '1' THEN 'interno'
-                        WHEN QI2_TIPO = '2' THEN 'externo_cliente'
-                        WHEN QI2_TIPO = '3' THEN 'fornecedor'
+                        WHEN nc.QI2_TIPO = '1' THEN 'interno'
+                        WHEN nc.QI2_TIPO = '2' THEN 'externo_cliente'
+                        WHEN nc.QI2_TIPO = '3' THEN 'fornecedor'
                         ELSE 'outro'
                     END AS ppm_type_description,
-                    QI2_ITEM AS item_code,
-                    QI2_DESCR AS description,
-                    QI2_QTDDEV AS returned_quantity_original,
+                    nc.QI2_ITEM AS item_code,
+                    nc.QI2_DESCR AS description,
+                    {qi2_detailed_description_sql(table_alias="nc")},
+                    NULLIF(LTRIM(RTRIM(nc.QI2_CODCLI)), '') AS customer_code,
+                    NULLIF(LTRIM(RTRIM(nc.QI2_LOJCLI)), '') AS customer_store,
+                    NULLIF(LTRIM(RTRIM(SA1.A1_NOME)), '') AS customer_name,
+                    nc.QI2_QTDDEV AS returned_quantity_original,
                     CAST(
                         COALESCE(
-                            TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'pt-BR'),
-                            TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'en-US'),
+                            TRY_PARSE(NULLIF(LTRIM(RTRIM(nc.QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'pt-BR'),
+                            TRY_PARSE(NULLIF(LTRIM(RTRIM(nc.QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'en-US'),
                             0
                         ) AS FLOAT
                     ) AS returned_quantity_un
@@ -360,7 +380,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
                 sql = f"""
                     {select_sql}
-                    ORDER BY QI2_OCORRE DESC, QI2_FNC DESC
+                    ORDER BY nc.QI2_OCORRE DESC, nc.QI2_FNC DESC
                     OFFSET ? ROWS
                     FETCH NEXT ? ROWS ONLY
                 """
@@ -372,7 +392,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
                 sql = f"""
                     {select_sql}
-                    ORDER BY QI2_OCORRE DESC, QI2_FNC DESC
+                    ORDER BY nc.QI2_OCORRE DESC, nc.QI2_FNC DESC
                 """
 
                 final_params = params

@@ -55,6 +55,7 @@
     "AC2010",
 
     "QI2010",
+    "SYP010",
 
     "SX2010",
     "SX3010",
@@ -118,6 +119,7 @@
     "AC2010": "Estágios do Processo de Vendas — usada para identificar a descrição do estágio da OV/LMP, como AC2_STAGE e AC2_DESCRI.",
 
     "QI2010": "Não Conformidades — necessária para cálculo do PPM interno/externo e análise de FNCs.",
+    "SYP010": "Repositório de campos MEMO (MSMM) — descrição detalhada das não conformidades (QI2_DDETA).",
 
     "SX2010": "Dicionário de Tabelas Protheus — usada para localizar e descrever tabelas do sistema.",
     "SX3010": "Dicionário de Campos Protheus — usada para consultar colunas, tipos, tamanhos e descrições.",

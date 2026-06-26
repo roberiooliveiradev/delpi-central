@@ -24,9 +24,14 @@ export type PpmItem = {
   branch: string;
   registered_date: string | null;
   code: string;
+  code_display: string | null;
   revision: string;
   item_code: string | null;
   description: string | null;
+  detailed_description: string | null;
+  customer_code: string | null;
+  customer_store: string | null;
+  customer_name: string | null;
   returned_quantity_original: string | null;
   returned_quantity_un: number;
 };

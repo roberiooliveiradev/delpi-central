@@ -2,6 +2,16 @@
 
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.quality.qi2_record_sql import (
+    qi2_detailed_description_sql,
+    qi2_from_with_customer,
+    qi2_prefix_where_clause,
+)
+from app.domain.services.quality.nonconformity_display_service import (
+    format_nonconformity_code,
+    normalize_memo_text,
+    normalize_optional_text,
+)
 
 from app.domain.entities.nonconformity.nonconformity import Nonconformity
 from app.application.dto.nonconformity.list_nonconformity_request import (
@@ -17,6 +27,36 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
 
     INTERNAL_TYPES = ["1"]
     EXTERNAL_TYPES = ["2", "3"]
+
+    def _map_nonconformity(self, row: dict) -> Nonconformity:
+        code = str(row.get("code") or "").strip()
+        return Nonconformity(
+            branch=str(row.get("branch") or "").strip(),
+            code=code,
+            revision=str(row.get("revision") or "").strip(),
+            type_code=str(row.get("type_code") or "").strip(),
+            code_display=format_nonconformity_code(code),
+            type_label=row.get("type_label"),
+            status_code=row.get("status_code"),
+            status_label=row.get("status_label"),
+            description=normalize_optional_text(row.get("description")),
+            detailed_description=normalize_memo_text(row.get("detailed_description")),
+            item_code=normalize_optional_text(row.get("item_code")),
+            op_code=normalize_optional_text(row.get("op_code")),
+            registered_date=row.get("registered_date"),
+            occurrence_date=row.get("occurrence_date"),
+            priority_code=row.get("priority_code"),
+            priority_label=row.get("priority_label"),
+            origin_department=normalize_optional_text(row.get("origin_department")),
+            destination_department=normalize_optional_text(row.get("destination_department")),
+            customer_code=normalize_optional_text(row.get("customer_code")),
+            customer_store=normalize_optional_text(row.get("customer_store")),
+            customer_name=normalize_optional_text(row.get("customer_name")),
+            supplier_code=normalize_optional_text(row.get("supplier_code")),
+            supplier_store=normalize_optional_text(row.get("supplier_store")),
+            produced_quantity=row.get("produced_quantity"),
+            returned_quantity=row.get("returned_quantity"),
+        )
 
     def list_nonconformities(
         self,
@@ -44,8 +84,8 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
         where_clause, params = qb.build()
 
         base_sql = f"""
-            FROM QI2010
-            WHERE {where_clause}
+            {qi2_from_with_customer(table_alias="nc")}
+            WHERE {qi2_prefix_where_clause(where_clause, table_alias="nc")}
         """
 
         with self as repo:
@@ -59,51 +99,53 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
 
             select_sql = f"""
                 SELECT
-                    QI2_FILIAL as branch,
-                    QI2_FNC as code,
-                    QI2_REV as revision,
-                    QI2_TIPO as type_code,
+                    nc.QI2_FILIAL as branch,
+                    nc.QI2_FNC as code,
+                    nc.QI2_REV as revision,
+                    nc.QI2_TIPO as type_code,
                     CASE
-                        WHEN QI2_TIPO = '1' THEN 'internal'
-                        WHEN QI2_TIPO = '2' THEN 'customer'
-                        WHEN QI2_TIPO = '3' THEN 'supplier'
+                        WHEN nc.QI2_TIPO = '1' THEN 'internal'
+                        WHEN nc.QI2_TIPO = '2' THEN 'customer'
+                        WHEN nc.QI2_TIPO = '3' THEN 'supplier'
                         ELSE NULL
                     END as type_label,
-                    QI2_STATUS as status_code,
+                    nc.QI2_STATUS as status_code,
                     CASE
-                        WHEN QI2_STATUS = '1' THEN 'registered'
-                        WHEN QI2_STATUS = '2' THEN 'under_analysis'
-                        WHEN QI2_STATUS = '3' THEN 'proceeds'
-                        WHEN QI2_STATUS = '4' THEN 'does_not_proceed'
-                        WHEN QI2_STATUS = '5' THEN 'cancelled'
+                        WHEN nc.QI2_STATUS = '1' THEN 'registered'
+                        WHEN nc.QI2_STATUS = '2' THEN 'under_analysis'
+                        WHEN nc.QI2_STATUS = '3' THEN 'proceeds'
+                        WHEN nc.QI2_STATUS = '4' THEN 'does_not_proceed'
+                        WHEN nc.QI2_STATUS = '5' THEN 'cancelled'
                         ELSE NULL
                     END as status_label,
-                    QI2_DESCR as description,
-                    QI2_ITEM as item_code,
-                    QI2_OP as op_code,
+                    nc.QI2_DESCR as description,
+                    {qi2_detailed_description_sql(table_alias="nc")},
+                    nc.QI2_ITEM as item_code,
+                    nc.QI2_OP as op_code,
                     FORMAT(
-                        TRY_CONVERT(date, QI2_REGIST, 112),
+                        TRY_CONVERT(date, nc.QI2_REGIST, 112),
                         'dd/MM/yyyy'
                     ) as registered_date,
                     FORMAT(
-                        TRY_CONVERT(date, QI2_OCORRE, 112),
+                        TRY_CONVERT(date, nc.QI2_OCORRE, 112),
                         'dd/MM/yyyy'
                     ) as occurrence_date,
-                    QI2_PRIORI as priority_code,
+                    nc.QI2_PRIORI as priority_code,
                     CASE
-                        WHEN QI2_PRIORI = '1' THEN 'low'
-                        WHEN QI2_PRIORI = '2' THEN 'medium'
-                        WHEN QI2_PRIORI = '3' THEN 'high'
+                        WHEN nc.QI2_PRIORI = '1' THEN 'low'
+                        WHEN nc.QI2_PRIORI = '2' THEN 'medium'
+                        WHEN nc.QI2_PRIORI = '3' THEN 'high'
                         ELSE NULL
                     END as priority_label,
-                    QI2_ORIDEP as origin_department,
-                    QI2_DESDEP as destination_department,
-                    QI2_CODCLI as customer_code,
-                    QI2_LOJCLI as customer_store,
-                    QI2_CODFOR as supplier_code,
-                    QI2_LOJFOR as supplier_store,
-                    QI2_QTDPRO as produced_quantity,
-                    QI2_QTDDEV as returned_quantity
+                    nc.QI2_ORIDEP as origin_department,
+                    nc.QI2_DESDEP as destination_department,
+                    NULLIF(LTRIM(RTRIM(nc.QI2_CODCLI)), '') as customer_code,
+                    NULLIF(LTRIM(RTRIM(nc.QI2_LOJCLI)), '') as customer_store,
+                    NULLIF(LTRIM(RTRIM(SA1.A1_NOME)), '') as customer_name,
+                    nc.QI2_CODFOR as supplier_code,
+                    nc.QI2_LOJFOR as supplier_store,
+                    nc.QI2_QTDPRO as produced_quantity,
+                    nc.QI2_QTDDEV as returned_quantity
                 {base_sql}
             """
 
@@ -113,7 +155,7 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
 
                 sql = f"""
                     {select_sql}
-                    ORDER BY QI2_OCORRE DESC, QI2_FNC DESC, QI2_REV DESC
+                    ORDER BY nc.QI2_OCORRE DESC, nc.QI2_FNC DESC, nc.QI2_REV DESC
                     OFFSET ? ROWS
                     FETCH NEXT ? ROWS ONLY
                 """
@@ -125,14 +167,14 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
                 page = 1
                 sql = f"""
                     {select_sql}
-                    ORDER BY QI2_OCORRE DESC, QI2_FNC DESC, QI2_REV DESC
+                    ORDER BY nc.QI2_OCORRE DESC, nc.QI2_FNC DESC, nc.QI2_REV DESC
                 """
                 final_params = params
 
             rows = repo.execute_query(sql, final_params)
 
             items = [
-                Nonconformity(**row)
+                self._map_nonconformity(row)
                 for row in rows
             ]
 

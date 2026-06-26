@@ -9,9 +9,14 @@ class PpmItem:
     branch: str
     registered_date: Optional[str]
     code: str
+    code_display: Optional[str]
     revision: str
     item_code: Optional[str]
     description: Optional[str]
+    detailed_description: Optional[str]
+    customer_code: Optional[str]
+    customer_store: Optional[str]
+    customer_name: Optional[str]
     returned_quantity_original: Optional[str]
     returned_quantity_un: float
 

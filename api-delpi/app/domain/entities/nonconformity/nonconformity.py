@@ -10,10 +10,12 @@ class Nonconformity:
     code: str
     revision: str
     type_code: str
+    code_display: Optional[str] = None
     type_label: Optional[str] = None
     status_code: Optional[str] = None
     status_label: Optional[str] = None
     description: Optional[str] = None
+    detailed_description: Optional[str] = None
     item_code: Optional[str] = None
     op_code: Optional[str] = None
     registered_date: Optional[str] = None
@@ -24,6 +26,7 @@ class Nonconformity:
     destination_department: Optional[str] = None
     customer_code: Optional[str] = None
     customer_store: Optional[str] = None
+    customer_name: Optional[str] = None
     supplier_code: Optional[str] = None
     supplier_store: Optional[str] = None
     produced_quantity: Optional[float] = None

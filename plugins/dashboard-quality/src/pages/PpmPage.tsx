@@ -24,7 +24,7 @@ import type { PpmItem, PpmType } from "../types/ppm";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
-import { formatDecimal, formatPpm } from "../utils/format";
+import { formatDecimal, formatPpm, formatCustomerRef, formatNonconformityCode } from "../utils/format";
 import {
   downloadChartSeriesCsv,
   downloadDualPpmSeriesCsv,
@@ -129,8 +129,19 @@ export function PpmPage({ pathname }: PpmPageProps) {
       },
       {
         key: "code",
-        header: "Código",
-        render: (row) => row.code,
+        header: "Código Não Conformidade",
+        render: (row) => formatNonconformityCode(row.code, row.code_display),
+      },
+      {
+        key: "customer_code",
+        header: "Cliente",
+        render: (row) => formatCustomerRef(row.customer_code, row.customer_store),
+      },
+      {
+        key: "customer_name",
+        header: "Nome do cliente",
+        className: "dq-table__col--wide",
+        render: (row) => row.customer_name ?? "—",
       },
       {
         key: "item_code",
@@ -142,6 +153,12 @@ export function PpmPage({ pathname }: PpmPageProps) {
         header: "Descrição",
         className: "dq-table__col--wide",
         render: (row) => row.description ?? "—",
+      },
+      {
+        key: "detailed_description",
+        header: "Descrição detalhada",
+        className: "dq-table__col--wide",
+        render: (row) => row.detailed_description ?? "—",
       },
       {
         key: "returned_quantity_un",
@@ -162,19 +179,25 @@ export function PpmPage({ pathname }: PpmPageProps) {
       [
         "Data",
         "Filial",
-        "Código",
+        "Código Não Conformidade",
+        "Cliente",
+        "Nome do cliente",
         "Revisão",
         "Item",
         "Descrição",
+        "Descrição detalhada",
         "Qtd devolvida (un)",
       ],
       items.map((row) => [
         formatDisplayDate(row.registered_date),
         row.branch,
-        row.code,
+        formatNonconformityCode(row.code, row.code_display),
+        formatCustomerRef(row.customer_code, row.customer_store),
+        row.customer_name ?? "",
         row.revision,
         row.item_code ?? "",
         row.description ?? "",
+        row.detailed_description ?? "",
         String(row.returned_quantity_un ?? ""),
       ])
     );

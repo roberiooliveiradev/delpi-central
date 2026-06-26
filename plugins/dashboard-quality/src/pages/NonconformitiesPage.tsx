@@ -28,7 +28,7 @@ import type { ChartGranularity, ChartSeriesPoint } from "../types/chart";
 import type { Nonconformity, NonconformityType } from "../types/nonconformity";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate } from "../utils/dates";
-import { formatDecimal } from "../utils/format";
+import { formatDecimal, formatCustomerRef, formatNonconformityCode } from "../utils/format";
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { suggestGranularity } from "../utils/periodBuckets";
 
@@ -154,8 +154,19 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       },
       {
         key: "code",
-        header: "Código",
-        render: (row) => `${row.code}/${row.revision}`,
+        header: "Código Não Conformidade",
+        render: (row) => formatNonconformityCode(row.code, row.code_display),
+      },
+      {
+        key: "customer_code",
+        header: "Cliente",
+        render: (row) => formatCustomerRef(row.customer_code, row.customer_store),
+      },
+      {
+        key: "customer_name",
+        header: "Nome do cliente",
+        className: "dq-table__col--wide",
+        render: (row) => truncate(row.customer_name, 60),
       },
       {
         key: "registered_date",
@@ -184,6 +195,12 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         render: (row) => truncate(row.description),
       },
       {
+        key: "detailed_description",
+        header: "Descrição detalhada",
+        className: "dq-table__col--wide",
+        render: (row) => truncate(row.detailed_description, 120),
+      },
+      {
         key: "returned_quantity",
         header: "Qtd. devolvida",
         className: "dq-table__col--numeric",
@@ -202,25 +219,31 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       [
         "Tipo",
         "Filial",
-        "Código",
+        "Código Não Conformidade",
+        "Cliente",
+        "Nome do cliente",
         "Revisão",
         "Registro",
         "Ocorrência",
         "Status",
         "Item",
         "Descrição",
+        "Descrição detalhada",
         "Qtd devolvida",
       ],
       items.map((row) => [
         row.type_label ?? row.type_code,
         row.branch,
-        row.code,
+        formatNonconformityCode(row.code, row.code_display),
+        formatCustomerRef(row.customer_code, row.customer_store),
+        row.customer_name ?? "",
         row.revision,
         formatDisplayDate(row.registered_date),
         formatDisplayDate(row.occurrence_date),
         row.status_label ?? row.status_code ?? "",
         row.item_code ?? "",
         row.description ?? "",
+        row.detailed_description ?? "",
         String(row.returned_quantity ?? ""),
       ])
     );
