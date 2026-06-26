@@ -77,9 +77,9 @@
 
 Ver [status-atual.md](./status-atual.md). Síntese:
 
-- **Feito:** modelo PAC, CRUD duplo (api-pac + api-delpi), plugin com dashboard/lista/detalhe, Ishikawa, 5 Porquês duplo, relatório 8D, evidências, export Excel, inteligência no agente.
-- **Parcial:** formulário de criação, dashboard executivo, conhecimento visível na UI, agente alinhado ao 8D.
-- **Não feito:** homologação formal, notificações, TOTVS, busca semântica, PDF, aprovação formal, integração com chat Minha DELPI.
+- **Feito:** modelo PAC, CRUD duplo (api-pac + api-delpi), plugin com dashboard/lista/detalhe, Ishikawa, 5 Porquês duplo, relatório 8D, evidências, export Excel, inteligência no agente, workflow eficácia, reabertura, tooltips no detalhe.
+- **Parcial:** homologação formal H2 (GPT produção), conhecimento visível na UI (recorrência ok; soluções testadas parcial).
+- **Não feito / adiado:** homologação H2, notificações ativas, TOTVS, integração Kaizen/5S (V016 removeu colunas; futuro via tabelas auxiliares).
 
 ---
 
@@ -243,8 +243,8 @@ Cada onda tem **objetivo**, **entregas**, **critério de aceite** e **dependênc
 | # | Entrega | Esforço | Notas |
 |---|---|---|---|
 | 7.1 | Link bidirecional NC TOTVS (`QI2010`) | L | Import manual → automático |
-| 7.2 | Vínculo plano PAC ↔ Kaizen gerado | M | ✅ V012 + `linked_kaizen_id` no PATCH/detalhe (jun/2026) |
-| 7.3 | Vínculo plano ↔ Auditoria 5S (NC origem) | M | ✅ V013 + `linked_audit_5s_nc_id` no PATCH/detalhe (jun/2026) |
+| 7.2 | Vínculo plano PAC ↔ Kaizen gerado | M | **Adiado** — V012 experimental revertida na **V016**; amarração futura via tabela auxiliar |
+| 7.3 | Vínculo plano ↔ Auditoria 5S (NC origem) | M | **Adiado** — V013 experimental revertida na **V016**; amarração futura via tabela auxiliar |
 | 7.4 | Indicadores PAC no **strategic-indicators-api** | M | PPM, reincidência cliente |
 | 7.5 | NC fornecedor (escopo `supplier`) | L | Novo `nonconformity_scope` |
 | 7.6 | Custo da não qualidade (horas × material) | L | Campos opcionais + BI |
@@ -314,9 +314,9 @@ Analista / Liderança
 | Must | Should | Could | Won't (agora) |
 |---|---|---|---|
 | Onda 1 completa | Onda 2.1–2.4 | PDF export | TOTVS auto |
-| Homologação 3 casos | Dashboard avançado (3.1–3.4) | Chat skill PAC | Embeddings |
+| Homologação 3 casos | Dashboard avançado (3.1–3.4) | Chat skill PAC | Vínculo Kaizen/5S em coluna (V016) |
 | Paridade API PAC 8D/evidências | Timeline visual | OCR evidências | E-mail digest |
-| Docs atualizadas | Filtros avançados | Kaizen link | Multi-tenant |
+| Docs atualizadas | Filtros avançados | — | Multi-tenant |
 
 ---
 

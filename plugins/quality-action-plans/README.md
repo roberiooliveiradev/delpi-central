@@ -25,6 +25,13 @@ Plugin → /apps/quality-action-plans/* (rotas internas do MFE)
 | `/apps/quality-action-plans/novo` | Formulário de criação |
 | `/apps/quality-action-plans/atrasados` | Planos com ações vencidas (filtro filial) |
 | `/apps/quality-action-plans/plano/{id}` | Detalhe editável: status, Ishikawa, 5 Porquês, ações, eficácia, histórico |
+| `/apps/quality-action-plans/recorrencia` | Painel de reincidência |
+| `/apps/quality-action-plans/solucoes-testadas` | Padrões de solução |
+| `/apps/quality-action-plans/minha-fila` | Ações do usuário logado |
+
+Balões de ajuda (`?`) em campos do detalhe e demais telas: `src/content/helpTooltips.ts`.
+
+**Nota:** vínculos com Kaizen ou Auditoria 5S foram removidos da UI e do modelo (migration V016); integrações futuras usarão tabelas auxiliares.
 
 ## API consumida (api-delpi)
 
@@ -37,12 +44,18 @@ Base: `/apps/api-delpi/quality/action-plans`
 | Atrasados | GET | `/overdue?branch_code=` |
 | Detalhe | GET | `/{id}` |
 | Criar plano | POST | `/` |
+| Identificação | PATCH | `/{id}` (status via `/{id}/status`) |
 | Status | PATCH | `/{id}/status` |
+| Reabrir | POST | `/{id}/reopen` |
 | Ishikawa | PUT | `/{id}/ishikawa` |
 | 5 Porquês | PUT | `/{id}/five-whys` |
 | Criar ações | POST | `/{id}/actions` |
 | Atualizar ação | PATCH | `/{id}/actions/{action_id}` |
-| Eficácia | POST | `/{id}/effectiveness-review` |
+| Remover ação | DELETE | `/{id}/actions/{action_id}` |
+| Eficácia | POST | `/{id}/effectiveness-review` (+ submit/approve/reject) |
+| Relatório 8D | PUT | `/{id}/rnc-8d` |
+| Export 8D | GET | `/{id}/export/rnc-8d` |
+| Evidências | GET/POST/DELETE | `/{id}/evidences` |
 
 Documentação completa: [`api-delpi/docs/api/quality-action-plans-pac.md`](../../api-delpi/docs/api/quality-action-plans-pac.md)
 
@@ -101,13 +114,21 @@ TOKEN="<jwt-admin>" ./plugins/quality-action-plans/scripts/register-manifest.sh
 docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin quality-action-plans
 ```
 
-Arquivos: `V001` (core), `V002` (sequência PAC), `V003` (knowledge layer), `V004` (`branch_code`).
+| Versão | Conteúdo resumido |
+|--------|-------------------|
+| V001–V005 | Core, sequência PAC, knowledge layer, filial, escopo NC |
+| V006–V007 | Template RNC 8D, evidências com arquivo, vínculo evidência↔ação |
+| V008–V011 | Audit log, notificações, workflow eficácia, pgvector |
+| V012–V013 | Vínculos Kaizen/5S (experimentais — revertidos na V016) |
+| V014–V015 | Ishikawa e 5 Porquês em JSONB |
+| V016 | Remove colunas de vínculo externo; integrações futuras via tabelas auxiliares |
 
 ## Documentação relacionada
 
 | Documento | Conteúdo |
 |-----------|----------|
 | [`api-delpi/docs/api/quality-action-plans-pac.md`](../../api-delpi/docs/api/quality-action-plans-pac.md) | Contrato HTTP api-delpi |
+| [`docs/12-roadmap-e-evolucao/quality-action-plans/status-atual.md`](../../docs/12-roadmap-e-evolucao/quality-action-plans/status-atual.md) | Status e débitos |
 | [`api-pac-quality/playbook_pac_qualidade_delpi.md`](../../../api-pac-quality/playbook_pac_qualidade_delpi.md) | Playbook do domínio PAC |
 | [`api-pac-quality/docs/chatgpt-especialista-qualidade.md`](../../../api-pac-quality/docs/chatgpt-especialista-qualidade.md) | Agente GPT (só API PAC) |
 | [`api-pac-quality/README.md`](../../../api-pac-quality/README.md) | API transacional GPT + inteligência |

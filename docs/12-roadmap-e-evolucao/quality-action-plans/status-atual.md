@@ -8,7 +8,7 @@
 
 | Camada | Maturidade | Nota |
 |---|---|---|
-| Modelo de dados + migrations | Alta | V001–V013 no plugin `quality-action-plans` |
+| Modelo de dados + migrations | Alta | V001–V016 no plugin `quality-action-plans` |
 | API PAC (`api-pac-quality`) | Média-alta | **Produção** (agente GPT); paridade de escrita — validar localmente só na **api-delpi** |
 | API consolidada (`api-delpi`) | Média-alta | **Canônica** para plugin + homologação local (V007) |
 | Plugin MFE | Média | Fluxo analista ok; imagem `delpi-quality-action-plans` reconstruída |
@@ -37,8 +37,11 @@
 | V009 | `quality_notification_dispatches` (dedup alertas) | APLICADA |
 | V010 | Workflow aprovação de eficácia | APLICADA |
 | V011 | `search_embedding` pgvector (busca semântica) | APLICADA |
-| V012 | `linked_kaizen_id` → `quality.kaizens` (Onda 7.2) | APLICADA |
-| V013 | `linked_audit_5s_nc_id` → `quality.audit_5s_nonconformities` (Onda 7.3) | APLICADA |
+| V012 | `linked_kaizen_id` → `quality.kaizens` (Onda 7.2 — experimental) | APLICADA e **revertida** na V016 |
+| V013 | `linked_audit_5s_nc_id` → `quality.audit_5s_nonconformities` (Onda 7.3 — experimental) | APLICADA e **revertida** na V016 |
+| V014 | Ishikawa 6M — causas por categoria em JSONB (`machine`, `method_process`, …) | APLICADA |
+| V015 | 5 Porquês — trilhas dinâmicas `occurrence_whys` / `detection_whys` (JSONB) | APLICADA |
+| V016 | Remove `linked_kaizen_id` e `linked_audit_5s_nc_id`; vínculos futuros via tabelas auxiliares | APLICADA |
 
 ---
 
@@ -50,12 +53,16 @@
 |---|---|---|
 | Dashboard / lista / detalhe / atrasados | GET | Sim |
 | Criar plano, Ishikawa, 5 Porquês, ações, status, eficácia | POST/PUT/PATCH | Sim |
-| Relatório 8D | PUT `/rnc-8d`, GET `/export/rnc-8d` | Sim |
+| Identificação do plano | PATCH `/{id}` (sem `status` — usar `/{id}/status`) | Sim |
+| Reabertura | POST `/{id}/reopen` (motivo auditado) | Sim |
+| CRUD ações | POST/PATCH/DELETE `/{id}/actions/{action_id}` | Sim |
+| Workflow eficácia | submit / approve / reject + fila `pending` | Sim (V010) |
+| Auditoria | GET `/{id}/audit-log` | Sim (V008) |
+| Relatório 8D | PUT `/rnc-8d`, GET `/export/rnc-8d`, PDF | Sim |
 | Evidências | GET/POST/DELETE `/evidences`, download arquivo | Sim |
 | Inteligência (similaridade, padrões) | GET `/similar-cases`, GET `/recurrence` | Parcial (Onda 2.1–2.3) |
 | Inteligência Onda 6 | GET `/intelligence/knowledge-graph`, POST recorrência/tags | Sim (smoke `run_onda6_intelligence_smoke.py`) |
-| Vínculo Kaizen (Onda 7.2) | `linked_kaizen_id` no PATCH/detalhe + seletor no plugin | Sim |
-| Vínculo NC Auditoria 5S (Onda 7.3) | `linked_audit_5s_nc_id` no PATCH/detalhe + campo UUID no plugin | Sim |
+| Vínculo Kaizen / Auditoria 5S | — | **Removido** (V016); integração futura via tabelas auxiliares |
 
 ### api-pac-quality
 
@@ -74,7 +81,8 @@
 | Dashboard (KPIs + gráficos) | Implementada |
 | Lista + filtros básicos | Implementada |
 | Novo plano | Implementada (`customer_template` + registro NC) |
-| Detalhe (pipeline, Ishikawa, 5 Porquês, ações, histórico) | Implementada |
+| Detalhe (pipeline, Ishikawa, 5 Porquês, ações, histórico, tooltips `?`) | Implementada |
+| Espelho Problema ↔ 8D (somente leitura no detalhe) | Implementada |
 | Relatório 8D + export Excel | Implementada (após ativar `rnc_8d`) |
 | Painel de evidências | Implementada (vínculo opcional com ação) |
 | Atrasados | Implementada |
@@ -87,7 +95,7 @@
 
 1. Template Excel `rnc_8d_template.xlsx` fora do git — copiar no deploy.
 2. ~~Export 8D sem imagens na aba Anexos.~~ Imagens embutidas na aba `Anexos(Evidencias)` (requer Pillow).
-3. Documentação `quality-action-plans-pac.md` atualizada (V006/V007 + rotas 8D/evidências).
+3. ~~Documentação desatualizada (migrations, Kaizen/5S).~~ Sincronizada jun/2026 — `quality-action-plans-pac.md`, `status-atual.md`, README do plugin.
 4. ~~Agente sem rotas de evidência e 8D.~~ Paridade API PAC — OpenAPI reimportado em **produção** (validar com `check-pac-api-server.sh`).
 5. Indicadores executivos do playbook (tempo médio, reincidência, eficácia por tipo) ausentes no dashboard.
 6. ~~Índice `quality_case_similarity_index` não atualizado pela api-delpi.~~ Sincronizado em create / 5 Porquês / eficácia (paridade api-pac).

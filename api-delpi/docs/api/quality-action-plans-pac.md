@@ -4,7 +4,7 @@ CRUD e leitura consolidada de **planos de ação central de qualidade** (PAC), p
 
 **Plugin consumidor:** `plugins/quality-action-plans`  
 **Agente GPT (escrita alternativa):** `api-pac-quality` em `pac-api.minhadelpi.com.br` — mesma base Postgres, autenticação por API key.  
-**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V006)
+**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V016)
 
 **Formato:** envelope `{ success, message, data, meta }` (Playbook 10).
 
@@ -88,10 +88,12 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | POST | `/quality/action-plans` | `create_quality_action_plan` | Criar plano |
 | PATCH | `/quality/action-plans/{plan_id}` | `update_quality_action_plan` | Atualizar identificação do plano |
 | PATCH | `/quality/action-plans/{plan_id}/status` | `update_quality_action_plan_status` | Atualizar status |
+| POST | `/quality/action-plans/{plan_id}/reopen` | `reopen_quality_action_plan` | Reabrir plano `completed`/`cancelled` |
 | PUT | `/quality/action-plans/{plan_id}/ishikawa` | `upsert_quality_action_plan_ishikawa` | Ishikawa (upsert) |
 | PUT | `/quality/action-plans/{plan_id}/five-whys` | `upsert_quality_action_plan_five_whys` | 5 Porquês duplo (upsert) |
 | POST | `/quality/action-plans/{plan_id}/actions` | `create_quality_action_plan_actions` | Criar ações |
 | PATCH | `/quality/action-plans/{plan_id}/actions/{action_id}` | `update_quality_action_plan_action` | Atualizar ação |
+| DELETE | `/quality/action-plans/{plan_id}/actions/{action_id}` | `delete_quality_action_plan_action` | Remover ação |
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review` | `record_quality_action_plan_effectiveness` | Registrar eficácia (coordenador — direto) |
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review/submit` | `submit_quality_action_plan_effectiveness_review` | Submeter eficácia para aprovação (analista) |
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review/approve` | `approve_quality_action_plan_effectiveness_review` | Aprovar submissão de eficácia |
@@ -140,6 +142,8 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_contact`, `product_code`, `product_description`, `batch_number`, `reported_problem`, `severity`, `branch_code`, `nonconformity_scope`, `department`, `failure_mode`, `customer_template` (`generic` \| `rnc_8d`), `client_nc_registry`, etc.
 
+**Status:** altere apenas via `PATCH /{plan_id}/status` — não envie `status` neste PATCH de identificação.
+
 Vínculos com Kaizen ou Auditoria 5S não usam mais colunas em `quality_action_plans` (removidas na migration V016); amarrações futuras devem usar tabelas auxiliares dedicadas.
 
 ### POST evidências (multipart)
@@ -186,7 +190,22 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 
 | Versão | Conteúdo |
 |--------|----------|
+| V001 | Tabelas core PAC (`quality_action_plans`, ações, Ishikawa, 5 Porquês, histórico) |
+| V002 | Sequência `PAC-YYYY-####` + submodule |
+| V003 | Knowledge layer (`similarity_index`, `solution_patterns`) |
+| V004 | `branch_code` |
+| V005 | `nonconformity_scope` |
 | V006 | `customer_template`, `rnc_8d`, evidências com arquivo, equipe, trilha detecção |
+| V007 | `action_id` em evidências (vínculo com ação do plano) |
+| V008 | `quality_audit_log` (append-only) |
+| V009 | `quality_notification_dispatches` (dedup alertas) |
+| V010 | Workflow aprovação de eficácia (submit / approve / reject) |
+| V011 | `search_embedding` pgvector (busca semântica) |
+| V012 | `linked_kaizen_id` (experimental — revertido na V016) |
+| V013 | `linked_audit_5s_nc_id` (experimental — revertido na V016) |
+| V014 | Ishikawa 6M — causas por categoria em JSONB |
+| V015 | 5 Porquês — trilhas `occurrence_whys` / `detection_whys` em JSONB |
+| V016 | Remove colunas de vínculo Kaizen/5S; integrações futuras via tabelas auxiliares |
 
 ---
 
