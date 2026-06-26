@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { HrFilterParams } from "../types/hr";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
 import {
   readHrFilters,
@@ -10,18 +11,18 @@ import {
 export function useHrFilters() {
   const [dateStart, setDateStartState] = useState(() => readHrFilters().dateStart);
   const [dateEnd, setDateEndState] = useState(() => readHrFilters().dateEnd);
-  const [branch, setBranchState] = useState(() => readHrFilters().branch);
+  const [branches, setBranchesState] = useState(() => readHrFilters().branches);
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branch });
-  }, [dateStart, dateEnd, branch]);
+    writeFiltersToUrl({ dateStart, dateEnd, branches });
+  }, [dateStart, dateEnd, branches]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = readHrFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
-      setBranchState(next.branch);
+      setBranchesState(next.branches);
     };
 
     window.addEventListener("popstate", onPopState);
@@ -31,18 +32,18 @@ export function useHrFilters() {
   const apiParams: HrFilterParams = {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
-    branch: branch || undefined,
+    branch: resolveApiBranch(branches),
   };
 
-  const filterState: HrFilterUrlState = { dateStart, dateEnd, branch };
+  const filterState: HrFilterUrlState = { dateStart, dateEnd, branches };
 
   return {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart: useCallback((value: string) => setDateStartState(value), []),
     setDateEnd: useCallback((value: string) => setDateEndState(value), []),
-    setBranch: useCallback((value: string) => setBranchState(value), []),
+    setBranches: useCallback((value: string[]) => setBranchesState(value), []),
     apiParams,
     filterState,
   };

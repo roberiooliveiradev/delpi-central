@@ -44,6 +44,7 @@ import {
 import { navigateProduction } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 
 const PAGE_SIZE = 20;
 
@@ -57,10 +58,10 @@ export function OtdPage({ pathname }: OtdPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useProductionFilters();
@@ -114,12 +115,15 @@ export function OtdPage({ pathname }: OtdPageProps) {
     [dateStart, dateEnd]
   );
 
-  const branchLabel = branch
-    ? `Filial ${branch}`
-    : "Consolidado (média das filiais)";
+  const selectedBranch = resolveApiBranch(branches);
+  const branchLabel = selectedBranch
+    ? `Filial ${selectedBranch}`
+    : branches.length > 1
+      ? `Filiais ${branches.join(", ")}`
+      : "Consolidado (média das filiais)";
 
-  const temporalChartHint = branch
-    ? `Clique em um ponto para filtrar o período. Série da filial ${branch}.`
+  const temporalChartHint = selectedBranch
+    ? `Clique em um ponto para filtrar o período. Série da filial ${selectedBranch}.`
     : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
 
   const handleTemporalChartDrillDown = useCallback(
@@ -240,10 +244,10 @@ export function OtdPage({ pathname }: OtdPageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={handleRefresh}
         refreshing={loading && hasData}
       />
@@ -339,7 +343,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
             (otdSeries.points.length > 0 || otdSeries.loading) ? (
               <OtdEvolutionChart
                 data={otdSeries.points}
-                branch={branch || undefined}
+                branch={selectedBranch}
                 loading={otdSeries.loading}
                 onDrillDown={handleTemporalChartDrillDown}
               />

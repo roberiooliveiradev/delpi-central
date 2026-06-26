@@ -52,10 +52,10 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useEngineeringFilters();
@@ -209,10 +209,10 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
       />

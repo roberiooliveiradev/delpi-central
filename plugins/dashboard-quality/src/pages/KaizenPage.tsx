@@ -75,10 +75,10 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches: selectedBranches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useQualityFilters();
@@ -86,7 +86,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
   const debouncedTitle = useDebouncedValue(title);
   const debouncedStatus = useDebouncedValue(status);
 
-  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
+  const { branches: branchOptions, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const summaryParams = useMemo(
     () => ({
@@ -274,14 +274,14 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         <KaizenFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
-        branches={branches}
+        selectedBranches={selectedBranches}
+        branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         title={title}
         status={status}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onTitleChange={setTitle}
         onStatusChange={setStatus}
       />

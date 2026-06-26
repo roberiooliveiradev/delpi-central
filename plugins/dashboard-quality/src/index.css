@@ -1463,3 +1463,147 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   flex-wrap: wrap;
   gap: 6px;
 }
+
+/* Multi-select (padrão LMPs/commercial) */
+.dashboard-quality .dq-field--multi-select {
+  gap: 6px;
+}
+
+.dashboard-quality .dq-multi-select {
+  position: relative;
+  min-width: 0;
+}
+
+.dashboard-quality .dq-multi-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--dq-control-height);
+  border-radius: var(--dq-control-radius);
+  border: 1px solid var(--dq-card-border);
+  padding: 8px 12px;
+  background: var(--surface, #fff);
+  color: var(--dq-text);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dashboard-quality .dq-multi-select__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-quality .dq-multi-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.dashboard-quality .dq-multi-select--open .dq-multi-select__trigger {
+  border-color: color-mix(in srgb, var(--dq-accent) 45%, var(--dq-card-border));
+}
+
+.dashboard-quality .dq-multi-select__panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--dq-card-border);
+  background: var(--dq-card-bg);
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+}
+
+.dashboard-quality .dq-multi-select__search {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: var(--dq-control-radius);
+  border: 1px solid var(--dq-card-border);
+  background: var(--surface, #fff);
+  color: var(--dq-text);
+  box-sizing: border-box;
+}
+
+.dashboard-quality .dq-multi-select__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dashboard-quality .dq-btn--sm {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: var(--dq-font-xs, 12px);
+}
+
+.dashboard-quality .dq-multi-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 168px;
+  overflow: auto;
+  display: grid;
+  gap: 2px;
+}
+
+.dashboard-quality .dq-multi-select__option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--dq-text);
+  font-size: var(--dq-font-sm, 13px);
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.dashboard-quality .dq-multi-select__option:hover {
+  background: color-mix(in srgb, var(--dq-accent) 8%, transparent);
+}
+
+.dashboard-quality .dq-multi-select__option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  accent-color: var(--dq-accent);
+}
+
+.dashboard-quality .dq-multi-select__option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.dashboard-quality .dq-multi-select__empty {
+  margin: 0;
+  padding: 8px;
+  color: var(--dq-text-muted);
+  font-size: var(--dq-font-sm, 13px);
+}
+
+.dashboard-quality .dq-filter-box.dq-field label.dq-field__label,
+.dashboard-quality .dq-filter-box .dq-field__label {
+  font-size: var(--dq-font-sm);
+  font-weight: 600;
+  color: var(--dq-text-muted);
+}

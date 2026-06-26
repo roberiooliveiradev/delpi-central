@@ -44,11 +44,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     location,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     setLocation,
     periodParams,
     filterState,
@@ -176,11 +176,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         location={location}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onLocationChange={setLocation}
         onRefresh={reload}
         refreshing={refreshing}

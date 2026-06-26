@@ -10,13 +10,13 @@ type FilterBarProps = {
   filterState: SuppliesFilterUrlState;
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   location: string;
   showPeriodFilters?: boolean;
   showLocationFilter?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onLocationChange: (value: string) => void;
   onRefresh: () => void;
   refreshing?: boolean;
@@ -29,13 +29,13 @@ export function FilterBar({
   filterState,
   dateStart,
   dateEnd,
-  branch,
+  branches,
   location,
   showPeriodFilters = true,
   showLocationFilter = true,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onLocationChange,
   onRefresh,
   refreshing = false,
@@ -53,13 +53,13 @@ export function FilterBar({
       <SuppliesFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         location={location}
         showPeriodFilters={showPeriodFilters}
         showLocationFilter={showLocationFilter}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
-        onBranchChange={onBranchChange}
+        onBranchesChange={onBranchesChange}
         onLocationChange={onLocationChange}
       />
     </>

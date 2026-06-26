@@ -1,14 +1,24 @@
+import { useMemo } from "react";
+
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  buildBranchOptions,
+  sanitizeBranches,
+} from "../utils/branchClientFilters";
+import { FieldLabel } from "./HelpTooltip";
+import { MultiSelectField } from "./MultiSelectField";
+
 type KaizenFiltersProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
-  branches?: string[];
+  selectedBranches: string[];
+  branchOptions: string[];
   branchesLoading?: boolean;
   title: string;
   status: string;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onTitleChange: (value: string) => void;
   onStatusChange: (value: string) => void;
 };
@@ -16,61 +26,62 @@ type KaizenFiltersProps = {
 export function KaizenFilters({
   dateStart,
   dateEnd,
-  branch,
-  branches = [],
+  selectedBranches,
+  branchOptions,
   branchesLoading = false,
   title,
   status,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onTitleChange,
   onStatusChange,
 }: KaizenFiltersProps) {
-  const branchOptions =
-    branches.length > 0 ? branches : branch ? [branch] : [];
+  const options = useMemo(
+    () => buildBranchOptions(branchOptions),
+    [branchOptions]
+  );
+
+  const selectedValues = useMemo(
+    () => sanitizeBranches(selectedBranches, branchOptions),
+    [branchOptions, selectedBranches]
+  );
 
   return (
-    <section className="dq-filters-row dq-filters-row--extended">
-      <div className="dq-filter-box">
-        <label htmlFor="kz-date-start">Data inicial</label>
+    <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de kaizen">
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} />
         <input
           id="kz-date-start"
           type="date"
           value={dateStart}
           onChange={(e) => onDateStartChange(e.target.value)}
         />
-      </div>
+      </label>
 
-      <div className="dq-filter-box">
-        <label htmlFor="kz-date-end">Data final</label>
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} />
         <input
           id="kz-date-end"
           type="date"
           value={dateEnd}
           onChange={(e) => onDateEndChange(e.target.value)}
         />
-      </div>
+      </label>
 
-      <div className="dq-filter-box">
-        <label htmlFor="kz-branch">Filial</label>
-        <select
-          id="kz-branch"
-          value={branch}
-          onChange={(e) => onBranchChange(e.target.value)}
-          disabled={branchesLoading}
-        >
-          <option value="">Todas</option>
-          {branchOptions.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
-      </div>
+      <MultiSelectField
+        label="Filial"
+        labelHint={QUALITY_HELP_TOOLTIPS.filters.branch}
+        options={options}
+        selectedValues={selectedValues}
+        onChange={onBranchesChange}
+        emptyLabel="Todas"
+        searchable
+        disabled={branchesLoading}
+      />
 
-      <div className="dq-filter-box">
-        <label htmlFor="kz-title">Título</label>
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Título" />
         <input
           id="kz-title"
           type="text"
@@ -78,10 +89,10 @@ export function KaizenFilters({
           placeholder="Buscar por título"
           onChange={(e) => onTitleChange(e.target.value)}
         />
-      </div>
+      </label>
 
-      <div className="dq-filter-box">
-        <label htmlFor="kz-status">Status</label>
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Status" />
         <input
           id="kz-status"
           type="text"
@@ -89,7 +100,7 @@ export function KaizenFilters({
           placeholder="Filtro de status"
           onChange={(e) => onStatusChange(e.target.value)}
         />
-      </div>
+      </label>
     </section>
   );
 }

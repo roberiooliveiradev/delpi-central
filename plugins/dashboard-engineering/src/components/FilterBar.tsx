@@ -10,10 +10,10 @@ type FilterBarProps = {
   filterState: EngineeringFilterUrlState;
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
 };
@@ -25,10 +25,10 @@ export function FilterBar({
   filterState,
   dateStart,
   dateEnd,
-  branch,
+  branches,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onRefresh,
   refreshing = false,
 }: FilterBarProps) {
@@ -45,10 +45,10 @@ export function FilterBar({
       <EngineeringFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
-        onBranchChange={onBranchChange}
+        onBranchesChange={onBranchesChange}
       />
     </>
   );

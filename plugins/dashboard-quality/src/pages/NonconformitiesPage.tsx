@@ -60,15 +60,15 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches: selectedBranches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useQualityFilters();
 
-  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
+  const { branches: branchOptions, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const debouncedStatus = useDebouncedValue(status);
   const debouncedItemCode = useDebouncedValue(itemCode);
@@ -307,8 +307,8 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       <NonconformityFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
-        branches={branches}
+        selectedBranches={selectedBranches}
+        branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         type={type}
         status={status}
@@ -316,7 +316,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         description={description}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onTypeChange={setType}
         onStatusChange={setStatus}
         onItemCodeChange={setItemCode}

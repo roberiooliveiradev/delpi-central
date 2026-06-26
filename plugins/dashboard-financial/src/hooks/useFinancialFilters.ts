@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FinancialFilterParams } from "../types/financial";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
 import {
   readFinancialFilters,
@@ -14,18 +15,20 @@ export function useFinancialFilters() {
   const [dateEnd, setDateEndState] = useState(
     () => readFinancialFilters().dateEnd
   );
-  const [branch, setBranchState] = useState(() => readFinancialFilters().branch);
+  const [branches, setBranchesState] = useState(
+    () => readFinancialFilters().branches
+  );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branch });
-  }, [dateStart, dateEnd, branch]);
+    writeFiltersToUrl({ dateStart, dateEnd, branches });
+  }, [dateStart, dateEnd, branches]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = readFinancialFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
-      setBranchState(next.branch);
+      setBranchesState(next.branches);
     };
 
     window.addEventListener("popstate", onPopState);
@@ -35,22 +38,22 @@ export function useFinancialFilters() {
   const apiParams: FinancialFilterParams = {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
-    branch: branch || undefined,
+    branch: resolveApiBranch(branches),
   };
 
   const filterState: FinancialFilterUrlState = {
     dateStart,
     dateEnd,
-    branch,
+    branches,
   };
 
   return {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart: useCallback((v: string) => setDateStartState(v), []),
     setDateEnd: useCallback((v: string) => setDateEndState(v), []),
-    setBranch: useCallback((v: string) => setBranchState(v), []),
+    setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     apiParams,
     filterState,
   };

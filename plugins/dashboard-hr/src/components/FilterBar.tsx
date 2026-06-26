@@ -6,11 +6,12 @@ type FilterBarProps = {
   subtitle?: string;
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   branchOptions: string[];
+  branchesLoading?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
 };
@@ -20,11 +21,12 @@ export function FilterBar({
   subtitle = "Indicadores consolidados do Portal RH",
   dateStart,
   dateEnd,
-  branch,
+  branches,
   branchOptions,
+  branchesLoading = false,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onRefresh,
   refreshing = false,
 }: FilterBarProps) {
@@ -39,11 +41,12 @@ export function FilterBar({
       <HrFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         branchOptions={branchOptions}
+        branchesLoading={branchesLoading}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
-        onBranchChange={onBranchChange}
+        onBranchesChange={onBranchesChange}
       />
     </>
   );

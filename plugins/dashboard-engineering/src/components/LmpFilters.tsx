@@ -1,45 +1,46 @@
+import {
+  LMP_LISTING_TYPE_OPTIONS,
+  LMP_STATUS_OPTIONS,
+} from "../constants/lmpFilterOptions";
+import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { MultiSelectField } from "./MultiSelectField";
+
 type LmpFiltersProps = {
-  listingType: string;
-  status: string;
-  onListingTypeChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
+  listingTypes: string[];
+  statuses: string[];
+  onListingTypesChange: (values: string[]) => void;
+  onStatusesChange: (values: string[]) => void;
 };
 
 export function LmpFilters({
-  listingType,
-  status,
-  onListingTypeChange,
-  onStatusChange,
+  listingTypes,
+  statuses,
+  onListingTypesChange,
+  onStatusesChange,
 }: LmpFiltersProps) {
   return (
-    <section className="ds-filters-row ds-filters-row--extended">
-      <div className="ds-filter-box">
-        <label htmlFor="de-listing-type">Tipo</label>
-        <select
-          id="de-listing-type"
-          value={listingType}
-          onChange={(e) => onListingTypeChange(e.target.value)}
-        >
-          <option value="Todos">Todos</option>
-          <option value="LMP">LMP</option>
-          <option value="Amostra">Amostra</option>
-          <option value="Outro">Outro</option>
-        </select>
-      </div>
-      <div className="ds-filter-box">
-        <label htmlFor="de-lmp-status">Status</label>
-        <select
-          id="de-lmp-status"
-          value={status}
-          onChange={(e) => onStatusChange(e.target.value)}
-        >
-          <option value="Todos">Todos</option>
-          <option value="Pontual">Pontual</option>
-          <option value="Atrasado">Atrasado</option>
-          <option value="Andamento">Andamento</option>
-          <option value="Retornada">Retornada</option>
-        </select>
-      </div>
+    <section
+      className="ds-filters-row ds-filters-row--extended"
+      aria-label="Filtros de LMP"
+    >
+      <MultiSelectField
+        label="Tipo"
+        labelHint={ENGINEERING_HELP_TOOLTIPS.filters.listingType}
+        options={LMP_LISTING_TYPE_OPTIONS}
+        selectedValues={listingTypes}
+        onChange={onListingTypesChange}
+        emptyLabel="Todos"
+        searchable
+      />
+      <MultiSelectField
+        label="Status"
+        labelHint={ENGINEERING_HELP_TOOLTIPS.filters.status}
+        options={LMP_STATUS_OPTIONS}
+        selectedValues={statuses}
+        onChange={onStatusesChange}
+        emptyLabel="Todos"
+        searchable
+      />
     </section>
   );
 }

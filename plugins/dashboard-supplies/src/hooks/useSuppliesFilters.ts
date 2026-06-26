@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { SuppliesFilterParams } from "../types/supplies";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
 import {
   readSuppliesFilters,
@@ -14,21 +15,23 @@ export function useSuppliesFilters() {
   const [dateEnd, setDateEndState] = useState(
     () => readSuppliesFilters().dateEnd
   );
-  const [branch, setBranchState] = useState(() => readSuppliesFilters().branch);
+  const [branches, setBranchesState] = useState(
+    () => readSuppliesFilters().branches
+  );
   const [location, setLocationState] = useState(
     () => readSuppliesFilters().location
   );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branch, location });
-  }, [dateStart, dateEnd, branch, location]);
+    writeFiltersToUrl({ dateStart, dateEnd, branches, location });
+  }, [dateStart, dateEnd, branches, location]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = readSuppliesFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
-      setBranchState(next.branch);
+      setBranchesState(next.branches);
       setLocationState(next.location);
     };
 
@@ -36,35 +39,37 @@ export function useSuppliesFilters() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  const resolvedBranch = resolveApiBranch(branches);
+
   const periodParams: SuppliesFilterParams = {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
-    branch: branch || undefined,
+    branch: resolvedBranch,
     location: location || undefined,
   };
 
   const stockParams: SuppliesFilterParams = {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
-    branch: branch || undefined,
+    branch: resolvedBranch,
     location: location || undefined,
   };
 
   const filterState: SuppliesFilterUrlState = {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     location,
   };
 
   return {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     location,
     setDateStart: useCallback((v: string) => setDateStartState(v), []),
     setDateEnd: useCallback((v: string) => setDateEndState(v), []),
-    setBranch: useCallback((v: string) => setBranchState(v), []),
+    setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     setLocation: useCallback((v: string) => setLocationState(v), []),
     periodParams,
     stockParams,

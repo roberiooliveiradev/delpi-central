@@ -63,15 +63,15 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches: selectedBranches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useQualityFilters();
 
-  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
+  const { branches: branchOptions, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const {
     ppmInternal,
@@ -117,13 +117,13 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         currentPath={pathname ?? QUALITY_ROUTES.home}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
-        branches={branches}
+        branches={selectedBranches}
+        branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         printDisabled={printDisabled}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
       />

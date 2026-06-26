@@ -33,6 +33,7 @@ import type {
 import { buildNegotiationSavingsTrendSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatChartCurrency, formatCurrency, formatInteger } from "../utils/format";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -44,11 +45,11 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     location,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     setLocation,
     periodParams,
     filterState,
@@ -71,7 +72,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
-  const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
+  const branchLabel = formatBranchFilterLabel(branches);
   const isBusy = loading || refreshing;
 
   const monthlyChart = useMemo(
@@ -139,11 +140,11 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         location={location}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onLocationChange={setLocation}
         onRefresh={reload}
         refreshing={refreshing}

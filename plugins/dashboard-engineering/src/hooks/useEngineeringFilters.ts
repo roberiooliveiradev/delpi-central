@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { EngineeringFilterParams } from "../types/engineering";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
 import {
   readEngineeringFilters,
@@ -14,44 +15,48 @@ export function useEngineeringFilters() {
   const [dateEnd, setDateEndState] = useState(
     () => readEngineeringFilters().dateEnd
   );
-  const [branch, setBranchState] = useState(() => readEngineeringFilters().branch);
+  const [branches, setBranchesState] = useState(
+    () => readEngineeringFilters().branches
+  );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branch });
-  }, [dateStart, dateEnd, branch]);
+    writeFiltersToUrl({ dateStart, dateEnd, branches });
+  }, [dateStart, dateEnd, branches]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = readEngineeringFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
-      setBranchState(next.branch);
+      setBranchesState(next.branches);
     };
 
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  const resolvedBranch = resolveApiBranch(branches);
+
   const apiParams: EngineeringFilterParams = {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
-    filial_id: branch || undefined,
-    branch: branch || undefined,
+    filial_id: resolvedBranch,
+    branch: resolvedBranch,
   };
 
   const filterState: EngineeringFilterUrlState = {
     dateStart,
     dateEnd,
-    branch,
+    branches,
   };
 
   return {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart: useCallback((v: string) => setDateStartState(v), []),
     setDateEnd: useCallback((v: string) => setDateEndState(v), []),
-    setBranch: useCallback((v: string) => setBranchState(v), []),
+    setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     apiParams,
     filterState,
   };

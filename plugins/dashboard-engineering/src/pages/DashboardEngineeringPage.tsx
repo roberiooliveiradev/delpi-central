@@ -14,6 +14,7 @@ import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import {
   formatDecimal,
   formatInteger,
@@ -42,10 +43,10 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useEngineeringFilters();
@@ -65,7 +66,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
-  const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
+  const branchLabel = formatBranchFilterLabel(branches);
   const isBusy = loading || refreshing;
   const hasData = transforma !== null || lmpSummary !== null;
 
@@ -77,10 +78,10 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
       />

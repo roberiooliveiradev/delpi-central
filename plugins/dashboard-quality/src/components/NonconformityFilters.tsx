@@ -1,10 +1,19 @@
+import { useMemo } from "react";
+
 import type { NonconformityType } from "../types/nonconformity";
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  buildBranchOptions,
+  sanitizeBranches,
+} from "../utils/branchClientFilters";
+import { FieldLabel } from "./HelpTooltip";
+import { MultiSelectField } from "./MultiSelectField";
 
 type NonconformityFiltersProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
-  branches?: string[];
+  selectedBranches: string[];
+  branchOptions: string[];
   branchesLoading?: boolean;
   type: NonconformityType;
   status: string;
@@ -12,7 +21,7 @@ type NonconformityFiltersProps = {
   description: string;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onTypeChange: (value: NonconformityType) => void;
   onStatusChange: (value: string) => void;
   onItemCodeChange: (value: string) => void;
@@ -22,8 +31,8 @@ type NonconformityFiltersProps = {
 export function NonconformityFilters({
   dateStart,
   dateEnd,
-  branch,
-  branches = [],
+  selectedBranches,
+  branchOptions,
   branchesLoading = false,
   type,
   status,
@@ -31,80 +40,80 @@ export function NonconformityFilters({
   description,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onTypeChange,
   onStatusChange,
   onItemCodeChange,
   onDescriptionChange,
 }: NonconformityFiltersProps) {
-  const branchOptions =
-    branches.length > 0 ? branches : branch ? [branch] : [];
+  const options = useMemo(
+    () => buildBranchOptions(branchOptions),
+    [branchOptions]
+  );
+
+  const selectedValues = useMemo(
+    () => sanitizeBranches(selectedBranches, branchOptions),
+    [branchOptions, selectedBranches]
+  );
 
   return (
-    <section className="dq-filters-row dq-filters-row--extended">
-      <div className="dq-filter-box">
-        <label htmlFor="nc-date-start">Data inicial</label>
+    <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de NC">
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} />
         <input
           id="nc-date-start"
           type="date"
           value={dateStart}
           onChange={(e) => onDateStartChange(e.target.value)}
         />
-      </div>
+      </label>
 
-      <div className="dq-filter-box">
-        <label htmlFor="nc-date-end">Data final</label>
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} />
         <input
           id="nc-date-end"
           type="date"
           value={dateEnd}
           onChange={(e) => onDateEndChange(e.target.value)}
         />
-      </div>
+      </label>
 
-      <div className="dq-filter-box">
-        <label htmlFor="nc-branch">Filial</label>
-        <select
-          id="nc-branch"
-          value={branch}
-          onChange={(e) => onBranchChange(e.target.value)}
-          disabled={branchesLoading}
-        >
-          <option value="">Todas</option>
-          {branchOptions.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
-      </div>
+      <MultiSelectField
+        label="Filial"
+        labelHint={QUALITY_HELP_TOOLTIPS.filters.branch}
+        options={options}
+        selectedValues={selectedValues}
+        onChange={onBranchesChange}
+        emptyLabel="Todas"
+        searchable
+        disabled={branchesLoading}
+      />
 
-      <div className="dq-filter-box">
-        <label htmlFor="nc-type">Tipo</label>
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Tipo" />
         <select
           id="nc-type"
           value={type}
           onChange={(e) => onTypeChange(e.target.value as NonconformityType)}
         >
-          <option value="all">Todas</option>
           <option value="internal">Interna</option>
           <option value="external">Externa</option>
         </select>
-      </div>
+      </label>
 
-      <div className="dq-filter-box">
-        <label htmlFor="nc-status">Status</label>
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Status" />
         <input
           id="nc-status"
           type="text"
           value={status}
-          placeholder="Filtro de status"
+          placeholder="Status"
           onChange={(e) => onStatusChange(e.target.value)}
         />
-      </div>
+      </label>
 
-      <div className="dq-filter-box">
-        <label htmlFor="nc-item">Item</label>
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Item" />
         <input
           id="nc-item"
           type="text"
@@ -112,10 +121,10 @@ export function NonconformityFilters({
           placeholder="Código do item"
           onChange={(e) => onItemCodeChange(e.target.value)}
         />
-      </div>
+      </label>
 
-      <div className="dq-filter-box dq-filter-box--wide">
-        <label htmlFor="nc-description">Descrição</label>
+      <label className="dq-filter-box dq-field dq-filter-box--wide">
+        <FieldLabel label="Descrição" />
         <input
           id="nc-description"
           type="text"
@@ -123,7 +132,7 @@ export function NonconformityFilters({
           placeholder="Buscar na descrição"
           onChange={(e) => onDescriptionChange(e.target.value)}
         />
-      </div>
+      </label>
     </section>
   );
 }

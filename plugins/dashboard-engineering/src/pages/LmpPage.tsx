@@ -47,6 +47,12 @@ import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
+import { resolveApiBranch } from "../utils/branchClientFilters";
+import {
+  matchesMultiFilter,
+  needsClientSideMultiFilter,
+  resolveScalarApiFilter,
+} from "../utils/lmpClientFilters";
 import { formatDecimal, formatInteger } from "../utils/format";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -74,19 +80,24 @@ export function LmpPage({ pathname }: LmpPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     filterState,
   } = useEngineeringFilters();
 
-  const [listingType, setListingType] = useState("Todos");
-  const [status, setStatus] = useState("Todos");
+  const [listingTypes, setListingTypes] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<string[]>([]);
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
+  const apiListingType = resolveScalarApiFilter(listingTypes, "Todos");
+  const apiStatus = resolveScalarApiFilter(statuses, "Todos");
+  const clientFilterListing = needsClientSideMultiFilter(listingTypes);
+  const clientFilterStatus = needsClientSideMultiFilter(statuses);
+
   const {
-    items,
+    items: rawItems,
     summary,
     charts,
     total,
@@ -101,10 +112,28 @@ export function LmpPage({ pathname }: LmpPageProps) {
   } = useLmpsDashboard({
     date_start: dateStart || undefined,
     date_end: dateEnd || undefined,
-    branch: branch || undefined,
-    listing_type: listingType,
-    status,
+    branch: resolveApiBranch(branches),
+    listing_type: apiListingType,
+    status: apiStatus,
   });
+
+  const items = useMemo(() => {
+    if (!clientFilterListing && !clientFilterStatus) return rawItems;
+    return rawItems.filter((row) => {
+      const kind = row.listing_kind ?? "";
+      const statusValue = row.status ?? "";
+      return (
+        matchesMultiFilter(kind, listingTypes) &&
+        matchesMultiFilter(statusValue, statuses)
+      );
+    });
+  }, [
+    clientFilterListing,
+    clientFilterStatus,
+    listingTypes,
+    rawItems,
+    statuses,
+  ]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -236,19 +265,19 @@ export function LmpPage({ pathname }: LmpPageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
       />
       <DataSourceBanner variant="lmp" />
       <LmpFilters
-        listingType={listingType}
-        status={status}
-        onListingTypeChange={setListingType}
-        onStatusChange={setStatus}
+        listingTypes={listingTypes}
+        statuses={statuses}
+        onListingTypesChange={setListingTypes}
+        onStatusesChange={setStatuses}
       />
       <EngineeringStatusAlerts
         error={error}
@@ -291,7 +320,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
           titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.totalProposals}
           value={formatInteger(totalPropostas)}
           contextLabel={
-            status !== "Todos" || listingType !== "Todos"
+            listingTypes.length > 0 || statuses.length > 0
               ? "Registros no filtro"
               : "Período filtrado"
           }

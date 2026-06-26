@@ -12,6 +12,7 @@ import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import { formatPeriodLabel } from "../utils/dates";
 import { formatCurrency, formatDecimal } from "../utils/format";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type InventoryTurnoverPageProps = { pathname?: string };
@@ -26,11 +27,11 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     location,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     setLocation,
     periodParams,
     filterState,
@@ -51,7 +52,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
     [dateStart, dateEnd]
   );
 
-  const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
+  const branchLabel = formatBranchFilterLabel(branches);
   const locationLabel = location ? `Local ${location}` : "Todas";
 
   const isOfficialClosure =
@@ -78,11 +79,11 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         location={location}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onLocationChange={setLocation}
         onRefresh={reload}
         refreshing={refreshing}

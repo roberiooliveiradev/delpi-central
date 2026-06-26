@@ -7,14 +7,14 @@ type FilterBarProps = {
   filterState: QualityFilterUrlState;
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   printDisabled?: boolean;
-  branches?: string[];
+  branchOptions?: string[];
   branchesLoading?: boolean;
   currentPath?: string;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
 };
@@ -23,14 +23,14 @@ export function FilterBar({
   filterState,
   dateStart,
   dateEnd,
-  branch,
   branches,
+  branchOptions,
   branchesLoading,
   currentPath,
   printDisabled = false,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onRefresh,
   refreshing = false,
 }: FilterBarProps) {
@@ -49,12 +49,12 @@ export function FilterBar({
         className="dq-no-print"
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
         branches={branches}
+        branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
-        onBranchChange={onBranchChange}
+        onBranchesChange={onBranchesChange}
       />
     </>
   );

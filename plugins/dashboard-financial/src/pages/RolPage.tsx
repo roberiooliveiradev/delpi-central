@@ -12,6 +12,7 @@ import { FINANCIAL_ROUTES } from "../constants/routes";
 import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import { formatPeriodLabel } from "../utils/dates";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatCurrency } from "../utils/format";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -23,10 +24,10 @@ export function RolPage({ pathname }: RolPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useFinancialFilters();
@@ -91,10 +92,10 @@ export function RolPage({ pathname }: RolPageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
       />
@@ -121,7 +122,7 @@ export function RolPage({ pathname }: RolPageProps) {
           title="ROL com IPI"
           titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolWithIpiDetail}
           value={formatCurrency(data?.rol_with_ipi)}
-          subtitle={branch ? `Filial ${branch}` : "Consolidado"}
+          subtitle={formatBranchFilterLabel(branches)}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !data}
         />

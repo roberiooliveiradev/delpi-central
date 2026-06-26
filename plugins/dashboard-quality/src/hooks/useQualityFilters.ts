@@ -4,6 +4,7 @@ import {
   getTodayInputValue,
   inputDateToApi,
 } from "../utils/dates";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import {
   readQualityFilters,
   writeFiltersToUrl,
@@ -16,22 +17,24 @@ export function useQualityFilters() {
     () => readQualityFilters().dateStart
   );
   const [dateEnd, setDateEndState] = useState(() => readQualityFilters().dateEnd);
-  const [branch, setBranchState] = useState(() => readQualityFilters().branch);
+  const [branches, setBranchesState] = useState(
+    () => readQualityFilters().branches
+  );
 
   const syncToUrl = useCallback((state: QualityFilterUrlState) => {
     writeFiltersToUrl(state);
   }, []);
 
   useEffect(() => {
-    syncToUrl({ dateStart, dateEnd, branch });
-  }, [dateStart, dateEnd, branch, syncToUrl]);
+    syncToUrl({ dateStart, dateEnd, branches });
+  }, [dateStart, dateEnd, branches, syncToUrl]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = readQualityFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
-      setBranchState(next.branch);
+      setBranchesState(next.branches);
     };
 
     window.addEventListener("popstate", onPopState);
@@ -46,12 +49,12 @@ export function useQualityFilters() {
     setDateEndState(value);
   }, []);
 
-  const setBranch = useCallback((value: string) => {
-    setBranchState(value);
+  const setBranches = useCallback((value: string[]) => {
+    setBranchesState(value);
   }, []);
 
   const apiParams: DateRangeParams = {
-    branch: branch || undefined,
+    branch: resolveApiBranch(branches),
     date_start: inputDateToApi(dateStart),
     date_end: inputDateToApi(dateEnd),
   };
@@ -59,29 +62,29 @@ export function useQualityFilters() {
   const filterState: QualityFilterUrlState = {
     dateStart,
     dateEnd,
-    branch,
+    branches,
   };
 
   const resetFilters = useCallback(() => {
     const next = {
       dateStart: getFirstDayOfMonthInputValue(),
       dateEnd: getTodayInputValue(),
-      branch: "",
+      branches: [] as string[],
     };
 
     setDateStartState(next.dateStart);
     setDateEndState(next.dateEnd);
-    setBranchState(next.branch);
+    setBranchesState(next.branches);
     writeFiltersToUrl(next);
   }, []);
 
   return {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
     resetFilters,

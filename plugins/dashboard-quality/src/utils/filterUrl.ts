@@ -2,11 +2,15 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import {
+  parseDynamicBranchCsv,
+  serializeDynamicBranchCsv,
+} from "./branchClientFilters";
 
 export type QualityFilterUrlState = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
 };
 
 const FILTER_KEYS = ["date_start", "date_end", "branch"] as const;
@@ -20,8 +24,24 @@ function defaultFilterState(): QualityFilterUrlState {
   return {
     dateStart: getFirstDayOfMonthInputValue(),
     dateEnd: getTodayInputValue(),
-    branch: "",
+    branches: [],
   };
+}
+
+function parseStoredBranches(data: Record<string, unknown>): string[] {
+  if (Array.isArray(data.branches)) {
+    return parseDynamicBranchCsv(
+      data.branches
+        .filter((entry): entry is string => typeof entry === "string")
+        .join(",")
+    );
+  }
+
+  if (typeof data.branch === "string" && data.branch.trim()) {
+    return parseDynamicBranchCsv(data.branch);
+  }
+
+  return [];
 }
 
 function parseFilterParams(params: URLSearchParams): QualityFilterUrlState | null {
@@ -42,7 +62,7 @@ function parseFilterParams(params: URLSearchParams): QualityFilterUrlState | nul
       ? dateStartParam
       : defaults.dateStart,
     dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
-    branch: branchParam,
+    branches: parseDynamicBranchCsv(branchParam),
   };
 }
 
@@ -60,7 +80,8 @@ export function readFiltersFromSession(): QualityFilterUrlState | null {
     const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
 
-    const data = JSON.parse(raw) as Partial<QualityFilterUrlState>;
+    const data = JSON.parse(raw) as Partial<QualityFilterUrlState> &
+      Record<string, unknown>;
     const dateStart =
       typeof data.dateStart === "string" && isValidIsoDate(data.dateStart)
         ? data.dateStart
@@ -69,16 +90,16 @@ export function readFiltersFromSession(): QualityFilterUrlState | null {
       typeof data.dateEnd === "string" && isValidIsoDate(data.dateEnd)
         ? data.dateEnd
         : "";
-    const branch = typeof data.branch === "string" ? data.branch : "";
+    const branches = parseStoredBranches(data);
 
-    if (!dateStart && !dateEnd && !branch) return null;
+    if (!dateStart && !dateEnd && branches.length === 0) return null;
 
     const defaults = defaultFilterState();
 
     return {
       dateStart: dateStart || defaults.dateStart,
       dateEnd: dateEnd || defaults.dateEnd,
-      branch,
+      branches,
     };
   } catch {
     return null;
@@ -116,8 +137,9 @@ export function buildFilterSearchParams(state: QualityFilterUrlState): string {
     params.set("date_end", state.dateEnd);
   }
 
-  if (state.branch) {
-    params.set("branch", state.branch);
+  const branchCsv = serializeDynamicBranchCsv(state.branches);
+  if (branchCsv) {
+    params.set("branch", branchCsv);
   }
 
   const query = params.toString();

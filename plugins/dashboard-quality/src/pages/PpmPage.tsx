@@ -49,15 +49,16 @@ export function PpmPage({ pathname }: PpmPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches: selectedBranches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useQualityFilters();
 
-  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
+  const { branches: branchOptions, loading: branchesLoading } =
+    useQualityBranches(apiParams);
 
   const { summary, page: tablePage, loading, refreshing, error, reload } =
     usePpmPage({
@@ -286,12 +287,12 @@ export function PpmPage({ pathname }: PpmPageProps) {
         className="dq-no-print"
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
-        branches={branches}
+        branches={selectedBranches}
+        branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
       />
 
       <div className="dq-ppm-toolbar dq-no-print">

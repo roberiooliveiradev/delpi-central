@@ -2,11 +2,15 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import {
+  parseBranchCsv,
+  serializeBranchCsv,
+} from "./branchClientFilters";
 
 export type FinancialFilterUrlState = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
 };
 
 const SESSION_STORAGE_KEY = "delpi.dashboard-financial.filters";
@@ -19,8 +23,24 @@ function defaultFilterState(): FinancialFilterUrlState {
   return {
     dateStart: getFirstDayOfMonthInputValue(),
     dateEnd: getTodayInputValue(),
-    branch: "",
+    branches: [],
   };
+}
+
+function parseStoredBranches(data: Record<string, unknown>): string[] {
+  if (Array.isArray(data.branches)) {
+    return parseBranchCsv(
+      data.branches
+        .filter((entry): entry is string => typeof entry === "string")
+        .join(",")
+    );
+  }
+
+  if (typeof data.branch === "string" && data.branch.trim()) {
+    return parseBranchCsv(data.branch);
+  }
+
+  return [];
 }
 
 function parseFilterParams(
@@ -43,7 +63,7 @@ function parseFilterParams(
       ? dateStartParam
       : defaults.dateStart,
     dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
-    branch: branchParam,
+    branches: parseBranchCsv(branchParam),
   };
 }
 
@@ -57,7 +77,8 @@ export function readFinancialFilters(
     try {
       const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (raw) {
-        const data = JSON.parse(raw) as Partial<FinancialFilterUrlState>;
+        const data = JSON.parse(raw) as Partial<FinancialFilterUrlState> &
+          Record<string, unknown>;
         const defaults = defaultFilterState();
         return {
           dateStart:
@@ -68,7 +89,7 @@ export function readFinancialFilters(
             data.dateEnd && isValidIsoDate(data.dateEnd)
               ? data.dateEnd
               : defaults.dateEnd,
-          branch: typeof data.branch === "string" ? data.branch : "",
+          branches: parseStoredBranches(data),
         };
       }
     } catch {
@@ -84,7 +105,8 @@ export function buildFilterSearchParams(state: FinancialFilterUrlState): string 
 
   if (state.dateStart) params.set("start_date", state.dateStart);
   if (state.dateEnd) params.set("end_date", state.dateEnd);
-  if (state.branch) params.set("branch", state.branch);
+  const branchCsv = serializeBranchCsv(state.branches);
+  if (branchCsv) params.set("branch", branchCsv);
 
   const query = params.toString();
   return query ? `?${query}` : "";

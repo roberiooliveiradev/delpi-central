@@ -4,6 +4,17 @@ export const ENGINEERING_HELP_TOOLTIPS = {
       "Indicadores estratégicos de engenharia: LMPs no prazo e ganhos do programa TRANSFORMA+.",
     refresh: "Recarrega KPIs de LMP e TRANSFORMA+ com os filtros atuais.",
   },
+  filters: {
+    dateStart:
+      "Início do período para LMP e TRANSFORMA+. KPIs e gráficos usam propostas/melhorias a partir desta data.",
+    dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
+    branch:
+      "Filial TOTVS. Vazio = consolidado; múltiplas filiais restringem o recorte dos indicadores.",
+    listingType:
+      "Classificação da listagem (LMP, Amostra ou Outro). Vazio = todos os tipos.",
+    status:
+      "Status de classificação de prazo (Pontual, Atrasado, Andamento, Retornada). Vazio = todos.",
+  },
   kpis: {
     lmpOnTime:
       "Percentual de LMPs/propostas classificadas como dentro do prazo no período e filial.",

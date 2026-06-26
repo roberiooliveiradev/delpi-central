@@ -55,15 +55,15 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches: selectedBranches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useQualityFilters();
 
-  const { branches, loading: branchesLoading } = useQualityBranches(apiParams);
+  const { branches: branchOptions, loading: branchesLoading } = useQualityBranches(apiParams);
 
   const summaryParams = useMemo(
     () => ({
@@ -212,12 +212,12 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
       <Audit5sFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
-        branches={branches}
+        selectedBranches={selectedBranches}
+        branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
       />
       </div>
 

@@ -44,6 +44,7 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 
 const CHART_HEIGHT = 300;
 
@@ -51,10 +52,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useProductionFilters();
@@ -94,9 +95,12 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
     [dateStart, dateEnd]
   );
 
-  const branchLabel = branch
-    ? `Filial ${branch}`
-    : "Consolidado (média das filiais)";
+  const selectedBranch = resolveApiBranch(branches);
+  const branchLabel = selectedBranch
+    ? `Filial ${selectedBranch}`
+    : branches.length > 1
+      ? `Filiais ${branches.join(", ")}`
+      : "Consolidado (média das filiais)";
 
   const isBusy = loading || refreshing;
   const hasData =
@@ -162,8 +166,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
       (point.otdFilial02 != null && point.otdFilial02 > 0)
   );
 
-  const temporalChartHint = branch
-    ? `Clique em um ponto para filtrar o período. Série da filial ${branch}.`
+  const temporalChartHint = selectedBranch
+    ? `Clique em um ponto para filtrar o período. Série da filial ${selectedBranch}.`
     : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
 
   const handleTemporalChartDrillDown = useCallback(
@@ -189,10 +193,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={refreshAll}
         refreshing={refreshing}
       />
@@ -349,7 +353,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             (oeeSeries.points.length > 0 || oeeSeries.loading) ? (
               <OeeEvolutionChart
                 data={oeeSeries.points}
-                branch={branch || undefined}
+                branch={selectedBranch}
                 loading={oeeSeries.loading}
                 onDrillDown={handleTemporalChartDrillDown}
               />
@@ -409,7 +413,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             (otdSeries.points.length > 0 || otdSeries.loading) ? (
               <OtdEvolutionChart
                 data={otdSeries.points}
-                branch={branch || undefined}
+                branch={selectedBranch}
                 loading={otdSeries.loading}
                 onDrillDown={handleTemporalChartDrillDown}
               />

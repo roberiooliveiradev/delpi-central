@@ -10,11 +10,11 @@ type FilterBarProps = {
   filterState: FinancialFilterUrlState;
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   showPeriodFilters?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
 };
@@ -26,11 +26,11 @@ export function FilterBar({
   filterState,
   dateStart,
   dateEnd,
-  branch,
+  branches,
   showPeriodFilters = true,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onRefresh,
   refreshing = false,
 }: FilterBarProps) {
@@ -47,11 +47,11 @@ export function FilterBar({
       <FinancialFilters
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         showPeriodFilters={showPeriodFilters}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
-        onBranchChange={onBranchChange}
+        onBranchesChange={onBranchesChange}
       />
     </>
   );

@@ -1,57 +1,74 @@
+import { useMemo } from "react";
+
+import { HR_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  buildBranchOptions,
+  sanitizeBranches,
+} from "../utils/branchClientFilters";
+import { FieldLabel } from "./HelpTooltip";
+import { MultiSelectField } from "./MultiSelectField";
+
 type HrFiltersProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   branchOptions: string[];
+  branchesLoading?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
 };
 
 export function HrFilters({
   dateStart,
   dateEnd,
-  branch,
+  branches,
   branchOptions,
+  branchesLoading = false,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
 }: HrFiltersProps) {
+  const options = useMemo(
+    () => buildBranchOptions(branchOptions),
+    [branchOptions]
+  );
+
+  const selectedValues = useMemo(
+    () => sanitizeBranches(branches, branchOptions),
+    [branchOptions, branches]
+  );
+
   return (
     <section className="dh-filters-row" aria-label="Filtros do dashboard de RH">
-      <div className="dh-filter-box">
-        <label htmlFor="hr-filter-start">Início</label>
+      <label className="dh-filter-box dh-field">
+        <FieldLabel label="Início" hint={HR_HELP_TOOLTIPS.filters.dateStart} />
         <input
           id="hr-filter-start"
           type="date"
           value={dateStart}
           onChange={(event) => onDateStartChange(event.target.value)}
         />
-      </div>
-      <div className="dh-filter-box">
-        <label htmlFor="hr-filter-end">Fim</label>
+      </label>
+      <label className="dh-filter-box dh-field">
+        <FieldLabel label="Fim" hint={HR_HELP_TOOLTIPS.filters.dateEnd} />
         <input
           id="hr-filter-end"
           type="date"
           value={dateEnd}
           onChange={(event) => onDateEndChange(event.target.value)}
         />
-      </div>
-      <div className="dh-filter-box">
-        <label htmlFor="hr-filter-branch">Filial</label>
-        <select
-          id="hr-filter-branch"
-          value={branch}
-          onChange={(event) => onBranchChange(event.target.value)}
-        >
-          <option value="">Todas</option>
-          {branchOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
+      </label>
+      <MultiSelectField
+        label="Filial"
+        labelHint={HR_HELP_TOOLTIPS.filters.branch}
+        options={options}
+        selectedValues={selectedValues}
+        onChange={onBranchesChange}
+        emptyLabel="Todas"
+        searchable
+        disabled={branchesLoading}
+      />
     </section>
   );
 }

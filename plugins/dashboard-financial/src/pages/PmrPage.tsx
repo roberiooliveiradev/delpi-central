@@ -40,10 +40,10 @@ export function PmrPage({ pathname }: PmrPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useFinancialFilters();
@@ -82,7 +82,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
   );
 
   const isBusy = loading || refreshing;
-  const showBranchChart = !branch && chartData.length > 0;
+  const showBranchChart = branches.length === 0 && chartData.length > 0;
 
   return (
     <div className="dashboard-financial dashboard-page">
@@ -93,10 +93,10 @@ export function PmrPage({ pathname }: PmrPageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
       />

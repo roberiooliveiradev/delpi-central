@@ -59,6 +59,7 @@ import {
 import { navigateProduction } from "../utils/navigation";
 import { buildOeeAppointmentPath } from "../constants/routes";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 
 const PAGE_SIZE = 20;
 
@@ -93,10 +94,10 @@ export function OeePage({ pathname }: OeePageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
     filterState,
   } = useProductionFilters();
@@ -215,12 +216,15 @@ export function OeePage({ pathname }: OeePageProps) {
     [dateStart, dateEnd]
   );
 
-  const branchLabel = branch
-    ? `Filial ${branch}`
-    : "Consolidado (média das filiais)";
+  const selectedBranch = resolveApiBranch(branches);
+  const branchLabel = selectedBranch
+    ? `Filial ${selectedBranch}`
+    : branches.length > 1
+      ? `Filiais ${branches.join(", ")}`
+      : "Consolidado (média das filiais)";
 
-  const temporalChartHint = branch
-    ? `Clique em um ponto para filtrar o período. Série da filial ${branch}.`
+  const temporalChartHint = selectedBranch
+    ? `Clique em um ponto para filtrar o período. Série da filial ${selectedBranch}.`
     : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
 
   const handleTemporalChartDrillDown = useCallback(
@@ -390,7 +394,7 @@ export function OeePage({ pathname }: OeePageProps) {
     (row: ProductionOeeAppointmentItem) => {
       navigateProduction(buildOeeAppointmentPath(row.appointment_id), {
         ...filterState,
-        branch: row.branch || filterState.branch,
+        branches: row.branch ? [row.branch] : filterState.branches,
       });
     },
     [filterState]
@@ -405,10 +409,10 @@ export function OeePage({ pathname }: OeePageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onRefresh={handleRefresh}
         refreshing={loading && hasData}
       />
@@ -504,7 +508,7 @@ export function OeePage({ pathname }: OeePageProps) {
           (oeeSeries.points.length > 0 || oeeSeries.loading) ? (
             <OeeEvolutionChart
               data={oeeSeries.points}
-              branch={branch || undefined}
+              branch={selectedBranch}
               loading={oeeSeries.loading}
               onDrillDown={handleTemporalChartDrillDown}
             />

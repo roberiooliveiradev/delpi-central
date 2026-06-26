@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ProductionFilterParams } from "../types/production";
+import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
 import {
   readProductionFilters,
@@ -14,18 +15,20 @@ export function useProductionFilters() {
   const [dateEnd, setDateEndState] = useState(
     () => readProductionFilters().dateEnd
   );
-  const [branch, setBranchState] = useState(() => readProductionFilters().branch);
+  const [branches, setBranchesState] = useState(
+    () => readProductionFilters().branches
+  );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branch });
-  }, [dateStart, dateEnd, branch]);
+    writeFiltersToUrl({ dateStart, dateEnd, branches });
+  }, [dateStart, dateEnd, branches]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = readProductionFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
-      setBranchState(next.branch);
+      setBranchesState(next.branches);
     };
 
     window.addEventListener("popstate", onPopState);
@@ -35,18 +38,22 @@ export function useProductionFilters() {
   const apiParams: ProductionFilterParams = {
     start_date: inputDateToApi(dateStart),
     end_date: inputDateToApi(dateEnd),
-    branch: branch || undefined,
+    branch: resolveApiBranch(branches),
   };
 
-  const filterState: ProductionFilterUrlState = { dateStart, dateEnd, branch };
+  const filterState: ProductionFilterUrlState = {
+    dateStart,
+    dateEnd,
+    branches,
+  };
 
   return {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart: useCallback((v: string) => setDateStartState(v), []),
     setDateEnd: useCallback((v: string) => setDateEndState(v), []),
-    setBranch: useCallback((v: string) => setBranchState(v), []),
+    setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     apiParams,
     filterState,
   };

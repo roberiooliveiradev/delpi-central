@@ -2,11 +2,15 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import {
+  parseBranchCsv,
+  serializeBranchCsv,
+} from "./branchClientFilters";
 
 export type ProductionFilterUrlState = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
 };
 
 const SESSION_STORAGE_KEY = "delpi.dashboard-production.filters";
@@ -19,8 +23,24 @@ function defaultFilterState(): ProductionFilterUrlState {
   return {
     dateStart: getFirstDayOfMonthInputValue(),
     dateEnd: getTodayInputValue(),
-    branch: "",
+    branches: [],
   };
+}
+
+function parseStoredBranches(data: Record<string, unknown>): string[] {
+  if (Array.isArray(data.branches)) {
+    return parseBranchCsv(
+      data.branches
+        .filter((entry): entry is string => typeof entry === "string")
+        .join(",")
+    );
+  }
+
+  if (typeof data.branch === "string" && data.branch.trim()) {
+    return parseBranchCsv(data.branch);
+  }
+
+  return [];
 }
 
 function parseFilterParams(
@@ -43,7 +63,7 @@ function parseFilterParams(
       ? dateStartParam
       : defaults.dateStart,
     dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
-    branch: branchParam,
+    branches: parseBranchCsv(branchParam),
   };
 }
 
@@ -57,7 +77,8 @@ export function readProductionFilters(
     try {
       const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (raw) {
-        const data = JSON.parse(raw) as Partial<ProductionFilterUrlState>;
+        const data = JSON.parse(raw) as Partial<ProductionFilterUrlState> &
+          Record<string, unknown>;
         const defaults = defaultFilterState();
         return {
           dateStart:
@@ -68,7 +89,7 @@ export function readProductionFilters(
             data.dateEnd && isValidIsoDate(data.dateEnd)
               ? data.dateEnd
               : defaults.dateEnd,
-          branch: typeof data.branch === "string" ? data.branch : "",
+          branches: parseStoredBranches(data),
         };
       }
     } catch {
@@ -79,14 +100,13 @@ export function readProductionFilters(
   return defaultFilterState();
 }
 
-export function buildFilterSearchParams(
-  state: ProductionFilterUrlState
-): string {
+export function buildFilterSearchParams(state: ProductionFilterUrlState): string {
   const params = new URLSearchParams();
 
   if (state.dateStart) params.set("start_date", state.dateStart);
   if (state.dateEnd) params.set("end_date", state.dateEnd);
-  if (state.branch) params.set("branch", state.branch);
+  const branchCsv = serializeBranchCsv(state.branches);
+  if (branchCsv) params.set("branch", branchCsv);
 
   const query = params.toString();
   return query ? `?${query}` : "";

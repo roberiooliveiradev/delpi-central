@@ -4,6 +4,13 @@ export const FINANCIAL_HELP_TOOLTIPS = {
       "Indicadores financeiros do TOTVS: ROL, EBITDA, custos fixos e prazo médio de recebimento (PMR).",
     refresh: "Recarrega KPIs e gráficos com período e filial selecionados.",
   },
+  filters: {
+    dateStart:
+      "Início do período. KPIs e gráficos usam o intervalo a partir desta data.",
+    dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
+    branch:
+      "Filial TOTVS para ROL, EBITDA, custos fixos e PMR. Vazio = consolidado; múltiplas filiais restringem o recorte exibido.",
+  },
   kpis: {
     rolWithIpi:
       "Receita Operacional Líquida com IPI no período (vendas SD2 menos devoluções, conforme regra do indicador).",

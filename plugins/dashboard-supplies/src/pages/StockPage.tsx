@@ -31,6 +31,7 @@ import {
   formatInteger,
 } from "../utils/format";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatProtheusDateHuman } from "../utils/dates";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -42,11 +43,11 @@ export function StockPage({ pathname }: StockPageProps) {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     location,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     setLocation,
     stockParams,
     filterState,
@@ -74,7 +75,7 @@ export function StockPage({ pathname }: StockPageProps) {
     data?.estimation?.method === "sb2_register_snapshot" ||
     data?.estimation?.stock_method_resolved === "register_snapshot";
 
-  const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
+  const branchLabel = formatBranchFilterLabel(branches);
   const locationLabel = location ? `Local ${location}` : "Todas";
 
   const byLocationChart = useMemo(
@@ -170,12 +171,12 @@ export function StockPage({ pathname }: StockPageProps) {
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         location={location}
         showLocationFilter
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onLocationChange={setLocation}
         onRefresh={reload}
         refreshing={refreshing}

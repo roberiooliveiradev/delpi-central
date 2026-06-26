@@ -18,6 +18,7 @@ import { useSuppliesDashboard } from "../hooks/useSuppliesDashboard";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { formatPeriodLabel } from "../utils/dates";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import {
   formatCurrency,
   formatInteger,
@@ -61,11 +62,11 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     location,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     setLocation,
     periodParams,
     stockParams,
@@ -79,7 +80,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
-  const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
+  const branchLabel = formatBranchFilterLabel(branches);
   const locationLabel = location ? `Local ${location}` : "Todas as localizações";
   const isBusy = loading || refreshing;
   const hasData =
@@ -96,11 +97,11 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         filterState={filterState}
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         location={location}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+        onBranchesChange={setBranches}
         onLocationChange={setLocation}
         onRefresh={reload}
         refreshing={refreshing}

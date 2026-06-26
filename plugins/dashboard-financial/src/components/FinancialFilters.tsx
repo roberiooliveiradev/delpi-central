@@ -1,10 +1,15 @@
+import { BRANCH_OPTIONS } from "../constants/filterOptions";
+import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { FieldLabel } from "./HelpTooltip";
+import { MultiSelectField } from "./MultiSelectField";
+
 type FinancialFiltersProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   showPeriodFilters?: boolean;
   className?: string;
 };
@@ -12,49 +17,55 @@ type FinancialFiltersProps = {
 export function FinancialFilters({
   dateStart,
   dateEnd,
-  branch,
+  branches,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   showPeriodFilters = true,
   className = "",
 }: FinancialFiltersProps) {
   return (
-    <section className={`ds-filters-row ${className}`.trim()}>
+    <section
+      className={`ds-filters-row ${className}`.trim()}
+      aria-label="Filtros do dashboard"
+    >
       {showPeriodFilters ? (
         <>
-          <div className="ds-filter-box">
-            <label htmlFor="ds-date-start">Data inicial</label>
+          <label className="ds-filter-box ds-field">
+            <FieldLabel
+              label="Data inicial"
+              hint={FINANCIAL_HELP_TOOLTIPS.filters.dateStart}
+            />
             <input
               id="ds-date-start"
               type="date"
               value={dateStart}
               onChange={(e) => onDateStartChange(e.target.value)}
             />
-          </div>
-          <div className="ds-filter-box">
-            <label htmlFor="ds-date-end">Data final</label>
+          </label>
+          <label className="ds-filter-box ds-field">
+            <FieldLabel
+              label="Data final"
+              hint={FINANCIAL_HELP_TOOLTIPS.filters.dateEnd}
+            />
             <input
               id="ds-date-end"
               type="date"
               value={dateEnd}
               onChange={(e) => onDateEndChange(e.target.value)}
             />
-          </div>
+          </label>
         </>
       ) : null}
-      <div className="ds-filter-box">
-        <label htmlFor="ds-branch">Filial</label>
-        <select
-          id="ds-branch"
-          value={branch}
-          onChange={(e) => onBranchChange(e.target.value)}
-        >
-          <option value="">Consolidado</option>
-          <option value="01">01 — Matriz</option>
-          <option value="02">02 — Filial</option>
-        </select>
-      </div>
+      <MultiSelectField
+        label="Filial"
+        labelHint={FINANCIAL_HELP_TOOLTIPS.filters.branch}
+        options={BRANCH_OPTIONS}
+        selectedValues={branches}
+        onChange={onBranchesChange}
+        emptyLabel="Consolidado"
+        searchable
+      />
     </section>
   );
 }

@@ -65,10 +65,10 @@ export function DashboardHrPage() {
   const {
     dateStart,
     dateEnd,
-    branch,
+    branches,
     setDateStart,
     setDateEnd,
-    setBranch,
+    setBranches,
     apiParams,
   } = useHrFilters();
 
@@ -84,27 +84,34 @@ export function DashboardHrPage() {
   const hasData = snapshot !== null;
   const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
-  const selectedBranch = pickBranchMetrics(snapshot, branch);
+  const selectedBranch =
+    branches.length === 1 ? pickBranchMetrics(snapshot, branches[0]) : null;
+
+  const activeBranches = useMemo(() => {
+    const all = snapshot?.branches ?? [];
+    if (branches.length === 0) return all;
+    return all.filter((item) => branches.includes(item.branch_code));
+  }, [snapshot?.branches, branches]);
 
   const absenteeism = selectedBranch
     ? selectedBranch.absenteeism_pct
-    : aggregateFromBranches(snapshot?.branches ?? [], "absenteeism_pct");
+    : aggregateFromBranches(activeBranches, "absenteeism_pct");
 
   const turnover = selectedBranch
     ? selectedBranch.turnover_pct
-    : aggregateFromBranches(snapshot?.branches ?? [], "turnover_pct");
+    : aggregateFromBranches(activeBranches, "turnover_pct");
 
   const trainingHours = selectedBranch
     ? selectedBranch.training_hours_per_collaborator
     : aggregateFromBranches(
-        snapshot?.branches ?? [],
+        activeBranches,
         "training_hours_per_collaborator"
       );
 
   const activePdi = selectedBranch
     ? selectedBranch.active_pdi_pct
     : snapshot?.active_pdi_pct ??
-      aggregateFromBranches(snapshot?.branches ?? [], "active_pdi_pct");
+      aggregateFromBranches(activeBranches, "active_pdi_pct");
 
   const satisfaction = snapshot?.internal_satisfaction_pct ?? null;
 
@@ -127,18 +134,19 @@ export function DashboardHrPage() {
     [snapshot?.branches]
   );
 
-  const showBranchCharts = !branch && branchChartData.length > 0;
+  const showBranchCharts = branches.length === 0 && branchChartData.length > 0;
 
   return (
     <div className="dashboard-hr dashboard-page">
       <FilterBar
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
+        branches={branches}
         branchOptions={branchOptions}
+        onBranchesChange={setBranches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
+
         onRefresh={reload}
         refreshing={refreshing}
       />
@@ -229,7 +237,7 @@ export function DashboardHrPage() {
             snapshot?.goals_by_metric?.active_pdi_pct,
           )}
           {...buildKpiGoalPresentation(
-            branch ? `Filial ${branch}` : "Média das filiais",
+            branches.length === 1 ? `Filial ${branches[0]}` : branches.length > 1 ? `Filiais ${branches.join(", ")}` : "Média das filiais",
             snapshot?.goals_by_metric?.active_pdi_pct,
             undefined,
             { realizedValue: activePdi },

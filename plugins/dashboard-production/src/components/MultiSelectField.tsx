@@ -90,10 +90,12 @@ export function MultiSelectField({
     onChange([...new Set([...selectedValues, ...visibleValues])]);
   };
 
-  const rootClass = ["dp-field", "dp-field--multi-select", className].filter(Boolean).join(" ");
+  const rootClass = ["dp-field", "dp-field--multi-select", className]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={rootClass} ref={wrapperRef}>
+    <div className={`dp-filter-box ${rootClass}`.trim()} ref={wrapperRef}>
       <FieldLabel label={label} hint={labelHint} />
       <div className={`dp-multi-select${open ? " dp-multi-select--open" : ""}`}>
         <button
@@ -124,14 +126,14 @@ export function MultiSelectField({
             <div className="dp-multi-select__actions">
               <button
                 type="button"
-                className="dp-ghost-btn dp-ghost-btn--sm"
+                className="dp-ghost-btn dp-btn--sm"
                 onClick={selectVisible}
               >
                 Marcar visíveis
               </button>
               <button
                 type="button"
-                className="dp-ghost-btn dp-ghost-btn--sm"
+                className="dp-ghost-btn dp-btn--sm"
                 onClick={() => onChange([])}
               >
                 Limpar

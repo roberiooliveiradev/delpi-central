@@ -1,11 +1,16 @@
+import { BRANCH_OPTIONS } from "../constants/filterOptions";
+import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { FieldLabel } from "./HelpTooltip";
+import { MultiSelectField } from "./MultiSelectField";
+
 type SuppliesFiltersProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
   location: string;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onBranchesChange: (values: string[]) => void;
   onLocationChange: (value: string) => void;
   showPeriodFilters?: boolean;
   showLocationFilter?: boolean;
@@ -15,55 +20,64 @@ type SuppliesFiltersProps = {
 export function SuppliesFilters({
   dateStart,
   dateEnd,
-  branch,
+  branches,
   location,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
+  onBranchesChange,
   onLocationChange,
   showPeriodFilters = true,
   showLocationFilter = true,
   className = "",
 }: SuppliesFiltersProps) {
   return (
-    <section className={`ds-filters-row ${className}`.trim()}>
+    <section
+      className={`ds-filters-row ${className}`.trim()}
+      aria-label="Filtros do dashboard"
+    >
       {showPeriodFilters ? (
         <>
-          <div className="ds-filter-box">
-            <label htmlFor="ds-date-start">Data inicial</label>
+          <label className="ds-filter-box ds-field">
+            <FieldLabel
+              label="Data inicial"
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.dateStart}
+            />
             <input
               id="ds-date-start"
               type="date"
               value={dateStart}
               onChange={(e) => onDateStartChange(e.target.value)}
             />
-          </div>
-          <div className="ds-filter-box">
-            <label htmlFor="ds-date-end">Data final</label>
+          </label>
+          <label className="ds-filter-box ds-field">
+            <FieldLabel
+              label="Data final"
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.dateEnd}
+            />
             <input
               id="ds-date-end"
               type="date"
               value={dateEnd}
               onChange={(e) => onDateEndChange(e.target.value)}
             />
-          </div>
+          </label>
         </>
       ) : null}
-      <div className="ds-filter-box">
-        <label htmlFor="ds-branch">Filial</label>
-        <select
-          id="ds-branch"
-          value={branch}
-          onChange={(e) => onBranchChange(e.target.value)}
-        >
-          <option value="">Consolidado</option>
-          <option value="01">01 — Matriz</option>
-          <option value="02">02 — Filial</option>
-        </select>
-      </div>
+      <MultiSelectField
+        label="Filial"
+        labelHint={SUPPLIES_HELP_TOOLTIPS.filters.branch}
+        options={BRANCH_OPTIONS}
+        selectedValues={branches}
+        onChange={onBranchesChange}
+        emptyLabel="Consolidado"
+        searchable
+      />
       {showLocationFilter ? (
-        <div className="ds-filter-box">
-          <label htmlFor="ds-location">Localização (estoque)</label>
+        <label className="ds-filter-box ds-field">
+          <FieldLabel
+            label="Localização (estoque)"
+            hint={SUPPLIES_HELP_TOOLTIPS.filters.location}
+          />
           <input
             id="ds-location"
             type="text"
@@ -71,7 +85,7 @@ export function SuppliesFilters({
             placeholder="Todas"
             onChange={(e) => onLocationChange(e.target.value)}
           />
-        </div>
+        </label>
       ) : null}
     </section>
   );

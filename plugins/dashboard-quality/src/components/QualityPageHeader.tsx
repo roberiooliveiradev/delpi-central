@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Award, ListFilter } from "lucide-react";
 import type { QualityFilterUrlState } from "../utils/filterUrl";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { PrintReportButton } from "./PrintReportButton";
 import { PrintReportSummary } from "./PrintReportSummary";
 import { QualityNav } from "./QualityNav";
@@ -10,7 +11,7 @@ type QualityPageHeaderProps = {
   subtitle: string;
   currentPath?: string;
   filterState?: QualityFilterUrlState;
-  printFilters?: Pick<QualityFilterUrlState, "dateStart" | "dateEnd" | "branch">;
+  printFilters?: Pick<QualityFilterUrlState, "dateStart" | "dateEnd" | "branches">;
   showPrint?: boolean;
   printDisabled?: boolean;
   onRefresh?: () => void;
@@ -39,7 +40,7 @@ export function QualityPageHeader({
           title={title}
           dateStart={summaryFilters.dateStart}
           dateEnd={summaryFilters.dateEnd}
-          branch={summaryFilters.branch}
+          branch={formatBranchFilterLabel(summaryFilters.branches)}
         />
       ) : null}
 

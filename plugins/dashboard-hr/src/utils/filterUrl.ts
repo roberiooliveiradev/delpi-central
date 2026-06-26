@@ -2,11 +2,15 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import {
+  parseDynamicBranchCsv,
+  serializeDynamicBranchCsv,
+} from "./branchClientFilters";
 
 export type HrFilterUrlState = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
+  branches: string[];
 };
 
 const SESSION_STORAGE_KEY = "delpi.dashboard-hr.filters";
@@ -19,8 +23,24 @@ function defaultFilterState(): HrFilterUrlState {
   return {
     dateStart: getFirstDayOfMonthInputValue(),
     dateEnd: getTodayInputValue(),
-    branch: "",
+    branches: [],
   };
+}
+
+function parseStoredBranches(data: Record<string, unknown>): string[] {
+  if (Array.isArray(data.branches)) {
+    return parseDynamicBranchCsv(
+      data.branches
+        .filter((entry): entry is string => typeof entry === "string")
+        .join(",")
+    );
+  }
+
+  if (typeof data.branch === "string" && data.branch.trim()) {
+    return parseDynamicBranchCsv(data.branch);
+  }
+
+  return [];
 }
 
 function parseFilterParams(params: URLSearchParams): HrFilterUrlState | null {
@@ -41,7 +61,7 @@ function parseFilterParams(params: URLSearchParams): HrFilterUrlState | null {
       ? dateStartParam
       : defaults.dateStart,
     dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
-    branch: branchParam,
+    branches: parseDynamicBranchCsv(branchParam),
   };
 }
 
@@ -55,7 +75,8 @@ export function readHrFilters(
     try {
       const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (raw) {
-        const data = JSON.parse(raw) as Partial<HrFilterUrlState>;
+        const data = JSON.parse(raw) as Partial<HrFilterUrlState> &
+          Record<string, unknown>;
         const defaults = defaultFilterState();
         return {
           dateStart:
@@ -66,7 +87,7 @@ export function readHrFilters(
             data.dateEnd && isValidIsoDate(data.dateEnd)
               ? data.dateEnd
               : defaults.dateEnd,
-          branch: typeof data.branch === "string" ? data.branch : "",
+          branches: parseStoredBranches(data),
         };
       }
     } catch {
@@ -82,7 +103,8 @@ export function buildFilterSearchParams(state: HrFilterUrlState): string {
 
   if (state.dateStart) params.set("start_date", state.dateStart);
   if (state.dateEnd) params.set("end_date", state.dateEnd);
-  if (state.branch) params.set("branch", state.branch);
+  const branchCsv = serializeDynamicBranchCsv(state.branches);
+  if (branchCsv) params.set("branch", branchCsv);
 
   const query = params.toString();
   return query ? `?${query}` : "";

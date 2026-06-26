@@ -4,6 +4,12 @@ export const QUALITY_HELP_TOOLTIPS = {
       "Indicadores de qualidade: PPM interno/externo, kaizens, auditorias 5S e não conformidades.",
     refresh: "Recarrega PPM, kaizens e auditorias com os filtros atuais.",
   },
+  filters: {
+    dateStart: "Início do período para PPM, kaizens e auditorias 5S.",
+    dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
+    branch:
+      "Filial TOTVS. Vazio = todas; múltiplas filiais restringem o recorte dos indicadores.",
+  },
   kpis: {
     ppmInternal:
       "Parts Per Million interno: devoluções internas por milhão de unidades produzidas no período.",

@@ -4,6 +4,12 @@ export const HR_HELP_TOOLTIPS = {
       "Indicadores de RH: absenteísmo, turnover, satisfação interna, PDI e horas de treinamento.",
     refresh: "Recarrega os indicadores com período e filial selecionados.",
   },
+  filters: {
+    dateStart: "Início do período para os indicadores de RH.",
+    dateEnd: "Fim do período. Deve ser igual ou posterior ao início.",
+    branch:
+      "Filial TOTVS. Vazio = média/consolidado das filiais; múltiplas filiais restringem o recorte.",
+  },
   kpis: {
     absenteeism:
       "Percentual de absenteísmo no período. Com filial Todas, exibe média das filiais com dado.",

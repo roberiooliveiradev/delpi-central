@@ -5,6 +5,15 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     refresh:
       "Recarrega KPIs e gráficos com os filtros atuais (período, filial e localização).",
   },
+  filters: {
+    dateStart:
+      "Início do período. KPIs e gráficos consideram movimentos e saldos a partir desta data.",
+    dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
+    branch:
+      "Filial TOTVS para CPV, OTD, estoque e economia. Vazio = consolidado; múltiplas filiais comparam o recorte selecionado.",
+    location:
+      "Código de localização de estoque (armazém). Vazio = todas as localizações no recorte de filial.",
+  },
   kpis: {
     cpvTotal:
       "Custo dos Produtos Vendidos no período (movimentos SD3 classificados como CPV). Meta alinhada ao catálogo de Indicadores Estratégicos quando configurada.",
