@@ -156,4 +156,5 @@ def test_hr_satisfaction_consolidated_unit_values_fail_branch_view() -> None:
     )
 
     assert len(branch_01) == 1
-    assert branch_01[0].classification == calculator.MISSING_VALUE_CLASSIFICATION
+    assert branch_01[0].score == 0.0
+    assert branch_01[0].classification == calculator.classify_score(0.0)

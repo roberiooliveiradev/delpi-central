@@ -8,7 +8,9 @@ type IndicatorAnalyticsSummaryProps = {
 };
 
 function averageScore(items: IndicatorAnalyticsViewItem[]) {
-  const scored = items.filter((item) => item.hasValue && item.score !== null);
+  const scored = items.filter(
+    (item) => item.score !== null && item.score !== undefined,
+  );
   if (!scored.length) return null;
 
   const total = scored.reduce((sum, item) => sum + Number(item.score), 0);

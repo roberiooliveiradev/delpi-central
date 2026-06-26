@@ -40,7 +40,7 @@ def test_lower_is_better_real_zero_scores_ten() -> None:
     assert score == 10.0
 
 
-def test_missing_measurement_is_reported_without_score() -> None:
+def test_missing_measurement_scores_zero_and_penalizes_department() -> None:
     calculator = StrategicIndicatorsCalculator()
     indicator = _financial_fixed_cost_indicator()
 
@@ -59,11 +59,11 @@ def test_missing_measurement_is_reported_without_score() -> None:
 
     assert len(calculated) == 1
     assert calculated[0].value is None
-    assert calculated[0].score is None
-    assert calculated[0].classification == calculator.MISSING_VALUE_CLASSIFICATION
+    assert calculated[0].score == 0.0
+    assert calculated[0].classification == calculator.classify_score(0.0)
 
 
-def test_catalog_indicator_without_measurement_is_reported() -> None:
+def test_catalog_indicator_without_measurement_scores_zero() -> None:
     calculator = StrategicIndicatorsCalculator()
     indicator = _financial_fixed_cost_indicator()
 
@@ -73,4 +73,57 @@ def test_catalog_indicator_without_measurement_is_reported() -> None:
     )
 
     assert len(calculated) == 1
-    assert calculated[0].classification == calculator.MISSING_VALUE_CLASSIFICATION
+    assert calculated[0].score == 0.0
+    assert calculated[0].classification == calculator.classify_score(0.0)
+
+
+def test_supplies_negotiation_savings_without_data_scores_zero() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    indicator = StrategicIndicatorCatalogItem(
+        indicator_id="supplies_negotiation_savings",
+        department_id="supplies",
+        indicator_name="Economia em Negociações de Compras",
+        weight_pct=15,
+        goal_label="Meta",
+        goal_value=100_000.0,
+        goal_periodicity="monthly",
+        goal_mode="standard",
+        scope_type="per_unit",
+        performance_direction="higher_is_better",
+        branch_goals={
+            "01": {
+                "goal_value": 100_000.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "standard",
+                "monthly_targets": [],
+            },
+            "02": {
+                "goal_value": 100_000.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "standard",
+                "monthly_targets": [],
+            },
+        },
+        has_resolved_goal=True,
+    )
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=[indicator],
+        measurements=[
+            StrategicIndicatorMeasuredValue(
+                indicator_id="supplies_negotiation_savings",
+                department_id="supplies",
+                value=None,
+                source="supplies_negotiation_savings",
+                unit_values={"01": None, "02": None},
+            )
+        ],
+        competence="2026-05",
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+    )
+
+    assert len(calculated) == 1
+    assert calculated[0].value is None
+    assert calculated[0].score == 0.0
+    assert calculated[0].classification == calculator.classify_score(0.0)

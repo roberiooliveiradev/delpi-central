@@ -32,7 +32,7 @@ function buildDepartmentBuckets(
     .map(([departmentId, items]) => {
       const totalIndicators = items.length;
       const scoredItems = items.filter(
-        (item) => item.hasValue && item.score !== null,
+        (item) => item.score !== null && item.score !== undefined,
       );
       const totalScore = scoredItems.reduce(
         (sum, item) => sum + Number(item.score),

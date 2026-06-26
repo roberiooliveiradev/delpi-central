@@ -219,6 +219,7 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 unit_ids.add(unit_id)
 
                 if raw_value is None:
+                    unit_scores.setdefault(unit_id, []).append(0.0)
                     continue
 
                 unit_score = self._calculator.calculate_indicator_score(

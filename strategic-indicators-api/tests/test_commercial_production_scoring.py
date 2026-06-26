@@ -107,7 +107,7 @@ def test_commercial_department_scores_with_rol_per_unit_and_average_of_units() -
     assert departments[0].score > 0
 
 
-def test_production_null_measurement_is_not_scored_as_zero() -> None:
+def test_production_null_measurement_scores_zero() -> None:
     calculator = StrategicIndicatorsCalculator()
     indicator = StrategicIndicatorCatalogItem(
         indicator_id="production-oee",
@@ -137,8 +137,8 @@ def test_production_null_measurement_is_not_scored_as_zero() -> None:
 
     assert len(calculated) == 1
     assert calculated[0].value is None
-    assert calculated[0].score is None
-    assert calculated[0].classification == calculator.MISSING_VALUE_CLASSIFICATION
+    assert calculated[0].score == 0.0
+    assert calculated[0].classification == calculator.classify_score(0.0)
 
 
 def _production_rol_branch_goals() -> dict:
