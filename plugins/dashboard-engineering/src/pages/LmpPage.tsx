@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -89,6 +89,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
 
   const [listingTypes, setListingTypes] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
+  const [tableSearch, setTableSearch] = useState("");
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const apiListingType = resolveScalarApiFilter(listingTypes, "Todos");
@@ -104,6 +105,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
     page,
     pageSize,
     setPage,
+    setPageSize,
     loading,
     refreshing,
     requestProgress,
@@ -176,9 +178,51 @@ export function LmpPage({ pathname }: LmpPageProps) {
     summary?.total_lmps ??
     sortedItems.length;
 
+  const tableRows = useMemo(() => {
+    const query = tableSearch.trim().toLowerCase();
+    if (!query) return sortedItems;
+
+    return sortedItems.filter((row) =>
+      [
+        row.branch,
+        row.sale_number,
+        row.sale_description,
+        row.engineering_status,
+        row.nivel,
+        row.status,
+        formatListingKind(row.listing_kind),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [sortedItems, tableSearch]);
+
+  const handleLmpRowClick = useCallback(
+    (row: LmpDashboardItem) => {
+      if (!row.sale_number) return;
+      const params = new URLSearchParams();
+      if (row.branch) params.set("branch", row.branch);
+      if (dateStart) params.set("date_start", dateStart);
+      if (dateEnd) params.set("date_end", dateEnd);
+      const query = params.toString();
+      const target = `/apps/dashboard-lmps/ov/${encodeURIComponent(row.sale_number)}${
+        query ? `?${query}` : ""
+      }`;
+      window.location.assign(target);
+    },
+    [dateStart, dateEnd]
+  );
+
   const columns = useMemo<DataTableColumn<LmpDashboardItem>[]>(
     () => [
-      { key: "branch", header: "Filial", render: (row) => row.branch ?? "—" },
+      {
+        key: "branch",
+        header: "Filial",
+        headerHint: ENGINEERING_HELP_TOOLTIPS.table.branch,
+        render: (row) => row.branch ?? "—",
+      },
       {
         key: "kind",
         header: "Tipo",
@@ -452,37 +496,32 @@ export function LmpPage({ pathname }: LmpPageProps) {
 
       <DataTableSection
         title="Registros filtrados"
-        hint={periodLabel}
+        titleHint={ENGINEERING_HELP_TOOLTIPS.table.section}
+        hint={`${periodLabel} · clique na linha para abrir o detalhe da proposta`}
         columns={columns}
-        rows={sortedItems}
+        rows={tableRows}
         rowKey={buildLmpDashboardRowKey}
         loading={loading && items.length === 0}
         refreshing={refreshing}
+        onRowClick={handleLmpRowClick}
         emptyMessage={
           loading
             ? "Carregando registros…"
             : "Nenhum registro encontrado para os filtros informados."
         }
         searchPlaceholder="Buscar proposta, descrição, status…"
+        searchHint={ENGINEERING_HELP_TOOLTIPS.table.search}
+        serverSearch={{
+          value: tableSearch,
+          onChange: setTableSearch,
+        }}
         serverPagination={{
           page,
           pageSize,
           total,
           onPageChange: setPage,
+          onPageSizeChange: setPageSize,
         }}
-        getSearchText={(row) =>
-          [
-            row.branch,
-            row.sale_number,
-            row.sale_description,
-            row.engineering_status,
-            row.nivel,
-            row.status,
-            formatListingKind(row.listing_kind),
-          ]
-            .filter(Boolean)
-            .join(" ")
-        }
       />
     </div>
   );

@@ -6,6 +6,12 @@ export type ParsedQualityRoute =
       kaizenId: string;
     }
   | {
+      view: "ppm-detail";
+    }
+  | {
+      view: "nonconformity-detail";
+    }
+  | {
       view: "page";
       path: string;
     };
@@ -20,6 +26,15 @@ function normalizeQualityPath(pathname: string): string {
 
 export function parseQualityPath(pathname: string): ParsedQualityRoute {
   const path = normalizeQualityPath(pathname);
+
+  if (path === QUALITY_ROUTES.ppmDetail) {
+    return { view: "ppm-detail" };
+  }
+
+  if (path === QUALITY_ROUTES.nonconformityDetail) {
+    return { view: "nonconformity-detail" };
+  }
+
   const kaizenPrefix = `${QUALITY_ROUTES.kaizen}/`;
 
   if (path.startsWith(kaizenPrefix)) {

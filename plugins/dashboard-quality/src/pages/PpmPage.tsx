@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Factory, Truck } from "lucide-react";
 
 import { ChartCard } from "../components/ChartCard";
@@ -13,7 +13,7 @@ import { QualityFilters } from "../components/QualityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { QualityStatusAlerts } from "../components/QualityStatusAlerts";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
-import { QUALITY_ROUTES } from "../constants/routes";
+import { QUALITY_ROUTES, buildPpmDetailPath } from "../constants/routes";
 import { getPpmChartReferenceLines } from "../constants/ppmReferenceLines";
 import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { usePpmPage } from "../hooks/usePpmPage";
@@ -33,6 +33,8 @@ import {
   downloadDualPpmSeriesCsv,
 } from "../utils/chartSeriesExport";
 import { mergePpmSeries } from "../utils/mergePpmSeries";
+import { navigateQuality } from "../utils/navigation";
+import { savePpmDetailRecord } from "../utils/recordDetailStorage";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -44,6 +46,8 @@ export function PpmPage({ pathname }: PpmPageProps) {
   const [ppmType, setPpmType] = useState<PpmType>("internal");
   const [compareChart, setCompareChart] = useState(false);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [tableSearch, setTableSearch] = useState("");
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
 
   const {
@@ -65,6 +69,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
       type: ppmType,
       filters: apiParams,
       page,
+      pageSize,
     });
 
   const internalSeries = usePpmChartSeries({
@@ -109,7 +114,11 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
   useEffect(() => {
     setPage(1);
-  }, [ppmType, apiParams.branch, apiParams.date_start, apiParams.date_end]);
+  }, [ppmType, apiParams.branch, apiParams.date_start, apiParams.date_end, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tableSearch]);
 
   useEffect(() => {
     setGranularity(suggestGranularity(dateStart, dateEnd));
@@ -118,6 +127,37 @@ export function PpmPage({ pathname }: PpmPageProps) {
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
+  );
+
+  const tableRows = useMemo(() => {
+    const items = tablePage?.items ?? [];
+    const query = tableSearch.trim().toLowerCase();
+    if (!query) return items;
+
+    return items.filter((row) =>
+      [
+        row.branch,
+        formatNonconformityCode(row.code, row.code_display),
+        row.customer_code,
+        row.customer_store,
+        row.customer_name,
+        row.item_code,
+        row.description,
+        row.detailed_description,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [tablePage?.items, tableSearch]);
+
+  const handlePpmRowClick = useCallback(
+    (row: PpmItem) => {
+      savePpmDetailRecord(row);
+      navigateQuality(buildPpmDetailPath(), filterState);
+    },
+    [filterState]
   );
 
   const columns = useMemo<DataTableColumn<PpmItem>[]>(
@@ -130,6 +170,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
       {
         key: "branch",
         header: "Filial",
+        headerHint: QUALITY_HELP_TOOLTIPS.table.branch,
         render: (row) => row.branch,
       },
       {
@@ -389,16 +430,31 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
       <DataTableSection
         title={`Registros de PPM ${typeLabel}`}
-        hint={
-          tablePage
-            ? `${tablePage.total} registro(s) · busca na página atual`
-            : undefined
-        }
+        titleHint={QUALITY_HELP_TOOLTIPS.table.section}
+        hint={`${periodLabel} · clique na linha para ver o detalhe`}
         columns={columns}
-        rows={tablePage?.items ?? []}
+        rows={tableRows}
         rowKey={(row) => `${row.code}-${row.revision}-${row.registered_date}`}
         loading={loading && !tablePage}
-        searchPlaceholder="Buscar código, produto…"
+        refreshing={refreshing && Boolean(tablePage?.items.length)}
+        onRowClick={handlePpmRowClick}
+        searchPlaceholder="Buscar código, produto, cliente…"
+        searchHint={QUALITY_HELP_TOOLTIPS.table.search}
+        serverSearch={{
+          value: tableSearch,
+          onChange: setTableSearch,
+        }}
+        headerActions={
+          <button
+            type="button"
+            className="dq-ghost-btn dq-no-print"
+            onClick={handleExportCsv}
+            disabled={!tablePage?.items.length}
+          >
+            <Download size={16} />
+            Exportar CSV
+          </button>
+        }
         serverPagination={
           tablePage
             ? {
@@ -406,6 +462,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
                 pageSize: tablePage.page_size,
                 total: tablePage.total,
                 onPageChange: setPage,
+                onPageSizeChange: setPageSize,
               }
             : undefined
         }

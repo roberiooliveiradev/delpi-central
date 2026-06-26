@@ -1584,3 +1584,85 @@ html.ds-printing .dashboard-financial .recharts-responsive-container {
   font-weight: 600;
   color: var(--ds-text-muted);
 }
+
+/* Table stack (padrão commercial — ds) */
+.dashboard-financial .ds-table-section__actions {
+.dashboard-financial .ds-pagination__action,
+.dashboard-financial .ds-pagination__help,
+.dashboard-financial .ds-pagination__action-help,
+.dashboard-financial .ds-table-page-size__help,
+.dashboard-financial .ds-table-search__help,
+.dashboard-financial .ds-table__header-help,
+.dashboard-financial .ds-table-section__title-help {
+.dashboard-financial .ds-pagination__info {
+.dashboard-financial .ds-table-section__header .ds-section-title {
+.dashboard-financial .ds-table__header-label {
+.dashboard-financial .ds-table__header-text {
+.dashboard-financial .ds-table__header-help {
+.dashboard-financial .ds-table-section__header {
+.dashboard-financial .ds-table-section__meta {
+.dashboard-financial .ds-table-section__meta-group {
+.dashboard-financial .ds-table-toolbar {
+.dashboard-financial .ds-table-page-size {
+.dashboard-financial .ds-table-page-size__label {
+.dashboard-financial .ds-table-page-size__select {
+.dashboard-financial .ds-table-toolbar__search-group {
+.dashboard-financial .ds-table-search {
+.dashboard-financial .ds-table-search__icon {
+.dashboard-financial .ds-table-search__input {
+.dashboard-financial .ds-table-toolbar__extra {
+.dashboard-financial .ds-table-wrap {
+.dashboard-financial .ds-table {
+.dashboard-financial .ds-table th,
+.dashboard-financial .ds-table td {
+.dashboard-financial .ds-table th {
+.dashboard-financial .ds-table__col--wide {
+.dashboard-financial .ds-table__col--numeric {
+.dashboard-financial .ds-table__empty {
+.dashboard-financial .ds-table-section.ds-card {
+.dashboard-financial .ds-table-wrap--section {
+.dashboard-financial .ds-table-wrap--embedded {
+.dashboard-financial .ds-table--section {
+.dashboard-financial .ds-table--sortable th {
+.dashboard-financial .ds-table tbody tr:last-child td {
+.dashboard-financial .ds-table__row--clickable:hover td,
+.dashboard-financial .ds-table--clickable tbody tr:hover td {
+.dashboard-financial .ds-table__sort-button {
+.dashboard-financial .ds-table__sort-button:hover,
+.dashboard-financial .ds-table__sort-button:focus-visible {
+.dashboard-financial .ds-table__sort-button--active {
+.dashboard-financial .ds-table__sort-indicator {
+.dashboard-financial .ds-table__sort-button--active .ds-table__sort-indicator {
+.dashboard-financial .ds-table-section__title-hint {
+.dashboard-financial .ds-table-search__hint {
+.dashboard-financial .ds-pagination {
+.dashboard-financial .ds-pagination__info {
+.dashboard-financial .ds-pagination__jump {
+.dashboard-financial .ds-pagination__jump-field {
+.dashboard-financial .ds-pagination__jump-label {
+.dashboard-financial .ds-pagination__jump-input {
+.dashboard-financial .ds-pagination__jump-input:focus-visible {
+.dashboard-financial .ds-pagination__jump-input--invalid {
+.dashboard-financial .ds-pagination__jump-error {
+.dashboard-financial .ds-pagination__controls {
+.dashboard-financial .ds-pagination__pages {
+.dashboard-financial .ds-pagination__page {
+.dashboard-financial .ds-pagination__page:hover:not(:disabled) {
+.dashboard-financial .ds-pagination__page--active {
+.dashboard-financial .ds-pagination__ellipsis {
+  .dashboard-financial .ds-table-toolbar {
+  .dashboard-financial .ds-table-page-size,
+  .dashboard-financial .ds-table-toolbar__search-group {
+  .dashboard-financial .ds-pagination,
+  .dashboard-financial .ds-pagination__actions,
+  .dashboard-financial .ds-table-section {
+  .dashboard-financial .ds-table-wrap {
+  .dashboard-financial .ds-table {
+  .dashboard-financial .ds-table th,
+  .dashboard-financial .ds-table td {
+  .dashboard-financial .ds-table th {
+.dashboard-financial .ds-table--clickable tbody tr {
+.dashboard-financial .ds-table--clickable tbody tr:hover {
+.dashboard-financial .ds-detail-card .ds-table-wrap {
+.dashboard-financial .ds-detail-card .ds-table th {
+.dashboard-financial .ds-detail-card .ds-table {

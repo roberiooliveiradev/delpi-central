@@ -1,0 +1,112 @@
+import { useEffect, useId, useState } from "react";
+
+import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  parsePageJumpInput,
+  type PageJumpValidationReason,
+} from "../utils/paginationPages";
+import { HelpTooltip } from "./HelpTooltip";
+
+type PaginationPageJumpProps = {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+};
+
+function resolveJumpErrorMessage(
+  reason: PageJumpValidationReason,
+  totalPages: number,
+): string {
+  switch (reason) {
+    case "empty":
+      return DP_HELP_TOOLTIPS.pagination.jumpEmpty;
+    case "invalid":
+      return DP_HELP_TOOLTIPS.pagination.jumpInvalid;
+    case "below_min":
+      return DP_HELP_TOOLTIPS.pagination.jumpBelowMin;
+    case "above_max":
+      return `A página máxima é ${totalPages}.`;
+    default: {
+      const _exhaustive: never = reason;
+      return _exhaustive;
+    }
+  }
+}
+
+export function PaginationPageJump({
+  page,
+  totalPages,
+  onPageChange,
+}: PaginationPageJumpProps) {
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
+  const [draft, setDraft] = useState(String(page));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDraft(String(page));
+    setError(null);
+  }, [page]);
+
+  const commitJump = () => {
+    const result = parsePageJumpInput(draft, totalPages);
+
+    if (!result.ok) {
+      setError(resolveJumpErrorMessage(result.reason, totalPages));
+      return;
+    }
+
+    setError(null);
+    setDraft(String(result.page));
+
+    if (result.page !== page) {
+      onPageChange(result.page);
+    }
+  };
+
+  return (
+    <div className="dp-pagination__jump">
+      <label className="dp-pagination__jump-field" htmlFor={inputId}>
+        <span className="dp-pagination__jump-label">Ir para</span>
+        <input
+          id={inputId}
+          className={
+            error
+              ? "dp-pagination__jump-input dp-pagination__jump-input--invalid"
+              : "dp-pagination__jump-input"
+          }
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={draft}
+          aria-label="Ir para página"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            if (error) {
+              setError(null);
+            }
+          }}
+          onBlur={commitJump}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commitJump();
+            }
+          }}
+        />
+      </label>
+      <HelpTooltip
+        content={DP_HELP_TOOLTIPS.pagination.jump}
+        ariaLabel="Ajuda: ir para página"
+        className="dp-pagination__jump-help"
+      />
+      {error ? (
+        <span id={errorId} className="dp-pagination__jump-error" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}

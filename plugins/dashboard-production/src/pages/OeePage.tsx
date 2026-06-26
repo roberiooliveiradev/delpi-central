@@ -565,6 +565,7 @@ export function OeePage({ pathname }: OeePageProps) {
         refreshing={loading && Boolean(data?.appointments.items?.length)}
         emptyMessage="Nenhum apontamento no período."
         searchPlaceholder="Buscar OP, produto, CT, operador…"
+        searchHint={DP_HELP_TOOLTIPS.table.search}
         getSearchText={(row) =>
           [
             row.branch,
@@ -582,9 +583,10 @@ export function OeePage({ pathname }: OeePageProps) {
         }
         serverPagination={{
           page: data?.appointments.page ?? serverTable.query.page,
-          pageSize: data?.appointments.page_size ?? PAGE_SIZE,
+          pageSize: data?.appointments.page_size ?? serverTable.query.pageSize,
           total: data?.appointments.total ?? 0,
           onPageChange: serverTable.setPage,
+          onPageSizeChange: serverTable.setPageSize,
         }}
         serverSort={{
           sortKey: serverTable.query.sortKey,

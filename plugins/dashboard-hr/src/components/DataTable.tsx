@@ -30,13 +30,13 @@ type DataTableProps<T> = {
 
 function renderColumnHeader<T>(column: DataTableColumn<T>) {
   return (
-    <span className="ds-table__header-label">
-      <span className="ds-table__header-text">{column.header}</span>
+    <span className="dh-table__header-label">
+      <span className="dh-table__header-text">{column.header}</span>
       {column.headerHint ? (
         <HelpTooltip
           content={column.headerHint}
           ariaLabel={`Ajuda: ${column.header}`}
-          className="ds-table__header-help"
+          className="dh-table__header-help"
         />
       ) : null}
     </span>
@@ -58,18 +58,18 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const isSortable = Boolean(onSortChange && columns.some((column) => column.sortable));
   const tableClass = [
-    "ds-table",
-    layout === "section" ? "ds-table--section" : "",
-    isSortable ? "ds-table--sortable" : "",
-    onRowClick ? "ds-table--clickable" : "",
+    "dh-table",
+    layout === "section" ? "dh-table--section" : "",
+    isSortable ? "dh-table--sortable" : "",
+    onRowClick ? "dh-table--clickable" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   const wrapClass =
     layout === "section"
-      ? "ds-table-wrap ds-table-wrap--section"
-      : "ds-table-wrap ds-table-wrap--embedded";
+      ? "dh-table-wrap dh-table-wrap--section"
+      : "dh-table-wrap dh-table-wrap--embedded";
 
   if (loading) {
     return (
@@ -77,7 +77,7 @@ export function DataTable<T>({
         <table className={tableClass}>
           <tbody>
             <tr>
-              <td colSpan={columns.length} className="ds-table__empty">
+              <td colSpan={columns.length} className="dh-table__empty">
                 Carregando…
               </td>
             </tr>
@@ -93,7 +93,7 @@ export function DataTable<T>({
         <table className={tableClass}>
           <tbody>
             <tr>
-              <td colSpan={columns.length} className="ds-table__empty">
+              <td colSpan={columns.length} className="dh-table__empty">
                 {emptyMessage}
               </td>
             </tr>
@@ -129,14 +129,14 @@ export function DataTable<T>({
                   {column.sortable && onSortChange ? (
                     <button
                       type="button"
-                      className={`ds-table__sort-button${
-                        isSorted ? " ds-table__sort-button--active" : ""
+                      className={`dh-table__sort-button${
+                        isSorted ? " dh-table__sort-button--active" : ""
                       }`}
                       onClick={() => onSortChange(column.key)}
                       aria-label={`Ordenar por ${column.header}`}
                     >
                       {renderColumnHeader(column)}
-                      <span className="ds-table__sort-indicator" aria-hidden="true">
+                      <span className="dh-table__sort-indicator" aria-hidden="true">
                         {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
                       </span>
                     </button>
@@ -152,7 +152,7 @@ export function DataTable<T>({
           {rows.map((row) => {
             const rowClass = [
               getRowClassName?.(row),
-              onRowClick ? "ds-table__row--clickable" : "",
+              onRowClick ? "dh-table__row--clickable" : "",
             ]
               .filter(Boolean)
               .join(" ");

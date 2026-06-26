@@ -1593,3 +1593,85 @@ html.ds-printing .dashboard-engineering .recharts-responsive-container {
   font-weight: 600;
   color: var(--ds-text-muted);
 }
+
+/* Table stack (padrão commercial — ds) */
+.dashboard-engineering .ds-table-section__actions {
+.dashboard-engineering .ds-pagination__action,
+.dashboard-engineering .ds-pagination__help,
+.dashboard-engineering .ds-pagination__action-help,
+.dashboard-engineering .ds-table-page-size__help,
+.dashboard-engineering .ds-table-search__help,
+.dashboard-engineering .ds-table__header-help,
+.dashboard-engineering .ds-table-section__title-help {
+.dashboard-engineering .ds-pagination__info {
+.dashboard-engineering .ds-table-section__header .ds-section-title {
+.dashboard-engineering .ds-table__header-label {
+.dashboard-engineering .ds-table__header-text {
+.dashboard-engineering .ds-table__header-help {
+.dashboard-engineering .ds-table-section__header {
+.dashboard-engineering .ds-table-section__meta {
+.dashboard-engineering .ds-table-section__meta-group {
+.dashboard-engineering .ds-table-toolbar {
+.dashboard-engineering .ds-table-page-size {
+.dashboard-engineering .ds-table-page-size__label {
+.dashboard-engineering .ds-table-page-size__select {
+.dashboard-engineering .ds-table-toolbar__search-group {
+.dashboard-engineering .ds-table-search {
+.dashboard-engineering .ds-table-search__icon {
+.dashboard-engineering .ds-table-search__input {
+.dashboard-engineering .ds-table-toolbar__extra {
+.dashboard-engineering .ds-table-wrap {
+.dashboard-engineering .ds-table {
+.dashboard-engineering .ds-table th,
+.dashboard-engineering .ds-table td {
+.dashboard-engineering .ds-table th {
+.dashboard-engineering .ds-table__col--wide {
+.dashboard-engineering .ds-table__col--numeric {
+.dashboard-engineering .ds-table__empty {
+.dashboard-engineering .ds-table-section.ds-card {
+.dashboard-engineering .ds-table-wrap--section {
+.dashboard-engineering .ds-table-wrap--embedded {
+.dashboard-engineering .ds-table--section {
+.dashboard-engineering .ds-table--sortable th {
+.dashboard-engineering .ds-table tbody tr:last-child td {
+.dashboard-engineering .ds-table__row--clickable:hover td,
+.dashboard-engineering .ds-table--clickable tbody tr:hover td {
+.dashboard-engineering .ds-table__sort-button {
+.dashboard-engineering .ds-table__sort-button:hover,
+.dashboard-engineering .ds-table__sort-button:focus-visible {
+.dashboard-engineering .ds-table__sort-button--active {
+.dashboard-engineering .ds-table__sort-indicator {
+.dashboard-engineering .ds-table__sort-button--active .ds-table__sort-indicator {
+.dashboard-engineering .ds-table-section__title-hint {
+.dashboard-engineering .ds-table-search__hint {
+.dashboard-engineering .ds-pagination {
+.dashboard-engineering .ds-pagination__info {
+.dashboard-engineering .ds-pagination__jump {
+.dashboard-engineering .ds-pagination__jump-field {
+.dashboard-engineering .ds-pagination__jump-label {
+.dashboard-engineering .ds-pagination__jump-input {
+.dashboard-engineering .ds-pagination__jump-input:focus-visible {
+.dashboard-engineering .ds-pagination__jump-input--invalid {
+.dashboard-engineering .ds-pagination__jump-error {
+.dashboard-engineering .ds-pagination__controls {
+.dashboard-engineering .ds-pagination__pages {
+.dashboard-engineering .ds-pagination__page {
+.dashboard-engineering .ds-pagination__page:hover:not(:disabled) {
+.dashboard-engineering .ds-pagination__page--active {
+.dashboard-engineering .ds-pagination__ellipsis {
+  .dashboard-engineering .ds-table-toolbar {
+  .dashboard-engineering .ds-table-page-size,
+  .dashboard-engineering .ds-table-toolbar__search-group {
+  .dashboard-engineering .ds-pagination,
+  .dashboard-engineering .ds-pagination__actions,
+  .dashboard-engineering .ds-table-section {
+  .dashboard-engineering .ds-table-wrap {
+  .dashboard-engineering .ds-table {
+  .dashboard-engineering .ds-table th,
+  .dashboard-engineering .ds-table td {
+  .dashboard-engineering .ds-table th {
+.dashboard-engineering .ds-table--clickable tbody tr {
+.dashboard-engineering .ds-table--clickable tbody tr:hover {
+.dashboard-engineering .ds-detail-card .ds-table-wrap {
+.dashboard-engineering .ds-detail-card .ds-table th {
+.dashboard-engineering .ds-detail-card .ds-table {

@@ -9,12 +9,13 @@ import type {
 } from "../types/ppm";
 import type { Page } from "../types/pagination";
 
-const TABLE_PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
 
 type UsePpmPageParams = {
   type: PpmType;
   filters: DateRangeParams;
   page: number;
+  pageSize?: number;
 };
 
 type UsePpmPageResult = {
@@ -31,6 +32,7 @@ export function usePpmPage({
   type,
   filters,
   page,
+  pageSize = DEFAULT_PAGE_SIZE,
 }: UsePpmPageParams): UsePpmPageResult {
   const [summary, setSummary] = useState<PpmSummary | null>(null);
   const [tablePage, setTablePage] = useState<Page<PpmItem> | null>(null);
@@ -63,7 +65,7 @@ export function usePpmPage({
         const listParams: ListPpmParams = {
           ...stableFilters,
           page,
-          page_size: TABLE_PAGE_SIZE,
+          page_size: pageSize,
         };
 
         const [summaryResult, tableResult] = await Promise.all([
@@ -91,7 +93,7 @@ export function usePpmPage({
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, page, stableFilters.branch, stableFilters.date_start, stableFilters.date_end, reloadKey]);
+  }, [type, page, pageSize, stableFilters.branch, stableFilters.date_start, stableFilters.date_end, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);
@@ -104,6 +106,6 @@ export function usePpmPage({
     refreshing,
     error,
     reload,
-    pageSize: TABLE_PAGE_SIZE,
+    pageSize,
   };
 }

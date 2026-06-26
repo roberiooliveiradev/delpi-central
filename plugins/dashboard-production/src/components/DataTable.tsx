@@ -9,6 +9,9 @@ export type DataTableColumn<T> = {
   render: (row: T) => ReactNode;
   className?: string;
   sortable?: boolean;
+  sortValue?: (row: T) => string | number | null | undefined;
+  /** Rótulo exibido no modo cartão (mobile). */
+  mobileLabel?: string;
 };
 
 type DataTableProps<T> = {
@@ -22,7 +25,23 @@ type DataTableProps<T> = {
   sortKey?: string | null;
   sortDirection?: "asc" | "desc";
   onSortChange?: (columnKey: string) => void;
+  layout?: "section" | "embedded";
 };
+
+function renderColumnHeader<T>(column: DataTableColumn<T>) {
+  return (
+    <span className="dp-table__header-label">
+      <span className="dp-table__header-text">{column.header}</span>
+      {column.headerHint ? (
+        <HelpTooltip
+          content={column.headerHint}
+          ariaLabel={`Ajuda: ${column.header}`}
+          className="dp-table__header-help"
+        />
+      ) : null}
+    </span>
+  );
+}
 
 export function DataTable<T>({
   columns,
@@ -35,29 +54,68 @@ export function DataTable<T>({
   sortKey = null,
   sortDirection = "asc",
   onSortChange,
+  layout = "embedded",
 }: DataTableProps<T>) {
-  const tableClass = onRowClick
-    ? "dp-table dp-table--clickable"
-    : "dp-table";
+  const isSortable = Boolean(onSortChange && columns.some((column) => column.sortable));
+  const tableClass = [
+    "dp-table",
+    layout === "section" ? "dp-table--section" : "",
+    isSortable ? "dp-table--sortable" : "",
+    onRowClick ? "dp-table--clickable" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const wrapClass =
+    layout === "section"
+      ? "dp-table-wrap dp-table-wrap--section"
+      : "dp-table-wrap dp-table-wrap--embedded";
+
+  if (loading) {
+    return (
+      <div className={wrapClass}>
+        <table className={tableClass}>
+          <tbody>
+            <tr>
+              <td colSpan={columns.length} className="dp-table__empty">
+                Carregando…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className={wrapClass}>
+        <table className={tableClass}>
+          <tbody>
+            <tr>
+              <td colSpan={columns.length} className="dp-table__empty">
+                {emptyMessage}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   return (
-    <div className="dp-table-wrap">
+    <div className={wrapClass}>
       <table className={tableClass}>
         <thead>
           <tr>
             {columns.map((column) => {
               const isSorted = sortKey === column.key;
-              const headerClass = [
-                column.className,
-                column.sortable ? "dp-table__col--sortable" : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
 
               return (
                 <th
                   key={column.key}
-                  className={headerClass || undefined}
+                  scope="col"
+                  className={column.className}
                   aria-sort={
                     column.sortable
                       ? isSorted
@@ -71,33 +129,19 @@ export function DataTable<T>({
                   {column.sortable && onSortChange ? (
                     <button
                       type="button"
-                      className="dp-table__sort-button"
+                      className={`dp-table__sort-button${
+                        isSorted ? " dp-table__sort-button--active" : ""
+                      }`}
                       onClick={() => onSortChange(column.key)}
                       aria-label={`Ordenar por ${column.header}`}
                     >
-                      <span className="dp-table__header-label">
-                        <span>{column.header}</span>
-                        {column.headerHint ? (
-                          <HelpTooltip
-                            content={column.headerHint}
-                            ariaLabel={`Ajuda: ${column.header}`}
-                          />
-                        ) : null}
-                      </span>
+                      {renderColumnHeader(column)}
                       <span className="dp-table__sort-indicator" aria-hidden="true">
                         {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
                       </span>
                     </button>
                   ) : (
-                    <span className="dp-table__header-label">
-                      {column.header}
-                      {column.headerHint ? (
-                        <HelpTooltip
-                          content={column.headerHint}
-                          ariaLabel={`Ajuda: ${column.header}`}
-                        />
-                      ) : null}
-                    </span>
+                    renderColumnHeader(column)
                   )}
                 </th>
               );
@@ -105,52 +149,43 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan={columns.length} className="dp-table__empty">
-                Carregando…
-              </td>
-            </tr>
-          ) : rows.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="dp-table__empty">
-                {emptyMessage}
-              </td>
-            </tr>
-          ) : (
-            rows.map((row) => {
-              const extraClass = getRowClassName?.(row);
-              const rowClass = [extraClass, onRowClick ? "is-clickable" : ""]
-                .filter(Boolean)
-                .join(" ");
+          {rows.map((row) => {
+            const rowClass = [
+              getRowClassName?.(row),
+              onRowClick ? "dp-table__row--clickable" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
 
-              return (
-                <tr
-                  key={rowKey(row)}
-                  className={rowClass || undefined}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  onKeyDown={
-                    onRowClick
-                      ? (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            onRowClick(row);
-                          }
+            return (
+              <tr
+                key={rowKey(row)}
+                className={rowClass || undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
                         }
-                      : undefined
-                  }
-                  tabIndex={onRowClick ? 0 : undefined}
-                  role={onRowClick ? "button" : undefined}
-                >
-                  {columns.map((column) => (
-                    <td key={column.key} className={column.className}>
-                      {column.render(row)}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })
-          )}
+                      }
+                    : undefined
+                }
+              >
+                {columns.map((column) => (
+                  <td
+                    key={column.key}
+                    className={column.className}
+                    data-label={column.mobileLabel ?? column.header}
+                  >
+                    {column.render(row)}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

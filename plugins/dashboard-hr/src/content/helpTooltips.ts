@@ -27,4 +27,19 @@ export const HR_HELP_TOOLTIPS = {
       "Comparativo de absenteísmo e turnover por filial quando nenhuma filial específica está selecionada.",
     trainingByBranch: "Horas de treinamento por colaborador agrupadas por filial.",
   },
+  pagination: {
+    info: "Paginação: busca, ordenação e tamanho da página são aplicados na consulta ou na página atual.",
+    pageSize: "Define quantos registros são exibidos por página (10, 20, 50 ou 100).",
+    jump: "Digite o número da página e pressione Enter ou saia do campo.",
+    jumpEmpty: "Informe um número de página.",
+    jumpInvalid: "Use apenas números inteiros.",
+    jumpBelowMin: "A página mínima é 1.",
+    previous: "Volta uma página mantendo busca, ordenação e tamanho da lista.",
+    next: "Avança uma página mantendo busca, ordenação e tamanho da lista.",
+  },
+  table: {
+    section: "Listagem do período filtrado. Clique na linha para ver o detalhe quando disponível.",
+    search: "Filtra os registros visíveis por texto nas colunas principais.",
+    branch: "Filial TOTVS do registro.",
+  },
 } as const;

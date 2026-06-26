@@ -153,25 +153,25 @@ export function DataTableSection<T>({
   );
 
   return (
-    <section className="dq-card dq-table-section" aria-busy={loading || refreshing}>
-      <div className="dq-table-section__header">
-        <h2 className="dq-section-title">
+    <section className="dh-card dh-table-section" aria-busy={loading || refreshing}>
+      <div className="dh-table-section__header">
+        <h2 className="dh-section-title">
           {title}
           {titleHint ? (
             <HelpTooltip
               content={titleHint}
               ariaLabel={`Ajuda: ${title}`}
-              className="dq-table-section__title-help"
+              className="dh-table-section__title-help"
             />
           ) : null}
         </h2>
-        <div className="dq-table-section__meta-group">
-          {hint ? <span className="dq-table-section__meta">{hint}</span> : null}
-          <span className="dq-table-section__meta">
+        <div className="dh-table-section__meta-group">
+          {hint ? <span className="dh-table-section__meta">{hint}</span> : null}
+          <span className="dh-table-section__meta">
             {paginationTotal} registro(s)
           </span>
           {headerActions ? (
-            <div className="dq-table-section__actions dq-no-print">{headerActions}</div>
+            <div className="dh-table-section__actions dh-no-print">{headerActions}</div>
           ) : null}
         </div>
       </div>
@@ -194,7 +194,7 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          <div className="dq-table-toolbar">
+          <div className="dh-table-toolbar">
             <TablePageSizeSelect
               pageSize={paginationSize}
               pageSizeOptions={pageSizeOptions}
@@ -202,16 +202,16 @@ export function DataTableSection<T>({
             />
 
             {!hideSearch ? (
-              <div className="dq-table-toolbar__search-group">
-                <div className="dq-table-search" role="search">
+              <div className="dh-table-toolbar__search-group">
+                <div className="dh-table-search" role="search">
                   <Search
                     size={16}
                     aria-hidden="true"
-                    className="dq-table-search__icon"
+                    className="dh-table-search__icon"
                   />
                   <input
                     type="search"
-                    className="dq-table-search__input"
+                    className="dh-table-search__input"
                     value={search}
                     placeholder={searchPlaceholder}
                     onChange={(event) => handleSearchChange(event.target.value)}
@@ -222,14 +222,14 @@ export function DataTableSection<T>({
                   <HelpTooltip
                     content={searchHint}
                     ariaLabel="Ajuda: busca na tabela"
-                    className="dq-table-search__help"
+                    className="dh-table-search__help"
                   />
                 ) : null}
               </div>
             ) : null}
 
             {toolbarExtra ? (
-              <div className="dq-table-toolbar__extra">{toolbarExtra}</div>
+              <div className="dh-table-toolbar__extra">{toolbarExtra}</div>
             ) : null}
           </div>
 

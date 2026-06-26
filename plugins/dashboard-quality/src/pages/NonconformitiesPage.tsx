@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import {
   Bar,
@@ -17,7 +17,7 @@ import { DataTableSection } from "../components/DataTableSection";
 import { NonconformityFilters } from "../components/NonconformityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
-import { QUALITY_ROUTES } from "../constants/routes";
+import { QUALITY_ROUTES, buildNonconformityDetailPath } from "../constants/routes";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useNonconformitiesChart } from "../hooks/useNonconformitiesChart";
@@ -34,9 +34,12 @@ import {
   formatNonconformityTypeLabel,
 } from "../utils/nonconformityLabels";
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
+import { navigateQuality } from "../utils/navigation";
+import { saveNonconformityDetailRecord } from "../utils/recordDetailStorage";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
 const CHART_HEIGHT = 320;
 
 type NonconformitiesPageProps = {
@@ -51,6 +54,8 @@ function truncate(text: string | null, max = 80): string {
 
 export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [tableSearch, setTableSearch] = useState("");
   const [type, setType] = useState<NonconformityType>("all");
   const [status, setStatus] = useState("");
   const [itemCode, setItemCode] = useState("");
@@ -73,6 +78,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const debouncedStatus = useDebouncedValue(status);
   const debouncedItemCode = useDebouncedValue(itemCode);
   const debouncedDescription = useDebouncedValue(description);
+  const debouncedTableSearch = useDebouncedValue(tableSearch);
 
   const listParams = useMemo(
     () => ({
@@ -80,9 +86,9 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       type,
       status: debouncedStatus || undefined,
       item_code: debouncedItemCode || undefined,
-      description: debouncedDescription || undefined,
+      description: debouncedTableSearch || debouncedDescription || undefined,
       page,
-      page_size: PAGE_SIZE,
+      page_size: pageSize,
     }),
     [
       apiParams,
@@ -90,7 +96,9 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       debouncedStatus,
       debouncedItemCode,
       debouncedDescription,
+      debouncedTableSearch,
       page,
+      pageSize,
     ]
   );
 
@@ -104,7 +112,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       date_end: apiParams.date_end,
       status: debouncedStatus || undefined,
       item_code: debouncedItemCode || undefined,
-      description: debouncedDescription || undefined,
+      description: debouncedTableSearch || debouncedDescription || undefined,
     }),
     [
       type,
@@ -114,6 +122,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       debouncedStatus,
       debouncedItemCode,
       debouncedDescription,
+      debouncedTableSearch,
     ]
   );
 
@@ -142,7 +151,17 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     status,
     itemCode,
     description,
+    tableSearch,
+    pageSize,
   ]);
+
+  const handleNonconformityRowClick = useCallback(
+    (row: Nonconformity) => {
+      saveNonconformityDetailRecord(row);
+      navigateQuality(buildNonconformityDetailPath(), filterState);
+    },
+    [filterState]
+  );
 
   const columns = useMemo<DataTableColumn<Nonconformity>[]>(
     () => [
@@ -154,6 +173,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       {
         key: "branch",
         header: "Filial",
+        headerHint: QUALITY_HELP_TOOLTIPS.table.branch,
         render: (row) => row.branch,
       },
       {
@@ -407,17 +427,32 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
 
       <DataTableSection
         title="Registros"
-        hint={
-          data
-            ? `${data.total} registro(s) no período · busca na página atual`
-            : undefined
-        }
+        titleHint={QUALITY_HELP_TOOLTIPS.table.section}
+        hint="Clique na linha para abrir o detalhe do registro."
         columns={columns}
         rows={data?.items ?? []}
         rowKey={(row) => `${row.code}-${row.revision}-${row.branch}`}
         loading={loading && !data}
+        refreshing={loading && Boolean(data?.items.length)}
+        onRowClick={handleNonconformityRowClick}
         emptyMessage="Nenhuma não conformidade encontrada para os filtros."
-        searchPlaceholder="Buscar código, produto, filial…"
+        searchPlaceholder="Buscar código, produto, filial, descrição…"
+        searchHint={QUALITY_HELP_TOOLTIPS.table.search}
+        serverSearch={{
+          value: tableSearch,
+          onChange: setTableSearch,
+        }}
+        headerActions={
+          <button
+            type="button"
+            className="dq-ghost-btn dq-no-print"
+            onClick={handleExportCsv}
+            disabled={!data?.items.length}
+          >
+            <Download size={16} />
+            Exportar CSV
+          </button>
+        }
         serverPagination={
           data
             ? {
@@ -425,6 +460,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
                 pageSize: data.page_size,
                 total: data.total,
                 onPageChange: setPage,
+                onPageSizeChange: setPageSize,
               }
             : undefined
         }

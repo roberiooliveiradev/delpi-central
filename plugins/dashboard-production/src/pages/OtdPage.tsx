@@ -395,6 +395,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         refreshing={loading && Boolean(data?.orders.items?.length)}
         emptyMessage="Nenhuma OP finalizada no período."
         searchPlaceholder="Buscar OP, produto, filial…"
+        searchHint={DP_HELP_TOOLTIPS.table.search}
         getSearchText={(row) =>
           [
             row.branch,
@@ -410,9 +411,10 @@ export function OtdPage({ pathname }: OtdPageProps) {
         }
         serverPagination={{
           page: data?.orders.page ?? serverTable.query.page,
-          pageSize: data?.orders.page_size ?? PAGE_SIZE,
+          pageSize: data?.orders.page_size ?? serverTable.query.pageSize,
           total: data?.orders.total ?? 0,
           onPageChange: serverTable.setPage,
+          onPageSizeChange: serverTable.setPageSize,
         }}
         serverSort={{
           sortKey: serverTable.query.sortKey,

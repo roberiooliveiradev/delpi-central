@@ -27,7 +27,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
   const [items, setItems] = useState<LmpDashboardItem[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(LMP_DASHBOARD_PAGE_SIZE);
+  const [pageSize, setPageSizeState] = useState(LMP_DASHBOARD_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [itemsRefreshing, setItemsRefreshing] = useState(false);
@@ -131,7 +131,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
         else if (!summary) setLoading(true);
 
         const itemsResult = await getLmpsDashboardItems(
-          { ...stableParams, page, page_size: LMP_DASHBOARD_PAGE_SIZE },
+          { ...stableParams, page, page_size: pageSize },
           controller.signal,
         );
         if (controller.signal.aborted) return;
@@ -163,8 +163,14 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     stableParams.listing_type,
     stableParams.status,
     page,
+    pageSize,
     reloadKey,
   ]);
+
+  const setPageSize = useCallback((nextPageSize: number) => {
+    setPageSizeState(nextPageSize);
+    setPage(1);
+  }, []);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);
@@ -179,6 +185,7 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     page: currentPage,
     pageSize,
     setPage,
+    setPageSize,
     loading,
     refreshing: refreshing || itemsRefreshing,
     requestProgress,

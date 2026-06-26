@@ -1,5 +1,4 @@
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../hooks/useClientPagination";
@@ -7,10 +6,11 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
-import { DataTable, type DataTableColumn } from "./DataTable";
 import { HelpTooltip } from "./HelpTooltip";
+import { DataTable, type DataTableColumn } from "./DataTable";
 import { LoadingActivityCard } from "./LoadingActivityCard";
-import { Pagination } from "./Pagination";
+import { Pagination, TablePageSizeSelect } from "./Pagination";
+import { TABLE_PAGE_SIZE_OPTIONS } from "../utils/paginationPages";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -19,12 +19,19 @@ export type ServerPaginationConfig = {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: readonly number[];
 };
 
 export type ServerSortConfig = {
   sortKey: string | null;
   sortDirection: "asc" | "desc";
   onSortChange: (columnKey: string) => void;
+};
+
+export type ServerSearchConfig = {
+  value: string;
+  onChange: (value: string) => void;
 };
 
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
@@ -43,8 +50,8 @@ function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
 
 export type DataTableSectionProps<T> = {
   title: string;
-  hint?: string;
   titleHint?: string;
+  hint?: string;
   columns: DataTableColumn<T>[];
   rows: T[];
   rowKey: (row: T) => string;
@@ -53,19 +60,22 @@ export type DataTableSectionProps<T> = {
   emptyMessage?: string;
   pageSize?: number;
   searchPlaceholder?: string;
+  searchHint?: string;
   getSearchText?: (row: T) => string;
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
   serverSort?: ServerSortConfig;
-  headerActions?: ReactNode;
+  serverSearch?: ServerSearchConfig;
+  toolbarExtra?: ReactNode;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
+  headerActions?: ReactNode;
 };
 
 export function DataTableSection<T>({
   title,
-  hint,
   titleHint,
+  hint,
   columns,
   rows,
   rowKey,
@@ -74,17 +84,28 @@ export function DataTableSection<T>({
   emptyMessage = "Nenhum registro encontrado.",
   pageSize = DEFAULT_PAGE_SIZE,
   searchPlaceholder = "Buscar na tabela…",
+  searchHint,
   getSearchText,
   hideSearch = false,
   serverPagination,
   serverSort,
-  headerActions,
+  serverSearch,
+  toolbarExtra,
   onRowClick,
   getRowClassName,
+  headerActions,
 }: DataTableSectionProps<T>) {
-  const [search, setSearch] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
+  const [localPageSize, setLocalPageSize] = useState(pageSize);
+  const search = serverSearch?.value ?? localSearch;
+  const handleSearchChange = serverSearch?.onChange ?? setLocalSearch;
+  const effectivePageSize = serverPagination?.pageSize ?? localPageSize;
+  const pageSizeOptions =
+    serverPagination?.pageSizeOptions ?? TABLE_PAGE_SIZE_OPTIONS;
 
   const filteredRows = useMemo(() => {
+    if (serverPagination) return rows;
+
     const query = search.trim().toLowerCase();
     if (!query) return rows;
 
@@ -94,24 +115,29 @@ export function DataTableSection<T>({
       ).toLowerCase();
       return haystack.includes(query);
     });
-  }, [rows, search, columns, getSearchText]);
+  }, [rows, search, columns, getSearchText, serverPagination]);
 
   const { page, setPage, slice, total } = useClientPagination(
     filteredRows,
-    pageSize
+    effectivePageSize
   );
-
-  useEffect(() => {
-    if (serverPagination && search.trim()) {
-      serverPagination.onPageChange(1);
-    }
-  }, [search, serverPagination]);
-
-  const displayRows = serverPagination ? filteredRows : slice;
+  const displayRows = serverPagination ? rows : slice;
   const paginationPage = serverPagination?.page ?? page;
   const paginationTotal = serverPagination?.total ?? total;
-  const paginationSize = serverPagination?.pageSize ?? pageSize;
+  const paginationSize = serverPagination?.pageSize ?? effectivePageSize;
   const handlePageChange = serverPagination?.onPageChange ?? setPage;
+  const handlePageSizeChange = useCallback(
+    (nextPageSize: number) => {
+      if (serverPagination?.onPageSizeChange) {
+        serverPagination.onPageSizeChange(nextPageSize);
+        return;
+      }
+
+      setLocalPageSize(nextPageSize);
+      setPage(1);
+    },
+    [serverPagination, setPage],
+  );
 
   const showInitialLoading = loading && rows.length === 0;
   const showRefreshLoading = refreshing && rows.length > 0;
@@ -127,10 +153,7 @@ export function DataTableSection<T>({
   );
 
   return (
-    <section
-      className="dp-card dp-table-section"
-      aria-busy={loading || refreshing}
-    >
+    <section className="dp-card dp-table-section" aria-busy={loading || refreshing}>
       <div className="dp-table-section__header">
         <h2 className="dp-section-title">
           {title}
@@ -138,7 +161,7 @@ export function DataTableSection<T>({
             <HelpTooltip
               content={titleHint}
               ariaLabel={`Ajuda: ${title}`}
-              className="dp-section-title__help"
+              className="dp-table-section__title-help"
             />
           ) : null}
         </h2>
@@ -147,11 +170,13 @@ export function DataTableSection<T>({
           <span className="dp-table-section__meta">
             {paginationTotal} registro(s)
           </span>
-          {headerActions}
+          {headerActions ? (
+            <div className="dp-table-section__actions dp-no-print">{headerActions}</div>
+          ) : null}
         </div>
       </div>
 
-      {refreshing && rows.length > 0 ? (
+      {showRefreshLoading ? (
         <LoadingActivityCard
           title="Atualizando tabela"
           description="Mantendo os dados visíveis enquanto a nova consulta é aplicada."
@@ -169,21 +194,44 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          {!hideSearch ? (
-            <div className="dp-table-toolbar">
-              <div className="dp-table-search" role="search">
-                <Search size={16} aria-hidden="true" className="dp-table-search__icon" />
-                <input
-                  type="search"
-                  className="dp-table-search__input"
-                  value={search}
-                  placeholder={searchPlaceholder}
-                  onChange={(event) => setSearch(event.target.value)}
-                  aria-label="Filtrar registros da tabela"
-                />
+          <div className="dp-table-toolbar">
+            <TablePageSizeSelect
+              pageSize={paginationSize}
+              pageSizeOptions={pageSizeOptions}
+              onPageSizeChange={handlePageSizeChange}
+            />
+
+            {!hideSearch ? (
+              <div className="dp-table-toolbar__search-group">
+                <div className="dp-table-search" role="search">
+                  <Search
+                    size={16}
+                    aria-hidden="true"
+                    className="dp-table-search__icon"
+                  />
+                  <input
+                    type="search"
+                    className="dp-table-search__input"
+                    value={search}
+                    placeholder={searchPlaceholder}
+                    onChange={(event) => handleSearchChange(event.target.value)}
+                    aria-label="Filtrar registros da tabela"
+                  />
+                </div>
+                {searchHint ? (
+                  <HelpTooltip
+                    content={searchHint}
+                    ariaLabel="Ajuda: busca na tabela"
+                    className="dp-table-search__help"
+                  />
+                ) : null}
               </div>
-            </div>
-          ) : null}
+            ) : null}
+
+            {toolbarExtra ? (
+              <div className="dp-table-toolbar__extra">{toolbarExtra}</div>
+            ) : null}
+          </div>
 
           <DataTable
             columns={columns}
@@ -195,6 +243,7 @@ export function DataTableSection<T>({
             sortKey={serverSort?.sortKey}
             sortDirection={serverSort?.sortDirection}
             onSortChange={serverSort?.onSortChange}
+            layout="section"
           />
 
           <Pagination

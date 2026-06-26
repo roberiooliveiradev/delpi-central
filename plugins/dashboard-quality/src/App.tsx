@@ -6,6 +6,8 @@ import { DashboardQualityPage } from "./pages/DashboardQualityPage";
 import { KaizenDetailPage } from "./pages/KaizenDetailPage";
 import { KaizenPage } from "./pages/KaizenPage";
 import { NonconformitiesPage } from "./pages/NonconformitiesPage";
+import { NonconformityDetailPage } from "./pages/NonconformityDetailPage";
+import { PpmItemDetailPage } from "./pages/PpmItemDetailPage";
 import { PpmPage } from "./pages/PpmPage";
 import { parseQualityPath } from "./utils/routeParser";
 
@@ -29,14 +31,19 @@ function renderPage(path: string, pathname?: string) {
     return <KaizenDetailPage kaizenId={route.kaizenId} pathname={path} />;
   }
 
-  if (path === QUALITY_ROUTES.ppm || path.startsWith(`${QUALITY_ROUTES.ppm}/`)) {
+  if (route.view === "ppm-detail") {
+    return <PpmItemDetailPage pathname={path} />;
+  }
+
+  if (route.view === "nonconformity-detail") {
+    return <NonconformityDetailPage pathname={path} />;
+  }
+
+  if (path === QUALITY_ROUTES.ppm) {
     return <PpmPage pathname={path} />;
   }
 
-  if (
-    path === QUALITY_ROUTES.nonconformities ||
-    path.startsWith(`${QUALITY_ROUTES.nonconformities}/`)
-  ) {
+  if (path === QUALITY_ROUTES.nonconformities) {
     return <NonconformitiesPage pathname={path} />;
   }
 

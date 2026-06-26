@@ -1,10 +1,17 @@
 import type { ReactNode } from "react";
 
+import { HelpTooltip } from "./HelpTooltip";
+
 export type DataTableColumn<T> = {
   key: string;
   header: string;
+  headerHint?: string;
   render: (row: T) => ReactNode;
   className?: string;
+  sortable?: boolean;
+  sortValue?: (row: T) => string | number | null | undefined;
+  /** Rótulo exibido no modo cartão (mobile). */
+  mobileLabel?: string;
 };
 
 type DataTableProps<T> = {
@@ -14,7 +21,27 @@ type DataTableProps<T> = {
   emptyMessage?: string;
   loading?: boolean;
   onRowClick?: (row: T) => void;
+  getRowClassName?: (row: T) => string | undefined;
+  sortKey?: string | null;
+  sortDirection?: "asc" | "desc";
+  onSortChange?: (columnKey: string) => void;
+  layout?: "section" | "embedded";
 };
+
+function renderColumnHeader<T>(column: DataTableColumn<T>) {
+  return (
+    <span className="dq-table__header-label">
+      <span className="dq-table__header-text">{column.header}</span>
+      {column.headerHint ? (
+        <HelpTooltip
+          content={column.headerHint}
+          ariaLabel={`Ajuda: ${column.header}`}
+          className="dq-table__header-help"
+        />
+      ) : null}
+    </span>
+  );
+}
 
 export function DataTable<T>({
   columns,
@@ -23,62 +50,142 @@ export function DataTable<T>({
   emptyMessage = "Nenhum registro encontrado.",
   loading = false,
   onRowClick,
+  getRowClassName,
+  sortKey = null,
+  sortDirection = "asc",
+  onSortChange,
+  layout = "embedded",
 }: DataTableProps<T>) {
-  return (
-    <div className="dq-table-wrap">
-      <table className="dq-table">
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.key} className={column.className}>
-                {column.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
+  const isSortable = Boolean(onSortChange && columns.some((column) => column.sortable));
+  const tableClass = [
+    "dq-table",
+    layout === "section" ? "dq-table--section" : "",
+    isSortable ? "dq-table--sortable" : "",
+    onRowClick ? "dq-table--clickable" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const wrapClass =
+    layout === "section"
+      ? "dq-table-wrap dq-table-wrap--section"
+      : "dq-table-wrap dq-table-wrap--embedded";
+
+  if (loading) {
+    return (
+      <div className={wrapClass}>
+        <table className={tableClass}>
+          <tbody>
             <tr>
               <td colSpan={columns.length} className="dq-table__empty">
                 Carregando…
               </td>
             </tr>
-          ) : rows.length === 0 ? (
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className={wrapClass}>
+        <table className={tableClass}>
+          <tbody>
             <tr>
               <td colSpan={columns.length} className="dq-table__empty">
                 {emptyMessage}
               </td>
             </tr>
-          ) : (
-            rows.map((row) => {
-              const isClickable = Boolean(onRowClick);
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  return (
+    <div className={wrapClass}>
+      <table className={tableClass}>
+        <thead>
+          <tr>
+            {columns.map((column) => {
+              const isSorted = sortKey === column.key;
 
               return (
-                <tr
-                  key={rowKey(row)}
-                  className={isClickable ? "dq-row--clickable" : undefined}
-                  tabIndex={isClickable ? 0 : undefined}
-                  onClick={isClickable ? () => onRowClick?.(row) : undefined}
-                  onKeyDown={
-                    isClickable
-                      ? (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            onRowClick?.(row);
-                          }
-                        }
+                <th
+                  key={column.key}
+                  scope="col"
+                  className={column.className}
+                  aria-sort={
+                    column.sortable
+                      ? isSorted
+                        ? sortDirection === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
                       : undefined
                   }
                 >
-                  {columns.map((column) => (
-                    <td key={column.key} className={column.className}>
-                      {column.render(row)}
-                    </td>
-                  ))}
-                </tr>
+                  {column.sortable && onSortChange ? (
+                    <button
+                      type="button"
+                      className={`dq-table__sort-button${
+                        isSorted ? " dq-table__sort-button--active" : ""
+                      }`}
+                      onClick={() => onSortChange(column.key)}
+                      aria-label={`Ordenar por ${column.header}`}
+                    >
+                      {renderColumnHeader(column)}
+                      <span className="dq-table__sort-indicator" aria-hidden="true">
+                        {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                      </span>
+                    </button>
+                  ) : (
+                    renderColumnHeader(column)
+                  )}
+                </th>
               );
-            })
-          )}
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const rowClass = [
+              getRowClassName?.(row),
+              onRowClick ? "dq-table__row--clickable" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            return (
+              <tr
+                key={rowKey(row)}
+                className={rowClass || undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
+              >
+                {columns.map((column) => (
+                  <td
+                    key={column.key}
+                    className={column.className}
+                    data-label={column.mobileLabel ?? column.header}
+                  >
+                    {column.render(row)}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

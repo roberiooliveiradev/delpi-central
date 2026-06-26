@@ -1607,3 +1607,85 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   font-weight: 600;
   color: var(--dq-text-muted);
 }
+
+/* Table stack (padrão commercial — dq) */
+.dashboard-quality .dq-table-section__actions {
+.dashboard-quality .dq-pagination__action,
+.dashboard-quality .dq-pagination__help,
+.dashboard-quality .dq-pagination__action-help,
+.dashboard-quality .dq-table-page-size__help,
+.dashboard-quality .dq-table-search__help,
+.dashboard-quality .dq-table__header-help,
+.dashboard-quality .dq-table-section__title-help {
+.dashboard-quality .dq-pagination__info {
+.dashboard-quality .dq-table-section__header .dq-section-title {
+.dashboard-quality .dq-table__header-label {
+.dashboard-quality .dq-table__header-text {
+.dashboard-quality .dq-table__header-help {
+.dashboard-quality .dq-table-section__header {
+.dashboard-quality .dq-table-section__meta {
+.dashboard-quality .dq-table-section__meta-group {
+.dashboard-quality .dq-table-toolbar {
+.dashboard-quality .dq-table-page-size {
+.dashboard-quality .dq-table-page-size__label {
+.dashboard-quality .dq-table-page-size__select {
+.dashboard-quality .dq-table-toolbar__search-group {
+.dashboard-quality .dq-table-search {
+.dashboard-quality .dq-table-search__icon {
+.dashboard-quality .dq-table-search__input {
+.dashboard-quality .dq-table-toolbar__extra {
+.dashboard-quality .dq-table-wrap {
+.dashboard-quality .dq-table {
+.dashboard-quality .dq-table th,
+.dashboard-quality .dq-table td {
+.dashboard-quality .dq-table th {
+.dashboard-quality .dq-table__col--wide {
+.dashboard-quality .dq-table__col--numeric {
+.dashboard-quality .dq-table__empty {
+.dashboard-quality .dq-table-section.dq-card {
+.dashboard-quality .dq-table-wrap--section {
+.dashboard-quality .dq-table-wrap--embedded {
+.dashboard-quality .dq-table--section {
+.dashboard-quality .dq-table--sortable th {
+.dashboard-quality .dq-table tbody tr:last-child td {
+.dashboard-quality .dq-table__row--clickable:hover td,
+.dashboard-quality .dq-table--clickable tbody tr:hover td {
+.dashboard-quality .dq-table__sort-button {
+.dashboard-quality .dq-table__sort-button:hover,
+.dashboard-quality .dq-table__sort-button:focus-visible {
+.dashboard-quality .dq-table__sort-button--active {
+.dashboard-quality .dq-table__sort-indicator {
+.dashboard-quality .dq-table__sort-button--active .dq-table__sort-indicator {
+.dashboard-quality .dq-table-section__title-hint {
+.dashboard-quality .dq-table-search__hint {
+.dashboard-quality .dq-pagination {
+.dashboard-quality .dq-pagination__info {
+.dashboard-quality .dq-pagination__jump {
+.dashboard-quality .dq-pagination__jump-field {
+.dashboard-quality .dq-pagination__jump-label {
+.dashboard-quality .dq-pagination__jump-input {
+.dashboard-quality .dq-pagination__jump-input:focus-visible {
+.dashboard-quality .dq-pagination__jump-input--invalid {
+.dashboard-quality .dq-pagination__jump-error {
+.dashboard-quality .dq-pagination__controls {
+.dashboard-quality .dq-pagination__pages {
+.dashboard-quality .dq-pagination__page {
+.dashboard-quality .dq-pagination__page:hover:not(:disabled) {
+.dashboard-quality .dq-pagination__page--active {
+.dashboard-quality .dq-pagination__ellipsis {
+  .dashboard-quality .dq-table-toolbar {
+  .dashboard-quality .dq-table-page-size,
+  .dashboard-quality .dq-table-toolbar__search-group {
+  .dashboard-quality .dq-pagination,
+  .dashboard-quality .dq-pagination__actions,
+  .dashboard-quality .dq-table-section {
+  .dashboard-quality .dq-table-wrap {
+  .dashboard-quality .dq-table {
+  .dashboard-quality .dq-table th,
+  .dashboard-quality .dq-table td {
+  .dashboard-quality .dq-table th {
+.dashboard-quality .dq-table--clickable tbody tr {
+.dashboard-quality .dq-table--clickable tbody tr:hover {
+.dashboard-quality .dq-detail-card .dq-table-wrap {
+.dashboard-quality .dq-detail-card .dq-table th {
+.dashboard-quality .dq-detail-card .dq-table {

@@ -2337,3 +2337,85 @@ html.dp-printing .dashboard-production .recharts-responsive-container {
   font-weight: 600;
   color: var(--dp-text-muted);
 }
+
+/* Table stack (padrão commercial — dp) */
+.dashboard-production .dp-table-section__actions {
+.dashboard-production .dp-pagination__action,
+.dashboard-production .dp-pagination__help,
+.dashboard-production .dp-pagination__action-help,
+.dashboard-production .dp-table-page-size__help,
+.dashboard-production .dp-table-search__help,
+.dashboard-production .dp-table__header-help,
+.dashboard-production .dp-table-section__title-help {
+.dashboard-production .dp-pagination__info {
+.dashboard-production .dp-table-section__header .dp-section-title {
+.dashboard-production .dp-table__header-label {
+.dashboard-production .dp-table__header-text {
+.dashboard-production .dp-table__header-help {
+.dashboard-production .dp-table-section__header {
+.dashboard-production .dp-table-section__meta {
+.dashboard-production .dp-table-section__meta-group {
+.dashboard-production .dp-table-toolbar {
+.dashboard-production .dp-table-page-size {
+.dashboard-production .dp-table-page-size__label {
+.dashboard-production .dp-table-page-size__select {
+.dashboard-production .dp-table-toolbar__search-group {
+.dashboard-production .dp-table-search {
+.dashboard-production .dp-table-search__icon {
+.dashboard-production .dp-table-search__input {
+.dashboard-production .dp-table-toolbar__extra {
+.dashboard-production .dp-table-wrap {
+.dashboard-production .dp-table {
+.dashboard-production .dp-table th,
+.dashboard-production .dp-table td {
+.dashboard-production .dp-table th {
+.dashboard-production .dp-table__col--wide {
+.dashboard-production .dp-table__col--numeric {
+.dashboard-production .dp-table__empty {
+.dashboard-production .dp-table-section.dp-card {
+.dashboard-production .dp-table-wrap--section {
+.dashboard-production .dp-table-wrap--embedded {
+.dashboard-production .dp-table--section {
+.dashboard-production .dp-table--sortable th {
+.dashboard-production .dp-table tbody tr:last-child td {
+.dashboard-production .dp-table__row--clickable:hover td,
+.dashboard-production .dp-table--clickable tbody tr:hover td {
+.dashboard-production .dp-table__sort-button {
+.dashboard-production .dp-table__sort-button:hover,
+.dashboard-production .dp-table__sort-button:focus-visible {
+.dashboard-production .dp-table__sort-button--active {
+.dashboard-production .dp-table__sort-indicator {
+.dashboard-production .dp-table__sort-button--active .dp-table__sort-indicator {
+.dashboard-production .dp-table-section__title-hint {
+.dashboard-production .dp-table-search__hint {
+.dashboard-production .dp-pagination {
+.dashboard-production .dp-pagination__info {
+.dashboard-production .dp-pagination__jump {
+.dashboard-production .dp-pagination__jump-field {
+.dashboard-production .dp-pagination__jump-label {
+.dashboard-production .dp-pagination__jump-input {
+.dashboard-production .dp-pagination__jump-input:focus-visible {
+.dashboard-production .dp-pagination__jump-input--invalid {
+.dashboard-production .dp-pagination__jump-error {
+.dashboard-production .dp-pagination__controls {
+.dashboard-production .dp-pagination__pages {
+.dashboard-production .dp-pagination__page {
+.dashboard-production .dp-pagination__page:hover:not(:disabled) {
+.dashboard-production .dp-pagination__page--active {
+.dashboard-production .dp-pagination__ellipsis {
+  .dashboard-production .dp-table-toolbar {
+  .dashboard-production .dp-table-page-size,
+  .dashboard-production .dp-table-toolbar__search-group {
+  .dashboard-production .dp-pagination,
+  .dashboard-production .dp-pagination__actions,
+  .dashboard-production .dp-table-section {
+  .dashboard-production .dp-table-wrap {
+  .dashboard-production .dp-table {
+  .dashboard-production .dp-table th,
+  .dashboard-production .dp-table td {
+  .dashboard-production .dp-table th {
+.dashboard-production .dp-table--clickable tbody tr {
+.dashboard-production .dp-table--clickable tbody tr:hover {
+.dashboard-production .dp-detail-card .dp-table-wrap {
+.dashboard-production .dp-detail-card .dp-table th {
+.dashboard-production .dp-detail-card .dp-table {

@@ -1,4 +1,4 @@
-import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { HR_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   TABLE_PAGE_SIZE_OPTIONS,
   buildVisiblePageItems,
@@ -18,10 +18,10 @@ export function TablePageSizeSelect({
   onPageSizeChange,
 }: TablePageSizeSelectProps) {
   return (
-    <label className="ds-table-page-size">
-      <span className="ds-table-page-size__label">Itens por página</span>
+    <label className="dh-table-page-size">
+      <span className="dh-table-page-size__label">Itens por página</span>
       <select
-        className="ds-table-page-size__select"
+        className="dh-table-page-size__select"
         value={pageSize}
         onChange={(event) => onPageSizeChange(Number(event.target.value))}
         aria-label="Quantidade de itens por página"
@@ -33,9 +33,9 @@ export function TablePageSizeSelect({
         ))}
       </select>
       <HelpTooltip
-        content={ENGINEERING_HELP_TOOLTIPS.pagination.pageSize}
+        content={HR_HELP_TOOLTIPS.pagination.pageSize}
         ariaLabel="Ajuda: itens por página"
-        className="ds-table-page-size__help"
+        className="dh-table-page-size__help"
       />
     </label>
   );
@@ -64,12 +64,12 @@ export function Pagination({
   if (total === 0) return null;
 
   return (
-    <div className="ds-pagination" role="navigation" aria-label="Paginação da tabela">
-      <div className="ds-pagination__controls">
-        <div className="ds-pagination__action">
+    <div className="dh-pagination" role="navigation" aria-label="Paginação da tabela">
+      <div className="dh-pagination__controls">
+        <div className="dh-pagination__action">
           <button
             type="button"
-            className="ds-ghost-btn"
+            className="dh-ghost-btn"
             disabled={!canPrev}
             onClick={() => onPageChange(page - 1)}
             aria-disabled={!canPrev}
@@ -77,19 +77,19 @@ export function Pagination({
             Anterior
           </button>
           <HelpTooltip
-            content={ENGINEERING_HELP_TOOLTIPS.pagination.previous}
+            content={HR_HELP_TOOLTIPS.pagination.previous}
             ariaLabel="Ajuda: página anterior"
-            className="ds-pagination__action-help"
+            className="dh-pagination__action-help"
           />
         </div>
 
         {totalPages > 1 ? (
-          <div className="ds-pagination__pages" role="group" aria-label="Páginas">
+          <div className="dh-pagination__pages" role="group" aria-label="Páginas">
             {pageItems.map((item, index) =>
               item === "ellipsis" ? (
                 <span
                   key={`ellipsis-${index}`}
-                  className="ds-pagination__ellipsis"
+                  className="dh-pagination__ellipsis"
                   aria-hidden="true"
                 >
                   …
@@ -100,8 +100,8 @@ export function Pagination({
                   type="button"
                   className={
                     item === page
-                      ? "ds-pagination__page ds-pagination__page--active"
-                      : "ds-pagination__page"
+                      ? "dh-pagination__page dh-pagination__page--active"
+                      : "dh-pagination__page"
                   }
                   aria-current={item === page ? "page" : undefined}
                   onClick={() => onPageChange(item)}
@@ -121,10 +121,10 @@ export function Pagination({
           />
         ) : null}
 
-        <div className="ds-pagination__action">
+        <div className="dh-pagination__action">
           <button
             type="button"
-            className="ds-ghost-btn"
+            className="dh-ghost-btn"
             disabled={!canNext}
             onClick={() => onPageChange(page + 1)}
             aria-disabled={!canNext}
@@ -132,19 +132,19 @@ export function Pagination({
             Próxima
           </button>
           <HelpTooltip
-            content={ENGINEERING_HELP_TOOLTIPS.pagination.next}
+            content={HR_HELP_TOOLTIPS.pagination.next}
             ariaLabel="Ajuda: próxima página"
-            className="ds-pagination__action-help"
+            className="dh-pagination__action-help"
           />
         </div>
       </div>
 
-      <span className="ds-pagination__info">
+      <span className="dh-pagination__info">
         Exibindo {rangeStart}–{rangeEnd} de {total} · Página {page} de {totalPages}
         <HelpTooltip
-          content={ENGINEERING_HELP_TOOLTIPS.pagination.info}
+          content={HR_HELP_TOOLTIPS.pagination.info}
           ariaLabel="Ajuda: paginação"
-          className="ds-pagination__help"
+          className="dh-pagination__help"
         />
       </span>
     </div>

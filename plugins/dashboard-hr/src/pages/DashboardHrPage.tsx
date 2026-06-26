@@ -18,6 +18,8 @@ import {
 } from "recharts";
 
 import { ChartCard } from "../components/ChartCard";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
@@ -135,6 +137,47 @@ export function DashboardHrPage() {
   );
 
   const showBranchCharts = branches.length === 0 && branchChartData.length > 0;
+
+  const branchTableRows = useMemo(
+    () => snapshot?.branches ?? [],
+    [snapshot?.branches]
+  );
+
+  const branchColumns = useMemo<DataTableColumn<HrBranchMetrics>[]>(
+    () => [
+      {
+        key: "branch_code",
+        header: "Filial",
+        headerHint: HR_HELP_TOOLTIPS.table.branch,
+        render: (row) => row.branch_code,
+      },
+      {
+        key: "absenteeism_pct",
+        header: "Absenteísmo",
+        className: "dh-table__col--numeric",
+        render: (row) => formatPercent(row.absenteeism_pct),
+      },
+      {
+        key: "turnover_pct",
+        header: "Turnover",
+        className: "dh-table__col--numeric",
+        render: (row) => formatPercent(row.turnover_pct),
+      },
+      {
+        key: "training_hours_per_collaborator",
+        header: "Treinamento (h)",
+        className: "dh-table__col--numeric",
+        render: (row) => formatDecimal(row.training_hours_per_collaborator, 2),
+      },
+      {
+        key: "active_pdi_pct",
+        header: "PDI ativos",
+        className: "dh-table__col--numeric",
+        render: (row) => formatPercent(row.active_pdi_pct),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="dashboard-hr dashboard-page">
@@ -316,53 +359,20 @@ export function DashboardHrPage() {
         </section>
       ) : null}
 
-      <section className="dh-card dh-table-section">
-        <div className="dh-table-section__header">
-          <h2 className="dh-section-title">Detalhamento por filial</h2>
-          <span className="dh-table-section__meta">
-            {(snapshot?.branches.length ?? 0).toLocaleString("pt-BR")} filial(is)
-          </span>
-        </div>
-        <div className="dh-table-wrap">
-          <table className="dh-table">
-            <thead>
-              <tr>
-                <th>Filial</th>
-                <th className="dh-table__col--numeric">Absenteísmo</th>
-                <th className="dh-table__col--numeric">Turnover</th>
-                <th className="dh-table__col--numeric">Treinamento (h)</th>
-                <th className="dh-table__col--numeric">PDI ativos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(snapshot?.branches ?? []).map((row) => (
-                <tr key={row.branch_code}>
-                  <td>{row.branch_code}</td>
-                  <td className="dh-table__col--numeric">
-                    {formatPercent(row.absenteeism_pct)}
-                  </td>
-                  <td className="dh-table__col--numeric">
-                    {formatPercent(row.turnover_pct)}
-                  </td>
-                  <td className="dh-table__col--numeric">
-                    {formatDecimal(row.training_hours_per_collaborator, 2)}
-                  </td>
-                  <td className="dh-table__col--numeric">
-                    {formatPercent(row.active_pdi_pct)}
-                  </td>
-                </tr>
-              ))}
-              {!loading && (snapshot?.branches.length ?? 0) === 0 ? (
-                <tr>
-                  <td colSpan={5} className="dh-table__empty">
-                    Nenhum dado de RH para o período selecionado.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTableSection
+        title="Detalhamento por filial"
+        titleHint={HR_HELP_TOOLTIPS.table.section}
+        hint={periodLabel}
+        columns={branchColumns}
+        rows={branchTableRows}
+        rowKey={(row) => row.branch_code}
+        loading={loading && !hasData}
+        refreshing={refreshing && hasData}
+        emptyMessage="Nenhum dado de RH para o período selecionado."
+        searchPlaceholder="Buscar filial…"
+        searchHint={HR_HELP_TOOLTIPS.table.search}
+        getSearchText={(row) => row.branch_code}
+      />
     </div>
   );
 }
