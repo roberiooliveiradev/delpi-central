@@ -78,11 +78,9 @@ function computeBubblePosition(
   };
 }
 
-function resolvePortalContainer(anchor: HTMLElement | null): HTMLElement {
-  const dashboardRoot = anchor?.closest(
-    ".dashboard-commercial, .dashboard-lmps"
-  ) as HTMLElement | null;
-  return dashboardRoot ?? document.body;
+/** Fixed + coords de viewport exigem portal no body (ancestrais com transform quebram o posicionamento). */
+function resolvePortalContainer(): HTMLElement {
+  return document.body;
 }
 
 export function HelpTooltip({
@@ -221,7 +219,7 @@ export function HelpTooltip({
       {visible
         ? createPortal(
             bubble,
-            resolvePortalContainer(triggerRef.current ?? rootRef.current)
+            resolvePortalContainer()
           )
         : null}
     </span>

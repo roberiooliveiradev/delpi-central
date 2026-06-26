@@ -34,6 +34,7 @@ import { buildNegotiationSavingsTrendSeries } from "../utils/chartMonthlySeries"
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatChartCurrency, formatCurrency, formatInteger } from "../utils/format";
+import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 320;
 
@@ -167,6 +168,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Economia total"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.savingsTotal}
           value={formatDashboardMetricValue(realizedValue, data?.summary)}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
@@ -179,6 +181,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
         />
         <KpiCard
           title="Lançamentos no período"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.savingsEntries}
           value={formatInteger(data?.entries.length)}
           subtitle="Registros na planilha IDD"
           icon={<TrendingUp size={22} />}
@@ -189,6 +192,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
       <section className="ds-charts-grid">
         <ChartCard
           title="Economia no período"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.savingsPeriod}
           hint="Soma mensal dos lançamentos da planilha."
         >
           {monthlyChart.length > 0 ? (

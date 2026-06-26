@@ -32,6 +32,7 @@ import {
   formatInteger,
 } from "../utils/format";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
+import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 320;
 
@@ -162,6 +163,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="CPV total"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.cpvTotal}
           value={formatCurrency(data?.summary.cpv_total)}
           {...buildKpiGoalPresentation(periodLabel, data?.summary, undefined, {
             showGoal: false,
@@ -171,6 +173,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
         />
         <KpiCard
           title="CPV / ROL"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.cpvRol}
           value={formatDashboardMetricValue(
             data?.summary.cpv_percentage,
             data?.summary,
@@ -186,6 +189,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
         />
         <KpiCard
           title="Movimentos"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.cpvMovements}
           value={formatInteger(data?.summary.total_movements)}
           subtitle={`Qtd ${formatDecimal(data?.summary.total_quantity, 0)}`}
           icon={<TrendingUp size={22} />}
@@ -193,6 +197,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
         />
         <KpiCard
           title="Custo médio / unidade"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.avgCostPerUnit}
           value={formatCurrency(data?.summary.average_cost_per_unit)}
           subtitle={`Por movimento ${formatCurrency(data?.summary.average_cost_per_movement)}`}
           icon={<Percent size={22} />}

@@ -33,6 +33,7 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { averageNullable, formatDecimal, formatPercent } from "../utils/format";
+import { HR_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 280;
 
@@ -174,6 +175,7 @@ export function DashboardHrPage() {
       <section className="dh-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Absenteísmo"
+          titleHint={HR_HELP_TOOLTIPS.kpis.absenteeism}
           value={formatDashboardMetricValue(
             absenteeism,
             snapshot?.goals_by_metric?.absenteeism_pct,
@@ -189,6 +191,7 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="Turnover"
+          titleHint={HR_HELP_TOOLTIPS.kpis.turnover}
           value={formatDashboardMetricValue(
             turnover,
             snapshot?.goals_by_metric?.turnover_pct,
@@ -204,6 +207,7 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="Satisfação interna"
+          titleHint={HR_HELP_TOOLTIPS.kpis.internalSatisfaction}
           value={formatDashboardMetricValue(
             satisfaction,
             snapshot?.goals_by_metric?.internal_satisfaction_pct,
@@ -219,6 +223,7 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="PDI ativos"
+          titleHint={HR_HELP_TOOLTIPS.kpis.activePdi}
           value={formatDashboardMetricValue(
             activePdi,
             snapshot?.goals_by_metric?.active_pdi_pct,
@@ -234,6 +239,7 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="Horas treinamento / colaborador"
+          titleHint={HR_HELP_TOOLTIPS.kpis.trainingHours}
           value={formatDashboardMetricValue(
             trainingHours,
             snapshot?.goals_by_metric?.training_hours_per_collaborator,
@@ -253,6 +259,7 @@ export function DashboardHrPage() {
         <section className="dh-charts-grid">
           <ChartCard
             title="Absenteísmo e turnover por filial"
+            titleHint={HR_HELP_TOOLTIPS.charts.absenteeismTurnoverByBranch}
             hint="Comparativo percentual no período."
           >
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
@@ -280,6 +287,7 @@ export function DashboardHrPage() {
 
           <ChartCard
             title="Treinamento por filial"
+            titleHint={HR_HELP_TOOLTIPS.charts.trainingByBranch}
             hint="Média de horas por participação."
           >
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>

@@ -22,6 +22,7 @@ import {
   formatCurrency,
   formatInteger,
 } from "../utils/format";
+import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const SHORTCUTS = [
   {
@@ -118,6 +119,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="CPV total"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.cpvTotal}
           value={formatCurrency(cpv?.summary.cpv_total)}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
@@ -130,6 +132,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="CPV / ROL"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.cpvRol}
           value={formatDashboardMetricValue(
             cpv?.summary.cpv_percentage,
             cpv?.summary,
@@ -145,6 +148,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="OTD compras"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.otdPurchases}
           value={formatDashboardMetricValue(
             otd?.summary.otd_percentage,
             otd?.summary,
@@ -160,6 +164,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="Valor de estoque"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.stockValue}
           value={formatDashboardMetricValue(
             stockValue?.summary.total_stock_value,
             stockValue?.summary,
@@ -175,6 +180,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="Giro de estoque (meses)"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.inventoryTurnoverMonths}
           value={formatDashboardMetricValue(
             inventoryTurnover?.summary.inventory_turnover_months,
             inventoryTurnover?.summary,
@@ -190,6 +196,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="Economia em negociações"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.negotiationSavings}
           value={formatDashboardMetricValue(
             negotiationSavings?.summary.total_savings ??
               negotiationSavings?.total_savings,

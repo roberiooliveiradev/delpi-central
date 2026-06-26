@@ -19,6 +19,7 @@ import {
   formatInteger,
   formatPercent,
 } from "../utils/format";
+import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const SHORTCUTS = [
   {
@@ -104,6 +105,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="% LMP dentro do prazo"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.lmpOnTime}
           value={formatDashboardMetricValue(
             lmpSummary?.percent_dentro_prazo,
             lmpSummary,
@@ -119,6 +121,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         />
         <KpiCard
           title="Lead time médio (dias úteis)"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.avgLeadTime}
           value={formatDecimal(lmpSummary?.avg_lead_time, 2)}
           contextLabel="Média no período"
           icon={<Clock size={22} />}
@@ -126,6 +129,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         />
         <KpiCard
           title="Total de propostas"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.totalProposals}
           value={formatInteger(
             lmpSummary?.total_items ?? lmpSummary?.total_lmps
           )}
@@ -135,6 +139,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         />
         <KpiCard
           title="Ganhos brutos TRANSFORMA+"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.transformaSavings}
           value={formatDashboardMetricValue(
             transforma?.total_gross_savings_in_period,
             transforma,
@@ -150,6 +155,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         />
         <KpiCard
           title="Soluções implementadas"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.implementedSolutions}
           value={formatInteger(transforma?.implemented_solutions_count)}
           contextLabel="Melhorias na planilha"
           icon={<Lightbulb size={22} />}
@@ -157,6 +163,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         />
         <KpiCard
           title="ROI médio TRANSFORMA+"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.averageRoi}
           value={formatPercent(transforma?.average_roi, 1)}
           {...buildKpiGoalPresentation(
             "No período filtrado",

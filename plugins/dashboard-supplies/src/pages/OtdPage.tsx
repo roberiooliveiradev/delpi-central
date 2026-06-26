@@ -34,6 +34,7 @@ import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
+import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 320;
 
@@ -198,6 +199,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="OTD"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.otd}
           value={formatDashboardMetricValue(
             data?.summary.otd_percentage,
             data?.summary,
@@ -210,6 +212,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         />
         <KpiCard
           title="Linhas no prazo"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.onTimeLines}
           value={formatInteger(data?.summary.on_time_lines)}
           subtitle={`De ${formatInteger(data?.summary.total_lines)} linhas`}
           icon={<Truck size={22} />}
@@ -217,6 +220,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         />
         <KpiCard
           title="Linhas em atraso"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.lateLines}
           value={formatInteger(data?.summary.late_lines)}
           subtitle={formatPercent(data?.summary.late_percentage)}
           icon={<Truck size={22} />}

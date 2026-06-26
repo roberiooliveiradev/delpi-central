@@ -48,6 +48,7 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { formatDecimal, formatInteger } from "../utils/format";
+import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const PIE_HEIGHT = 320;
 const PIE_RADIUS = 110;
@@ -263,6 +264,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="% LMP dentro do prazo"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.lmpOnTime}
           value={formatDashboardMetricValue(
             summary?.percent_dentro_prazo,
             summary,
@@ -278,6 +280,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
         />
         <KpiCard
           title="Lead time médio útil"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.avgLeadTimeUseful}
           value={`${formatDecimal(summary?.avg_lead_time, 2)} dias`}
           contextLabel="Média no período"
           icon={<Clock3 size={22} />}
@@ -285,6 +288,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
         />
         <KpiCard
           title="Total de propostas"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.totalProposals}
           value={formatInteger(totalPropostas)}
           contextLabel={
             status !== "Todos" || listingType !== "Todos"

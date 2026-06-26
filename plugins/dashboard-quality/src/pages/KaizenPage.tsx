@@ -48,6 +48,7 @@ import { formatCurrency, formatDecimal } from "../utils/format";
 import { navigateQuality } from "../utils/navigation";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 300;
 
@@ -301,6 +302,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       <section className="dq-kpi-grid" aria-busy={loading}>
         <KpiCard
           title="Total de kaizens"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenTotal}
           value={formatDashboardMetricValue(data?.total_kaizens, data)}
           {...buildKpiGoalPresentation(
             periodLabel,
@@ -313,6 +315,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         />
         <KpiCard
           title="Economia acumulada"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenSavings}
           value={formatCurrency(data?.total_savings)}
           subtitle="Soma reportada pela API no período"
           icon={<Wallet size={22} />}

@@ -30,6 +30,7 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
+import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 320;
 
@@ -128,6 +129,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="EBITDA / ROL"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.ebitdaOverRol}
           value={formatDashboardMetricValue(
             data?.ebitda_over_rol_pct,
             data,
@@ -144,6 +146,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
         {data?.ebitda_value != null ? (
           <KpiCard
             title="EBITDA"
+            titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.ebitdaValue}
             value={formatCurrency(data.ebitda_value)}
             subtitle={`ROL ${formatCurrency(data.rol_with_ipi)}`}
             icon={<Percent size={22} />}

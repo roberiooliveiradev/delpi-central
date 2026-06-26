@@ -35,6 +35,7 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   formatCurrency,
   formatDecimal,
@@ -247,6 +248,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Ganhos brutos no período"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.transformaSavings}
           value={formatDashboardMetricValue(
             summary?.total_gross_savings_in_period,
             summary,
@@ -262,6 +264,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         />
         <KpiCard
           title="Economia líquida"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.netSavings}
           value={formatCurrency(summary?.total_net_savings_until_now)}
           contextLabel="Acumulado no recorte"
           icon={<Coins size={22} />}
@@ -269,6 +272,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         />
         <KpiCard
           title="Soluções implementadas"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.implementedSolutions}
           value={formatInteger(summary?.implemented_solutions_count)}
           contextLabel="Cenários de melhoria"
           icon={<Lightbulb size={22} />}
@@ -276,6 +280,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         />
         <KpiCard
           title="Horas economizadas"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.hoursSaved}
           value={formatDecimal(summary?.total_hours_saved_until_now, 1)}
           contextLabel={periodLabel}
           icon={<Clock size={22} />}
@@ -283,6 +288,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         />
         <KpiCard
           title="ROI médio"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.averageRoi}
           value={formatPercent(summary?.average_roi, 1)}
           {...buildKpiGoalPresentation(
             "Média no período",
@@ -298,6 +304,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         />
         <KpiCard
           title="Processos listados"
+          titleHint={ENGINEERING_HELP_TOOLTIPS.kpis.listedProcesses}
           value={String(processesData?.total ?? items.length)}
           contextLabel="Com filtros aplicados"
           icon={<Lightbulb size={22} />}

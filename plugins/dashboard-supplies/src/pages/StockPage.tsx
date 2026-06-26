@@ -32,6 +32,7 @@ import {
 } from "../utils/format";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatProtheusDateHuman } from "../utils/dates";
+import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 320;
 
@@ -203,6 +204,7 @@ export function StockPage({ pathname }: StockPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title={primaryKpiTitle}
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.stockValue}
           value={formatDashboardMetricValue(
             data?.summary.total_stock_value,
             data?.summary,
@@ -218,6 +220,7 @@ export function StockPage({ pathname }: StockPageProps) {
         />
         <KpiCard
           title="Quantidade"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.stockQuantity}
           value={formatDecimal(data?.summary.total_stock_quantity, 0)}
           subtitle={`${formatInteger(data?.summary.total_products)} produtos`}
           icon={<Warehouse size={22} />}
@@ -225,6 +228,7 @@ export function StockPage({ pathname }: StockPageProps) {
         />
         <KpiCard
           title="Localizações"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.locations}
           value={formatInteger(data?.summary.total_locations)}
           subtitle={`${formatInteger(data?.summary.total_records)} registros`}
           icon={<Warehouse size={22} />}
@@ -232,6 +236,7 @@ export function StockPage({ pathname }: StockPageProps) {
         />
         <KpiCard
           title="Valor médio / unidade"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.avgUnitValue}
           value={formatCurrency(data?.summary.average_unit_value)}
           subtitle="Custo unitário médio"
           icon={<Warehouse size={22} />}

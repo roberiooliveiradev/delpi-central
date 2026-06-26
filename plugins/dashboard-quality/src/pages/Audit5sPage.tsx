@@ -41,6 +41,7 @@ import {
 import { formatScore } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 300;
 
@@ -235,6 +236,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
       <section className="dq-kpi-grid" aria-busy={loading}>
         <KpiCard
           title="Nota média"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.audit5sScore}
           value={formatDashboardMetricValue(data?.average_score, data)}
           {...buildKpiGoalPresentation(
             periodLabel,
@@ -247,6 +249,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         />
         <KpiCard
           title="Auditorias"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.audit5sCount}
           value={String(items.length || (loading ? "…" : 0))}
           subtitle="Registros no período filtrado"
           icon={<ClipboardCheck size={22} />}

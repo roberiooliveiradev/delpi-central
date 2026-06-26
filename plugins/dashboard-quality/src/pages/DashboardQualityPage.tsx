@@ -30,6 +30,7 @@ import {
   formatScore,
 } from "../utils/format";
 import { formatPeriodLabel } from "../utils/dates";
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const MODULE_SHORTCUTS = [
   {
@@ -163,6 +164,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       <section className="dq-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="PPM interno"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmInternal}
           value={formatDashboardMetricValue(ppmInternal?.ppm, ppmInternal)}
           {...buildKpiGoalPresentation(
             `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${periodLabel}`,
@@ -181,6 +183,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         />
         <KpiCard
           title="PPM externo"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmExternal}
           value={formatDashboardMetricValue(ppmExternal?.ppm, ppmExternal)}
           {...buildKpiGoalPresentation(
             `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${periodLabel}`,

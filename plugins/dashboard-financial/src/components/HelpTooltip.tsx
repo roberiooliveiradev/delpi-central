@@ -100,9 +100,9 @@ export function HelpTooltip({
   const [positioned, setPositioned] = useState(false);
 
   const rootClass = [
-    "dp-help-tooltip",
-    wrap ? "dp-help-tooltip--wrap" : "",
-    visible ? "dp-help-tooltip--open" : "",
+    "ds-help-tooltip",
+    wrap ? "ds-help-tooltip--wrap" : "",
+    visible ? "ds-help-tooltip--open" : "",
     className,
   ]
     .filter(Boolean)
@@ -157,12 +157,12 @@ export function HelpTooltip({
   }, [visible, updateBubblePosition]);
 
   const bubbleClass = [
-    "dp-help-tooltip__bubble",
-    "dp-help-tooltip__bubble--fixed",
+    "ds-help-tooltip__bubble",
+    "ds-help-tooltip__bubble--fixed",
     bubblePosition?.placement === "top"
-      ? "dp-help-tooltip__bubble--placement-top"
-      : "dp-help-tooltip__bubble--placement-bottom",
-    positioned ? "dp-help-tooltip__bubble--ready" : "",
+      ? "ds-help-tooltip__bubble--placement-top"
+      : "ds-help-tooltip__bubble--placement-bottom",
+    positioned ? "ds-help-tooltip__bubble--ready" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -206,7 +206,7 @@ export function HelpTooltip({
         <button
           ref={triggerRef}
           type="button"
-          className="dp-help-tooltip__trigger"
+          className="ds-help-tooltip__trigger"
           aria-label={ariaLabel}
           aria-describedby={tooltipId}
           onClick={(event) => event.stopPropagation()}
@@ -223,7 +223,7 @@ export function HelpTooltip({
 
 export function FieldLabel({ label, hint }: { label: string; hint?: string }) {
   return (
-    <span className="dp-field__label">
+    <span className="ds-field__label">
       {label}
       {hint ? <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} /> : null}
     </span>

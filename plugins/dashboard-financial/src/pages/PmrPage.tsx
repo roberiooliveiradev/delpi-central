@@ -30,6 +30,7 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { formatDecimal } from "../utils/format";
+import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 320;
 
@@ -112,6 +113,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="PMR (dias)"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.pmr}
           value={formatDashboardMetricValue(data?.pmr_days, data)}
           {...buildKpiGoalPresentation(
             periodLabel,

@@ -13,6 +13,7 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import { formatPeriodLabel } from "../utils/dates";
 import { formatCurrency } from "../utils/format";
+import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type RolRow = { label: string; value: number };
 
@@ -110,6 +111,7 @@ export function RolPage({ pathname }: RolPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="ROL"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rol}
           value={formatCurrency(data?.rol)}
           subtitle={periodLabel}
           icon={<TrendingUp size={22} />}
@@ -117,6 +119,7 @@ export function RolPage({ pathname }: RolPageProps) {
         />
         <KpiCard
           title="ROL com IPI"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolWithIpiDetail}
           value={formatCurrency(data?.rol_with_ipi)}
           subtitle={branch ? `Filial ${branch}` : "Consolidado"}
           icon={<TrendingUp size={22} />}

@@ -12,6 +12,7 @@ import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import { formatPeriodLabel } from "../utils/dates";
 import { formatCurrency, formatDecimal } from "../utils/format";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
+import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type InventoryTurnoverPageProps = { pathname?: string };
 
@@ -108,6 +109,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Giro (meses)"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.turnoverMonths}
           value={formatDashboardMetricValue(
             data?.summary.inventory_turnover_months,
             data?.summary,
@@ -123,6 +125,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         />
         <KpiCard
           title="Giro (vezes)"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.turnoverTimes}
           value={formatDecimal(data?.summary.inventory_turnover_times, 2)}
           subtitle="CPV total ÷ estoque"
           icon={<TrendingUp size={22} />}
@@ -130,6 +133,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         />
         <KpiCard
           title="Estoque"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.stockValue}
           value={formatDashboardMetricValue(
             data?.summary.total_stock_value,
             data?.stock_context,
@@ -145,6 +149,7 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         />
         <KpiCard
           title="CPV médio mensal"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.cpvTotal}
           value={formatCurrency(data?.summary.cpv_average_monthly)}
           subtitle={periodLabel}
           icon={<Percent size={22} />}

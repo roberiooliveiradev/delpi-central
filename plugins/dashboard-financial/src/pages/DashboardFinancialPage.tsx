@@ -30,6 +30,7 @@ import {
   formatCurrency,
   formatPercent,
 } from "../utils/format";
+import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const SHORTCUTS = [
   {
@@ -129,6 +130,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="ROL (com IPI)"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolWithIpi}
           value={formatCurrency(rol?.rol_with_ipi)}
           subtitle={`${branchLabel} · ${periodLabel}`}
           icon={<TrendingUp size={22} />}
@@ -136,6 +138,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         />
         <KpiCard
           title="EBITDA / ROL"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.ebitdaOverRol}
           value={formatDashboardMetricValue(
             ebitda?.ebitda_over_rol_pct,
             ebitda,
@@ -153,6 +156,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         />
         <KpiCard
           title="Custos fixos / ROL"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.fixedCostOverRol}
           value={formatDashboardMetricValue(
             fixedCost?.fixed_cost_over_rol_pct,
             fixedCost,
@@ -170,6 +174,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         />
         <KpiCard
           title="PMR (dias)"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.pmrDays}
           value={formatDashboardMetricValue(pmr?.pmr_days, pmr)}
           {...buildKpiGoalPresentation(
             periodLabel,
@@ -185,6 +190,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       <section className="ds-chart-section">
         <ChartCard
           title="Indicadores percentuais"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.charts.percentIndicators}
           hint={`${branchLabel} · ${periodLabel}`}
         >
         {hasChartValues ? (

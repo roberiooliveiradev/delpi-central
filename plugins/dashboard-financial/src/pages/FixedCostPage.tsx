@@ -30,6 +30,7 @@ import {
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
+import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 320;
 
@@ -124,6 +125,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Custos fixos / ROL"
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.fixedCostOverRol}
           value={formatDashboardMetricValue(
             data?.fixed_cost_over_rol_pct,
             data,
@@ -140,6 +142,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
         {data?.fixed_cost_value != null ? (
           <KpiCard
             title="Custos fixos"
+            titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.fixedCostValue}
             value={formatCurrency(data.fixed_cost_value)}
             subtitle={`ROL ${formatCurrency(data.rol_with_ipi)}`}
             icon={<Landmark size={22} />}

@@ -34,6 +34,7 @@ import {
 } from "../utils/chartSeriesExport";
 import { mergePpmSeries } from "../utils/mergePpmSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type PpmPageProps = {
   pathname?: string;
@@ -312,6 +313,11 @@ export function PpmPage({ pathname }: PpmPageProps) {
       <section className="dq-kpi-grid dq-kpi-grid--single-row" aria-busy={isBusy}>
         <KpiCard
           title={`PPM ${typeLabel}`}
+          titleHint={
+            ppmType === "internal"
+              ? QUALITY_HELP_TOOLTIPS.kpis.ppmInternal
+              : QUALITY_HELP_TOOLTIPS.kpis.ppmExternal
+          }
           value={formatDashboardMetricValue(summary?.ppm, summary)}
           {...buildKpiGoalPresentation(
             `Produzido: ${formatDecimal(summary?.total_produzido_un)} un · ${periodLabel}`,
@@ -330,6 +336,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
         />
         <KpiCard
           title="Total devolvido"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmReturned}
           value={formatDecimal(summary?.total_devolvido_un)}
           subtitle={`Milheiro produzido: ${formatDecimal(summary?.total_produzido_milheiro)}`}
           icon={ppmType === "internal" ? <Factory size={22} /> : <Truck size={22} />}
