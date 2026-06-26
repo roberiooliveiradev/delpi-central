@@ -4,6 +4,7 @@ import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
 import {
   readSuppliesFilters,
+  subscribeFilterRouteSync,
   writeFiltersToUrl,
   type SuppliesFilterUrlState,
 } from "../utils/filterUrl";
@@ -27,16 +28,13 @@ export function useSuppliesFilters() {
   }, [dateStart, dateEnd, branches, location]);
 
   useEffect(() => {
-    const onPopState = () => {
+    return subscribeFilterRouteSync(() => {
       const next = readSuppliesFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
       setBranchesState(next.branches);
       setLocationState(next.location);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    });
   }, []);
 
   const resolvedBranch = resolveApiBranch(branches);

@@ -1,5 +1,5 @@
 import type { QualityFilterUrlState } from "./filterUrl";
-import { appendFiltersToPath } from "./filterUrl";
+import { appendFiltersToPath, readQualityFilters } from "./filterUrl";
 
 let qualityNavStackDepth = 0;
 let suppressPopstateDepthChange = false;
@@ -26,7 +26,10 @@ export function navigateQuality(path: string, filterState?: QualityFilterUrlStat
   suppressPopstateDepthChange = false;
 }
 
-export function navigateQualityBack(fallbackPath: string) {
+export function navigateQualityBack(
+  fallbackPath: string,
+  filterState?: QualityFilterUrlState
+) {
   if (typeof window === "undefined") return;
 
   if (qualityNavStackDepth > 0) {
@@ -34,5 +37,5 @@ export function navigateQualityBack(fallbackPath: string) {
     return;
   }
 
-  navigateQuality(fallbackPath);
+  navigateQuality(fallbackPath, filterState ?? readQualityFilters());
 }

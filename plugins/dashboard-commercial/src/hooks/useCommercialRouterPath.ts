@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { dispatchFilterRouteSync } from "../utils/filterUrl";
 
 function readPathname(): string {
   if (typeof window === "undefined") return "";
@@ -27,6 +28,10 @@ export function useCommercialRouterPath(pathnameFromHost?: string): string {
     window.addEventListener("popstate", syncFromBrowser);
     return () => window.removeEventListener("popstate", syncFromBrowser);
   }, []);
+
+  useEffect(() => {
+    dispatchFilterRouteSync();
+  }, [pathname]);
 
   return pathname;
 }

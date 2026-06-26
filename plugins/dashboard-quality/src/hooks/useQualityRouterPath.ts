@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { dispatchFilterRouteSync } from "../utils/filterUrl";
 
 function readPathname(fallback?: string): string {
   if (typeof window === "undefined") return fallback ?? "";
@@ -21,6 +22,10 @@ export function useQualityRouterPath(pathnameFromHost?: string): string {
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, [pathnameFromHost]);
+
+  useEffect(() => {
+    dispatchFilterRouteSync();
+  }, [pathname]);
 
   return pathname;
 }

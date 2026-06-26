@@ -145,3 +145,22 @@ export function appendFiltersToPath(
 export function readFiltersFromUrl(search: string): EngineeringFilterUrlState {
   return parseFilterParams(new URLSearchParams(search)) ?? defaultFilterState();
 }
+
+export const FILTER_ROUTE_SYNC_EVENT = "delpi.dashboard-engineering.route-sync";
+
+export function dispatchFilterRouteSync(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(FILTER_ROUTE_SYNC_EVENT));
+}
+
+export function subscribeFilterRouteSync(onSync: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener("popstate", onSync);
+  window.addEventListener(FILTER_ROUTE_SYNC_EVENT, onSync);
+
+  return () => {
+    window.removeEventListener("popstate", onSync);
+    window.removeEventListener(FILTER_ROUTE_SYNC_EVENT, onSync);
+  };
+}

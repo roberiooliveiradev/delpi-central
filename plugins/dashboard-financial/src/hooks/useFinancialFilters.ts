@@ -4,6 +4,7 @@ import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
 import {
   readFinancialFilters,
+  subscribeFilterRouteSync,
   writeFiltersToUrl,
   type FinancialFilterUrlState,
 } from "../utils/filterUrl";
@@ -24,15 +25,12 @@ export function useFinancialFilters() {
   }, [dateStart, dateEnd, branches]);
 
   useEffect(() => {
-    const onPopState = () => {
+    return subscribeFilterRouteSync(() => {
       const next = readFinancialFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
       setBranchesState(next.branches);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    });
   }, []);
 
   const apiParams: FinancialFilterParams = {

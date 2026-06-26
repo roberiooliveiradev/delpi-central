@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
-import { PRODUCTION_ROUTES } from "./constants/routes";
 import { useProductionRouterPath } from "./hooks/useProductionRouterPath";
 import { DashboardProductionPage } from "./pages/DashboardProductionPage";
 import { OeeAppointmentDetailPage } from "./pages/OeeAppointmentDetailPage";
@@ -21,35 +20,46 @@ export type AppProps = {
   pathname?: string;
 };
 
+function renderPage(path: string) {
+  const route = parseProductionPath(path);
+
+  if (route.view === "oee-detail" && route.appointmentId) {
+    return (
+      <OeeAppointmentDetailPage
+        appointmentId={route.appointmentId}
+        branch={readAppointmentBranchFromUrl()}
+        pathname={path}
+      />
+    );
+  }
+
+  if (route.view === "otd-detail" && route.productionOrder) {
+    return (
+      <OtdOrderDetailPage
+        productionOrder={route.productionOrder}
+        branch={readOrderBranchFromUrl()}
+        productType={readOrderProductTypeFromUrl()}
+        pathname={path}
+      />
+    );
+  }
+
+  if (route.view === "oee") {
+    return <OeePage pathname={path} />;
+  }
+
+  if (route.view === "otd") {
+    return <OtdPage pathname={path} />;
+  }
+
+  return <DashboardProductionPage pathname={path} />;
+}
+
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
 
   const pathname = useProductionRouterPath(pathnameFromHost);
   const path = normalizeProductionPath(pathname);
-  const route = parseProductionPath(path);
-
-  const showHome = route.view === "home";
-  const showOee = route.view === "oee";
-  const showOeeDetail =
-    route.view === "oee-detail" && Boolean(route.appointmentId);
-  const showOtd = route.view === "otd";
-  const showOtdDetail =
-    route.view === "otd-detail" && Boolean(route.productionOrder);
-
-  const [otdPageMounted, setOtdPageMounted] = useState(showOtd || showOtdDetail);
-  const [oeePageMounted, setOeePageMounted] = useState(showOee || showOeeDetail);
-
-  useEffect(() => {
-    if (showOtd || showOtdDetail) {
-      setOtdPageMounted(true);
-    }
-  }, [showOtd, showOtdDetail]);
-
-  useEffect(() => {
-    if (showOee || showOeeDetail) {
-      setOeePageMounted(true);
-    }
-  }, [showOee, showOeeDetail]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("scrollRestoration" in window.history)) {
@@ -65,39 +75,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   }, []);
 
   return (
-    <div className="dp-app-shell">
-      {showHome ? (
-        <DashboardProductionPage pathname={pathnameFromHost ?? path} />
-      ) : null}
-
-      {oeePageMounted ? (
-        <div hidden={!showOee} aria-hidden={!showOee}>
-          <OeePage pathname={PRODUCTION_ROUTES.oee} />
-        </div>
-      ) : null}
-
-      {otdPageMounted ? (
-        <div hidden={!showOtd} aria-hidden={!showOtd}>
-          <OtdPage pathname={PRODUCTION_ROUTES.otd} />
-        </div>
-      ) : null}
-
-      {showOeeDetail && route.appointmentId ? (
-        <OeeAppointmentDetailPage
-          appointmentId={route.appointmentId}
-          branch={readAppointmentBranchFromUrl()}
-          pathname={path}
-        />
-      ) : null}
-
-      {showOtdDetail && route.productionOrder ? (
-        <OtdOrderDetailPage
-          productionOrder={route.productionOrder}
-          branch={readOrderBranchFromUrl()}
-          productType={readOrderProductTypeFromUrl()}
-          pathname={path}
-        />
-      ) : null}
+    <div className="dp-app-shell" key={path}>
+      {renderPage(path)}
     </div>
   );
 }

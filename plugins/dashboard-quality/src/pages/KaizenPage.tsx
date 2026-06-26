@@ -192,7 +192,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
   const handleKaizenRowClick = useCallback((row: Kaizen) => {
     if (!row.id) return;
-    navigateQuality(buildKaizenDetailPath(row.id));
+    navigateQuality(buildKaizenDetailPath(row.id), filterState);
   }, []);
 
   const handleReload = useCallback(() => {

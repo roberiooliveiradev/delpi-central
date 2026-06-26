@@ -12,7 +12,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
 import { formatDisplayDate } from "../utils/dates";
-import { appendFiltersToPath, readQualityFilters } from "../utils/filterUrl";
+import { readQualityFilters } from "../utils/filterUrl";
 import { formatCurrency, formatDecimal } from "../utils/format";
 import { navigateQualityBack } from "../utils/navigation";
 
@@ -101,9 +101,7 @@ export function KaizenDetailPage({ kaizenId, pathname }: KaizenDetailPageProps) 
             type="button"
             className="dq-ghost-btn dq-no-print"
             onClick={() =>
-              navigateQualityBack(
-                appendFiltersToPath(QUALITY_ROUTES.kaizen, readQualityFilters())
-              )
+              navigateQualityBack(QUALITY_ROUTES.kaizen, readQualityFilters())
             }
           >
             <ArrowLeft size={16} />

@@ -3,6 +3,7 @@ import { inputDateToApi } from "../utils/dates";
 import { resolveCommercialApiBranch } from "../utils/commercialClientFilters";
 import {
   readCommercialFilters,
+  subscribeFilterRouteSync,
   writeFiltersToUrl,
   type CommercialFilterUrlState,
 } from "../utils/filterUrl";
@@ -27,16 +28,13 @@ export function useCommercialFilters() {
   }, [dateStart, dateEnd, branches, customerSegment]);
 
   useEffect(() => {
-    const onPopState = () => {
+    return subscribeFilterRouteSync(() => {
       const next = readCommercialFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
       setBranchesState(next.branches);
       setCustomerSegmentState(next.customerSegment);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    });
   }, []);
 
   const apiParams: CommercialFilterParams = {

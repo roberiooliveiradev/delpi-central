@@ -7,6 +7,7 @@ import {
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import {
   readQualityFilters,
+  subscribeFilterRouteSync,
   writeFiltersToUrl,
   type QualityFilterUrlState,
 } from "../utils/filterUrl";
@@ -30,15 +31,12 @@ export function useQualityFilters() {
   }, [dateStart, dateEnd, branches, syncToUrl]);
 
   useEffect(() => {
-    const onPopState = () => {
+    return subscribeFilterRouteSync(() => {
       const next = readQualityFilters();
       setDateStartState(next.dateStart);
       setDateEndState(next.dateEnd);
       setBranchesState(next.branches);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    });
   }, []);
 
   const setDateStart = useCallback((value: string) => {

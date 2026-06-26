@@ -128,3 +128,34 @@ export function writeFiltersToUrl(state: HrFilterUrlState): void {
 
   window.history.replaceState(window.history.state, "", nextUrl);
 }
+
+export function appendFiltersToPath(
+  path: string,
+  state?: HrFilterUrlState
+): string {
+  const filters = state ?? readHrFilters();
+  return `${path}${buildFilterSearchParams(filters)}`;
+}
+
+export function readFiltersFromUrl(search: string): HrFilterUrlState {
+  return parseFilterParams(new URLSearchParams(search)) ?? defaultFilterState();
+}
+
+export const FILTER_ROUTE_SYNC_EVENT = "delpi.dashboard-hr.route-sync";
+
+export function dispatchFilterRouteSync(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(FILTER_ROUTE_SYNC_EVENT));
+}
+
+export function subscribeFilterRouteSync(onSync: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener("popstate", onSync);
+  window.addEventListener(FILTER_ROUTE_SYNC_EVENT, onSync);
+
+  return () => {
+    window.removeEventListener("popstate", onSync);
+    window.removeEventListener(FILTER_ROUTE_SYNC_EVENT, onSync);
+  };
+}

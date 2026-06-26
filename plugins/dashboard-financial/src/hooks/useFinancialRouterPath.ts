@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FINANCIAL_ROUTES } from "../constants/routes";
+import { dispatchFilterRouteSync } from "../utils/filterUrl";
 
 function readBrowserPathname(): string {
   if (typeof window === "undefined") return FINANCIAL_ROUTES.home;
@@ -25,6 +26,10 @@ export function useFinancialRouterPath(pathnameFromHost?: string): string {
     window.addEventListener("popstate", syncFromBrowser);
     return () => window.removeEventListener("popstate", syncFromBrowser);
   }, []);
+
+  useEffect(() => {
+    dispatchFilterRouteSync();
+  }, [pathname]);
 
   return pathname;
 }
