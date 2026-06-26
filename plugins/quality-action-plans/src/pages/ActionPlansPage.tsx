@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { parseRoute } from "../constants/actionPlans";
+import { navigatePac } from "../utils/navigation";
 import { DashboardPage } from "./DashboardPage";
 import { MyQueuePage } from "./MyQueuePage";
 import { OverduePage } from "./OverduePage";
@@ -27,6 +28,7 @@ export function ActionPlansPage({ pathname }: Props) {
   }, [externalRoute.view, externalRoute.planId]);
 
   function handleNavigate(path: string) {
+    navigatePac(path);
     const next = parseRoute(path);
     setView(next.view);
     setPlanId(next.planId);
