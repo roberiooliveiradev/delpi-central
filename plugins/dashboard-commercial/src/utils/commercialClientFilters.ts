@@ -1,12 +1,17 @@
 import { COMMERCIAL_BRANCH_OPTIONS } from "../constants/filterOptions";
-import { formatOperationalUnitCode, formatOperationalUnitsFilterLabel, formatOperationalUnitsPrintLabel } from "./operationalUnitLabels";
+import {
+  formatOperationalUnitCode,
+  formatOperationalUnitsFilterLabel,
+  formatOperationalUnitsPrintLabel,
+  normalizeOperationalUnitCode,
+} from "./operationalUnitLabels";
 
 export function parseCommercialBranchCsv(value: string): string[] {
   const allowed = new Set(COMMERCIAL_BRANCH_OPTIONS.map((option) => option.value));
 
   return value
     .split(",")
-    .map((entry) => entry.trim())
+    .map((entry) => normalizeOperationalUnitCode(entry))
     .filter((entry) => allowed.has(entry));
 }
 

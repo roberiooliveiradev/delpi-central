@@ -62,11 +62,4 @@ export {
   resolveDelpiLogoUrl,
 } from "./pdf";
 
-export {
-  exportChartElementToPng,
-  rasterizeChartElement,
-  resolveChartExportTarget,
-  resolveExportContainer,
-} from "./chartPngExport";
-
 export type { DelpiDocumentSpec } from "./pdf";

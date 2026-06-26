@@ -43,6 +43,7 @@ import {
 } from "../utils/otdExport";
 import { navigateProduction } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
+import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
@@ -231,8 +232,12 @@ export function OtdPage({ pathname }: OtdPageProps) {
   const handleOrderRowClick = useCallback(
     (row: ProductionOtdOrderItem) => {
       navigateProduction(
-        buildOtdOrderPath(row.production_order, formatOperationalUnitCode(row.branch, ""), filterState, "PA"),
-        filterState
+        buildOtdOrderPath(
+          row.production_order,
+          normalizeOperationalUnitCode(row.branch),
+          filterState,
+          "PA",
+        ),
       );
     },
     [filterState]

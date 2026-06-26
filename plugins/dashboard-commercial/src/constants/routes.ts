@@ -1,6 +1,7 @@
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 import { appendFiltersToPath } from "../utils/filterUrl";
 import { resolveCommercialApiBranch } from "../utils/commercialClientFilters";
+import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 export const COMMERCIAL_BASE_PATH = "/apps/dashboard-commercial";
 
@@ -18,11 +19,9 @@ export function buildCommercialDetailPath(
   state: CommercialDetailUrlState
 ): string {
   const encoded = encodeURIComponent(String(proposalNumber).trim());
-  const branch = (
-    state.proposalBranch ||
-    resolveCommercialApiBranch(state.branches) ||
-    ""
-  ).trim();
+  const branch = normalizeOperationalUnitCode(
+    state.proposalBranch || resolveCommercialApiBranch(state.branches) || "",
+  );
   const params = new URLSearchParams();
 
   if (state.dateStart) params.set("start_date", state.dateStart);

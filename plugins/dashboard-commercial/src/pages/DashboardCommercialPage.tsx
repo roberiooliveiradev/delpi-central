@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Banknote,
   PackageCheck,
@@ -64,7 +64,7 @@ import {
   formatCommercialBranchFilterLabel,
   resolveCommercialApiBranch,
 } from "../utils/commercialClientFilters";
-import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode, normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import {
   appendCustomerSegmentToLabel,
   formatNewBusinessRolContextLine,
@@ -103,8 +103,6 @@ export function DashboardCommercialPage({
     proposalSearch,
     PROPOSAL_SEARCH_DEBOUNCE_MS
   );
-  const rolChartExportRef = useRef<HTMLDivElement>(null);
-  const funnelChartExportRef = useRef<HTMLDivElement>(null);
   const proposalsServerTable = useServerTable({
     pageSize: PROPOSALS_PAGE_SIZE,
     defaultSortKey: "proposal_date",
@@ -359,7 +357,7 @@ export function DashboardCommercialPage({
           competence,
           branches,
           customerSegment,
-          proposalBranch: formatOperationalUnitCode(row.branch, ""),
+          proposalBranch: normalizeOperationalUnitCode(row.branch),
           revision: row.revision,
         })
       );
@@ -632,7 +630,6 @@ export function DashboardCommercialPage({
                 variant="table"
                 payload={rolSeriesExportPayload}
                 disabled={rolSeries.points.length === 0}
-                getChartRoot={() => rolChartExportRef.current}
                 className="dc-export-actions dc-export-actions--compact"
                 buttonClassName="dc-ghost-btn dc-chart-toolbar__export"
               />
@@ -647,13 +644,11 @@ export function DashboardCommercialPage({
 
           {!rolSeries.error &&
           (rolSeries.points.length > 0 || rolSeries.loading) ? (
-            <div ref={rolChartExportRef}>
-              <RolEvolutionChart
-                data={rolSeries.points}
-                loading={rolSeries.loading}
-                onDrillDown={handleChartDrillDown}
-              />
-            </div>
+            <RolEvolutionChart
+              data={rolSeries.points}
+              loading={rolSeries.loading}
+              onDrillDown={handleChartDrillDown}
+            />
           ) : null}
 
           {!rolSeries.error &&
@@ -689,19 +684,16 @@ export function DashboardCommercialPage({
             <CommercialExportButtons
               variant="table"
               payload={funnelExportPayload}
-              disabled={!closingRate}
-              getChartRoot={() => funnelChartExportRef.current}
+              disabled={!closingRate || (closingRate.qtd_proposals ?? 0) === 0}
               className="dc-export-actions dc-export-actions--compact"
               buttonClassName="dc-ghost-btn dc-chart-toolbar__export"
             />
           }
         >
-          <div ref={funnelChartExportRef}>
-            <ConversionFunnelChart
-              data={closingRate}
-              loading={isBusy && !closingRate}
-            />
-          </div>
+          <ConversionFunnelChart
+            data={closingRate}
+            loading={isBusy && !closingRate}
+          />
         </ChartCard>
       </section>
 

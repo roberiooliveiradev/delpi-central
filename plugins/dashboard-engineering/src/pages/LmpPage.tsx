@@ -55,7 +55,7 @@ import {
 } from "../utils/lmpClientFilters";
 import { formatDecimal, formatInteger } from "../utils/format";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode, normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const PIE_HEIGHT = 320;
 const PIE_RADIUS = 110;
@@ -206,7 +206,9 @@ export function LmpPage({ pathname }: LmpPageProps) {
     (row: LmpDashboardItem) => {
       if (!row.sale_number) return;
       const params = new URLSearchParams();
-      if (row.branch) params.set("branch", row.branch);
+      if (row.branch) {
+        params.set("branch", normalizeOperationalUnitCode(row.branch));
+      }
       if (dateStart) params.set("date_start", dateStart);
       if (dateEnd) params.set("date_end", dateEnd);
       const query = params.toString();

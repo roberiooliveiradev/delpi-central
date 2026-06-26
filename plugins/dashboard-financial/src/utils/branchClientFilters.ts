@@ -1,5 +1,8 @@
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
-import { formatOperationalUnitsFilterLabel } from "./operationalUnitLabels";
+import {
+  formatOperationalUnitsFilterLabel,
+  normalizeOperationalUnitCode,
+} from "./operationalUnitLabels";
 
 function allowedBranches(): Set<string> {
   return new Set(BRANCH_OPTIONS.map((option) => option.value));
@@ -9,7 +12,7 @@ export function parseBranchCsv(value: string): string[] {
   const allowed = allowedBranches();
   return value
     .split(",")
-    .map((entry) => entry.trim())
+    .map((entry) => normalizeOperationalUnitCode(entry))
     .filter((entry) => allowed.has(entry));
 }
 

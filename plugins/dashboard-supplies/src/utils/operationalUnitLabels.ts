@@ -11,10 +11,41 @@ const UNIT_NAMES: Record<string, string> = {
   "02": "Espírito Santo",
 };
 
+const UNIT_CODE_BY_LABEL: Record<string, string> = {
+  "Santa Catarina": "01",
+  "Espírito Santo": "02",
+};
+
 export const OPERATIONAL_UNIT_OPTIONS: MultiSelectOption[] = [
   { value: "01", label: "Santa Catarina" },
   { value: "02", label: "Espírito Santo" },
 ];
+
+/** Código TOTVS (`01`/`02`) para API e URL — aceita rótulo legível por engano. */
+export function normalizeOperationalUnitCode(
+  value: string | null | undefined,
+): string {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "";
+
+  if (trimmed === "01" || trimmed === "02") {
+    return trimmed;
+  }
+
+  const byExactLabel = UNIT_CODE_BY_LABEL[trimmed];
+  if (byExactLabel) {
+    return byExactLabel;
+  }
+
+  const normalizedLabel = trimmed.toLowerCase();
+  for (const [label, code] of Object.entries(UNIT_CODE_BY_LABEL)) {
+    if (label.toLowerCase() === normalizedLabel) {
+      return code;
+    }
+  }
+
+  return trimmed;
+}
 
 export function formatOperationalUnitCode(
   code: string | null | undefined,

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { resolveCommercialApiBranch } from "../utils/commercialClientFilters";
 import { readCommercialFilters } from "../utils/filterUrl";
+import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 export type CommercialDetailRequestScope = {
   dateStart: string;
@@ -20,7 +21,9 @@ export function useCommercialDetailRequestScope(
     return {
       dateStart: filters.dateStart,
       dateEnd: filters.dateEnd,
-      branch: branch ?? resolveCommercialApiBranch(filters.branches),
+      branch: normalizeOperationalUnitCode(
+        branch ?? resolveCommercialApiBranch(filters.branches) ?? "",
+      ) || undefined,
       revision: revision || undefined,
     };
   }, [proposalNumber, branch, revision]);

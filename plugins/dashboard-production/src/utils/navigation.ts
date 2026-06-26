@@ -9,6 +9,10 @@ import {
 let productionNavStackDepth = 0;
 let suppressPopstateDepthChange = false;
 
+function isProductionDetailPath(basePath: string): boolean {
+  return /\/(otd\/op|oee\/appointment)\/[^/]+$/.test(basePath);
+}
+
 if (typeof window !== "undefined") {
   window.addEventListener("popstate", () => {
     if (suppressPopstateDepthChange) return;
@@ -20,13 +24,24 @@ export function navigateProduction(
   path: string,
   filters?: ProductionFilterUrlState
 ) {
-  const [rawPath, rawSearch] = path.split("?");
+  const questionIndex = path.indexOf("?");
+  const rawPath = questionIndex >= 0 ? path.slice(0, questionIndex) : path;
   const basePath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  const resolvedFilters =
-    filters ??
-    (rawSearch ? readFiltersFromUrl(`?${rawSearch}`) : readProductionFilters());
-  const query = buildFilterSearchParams(resolvedFilters);
-  const target = `${basePath}${query}`;
+  const rawSearch = questionIndex >= 0 ? path.slice(questionIndex + 1) : "";
+
+  const target =
+    rawSearch && isProductionDetailPath(basePath)
+      ? `${basePath}?${rawSearch}`
+      : (() => {
+          const resolvedFilters =
+            filters ??
+            (rawSearch
+              ? readFiltersFromUrl(`?${rawSearch}`)
+              : readProductionFilters());
+          return `${basePath}${buildFilterSearchParams(resolvedFilters)}`;
+        })();
+
+  const query = target.includes("?") ? target.slice(target.indexOf("?")) : "";
 
   if (
     window.location.pathname === basePath &&

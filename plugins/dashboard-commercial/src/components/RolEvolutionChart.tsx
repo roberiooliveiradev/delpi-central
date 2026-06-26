@@ -1,4 +1,4 @@
-import type React from "react";
+import type { ComponentProps } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -28,23 +28,7 @@ export function RolEvolutionChart({
   loading = false,
   onDrillDown,
 }: RolEvolutionChartProps) {
-  if (loading && data.length === 0) {
-    return (
-      <div className="dc-state-box" aria-busy="true">
-        Carregando gráfico…
-      </div>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="dc-state-box">Sem dados para o gráfico no período.</div>
-    );
-  }
-
-  const handleClick: React.ComponentProps<typeof LineChart>["onClick"] = (
-    state
-  ) => {
+  const handleClick: ComponentProps<typeof LineChart>["onClick"] = (state) => {
     if (!state) return;
     const rawIndex = state.activeTooltipIndex;
     const index =
@@ -61,9 +45,22 @@ export function RolEvolutionChart({
     }
   };
 
+  if (loading && data.length === 0) {
+    return (
+      <div className="dc-state-box" aria-busy="true">
+        Carregando gráfico…
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="dc-state-box">Sem dados para o gráfico no período.</div>
+    );
+  }
+
   return (
-    <div className="dc-chart-export-root">
-      <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
       <LineChart
         data={data as Record<string, string | number>[]}
         onClick={handleClick}
@@ -81,7 +78,9 @@ export function RolEvolutionChart({
         />
         <Tooltip
           formatter={(value, name) => [
-            formatChartCurrency(typeof value === "number" ? value : Number(value)),
+            formatChartCurrency(
+              typeof value === "number" ? value : Number(value),
+            ),
             String(name),
           ]}
         />
@@ -106,6 +105,5 @@ export function RolEvolutionChart({
         />
       </LineChart>
     </ResponsiveContainer>
-    </div>
   );
 }

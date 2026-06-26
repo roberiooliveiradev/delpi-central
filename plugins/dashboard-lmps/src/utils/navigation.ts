@@ -8,6 +8,10 @@ import {
 let lmpsNavStackDepth = 0;
 let suppressPopstateDepthChange = false;
 
+function isLmpsDetailPath(basePath: string): boolean {
+  return /\/ov\/[^/]+$/.test(basePath);
+}
+
 if (typeof window !== "undefined") {
   window.addEventListener("popstate", () => {
     if (suppressPopstateDepthChange) return;
@@ -16,12 +20,22 @@ if (typeof window !== "undefined") {
 }
 
 export function navigateLmps(path: string, filters?: LmpsFilterUrlState) {
-  const [rawPath, rawSearch] = path.split("?");
+  const questionIndex = path.indexOf("?");
+  const rawPath = questionIndex >= 0 ? path.slice(0, questionIndex) : path;
   const basePath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  const resolvedFilters =
-    filters ?? (rawSearch ? readLmpsFilters(`?${rawSearch}`) : readLmpsFilters());
-  const query = buildFilterSearchParams(resolvedFilters);
-  const target = `${basePath}${query}`;
+  const rawSearch = questionIndex >= 0 ? path.slice(questionIndex + 1) : "";
+
+  const target =
+    rawSearch && (filters === undefined || isLmpsDetailPath(basePath))
+      ? `${basePath}?${rawSearch}`
+      : (() => {
+          const resolvedFilters =
+            filters ??
+            (rawSearch ? readLmpsFilters(`?${rawSearch}`) : readLmpsFilters());
+          return `${basePath}${buildFilterSearchParams(resolvedFilters)}`;
+        })();
+
+  const query = target.includes("?") ? target.slice(target.indexOf("?")) : "";
 
   if (window.location.pathname === basePath && window.location.search === query) {
     return;

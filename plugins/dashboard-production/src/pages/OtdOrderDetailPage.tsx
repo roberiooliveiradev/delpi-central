@@ -36,6 +36,7 @@ import { formatDecimal, formatInteger } from "../utils/format";
 import { appendFiltersToPath, readProductionFilters } from "../utils/filterUrl";
 import { navigateProduction, navigateProductionBack } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
+import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { readProductField } from "../utils/productFields";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
@@ -85,7 +86,7 @@ export function OtdOrderDetailPage({
     navigateProduction(
       buildOtdOrderPath(
         row.production_order,
-        formatOperationalUnitCode(row.branch, ""),
+        normalizeOperationalUnitCode(row.branch),
         filterState,
         rowProductType
       ),

@@ -1,6 +1,5 @@
-import { Download, Image } from "lucide-react";
+import { Download } from "lucide-react";
 
-import { exportChartElementToPng } from "./chartPngExport";
 import { runCommercialExport } from "./dispatch";
 import { TABULAR_EXPORT_ACTIONS } from "./types";
 import type {
@@ -21,9 +20,6 @@ type TableExportButtonsProps = ExportButtonsBaseProps & {
   variant: "table";
   payload: TableExportPayload;
   resolvePayload?: () => Promise<TableExportPayload>;
-  chartRoot?: HTMLElement | null;
-  getChartRoot?: () => HTMLElement | null;
-  showPngExport?: boolean;
 };
 
 type DashboardExportButtonsProps = ExportButtonsBaseProps & {
@@ -42,10 +38,6 @@ export type CommercialExportButtonsProps =
   | DashboardExportButtonsProps
   | DetailExportButtonsProps;
 
-function resolveChartRoot(props: TableExportButtonsProps): HTMLElement | null {
-  return props.getChartRoot?.() ?? props.chartRoot ?? null;
-}
-
 function dispatchRequest(
   props: CommercialExportButtonsProps,
   format: TabularExportFormat,
@@ -59,7 +51,6 @@ function dispatchRequest(
         kind: "table",
         payload,
         format,
-        chartRoot: format === "pdf" ? resolveChartRoot(props) : undefined,
       });
     })();
     return;
@@ -86,11 +77,6 @@ export function CommercialExportButtons(props: CommercialExportButtonsProps) {
     showIcon = true,
   } = props;
 
-  const showPngExport =
-    props.variant === "table" &&
-    props.showPngExport !== false &&
-    (props.chartRoot != null || props.getChartRoot != null);
-
   return (
     <div className={className} role="group" aria-label="Exportar dados">
       {TABULAR_EXPORT_ACTIONS.map((action) => (
@@ -107,24 +93,6 @@ export function CommercialExportButtons(props: CommercialExportButtonsProps) {
           <span>{action.label}</span>
         </button>
       ))}
-      {showPngExport ? (
-        <button
-          type="button"
-          className={buttonClassName}
-          title="Baixar gráfico PNG"
-          aria-label="Baixar gráfico PNG"
-          disabled={disabled}
-          onClick={() =>
-            exportChartElementToPng(
-              resolveChartRoot(props as TableExportButtonsProps),
-              (props as TableExportButtonsProps).payload.title,
-            )
-          }
-        >
-          {showIcon ? <Image size={15} aria-hidden="true" /> : null}
-          <span>PNG</span>
-        </button>
-      ) : null}
     </div>
   );
 }

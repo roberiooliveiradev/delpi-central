@@ -16,13 +16,25 @@ if (typeof window !== "undefined") {
 }
 
 export function navigateCommercial(path: string, filters?: CommercialFilterUrlState) {
-  const [rawPath, rawSearch] = path.split("?");
+  const questionIndex = path.indexOf("?");
+  const rawPath =
+    questionIndex >= 0 ? path.slice(0, questionIndex) : path;
   const basePath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  const resolvedFilters =
-    filters ??
-    (rawSearch ? readCommercialFilters(`?${rawSearch}`) : readCommercialFilters());
-  const query = buildFilterSearchParams(resolvedFilters);
-  const target = `${basePath}${query}`;
+  const rawSearch = questionIndex >= 0 ? path.slice(questionIndex + 1) : "";
+
+  const target =
+    rawSearch && filters === undefined
+      ? `${basePath}?${rawSearch}`
+      : (() => {
+          const resolvedFilters =
+            filters ??
+            (rawSearch
+              ? readCommercialFilters(`?${rawSearch}`)
+              : readCommercialFilters());
+          return `${basePath}${buildFilterSearchParams(resolvedFilters)}`;
+        })();
+
+  const query = target.includes("?") ? target.slice(target.indexOf("?")) : "";
 
   if (window.location.pathname === basePath && window.location.search === query) {
     return;

@@ -58,6 +58,7 @@ import {
 } from "../utils/oeeExport";
 import { navigateProduction } from "../utils/navigation";
 import { buildOeeAppointmentPath } from "../constants/routes";
+import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
@@ -395,10 +396,12 @@ export function OeePage({ pathname }: OeePageProps) {
 
   const handleAppointmentRowClick = useCallback(
     (row: ProductionOeeAppointmentItem) => {
-      navigateProduction(buildOeeAppointmentPath(row.appointment_id), {
-        ...filterState,
-        branches: row.branch ? [row.branch] : filterState.branches,
-      });
+      navigateProduction(
+        buildOeeAppointmentPath(
+          row.appointment_id,
+          normalizeOperationalUnitCode(row.branch),
+        ),
+      );
     },
     [filterState]
   );

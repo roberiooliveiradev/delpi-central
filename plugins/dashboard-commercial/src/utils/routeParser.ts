@@ -1,4 +1,5 @@
 import { COMMERCIAL_BASE_PATH } from "../constants/routes";
+import { normalizeOperationalUnitCode } from "./operationalUnitLabels";
 
 export type CommercialView = "dashboard" | "ov-detail";
 
@@ -35,7 +36,8 @@ export function readProposalBranchFromUrl(
   search = typeof window !== "undefined" ? window.location.search : ""
 ): string | undefined {
   const value = new URLSearchParams(search).get("branch")?.trim();
-  return value || undefined;
+  const normalized = normalizeOperationalUnitCode(value);
+  return normalized || undefined;
 }
 
 export function readProposalRevisionFromUrl(

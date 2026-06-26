@@ -26,6 +26,7 @@ import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { buildLmpDetailPath } from "../constants/routes";
+import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useClientTableSort } from "../hooks/useClientTableSort";
@@ -153,7 +154,9 @@ export function DashboardLmpsPage({
       navigateLmps(
         buildLmpDetailPath(row.sale_number, {
           ...filterState,
-          branches: row.branch ? [row.branch] : filterState.branches,
+          branches: row.branch
+            ? [normalizeOperationalUnitCode(row.branch)]
+            : filterState.branches,
         })
       );
     },

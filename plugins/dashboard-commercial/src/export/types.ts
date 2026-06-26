@@ -60,7 +60,6 @@ export type CommercialExportRequest =
       kind: "table";
       payload: TableExportPayload;
       format: TabularExportFormat;
-      chartRoot?: HTMLElement | null;
     }
   | {
       kind: "tables";

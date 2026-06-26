@@ -2,6 +2,7 @@ import { PRODUCTION_BASE_PATH, PRODUCTION_ROUTES } from "../constants/routes";
 import type { ProductionOrderProductType } from "../types/production";
 import type { ProductionFilterUrlState } from "./filterUrl";
 import { appendFiltersToPath, readProductionFilters } from "./filterUrl";
+import { normalizeOperationalUnitCode } from "./operationalUnitLabels";
 
 export type ProductionView =
   | "home"
@@ -76,7 +77,7 @@ export function buildOtdOrderPath(
   );
 
   if (orderBranch) {
-    params.set("branch", orderBranch);
+    params.set("branch", normalizeOperationalUnitCode(orderBranch));
   }
 
   if (productType) {
@@ -102,11 +103,15 @@ export function readOrderProductTypeFromUrl(
 export function readAppointmentBranchFromUrl(
   search = typeof window !== "undefined" ? window.location.search : ""
 ): string {
-  return new URLSearchParams(search).get("branch")?.trim() ?? "";
+  return normalizeOperationalUnitCode(
+    new URLSearchParams(search).get("branch")?.trim() ?? "",
+  );
 }
 
 export function readOrderBranchFromUrl(
   search = typeof window !== "undefined" ? window.location.search : ""
 ): string {
-  return new URLSearchParams(search).get("branch")?.trim() ?? "";
+  return normalizeOperationalUnitCode(
+    new URLSearchParams(search).get("branch")?.trim() ?? "",
+  );
 }

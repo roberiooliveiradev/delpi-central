@@ -1,3 +1,5 @@
+import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
+
 export const PRODUCTION_BASE_PATH = "/apps/dashboard-production";
 
 export const PRODUCTION_ROUTES = {
@@ -12,6 +14,7 @@ export function buildOeeAppointmentPath(
 ): string {
   const encoded = encodeURIComponent(String(appointmentId).trim());
   const basePath = `${PRODUCTION_ROUTES.oee}/appointment/${encoded}`;
-  if (!branch) return basePath;
-  return `${basePath}?branch=${encodeURIComponent(branch)}`;
+  const normalizedBranch = normalizeOperationalUnitCode(branch);
+  if (!normalizedBranch) return basePath;
+  return `${basePath}?branch=${encodeURIComponent(normalizedBranch)}`;
 }

@@ -62,27 +62,23 @@ export function ConversionFunnelChart({
 
   const stages = useMemo(
     () => buildStages(proposals, won),
-    [proposals, won]
+    [proposals, won],
   );
 
   const hasData = proposals > 0;
 
   if (loading && !hasData) {
     return (
-      <div className="dc-chart-export-root">
-        <div className="dc-funnel dc-funnel--loading" aria-busy="true">
-          <div className="dc-state-box">Carregando funil…</div>
-        </div>
+      <div className="dc-funnel dc-funnel--loading" aria-busy="true">
+        <div className="dc-state-box">Carregando funil…</div>
       </div>
     );
   }
 
   if (!hasData) {
     return (
-      <div className="dc-chart-export-root">
-        <div className="dc-funnel dc-funnel--empty">
-          <div className="dc-state-box">Sem propostas no período filtrado.</div>
-        </div>
+      <div className="dc-funnel dc-funnel--empty">
+        <div className="dc-state-box">Sem propostas no período filtrado.</div>
       </div>
     );
   }
@@ -91,7 +87,6 @@ export function ConversionFunnelChart({
     goalPct != null && conversionPct != null ? conversionPct - goalPct : null;
 
   return (
-    <div className="dc-chart-export-root">
     <div className="dc-funnel" role="img" aria-label="Funil de conversão comercial">
       <div className="dc-funnel__summary">
         <div className="dc-funnel__rate">
@@ -126,54 +121,53 @@ export function ConversionFunnelChart({
 
       <div className="dc-funnel__visual">
         <div className="dc-funnel__stages">
-        {stages.map((stage, index) => (
-          <div key={stage.key} className="dc-funnel__stage-wrap">
-            {index > 0 ? (
-              <div className="dc-funnel__arrow" aria-hidden="true">
-                <span className="dc-funnel__arrow-line" />
-                {index === 1 ? (
-                  <span className="dc-funnel__arrow-label">
-                    {formatPercent(stage.sharePct, 1)} convertidas
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
+          {stages.map((stage, index) => (
+            <div key={stage.key} className="dc-funnel__stage-wrap">
+              {index > 0 ? (
+                <div className="dc-funnel__arrow" aria-hidden="true">
+                  <span className="dc-funnel__arrow-line" />
+                  {index === 1 ? (
+                    <span className="dc-funnel__arrow-label">
+                      {formatPercent(stage.sharePct, 1)} convertidas
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
 
-            <div
-              className={`dc-funnel__stage dc-funnel__stage--${stage.tone}`}
-              style={
-                {
-                  "--dc-funnel-width": `${stage.widthPct}%`,
-                  "--dc-funnel-accent":
-                    stage.tone === "won"
-                      ? CHART_COLORS[4]
-                      : stage.tone === "lost"
-                        ? "#e85d4c"
-                        : CHART_COLORS[0],
-                } as CSSProperties
-              }
-            >
-              <div className="dc-funnel__stage-inner">
-                <span className="dc-funnel__stage-value">
-                  {formatInteger(stage.value)}
-                </span>
-                <span className="dc-funnel__stage-label">{stage.label}</span>
-                <span className="dc-funnel__stage-share">
-                  {formatPercent(stage.sharePct, 1)} do total
-                </span>
+              <div
+                className={`dc-funnel__stage dc-funnel__stage--${stage.tone}`}
+                style={
+                  {
+                    "--dc-funnel-width": `${stage.widthPct}%`,
+                    "--dc-funnel-accent":
+                      stage.tone === "won"
+                        ? CHART_COLORS[4]
+                        : stage.tone === "lost"
+                          ? "#e85d4c"
+                          : CHART_COLORS[0],
+                  } as CSSProperties
+                }
+              >
+                <div className="dc-funnel__stage-inner">
+                  <span className="dc-funnel__stage-value">
+                    {formatInteger(stage.value)}
+                  </span>
+                  <span className="dc-funnel__stage-label">{stage.label}</span>
+                  <span className="dc-funnel__stage-share">
+                    {formatPercent(stage.sharePct, 1)} do total
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
         </div>
 
         <p className="dc-funnel__footnote">
-          Largura das etapas proporcional ao volume; números absolutos em cada faixa.
-          Ganhas = propostas com status TOTVS <code>9</code> e aceite (
+          Largura das etapas proporcional ao volume; números absolutos em cada
+          faixa. Ganhas = propostas com status TOTVS <code>9</code> e aceite (
           <code>AD1_DTASSI</code>) no período filtrado.
         </p>
       </div>
-    </div>
     </div>
   );
 }
