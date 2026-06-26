@@ -39,6 +39,7 @@ export function FilterBar({
       <HrPageHeader
         title={title}
         subtitle={subtitle}
+        iddFilters={{ competence, dateStart, dateEnd, branches }}
         onRefresh={onRefresh}
         refreshing={refreshing}
       />

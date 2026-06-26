@@ -1903,4 +1903,51 @@ html.dh-printing .dashboard-hr .recharts-responsive-container {
   }
 }
 
+/* Department IDD badge (sync dashboard_department_idd) */
+.dashboard-hr .dh-page-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-hr .dh-dept-idd {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--dh-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--dh-accent) 10%, transparent);
+  color: var(--dh-title);
+  font-size: var(--dh-font-sm);
+  line-height: 1.2;
+}
+
+.dashboard-hr .dh-dept-idd--loading {
+  opacity: 0.7;
+}
+
+.dashboard-hr .dh-dept-idd__label {
+  font-size: var(--dh-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dh-accent);
+}
+
+.dashboard-hr .dh-dept-idd__value {
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-hr .dh-dept-idd__classification {
+  font-size: var(--dh-font-xs);
+  color: var(--dh-muted);
+  max-width: 12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 

@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { Award, ListFilter } from "lucide-react";
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import type { QualityFilterUrlState } from "../utils/filterUrl";
 import { formatBranchFilterLabel } from "../utils/branchClientFilters";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { PrintReportButton } from "./PrintReportButton";
 import { PrintReportSummary } from "./PrintReportSummary";
 import { QualityNav } from "./QualityNav";
@@ -51,7 +53,21 @@ export function QualityPageHeader({
           </div>
           <div>
             <p className="dq-eyebrow">DELPI • Qualidade</p>
-            <h1>{title}</h1>
+            <div className="dq-page-header__title-row">
+              <h1>{title}</h1>
+              {filterState ? (
+                <DepartmentIddBadge
+                  departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+                  filters={{
+                    competence: filterState.competence,
+                    dateStart: filterState.dateStart,
+                    dateEnd: filterState.dateEnd,
+                    branches: filterState.branches,
+                  }}
+                  classPrefix="dq"
+                />
+              ) : null}
+            </div>
             <span className="dq-page-subtitle">{subtitle}</span>
             <QualityNav currentPath={currentPath} filterState={filterState} />
           </div>

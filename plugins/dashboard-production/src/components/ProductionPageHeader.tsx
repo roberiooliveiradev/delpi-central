@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { Factory, ListFilter } from "lucide-react";
 
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import type { ProductionFilterUrlState } from "../utils/filterUrl";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { ProductionNav } from "./ProductionNav";
 
 type ProductionPageHeaderProps = {
@@ -32,7 +34,21 @@ export function ProductionPageHeader({
         </div>
         <div>
           <p className="dp-eyebrow">DELPI • Produção</p>
-          <h1>{title}</h1>
+          <div className="dp-page-header__title-row">
+            <h1>{title}</h1>
+            {filterState ? (
+              <DepartmentIddBadge
+                departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+                filters={{
+                  competence: filterState.competence,
+                  dateStart: filterState.dateStart,
+                  dateEnd: filterState.dateEnd,
+                  branches: filterState.branches,
+                }}
+                classPrefix="dp"
+              />
+            ) : null}
+          </div>
           <span className="dp-page-subtitle">{subtitle}</span>
           <ProductionNav
             currentPath={currentPath ?? PRODUCTION_ROUTES.home}

@@ -1,5 +1,6 @@
 import { Download, ListFilter } from "lucide-react";
 
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   LMPS_BRANCH_OPTIONS,
@@ -7,6 +8,7 @@ import {
   LMPS_STATUS_OPTIONS,
 } from "../constants/filterOptions";
 import { FieldLabel, HelpTooltip } from "./HelpTooltip";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { MultiSelectField } from "./MultiSelectField";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
@@ -52,7 +54,14 @@ export function FilterBar({
       <header className="lmps-page-header">
         <div>
           <p className="lmps-eyebrow">DELPI • Analytics</p>
-          <h1>Acompanhamento de LMPs</h1>
+          <div className="lmps-page-header__title-row">
+            <h1>Acompanhamento de LMPs</h1>
+            <DepartmentIddBadge
+              departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+              filters={{ competence, dateStart, dateEnd, branches }}
+              classPrefix="lmps"
+            />
+          </div>
           <span className="lmps-page-subtitle lmps-page-subtitle--with-help">
             Indicadores de prazo, nível, status e lead time útil
             <HelpTooltip

@@ -125,6 +125,53 @@
   color: var(--dc-title);
 }
 
+.dashboard-commercial .dc-page-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-commercial .dc-dept-idd {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--dc-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--dc-accent) 10%, transparent);
+  color: var(--dc-title);
+  font-size: var(--dc-font-sm);
+  line-height: 1.2;
+}
+
+.dashboard-commercial .dc-dept-idd--loading {
+  opacity: 0.7;
+}
+
+.dashboard-commercial .dc-dept-idd__label {
+  font-size: var(--dc-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dc-accent);
+}
+
+.dashboard-commercial .dc-dept-idd__value {
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-commercial .dc-dept-idd__classification {
+  font-size: var(--dc-font-xs);
+  color: var(--dc-muted);
+  max-width: 12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .dashboard-commercial .dc-page-subtitle {
   display: inline-block;
   margin-top: 6px;

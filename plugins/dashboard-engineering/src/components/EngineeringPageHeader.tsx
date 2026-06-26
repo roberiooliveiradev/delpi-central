@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { DraftingCompass, ListFilter } from "lucide-react";
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import type { EngineeringFilterUrlState } from "../utils/filterUrl";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { EngineeringNav } from "./EngineeringNav";
 
 type EngineeringPageHeaderProps = {
@@ -30,7 +32,21 @@ export function EngineeringPageHeader({
         </div>
         <div>
           <p className="ds-eyebrow">DELPI • Engenharia</p>
-          <h1>{title}</h1>
+          <div className="ds-page-header__title-row">
+            <h1>{title}</h1>
+            {filterState ? (
+              <DepartmentIddBadge
+                departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+                filters={{
+                  competence: filterState.competence,
+                  dateStart: filterState.dateStart,
+                  dateEnd: filterState.dateEnd,
+                  branches: filterState.branches,
+                }}
+                classPrefix="ds"
+              />
+            ) : null}
+          </div>
           <span className="ds-page-subtitle">{subtitle}</span>
           <EngineeringNav currentPath={currentPath} filterState={filterState} />
         </div>

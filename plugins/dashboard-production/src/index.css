@@ -2774,4 +2774,51 @@ html.dp-printing .dashboard-production .recharts-responsive-container {
   }
 }
 
+/* Department IDD badge (sync dashboard_department_idd) */
+.dashboard-production .dp-page-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-production .dp-dept-idd {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--dp-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--dp-accent) 10%, transparent);
+  color: var(--dp-title);
+  font-size: var(--dp-font-sm);
+  line-height: 1.2;
+}
+
+.dashboard-production .dp-dept-idd--loading {
+  opacity: 0.7;
+}
+
+.dashboard-production .dp-dept-idd__label {
+  font-size: var(--dp-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dp-accent);
+}
+
+.dashboard-production .dp-dept-idd__value {
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production .dp-dept-idd__classification {
+  font-size: var(--dp-font-xs);
+  color: var(--dp-muted);
+  max-width: 12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 

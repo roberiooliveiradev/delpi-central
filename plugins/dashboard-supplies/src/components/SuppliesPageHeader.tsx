@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { ListFilter, Package } from "lucide-react";
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import type { SuppliesFilterUrlState } from "../utils/filterUrl";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { SuppliesNav } from "./SuppliesNav";
 
 type SuppliesPageHeaderProps = {
@@ -30,7 +32,21 @@ export function SuppliesPageHeader({
         </div>
         <div>
           <p className="ds-eyebrow">DELPI • Suprimentos</p>
-          <h1>{title}</h1>
+          <div className="ds-page-header__title-row">
+            <h1>{title}</h1>
+            {filterState ? (
+              <DepartmentIddBadge
+                departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+                filters={{
+                  competence: filterState.competence,
+                  dateStart: filterState.dateStart,
+                  dateEnd: filterState.dateEnd,
+                  branches: filterState.branches,
+                }}
+                classPrefix="ds"
+              />
+            ) : null}
+          </div>
           <span className="ds-page-subtitle">{subtitle}</span>
           <SuppliesNav currentPath={currentPath} filterState={filterState} />
         </div>

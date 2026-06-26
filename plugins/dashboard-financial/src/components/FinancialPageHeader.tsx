@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Landmark, ListFilter } from "lucide-react";
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import type { FinancialFilterUrlState } from "../utils/filterUrl";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { FinancialNav } from "./FinancialNav";
 
 type FinancialPageHeaderProps = {
@@ -30,7 +32,21 @@ export function FinancialPageHeader({
         </div>
         <div>
           <p className="ds-eyebrow">DELPI • Financeiro</p>
-          <h1>{title}</h1>
+          <div className="ds-page-header__title-row">
+            <h1>{title}</h1>
+            {filterState ? (
+              <DepartmentIddBadge
+                departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+                filters={{
+                  competence: filterState.competence,
+                  dateStart: filterState.dateStart,
+                  dateEnd: filterState.dateEnd,
+                  branches: filterState.branches,
+                }}
+                classPrefix="ds"
+              />
+            ) : null}
+          </div>
           <span className="ds-page-subtitle">{subtitle}</span>
           <FinancialNav currentPath={currentPath} filterState={filterState} />
         </div>

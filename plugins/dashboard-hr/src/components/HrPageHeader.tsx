@@ -1,8 +1,13 @@
 import { ListFilter, Users } from "lucide-react";
 
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
+import type { DepartmentIddFilterInput } from "../utils/departmentIddFilters";
+import { DepartmentIddBadge } from "./DepartmentIddBadge";
+
 type HrPageHeaderProps = {
   title: string;
   subtitle: string;
+  iddFilters?: DepartmentIddFilterInput;
   onRefresh?: () => void;
   refreshing?: boolean;
 };
@@ -10,6 +15,7 @@ type HrPageHeaderProps = {
 export function HrPageHeader({
   title,
   subtitle,
+  iddFilters,
   onRefresh,
   refreshing = false,
 }: HrPageHeaderProps) {
@@ -21,7 +27,16 @@ export function HrPageHeader({
         </div>
         <div>
           <p className="dh-eyebrow">DELPI • Recursos Humanos</p>
-          <h1>{title}</h1>
+          <div className="dh-page-header__title-row">
+            <h1>{title}</h1>
+            {iddFilters ? (
+              <DepartmentIddBadge
+                departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+                filters={iddFilters}
+                classPrefix="dh"
+              />
+            ) : null}
+          </div>
           <span className="dh-page-subtitle">{subtitle}</span>
         </div>
       </div>

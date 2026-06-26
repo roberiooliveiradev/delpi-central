@@ -43,6 +43,9 @@ from si_app.application.use_cases.strategic_indicators.get_trends_real_use_case 
 from si_app.application.use_cases.strategic_indicators.get_dashboard_goals_by_source_keys_use_case import (
     GetDashboardGoalsBySourceKeysUseCase,
 )
+from si_app.application.use_cases.strategic_indicators.get_dashboard_department_score_use_case import (
+    GetDashboardDepartmentScoreUseCase,
+)
 from si_app.application.use_cases.strategic_indicators.get_departments_tree_use_case import (
     GetStrategicIndicatorsDepartmentsTreeUseCase,
 )
@@ -381,6 +384,12 @@ def build_get_departments_tree_trends_use_case():
 def build_get_dashboard_goals_by_source_keys_use_case():
     return GetDashboardGoalsBySourceKeysUseCase(
         goals_repository=PostgresStrategicIndicatorsIndicatorGoalsRepository(),
+    )
+
+
+def build_get_dashboard_department_score_use_case():
+    return GetDashboardDepartmentScoreUseCase(
+        departments_use_case=build_get_strategic_indicators_departments_use_case(),
     )
 
 
