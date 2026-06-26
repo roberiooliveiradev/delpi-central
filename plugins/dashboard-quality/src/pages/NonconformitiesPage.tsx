@@ -29,6 +29,10 @@ import type { Nonconformity, NonconformityType } from "../types/nonconformity";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate } from "../utils/dates";
 import { formatDecimal, formatCustomerRef, formatNonconformityCode } from "../utils/format";
+import {
+  formatNonconformityStatusLabel,
+  formatNonconformityTypeLabel,
+} from "../utils/nonconformityLabels";
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { suggestGranularity } from "../utils/periodBuckets";
 
@@ -145,7 +149,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       {
         key: "type_label",
         header: "Tipo",
-        render: (row) => row.type_label ?? row.type_code ?? "—",
+        render: (row) => formatNonconformityTypeLabel(row),
       },
       {
         key: "branch",
@@ -181,7 +185,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       {
         key: "status_label",
         header: "Status",
-        render: (row) => row.status_label ?? row.status_code ?? "—",
+        render: (row) => formatNonconformityStatusLabel(row),
       },
       {
         key: "item_code",
@@ -232,7 +236,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         "Qtd devolvida",
       ],
       items.map((row) => [
-        row.type_label ?? row.type_code,
+        formatNonconformityTypeLabel(row),
         row.branch,
         formatNonconformityCode(row.code, row.code_display),
         formatCustomerRef(row.customer_code, row.customer_store),
@@ -240,7 +244,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         row.revision,
         formatDisplayDate(row.registered_date),
         formatDisplayDate(row.occurrence_date),
-        row.status_label ?? row.status_code ?? "",
+        formatNonconformityStatusLabel(row),
         row.item_code ?? "",
         row.description ?? "",
         row.detailed_description ?? "",

@@ -11,6 +11,8 @@ from app.domain.services.quality.nonconformity_display_service import (
     format_nonconformity_code,
     normalize_memo_text,
     normalize_optional_text,
+    resolve_nonconformity_status_label,
+    resolve_nonconformity_type_label,
 )
 
 from app.domain.entities.nonconformity.nonconformity import Nonconformity
@@ -30,15 +32,17 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
 
     def _map_nonconformity(self, row: dict) -> Nonconformity:
         code = str(row.get("code") or "").strip()
+        type_code = str(row.get("type_code") or "").strip()
+        status_code = str(row.get("status_code") or "").strip()
         return Nonconformity(
             branch=str(row.get("branch") or "").strip(),
             code=code,
             revision=str(row.get("revision") or "").strip(),
-            type_code=str(row.get("type_code") or "").strip(),
+            type_code=type_code,
             code_display=format_nonconformity_code(code),
-            type_label=row.get("type_label"),
-            status_code=row.get("status_code"),
-            status_label=row.get("status_label"),
+            type_label=resolve_nonconformity_type_label(type_code),
+            status_code=status_code or None,
+            status_label=resolve_nonconformity_status_label(status_code),
             description=normalize_optional_text(row.get("description")),
             detailed_description=normalize_memo_text(row.get("detailed_description")),
             item_code=normalize_optional_text(row.get("item_code")),
@@ -103,21 +107,7 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
                     nc.QI2_FNC as code,
                     nc.QI2_REV as revision,
                     nc.QI2_TIPO as type_code,
-                    CASE
-                        WHEN nc.QI2_TIPO = '1' THEN 'internal'
-                        WHEN nc.QI2_TIPO = '2' THEN 'customer'
-                        WHEN nc.QI2_TIPO = '3' THEN 'supplier'
-                        ELSE NULL
-                    END as type_label,
                     nc.QI2_STATUS as status_code,
-                    CASE
-                        WHEN nc.QI2_STATUS = '1' THEN 'registered'
-                        WHEN nc.QI2_STATUS = '2' THEN 'under_analysis'
-                        WHEN nc.QI2_STATUS = '3' THEN 'proceeds'
-                        WHEN nc.QI2_STATUS = '4' THEN 'does_not_proceed'
-                        WHEN nc.QI2_STATUS = '5' THEN 'cancelled'
-                        ELSE NULL
-                    END as status_label,
                     nc.QI2_DESCR as description,
                     {qi2_detailed_description_sql(table_alias="nc")},
                     nc.QI2_ITEM as item_code,
