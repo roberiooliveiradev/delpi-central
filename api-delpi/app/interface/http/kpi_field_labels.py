@@ -66,7 +66,7 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "ipi_separated": "IPI destacado",
     "rol_taxes": "Impostos sobre ROL",
     "rol": "ROL",
-    "rol_with_ipi": "ROL com IPI",
+    "rol_with_ipi": "ROL",
     "financial_titles": "Títulos financeiros",
     "financial_balance": "Saldo financeiro",
 }
@@ -74,7 +74,7 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
 FINANCIAL_EBITDA_FIELD_LABELS: dict[str, str] = {
     "ebitda_value": "EBITDA (valor)",
     "ebitda_over_rol_pct": "EBITDA / ROL (%)",
-    "rol_with_ipi": "ROL com IPI",
+    "rol_with_ipi": "ROL",
 }
 
 FINANCIAL_FIXED_COST_FIELD_LABELS: dict[str, str] = {

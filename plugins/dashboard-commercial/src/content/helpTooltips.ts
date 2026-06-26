@@ -36,7 +36,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     next: "Avança uma página mantendo busca, ordenação e tamanho da lista.",
   },
   kpis: {
-    rol: "ROL (R$ com IPI) no período. Com unidade Todas, exibe soma ou comparativo de Santa Catarina e Espírito Santo conforme o card.",
+    rol: "ROL (R$) no período. Com unidade Todas, exibe soma ou comparativo de Santa Catarina e Espírito Santo conforme o card.",
     salesOrderOtd:
       "Percentual de linhas de pedido de venda entregues no prazo (data de faturamento ≤ data de entrega prometida).",
     closingRate:

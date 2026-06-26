@@ -59,7 +59,6 @@ export function RolPage({ pathname }: RolPageProps) {
       { label: "IPI destacado", value: data.ipi_separated },
       { label: "Impostos ROL", value: data.rol_taxes },
       { label: "ROL", value: data.rol },
-      { label: "ROL com IPI", value: data.rol_with_ipi },
       { label: "Títulos financeiros", value: data.financial_titles },
       { label: "Saldo financeiro", value: data.financial_balance },
     ];
@@ -123,7 +122,7 @@ export function RolPage({ pathname }: RolPageProps) {
           loading={isBusy && !data}
         />
         <KpiCard
-          title="ROL com IPI"
+          title="ROL"
           titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolWithIpiDetail}
           value={formatCurrency(data?.rol_with_ipi)}
           subtitle={formatBranchFilterLabel(branches)}

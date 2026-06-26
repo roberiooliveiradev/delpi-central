@@ -115,7 +115,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
   const kpiExportRows = useMemo(
     () => [
       {
-        indicador: "ROL (com IPI)",
+        indicador: "ROL",
         valor: formatCurrency(rol?.rol_with_ipi),
         contexto: `${branchLabel} · ${periodLabel}`,
       },
@@ -201,7 +201,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
-          title="ROL (com IPI)"
+          title="ROL"
           titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolWithIpi}
           value={formatCurrency(rol?.rol_with_ipi)}
           subtitle={`${branchLabel} · ${periodLabel}`}

@@ -20,7 +20,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     cpvTotal:
       "Custo dos Produtos Vendidos no período (movimentos SD3 classificados como CPV). Meta alinhada ao catálogo de Indicadores Estratégicos quando configurada.",
     cpvRol:
-      "Participação do CPV sobre o ROL com IPI no mesmo período. Quanto menor, melhor quando a meta é de redução.",
+      "Participação do CPV sobre o ROL no mesmo período. Quanto menor, melhor quando a meta é de redução.",
     otdPurchases:
       "Percentual de linhas de pedido de compra recebidas no prazo prometido (data de recebimento ≤ data prometida).",
     stockValue:

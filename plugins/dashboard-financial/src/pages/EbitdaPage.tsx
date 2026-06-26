@@ -86,7 +86,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
       },
       {
         key: "rol",
-        header: "ROL c/ IPI",
+        header: "ROL",
         className: "ds-table__col--numeric",
         render: (row) => formatCurrency(row.rol_with_ipi),
       },
