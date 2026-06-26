@@ -1,8 +1,10 @@
+import { formatFilterViewScopeLabel } from "./operationalUnitLabels";
+
 export type StrategicIndicatorsViewMode = "consolidated" | "branch";
 
 export const STRATEGIC_INDICATORS_BRANCH_OPTIONS = [
-  { value: "01", label: "01" },
-  { value: "02", label: "02" },
+  { value: "01", label: "Santa Catarina" },
+  { value: "02", label: "Espírito Santo" },
 ];
 
 export function getCurrentStrategicIndicatorsMonthValue() {
@@ -50,16 +52,12 @@ export function resolveStrategicIndicatorsBranch(
   return viewMode === "branch" ? branch : undefined;
 }
 
-/** Rótulo da visão ativa nos painéis (filtro consolidado vs filial). */
+/** Rótulo da visão ativa nos painéis (filtro consolidado vs unidade). */
 export function getFilterViewScopeLabel(
   viewMode: StrategicIndicatorsViewMode,
   branch: string,
 ): string {
-  if (viewMode === "branch" && branch.trim()) {
-    return `Filial ${branch.trim()}`;
-  }
-
-  return "Consolidado";
+  return formatFilterViewScopeLabel(viewMode, branch);
 }
 
 export function isStrategicIndicatorsDepartmentsRoute(

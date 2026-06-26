@@ -55,6 +55,7 @@ import {
 } from "../utils/lmpClientFilters";
 import { formatDecimal, formatInteger } from "../utils/format";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const PIE_HEIGHT = 320;
 const PIE_RADIUS = 110;
@@ -186,7 +187,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
 
     return sortedItems.filter((row) =>
       [
-        row.branch,
+        formatOperationalUnitCode(row.branch, ""),
         row.sale_number,
         row.sale_description,
         row.engineering_status,
@@ -221,9 +222,9 @@ export function LmpPage({ pathname }: LmpPageProps) {
     () => [
       {
         key: "branch",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         headerHint: ENGINEERING_HELP_TOOLTIPS.table.branch,
-        render: (row) => row.branch ?? "—",
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "kind",

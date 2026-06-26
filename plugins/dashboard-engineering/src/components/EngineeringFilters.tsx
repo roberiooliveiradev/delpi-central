@@ -2,6 +2,7 @@ import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
+import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type EngineeringFiltersProps = {
   competence: string;
@@ -74,7 +75,7 @@ export function EngineeringFilters({
         </>
       ) : null}
       <MultiSelectField
-        label="Filial"
+        label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={ENGINEERING_HELP_TOOLTIPS.filters.branch}
         options={BRANCH_OPTIONS}
         selectedValues={branches}

@@ -1,4 +1,5 @@
 import { formatDisplayDate } from "../utils/dates";
+import { OPERATIONAL_UNIT_COLUMN_LABEL } from "../utils/operationalUnitLabels";
 
 export type PrintReportSummaryProps = {
   title: string;
@@ -29,7 +30,7 @@ export function PrintReportSummary({
           </dd>
         </div>
         <div>
-          <dt>Filial</dt>
+          <dt>{OPERATIONAL_UNIT_COLUMN_LABEL}</dt>
           <dd>{branch?.trim() ? branch : "Todas"}</dd>
         </div>
         <div>

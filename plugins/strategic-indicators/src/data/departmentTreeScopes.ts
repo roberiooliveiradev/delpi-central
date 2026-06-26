@@ -1,4 +1,5 @@
 import type { StrategicIndicatorsViewMode } from "../ui/shared/strategicIndicatorsFilters";
+import { formatOperationalUnitCode } from "../ui/shared/operationalUnitLabels";
 import type {
   DepartmentTreeColumn,
   DepartmentTreeScopeConfig,
@@ -12,8 +13,8 @@ export const DEPARTMENT_TREE_SCOPE_OPTIONS: ReadonlyArray<{
   label: string;
 }> = [
   { value: "consolidated", label: "Consolidado" },
-  { value: "01", label: "Filial 01" },
-  { value: "02", label: "Filial 02" },
+  { value: "01", label: "Santa Catarina" },
+  { value: "02", label: "Espírito Santo" },
 ];
 
 export function resolveActiveTreeScopeKey(
@@ -60,7 +61,7 @@ export function resolveDepartmentTreeScopes(
       {
         key: BRANCH_SCOPE_KEYS.has(key) ? key : "01",
         branch: branch.trim(),
-        label: `Filial ${branch.trim()}`,
+        label: formatOperationalUnitCode(branch.trim(), branch.trim()),
       },
     ];
   }

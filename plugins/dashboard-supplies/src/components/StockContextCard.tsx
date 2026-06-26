@@ -8,6 +8,7 @@ import {
 } from "../utils/dates";
 import { formatCurrency } from "../utils/format";
 import { buildStockEstimationStats, methodBadge } from "./stockContextHelpers";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type StockContextCardProps = {
   dateStart?: string;
@@ -129,11 +130,11 @@ export function StockContextCard({
 
           {branchRows.length > 0 && !isRegisterSnapshot ? (
             <div className="ds-stock-context-card__table-wrap">
-              <h3 className="ds-stock-context-card__composition-title">Por filial</h3>
+              <h3 className="ds-stock-context-card__composition-title">Por unidade</h3>
               <table className="ds-table ds-stock-estimation__table">
                 <thead>
                   <tr>
-                    <th>Filial</th>
+                    <th>{OPERATIONAL_UNIT_COLUMN_LABEL}</th>
                     <th>Base SB9</th>
                     <th>Ponte SD3</th>
                     <th>Período SD3</th>
@@ -143,7 +144,7 @@ export function StockContextCard({
                 <tbody>
                   {branchRows.map((row) => (
                     <tr key={row.branch ?? "branch"}>
-                      <td>{row.branch ?? "—"}</td>
+                      <td>{formatOperationalUnitCode(row.branch)}</td>
                       <td>
                         {formatProtheusDateHuman(row.closing_base_date)}
                         <br />

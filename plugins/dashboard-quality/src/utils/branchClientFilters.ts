@@ -1,4 +1,8 @@
 import type { MultiSelectOption } from "../components/MultiSelectField";
+import {
+  buildOperationalUnitOptions,
+  formatOperationalUnitsFilterLabel,
+} from "./operationalUnitLabels";
 
 export function parseDynamicBranchCsv(value: string): string[] {
   return value
@@ -15,7 +19,7 @@ export function serializeDynamicBranchCsv(values: string[]): string {
 }
 
 export function buildBranchOptions(codes: string[]): MultiSelectOption[] {
-  return codes.map((code) => ({ value: code, label: `Filial ${code}` }));
+  return buildOperationalUnitOptions(codes);
 }
 
 export function sanitizeBranches(
@@ -34,7 +38,5 @@ export function formatBranchFilterLabel(
   branches: string[],
   emptyLabel = "Todas"
 ): string {
-  if (branches.length === 0) return emptyLabel;
-  if (branches.length === 1) return `Filial ${branches[0]}`;
-  return `Filiais ${branches.join(", ")}`;
+  return formatOperationalUnitsFilterLabel(branches, { emptyLabel });
 }

@@ -25,6 +25,7 @@ import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import type { StockTopProduct, StockValueByLocation } from "../types/supplies";
 import { formatChartCurrencyAxis } from "../utils/chartHelpers";
+import { formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 import {
   formatCurrency,
   formatDecimal,
@@ -99,7 +100,7 @@ export function StockPage({ pathname }: StockPageProps) {
   const byBranchChart = useMemo(
     () =>
       (data?.by_branch ?? []).map((item) => ({
-        name: item.branch ?? "—",
+        name: formatOperationalUnitCode(item.branch),
         value: Number(item.total_stock_value ?? 0),
       })),
     [data?.by_branch]
@@ -158,7 +159,7 @@ export function StockPage({ pathname }: StockPageProps) {
         : data?.estimation?.enabled
           ? "Estimativa Kardex SB9+SD3 (modo analítico)"
           : "Período histórico — aguardando dados"
-    : "Posição atual por filial e localização (SB2)";
+    : "Posição atual por unidade e localização (SB2)";
 
   const primaryKpiTitle = isRegisterSnapshot ? "EM estoque (SB2)" : "Valor total";
 
@@ -273,7 +274,7 @@ export function StockPage({ pathname }: StockPageProps) {
           )}
         </ChartCard>
 
-        <ChartCard title="Estoque por filial">
+        <ChartCard title="Estoque por unidade">
           {byBranchChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={byBranchChart}>
@@ -285,7 +286,7 @@ export function StockPage({ pathname }: StockPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem saldo por filial.</div>
+            <div className="ds-state-box">Sem saldo por unidade.</div>
           )}
         </ChartCard>
       </section>

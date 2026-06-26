@@ -31,6 +31,7 @@ import {
 } from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 320;
 
@@ -64,7 +65,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
   const chartData = useMemo(
     () =>
       branchRows.map((row) => ({
-        name: `Filial ${row.branch}`,
+        name: formatOperationalUnitCode(row.branch, row.branch),
         value: row.fixed_cost_over_rol_pct,
       })),
     [branchRows]
@@ -72,7 +73,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
 
   const columns = useMemo<DataTableColumn<FixedCostBranchRow>[]>(
     () => [
-      { key: "branch", header: "Filial", render: (row) => row.branch },
+      { key: "branch", header: OPERATIONAL_UNIT_COLUMN_LABEL, render: (row) => formatOperationalUnitCode(row.branch) },
       {
         key: "fixed",
         header: "Custos fixos (R$)",
@@ -157,7 +158,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
 
       {showBranchChart ? (
         <section className="ds-charts-grid ds-charts-grid--single">
-        <ChartCard title="Custos fixos / ROL por filial" hint={periodLabel}>
+        <ChartCard title="Custos fixos / ROL por unidade" hint={periodLabel}>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -177,7 +178,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
 
       {branchRows.length > 0 ? (
         <DataTableSection
-          title="Por filial"
+          title="Por unidade"
           hint={periodLabel}
           columns={columns}
           rows={branchRows}

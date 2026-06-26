@@ -10,7 +10,7 @@ export const QUALITY_HELP_TOOLTIPS = {
     dateStart: "Início do período para PPM, kaizens e auditorias 5S.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Filial TOTVS. Vazio = todas; múltiplas filiais restringem o recorte dos indicadores.",
+      "Unidade TOTVS. Vazio = todas; múltiplas unidades restringem o recorte dos indicadores.",
   },
   kpis: {
     ppmInternal:
@@ -48,6 +48,6 @@ export const QUALITY_HELP_TOOLTIPS = {
   table: {
     section: "Listagem do período filtrado. Clique na linha para ver o detalhe quando disponível.",
     search: "Filtra os registros visíveis por texto nas colunas principais.",
-    branch: "Filial TOTVS do registro.",
+    branch: "Unidade TOTVS do registro.",
   },
 } as const;

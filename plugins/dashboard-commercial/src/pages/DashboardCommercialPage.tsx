@@ -64,6 +64,7 @@ import {
   formatCommercialBranchFilterLabel,
   resolveCommercialApiBranch,
 } from "../utils/commercialClientFilters";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 import {
   appendCustomerSegmentToLabel,
   formatNewBusinessRolContextLine,
@@ -176,7 +177,7 @@ export function DashboardCommercialPage({
 
   const rolContextLabel = appendCustomerSegmentToLabel(
     activeApiBranch
-      ? `Filial ${activeApiBranch} · ${periodLabel}`
+      ? `${formatOperationalUnitCode(activeApiBranch, activeApiBranch)} · ${periodLabel}`
       : `${COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.sum} · ${periodLabel}`,
     customerSegment
   );
@@ -355,7 +356,7 @@ export function DashboardCommercialPage({
           competence,
           branches,
           customerSegment,
-          proposalBranch: row.branch,
+          proposalBranch: formatOperationalUnitCode(row.branch, ""),
           revision: row.revision,
         })
       );
@@ -367,11 +368,11 @@ export function DashboardCommercialPage({
     () => [
       {
         key: "branch",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         headerHint: COMMERCIAL_HELP_TOOLTIPS.table.branch,
-        render: (row) => row.branch || "—",
+        render: (row) => formatOperationalUnitCode(row.branch),
         sortable: true,
-        sortValue: (row) => row.branch,
+        sortValue: (row) => formatOperationalUnitCode(row.branch, ""),
       },
       {
         key: "proposal",
@@ -461,7 +462,7 @@ export function DashboardCommercialPage({
         : "Última revisão por proposta no período (data AD1_DATA).";
 
   const chartSubtitle =
-    "Clique em um ponto para filtrar o período ao intervalo. Séries por filial 01 e 02.";
+    "Clique em um ponto para filtrar o período ao intervalo. Séries por Santa Catarina e Espírito Santo.";
 
   return (
     <div className="dashboard-commercial dashboard-page dc-print-root">

@@ -59,7 +59,7 @@ export function FinancialStatusAlerts({
       {loading && !hasData ? (
         <LoadingActivityCard
           title="Carregando indicadores"
-          description="Buscando dados financeiros para o período e filial selecionados."
+          description="Buscando dados financeiros para o período e unidade selecionados."
           progressPercent={loadingProgress}
         />
       ) : null}

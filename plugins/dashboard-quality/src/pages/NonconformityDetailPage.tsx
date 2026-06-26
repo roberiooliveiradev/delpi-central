@@ -18,6 +18,7 @@ import {
 import { navigateQualityBack } from "../utils/navigation";
 import { readNonconformityDetailRecord } from "../utils/recordDetailStorage";
 import { readQualityFilters } from "../utils/filterUrl";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type NonconformityDetailPageProps = {
   pathname?: string;
@@ -31,7 +32,7 @@ export function NonconformityDetailPage(_props: NonconformityDetailPageProps) {
       item
         ? [
             { label: "Tipo", value: formatNonconformityTypeLabel(item) },
-            { label: "Filial", value: item.branch },
+            { label: OPERATIONAL_UNIT_COLUMN_LABEL, value: formatOperationalUnitCode(item.branch) },
             {
               label: "Código",
               value: formatNonconformityCode(item.code, item.code_display),
@@ -88,7 +89,7 @@ export function NonconformityDetailPage(_props: NonconformityDetailPageProps) {
           </h1>
           <p>
             {item
-              ? [formatNonconformityTypeLabel(item), item.branch, formatNonconformityStatusLabel(item)]
+              ? [formatNonconformityTypeLabel(item), formatOperationalUnitCode(item.branch, ""), formatNonconformityStatusLabel(item)]
                   .filter(Boolean)
                   .join(" · ")
               : "Registro não encontrado. Volte à listagem e abra o item novamente."}

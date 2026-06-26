@@ -45,6 +45,7 @@ import {
 } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
 import { resolveApiBranch } from "../utils/branchClientFilters";
+import { formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 300;
 
@@ -99,10 +100,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
 
   const selectedBranch = resolveApiBranch(branches);
   const branchLabel = selectedBranch
-    ? `Filial ${selectedBranch}`
+    ? formatOperationalUnitCode(selectedBranch, selectedBranch)
     : branches.length > 1
-      ? `Filiais ${branches.join(", ")}`
-      : "Consolidado (média das filiais)";
+      ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
+      : "Consolidado (média das unidades)";
 
   const isBusy = loading || refreshing;
   const hasData =
@@ -169,8 +170,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
   );
 
   const temporalChartHint = selectedBranch
-    ? `Clique em um ponto para filtrar o período. Série da filial ${selectedBranch}.`
-    : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
+    ? `Clique em um ponto para filtrar o período. Série de ${formatOperationalUnitCode(selectedBranch, selectedBranch)}.`
+    : "Clique em um ponto para filtrar o período. Séries por Santa Catarina e Espírito Santo.";
 
   const handleTemporalChartDrillDown = useCallback(
     (nextStart: string, nextEnd: string) => {
@@ -489,8 +490,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
           <p className="dp-summary-card__description">
             Os três primeiros KPIs são custos médios das planilhas divididos pelo
             ROL (TOTVS) no período. <strong>OEE</strong> é a média de eficiência
-            dos apontamentos (gráfico temporal por filial). <strong>OTD</strong> mede ordens de produção
-            concluídas no prazo (gráfico temporal por filial).
+            dos apontamentos (gráfico temporal por unidade). <strong>OTD</strong> mede ordens de produção
+            concluídas no prazo (gráfico temporal por unidade).
           </p>
         </article>
       </section>

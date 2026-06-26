@@ -2,6 +2,7 @@ import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
+import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type SuppliesFiltersProps = {
   competence: string;
@@ -80,7 +81,7 @@ export function SuppliesFilters({
         </>
       ) : null}
       <MultiSelectField
-        label="Filial"
+        label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={SUPPLIES_HELP_TOOLTIPS.filters.branch}
         options={BRANCH_OPTIONS}
         selectedValues={branches}

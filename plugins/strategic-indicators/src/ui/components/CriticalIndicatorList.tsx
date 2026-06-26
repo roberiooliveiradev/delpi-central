@@ -1,7 +1,7 @@
 import type { IndicatorAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
 import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
-import { resolveStrategicIndicatorsBranch } from "../shared/strategicIndicatorsFilters";
+import { resolveStrategicIndicatorsBranch, getFilterViewScopeLabel } from "../shared/strategicIndicatorsFilters";
 import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
 import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./CriticalIndicatorList.css";
@@ -31,6 +31,9 @@ export function CriticalIndicatorList({
   viewMode = "consolidated",
   branch = "01",
 }: CriticalIndicatorListProps) {
+  const scopeLabel = getFilterViewScopeLabel(viewMode, branch);
+  const activeBranch = resolveStrategicIndicatorsBranch(viewMode, branch);
+
   if (!alerts.length) {
     return (
       <div className="si-critical-list si-critical-list--empty">
@@ -70,16 +73,14 @@ export function CriticalIndicatorList({
                   valueDecimals: alert.valueDecimals,
                 }}
                 displayContext={{
-                  filterViewScopeLabel:
-                    viewMode === "branch" ? `Filial ${branch}` : "Consolidado",
-                  activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+                  filterViewScopeLabel: scopeLabel,
+                  activeBranch,
                 }}
                 layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorGoalValue(alert, competence, {
-                  filterViewScopeLabel:
-                    viewMode === "branch" ? `Filial ${branch}` : "Consolidado",
-                  activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+                  filterViewScopeLabel: scopeLabel,
+                  activeBranch,
                 })}
               />
             </span>

@@ -15,6 +15,7 @@ import { formatDisplayDate } from "../utils/dates";
 import { readQualityFilters } from "../utils/filterUrl";
 import { formatCurrency, formatDecimal } from "../utils/format";
 import { navigateQualityBack } from "../utils/navigation";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type KaizenDetailPageProps = {
   kaizenId: string;
@@ -33,7 +34,7 @@ export function KaizenDetailPage({ kaizenId, pathname }: KaizenDetailPageProps) 
             { label: "Título", value: data.title, wide: true },
             { label: "Status", value: data.status ?? "—" },
             { label: "Setor", value: data.sector ?? "—" },
-            { label: "Filial", value: data.branch ?? "—" },
+            { label: OPERATIONAL_UNIT_COLUMN_LABEL, value: formatOperationalUnitCode(data.branch) },
             {
               label: "Implementação",
               value: formatDisplayDate(data.date_implemented),

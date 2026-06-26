@@ -60,6 +60,7 @@ import { navigateProduction } from "../utils/navigation";
 import { buildOeeAppointmentPath } from "../constants/routes";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { resolveApiBranch } from "../utils/branchClientFilters";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const PAGE_SIZE = 20;
 
@@ -220,14 +221,14 @@ export function OeePage({ pathname }: OeePageProps) {
 
   const selectedBranch = resolveApiBranch(branches);
   const branchLabel = selectedBranch
-    ? `Filial ${selectedBranch}`
+    ? formatOperationalUnitCode(selectedBranch, selectedBranch)
     : branches.length > 1
-      ? `Filiais ${branches.join(", ")}`
-      : "Consolidado (média das filiais)";
+      ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
+      : "Consolidado (média das unidades)";
 
   const temporalChartHint = selectedBranch
-    ? `Clique em um ponto para filtrar o período. Série da filial ${selectedBranch}.`
-    : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
+    ? `Clique em um ponto para filtrar o período. Série de ${formatOperationalUnitCode(selectedBranch, selectedBranch)}.`
+    : "Clique em um ponto para filtrar o período. Séries por Santa Catarina e Espírito Santo.";
 
   const handleTemporalChartDrillDown = useCallback(
     (nextStart: string, nextEnd: string) => {
@@ -325,10 +326,10 @@ export function OeePage({ pathname }: OeePageProps) {
       },
       {
         key: "branch",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         headerHint: DP_HELP_TOOLTIPS.oee.table.branch,
         sortable: true,
-        render: (row) => row.branch ?? "—",
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "production_order",
@@ -572,7 +573,7 @@ export function OeePage({ pathname }: OeePageProps) {
         searchHint={DP_HELP_TOOLTIPS.table.search}
         getSearchText={(row) =>
           [
-            row.branch,
+            formatOperationalUnitCode(row.branch, ""),
             row.production_order,
             row.product_code,
             row.product_description,

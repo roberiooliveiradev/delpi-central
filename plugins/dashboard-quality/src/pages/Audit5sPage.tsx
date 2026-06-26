@@ -42,6 +42,7 @@ import { formatScore } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 300;
 
@@ -115,8 +116,8 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
       },
       {
         key: "branch",
-        header: "Filial",
-        render: (row) => row.branch ?? "—",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "auditor",
@@ -151,7 +152,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         "Data",
         "Área",
         "Nota",
-        "Filial",
+        "Unidade",
         "Auditor",
         "Auditado",
         "Turno",
@@ -161,7 +162,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         formatDisplayDate(row.date),
         row.evaluated_area ?? "",
         String(row.average_line_score ?? ""),
-        row.branch ?? "",
+        formatOperationalUnitCode(row.branch, ""),
         row.auditor ?? "",
         row.audited ?? "",
         row.shift ?? "",

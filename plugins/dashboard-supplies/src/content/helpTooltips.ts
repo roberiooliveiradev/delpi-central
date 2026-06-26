@@ -3,7 +3,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     pageSubtitle:
       "Indicadores de suprimentos no TOTVS: CPV, pontualidade de compras, estoque, giro e economia em negociações.",
     refresh:
-      "Recarrega KPIs e gráficos com os filtros atuais (período, filial e localização).",
+      "Recarrega KPIs e gráficos com os filtros atuais (período, unidade e localização).",
   },
   filters: {
     competence:
@@ -12,9 +12,9 @@ export const SUPPLIES_HELP_TOOLTIPS = {
       "Início do período. KPIs e gráficos consideram movimentos e saldos a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Filial TOTVS para CPV, OTD, estoque e economia. Vazio = consolidado; múltiplas filiais comparam o recorte selecionado.",
+      "Unidade TOTVS para CPV, OTD, estoque e economia. Vazio = consolidado; múltiplas unidades comparam o recorte selecionado.",
     location:
-      "Código de localização de estoque (armazém). Vazio = todas as localizações no recorte de filial.",
+      "Código de localização de estoque (armazém). Vazio = todas as localizações no recorte de unidade.",
   },
   kpis: {
     cpvTotal:
@@ -24,7 +24,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     otdPurchases:
       "Percentual de linhas de pedido de compra recebidas no prazo prometido (data de recebimento ≤ data prometida).",
     stockValue:
-      "Valor total do estoque (SB9) no recorte de filial e localização selecionados.",
+      "Valor total do estoque (SB9) no recorte de unidade e localização selecionados.",
     inventoryTurnoverMonths:
       "Giro de estoque em meses de cobertura (estoque ÷ CPV médio mensal). Métrica auxiliar — o indicador oficial é em vezes.",
     inventoryTurnoverTimes:
@@ -42,7 +42,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     stockQuantity: "Quantidade total em estoque no recorte filtrado.",
     locations: "Quantidade de localizações com saldo registrado.",
     avgUnitValue: "Valor médio por unidade em estoque (custo unitário médio).",
-    savingsTotal: "Soma da economia em negociações no período e filial selecionados.",
+    savingsTotal: "Soma da economia em negociações no período e unidade selecionados.",
     savingsEntries: "Quantidade de lançamentos na planilha IDD no recorte.",
     savingsPeriod: "Economia acumulada no intervalo de datas filtrado.",
   },
@@ -52,8 +52,8 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     otdEvolution: "Evolução mensal da pontualidade de compras (OTD).",
     lateSuppliers: "Fornecedores com maior volume de linhas em atraso no período.",
     stockByLocation: "Valor de estoque agrupado por localização (armazém).",
-    stockByBranch: "Valor de estoque consolidado por filial TOTVS.",
-    savingsByBranch: "Economia em negociações agrupada por filial.",
+    stockByBranch: "Valor de estoque consolidado por unidade TOTVS.",
+    savingsByBranch: "Economia em negociações agrupada por unidade.",
     percentIndicators: "Comparativo visual de indicadores percentuais do módulo.",
   },
   pagination: {
@@ -69,6 +69,6 @@ export const SUPPLIES_HELP_TOOLTIPS = {
   table: {
     section: "Listagem do período filtrado. Clique na linha para ver o detalhe quando disponível.",
     search: "Filtra os registros visíveis por texto nas colunas principais.",
-    branch: "Filial TOTVS do registro.",
+    branch: "Unidade TOTVS do registro.",
   },
 } as const;

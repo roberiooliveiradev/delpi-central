@@ -36,6 +36,7 @@ import {
 } from "../utils/goalDisplay";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 import {
   formatCurrency,
   formatDecimal,
@@ -178,7 +179,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         className: "ds-table__col--wide",
         render: (row) => row.name_process || "—",
       },
-      { key: "filial", header: "Filial", render: (row) => row.filial_id ?? "—" },
+      { key: "filial", header: OPERATIONAL_UNIT_COLUMN_LABEL, render: (row) => formatOperationalUnitCode(row.filial_id) },
       { key: "sector", header: "Setor", render: (row) => row.sector_name ?? "—" },
       { key: "status", header: "Status", render: (row) => row.status ?? "—" },
       {

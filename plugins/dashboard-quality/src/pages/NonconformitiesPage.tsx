@@ -38,6 +38,7 @@ import { navigateQuality } from "../utils/navigation";
 import { saveNonconformityDetailRecord } from "../utils/recordDetailStorage";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const DEFAULT_PAGE_SIZE = 20;
 const CHART_HEIGHT = 320;
@@ -174,9 +175,9 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       },
       {
         key: "branch",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         headerHint: QUALITY_HELP_TOOLTIPS.table.branch,
-        render: (row) => row.branch,
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "code",
@@ -244,7 +245,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       `nao-conformidades-totvs-pagina-${page}.csv`,
       [
         "Tipo",
-        "Filial",
+        "Unidade",
         "Código Não Conformidade",
         "Cliente",
         "Nome do cliente",
@@ -259,7 +260,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       ],
       items.map((row) => [
         formatNonconformityTypeLabel(row),
-        row.branch,
+        formatOperationalUnitCode(row.branch, ""),
         formatNonconformityCode(row.code, row.code_display),
         formatCustomerRef(row.customer_code, row.customer_store),
         row.customer_name ?? "",
@@ -440,7 +441,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         refreshing={loading && Boolean(data?.items.length)}
         onRowClick={handleNonconformityRowClick}
         emptyMessage="Nenhuma não conformidade encontrada para os filtros."
-        searchPlaceholder="Buscar código, produto, filial, descrição…"
+        searchPlaceholder="Buscar código, produto, unidade, descrição…"
         searchHint={QUALITY_HELP_TOOLTIPS.table.search}
         serverSearch={{
           value: tableSearch,

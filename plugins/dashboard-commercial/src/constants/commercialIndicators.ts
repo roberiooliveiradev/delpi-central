@@ -18,13 +18,13 @@ export const COMMERCIAL_SI_INDICATOR_IDS = {
 } as const;
 
 export const COMMERCIAL_ROL_SERIES_LABELS = {
-  filial01: "ROL Filial 01",
-  filial02: "ROL Filial 02",
+  filial01: "ROL Santa Catarina",
+  filial02: "ROL Espírito Santo",
 } as const;
 
-/** Como o realizado consolidado é agregado na UI (metas continuam por filial). */
+/** Como o realizado consolidado é agregado na UI (metas continuam por unidade). */
 export const COMMERCIAL_CONSOLIDATED_BRANCH_LABELS = {
-  sum: "Consolidado (soma das filiais)",
-  average: "Consolidado (média das filiais)",
-  allBranches: "Consolidado (todas as filiais)",
+  sum: "Consolidado (soma das unidades)",
+  average: "Consolidado (média das unidades)",
+  allBranches: "Consolidado (todas as unidades)",
 } as const;

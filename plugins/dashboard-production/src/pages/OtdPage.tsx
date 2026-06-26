@@ -45,6 +45,7 @@ import { navigateProduction } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { resolveApiBranch } from "../utils/branchClientFilters";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const PAGE_SIZE = 20;
 
@@ -119,14 +120,14 @@ export function OtdPage({ pathname }: OtdPageProps) {
 
   const selectedBranch = resolveApiBranch(branches);
   const branchLabel = selectedBranch
-    ? `Filial ${selectedBranch}`
+    ? formatOperationalUnitCode(selectedBranch, selectedBranch)
     : branches.length > 1
-      ? `Filiais ${branches.join(", ")}`
-      : "Consolidado (média das filiais)";
+      ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
+      : "Consolidado (média das unidades)";
 
   const temporalChartHint = selectedBranch
-    ? `Clique em um ponto para filtrar o período. Série da filial ${selectedBranch}.`
-    : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
+    ? `Clique em um ponto para filtrar o período. Série de ${formatOperationalUnitCode(selectedBranch, selectedBranch)}.`
+    : "Clique em um ponto para filtrar o período. Séries por Santa Catarina e Espírito Santo.";
 
   const handleTemporalChartDrillDown = useCallback(
     (nextStart: string, nextEnd: string) => {
@@ -187,7 +188,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         sortable: true,
         render: (row) => <OtdStatusBadge status={row.status} />,
       },
-      { key: "branch", header: "Filial", headerHint: DP_HELP_TOOLTIPS.otd.table.branch, sortable: true, render: (row) => row.branch ?? "—" },
+      { key: "branch", header: OPERATIONAL_UNIT_COLUMN_LABEL, headerHint: DP_HELP_TOOLTIPS.otd.table.branch, sortable: true, render: (row) => formatOperationalUnitCode(row.branch) },
       { key: "production_order", header: "OP", headerHint: DP_HELP_TOOLTIPS.otd.table.productionOrder, sortable: true, render: (row) => row.production_order ?? "—" },
       { key: "order_number", header: "Nº OP", headerHint: DP_HELP_TOOLTIPS.otd.table.orderNumber, sortable: true, render: (row) => row.order_number ?? "—" },
       { key: "order_item", header: "Item", headerHint: DP_HELP_TOOLTIPS.otd.table.orderItem, sortable: true, render: (row) => row.order_item ?? "—" },
@@ -230,7 +231,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
   const handleOrderRowClick = useCallback(
     (row: ProductionOtdOrderItem) => {
       navigateProduction(
-        buildOtdOrderPath(row.production_order, row.branch, filterState, "PA"),
+        buildOtdOrderPath(row.production_order, formatOperationalUnitCode(row.branch, ""), filterState, "PA"),
         filterState
       );
     },
@@ -398,11 +399,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
         loading={loading && !(data?.orders.items?.length)}
         refreshing={loading && Boolean(data?.orders.items?.length)}
         emptyMessage="Nenhuma OP finalizada no período."
-        searchPlaceholder="Buscar OP, produto, filial…"
+        searchPlaceholder="Buscar OP, produto, unidade…"
         searchHint={DP_HELP_TOOLTIPS.table.search}
         getSearchText={(row) =>
           [
-            row.branch,
+            formatOperationalUnitCode(row.branch, ""),
             row.production_order,
             row.order_number,
             row.order_item,

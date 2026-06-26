@@ -3,13 +3,14 @@ import { formatProductionQuantity } from "./format";
 import { formatOeeAppointmentStatusLabel } from "./oeeAppointmentStatus";
 import { downloadCsv } from "./csv";
 import { exportTableExcel, exportTablePdf, type ExportTable } from "./exportDocument";
+import { formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 export const OEE_APPOINTMENTS_HEADERS = [
   "Data",
   "Início",
   "Fim",
   "Qtd. apontada",
-  "Filial",
+  "Unidade",
   "OP",
   "Descrição produto",
   "CT",
@@ -28,7 +29,7 @@ export function oeeAppointmentToRow(item: ProductionOeeAppointmentItem): (string
     item.start_time ?? "",
     item.end_time ?? "",
     formatProductionQuantity(item.produced_qty, item.unit),
-    item.branch ?? "",
+    formatOperationalUnitCode(item.branch, ""),
     item.production_order ?? "",
     item.product_description ?? "",
     item.work_center ?? "",

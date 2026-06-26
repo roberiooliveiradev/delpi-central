@@ -7,6 +7,7 @@ import {
 } from "../utils/branchClientFilters";
 import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
+import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type HrFiltersProps = {
   competence: string;
@@ -76,7 +77,7 @@ export function HrFilters({
         />
       </label>
       <MultiSelectField
-        label="Filial"
+        label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={HR_HELP_TOOLTIPS.filters.branch}
         options={options}
         selectedValues={selectedValues}

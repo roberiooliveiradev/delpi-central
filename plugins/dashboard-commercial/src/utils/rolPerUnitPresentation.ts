@@ -5,9 +5,13 @@ import {
   formatDashboardMetricValue,
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
-/** Mesmo texto retornado pela api-delpi quando a meta é só por filial. */
+import {
+  formatOperationalUnitCode,
+} from "./operationalUnitLabels";
+
+/** Mesmo texto retornado pela api-delpi quando a meta é só por unidade. */
 export const BRANCH_GOALS_FILTER_HINT =
-  "Metas cadastradas apenas por filial (01 e 02). Selecione uma filial no filtro.";
+  "Metas cadastradas apenas por unidade (Santa Catarina e Espírito Santo). Selecione uma unidade no filtro.";
 
 export type RolPerUnitKpiView = KpiGoalPresentation & {
   valueVariant: "default" | "per-unit";
@@ -64,7 +68,7 @@ function resolvePerUnitPerformanceBadges(
       }
       return {
         ...badge,
-        statusLabel: `${code}: ${badge.statusLabel}`,
+        statusLabel: `${formatOperationalUnitCode(code, code)}: ${badge.statusLabel}`,
       };
     })
     .filter((badge): badge is GoalPerformanceBadge => badge != null);

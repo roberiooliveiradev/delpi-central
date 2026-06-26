@@ -7,7 +7,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     dateEnd:
       "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Filial TOTVS para conversão, OTD, ROL e % novos negócios. Vazio = consolidado de todas as filiais.",
+      "Unidade TOTVS para conversão, OTD, ROL e % novos negócios. Vazio = consolidado de todas as unidades.",
     customerSegment:
       "WEG = cliente código 000001 (todas as lojas). Novos negócios = demais clientes. Afeta ROL, conversão, OTD, % novos negócios, gráfico de ROL e tabela de propostas.",
     proposalStatus:
@@ -15,11 +15,11 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   },
   actions: {
     pageSubtitle:
-      "Indicadores comerciais do TOTVS: ROL por filial, taxa de conversão de propostas, OTD de pedidos e participação de novos negócios no ROL.",
+      "Indicadores comerciais do TOTVS: ROL por unidade, taxa de conversão de propostas, OTD de pedidos e participação de novos negócios no ROL.",
     refresh:
-      "Recarrega KPIs, gráficos e tabela com os filtros atuais (período e filial).",
+      "Recarrega KPIs, gráficos e tabela com os filtros atuais (período e unidade).",
     back:
-      "Retorna ao dashboard comercial preservando período e filial na URL.",
+      "Retorna ao dashboard comercial preservando período e unidade na URL.",
     detailRefresh:
       "Atualiza cabeçalho da OV e histórico de processo/estágio no TOTVS.",
     totvsBanner:
@@ -36,7 +36,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     next: "Avança uma página mantendo busca, ordenação e tamanho da lista.",
   },
   kpis: {
-    rol: "ROL (R$ com IPI) no período. Com filial Todas, exibe soma ou comparativo das filiais 01 e 02 conforme o card.",
+    rol: "ROL (R$ com IPI) no período. Com unidade Todas, exibe soma ou comparativo de Santa Catarina e Espírito Santo conforme o card.",
     salesOrderOtd:
       "Percentual de linhas de pedido de venda entregues no prazo (data de faturamento ≤ data de entrega prometida).",
     closingRate:
@@ -46,7 +46,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   },
   charts: {
     rolEvolution:
-      "Evolução do ROL por filial 01 (matriz) e 02. Clique em um ponto para ajustar o período ao intervalo selecionado.",
+      "Evolução do ROL por Santa Catarina e Espírito Santo. Clique em um ponto para ajustar o período ao intervalo selecionado.",
     rolGranularity:
       "Agrupa os pontos do gráfico por dia, semana ou mês conforme o intervalo filtrado.",
     rolExport:
@@ -57,7 +57,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   table: {
     section:
       "Última revisão por proposta no período. Clique na linha para abrir o detalhe da OV com histórico.",
-    branch: "Filial TOTVS em que a proposta está registrada (AD1_FILIAL).",
+    branch: "Unidade TOTVS em que a proposta está registrada (AD1_FILIAL).",
     proposal: "Número da oportunidade de venda / proposta comercial (AD1_NROPOR).",
     revision: "Revisão da proposta no AD1010 (AD1_REVISA).",
     description: "Descrição comercial resumida da proposta (AD1_DESCRI).",
@@ -71,7 +71,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   },
   summary: {
     howToRead:
-      "ROL segue o indicador commercial-rol no SI. Com filial Todas, ROL soma 01+02; demais KPIs vêm consolidados da api-delpi.",
+      "ROL segue o indicador commercial-rol no SI. Com unidade Todas, ROL soma Santa Catarina e Espírito Santo; demais KPIs vêm consolidados da api-delpi.",
   },
   detail: {
     pageSubtitle: "Detalhe da proposta comercial com cabeçalho AD1010 e histórico AIJ010.",
@@ -79,12 +79,12 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     openingKpi: "Data de abertura registrada no campo AD1_DATA.",
     closingKpi: "Data de aceite da proposta ganha (AD1_DTASSI), alinhada ao TOTVS.",
     proposalSection:
-      "Cabeçalho da OV: filial, revisão, processo, estágio, datas e status no AD1010.",
+      "Cabeçalho da OV: unidade, revisão, processo, estágio, datas e status no AD1010.",
     customerSection:
       "Cliente e vendedor vinculados à proposta (SA1010 e SA3010).",
     historySection:
       "Histórico de processos e estágios da OV no AIJ010 — linha do tempo ou tabela detalhada.",
-    proposalBranch: "Filial TOTVS da proposta.",
+    proposalBranch: "Unidade TOTVS da proposta.",
     proposalNumber: "Número da proposta / OV.",
     proposalRevision: "Revisão atual consultada.",
     proposalDescription: "Descrição comercial da oportunidade.",

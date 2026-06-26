@@ -41,7 +41,7 @@ const SHORTCUTS = [
   },
   {
     title: "EBITDA",
-    description: "Percentual de EBITDA sobre ROL por filial.",
+    description: "Percentual de EBITDA sobre ROL por unidade.",
     href: FINANCIAL_ROUTES.ebitda,
   },
   {

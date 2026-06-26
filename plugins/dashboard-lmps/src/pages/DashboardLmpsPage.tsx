@@ -48,6 +48,7 @@ import { aggregateLmpEvolutionSeries } from "../utils/lmpEvolutionSeries";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { readLmpsFilters, syncLmpsFiltersToUrl, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmps } from "../utils/navigation";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 import {
   computeLmpsSummaryFromItems,
   filterLmpsDashboardItems,
@@ -279,12 +280,12 @@ export function DashboardLmpsPage({
     () => [
       {
         key: "branch",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         headerHint: LMPS_HELP_TOOLTIPS.table.branch,
         className: "lmps-table__col--compact",
         sortable: true,
-        sortValue: (row) => row.branch ?? "",
-        render: (row) => row.branch ?? "-",
+        sortValue: (row) => formatOperationalUnitCode(row.branch, ""),
+        render: (row) => formatOperationalUnitCode(row.branch, "-"),
       },
       {
         key: "kind",
@@ -689,7 +690,7 @@ export function DashboardLmpsPage({
         searchHint={LMPS_HELP_TOOLTIPS.tableSearch}
         getSearchText={(row) =>
           [
-            row.branch,
+            formatOperationalUnitCode(row.branch, ""),
             row.sale_number,
             formatDashboardRevision(row),
             formatCycleIndex(row.cycle_index),

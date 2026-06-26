@@ -31,6 +31,7 @@ import {
 } from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 320;
 
@@ -64,7 +65,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
   const chartData = useMemo(
     () =>
       branchRows.map((row) => ({
-        name: `Filial ${row.branch}`,
+        name: formatOperationalUnitCode(row.branch, row.branch),
         value: row.ebitda_over_rol_pct,
       })),
     [branchRows]
@@ -74,8 +75,8 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
     () => [
       {
         key: "branch",
-        header: "Filial",
-        render: (row) => row.branch,
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "ebitda",
@@ -161,7 +162,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
 
       {showBranchChart ? (
         <section className="ds-charts-grid ds-charts-grid--single">
-        <ChartCard title="EBITDA / ROL por filial" hint={periodLabel}>
+        <ChartCard title="EBITDA / ROL por unidade" hint={periodLabel}>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -181,7 +182,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
 
       {branchRows.length > 0 ? (
         <DataTableSection
-          title="Por filial"
+          title="Por unidade"
           hint={periodLabel}
           columns={columns}
           rows={branchRows}

@@ -265,14 +265,14 @@ export function PresentationTopBar({
               onClick={() => onViewModeChange("branch")}
               aria-pressed={viewMode === "branch"}
             >
-              Filial
+              Unidade
             </button>
           </div>
         </div>
 
         {showBranchFilter ? (
           <label className="si-presentation-topbar__filter">
-            <span>Filial</span>
+            <span>Unidade</span>
             <select
               value={branch}
               onChange={(event) => onBranchChange(event.target.value)}

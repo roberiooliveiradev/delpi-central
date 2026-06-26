@@ -84,13 +84,13 @@ export function StrategicIndicatorsReferenceFilters({
               }
             >
               <option value="consolidated">Consolidado</option>
-              <option value="branch">Por filial</option>
+              <option value="branch">Por unidade</option>
             </select>
           </label>
 
           {viewMode === "branch" ? (
             <label className="si-reference-filters__field">
-              <span className="si-reference-filters__label">Filial</span>
+              <span className="si-reference-filters__label">Unidade</span>
               <select
                 className="si-reference-filters__input"
                 value={branch}

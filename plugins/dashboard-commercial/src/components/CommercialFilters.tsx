@@ -3,6 +3,7 @@ import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
+import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type CommercialFiltersProps = {
   competence: string;
@@ -75,7 +76,7 @@ export function CommercialFilters({
         />
       </label>
       <MultiSelectField
-        label="Filial (indicadores)"
+        label={`${OPERATIONAL_UNIT_FIELD_LABEL} (indicadores)`}
         labelHint={COMMERCIAL_HELP_TOOLTIPS.filters.branch}
         options={COMMERCIAL_BRANCH_OPTIONS}
         selectedValues={branches}

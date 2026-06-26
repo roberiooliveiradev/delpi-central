@@ -2,6 +2,7 @@ import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
+import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type FinancialFiltersProps = {
   competence: string;
@@ -74,7 +75,7 @@ export function FinancialFilters({
         </>
       ) : null}
       <MultiSelectField
-        label="Filial"
+        label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={FINANCIAL_HELP_TOOLTIPS.filters.branch}
         options={BRANCH_OPTIONS}
         selectedValues={branches}

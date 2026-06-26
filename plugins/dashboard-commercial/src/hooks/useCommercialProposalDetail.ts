@@ -37,7 +37,7 @@ export function useCommercialProposalDetail(
 
       if (!requestScope.branch) {
         setData(null);
-        setError("Filial da proposta não informada na URL.");
+        setError("Unidade da proposta não informada na URL.");
         setLoading(false);
         return;
       }

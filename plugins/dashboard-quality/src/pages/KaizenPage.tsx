@@ -49,6 +49,7 @@ import { navigateQuality } from "../utils/navigation";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 300;
 
@@ -157,8 +158,8 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       },
       {
         key: "branch",
-        header: "Filial",
-        render: (row) => row.branch ?? "—",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "date_implemented",
@@ -211,7 +212,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         "Título",
         "Status",
         "Setor",
-        "Filial",
+        "Unidade",
         "Implementação",
         "Responsável",
         "Investimento",
@@ -222,7 +223,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         row.title,
         row.status ?? "",
         row.sector ?? "",
-        row.branch ?? "",
+        formatOperationalUnitCode(row.branch, ""),
         formatDisplayDate(row.date_implemented),
         row.accountable ?? "",
         String(row.investment ?? ""),

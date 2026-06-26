@@ -1,4 +1,5 @@
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
+import { formatOperationalUnitsFilterLabel } from "./operationalUnitLabels";
 
 function allowedBranches(): Set<string> {
   return new Set(BRANCH_OPTIONS.map((option) => option.value));
@@ -20,7 +21,7 @@ export function serializeBranchCsv(values: string[]): string {
     .join(",");
 }
 
-/** Uma filial → parâmetro na API; vazio ou várias → consolidado no servidor. */
+/** Uma unidade → parâmetro na API; vazio ou várias → consolidado no servidor. */
 export function resolveApiBranch(branches: string[]): string | undefined {
   return branches.length === 1 ? branches[0] : undefined;
 }
@@ -29,8 +30,5 @@ export function formatBranchFilterLabel(branches: string[]): string {
   if (branches.length === 0 || branches.length >= BRANCH_OPTIONS.length) {
     return "Consolidado";
   }
-  if (branches.length === 1) {
-    return `Filial ${branches[0]}`;
-  }
-  return `Filiais ${branches.join(", ")}`;
+  return formatOperationalUnitsFilterLabel(branches);
 }

@@ -1,5 +1,6 @@
 import type { LmpDashboardItem } from "../types/lmp";
 import { downloadCsv } from "./csv";
+import { formatOperationalUnitCode } from "./operationalUnitLabels";
 import {
   formatCycleIndex,
   formatDashboardRevision,
@@ -18,7 +19,7 @@ function formatListingKind(kind?: string | null): string {
 }
 
 const EXPORT_HEADERS = [
-  "Filial",
+  "Unidade",
   "Tipo",
   "Nº Proposta",
   "Revisão",
@@ -37,7 +38,7 @@ const EXPORT_HEADERS = [
 
 function rowToCsvCells(row: LmpDashboardItem): string[] {
   return [
-    row.branch ?? "",
+    formatOperationalUnitCode(row.branch, ""),
     formatListingKind(row.listing_kind),
     row.sale_number,
     formatDashboardRevision(row),

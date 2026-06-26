@@ -18,7 +18,7 @@ export function DataSourceBanner({ variant = "all" }: DataSourceBannerProps) {
             <strong>Planilha Google Sheets</strong>
             <p>
               EBITDA, custos fixos e prazo médio de recebimento vêm do
-              preenchimento manual da planilha (médias por filial no período
+              preenchimento manual da planilha (médias por unidade no período
               filtrado).
             </p>
           </div>

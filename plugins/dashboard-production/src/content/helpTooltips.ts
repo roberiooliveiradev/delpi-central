@@ -7,7 +7,7 @@ export const DP_HELP_TOOLTIPS = {
     dateEnd:
       "Fim do período analisado. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Filial TOTVS (01 ou 02). Consolidado calcula a média entre filiais nos indicadores agregados.",
+      "Unidade TOTVS (Santa Catarina ou Espírito Santo). Consolidado calcula a média entre unidades nos indicadores agregados.",
   },
   home: {
     directLabor:
@@ -19,7 +19,7 @@ export const DP_HELP_TOOLTIPS = {
     oee: "Média de eficiência dos apontamentos válidos (0–199%) na view fabril compartilhada.",
     otd: "Percentual de OPs mãe (sequência 001) finalizadas dentro do prazo previsto.",
     comparisonChart:
-      "Comparativo dos cinco indicadores principais do painel no período e filial selecionados.",
+      "Comparativo dos cinco indicadores principais do painel no período e unidade selecionados.",
     oeeEvolution:
       "Série temporal do OEE (%). Clique em um ponto para restringir o período aos filtros de data.",
     otdEvolution:
@@ -53,7 +53,7 @@ export const DP_HELP_TOOLTIPS = {
       startTime: "Horário de início do apontamento.",
       endTime: "Horário de término do apontamento.",
       producedQty: "Quantidade produzida registrada no apontamento.",
-      branch: "Filial TOTVS do apontamento.",
+      branch: "Unidade TOTVS do apontamento.",
       productionOrder: "Número da ordem de produção (OP).",
       productDescription: "Descrição do produto fabricado na OP.",
       workCenter: "Centro de trabalho (CT) onde o apontamento foi realizado.",
@@ -75,7 +75,7 @@ export const DP_HELP_TOOLTIPS = {
     table: {
       section: "Ordens de produção mãe (…001) finalizadas no período. OPs vinculadas (002+) não entram no OTD.",
       status: "No prazo ou atrasada conforme comparação entre data de conclusão e data prevista.",
-      branch: "Filial TOTVS da ordem.",
+      branch: "Unidade TOTVS da ordem.",
       productionOrder: "Identificador da ordem de produção.",
       orderNumber: "Número da OP no Protheus.",
       orderItem: "Item da ordem de produção.",
@@ -101,6 +101,6 @@ export const DP_HELP_TOOLTIPS = {
   table: {
     section: "Listagem do período filtrado. Clique na linha para ver o detalhe quando disponível.",
     search: "Filtra os registros visíveis por texto nas colunas principais.",
-    branch: "Filial TOTVS do registro.",
+    branch: "Unidade TOTVS do registro.",
   },
 } as const;

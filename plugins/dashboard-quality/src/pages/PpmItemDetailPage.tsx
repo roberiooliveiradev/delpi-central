@@ -14,6 +14,7 @@ import {
 import { navigateQualityBack } from "../utils/navigation";
 import { readPpmDetailRecord } from "../utils/recordDetailStorage";
 import { readQualityFilters } from "../utils/filterUrl";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type PpmItemDetailPageProps = {
   pathname?: string;
@@ -26,7 +27,7 @@ export function PpmItemDetailPage(_props: PpmItemDetailPageProps) {
     () =>
       item
         ? [
-            { label: "Filial", value: item.branch },
+            { label: OPERATIONAL_UNIT_COLUMN_LABEL, value: formatOperationalUnitCode(item.branch) },
             {
               label: "Data de registro",
               value: formatDisplayDate(item.registered_date),

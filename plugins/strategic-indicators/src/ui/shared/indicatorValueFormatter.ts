@@ -1,3 +1,8 @@
+import {
+  formatOperationalUnitCode,
+  OPERATIONAL_UNIT_COLUMN_LABEL,
+} from "./operationalUnitLabels";
+
 export const MISSING_VALUE_LABEL = "Sem dados preenchidos";
 
 export function isMissingValueClassification(
@@ -178,7 +183,7 @@ function getMonthlyTargetValue(
 /** Rótulos PT-BR para chaves de `realized` / `gaps` (comercial, filiais TOTVS, etc.). */
 const UNIT_SCOPE_LABELS: Record<string, string> = {
   matrix: "Matriz",
-  branch: "Filial",
+  branch: OPERATIONAL_UNIT_COLUMN_LABEL,
 };
 
 function formatBranchUnitLabel(
@@ -189,7 +194,14 @@ function formatBranchUnitLabel(
   const activeBranch = (options.activeBranch ?? "").trim();
 
   if (activeBranch && normalized === activeBranch) {
-    return options.filterViewScopeLabel ?? `Filial ${activeBranch}`;
+    return (
+      options.filterViewScopeLabel ??
+      formatOperationalUnitCode(activeBranch, activeBranch)
+    );
+  }
+
+  if (normalized === "01" || normalized === "02") {
+    return formatOperationalUnitCode(normalized, normalized);
   }
 
   return UNIT_SCOPE_LABELS[normalized] ?? normalized;

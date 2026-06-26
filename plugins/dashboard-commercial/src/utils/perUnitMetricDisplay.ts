@@ -1,3 +1,5 @@
+import { formatOperationalUnitCode } from "./operationalUnitLabels";
+
 const BRANCH_ORDER = ["01", "02"] as const;
 
 export type BranchCode = (typeof BRANCH_ORDER)[number];
@@ -24,7 +26,7 @@ export function resolveActiveBranches(
   return [...BRANCH_ORDER];
 }
 
-/** Realizado ou meta por filial no padrão do painel SI: `01: … | 02: …`. */
+/** Realizado ou meta por unidade no padrão do painel SI: `Santa Catarina: … | Espírito Santo: …`. */
 export function formatPerUnitBranchMetric(
   values: Partial<Record<BranchCode, number | null | undefined>>,
   formatValue: (value: number) => string,
@@ -38,7 +40,7 @@ export function formatPerUnitBranchMetric(
       if (raw == null || Number.isNaN(raw)) {
         return null;
       }
-      return `${code}: ${formatValue(raw)}`;
+      return `${formatOperationalUnitCode(code, code)}: ${formatValue(raw)}`;
     })
     .filter((part): part is string => part != null);
 

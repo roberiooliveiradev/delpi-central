@@ -34,10 +34,10 @@ function GoalScopeBadges({
       <span className={consolidated ? "is-on" : "is-off"} title="Meta consolidada">
         C
       </span>
-      <span className={branch01 ? "is-on" : "is-off"} title="Meta filial 01">
+      <span className={branch01 ? "is-on" : "is-off"} title="Meta Santa Catarina">
         01
       </span>
-      <span className={branch02 ? "is-on" : "is-off"} title="Meta filial 02">
+      <span className={branch02 ? "is-on" : "is-off"} title="Meta Espírito Santo">
         02
       </span>
     </span>

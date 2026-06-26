@@ -31,6 +31,7 @@ import {
 } from "../utils/goalDisplay";
 import { formatDecimal } from "../utils/format";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 320;
 
@@ -64,7 +65,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
   const chartData = useMemo(
     () =>
       branchRows.map((row) => ({
-        name: `Filial ${row.branch}`,
+        name: formatOperationalUnitCode(row.branch, row.branch),
         value: row.pmr_days,
       })),
     [branchRows]
@@ -72,7 +73,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
 
   const columns = useMemo<DataTableColumn<PmrBranchRow>[]>(
     () => [
-      { key: "branch", header: "Filial", render: (row) => row.branch },
+      { key: "branch", header: OPERATIONAL_UNIT_COLUMN_LABEL, render: (row) => formatOperationalUnitCode(row.branch) },
       {
         key: "pmr",
         header: "PMR (dias)",
@@ -132,7 +133,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
 
       {showBranchChart ? (
         <section className="ds-charts-grid ds-charts-grid--single">
-        <ChartCard title="PMR por filial" hint={periodLabel}>
+        <ChartCard title="PMR por unidade" hint={periodLabel}>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -152,7 +153,7 @@ export function PmrPage({ pathname }: PmrPageProps) {
 
       {branchRows.length > 0 ? (
         <DataTableSection
-          title="Por filial"
+          title="Por unidade"
           hint={periodLabel}
           columns={columns}
           rows={branchRows}

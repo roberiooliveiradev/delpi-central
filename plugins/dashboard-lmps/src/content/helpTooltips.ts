@@ -7,7 +7,7 @@ export const LMPS_HELP_TOOLTIPS = {
     dateEnd:
       "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Filial TOTVS da proposta. Permite selecionar várias; vazio = todas as filiais.",
+      "Unidade TOTVS da proposta. Permite selecionar várias; vazio = todas as unidades.",
     listingType:
       "Classificação da listagem (LMP, Amostra ou Outro). Permite múltipla seleção.",
     status:
@@ -17,11 +17,11 @@ export const LMPS_HELP_TOOLTIPS = {
     pageSubtitle:
       "Resumo do escopo analítico: prazo, nível de SLA, status de classificação e lead time útil das LMPs.",
     refresh:
-      "Recarrega KPIs, gráficos e tabela com os filtros atuais (período, filial, tipo e status).",
+      "Recarrega KPIs, gráficos e tabela com os filtros atuais (período, unidade, tipo e status).",
     exportCsv:
       "Exporta os registros visíveis na tabela para CSV, respeitando filtros e busca local.",
     back:
-      "Retorna ao dashboard de LMPs preservando os filtros de período e filial na URL.",
+      "Retorna ao dashboard de LMPs preservando os filtros de período e unidade na URL.",
     detailRefresh:
       "Atualiza proposta, produtos, estrutura e histórico da OV no TOTVS.",
   },
@@ -53,7 +53,7 @@ export const LMPS_HELP_TOOLTIPS = {
   table: {
     section:
       "Propostas do período após filtros. Clique na linha para abrir o detalhe da OV com produtos e estrutura.",
-    branch: "Filial TOTVS vinculada à proposta.",
+    branch: "Unidade TOTVS vinculada à proposta.",
     kind: "Tipo de listagem: LMP, Amostra ou Outro.",
     sale: "Número da proposta / ordem de venda (OV).",
     revision:
@@ -88,7 +88,7 @@ export const LMPS_HELP_TOOLTIPS = {
       "Produtos vinculados à OV no TOTVS, com tipo, grupo e quantidade de PI por item.",
     productStructureSection:
       "Estrutura analítica (BOM) de cada produto da proposta, com níveis aninhados como no cadastro TOTVS.",
-    proposalBranch: "Filial TOTVS em que a proposta está registrada.",
+    proposalBranch: "Unidade TOTVS em que a proposta está registrada.",
     proposalKind: "Classificação da listagem: LMP, Amostra ou Outro.",
     proposalNumber: "Número da proposta / ordem de venda (OV).",
     proposalDescription: "Descrição comercial resumida cadastrada na proposta.",

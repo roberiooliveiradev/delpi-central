@@ -38,7 +38,7 @@ const SHORTCUTS = [
   },
   {
     title: "Estoque",
-    description: "Saldo por filial, localização e produtos com maior valor.",
+    description: "Saldo por unidade, localização e produtos com maior valor.",
     href: SUPPLIES_ROUTES.stock,
   },
   {
@@ -48,7 +48,7 @@ const SHORTCUTS = [
   },
   {
     title: "Economia em negociações",
-    description: "Economia em compras por filial (planilha IDD Suprimentos).",
+    description: "Economia em compras por unidade (planilha IDD Suprimentos).",
     href: SUPPLIES_ROUTES.negotiationSavings,
   },
 ] as const;

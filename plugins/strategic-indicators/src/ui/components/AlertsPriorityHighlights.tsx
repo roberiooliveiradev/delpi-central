@@ -1,6 +1,6 @@
 import type { AlertsDashboardViewData } from "../../data/types/alerts";
 import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
-import { resolveStrategicIndicatorsBranch } from "../shared/strategicIndicatorsFilters";
+import { resolveStrategicIndicatorsBranch, getFilterViewScopeLabel } from "../shared/strategicIndicatorsFilters";
 import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
 import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import { StatusBadge } from "./StatusBadge";
@@ -22,7 +22,7 @@ export function AlertsPriorityHighlights({
   const topDepartment = data.departmentAlerts[0] ?? null;
   const topIndicator = data.indicatorAlerts[0] ?? null;
   const displayContext = {
-    filterViewScopeLabel: viewMode === "branch" ? `Filial ${branch}` : "Consolidado",
+    filterViewScopeLabel: getFilterViewScopeLabel(viewMode, branch),
     activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
   };
 

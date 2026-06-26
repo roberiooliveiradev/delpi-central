@@ -26,6 +26,7 @@ import type {
   TableExportPayload,
 } from "../export/types";
 import { buildProductStructuresPayload } from "./productStructureExport";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   PA: "Acabado",
@@ -138,7 +139,7 @@ export function buildProposalsPayload(
   return {
     title: "Propostas",
     columns: [
-      { key: "branch", label: "Filial" },
+      { key: "branch", label: OPERATIONAL_UNIT_COLUMN_LABEL },
       { key: "proposal_number", label: "Nº proposta" },
       { key: "revision", label: "Rev." },
       { key: "description", label: "Descrição" },
@@ -149,7 +150,7 @@ export function buildProposalsPayload(
       { key: "customer_store", label: "Loja" },
     ],
     rows: proposals.map((row) => ({
-      branch: row.branch || "—",
+      branch: formatOperationalUnitCode(row.branch),
       proposal_number: row.proposal_number,
       revision: row.revision || "—",
       description: row.description ?? "—",
@@ -242,7 +243,7 @@ export function buildDetailSummaryPayload(
     ],
     rows: [
       { campo: "OV", valor: detail.proposal_number },
-      { campo: "Filial", valor: detail.branch },
+      { campo: "Unidade", valor: formatOperationalUnitCode(detail.branch) },
       { campo: "Revisão", valor: detail.revision },
       { campo: "Descrição", valor: detail.description ?? "—" },
       { campo: "Período consulta", valor: periodLabel },

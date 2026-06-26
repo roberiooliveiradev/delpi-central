@@ -1,6 +1,4 @@
 import type { MultiSelectOption } from "../components/MultiSelectField";
+import { OPERATIONAL_UNIT_OPTIONS } from "../utils/operationalUnitLabels";
 
-export const BRANCH_OPTIONS: MultiSelectOption[] = [
-  { value: "01", label: "01 — Matriz" },
-  { value: "02", label: "02 — Filial" },
-];
+export const BRANCH_OPTIONS: MultiSelectOption[] = [...OPERATIONAL_UNIT_OPTIONS];

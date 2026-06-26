@@ -11,7 +11,7 @@ export const ENGINEERING_HELP_TOOLTIPS = {
       "Início do período para LMP e TRANSFORMA+. KPIs e gráficos usam propostas/melhorias a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Filial TOTVS. Vazio = consolidado; múltiplas filiais restringem o recorte dos indicadores.",
+      "Unidade TOTVS. Vazio = consolidado; múltiplas unidades restringem o recorte dos indicadores.",
     listingType:
       "Classificação da listagem (LMP, Amostra ou Outro). Vazio = todos os tipos.",
     status:
@@ -19,7 +19,7 @@ export const ENGINEERING_HELP_TOOLTIPS = {
   },
   kpis: {
     lmpOnTime:
-      "Percentual de LMPs/propostas classificadas como dentro do prazo no período e filial.",
+      "Percentual de LMPs/propostas classificadas como dentro do prazo no período e unidade.",
     avgLeadTime:
       "Média de lead time útil (dias úteis) das propostas no recorte filtrado.",
     totalProposals:
@@ -52,6 +52,6 @@ export const ENGINEERING_HELP_TOOLTIPS = {
   table: {
     section: "Listagem do período filtrado. Clique na linha para ver o detalhe quando disponível.",
     search: "Filtra os registros visíveis por texto nas colunas principais.",
-    branch: "Filial TOTVS do registro.",
+    branch: "Unidade TOTVS do registro.",
   },
 } as const;

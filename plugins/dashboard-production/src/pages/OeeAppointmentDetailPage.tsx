@@ -50,6 +50,7 @@ import {
 } from "../utils/appointmentDetailExport";
 import { navigateProduction, navigateProductionBack } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type OeeAppointmentDetailPageProps = {
   appointmentId: string;
@@ -154,7 +155,7 @@ export function OeeAppointmentDetailPage({
               label: "Tipo produto",
               value: <ProductTypeBadge productType={appointment.product_type} />,
             },
-            { label: "Filial", value: appointment.branch },
+            { label: OPERATIONAL_UNIT_COLUMN_LABEL, value: formatOperationalUnitCode(appointment.branch) },
             { label: "Apontamento", value: <DetailIntegerValue value={appointment.appointment_id} /> },
             { label: "OP", value: appointment.production_order || "—" },
             { label: "Nº OP", value: appointment.order_number || "—" },
@@ -382,7 +383,7 @@ export function OeeAppointmentDetailPage({
   const pageSubtitle = appointment
     ? `OP ${appointment.production_order} · ${appointment.product_code} · CT ${appointment.work_center}`
     : branch
-      ? `Filial ${branch}`
+      ? formatOperationalUnitCode(branch, branch)
       : "Detalhe do apontamento de produção";
 
   return (

@@ -1,6 +1,18 @@
 import type { AdminDepartmentIndicatorItem, AdminDepartmentItem } from "../data/types/settings";
 import type { StrategicIndicatorGoalItem } from "../data/types/indicatorGoals";
 
+const OPERATIONAL_UNIT_NAMES: Record<string, string> = {
+  "01": "Santa Catarina",
+  "02": "Espírito Santo",
+};
+
+function formatOperationalUnitCodesList(codes: string): string {
+  return codes
+    .split(" e ")
+    .map((code) => OPERATIONAL_UNIT_NAMES[code.trim()] ?? code.trim())
+    .join(" e ");
+}
+
 export type ValidationSeverity = "ok" | "info" | "warning" | "error";
 
 export type CatalogValidationIssue = {
@@ -121,7 +133,7 @@ export function validateCatalogRow(input: {
         issues.push({
           code: "missing_branch_goals",
           severity: "error",
-          message: `Departamento por unidade exige metas ativas para filial ${missing}.`,
+          message: `Departamento por unidade exige metas ativas para ${formatOperationalUnitCodesList(missing)}.`,
         });
       }
       if (coverage.consolidated && !coverage.branch01 && !coverage.branch02) {
@@ -129,7 +141,7 @@ export function validateCatalogRow(input: {
           code: "only_consolidated_goal_on_average_dept",
           severity: "warning",
           message:
-            "Só meta consolidada: visão filial 01/02 não pontua até cadastrar metas por filial.",
+            "Só meta consolidada: visão por unidade (Santa Catarina / Espírito Santo) não pontua até cadastrar metas por unidade.",
         });
       }
     }
@@ -139,7 +151,7 @@ export function validateCatalogRow(input: {
         code: "consolidated_indicator_on_average_dept",
         severity: "info",
         message:
-          "Indicador consolidado em depto por unidade (ex.: RH): use metas 01/02 e realizado por filial.",
+          "Indicador consolidado em depto por unidade (ex.: RH): use metas por unidade e realizado por unidade.",
       });
     }
   }
@@ -153,7 +165,7 @@ export function validateCatalogRow(input: {
           code: "branch_only_goals_on_consolidated_indicator",
           severity: "warning",
           message:
-            "Indicador consolidado só com metas 01/02: visão consolidada pode ficar sem meta.",
+            "Indicador consolidado só com metas por unidade: visão consolidada pode ficar sem meta.",
         });
       }
       if (!coverage.consolidated && !coverage.branch01 && !coverage.branch02) {
@@ -170,7 +182,7 @@ export function validateCatalogRow(input: {
         code: "per_unit_indicator_on_consolidated_dept",
         severity: "info",
         message:
-          "Indicador por unidade em depto consolidado (ex.: ROL Matriz/Filial): IDD do depto usa nota consolidada na visão geral.",
+          "Indicador por unidade em depto consolidado (ex.: ROL): IDD do depto usa nota consolidada na visão geral.",
       });
     }
 

@@ -47,7 +47,7 @@ export function validateIndicatorGoalForm(input: {
 
   const scope = (input.goalScopeBranch ?? "").trim();
   if (!VALID_SCOPE_BRANCHES.has(scope as GoalScopeBranch | "")) {
-    return "Escopo inválido: use consolidado ou filial 01/02.";
+    return "Escopo inválido: use consolidado ou unidade (Santa Catarina / Espírito Santo).";
   }
 
   if (input.goalMode === "standard" && input.goalValue < 0) {

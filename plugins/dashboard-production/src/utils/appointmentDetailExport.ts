@@ -8,6 +8,7 @@ import {
 } from "./exportDocument";
 import { formatDecimal, formatHours, formatPercent, formatProductionQuantity } from "./format";
 import { formatOeeAppointmentStatusLabel } from "./oeeAppointmentStatus";
+import { formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 function formatRealHoursSource(source?: string | null): string {
   if (source === "interval") return "Horário de início e término do apontamento";
@@ -24,7 +25,7 @@ export function buildAppointmentDetailExportDocument(
   const appointmentRows: [string, string][] = [
     ["Status", formatOeeAppointmentStatusLabel(appointment)],
     ["Tipo produto", appointment.product_type || "—"],
-    ["Filial", appointment.branch || "—"],
+    ["Unidade", formatOperationalUnitCode(appointment.branch)],
     ["Apontamento", String(appointment.appointment_id)],
     ["OP", appointment.production_order || "—"],
     ["Nº OP", appointment.order_number || "—"],

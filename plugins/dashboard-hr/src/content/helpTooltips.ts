@@ -2,7 +2,7 @@ export const HR_HELP_TOOLTIPS = {
   actions: {
     pageSubtitle:
       "Indicadores de RH alinhados ao catálogo de Indicadores Estratégicos: absenteísmo, turnover, satisfação, PDIs, avaliações e treinamento.",
-    refresh: "Recarrega os indicadores com período e filial selecionados.",
+    refresh: "Recarrega os indicadores com período e unidade selecionados.",
   },
   filters: {
     competence:
@@ -10,11 +10,11 @@ export const HR_HELP_TOOLTIPS = {
     dateStart: "Início do período para os indicadores de RH.",
     dateEnd: "Fim do período. Deve ser igual ou posterior ao início.",
     branch:
-      "Filial TOTVS. Vazio = média/consolidado das filiais; múltiplas filiais restringem o recorte.",
+      "Unidade TOTVS. Vazio = média/consolidado das unidades; múltiplas unidades restringem o recorte.",
   },
   kpis: {
     absenteeism:
-      "Percentual de absenteísmo no período. Com filial Todas, exibe média das filiais com dado.",
+      "Percentual de absenteísmo no período. Com unidade Todas, exibe média das unidades com dado.",
     turnover:
       "Percentual de turnover no período. Meta alinhada ao catálogo de Indicadores Estratégicos.",
     internalSatisfaction:
@@ -28,8 +28,8 @@ export const HR_HELP_TOOLTIPS = {
   },
   charts: {
     absenteeismTurnoverByBranch:
-      "Comparativo de absenteísmo e turnover por filial quando nenhuma filial específica está selecionada.",
-    trainingByBranch: "Horas de treinamento por colaborador agrupadas por filial.",
+      "Comparativo de absenteísmo e turnover por unidade quando nenhuma unidade específica está selecionada.",
+    trainingByBranch: "Horas de treinamento por colaborador agrupadas por unidade.",
   },
   pagination: {
     info: "Paginação: busca, ordenação e tamanho da página são aplicados na consulta ou na página atual.",
@@ -44,6 +44,6 @@ export const HR_HELP_TOOLTIPS = {
   table: {
     section: "Listagem do período filtrado. Clique na linha para ver o detalhe quando disponível.",
     search: "Filtra os registros visíveis por texto nas colunas principais.",
-    branch: "Filial TOTVS do registro.",
+    branch: "Unidade TOTVS do registro.",
   },
 } as const;

@@ -37,6 +37,7 @@ import {
 } from "../utils/goalDisplay";
 import { averageNullable, formatDecimal, formatPercent, sumNullable } from "../utils/format";
 import { HR_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 280;
 
@@ -135,7 +136,7 @@ export function DashboardHrPage() {
   const branchChartData = useMemo(
     () =>
       (snapshot?.branches ?? []).map((item) => ({
-        name: `Filial ${item.branch_code}`,
+        name: formatOperationalUnitCode(item.branch_code, item.branch_code),
         absenteismo: item.absenteeism_pct ?? 0,
         turnover: item.turnover_pct ?? 0,
       })),
@@ -145,7 +146,7 @@ export function DashboardHrPage() {
   const trainingChartData = useMemo(
     () =>
       (snapshot?.branches ?? []).map((item) => ({
-        name: `Filial ${item.branch_code}`,
+        name: formatOperationalUnitCode(item.branch_code, item.branch_code),
         horas: item.training_hours_per_collaborator ?? 0,
       })),
     [snapshot?.branches]
@@ -162,9 +163,9 @@ export function DashboardHrPage() {
     () => [
       {
         key: "branch_code",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         headerHint: HR_HELP_TOOLTIPS.table.branch,
-        render: (row) => row.branch_code,
+        render: (row) => formatOperationalUnitCode(row.branch_code),
       },
       {
         key: "absenteeism_pct",
@@ -303,10 +304,10 @@ export function DashboardHrPage() {
           )}
           {...buildKpiGoalPresentation(
             branches.length === 1
-              ? `Filial ${branches[0]}`
+              ? formatOperationalUnitCode(branches[0], branches[0])
               : branches.length > 1
-                ? `Filiais ${branches.join(", ")}`
-                : "Soma das filiais",
+                ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
+                : "Soma das unidades",
             snapshot?.goals_by_metric?.active_pdi_count,
             undefined,
             { realizedValue: activePdiCount },
@@ -323,10 +324,10 @@ export function DashboardHrPage() {
           )}
           {...buildKpiGoalPresentation(
             branches.length === 1
-              ? `Filial ${branches[0]}`
+              ? formatOperationalUnitCode(branches[0], branches[0])
               : branches.length > 1
-                ? `Filiais ${branches.join(", ")}`
-                : "Média das filiais",
+                ? branches.map((b) => formatOperationalUnitCode(b, b)).join(", ")
+                : "Média das unidades",
             snapshot?.goals_by_metric?.performance_reviews_completion_pct,
             undefined,
             { realizedValue: performanceReviewsCompletion },
@@ -355,7 +356,7 @@ export function DashboardHrPage() {
       {showBranchCharts ? (
         <section className="dh-charts-grid">
           <ChartCard
-            title="Absenteísmo e turnover por filial"
+            title="Absenteísmo e turnover por unidade"
             titleHint={HR_HELP_TOOLTIPS.charts.absenteeismTurnoverByBranch}
             hint="Comparativo percentual no período."
           >
@@ -383,7 +384,7 @@ export function DashboardHrPage() {
           </ChartCard>
 
           <ChartCard
-            title="Treinamento por filial"
+            title="Treinamento por unidade"
             titleHint={HR_HELP_TOOLTIPS.charts.trainingByBranch}
             hint="Média de horas por participação."
           >
@@ -406,7 +407,7 @@ export function DashboardHrPage() {
       ) : null}
 
       <DataTableSection
-        title="Detalhamento por filial"
+        title="Detalhamento por unidade"
         titleHint={HR_HELP_TOOLTIPS.table.section}
         hint={periodLabel}
         columns={branchColumns}
@@ -415,7 +416,7 @@ export function DashboardHrPage() {
         loading={loading && !hasData}
         refreshing={refreshing && hasData}
         emptyMessage="Nenhum dado de RH para o período selecionado."
-        searchPlaceholder="Buscar filial…"
+        searchPlaceholder="Buscar unidade…"
         searchHint={HR_HELP_TOOLTIPS.table.search}
         getSearchText={(row) => row.branch_code}
       />

@@ -35,6 +35,7 @@ import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { readCommercialFilters } from "../utils/filterUrl";
 import { navigateCommercialBack } from "../utils/navigation";
 import { commercialProductColumns } from "../utils/commercialProductsPresentation";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type CommercialDetailPageProps = {
   proposalNumber: string;
@@ -145,7 +146,7 @@ export function CommercialDetailPage({
           <h1 className="dc-detail-page__title">
             OV {data.proposal_number}
             <span className="dc-detail-page__meta">
-              Filial {data.branch} · Rev. {data.revision}
+              {formatOperationalUnitCode(data.branch)} · Rev. {data.revision}
             </span>
           </h1>
           <p className="dc-detail-page__subtitle dc-page-subtitle--with-help">
@@ -237,9 +238,9 @@ export function CommercialDetailPage({
           <DetailFieldGrid
             fields={[
               {
-                label: "Filial",
+                label: OPERATIONAL_UNIT_COLUMN_LABEL,
                 hint: COMMERCIAL_HELP_TOOLTIPS.detail.proposalBranch,
-                value: data.branch,
+                value: formatOperationalUnitCode(data.branch),
               },
               {
                 label: "Nº proposta",

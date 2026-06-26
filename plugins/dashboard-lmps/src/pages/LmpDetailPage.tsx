@@ -34,6 +34,7 @@ import type { LmpProduct } from "../types/lmp";
 import { formatPeriodLabel } from "../utils/dates";
 import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmpsBack } from "../utils/navigation";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type LmpDetailPageProps = {
   saleNumber: string;
@@ -206,9 +207,9 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
       item
         ? [
             {
-              label: "Filial",
+              label: OPERATIONAL_UNIT_COLUMN_LABEL,
               hint: LMPS_HELP_TOOLTIPS.detail.proposalBranch,
-              value: item.branch ?? "—",
+              value: formatOperationalUnitCode(item.branch),
             },
             {
               label: "Tipo",

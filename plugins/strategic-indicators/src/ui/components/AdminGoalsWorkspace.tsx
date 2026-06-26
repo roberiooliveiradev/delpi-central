@@ -399,7 +399,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                   <div>
                     <h3>Ciclo {selectedYear}</h3>
                     <p>
-                      Metas por indicador com escopo consolidado ou por filial (01/02).
+                      Metas por indicador com escopo consolidado ou por unidade (Santa Catarina / Espírito Santo).
                     </p>
                   </div>
 
@@ -791,7 +791,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
         description={
           duplicatingGoal
             ? "Revise os dados e salve. Mesmo indicador, ano e escopo substituem a meta ativa anterior por uma nova versão."
-            : "Meta por indicador, ano e escopo (consolidado ou filial 01/02)."
+            : "Meta por indicador, ano e escopo (consolidado ou unidade Santa Catarina / Espírito Santo)."
         }
         size="xl"
       >

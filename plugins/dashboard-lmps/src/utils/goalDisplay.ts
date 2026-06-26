@@ -1,3 +1,5 @@
+import { formatGoalScopeUnitLabel } from "./operationalUnitLabels";
+
 export type PerformanceDirection = "higher_is_better" | "lower_is_better";
 
 export type GoalPerformanceTone = "success" | "warning";
@@ -82,19 +84,7 @@ export function formatGoalScopeLabel(
   goalScopeBranch?: string | null,
   scopeType?: string | null,
 ): string {
-  const branch = (goalScopeBranch ?? "").trim();
-  if (branch === "01" || branch === "02") {
-    return `Meta filial ${branch}`;
-  }
-  if (branch) {
-    return `Meta filial ${branch}`;
-  }
-
-  if ((scopeType ?? "").trim() === "per_unit") {
-    return "Meta por unidade";
-  }
-
-  return "Meta consolidada";
+  return formatGoalScopeUnitLabel(goalScopeBranch, scopeType);
 }
 
 export function resolveGoalScopeBadge(

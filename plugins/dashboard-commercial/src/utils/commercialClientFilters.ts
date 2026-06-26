@@ -1,4 +1,5 @@
 import { COMMERCIAL_BRANCH_OPTIONS } from "../constants/filterOptions";
+import { formatOperationalUnitCode, formatOperationalUnitsFilterLabel, formatOperationalUnitsPrintLabel } from "./operationalUnitLabels";
 
 export function parseCommercialBranchCsv(value: string): string[] {
   const allowed = new Set(COMMERCIAL_BRANCH_OPTIONS.map((option) => option.value));
@@ -18,7 +19,7 @@ export function serializeCommercialBranchCsv(values: string[]): string {
     .join(",");
 }
 
-/** Uma filial → parâmetro `branch` na API; vazio ou várias → consolidado no servidor. */
+/** Uma unidade → parâmetro `branch` na API; vazio ou várias → consolidado no servidor. */
 export function resolveCommercialApiBranch(branches: string[]): string | undefined {
   return branches.length === 1 ? branches[0] : undefined;
 }
@@ -28,22 +29,19 @@ export function formatCommercialBranchFilterLabel(branches: string[]): string | 
   if (branches.length === 0) {
     return null;
   }
-  if (branches.length === 1) {
-    return `Filial ${branches[0]}`;
-  }
   if (branches.length >= COMMERCIAL_BRANCH_OPTIONS.length) {
     return null;
   }
-  return `Filiais ${branches.join(", ")}`;
+  return formatOperationalUnitsFilterLabel(branches, {
+    allSelectedCount: COMMERCIAL_BRANCH_OPTIONS.length,
+  });
 }
 
 /** Texto para impressão / resumo do relatório. */
 export function formatCommercialBranchPrintLabel(branches: string[]): string {
-  if (branches.length === 0 || branches.length >= COMMERCIAL_BRANCH_OPTIONS.length) {
-    return "Todas";
-  }
-  if (branches.length === 1) {
-    return branches[0];
-  }
-  return branches.join(", ");
+  return formatOperationalUnitsPrintLabel(branches, {
+    allSelectedCount: COMMERCIAL_BRANCH_OPTIONS.length,
+  });
 }
+
+export { formatOperationalUnitCode };

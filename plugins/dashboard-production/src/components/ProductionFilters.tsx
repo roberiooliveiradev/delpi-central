@@ -2,6 +2,7 @@ import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
+import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type ProductionFiltersProps = {
   competence: string;
@@ -56,7 +57,7 @@ export function ProductionFilters({
         />
       </label>
       <MultiSelectField
-        label="Filial"
+        label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={DP_HELP_TOOLTIPS.filters.branch}
         options={BRANCH_OPTIONS}
         selectedValues={branches}

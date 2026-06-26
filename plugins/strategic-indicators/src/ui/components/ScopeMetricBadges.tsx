@@ -6,6 +6,7 @@ import {
   type IndicatorDisplayContext,
   type IndicatorValueFormat,
 } from "../shared/indicatorValueFormatter";
+import { formatOperationalUnitCode } from "../shared/operationalUnitLabels";
 import "./ScopeMetricBadges.css";
 
 type ScopeMetricBadgesProps = {
@@ -98,9 +99,11 @@ export function ScopeMetricBadges({
         <span
           key={key}
           className={`si-scope-badge si-scope-badge--branch-${key}`}
-          title={`Filial ${key}`}
+          title={formatOperationalUnitCode(key, key)}
         >
-          <span className="si-scope-badge__key">{key}</span>
+          <span className="si-scope-badge__key">
+            {formatOperationalUnitCode(key, key)}
+          </span>
           <span className="si-scope-badge__value">
             {formatIndicatorValue(normalizedValues[key], normalizedFormat)}
           </span>

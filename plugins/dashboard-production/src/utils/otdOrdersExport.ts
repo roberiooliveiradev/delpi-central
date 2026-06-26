@@ -2,9 +2,10 @@ import type { ProductionOtdOrderItem } from "../types/production";
 import { formatDisplayDate } from "./dates";
 import { downloadCsv } from "./csv";
 import { exportTableExcel, exportTablePdf, type ExportTable } from "./exportDocument";
+import { formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 export const OTD_ORDERS_HEADERS = [
-  "Filial",
+  "Unidade",
   "OP",
   "Nº OP",
   "Item",
@@ -24,7 +25,7 @@ function statusLabel(status: string): string {
 
 export function otdOrderToRow(row: ProductionOtdOrderItem): (string | number)[] {
   return [
-    row.branch ?? "",
+    formatOperationalUnitCode(row.branch, ""),
     row.production_order ?? "",
     row.order_number ?? "",
     row.order_item ?? "",

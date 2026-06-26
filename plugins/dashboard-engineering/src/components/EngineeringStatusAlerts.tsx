@@ -59,7 +59,7 @@ export function EngineeringStatusAlerts({
       {loading && !hasData ? (
         <LoadingActivityCard
           title="Carregando indicadores"
-          description="Buscando dados de engenharia para o período e filial selecionados."
+          description="Buscando dados de engenharia para o período e unidade selecionados."
           progressPercent={loadingProgress}
         />
       ) : null}

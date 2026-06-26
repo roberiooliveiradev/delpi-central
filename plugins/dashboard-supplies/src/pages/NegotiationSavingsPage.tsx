@@ -36,6 +36,7 @@ import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/g
 import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatChartCurrency, formatCurrency, formatInteger } from "../utils/format";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 320;
 
@@ -85,7 +86,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
   const branchChart = useMemo(
     () =>
       (data?.branches ?? []).map((item) => ({
-        name: `Filial ${item.branch ?? "—"}`,
+        name: formatOperationalUnitCode(item.branch ?? "—", item.branch ?? "—"),
         value: Number(item.total_savings ?? 0),
       })),
     [data?.branches]
@@ -95,8 +96,8 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
     () => [
       {
         key: "branch",
-        header: "Filial",
-        render: (row) => (row.branch ? `Filial ${row.branch}` : "—"),
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "total",
@@ -117,8 +118,8 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
       },
       {
         key: "branch",
-        header: "Filial",
-        render: (row) => (row.branch ? `Filial ${row.branch}` : "—"),
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "amount",
@@ -156,7 +157,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
       />
       <div className="ds-source-banners" role="note">
         <InfoCard variant="info" icon={<HandCoins size={18} />} title="Google Sheets — IDD Suprimentos">
-          Economia em reais por filial e data de registro. Metas alinhadas ao indicador
+          Economia em reais por unidade e data de registro. Metas alinhadas ao indicador
           estratégico <em>supplies-negotiation-savings</em>.
         </InfoCard>
       </div>
@@ -223,7 +224,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
           )}
         </ChartCard>
 
-        <ChartCard title="Economia por filial">
+        <ChartCard title="Economia por unidade">
           {branchChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={branchChart}>
@@ -242,19 +243,19 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem dados por filial.</div>
+            <div className="ds-state-box">Sem dados por unidade.</div>
           )}
         </ChartCard>
       </section>
 
       <DataTableSection
-        title="Totais por filial"
+        title="Totais por unidade"
         columns={branchColumns}
         rows={data?.branches ?? []}
         rowKey={(row) => row.branch ?? "branch"}
         loading={loading && !(data?.branches?.length)}
         refreshing={refreshing}
-        emptyMessage="Nenhum total por filial no período."
+        emptyMessage="Nenhum total por unidade no período."
       />
 
       <DataTableSection
@@ -266,7 +267,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
         loading={loading && !(data?.entries?.length)}
         refreshing={refreshing}
         emptyMessage="Nenhum lançamento no período."
-        searchPlaceholder="Buscar filial ou data…"
+        searchPlaceholder="Buscar unidade ou data…"
       />
     </div>
   );

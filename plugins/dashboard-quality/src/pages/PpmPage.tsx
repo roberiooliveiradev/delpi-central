@@ -37,6 +37,7 @@ import { navigateQuality } from "../utils/navigation";
 import { savePpmDetailRecord } from "../utils/recordDetailStorage";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type PpmPageProps = {
   pathname?: string;
@@ -138,7 +139,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
     return items.filter((row) =>
       [
-        row.branch,
+        formatOperationalUnitCode(row.branch, ""),
         formatNonconformityCode(row.code, row.code_display),
         row.customer_code,
         row.customer_store,
@@ -171,9 +172,9 @@ export function PpmPage({ pathname }: PpmPageProps) {
       },
       {
         key: "branch",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         headerHint: QUALITY_HELP_TOOLTIPS.table.branch,
-        render: (row) => row.branch,
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "code",
@@ -226,7 +227,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
       `ppm-${ppmType}-pagina-${page}.csv`,
       [
         "Data",
-        "Filial",
+        "Unidade",
         "Código Não Conformidade",
         "Cliente",
         "Nome do cliente",
@@ -238,7 +239,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
       ],
       items.map((row) => [
         formatDisplayDate(row.registered_date),
-        row.branch,
+        formatOperationalUnitCode(row.branch, ""),
         formatNonconformityCode(row.code, row.code_display),
         formatCustomerRef(row.customer_code, row.customer_store),
         row.customer_name ?? "",

@@ -5,6 +5,7 @@ import { formatDisplayDate } from "../utils/dates";
 import { formatDecimal, formatInteger } from "../utils/format";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { OtdStatusBadge } from "./OtdStatusBadge";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type IntermediateOrdersTableProps = {
   rows: IntermediateProductionOrderRow[];
@@ -29,9 +30,9 @@ export function useIntermediateOrderColumns(): DataTableColumn<IntermediateProdu
       },
       {
         key: "branch",
-        header: "Filial",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
         sortable: true,
-        render: (row) => row.branch || "—",
+        render: (row) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "production_order",

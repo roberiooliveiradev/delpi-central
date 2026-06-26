@@ -37,6 +37,7 @@ import { appendFiltersToPath, readProductionFilters } from "../utils/filterUrl";
 import { navigateProduction, navigateProductionBack } from "../utils/navigation";
 import { buildOtdOrderPath } from "../utils/routeParser";
 import { readProductField } from "../utils/productFields";
+import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 type OtdOrderDetailPageProps = {
   productionOrder: string;
@@ -84,7 +85,7 @@ export function OtdOrderDetailPage({
     navigateProduction(
       buildOtdOrderPath(
         row.production_order,
-        row.branch,
+        formatOperationalUnitCode(row.branch, ""),
         filterState,
         rowProductType
       ),
@@ -109,7 +110,7 @@ export function OtdOrderDetailPage({
               label: "Status OTD",
               value: <OtdStatusBadge status={order.otd_status} />,
             },
-            { label: "Filial", value: order.branch },
+            { label: OPERATIONAL_UNIT_COLUMN_LABEL, value: formatOperationalUnitCode(order.branch) },
             { label: "OP (C2_OP)", value: order.production_order },
             { label: "Nº OP", value: order.order_number },
             { label: "Item", value: order.order_item },
@@ -187,8 +188,8 @@ export function OtdOrderDetailPage({
     () => [
       {
         key: "branch",
-        header: "Filial",
-        render: (row: ProductStockItem) => row.branch ?? "—",
+        header: OPERATIONAL_UNIT_COLUMN_LABEL,
+        render: (row: ProductStockItem) => formatOperationalUnitCode(row.branch),
       },
       {
         key: "warehouse",
@@ -227,9 +228,9 @@ export function OtdOrderDetailPage({
     : `OP ${productionOrder}`;
 
   const pageSubtitle = order
-    ? `${order.product_code} · ${order.product_description} · Filial ${order.branch}`
+    ? `${order.product_code} · ${order.product_description} · ${formatOperationalUnitCode(order.branch)}`
     : branch
-      ? `Filial ${branch}`
+      ? formatOperationalUnitCode(branch, branch)
       : "Detalhe da ordem de produção";
 
   return (
@@ -357,7 +358,7 @@ export function OtdOrderDetailPage({
           {stockItems.length > 0 ? (
             <DataTableSection
               title="Estoque do produto"
-              hint="Saldos por filial e armazém"
+              hint="Saldos por unidade e armazém"
               columns={stockColumns}
               rows={stockItems}
               rowKey={(row) =>

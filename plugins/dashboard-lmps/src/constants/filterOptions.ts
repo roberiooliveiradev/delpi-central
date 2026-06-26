@@ -1,8 +1,8 @@
 import type { MultiSelectOption } from "../components/MultiSelectField";
+import { OPERATIONAL_UNIT_OPTIONS } from "../utils/operationalUnitLabels";
 
 export const LMPS_BRANCH_OPTIONS: MultiSelectOption[] = [
-  { value: "01", label: "01" },
-  { value: "02", label: "02" },
+  ...OPERATIONAL_UNIT_OPTIONS,
 ];
 
 export const LMPS_LISTING_TYPE_OPTIONS: MultiSelectOption[] = [
