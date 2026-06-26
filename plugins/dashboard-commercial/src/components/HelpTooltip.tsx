@@ -78,11 +78,9 @@ function computeBubblePosition(
   };
 }
 
-function resolvePortalContainer(anchor: HTMLElement | null): HTMLElement {
-  const dashboardRoot = anchor?.closest(
-    ".dashboard-commercial, .dashboard-lmps"
-  ) as HTMLElement | null;
-  return dashboardRoot ?? document.body;
+/** Fixed + coords de viewport exigem portal no body (ancestrais com transform quebram o posicionamento). */
+function resolvePortalContainer(): HTMLElement {
+  return document.body;
 }
 
 export function HelpTooltip({
@@ -100,7 +98,6 @@ export function HelpTooltip({
   const [visible, setVisible] = useState(false);
   const [bubblePosition, setBubblePosition] = useState<BubblePosition | null>(null);
   const [positioned, setPositioned] = useState(false);
-  const [portalContainer, setPortalContainer] = useState<HTMLElement>(() => document.body);
 
   const rootClass = [
     "dc-help-tooltip",
@@ -139,9 +136,6 @@ export function HelpTooltip({
 
   useLayoutEffect(() => {
     if (!visible) return;
-
-    const anchor = triggerRef.current ?? rootRef.current;
-    setPortalContainer(resolvePortalContainer(anchor));
     updateBubblePosition();
   }, [visible, updateBubblePosition, content]);
 
@@ -222,7 +216,7 @@ export function HelpTooltip({
           <HelpCircle size={14} aria-hidden="true" />
         </button>
       )}
-      {visible ? createPortal(bubble, portalContainer) : null}
+      {visible ? createPortal(bubble, resolvePortalContainer()) : null}
     </span>
   );
 }
