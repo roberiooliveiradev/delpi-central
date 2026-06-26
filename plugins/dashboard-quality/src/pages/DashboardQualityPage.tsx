@@ -12,7 +12,6 @@ import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KpiCard } from "../components/KpiCard";
 import { PpmSparkline } from "../components/PpmSparkline";
 import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
-import { SummaryCard } from "../components/SummaryCard";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { CHART_COLORS } from "../constants/chartColors";
 import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
@@ -26,8 +25,6 @@ import {
 } from "../utils/goalDisplay";
 import {
   formatDecimal,
-  formatInteger,
-  formatScore,
 } from "../utils/format";
 import { formatPeriodLabel } from "../utils/dates";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -237,12 +234,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           icon={<Wallet size={22} />}
           loading={isBusy && !kaizen}
         />
-      </section>
-
-      <section className="dq-summary-grid" aria-busy={isBusy}>
-        <SummaryCard
+        <KpiCard
           title="Auditoria 5S"
-          description="Média de notas das auditorias realizadas."
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.audit5sScore}
+          value={formatDashboardMetricValue(audit5s?.average_score, audit5s)}
           {...buildKpiGoalPresentation(
             periodLabel,
             audit5s,
@@ -251,20 +246,6 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           )}
           icon={<ClipboardCheck size={22} />}
           loading={isBusy && !audit5s}
-          metrics={[
-            {
-              label: "Nota média",
-              value: formatScore(audit5s?.average_score),
-            },
-            {
-              label: "Auditorias no período",
-              value: formatInteger(audit5s?.list_audits.length ?? 0),
-            },
-            {
-              label: "Período",
-              value: periodLabel,
-            },
-          ]}
         />
       </section>
 
