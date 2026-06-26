@@ -77,8 +77,88 @@ export type KpiGoalPresentation = {
   goalScopeBadge: GoalScopeBadge | null;
   goalScopeHint: string | null;
   goalPerformanceBadge: GoalPerformanceBadge | null;
+  iddScoreLabel: string | null;
   contextLabel: string;
 };
+
+/** Mesma regra do StrategicIndicatorsCalculator.calculate_indicator_score (SI). */
+export function calculateIndicatorIddScore(
+  realized: number | null | undefined,
+  goal?: DashboardGoalFields | null,
+): number | null {
+  if (realized == null || Number.isNaN(Number(realized)) || !goal) {
+    return null;
+  }
+
+  const comparable = goal.comparable_goal ?? goal.target;
+  if (comparable == null || comparable <= 0) {
+    return null;
+  }
+
+  const numericRealized = Number(realized);
+  const numericGoal = Number(comparable);
+  const lowerIsBetter = goal.performance_direction === "lower_is_better";
+
+  if (lowerIsBetter) {
+    if (numericRealized <= numericGoal) {
+      return 10;
+    }
+    return Math.round(Math.min((numericGoal / numericRealized) * 10, 10) * 100) / 100;
+  }
+
+  if (numericRealized >= numericGoal) {
+    return 10;
+  }
+
+  return Math.round(Math.min((numericRealized / numericGoal) * 10, 10) * 100) / 100;
+}
+
+export function formatIndicatorIddScore(
+  score: number | null | undefined,
+  fallback = "—",
+): string {
+  if (score == null || Number.isNaN(Number(score))) {
+    return fallback;
+  }
+
+  return Number(score).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+export function resolveIddScoreLabel(
+  realized: number | null | undefined,
+  goal?: DashboardGoalFields | null,
+): string | null {
+  const score = calculateIndicatorIddScore(realized, goal);
+  if (score == null) {
+    return null;
+  }
+
+  return formatIndicatorIddScore(score);
+}
+
+export function resolveConsolidatedIddScoreLabel(
+  entries: Array<{
+    realized: number | null | undefined;
+    goal?: DashboardGoalFields | null;
+  }>,
+): string | null {
+  const scores = entries
+    .map(({ realized, goal }) => calculateIndicatorIddScore(realized, goal))
+    .filter((score): score is number => score != null);
+
+  if (scores.length === 0) {
+    return null;
+  }
+
+  const average =
+    Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 100) /
+    100;
+
+  return formatIndicatorIddScore(average);
+}
 
 export function formatGoalScopeLabel(
   goalScopeBranch?: string | null,
@@ -233,6 +313,9 @@ export function buildKpiGoalPresentation(
     goalPerformanceBadge: showGoal
       ? resolveGoalPerformanceBadge(options?.realizedValue, goal)
       : null,
+    iddScoreLabel: showGoal
+      ? resolveIddScoreLabel(options?.realizedValue, goal)
+      : null,
     contextLabel,
   };
 }
@@ -242,14 +325,23 @@ export function formatGoalSubtitle(
   periodLabel: string,
   goal?: DashboardGoalFields | null,
   formatComparable?: (value: number) => string,
+  realizedValue?: number | null,
 ): string {
-  const { goalLabel, contextLabel } = buildKpiGoalPresentation(
+  const { goalLabel, iddScoreLabel, contextLabel } = buildKpiGoalPresentation(
     periodLabel,
     goal,
     formatComparable,
+    { realizedValue },
   );
-  if (!goalLabel) {
+  const parts: string[] = [];
+  if (goalLabel) {
+    parts.push(`Meta: ${goalLabel}`);
+  }
+  if (iddScoreLabel) {
+    parts.push(`Nota IDD: ${iddScoreLabel}`);
+  }
+  if (parts.length === 0) {
     return contextLabel;
   }
-  return `Meta: ${goalLabel} · ${contextLabel}`;
+  return `${parts.join(" · ")} · ${contextLabel}`;
 }

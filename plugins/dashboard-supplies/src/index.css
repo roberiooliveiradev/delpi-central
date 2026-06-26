@@ -334,6 +334,15 @@
   color: color-mix(in srgb, var(--ds-accent) 72%, var(--ds-text-muted));
 }
 
+.dashboard-supplies .ds-kpi-goal--idd {
+  color: var(--ds-title);
+  font-size: clamp(16px, 1.35vw, 24px);
+}
+
+.dashboard-supplies .ds-kpi-goal--idd .ds-kpi-goal-prefix {
+  color: color-mix(in srgb, var(--ds-title) 72%, var(--ds-text-muted));
+}
+
 .dashboard-supplies .ds-kpi-goal-scope {
   font-size: 0.62em;
   font-weight: 600;

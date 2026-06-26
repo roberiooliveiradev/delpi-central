@@ -303,6 +303,15 @@
   color: color-mix(in srgb, var(--dq-accent, #089bdb) 72%, var(--dq-text-muted));
 }
 
+.dashboard-quality .dq-kpi-goal--idd {
+  color: var(--dq-title);
+  font-size: clamp(16px, 1.35vw, 24px);
+}
+
+.dashboard-quality .dq-kpi-goal--idd .dq-kpi-goal-prefix {
+  color: color-mix(in srgb, var(--dq-title) 72%, var(--dq-text-muted));
+}
+
 .dashboard-quality .dq-kpi-badges {
   display: flex;
   flex-wrap: wrap;

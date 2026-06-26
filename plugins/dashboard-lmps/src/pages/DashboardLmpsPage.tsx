@@ -471,11 +471,15 @@ export function DashboardLmpsPage({
               maximumFractionDigits: 2,
             }
           )}%`}
-          subtitle={formatGoalSubtitle(periodLabel, displaySummary, (v) =>
-            `${v.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}%`,
+          subtitle={formatGoalSubtitle(
+            periodLabel,
+            displaySummary,
+            (v) =>
+              `${v.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}%`,
+            displaySummary?.percent_dentro_prazo,
           )}
           icon={<CircleGauge size={22} />}
         />

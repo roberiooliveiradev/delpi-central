@@ -307,6 +307,15 @@
   color: color-mix(in srgb, var(--dh-accent, #089bdb) 72%, var(--dh-text-muted));
 }
 
+.dashboard-hr .dh-kpi-goal--idd {
+  color: var(--dh-title);
+  font-size: clamp(16px, 1.35vw, 24px);
+}
+
+.dashboard-hr .dh-kpi-goal--idd .dh-kpi-goal-prefix {
+  color: color-mix(in srgb, var(--dh-title) 72%, var(--dh-text-muted));
+}
+
 .dashboard-hr .dh-kpi-badges {
   display: flex;
   flex-wrap: wrap;

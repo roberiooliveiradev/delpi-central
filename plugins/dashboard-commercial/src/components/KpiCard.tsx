@@ -14,6 +14,7 @@ type KpiCardProps = {
   goalScopeHint?: string | null;
   goalPerformanceBadge?: GoalPerformanceBadge | null;
   goalPerformanceBadges?: GoalPerformanceBadge[];
+  iddScoreLabel?: string | null;
   goalVariant?: "default" | "per-unit";
   subtitle?: string;
   icon: ReactNode;
@@ -31,6 +32,7 @@ export function KpiCard({
   goalScopeHint = null,
   goalPerformanceBadge = null,
   goalPerformanceBadges = [],
+  iddScoreLabel = null,
   goalVariant = "default",
   subtitle,
   icon,
@@ -75,6 +77,11 @@ export function KpiCard({
           {resolvedGoal ? (
             <p className={goalClassName}>
               <span className="dc-kpi-goal-prefix">Meta</span> {resolvedGoal}
+            </p>
+          ) : null}
+          {iddScoreLabel ? (
+            <p className={`${goalClassName} dc-kpi-goal--idd`}>
+              <span className="dc-kpi-goal-prefix">Nota IDD</span> {iddScoreLabel}
             </p>
           ) : null}
           {hasBadges ? (

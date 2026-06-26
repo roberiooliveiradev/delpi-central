@@ -896,6 +896,15 @@
   color: color-mix(in srgb, var(--dc-accent, #089bdb) 72%, var(--dc-text-muted));
 }
 
+.dashboard-commercial .dc-kpi-goal--idd {
+  color: var(--dc-title);
+  font-size: clamp(16px, 1.35vw, 24px);
+}
+
+.dashboard-commercial .dc-kpi-goal--idd .dc-kpi-goal-prefix {
+  color: color-mix(in srgb, var(--dc-title) 72%, var(--dc-text-muted));
+}
+
 .dashboard-commercial .dc-kpi-badges {
   display: flex;
   flex-wrap: wrap;

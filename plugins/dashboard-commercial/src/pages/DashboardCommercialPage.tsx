@@ -551,6 +551,7 @@ export function DashboardCommercialPage({
           goalScopeHint={rolKpi.goalScopeHint}
           goalPerformanceBadge={rolKpi.goalPerformanceBadge}
           goalPerformanceBadges={rolKpi.goalPerformanceBadges}
+          iddScoreLabel={rolKpi.iddScoreLabel}
           icon={<Banknote size={22} />}
           loading={isBusy && !headOfficeRol && !branchRol}
         />

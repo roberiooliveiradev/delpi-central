@@ -14,6 +14,7 @@ type SummaryCardProps = {
   goalScopeBadge?: GoalScopeBadge | null;
   goalScopeHint?: string | null;
   goalPerformanceBadge?: GoalPerformanceBadge | null;
+  iddScoreLabel?: string | null;
   icon: ReactNode;
   metrics: SummaryMetric[];
   loading?: boolean;
@@ -26,6 +27,7 @@ export function SummaryCard({
   goalScopeBadge = null,
   goalScopeHint = null,
   goalPerformanceBadge = null,
+  iddScoreLabel = null,
   icon,
   metrics,
   loading = false,
@@ -45,6 +47,11 @@ export function SummaryCard({
           {goalLabel ? (
             <p className="dq-kpi-goal">
               <span className="dq-kpi-goal-prefix">Meta</span> {goalLabel}
+            </p>
+          ) : null}
+          {iddScoreLabel ? (
+            <p className="dq-kpi-goal dq-kpi-goal--idd">
+              <span className="dq-kpi-goal-prefix">Nota IDD</span> {iddScoreLabel}
             </p>
           ) : null}
           {hasBadges ? (

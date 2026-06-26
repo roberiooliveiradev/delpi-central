@@ -400,6 +400,15 @@
   color: color-mix(in srgb, var(--dp-accent, #089bdb) 72%, var(--dp-text-muted));
 }
 
+.dashboard-production .dp-kpi-goal--idd {
+  color: var(--dp-title);
+  font-size: clamp(16px, 1.35vw, 24px);
+}
+
+.dashboard-production .dp-kpi-goal--idd .dp-kpi-goal-prefix {
+  color: color-mix(in srgb, var(--dp-title) 72%, var(--dp-text-muted));
+}
+
 .dashboard-production .dp-kpi-badges {
   display: flex;
   flex-wrap: wrap;

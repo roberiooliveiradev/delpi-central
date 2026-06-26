@@ -334,6 +334,15 @@
   color: color-mix(in srgb, var(--ds-accent) 72%, var(--ds-text-muted));
 }
 
+.dashboard-engineering .ds-kpi-goal--idd {
+  color: var(--ds-title);
+  font-size: clamp(16px, 1.35vw, 24px);
+}
+
+.dashboard-engineering .ds-kpi-goal--idd .ds-kpi-goal-prefix {
+  color: color-mix(in srgb, var(--ds-title) 72%, var(--ds-text-muted));
+}
+
 .dashboard-engineering .ds-kpi-badges {
   display: flex;
   flex-wrap: wrap;
