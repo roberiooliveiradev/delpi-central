@@ -127,7 +127,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     source_type: "",
     source_reference: "",
     linked_kaizen_id: "",
-    linked_audit_5s_nc_id: "",
   });
 
   const load = useCallback(async () => {
@@ -184,7 +183,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         source_type: data.plan.source_type ?? "",
         source_reference: data.plan.source_reference ?? "",
         linked_kaizen_id: data.plan.linked_kaizen_id ?? "",
-        linked_audit_5s_nc_id: data.plan.linked_audit_5s_nc_id ?? "",
       });
       try {
         const audit = await fetchPlanAuditLog(planId);
@@ -489,16 +487,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 }
                 disabled={saving === "identification"}
               />
-              <TextField
-                id="pac-detail-linked-audit-5s-nc"
-                label="NC Auditoria 5S (UUID)"
-                hint={PAC_HELP_TOOLTIPS.detail.audit5sNc}
-                value={identificationForm.linked_audit_5s_nc_id}
-                onChange={(linked_audit_5s_nc_id) =>
-                  setIdentificationForm((c) => ({ ...c, linked_audit_5s_nc_id }))
-                }
-                placeholder="UUID da NC em quality.audit_5s_nonconformities"
-              />
               <TextAreaField
                 id="pac-detail-problem"
                 label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
@@ -547,9 +535,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       source_reference: identificationForm.source_reference.trim() || undefined,
                       linked_kaizen_id: identificationForm.linked_kaizen_id.trim()
                         ? identificationForm.linked_kaizen_id.trim()
-                        : null,
-                      linked_audit_5s_nc_id: identificationForm.linked_audit_5s_nc_id.trim()
-                        ? identificationForm.linked_audit_5s_nc_id.trim()
                         : null,
                     });
                     if (isRnc8dTemplate) {

@@ -70,7 +70,7 @@ export const PAC_HELP_TOOLTIPS = {
   form: {
     identification: "Dados cadastrais do plano: título, cliente, produto, lote e filial.",
     source: "Canal de origem do relato (e-mail, PDF, texto manual) e referência externa.",
-    context: "Vínculos opcionais com Kaizen, auditoria 5S ou outras fontes.",
+    context: "Vínculos opcionais com Kaizen ou outras fontes.",
     description: "Narrativa do problema relatado e tags de sintoma para busca futura.",
     actionType: "Classificação da ação: contenção, corretiva, preventiva, verificação, padronização ou treinamento.",
     actionTrack: "Em 8D, indica se a ação trata a causa de ocorrência ou de detecção.",
@@ -96,7 +96,6 @@ export const PAC_HELP_TOOLTIPS = {
     symptomTags: "Palavras-chave separadas por vírgula — alimentam busca e casos similares.",
     sourceReference: "ID do e-mail, ticket, arquivo ou outra referência do canal de origem.",
     clientNcRegistry: "Número formal da reclamação registrada pelo cliente.",
-    audit5sNc: "UUID da NC de auditoria 5S vinculada, quando aplicável.",
     statusPipeline: "Estágio atual do plano no fluxo operacional do PAC.",
     updateStatus: "Avança ou retrocede o plano no fluxo (triagem, contenção, análise, etc.).",
     reopenReason: "Justificativa obrigatória (mín. 5 caracteres) para reabrir plano encerrado.",
