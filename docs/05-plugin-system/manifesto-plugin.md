@@ -841,7 +841,7 @@ Exemplo:
 {
   "dependencies": [
     "api-delpi",
-    "dashboard-delpi"
+    "dashboard-commercial"
   ]
 }
 ```

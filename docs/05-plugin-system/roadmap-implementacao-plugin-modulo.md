@@ -219,7 +219,7 @@ plugins/maintenance/src/constants/manutencaoGeralForm.ts → URL no manifest tar
 
 ### Plugins (permanecem autônomos)
 
-`dashboard-commercial`, `dashboard-production`, `dashboard-financial`, `dashboard-hr`, `dashboard-quality`, `dashboard-supplies`, `dashboard-engineering`, `dashboard-delpi`, `dash-lmps`, `minha-delpi-chat`, `eficiencia-fabril`, `auditoria-5s`, `central-agendamento`, `cadastro-kaizen`, `inspecoes-entrada`, `pedidos-venda-abertos`, `propostas-comerciais`, `api-delpi-console`, `cultura-delpi`, `transformometro`, `helpdesk`, `idd_production`, etc.
+`dashboard-commercial`, `dashboard-production`, `dashboard-financial`, `dashboard-hr`, `dashboard-quality`, `dashboard-supplies`, `dashboard-engineering`, `dash-lmps`, `minha-delpi-chat`, `eficiencia-fabril`, `auditoria-5s`, `central-agendamento`, `cadastro-kaizen`, `inspecoes-entrada`, `pedidos-venda-abertos`, `propostas-comerciais`, `api-delpi-console`, `cultura-delpi`, `transformometro`, `helpdesk`, `idd_production`, etc.
 
 ---
 

@@ -98,7 +98,6 @@ A api-delpi é **API compartilhada**. Mudanças no envelope ou em `data` impacta
 | `dashboard-engineering` | `src/api/engineeringApi.ts` | `/apps/api-delpi/engineering` |
 | `dashboard-hr` | `src/api/hrApi.ts` | `/apps/api-delpi/hr` |
 | `dashboard-lmps` | `src/api/lmpApi.ts` | `/apps/api-delpi/engineering/lmps` |
-| `dashboard-delpi` | `src/data/delpiApi.ts` | `/apps/api-delpi/products` |
 | `central-agendamento` | `src/constants/scheduling.ts` | `/apps/api-delpi/scheduling` |
 | `auditoria-5s` | `src/constants/audit5s.ts` | `/apps/api-delpi/quality/audit-5s` (+ Socket.IO no mesmo host) |
 | `eficiencia-fabril` | `src/api/eficienciaFabrilApi.ts` | `/apps/api-delpi/production` |

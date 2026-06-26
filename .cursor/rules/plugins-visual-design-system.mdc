@@ -19,7 +19,6 @@ Plugins novos e alterações de UI em `plugins/` devem **parecer nativos do port
 | Dashboard modelo | `plugins/dashboard-production/` (`index.css`, `KpiCard`, `ChartCard`) |
 | Dashboard extras | `plugins/dashboard-commercial/` (tabela com busca, impressão) |
 | Admin analytics | `portal/src/ui/admin/tabs/StatsTab.css` |
-| Anti-referência | `plugins/dashboard-delpi/` (template Vite, não seguir) |
 
 ## Tema claro e escuro
 

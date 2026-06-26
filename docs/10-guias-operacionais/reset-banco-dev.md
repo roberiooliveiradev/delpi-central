@@ -177,11 +177,6 @@ curl -s -X POST http://localhost/core-api/admin/apps/register \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d @../plugins/minha-delpi-chat/delpi.manifest.json
-
-curl -s -X POST http://localhost/core-api/admin/apps/register \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d @../plugins/dashboard-delpi/dashboard-delpi.manifest.json
 ```
 
 Inventário completo: [../08-plugins/README.md](../08-plugins/README.md).

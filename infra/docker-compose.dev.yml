@@ -423,19 +423,6 @@ services:
       - delpi-network
 
 
-  dashboard-delpi:
-    build:
-      context: ../plugins/dashboard-delpi
-      dockerfile: Dockerfile
-
-    container_name: delpi-dashboard-delpi
-    restart: unless-stopped
-
-    environment:
-      TZ: ${TZ}
-
-    networks:
-      - delpi-network
 
   strategic-indicators:
     build:

@@ -110,7 +110,6 @@ Exemplos:
 ```text
 strategic-indicators
 minha-delpi-chat
-dashboard-delpi
 dash-lmps
 api-delpi
 ```

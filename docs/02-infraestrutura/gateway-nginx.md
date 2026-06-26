@@ -164,7 +164,6 @@ Containers que o gateway espera na rede `delpi-network`:
 portal, core-api, keycloak, api-delpi
 delpi-minha-delpi-ai-api
 delpi-strategic-indicators, delpi-dashboard-lmps, delpi-minha-delpi-chat
-delpi-dashboard-delpi (se assets servidos por /apps/dashboard-delpi)
 ```
 
 `depends_on` do gateway no Compose lista os principais; plugins adicionais precisam existir na rede com nome `delpi-<manifest-id>`.

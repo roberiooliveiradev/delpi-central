@@ -137,7 +137,6 @@ Legenda: **D** = HTTP direto no browser/serviço; **I** = indireto (via outro ba
 | `dashboard-engineering` | `/engineering` | `/transforma-mais/processes*` | `engineeringApi.ts` |
 | `dashboard-hr` | `/hr` | `/snapshot`, `/branches` | `hrApi.ts` |
 | `dashboard-lmps` | `/engineering/lmps` | list, dashboard, summary, charts, items | `lmpApi.ts` |
-| `dashboard-delpi` | `/products` | `/search`, listagem paginada | `delpiApi.ts` |
 | `central-agendamento` | `/scheduling` | `/resources`, `/bookings` | `schedulingApi.ts` |
 | `auditoria-5s` | `/quality/audit-5s` | `/areas`, `/audits`, NC, anexos | `audit5sApi.ts` + Socket.IO |
 | `eficiencia-fabril` | `/production` | `/eficiencia-fabril/dashboard`, `/appointments` | `eficienciaFabrilApi.ts` |

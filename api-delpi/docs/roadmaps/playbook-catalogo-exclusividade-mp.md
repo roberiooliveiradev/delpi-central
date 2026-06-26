@@ -175,7 +175,7 @@ Desambiguação chat:
 
 | Critério | Análise |
 |----------|---------|
-| **Consumidores** | Chat (`get_product_structure`), export Excel, possivelmente dashboard-delpi, testes OpenAPI |
+| **Consumidores** | Chat (`get_product_structure`), export Excel, testes OpenAPI |
 | **Contrato atual** | `hierarchy` — `root` + `items[]` recursivos via `BomTreeBuilder`; campos: `code`, `description`, `type`, `unit`, `quantity` |
 | **Custo de calcular exclusividade** | Alto — exige CTE `TODAS_ESTRUTURAS_VALIDAS` sobre **todos os PAs** por request |
 | **Risco de quebra** | Baixo se campo opcional **additive**; **alto** se clientes validam schema estrito ou performance SLA |

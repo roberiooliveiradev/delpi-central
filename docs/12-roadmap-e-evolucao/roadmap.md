@@ -103,7 +103,6 @@ Garantir que todos os plugins existentes tenham manifesto válido, coerente e re
 Plugins:
 
 ```text
-dashboard-delpi
 strategic-indicators
 dash-lmps (dashboard-lmps)
 minha-delpi-chat

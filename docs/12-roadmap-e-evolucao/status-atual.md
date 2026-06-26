@@ -53,7 +53,6 @@ postgres-plugins
 minha-delpi-ai-api
 ollama
 minha-delpi-chat
-dashboard-delpi
 strategic-indicators
 dashboard-lmps
 ```
@@ -63,7 +62,6 @@ Plugins/módulos (inventário): [../08-plugins/README.md](../08-plugins/README.m
 Plugins citados na documentação operacional:
 
 ```text
-dashboard-delpi
 strategic-indicators
 dashboard-lmps
 minha-delpi-chat
@@ -258,7 +256,6 @@ Documentação: [../09-banco-de-dados/README.md](../09-banco-de-dados/README.md)
 
 | Plugin | Status documental | Observação |
 |---|---|---|
-| `dashboard-delpi` | Documentado com base na infraestrutura | Detalhes funcionais dependem do código real do plugin |
 | `strategic-indicators` | Documentado com base na infraestrutura | Detalhes funcionais dependem do código real do plugin |
 | `dashboard-lmps` | Documentado com manifesto e contexto LMP | APIs/telas finais dependem do código real |
 | `minha-delpi-chat` | Documentado (chat + AI API) | Ver [08-plugins/README.md](../08-plugins/README.md) |
@@ -269,7 +266,7 @@ Documentação: [../09-banco-de-dados/README.md](../09-banco-de-dados/README.md)
 ## 12. Pendências controladas (evolução contínua)
 
 1. Manter `api-delpi/docs/api/` alinhado a novo código (revisão periódica).
-2. Implementação e telas finais dos MFEs `dashboard-delpi`, `strategic-indicators`, `dashboard-lmps`.
+2. Implementação e telas finais dos MFEs `strategic-indicators`, `dashboard-lmps`.
 3. Manifestos e versões registradas em homologação/produção.
 4. Configuração final do Gateway em produção.
 5. Módulo de qualidade / NC conforme roadmap.

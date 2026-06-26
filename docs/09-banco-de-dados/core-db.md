@@ -474,7 +474,6 @@ id
 Exemplos de IDs:
 
 ```text
-dashboard-delpi
 strategic-indicators
 dash-lmps
 api-delpi

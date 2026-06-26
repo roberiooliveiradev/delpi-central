@@ -58,7 +58,7 @@ Visão macro:
         ▼
 ┌─────────────────────────────────────────────────────────┐
 │                 Plugins / Microfrontends                │
-│ dashboard-delpi, strategic-indicators, dashboard-lmps... │
+│ strategic-indicators, dashboard-lmps... │
 └───────────────────────────┬─────────────────────────────┘
                             │
                             ▼
@@ -252,7 +252,6 @@ Serviços identificados na stack atual:
 ```text
 strategic-indicators
 minha-delpi-chat
-dashboard-delpi
 dashboard-lmps
 ```
 

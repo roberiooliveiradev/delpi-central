@@ -313,7 +313,6 @@ docs/02-infraestrutura/gateway-nginx.md
 A stack atual possui serviços de plugins visuais como:
 
 ```text
-dashboard-delpi
 strategic-indicators
 dashboard-lmps
 ```

@@ -385,7 +385,7 @@ Plugins atuais conhecidos pela stack:
 
 ```text
 plugins/
-  dashboard-delpi/
+  dashboard-commercial/
   strategic-indicators/
   dashboard-lmps/
 ```

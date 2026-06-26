@@ -71,7 +71,6 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/cadastro-kaizen` | `cadastro-kaizen` | microfrontend | plugin | `/apps/cadastro-kaizen` | `delpi-cadastro-kaizen` |
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
-| `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | plugin | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/transformometro` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
@@ -122,7 +121,7 @@ const DELPI_CALLER_APP = "dashboard-commercial"; // id do manifesto
 headers["X-Delpi-Caller-App"] = DELPI_CALLER_APP;
 ```
 
-Implementado em `plugins/*/src/api/httpClient.ts` (e `dashboard-delpi/src/data/apiClient.ts`).
+Implementado em `plugins/*/src/api/httpClient.ts`.
 
 | Plugin | Valor do header |
 |--------|-----------------|
@@ -134,7 +133,6 @@ Implementado em `plugins/*/src/api/httpClient.ts` (e `dashboard-delpi/src/data/a
 | dashboard-engineering | `dashboard-engineering` |
 | dashboard-hr | `dashboard-hr` |
 | dashboard-lmps | `dashboard-lmps` |
-| dashboard-delpi | `dashboard-delpi` |
 | api-delpi-console | `api-delpi-console` |
 | eficiencia-fabril | `eficiencia-fabril` |
 | central-agendamento | `central-agendamento` |

@@ -98,7 +98,7 @@ Código / Documento
 Pendência:
 
 ```text
-Confirmar manifestos reais de dashboard-delpi, strategic-indicators e dashboard-lmps.
+Confirmar manifestos reais de strategic-indicators e dashboard-lmps.
 ```
 
 Motivo:
@@ -151,7 +151,6 @@ Confirmar rotas reais do Gateway para todos os plugins e API DELPI.
 
 Verificar (conferir `gateway/nginx.conf` e manifestos):
 
-- `/apps/dashboard-delpi`;
 - `/apps/strategic-indicators`;
 - `/dash-lmps` (plugin iframe `dash-lmps` — não usar `/apps/dashboard-lmps` salvo novo manifesto);
 - `/apps/minha-delpi-chat`;
@@ -351,7 +350,6 @@ Plugins:
 
 ```text
 minha-delpi-chat
-dashboard-delpi
 strategic-indicators
 dashboard-lmps (dash-lmps)
 ```

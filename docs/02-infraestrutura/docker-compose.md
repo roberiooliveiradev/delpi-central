@@ -59,7 +59,6 @@ docker compose -f docker-compose.dev.yml up --build -d
 | `strategic-indicators` | `delpi-strategic-indicators` | `plugins/strategic-indicators` |
 | `minha-delpi-chat` | `delpi-minha-delpi-chat` | `plugins/minha-delpi-chat` |
 | `dashboard-lmps` | `delpi-dashboard-lmps` | `plugins/dashboard-lmps` |
-| `dashboard-delpi` | `delpi-dashboard-delpi` | `plugins/dashboard-delpi` |
 
 O Nginx resolve plugins como `http://delpi-<id>/` quando a URL é `/apps/<id>/assets/...`.
 
@@ -164,8 +163,6 @@ Init: `infra/docker/postgres/plugins-init.sql`
 portal, core-api, keycloak, strategic-indicators, strategic-indicators-api, api-delpi,
 dashboard-lmps, minha-delpi-ai-api, minha-delpi-chat
 ```
-
-`dashboard-delpi` não está no `depends_on` do gateway dev, mas o container deve existir se o plugin for usado.
 
 ---
 

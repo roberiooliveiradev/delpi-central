@@ -17,7 +17,7 @@ Este arquivo é o **ponto de entrada no repositório api-delpi** para o roadmap 
 | Consumidor | Integração |
 |------------|------------|
 | **strategic-indicators-api** | `shared/delpi_api_client` → `/financial`, `/commercial`, `/production`, `/supplies`, `/quality`, `/engineering` |
-| **12 plugins MFE** (HTTP direto) | `dashboard-supplies`, `dashboard-commercial`, `dashboard-production`, `dashboard-quality`, `dashboard-financial`, `dashboard-engineering`, `dashboard-hr`, `dashboard-lmps`, `dashboard-delpi`, `central-agendamento`, `auditoria-5s`, `eficiencia-fabril` |
+| **12 plugins MFE** (HTTP direto) | `dashboard-supplies`, `dashboard-commercial`, `dashboard-production`, `dashboard-quality`, `dashboard-financial`, `dashboard-engineering`, `dashboard-hr`, `dashboard-lmps`, `central-agendamento`, `auditoria-5s`, `eficiencia-fabril` |
 | **Portal** | `portal/src/data/delpiApi.ts` — health, products, status |
 | **minha-delpi-ai-api** | Actions OpenAPI — presenter + LLM (não é plugin browser) |
 | **strategic-indicators** (plugin) | Só via `strategic-indicators-api` — não chama api-delpi no frontend |

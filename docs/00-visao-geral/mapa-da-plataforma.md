@@ -32,7 +32,7 @@ postgres-core, keycloak-db, keycloak
 core-api, portal, api-delpi
 postgres-plugins
 ollama, minha-delpi-ai-api
-dashboard-delpi, strategic-indicators, dash-lmps, minha-delpi-chat
+strategic-indicators, dash-lmps, minha-delpi-chat
 gateway
 ```
 

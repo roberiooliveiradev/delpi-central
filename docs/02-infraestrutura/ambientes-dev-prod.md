@@ -52,7 +52,7 @@ core-api, portal, gateway
 postgres-plugins (pgvector)
 api-delpi
 minha-delpi-ai-api, ollama
-strategic-indicators, minha-delpi-chat, dashboard-lmps, dashboard-delpi
+strategic-indicators, minha-delpi-chat, dashboard-lmps
 ```
 
 Apenas em **produção** (opcional): `vllm` com profile `docker compose --profile gpu`.
@@ -310,7 +310,6 @@ Ponto importante:
 Plugins atuais na stack:
 
 ```text
-dashboard-delpi
 strategic-indicators
 dashboard-lmps
 ```

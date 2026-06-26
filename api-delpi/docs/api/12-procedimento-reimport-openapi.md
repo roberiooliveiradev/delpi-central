@@ -80,7 +80,6 @@ docker exec delpi-minha-delpi-ai-api pytest \
 | `dashboard-financial` | KPI ROL carrega |
 | `dashboard-supplies` | CPV / OTD |
 | `dashboard-lmps` | Dashboard summary |
-| `dashboard-delpi` | Busca de produtos |
 | `central-agendamento` | Lista recursos |
 | `auditoria-5s` | Lista áreas |
 
