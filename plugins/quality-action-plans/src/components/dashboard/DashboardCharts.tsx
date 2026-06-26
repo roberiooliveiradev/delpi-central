@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { CHART_HEIGHT } from "../../constants/chartColors";
 import {
   CHART_AXIS_TICK,
@@ -52,7 +53,7 @@ export function DashboardCharts({ summary, plans }: Props) {
 
   return (
     <div className="pac-charts-grid">
-      <ChartCard title="Panorama operacional" hint="Indicadores consolidados do recorte selecionado.">
+      <ChartCard title="Panorama operacional" hint={PAC_HELP_TOOLTIPS.charts.overview}>
         {hasOverview ? (
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={overviewData} layout="vertical" margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
@@ -73,7 +74,7 @@ export function DashboardCharts({ summary, plans }: Props) {
       </ChartCard>
 
       {hasBranch ? (
-        <ChartCard title="Abertos por filial" hint="Comparativo de planos abertos e críticos.">
+        <ChartCard title="Abertos por filial" hint={PAC_HELP_TOOLTIPS.charts.byBranch}>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={branchData} margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--pac-card-border)" />
@@ -88,7 +89,7 @@ export function DashboardCharts({ summary, plans }: Props) {
         </ChartCard>
       ) : null}
 
-      <ChartCard title="Planos abertos por escopo" hint="Interna (processo/área) vs externa (cliente/fornecedor).">
+      <ChartCard title="Planos abertos por escopo" hint={PAC_HELP_TOOLTIPS.charts.byScope}>
         {hasScope ? (
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <PieChart>
@@ -117,7 +118,7 @@ export function DashboardCharts({ summary, plans }: Props) {
         )}
       </ChartCard>
 
-      <ChartCard title="Distribuição por status" hint="Baseado nos planos carregados para análise.">
+      <ChartCard title="Distribuição por status" hint={PAC_HELP_TOOLTIPS.charts.byStatus}>
         {hasStatus ? (
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <PieChart>
@@ -146,7 +147,7 @@ export function DashboardCharts({ summary, plans }: Props) {
         )}
       </ChartCard>
 
-      <ChartCard title="Distribuição por severidade" hint="Priorização visual dos planos ativos.">
+      <ChartCard title="Distribuição por severidade" hint={PAC_HELP_TOOLTIPS.charts.bySeverity}>
         {hasSeverity ? (
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={severityData} margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>

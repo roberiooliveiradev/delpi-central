@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { CHART_HEIGHT } from "../../constants/chartColors";
 import {
   CHART_AXIS_TICK,
@@ -73,7 +74,7 @@ export function DashboardRankingCharts({ rankings }: Props) {
 
   return (
     <div className="pac-charts-grid pac-charts-grid--rankings">
-      <ChartCard title="Top clientes (NC)" hint={`Mais planos nos últimos ${windowMonths} meses.`}>
+      <ChartCard title="Top clientes (NC)" hint={`${PAC_HELP_TOOLTIPS.charts.topCustomers} (${windowMonths} meses).`}>
         {customerData.length ? (
           <RankingBarChart data={customerData} />
         ) : (
@@ -81,7 +82,7 @@ export function DashboardRankingCharts({ rankings }: Props) {
         )}
       </ChartCard>
 
-      <ChartCard title="Top produtos (NC)" hint={`Produtos com mais ocorrências (${windowMonths} meses).`}>
+      <ChartCard title="Top produtos (NC)" hint={`${PAC_HELP_TOOLTIPS.charts.topProducts} (${windowMonths} meses).`}>
         {productData.length ? (
           <RankingBarChart data={productData} />
         ) : (
@@ -91,7 +92,7 @@ export function DashboardRankingCharts({ rankings }: Props) {
 
       <ChartCard
         title="Top responsáveis"
-        hint={`Donos de plano com maior volume (${windowMonths} meses).`}
+        hint={`${PAC_HELP_TOOLTIPS.charts.topOwners} (${windowMonths} meses).`}
       >
         {ownerData.length ? (
           <RankingBarChart data={ownerData} />

@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { CHART_HEIGHT } from "../../constants/chartColors";
 import {
   CHART_AXIS_TICK,
@@ -75,7 +76,7 @@ export function DashboardBreakdownCharts({ breakdowns }: Props) {
     <div className="pac-charts-grid pac-charts-grid--breakdowns">
       <ChartCard
         title="Por causa raiz"
-        hint={`Top categorias nos últimos ${windowMonths} meses.`}
+        hint={`${PAC_HELP_TOOLTIPS.charts.topCategories} (${windowMonths} meses).`}
       >
         {rootCauseData.length ? (
           <BreakdownBarChart data={rootCauseData} />
@@ -86,7 +87,7 @@ export function DashboardBreakdownCharts({ breakdowns }: Props) {
 
       <ChartCard
         title="Por modo de falha"
-        hint={`Recorrência de modos de falha (${windowMonths} meses).`}
+        hint={`${PAC_HELP_TOOLTIPS.charts.topFailureModes} (${windowMonths} meses).`}
       >
         {failureModeData.length ? (
           <BreakdownBarChart data={failureModeData} />
@@ -97,7 +98,7 @@ export function DashboardBreakdownCharts({ breakdowns }: Props) {
 
       <ChartCard
         title="Por tipo de ação"
-        hint={`Distribuição de ações criadas (${windowMonths} meses).`}
+        hint={`${PAC_HELP_TOOLTIPS.charts.actionsMix} (${windowMonths} meses).`}
       >
         {actionTypeData.length ? (
           <BreakdownBarChart data={actionTypeData} />

@@ -1,5 +1,6 @@
 import { CalendarClock, Hourglass } from "lucide-react";
 
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { DashboardTiming } from "../../types/actionPlan";
 import { KpiCard } from "../ui/KpiCard";
 
@@ -32,14 +33,14 @@ export function DashboardTimingKpis({ timing, loading = false }: Props) {
         label="Tempo médio de fechamento"
         value={formatDays(timing?.avg_closure_days)}
         icon={<CalendarClock size={22} strokeWidth={1.75} />}
-        hint={sampleHint(timing?.closure_sample_size ?? 0, windowMonths)}
+        hint={`${PAC_HELP_TOOLTIPS.kpis.avgClosure} ${sampleHint(timing?.closure_sample_size ?? 0, windowMonths)}`}
         loading={loading}
       />
       <KpiCard
         label="Tempo médio até eficácia"
         value={formatDays(timing?.avg_time_to_effectiveness_days)}
         icon={<Hourglass size={22} strokeWidth={1.75} />}
-        hint={sampleHint(timing?.effectiveness_sample_size ?? 0, windowMonths)}
+        hint={`${PAC_HELP_TOOLTIPS.kpis.avgEffectiveness} ${sampleHint(timing?.effectiveness_sample_size ?? 0, windowMonths)}`}
         loading={loading}
       />
     </div>

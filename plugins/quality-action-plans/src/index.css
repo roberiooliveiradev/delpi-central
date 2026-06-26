@@ -813,6 +813,93 @@
   color: var(--pac-text-muted);
 }
 
+.dashboard-quality-action-plans .pac-field__label-row,
+.dashboard-quality-action-plans .pac-title-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-quality-action-plans .pac-section-title .pac-title-with-help {
+  display: inline-flex;
+}
+
+.dashboard-quality-action-plans .pac-chart-card__title .pac-title-with-help,
+.dashboard-quality-action-plans .pac-kpi-card__label .pac-title-with-help {
+  display: inline-flex;
+}
+
+.dashboard-quality-action-plans .pac-help-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.dashboard-quality-action-plans .pac-help-tooltip--wrap {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--pac-text-muted) 55%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-help-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pac-text-muted);
+  cursor: help;
+  opacity: 0.72;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.dashboard-quality-action-plans .pac-help-tooltip__trigger:hover,
+.dashboard-quality-action-plans .pac-help-tooltip__trigger:focus-visible {
+  opacity: 1;
+  color: var(--pac-accent);
+  background: color-mix(in srgb, var(--pac-accent) 10%, transparent);
+  outline: none;
+}
+
+.dashboard-quality-action-plans .pac-help-tooltip__bubble--fixed {
+  position: fixed;
+  bottom: auto;
+  right: auto;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transform: none;
+  pointer-events: none;
+  min-width: 200px;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--pac-card-border);
+  background: color-mix(in srgb, var(--pac-card-bg) 96%, var(--pac-accent));
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  font-size: var(--pac-font-xs);
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--pac-text);
+  white-space: normal;
+  text-align: left;
+  transition: opacity 0.15s ease;
+}
+
+.dashboard-quality-action-plans .pac-help-tooltip__bubble--fixed.pac-help-tooltip__bubble--ready,
+.pac-help-tooltip__bubble--fixed.pac-help-tooltip__bubble--ready {
+  opacity: 1;
+  visibility: visible;
+}
+
 .dashboard-quality-action-plans .pac-field__required {
   color: var(--pac-danger);
 }

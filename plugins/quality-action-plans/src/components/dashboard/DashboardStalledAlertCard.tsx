@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 
 import { branchLabel, detailPath } from "../../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { DashboardStalledAlert } from "../../types/actionPlan";
 import { KpiCard } from "../ui/KpiCard";
 import { SectionCard } from "../ui/SectionCard";
@@ -17,7 +18,6 @@ export function DashboardStalledAlertCard({ alert, loading = false, onNavigate }
   }
 
   const plans = alert?.top_plans ?? [];
-  const stallDays = alert?.stall_days ?? 7;
 
   return (
     <section className="pac-stalled-alert">
@@ -30,7 +30,7 @@ export function DashboardStalledAlertCard({ alert, loading = false, onNavigate }
           hint={
             loading
               ? undefined
-              : `Sem atualização há ≥ ${stallDays} dias (~5 dias úteis)`
+              : PAC_HELP_TOOLTIPS.alerts.stalled
           }
           loading={loading}
         />
@@ -38,6 +38,7 @@ export function DashboardStalledAlertCard({ alert, loading = false, onNavigate }
 
       <SectionCard
         title="Planos críticos parados"
+        hint={PAC_HELP_TOOLTIPS.alerts.stalled}
         subtitle="Severidade crítica sem atualização recente — exige acompanhamento da coordenação."
       >
         {loading ? (

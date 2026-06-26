@@ -8,6 +8,8 @@ import { StateAlert } from "../components/StateAlert";
 import { FilterBar } from "../components/ui/FilterBar";
 import { MultiSelectField } from "../components/ui/MultiSelectField";
 import { PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { FieldLabel, TitleWithHelp } from "../components/ui/HelpTooltip";
 import type { MyQueueItem, MyQueueSummary } from "../types/myQueue";
 
 type Props = {
@@ -76,6 +78,7 @@ export function MyQueuePage({ onNavigate }: Props) {
         <MultiSelectField
           id="pac-queue-branch"
           label="Filial"
+          hint={PAC_HELP_TOOLTIPS.filters.branch}
           options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
           selectedValues={branches}
           onChange={setBranches}
@@ -83,6 +86,9 @@ export function MyQueuePage({ onNavigate }: Props) {
           searchable={false}
         />
         <div className="pac-filter-box pac-filter-box--checkbox">
+          <span className="pac-field__label pac-field__label-row">
+            <FieldLabel label="Somente atrasadas" hint={PAC_HELP_TOOLTIPS.filters.overdueOnly} />
+          </span>
           <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-queue-overdue">
             <input
               id="pac-queue-overdue"
@@ -90,14 +96,16 @@ export function MyQueuePage({ onNavigate }: Props) {
               checked={overdueOnly}
               onChange={(event) => setOverdueOnly(event.target.checked)}
             />
-            <span>Somente atrasadas</span>
+            <span>Ativar filtro</span>
           </label>
         </div>
         </FilterBar>
 
         <section className="pac-card">
           <div className="pac-section-card__header pac-table-header">
-            <h2 className="pac-section-title">Suas ações</h2>
+            <h2 className="pac-section-title">
+              <TitleWithHelp title="Suas ações" hint={PAC_HELP_TOOLTIPS.sections.myQueue} />
+            </h2>
             <span className="pac-muted pac-table-header__count">
               {visibleItems.length} ação(ões)
             </span>

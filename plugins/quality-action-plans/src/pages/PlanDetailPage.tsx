@@ -51,6 +51,7 @@ import {
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type {
   ActionPlanDetail,
   PlanAuditLogEntry,
@@ -315,7 +316,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
       {plan ? (
         <div className="pac-detail-grid">
-          <SectionCard title="Problema">
+          <SectionCard title="Problema" hint={PAC_HELP_TOOLTIPS.sections.problem}>
             <StatusPipeline currentStatus={plan.status} />
             {isRnc8dTemplate && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
             <div className="pac-form-grid">
@@ -601,7 +602,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           <PlanTimeline detail={detail} />
 
           {auditLog.length > 0 ? (
-            <SectionCard title="Auditoria (governança)">
+            <SectionCard title="Auditoria (governança)" hint={PAC_HELP_TOOLTIPS.sections.audit}>
               <ol className="pac-timeline-track">
                 {auditLog.map((entry) => (
                   <li key={entry.id} className="pac-timeline-entry">
@@ -621,7 +622,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           ) : null}
 
           {!isRnc8dTemplate ? (
-            <SectionCard title="Template do relatório">
+            <SectionCard title="Template do relatório" hint={PAC_HELP_TOOLTIPS.sections.template}>
               <p className="pac-muted">
                 Ative o formulário 8D (materiais adquiridos) para preenchimento manual e exportação da planilha padrão do cliente.
               </p>
@@ -665,7 +666,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             onChanged={load}
           />
 
-          <SectionCard title="Ishikawa (6M)">
+          <SectionCard title="Ishikawa (6M)" hint={PAC_HELP_TOOLTIPS.sections.ishikawa}>
             <IshikawaFishboneDiagram
               problem={plan.reported_problem || plan.title}
               causes={ishikawaCausesForm}
@@ -684,7 +685,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             />
           </SectionCard>
 
-          <SectionCard title="4. Estudo de causa — Porquês">
+          <SectionCard title="4. Estudo de causa — Porquês" hint={PAC_HELP_TOOLTIPS.sections.fiveWhys}>
             <FiveWhysFlowPanel
               planId={planId}
               form={fiveWhysForm}
@@ -694,7 +695,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             />
           </SectionCard>
 
-          <SectionCard title="5. Ações corretivas e plano">
+          <SectionCard title="5. Ações corretivas e plano" hint={PAC_HELP_TOOLTIPS.sections.actions}>
             <PlanActionsPanel
               planId={planId}
               actions={detail.actions}
@@ -704,7 +705,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             />
           </SectionCard>
 
-          <SectionCard title="Eficácia">
+          <SectionCard title="Eficácia" hint={PAC_HELP_TOOLTIPS.sections.effectiveness}>
             {isEffectivenessPendingApproval ? (
               <div className="pac-state" style={{ marginBottom: "0.75rem" }}>
                 <strong>Aguardando aprovação do coordenador.</strong>

@@ -1,6 +1,7 @@
 import { Repeat } from "lucide-react";
 
 import { branchLabel, recurrencePath } from "../../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { DashboardRecurrenceAlert } from "../../types/actionPlan";
 import { KpiCard } from "../ui/KpiCard";
 import { SectionCard } from "../ui/SectionCard";
@@ -30,7 +31,7 @@ export function DashboardRecurrenceAlertCard({ alert, loading = false, onNavigat
           hint={
             loading
               ? undefined
-              : `${windowMonths} meses · ${alert?.plans_in_window ?? 0} planos · ${alert?.open_plans_in_recurrence ?? 0} abertos`
+              : PAC_HELP_TOOLTIPS.kpis.recurrence
           }
           loading={loading}
         />
@@ -38,6 +39,7 @@ export function DashboardRecurrenceAlertCard({ alert, loading = false, onNavigat
 
       <SectionCard
         title="Padrões recorrentes recentes"
+        hint={PAC_HELP_TOOLTIPS.alerts.recurrence}
         subtitle={`Mesmo produto + modo de falha com ≥ 2 aberturas nos últimos ${windowMonths} meses.`}
         actions={
           <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(recurrencePath())}>

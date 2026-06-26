@@ -18,6 +18,7 @@ import {
   type TimelineCategory,
   type TimelineFilter,
 } from "../utils/planTimeline";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SectionCard } from "./ui/SectionCard";
 
 type Props = {
@@ -72,6 +73,7 @@ export function PlanTimeline({ detail }: Props) {
   return (
     <SectionCard
       title="Linha do tempo"
+      hint={PAC_HELP_TOOLTIPS.sections.timeline}
       subtitle="Status, ações, evidências e eficácia em ordem cronológica."
     >
       <div className="pac-timeline-filters" role="tablist" aria-label="Filtrar linha do tempo">

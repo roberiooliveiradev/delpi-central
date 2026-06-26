@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { KpiTone } from "../../constants/dashboardKpis";
+import { TitleWithHelp } from "./HelpTooltip";
 
 type KpiCardProps = {
   label: string;
@@ -18,9 +19,10 @@ export function KpiCard({ label, value, tone = "default", icon, hint, loading = 
     <article className={`pac-card pac-kpi-card${toneClass}`}>
       <div className="pac-kpi-card__header">
         <div className="pac-kpi-card__content">
-          <p className="pac-kpi-card__label">{label}</p>
+          <p className="pac-kpi-card__label">
+            <TitleWithHelp title={label} hint={hint} />
+          </p>
           <p className="pac-kpi-card__value">{loading ? "…" : value}</p>
-          {hint ? <p className="pac-kpi-card__hint">{hint}</p> : null}
         </div>
         <div className="pac-kpi-card__icon" aria-hidden="true">
           {icon}

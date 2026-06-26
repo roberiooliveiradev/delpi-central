@@ -7,6 +7,7 @@ import { SolutionPatternsTable } from "../components/SolutionPatternsTable";
 import { StateAlert } from "../components/StateAlert";
 import { FilterBar } from "../components/ui/FilterBar";
 import { TextField } from "../components/ui/TextField";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { SolutionPattern } from "../types/solutionPattern";
 
 type Props = {
@@ -56,6 +57,7 @@ export function SolutionPatternsPage({ onNavigate }: Props) {
         <TextField
           id="pac-solutions-search"
           label="Busca"
+          hint={PAC_HELP_TOOLTIPS.sections.solutionPatterns}
           value={search}
           onChange={setSearch}
           placeholder="Título, categoria ou modo de falha"
@@ -63,12 +65,14 @@ export function SolutionPatternsPage({ onNavigate }: Props) {
         <TextField
           id="pac-solutions-category"
           label="Categoria"
+          hint={PAC_HELP_TOOLTIPS.charts.topCategories}
           value={problemCategory}
           onChange={setProblemCategory}
         />
         <TextField
           id="pac-solutions-failure"
           label="Modo de falha"
+          hint={PAC_HELP_TOOLTIPS.charts.topFailureModes}
           value={failureMode}
           onChange={setFailureMode}
         />

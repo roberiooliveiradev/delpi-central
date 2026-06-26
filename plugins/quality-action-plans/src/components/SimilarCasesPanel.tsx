@@ -5,6 +5,7 @@ import { StateAlert } from "./StateAlert";
 import { SectionCard } from "./ui/SectionCard";
 import type { PlanSimilarCasesResult } from "../types/similarCases";
 import { detailPath } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatDate } from "../utils/format";
 
 type Props = {
@@ -42,7 +43,7 @@ export function SimilarCasesPanel({ planId, onNavigate }: Props) {
   const recurrence = data?.recurrence_signals;
 
   return (
-    <SectionCard title="Casos similares">
+    <SectionCard title="Casos similares" hint={PAC_HELP_TOOLTIPS.sections.similarCases}>
       {loading ? <p className="pac-muted">Buscando histórico…</p> : null}
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {!loading && !error && cases.length === 0 ? (

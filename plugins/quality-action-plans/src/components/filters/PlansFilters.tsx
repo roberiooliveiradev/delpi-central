@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
 
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   PAC_BRANCH_OPTIONS,
   PAC_NONCONFORMITY_SCOPES,
@@ -8,6 +9,7 @@ import {
 } from "../../constants/actionPlans";
 import { EMPTY_PLANS_FILTERS, type PlansFilterState } from "../../utils/planFilters";
 import { FilterBar } from "../ui/FilterBar";
+import { FieldLabel } from "../ui/HelpTooltip";
 import { MultiSelectField } from "../ui/MultiSelectField";
 import { TextField } from "../ui/TextField";
 
@@ -64,6 +66,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <MultiSelectField
         id="pac-filter-scope"
         label="Escopo NC"
+        hint={PAC_HELP_TOOLTIPS.filters.scope}
         options={PAC_NONCONFORMITY_SCOPES.map((item) => ({ value: item.value, label: item.label }))}
         selectedValues={filters.scopes}
         onChange={(scopes) => patch({ scopes })}
@@ -73,6 +76,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <MultiSelectField
         id="pac-filter-status"
         label="Status"
+        hint={PAC_HELP_TOOLTIPS.filters.status}
         options={PLAN_STATUSES.map((item) => ({ value: item.value, label: item.label }))}
         selectedValues={filters.statuses}
         onChange={(statuses) => patch({ statuses })}
@@ -81,6 +85,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <MultiSelectField
         id="pac-filter-severity"
         label="Severidade"
+        hint={PAC_HELP_TOOLTIPS.filters.severity}
         options={PLAN_SEVERITIES.map((item) => ({ value: item.value, label: item.label }))}
         selectedValues={filters.severities}
         onChange={(severities) => patch({ severities })}
@@ -89,6 +94,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <MultiSelectField
         id="pac-filter-branch"
         label="Filial"
+        hint={PAC_HELP_TOOLTIPS.filters.branch}
         options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
         selectedValues={filters.branches}
         onChange={(branches) => patch({ branches })}
@@ -98,6 +104,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <TextField
         id="pac-filter-customer"
         label="Cliente"
+        hint={PAC_HELP_TOOLTIPS.filters.customer}
         value={filters.customerName}
         onChange={(customerName) => patch({ customerName })}
         placeholder="Filtrar por cliente"
@@ -106,6 +113,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <TextField
         id="pac-filter-product"
         label="Produto"
+        hint={PAC_HELP_TOOLTIPS.filters.product}
         value={filters.productCode}
         onChange={(productCode) => patch({ productCode })}
         placeholder="Código do produto"
@@ -114,6 +122,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <TextField
         id="pac-filter-owner"
         label="Responsável"
+        hint={PAC_HELP_TOOLTIPS.filters.owner}
         value={filters.ownerUserId}
         onChange={(ownerUserId) => patch({ ownerUserId })}
         placeholder="ID ou usuário responsável"
@@ -122,6 +131,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <TextField
         id="pac-filter-department"
         label="Departamento"
+        hint={PAC_HELP_TOOLTIPS.filters.department}
         value={filters.department}
         onChange={(department) => patch({ department })}
         placeholder="Ex.: Pintura, Montagem"
@@ -130,12 +140,16 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
       <TextField
         id="pac-filter-root-cause"
         label="Causa raiz"
+        hint={PAC_HELP_TOOLTIPS.filters.rootCause}
         value={filters.rootCauseCategory}
         onChange={(rootCauseCategory) => patch({ rootCauseCategory })}
         placeholder="Categoria ou texto da causa"
         type="search"
       />
       <div className="pac-filter-box pac-filter-box--checkbox">
+        <span className="pac-field__label pac-field__label-row">
+          <FieldLabel label="Somente com ações atrasadas" hint={PAC_HELP_TOOLTIPS.filters.overdueOnly} />
+        </span>
         <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-filter-overdue">
           <input
             id="pac-filter-overdue"
@@ -143,7 +157,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
             checked={filters.overdueOnly}
             onChange={(event) => patch({ overdueOnly: event.target.checked })}
           />
-          <span>Somente com ações atrasadas</span>
+          <span>Ativar filtro</span>
         </label>
       </div>
     </FilterBar>

@@ -1,11 +1,13 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { FieldLabel } from "./HelpTooltip";
 import type { SelectOption } from "./types";
 
 type MultiSelectFieldProps = {
   id?: string;
   label: string;
+  hint?: string;
   options: SelectOption[];
   selectedValues: string[];
   onChange: (values: string[]) => void;
@@ -30,6 +32,7 @@ function buildTriggerLabel(
 export function MultiSelectField({
   id,
   label,
+  hint,
   options,
   selectedValues,
   onChange,
@@ -85,7 +88,7 @@ export function MultiSelectField({
   return (
     <div className={`pac-field pac-field--multi${className ? ` ${className}` : ""}`} ref={wrapperRef}>
       <label className="pac-field__label" htmlFor={fieldId}>
-        {label}
+        <FieldLabel label={label} hint={hint} />
       </label>
       <div className={`pac-multi-select${open ? " pac-multi-select--open" : ""}`}>
         <button

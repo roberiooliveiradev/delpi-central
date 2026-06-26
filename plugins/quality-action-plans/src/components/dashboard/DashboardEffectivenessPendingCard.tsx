@@ -1,5 +1,6 @@
 import { ClipboardCheck } from "lucide-react";
 
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   branchLabel,
   detailPath,
@@ -44,7 +45,7 @@ export function DashboardEffectivenessPendingCard({
           hint={
             loading
               ? undefined
-              : "Planos aguardando validação da coordenação"
+              : PAC_HELP_TOOLTIPS.alerts.effectivenessPending
           }
           loading={loading}
         />
@@ -52,6 +53,7 @@ export function DashboardEffectivenessPendingCard({
 
       <SectionCard
         title="Fila de aprovação de eficácia"
+        hint={PAC_HELP_TOOLTIPS.alerts.effectivenessPending}
         subtitle="Submissões aguardando decisão — coordenação deve aprovar ou rejeitar."
         actions={
           pendingCount > 0 ? (

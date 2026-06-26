@@ -12,6 +12,7 @@ import {
   PAC_BRANCH_OPTIONS,
   PAC_NONCONFORMITY_SCOPES,
 } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RecurrenceGroup } from "../types/recurrence";
 
 type Props = {
@@ -77,6 +78,7 @@ export function RecurrencePage({ onNavigate }: Props) {
         <MultiSelectField
           id="pac-recurrence-branch"
           label="Filial"
+          hint={PAC_HELP_TOOLTIPS.filters.branch}
           options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
           selectedValues={branches}
           onChange={setBranches}
@@ -86,6 +88,7 @@ export function RecurrencePage({ onNavigate }: Props) {
         <SelectField
           id="pac-recurrence-scope"
           label="Escopo NC"
+          hint={PAC_HELP_TOOLTIPS.filters.scope}
           options={scopeOptions}
           value={scope}
           onChange={setScope}
@@ -94,6 +97,7 @@ export function RecurrencePage({ onNavigate }: Props) {
         <SelectField
           id="pac-recurrence-min"
           label="Mínimo de planos"
+          hint={PAC_HELP_TOOLTIPS.sections.recurrencePanel}
           options={MIN_PLANS_OPTIONS}
           value={minPlans}
           onChange={setMinPlans}

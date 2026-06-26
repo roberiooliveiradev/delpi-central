@@ -9,6 +9,7 @@ import {
 } from "../api/actionPlansApi";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
+import { FieldLabel } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
@@ -17,6 +18,7 @@ import {
   ACTION_TYPES,
   actionTypeLabel,
 } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDate } from "../utils/format";
@@ -236,6 +238,7 @@ export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }:
           <SelectField
             id="pac-action-type"
             label="Tipo"
+            hint={PAC_HELP_TOOLTIPS.form.actionType}
             options={typeOptions}
             value={form.actionType}
             onChange={(actionType) => setForm((current) => ({ ...current, actionType }))}
@@ -244,6 +247,7 @@ export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }:
           <SelectField
             id="pac-action-track"
             label="Ocorrência / Detecção"
+            hint={PAC_HELP_TOOLTIPS.form.actionTrack}
             options={CAUSE_TRACK_OPTIONS}
             value={form.causeTrack}
             onChange={(causeTrack) => setForm((current) => ({ ...current, causeTrack }))}
@@ -289,7 +293,12 @@ export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }:
               setForm((current) => ({ ...current, evidenceRequired: event.target.checked }))
             }
           />
-          <span>Exigir evidência anexada para concluir esta ação</span>
+          <span className="pac-field__label-row">
+            <FieldLabel
+              label="Exigir evidência anexada para concluir esta ação"
+              hint={PAC_HELP_TOOLTIPS.form.actionEvidence}
+            />
+          </span>
         </label>
 
         <FormActions>

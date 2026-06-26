@@ -18,6 +18,7 @@ export function DashboardKpis({ summary, loading = false }: Props) {
             label={kpi.label}
             value={summary[kpi.key]}
             tone={kpi.tone}
+            hint={kpi.hint}
             loading={loading}
             icon={<Icon size={22} strokeWidth={1.75} />}
           />

@@ -11,6 +11,7 @@ import {
 
 import { CheckCircle2 } from "lucide-react";
 
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { CHART_HEIGHT } from "../../constants/chartColors";
 import {
   CHART_AXIS_TICK,
@@ -82,7 +83,7 @@ export function DashboardEffectivenessCharts({ effectiveness, loading = false }:
 
       <ChartCard
         title="Eficácia por tipo de ação"
-        hint={`% de planos eficazes entre os revisados com cada tipo de ação (${windowMonths} meses).`}
+        hint={`${PAC_HELP_TOOLTIPS.charts.effectivenessByAction} (${windowMonths} meses).`}
       >
         {loading ? (
           <div className="pac-state-box">Carregando taxas de eficácia…</div>

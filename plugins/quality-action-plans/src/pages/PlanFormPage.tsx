@@ -18,6 +18,7 @@ import {
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { emptyPlanFormValues, formValuesToPayload, type PlanFormValues } from "../types/planForm";
 import { emptyRnc8dPayload } from "../types/rnc8d";
 
@@ -87,7 +88,7 @@ export function PlanFormPage({ onNavigate }: Props) {
       <form className="pac-form" onSubmit={(event) => void handleSubmit(event)}>
         {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 
-        <SectionCard title="Identificação">
+        <SectionCard title="Identificação" hint={PAC_HELP_TOOLTIPS.form.identification}>
           <div className="pac-form-grid">
             <TextField
               id="pac-title"
@@ -100,6 +101,7 @@ export function PlanFormPage({ onNavigate }: Props) {
             <SelectField
               id="pac-branch"
               label="Filial"
+              hint={PAC_HELP_TOOLTIPS.filters.branch}
               options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
               value={values.branch_code}
               onChange={(branch_code) => updateField("branch_code", branch_code)}
@@ -109,6 +111,7 @@ export function PlanFormPage({ onNavigate }: Props) {
             <SelectField
               id="pac-scope"
               label="Escopo da não conformidade"
+              hint={PAC_HELP_TOOLTIPS.filters.scope}
               options={PAC_NONCONFORMITY_SCOPES.map((item) => ({ value: item.value, label: item.label }))}
               value={values.nonconformity_scope}
               onChange={(nonconformity_scope) =>
@@ -124,6 +127,7 @@ export function PlanFormPage({ onNavigate }: Props) {
             <SelectField
               id="pac-severity"
               label="Severidade"
+              hint={PAC_HELP_TOOLTIPS.filters.severity}
               options={PLAN_SEVERITIES.map((item) => ({ value: item.value, label: item.label }))}
               value={values.severity}
               onChange={(severity) => updateField("severity", severity)}
@@ -160,11 +164,12 @@ export function PlanFormPage({ onNavigate }: Props) {
           </div>
         </SectionCard>
 
-        <SectionCard title="Origem do relato">
+        <SectionCard title="Origem do relato" hint={PAC_HELP_TOOLTIPS.form.source}>
           <div className="pac-form-grid">
             <SelectField
               id="pac-source-type"
               label="Canal (source_type)"
+              hint={PAC_HELP_TOOLTIPS.form.source}
               options={[{ value: "", label: "Não informado" }, ...PAC_SOURCE_TYPES.map((item) => ({ value: item.value, label: item.label }))]}
               value={values.source_type}
               onChange={(source_type) => updateField("source_type", source_type)}
@@ -181,7 +186,7 @@ export function PlanFormPage({ onNavigate }: Props) {
           </div>
         </SectionCard>
 
-        <SectionCard title="Contexto">
+        <SectionCard title="Contexto" hint={PAC_HELP_TOOLTIPS.form.context}>
           <div className="pac-form-grid">
             <TextField
               id="pac-customer"
@@ -230,10 +235,11 @@ export function PlanFormPage({ onNavigate }: Props) {
           </div>
         </SectionCard>
 
-        <SectionCard title="Descrição do problema">
+        <SectionCard title="Descrição do problema" hint={PAC_HELP_TOOLTIPS.form.description}>
           <TextAreaField
             id="pac-problem"
             label="Relato do problema"
+            hint={PAC_HELP_TOOLTIPS.form.description}
             value={values.reported_problem}
             onChange={(reported_problem) => updateField("reported_problem", reported_problem)}
             fullWidth

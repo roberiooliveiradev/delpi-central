@@ -1,6 +1,9 @@
+import { FieldLabel } from "./HelpTooltip";
+
 type TextAreaFieldProps = {
   id?: string;
   label: string;
+  hint?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -14,6 +17,7 @@ type TextAreaFieldProps = {
 export function TextAreaField({
   id,
   label,
+  hint,
   value,
   onChange,
   placeholder,
@@ -34,7 +38,7 @@ export function TextAreaField({
   return (
     <div className={fieldClass}>
       <label className="pac-field__label" htmlFor={id}>
-        {label}
+        <FieldLabel label={label} hint={hint} />
         {required ? <span className="pac-field__required"> *</span> : null}
       </label>
       <textarea

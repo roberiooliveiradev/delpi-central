@@ -15,6 +15,7 @@ import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { SelectField } from "../components/ui/SelectField";
 import { FilterBar } from "../components/ui/FilterBar";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { listPath, overduePath, recurrencePath, PAC_BRANCH_OPTIONS, PAC_NONCONFORMITY_SCOPES } from "../constants/actionPlans";
 import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
 
@@ -90,6 +91,7 @@ export function DashboardPage({ onNavigate }: Props) {
         <SelectField
           id="pac-dashboard-branch"
           label="Filial"
+          hint={PAC_HELP_TOOLTIPS.filters.branch}
           options={branchOptions}
           value={branchCode}
           onChange={setBranchCode}
@@ -98,6 +100,7 @@ export function DashboardPage({ onNavigate }: Props) {
         <SelectField
           id="pac-dashboard-scope"
           label="Escopo NC"
+          hint={PAC_HELP_TOOLTIPS.filters.scope}
           options={scopeOptions}
           value={scope}
           onChange={setScope}

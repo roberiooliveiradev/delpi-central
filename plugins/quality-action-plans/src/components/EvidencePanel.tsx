@@ -9,6 +9,7 @@ import {
 import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDateTime } from "../utils/format";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { StateAlert } from "./StateAlert";
 import { SectionCard } from "./ui/SectionCard";
 import { SelectField } from "./ui/SelectField";
@@ -106,6 +107,7 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
   return (
     <SectionCard
       title="Banco de conhecimento e evidências"
+      hint={PAC_HELP_TOOLTIPS.sections.evidences}
       subtitle="Anexe prints, PDFs, planilhas e documentos do processo. Visível para o analista e para o agente GPT."
     >
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}

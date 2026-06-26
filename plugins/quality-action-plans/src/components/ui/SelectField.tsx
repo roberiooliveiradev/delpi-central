@@ -1,11 +1,13 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { FieldLabel } from "./HelpTooltip";
 import type { SelectOption } from "./types";
 
 type SelectFieldProps = {
   id?: string;
   label: string;
+  hint?: string;
   options: SelectOption[];
   value: string;
   onChange: (value: string) => void;
@@ -21,6 +23,7 @@ type SelectFieldProps = {
 export function SelectField({
   id,
   label,
+  hint,
   options,
   value,
   onChange,
@@ -65,7 +68,7 @@ export function SelectField({
   return (
     <div className={`pac-field${className ? ` ${className}` : ""}`} ref={wrapperRef}>
       <label className="pac-field__label" htmlFor={fieldId}>
-        {label}
+        <FieldLabel label={label} hint={hint} />
         {required ? <span className="pac-field__required"> *</span> : null}
       </label>
       <div className={`pac-select${open ? " pac-select--open" : ""}`}>
