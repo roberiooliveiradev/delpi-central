@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { SUPPLIES_ROUTES } from "../constants/routes";
 import type { SuppliesFilterUrlState } from "../utils/filterUrl";
 import { SuppliesFilters } from "./SuppliesFilters";
@@ -22,6 +23,7 @@ type FilterBarProps = {
   onLocationChange: (value: string) => void;
   onRefresh: () => void;
   refreshing?: boolean;
+  exportActions?: ReactNode;
 };
 
 export function FilterBar({
@@ -43,6 +45,7 @@ export function FilterBar({
   onLocationChange,
   onRefresh,
   refreshing = false,
+  exportActions,
 }: FilterBarProps) {
   return (
     <>
@@ -53,6 +56,11 @@ export function FilterBar({
         filterState={filterState}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        actions={
+          exportActions ? (
+            <div className="ds-header-action ds-no-print">{exportActions}</div>
+          ) : undefined
+        }
       />
       <SuppliesFilters
         competence={competence}

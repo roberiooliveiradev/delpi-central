@@ -28,6 +28,10 @@ import {
   formatInteger,
 } from "../utils/format";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  SuppliesExportButtons,
+  buildDashboardExportContext,
+} from "../export";
 
 const SHORTCUTS = [
   {
@@ -97,6 +101,80 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     inventoryTurnover !== null ||
     negotiationSavings !== null;
 
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: "CPV total",
+        valor: formatCurrency(cpv?.summary.cpv_total),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "CPV / ROL",
+        valor: formatDashboardMetricValue(
+          cpv?.summary.cpv_percentage,
+          cpv?.summary,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "OTD compras",
+        valor: formatDashboardMetricValue(
+          otd?.summary.otd_percentage,
+          otd?.summary,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Valor de estoque",
+        valor: formatDashboardMetricValue(
+          stockValue?.summary.total_stock_value,
+          stockValue?.summary,
+        ),
+        contexto: `${branchLabel} · ${locationLabel}`,
+      },
+      {
+        indicador: "Giro de estoque",
+        valor: formatDashboardMetricValue(
+          inventoryTurnover?.summary.inventory_turnover_times,
+          inventoryTurnover?.summary,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Economia em negociações",
+        valor: formatDashboardMetricValue(
+          negotiationSavings?.summary.total_savings ??
+            negotiationSavings?.total_savings,
+          negotiationSavings?.summary,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+    ],
+    [
+      branchLabel,
+      cpv?.summary,
+      inventoryTurnover?.summary,
+      locationLabel,
+      negotiationSavings,
+      otd?.summary,
+      periodLabel,
+      stockValue?.summary,
+    ],
+  );
+
+  const dashboardExportContext = useMemo(
+    () =>
+      buildDashboardExportContext(
+        {
+          documentTitle: "dashboard-suprimentos",
+          periodLabel,
+          scopeLabel: `${branchLabel} · ${locationLabel}`,
+        },
+        kpiExportRows,
+      ),
+    [branchLabel, kpiExportRows, locationLabel, periodLabel],
+  );
+
   return (
     <div className="dashboard-supplies dashboard-page">
       <FilterBar
@@ -114,6 +192,13 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         onLocationChange={setLocation}
         onRefresh={reload}
         refreshing={refreshing}
+        exportActions={
+          <SuppliesExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={loading && !hasData}
+          />
+        }
       />
       <DataSourceBanner />
       <SuppliesStatusAlerts

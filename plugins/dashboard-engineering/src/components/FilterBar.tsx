@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import type { EngineeringFilterUrlState } from "../utils/filterUrl";
 import { EngineeringFilters } from "./EngineeringFilters";
@@ -18,6 +19,7 @@ type FilterBarProps = {
   onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
+  exportActions?: ReactNode;
 };
 
 export function FilterBar({
@@ -35,6 +37,7 @@ export function FilterBar({
   onBranchesChange,
   onRefresh,
   refreshing = false,
+  exportActions,
 }: FilterBarProps) {
   return (
     <>
@@ -45,6 +48,11 @@ export function FilterBar({
         filterState={filterState}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        actions={
+          exportActions ? (
+            <div className="ds-header-action ds-no-print">{exportActions}</div>
+          ) : undefined
+        }
       />
       <EngineeringFilters
         competence={competence}

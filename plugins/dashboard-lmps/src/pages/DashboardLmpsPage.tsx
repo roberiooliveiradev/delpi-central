@@ -39,7 +39,11 @@ import {
   formatPeriodLabel,
 } from "../utils/dates";
 import { formatGoalSubtitle } from "../utils/goalDisplay";
-import { exportLmpsDashboardCsv } from "../utils/exportLmpsCsv";
+import {
+  LmpsExportButtons,
+  buildDashboardExportContext,
+} from "../export";
+import { buildLmpsTableExportPayload } from "../export/lmpsDashboardSheets";
 import {
   buildLmpDashboardRowKey,
   formatCycleIndex,
@@ -425,12 +429,50 @@ export function DashboardLmpsPage({
     displaySummary?.total_lmps ??
     (usesClientFilter ? filteredItems.length : itemsTotal || dashboardItems.length);
 
-  const handleExportCsv = useCallback(() => {
-    exportLmpsDashboardCsv(filteredItems, {
-      dateStart: dateStart || undefined,
-      dateEnd: dateEnd || undefined,
-    });
-  }, [filteredItems, dateStart, dateEnd]);
+  const scopeLabel =
+    branches.length === 0
+      ? "Todas as unidades"
+      : branches.map((branch) => formatOperationalUnitCode(branch)).join(", ");
+
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: "% LMP Dentro do Prazo",
+        valor: `${(displaySummary?.percent_dentro_prazo ?? 0).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}%`,
+        contexto: periodLabel,
+      },
+      {
+        indicador: "Total de Propostas",
+        valor: String(totalPropostas),
+        contexto: periodLabel,
+      },
+      {
+        indicador: "Média Lead Time Útil",
+        valor: String(displaySummary?.avg_lead_time ?? "—"),
+        contexto: periodLabel,
+      },
+    ],
+    [displaySummary, periodLabel, totalPropostas],
+  );
+
+  const dashboardExportContext = useMemo(
+    () =>
+      buildDashboardExportContext(
+        {
+          documentTitle: "dashboard-lmps",
+          periodLabel,
+          scopeLabel,
+        },
+        kpiExportRows,
+        filteredItems.length > 0
+          ? [buildLmpsTableExportPayload(filteredItems)]
+          : [],
+      ),
+    [filteredItems, kpiExportRows, periodLabel, scopeLabel],
+  );
 
   return (
     <main className="dashboard-lmps dashboard-page">
@@ -448,8 +490,13 @@ export function DashboardLmpsPage({
         onListingTypesChange={setListingTypes}
         onStatusesChange={setStatuses}
         onRefresh={reload}
-        onExport={handleExportCsv}
-        exportDisabled={filteredItems.length === 0 || loading}
+        exportActions={
+          <LmpsExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={(loading && !hasData) || filteredItems.length === 0}
+          />
+        }
         disabled={loading}
       />
 

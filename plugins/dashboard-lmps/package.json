@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "xlsx": "^0.18.5",
     "@originjs/vite-plugin-federation": "^1.4.1",
     "lucide-react": "^0.576.0",
     "react": "^19.2.0",

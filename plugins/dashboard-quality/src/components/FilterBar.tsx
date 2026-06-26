@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { QualityFilters } from "./QualityFilters";
 import { QualityPageHeader } from "./QualityPageHeader";
 import { QUALITY_ROUTES } from "../constants/routes";
@@ -19,6 +20,7 @@ type FilterBarProps = {
   onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
+  exportActions?: ReactNode;
 };
 
 export function FilterBar({
@@ -37,6 +39,7 @@ export function FilterBar({
   onBranchesChange,
   onRefresh,
   refreshing = false,
+  exportActions,
 }: FilterBarProps) {
   return (
     <>
@@ -48,6 +51,11 @@ export function FilterBar({
         printDisabled={printDisabled}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        actions={
+          exportActions ? (
+            <div className="dq-header-action dq-no-print">{exportActions}</div>
+          ) : undefined
+        }
       />
       <QualityFilters
         className="dq-no-print"

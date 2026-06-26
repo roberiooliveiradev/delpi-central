@@ -40,8 +40,14 @@ import {
   buildHrSatisfactionIddSlices,
 } from "../utils/hrBranchIdd";
 import { resolveApiBranch } from "../utils/branchClientFilters";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { averageNullable, formatDecimal, formatPercent, sumNullable } from "../utils/format";
 import { HR_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  HrExportButtons,
+  buildDashboardExportContext,
+} from "../export";
+import { buildHrBranchesExportPayload } from "../export/hrDashboardSheets";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 
 const CHART_HEIGHT = 280;
@@ -93,6 +99,7 @@ export function DashboardHrPage() {
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
+  const branchLabel = formatBranchFilterLabel(branches);
 
   const isBusy = loading || refreshing;
   const hasData = snapshot !== null;
@@ -262,6 +269,67 @@ export function DashboardHrPage() {
     []
   );
 
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: "Absenteísmo",
+        valor: formatPercent(absenteeism),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Turnover",
+        valor: formatPercent(turnover),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Satisfação interna",
+        valor: formatPercent(satisfaction),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "PDIs ativos",
+        valor: formatDecimal(activePdiCount, 0),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Avaliações concluídas",
+        valor: formatPercent(performanceReviewsCompletion),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Horas de treinamento / colaborador",
+        valor: formatDecimal(trainingHours, 2),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+    ],
+    [
+      absenteeism,
+      activePdiCount,
+      branchLabel,
+      performanceReviewsCompletion,
+      periodLabel,
+      satisfaction,
+      trainingHours,
+      turnover,
+    ],
+  );
+
+  const dashboardExportContext = useMemo(
+    () =>
+      buildDashboardExportContext(
+        {
+          documentTitle: "dashboard-rh",
+          periodLabel,
+          scopeLabel: branchLabel,
+        },
+        kpiExportRows,
+        branchTableRows.length > 0
+          ? [buildHrBranchesExportPayload(branchTableRows)]
+          : [],
+      ),
+    [branchLabel, branchTableRows, kpiExportRows, periodLabel],
+  );
+
   return (
     <div className="dashboard-hr dashboard-page">
       <FilterBar
@@ -276,6 +344,13 @@ export function DashboardHrPage() {
         onDateEndChange={setDateEnd}
         onRefresh={reload}
         refreshing={refreshing}
+        exportActions={
+          <HrExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={loading && !hasData}
+          />
+        }
       />
 
       <DataSourceBanner />

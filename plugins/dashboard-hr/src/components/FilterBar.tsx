@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { HrFilters } from "./HrFilters";
 import { HrPageHeader } from "./HrPageHeader";
 
@@ -16,6 +17,7 @@ type FilterBarProps = {
   onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
+  exportActions?: ReactNode;
 };
 
 export function FilterBar({
@@ -33,6 +35,7 @@ export function FilterBar({
   onBranchesChange,
   onRefresh,
   refreshing = false,
+  exportActions,
 }: FilterBarProps) {
   return (
     <>
@@ -42,6 +45,11 @@ export function FilterBar({
         iddFilters={{ competence, dateStart, dateEnd, branches }}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        actions={
+          exportActions ? (
+            <div className="dh-header-action dh-no-print">{exportActions}</div>
+          ) : undefined
+        }
       />
       <HrFilters
         competence={competence}

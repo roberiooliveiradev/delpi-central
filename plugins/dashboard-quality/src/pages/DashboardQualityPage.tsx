@@ -14,6 +14,15 @@ import { PpmSparkline } from "../components/PpmSparkline";
 import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { CHART_COLORS } from "../constants/chartColors";
+import {
+  QualityExportButtons,
+  buildDashboardExportContext,
+} from "../export";
+import {
+  buildPpmSeriesExportPayload,
+  formatQualityKpiValue,
+  formatQualityPercentKpi,
+} from "../export/qualityDashboardSheets";
 import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
@@ -27,6 +36,7 @@ import { resolveApiBranch } from "../utils/branchClientFilters";
 import {
   formatDecimal,
 } from "../utils/format";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatPeriodLabel } from "../utils/dates";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -110,11 +120,71 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     [dateStart, dateEnd]
   );
   const activeApiBranch = resolveApiBranch(selectedBranches);
+  const branchLabel = formatBranchFilterLabel(selectedBranches);
 
   const isBusy = loading || refreshing;
   const hasData = ppmInternal !== null;
   const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
+
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: "PPM interno",
+        valor: formatQualityKpiValue(ppmInternal?.ppm),
+        contexto: `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "PPM externo",
+        valor: formatQualityKpiValue(ppmExternal?.ppm),
+        contexto: `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Kaizens",
+        valor: formatQualityKpiValue(kaizen?.total_kaizens, (v) => String(Math.round(v))),
+        contexto: `Economia: ${formatDecimal(kaizen?.total_savings)} · ${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Auditoria 5S",
+        valor: formatQualityPercentKpi(audit5s?.average_score),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+    ],
+    [
+      audit5s?.average_score,
+      branchLabel,
+      kaizen?.total_kaizens,
+      kaizen?.total_savings,
+      periodLabel,
+      ppmExternal?.ppm,
+      ppmExternal?.total_devolvido_un,
+      ppmInternal?.ppm,
+      ppmInternal?.total_devolvido_un,
+    ],
+  );
+
+  const dashboardExportContext = useMemo(
+    () =>
+      buildDashboardExportContext(
+        {
+          documentTitle: "dashboard-qualidade",
+          periodLabel,
+          scopeLabel: branchLabel,
+        },
+        kpiExportRows,
+        [
+          buildPpmSeriesExportPayload("PPM interno — série", internalSparkline.points),
+          buildPpmSeriesExportPayload("PPM externo — série", externalSparkline.points),
+        ],
+      ),
+    [
+      branchLabel,
+      externalSparkline.points,
+      internalSparkline.points,
+      kpiExportRows,
+      periodLabel,
+    ],
+  );
 
   return (
     <div className="dashboard-quality dashboard-page dq-print-root">
@@ -134,6 +204,13 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
+        exportActions={
+          <QualityExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={loading && !hasData}
+          />
+        }
       />
 
       {error ? (

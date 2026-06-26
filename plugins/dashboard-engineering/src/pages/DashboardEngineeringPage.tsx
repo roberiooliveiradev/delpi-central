@@ -22,6 +22,10 @@ import {
   formatPercent,
 } from "../utils/format";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  EngineeringExportButtons,
+  buildDashboardExportContext,
+} from "../export";
 
 const SHORTCUTS = [
   {
@@ -76,6 +80,63 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
   const isBusy = loading || refreshing;
   const hasData = transforma !== null || lmpSummary !== null;
 
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: "% LMP dentro do prazo",
+        valor: formatDashboardMetricValue(
+          lmpSummary?.percent_dentro_prazo,
+          lmpSummary,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Lead time médio (dias úteis)",
+        valor: formatDecimal(lmpSummary?.avg_lead_time, 2),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Total de propostas",
+        valor: formatInteger(
+          lmpSummary?.total_items ?? lmpSummary?.total_lmps,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Ganhos brutos TRANSFORMA+",
+        valor: formatDashboardMetricValue(
+          transforma?.total_gross_savings_in_period,
+          transforma,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Soluções implementadas",
+        valor: formatInteger(transforma?.implemented_solutions_count),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "ROI médio TRANSFORMA+",
+        valor: formatPercent(transforma?.average_roi, 1),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+    ],
+    [branchLabel, lmpSummary, periodLabel, transforma],
+  );
+
+  const dashboardExportContext = useMemo(
+    () =>
+      buildDashboardExportContext(
+        {
+          documentTitle: "dashboard-engenharia",
+          periodLabel,
+          scopeLabel: branchLabel,
+        },
+        kpiExportRows,
+      ),
+    [branchLabel, kpiExportRows, periodLabel],
+  );
+
   return (
     <div className="dashboard-engineering dashboard-page">
       <FilterBar
@@ -92,6 +153,13 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
+        exportActions={
+          <EngineeringExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={loading && !hasData}
+          />
+        }
       />
       <DataSourceBanner variant="all" />
       <EngineeringStatusAlerts

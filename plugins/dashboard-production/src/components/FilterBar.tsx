@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ProductionFilters } from "./ProductionFilters";
 import { ProductionPageHeader } from "./ProductionPageHeader";
 import { PRODUCTION_ROUTES } from "../constants/routes";
@@ -12,6 +13,7 @@ type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
   branches: string[];
+  exportActions?: ReactNode;
   onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
@@ -29,6 +31,7 @@ export function FilterBar({
   dateStart,
   dateEnd,
   branches,
+  exportActions,
   onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
@@ -45,6 +48,11 @@ export function FilterBar({
         filterState={filterState}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        actions={
+          exportActions ? (
+            <div className="dp-header-action dp-no-print">{exportActions}</div>
+          ) : undefined
+        }
       />
       <ProductionFilters
         competence={competence}

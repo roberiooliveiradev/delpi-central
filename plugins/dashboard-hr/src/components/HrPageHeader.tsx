@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ListFilter, Users } from "lucide-react";
 
 import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
@@ -10,6 +11,7 @@ type HrPageHeaderProps = {
   iddFilters?: DepartmentIddFilterInput;
   onRefresh?: () => void;
   refreshing?: boolean;
+  actions?: ReactNode;
 };
 
 export function HrPageHeader({
@@ -18,6 +20,7 @@ export function HrPageHeader({
   iddFilters,
   onRefresh,
   refreshing = false,
+  actions,
 }: HrPageHeaderProps) {
   return (
     <header className="dh-page-header">
@@ -43,6 +46,7 @@ export function HrPageHeader({
 
       {onRefresh ? (
         <div className="dh-header-actions">
+          {actions}
           <button
             className="dh-primary-btn"
             type="button"

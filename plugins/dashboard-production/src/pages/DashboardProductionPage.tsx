@@ -20,6 +20,14 @@ import {
 
 import { PRODUCTION_ROUTES } from "../constants/routes";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  ProductionExportButtons,
+  buildDashboardExportContext,
+} from "../export";
+import {
+  buildOeeSeriesExportPayload,
+  buildOtdSeriesExportPayload,
+} from "../export/productionDashboardSheets";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
@@ -194,6 +202,80 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
     downloadOtdSeriesCsv("otd-evolucao.csv", otdSeries.points);
   }, [otdSeries.points]);
 
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: "MO direta / ROL",
+        valor: formatDashboardMetricValue(
+          directLabor?.direct_labor_cost_pct,
+          directLabor,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Custo de produção / ROL",
+        valor: formatDashboardMetricValue(
+          productionCost?.production_cost_pct,
+          productionCost,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Depreciação / ROL",
+        valor: formatDashboardMetricValue(
+          depreciation?.depreciation_pct,
+          depreciation,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "OEE",
+        valor: formatDashboardMetricValue(
+          oee?.overall_equipment_effectiveness_pct,
+          oee,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "OTD — entrega no prazo",
+        valor: formatDashboardMetricValue(otd?.on_time_delivery_pct, otd),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+    ],
+    [
+      branchLabel,
+      depreciation,
+      directLabor,
+      oee,
+      otd,
+      periodLabel,
+      productionCost,
+    ],
+  );
+
+  const dashboardExportContext = useMemo(
+    () =>
+      buildDashboardExportContext(
+        {
+          documentTitle: "dashboard-producao",
+          periodLabel,
+          scopeLabel: branchLabel,
+        },
+        kpiExportRows,
+        [
+          buildOeeSeriesExportPayload(oeeSeries.points),
+          buildOtdSeriesExportPayload(otdSeries.points),
+        ],
+      ),
+    [
+      branchLabel,
+      kpiExportRows,
+      oeeSeries.points,
+      otdSeries.points,
+      periodLabel,
+    ],
+  );
+
   return (
     <div className="dashboard-production dashboard-page">
       <FilterBar
@@ -209,6 +291,13 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         onBranchesChange={setBranches}
         onRefresh={refreshAll}
         refreshing={refreshing}
+        exportActions={
+          <ProductionExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={loading && !hasData}
+          />
+        }
       />
 
       <DataSourceBanner />

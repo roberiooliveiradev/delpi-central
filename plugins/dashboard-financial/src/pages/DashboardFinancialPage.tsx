@@ -32,6 +32,11 @@ import {
   formatPercent,
 } from "../utils/format";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  FinancialExportButtons,
+  buildDashboardExportContext,
+} from "../export";
+import { buildPercentIndicatorsExportPayload } from "../export/financialDashboardSheets";
 
 const SHORTCUTS = [
   {
@@ -107,6 +112,60 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
 
   const hasChartValues = comparisonChartData.some((item) => item.value > 0);
 
+  const kpiExportRows = useMemo(
+    () => [
+      {
+        indicador: "ROL (com IPI)",
+        valor: formatCurrency(rol?.rol_with_ipi),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "EBITDA / ROL",
+        valor: formatDashboardMetricValue(
+          ebitda?.ebitda_over_rol_pct,
+          ebitda,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "Custos fixos / ROL",
+        valor: formatDashboardMetricValue(
+          fixedCost?.fixed_cost_over_rol_pct,
+          fixedCost,
+        ),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+      {
+        indicador: "PMR (dias)",
+        valor: formatDashboardMetricValue(pmr?.pmr_days, pmr),
+        contexto: `${branchLabel} · ${periodLabel}`,
+      },
+    ],
+    [branchLabel, ebitda, fixedCost, periodLabel, pmr, rol],
+  );
+
+  const dashboardExportContext = useMemo(
+    () =>
+      buildDashboardExportContext(
+        {
+          documentTitle: "dashboard-financeiro",
+          periodLabel,
+          scopeLabel: branchLabel,
+        },
+        kpiExportRows,
+        hasChartValues
+          ? [buildPercentIndicatorsExportPayload(comparisonChartData)]
+          : [],
+      ),
+    [
+      branchLabel,
+      comparisonChartData,
+      hasChartValues,
+      kpiExportRows,
+      periodLabel,
+    ],
+  );
+
   return (
     <div className="dashboard-financial dashboard-page">
       <FilterBar
@@ -122,6 +181,13 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
+        exportActions={
+          <FinancialExportButtons
+            variant="dashboard"
+            context={dashboardExportContext}
+            disabled={loading && !hasData}
+          />
+        }
       />
       <DataSourceBanner />
       <FinancialStatusAlerts

@@ -1,4 +1,5 @@
-import { Download, ListFilter } from "lucide-react";
+import type { ReactNode } from "react";
+import { ListFilter } from "lucide-react";
 
 import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -26,8 +27,7 @@ type FilterBarProps = {
   onListingTypesChange: (value: string[]) => void;
   onStatusesChange: (value: string[]) => void;
   onRefresh: () => void;
-  onExport?: () => void;
-  exportDisabled?: boolean;
+  exportActions?: ReactNode;
   disabled?: boolean;
 };
 
@@ -45,8 +45,7 @@ export function FilterBar({
   onListingTypesChange,
   onStatusesChange,
   onRefresh,
-  onExport,
-  exportDisabled = false,
+  exportActions,
   disabled = false,
 }: FilterBarProps) {
   return (
@@ -73,23 +72,8 @@ export function FilterBar({
         </div>
 
         <div className="lmps-header-actions">
-          {onExport ? (
-            <div className="lmps-header-action">
-              <button
-                className="lmps-ghost-btn"
-                type="button"
-                onClick={onExport}
-                disabled={exportDisabled}
-              >
-                <Download size={16} />
-                Exportar CSV
-              </button>
-              <HelpTooltip
-                content={LMPS_HELP_TOOLTIPS.actions.exportCsv}
-                ariaLabel="Ajuda: exportar CSV"
-                className="lmps-header-action__help"
-              />
-            </div>
+          {exportActions ? (
+            <div className="lmps-header-action lmps-no-print">{exportActions}</div>
           ) : null}
           <div className="lmps-header-action">
             <button className="lmps-primary-btn" type="button" onClick={onRefresh}>

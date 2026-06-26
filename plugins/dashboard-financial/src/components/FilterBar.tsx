@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { FINANCIAL_ROUTES } from "../constants/routes";
 import type { FinancialFilterUrlState } from "../utils/filterUrl";
 import { FinancialFilters } from "./FinancialFilters";
@@ -19,6 +20,7 @@ type FilterBarProps = {
   onBranchesChange: (values: string[]) => void;
   onRefresh: () => void;
   refreshing?: boolean;
+  exportActions?: ReactNode;
 };
 
 export function FilterBar({
@@ -37,6 +39,7 @@ export function FilterBar({
   onBranchesChange,
   onRefresh,
   refreshing = false,
+  exportActions,
 }: FilterBarProps) {
   return (
     <>
@@ -47,6 +50,11 @@ export function FilterBar({
         filterState={filterState}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        actions={
+          exportActions ? (
+            <div className="ds-header-action ds-no-print">{exportActions}</div>
+          ) : undefined
+        }
       />
       <FinancialFilters
         competence={competence}

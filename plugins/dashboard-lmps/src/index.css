@@ -2322,3 +2322,30 @@
   text-overflow: ellipsis;
 }
 
+/* export tabular — sincronizado com dashboard-commercial */
+.dashboard-lmps .lmps-export-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dashboard-lmps .lmps-export-actions--compact .lmps-export-actions__btn {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.8125rem;
+}
+
+.dashboard-lmps .lmps-export-actions__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-lmps .lmps-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
