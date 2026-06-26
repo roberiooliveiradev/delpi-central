@@ -96,11 +96,10 @@
   padding: 0 4px;
 }
 
-/* Layout compacto: células estreitas (tabela, cards da árvore, painéis) */
+/* Layout compacto: células estreitas (tabela, painéis) */
 .si-scope-badges--compact,
 .si-indicator-card__goal-value .si-scope-badges,
 .si-indicator-table__metrics .si-scope-badges,
-.si-tree-indicator-card__goals .si-scope-badges,
 .si-critical-item__metrics .si-scope-badges,
 .si-indicator-priority-item__meta .si-scope-badges {
   display: flex;
@@ -113,7 +112,6 @@
 .si-scope-badges--compact .si-scope-badge,
 .si-indicator-card__goal-value .si-scope-badge,
 .si-indicator-table__metrics .si-scope-badge,
-.si-tree-indicator-card__goals .si-scope-badge,
 .si-critical-item__metrics .si-scope-badge,
 .si-indicator-priority-item__meta .si-scope-badge {
   width: 100%;
@@ -125,22 +123,34 @@
 .si-scope-badges--compact .si-scope-badge__value,
 .si-indicator-card__goal-value .si-scope-badge__value,
 .si-indicator-table__metrics .si-scope-badge__value,
-.si-tree-indicator-card__goals .si-scope-badge__value,
 .si-critical-item__metrics .si-scope-badge__value,
 .si-indicator-priority-item__meta .si-scope-badge__value {
   flex: 1 1 auto;
   text-align: right;
 }
 
-.si-tree-indicator-card__goals .si-scope-badge__key {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow-wrap: anywhere;
+/* Árvore SI: badge de unidade no tamanho do conteúdo (não estica a célula pai) */
+.si-tree-indicator-card__goals .si-scope-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: auto;
+  max-width: 100%;
+  gap: 6px;
+}
+
+.si-tree-indicator-card__goals .si-scope-badge {
+  width: fit-content;
+  max-width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 5px 10px;
 }
 
 .si-tree-indicator-card__goals .si-scope-badge__value {
+  flex: 0 0 auto;
+  text-align: left;
   overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
-  flex-shrink: 0;
 }

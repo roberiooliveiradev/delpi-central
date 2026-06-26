@@ -2,23 +2,19 @@
 
 .si-org-chart--single-scope {
   --si-dept-gap: clamp(16px, 2cqw, 32px);
-  /* Largura legível por coluna; pan-zoom compensa quando há vários departamentos. */
-  --si-dept-slot-width: clamp(400px, 44cqw, 620px);
-  --si-igd-card-max-width: min(720px, 100%);
+  /* Largura fixa legível por card; o pan-zoom ajusta quando há muitos departamentos. */
+  --si-dept-slot-width: clamp(300px, 36cqw, 440px);
+  --si-igd-card-max-width: min(640px, 100%);
   --si-tree-card-radius: 26px;
   padding: clamp(12px, 2cqw, 20px) clamp(14px, 2.5cqw, 24px)
     clamp(24px, 4cqw, 36px);
 }
 
-.si-org-chart--single-scope:has(.si-org-chart__department-column--solo-expanded) {
-  --si-dept-slot-width: clamp(520px, 58cqw, 760px);
-}
-
 .si-org-chart--single-scope .si-org-chart__department-column {
   display: flex;
   flex-direction: column;
-  min-width: var(--si-dept-slot-width, 620px);
-  max-width: var(--si-dept-slot-width, 620px);
+  min-width: var(--si-dept-slot-width, 440px);
+  max-width: var(--si-dept-slot-width, 440px);
 }
 
 .si-org-chart--single-scope .si-org-chart__department-scopes {
@@ -674,27 +670,15 @@
 
 .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
   display: block;
-  flex: 1 1 380px;
+  flex: 1 1 340px;
   width: auto;
-  min-width: min(100%, 360px);
-  max-width: min(100%, 620px);
-}
-
-.si-org-chart--single-scope .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
-  flex: 1 1 100%;
-  min-width: min(100%, 480px);
-  max-width: none;
-}
-
-.si-tree-dept__indicators--solo-expanded .si-tree-dept__indicator-list--row > .si-tree-indicator-card__link {
-  flex: 1 1 100%;
-  min-width: min(100%, 520px);
-  max-width: none;
+  min-width: 300px;
+  max-width: 440px;
 }
 
 .si-tree-dept__indicator-list--multi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 18px;
 }
 
@@ -756,22 +740,20 @@
 
 .si-tree-indicator-card__goals {
   display: grid;
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-}
-
-.si-org-chart--single-scope .si-tree-indicator-card__goals {
-  grid-template-columns: repeat(2, minmax(200px, 1fr));
-  gap: 12px;
 }
 
 .si-tree-indicator-card__goals .si-indicator-card__goal {
   min-width: 0;
   overflow: visible;
+  align-items: flex-start;
 }
 
 .si-tree-indicator-card__goals .si-indicator-card__goal-value {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .si-tree-indicator-card__footer {

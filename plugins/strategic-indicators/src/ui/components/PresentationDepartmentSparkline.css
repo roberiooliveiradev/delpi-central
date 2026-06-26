@@ -1,7 +1,6 @@
 .si-presentation-sparkline {
   width: 100%;
-  height: 72px;
-  min-height: 72px;
+  min-height: 0;
 }
 
 .si-presentation-sparkline--empty {

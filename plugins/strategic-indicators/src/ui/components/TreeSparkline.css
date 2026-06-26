@@ -1,9 +1,15 @@
 .si-tree-sparkline {
   width: 100%;
+  max-width: 100%;
   padding: 8px 10px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--si-card-bg) 65%, transparent);
   border: 1px solid color-mix(in srgb, var(--si-card-border) 70%, transparent);
+}
+
+.si-tree-sparkline .si-presentation-sparkline {
+  width: 100%;
+  min-height: 0;
 }
 
 .si-tree-sparkline__label {
