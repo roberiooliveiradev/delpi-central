@@ -70,7 +70,7 @@ export const PAC_HELP_TOOLTIPS = {
   form: {
     identification: "Dados cadastrais do plano: título, cliente, produto, lote e filial.",
     source: "Canal de origem do relato (e-mail, PDF, texto manual) e referência externa.",
-    context: "Vínculos opcionais com Kaizen ou outras fontes.",
+    context: "Cliente, produto, lote, área e modo de falha para contextualizar a NC.",
     description: "Narrativa do problema relatado e tags de sintoma para busca futura.",
     actionType: "Classificação da ação: contenção, corretiva, preventiva, verificação, padronização ou treinamento.",
     actionTrack: "Em 8D, indica se a ação trata a causa de ocorrência ou de detecção.",
@@ -82,7 +82,6 @@ export const PAC_HELP_TOOLTIPS = {
     actionDescription: "O que será feito — descrição objetiva da ação corretiva ou de contenção.",
     rootCause: "Síntese da causa raiz validada após Ishikawa e porquês.",
     confidence: "Grau de confiança da equipe na causa raiz identificada.",
-    kaizenLink: "Vincula o plano a uma melhoria contínua (Kaizen) relacionada.",
   },
   detail: {
     title: "Nome curto do plano para listagens, buscas e relatórios.",

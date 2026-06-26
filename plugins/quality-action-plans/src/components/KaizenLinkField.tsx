@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { fetchKaizenLinkOptions, kaizenEditPath } from "../api/kaizenLinkApi";
 import type { KaizenLinkSummary } from "../types/kaizenLink";
-import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SelectField } from "./ui/SelectField";
+
+const DEFAULT_KAIZEN_LINK_HINT =
+  "Vincula o plano a uma melhoria contínua (Kaizen) relacionada.";
 
 type Props = {
   branchCode: string;
@@ -57,7 +59,7 @@ export function KaizenLinkField({ branchCode, value, onChange, disabled, hint }:
       <SelectField
         id="pac-detail-linked-kaizen"
         label="Kaizen vinculado"
-        hint={hint ?? PAC_HELP_TOOLTIPS.form.kaizenLink}
+        hint={hint ?? DEFAULT_KAIZEN_LINK_HINT}
         options={options}
         value={value}
         onChange={onChange}

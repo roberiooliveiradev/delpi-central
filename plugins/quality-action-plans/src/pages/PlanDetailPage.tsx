@@ -26,7 +26,6 @@ import { EvidencePanel } from "../components/EvidencePanel";
 import { FiveWhysFlowPanel } from "../components/FiveWhysFlowPanel";
 import { PlanActionsPanel } from "../components/PlanActionsPanel";
 import { IshikawaFishboneDiagram } from "../components/IshikawaFishboneDiagram";
-import { KaizenLinkField } from "../components/KaizenLinkField";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
@@ -126,7 +125,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     client_nc_registry: "",
     source_type: "",
     source_reference: "",
-    linked_kaizen_id: "",
   });
 
   const load = useCallback(async () => {
@@ -182,7 +180,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         client_nc_registry: data.plan.client_nc_registry ?? "",
         source_type: data.plan.source_type ?? "",
         source_reference: data.plan.source_reference ?? "",
-        linked_kaizen_id: data.plan.linked_kaizen_id ?? "",
       });
       try {
         const audit = await fetchPlanAuditLog(planId);
@@ -479,14 +476,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   }
                 />
               ) : null}
-              <KaizenLinkField
-                branchCode={identificationForm.branch_code}
-                value={identificationForm.linked_kaizen_id}
-                onChange={(linked_kaizen_id) =>
-                  setIdentificationForm((c) => ({ ...c, linked_kaizen_id }))
-                }
-                disabled={saving === "identification"}
-              />
               <TextAreaField
                 id="pac-detail-problem"
                 label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
@@ -533,9 +522,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       client_nc_registry: identificationForm.client_nc_registry.trim() || undefined,
                       source_type: identificationForm.source_type.trim() || undefined,
                       source_reference: identificationForm.source_reference.trim() || undefined,
-                      linked_kaizen_id: identificationForm.linked_kaizen_id.trim()
-                        ? identificationForm.linked_kaizen_id.trim()
-                        : null,
                     });
                     if (isRnc8dTemplate) {
                       await upsertRnc8dReport(
