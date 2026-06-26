@@ -306,8 +306,8 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
       <section className="dq-kpi-grid" aria-busy={loading}>
         <KpiCard
-          title="Total de kaizens"
-          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenTotal}
+          title="Ideias aprovadas para Kaizen/mês"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenIdeas}
           value={formatDashboardMetricValue(data?.total_kaizens, data?.ideas_goal ?? data)}
           {...buildKpiGoalPresentation(
             periodLabel,

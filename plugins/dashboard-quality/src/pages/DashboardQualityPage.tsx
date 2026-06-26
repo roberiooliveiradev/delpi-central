@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import {
   ClipboardCheck,
   Factory,
+  Lightbulb,
   Truck,
   Wallet,
 } from "lucide-react";
@@ -206,13 +207,29 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         />
       </section>
 
-      <section className="dq-summary-grid" aria-busy={isBusy}>
+      <section className="dq-kpi-grid" aria-busy={isBusy}>
+        <KpiCard
+          title="Ideias aprovadas para Kaizen/mês"
+          titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenIdeas}
+          value={formatDashboardMetricValue(
+            kaizen?.total_kaizens,
+            kaizen?.ideas_goal ?? kaizen,
+          )}
+          {...buildKpiGoalPresentation(
+            periodLabel,
+            kaizen?.ideas_goal ?? kaizen,
+            undefined,
+            { realizedValue: kaizen?.total_kaizens },
+          )}
+          icon={<Lightbulb size={22} />}
+          loading={isBusy && !kaizen}
+        />
         <KpiCard
           title="Ganhos financeiros do kaizen"
           titleHint={QUALITY_HELP_TOOLTIPS.kpis.kaizenFinancialGains}
           value={formatDashboardMetricValue(kaizen?.total_savings, kaizen)}
           {...buildKpiGoalPresentation(
-            `${formatInteger(kaizen?.total_kaizens)} kaizens no período · ${periodLabel}`,
+            periodLabel,
             kaizen,
             undefined,
             { realizedValue: kaizen?.total_savings },
@@ -220,6 +237,9 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           icon={<Wallet size={22} />}
           loading={isBusy && !kaizen}
         />
+      </section>
+
+      <section className="dq-summary-grid" aria-busy={isBusy}>
         <SummaryCard
           title="Auditoria 5S"
           description="Média de notas das auditorias realizadas."
