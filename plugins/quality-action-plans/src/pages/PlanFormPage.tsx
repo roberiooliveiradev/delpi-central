@@ -18,6 +18,7 @@ import {
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
+import { RNC8D_SHARED_FIELD_LABELS } from "../constants/rnc8dSharedFields";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { emptyPlanFormValues, formValuesToPayload, type PlanFormValues } from "../types/planForm";
 import { emptyRnc8dPayload } from "../types/rnc8d";
@@ -72,6 +73,8 @@ export function PlanFormPage({ onNavigate }: Props) {
   const initialStatusOptions = PLAN_STATUSES.filter(
     (item) => item.value === "draft" || item.value === "triage",
   ).map((item) => ({ value: item.value, label: item.label }));
+
+  const isRnc8dTemplate = values.customer_template === "rnc_8d";
 
   return (
     <>
@@ -156,7 +159,7 @@ export function PlanFormPage({ onNavigate }: Props) {
             {values.customer_template === "rnc_8d" ? (
               <TextField
                 id="pac-nc-registry"
-                label="Registro NC do cliente"
+                label={RNC8D_SHARED_FIELD_LABELS.clientNcRegistry}
                 value={values.client_nc_registry}
                 onChange={(client_nc_registry) => updateField("client_nc_registry", client_nc_registry)}
               />
@@ -196,13 +199,13 @@ export function PlanFormPage({ onNavigate }: Props) {
             />
             <TextField
               id="pac-product"
-              label="Produto"
+              label={isRnc8dTemplate ? RNC8D_SHARED_FIELD_LABELS.productCode : "Produto"}
               value={values.product_code}
               onChange={(product_code) => updateField("product_code", product_code)}
             />
             <TextField
               id="pac-batch"
-              label="Lote"
+              label={isRnc8dTemplate ? RNC8D_SHARED_FIELD_LABELS.supplierBatch : "Lote"}
               value={values.batch_number}
               onChange={(batch_number) => updateField("batch_number", batch_number)}
             />
@@ -238,7 +241,7 @@ export function PlanFormPage({ onNavigate }: Props) {
         <SectionCard title="Descrição do problema" hint={PAC_HELP_TOOLTIPS.form.description}>
           <TextAreaField
             id="pac-problem"
-            label="Relato do problema"
+            label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
             hint={PAC_HELP_TOOLTIPS.form.description}
             value={values.reported_problem}
             onChange={(reported_problem) => updateField("reported_problem", reported_problem)}

@@ -1,6 +1,12 @@
 import { Save } from "lucide-react";
 
+import {
+  RNC8D_SHARED_FIELD_LABELS,
+  RNC8D_SHARED_MIRROR_HINT,
+  type Rnc8dSharedIdentification,
+} from "../constants/rnc8dSharedFields";
 import { FormActions } from "./ui/FormActions";
+import { ReadOnlyField } from "./ui/ReadOnlyField";
 import { SectionCard } from "./ui/SectionCard";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
@@ -9,6 +15,7 @@ import { emptyRnc8dPayload } from "../types/rnc8d";
 
 type Props = {
   value: Rnc8dReportPayload;
+  sharedIdentification: Rnc8dSharedIdentification;
   onChange: (value: Rnc8dReportPayload) => void;
   onSave: () => void | Promise<void>;
   saving?: boolean;
@@ -33,7 +40,7 @@ function updatePayload(
   };
 }
 
-export function Rnc8dReportEditor({ value, onChange, onSave, saving }: Props) {
+export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSave, saving }: Props) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
   const nc = payload.nc_description ?? {};
   const effectiveness = payload.effectiveness ?? {};
@@ -55,19 +62,22 @@ export function Rnc8dReportEditor({ value, onChange, onSave, saving }: Props) {
 
   return (
     <div className="pac-rnc8d">
-      <SectionCard title="1. Identificação — relatório 8D (materiais adquiridos)">
+      <SectionCard
+        title="1. Identificação — relatório 8D (materiais adquiridos)"
+        subtitle="Campos espelhados do painel Problema aparecem somente leitura."
+      >
         <div className="pac-form-grid">
-          <TextField
+          <ReadOnlyField
             id="rnc-nc-registry"
-            label="Registro NC (cliente)"
-            value={value.client_nc_registry ?? ""}
-            onChange={(client_nc_registry) => onChange({ ...value, client_nc_registry })}
+            label={RNC8D_SHARED_FIELD_LABELS.clientNcRegistry}
+            hint={RNC8D_SHARED_MIRROR_HINT}
+            value={sharedIdentification.client_nc_registry}
           />
-          <TextField
+          <ReadOnlyField
             id="rnc-customer"
-            label="Cliente"
-            value={value.customer_name ?? ""}
-            onChange={(customer_name) => onChange({ ...value, customer_name })}
+            label={RNC8D_SHARED_FIELD_LABELS.customer}
+            hint={RNC8D_SHARED_MIRROR_HINT}
+            value={sharedIdentification.customer_name}
           />
           <TextField
             id="rnc-contact"
@@ -75,17 +85,17 @@ export function Rnc8dReportEditor({ value, onChange, onSave, saving }: Props) {
             value={value.customer_contact ?? ""}
             onChange={(customer_contact) => onChange({ ...value, customer_contact })}
           />
-          <TextField
+          <ReadOnlyField
             id="rnc-product"
-            label="Código material"
-            value={value.product_code ?? ""}
-            onChange={(product_code) => onChange({ ...value, product_code })}
+            label={RNC8D_SHARED_FIELD_LABELS.productCode}
+            hint={RNC8D_SHARED_MIRROR_HINT}
+            value={sharedIdentification.product_code}
           />
-          <TextField
+          <ReadOnlyField
             id="rnc-product-desc"
-            label="Descrição material"
-            value={value.product_description ?? ""}
-            onChange={(product_description) => onChange({ ...value, product_description })}
+            label={RNC8D_SHARED_FIELD_LABELS.productDescription}
+            hint={RNC8D_SHARED_MIRROR_HINT}
+            value={sharedIdentification.product_description}
             fullWidth
           />
           <TextField
@@ -125,11 +135,11 @@ export function Rnc8dReportEditor({ value, onChange, onSave, saving }: Props) {
             value={payload.client_batch ?? ""}
             onChange={(client_batch) => onChange(updatePayload(value, { client_batch }))}
           />
-          <TextField
+          <ReadOnlyField
             id="rnc-supplier-batch"
-            label="Lote fornecedor"
-            value={value.batch_number ?? ""}
-            onChange={(batch_number) => onChange({ ...value, batch_number })}
+            label={RNC8D_SHARED_FIELD_LABELS.supplierBatch}
+            hint={RNC8D_SHARED_MIRROR_HINT}
+            value={sharedIdentification.batch_number}
           />
           <TextField
             id="rnc-batch-qty"
@@ -176,18 +186,13 @@ export function Rnc8dReportEditor({ value, onChange, onSave, saving }: Props) {
             }
             fullWidth
           />
-          <TextAreaField
+          <ReadOnlyField
             id="rnc-nc-verified"
-            label="Verificado"
-            value={nc.verified ?? value.reported_problem ?? ""}
-            onChange={(verified) => {
-              onChange({
-                ...updatePayload(value, { nc_description: { ...nc, verified } }),
-                reported_problem: verified,
-              });
-            }}
-            rows={4}
+            label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
+            hint={RNC8D_SHARED_MIRROR_HINT}
+            value={sharedIdentification.reported_problem}
             fullWidth
+            multiline
           />
           <TextAreaField
             id="rnc-nc-obs"

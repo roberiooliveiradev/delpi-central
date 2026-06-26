@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Download,
@@ -51,6 +51,7 @@ import {
   PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
+import { RNC8D_SHARED_FIELD_LABELS } from "../constants/rnc8dSharedFields";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type {
   ActionPlanDetail,
@@ -58,7 +59,7 @@ import type {
 } from "../types/actionPlan";
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
-import { buildActivateRnc8dPayload } from "../utils/rnc8dPayload";
+import { buildActivateRnc8dPayload, mergeSharedIdentificationIntoRnc8d, sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
 import { formatDateTime } from "../utils/format";
 import {
   emptyIshikawaCausesForm,
@@ -233,6 +234,17 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     (item) => !terminalStatuses.has(item.value) && item.value !== "draft",
   ).map((item) => ({ value: item.value, label: item.label }));
   const isRnc8dTemplate = plan?.customer_template === "rnc_8d";
+  const sharedIdentification = useMemo(
+    () => ({
+      client_nc_registry: identificationForm.client_nc_registry,
+      customer_name: identificationForm.customer_name,
+      product_code: identificationForm.product_code,
+      product_description: identificationForm.product_description,
+      batch_number: identificationForm.batch_number,
+      reported_problem: identificationForm.reported_problem,
+    }),
+    [identificationForm],
+  );
   const effectivenessApprovalStatus = plan?.effectiveness_approval_status ?? null;
   const isEffectivenessPendingApproval = effectivenessApprovalStatus === "pending_review";
   const isEffectivenessRejected = effectivenessApprovalStatus === "rejected";
@@ -358,13 +370,21 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               />
               <TextField
                 id="pac-detail-product"
-                label="Código produto"
+                label={
+                  isRnc8dTemplate
+                    ? RNC8D_SHARED_FIELD_LABELS.productCode
+                    : "Código produto"
+                }
                 value={identificationForm.product_code}
                 onChange={(product_code) => setIdentificationForm((c) => ({ ...c, product_code }))}
               />
               <TextField
                 id="pac-detail-product-desc"
-                label="Descrição produto"
+                label={
+                  isRnc8dTemplate
+                    ? RNC8D_SHARED_FIELD_LABELS.productDescription
+                    : "Descrição produto"
+                }
                 value={identificationForm.product_description}
                 onChange={(product_description) =>
                   setIdentificationForm((c) => ({ ...c, product_description }))
@@ -372,7 +392,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               />
               <TextField
                 id="pac-detail-batch"
-                label="Lote"
+                label={
+                  isRnc8dTemplate ? RNC8D_SHARED_FIELD_LABELS.supplierBatch : "Lote"
+                }
                 value={identificationForm.batch_number}
                 onChange={(batch_number) => setIdentificationForm((c) => ({ ...c, batch_number }))}
               />
@@ -434,7 +456,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               {isRnc8dTemplate ? (
                 <TextField
                   id="pac-detail-nc-registry"
-                  label="Registro NC do cliente"
+                  label={RNC8D_SHARED_FIELD_LABELS.clientNcRegistry}
                   value={identificationForm.client_nc_registry}
                   onChange={(client_nc_registry) =>
                     setIdentificationForm((c) => ({ ...c, client_nc_registry }))
@@ -460,7 +482,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               />
               <TextAreaField
                 id="pac-detail-problem"
-                label="Relato do problema"
+                label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
                 value={identificationForm.reported_problem}
                 onChange={(reported_problem) =>
                   setIdentificationForm((c) => ({ ...c, reported_problem }))
@@ -475,6 +497,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 disabled={saving === "identification"}
                 onClick={() =>
                   void runSave("identification", async () => {
+                    const shared = {
+                      client_nc_registry: identificationForm.client_nc_registry,
+                      customer_name: identificationForm.customer_name,
+                      product_code: identificationForm.product_code,
+                      product_description: identificationForm.product_description,
+                      batch_number: identificationForm.batch_number,
+                      reported_problem: identificationForm.reported_problem,
+                    };
                     await updateActionPlan(planId, {
                       title: identificationForm.title.trim() || undefined,
                       customer_name: identificationForm.customer_name.trim() || undefined,
@@ -502,6 +532,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         ? identificationForm.linked_audit_5s_nc_id.trim()
                         : null,
                     });
+                    if (isRnc8dTemplate) {
+                      await upsertRnc8dReport(
+                        planId,
+                        sanitizeRnc8dReportPayload(
+                          mergeSharedIdentificationIntoRnc8d(rnc8dForm, shared),
+                        ),
+                      );
+                    }
                   })
                 }
               >
@@ -649,11 +687,17 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           {isRnc8dTemplate ? (
             <Rnc8dReportEditor
               value={rnc8dForm}
+              sharedIdentification={sharedIdentification}
               onChange={setRnc8dForm}
               saving={saving === "rnc-8d"}
               onSave={() =>
                 runSave("rnc-8d", async () => {
-                  await upsertRnc8dReport(planId, rnc8dForm);
+                  await upsertRnc8dReport(
+                    planId,
+                    sanitizeRnc8dReportPayload(
+                      mergeSharedIdentificationIntoRnc8d(rnc8dForm, sharedIdentification),
+                    ),
+                  );
                 })
               }
             />

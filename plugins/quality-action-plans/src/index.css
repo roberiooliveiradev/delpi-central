@@ -926,6 +926,24 @@
   outline-offset: 2px;
 }
 
+.dashboard-quality-action-plans .pac-readonly-field__value {
+  margin: 0;
+  min-height: var(--pac-control-height);
+  padding: 8px 12px;
+  border-radius: var(--pac-control-radius);
+  border: 1px dashed color-mix(in srgb, var(--pac-card-border) 85%, transparent);
+  background: color-mix(in srgb, var(--pac-input-bg) 72%, var(--pac-card-bg));
+  color: var(--pac-text);
+  font-size: var(--pac-font-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dashboard-quality-action-plans .pac-readonly-field--multiline .pac-readonly-field__value {
+  min-height: 96px;
+}
+
 /* ——— Multi-select e select com busca ——— */
 .dashboard-quality-action-plans .pac-multi-select,
 .dashboard-quality-action-plans .pac-select {
