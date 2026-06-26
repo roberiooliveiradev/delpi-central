@@ -1303,6 +1303,27 @@
   justify-content: flex-end;
 }
 
+.dashboard-quality-action-plans .pac-status-pipeline-block {
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-quality-action-plans .pac-status-pipeline-block__label {
+  margin: 0 0 0.35rem;
+  font-size: var(--pac-font-sm, 0.8125rem);
+  color: var(--pac-text-muted);
+}
+
+.dashboard-quality-action-plans .pac-timeline-filters__label {
+  margin: 0 0 0.35rem;
+  font-size: var(--pac-font-sm, 0.8125rem);
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__step-label {
+  display: block;
+  margin: 0.25rem 0 0.35rem;
+  font-size: var(--pac-font-sm, 0.8125rem);
+}
+
 .dashboard-quality-action-plans .pac-status-pipeline {
   display: flex;
   gap: 4px;
@@ -2135,6 +2156,10 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-progress__header .pac-title-with-help {
+  font-weight: 600;
 }
 
 .dashboard-quality-action-plans .pac-rnc8d-progress__bar {

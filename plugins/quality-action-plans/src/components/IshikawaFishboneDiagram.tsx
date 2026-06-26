@@ -3,7 +3,9 @@ import { Cog, FlaskConical, Leaf, Plus, Ruler, Trash2, Users, Wrench } from "luc
 import type { LucideIcon } from "lucide-react";
 
 import { FormActions } from "./ui/FormActions";
+import { TitleWithHelp } from "./ui/HelpTooltip";
 import { TextAreaField } from "./ui/TextAreaField";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { IshikawaCategoryKey, IshikawaCausesForm } from "../utils/ishikawaCauses";
 
 type BranchConfig = {
@@ -11,20 +13,66 @@ type BranchConfig = {
   label: string;
   color: string;
   icon: LucideIcon;
+  hint: string;
+};
+
+const ISHIKAWA_HINTS: Record<IshikawaCategoryKey, string> = {
+  method_process: PAC_HELP_TOOLTIPS.ishikawa.method,
+  material: PAC_HELP_TOOLTIPS.ishikawa.material,
+  machine: PAC_HELP_TOOLTIPS.ishikawa.machine,
+  measurement: PAC_HELP_TOOLTIPS.ishikawa.measurement,
+  manpower: PAC_HELP_TOOLTIPS.ishikawa.manpower,
+  environment: PAC_HELP_TOOLTIPS.ishikawa.environment,
 };
 
 const FISHBONE_COLUMNS: { top: BranchConfig; bottom: BranchConfig }[] = [
   {
-    top: { key: "method_process", label: "Método", color: "#e8b923", icon: Wrench },
-    bottom: { key: "material", label: "Material", color: "#7b5ea7", icon: FlaskConical },
+    top: {
+      key: "method_process",
+      label: "Método",
+      color: "#e8b923",
+      icon: Wrench,
+      hint: ISHIKAWA_HINTS.method_process,
+    },
+    bottom: {
+      key: "material",
+      label: "Material",
+      color: "#7b5ea7",
+      icon: FlaskConical,
+      hint: ISHIKAWA_HINTS.material,
+    },
   },
   {
-    top: { key: "machine", label: "Máquina", color: "#e255a1", icon: Cog },
-    bottom: { key: "measurement", label: "Medição", color: "#5bc0eb", icon: Ruler },
+    top: {
+      key: "machine",
+      label: "Máquina",
+      color: "#e255a1",
+      icon: Cog,
+      hint: ISHIKAWA_HINTS.machine,
+    },
+    bottom: {
+      key: "measurement",
+      label: "Medição",
+      color: "#5bc0eb",
+      icon: Ruler,
+      hint: ISHIKAWA_HINTS.measurement,
+    },
   },
   {
-    top: { key: "manpower", label: "Mão de obra", color: "#8b2942", icon: Users },
-    bottom: { key: "environment", label: "Meio ambiente", color: "#3daa7e", icon: Leaf },
+    top: {
+      key: "manpower",
+      label: "Mão de obra",
+      color: "#8b2942",
+      icon: Users,
+      hint: ISHIKAWA_HINTS.manpower,
+    },
+    bottom: {
+      key: "environment",
+      label: "Meio ambiente",
+      color: "#3daa7e",
+      icon: Leaf,
+      hint: ISHIKAWA_HINTS.environment,
+    },
   },
 ];
 
@@ -86,7 +134,9 @@ function BranchPanel({
         <span className="pac-fishbone-branch__badge" aria-hidden="true">
           <Icon size={14} />
         </span>
-        <span className="pac-fishbone-branch__label">{branch.label}</span>
+        <span className="pac-fishbone-branch__label">
+          <TitleWithHelp title={branch.label} hint={branch.hint} />
+        </span>
       </div>
       <ul className="pac-fishbone-branch__causes">
         {causes.map((cause, index) => (
@@ -187,6 +237,7 @@ export function IshikawaFishboneDiagram({
       <TextAreaField
         id="pac-ishikawa-notes"
         label="Observações gerais (opcional)"
+        hint={PAC_HELP_TOOLTIPS.ishikawa.notes}
         value={notes}
         onChange={onNotesChange}
         rows={2}

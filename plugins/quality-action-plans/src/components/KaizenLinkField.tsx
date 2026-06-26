@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { fetchKaizenLinkOptions, kaizenEditPath } from "../api/kaizenLinkApi";
 import type { KaizenLinkSummary } from "../types/kaizenLink";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SelectField } from "./ui/SelectField";
 
 type Props = {
@@ -10,9 +11,10 @@ type Props = {
   value: string;
   onChange: (kaizenId: string) => void;
   disabled?: boolean;
+  hint?: string;
 };
 
-export function KaizenLinkField({ branchCode, value, onChange, disabled }: Props) {
+export function KaizenLinkField({ branchCode, value, onChange, disabled, hint }: Props) {
   const [items, setItems] = useState<KaizenLinkSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -55,6 +57,7 @@ export function KaizenLinkField({ branchCode, value, onChange, disabled }: Props
       <SelectField
         id="pac-detail-linked-kaizen"
         label="Kaizen vinculado"
+        hint={hint ?? PAC_HELP_TOOLTIPS.form.kaizenLink}
         options={options}
         value={value}
         onChange={onChange}

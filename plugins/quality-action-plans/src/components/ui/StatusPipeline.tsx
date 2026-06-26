@@ -1,15 +1,23 @@
 import { PLAN_STATUSES } from "../../constants/actionPlans";
+import { TitleWithHelp } from "./HelpTooltip";
 
 type StatusPipelineProps = {
   currentStatus: string;
+  hint?: string;
 };
 
-export function StatusPipeline({ currentStatus }: StatusPipelineProps) {
+export function StatusPipeline({ currentStatus, hint }: StatusPipelineProps) {
   const activeIndex = PLAN_STATUSES.findIndex((item) => item.value === currentStatus);
   const visibleStatuses = PLAN_STATUSES.filter((item) => item.value !== "cancelled");
 
   return (
-    <div className="pac-status-pipeline" role="list" aria-label="Progresso do plano">
+    <div className="pac-status-pipeline-block">
+      {hint ? (
+        <p className="pac-status-pipeline-block__label">
+          <TitleWithHelp title="Fluxo do plano" hint={hint} />
+        </p>
+      ) : null}
+      <div className="pac-status-pipeline" role="list" aria-label="Progresso do plano">
       {visibleStatuses.map((status, index) => {
         const isActive = status.value === currentStatus;
         const isPast = activeIndex >= 0 && index < activeIndex;
@@ -31,6 +39,7 @@ export function StatusPipeline({ currentStatus }: StatusPipelineProps) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

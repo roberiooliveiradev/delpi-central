@@ -5,7 +5,9 @@ import {
   RNC8D_SHARED_MIRROR_HINT,
   type Rnc8dSharedIdentification,
 } from "../constants/rnc8dSharedFields";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FormActions } from "./ui/FormActions";
+import { FieldLabel } from "./ui/HelpTooltip";
 import { ReadOnlyField } from "./ui/ReadOnlyField";
 import { SectionCard } from "./ui/SectionCard";
 import { TextAreaField } from "./ui/TextAreaField";
@@ -64,6 +66,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
     <div className="pac-rnc8d">
       <SectionCard
         title="1. Identificação — relatório 8D (materiais adquiridos)"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.identification}
         subtitle="Campos espelhados do painel Problema aparecem somente leitura."
       >
         <div className="pac-form-grid">
@@ -82,6 +85,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-contact"
             label="Contato"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.contact}
             value={value.customer_contact ?? ""}
             onChange={(customer_contact) => onChange({ ...value, customer_contact })}
           />
@@ -101,18 +105,21 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-purchase-order"
             label="Ordem compra / posição"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.purchaseOrder}
             value={payload.purchase_order ?? ""}
             onChange={(purchase_order) => onChange(updatePayload(value, { purchase_order }))}
           />
           <TextField
             id="rnc-invoice"
             label="Nota fiscal"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.invoice}
             value={payload.invoice_number ?? ""}
             onChange={(invoice_number) => onChange(updatePayload(value, { invoice_number }))}
           />
           <TextField
             id="rnc-invoice-date"
             label="Data digitação NF"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.invoiceDate}
             type="date"
             value={payload.invoice_date ?? ""}
             onChange={(invoice_date) => onChange(updatePayload(value, { invoice_date }))}
@@ -120,18 +127,21 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-defective-qty"
             label="Quantidade defeituosa"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQty}
             value={payload.defective_quantity ?? ""}
             onChange={(defective_quantity) => onChange(updatePayload(value, { defective_quantity }))}
           />
           <TextField
             id="rnc-phone"
             label="Telefone"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.phone}
             value={payload.contact_phone ?? ""}
             onChange={(contact_phone) => onChange(updatePayload(value, { contact_phone }))}
           />
           <TextField
             id="rnc-client-batch"
             label="Lote do cliente"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.clientBatch}
             value={payload.client_batch ?? ""}
             onChange={(client_batch) => onChange(updatePayload(value, { client_batch }))}
           />
@@ -144,29 +154,33 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-batch-qty"
             label="Quantidade lote"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.batchQty}
             value={payload.batch_quantity ?? ""}
             onChange={(batch_quantity) => onChange(updatePayload(value, { batch_quantity }))}
           />
           <TextField
             id="rnc-disposition"
             label="Disposição"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.disposition}
             value={payload.disposition ?? ""}
             onChange={(disposition) => onChange(updatePayload(value, { disposition }))}
           />
           <TextField
             id="rnc-rejected-qty"
             label="Quantidade rejeitada"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQty}
             value={payload.rejected_quantity ?? ""}
             onChange={(rejected_quantity) => onChange(updatePayload(value, { rejected_quantity }))}
           />
         </div>
       </SectionCard>
 
-      <SectionCard title="1. Descrição da não conformidade">
+      <SectionCard title="1. Descrição da não conformidade" hint={PAC_HELP_TOOLTIPS.rnc8d.ncDescription}>
         <div className="pac-form-grid">
           <TextField
             id="rnc-nc-char"
             label="Característica"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.characteristic}
             value={nc.characteristic ?? ""}
             onChange={(characteristic) =>
               onChange(
@@ -180,6 +194,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-nc-spec"
             label="Especificado"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.specified}
             value={nc.specified ?? ""}
             onChange={(specified) =>
               onChange(updatePayload(value, { nc_description: { ...nc, specified } }))
@@ -197,6 +212,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextAreaField
             id="rnc-nc-obs"
             label="Observações"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.observations}
             value={nc.observations ?? payload.observations ?? ""}
             onChange={(observations) =>
               onChange(
@@ -212,11 +228,12 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
         </div>
       </SectionCard>
 
-      <SectionCard title="Prazo e contato do cliente">
+      <SectionCard title="Prazo e contato do cliente" hint={PAC_HELP_TOOLTIPS.rnc8d.contact}>
         <div className="pac-form-grid">
           <TextField
             id="rnc-return-by"
             label="Devolver até"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.returnBy}
             type="date"
             value={payload.return_by ?? ""}
             onChange={(return_by) => onChange(updatePayload(value, { return_by }))}
@@ -224,25 +241,28 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-attention"
             label="Atenção para"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.attentionTo}
             value={payload.attention_to ?? ""}
             onChange={(attention_to) => onChange(updatePayload(value, { attention_to }))}
           />
           <TextField
             id="rnc-email"
             label="E-mail"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.attentionEmail}
             value={payload.attention_email ?? ""}
             onChange={(attention_email) => onChange(updatePayload(value, { attention_email }))}
           />
         </div>
       </SectionCard>
 
-      <SectionCard title="2. Equipe de análise">
+      <SectionCard title="2. Equipe de análise" hint={PAC_HELP_TOOLTIPS.rnc8d.team}>
         <div className="pac-team-list">
           {team.map((member, index) => (
             <div key={`${member.member_name}-${index}`} className="pac-form-grid pac-team-row">
               <TextField
                 id={`rnc-team-name-${index}`}
                 label={member.is_leader ? "Líder" : "Membro"}
+                hint={member.is_leader ? PAC_HELP_TOOLTIPS.rnc8d.teamLeader : PAC_HELP_TOOLTIPS.rnc8d.team}
                 value={member.member_name}
                 onChange={(member_name) => {
                   const next = [...team];
@@ -253,6 +273,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
               <TextField
                 id={`rnc-team-dept-${index}`}
                 label="Área"
+                hint={PAC_HELP_TOOLTIPS.detail.department}
                 value={member.department ?? ""}
                 onChange={(department) => {
                   const next = [...team];
@@ -272,7 +293,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                     onChange({ ...value, team_members: next });
                   }}
                 />
-                <span>Líder da equipe</span>
+                <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
               </label>
             </div>
           ))}
@@ -291,7 +312,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
         </button>
       </SectionCard>
 
-      <SectionCard title="3. Ação de contenção">
+      <SectionCard title="3. Ação de contenção" hint={PAC_HELP_TOOLTIPS.rnc8d.containment}>
         <div className="pac-table-wrap">
           <table className="pac-table">
             <thead>
@@ -347,10 +368,11 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
         </div>
       </SectionCard>
 
-      <SectionCard title="6. Verificação da eficácia">
+      <SectionCard title="6. Verificação da eficácia" hint={PAC_HELP_TOOLTIPS.rnc8d.effectivenessSection}>
         <TextAreaField
           id="rnc-effectiveness-resolved"
           label="O problema foi resolvido? Como?"
+          hint={PAC_HELP_TOOLTIPS.rnc8d.resolvedHow}
           value={effectiveness.resolved_how ?? ""}
           onChange={(resolved_how) =>
             onChange(updatePayload(value, { effectiveness: { ...effectiveness, resolved_how } }))
@@ -362,6 +384,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-ok-material-date"
             label="Data material OK (ponto de corte)"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.okMaterialDate}
             type="date"
             value={effectiveness.ok_material_date ?? ""}
             onChange={(ok_material_date) =>
@@ -373,6 +396,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-new-parts-id"
             label="Como as peças novas serão identificadas?"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.newPartsId}
             value={effectiveness.new_parts_identification ?? ""}
             onChange={(new_parts_identification) =>
               onChange(
@@ -386,6 +410,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-verification-responsible"
             label="Responsável pela verificação"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.verificationResponsible}
             value={effectiveness.verification_responsible ?? ""}
             onChange={(verification_responsible) =>
               onChange(
@@ -398,6 +423,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-verification-date"
             label="Data de verificação"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.verificationDate}
             type="date"
             value={effectiveness.verification_date ?? ""}
             onChange={(verification_date) =>
@@ -409,10 +435,11 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
         </div>
       </SectionCard>
 
-      <SectionCard title="7. Ação preventiva e documentação">
+      <SectionCard title="7. Ação preventiva e documentação" hint={PAC_HELP_TOOLTIPS.rnc8d.preventiveSection}>
         <TextAreaField
           id="rnc-preventive-how"
           label="Como evitar no futuro?"
+          hint={PAC_HELP_TOOLTIPS.rnc8d.howAvoidFuture}
           value={preventive.how_avoid_future ?? ""}
           onChange={(how_avoid_future) =>
             onChange(updatePayload(value, { preventive: { ...preventive, how_avoid_future } }))
@@ -423,6 +450,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
         <TextAreaField
           id="rnc-preventive-scope"
           label="Outros processos/produtos afetados?"
+          hint={PAC_HELP_TOOLTIPS.rnc8d.otherProcesses}
           value={preventive.other_processes_products ?? ""}
           onChange={(other_processes_products) =>
             onChange(
@@ -436,6 +464,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-eval-responsible"
             label="Responsável pela avaliação"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.evalResponsible}
             value={preventive.evaluation_responsible ?? ""}
             onChange={(evaluation_responsible) =>
               onChange(
@@ -446,6 +475,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <TextField
             id="rnc-eval-date"
             label="Data conclusão da avaliação"
+            hint={PAC_HELP_TOOLTIPS.rnc8d.evalDate}
             type="date"
             value={preventive.evaluation_completion_date ?? ""}
             onChange={(evaluation_completion_date) =>
@@ -457,6 +487,9 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
             }
           />
         </div>
+        <p className="pac-muted pac-rnc8d-doc-hint">
+          <FieldLabel label="Atualização de documentos" hint={PAC_HELP_TOOLTIPS.rnc8d.documentation} />
+        </p>
         <div className="pac-table-wrap">
           <table className="pac-table">
             <thead>
@@ -511,6 +544,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
         <TextField
           id="rnc-closure"
           label="Fechamento 8D (uso do cliente)"
+          hint={PAC_HELP_TOOLTIPS.rnc8d.clientClosure}
           value={payload.client_closure_note ?? ""}
           onChange={(client_closure_note) => onChange(updatePayload(value, { client_closure_note }))}
           fullWidth

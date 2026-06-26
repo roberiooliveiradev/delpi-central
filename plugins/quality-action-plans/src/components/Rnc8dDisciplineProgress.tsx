@@ -1,4 +1,6 @@
 import type { ActionPlanDetail } from "../types/actionPlan";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { TitleWithHelp } from "./ui/HelpTooltip";
 import { computeRnc8dDisciplineProgress } from "../utils/rnc8dDisciplineProgress";
 
 type Props = {
@@ -11,7 +13,10 @@ export function Rnc8dDisciplineProgress({ detail }: Props) {
   return (
     <div className="pac-rnc8d-progress" aria-label="Progresso das disciplinas 8D">
       <div className="pac-rnc8d-progress__header">
-        <strong>Checklist 8D (D0–D8)</strong>
+        <TitleWithHelp
+          title="Checklist 8D (D0–D8)"
+          hint={PAC_HELP_TOOLTIPS.sections.disciplineProgress}
+        />
         <span className="pac-muted">{percentComplete}% concluído</span>
       </div>
       <div

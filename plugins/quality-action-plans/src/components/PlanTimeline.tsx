@@ -20,6 +20,7 @@ import {
 } from "../utils/planTimeline";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SectionCard } from "./ui/SectionCard";
+import { FieldLabel } from "./ui/HelpTooltip";
 
 type Props = {
   detail: ActionPlanDetail;
@@ -76,6 +77,9 @@ export function PlanTimeline({ detail }: Props) {
       hint={PAC_HELP_TOOLTIPS.sections.timeline}
       subtitle="Status, ações, evidências e eficácia em ordem cronológica."
     >
+      <p className="pac-timeline-filters__label">
+        <FieldLabel label="Filtrar eventos" hint={PAC_HELP_TOOLTIPS.detail.timelineFilter} />
+      </p>
       <div className="pac-timeline-filters" role="tablist" aria-label="Filtrar linha do tempo">
         {TIMELINE_FILTER_OPTIONS.map((option) => (
           <button

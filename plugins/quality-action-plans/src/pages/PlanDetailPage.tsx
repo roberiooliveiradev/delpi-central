@@ -329,12 +329,16 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       {plan ? (
         <div className="pac-detail-grid">
           <SectionCard title="Problema" hint={PAC_HELP_TOOLTIPS.sections.problem}>
-            <StatusPipeline currentStatus={plan.status} />
+            <StatusPipeline
+              currentStatus={plan.status}
+              hint={PAC_HELP_TOOLTIPS.detail.statusPipeline}
+            />
             {isRnc8dTemplate && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
             <div className="pac-form-grid">
               <TextField
                 id="pac-detail-title"
                 label="Título"
+                hint={PAC_HELP_TOOLTIPS.detail.title}
                 value={identificationForm.title}
                 onChange={(title) => setIdentificationForm((c) => ({ ...c, title }))}
                 fullWidth
@@ -342,6 +346,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextField
                 id="pac-detail-customer"
                 label="Cliente"
+                hint={PAC_HELP_TOOLTIPS.detail.customer}
                 value={identificationForm.customer_name}
                 onChange={(customer_name) =>
                   setIdentificationForm((c) => ({ ...c, customer_name }))
@@ -350,6 +355,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <SelectField
                 id="pac-detail-branch"
                 label="Filial"
+                hint={PAC_HELP_TOOLTIPS.filters.branch}
                 options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
                 value={identificationForm.branch_code}
                 onChange={(branch_code) => setIdentificationForm((c) => ({ ...c, branch_code }))}
@@ -358,6 +364,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <SelectField
                 id="pac-detail-scope"
                 label="Escopo NC"
+                hint={PAC_HELP_TOOLTIPS.filters.scope}
                 options={PAC_NONCONFORMITY_SCOPES.map((item) => ({
                   value: item.value,
                   label: item.label,
@@ -375,6 +382,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     ? RNC8D_SHARED_FIELD_LABELS.productCode
                     : "Código produto"
                 }
+                hint={PAC_HELP_TOOLTIPS.detail.productCode}
                 value={identificationForm.product_code}
                 onChange={(product_code) => setIdentificationForm((c) => ({ ...c, product_code }))}
               />
@@ -385,6 +393,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     ? RNC8D_SHARED_FIELD_LABELS.productDescription
                     : "Descrição produto"
                 }
+                hint={PAC_HELP_TOOLTIPS.detail.productDescription}
                 value={identificationForm.product_description}
                 onChange={(product_description) =>
                   setIdentificationForm((c) => ({ ...c, product_description }))
@@ -395,24 +404,28 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 label={
                   isRnc8dTemplate ? RNC8D_SHARED_FIELD_LABELS.supplierBatch : "Lote"
                 }
+                hint={PAC_HELP_TOOLTIPS.detail.supplierBatch}
                 value={identificationForm.batch_number}
                 onChange={(batch_number) => setIdentificationForm((c) => ({ ...c, batch_number }))}
               />
               <TextField
                 id="pac-detail-department"
                 label="Área"
+                hint={PAC_HELP_TOOLTIPS.detail.department}
                 value={identificationForm.department}
                 onChange={(department) => setIdentificationForm((c) => ({ ...c, department }))}
               />
               <TextField
                 id="pac-detail-failure"
                 label="Modo de falha"
+                hint={PAC_HELP_TOOLTIPS.detail.failureMode}
                 value={identificationForm.failure_mode}
                 onChange={(failure_mode) => setIdentificationForm((c) => ({ ...c, failure_mode }))}
               />
               <TextField
                 id="pac-detail-problem-category"
                 label="Categoria do problema"
+                hint={PAC_HELP_TOOLTIPS.detail.problemCategory}
                 value={identificationForm.problem_category}
                 onChange={(problem_category) =>
                   setIdentificationForm((c) => ({ ...c, problem_category }))
@@ -421,6 +434,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextField
                 id="pac-detail-symptom-tags"
                 label="Tags de sintoma"
+                hint={PAC_HELP_TOOLTIPS.detail.symptomTags}
                 value={identificationForm.symptom_tags_text}
                 onChange={(symptom_tags_text) =>
                   setIdentificationForm((c) => ({ ...c, symptom_tags_text }))
@@ -430,6 +444,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <SelectField
                 id="pac-detail-severity"
                 label="Severidade"
+                hint={PAC_HELP_TOOLTIPS.filters.severity}
                 options={PLAN_SEVERITIES.map((item) => ({ value: item.value, label: item.label }))}
                 value={identificationForm.severity}
                 onChange={(severity) => setIdentificationForm((c) => ({ ...c, severity }))}
@@ -438,6 +453,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <SelectField
                 id="pac-detail-source-type"
                 label="Canal (source_type)"
+                hint={PAC_HELP_TOOLTIPS.form.source}
                 options={[{ value: "", label: "Não informado" }, ...PAC_SOURCE_TYPES.map((item) => ({ value: item.value, label: item.label }))]}
                 value={identificationForm.source_type}
                 onChange={(source_type) =>
@@ -448,6 +464,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextField
                 id="pac-detail-source-reference"
                 label="Referência do canal"
+                hint={PAC_HELP_TOOLTIPS.detail.sourceReference}
                 value={identificationForm.source_reference}
                 onChange={(source_reference) =>
                   setIdentificationForm((c) => ({ ...c, source_reference }))
@@ -457,6 +474,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 <TextField
                   id="pac-detail-nc-registry"
                   label={RNC8D_SHARED_FIELD_LABELS.clientNcRegistry}
+                  hint={PAC_HELP_TOOLTIPS.detail.clientNcRegistry}
                   value={identificationForm.client_nc_registry}
                   onChange={(client_nc_registry) =>
                     setIdentificationForm((c) => ({ ...c, client_nc_registry }))
@@ -474,6 +492,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextField
                 id="pac-detail-linked-audit-5s-nc"
                 label="NC Auditoria 5S (UUID)"
+                hint={PAC_HELP_TOOLTIPS.detail.audit5sNc}
                 value={identificationForm.linked_audit_5s_nc_id}
                 onChange={(linked_audit_5s_nc_id) =>
                   setIdentificationForm((c) => ({ ...c, linked_audit_5s_nc_id }))
@@ -483,6 +502,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextAreaField
                 id="pac-detail-problem"
                 label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
+                hint={PAC_HELP_TOOLTIPS.form.description}
                 value={identificationForm.reported_problem}
                 onChange={(reported_problem) =>
                   setIdentificationForm((c) => ({ ...c, reported_problem }))
@@ -574,19 +594,20 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             <div className="pac-inline-form">
               {isTerminalPlan ? (
                 <>
-                  <label className="pac-field pac-field--full">
-                    <span className="pac-field__label">Motivo da reabertura</span>
-                    <textarea
-                      className="pac-field__control pac-field__control--textarea"
-                      rows={3}
-                      value={reopenReason}
-                      onChange={(event) => setReopenReason(event.target.value)}
-                      placeholder="Descreva por que o plano precisa ser reaberto…"
-                    />
-                  </label>
+                  <TextAreaField
+                    id="pac-reopen-reason"
+                    label="Motivo da reabertura"
+                    hint={PAC_HELP_TOOLTIPS.detail.reopenReason}
+                    value={reopenReason}
+                    onChange={setReopenReason}
+                    placeholder="Descreva por que o plano precisa ser reaberto…"
+                    rows={3}
+                    fullWidth
+                  />
                   <SelectField
                     id="pac-plan-reopen-status"
                     label="Retomar em"
+                    hint={PAC_HELP_TOOLTIPS.detail.reopenTargetStatus}
                     options={reopenStatusOptions}
                     value={reopenTargetStatus}
                     onChange={setReopenTargetStatus}
@@ -612,6 +633,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   <SelectField
                     id="pac-plan-status"
                     label="Atualizar status"
+                    hint={PAC_HELP_TOOLTIPS.detail.updateStatus}
                     options={statusOptions}
                     value={statusValue}
                     onChange={setStatusValue}
@@ -774,6 +796,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <SelectField
                 id="pac-effectiveness-status"
                 label="Resultado"
+                hint={PAC_HELP_TOOLTIPS.detail.effectivenessResult}
                 options={(isEffectivenessPendingApproval
                   ? EFFECTIVENESS_STATUSES
                   : submittableEffectivenessOptions
@@ -789,6 +812,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextAreaField
                 id="pac-effectiveness-notes"
                 label="Observações"
+                hint={PAC_HELP_TOOLTIPS.detail.effectivenessNotes}
                 value={effectivenessNotes}
                 onChange={setEffectivenessNotes}
                 placeholder="Evidências e conclusão da verificação de eficácia"
@@ -800,6 +824,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextAreaField
                 id="pac-effectiveness-rejection-reason"
                 label="Motivo da rejeição (coordenador)"
+                hint={PAC_HELP_TOOLTIPS.detail.effectivenessRejection}
                 value={effectivenessRejectionReason}
                 onChange={setEffectivenessRejectionReason}
                 placeholder="Descreva o motivo com ao menos 5 caracteres"
@@ -880,6 +905,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 <button
                   type="button"
                   className="pac-ghost-btn"
+                  title={PAC_HELP_TOOLTIPS.detail.promotePattern}
                   disabled={saving === "promote-pattern"}
                   onClick={() =>
                     void runSave("promote-pattern", async () => {

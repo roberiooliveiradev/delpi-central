@@ -2,7 +2,9 @@ import { useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import { upsertFiveWhys } from "../api/actionPlansApi";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FormActions } from "./ui/FormActions";
+import { FieldLabel, TitleWithHelp } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
 import type { FiveWhysForm } from "../utils/fiveWhys";
@@ -20,6 +22,7 @@ type TrackConfig = {
   key: TrackKey;
   title: string;
   addLabel: string;
+  hint: string;
 };
 
 const TRACKS: TrackConfig[] = [
@@ -27,11 +30,13 @@ const TRACKS: TrackConfig[] = [
     key: "occurrence",
     title: "Análise sobre a causa do problema (Ocorrência)",
     addLabel: "Adicionar porquê (ocorrência)",
+    hint: PAC_HELP_TOOLTIPS.detail.fiveWhysOccurrence,
   },
   {
     key: "detection",
     title: "Análise sobre o motivo pelo qual não foi detectado (Detecção)",
     addLabel: "Adicionar porquê (detecção)",
+    hint: PAC_HELP_TOOLTIPS.detail.fiveWhysDetection,
   },
 ];
 
@@ -86,7 +91,9 @@ function WhysFlowTrack({
 
   return (
     <div className="pac-whys-flow">
-      <h3 className="pac-whys-flow__track-title">{config.title}</h3>
+      <h3 className="pac-whys-flow__track-title">
+        <TitleWithHelp title={config.title} hint={config.hint} />
+      </h3>
       <div
         ref={scrollRef}
         className="pac-whys-flow__track-scroll"
@@ -119,7 +126,14 @@ function WhysFlowTrack({
                     <Trash2 size={14} />
                   </button>
                 </div>
+                <label className="pac-whys-flow__step-label" htmlFor={`pac-whys-${config.key}-${index}`}>
+                  <FieldLabel
+                    label={`${index + 1}º porquê`}
+                    hint={PAC_HELP_TOOLTIPS.detail.fiveWhysStep}
+                  />
+                </label>
                 <textarea
+                  id={`pac-whys-${config.key}-${index}`}
                   className="pac-whys-flow__input"
                   value={step}
                   placeholder={`${index + 1}º porquê`}
@@ -165,6 +179,7 @@ export function FiveWhysFlowPanel({ planId, form, saving, onChange, onSave }: Pr
         <TextField
           id="pac-root-cause"
           label="Causa raiz"
+          hint={PAC_HELP_TOOLTIPS.form.rootCause}
           value={form.root_cause}
           onChange={(root_cause) => onChange({ ...form, root_cause })}
           fullWidth
@@ -172,6 +187,7 @@ export function FiveWhysFlowPanel({ planId, form, saving, onChange, onSave }: Pr
         <SelectField
           id="pac-five-whys-confidence"
           label="Confiança na causa raiz"
+          hint={PAC_HELP_TOOLTIPS.form.confidence}
           options={CONFIDENCE_OPTIONS}
           value={form.confidence_level}
           onChange={(confidence_level) => onChange({ ...form, confidence_level })}

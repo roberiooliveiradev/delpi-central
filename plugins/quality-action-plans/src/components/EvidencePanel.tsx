@@ -12,6 +12,7 @@ import { formatDateTime } from "../utils/format";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { StateAlert } from "./StateAlert";
 import { SectionCard } from "./ui/SectionCard";
+import { FieldLabel } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
 
@@ -116,6 +117,7 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
         <SelectField
           id="pac-evidence-type"
           label="Tipo"
+          hint={PAC_HELP_TOOLTIPS.evidence.type}
           options={EVIDENCE_TYPES}
           value={evidenceType}
           onChange={setEvidenceType}
@@ -124,6 +126,7 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
         <SelectField
           id="pac-evidence-section"
           label="Seção 8D"
+          hint={PAC_HELP_TOOLTIPS.evidence.section}
           options={EVIDENCE_SECTIONS}
           value={section}
           onChange={setSection}
@@ -133,6 +136,7 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
           <SelectField
             id="pac-evidence-action"
             label="Vincular à ação"
+            hint={PAC_HELP_TOOLTIPS.evidence.linkedAction}
             options={actionOptions}
             value={actionId}
             onChange={setActionId}
@@ -142,11 +146,15 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
         <TextField
           id="pac-evidence-desc"
           label="Descrição"
+          hint={PAC_HELP_TOOLTIPS.evidence.description}
           value={description}
           onChange={setDescription}
           fullWidth
         />
         <div className="pac-evidence-upload__actions">
+          <p className="pac-field pac-field--full pac-evidence-upload__file-label">
+            <FieldLabel label="Arquivo" hint={PAC_HELP_TOOLTIPS.evidence.upload} />
+          </p>
           <input
             ref={fileInputRef}
             type="file"

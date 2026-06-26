@@ -256,12 +256,14 @@ export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }:
           <TextField
             id="pac-action-responsible"
             label="Responsável"
+            hint={PAC_HELP_TOOLTIPS.form.actionResponsible}
             value={form.responsible}
             onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
           />
           <TextField
             id="pac-action-due"
             label="Prazo"
+            hint={PAC_HELP_TOOLTIPS.form.actionDueDate}
             type="date"
             value={form.dueDate}
             onChange={(dueDate) => setForm((current) => ({ ...current, dueDate }))}
@@ -269,6 +271,7 @@ export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }:
           <SelectField
             id="pac-action-status"
             label="Status"
+            hint={PAC_HELP_TOOLTIPS.form.actionStatus}
             options={statusOptions}
             value={form.status}
             onChange={(status) => setForm((current) => ({ ...current, status }))}
@@ -279,6 +282,7 @@ export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }:
         <TextAreaField
           id="pac-action-desc"
           label="Descrição"
+          hint={PAC_HELP_TOOLTIPS.form.actionDescription}
           value={form.description}
           onChange={(description) => setForm((current) => ({ ...current, description }))}
           rows={3}
