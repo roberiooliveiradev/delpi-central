@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import {
   Award,
   BookOpen,
+  ClipboardCheck,
   Smile,
   TrendingDown,
   UserMinus,
@@ -34,7 +35,7 @@ import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
 } from "../utils/goalDisplay";
-import { averageNullable, formatDecimal, formatPercent } from "../utils/format";
+import { averageNullable, formatDecimal, formatPercent, sumNullable } from "../utils/format";
 import { HR_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const CHART_HEIGHT = 280;
@@ -57,10 +58,13 @@ function aggregateFromBranches(
     | "absenteeism_pct"
     | "turnover_pct"
     | "training_hours_per_collaborator"
-    | "active_pdi_pct"
-  >
+    | "active_pdi_count"
+    | "performance_reviews_completion_pct"
+  >,
+  mode: "average" | "sum" = "average"
 ): number | null {
-  return averageNullable(branches.map((item) => item[field]));
+  const values = branches.map((item) => item[field]);
+  return mode === "sum" ? sumNullable(values) : averageNullable(values);
 }
 
 export function DashboardHrPage() {
@@ -110,10 +114,19 @@ export function DashboardHrPage() {
         "training_hours_per_collaborator"
       );
 
-  const activePdi = selectedBranch
-    ? selectedBranch.active_pdi_pct
-    : snapshot?.active_pdi_pct ??
-      aggregateFromBranches(activeBranches, "active_pdi_pct");
+  const activePdiCount = selectedBranch
+    ? selectedBranch.active_pdi_count
+    : snapshot?.active_pdi_count ??
+      aggregateFromBranches(activeBranches, "active_pdi_count", "sum");
+
+  const performanceReviewsCompletion = selectedBranch
+    ? selectedBranch.performance_reviews_completion_pct
+    : snapshot?.performance_reviews_completion_pct ??
+      aggregateFromBranches(
+        activeBranches,
+        "performance_reviews_completion_pct",
+        "average"
+      );
 
   const satisfaction = snapshot?.internal_satisfaction_pct ?? null;
 
@@ -170,10 +183,16 @@ export function DashboardHrPage() {
         render: (row) => formatDecimal(row.training_hours_per_collaborator, 2),
       },
       {
-        key: "active_pdi_pct",
-        header: "PDI ativos",
+        key: "active_pdi_count",
+        header: "PDIs ativos",
         className: "dh-table__col--numeric",
-        render: (row) => formatPercent(row.active_pdi_pct),
+        render: (row) => formatDecimal(row.active_pdi_count, 0),
+      },
+      {
+        key: "performance_reviews_completion_pct",
+        header: "Avaliações concluídas",
+        className: "dh-table__col--numeric",
+        render: (row) => formatPercent(row.performance_reviews_completion_pct),
       },
     ],
     []
@@ -218,7 +237,7 @@ export function DashboardHrPage() {
       {loading && !hasData ? (
         <LoadingActivityCard
           title="Carregando indicadores de RH"
-          description="Buscando absenteísmo, turnover, satisfação, PDI e horas de treinamento."
+          description="Buscando absenteísmo, turnover, satisfação, PDIs, avaliações e horas de treinamento."
           progressPercent={initialLoadingProgress}
         />
       ) : null}
@@ -273,19 +292,43 @@ export function DashboardHrPage() {
           loading={loading}
         />
         <KpiCard
-          title="PDI ativos"
+          title="Número de PDIs ativos"
           titleHint={HR_HELP_TOOLTIPS.kpis.activePdi}
           value={formatDashboardMetricValue(
-            activePdi,
-            snapshot?.goals_by_metric?.active_pdi_pct,
+            activePdiCount,
+            snapshot?.goals_by_metric?.active_pdi_count,
           )}
           {...buildKpiGoalPresentation(
-            branches.length === 1 ? `Filial ${branches[0]}` : branches.length > 1 ? `Filiais ${branches.join(", ")}` : "Média das filiais",
-            snapshot?.goals_by_metric?.active_pdi_pct,
+            branches.length === 1
+              ? `Filial ${branches[0]}`
+              : branches.length > 1
+                ? `Filiais ${branches.join(", ")}`
+                : "Soma das filiais",
+            snapshot?.goals_by_metric?.active_pdi_count,
             undefined,
-            { realizedValue: activePdi },
+            { realizedValue: activePdiCount },
           )}
           icon={<Award size={22} />}
+          loading={loading}
+        />
+        <KpiCard
+          title="% de Avaliações de Desempenho Concluídas"
+          titleHint={HR_HELP_TOOLTIPS.kpis.performanceReviews}
+          value={formatDashboardMetricValue(
+            performanceReviewsCompletion,
+            snapshot?.goals_by_metric?.performance_reviews_completion_pct,
+          )}
+          {...buildKpiGoalPresentation(
+            branches.length === 1
+              ? `Filial ${branches[0]}`
+              : branches.length > 1
+                ? `Filiais ${branches.join(", ")}`
+                : "Média das filiais",
+            snapshot?.goals_by_metric?.performance_reviews_completion_pct,
+            undefined,
+            { realizedValue: performanceReviewsCompletion },
+          )}
+          icon={<ClipboardCheck size={22} />}
           loading={loading}
         />
         <KpiCard

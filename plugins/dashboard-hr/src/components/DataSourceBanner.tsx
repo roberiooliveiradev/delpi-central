@@ -7,8 +7,9 @@ export function DataSourceBanner() {
       <div>
         <strong>Fonte: Portal RH</strong>
         <p>
-          Absenteísmo, turnover, horas de treinamento, PDI e satisfação interna
-          consolidados por filial no período selecionado.
+          Absenteísmo, turnover, horas de treinamento, PDIs ativos, avaliações de
+          desempenho e satisfação interna consolidados por filial no período
+          selecionado.
         </p>
       </div>
     </aside>

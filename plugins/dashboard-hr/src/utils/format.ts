@@ -30,3 +30,13 @@ export function averageNullable(values: Array<number | null | undefined>): numbe
   if (valid.length === 0) return null;
   return valid.reduce((sum, item) => sum + item, 0) / valid.length;
 }
+
+export function sumNullable(values: Array<number | null | undefined>): number | null {
+  const valid = values.filter(
+    (item): item is number =>
+      item !== null && item !== undefined && !Number.isNaN(item)
+  );
+
+  if (valid.length === 0) return null;
+  return valid.reduce((sum, item) => sum + item, 0);
+}

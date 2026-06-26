@@ -1,7 +1,7 @@
 export const HR_HELP_TOOLTIPS = {
   actions: {
     pageSubtitle:
-      "Indicadores de RH: absenteísmo, turnover, satisfação interna, PDI e horas de treinamento.",
+      "Indicadores de RH alinhados ao catálogo de Indicadores Estratégicos: absenteísmo, turnover, satisfação, PDIs, avaliações e treinamento.",
     refresh: "Recarrega os indicadores com período e filial selecionados.",
   },
   filters: {
@@ -18,7 +18,9 @@ export const HR_HELP_TOOLTIPS = {
     internalSatisfaction:
       "Índice de satisfação interna consolidado no período (fonte configurada na API).",
     activePdi:
-      "Percentual de colaboradores com PDI ativo no recorte de filial ou média das filiais.",
+      "Quantidade de PDIs ativos no período (contagem, não percentual). Meta alinhada ao catálogo de Indicadores Estratégicos.",
+    performanceReviews:
+      "Percentual de avaliações de desempenho finalizadas no período filtrado.",
     trainingHours:
       "Média de horas de treinamento por colaborador no período filtrado.",
   },

@@ -11,14 +11,18 @@ export type HrBranchMetrics = {
   absenteeism_pct: number | null;
   turnover_pct: number | null;
   training_hours_per_collaborator: number | null;
+  active_pdi_count: number | null;
   active_pdi_pct: number | null;
+  performance_reviews_completion_pct: number | null;
 };
 
 export type HrSnapshot = {
   start_date: string | null;
   end_date: string | null;
   internal_satisfaction_pct: number | null;
+  active_pdi_count: number | null;
   active_pdi_pct: number | null;
+  performance_reviews_completion_pct: number | null;
   branches: HrBranchMetrics[];
   goals_by_metric?: Record<string, DashboardGoalFields | null>;
 };
