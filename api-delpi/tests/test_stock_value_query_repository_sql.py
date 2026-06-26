@@ -288,22 +288,26 @@ def test_historical_method_breakdown_sql_skips_sd3() -> None:
 
     assert "FROM SD3010" not in sql
     assert "movimentos_sd3" not in sql
+    assert "closing_base AS" in sql
+    assert "official_closure AS" in sql
     assert "branch_dates AS" in sql
     assert "branch_values AS" in sql
     assert "OVER (PARTITION BY" not in sql
-    assert sql.count("FROM SB9010") == 2
+    assert sql.count("FROM SB9010") == 3
     assert "official_closure_on_period_end" in sql
 
 
-def test_historical_method_routing_sql_single_sb9_scan() -> None:
+def test_historical_method_routing_sql_uses_indexable_sb9_aggregates() -> None:
     sql = format_historical_method_breakdown_sql(
         filters=_EMPTY_FILTERS,
         routing_only=True,
     )
 
-    assert sql.count("FROM SB9010") == 1
+    assert sql.count("FROM SB9010") == 2
+    assert "MAX(CASE WHEN B9.B9_DATA" not in sql
+    assert "closing_base AS" in sql
+    assert "official_closure AS" in sql
     assert "branch_values" not in sql
-    assert "B9.B9_DATA <=" in sql
 
 
 def test_build_historical_method_breakdown_params_matches_placeholders() -> None:
@@ -329,7 +333,7 @@ def test_build_historical_method_breakdown_params_matches_placeholders() -> None
     assert params == (
         "20260601",
         "20260624",
-        "20260624",
+        "02",
         "02",
         "02",
         "20260624",
@@ -356,13 +360,10 @@ def test_build_historical_method_routing_params_matches_placeholders() -> None:
     assert sql.count("?") == len(params)
     assert params == (
         "20260601",
-        "20260624",
-        "20260624",
-        "20260624",
-        "20260624",
-        "20260624",
+        "02",
         "20260624",
         "02",
+        "20260624",
     )
 
 

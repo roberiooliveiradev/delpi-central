@@ -72,3 +72,19 @@ def test_execute_uses_stock_value_repository_for_stock_context():
         6_554_795.0 / 2_000_000.0
     )
     assert result["stock_estimation"]["enabled"] is True
+
+
+def test_execute_uses_inventory_turnover_cache_on_second_call():
+    use_case = _build_use_case()
+    request = GetInventoryTurnoverRequest(
+        branch="02",
+        start_date="2026-05-01",
+        end_date="2026-05-31",
+    )
+
+    first = use_case.execute(request)
+    second = use_case.execute(request)
+
+    assert first == second
+    use_case._stock_repository.get_stock_value_bundle.assert_called_once()
+    use_case._repository.get_cpv_context.assert_called_once()

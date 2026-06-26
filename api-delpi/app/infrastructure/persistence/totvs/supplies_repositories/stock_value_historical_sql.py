@@ -251,48 +251,86 @@ HISTORICAL_STOCK_BREAKDOWN_ONLY_SQL = (
     + HISTORICAL_STOCK_BRANCH_BREAKDOWN_SELECT
 )
 
-# Breakdown SB9-only: GROUP BY datas + join seletivo (sem window em toda SB9).
+# Breakdown SB9-only: datas por filial em agregações indexáveis (sem MAX(CASE) em scan largo).
 HISTORICAL_STOCK_METHOD_ROUTING_SQL = """
+        WITH closing_base AS (
+            SELECT
+                B9_FILIAL AS branch,
+                MAX(B9_DATA) AS closing_base_date
+            FROM SB9010 WITH (NOLOCK)
+            WHERE D_E_L_E_T_ = ''
+              AND B9_DATA <> ''
+              AND B9_DATA < ?
+              {sb9_branch_filter}
+            GROUP BY B9_FILIAL
+        ),
+        official_closure AS (
+            SELECT
+                B9_FILIAL AS branch,
+                MAX(B9_DATA) AS official_closure_date
+            FROM SB9010 WITH (NOLOCK)
+            WHERE D_E_L_E_T_ = ''
+              AND B9_DATA <> ''
+              AND B9_DATA <= ?
+              {sb9_branch_filter}
+            GROUP BY B9_FILIAL
+        )
         SELECT
-            B9.B9_FILIAL AS branch,
-            MAX(CASE WHEN B9.B9_DATA < ? THEN B9.B9_DATA END) AS closing_base_date,
+            COALESCE(CB.branch, OC.branch) AS branch,
+            CB.closing_base_date,
             CAST(0 AS DECIMAL(18, 6)) AS closing_base_value,
             CAST(0 AS DECIMAL(18, 6)) AS bridge_value,
             CAST(0 AS DECIMAL(18, 6)) AS period_net_value,
-            MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) AS official_closure_date,
+            OC.official_closure_date,
             CAST(NULL AS DECIMAL(18, 6)) AS official_closure_value,
             CASE
-                WHEN MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) IS NOT NULL
-                 AND RTRIM(MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END)) <> ''
+                WHEN OC.official_closure_date IS NOT NULL
+                 AND RTRIM(OC.official_closure_date) <> ''
                 THEN 1
                 ELSE 0
             END AS official_closure_available,
             CASE
-                WHEN MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) = ?
+                WHEN OC.official_closure_date = ?
                 THEN 1
                 ELSE 0
             END AS official_closure_on_period_end
-        FROM SB9010 B9 WITH (NOLOCK)
-        WHERE B9.D_E_L_E_T_ = ''
-          AND B9.B9_DATA <> ''
-          AND B9.B9_DATA <= ?
-          {sb9_branch_filter}
-        GROUP BY B9.B9_FILIAL
-        ORDER BY B9.B9_FILIAL
+        FROM closing_base CB
+        FULL OUTER JOIN official_closure OC
+            ON OC.branch = CB.branch
+        ORDER BY COALESCE(CB.branch, OC.branch)
 """
 
 HISTORICAL_STOCK_METHOD_BREAKDOWN_SQL = """
-        WITH branch_dates AS (
+        WITH closing_base AS (
             SELECT
-                B9.B9_FILIAL AS branch,
-                MAX(CASE WHEN B9.B9_DATA < ? THEN B9.B9_DATA END) AS closing_base_date,
-                MAX(CASE WHEN B9.B9_DATA <= ? THEN B9.B9_DATA END) AS official_closure_date
-            FROM SB9010 B9 WITH (NOLOCK)
-            WHERE B9.D_E_L_E_T_ = ''
-              AND B9.B9_DATA <> ''
-              AND B9.B9_DATA <= ?
+                B9_FILIAL AS branch,
+                MAX(B9_DATA) AS closing_base_date
+            FROM SB9010 WITH (NOLOCK)
+            WHERE D_E_L_E_T_ = ''
+              AND B9_DATA <> ''
+              AND B9_DATA < ?
               {sb9_branch_filter}
-            GROUP BY B9.B9_FILIAL
+            GROUP BY B9_FILIAL
+        ),
+        official_closure AS (
+            SELECT
+                B9_FILIAL AS branch,
+                MAX(B9_DATA) AS official_closure_date
+            FROM SB9010 WITH (NOLOCK)
+            WHERE D_E_L_E_T_ = ''
+              AND B9_DATA <> ''
+              AND B9_DATA <= ?
+              {sb9_branch_filter}
+            GROUP BY B9_FILIAL
+        ),
+        branch_dates AS (
+            SELECT
+                COALESCE(CB.branch, OC.branch) AS branch,
+                CB.closing_base_date,
+                OC.official_closure_date
+            FROM closing_base CB
+            FULL OUTER JOIN official_closure OC
+                ON OC.branch = CB.branch
         ),
         branch_values AS (
             SELECT
@@ -597,16 +635,8 @@ def build_historical_method_routing_params(
     period_end: str,
     sb9_params: tuple,
 ) -> tuple:
-    """Somente datas SB9 — roteamento auto/hybrid (summary_only / SI)."""
-    return (
-        period_start,
-        period_end,
-        period_end,
-        period_end,
-        period_end,
-        period_end,
-        period_end,
-    ) + sb9_params
+    """Datas SB9 por filial — closing_base (< start) e official_closure (<= end)."""
+    return (period_start,) + sb9_params + (period_end,) + sb9_params + (period_end,)
 
 
 def build_historical_method_breakdown_params(
@@ -619,7 +649,8 @@ def build_historical_method_breakdown_params(
 ) -> tuple:
     """SB9010 com valores — bundle completo do dashboard."""
     return (
-        (period_start, period_end, period_end)
+        (period_start, period_end)
+        + sb9_params
         + sb9_params
         + sb9_b9_params
         + sb9_loc_params

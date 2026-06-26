@@ -4,6 +4,11 @@ from app.application.dto.supplies.get_inventory_turnover_request import (
     GetInventoryTurnoverRequest,
 )
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
+from app.application.services.supplies.inventory_turnover_cache import (
+    get_cached_inventory_turnover,
+    inventory_turnover_cache_key,
+    set_cached_inventory_turnover,
+)
 from app.application.services.supplies.stock_value_estimation_payload_service import (
     build_stock_estimation_payload,
 )
@@ -116,6 +121,11 @@ class GetInventoryTurnoverUseCase:
         return average, "partial_period_monthlyized", days
 
     def execute(self, request: GetInventoryTurnoverRequest) -> dict:
+        cache_key = inventory_turnover_cache_key(request)
+        cached = get_cached_inventory_turnover(cache_key)
+        if cached is not None:
+            return cached
+
         stock_request = self._to_stock_request(request)
         stock_bundle = self._stock_repository.get_stock_value_bundle(stock_request)
         stock_context = stock_bundle.get("summary") or {}
@@ -208,4 +218,5 @@ class GetInventoryTurnoverUseCase:
                 period_end_exclusive=(end_date + timedelta(days=1)).strftime("%Y%m%d"),
             )
 
+        set_cached_inventory_turnover(cache_key, payload)
         return payload
