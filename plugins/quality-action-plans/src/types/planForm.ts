@@ -59,8 +59,6 @@ export type UpdatePlanPayload = {
   customer_template?: string;
   source_type?: string;
   source_reference?: string;
-  linked_kaizen_id?: string | null;
-  linked_audit_5s_nc_id?: string | null;
 };
 
 export function emptyPlanFormValues(): PlanFormValues {

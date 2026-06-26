@@ -537,12 +537,6 @@
   font-size: 0.85rem;
 }
 
-.dashboard-quality-action-plans .pac-kaizen-link-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
 .dashboard-quality-action-plans .pac-inline-link {
   display: inline-flex;
   align-items: center;

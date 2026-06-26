@@ -46,8 +46,6 @@ PLAN_SELECT = """
            p.effectiveness_reviewed_by,
            p.effectiveness_rejection_reason,
            p.recurrence_key,
-           p.linked_kaizen_id,
-           p.linked_audit_5s_nc_id,
            p.created_at,
            p.updated_at,
            p.closed_at
@@ -69,7 +67,7 @@ def serialize_row(row: dict[str, Any] | None, *, id_keys: tuple[str, ...] = ("id
 
 
 def serialize_plan_row(row: dict[str, Any]) -> dict[str, Any]:
-    result = serialize_row(row, id_keys=("id", "linked_kaizen_id", "linked_audit_5s_nc_id")) or {}
+    result = serialize_row(row, id_keys=("id",)) or {}
     if result.get("symptom_tags") is None:
         result["symptom_tags"] = []
     if result.get("template_payload") is None:

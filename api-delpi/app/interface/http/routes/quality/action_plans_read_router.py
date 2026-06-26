@@ -152,8 +152,6 @@ class UpdateActionPlanBody(BaseModel):
         pattern="^(generic|rnc_8d)$",
     )
     client_nc_registry: str | None = Field(default=None, max_length=100)
-    linked_kaizen_id: str | None = Field(default=None, max_length=36)
-    linked_audit_5s_nc_id: str | None = Field(default=None, max_length=36)
 
 
 class UpdateActionPlanStatusBody(BaseModel):
@@ -717,7 +715,6 @@ def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
             plan_id,
             UpdateQualityActionPlanRequest(**fields),
             updated_by=_current_user_id(),
-            explicit_fields=frozenset(fields.keys()),
         )
         if not plan:
             return not_found_response("Plano de ação não encontrado.")

@@ -138,11 +138,9 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 ### PATCH `/quality/action-plans/{plan_id}`
 
-Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_contact`, `product_code`, `product_description`, `batch_number`, `reported_problem`, `severity`, `branch_code`, `nonconformity_scope`, `department`, `failure_mode`, `customer_template` (`generic` \| `rnc_8d`), `client_nc_registry`, `linked_kaizen_id` (UUID de `quality.kaizens`, Onda 7.2), `linked_audit_5s_nc_id` (UUID de `quality.audit_5s_nonconformities`, Onda 7.3), etc.
+Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_contact`, `product_code`, `product_description`, `batch_number`, `reported_problem`, `severity`, `branch_code`, `nonconformity_scope`, `department`, `failure_mode`, `customer_template` (`generic` \| `rnc_8d`), `client_nc_registry`, etc.
 
-**Vínculo Kaizen (Onda 7.2):** `linked_kaizen_id` retorna no detalhe/lista do plano e pode ser definido ou removido (`null`) via PATCH; o kaizen deve existir no cadastro PostgreSQL (`quality.kaizens`).
-
-**Vínculo NC Auditoria 5S (Onda 7.3):** `linked_audit_5s_nc_id` retorna no detalhe/lista e pode ser definido ou removido (`null`) via PATCH; a NC deve existir em `quality.audit_5s_nonconformities` e não estar com status `cancelled`.
+Vínculos com Kaizen ou Auditoria 5S não usam mais colunas em `quality_action_plans` (removidas na migration V016); amarrações futuras devem usar tabelas auxiliares dedicadas.
 
 ### POST evidências (multipart)
 

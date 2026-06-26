@@ -11,8 +11,6 @@ from app.domain.services.quality_action_plans.pac_quality_nonconformity_scope_se
     validate_nonconformity_scope,
 )
 
-_NULLABLE_PLAN_LINK_FIELDS = frozenset({"linked_kaizen_id", "linked_audit_5s_nc_id"})
-
 
 class QualityActionPlanRepository(Protocol):
     def create_plan(self, fields: dict[str, Any]) -> dict[str, Any]: ...
@@ -155,8 +153,6 @@ class UpdateQualityActionPlanRequest:
     recurrence_key: str | None = None
     customer_template: str | None = None
     client_nc_registry: str | None = None
-    linked_kaizen_id: str | None = None
-    linked_audit_5s_nc_id: str | None = None
 
 
 class UpdateQualityActionPlanUseCase:
@@ -169,17 +165,9 @@ class UpdateQualityActionPlanUseCase:
         request: UpdateQualityActionPlanRequest,
         *,
         updated_by: str,
-        explicit_fields: frozenset[str] | None = None,
     ) -> dict[str, Any] | None:
-        explicit = explicit_fields or frozenset()
         fields: dict[str, Any] = {}
         for key, value in request.__dict__.items():
-            if key in _NULLABLE_PLAN_LINK_FIELDS and key in explicit:
-                if value is None or not str(value).strip():
-                    fields[key] = None
-                else:
-                    fields[key] = str(value).strip()
-                continue
             if value is not None:
                 fields[key] = value
         if request.branch_code is not None:
@@ -193,13 +181,6 @@ class UpdateQualityActionPlanUseCase:
             "rnc_8d",
         }:
             raise ValueError("customer_template inválido.")
-        for link_field in _NULLABLE_PLAN_LINK_FIELDS:
-            value = getattr(request, link_field, None)
-            if value is not None and link_field not in explicit:
-                normalized = str(value).strip()
-                if not normalized:
-                    raise ValueError(f"{link_field} inválido.")
-                fields[link_field] = normalized
         fields["updated_by_user_id"] = updated_by
         return self._repository.update_plan(plan_id, fields)
 
