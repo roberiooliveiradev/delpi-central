@@ -25,7 +25,10 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import type { PmrBranchRow } from "../types/financial";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatDecimal } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -109,11 +112,11 @@ export function PmrPage({ pathname }: PmrPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="PMR (dias)"
-          value={formatDecimal(data?.pmr_days, 1)}
+          value={formatDashboardMetricValue(data?.pmr_days, data)}
           {...buildKpiGoalPresentation(
             periodLabel,
             data,
-            (v) => formatDecimal(v, 1),
+            undefined,
             { realizedValue: data?.pmr_days },
           )}
           icon={<Clock size={22} />}

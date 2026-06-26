@@ -32,7 +32,7 @@ import type {
 } from "../types/supplies";
 import { buildNegotiationSavingsTrendSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatChartCurrency, formatCurrency, formatInteger } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -167,11 +167,11 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Economia total"
-          value={formatCurrency(realizedValue)}
+          value={formatDashboardMetricValue(realizedValue, data?.summary)}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             data?.summary,
-            formatCurrency,
+            undefined,
             { realizedValue },
           )}
           icon={<HandCoins size={22} />}

@@ -26,8 +26,49 @@ export type DashboardGoalFields = {
   scope_type?: string | null;
   performance_direction?: PerformanceDirection | string | null;
   value_unit?: string | null;
+  value_prefix?: string | null;
   value_suffix?: string | null;
+  value_decimals?: number | null;
 };
+
+function normalizeDecimals(value: number | null | undefined): number {
+  const numeric = Number(value ?? 2);
+  if (!Number.isFinite(numeric)) return 2;
+  return Math.min(Math.max(Math.trunc(numeric), 0), 6);
+}
+
+function getSuffixSeparator(suffix: string): string {
+  if (!suffix) return "";
+  if (suffix === "%") return "";
+  if (suffix.startsWith("/")) return "";
+  return " ";
+}
+
+/** Formata valor/meta com prefixo, sufixo e decimais do catálogo SI (strategic indicators). */
+export function formatDashboardMetricValue(
+  value: number | null | undefined,
+  fields?: DashboardGoalFields | null,
+  options?: { fallback?: string },
+): string {
+  if (value == null || Number.isNaN(Number(value))) {
+    return options?.fallback ?? "—";
+  }
+
+  const numeric = Number(value);
+  const prefix = (fields?.value_prefix ?? "").trim();
+  const suffix = (fields?.value_suffix ?? "").trim();
+  const decimals = normalizeDecimals(fields?.value_decimals);
+
+  const formattedNumber = numeric.toLocaleString("pt-BR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+  const prefixText = prefix ? `${prefix} ` : "";
+  const suffixText = suffix ? `${getSuffixSeparator(suffix)}${suffix}` : "";
+
+  return `${prefixText}${formattedNumber}${suffixText}`;
+}
 
 export type KpiGoalPresentation = {
   goalLabel: string | null;
@@ -158,16 +199,22 @@ export function resolveGoalLabel(
     return null;
   }
 
-  if (goal.comparable_goal != null && formatComparable) {
-    return formatComparable(goal.comparable_goal);
-  }
+  const comparable = goal.comparable_goal ?? goal.target ?? null;
+  if (comparable != null) {
+    const hasCatalogFormat =
+      Boolean(goal.value_prefix?.trim()) ||
+      Boolean(goal.value_suffix?.trim()) ||
+      goal.value_decimals != null;
 
-  if (goal.comparable_goal != null) {
-    const suffix = goal.value_suffix?.trim();
-    if (suffix) {
-      return `${goal.comparable_goal} ${suffix}`;
+    if (hasCatalogFormat) {
+      return formatDashboardMetricValue(comparable, goal);
     }
-    return String(goal.comparable_goal);
+
+    if (formatComparable) {
+      return formatComparable(comparable);
+    }
+
+    return formatDashboardMetricValue(comparable, goal);
   }
 
   if (goal.goal_label) {

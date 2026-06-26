@@ -43,8 +43,11 @@ import {
   parseLmpDateNumber,
 } from "../utils/lmpDisplay";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
-import { formatDecimal, formatInteger, formatPercent } from "../utils/format";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
+import { formatDecimal, formatInteger } from "../utils/format";
 
 const PIE_HEIGHT = 320;
 const PIE_RADIUS = 110;
@@ -260,11 +263,14 @@ export function LmpPage({ pathname }: LmpPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="% LMP dentro do prazo"
-          value={formatPercent(summary?.percent_dentro_prazo, 2)}
+          value={formatDashboardMetricValue(
+            summary?.percent_dentro_prazo,
+            summary,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             summary,
-            (v) => formatPercent(v, 2),
+            undefined,
             { realizedValue: summary?.percent_dentro_prazo },
           )}
           icon={<CircleGauge size={22} />}

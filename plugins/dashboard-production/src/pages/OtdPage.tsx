@@ -32,7 +32,10 @@ import type { ChartGranularity } from "../types/chart";
 import { downloadOtdSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { formatProductionApiError } from "../utils/formatProductionApiError";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
 import {
   exportOtdOrdersExcel,
@@ -274,11 +277,14 @@ export function OtdPage({ pathname }: OtdPageProps) {
         <KpiCard
           title="OTD"
           titleHint={DP_HELP_TOOLTIPS.otd.kpiOtd}
-          value={formatPercent(data?.summary.on_time_delivery_pct)}
+          value={formatDashboardMetricValue(
+            data?.summary.on_time_delivery_pct,
+            data?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             data?.summary,
-            formatPercent,
+            undefined,
             { realizedValue: data?.summary.on_time_delivery_pct }
           )}
           icon={<CircleGauge size={22} />}

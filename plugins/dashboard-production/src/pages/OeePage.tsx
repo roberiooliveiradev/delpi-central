@@ -47,7 +47,10 @@ import {
   buildOperatorFilterOptions,
   buildWorkCenterFilterOptions,
 } from "../utils/filterOptions";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatInteger, formatPercent, formatProductionQuantity } from "../utils/format";
 import {
   exportOeeAppointmentsExcel,
@@ -439,11 +442,14 @@ export function OeePage({ pathname }: OeePageProps) {
         <KpiCard
           title="OEE"
           titleHint={DP_HELP_TOOLTIPS.oee.kpiOee}
-          value={formatPercent(data?.summary.oee_pct)}
+          value={formatDashboardMetricValue(
+            data?.summary.oee_pct,
+            data?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             data?.summary,
-            formatPercent,
+            undefined,
             { realizedValue: data?.summary.oee_pct }
           )}
           icon={<CircleGauge size={22} />}

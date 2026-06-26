@@ -40,7 +40,10 @@ import {
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatCurrency, formatDecimal } from "../utils/format";
 import { navigateQuality } from "../utils/navigation";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
@@ -298,11 +301,11 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       <section className="dq-kpi-grid" aria-busy={loading}>
         <KpiCard
           title="Total de kaizens"
-          value={String(data?.total_kaizens ?? (loading ? "…" : 0))}
+          value={formatDashboardMetricValue(data?.total_kaizens, data)}
           {...buildKpiGoalPresentation(
             periodLabel,
             data,
-            formatDecimal,
+            undefined,
             { realizedValue: data?.total_kaizens },
           )}
           icon={<Lightbulb size={22} />}

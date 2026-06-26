@@ -22,10 +22,12 @@ import { FINANCIAL_ROUTES } from "../constants/routes";
 import { useFinancialDashboard } from "../hooks/useFinancialDashboard";
 import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import {
   formatCurrency,
-  formatDecimal,
   formatPercent,
 } from "../utils/format";
 
@@ -134,13 +136,16 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         />
         <KpiCard
           title="EBITDA / ROL"
-          value={formatPercent(ebitda?.ebitda_over_rol_pct)}
+          value={formatDashboardMetricValue(
+            ebitda?.ebitda_over_rol_pct,
+            ebitda,
+          )}
           {...buildKpiGoalPresentation(
             ebitda?.ebitda_value != null
               ? `EBITDA ${formatCurrency(ebitda.ebitda_value)} · ${periodLabel}`
               : periodLabel,
             ebitda,
-            formatPercent,
+            undefined,
             { realizedValue: ebitda?.ebitda_over_rol_pct },
           )}
           icon={<Percent size={22} />}
@@ -148,13 +153,16 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         />
         <KpiCard
           title="Custos fixos / ROL"
-          value={formatPercent(fixedCost?.fixed_cost_over_rol_pct)}
+          value={formatDashboardMetricValue(
+            fixedCost?.fixed_cost_over_rol_pct,
+            fixedCost,
+          )}
           {...buildKpiGoalPresentation(
             fixedCost?.fixed_cost_value != null
               ? `Fixos ${formatCurrency(fixedCost.fixed_cost_value)} · ${periodLabel}`
               : periodLabel,
             fixedCost,
-            formatPercent,
+            undefined,
             { realizedValue: fixedCost?.fixed_cost_over_rol_pct },
           )}
           icon={<Landmark size={22} />}
@@ -162,11 +170,11 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         />
         <KpiCard
           title="PMR (dias)"
-          value={formatDecimal(pmr?.pmr_days, 1)}
+          value={formatDashboardMetricValue(pmr?.pmr_days, pmr)}
           {...buildKpiGoalPresentation(
             periodLabel,
             pmr,
-            (v) => formatDecimal(v, 1),
+            undefined,
             { realizedValue: pmr?.pmr_days },
           )}
           icon={<Clock size={22} />}

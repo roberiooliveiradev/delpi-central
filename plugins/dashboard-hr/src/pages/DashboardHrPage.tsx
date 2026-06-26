@@ -28,7 +28,10 @@ import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useHrFilters } from "../hooks/useHrFilters";
 import type { HrBranchMetrics } from "../types/hr";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { averageNullable, formatDecimal, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 280;
@@ -171,11 +174,14 @@ export function DashboardHrPage() {
       <section className="dh-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Absenteísmo"
-          value={formatPercent(absenteeism)}
+          value={formatDashboardMetricValue(
+            absenteeism,
+            snapshot?.goals_by_metric?.absenteeism_pct,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             snapshot?.goals_by_metric?.absenteeism_pct,
-            formatPercent,
+            undefined,
             { realizedValue: absenteeism },
           )}
           icon={<UserMinus size={22} />}
@@ -183,11 +189,14 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="Turnover"
-          value={formatPercent(turnover)}
+          value={formatDashboardMetricValue(
+            turnover,
+            snapshot?.goals_by_metric?.turnover_pct,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             snapshot?.goals_by_metric?.turnover_pct,
-            formatPercent,
+            undefined,
             { realizedValue: turnover },
           )}
           icon={<TrendingDown size={22} />}
@@ -195,11 +204,14 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="Satisfação interna"
-          value={formatPercent(satisfaction)}
+          value={formatDashboardMetricValue(
+            satisfaction,
+            snapshot?.goals_by_metric?.internal_satisfaction_pct,
+          )}
           {...buildKpiGoalPresentation(
             "Consolidado no período",
             snapshot?.goals_by_metric?.internal_satisfaction_pct,
-            formatPercent,
+            undefined,
             { realizedValue: satisfaction },
           )}
           icon={<Smile size={22} />}
@@ -207,11 +219,14 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="PDI ativos"
-          value={formatPercent(activePdi)}
+          value={formatDashboardMetricValue(
+            activePdi,
+            snapshot?.goals_by_metric?.active_pdi_pct,
+          )}
           {...buildKpiGoalPresentation(
             branch ? `Filial ${branch}` : "Média das filiais",
             snapshot?.goals_by_metric?.active_pdi_pct,
-            formatPercent,
+            undefined,
             { realizedValue: activePdi },
           )}
           icon={<Award size={22} />}
@@ -219,11 +234,14 @@ export function DashboardHrPage() {
         />
         <KpiCard
           title="Horas treinamento / colaborador"
-          value={formatDecimal(trainingHours, 2)}
+          value={formatDashboardMetricValue(
+            trainingHours,
+            snapshot?.goals_by_metric?.training_hours_per_collaborator,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             snapshot?.goals_by_metric?.training_hours_per_collaborator,
-            (value) => formatDecimal(value, 2),
+            undefined,
             { realizedValue: trainingHours },
           )}
           icon={<BookOpen size={22} />}

@@ -2,6 +2,7 @@ import type { RolTargetData } from "../types/commercial";
 import type { GoalPerformanceBadge, KpiGoalPresentation } from "./goalDisplay";
 import {
   buildKpiGoalPresentation,
+  formatDashboardMetricValue,
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
 /** Mesmo texto retornado pela api-delpi quando a meta é só por filial. */
@@ -80,12 +81,13 @@ export function buildRolPerUnitKpiView(
 
   if (branch === "01" || branch === "02") {
     const data = branch === "01" ? filial01 : filial02;
-    const single = buildKpiGoalPresentation(contextLabel, data, formatCurrency, {
+    const single = buildKpiGoalPresentation(contextLabel, data, undefined, {
       realizedValue: data?.rol,
     });
     return {
       ...single,
-      value: data?.rol != null ? formatCurrency(data.rol) : "—",
+      value:
+        data?.rol != null ? formatDashboardMetricValue(data.rol, data) : "—",
       valueVariant: "per-unit",
       goalPerformanceBadge: null,
       goalPerformanceBadges: resolvePerUnitPerformanceBadges(

@@ -30,9 +30,8 @@ import {
   formatCurrency,
   formatDecimal,
   formatInteger,
-  formatPercent,
 } from "../utils/format";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 
 const CHART_HEIGHT = 320;
 
@@ -172,11 +171,14 @@ export function CpvPage({ pathname }: CpvPageProps) {
         />
         <KpiCard
           title="CPV / ROL"
-          value={formatPercent(data?.summary.cpv_percentage)}
+          value={formatDashboardMetricValue(
+            data?.summary.cpv_percentage,
+            data?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `ROL ${formatCurrency(data?.summary.rol_with_ipi)}`,
             data?.summary,
-            formatPercent,
+            undefined,
             { realizedValue: data?.summary.cpv_percentage },
           )}
           icon={<Percent size={22} />}

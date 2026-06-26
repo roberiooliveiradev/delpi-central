@@ -49,7 +49,10 @@ import {
   COMMERCIAL_KPI_TITLES,
 } from "../constants/commercialIndicators";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { buildRolPerUnitKpiView } from "../utils/rolPerUnitPresentation";
 import {
   formatInteger,
@@ -548,11 +551,14 @@ export function DashboardCommercialPage({
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.salesOrderOtd}
           titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.salesOrderOtd}
-          value={formatPercent(salesOrderOtd?.sales_order_otd_pct)}
+          value={formatDashboardMetricValue(
+            salesOrderOtd?.sales_order_otd_pct,
+            salesOrderOtd,
+          )}
           {...buildKpiGoalPresentation(
             `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             salesOrderOtd,
-            formatPercent,
+            undefined,
             { realizedValue: salesOrderOtd?.sales_order_otd_pct },
           )}
           icon={<PackageCheck size={22} />}
@@ -561,11 +567,14 @@ export function DashboardCommercialPage({
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.closingRate}
           titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.closingRate}
-          value={formatPercent(closingRate?.sales_conversion_rate_pct)}
+          value={formatDashboardMetricValue(
+            closingRate?.sales_conversion_rate_pct,
+            closingRate,
+          )}
           {...buildKpiGoalPresentation(
             `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             closingRate,
-            formatPercent,
+            undefined,
             { realizedValue: closingRate?.sales_conversion_rate_pct },
           )}
           icon={<Percent size={22} />}
@@ -574,11 +583,14 @@ export function DashboardCommercialPage({
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.newBusinessRol}
           titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.newBusinessRol}
-          value={formatPercent(newBusinessRol?.new_business_rol_pct)}
+          value={formatDashboardMetricValue(
+            newBusinessRol?.new_business_rol_pct,
+            newBusinessRol,
+          )}
           {...buildKpiGoalPresentation(
             `${formatNewBusinessRolContextLine(newBusinessRol, customerSegment, formatCurrency)} · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             newBusinessRol,
-            formatPercent,
+            undefined,
             { realizedValue: newBusinessRol?.new_business_rol_pct },
           )}
           icon={<TrendingUp size={22} />}

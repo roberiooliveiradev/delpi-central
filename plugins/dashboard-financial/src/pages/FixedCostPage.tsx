@@ -25,7 +25,10 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import type { FixedCostBranchRow } from "../types/financial";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -121,11 +124,14 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Custos fixos / ROL"
-          value={formatPercent(data?.fixed_cost_over_rol_pct)}
+          value={formatDashboardMetricValue(
+            data?.fixed_cost_over_rol_pct,
+            data,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             data,
-            formatPercent,
+            undefined,
             { realizedValue: data?.fixed_cost_over_rol_pct },
           )}
           icon={<Landmark size={22} />}

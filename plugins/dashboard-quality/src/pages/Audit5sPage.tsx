@@ -34,7 +34,10 @@ import {
 import { downloadChartSeriesCsv } from "../utils/chartSeriesExport";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatScore } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { suggestGranularity } from "../utils/periodBuckets";
@@ -232,11 +235,11 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
       <section className="dq-kpi-grid" aria-busy={loading}>
         <KpiCard
           title="Nota média"
-          value={formatScore(data?.average_score)}
+          value={formatDashboardMetricValue(data?.average_score, data)}
           {...buildKpiGoalPresentation(
             periodLabel,
             data,
-            formatScore,
+            undefined,
             { realizedValue: data?.average_score },
           )}
           icon={<Star size={22} />}

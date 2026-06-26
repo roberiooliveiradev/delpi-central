@@ -17,12 +17,10 @@ import { SUPPLIES_ROUTES } from "../constants/routes";
 import { useSuppliesDashboard } from "../hooks/useSuppliesDashboard";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import {
   formatCurrency,
-  formatDecimal,
   formatInteger,
-  formatPercent,
 } from "../utils/format";
 
 const SHORTCUTS = [
@@ -132,11 +130,14 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="CPV / ROL"
-          value={formatPercent(cpv?.summary.cpv_percentage)}
+          value={formatDashboardMetricValue(
+            cpv?.summary.cpv_percentage,
+            cpv?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
             cpv?.summary,
-            formatPercent,
+            undefined,
             { realizedValue: cpv?.summary.cpv_percentage },
           )}
           icon={<Percent size={22} />}
@@ -144,11 +145,14 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="OTD compras"
-          value={formatPercent(otd?.summary.otd_percentage)}
+          value={formatDashboardMetricValue(
+            otd?.summary.otd_percentage,
+            otd?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `${formatInteger(otd?.summary.on_time_lines)} / ${formatInteger(otd?.summary.total_lines)} linhas`,
             otd?.summary,
-            formatPercent,
+            undefined,
             { realizedValue: otd?.summary.otd_percentage },
           )}
           icon={<CircleGauge size={22} />}
@@ -156,7 +160,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="Valor de estoque"
-          value={formatCurrency(stockValue?.summary.total_stock_value)}
+          value={formatDashboardMetricValue(
+            stockValue?.summary.total_stock_value,
+            stockValue?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             stockValue?.summary,
@@ -168,11 +175,14 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="Giro de estoque (meses)"
-          value={formatDecimal(inventoryTurnover?.summary.inventory_turnover_months, 2)}
+          value={formatDashboardMetricValue(
+            inventoryTurnover?.summary.inventory_turnover_months,
+            inventoryTurnover?.summary,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             inventoryTurnover?.summary,
-            (v) => formatDecimal(v, 2),
+            undefined,
             { realizedValue: inventoryTurnover?.summary.inventory_turnover_months },
           )}
           icon={<Package size={22} />}
@@ -180,13 +190,15 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
         />
         <KpiCard
           title="Economia em negociações"
-          value={formatCurrency(
-            negotiationSavings?.summary.total_savings ?? negotiationSavings?.total_savings,
+          value={formatDashboardMetricValue(
+            negotiationSavings?.summary.total_savings ??
+              negotiationSavings?.total_savings,
+            negotiationSavings?.summary,
           )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             negotiationSavings?.summary,
-            formatCurrency,
+            undefined,
             {
               realizedValue:
                 negotiationSavings?.summary.total_savings ??

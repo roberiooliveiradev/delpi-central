@@ -19,12 +19,14 @@ import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityFilters } from "../hooks/useQualityFilters";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import {
   formatCurrency,
   formatDecimal,
   formatInteger,
-  formatPpm,
   formatScore,
 } from "../utils/format";
 import { formatPeriodLabel } from "../utils/dates";
@@ -161,11 +163,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       <section className="dq-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="PPM interno"
-          value={formatPpm(ppmInternal?.ppm)}
+          value={formatDashboardMetricValue(ppmInternal?.ppm, ppmInternal)}
           {...buildKpiGoalPresentation(
             `Devolvido: ${formatDecimal(ppmInternal?.total_devolvido_un)} un · ${periodLabel}`,
             ppmInternal,
-            formatPpm,
+            undefined,
             { realizedValue: ppmInternal?.ppm },
           )}
           icon={<Factory size={22} />}
@@ -179,11 +181,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         />
         <KpiCard
           title="PPM externo"
-          value={formatPpm(ppmExternal?.ppm)}
+          value={formatDashboardMetricValue(ppmExternal?.ppm, ppmExternal)}
           {...buildKpiGoalPresentation(
             `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${periodLabel}`,
             ppmExternal,
-            formatPpm,
+            undefined,
             { realizedValue: ppmExternal?.ppm },
           )}
           icon={<Truck size={22} />}
@@ -205,7 +207,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           {...buildKpiGoalPresentation(
             periodLabel,
             kaizen,
-            formatDecimal,
+            undefined,
             { realizedValue: kaizen?.total_kaizens },
           )}
           icon={<Lightbulb size={22} />}
@@ -231,7 +233,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           {...buildKpiGoalPresentation(
             periodLabel,
             audit5s,
-            formatScore,
+            undefined,
             { realizedValue: audit5s?.average_score },
           )}
           icon={<ClipboardCheck size={22} />}

@@ -25,7 +25,10 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import type { EbitdaBranchRow } from "../types/financial";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatCurrency, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -125,11 +128,14 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="EBITDA / ROL"
-          value={formatPercent(data?.ebitda_over_rol_pct)}
+          value={formatDashboardMetricValue(
+            data?.ebitda_over_rol_pct,
+            data,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             data,
-            formatPercent,
+            undefined,
             { realizedValue: data?.ebitda_over_rol_pct },
           )}
           icon={<Percent size={22} />}

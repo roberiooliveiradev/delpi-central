@@ -11,7 +11,7 @@ import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import { formatPeriodLabel } from "../utils/dates";
 import { formatCurrency, formatDecimal } from "../utils/format";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 
 type InventoryTurnoverPageProps = { pathname?: string };
 
@@ -108,11 +108,14 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Giro (meses)"
-          value={formatDecimal(data?.summary.inventory_turnover_months, 2)}
+          value={formatDashboardMetricValue(
+            data?.summary.inventory_turnover_months,
+            data?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel} · ${periodLabel}`,
             data?.summary,
-            (v) => formatDecimal(v, 2),
+            undefined,
             { realizedValue: data?.summary.inventory_turnover_months },
           )}
           icon={<Package size={22} />}
@@ -127,7 +130,10 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         />
         <KpiCard
           title="Estoque"
-          value={formatCurrency(data?.summary.total_stock_value)}
+          value={formatDashboardMetricValue(
+            data?.summary.total_stock_value,
+            data?.stock_context,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             data?.stock_context,

@@ -30,7 +30,10 @@ import type { ChartGranularity } from "../types/chart";
 import type { TransformaProcess } from "../types/engineering";
 import { buildTransformaSavingsSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { suggestGranularity } from "../utils/periodBuckets";
 import {
   formatCurrency,
@@ -244,7 +247,10 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="Ganhos brutos no período"
-          value={formatCurrency(summary?.total_gross_savings_in_period)}
+          value={formatDashboardMetricValue(
+            summary?.total_gross_savings_in_period,
+            summary,
+          )}
           {...buildKpiGoalPresentation(
             periodLabel,
             summary,

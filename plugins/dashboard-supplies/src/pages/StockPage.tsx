@@ -30,7 +30,7 @@ import {
   formatDecimal,
   formatInteger,
 } from "../utils/format";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatProtheusDateHuman } from "../utils/dates";
 
 const CHART_HEIGHT = 320;
@@ -203,7 +203,10 @@ export function StockPage({ pathname }: StockPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title={primaryKpiTitle}
-          value={formatCurrency(data?.summary.total_stock_value)}
+          value={formatDashboardMetricValue(
+            data?.summary.total_stock_value,
+            data?.summary,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${locationLabel}`,
             data?.summary,

@@ -23,8 +23,11 @@ import type { ChartGranularity } from "../types/chart";
 import type { PpmItem, PpmType } from "../types/ppm";
 import { downloadCsv } from "../utils/csv";
 import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
-import { formatDecimal, formatPpm, formatCustomerRef, formatNonconformityCode } from "../utils/format";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
+import { formatDecimal, formatCustomerRef, formatNonconformityCode } from "../utils/format";
 import {
   downloadChartSeriesCsv,
   downloadDualPpmSeriesCsv,
@@ -309,11 +312,11 @@ export function PpmPage({ pathname }: PpmPageProps) {
       <section className="dq-kpi-grid dq-kpi-grid--single-row" aria-busy={isBusy}>
         <KpiCard
           title={`PPM ${typeLabel}`}
-          value={formatPpm(summary?.ppm)}
+          value={formatDashboardMetricValue(summary?.ppm, summary)}
           {...buildKpiGoalPresentation(
             `Produzido: ${formatDecimal(summary?.total_produzido_un)} un · ${periodLabel}`,
             summary,
-            formatPpm,
+            undefined,
             { realizedValue: summary?.ppm },
           )}
           icon={

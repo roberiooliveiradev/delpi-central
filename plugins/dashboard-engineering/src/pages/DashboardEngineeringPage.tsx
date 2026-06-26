@@ -10,9 +10,11 @@ import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringDashboard } from "../hooks/useEngineeringDashboard";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
-  formatCurrency,
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
+import {
   formatDecimal,
   formatInteger,
   formatPercent,
@@ -102,11 +104,14 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="% LMP dentro do prazo"
-          value={formatPercent(lmpSummary?.percent_dentro_prazo, 2)}
+          value={formatDashboardMetricValue(
+            lmpSummary?.percent_dentro_prazo,
+            lmpSummary,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             lmpSummary,
-            (v) => formatPercent(v, 2),
+            undefined,
             { realizedValue: lmpSummary?.percent_dentro_prazo },
           )}
           icon={<CircleGauge size={22} />}
@@ -130,7 +135,10 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         />
         <KpiCard
           title="Ganhos brutos TRANSFORMA+"
-          value={formatCurrency(transforma?.total_gross_savings_in_period)}
+          value={formatDashboardMetricValue(
+            transforma?.total_gross_savings_in_period,
+            transforma,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             transforma,

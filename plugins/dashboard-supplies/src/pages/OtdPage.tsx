@@ -32,7 +32,7 @@ import type { ChartGranularity } from "../types/chart";
 import { buildOtdTrendSeries } from "../utils/chartMonthlySeries";
 import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 320;
@@ -198,8 +198,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="OTD"
-          value={formatPercent(data?.summary.otd_percentage)}
-          {...buildKpiGoalPresentation(periodLabel, data?.summary, formatPercent, {
+          value={formatDashboardMetricValue(
+            data?.summary.otd_percentage,
+            data?.summary,
+          )}
+          {...buildKpiGoalPresentation(periodLabel, data?.summary, undefined, {
             realizedValue: data?.summary.otd_percentage,
           })}
           icon={<CircleGauge size={22} />}

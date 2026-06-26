@@ -39,7 +39,10 @@ import type { ChartGranularity } from "../types/chart";
 import { downloadOeeSeriesCsv, downloadOtdSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
-import { buildKpiGoalPresentation } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+} from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
 
 const CHART_HEIGHT = 300;
@@ -235,11 +238,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         <KpiCard
           title="MO direta / ROL"
           titleHint={DP_HELP_TOOLTIPS.home.directLabor}
-          value={formatPercent(directLabor?.direct_labor_cost_pct)}
+          value={formatDashboardMetricValue(
+            directLabor?.direct_labor_cost_pct,
+            directLabor,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             directLabor,
-            formatPercent,
+            undefined,
             { realizedValue: directLabor?.direct_labor_cost_pct },
           )}
           icon={<Users size={22} />}
@@ -248,11 +254,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         <KpiCard
           title="Custo de produção / ROL"
           titleHint={DP_HELP_TOOLTIPS.home.productionCost}
-          value={formatPercent(productionCost?.production_cost_pct)}
+          value={formatDashboardMetricValue(
+            productionCost?.production_cost_pct,
+            productionCost,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             productionCost,
-            formatPercent,
+            undefined,
             { realizedValue: productionCost?.production_cost_pct },
           )}
           icon={<Coins size={22} />}
@@ -261,11 +270,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         <KpiCard
           title="Depreciação / ROL"
           titleHint={DP_HELP_TOOLTIPS.home.depreciation}
-          value={formatPercent(depreciation?.depreciation_pct)}
+          value={formatDashboardMetricValue(
+            depreciation?.depreciation_pct,
+            depreciation,
+          )}
           {...buildKpiGoalPresentation(
             `${branchLabel} · ${periodLabel}`,
             depreciation,
-            formatPercent,
+            undefined,
             { realizedValue: depreciation?.depreciation_pct },
           )}
           icon={<Percent size={22} />}
@@ -274,11 +286,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         <KpiCard
           title="OEE"
           titleHint={DP_HELP_TOOLTIPS.home.oee}
-          value={formatPercent(oee?.overall_equipment_effectiveness_pct)}
+          value={formatDashboardMetricValue(
+            oee?.overall_equipment_effectiveness_pct,
+            oee,
+          )}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             oee,
-            formatPercent,
+            undefined,
             { realizedValue: oee?.overall_equipment_effectiveness_pct },
           )}
           icon={<CircleGauge size={22} />}
@@ -287,11 +302,14 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
         <KpiCard
           title="OTD — entrega no prazo"
           titleHint={DP_HELP_TOOLTIPS.home.otd}
-          value={formatPercent(otd?.on_time_delivery_pct)}
+          value={formatDashboardMetricValue(
+            otd?.on_time_delivery_pct,
+            otd,
+          )}
           {...buildKpiGoalPresentation(
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             otd,
-            formatPercent,
+            undefined,
             { realizedValue: otd?.on_time_delivery_pct },
           )}
           icon={<Truck size={22} />}
