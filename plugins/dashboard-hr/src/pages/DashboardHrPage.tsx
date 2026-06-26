@@ -71,9 +71,11 @@ export function DashboardHrPage() {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
   } = useHrFilters();
@@ -201,14 +203,15 @@ export function DashboardHrPage() {
   return (
     <div className="dashboard-hr dashboard-page">
       <FilterBar
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         branchOptions={branchOptions}
+        onCompetenceChange={setCompetence}
         onBranchesChange={setBranches}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-
         onRefresh={reload}
         refreshing={refreshing}
       />

@@ -5,6 +5,8 @@ import {
   inputDateToApi,
 } from "../utils/dates";
 import { resolveApiBranch } from "../utils/branchClientFilters";
+import { resolveLinkedDateFilters } from "../utils/competenceFilters";
+import { useCompetenceLinkedDates } from "./useCompetenceLinkedDates";
 import {
   readQualityFilters,
   subscribeFilterRouteSync,
@@ -14,38 +16,29 @@ import {
 import type { DateRangeParams } from "../types/ppm";
 
 export function useQualityFilters() {
-  const [dateStart, setDateStartState] = useState(
-    () => readQualityFilters().dateStart
-  );
-  const [dateEnd, setDateEndState] = useState(() => readQualityFilters().dateEnd);
-  const [branches, setBranchesState] = useState(
-    () => readQualityFilters().branches
-  );
-
-  const syncToUrl = useCallback((state: QualityFilterUrlState) => {
-    writeFiltersToUrl(state);
-  }, []);
+  const initial = readQualityFilters();
+  const {
+    dateStart,
+    dateEnd,
+    competence,
+    setDateStart,
+    setDateEnd,
+    setCompetence,
+    replaceAll,
+  } = useCompetenceLinkedDates(initial);
+  const [branches, setBranchesState] = useState(initial.branches);
 
   useEffect(() => {
-    syncToUrl({ dateStart, dateEnd, branches });
-  }, [dateStart, dateEnd, branches, syncToUrl]);
+    writeFiltersToUrl({ dateStart, dateEnd, competence, branches });
+  }, [dateStart, dateEnd, competence, branches]);
 
   useEffect(() => {
     return subscribeFilterRouteSync(() => {
       const next = readQualityFilters();
-      setDateStartState(next.dateStart);
-      setDateEndState(next.dateEnd);
+      replaceAll(next);
       setBranchesState(next.branches);
     });
-  }, []);
-
-  const setDateStart = useCallback((value: string) => {
-    setDateStartState(value);
-  }, []);
-
-  const setDateEnd = useCallback((value: string) => {
-    setDateEndState(value);
-  }, []);
+  }, [replaceAll]);
 
   const setBranches = useCallback((value: string[]) => {
     setBranchesState(value);
@@ -60,28 +53,33 @@ export function useQualityFilters() {
   const filterState: QualityFilterUrlState = {
     dateStart,
     dateEnd,
+    competence,
     branches,
   };
 
   const resetFilters = useCallback(() => {
-    const next = {
-      dateStart: getFirstDayOfMonthInputValue(),
-      dateEnd: getTodayInputValue(),
-      branches: [] as string[],
+    const next = resolveLinkedDateFilters({
+      defaultDateStart: getFirstDayOfMonthInputValue(),
+      defaultDateEnd: getTodayInputValue(),
+    });
+    const state: QualityFilterUrlState = {
+      ...next,
+      branches: [],
     };
 
-    setDateStartState(next.dateStart);
-    setDateEndState(next.dateEnd);
-    setBranchesState(next.branches);
-    writeFiltersToUrl(next);
-  }, []);
+    replaceAll(state);
+    setBranchesState([]);
+    writeFiltersToUrl(state);
+  }, [replaceAll]);
 
   return {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,

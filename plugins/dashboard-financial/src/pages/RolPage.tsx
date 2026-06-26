@@ -24,9 +24,11 @@ export function RolPage({ pathname }: RolPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -90,9 +92,11 @@ export function RolPage({ pathname }: RolPageProps) {
         subtitle="Composição da receita operacional líquida"
         currentPath={pathname ?? FINANCIAL_ROUTES.rol}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

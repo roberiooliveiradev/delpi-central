@@ -43,10 +43,12 @@ export function StockPage({ pathname }: StockPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     location,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     setLocation,
     stockParams,
@@ -169,11 +171,13 @@ export function StockPage({ pathname }: StockPageProps) {
         subtitle={estimationSubtitle}
         currentPath={pathname ?? SUPPLIES_ROUTES.stock}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         location={location}
         showLocationFilter
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

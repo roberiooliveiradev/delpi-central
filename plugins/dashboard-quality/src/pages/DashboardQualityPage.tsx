@@ -63,9 +63,11 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches: selectedBranches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -115,12 +117,14 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       <FilterBar
         filterState={filterState}
         currentPath={pathname ?? QUALITY_ROUTES.home}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={selectedBranches}
         branchOptions={branchOptions}
         branchesLoading={branchesLoading}
         printDisabled={printDisabled}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

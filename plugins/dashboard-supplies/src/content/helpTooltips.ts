@@ -6,6 +6,8 @@ export const SUPPLIES_HELP_TOOLTIPS = {
       "Recarrega KPIs e gráficos com os filtros atuais (período, filial e localização).",
   },
   filters: {
+    competence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Fica vazio quando o período abrange mais de um mês.",
     dateStart:
       "Início do período. KPIs e gráficos consideram movimentos e saldos a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",

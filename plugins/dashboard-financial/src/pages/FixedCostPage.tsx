@@ -40,9 +40,11 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -103,9 +105,11 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
         subtitle="Percentual de custos fixos sobre ROL"
         currentPath={pathname ?? FINANCIAL_ROUTES.fixedCost}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

@@ -2,6 +2,7 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import { isValidCompetence, resolveLinkedDateFilters } from "./competenceFilters";
 import {
   parseCommercialBranchCsv,
   serializeCommercialBranchCsv,
@@ -10,6 +11,7 @@ import {
 export type CommercialFilterUrlState = {
   dateStart: string;
   dateEnd: string;
+  competence: string;
   branches: string[];
   customerSegment: "" | "weg" | "new_business";
 };
@@ -21,9 +23,13 @@ function isValidIsoDate(value: string): boolean {
 }
 
 function defaultFilterState(): CommercialFilterUrlState {
+  const defaults = resolveLinkedDateFilters({
+    defaultDateStart: getFirstDayOfMonthInputValue(),
+    defaultDateEnd: getTodayInputValue(),
+  });
+
   return {
-    dateStart: getFirstDayOfMonthInputValue(),
-    dateEnd: getTodayInputValue(),
+    ...defaults,
     branches: [],
     customerSegment: "",
   };
@@ -57,23 +63,29 @@ function parseStoredBranches(data: Record<string, unknown>): string[] {
 function parseFilterParams(params: URLSearchParams): CommercialFilterUrlState | null {
   const dateStartParam = params.get("start_date") ?? "";
   const dateEndParam = params.get("end_date") ?? "";
+  const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const customerSegmentParam = params.get("customer_segment") ?? "";
   const hasAny =
     isValidIsoDate(dateStartParam) ||
     isValidIsoDate(dateEndParam) ||
+    isValidCompetence(competenceParam) ||
     branchParam.length > 0 ||
     customerSegmentParam.length > 0;
 
   if (!hasAny) return null;
 
   const defaults = defaultFilterState();
+  const dates = resolveLinkedDateFilters({
+    dateStart: isValidIsoDate(dateStartParam) ? dateStartParam : defaults.dateStart,
+    dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
+    competence: isValidCompetence(competenceParam) ? competenceParam : "",
+    defaultDateStart: defaults.dateStart,
+    defaultDateEnd: defaults.dateEnd,
+  });
 
   return {
-    dateStart: isValidIsoDate(dateStartParam)
-      ? dateStartParam
-      : defaults.dateStart,
-    dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
+    ...dates,
     branches: parseCommercialBranchCsv(branchParam),
     customerSegment: parseCustomerSegment(customerSegmentParam),
   };
@@ -91,7 +103,7 @@ export function readCommercialFilters(
       if (raw) {
         const data = JSON.parse(raw) as Record<string, unknown>;
         const defaults = defaultFilterState();
-        return {
+        const dates = resolveLinkedDateFilters({
           dateStart:
             typeof data.dateStart === "string" && isValidIsoDate(data.dateStart)
               ? data.dateStart
@@ -100,6 +112,16 @@ export function readCommercialFilters(
             typeof data.dateEnd === "string" && isValidIsoDate(data.dateEnd)
               ? data.dateEnd
               : defaults.dateEnd,
+          competence:
+            typeof data.competence === "string" && isValidCompetence(data.competence)
+              ? data.competence
+              : "",
+          defaultDateStart: defaults.dateStart,
+          defaultDateEnd: defaults.dateEnd,
+        });
+
+        return {
+          ...dates,
           branches: parseStoredBranches(data),
           customerSegment: parseCustomerSegment(
             typeof data.customerSegment === "string" ? data.customerSegment : null
@@ -119,6 +141,7 @@ export function buildFilterSearchParams(state: CommercialFilterUrlState): string
 
   if (state.dateStart) params.set("start_date", state.dateStart);
   if (state.dateEnd) params.set("end_date", state.dateEnd);
+  if (state.competence) params.set("competence", state.competence);
 
   const branch = serializeCommercialBranchCsv(state.branches);
   if (branch) params.set("branch", branch);

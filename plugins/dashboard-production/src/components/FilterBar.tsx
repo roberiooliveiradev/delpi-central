@@ -8,9 +8,11 @@ type FilterBarProps = {
   subtitle?: string;
   currentPath?: string;
   filterState?: ProductionFilterUrlState;
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -23,9 +25,11 @@ export function FilterBar({
   subtitle,
   currentPath,
   filterState,
+  competence,
   dateStart,
   dateEnd,
   branches,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -43,9 +47,11 @@ export function FilterBar({
         refreshing={refreshing}
       />
       <ProductionFilters
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={onCompetenceChange}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchesChange={onBranchesChange}

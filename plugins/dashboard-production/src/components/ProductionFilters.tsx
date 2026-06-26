@@ -4,9 +4,11 @@ import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type ProductionFiltersProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -14,9 +16,11 @@ type ProductionFiltersProps = {
 };
 
 export function ProductionFilters({
+  competence,
   dateStart,
   dateEnd,
   branches,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -24,6 +28,15 @@ export function ProductionFilters({
 }: ProductionFiltersProps) {
   return (
     <section className={`dp-filters-row ${className}`.trim()} aria-label="Filtros do dashboard">
+      <label className="dp-filter-box dp-field" htmlFor="dp-competence">
+        <FieldLabel label="Competência" hint={DP_HELP_TOOLTIPS.filters.competence} />
+        <input
+          id="dp-competence"
+          type="month"
+          value={competence}
+          onChange={(e) => onCompetenceChange(e.target.value)}
+        />
+      </label>
       <label className="dp-filter-box dp-field" htmlFor="dp-date-start">
         <FieldLabel label="Data inicial" hint={DP_HELP_TOOLTIPS.filters.dateStart} />
         <input

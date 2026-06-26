@@ -52,9 +52,11 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -207,9 +209,11 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         subtitle="Ganhos financeiros e processos de melhoria (Postgres transformometro)"
         currentPath={pathname ?? ENGINEERING_ROUTES.transforma}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

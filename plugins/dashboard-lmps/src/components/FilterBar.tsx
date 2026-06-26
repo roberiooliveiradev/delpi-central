@@ -10,11 +10,13 @@ import { FieldLabel, HelpTooltip } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type FilterBarProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
   listingTypes: string[];
   statuses: string[];
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (value: string[]) => void;
@@ -27,11 +29,13 @@ type FilterBarProps = {
 };
 
 export function FilterBar({
+  competence,
   dateStart,
   dateEnd,
   branches,
   listingTypes,
   statuses,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -92,6 +96,17 @@ export function FilterBar({
       </header>
 
       <section className="lmps-filters-row" aria-label="Filtros do dashboard">
+        <label className="lmps-filter-box lmps-field">
+          <FieldLabel label="Competência" hint={LMPS_HELP_TOOLTIPS.filters.competence} />
+          <input
+            id="lmps-competence"
+            type="month"
+            value={competence}
+            disabled={disabled}
+            onChange={(event) => onCompetenceChange(event.target.value)}
+          />
+        </label>
+
         <label className="lmps-filter-box lmps-field">
           <FieldLabel label="Data inicial" hint={LMPS_HELP_TOOLTIPS.filters.dateStart} />
           <input

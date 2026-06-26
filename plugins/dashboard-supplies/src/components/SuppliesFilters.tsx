@@ -4,10 +4,12 @@ import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type SuppliesFiltersProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
   location: string;
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -18,10 +20,12 @@ type SuppliesFiltersProps = {
 };
 
 export function SuppliesFilters({
+  competence,
   dateStart,
   dateEnd,
   branches,
   location,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -37,6 +41,18 @@ export function SuppliesFilters({
     >
       {showPeriodFilters ? (
         <>
+          <label className="ds-filter-box ds-field">
+            <FieldLabel
+              label="Competência"
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.competence}
+            />
+            <input
+              id="ds-competence"
+              type="month"
+              value={competence}
+              onChange={(e) => onCompetenceChange(e.target.value)}
+            />
+          </label>
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Data inicial"

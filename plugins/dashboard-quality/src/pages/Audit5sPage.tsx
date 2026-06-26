@@ -55,9 +55,11 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches: selectedBranches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -210,11 +212,13 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
 
       <div className="dq-no-print">
       <Audit5sFilters
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         selectedBranches={selectedBranches}
         branchOptions={branchOptions}
         branchesLoading={branchesLoading}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

@@ -1,5 +1,7 @@
 export const DP_HELP_TOOLTIPS = {
   filters: {
+    competence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Fica vazio quando o período abrange mais de um mês.",
     dateStart:
       "Início do período analisado. KPIs, gráficos e tabelas consideram apontamentos ou OPs com data dentro do intervalo.",
     dateEnd:

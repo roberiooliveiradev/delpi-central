@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { SuppliesFilterParams } from "../types/supplies";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
+import { useCompetenceLinkedDates } from "./useCompetenceLinkedDates";
 import {
   readSuppliesFilters,
   subscribeFilterRouteSync,
@@ -10,32 +11,31 @@ import {
 } from "../utils/filterUrl";
 
 export function useSuppliesFilters() {
-  const [dateStart, setDateStartState] = useState(
-    () => readSuppliesFilters().dateStart
-  );
-  const [dateEnd, setDateEndState] = useState(
-    () => readSuppliesFilters().dateEnd
-  );
-  const [branches, setBranchesState] = useState(
-    () => readSuppliesFilters().branches
-  );
-  const [location, setLocationState] = useState(
-    () => readSuppliesFilters().location
-  );
+  const initial = readSuppliesFilters();
+  const {
+    dateStart,
+    dateEnd,
+    competence,
+    setDateStart,
+    setDateEnd,
+    setCompetence,
+    replaceAll,
+  } = useCompetenceLinkedDates(initial);
+  const [branches, setBranchesState] = useState(initial.branches);
+  const [location, setLocationState] = useState(initial.location);
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branches, location });
-  }, [dateStart, dateEnd, branches, location]);
+    writeFiltersToUrl({ dateStart, dateEnd, competence, branches, location });
+  }, [dateStart, dateEnd, competence, branches, location]);
 
   useEffect(() => {
     return subscribeFilterRouteSync(() => {
       const next = readSuppliesFilters();
-      setDateStartState(next.dateStart);
-      setDateEndState(next.dateEnd);
+      replaceAll(next);
       setBranchesState(next.branches);
       setLocationState(next.location);
     });
-  }, []);
+  }, [replaceAll]);
 
   const resolvedBranch = resolveApiBranch(branches);
 
@@ -56,6 +56,7 @@ export function useSuppliesFilters() {
   const filterState: SuppliesFilterUrlState = {
     dateStart,
     dateEnd,
+    competence,
     branches,
     location,
   };
@@ -63,10 +64,12 @@ export function useSuppliesFilters() {
   return {
     dateStart,
     dateEnd,
+    competence,
     branches,
     location,
-    setDateStart: useCallback((v: string) => setDateStartState(v), []),
-    setDateEnd: useCallback((v: string) => setDateEndState(v), []),
+    setDateStart,
+    setDateEnd,
+    setCompetence,
     setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     setLocation: useCallback((v: string) => setLocationState(v), []),
     periodParams,

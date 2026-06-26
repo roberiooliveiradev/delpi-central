@@ -1,5 +1,7 @@
 export const LMPS_HELP_TOOLTIPS = {
   filters: {
+    competence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Fica vazio quando o período abrange mais de um mês.",
     dateStart:
       "Início do período. KPIs, gráficos e tabela consideram propostas com data de início a partir desta data.",
     dateEnd:

@@ -40,9 +40,11 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -107,9 +109,11 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
         subtitle="Percentual de EBITDA sobre ROL"
         currentPath={pathname ?? FINANCIAL_ROUTES.ebitda}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

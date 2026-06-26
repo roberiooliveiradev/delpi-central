@@ -27,6 +27,7 @@ export function buildCommercialDetailPath(
 
   if (state.dateStart) params.set("start_date", state.dateStart);
   if (state.dateEnd) params.set("end_date", state.dateEnd);
+  if (state.competence) params.set("competence", state.competence);
   if (branch) params.set("branch", branch);
   if (state.customerSegment) {
     params.set("customer_segment", state.customerSegment);

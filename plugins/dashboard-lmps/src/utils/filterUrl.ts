@@ -2,10 +2,12 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import { isValidCompetence, resolveLinkedDateFilters } from "./competenceFilters";
 
 export type LmpsFilterUrlState = {
   dateStart: string;
   dateEnd: string;
+  competence: string;
   branches: string[];
   listingTypes: string[];
   statuses: string[];
@@ -27,9 +29,13 @@ function serializeCsvParam(values: string[]): string {
 }
 
 export function defaultLmpsFilterState(): LmpsFilterUrlState {
+  const dates = resolveLinkedDateFilters({
+    defaultDateStart: getFirstDayOfMonthInputValue(),
+    defaultDateEnd: getTodayInputValue(),
+  });
+
   return {
-    dateStart: getFirstDayOfMonthInputValue(),
-    dateEnd: getTodayInputValue(),
+    ...dates,
     branches: [],
     listingTypes: [],
     statuses: [],
@@ -39,12 +45,14 @@ export function defaultLmpsFilterState(): LmpsFilterUrlState {
 function parseFilterParams(params: URLSearchParams): LmpsFilterUrlState | null {
   const dateStartParam = params.get("date_start") ?? "";
   const dateEndParam = params.get("date_end") ?? "";
+  const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const listingTypeParam = params.get("listing_type") ?? "";
   const statusParam = params.get("status") ?? "";
   const hasAny =
     isValidIsoDate(dateStartParam) ||
     isValidIsoDate(dateEndParam) ||
+    isValidCompetence(competenceParam) ||
     branchParam.length > 0 ||
     listingTypeParam.length > 0 ||
     statusParam.length > 0;
@@ -52,12 +60,16 @@ function parseFilterParams(params: URLSearchParams): LmpsFilterUrlState | null {
   if (!hasAny) return null;
 
   const defaults = defaultLmpsFilterState();
+  const dates = resolveLinkedDateFilters({
+    dateStart: isValidIsoDate(dateStartParam) ? dateStartParam : defaults.dateStart,
+    dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
+    competence: isValidCompetence(competenceParam) ? competenceParam : "",
+    defaultDateStart: getFirstDayOfMonthInputValue(),
+    defaultDateEnd: getTodayInputValue(),
+  });
 
   return {
-    dateStart: isValidIsoDate(dateStartParam)
-      ? dateStartParam
-      : defaults.dateStart,
-    dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
+    ...dates,
     branches: parseCsvParam(branchParam),
     listingTypes: parseCsvParam(listingTypeParam),
     statuses: parseCsvParam(statusParam),
@@ -75,6 +87,7 @@ export function buildFilterSearchParams(filters: LmpsFilterUrlState): string {
 
   if (filters.dateStart) params.set("date_start", filters.dateStart);
   if (filters.dateEnd) params.set("date_end", filters.dateEnd);
+  if (filters.competence) params.set("competence", filters.competence);
 
   const branch = serializeCsvParam(filters.branches);
   if (branch) params.set("branch", branch);

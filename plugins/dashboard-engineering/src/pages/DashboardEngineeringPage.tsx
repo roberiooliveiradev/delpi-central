@@ -43,9 +43,11 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -76,9 +78,11 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
         subtitle="Indicadores estratégicos de engenharia (LMP e TRANSFORMA+)"
         currentPath={pathname ?? ENGINEERING_ROUTES.home}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

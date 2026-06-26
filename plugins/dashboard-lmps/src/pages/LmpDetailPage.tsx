@@ -32,7 +32,7 @@ import {
 } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpProduct } from "../types/lmp";
 import { formatPeriodLabel } from "../utils/dates";
-import type { LmpsFilterUrlState } from "../utils/filterUrl";
+import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmpsBack } from "../utils/navigation";
 
 type LmpDetailPageProps = {
@@ -189,16 +189,17 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
   const initialLoadingProgress = useLoadingProgress(detail.loading, initialFetchProgress);
 
   const periodLabel = formatPeriodLabel(requestScope.dateStart, requestScope.dateEnd);
-  const backFilters = useMemo<LmpsFilterUrlState>(
-    () => ({
+  const backFilters = useMemo<LmpsFilterUrlState>(() => {
+    const filters = readLmpsFilters();
+    return {
       dateStart: requestScope.dateStart,
       dateEnd: requestScope.dateEnd,
+      competence: filters.competence,
       branches: requestScope.branch ? [requestScope.branch] : [],
       listingTypes: [],
       statuses: [],
-    }),
-    [requestScope],
-  );
+    };
+  }, [requestScope]);
 
   const proposalFields = useMemo(
     () =>

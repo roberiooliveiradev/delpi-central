@@ -42,10 +42,12 @@ export function CpvPage({ pathname }: CpvPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     location,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     setLocation,
     periodParams,
@@ -138,10 +140,12 @@ export function CpvPage({ pathname }: CpvPageProps) {
         subtitle="Movimentos SD3 e participação sobre o ROL"
         currentPath={pathname ?? SUPPLIES_ROUTES.cpv}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         location={location}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

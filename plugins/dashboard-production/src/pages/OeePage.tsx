@@ -94,9 +94,11 @@ export function OeePage({ pathname }: OeePageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -407,9 +409,11 @@ export function OeePage({ pathname }: OeePageProps) {
         subtitle="Apontamentos OK da view fabril — eficiência por tempos (previsto ÷ real), média na faixa 0–199%"
         currentPath={pathname ?? PRODUCTION_ROUTES.oee}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

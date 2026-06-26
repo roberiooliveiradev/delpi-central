@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { inputDateToApi } from "../utils/dates";
 import { resolveCommercialApiBranch } from "../utils/commercialClientFilters";
+import { useCompetenceLinkedDates } from "./useCompetenceLinkedDates";
 import {
   readCommercialFilters,
   subscribeFilterRouteSync,
@@ -10,32 +11,33 @@ import {
 import type { CommercialFilterParams } from "../types/commercial";
 
 export function useCommercialFilters() {
-  const [dateStart, setDateStartState] = useState(
-    () => readCommercialFilters().dateStart
-  );
-  const [dateEnd, setDateEndState] = useState(
-    () => readCommercialFilters().dateEnd
-  );
-  const [branches, setBranchesState] = useState(
-    () => readCommercialFilters().branches
-  );
+  const initial = readCommercialFilters();
+  const {
+    dateStart,
+    dateEnd,
+    competence,
+    setDateStart,
+    setDateEnd,
+    setCompetence,
+    replaceAll,
+  } = useCompetenceLinkedDates(initial);
+  const [branches, setBranchesState] = useState(initial.branches);
   const [customerSegment, setCustomerSegmentState] = useState(
-    () => readCommercialFilters().customerSegment
+    initial.customerSegment
   );
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branches, customerSegment });
-  }, [dateStart, dateEnd, branches, customerSegment]);
+    writeFiltersToUrl({ dateStart, dateEnd, competence, branches, customerSegment });
+  }, [dateStart, dateEnd, competence, branches, customerSegment]);
 
   useEffect(() => {
     return subscribeFilterRouteSync(() => {
       const next = readCommercialFilters();
-      setDateStartState(next.dateStart);
-      setDateEndState(next.dateEnd);
+      replaceAll(next);
       setBranchesState(next.branches);
       setCustomerSegmentState(next.customerSegment);
     });
-  }, []);
+  }, [replaceAll]);
 
   const apiParams: CommercialFilterParams = {
     start_date: inputDateToApi(dateStart),
@@ -47,6 +49,7 @@ export function useCommercialFilters() {
   const filterState: CommercialFilterUrlState = {
     dateStart,
     dateEnd,
+    competence,
     branches,
     customerSegment,
   };
@@ -54,10 +57,12 @@ export function useCommercialFilters() {
   return {
     dateStart,
     dateEnd,
+    competence,
     branches,
     customerSegment,
-    setDateStart: useCallback((v: string) => setDateStartState(v), []),
-    setDateEnd: useCallback((v: string) => setDateEndState(v), []),
+    setDateStart,
+    setDateEnd,
+    setCompetence,
     setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     setCustomerSegment: useCallback(
       (v: CommercialFilterUrlState["customerSegment"]) =>

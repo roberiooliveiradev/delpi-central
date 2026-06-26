@@ -53,9 +53,11 @@ export function PpmPage({ pathname }: PpmPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches: selectedBranches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -326,11 +328,13 @@ export function PpmPage({ pathname }: PpmPageProps) {
       <QualityFilters
         idPrefix="ppm"
         className="dq-no-print"
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={selectedBranches}
         branchOptions={branchOptions}
         branchesLoading={branchesLoading}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

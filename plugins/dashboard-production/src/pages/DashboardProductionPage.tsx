@@ -52,9 +52,11 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -191,9 +193,11 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
       <FilterBar
         currentPath={pathname ?? PRODUCTION_ROUTES.home}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

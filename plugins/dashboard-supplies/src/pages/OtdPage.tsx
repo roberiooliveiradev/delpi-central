@@ -44,10 +44,12 @@ export function OtdPage({ pathname }: OtdPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     location,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     setLocation,
     periodParams,
@@ -174,10 +176,12 @@ export function OtdPage({ pathname }: OtdPageProps) {
         subtitle="Linhas recebidas no prazo versus atrasadas"
         currentPath={pathname ?? SUPPLIES_ROUTES.otd}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         location={location}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

@@ -5,10 +5,12 @@ import { MultiSelectField } from "./MultiSelectField";
 import type { CommercialFilterUrlState } from "../utils/filterUrl";
 
 type CommercialFiltersProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
   customerSegment: CommercialFilterUrlState["customerSegment"];
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -19,10 +21,12 @@ type CommercialFiltersProps = {
 };
 
 export function CommercialFilters({
+  competence,
   dateStart,
   dateEnd,
   branches,
   customerSegment,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -34,6 +38,18 @@ export function CommercialFilters({
       className={`dc-filters-row ${className}`.trim()}
       aria-label="Filtros do dashboard"
     >
+      <label className="dc-filter-box dc-field">
+        <FieldLabel
+          label="Competência"
+          hint={COMMERCIAL_HELP_TOOLTIPS.filters.competence}
+        />
+        <input
+          id="dc-competence"
+          type="month"
+          value={competence}
+          onChange={(e) => onCompetenceChange(e.target.value)}
+        />
+      </label>
       <label className="dc-filter-box dc-field">
         <FieldLabel
           label="Data inicial"

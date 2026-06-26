@@ -2,6 +2,7 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import { isValidCompetence, resolveLinkedDateFilters } from "./competenceFilters";
 import {
   parseDynamicBranchCsv,
   serializeDynamicBranchCsv,
@@ -10,10 +11,11 @@ import {
 export type QualityFilterUrlState = {
   dateStart: string;
   dateEnd: string;
+  competence: string;
   branches: string[];
 };
 
-const FILTER_KEYS = ["date_start", "date_end", "branch"] as const;
+const FILTER_KEYS = ["date_start", "date_end", "competence", "branch"] as const;
 const SESSION_STORAGE_KEY = "delpi.dashboard-quality.filters";
 
 function isValidIsoDate(value: string): boolean {
@@ -21,9 +23,13 @@ function isValidIsoDate(value: string): boolean {
 }
 
 function defaultFilterState(): QualityFilterUrlState {
+  const defaults = resolveLinkedDateFilters({
+    defaultDateStart: getFirstDayOfMonthInputValue(),
+    defaultDateEnd: getTodayInputValue(),
+  });
+
   return {
-    dateStart: getFirstDayOfMonthInputValue(),
-    dateEnd: getTodayInputValue(),
+    ...defaults,
     branches: [],
   };
 }
@@ -47,21 +53,29 @@ function parseStoredBranches(data: Record<string, unknown>): string[] {
 function parseFilterParams(params: URLSearchParams): QualityFilterUrlState | null {
   const dateStartParam = params.get("date_start") ?? "";
   const dateEndParam = params.get("date_end") ?? "";
+  const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const hasAny =
     isValidIsoDate(dateStartParam) ||
     isValidIsoDate(dateEndParam) ||
+    isValidCompetence(competenceParam) ||
     branchParam.length > 0;
 
   if (!hasAny) return null;
 
   const defaults = defaultFilterState();
-
-  return {
+  const dates = resolveLinkedDateFilters({
     dateStart: isValidIsoDate(dateStartParam)
       ? dateStartParam
       : defaults.dateStart,
     dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
+    competence: isValidCompetence(competenceParam) ? competenceParam : "",
+    defaultDateStart: defaults.dateStart,
+    defaultDateEnd: defaults.dateEnd,
+  });
+
+  return {
+    ...dates,
     branches: parseDynamicBranchCsv(branchParam),
   };
 }
@@ -80,25 +94,37 @@ export function readFiltersFromSession(): QualityFilterUrlState | null {
     const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
 
-    const data = JSON.parse(raw) as Partial<QualityFilterUrlState> &
-      Record<string, unknown>;
-    const dateStart =
-      typeof data.dateStart === "string" && isValidIsoDate(data.dateStart)
-        ? data.dateStart
-        : "";
-    const dateEnd =
-      typeof data.dateEnd === "string" && isValidIsoDate(data.dateEnd)
-        ? data.dateEnd
-        : "";
+    const data = JSON.parse(raw) as Record<string, unknown>;
+    const defaults = defaultFilterState();
+    const dates = resolveLinkedDateFilters({
+      dateStart:
+        typeof data.dateStart === "string" && isValidIsoDate(data.dateStart)
+          ? data.dateStart
+          : defaults.dateStart,
+      dateEnd:
+        typeof data.dateEnd === "string" && isValidIsoDate(data.dateEnd)
+          ? data.dateEnd
+          : defaults.dateEnd,
+      competence:
+        typeof data.competence === "string" && isValidCompetence(data.competence)
+          ? data.competence
+          : "",
+      defaultDateStart: defaults.dateStart,
+      defaultDateEnd: defaults.dateEnd,
+    });
     const branches = parseStoredBranches(data);
 
-    if (!dateStart && !dateEnd && branches.length === 0) return null;
-
-    const defaults = defaultFilterState();
+    if (
+      !dates.dateStart &&
+      !dates.dateEnd &&
+      !dates.competence &&
+      branches.length === 0
+    ) {
+      return null;
+    }
 
     return {
-      dateStart: dateStart || defaults.dateStart,
-      dateEnd: dateEnd || defaults.dateEnd,
+      ...dates,
       branches,
     };
   } catch {
@@ -135,6 +161,10 @@ export function buildFilterSearchParams(state: QualityFilterUrlState): string {
 
   if (state.dateEnd) {
     params.set("date_end", state.dateEnd);
+  }
+
+  if (state.competence) {
+    params.set("competence", state.competence);
   }
 
   const branchCsv = serializeDynamicBranchCsv(state.branches);

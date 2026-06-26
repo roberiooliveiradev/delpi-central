@@ -65,9 +65,11 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches: selectedBranches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -325,6 +327,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
 
       <div className="dq-no-print">
       <NonconformityFilters
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         selectedBranches={selectedBranches}
@@ -334,6 +337,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         status={status}
         itemCode={itemCode}
         description={description}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

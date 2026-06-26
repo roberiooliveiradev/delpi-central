@@ -26,6 +26,7 @@ import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { buildLmpDetailPath } from "../constants/routes";
+import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useClientTableSort } from "../hooks/useClientTableSort";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
@@ -105,8 +106,15 @@ export function DashboardLmpsPage({
   isActive?: boolean;
 } = {}) {
   const initialFilters = useMemo(() => readLmpsFilters(), [pathname]);
-  const [dateStart, setDateStart] = useState(initialFilters.dateStart);
-  const [dateEnd, setDateEnd] = useState(initialFilters.dateEnd);
+  const {
+    dateStart,
+    dateEnd,
+    competence,
+    setDateStart,
+    setDateEnd,
+    setCompetence,
+    replaceAll,
+  } = useCompetenceLinkedDates(initialFilters);
   const [branches, setBranches] = useState(initialFilters.branches);
   const [listingTypes, setListingTypes] = useState(initialFilters.listingTypes);
   const [statuses, setStatuses] = useState(initialFilters.statuses);
@@ -131,11 +139,12 @@ export function DashboardLmpsPage({
     () => ({
       dateStart,
       dateEnd,
+      competence,
       branches,
       listingTypes,
       statuses,
     }),
-    [dateStart, dateEnd, branches, listingTypes, statuses]
+    [dateStart, dateEnd, competence, branches, listingTypes, statuses]
   );
 
   const handleRowClick = useCallback(
@@ -234,8 +243,11 @@ export function DashboardLmpsPage({
     if (!isActive) return;
 
     const fromUrl = readLmpsFilters();
-    setDateStart((current) => (current === fromUrl.dateStart ? current : fromUrl.dateStart));
-    setDateEnd((current) => (current === fromUrl.dateEnd ? current : fromUrl.dateEnd));
+    replaceAll({
+      dateStart: fromUrl.dateStart,
+      dateEnd: fromUrl.dateEnd,
+      competence: fromUrl.competence,
+    });
     setBranches((current) =>
       current.join(",") === fromUrl.branches.join(",") ? current : fromUrl.branches,
     );
@@ -245,7 +257,7 @@ export function DashboardLmpsPage({
     setStatuses((current) =>
       current.join(",") === fromUrl.statuses.join(",") ? current : fromUrl.statuses,
     );
-  }, [isActive, pathname]);
+  }, [isActive, pathname, replaceAll]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -419,11 +431,13 @@ export function DashboardLmpsPage({
   return (
     <main className="dashboard-lmps dashboard-page">
       <FilterBar
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         listingTypes={listingTypes}
         statuses={statuses}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

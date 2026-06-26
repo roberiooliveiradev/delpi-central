@@ -5,6 +5,8 @@ export const ENGINEERING_HELP_TOOLTIPS = {
     refresh: "Recarrega KPIs de LMP e TRANSFORMA+ com os filtros atuais.",
   },
   filters: {
+    competence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Fica vazio quando o período abrange mais de um mês.",
     dateStart:
       "Início do período para LMP e TRANSFORMA+. KPIs e gráficos usam propostas/melhorias a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",

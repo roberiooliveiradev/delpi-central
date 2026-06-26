@@ -4,9 +4,11 @@ import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type FinancialFiltersProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -15,9 +17,11 @@ type FinancialFiltersProps = {
 };
 
 export function FinancialFilters({
+  competence,
   dateStart,
   dateEnd,
   branches,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -31,6 +35,18 @@ export function FinancialFilters({
     >
       {showPeriodFilters ? (
         <>
+          <label className="ds-filter-box ds-field">
+            <FieldLabel
+              label="Competência"
+              hint={FINANCIAL_HELP_TOOLTIPS.filters.competence}
+            />
+            <input
+              id="ds-competence"
+              type="month"
+              value={competence}
+              onChange={(e) => onCompetenceChange(e.target.value)}
+            />
+          </label>
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Data inicial"

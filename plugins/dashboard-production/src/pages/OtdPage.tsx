@@ -58,9 +58,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -242,9 +244,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
         subtitle="OPs de produto acabado (PA) finalizadas no prazo — SC2010 × SB1010"
         currentPath={pathname ?? PRODUCTION_ROUTES.otd}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

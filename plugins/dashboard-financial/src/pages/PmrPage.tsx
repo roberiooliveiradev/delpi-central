@@ -40,9 +40,11 @@ export function PmrPage({ pathname }: PmrPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -91,9 +93,11 @@ export function PmrPage({ pathname }: PmrPageProps) {
         subtitle="Prazo médio de recebimento"
         currentPath={pathname ?? FINANCIAL_ROUTES.pmr}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

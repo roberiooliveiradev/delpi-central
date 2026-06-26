@@ -10,6 +10,7 @@ import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type NonconformityFiltersProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   selectedBranches: string[];
@@ -19,6 +20,7 @@ type NonconformityFiltersProps = {
   status: string;
   itemCode: string;
   description: string;
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -29,6 +31,7 @@ type NonconformityFiltersProps = {
 };
 
 export function NonconformityFilters({
+  competence,
   dateStart,
   dateEnd,
   selectedBranches,
@@ -38,6 +41,7 @@ export function NonconformityFilters({
   status,
   itemCode,
   description,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -58,6 +62,16 @@ export function NonconformityFilters({
 
   return (
     <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de NC">
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} />
+        <input
+          id="nc-competence"
+          type="month"
+          value={competence}
+          onChange={(e) => onCompetenceChange(e.target.value)}
+        />
+      </label>
+
       <label className="dq-filter-box dq-field">
         <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} />
         <input

@@ -80,9 +80,11 @@ export function LmpPage({ pathname }: LmpPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     filterState,
   } = useEngineeringFilters();
@@ -307,9 +309,11 @@ export function LmpPage({ pathname }: LmpPageProps) {
         subtitle="% de projetos/LMPs dentro do prazo e lead time útil (TOTVS)"
         currentPath={pathname ?? ENGINEERING_ROUTES.lmp}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

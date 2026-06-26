@@ -5,6 +5,8 @@ export const HR_HELP_TOOLTIPS = {
     refresh: "Recarrega os indicadores com período e filial selecionados.",
   },
   filters: {
+    competence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Fica vazio quando o período abrange mais de um mês.",
     dateStart: "Início do período para os indicadores de RH.",
     dateEnd: "Fim do período. Deve ser igual ou posterior ao início.",
     branch:

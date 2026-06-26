@@ -5,6 +5,8 @@ export const FINANCIAL_HELP_TOOLTIPS = {
     refresh: "Recarrega KPIs e gráficos com período e filial selecionados.",
   },
   filters: {
+    competence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Fica vazio quando o período abrange mais de um mês.",
     dateStart:
       "Início do período. KPIs e gráficos usam o intervalo a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",

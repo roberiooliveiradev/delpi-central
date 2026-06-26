@@ -5,6 +5,7 @@ import type { QualityFilterUrlState } from "../utils/filterUrl";
 
 type FilterBarProps = {
   filterState: QualityFilterUrlState;
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
@@ -12,6 +13,7 @@ type FilterBarProps = {
   branchOptions?: string[];
   branchesLoading?: boolean;
   currentPath?: string;
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -21,6 +23,7 @@ type FilterBarProps = {
 
 export function FilterBar({
   filterState,
+  competence,
   dateStart,
   dateEnd,
   branches,
@@ -28,6 +31,7 @@ export function FilterBar({
   branchesLoading,
   currentPath,
   printDisabled = false,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -47,11 +51,13 @@ export function FilterBar({
       />
       <QualityFilters
         className="dq-no-print"
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         branchOptions={branchOptions}
         branchesLoading={branchesLoading}
+        onCompetenceChange={onCompetenceChange}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchesChange={onBranchesChange}

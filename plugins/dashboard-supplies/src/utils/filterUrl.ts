@@ -2,6 +2,7 @@ import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "./dates";
+import { isValidCompetence, resolveLinkedDateFilters } from "./competenceFilters";
 import {
   parseBranchCsv,
   serializeBranchCsv,
@@ -10,6 +11,7 @@ import {
 export type SuppliesFilterUrlState = {
   dateStart: string;
   dateEnd: string;
+  competence: string;
   branches: string[];
   location: string;
 };
@@ -21,9 +23,13 @@ function isValidIsoDate(value: string): boolean {
 }
 
 function defaultFilterState(): SuppliesFilterUrlState {
+  const defaults = resolveLinkedDateFilters({
+    defaultDateStart: getFirstDayOfMonthInputValue(),
+    defaultDateEnd: getTodayInputValue(),
+  });
+
   return {
-    dateStart: getFirstDayOfMonthInputValue(),
-    dateEnd: getTodayInputValue(),
+    ...defaults,
     branches: [],
     location: "",
   };
@@ -50,23 +56,31 @@ function parseFilterParams(
 ): SuppliesFilterUrlState | null {
   const dateStartParam = params.get("start_date") ?? "";
   const dateEndParam = params.get("end_date") ?? "";
+  const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const locationParam = params.get("location") ?? "";
   const hasAny =
     isValidIsoDate(dateStartParam) ||
     isValidIsoDate(dateEndParam) ||
+    isValidCompetence(competenceParam) ||
     branchParam.length > 0 ||
     locationParam.length > 0;
 
   if (!hasAny) return null;
 
   const defaults = defaultFilterState();
-
-  return {
+  const dates = resolveLinkedDateFilters({
     dateStart: isValidIsoDate(dateStartParam)
       ? dateStartParam
       : defaults.dateStart,
     dateEnd: isValidIsoDate(dateEndParam) ? dateEndParam : defaults.dateEnd,
+    competence: isValidCompetence(competenceParam) ? competenceParam : "",
+    defaultDateStart: defaults.dateStart,
+    defaultDateEnd: defaults.dateEnd,
+  });
+
+  return {
+    ...dates,
     branches: parseBranchCsv(branchParam),
     location: locationParam,
   };
@@ -82,18 +96,27 @@ export function readSuppliesFilters(
     try {
       const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (raw) {
-        const data = JSON.parse(raw) as Partial<SuppliesFilterUrlState> &
-          Record<string, unknown>;
+        const data = JSON.parse(raw) as Record<string, unknown>;
         const defaults = defaultFilterState();
-        return {
+        const dates = resolveLinkedDateFilters({
           dateStart:
-            data.dateStart && isValidIsoDate(data.dateStart)
+            typeof data.dateStart === "string" && isValidIsoDate(data.dateStart)
               ? data.dateStart
               : defaults.dateStart,
           dateEnd:
-            data.dateEnd && isValidIsoDate(data.dateEnd)
+            typeof data.dateEnd === "string" && isValidIsoDate(data.dateEnd)
               ? data.dateEnd
               : defaults.dateEnd,
+          competence:
+            typeof data.competence === "string" && isValidCompetence(data.competence)
+              ? data.competence
+              : "",
+          defaultDateStart: defaults.dateStart,
+          defaultDateEnd: defaults.dateEnd,
+        });
+
+        return {
+          ...dates,
           branches: parseStoredBranches(data),
           location: typeof data.location === "string" ? data.location : "",
         };
@@ -111,6 +134,7 @@ export function buildFilterSearchParams(state: SuppliesFilterUrlState): string {
 
   if (state.dateStart) params.set("start_date", state.dateStart);
   if (state.dateEnd) params.set("end_date", state.dateEnd);
+  if (state.competence) params.set("competence", state.competence);
   const branchCsv = serializeBranchCsv(state.branches);
   if (branchCsv) params.set("branch", branchCsv);
   if (state.location) params.set("location", state.location);

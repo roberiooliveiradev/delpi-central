@@ -5,6 +5,8 @@ export const QUALITY_HELP_TOOLTIPS = {
     refresh: "Recarrega PPM, kaizens e auditorias com os filtros atuais.",
   },
   filters: {
+    competence:
+      "Mês de referência (aaaa-mm). Ao selecionar, ajusta o período para o mês inteiro — ou até hoje, no mês corrente. Fica vazio quando o período abrange mais de um mês.",
     dateStart: "Início do período para PPM, kaizens e auditorias 5S.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:

@@ -9,6 +9,7 @@ import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type KaizenFiltersProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   selectedBranches: string[];
@@ -16,6 +17,7 @@ type KaizenFiltersProps = {
   branchesLoading?: boolean;
   title: string;
   status: string;
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -24,6 +26,7 @@ type KaizenFiltersProps = {
 };
 
 export function KaizenFilters({
+  competence,
   dateStart,
   dateEnd,
   selectedBranches,
@@ -31,6 +34,7 @@ export function KaizenFilters({
   branchesLoading = false,
   title,
   status,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -49,6 +53,16 @@ export function KaizenFilters({
 
   return (
     <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de kaizen">
+      <label className="dq-filter-box dq-field">
+        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} />
+        <input
+          id="kz-competence"
+          type="month"
+          value={competence}
+          onChange={(e) => onCompetenceChange(e.target.value)}
+        />
+      </label>
+
       <label className="dq-filter-box dq-field">
         <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} />
         <input

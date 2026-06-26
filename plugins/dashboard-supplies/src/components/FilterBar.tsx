@@ -8,12 +8,14 @@ type FilterBarProps = {
   subtitle?: string;
   currentPath?: string;
   filterState: SuppliesFilterUrlState;
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
   location: string;
   showPeriodFilters?: boolean;
   showLocationFilter?: boolean;
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -27,12 +29,14 @@ export function FilterBar({
   subtitle = "CPV, OTD de compras, estoque e giro de estoque",
   currentPath,
   filterState,
+  competence,
   dateStart,
   dateEnd,
   branches,
   location,
   showPeriodFilters = true,
   showLocationFilter = true,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -51,12 +55,14 @@ export function FilterBar({
         refreshing={refreshing}
       />
       <SuppliesFilters
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         location={location}
         showPeriodFilters={showPeriodFilters}
         showLocationFilter={showLocationFilter}
+        onCompetenceChange={onCompetenceChange}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchesChange={onBranchesChange}

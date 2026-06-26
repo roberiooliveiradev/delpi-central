@@ -82,10 +82,12 @@ export function DashboardCommercialPage({
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     customerSegment,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     setCustomerSegment,
     apiParams,
@@ -350,6 +352,7 @@ export function DashboardCommercialPage({
         buildCommercialDetailPath(row.proposal_number, {
           dateStart,
           dateEnd,
+          competence,
           branches,
           customerSegment,
           proposalBranch: row.branch,
@@ -357,7 +360,7 @@ export function DashboardCommercialPage({
         })
       );
     },
-    [branches, customerSegment, dateEnd, dateStart, isActive]
+    [branches, competence, customerSegment, dateEnd, dateStart, isActive]
   );
 
   const proposalColumns = useMemo<DataTableColumn<CommercialProposal>[]>(
@@ -464,6 +467,7 @@ export function DashboardCommercialPage({
     <div className="dashboard-commercial dashboard-page dc-print-root">
       <FilterBar
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
@@ -476,6 +480,7 @@ export function DashboardCommercialPage({
             disabled={loading && !hasData}
           />
         }
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

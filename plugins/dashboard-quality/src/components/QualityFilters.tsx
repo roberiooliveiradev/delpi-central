@@ -9,11 +9,13 @@ import { FieldLabel } from "./HelpTooltip";
 import { MultiSelectField } from "./MultiSelectField";
 
 type QualityFiltersProps = {
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
   branchOptions?: string[];
   branchesLoading?: boolean;
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -22,11 +24,13 @@ type QualityFiltersProps = {
 };
 
 export function QualityFilters({
+  competence,
   dateStart,
   dateEnd,
   branches,
   branchOptions = [],
   branchesLoading = false,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -48,6 +52,19 @@ export function QualityFilters({
       className={["dq-filters-row", className].filter(Boolean).join(" ")}
       aria-label="Filtros do dashboard"
     >
+      <label className="dq-filter-box dq-field">
+        <FieldLabel
+          label="Competência"
+          hint={QUALITY_HELP_TOOLTIPS.filters.competence}
+        />
+        <input
+          id={`${idPrefix}-competence`}
+          type="month"
+          value={competence}
+          onChange={(e) => onCompetenceChange(e.target.value)}
+        />
+      </label>
+
       <label className="dq-filter-box dq-field">
         <FieldLabel
           label="Data inicial"

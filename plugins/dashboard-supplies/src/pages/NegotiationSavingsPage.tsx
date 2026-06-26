@@ -45,10 +45,12 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     location,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     setLocation,
     periodParams,
@@ -138,10 +140,12 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
         subtitle="Valores registrados na planilha IDD Suprimentos (Google Sheets)"
         currentPath={pathname ?? SUPPLIES_ROUTES.negotiationSavings}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         location={location}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

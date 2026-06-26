@@ -66,9 +66,11 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -109,9 +111,11 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       <FilterBar
         currentPath={pathname ?? FINANCIAL_ROUTES.home}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

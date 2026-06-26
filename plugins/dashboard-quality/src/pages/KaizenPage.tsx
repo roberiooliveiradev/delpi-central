@@ -75,9 +75,11 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
   const {
     dateStart,
     dateEnd,
+    competence,
     branches: selectedBranches,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     apiParams,
     filterState,
@@ -272,6 +274,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
       <div className="dq-no-print">
         <KaizenFilters
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         selectedBranches={selectedBranches}
@@ -279,6 +282,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         branchesLoading={branchesLoading}
         title={title}
         status={status}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

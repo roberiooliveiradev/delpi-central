@@ -8,10 +8,12 @@ type FilterBarProps = {
   subtitle?: string;
   currentPath?: string;
   filterState: FinancialFilterUrlState;
+  competence: string;
   dateStart: string;
   dateEnd: string;
   branches: string[];
   showPeriodFilters?: boolean;
+  onCompetenceChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchesChange: (values: string[]) => void;
@@ -24,10 +26,12 @@ export function FilterBar({
   subtitle = "ROL, EBITDA, custos fixos e prazo médio de recebimento",
   currentPath,
   filterState,
+  competence,
   dateStart,
   dateEnd,
   branches,
   showPeriodFilters = true,
+  onCompetenceChange,
   onDateStartChange,
   onDateEndChange,
   onBranchesChange,
@@ -45,10 +49,12 @@ export function FilterBar({
         refreshing={refreshing}
       />
       <FinancialFilters
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         showPeriodFilters={showPeriodFilters}
+        onCompetenceChange={onCompetenceChange}
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchesChange={onBranchesChange}

@@ -27,10 +27,12 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
   const {
     dateStart,
     dateEnd,
+    competence,
     branches,
     location,
     setDateStart,
     setDateEnd,
+    setCompetence,
     setBranches,
     setLocation,
     periodParams,
@@ -77,10 +79,12 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
         subtitle={subtitle}
         currentPath={pathname ?? SUPPLIES_ROUTES.inventoryTurnover}
         filterState={filterState}
+        competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         location={location}
+        onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}

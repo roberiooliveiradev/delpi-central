@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { EngineeringFilterParams } from "../types/engineering";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { inputDateToApi } from "../utils/dates";
+import { useCompetenceLinkedDates } from "./useCompetenceLinkedDates";
 import {
   readEngineeringFilters,
   subscribeFilterRouteSync,
@@ -10,28 +11,29 @@ import {
 } from "../utils/filterUrl";
 
 export function useEngineeringFilters() {
-  const [dateStart, setDateStartState] = useState(
-    () => readEngineeringFilters().dateStart
-  );
-  const [dateEnd, setDateEndState] = useState(
-    () => readEngineeringFilters().dateEnd
-  );
-  const [branches, setBranchesState] = useState(
-    () => readEngineeringFilters().branches
-  );
+  const initial = readEngineeringFilters();
+  const {
+    dateStart,
+    dateEnd,
+    competence,
+    setDateStart,
+    setDateEnd,
+    setCompetence,
+    replaceAll,
+  } = useCompetenceLinkedDates(initial);
+  const [branches, setBranchesState] = useState(initial.branches);
 
   useEffect(() => {
-    writeFiltersToUrl({ dateStart, dateEnd, branches });
-  }, [dateStart, dateEnd, branches]);
+    writeFiltersToUrl({ dateStart, dateEnd, competence, branches });
+  }, [dateStart, dateEnd, competence, branches]);
 
   useEffect(() => {
     return subscribeFilterRouteSync(() => {
       const next = readEngineeringFilters();
-      setDateStartState(next.dateStart);
-      setDateEndState(next.dateEnd);
+      replaceAll(next);
       setBranchesState(next.branches);
     });
-  }, []);
+  }, [replaceAll]);
 
   const resolvedBranch = resolveApiBranch(branches);
 
@@ -45,15 +47,18 @@ export function useEngineeringFilters() {
   const filterState: EngineeringFilterUrlState = {
     dateStart,
     dateEnd,
+    competence,
     branches,
   };
 
   return {
     dateStart,
     dateEnd,
+    competence,
     branches,
-    setDateStart: useCallback((v: string) => setDateStartState(v), []),
-    setDateEnd: useCallback((v: string) => setDateEndState(v), []),
+    setDateStart,
+    setDateEnd,
+    setCompetence,
     setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     apiParams,
     filterState,
