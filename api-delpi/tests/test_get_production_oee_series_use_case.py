@@ -6,24 +6,24 @@ from app.application.dto.production.production_oee_series_request import (
 from app.application.use_cases.production.get_production_oee_series_use_case import (
     GetProductionOeeSeriesUseCase,
 )
-from app.domain.entities.production.overall_equipment_effectiveness import (
-    OverallEquipmentEffectiveness,
-)
 
 
 def test_production_oee_series_returns_points_per_bucket() -> None:
     repository = MagicMock()
-
-    def fake_oee(request):
-        value = 80.0 if request.branch == "01" else 70.0
-        return OverallEquipmentEffectiveness(
-            branch=request.branch,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            oee_pct=value,
-        )
-
-    repository.get_overall_equipment_effectiveness.side_effect = fake_oee
+    repository.list_oee_kpi_by_day_and_branch.return_value = [
+        {
+            "production_date": "2026-05-15",
+            "branch": "01",
+            "oee_pct": 80.0,
+            "appointment_count": 10,
+        },
+        {
+            "production_date": "2026-05-15",
+            "branch": "02",
+            "oee_pct": 70.0,
+            "appointment_count": 8,
+        },
+    ]
 
     use_case = GetProductionOeeSeriesUseCase(repository)
     result = use_case.execute(
@@ -38,18 +38,12 @@ def test_production_oee_series_returns_points_per_bucket() -> None:
     assert result.points[0].oee_filial_01 == 80.0
     assert result.points[0].oee_filial_02 == 70.0
     assert result.branch is None
+    repository.list_oee_kpi_by_day_and_branch.assert_called_once()
 
 
 def test_production_oee_series_treats_empty_oee_as_null() -> None:
     repository = MagicMock()
-    repository.get_overall_equipment_effectiveness.return_value = (
-        OverallEquipmentEffectiveness(
-            branch="01",
-            start_date="2026-05-01",
-            end_date="2026-05-01",
-            oee_pct="",
-        )
-    )
+    repository.list_oee_kpi_by_day_and_branch.return_value = []
 
     use_case = GetProductionOeeSeriesUseCase(repository)
     result = use_case.execute(
@@ -67,14 +61,14 @@ def test_production_oee_series_treats_empty_oee_as_null() -> None:
 
 def test_production_oee_series_filters_single_branch() -> None:
     repository = MagicMock()
-    repository.get_overall_equipment_effectiveness.return_value = (
-        OverallEquipmentEffectiveness(
-            branch="02",
-            start_date="2026-05-01",
-            end_date="2026-05-31",
-            oee_pct=65.5,
-        )
-    )
+    repository.list_oee_kpi_by_day_and_branch.return_value = [
+        {
+            "production_date": "2026-05-10",
+            "branch": "02",
+            "oee_pct": 65.5,
+            "appointment_count": 4,
+        },
+    ]
 
     use_case = GetProductionOeeSeriesUseCase(repository)
     result = use_case.execute(

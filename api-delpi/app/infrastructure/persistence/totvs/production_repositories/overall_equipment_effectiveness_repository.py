@@ -7,15 +7,18 @@ from app.application.services.production.production_kpi_cache import (
     get_cached_production_oee,
     get_cached_production_oee_appointments_bundle,
     get_cached_production_oee_by_branch,
+    get_cached_production_oee_appointments_materialized,
+    get_cached_production_oee_series_daily,
     production_oee_appointments_bundle_cache_key,
     production_oee_appointments_materialized_cache_key,
     production_oee_by_branch_cache_key,
     production_oee_cache_key,
+    production_oee_series_daily_cache_key,
     set_cached_production_oee,
     set_cached_production_oee_appointments_bundle,
-    set_cached_production_oee_by_branch,
-    get_cached_production_oee_appointments_materialized,
     set_cached_production_oee_appointments_materialized,
+    set_cached_production_oee_by_branch,
+    set_cached_production_oee_series_daily,
 )
 from app.domain.entities.production.overall_equipment_effectiveness import (
     OverallEquipmentEffectiveness,
@@ -52,6 +55,7 @@ from app.infrastructure.persistence.totvs.production_fabril.production_fabril_sh
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_kpi_sql import (
     OEE_FABRIL_KPI_AVG_SELECT,
     OEE_FABRIL_KPI_BY_BRANCH_SELECT,
+    OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT,
 )
 from app.infrastructure.persistence.totvs.production_repositories.production_oee_sql import (
     OEE_APPOINTMENT_DETAIL_SELECT,
@@ -276,6 +280,41 @@ class OverallEquipmentEffectivenessRepository(
               AND RTRIM(LTRIM(EF.FILIAL)) <> ''
             GROUP BY EF.FILIAL
             ORDER BY branch
+        """
+
+        with self:
+            rows = self.execute_query(sql, where_params)
+
+        return rows or []
+
+    def list_oee_kpi_by_day_and_branch(
+        self,
+        request: ProductionRequest,
+    ) -> list[dict]:
+        cache_key = production_oee_series_daily_cache_key(request)
+        cached = get_cached_production_oee_series_daily(cache_key)
+        if cached is not None:
+            return cached
+
+        rows = self._load_oee_kpi_by_day_and_branch(request)
+        set_cached_production_oee_series_daily(cache_key, rows)
+        return rows
+
+    def _load_oee_kpi_by_day_and_branch(
+        self,
+        request: ProductionRequest,
+    ) -> list[dict]:
+        if not request.start_date or not request.end_date:
+            return []
+
+        where_clause, where_params = self._build_kpi_filters(request)
+
+        sql = f"""
+            {OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT}
+            WHERE {where_clause}
+              AND RTRIM(LTRIM(EF.FILIAL)) <> ''
+            GROUP BY EF.DATA_PRODUCAO, EF.FILIAL
+            ORDER BY production_date, branch
         """
 
         with self:

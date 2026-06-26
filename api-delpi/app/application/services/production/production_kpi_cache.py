@@ -155,5 +155,27 @@ def set_cached_production_oee_by_branch(key: str, value: list[dict]) -> None:
     build_query_cache().set(key, value)
 
 
+def production_oee_series_daily_cache_key(request: ProductionRequest) -> str:
+    return "|".join(
+        [
+            "production-oee-series-daily",
+            request.branch or "",
+            request.start_date or "",
+            request.end_date or "",
+        ]
+    )
+
+
+def get_cached_production_oee_series_daily(key: str) -> list[dict] | None:
+    cached = build_query_cache().get(key)
+    if isinstance(cached, list):
+        return cached
+    return None
+
+
+def set_cached_production_oee_series_daily(key: str, value: list[dict]) -> None:
+    build_query_cache().set(key, value)
+
+
 def set_cached_chart_series(key: str, value: dict[str, Any]) -> None:
     build_query_cache().set(key, value)

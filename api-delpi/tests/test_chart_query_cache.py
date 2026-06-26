@@ -90,14 +90,20 @@ def test_commercial_rol_series_use_case_caches_full_response() -> None:
 
 def test_production_oee_series_use_case_caches_full_response() -> None:
     repository = MagicMock()
-    repository.get_overall_equipment_effectiveness.return_value = (
-        OverallEquipmentEffectiveness(
-            branch="01",
-            start_date="2026-05-01",
-            end_date="2026-05-31",
-            oee_pct=88.5,
-        )
-    )
+    repository.list_oee_kpi_by_day_and_branch.return_value = [
+        {
+            "production_date": "2026-05-15",
+            "branch": "01",
+            "oee_pct": 88.5,
+            "appointment_count": 5,
+        },
+        {
+            "production_date": "2026-05-15",
+            "branch": "02",
+            "oee_pct": 88.5,
+            "appointment_count": 5,
+        },
+    ]
 
     use_case = GetProductionOeeSeriesUseCase(repository)
     request = ProductionOeeSeriesRequest(
@@ -111,7 +117,7 @@ def test_production_oee_series_use_case_caches_full_response() -> None:
 
     assert first.points[0].oee_filial_01 == 88.5
     assert second.points[0].oee_filial_01 == 88.5
-    assert repository.get_overall_equipment_effectiveness.call_count == 2
+    assert repository.list_oee_kpi_by_day_and_branch.call_count == 1
 
     cache_key = production_oee_series_cache_key(request)
     assert build_query_cache().get(cache_key) is not None

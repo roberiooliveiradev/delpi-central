@@ -28,6 +28,13 @@ class OverallEquipmentEffectivenessRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_oee_kpi_by_day_and_branch(
+        self,
+        request: ProductionRequest,
+    ) -> list[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_oee_appointments_bundle(
         self,
         request: GetProductionOeeRequest,

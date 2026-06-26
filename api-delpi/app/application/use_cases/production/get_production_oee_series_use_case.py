@@ -16,9 +16,11 @@ from app.application.services.production.production_kpi_cache import (
     set_cached_chart_series,
 )
 from app.application.shared.chart_period_buckets import build_period_buckets
-from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
+)
+from app.domain.services.production.production_oee_series_aggregation_service import (
+    resolve_bucket_oee_pct,
 )
 
 FILIAL_01 = "01"
@@ -46,20 +48,39 @@ class GetProductionOeeSeriesUseCase:
             granularity=request.granularity,
         )
 
+        daily_rows = self._oee_repository.list_oee_kpi_by_day_and_branch(
+            ProductionRequest(
+                branch=request.branch,
+                start_date=request.date_start,
+                end_date=request.date_end,
+            )
+        )
+
         points: list[ProductionOeeSeriesPointDto] = []
 
         for bucket in buckets_result.buckets:
-            oee_01 = self._fetch_oee_pct(
-                branch=FILIAL_01,
-                start_date=bucket.date_start,
-                end_date=bucket.date_end,
-                include=request.branch in (None, FILIAL_01),
+            include_01 = request.branch in (None, FILIAL_01)
+            include_02 = request.branch in (None, FILIAL_02)
+
+            oee_01 = (
+                resolve_bucket_oee_pct(
+                    daily_rows,
+                    branch=FILIAL_01,
+                    date_start=bucket.date_start,
+                    date_end=bucket.date_end,
+                )
+                if include_01
+                else None
             )
-            oee_02 = self._fetch_oee_pct(
-                branch=FILIAL_02,
-                start_date=bucket.date_start,
-                end_date=bucket.date_end,
-                include=request.branch in (None, FILIAL_02),
+            oee_02 = (
+                resolve_bucket_oee_pct(
+                    daily_rows,
+                    branch=FILIAL_02,
+                    date_start=bucket.date_start,
+                    date_end=bucket.date_end,
+                )
+                if include_02
+                else None
             )
 
             points.append(
@@ -93,32 +114,3 @@ class GetProductionOeeSeriesUseCase:
                 for point in cached.get("points") or []
             ],
         )
-
-    def _fetch_oee_pct(
-        self,
-        *,
-        branch: str,
-        start_date: str,
-        end_date: str,
-        include: bool,
-    ) -> float | None:
-        if not include:
-            return None
-
-        oee = self._oee_repository.get_overall_equipment_effectiveness(
-            ProductionRequest(
-                branch=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
-        )
-
-        if oee is None:
-            return None
-
-        parsed = to_optional_float(oee.oee_pct)
-        if parsed is None:
-            return None
-
-        return round(parsed, 2)
-

@@ -1,6 +1,7 @@
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_kpi_sql import (
     OEE_FABRIL_KPI_AVG_SELECT,
     OEE_FABRIL_KPI_BY_BRANCH_SELECT,
+    OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT,
     OEE_FABRIL_KPI_FROM,
 )
 
@@ -10,6 +11,7 @@ def test_oee_kpi_sql_uses_nolock_on_fabril_view() -> None:
         OEE_FABRIL_KPI_FROM,
         OEE_FABRIL_KPI_AVG_SELECT,
         OEE_FABRIL_KPI_BY_BRANCH_SELECT,
+        OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT,
     ):
         assert "vw_Apontamentos_Eficiencia" in fragment
         assert "WITH (NOLOCK)" in fragment
