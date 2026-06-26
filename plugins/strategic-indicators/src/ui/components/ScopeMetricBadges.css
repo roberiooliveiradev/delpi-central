@@ -131,3 +131,16 @@
   flex: 1 1 auto;
   text-align: right;
 }
+
+.si-tree-indicator-card__goals .si-scope-badge__key {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.si-tree-indicator-card__goals .si-scope-badge__value {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
