@@ -156,6 +156,17 @@ class UpdateActionPlanBody(BaseModel):
     linked_audit_5s_nc_id: str | None = Field(default=None, max_length=36)
 
 
+class UpdateActionPlanStatusBody(BaseModel):
+    status: str = Field(
+        ...,
+        pattern=(
+            "^(draft|triage|containment|root_cause_analysis|action_plan_defined|"
+            "in_progress|waiting_validation|completed|cancelled)$"
+        ),
+    )
+    comment: str | None = None
+
+
 class ReopenActionPlanBody(BaseModel):
     reason: str = Field(..., min_length=5, max_length=2000)
     target_status: str | None = Field(
