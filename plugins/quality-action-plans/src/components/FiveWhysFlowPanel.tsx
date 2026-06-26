@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import { upsertFiveWhys } from "../api/actionPlansApi";
@@ -61,6 +62,8 @@ function WhysFlowTrack({
   disabled: boolean;
   onChange: (steps: string[]) => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   function setStep(index: number, value: string) {
     onChange(steps.map((item, currentIndex) => (currentIndex === index ? value : item)));
   }
@@ -72,12 +75,25 @@ function WhysFlowTrack({
 
   function addStep() {
     onChange([...steps, ""]);
+    requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      if (!container) {
+        return;
+      }
+      container.scrollTo({ left: container.scrollWidth, behavior: "smooth" });
+    });
   }
 
   return (
     <div className="pac-whys-flow">
       <h3 className="pac-whys-flow__track-title">{config.title}</h3>
-      <div className="pac-whys-flow__track-scroll">
+      <div
+        ref={scrollRef}
+        className="pac-whys-flow__track-scroll"
+        role="region"
+        aria-label={`${config.title} — deslize horizontalmente para ver todos os passos`}
+        tabIndex={0}
+      >
         <div className="pac-whys-flow__track">
           {steps.map((step, index) => (
             <div key={`${config.key}-${index}`} className="pac-whys-flow__segment">
