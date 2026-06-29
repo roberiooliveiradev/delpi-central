@@ -154,6 +154,8 @@ export const PAC_HELP_TOOLTIPS = {
     attentionEmail: "E-mail para envio do relatório ao cliente.",
     team: "Equipe multidisciplinar responsável pela análise 8D (D1).",
     teamLeader: "Indica o membro líder da equipe de análise.",
+    teamMemberArea:
+      "Área ou departamento em que o membro atua na análise (ex.: Qualidade, Engenharia, Produção).",
     teamMemberSelect: "Membros cadastrados na seção 2. O vínculo Delpi é feito nesta seção.",
     teamMemberUserLink:
       "Pesquise na Delpi usuários com acesso ao PAC (mesmo fluxo da busca de cliente).",

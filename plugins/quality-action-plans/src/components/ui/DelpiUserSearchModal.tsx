@@ -11,10 +11,23 @@ import { TextField } from "./TextField";
 const USER_SEARCH_PAGE_SIZE = 20;
 const T = PAC_HELP_TOOLTIPS.tables;
 
+function filterExcludedUsers(
+  users: DirectoryUser[],
+  excludedUserIds: string[] | undefined,
+): DirectoryUser[] {
+  if (!excludedUserIds?.length) {
+    return users;
+  }
+  const excluded = new Set(excludedUserIds);
+  return users.filter((user) => !excluded.has(user.id));
+}
+
 type DelpiUserSearchModalProps = {
   open: boolean;
   onClose: () => void;
   initialQuery?: string;
+  /** IDs já vinculados em outros membros — não aparecem na lista. */
+  excludedUserIds?: string[];
   onSelect: (user: DirectoryUser) => void;
 };
 
@@ -22,11 +35,13 @@ export function DelpiUserSearchModal({
   open,
   onClose,
   initialQuery,
+  excludedUserIds,
   onSelect,
 }: DelpiUserSearchModalProps) {
   const formId = useId();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<DirectoryUser[]>([]);
+  const [hiddenLinkedCount, setHiddenLinkedCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
@@ -41,7 +56,9 @@ export function DelpiUserSearchModal({
         limit: USER_SEARCH_PAGE_SIZE,
         browse,
       });
-      setItems(results);
+      const visible = filterExcludedUsers(results, excludedUserIds);
+      setHiddenLinkedCount(results.length - visible.length);
+      setItems(visible);
     } catch (searchError: unknown) {
       setItems([]);
       setError(searchError instanceof Error ? searchError.message : "Erro ao buscar usuários.");
@@ -55,10 +72,11 @@ export function DelpiUserSearchModal({
     const initial = initialQuery?.trim() ?? "";
     setQuery(initial);
     setItems([]);
+    setHiddenLinkedCount(0);
     setError(null);
     setSearched(false);
     void runSearch(initial, !initial);
-  }, [initialQuery, open]);
+  }, [excludedUserIds, initialQuery, open]);
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -128,13 +146,20 @@ export function DelpiUserSearchModal({
           ) : null}
 
           {!loading && searched && !error && items.length === 0 ? (
-            <p className="pac-muted pac-customer-search-modal__status">Nenhum usuário encontrado.</p>
+            <p className="pac-muted pac-customer-search-modal__status">
+              {hiddenLinkedCount > 0
+                ? "Nenhum usuário disponível — os demais já estão vinculados à equipe."
+                : "Nenhum usuário encontrado."}
+            </p>
           ) : null}
 
           {!loading && items.length > 0 ? (
             <>
               <p className="pac-customer-search-modal__results-header">
                 {items.length} resultado{items.length === 1 ? "" : "s"} (máx. {USER_SEARCH_PAGE_SIZE})
+                {hiddenLinkedCount > 0
+                  ? ` · ${hiddenLinkedCount} já vinculado${hiddenLinkedCount === 1 ? "" : "s"} oculto${hiddenLinkedCount === 1 ? "" : "s"}`
+                  : ""}
               </p>
               <div className="pac-table-wrap pac-customer-search-modal__table">
                 <table className="pac-table">

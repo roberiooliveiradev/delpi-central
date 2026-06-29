@@ -210,6 +210,9 @@ export function Rnc8dNcDescriptionSection({ value, onChange }: Rnc8dSectionsProp
 export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
   const team = value.team_members ?? [];
   const teamDrag = useDragReorder(team, (team_members) => onChange({ ...value, team_members }));
+  const linkedUserIds = team
+    .map((item) => item.member_user_id)
+    .filter((id): id is string => Boolean(id));
 
   return (
     <SectionCard title="2. Membros da equipe de análise" hint={PAC_HELP_TOOLTIPS.rnc8d.team}>
@@ -219,6 +222,7 @@ export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
             key={`team-${index}`}
             index={index}
             member={member}
+            excludedUserIds={linkedUserIds}
             rowClassName={teamDrag.rowClassName("pac-team-card", index)}
             rowDropProps={teamDrag.rowDropProps(index)}
             canDrag={teamDrag.canDrag}

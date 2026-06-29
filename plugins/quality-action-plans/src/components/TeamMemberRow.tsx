@@ -26,6 +26,7 @@ type Props = {
   onChange: (member: TeamMember) => void;
   onLeaderToggle: (checked: boolean) => void;
   onRemove: () => void;
+  excludedUserIds?: string[];
 };
 
 export function TeamMemberRow({
@@ -39,6 +40,7 @@ export function TeamMemberRow({
   onChange,
   onLeaderToggle,
   onRemove,
+  excludedUserIds,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
@@ -112,7 +114,7 @@ export function TeamMemberRow({
           <TextField
             id={`rnc-team-dept-${index}`}
             label="Área"
-            hint={PAC_HELP_TOOLTIPS.detail.department}
+            hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberArea}
             value={member.department ?? ""}
             onChange={(department) => patch({ department })}
           />
@@ -147,6 +149,7 @@ export function TeamMemberRow({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         initialQuery={member.member_name.trim() || undefined}
+        excludedUserIds={excludedUserIds}
         onSelect={handleSelect}
       />
     </article>
