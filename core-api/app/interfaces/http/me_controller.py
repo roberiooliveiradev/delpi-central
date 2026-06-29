@@ -457,6 +457,8 @@ def search_directory_users():
     user = g.current_user
     query = request.args.get("q") or request.args.get("query")
     limit = request.args.get("limit", 10)
+    app_id = (request.args.get("app") or "").strip() or None
+    permission_code = (request.args.get("permission") or "").strip() or None
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -464,6 +466,8 @@ def search_directory_users():
                 current_user_id=str(user.id),
                 query=query,
                 limit=int(limit),
+                app_id=app_id,
+                permission_code=permission_code,
             )
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)

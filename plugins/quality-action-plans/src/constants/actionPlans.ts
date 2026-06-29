@@ -23,6 +23,9 @@ export const PAC_SOURCE_TYPES = [
 
 export const APP_BASE = "/apps/quality-action-plans";
 
+/** Id do plugin no portal — filtra diretório para usuários com acesso ao PAC. */
+export const QUALITY_ACTION_PLANS_APP_ID = "quality-action-plans";
+
 export const PLAN_STATUSES: Array<{ value: PlanStatus; label: string }> = [
   { value: "draft", label: "Rascunho" },
   { value: "triage", label: "Triagem" },

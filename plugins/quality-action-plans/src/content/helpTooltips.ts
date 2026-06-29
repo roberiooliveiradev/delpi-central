@@ -78,7 +78,7 @@ export const PAC_HELP_TOOLTIPS = {
       "Quando marcado, exige anexo de evidência antes de concluir a ação.",
     actionResponsible: "Pessoa ou equipe responsável pela execução da ação.",
     actionResponsibleUserLink:
-      "Busque um usuário Delpi pelo nome ou e-mail. Opcional — habilita a Minha fila e notificações para essa pessoa.",
+      "Busque um usuário Delpi com acesso ao PAC (nome ou e-mail). Opcional — habilita a Minha fila e notificações para essa pessoa.",
     actionResponsibleLinked:
       "Usuário vinculado por ID — a ação entra na Minha fila dele enquanto estiver aberta.",
     actionResponsibleNameOnly:

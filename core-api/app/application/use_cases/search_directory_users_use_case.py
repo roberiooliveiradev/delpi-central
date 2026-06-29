@@ -1,5 +1,8 @@
 from uuid import UUID
 
+from app.application.services.directory_user_eligibility_service import (
+    DirectoryUserEligibilityService,
+)
 from app.application.unit_of_work import UnitOfWork
 
 
@@ -25,6 +28,8 @@ class SearchDirectoryUsersUseCase:
         current_user_id: str,
         query: str | None,
         limit: int = 10,
+        app_id: str | None = None,
+        permission_code: str | None = None,
     ) -> list[dict]:
         normalized = (query or "").strip()
 
@@ -33,11 +38,13 @@ class SearchDirectoryUsersUseCase:
 
         safe_limit = max(1, min(limit, 20))
         exclude_id = UUID(current_user_id)
+        eligibility = DirectoryUserEligibilityService(self.uow)
 
+        fetch_size = min(max(safe_limit * 5, safe_limit + 1), 50)
         users, _ = self.uow.users.list_paginated(
             q=normalized,
             page=1,
-            page_size=safe_limit + 1,
+            page_size=fetch_size,
             sort="name",
             direction="asc",
         )
@@ -45,7 +52,13 @@ class SearchDirectoryUsersUseCase:
         results: list[dict] = []
 
         for user in users:
-            if user.id == exclude_id or not user.active:
+            if user.id == exclude_id:
+                continue
+            if not eligibility.matches(
+                user,
+                app_id=app_id,
+                permission_code=permission_code,
+            ):
                 continue
 
             results.append(
