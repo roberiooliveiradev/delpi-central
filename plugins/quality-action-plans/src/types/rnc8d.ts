@@ -87,6 +87,8 @@ export type PlanEvidence = {
   knowledge_visible?: boolean;
   action_id?: string | null;
   uploaded_by?: string;
+  uploaded_by_name?: string | null;
+  uploaded_by_email?: string | null;
   created_at?: string;
 };
 

@@ -118,7 +118,15 @@ class UpsertIshikawaUseCase:
     def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
         self._repository = repository
 
-    def execute(self, plan_id: str, request: UpsertIshikawaRequest, *, updated_by: str):
+    def execute(
+        self,
+        plan_id: str,
+        request: UpsertIshikawaRequest,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
+    ):
         return self._repository.upsert_ishikawa(
             plan_id,
             normalize_ishikawa_payload(
@@ -133,6 +141,8 @@ class UpsertIshikawaUseCase:
                 }
             ),
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
         )
 
 
@@ -145,7 +155,15 @@ class UpsertFiveWhysUseCase:
         self._repository = repository
         self._intelligence_sync = intelligence_sync
 
-    def execute(self, plan_id: str, request: UpsertFiveWhysRequest, *, updated_by: str):
+    def execute(
+        self,
+        plan_id: str,
+        request: UpsertFiveWhysRequest,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
+    ):
         if request.confidence_level and request.confidence_level not in {"low", "medium", "high"}:
             raise ValueError("confidence_level inválido.")
         result = self._repository.upsert_five_whys(
@@ -169,6 +187,8 @@ class UpsertFiveWhysUseCase:
                 }
             ),
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
         )
         if result and self._intelligence_sync:
             self._intelligence_sync.execute(plan_id)
@@ -194,6 +214,8 @@ class CreatePlanActionsUseCase:
         actions: list[CreateActionItemRequest],
         *,
         created_by: str,
+        created_by_name: str | None = None,
+        created_by_email: str | None = None,
     ):
         if not actions:
             raise ValueError("Informe ao menos uma ação.")
@@ -218,7 +240,13 @@ class CreatePlanActionsUseCase:
                     "cause_track": action.cause_track,
                 }
             )
-        return self._repository.create_actions(plan_id, payload, created_by=created_by)
+        return self._repository.create_actions(
+            plan_id,
+            payload,
+            created_by=created_by,
+            created_by_name=created_by_name,
+            created_by_email=created_by_email,
+        )
 
 
 class RecordEffectivenessReviewUseCase:
@@ -236,6 +264,8 @@ class RecordEffectivenessReviewUseCase:
         request: EffectivenessReviewRequest,
         *,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ):
         if request.effectiveness_status not in VALID_EFFECTIVENESS:
             raise ValueError("effectiveness_status inválido.")
@@ -246,6 +276,8 @@ class RecordEffectivenessReviewUseCase:
                 "notes": request.notes,
             },
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
         )
         if plan and self._intelligence_sync:
             self._intelligence_sync.execute(plan_id)
@@ -262,6 +294,8 @@ class SubmitEffectivenessReviewUseCase:
         request: EffectivenessReviewRequest,
         *,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ):
         if request.effectiveness_status not in SUBMITTABLE_EFFECTIVENESS:
             raise ValueError(
@@ -274,6 +308,8 @@ class SubmitEffectivenessReviewUseCase:
                 "notes": request.notes,
             },
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
         )
 
 
@@ -286,10 +322,19 @@ class ApproveEffectivenessReviewUseCase:
         self._repository = repository
         self._intelligence_sync = intelligence_sync
 
-    def execute(self, plan_id: str, *, updated_by: str):
+    def execute(
+        self,
+        plan_id: str,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
+    ):
         plan = self._repository.approve_effectiveness_review(
             plan_id,
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
         )
         if plan and self._intelligence_sync:
             self._intelligence_sync.execute(plan_id)
@@ -302,7 +347,15 @@ class RejectEffectivenessReviewUseCase:
     def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
         self._repository = repository
 
-    def execute(self, plan_id: str, *, reason: str, updated_by: str):
+    def execute(
+        self,
+        plan_id: str,
+        *,
+        reason: str,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
+    ):
         cleaned = (reason or "").strip()
         if len(cleaned) < self.MIN_REASON_LENGTH:
             raise ValueError("Informe o motivo da rejeição com ao menos 5 caracteres.")
@@ -310,6 +363,8 @@ class RejectEffectivenessReviewUseCase:
             plan_id,
             reason=cleaned,
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
         )
 
 
@@ -338,6 +393,8 @@ class UpdatePlanActionUseCase:
         fields: dict[str, Any],
         *,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ):
         status = fields.get("status")
         if status is not None and status not in self.VALID_STATUSES:
@@ -347,12 +404,33 @@ class UpdatePlanActionUseCase:
             raise ValueError(f"action_type inválido: {action_type}")
         if fields.get("cause_track") == "":
             fields = {**fields, "cause_track": None}
-        return self._repository.update_action(plan_id, action_id, fields, updated_by=updated_by)
+        return self._repository.update_action(
+            plan_id,
+            action_id,
+            fields,
+            updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
+        )
 
 
 class DeletePlanActionUseCase:
     def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
         self._repository = repository
 
-    def execute(self, plan_id: str, action_id: str, *, updated_by: str):
-        return self._repository.delete_action(plan_id, action_id, updated_by=updated_by)
+    def execute(
+        self,
+        plan_id: str,
+        action_id: str,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
+    ):
+        return self._repository.delete_action(
+            plan_id,
+            action_id,
+            updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
+        )

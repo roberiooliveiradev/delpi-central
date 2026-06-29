@@ -30,7 +30,17 @@ import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
 import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
-import { Rnc8dReportEditor } from "../components/Rnc8dReportEditor";
+import { formatActorDisplay } from "../utils/actorDisplay";
+import {
+  Rnc8dClosureSection,
+  Rnc8dContainmentSection,
+  Rnc8dEffectivenessSection,
+  Rnc8dHeaderSection,
+  Rnc8dNcDescriptionSection,
+  Rnc8dPreventiveSection,
+  Rnc8dSaveActions,
+  Rnc8dTeamSection,
+} from "../components/rnc8d/Rnc8dSections";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { SaveStatusBanner } from "../components/SaveStatusBanner";
 import { FormActions } from "../components/ui/FormActions";
@@ -58,7 +68,7 @@ import type {
 } from "../types/actionPlan";
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
-import { buildActivateRnc8dPayload, mergeSharedIdentificationIntoRnc8d, sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
+import { mergeSharedIdentificationIntoRnc8d, sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
 import { formatDateTime } from "../utils/format";
 import {
   emptyIshikawaCausesForm,
@@ -228,7 +238,10 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const reopenStatusOptions = PLAN_STATUSES.filter(
     (item) => !terminalStatuses.has(item.value) && item.value !== "draft",
   ).map((item) => ({ value: item.value, label: item.label }));
-  const isRnc8dTemplate = plan?.customer_template === "rnc_8d";
+  const showRnc8dFlow =
+    plan?.nonconformity_scope === "external"
+    || identificationForm.nonconformity_scope === "external"
+    || plan?.customer_template === "rnc_8d";
   const sharedIdentification = useMemo(
     () => ({
       client_nc_registry: identificationForm.client_nc_registry,
@@ -295,7 +308,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <Download size={16} />
               PDF resumo
             </button>
-            {isRnc8dTemplate ? (
+            {showRnc8dFlow ? (
               <>
                 <button type="button" className="pac-primary-btn" onClick={() => void handleExportRnc8d()}>
                   <Download size={16} />
@@ -328,7 +341,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               currentStatus={plan.status}
               hint={PAC_HELP_TOOLTIPS.detail.statusPipeline}
             />
-            {isRnc8dTemplate && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
+            {showRnc8dFlow && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
             <div className="pac-form-grid">
               <TextField
                 id="pac-detail-title"
@@ -373,7 +386,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextField
                 id="pac-detail-product"
                 label={
-                  isRnc8dTemplate
+                  showRnc8dFlow
                     ? RNC8D_SHARED_FIELD_LABELS.productCode
                     : "Código produto"
                 }
@@ -384,7 +397,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextField
                 id="pac-detail-product-desc"
                 label={
-                  isRnc8dTemplate
+                  showRnc8dFlow
                     ? RNC8D_SHARED_FIELD_LABELS.productDescription
                     : "Descrição produto"
                 }
@@ -397,7 +410,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <TextField
                 id="pac-detail-batch"
                 label={
-                  isRnc8dTemplate ? RNC8D_SHARED_FIELD_LABELS.supplierBatch : "Lote"
+                  showRnc8dFlow ? RNC8D_SHARED_FIELD_LABELS.supplierBatch : "Lote"
                 }
                 hint={PAC_HELP_TOOLTIPS.detail.supplierBatch}
                 value={identificationForm.batch_number}
@@ -465,7 +478,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   setIdentificationForm((c) => ({ ...c, source_reference }))
                 }
               />
-              {isRnc8dTemplate ? (
+              {showRnc8dFlow ? (
                 <TextField
                   id="pac-detail-nc-registry"
                   label={RNC8D_SHARED_FIELD_LABELS.clientNcRegistry}
@@ -523,7 +536,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       source_type: identificationForm.source_type.trim() || undefined,
                       source_reference: identificationForm.source_reference.trim() || undefined,
                     });
-                    if (isRnc8dTemplate) {
+                    if (showRnc8dFlow) {
                       await upsertRnc8dReport(
                         planId,
                         sanitizeRnc8dReportPayload(
@@ -630,119 +643,119 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
           <SimilarCasesPanel planId={planId} onNavigate={onNavigate} />
 
-          <PlanTimeline detail={detail} />
+          {showRnc8dFlow ? (
+            <>
+              <Rnc8dHeaderSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <Rnc8dNcDescriptionSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <Rnc8dTeamSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <Rnc8dContainmentSection value={rnc8dForm} onChange={setRnc8dForm} />
 
-          {auditLog.length > 0 ? (
-            <SectionCard title="Auditoria (governança)" hint={PAC_HELP_TOOLTIPS.sections.audit}>
-              <ol className="pac-timeline-track">
-                {auditLog.map((entry) => (
-                  <li key={entry.id} className="pac-timeline-entry">
-                    <div className="pac-timeline-entry__header">
-                      <strong>
-                        {AUDIT_EVENT_LABELS[entry.event_type] ?? entry.event_type}
-                      </strong>
-                      <span className="pac-muted">{formatDateTime(entry.created_at)}</span>
-                    </div>
-                    <p className="pac-timeline-entry__meta pac-muted">
-                      {entry.actor_user_id ? `Por ${entry.actor_user_id}` : null}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </SectionCard>
-          ) : null}
-
-          {!isRnc8dTemplate ? (
-            <SectionCard title="Template do relatório" hint={PAC_HELP_TOOLTIPS.sections.template}>
-              <p className="pac-muted">
-                Ative o formulário 8D (materiais adquiridos) para preenchimento manual e exportação da planilha padrão do cliente.
-              </p>
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "activate-rnc-8d"}
-                onClick={() =>
-                  void runSave("activate-rnc-8d", async () => {
-                    await upsertRnc8dReport(
-                      planId,
-                      buildActivateRnc8dPayload({
-                        template_payload: rnc8dForm.template_payload ?? emptyRnc8dPayload(),
-                      }),
-                    );
-                  })
-                }
+              <SectionCard
+                title="4. Estudo da causa do defeito (5 Porquês)"
+                hint={PAC_HELP_TOOLTIPS.sections.fiveWhys}
               >
-                {saving === "activate-rnc-8d" ? "Ativando…" : "Ativar relatório 8D"}
-              </button>
-            </SectionCard>
-          ) : null}
+                <FiveWhysFlowPanel
+                  planId={planId}
+                  form={fiveWhysForm}
+                  saving={saving}
+                  onChange={setFiveWhysForm}
+                  onSave={runSave}
+                />
+              </SectionCard>
 
-          {isRnc8dTemplate ? (
-            <Rnc8dReportEditor
-              value={rnc8dForm}
-              sharedIdentification={sharedIdentification}
-              onChange={setRnc8dForm}
-              saving={saving === "rnc-8d"}
-              onSave={() =>
-                runSave("rnc-8d", async () => {
-                  await upsertRnc8dReport(
-                    planId,
-                    sanitizeRnc8dReportPayload(
-                      mergeSharedIdentificationIntoRnc8d(rnc8dForm, sharedIdentification),
-                    ),
-                  );
-                })
-              }
-            />
-          ) : null}
+              <SectionCard title="4. Ishikawa (6M)" hint={PAC_HELP_TOOLTIPS.sections.ishikawa}>
+                <IshikawaFishboneDiagram
+                  problem={plan.reported_problem || plan.title}
+                  causes={ishikawaCausesForm}
+                  notes={ishikawaNotes}
+                  onChange={setIshikawaCausesForm}
+                  onNotesChange={setIshikawaNotes}
+                  saving={saving === "ishikawa"}
+                  onSave={() =>
+                    void runSave("ishikawa", async () => {
+                      await upsertIshikawa(
+                        planId,
+                        serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+                      );
+                    })
+                  }
+                />
+              </SectionCard>
 
-          <EvidencePanel
-            planId={planId}
-            evidences={detail.evidences ?? []}
-            actions={detail.actions ?? []}
-            onChanged={load}
-          />
+              <SectionCard
+                title="5. Ação corretiva proposta"
+                hint={PAC_HELP_TOOLTIPS.sections.actions}
+              >
+                <PlanActionsPanel
+                  planId={planId}
+                  actions={detail.actions}
+                  evidences={detail.evidences ?? []}
+                  saving={saving}
+                  onSave={runSave}
+                />
+              </SectionCard>
 
-          <SectionCard title="Ishikawa (6M)" hint={PAC_HELP_TOOLTIPS.sections.ishikawa}>
-            <IshikawaFishboneDiagram
-              problem={plan.reported_problem || plan.title}
-              causes={ishikawaCausesForm}
-              notes={ishikawaNotes}
-              onChange={setIshikawaCausesForm}
-              onNotesChange={setIshikawaNotes}
-              saving={saving === "ishikawa"}
-              onSave={() =>
-                void runSave("ishikawa", async () => {
-                  await upsertIshikawa(
-                    planId,
-                    serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
-                  );
-                })
-              }
-            />
-          </SectionCard>
+              <Rnc8dEffectivenessSection value={rnc8dForm} onChange={setRnc8dForm} />
+            </>
+          ) : (
+            <>
+              <EvidencePanel
+                planId={planId}
+                evidences={detail.evidences ?? []}
+                actions={detail.actions ?? []}
+                onChanged={load}
+              />
 
-          <SectionCard title="4. Estudo de causa — Porquês" hint={PAC_HELP_TOOLTIPS.sections.fiveWhys}>
-            <FiveWhysFlowPanel
-              planId={planId}
-              form={fiveWhysForm}
-              saving={saving}
-              onChange={setFiveWhysForm}
-              onSave={runSave}
-            />
-          </SectionCard>
+              <SectionCard title="Ishikawa (6M)" hint={PAC_HELP_TOOLTIPS.sections.ishikawa}>
+                <IshikawaFishboneDiagram
+                  problem={plan.reported_problem || plan.title}
+                  causes={ishikawaCausesForm}
+                  notes={ishikawaNotes}
+                  onChange={setIshikawaCausesForm}
+                  onNotesChange={setIshikawaNotes}
+                  saving={saving === "ishikawa"}
+                  onSave={() =>
+                    void runSave("ishikawa", async () => {
+                      await upsertIshikawa(
+                        planId,
+                        serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+                      );
+                    })
+                  }
+                />
+              </SectionCard>
 
-          <SectionCard title="5. Ações corretivas e plano" hint={PAC_HELP_TOOLTIPS.sections.actions}>
-            <PlanActionsPanel
-              planId={planId}
-              actions={detail.actions}
-              evidences={detail.evidences ?? []}
-              saving={saving}
-              onSave={runSave}
-            />
-          </SectionCard>
+              <SectionCard title="Estudo de causa — Porquês" hint={PAC_HELP_TOOLTIPS.sections.fiveWhys}>
+                <FiveWhysFlowPanel
+                  planId={planId}
+                  form={fiveWhysForm}
+                  saving={saving}
+                  onChange={setFiveWhysForm}
+                  onSave={runSave}
+                />
+              </SectionCard>
 
-          <SectionCard title="Eficácia" hint={PAC_HELP_TOOLTIPS.sections.effectiveness}>
+              <SectionCard title="Ações corretivas e plano" hint={PAC_HELP_TOOLTIPS.sections.actions}>
+                <PlanActionsPanel
+                  planId={planId}
+                  actions={detail.actions}
+                  evidences={detail.evidences ?? []}
+                  saving={saving}
+                  onSave={runSave}
+                />
+              </SectionCard>
+            </>
+          )}
+
+          <SectionCard
+            title={showRnc8dFlow ? "6. Registro de eficácia (PAC)" : "Eficácia"}
+            hint={PAC_HELP_TOOLTIPS.sections.effectiveness}
+            subtitle={
+              showRnc8dFlow
+                ? "Fluxo de aprovação do coordenador — complementa a seção 6 da planilha 8D."
+                : undefined
+            }
+          >
             {isEffectivenessPendingApproval ? (
               <div className="pac-state" style={{ marginBottom: "0.75rem" }}>
                 <strong>Aguardando aprovação do coordenador.</strong>
@@ -889,6 +902,63 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               ) : null}
             </FormActions>
           </SectionCard>
+
+          {showRnc8dFlow ? (
+            <>
+              <Rnc8dPreventiveSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <EvidencePanel
+                planId={planId}
+                evidences={detail.evidences ?? []}
+                actions={detail.actions ?? []}
+                onChanged={load}
+                title="7. Evidências das ações"
+                subtitle="Anexe prints, PDFs e documentos do processo (planilha: Inserir evidências)."
+              />
+              <Rnc8dClosureSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <Rnc8dSaveActions
+                saving={saving === "rnc-8d"}
+                onSave={() =>
+                  runSave("rnc-8d", async () => {
+                    await upsertRnc8dReport(
+                      planId,
+                      sanitizeRnc8dReportPayload(
+                        mergeSharedIdentificationIntoRnc8d(rnc8dForm, sharedIdentification),
+                      ),
+                    );
+                  })
+                }
+              />
+            </>
+          ) : null}
+
+          <PlanTimeline detail={detail} />
+
+          {auditLog.length > 0 ? (
+            <SectionCard title="Auditoria (governança)" hint={PAC_HELP_TOOLTIPS.sections.audit}>
+              <ol className="pac-timeline-track">
+                {auditLog.map((entry) => (
+                  <li key={entry.id} className="pac-timeline-entry">
+                    <div className="pac-timeline-entry__header">
+                      <strong>
+                        {AUDIT_EVENT_LABELS[entry.event_type] ?? entry.event_type}
+                      </strong>
+                      <span className="pac-muted">{formatDateTime(entry.created_at)}</span>
+                    </div>
+                    {(() => {
+                      const actorLabel = formatActorDisplay({
+                        userId: entry.actor_user_id,
+                        name: entry.actor_name,
+                        email: entry.actor_email,
+                      });
+                      return actorLabel ? (
+                        <p className="pac-timeline-entry__meta pac-muted">{actorLabel}</p>
+                      ) : null;
+                    })()}
+                  </li>
+                ))}
+              </ol>
+            </SectionCard>
+          ) : null}
         </div>
       ) : null}
     </>

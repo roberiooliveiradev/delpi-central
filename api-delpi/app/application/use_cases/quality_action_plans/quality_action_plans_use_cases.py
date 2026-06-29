@@ -42,6 +42,8 @@ class QualityActionPlanRepository(Protocol):
 class CreateQualityActionPlanRequest:
     title: str
     created_by_user_id: str
+    created_by_name: str | None = None
+    created_by_email: str | None = None
     customer_name: str | None = None
     customer_contact: str | None = None
     nonconformity_scope: str | None = None
@@ -98,6 +100,8 @@ class CreateQualityActionPlanUseCase:
             {
                 "title": request.title.strip(),
                 "created_by_user_id": request.created_by_user_id,
+                "created_by_name": request.created_by_name,
+                "created_by_email": request.created_by_email,
                 "customer_name": request.customer_name,
                 "customer_contact": request.customer_contact,
                 "nonconformity_scope": nonconformity_scope,
@@ -165,6 +169,8 @@ class UpdateQualityActionPlanUseCase:
         request: UpdateQualityActionPlanRequest,
         *,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         fields: dict[str, Any] = {}
         for key, value in request.__dict__.items():
@@ -182,6 +188,8 @@ class UpdateQualityActionPlanUseCase:
         }:
             raise ValueError("customer_template inválido.")
         fields["updated_by_user_id"] = updated_by
+        fields["updated_by_name"] = updated_by_name
+        fields["updated_by_email"] = updated_by_email
         return self._repository.update_plan(plan_id, fields)
 
 
@@ -208,6 +216,8 @@ class UpdateQualityActionPlanStatusUseCase:
         *,
         status: str,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
         comment: str | None = None,
     ) -> dict[str, Any] | None:
         if status not in self.VALID_STATUSES:
@@ -227,6 +237,8 @@ class UpdateQualityActionPlanStatusUseCase:
             plan_id,
             status=status,
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
             comment=comment,
         )
 
@@ -257,6 +269,8 @@ class ReopenQualityActionPlanUseCase:
         reason: str,
         target_status: str | None = None,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         normalized_reason = (reason or "").strip()
         if len(normalized_reason) < 5:
@@ -279,4 +293,6 @@ class ReopenQualityActionPlanUseCase:
             target_status=resolved_target,
             reason=normalized_reason,
             updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
         )

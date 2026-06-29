@@ -32,7 +32,38 @@ _TERMINAL_PLAN_STATUSES = frozenset({"completed", "cancelled"})
 _STALL_DAYS_CRITICAL = CRITICAL_STALL_DAYS
 
 
+def _optional_actor_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
 class PostgresQualityActionPlanRepository(PluginBaseRepository):
+    @staticmethod
+    def _history_author(
+        user_id: str,
+        name: str | None = None,
+        email: str | None = None,
+    ) -> dict[str, str | None]:
+        return {
+            "created_by": user_id,
+            "created_by_name": name,
+            "created_by_email": email,
+        }
+
+    @staticmethod
+    def _audit_author(
+        user_id: str,
+        name: str | None = None,
+        email: str | None = None,
+    ) -> dict[str, str | None]:
+        return {
+            "actor_user_id": user_id,
+            "actor_name": name,
+            "actor_email": email,
+        }
+
     """Leitura e escrita PAC Qualidade (plugin + agente GPT via api-pac-quality)."""
 
     def list_plans(
@@ -183,7 +214,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             """
             SELECT id, plan_id, type, file_name, file_url, text_excerpt,
                    stored_name, mime_type, size_bytes, section, description,
-                   knowledge_visible, uploaded_by, action_id, created_at
+                   knowledge_visible, uploaded_by, uploaded_by_name, uploaded_by_email,
+                   action_id, created_at
               FROM quality.quality_problem_evidences
              WHERE plan_id = %s
              ORDER BY created_at DESC
@@ -193,7 +225,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         history = self.fetch_all(
             """
             SELECT id, plan_id, event_type, old_value, new_value, comment,
-                   created_by, created_at
+                   created_by, created_by_name, created_by_email, created_at
               FROM quality.quality_action_history
              WHERE plan_id = %s
              ORDER BY created_at DESC
@@ -1474,10 +1506,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             raise PluginsRepositoryError("Falha ao criar plano de ação.")
 
         plan_id = str(row["id"])
+        actor_name = _optional_actor_text(fields.get("created_by_name"))
+        actor_email = _optional_actor_text(fields.get("created_by_email"))
         self.append_history(
             plan_id=plan_id,
             event_type="plan_created",
             created_by=fields["created_by_user_id"],
+            created_by_name=actor_name,
+            created_by_email=actor_email,
             new_value=code,
             comment="Plano de ação criado via api-delpi.",
             auto_commit=False,
@@ -1487,6 +1523,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             entity_id=plan_id,
             event_type="plan_created",
             actor_user_id=fields["created_by_user_id"],
+            actor_name=actor_name,
+            actor_email=actor_email,
             payload={
                 "code": code,
                 "severity": fields.get("severity", "medium"),
@@ -1558,6 +1596,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             plan_id=plan_id,
             event_type="plan_updated",
             created_by=fields.get("updated_by_user_id", "system"),
+            created_by_name=_optional_actor_text(fields.get("updated_by_name")),
+            created_by_email=_optional_actor_text(fields.get("updated_by_email")),
             comment="Plano atualizado via api-delpi.",
             auto_commit=False,
         )
@@ -1567,6 +1607,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             entity_id=plan_id,
             event_type="plan_updated",
             actor_user_id=actor,
+            actor_name=_optional_actor_text(fields.get("updated_by_name")),
+            actor_email=_optional_actor_text(fields.get("updated_by_email")),
             payload={"fields": sorted(updates.keys())},
             auto_commit=False,
         )
@@ -1589,6 +1631,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         status: str,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
         comment: str | None = None,
     ) -> dict[str, Any] | None:
         current = self.get_plan_by_id(plan_id)
@@ -1616,6 +1660,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             plan_id=plan_id,
             event_type=history_event,
             created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
             old_value=previous_status,
             new_value=status,
             comment=comment,
@@ -1627,6 +1673,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 entity_id=plan_id,
                 event_type="plan_closed",
                 actor_user_id=updated_by,
+                actor_name=updated_by_name,
+                actor_email=updated_by_email,
                 payload={
                     "previous_status": previous_status,
                     "status": status,
@@ -1644,6 +1692,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         target_status: str,
         reason: str,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         current = self.get_plan_by_id(plan_id)
         if not current:
@@ -1672,6 +1722,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             plan_id=plan_id,
             event_type="plan_reopened",
             created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
             old_value=previous_status,
             new_value=target_status,
             comment=reason,
@@ -1682,6 +1734,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             entity_id=plan_id,
             event_type="plan_reopened",
             actor_user_id=updated_by,
+            actor_name=updated_by_name,
+            actor_email=updated_by_email,
             payload={
                 "previous_status": previous_status,
                 "target_status": target_status,
@@ -1698,6 +1752,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         plan_id: str,
         event_type: str,
         created_by: str,
+        created_by_name: str | None = None,
+        created_by_email: str | None = None,
         old_value: str | None = None,
         new_value: str | None = None,
         comment: str | None = None,
@@ -1706,10 +1762,26 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.execute(
             """
             INSERT INTO quality.quality_action_history (
-                plan_id, event_type, old_value, new_value, comment, created_by
-            ) VALUES (%s, %s, %s, %s, %s, %s)
+                plan_id,
+                event_type,
+                old_value,
+                new_value,
+                comment,
+                created_by,
+                created_by_name,
+                created_by_email
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (plan_id, event_type, old_value, new_value, comment, created_by),
+            (
+                plan_id,
+                event_type,
+                old_value,
+                new_value,
+                comment,
+                created_by,
+                created_by_name,
+                created_by_email,
+            ),
             auto_commit=auto_commit,
         )
 
@@ -1720,14 +1792,16 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         entity_id: str,
         event_type: str,
         actor_user_id: str,
+        actor_name: str | None = None,
+        actor_email: str | None = None,
         payload: dict[str, Any] | None = None,
         auto_commit: bool = True,
     ) -> None:
         self.execute(
             """
             INSERT INTO quality.quality_audit_log (
-                entity_type, entity_id, event_type, payload, actor_user_id
-            ) VALUES (%s, %s, %s, %s::jsonb, %s)
+                entity_type, entity_id, event_type, payload, actor_user_id, actor_name, actor_email
+            ) VALUES (%s, %s, %s, %s::jsonb, %s, %s, %s)
             """,
             (
                 entity_type,
@@ -1735,6 +1809,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 event_type,
                 json.dumps(payload or {}),
                 actor_user_id,
+                actor_name,
+                actor_email,
             ),
             auto_commit=auto_commit,
         )
@@ -1778,6 +1854,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    event_type,
                    payload,
                    actor_user_id,
+                   actor_name,
+                   actor_email,
                    created_at
               FROM quality.quality_audit_log
              WHERE entity_type = 'quality_action_plan'
@@ -1796,6 +1874,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     "event_type": row.get("event_type"),
                     "payload": row.get("payload") or {},
                     "actor_user_id": row.get("actor_user_id"),
+                    "actor_name": row.get("actor_name"),
+                    "actor_email": row.get("actor_email"),
                     "created_at": (
                         created_at.isoformat()
                         if isinstance(created_at, datetime)
@@ -1828,7 +1908,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return row is not None
 
     def upsert_ishikawa(
-        self, plan_id: str, fields: dict[str, Any], *, updated_by: str
+        self,
+        plan_id: str,
+        fields: dict[str, Any],
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -1866,14 +1952,20 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="ishikawa_updated",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             auto_commit=False,
         )
         self.commit()
         return serialize_ishikawa_row(row)
 
     def upsert_five_whys(
-        self, plan_id: str, fields: dict[str, Any], *, updated_by: str
+        self,
+        plan_id: str,
+        fields: dict[str, Any],
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -1916,7 +2008,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="five_whys_updated",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             new_value=fields.get("root_cause"),
             auto_commit=False,
         )
@@ -1924,7 +2016,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return serialize_five_whys_row(row)
 
     def create_actions(
-        self, plan_id: str, actions: list[dict[str, Any]], *, created_by: str
+        self,
+        plan_id: str,
+        actions: list[dict[str, Any]],
+        *,
+        created_by: str,
+        created_by_name: str | None = None,
+        created_by_email: str | None = None,
     ) -> list[dict[str, Any]] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -1962,7 +2060,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 self.append_history(
                     plan_id=plan_id,
                     event_type="action_created",
-                    created_by=created_by,
+                    **self._history_author(created_by, created_by_name, created_by_email),
                     new_value=action["description"][:200],
                     auto_commit=False,
                 )
@@ -1970,7 +2068,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return created
 
     def update_action(
-        self, plan_id: str, action_id: str, fields: dict[str, Any], *, updated_by: str
+        self,
+        plan_id: str,
+        action_id: str,
+        fields: dict[str, Any],
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         allowed = {
             "action_type",
@@ -2028,14 +2133,20 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type=event,
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             auto_commit=False,
         )
         self.commit()
         return serialize_row(row, id_keys=("id", "plan_id"))
 
     def delete_action(
-        self, plan_id: str, action_id: str, *, updated_by: str
+        self,
+        plan_id: str,
+        action_id: str,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self.action_belongs_to_plan(plan_id, action_id):
             return None
@@ -2059,7 +2170,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="action_deleted",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             old_value=(row.get("description") or "")[:200],
             auto_commit=False,
         )
@@ -2067,7 +2178,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return {"id": str(action_id), "deleted": True}
 
     def submit_effectiveness_review(
-        self, plan_id: str, fields: dict[str, Any], *, updated_by: str
+        self,
+        plan_id: str,
+        fields: dict[str, Any],
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -2103,7 +2220,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="effectiveness_submitted",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             new_value=fields["effectiveness_status"],
             comment=fields.get("notes"),
             auto_commit=False,
@@ -2112,7 +2229,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             entity_type="quality_action_plan",
             entity_id=plan_id,
             event_type="effectiveness_submitted",
-            actor_user_id=updated_by,
+            **self._audit_author(updated_by, updated_by_name, updated_by_email),
             payload={
                 "proposed_status": fields["effectiveness_status"],
                 "notes": fields.get("notes"),
@@ -2123,7 +2240,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return self.get_plan_by_id(plan_id)
 
     def approve_effectiveness_review(
-        self, plan_id: str, *, updated_by: str
+        self,
+        plan_id: str,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -2155,7 +2277,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="effectiveness_reviewed",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             new_value=proposed,
             comment=current.get("effectiveness_notes"),
             auto_commit=False,
@@ -2164,7 +2286,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             entity_type="quality_action_plan",
             entity_id=plan_id,
             event_type="effectiveness_approved",
-            actor_user_id=updated_by,
+            **self._audit_author(updated_by, updated_by_name, updated_by_email),
             payload={
                 "effectiveness_status": proposed,
                 "submitted_by": current.get("effectiveness_submitted_by"),
@@ -2175,7 +2297,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return self.get_plan_by_id(plan_id)
 
     def reject_effectiveness_review(
-        self, plan_id: str, *, reason: str, updated_by: str
+        self,
+        plan_id: str,
+        *,
+        reason: str,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -2202,7 +2330,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="effectiveness_approval_rejected",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             new_value=current.get("effectiveness_proposed_status"),
             comment=reason,
             auto_commit=False,
@@ -2211,7 +2339,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             entity_type="quality_action_plan",
             entity_id=plan_id,
             event_type="effectiveness_approval_rejected",
-            actor_user_id=updated_by,
+            **self._audit_author(updated_by, updated_by_name, updated_by_email),
             payload={
                 "proposed_status": current.get("effectiveness_proposed_status"),
                 "reason": reason,
@@ -2259,7 +2387,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         }
 
     def record_effectiveness_review(
-        self, plan_id: str, fields: dict[str, Any], *, updated_by: str
+        self,
+        plan_id: str,
+        fields: dict[str, Any],
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -2286,7 +2420,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="effectiveness_reviewed",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             new_value=fields["effectiveness_status"],
             comment=fields.get("notes"),
             auto_commit=False,
@@ -2295,7 +2429,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             entity_type="quality_action_plan",
             entity_id=plan_id,
             event_type="effectiveness_reviewed",
-            actor_user_id=updated_by,
+            **self._audit_author(updated_by, updated_by_name, updated_by_email),
             payload={
                 "effectiveness_status": fields["effectiveness_status"],
                 "notes": fields.get("notes"),
@@ -2306,7 +2440,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return self.get_plan_by_id(plan_id)
 
     def upsert_rnc_8d_report(
-        self, plan_id: str, fields: dict[str, Any], *, updated_by: str
+        self,
+        plan_id: str,
+        fields: dict[str, Any],
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
         if not self._plan_exists(plan_id):
             return None
@@ -2369,7 +2509,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         self.append_history(
             plan_id=plan_id,
             event_type="plan_updated",
-            created_by=updated_by,
+            **self._history_author(updated_by, updated_by_name, updated_by_email),
             comment="Relatório 8D (materiais adquiridos) atualizado.",
             auto_commit=False,
         )
@@ -2502,7 +2642,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             f"""
             SELECT id, plan_id, type, file_name, file_url, text_excerpt,
                    stored_name, mime_type, size_bytes, section, description,
-                   knowledge_visible, uploaded_by, action_id, created_at
+                   knowledge_visible, uploaded_by, uploaded_by_name, uploaded_by_email,
+                   action_id, created_at
               FROM quality.quality_problem_evidences
              WHERE {where_clause}
              ORDER BY created_at DESC
@@ -2516,7 +2657,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             """
             SELECT id, plan_id, type, file_name, file_url, text_excerpt,
                    stored_name, mime_type, size_bytes, section, description,
-                   knowledge_visible, uploaded_by, action_id, created_at
+                   knowledge_visible, uploaded_by, uploaded_by_name, uploaded_by_email,
+                   action_id, created_at
               FROM quality.quality_problem_evidences
              WHERE id = %s AND plan_id = %s
             """,
@@ -2535,11 +2677,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             INSERT INTO quality.quality_problem_evidences (
                 plan_id, type, file_name, file_url, text_excerpt,
                 stored_name, mime_type, size_bytes, section, description,
-                knowledge_visible, uploaded_by, action_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                knowledge_visible, uploaded_by, uploaded_by_name, uploaded_by_email, action_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, plan_id, type, file_name, file_url, text_excerpt,
                       stored_name, mime_type, size_bytes, section, description,
-                      knowledge_visible, uploaded_by, action_id, created_at
+                      knowledge_visible, uploaded_by, uploaded_by_name, uploaded_by_email,
+                      action_id, created_at
             """,
             (
                 plan_id,
@@ -2554,6 +2697,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields.get("description"),
                 fields.get("knowledge_visible", True),
                 fields["uploaded_by"],
+                _optional_actor_text(fields.get("uploaded_by_name")),
+                _optional_actor_text(fields.get("uploaded_by_email")),
                 action_id,
             ),
             auto_commit=True,

@@ -232,6 +232,8 @@ export type PlanHistoryEvent = {
   new_value?: string | null;
   comment?: string | null;
   created_by?: string | null;
+  created_by_name?: string | null;
+  created_by_email?: string | null;
   created_at?: string;
 };
 
@@ -240,6 +242,8 @@ export type PlanAuditLogEntry = {
   event_type: string;
   payload?: Record<string, unknown>;
   actor_user_id?: string | null;
+  actor_name?: string | null;
+  actor_email?: string | null;
   created_at?: string;
 };
 

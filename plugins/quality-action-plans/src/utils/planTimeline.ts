@@ -5,6 +5,7 @@ import {
 } from "../constants/actionPlans";
 import type { ActionPlanDetail, PlanHistoryEvent } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
+import { formatActorDisplay } from "./actorDisplay";
 
 export type TimelineCategory = "status" | "actions" | "evidence" | "effectiveness" | "analysis";
 
@@ -101,7 +102,11 @@ function entryFromHistory(event: PlanHistoryEvent): PlanTimelineEntry | null {
     category: categoryForEventType(event.event_type),
     title: titleForHistoryEvent(event),
     detail,
-    meta: event.created_by ? `Por ${event.created_by}` : undefined,
+    meta: formatActorDisplay({
+      userId: event.created_by,
+      name: event.created_by_name,
+      email: event.created_by_email,
+    }),
     occurredAt,
   };
 }
@@ -111,15 +116,18 @@ function entryFromEvidence(evidence: PlanEvidence): PlanTimelineEntry | null {
 
   const label = evidence.file_name || evidence.description || evidence.type || "Arquivo";
   const actionHint = evidence.action_id ? " · vinculada a ação" : "";
+  const actorLabel = formatActorDisplay({
+    userId: evidence.uploaded_by,
+    name: evidence.uploaded_by_name,
+    email: evidence.uploaded_by_email,
+  });
 
   return {
     id: `evidence-${evidence.id}`,
     category: "evidence",
     title: "Evidência anexada",
     detail: label,
-    meta: evidence.uploaded_by
-      ? `Por ${evidence.uploaded_by}${actionHint}`
-      : actionHint || undefined,
+    meta: actorLabel ? `${actorLabel}${actionHint}` : actionHint || undefined,
     occurredAt: evidence.created_at,
   };
 }

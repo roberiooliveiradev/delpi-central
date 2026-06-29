@@ -44,6 +44,8 @@ type Props = {
   evidences: PlanEvidence[];
   actions?: PlanAction[];
   onChanged: () => void | Promise<void>;
+  title?: string;
+  subtitle?: string;
 };
 
 function actionLabel(action: PlanAction): string {
@@ -162,7 +164,14 @@ function EvidencePreviewContent({
   );
 }
 
-export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Props) {
+export function EvidencePanel({
+  planId,
+  evidences,
+  actions = [],
+  onChanged,
+  title = "Banco de conhecimento e evidências",
+  subtitle = "Anexe prints, PDFs, planilhas e documentos do processo. Visível para o analista e para o agente GPT.",
+}: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [evidenceType, setEvidenceType] = useState("image");
   const [section, setSection] = useState("general");
@@ -214,9 +223,9 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
 
   return (
     <SectionCard
-      title="Banco de conhecimento e evidências"
+      title={title}
       hint={PAC_HELP_TOOLTIPS.sections.evidences}
-      subtitle="Anexe prints, PDFs, planilhas e documentos do processo. Visível para o analista e para o agente GPT."
+      subtitle={subtitle}
     >
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 

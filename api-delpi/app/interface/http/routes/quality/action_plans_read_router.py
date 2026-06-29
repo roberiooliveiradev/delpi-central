@@ -13,6 +13,7 @@ from delpi_auth.authorization import require_any_permission
 from delpi_auth.authz_core import has_any_permission
 from delpi_auth.request_context import get_current_user
 
+from app.shared.utils.person_name import format_person_name
 from delpi_auth.service_token import request_has_valid_internal_service_token
 
 from app.application.security.api_delpi_permissions import (
@@ -297,6 +298,54 @@ def _current_user_id() -> str:
     return str(getattr(user, "id", "unknown"))
 
 
+def _current_user_name() -> str | None:
+    user = get_current_user()
+    if user is None:
+        return None
+    raw = str(getattr(user, "name", "") or "").strip()
+    return format_person_name(raw) if raw else None
+
+
+def _current_user_email() -> str | None:
+    user = get_current_user()
+    if user is None:
+        return None
+    raw = str(getattr(user, "email", "") or "").strip()
+    return raw or None
+
+
+def _actor_write_kwargs() -> dict[str, str | None]:
+    return {
+        "updated_by": _current_user_id(),
+        "updated_by_name": _current_user_name(),
+        "updated_by_email": _current_user_email(),
+    }
+
+
+def _creator_identity_kwargs() -> dict[str, str | None]:
+    return {
+        "created_by_user_id": _current_user_id(),
+        "created_by_name": _current_user_name(),
+        "created_by_email": _current_user_email(),
+    }
+
+
+def _actor_create_kwargs() -> dict[str, str | None]:
+    return {
+        "created_by": _current_user_id(),
+        "created_by_name": _current_user_name(),
+        "created_by_email": _current_user_email(),
+    }
+
+
+def _uploader_identity_kwargs() -> dict[str, str | None]:
+    return {
+        "uploaded_by": _current_user_id(),
+        "uploaded_by_name": _current_user_name(),
+        "uploaded_by_email": _current_user_email(),
+    }
+
+
 def _permission_denied_if_missing(permission_codes: list[str]):
     user = get_current_user()
     if user is None:
@@ -499,7 +548,7 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
         plan = build_create_quality_action_plan_use_case().execute(
             CreateQualityActionPlanRequest(
                 title=body.title,
-                created_by_user_id=_current_user_id(),
+                **_creator_identity_kwargs(),
                 customer_name=body.customer_name,
                 customer_contact=body.customer_contact,
                 source_type=body.source_type,
@@ -714,7 +763,7 @@ def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
         plan = build_update_quality_action_plan_use_case().execute(
             plan_id,
             UpdateQualityActionPlanRequest(**fields),
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not plan:
             return not_found_response("Plano de ação não encontrado.")
@@ -744,7 +793,7 @@ def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = B
         plan = build_update_quality_action_plan_status_use_case().execute(
             plan_id,
             status=body.status,
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
             comment=body.comment,
         )
         if not plan:
@@ -772,7 +821,7 @@ def reopen_action_plan(plan_id: str, body: ReopenActionPlanBody = Body(...)):
             plan_id,
             reason=body.reason,
             target_status=body.target_status,
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not plan:
             return not_found_response("Plano de ação não encontrado.")
@@ -798,7 +847,7 @@ def upsert_ishikawa(plan_id: str, body: IshikawaBody = Body(...)):
         result = build_upsert_ishikawa_use_case().execute(
             plan_id,
             UpsertIshikawaRequest(**body.model_dump()),
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Plano de ação não encontrado.")
@@ -822,7 +871,7 @@ def upsert_five_whys(plan_id: str, body: FiveWhysBody = Body(...)):
         result = build_upsert_five_whys_use_case().execute(
             plan_id,
             UpsertFiveWhysRequest(**body.model_dump()),
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Plano de ação não encontrado.")
@@ -849,7 +898,7 @@ def create_plan_actions(plan_id: str, body: CreateActionsBody = Body(...)):
         result = build_create_plan_actions_use_case().execute(
             plan_id,
             actions,
-            created_by=_current_user_id(),
+            **_actor_create_kwargs(),
         )
         if result is None:
             return not_found_response("Plano de ação não encontrado.")
@@ -877,7 +926,7 @@ def update_plan_action(plan_id: str, action_id: str, body: UpdateActionBody = Bo
             plan_id,
             action_id,
             fields,
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Ação não encontrada.")
@@ -903,7 +952,7 @@ def delete_plan_action(plan_id: str, action_id: str):
         result = build_delete_plan_action_use_case().execute(
             plan_id,
             action_id,
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Ação não encontrada.")
@@ -930,7 +979,7 @@ def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Bo
                 effectiveness_status=body.effectiveness_status,
                 notes=body.notes,
             ),
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Plano de ação não encontrado.")
@@ -962,7 +1011,7 @@ def submit_effectiveness_review(plan_id: str, body: SubmitEffectivenessReviewBod
                 effectiveness_status=body.effectiveness_status,
                 notes=body.notes,
             ),
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Plano de ação não encontrado.")
@@ -990,7 +1039,7 @@ def approve_effectiveness_review(plan_id: str):
     try:
         result = build_approve_effectiveness_review_use_case().execute(
             plan_id,
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Plano de ação não encontrado.")
@@ -1022,7 +1071,7 @@ def reject_effectiveness_review(
         result = build_reject_effectiveness_review_use_case().execute(
             plan_id,
             reason=body.reason,
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Plano de ação não encontrado.")
@@ -1062,7 +1111,7 @@ def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
                 if body.team_members is not None
                 else None,
             },
-            updated_by=_current_user_id(),
+            **_actor_write_kwargs(),
         )
         if not result:
             return not_found_response("Plano de ação não encontrado.")
@@ -1227,7 +1276,7 @@ async def upload_plan_evidence(
                 "section": section,
                 "description": description,
                 "knowledge_visible": knowledge_visible,
-                "uploaded_by": _current_user_id(),
+                **_uploader_identity_kwargs(),
                 "action_id": action_id,
             },
         )
