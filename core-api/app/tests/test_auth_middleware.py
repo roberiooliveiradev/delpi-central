@@ -167,3 +167,14 @@ def test_authenticate_new_user_creates_without_identity_sync(app, monkeypatch):
         assert uow.users.created[0].email == "new@test.com"
         assert notified["called"] is True
         assert len(uow.users.identity_updates) == 0
+
+
+def test_authenticate_skips_jwt_for_integrations_service_token(app, monkeypatch):
+    monkeypatch.setenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN", "service-token-secret")
+
+    with app.test_request_context(
+        "/integrations/directory/users",
+        headers={"Authorization": "Bearer service-token-secret"},
+    ):
+        assert am.authenticate() is None
+        assert g.current_user is None

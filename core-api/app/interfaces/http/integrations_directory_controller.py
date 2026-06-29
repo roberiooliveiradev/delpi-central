@@ -27,7 +27,7 @@ _PAC_QUALITY_APP_ID = "quality-action-plans"
 
 @integrations_directory_bp.route("/users", methods=["GET"])
 @require_service_token()
-@integration_rate_limit
+@integration_rate_limit()
 def search_integration_directory_users():
     query = request.args.get("q") or request.args.get("query")
     limit = request.args.get("limit", 10)

@@ -153,7 +153,7 @@ export const PAC_HELP_TOOLTIPS = {
     teamLeader: "Indica o membro líder da equipe de análise.",
     teamMemberSelect: "Membros cadastrados na seção 2. O vínculo Delpi é feito nesta seção.",
     teamMemberUserLink:
-      "Busque um usuário Delpi com acesso ao PAC. Ações que atribuírem este membro entram na Minha fila dele.",
+      "Pesquise na Delpi usuários com acesso ao PAC (mesmo fluxo da busca de cliente).",
     teamMemberLinked: "Usuário Delpi vinculado a este membro da equipe.",
     teamMemberUnlinked:
       "Sem vínculo — ações com este membro não entram na Minha fila até vincular um usuário Delpi.",
@@ -236,6 +236,9 @@ export const PAC_HELP_TOOLTIPS = {
     customerStore: "Loja do cliente no cadastro TOTVS, quando aplicável.",
     customerName: "Razão social ou nome fantasia do cliente.",
     selectCustomer: "Selecionar este cliente para preencher o plano.",
+    directoryUserName: "Nome do usuário na plataforma Delpi.",
+    directoryUserEmail: "E-mail mascarado do usuário (LGPD).",
+    selectDirectoryUser: "Vincular este usuário Delpi ao membro ou responsável.",
     reorder: "Arraste para reordenar as linhas da tabela.",
   },
 } as const;

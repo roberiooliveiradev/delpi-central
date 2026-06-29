@@ -1,19 +1,29 @@
 # app/interfaces/http/auth_middleware.py
 
+import logging
+import os
+import secrets
 from datetime import datetime
-from uuid import UUID
 from types import SimpleNamespace
+from uuid import UUID
 
-from flask import request, g, jsonify
+from flask import g, jsonify, request
 
 from delpi_auth.jwt_validator import validate_token
+
 from app.application.use_cases.send_welcome_notification_use_case import (
     SendWelcomeNotificationUseCase,
 )
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
-import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _matches_integrations_service_token(token: str) -> bool:
+    expected = os.getenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN", "").strip()
+    if not expected or not token:
+        return False
+    return secrets.compare_digest(token.strip(), expected)
 
 
 def _name_from_keycloak_claims(claims: dict, *, email: str) -> str:
@@ -41,6 +51,9 @@ def authenticate():
         return None  # endpoint público pode passar
 
     token = auth_header.split(" ", 1)[1]
+
+    if _matches_integrations_service_token(token):
+        return None
 
     try:
         claims = validate_token(token)

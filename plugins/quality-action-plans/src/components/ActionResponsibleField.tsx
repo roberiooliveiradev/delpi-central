@@ -1,11 +1,7 @@
-import { useCallback } from "react";
-
-import { searchDirectoryUsers } from "../api/directoryApi";
-import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { formatPersonName } from "../utils/formatPersonName";
-import { DelpiAsyncLookupField, type DelpiLookupOption } from "./ui/DelpiAsyncLookupField";
+import { DelpiUserLinkSection } from "./DelpiUserLinkSection";
 import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { TeamMember } from "../types/rnc8d";
 import { buildTeamMemberSelectOptions } from "../utils/teamMemberOptions";
 import type { SelectOption } from "./ui/types";
@@ -45,26 +41,10 @@ export function ActionResponsibleField({
     teamOptions ??
     (teamMembers?.length ? buildTeamMemberSelectOptions(teamMembers, [value.responsibleName]) : undefined);
 
-  const searchUsers = useCallback(async (query: string, signal: AbortSignal) => {
-    const users = await searchDirectoryUsers(query, {
-      limit: 20,
-      browse: !query.trim(),
-      signal,
-    });
-    return users.map(
-      (user): DelpiLookupOption<{ email: string }> => ({
-        value: user.id,
-        label: `${formatPersonName(user.name) || user.email} · ${user.email}`,
-        meta: { email: user.email },
-      }),
-    );
-  }, []);
-
-  function handleDirectorySelect(option: DelpiLookupOption<{ email: string }>) {
-    const name = option.label.split(" · ")[0]?.trim() || option.label;
+  function handleDirectoryLink(userId: string, displayName: string) {
     onChange({
-      responsibleUserId: option.value,
-      responsibleName: name,
+      responsibleUserId: userId,
+      responsibleName: displayName,
     });
   }
 
@@ -92,18 +72,16 @@ export function ActionResponsibleField({
         />
       ) : null}
 
-      {!usesTeamFlow && !value.responsibleUserId ? (
-        <DelpiAsyncLookupField
-          id={`${idPrefix}-directory`}
+      {!usesTeamFlow ? (
+        <DelpiUserLinkSection
+          idPrefix={`${idPrefix}-directory`}
+          userId={value.responsibleUserId}
+          displayName={value.responsibleName}
           label="Vincular usuário Delpi"
           hint={PAC_HELP_TOOLTIPS.form.actionResponsibleUserLink}
-          value=""
-          onChange={() => undefined}
-          onSelect={handleDirectorySelect}
-          searchOptions={searchUsers}
-          placeholder="Selecione ou busque por nome ou e-mail…"
-          browseOnOpen
-          minQueryLength={2}
+          unlinkedNote="Sem vínculo com usuário Delpi — a ação não entra na Minha fila até selecionar alguém na pesquisa."
+          onLink={handleDirectoryLink}
+          onUnlink={() => onChange({ ...value, responsibleUserId: null })}
         />
       ) : null}
 
@@ -118,13 +96,6 @@ export function ActionResponsibleField({
       {usesTeamFlow && !value.responsibleUserId ? (
         <p className="pac-muted pac-action-responsible__note">
           {PAC_HELP_TOOLTIPS.form.actionResponsibleTeamUnlinked}
-        </p>
-      ) : null}
-
-      {!usesTeamFlow && !value.responsibleUserId ? (
-        <p className="pac-muted pac-action-responsible__note">
-          Sem vínculo com usuário Delpi — a ação não entra na Minha fila até buscar e selecionar alguém
-          acima.
         </p>
       ) : null}
 

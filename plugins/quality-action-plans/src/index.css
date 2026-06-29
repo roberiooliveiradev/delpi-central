@@ -2594,6 +2594,14 @@
   margin-bottom: 12px;
 }
 
+.pac-user-link-section {
+  margin-top: 0.35rem;
+}
+
+.pac-user-link-section__note {
+  margin: 8px 0 0;
+}
+
 .pac-customer-search-modal {
   display: flex;
   flex-direction: column;
