@@ -9,7 +9,7 @@ import {
 } from "../api/actionPlansApi";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
-import { FieldLabel } from "./ui/HelpTooltip";
+import { FieldLabel, TableHeaderCell } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
@@ -23,6 +23,8 @@ import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDate } from "../utils/format";
 import type { SelectOption } from "./ui/types";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 const CAUSE_TRACK_OPTIONS = [
   { value: "", label: "—" },
@@ -165,14 +167,18 @@ export function PlanActionsPanel({
           <table className="pac-table">
             <thead>
               <tr>
-                <th>Tipo</th>
-                <th>Ocorr./Det.</th>
-                <th>Descrição</th>
-                <th>Responsável</th>
-                <th>Prazo</th>
-                <th>Evidência</th>
-                <th>Status</th>
-                <th aria-label="Ações" />
+                <TableHeaderCell label="Tipo" hint={T.actionType} />
+                <TableHeaderCell label="Ocorr./Det." hint={T.causeTrack} />
+                <TableHeaderCell label="Descrição" hint={PAC_HELP_TOOLTIPS.form.actionDescription} />
+                <TableHeaderCell label="Responsável" hint={PAC_HELP_TOOLTIPS.form.actionResponsible} />
+                <TableHeaderCell label="Prazo" hint={T.dueDate} />
+                <TableHeaderCell label="Evidência" hint={T.evidenceRequired} />
+                <TableHeaderCell label="Status" hint={T.actionStatus} />
+                <TableHeaderCell
+                  label="Ações"
+                  hint={T.rowActions}
+                  className="pac-table__actions-col"
+                />
               </tr>
             </thead>
             <tbody>

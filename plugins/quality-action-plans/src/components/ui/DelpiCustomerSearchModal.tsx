@@ -5,10 +5,13 @@ import {
   searchDelpiCustomers,
   type DelpiCustomerLookupItem,
 } from "../../api/delpiLookupApi";
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { TableHeaderCell } from "./HelpTooltip";
 import { Modal } from "./Modal";
 import { TextField } from "./TextField";
 
 const CUSTOMER_SEARCH_PAGE_SIZE = 20;
+const T = PAC_HELP_TOOLTIPS.tables;
 
 export type DelpiCustomerSearchFilters = {
   code: string;
@@ -183,10 +186,14 @@ export function DelpiCustomerSearchModal({
                 <table className="pac-table">
                   <thead>
                     <tr>
-                      <th>Código</th>
-                      <th>Loja</th>
-                      <th>Nome do cliente</th>
-                      <th aria-label="Ações" />
+                      <TableHeaderCell label="Código" hint={T.customerCode} />
+                      <TableHeaderCell label="Loja" hint={T.customerStore} />
+                      <TableHeaderCell label="Nome do cliente" hint={T.customerName} />
+                      <TableHeaderCell
+                        label="Ações"
+                        hint={T.selectCustomer}
+                        className="pac-table__actions-col"
+                      />
                     </tr>
                   </thead>
                   <tbody>

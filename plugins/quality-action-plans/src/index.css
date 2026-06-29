@@ -453,6 +453,10 @@
   font-weight: 700;
 }
 
+.dashboard-quality-action-plans .pac-table th .pac-field__label-row {
+  white-space: nowrap;
+}
+
 .dashboard-quality-action-plans .pac-icon-btn {
   border: 1px solid var(--pac-card-border);
   background: transparent;
@@ -2427,6 +2431,44 @@
   border-bottom: 1px solid color-mix(in srgb, var(--border, #d8dce3) 80%, transparent);
   text-align: left;
   vertical-align: middle;
+}
+
+.pac-modal .pac-help-tooltip,
+.pac-modal .pac-field__label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pac-modal .pac-help-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.pac-modal .pac-help-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pac-text-muted, #667085);
+  cursor: help;
+  opacity: 0.72;
+}
+
+.pac-modal .pac-help-tooltip__trigger:hover,
+.pac-modal .pac-help-tooltip__trigger:focus-visible {
+  opacity: 1;
+  color: var(--pac-accent, #089bdb);
+  background: color-mix(in srgb, var(--pac-accent, #089bdb) 10%, transparent);
+  outline: none;
 }
 
 .pac-modal--customer-search .pac-table th {

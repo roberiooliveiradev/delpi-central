@@ -1,5 +1,9 @@
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { SolutionPattern } from "../types/solutionPattern";
 import { formatEffectivenessRate } from "../utils/symptomTags";
+import { TableHeaderCell } from "./ui/HelpTooltip";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 type Props = {
   items: SolutionPattern[];
@@ -21,12 +25,12 @@ export function SolutionPatternsTable({ items, loading, emptyMessage }: Props) {
       <table className="pac-table">
         <thead>
           <tr>
-            <th>Título</th>
-            <th>Categoria</th>
-            <th>Modo de falha</th>
-            <th>Eficácia</th>
-            <th>Usos</th>
-            <th>Ações recomendadas</th>
+            <TableHeaderCell label="Título" hint={T.title} />
+            <TableHeaderCell label="Categoria" hint={T.category} />
+            <TableHeaderCell label="Modo de falha" hint={T.failureMode} />
+            <TableHeaderCell label="Eficácia" hint={T.effectiveness} />
+            <TableHeaderCell label="Usos" hint={T.usageCount} />
+            <TableHeaderCell label="Ações recomendadas" hint={T.recommendedActions} />
           </tr>
         </thead>
         <tbody>

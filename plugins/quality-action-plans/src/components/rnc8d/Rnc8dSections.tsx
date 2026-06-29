@@ -8,7 +8,7 @@ import { emptyRnc8dPayload } from "../../types/rnc8d";
 import { buildTeamMemberSelectOptions } from "../../utils/teamMemberOptions";
 import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
-import { FieldLabel } from "../ui/HelpTooltip";
+import { FieldLabel, HelpTooltip, TableHeaderCell } from "../ui/HelpTooltip";
 import { DragHandle, RemoveRowButton } from "../ui/RowActions";
 import { SectionCard } from "../ui/SectionCard";
 import { TableMemberSelect } from "../ui/TableMemberSelect";
@@ -323,7 +323,12 @@ export function Rnc8dContainmentSection({ value, onChange }: Rnc8dSectionsProps)
         <table className="pac-table pac-table--containment">
           <thead>
             <tr>
-              <th className="pac-table__drag-col" aria-label="Ordenar" />
+              <th className="pac-table__drag-col" scope="col">
+                <HelpTooltip
+                  content={PAC_HELP_TOOLTIPS.tables.reorder}
+                  ariaLabel="Ajuda: Ordenar"
+                />
+              </th>
               <th>
                 <FieldLabel label="Área" hint={PAC_HELP_TOOLTIPS.rnc8d.containmentArea} />
               </th>
@@ -339,7 +344,11 @@ export function Rnc8dContainmentSection({ value, onChange }: Rnc8dSectionsProps)
               <th>
                 <FieldLabel label="Data" hint={PAC_HELP_TOOLTIPS.rnc8d.containmentDate} />
               </th>
-              <th className="pac-table__actions-col" aria-label="Ações" />
+              <TableHeaderCell
+                label="Ações"
+                hint={PAC_HELP_TOOLTIPS.tables.rowActions}
+                className="pac-table__actions-col"
+              />
             </tr>
           </thead>
           <tbody>
@@ -609,7 +618,12 @@ export function Rnc8dPreventiveSection({ value, onChange }: Rnc8dSectionsProps) 
         <table className="pac-table pac-table--documentation">
           <thead>
             <tr>
-              <th className="pac-table__drag-col" aria-label="Ordenar" />
+              <th className="pac-table__drag-col" scope="col">
+                <HelpTooltip
+                  content={PAC_HELP_TOOLTIPS.tables.reorder}
+                  ariaLabel="Ajuda: Ordenar"
+                />
+              </th>
               <th>
                 <FieldLabel label="Documento afetado" hint={PAC_HELP_TOOLTIPS.rnc8d.docAffected} />
               </th>
@@ -619,7 +633,11 @@ export function Rnc8dPreventiveSection({ value, onChange }: Rnc8dSectionsProps) 
               <th>
                 <FieldLabel label="Data" hint={PAC_HELP_TOOLTIPS.rnc8d.docDate} />
               </th>
-              <th className="pac-table__actions-col" aria-label="Ações" />
+              <TableHeaderCell
+                label="Ações"
+                hint={PAC_HELP_TOOLTIPS.tables.rowActions}
+                className="pac-table__actions-col"
+              />
             </tr>
           </thead>
           <tbody>

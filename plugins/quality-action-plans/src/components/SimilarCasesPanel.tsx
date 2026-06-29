@@ -7,6 +7,9 @@ import type { PlanSimilarCasesResult } from "../types/similarCases";
 import { detailPath } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatDate } from "../utils/format";
+import { TableHeaderCell } from "./ui/HelpTooltip";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 type Props = {
   planId: string;
@@ -60,11 +63,11 @@ export function SimilarCasesPanel({ planId, onNavigate }: Props) {
           <table className="pac-table pac-table--compact">
             <thead>
               <tr>
-                <th>Plano</th>
-                <th>Score</th>
-                <th>Produto</th>
-                <th>Resumo</th>
-                <th>Eficácia</th>
+                <TableHeaderCell label="Plano" hint={T.planRef} />
+                <TableHeaderCell label="Score" hint={T.similarityScore} />
+                <TableHeaderCell label="Produto" hint={T.product} />
+                <TableHeaderCell label="Resumo" hint={T.summary} />
+                <TableHeaderCell label="Eficácia" hint={T.effectivenessStatus} />
               </tr>
             </thead>
             <tbody>

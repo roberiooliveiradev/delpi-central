@@ -13,9 +13,12 @@ import { formatDateTime } from "../utils/format";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { StateAlert } from "./StateAlert";
 import { Modal } from "./ui/Modal";
+import { TableHeaderCell } from "./ui/HelpTooltip";
 import { SectionCard } from "./ui/SectionCard";
 import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 const EVIDENCE_TYPES = [
   { value: "image", label: "Imagem" },
@@ -295,13 +298,17 @@ export function EvidencePanel({
           <table className="pac-table">
             <thead>
               <tr>
-                <th>Arquivo</th>
-                <th>Tipo</th>
-                <th>Seção</th>
-                <th>Ação</th>
-                <th>Tamanho</th>
-                <th>Enviado em</th>
-                <th />
+                <TableHeaderCell label="Arquivo" hint={T.file} />
+                <TableHeaderCell label="Tipo" hint={T.evidenceType} />
+                <TableHeaderCell label="Seção" hint={T.sectionRef} />
+                <TableHeaderCell label="Ação" hint={T.linkedAction} />
+                <TableHeaderCell label="Tamanho" hint={T.fileSize} />
+                <TableHeaderCell label="Enviado em" hint={T.uploadedAt} />
+                <TableHeaderCell
+                  label="Ações"
+                  hint={T.evidenceActions}
+                  className="pac-table__actions-col"
+                />
               </tr>
             </thead>
             <tbody>

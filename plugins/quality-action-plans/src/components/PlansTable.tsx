@@ -1,10 +1,14 @@
 import { Eye } from "lucide-react";
 
 import { branchLabel, detailPath } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
 import { PlanSlaBadge } from "./PlanSlaBadge";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "./StatusBadge";
+import { TableHeaderCell } from "./ui/HelpTooltip";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 type Props = {
   items: ActionPlanSummary[];
@@ -27,17 +31,21 @@ export function PlansTable({ items, loading, emptyMessage, onNavigate }: Props) 
       <table className="pac-table">
         <thead>
           <tr>
-            <th>Código</th>
-            <th>Título</th>
-            <th>Cliente</th>
-            <th>Filial</th>
-            <th>Escopo</th>
-            <th>Produto</th>
-            <th>Severidade</th>
-            <th>Status</th>
-            <th>SLA</th>
-            <th>Atualizado</th>
-            <th aria-label="Ações" />
+            <TableHeaderCell label="Código" hint={T.code} />
+            <TableHeaderCell label="Título" hint={T.title} />
+            <TableHeaderCell label="Cliente" hint={T.customer} />
+            <TableHeaderCell label="Filial" hint={T.branch} />
+            <TableHeaderCell label="Escopo" hint={T.scope} />
+            <TableHeaderCell label="Produto" hint={T.product} />
+            <TableHeaderCell label="Severidade" hint={T.severity} />
+            <TableHeaderCell label="Status" hint={T.status} />
+            <TableHeaderCell label="SLA" hint={T.sla} />
+            <TableHeaderCell label="Atualizado" hint={T.updatedAt} />
+            <TableHeaderCell
+              label="Ações"
+              hint={T.rowActions}
+              className="pac-table__actions-col"
+            />
           </tr>
         </thead>
         <tbody>

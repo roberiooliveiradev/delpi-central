@@ -6,8 +6,12 @@ import {
   branchLabel,
   detailPath,
 } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { MyQueueItem } from "../types/myQueue";
 import { formatDate } from "../utils/format";
+import { TableHeaderCell } from "./ui/HelpTooltip";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 type Props = {
   items: MyQueueItem[];
@@ -30,14 +34,18 @@ export function MyQueueTable({ items, loading, emptyMessage, onNavigate }: Props
       <table className="pac-table">
         <thead>
           <tr>
-            <th>Plano</th>
-            <th>Ação</th>
-            <th>Tipo</th>
-            <th>Prazo</th>
-            <th>Status</th>
-            <th>Filial</th>
-            <th>Cliente</th>
-            <th aria-label="Ações" />
+            <TableHeaderCell label="Plano" hint={T.plan} />
+            <TableHeaderCell label="Ação" hint={T.action} />
+            <TableHeaderCell label="Tipo" hint={T.actionType} />
+            <TableHeaderCell label="Prazo" hint={T.dueDate} />
+            <TableHeaderCell label="Status" hint={T.actionStatus} />
+            <TableHeaderCell label="Filial" hint={T.branch} />
+            <TableHeaderCell label="Cliente" hint={T.customer} />
+            <TableHeaderCell
+              label="Ações"
+              hint={T.rowActions}
+              className="pac-table__actions-col"
+            />
           </tr>
         </thead>
         <tbody>

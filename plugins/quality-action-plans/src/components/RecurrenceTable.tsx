@@ -1,8 +1,12 @@
 import { Eye } from "lucide-react";
 
 import { branchLabel, detailPath } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RecurrenceGroup } from "../types/recurrence";
 import { formatDateTime } from "../utils/format";
+import { TableHeaderCell } from "./ui/HelpTooltip";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 type Props = {
   items: RecurrenceGroup[];
@@ -25,15 +29,19 @@ export function RecurrenceTable({ items, loading, emptyMessage, onNavigate }: Pr
       <table className="pac-table">
         <thead>
           <tr>
-            <th>Filial</th>
-            <th>Produto</th>
-            <th>Modo de falha</th>
-            <th>Total</th>
-            <th>Abertos</th>
-            <th>Críticos abertos</th>
-            <th>Último plano</th>
-            <th>Última abertura</th>
-            <th aria-label="Ações" />
+            <TableHeaderCell label="Filial" hint={T.branch} />
+            <TableHeaderCell label="Produto" hint={T.product} />
+            <TableHeaderCell label="Modo de falha" hint={T.failureMode} />
+            <TableHeaderCell label="Total" hint={T.totalPlans} />
+            <TableHeaderCell label="Abertos" hint={T.openPlans} />
+            <TableHeaderCell label="Críticos abertos" hint={T.criticalOpen} />
+            <TableHeaderCell label="Último plano" hint={T.lastPlan} />
+            <TableHeaderCell label="Última abertura" hint={T.lastOpened} />
+            <TableHeaderCell
+              label="Ações"
+              hint={T.rowActions}
+              className="pac-table__actions-col"
+            />
           </tr>
         </thead>
         <tbody>

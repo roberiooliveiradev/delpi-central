@@ -1,8 +1,12 @@
 import { Eye } from "lucide-react";
 
 import { branchLabel, detailPath } from "../constants/actionPlans";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EvidenceSearchHit } from "../types/evidenceSearch";
 import { formatDateTime } from "../utils/format";
+import { TableHeaderCell } from "./ui/HelpTooltip";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 type Props = {
   items: EvidenceSearchHit[];
@@ -25,14 +29,18 @@ export function EvidenceSearchTable({ items, loading, emptyMessage, onNavigate }
       <table className="pac-table">
         <thead>
           <tr>
-            <th>Arquivo</th>
-            <th>Plano</th>
-            <th>Filial</th>
-            <th>Produto</th>
-            <th>Seção</th>
-            <th>Descrição</th>
-            <th>Enviado em</th>
-            <th aria-label="Ações" />
+            <TableHeaderCell label="Arquivo" hint={T.file} />
+            <TableHeaderCell label="Plano" hint={T.planRef} />
+            <TableHeaderCell label="Filial" hint={T.branch} />
+            <TableHeaderCell label="Produto" hint={T.product} />
+            <TableHeaderCell label="Seção" hint={T.sectionRef} />
+            <TableHeaderCell label="Descrição" hint={T.description} />
+            <TableHeaderCell label="Enviado em" hint={T.uploadedAt} />
+            <TableHeaderCell
+              label="Ações"
+              hint={T.rowActions}
+              className="pac-table__actions-col"
+            />
           </tr>
         </thead>
         <tbody>

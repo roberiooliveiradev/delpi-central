@@ -10,7 +10,9 @@ import { AppNav } from "../components/AppNav";
 import { PageHeader } from "../components/PageHeader";
 import { ScopeBadge, SeverityBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
+import { TableHeaderCell } from "../components/ui/HelpTooltip";
 import { TextAreaField } from "../components/ui/TextAreaField";
+import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   branchLabel,
   detailPath,
@@ -18,6 +20,8 @@ import {
 } from "../constants/actionPlans";
 import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
+
+const T = PAC_HELP_TOOLTIPS.tables;
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -118,15 +122,19 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
             <table className="pac-table">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Título</th>
-                  <th>Filial</th>
-                  <th>Escopo</th>
-                  <th>Severidade</th>
-                  <th>Proposta</th>
-                  <th>Submetido em</th>
-                  <th>Por</th>
-                  <th aria-label="Ações" />
+                  <TableHeaderCell label="Código" hint={T.code} />
+                  <TableHeaderCell label="Título" hint={T.title} />
+                  <TableHeaderCell label="Filial" hint={T.branch} />
+                  <TableHeaderCell label="Escopo" hint={T.scope} />
+                  <TableHeaderCell label="Severidade" hint={T.severity} />
+                  <TableHeaderCell label="Proposta" hint={T.proposedEffectiveness} />
+                  <TableHeaderCell label="Submetido em" hint={T.submittedAt} />
+                  <TableHeaderCell label="Por" hint={T.submittedBy} />
+                  <TableHeaderCell
+                    label="Ações"
+                    hint={T.rowActions}
+                    className="pac-table__actions-col"
+                  />
                 </tr>
               </thead>
               <tbody>
