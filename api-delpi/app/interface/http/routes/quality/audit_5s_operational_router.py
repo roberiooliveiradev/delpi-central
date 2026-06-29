@@ -131,10 +131,16 @@ def create_area(body: CreateAreaBody = Body(...)):
 
 @router.get("/criteria")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
-def list_criteria(catalog_version: int | None = Query(None, ge=1)):
+def list_criteria(
+    catalog_version: int | None = Query(None, ge=1),
+    branch: str | None = Query(None, pattern="^(01|02)$"),
+):
     try:
         repo = build_audit_5s_repository()
-        data = repo.list_criteria_catalog(catalog_version)
+        version = catalog_version
+        if version is None and branch is not None:
+            version = repo.resolve_catalog_version(branch)
+        data = repo.list_criteria_catalog(version)
         return api_delpi_success(data, operation_id="list_audit_5s_criteria")
     except Exception as exc:
         log_error(f"Erro ao listar critérios 5S: {exc}")

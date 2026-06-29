@@ -5,6 +5,7 @@ import { formatPersonName } from "../utils/formatPersonName";
 
 type Props = {
   connected: boolean;
+  connectionError?: string | null;
   presence: AuditPresenceUser[];
   notice: { message: string; tone: "info" | "warning" } | null;
   onDismissNotice: () => void;
@@ -12,6 +13,7 @@ type Props = {
 
 export function AuditRealtimeBar({
   connected,
+  connectionError,
   presence,
   notice,
   onDismissNotice,
@@ -24,11 +26,15 @@ export function AuditRealtimeBar({
           .join(", ")
       : null;
 
+  const statusLabel = connected
+    ? "Colaboração ativa"
+    : connectionError?.trim() || "Reconectando…";
+
   return (
     <div className="a5s-realtime">
       <div className={`a5s-realtime__status ${connected ? "a5s-realtime__status--on" : ""}`}>
         {connected ? <Wifi size={14} aria-hidden /> : <WifiOff size={14} aria-hidden />}
-        <span>{connected ? "Colaboração ativa" : "Reconectando…"}</span>
+        <span>{statusLabel}</span>
       </div>
 
       {others ? (
