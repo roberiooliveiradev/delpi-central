@@ -7,6 +7,8 @@ type SectionSaveButtonProps = {
   label?: string;
   dirty?: boolean;
   align?: "start" | "end";
+  /** Sem largura total — uso em barra com botão «Adicionar» na mesma linha. */
+  inline?: boolean;
 };
 
 export function SectionSaveButton({
@@ -16,11 +18,20 @@ export function SectionSaveButton({
   label = "Salvar",
   dirty = false,
   align = "end",
+  inline = false,
 }: SectionSaveButtonProps) {
   const busy = saving === saveKey;
 
   return (
-    <div className={`pac-section-save pac-section-save--${align}`}>
+    <div
+      className={[
+        "pac-section-save",
+        `pac-section-save--${align}`,
+        inline ? "pac-section-save--inline" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {dirty ? (
         <span className="pac-section-save__dirty" title="Há alterações não salvas neste bloco">
           Alterações não salvas

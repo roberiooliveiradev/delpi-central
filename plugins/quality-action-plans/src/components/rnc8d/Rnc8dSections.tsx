@@ -60,6 +60,37 @@ function Rnc8dSectionFooter({
   );
 }
 
+function Rnc8dSectionToolbar({
+  addLabel,
+  onAdd,
+  saveKey,
+  saving,
+  onSave,
+  dirty = false,
+  saveLabel,
+}: {
+  addLabel: string;
+  onAdd: () => void;
+} & Rnc8dSectionSaveProps) {
+  return (
+    <div className="pac-section-toolbar">
+      <button type="button" className="pac-ghost-btn" onClick={onAdd}>
+        {addLabel}
+      </button>
+      {onSave ? (
+        <SectionSaveButton
+          saveKey={saveKey}
+          saving={saving}
+          onSave={onSave}
+          dirty={dirty}
+          label={saveLabel}
+          inline
+        />
+      ) : null}
+    </div>
+  );
+}
+
 const CONTAINMENT_AREAS = [
   { value: "end_customer", label: "Cliente final" },
   { value: "client_plant", label: "Cliente (planta)" },
@@ -327,19 +358,14 @@ export function Rnc8dTeamSection({
           />
         ))}
       </div>
-      <button
-        type="button"
-        className="pac-ghost-btn"
-        onClick={() =>
+      <Rnc8dSectionToolbar
+        addLabel="Adicionar membro"
+        onAdd={() =>
           onChange({
             ...value,
             team_members: [...team, { member_name: "", department: "", is_leader: false }],
           })
         }
-      >
-        Adicionar membro
-      </button>
-      <Rnc8dSectionFooter
         saveKey={saveKey}
         saving={saving}
         onSave={onSave}
@@ -501,20 +527,15 @@ export function Rnc8dContainmentSection({
           </tbody>
         </table>
       </div>
-      <button
-        type="button"
-        className="pac-ghost-btn pac-rnc8d-add-row"
-        onClick={() =>
+      <Rnc8dSectionToolbar
+        addLabel="Adicionar linha de contenção"
+        onAdd={() =>
           onChange(
             updatePayload(value, {
               containment: [...containment, { area: "end_customer" }],
             }),
           )
         }
-      >
-        Adicionar linha de contenção
-      </button>
-      <Rnc8dSectionFooter
         saveKey={saveKey}
         saving={saving}
         onSave={onSave}
@@ -802,16 +823,11 @@ export function Rnc8dPreventiveSection({
           </tbody>
         </table>
       </div>
-      <button
-        type="button"
-        className="pac-ghost-btn pac-rnc8d-add-row"
-        onClick={() =>
+      <Rnc8dSectionToolbar
+        addLabel="Adicionar documento"
+        onAdd={() =>
           onChange(updatePayload(value, { documentation_updates: [...documentation, {}] }))
         }
-      >
-        Adicionar documento
-      </button>
-      <Rnc8dSectionFooter
         saveKey={saveKey}
         saving={saving}
         onSave={onSave}

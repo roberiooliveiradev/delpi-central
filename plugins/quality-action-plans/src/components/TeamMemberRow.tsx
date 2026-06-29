@@ -69,12 +69,9 @@ export function TeamMemberRow({
   return (
     <article className={rowClassName} {...rowDropProps}>
       <header className="pac-team-card__header">
-        <div className="pac-team-card__header-start">
-          {canDrag && dragProps ? <DragHandle dragProps={dragProps} /> : null}
-          <div className="pac-team-card__heading">
-            <span className="pac-team-card__index">Membro {index + 1}</span>
-            {member.is_leader ? <span className="pac-team-card__leader-badge">Líder</span> : null}
-          </div>
+        <div className="pac-team-card__heading">
+          <span className="pac-team-card__index">Membro {index + 1}</span>
+          {member.is_leader ? <span className="pac-team-card__leader-badge">Líder</span> : null}
         </div>
         <RemoveRowButton
           onRemove={onRemove}
@@ -86,6 +83,9 @@ export function TeamMemberRow({
 
       <div className="pac-team-card__body">
         <div className="pac-form-grid pac-team-card__fields">
+          <div className="pac-team-card__drag" aria-hidden={!canDrag}>
+            {canDrag && dragProps ? <DragHandle dragProps={dragProps} /> : null}
+          </div>
           <div className="pac-field pac-team-card__name">
             <label className="pac-field__label" htmlFor={`rnc-team-name-${index}`}>
               <FieldLabel label="Nome" hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberUserLink} />
@@ -113,6 +113,7 @@ export function TeamMemberRow({
 
           <TextField
             id={`rnc-team-dept-${index}`}
+            className="pac-team-card__department"
             label="Área"
             hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberArea}
             value={member.department ?? ""}
