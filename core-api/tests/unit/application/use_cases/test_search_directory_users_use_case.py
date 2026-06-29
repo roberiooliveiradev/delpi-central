@@ -34,8 +34,8 @@ def test_search_directory_users_excludes_current_user():
     uow.users.list_paginated.return_value = (users, 2)
 
     result = SearchDirectoryUsersUseCase(uow).execute(
-        current_user_id=str(current_id),
         query="delpi",
+        exclude_user_id=str(current_id),
     )
 
     assert len(result) == 1
@@ -90,9 +90,9 @@ def test_search_directory_users_filters_by_app_access():
     uow.permission_queries.list_user_overrides.return_value = []
 
     result = SearchDirectoryUsersUseCase(uow).execute(
-        current_user_id=str(current_id),
         query="delpi",
         app_id="quality-action-plans",
+        exclude_user_id=str(current_id),
     )
 
     assert len(result) == 1

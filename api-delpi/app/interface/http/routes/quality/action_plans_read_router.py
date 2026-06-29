@@ -27,6 +27,7 @@ from app.application.security.api_delpi_permissions import (
     QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS,
     QUALITY_ACTION_PLANS_WRITE_PERMISSIONS,
 )
+from app.application.services.core_api_directory_service import CoreApiDirectoryService
 from app.application.services.quality_action_plans.pac_evidence_storage import (
     PacEvidenceStorage,
     PacEvidenceStorageError,
@@ -608,6 +609,22 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao criar plano PAC: {exc}")
         return error_response(str(exc), status_code=500)
+
+
+@router.get(
+    "/assignable-users",
+    **_pac_openapi("list_quality_action_plan_assignable_users", "/assignable-users"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def list_assignable_users(
+    q: str = Query(..., min_length=2),
+    limit: int = Query(default=10, ge=1, le=20),
+):
+    items = CoreApiDirectoryService().search_assignable_users(query=q, limit=limit)
+    return api_delpi_success(
+        {"items": items},
+        operation_id="list_quality_action_plan_assignable_users",
+    )
 
 
 @router.get("", **_pac_openapi("list_quality_action_plans", ""))

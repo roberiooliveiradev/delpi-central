@@ -463,11 +463,11 @@ def search_directory_users():
     try:
         with SqlAlchemyUnitOfWork() as uow:
             results = SearchDirectoryUsersUseCase(uow).execute(
-                current_user_id=str(user.id),
                 query=query,
                 limit=int(limit),
                 app_id=app_id,
                 permission_code=permission_code,
+                exclude_user_id=str(user.id),
             )
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)

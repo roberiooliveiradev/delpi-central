@@ -25,11 +25,11 @@ class SearchDirectoryUsersUseCase:
     def execute(
         self,
         *,
-        current_user_id: str,
         query: str | None,
         limit: int = 10,
         app_id: str | None = None,
         permission_code: str | None = None,
+        exclude_user_id: str | None = None,
     ) -> list[dict]:
         normalized = (query or "").strip()
 
@@ -37,7 +37,7 @@ class SearchDirectoryUsersUseCase:
             return []
 
         safe_limit = max(1, min(limit, 20))
-        exclude_id = UUID(current_user_id)
+        exclude_id = UUID(exclude_user_id) if exclude_user_id else None
         eligibility = DirectoryUserEligibilityService(self.uow)
 
         fetch_size = min(max(safe_limit * 5, safe_limit + 1), 50)
@@ -52,7 +52,7 @@ class SearchDirectoryUsersUseCase:
         results: list[dict] = []
 
         for user in users:
-            if user.id == exclude_id:
+            if exclude_id is not None and user.id == exclude_id:
                 continue
             if not eligibility.matches(
                 user,
