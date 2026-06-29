@@ -1,7 +1,7 @@
 """Filtros SQL compartilhados para OPs de produto acabado (PA) em produção."""
 
-# PA elegível no OTD e detalhe de OP: prefixos de C2_PRODUTO alinhados ao Power BI / negócio.
-SC2_PA_PRODUCT_CODE_PREFIXES: tuple[str, ...] = ("9026", "8000", "8001")
+# PA elegível no OTD e detalhe de OP: C2_PRODUTO começa com 9 (PA DELPI) ou 8 (amostras/teste).
+SC2_PA_PRODUCT_CODE_PREFIXES: tuple[str, ...] = ("9", "8")
 
 
 def _product_code_prefix_clause(column: str) -> str:

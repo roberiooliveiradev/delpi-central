@@ -14,9 +14,9 @@ def test_otd_mother_op_sequence_filter_constant() -> None:
 
 
 def test_otd_pa_product_prefixes_include_business_codes() -> None:
-    assert SC2_PA_PRODUCT_CODE_PREFIXES == ("9026", "8000", "8001")
-    for prefix in SC2_PA_PRODUCT_CODE_PREFIXES:
-        assert f"LIKE '{prefix}%'" in SC2_PA_PRODUCT_CODE_PREFIX_SQL
+    assert SC2_PA_PRODUCT_CODE_PREFIXES == ("9", "8")
+    assert "LIKE '9%'" in SC2_PA_PRODUCT_CODE_PREFIX_SQL
+    assert "LIKE '8%'" in SC2_PA_PRODUCT_CODE_PREFIX_SQL
 
 
 def test_otd_base_where_includes_mother_op_and_pa_prefix_filters() -> None:
