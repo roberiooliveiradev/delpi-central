@@ -1,17 +1,17 @@
 import type { ReactNode } from "react";
-import { Save } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { Save, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
-  searchDelpiCustomers,
   searchDelpiProducts,
-  type DelpiCustomerLookupItem,
   type DelpiProductLookupItem,
 } from "../api/delpiLookupApi";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "./StatusBadge";
 import { CreatableMultiSelectField } from "./ui/CreatableMultiSelectField";
 import { DelpiAsyncLookupField } from "./ui/DelpiAsyncLookupField";
+import { DelpiCustomerSearchModal } from "./ui/DelpiCustomerSearchModal";
 import { FormActions } from "./ui/FormActions";
+import { ReadOnlyField } from "./ui/ReadOnlyField";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
@@ -74,11 +74,6 @@ type PlanProblemSectionProps = {
   materialSection?: ReactNode;
 };
 
-function formatCustomerLabel(item: DelpiCustomerLookupItem): string {
-  const store = item.store ? ` / loja ${item.store}` : "";
-  return `${item.code}${store} — ${item.name}`;
-}
-
 function formatProductLabel(item: DelpiProductLookupItem): string {
   return item.description ? `${item.code} — ${item.description}` : item.code;
 }
@@ -105,22 +100,12 @@ export function PlanProblemSection({
   onSaveIdentification,
   materialSection,
 }: PlanProblemSectionProps) {
+  const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
+
   const statusOptions = useMemo(
     () => PLAN_STATUSES.map((item) => ({ value: item.value, label: item.label })),
     [],
   );
-
-  const searchCustomers = useCallback(async (query: string, signal: AbortSignal) => {
-    const looksLikeCode = /^[0-9A-Za-z./-]+$/.test(query.trim());
-    const items = await searchDelpiCustomers(
-      looksLikeCode ? { code: query, signal } : { name: query, signal },
-    );
-    return items.map((item) => ({
-      value: item.code,
-      label: formatCustomerLabel(item),
-      meta: { code: item.code, store: item.store, name: item.name },
-    }));
-  }, []);
 
   const searchProducts = useCallback(async (query: string, signal: AbortSignal) => {
     const looksLikeCode = /^[0-9A-Za-z./-]+$/.test(query.trim());
@@ -268,37 +253,74 @@ export function PlanProblemSection({
       </div>
 
       <h3 className="pac-subsection-title">Cliente</h3>
-      <div className="pac-form-grid">
-        <DelpiAsyncLookupField
-          id="pac-detail-customer-code"
-          label="Código do cliente (Delpi)"
-          hint={PAC_HELP_TOOLTIPS.detail.customer}
-          value={identificationForm.customer_code}
-          onChange={(customer_code) => setField("customer_code", customer_code)}
-          searchOptions={searchCustomers}
-          onSelect={(option) => {
-            onIdentificationChange((current) => ({
-              ...current,
-              customer_code: option.meta?.code ?? option.value,
-              customer_store: option.meta?.store ?? current.customer_store,
-              customer_name: option.meta?.name ?? current.customer_name,
-            }));
-          }}
-        />
-        <TextField
-          id="pac-detail-customer-store"
-          label="Loja"
-          value={identificationForm.customer_store}
-          onChange={(customer_store) => setField("customer_store", customer_store)}
-        />
-        <TextField
-          id="pac-detail-customer-name"
-          label="Nome do cliente"
-          hint={PAC_HELP_TOOLTIPS.detail.customer}
-          value={identificationForm.customer_name}
-          onChange={(customer_name) => setField("customer_name", customer_name)}
-        />
+      <div className="pac-customer-section">
+        <div className="pac-customer-section__toolbar">
+          <button
+            type="button"
+            className="pac-ghost-btn"
+            onClick={() => setCustomerSearchOpen(true)}
+          >
+            <Search size={16} aria-hidden="true" />
+            Pesquisar cliente na Delpi
+          </button>
+          {identificationForm.customer_code ||
+          identificationForm.customer_store ||
+          identificationForm.customer_name ? (
+            <button
+              type="button"
+              className="pac-ghost-btn pac-ghost-btn--danger"
+              onClick={() =>
+                onIdentificationChange((current) => ({
+                  ...current,
+                  customer_code: "",
+                  customer_store: "",
+                  customer_name: "",
+                }))
+              }
+            >
+              Limpar cliente
+            </button>
+          ) : null}
+        </div>
+        <div className="pac-form-grid">
+          <ReadOnlyField
+            id="pac-detail-customer-code"
+            label="Código do cliente (Delpi)"
+            hint={PAC_HELP_TOOLTIPS.detail.customer}
+            value={identificationForm.customer_code}
+          />
+          <ReadOnlyField
+            id="pac-detail-customer-store"
+            label="Loja"
+            value={identificationForm.customer_store}
+          />
+          <TextField
+            id="pac-detail-customer-name"
+            label="Nome do cliente"
+            hint={PAC_HELP_TOOLTIPS.detail.customer}
+            value={identificationForm.customer_name}
+            onChange={(customer_name) => setField("customer_name", customer_name)}
+          />
+        </div>
       </div>
+
+      <DelpiCustomerSearchModal
+        open={customerSearchOpen}
+        onClose={() => setCustomerSearchOpen(false)}
+        initialFilters={{
+          code: identificationForm.customer_code,
+          store: identificationForm.customer_store,
+          name: identificationForm.customer_name,
+        }}
+        onSelect={(customer) => {
+          onIdentificationChange((current) => ({
+            ...current,
+            customer_code: customer.code,
+            customer_store: customer.store,
+            customer_name: customer.name,
+          }));
+        }}
+      />
 
       <h3 className="pac-subsection-title">Material</h3>
       <div className="pac-form-grid">

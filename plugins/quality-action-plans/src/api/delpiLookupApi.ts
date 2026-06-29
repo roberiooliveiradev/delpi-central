@@ -96,7 +96,7 @@ export async function searchDelpiCustomers(params: {
     name: params.name?.trim(),
     store: params.store?.trim(),
     page: 1,
-    page_size: params.pageSize ?? 15,
+    page_size: params.pageSize ?? 20,
   });
   const data = await fetchPaged<Record<string, unknown>>(
     `${CUSTOMERS_BASE}/search${query}`,

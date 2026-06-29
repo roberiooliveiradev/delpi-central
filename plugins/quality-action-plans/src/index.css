@@ -2332,6 +2332,52 @@
   gap: 12px;
 }
 
+.pac-modal--customer-search {
+  width: min(960px, 100%);
+}
+
+.pac-customer-section__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pac-customer-search-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pac-customer-search-modal__hint {
+  margin: 0;
+}
+
+.pac-customer-search-modal__filters {
+  margin: 0;
+}
+
+.pac-customer-search-modal__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.pac-customer-search-modal__error {
+  margin: 0;
+  color: var(--pac-danger, #c0392b);
+  font-size: var(--pac-font-md);
+}
+
+.pac-customer-search-modal__table {
+  max-height: min(52vh, 480px);
+  overflow: auto;
+}
+
+.pac-customer-search-modal__select {
+  margin: 0;
+  white-space: nowrap;
+}
+
 .pac-evidence-preview-modal__image {
   display: block;
   width: 100%;
