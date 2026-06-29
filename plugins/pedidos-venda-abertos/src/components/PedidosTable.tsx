@@ -3,6 +3,7 @@ import { FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
 
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
+import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
 import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
 import { useTableFontSize } from "../hooks/useTableFontSize";
 import { formatDisplayDate } from "../utils/dates";
@@ -73,7 +74,13 @@ function renderCell(
       return (
         <div className="pva-cell-stack">
           <strong>{row.nome_cliente || "—"}</strong>
-          <span className="pva-cell-muted">{row.tipo_entidade || "—"}</span>
+          <span className="pva-cell-muted">
+            {formatEntityTypeWithCodeStore(
+              row.tipo_entidade,
+              row.codigo_cadastro,
+              row.loja_cadastro,
+            )}
+          </span>
         </div>
       );
     case "filial":

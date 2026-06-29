@@ -8,23 +8,33 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 VIEW = "dbo.VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES"
 
 _ITEMS_SELECT = """
-    nome_cliente,
-    tipo_entidade,
-    tipo_pedido,
-    pedido_cliente,
-    filial,
-    pedido,
-    linha,
-    produto,
-    codigo_cliente,
-    quantidade,
-    entregue,
-    saldo,
-    CONVERT(VARCHAR(10), data_despacho, 23) AS data_despacho,
-    CONVERT(VARCHAR(10), data_entrega, 23) AS data_entrega,
-    no_estoque,
-    preco_venda,
-    valor_aberto
+    v.nome_cliente,
+    v.tipo_entidade,
+    v.tipo_pedido,
+    v.pedido_cliente,
+    v.filial,
+    v.pedido,
+    v.linha,
+    v.produto,
+    v.codigo_cliente,
+    NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') AS codigo_cadastro,
+    NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') AS loja_cadastro,
+    v.quantidade,
+    v.entregue,
+    v.saldo,
+    CONVERT(VARCHAR(10), v.data_despacho, 23) AS data_despacho,
+    CONVERT(VARCHAR(10), v.data_entrega, 23) AS data_entrega,
+    v.no_estoque,
+    v.preco_venda,
+    v.valor_aberto
+"""
+
+_ITEMS_FROM = f"""
+    FROM {VIEW} v
+    LEFT JOIN SC5010 C5 WITH (NOLOCK)
+      ON C5.C5_FILIAL = v.filial
+     AND LTRIM(RTRIM(C5.C5_NUM)) = LTRIM(RTRIM(v.pedido))
+     AND C5.D_E_L_E_T_ <> '*'
 """
 
 
@@ -43,14 +53,14 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
                         CASE WHEN no_estoque > 0 AND no_estoque < saldo THEN 1 ELSE 0 END
                     ) AS itens_estoque_parcial,
                     SUM(CASE WHEN no_estoque <= 0 THEN 1 ELSE 0 END) AS itens_sem_estoque
-                FROM {VIEW}
+                FROM {VIEW} v
                 """
             )
             items = self.execute_query(
                 f"""
                 SELECT {_ITEMS_SELECT}
-                FROM {VIEW}
-                ORDER BY data_entrega DESC
+                {_ITEMS_FROM}
+                ORDER BY v.data_entrega DESC
                 """
             )
 

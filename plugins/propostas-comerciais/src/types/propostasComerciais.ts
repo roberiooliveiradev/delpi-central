@@ -163,10 +163,10 @@ export type PropostaComercialPdfRotulosOverrides = {
   resumo?: Partial<
     Record<"numero_ov" | "data" | "versao" | "total_r_mil" | "empresa" | "cliente", string>
   >;
-  total_proposta?: string;
 };
 
 export type PropostaComercialPdfExportOverrides = {
+  exibir_coluna_valor_liquido?: boolean;
   observacoes?: string;
   contato?: Partial<Pick<PropostaComercialContato, "nome" | "departamento" | "email" | "telefone">>;
   condicoes?: Partial<

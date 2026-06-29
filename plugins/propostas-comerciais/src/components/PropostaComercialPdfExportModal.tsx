@@ -4,7 +4,6 @@ import { Eye, FileDown, Loader2 } from "lucide-react";
 import {
   DEFAULT_ITEM_COLUMN_LABELS,
   DEFAULT_RESUMO_LABELS,
-  DEFAULT_TOTAL_PROPOSTA_LABEL,
   buildDefaultRotulosDraft,
   type PropostaComercialItemColumnKey,
   type PropostaComercialResumoLabelKey,
@@ -51,6 +50,7 @@ type DraftState = {
   vendedorTelefone: string;
   itemDrafts: PropostaComercialItemTextDraft[];
   rotulos: PropostaComercialRotulosDraft;
+  exibirColunaValorLiquido: boolean;
 };
 
 function buildItemDrafts(items: PropostaComercialItem[]): PropostaComercialItemTextDraft[] {
@@ -80,6 +80,7 @@ function buildDraft(detail: PropostaComercialDetail): DraftState {
     vendedorTelefone: detail.vendedor.telefone ?? "",
     itemDrafts: buildItemDrafts(detail.itens),
     rotulos: buildDefaultRotulosDraft(),
+    exibirColunaValorLiquido: true,
   };
 }
 
@@ -101,17 +102,14 @@ function buildChangedStringMap<T extends string>(
 function buildRotulosOverrides(rotulos: PropostaComercialRotulosDraft): PropostaComercialPdfRotulosOverrides | undefined {
   const colunas_itens = buildChangedStringMap(rotulos.colunas_itens, DEFAULT_ITEM_COLUMN_LABELS);
   const resumo = buildChangedStringMap(rotulos.resumo, DEFAULT_RESUMO_LABELS);
-  const total_proposta =
-    rotulos.total_proposta !== DEFAULT_TOTAL_PROPOSTA_LABEL ? rotulos.total_proposta : undefined;
 
-  if (!colunas_itens && !resumo && !total_proposta) {
+  if (!colunas_itens && !resumo) {
     return undefined;
   }
 
   return {
     ...(colunas_itens ? { colunas_itens } : {}),
     ...(resumo ? { resumo } : {}),
-    ...(total_proposta ? { total_proposta } : {}),
   };
 }
 
@@ -181,6 +179,7 @@ function buildOverrides(
     },
     ...(itemOverrides ? { itens: itemOverrides } : {}),
     ...(rotulosOverrides ? { rotulos: rotulosOverrides } : {}),
+    ...(draft.exibirColunaValorLiquido ? {} : { exibir_coluna_valor_liquido: false }),
   };
 }
 
@@ -360,7 +359,7 @@ export function PropostaComercialPdfExportModal({
       <p className="pc-modal__intro">
         Revise o conteúdo que irá para o PDF. Os ajustes abaixo valem apenas para esta exportação e
         não alteram a proposta no Protheus. É possível editar rótulos do resumo, colunas da tabela e
-        os textos de descrição, referência do cliente e NCM.
+        os textos de descrição, referência do cliente e NCM (o NCM é exibido em Observações no PDF).
       </p>
 
       {error ? (
@@ -392,19 +391,17 @@ export function PropostaComercialPdfExportModal({
 
       <section className="pc-export-section">
         <h3>Itens ({detail.itens.length})</h3>
-        <Field
-          label="Rótulo da linha de total no PDF"
-          value={draft.rotulos.total_proposta}
-          onChange={(value) =>
-            updateDraft({
-              rotulos: {
-                ...draft.rotulos,
-                total_proposta: value,
-              },
-            })
-          }
-          wide
-        />
+        <label className="pc-export-option">
+          <input
+            type="checkbox"
+            checked={draft.exibirColunaValorLiquido}
+            onChange={(event) => {
+              updateDraft({ exibirColunaValorLiquido: event.target.checked });
+              onClearPreview();
+            }}
+          />
+          <span>Exibir coluna Líquido R$/mil no PDF</span>
+        </label>
         <ItensTable
           items={detail.itens}
           editable

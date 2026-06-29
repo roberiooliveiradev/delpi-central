@@ -78,6 +78,7 @@ class PropostaComercialPdfRotulosOverrides(BaseModel):
 class PropostaComercialPdfExportRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    exibir_coluna_valor_liquido: bool | None = None
     observacoes: str | None = None
     contato: PropostaComercialPdfContatoOverrides | None = None
     condicoes: PropostaComercialPdfCondicoesOverrides | None = None

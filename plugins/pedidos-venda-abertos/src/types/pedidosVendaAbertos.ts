@@ -18,6 +18,10 @@ export type PedidosVendaAbertosItem = {
   linha: string;
   produto: string;
   codigo_cliente: string;
+  /** Código Protheus do cliente/fornecedor (SC5.C5_CLIENTE). */
+  codigo_cadastro: string;
+  /** Loja Protheus do cliente/fornecedor (SC5.C5_LOJACLI). */
+  loja_cadastro: string;
   quantidade: number;
   entregue: number;
   saldo: number;

@@ -20,6 +20,7 @@ from app.domain.propostas_comerciais.services.proposta_comercial_pdf_export_over
 )
 from app.infrastructure.pdf.propostas_comerciais.proposta_comercial_pdf_renderer import (
     PropostaComercialPdfRenderer,
+    _compose_observacoes_text,
 )
 from app.infrastructure.totvs.propostas_comerciais.queries import DETAIL_ITEMS_SQL
 
@@ -692,6 +693,52 @@ def test_proposta_comercial_pdf_renderer_returns_pdf_bytes() -> None:
     assert len(pdf_bytes) > 1000
 
 
+def test_compose_observacoes_text_appends_ncm_lines() -> None:
+    text = _compose_observacoes_text(
+        "Observacao geral",
+        [{"item": "01", "ncm": "8544.42.00"}, {"item": "02", "ncm": ""}],
+    )
+
+    assert text.startswith("Observacao geral")
+    assert "NCM:" in text
+    assert "Item 01 — NCM 8544.42.00" in text
+    assert "Item 02" not in text
+
+
+def test_compose_observacoes_text_returns_only_ncm_when_observacoes_empty() -> None:
+    text = _compose_observacoes_text("", [{"item": "01", "ncm": "8544.42.00"}])
+
+    assert text == "NCM:\nItem 01 — NCM 8544.42.00"
+
+
+def test_proposta_comercial_pdf_renderer_omits_total_row() -> None:
+    renderer = PropostaComercialPdfRenderer()
+    pdf_bytes = renderer.render(_sample_detail())
+
+    assert b"Total da proposta" not in pdf_bytes
+
+
+def test_proposta_comercial_pdf_renderer_hides_valor_liquido_column_when_disabled() -> None:
+    renderer = PropostaComercialPdfRenderer()
+    with_liquido = renderer.render(_sample_detail())
+    without_liquido = renderer.render(
+        {**_sample_detail(), "exibir_coluna_valor_liquido": False},
+    )
+
+    assert with_liquido != without_liquido
+    assert len(with_liquido) > len(without_liquido)
+
+
+def test_pdf_export_overrides_service_applies_exibir_coluna_valor_liquido() -> None:
+    detail = _sample_detail()
+    merged = PropostaComercialPdfExportOverridesService.apply(
+        detail,
+        {"exibir_coluna_valor_liquido": False},
+    )
+
+    assert merged["exibir_coluna_valor_liquido"] is False
+
+
 def test_generate_proposta_comercial_pdf_use_case_returns_filename() -> None:
     get_use_case = MagicMock(spec=GetPropostaComercialUseCase)
     get_use_case.execute.return_value = _sample_detail()
@@ -872,19 +919,21 @@ def test_pdf_export_request_sanitizes_rotulos_overrides() -> None:
     )
 
     payload = PropostaComercialPdfExportRequest(
+        exibir_coluna_valor_liquido=False,
         rotulos={
             "colunas_itens": {"produto": "Ref. editada", "descricao": "Descrição"},
             "resumo": {"total_r_mil": "Total R$/mil"},
             "total_proposta": " Total custom ",
-        }
+        },
     )
 
     assert payload.to_overrides_dict() == {
+        "exibir_coluna_valor_liquido": False,
         "rotulos": {
             "colunas_itens": {"produto": "Ref. editada", "descricao": "Descrição"},
             "resumo": {"total_r_mil": "Total R$/mil"},
             "total_proposta": "Total custom",
-        }
+        },
     }
 
 
