@@ -20,6 +20,8 @@ type DelpiAsyncLookupFieldProps<TMeta = Record<string, string>> = {
   placeholder?: string;
   disabled?: boolean;
   minQueryLength?: number;
+  /** Ao abrir, carrega a lista inicial de usuários (sem digitar). */
+  browseOnOpen?: boolean;
   className?: string;
 };
 
@@ -34,6 +36,7 @@ export function DelpiAsyncLookupField<TMeta = Record<string, string>>({
   placeholder = "Digite para buscar…",
   disabled = false,
   minQueryLength = 2,
+  browseOnOpen = false,
   className,
 }: DelpiAsyncLookupFieldProps<TMeta>) {
   const [open, setOpen] = useState(false);
@@ -53,7 +56,10 @@ export function DelpiAsyncLookupField<TMeta = Record<string, string>>({
   useEffect(() => {
     if (!open) return;
     const normalized = query.trim();
-    if (normalized.length < minQueryLength) {
+    const shouldSearch = browseOnOpen
+      ? normalized.length === 0 || normalized.length >= minQueryLength
+      : normalized.length >= minQueryLength;
+    if (!shouldSearch) {
       setOptions([]);
       setSearchError(null);
       setLoading(false);
@@ -83,7 +89,7 @@ export function DelpiAsyncLookupField<TMeta = Record<string, string>>({
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [minQueryLength, open, query, searchOptions]);
+  }, [browseOnOpen, minQueryLength, open, query, searchOptions]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -140,10 +146,10 @@ export function DelpiAsyncLookupField<TMeta = Record<string, string>>({
           <div className="pac-lookup__panel">
             {loading ? <p className="pac-lookup__status">Buscando…</p> : null}
             {searchError ? <p className="pac-lookup__status pac-lookup__status--error">{searchError}</p> : null}
-            {!loading && !searchError && query.trim().length < minQueryLength ? (
+            {!loading && !searchError && !browseOnOpen && query.trim().length < minQueryLength ? (
               <p className="pac-lookup__status">Digite pelo menos {minQueryLength} caracteres.</p>
             ) : null}
-            {!loading && !searchError && query.trim().length >= minQueryLength ? (
+            {!loading && !searchError && (browseOnOpen || query.trim().length >= minQueryLength) ? (
               <ul id={listId} className="pac-lookup__list" role="listbox">
                 {options.length === 0 ? (
                   <li className="pac-lookup__empty">Nenhum resultado.</li>

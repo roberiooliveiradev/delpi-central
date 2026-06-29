@@ -20,17 +20,27 @@ class CoreApiDirectoryService:
             and (settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip()
         )
 
-    def search_assignable_users(self, *, query: str, limit: int = 10) -> list[dict]:
+    def search_assignable_users(
+        self,
+        *,
+        query: str | None,
+        limit: int = 10,
+        browse: bool = False,
+    ) -> list[dict]:
         if not self.configured():
             return []
 
         base_url = (settings.CORE_API_BASE_URL or "").rstrip("/")
         token = (settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip()
-        params = {
-            "q": query.strip(),
+        normalized = (query or "").strip()
+        params: dict[str, str | int] = {
             "limit": max(1, min(limit, 20)),
             "app": _PAC_QUALITY_APP_ID,
         }
+        if normalized:
+            params["q"] = normalized
+        if browse or not normalized:
+            params["browse"] = "true"
         headers = {
             "Authorization": f"Bearer {token}",
             "X-Delpi-Service-Token": token,

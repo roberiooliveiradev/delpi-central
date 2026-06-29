@@ -33,6 +33,8 @@ def search_integration_directory_users():
     limit = request.args.get("limit", 10)
     app_id = (request.args.get("app") or _PAC_QUALITY_APP_ID).strip() or _PAC_QUALITY_APP_ID
     permission_code = (request.args.get("permission") or "").strip() or None
+    browse_raw = (request.args.get("browse") or "").strip().lower()
+    browse = browse_raw in {"1", "true", "yes"}
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -41,6 +43,7 @@ def search_integration_directory_users():
                 limit=int(limit),
                 app_id=app_id,
                 permission_code=permission_code,
+                browse=browse,
             )
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)

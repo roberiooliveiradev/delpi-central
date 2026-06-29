@@ -2,7 +2,6 @@ import { UserRound, X } from "lucide-react";
 import { useCallback } from "react";
 
 import { searchDirectoryUsers } from "../api/directoryApi";
-import { QUALITY_ACTION_PLANS_APP_ID } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatPersonName } from "../utils/formatPersonName";
 import { DelpiAsyncLookupField, type DelpiLookupOption } from "./ui/DelpiAsyncLookupField";
@@ -24,8 +23,8 @@ export function TeamMemberDelpiLinkField({
 }: Props) {
   const searchUsers = useCallback(async (query: string, signal: AbortSignal) => {
     const users = await searchDirectoryUsers(query, {
-      limit: 10,
-      appId: QUALITY_ACTION_PLANS_APP_ID,
+      limit: 20,
+      browse: !query.trim(),
       signal,
     });
     return users.map(
@@ -75,7 +74,8 @@ export function TeamMemberDelpiLinkField({
         onChange={() => undefined}
         onSelect={handleSelect}
         searchOptions={searchUsers}
-        placeholder="Buscar por nome ou e-mail…"
+        placeholder="Selecione ou busque por nome ou e-mail…"
+        browseOnOpen
         minQueryLength={2}
       />
       <p className="pac-muted pac-team-member-link__note">

@@ -22,6 +22,20 @@ def _user(user_id, name="User", email="user@delpi.com", *, active=True, superadm
     )
 
 
+def test_search_directory_users_browse_lists_without_query():
+    user_id = uuid4()
+    users = [_user(user_id, name="Ana", email="ana@delpi.com")]
+
+    uow = MagicMock()
+    uow.users.list_paginated.return_value = (users, 1)
+
+    result = SearchDirectoryUsersUseCase(uow).execute(query="", browse=True)
+
+    assert len(result) == 1
+    uow.users.list_paginated.assert_called_once()
+    assert uow.users.list_paginated.call_args.kwargs["q"] is None
+
+
 def test_search_directory_users_excludes_current_user():
     current_id = uuid4()
     other_id = uuid4()

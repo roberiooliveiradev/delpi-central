@@ -618,10 +618,20 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
 )
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_assignable_users(
-    q: str = Query(..., min_length=2),
-    limit: int = Query(default=10, ge=1, le=20),
+    q: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=20),
 ):
-    items = CoreApiDirectoryService().search_assignable_users(query=q, limit=limit)
+    normalized = (q or "").strip()
+    if normalized and len(normalized) < 2:
+        return api_delpi_success(
+            {"items": []},
+            operation_id="list_quality_action_plan_assignable_users",
+        )
+    items = CoreApiDirectoryService().search_assignable_users(
+        query=normalized or None,
+        limit=limit,
+        browse=not normalized,
+    )
     return api_delpi_success(
         {"items": items},
         operation_id="list_quality_action_plan_assignable_users",

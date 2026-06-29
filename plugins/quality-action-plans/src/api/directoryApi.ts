@@ -1,4 +1,4 @@
-import { httpGet } from "./httpClient";
+import { httpGet, unwrapApiDelpiEnvelope, type ApiEnvelope } from "./httpClient";
 
 export type DirectoryUser = {
   id: string;
@@ -12,39 +12,38 @@ type DirectorySearchResponse = {
 
 export type DirectorySearchOptions = {
   limit?: number;
-  /** Id do app no portal (ex.: quality-action-plans) — mesma regra de GET /me/apps. */
-  appId?: string;
-  /** Código de permissão exigido (alternativa ao appId). */
-  permission?: string;
+  /** Lista inicial ao abrir o seletor (sem filtro de texto). */
+  browse?: boolean;
   signal?: AbortSignal;
 };
+
+const ASSIGNABLE_USERS_BASE = "/apps/api-delpi/quality/action-plans/assignable-users";
 
 export async function searchDirectoryUsers(
   query: string,
   options: DirectorySearchOptions = {},
 ): Promise<DirectoryUser[]> {
   const normalized = query.trim();
-  if (normalized.length < 2) {
+  const limit = options.limit ?? 20;
+  const browse = options.browse ?? (!normalized);
+
+  if (!browse && normalized.length < 2) {
     return [];
   }
 
-  const limit = options.limit ?? 10;
   const params = new URLSearchParams({
-    q: normalized,
     limit: String(limit),
   });
 
-  if (options.appId) {
-    params.set("app", options.appId);
-  }
-  if (options.permission) {
-    params.set("permission", options.permission);
+  if (normalized) {
+    params.set("q", normalized);
   }
 
-  const payload = await httpGet<DirectorySearchResponse>(
-    `/core-api/me/directory/users?${params.toString()}`,
+  const envelope = await httpGet<ApiEnvelope<DirectorySearchResponse>>(
+    `${ASSIGNABLE_USERS_BASE}?${params.toString()}`,
     { signal: options.signal },
   );
 
-  return payload.items ?? [];
+  const data = unwrapApiDelpiEnvelope(envelope, "Erro ao buscar usuários atribuíveis.");
+  return data.items ?? [];
 }

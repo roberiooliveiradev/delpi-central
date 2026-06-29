@@ -30,10 +30,11 @@ class SearchDirectoryUsersUseCase:
         app_id: str | None = None,
         permission_code: str | None = None,
         exclude_user_id: str | None = None,
+        browse: bool = False,
     ) -> list[dict]:
         normalized = (query or "").strip()
 
-        if len(normalized) < 2:
+        if len(normalized) < 2 and not browse:
             return []
 
         safe_limit = max(1, min(limit, 20))
@@ -42,7 +43,7 @@ class SearchDirectoryUsersUseCase:
 
         fetch_size = min(max(safe_limit * 5, safe_limit + 1), 50)
         users, _ = self.uow.users.list_paginated(
-            q=normalized,
+            q=normalized if len(normalized) >= 2 else None,
             page=1,
             page_size=fetch_size,
             sort="name",
