@@ -10,6 +10,7 @@ import {
   FilterX,
   Lock,
   MoreHorizontal,
+  Pencil,
   Plus,
   Search,
   Trash2,
@@ -57,6 +58,7 @@ type Props = {
   onOpenDashboard: () => void;
   onOpenAudit: (auditId: string) => void;
   onOpenNc: (auditId: string) => void;
+  onEditAudit: (auditId: string) => void;
   onDeleteAudit: (auditId: string) => Promise<void>;
 };
 
@@ -82,7 +84,7 @@ function primaryActionLabel(status: string): string {
 function countRowMenuItems(item: AuditListItem): number {
   let count = 1;
   if (canAccessNc(item.status)) count += 1;
-  if (item.status === "draft") count += 1;
+  if (item.status === "draft") count += 2;
   return count;
 }
 
@@ -95,6 +97,7 @@ export function AuditListView({
   onOpenDashboard,
   onOpenAudit,
   onOpenNc,
+  onEditAudit,
   onDeleteAudit,
 }: Props) {
   const [filters, setFilters] = useState<AuditListFilters>(EMPTY_AUDIT_LIST_FILTERS);
@@ -383,6 +386,20 @@ export function AuditListView({
                                   }}
                                 >
                                   {ncActionLabel(item.status)}
+                                </button>
+                              ) : null}
+                              {item.status === "draft" ? (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="a5s-row-menu__item"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    onEditAudit(item.id);
+                                  }}
+                                >
+                                  <Pencil size={14} aria-hidden />
+                                  Editar cabeçalho
                                 </button>
                               ) : null}
                               {item.status === "draft" ? (

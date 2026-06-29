@@ -112,6 +112,23 @@ export async function createAudit(payload: {
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
+export async function updateAudit(
+  auditId: string,
+  payload: {
+    audit_date?: string;
+    area_id?: string;
+    area_responsible?: string;
+    shift?: string;
+    auditors?: Array<{ user_id: string; display_name: string }>;
+  },
+) {
+  const res = await httpPatch<ApiEnvelope<AuditDetail>>(
+    `${API_BASE}/audits/${auditId.trim()}`,
+    payload,
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
 export async function saveResponse(
   auditId: string,
   criterionId: string,

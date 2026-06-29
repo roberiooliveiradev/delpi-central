@@ -129,7 +129,7 @@ export function AuditRowMenuPortal({
   return createPortal(
     <div
       ref={panelRef}
-      className="a5s-row-menu__panel a5s-row-menu__panel--portal"
+      className="dashboard-auditoria-5s a5s-app a5s-row-menu__panel a5s-row-menu__panel--portal"
       role="menu"
       style={{ top: position.top, left: position.left }}
     >
