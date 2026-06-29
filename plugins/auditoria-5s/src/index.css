@@ -2237,15 +2237,22 @@
   min-width: 160px;
   padding: 6px;
   border-radius: 10px;
-  border: 1px solid var(--a5s-border);
-  background: var(--a5s-surface);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--a5s-title) 12%, transparent);
+  border: 1px solid var(--a5s-border, var(--border, #e6e6e6));
+  background: var(--a5s-surface, var(--surface, #ffffff));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--a5s-title, #003866) 12%, transparent);
 }
 
 .a5s-row-menu__panel--portal {
   position: fixed;
   right: auto;
   z-index: 1200;
+  /* Portal em document.body — tokens globais + classe .a5s-app no nó */
+  border: 1px solid var(--a5s-border, var(--border, #e6e6e6));
+  background-color: var(--a5s-surface, var(--surface, #ffffff));
+  color: var(--a5s-text, var(--text, #111111));
+  box-shadow:
+    0 4px 8px rgba(15, 23, 42, 0.08),
+    0 12px 28px rgba(15, 23, 42, 0.14);
 }
 
 .a5s-row-menu__panel button {
@@ -2257,22 +2264,44 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  color: var(--a5s-text);
+  color: var(--a5s-text, var(--text, #111111));
+}
+
+.a5s-row-menu__panel--portal button {
+  color: var(--text, #111111);
 }
 
 .a5s-row-menu__panel button:hover {
-  background: color-mix(in srgb, var(--a5s-accent) 8%, var(--a5s-surface));
+  background: color-mix(in srgb, var(--a5s-accent, var(--primary, #089bdb)) 8%, var(--a5s-surface, var(--surface, #ffffff)));
+}
+
+.a5s-row-menu__panel--portal button:hover {
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, var(--surface, #ffffff));
 }
 
 .a5s-row-menu__panel button.a5s-row-menu__danger {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--a5s-danger);
+  color: var(--a5s-danger, var(--danger, #b42318));
+}
+
+.a5s-row-menu__panel button.a5s-row-menu__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.a5s-row-menu__panel--portal button.a5s-row-menu__danger {
+  color: var(--danger, #b42318);
 }
 
 .a5s-row-menu__panel button.a5s-row-menu__danger:hover {
-  background: color-mix(in srgb, var(--a5s-danger) 10%, var(--a5s-surface));
+  background: color-mix(in srgb, var(--a5s-danger, var(--danger, #b42318)) 10%, var(--a5s-surface, var(--surface, #ffffff)));
+}
+
+.a5s-row-menu__panel--portal button.a5s-row-menu__danger:hover {
+  background: color-mix(in srgb, var(--danger, #b42318) 10%, var(--surface, #ffffff));
 }
 
 .a5s-confirm-overlay {

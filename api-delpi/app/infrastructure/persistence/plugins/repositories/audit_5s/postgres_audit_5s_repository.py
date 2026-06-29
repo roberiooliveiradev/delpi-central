@@ -263,6 +263,111 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         self.commit()
         return self.get_audit(audit_id) or audit
 
+    def update_audit(
+        self,
+        *,
+        audit_id: str,
+        audit_date: str | None = None,
+        area_id: str | None = None,
+        area_responsible: str | None = None,
+        shift: str | None = None,
+        auditors: list[dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
+        audit = self.fetch_one(
+            """
+            SELECT id, status, branch_code
+              FROM quality.audit_5s_audits
+             WHERE id = %s
+            """,
+            (audit_id,),
+        )
+        if not audit:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+        if audit["status"] != "draft":
+            raise PluginsRepositoryError(
+                "Somente auditorias em avaliação podem ter o cabeçalho editado."
+            )
+
+        if area_id is not None:
+            area = self.fetch_one(
+                """
+                SELECT id
+                  FROM quality.audit_5s_areas
+                 WHERE id = %s
+                   AND branch_code = %s
+                   AND active = TRUE
+                """,
+                (area_id, audit["branch_code"]),
+            )
+            if not area:
+                raise PluginsRepositoryError("Área auditada inválida para esta filial.")
+
+        fields: list[str] = []
+        params: list[Any] = []
+
+        if audit_date is not None:
+            fields.append("audit_date = %s")
+            params.append(audit_date)
+        if area_id is not None:
+            fields.append("area_id = %s")
+            params.append(area_id)
+        if area_responsible is not None:
+            fields.append("area_responsible = %s")
+            params.append(area_responsible.strip())
+        if shift is not None:
+            fields.append("shift = %s")
+            params.append(shift)
+
+        if not fields and auditors is None:
+            raise PluginsRepositoryError("Nenhuma alteração informada.")
+
+        if auditors is not None and not auditors:
+            raise PluginsRepositoryError("Informe ao menos um auditor.")
+
+        try:
+            if fields:
+                fields.append("updated_at = NOW()")
+                params.append(audit_id)
+                self.execute(
+                    f"""
+                    UPDATE quality.audit_5s_audits
+                       SET {", ".join(fields)}
+                     WHERE id = %s
+                    """,
+                    tuple(params),
+                    auto_commit=False,
+                )
+
+            if auditors is not None:
+                self.execute(
+                    "DELETE FROM quality.audit_5s_auditors WHERE audit_id = %s",
+                    (audit_id,),
+                    auto_commit=False,
+                )
+                for auditor in auditors:
+                    self.execute(
+                        """
+                        INSERT INTO quality.audit_5s_auditors (audit_id, user_id, display_name)
+                        VALUES (%s, %s, %s)
+                        """,
+                        (
+                            audit_id,
+                            auditor["user_id"],
+                            format_person_name(auditor.get("display_name")),
+                        ),
+                        auto_commit=False,
+                    )
+
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+
+        result = self.get_audit(audit_id)
+        if not result:
+            raise PluginsRepositoryError("Falha ao atualizar auditoria.")
+        return result
+
     def ensure_auditor(
         self,
         *,

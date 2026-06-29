@@ -52,6 +52,17 @@ class CreateAuditBody(BaseModel):
     auditors: list[AuditorBody] = Field(default_factory=list)
 
 
+class UpdateAuditBody(BaseModel):
+    audit_date: str | None = None
+    area_id: str | None = None
+    area_responsible: str | None = Field(default=None, min_length=2, max_length=200)
+    shift: str | None = Field(
+        default=None,
+        pattern="^(TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO)$",
+    )
+    auditors: list[AuditorBody] | None = None
+
+
 class UpsertResponseBody(BaseModel):
     score: int | None = Field(default=None)
     is_not_applicable: bool = False
@@ -193,6 +204,66 @@ def create_audit(body: CreateAuditBody = Body(...)):
     except Exception as exc:
         log_error(f"Erro ao criar auditoria 5S: {exc}")
         return error_response("Erro interno ao criar auditoria.", status_code=500)
+
+
+@router.patch("/audits/{audit_id}")
+@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+async def update_audit(audit_id: str, body: UpdateAuditBody = Body(...)):
+    audit_id = audit_id.strip()
+    if not audit_id:
+        return error_response("Identificador da auditoria inválido.", status_code=400)
+
+    if (
+        body.audit_date is None
+        and body.area_id is None
+        and body.area_responsible is None
+        and body.shift is None
+        and body.auditors is None
+    ):
+        return error_response("Informe ao menos um campo para atualizar.", status_code=400)
+
+    try:
+        auditors = None
+        if body.auditors is not None:
+            auditors = [
+                {
+                    "user_id": item.user_id,
+                    "display_name": format_person_name(item.display_name),
+                }
+                for item in body.auditors
+            ]
+
+        repo = build_audit_5s_repository()
+        data = repo.update_audit(
+            audit_id=audit_id,
+            audit_date=body.audit_date,
+            area_id=body.area_id,
+            area_responsible=body.area_responsible,
+            shift=body.shift,
+            auditors=auditors,
+        )
+        try:
+            await publish_audit_updated(
+                audit_id=audit_id,
+                audit=data,
+                event_type="header_updated",
+                actor_user_id=_current_user_id(),
+                actor_display_name=_current_user_name(),
+            )
+        except Exception as publish_exc:
+            log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
+        return api_delpi_success(
+            data,
+            operation_id="update_audit_5s_audit",
+            message="Cabeçalho da auditoria atualizado com sucesso.",
+        )
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status_code = 404 if "não encontrada" in message.lower() else 422
+        return error_response(message, status_code=status_code)
+    except Exception as exc:
+        log_error(f"Erro ao atualizar auditoria 5S: {exc}")
+        return error_response("Erro interno ao atualizar auditoria.", status_code=500)
 
 
 @router.get("/audits/{audit_id}")

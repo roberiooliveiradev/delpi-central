@@ -10,6 +10,7 @@ import {
   fetchAudits,
   joinAudit,
   saveResponse,
+  updateAudit,
   type AuditDetail,
   type AuditListItem,
   type AuditArea,
@@ -17,7 +18,7 @@ import {
   type Criterion,
 } from "../api/audit5sApi";
 import { getClientId } from "../utils/clientId";
-import { AuditAuditorPicker } from "../components/AuditAuditorPicker";
+import { AuditHeaderForm } from "../components/AuditHeaderForm";
 import { AuditListView } from "../components/AuditListView";
 import { AuditDashboardPage } from "./AuditDashboardPage";
 import { AuditDetailHero } from "../components/AuditDetailHero";
@@ -31,7 +32,6 @@ import {
   getScoreTone,
 } from "../components/CriterionScorePicker";
 import {
-  SHIFTS,
   auditListSubtitle,
   branchFromPathname,
   canAccessNc,
@@ -49,7 +49,7 @@ type Props = {
   pathname?: string;
 };
 
-type View = "list" | "new" | "audit" | "nc" | "dashboard";
+type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard";
 
 export function Audit5sPage({ pathname }: Props) {
   const branch = branchFromPathname(pathname);
@@ -73,6 +73,7 @@ export function Audit5sPage({ pathname }: Props) {
   const [selectedAuditors, setSelectedAuditors] = useState<AuditAuditorSelection[]>(
     buildDefaultAuditors,
   );
+  const [editingAuditId, setEditingAuditId] = useState<string | null>(null);
 
   const loadList = useCallback(async () => {
     if (!branch) return;
@@ -150,11 +151,13 @@ export function Audit5sPage({ pathname }: Props) {
 
   const handleBack = () => {
     setSelectedAudit(null);
+    setEditingAuditId(null);
     setError(null);
     setView("list");
   };
 
   const openNewAudit = () => {
+    setEditingAuditId(null);
     setForm({
       audit_date: new Date().toISOString().slice(0, 10),
       area_id: "",
@@ -180,6 +183,44 @@ export function Audit5sPage({ pathname }: Props) {
     }
   };
 
+  const buildAuditorsPayload = () =>
+    selectedAuditors.map((auditor) => ({
+      user_id: auditor.user_id,
+      display_name: formatPersonName(auditor.display_name) || auditor.display_name,
+    }));
+
+  const openEditAudit = async (auditId: string) => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const detail = await fetchAudit(auditId);
+      if (detail.status !== "draft") {
+        setError("Somente auditorias em avaliação podem ter o cabeçalho editado.");
+        return;
+      }
+      setEditingAuditId(detail.id);
+      setForm({
+        audit_date: detail.audit_date.slice(0, 10),
+        area_id: detail.area_id,
+        area_responsible: detail.area_responsible,
+        shift: detail.shift,
+      });
+      setSelectedAuditors(
+        detail.auditors.map((auditor) => ({
+          user_id: auditor.user_id,
+          display_name: auditor.display_name,
+        })),
+      );
+      setNewAreaName("");
+      setView("edit");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar auditoria.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCreateAudit = async () => {
     if (!branch) return;
     setLoading(true);
@@ -191,17 +232,39 @@ export function Audit5sPage({ pathname }: Props) {
         area_id: form.area_id,
         area_responsible: formatPersonName(form.area_responsible.trim()) || form.area_responsible.trim(),
         shift: form.shift,
-        auditors: selectedAuditors.map((auditor) => ({
-          user_id: auditor.user_id,
-          display_name: formatPersonName(auditor.display_name) || auditor.display_name,
-        })),
+        auditors: buildAuditorsPayload(),
       });
       setSelectedAudit(audit);
       setObservationDrafts({});
+      setActiveSenso(1);
       setView("audit");
       await loadList();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar auditoria.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateAudit = async () => {
+    if (!editingAuditId) return;
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await updateAudit(editingAuditId, {
+        audit_date: form.audit_date,
+        area_id: form.area_id,
+        area_responsible: formatPersonName(form.area_responsible.trim()) || form.area_responsible.trim(),
+        shift: form.shift,
+        auditors: buildAuditorsPayload(),
+      });
+      setEditingAuditId(null);
+      await loadList();
+      setView("list");
+      setSuccess("Cabeçalho da auditoria atualizado com sucesso.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao atualizar cabeçalho.");
     } finally {
       setLoading(false);
     }
@@ -375,7 +438,9 @@ export function Audit5sPage({ pathname }: Props) {
   const pageSubtitle =
     view === "new"
       ? "Preencha os dados para iniciar uma nova avaliação."
-      : view === "audit"
+      : view === "edit"
+        ? "Atualize data, área, responsável, turno e auditores desta auditoria."
+        : view === "audit"
         ? "Avalie os critérios por senso e acompanhe o progresso em tempo real."
         : view === "nc"
           ? "Registre ações corretivas para os critérios com nota baixa desta auditoria."
@@ -417,6 +482,7 @@ export function Audit5sPage({ pathname }: Props) {
           onOpenDashboard={() => setView("dashboard")}
           onOpenAudit={(auditId) => void openAudit(auditId)}
           onOpenNc={(auditId) => void openNc(auditId)}
+          onEditAudit={(auditId) => void openEditAudit(auditId)}
           onDeleteAudit={handleDeleteAudit}
         />
       )}
@@ -431,80 +497,37 @@ export function Audit5sPage({ pathname }: Props) {
       )}
 
       {view === "new" && (
-        <section className="a5s-panel a5s-form a5s-form--new-audit">
-          <h2 className="a5s-form__title">Nova auditoria</h2>
-          <label>
-            Data
-            <input
-              type="date"
-              value={form.audit_date}
-              onChange={(e) => setForm((prev) => ({ ...prev, audit_date: e.target.value }))}
-            />
-          </label>
-          <label>
-            Área auditada
-            <select
-              value={form.area_id}
-              onChange={(e) => setForm((prev) => ({ ...prev, area_id: e.target.value }))}
-            >
-              <option value="">Selecione...</option>
-              {areas.map((area) => (
-                <option key={area.id} value={area.id}>
-                  {area.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="a5s-inline a5s-form__full">
-            <input
-              type="text"
-              placeholder="Cadastrar nova área"
-              value={newAreaName}
-              onChange={(e) => setNewAreaName(e.target.value)}
-            />
-            <button type="button" className="a5s-btn a5s-btn--ghost" onClick={() => void handleCreateArea()}>
-              Adicionar área
-            </button>
-          </div>
-          <label>
-            Responsável pela área
-            <input
-              type="text"
-              value={form.area_responsible}
-              onChange={(e) => setForm((prev) => ({ ...prev, area_responsible: e.target.value }))}
-            />
-          </label>
-          <label>
-            Turno
-            <select
-              value={form.shift}
-              onChange={(e) => setForm((prev) => ({ ...prev, shift: e.target.value }))}
-            >
-              {SHIFTS.map((shift) => (
-                <option key={shift.value} value={shift.value}>
-                  {shift.label}
-                </option>
-              ))}
-            </select>
-          </label>
+        <AuditHeaderForm
+          title="Nova auditoria"
+          areas={areas}
+          form={form}
+          onFormChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+          selectedAuditors={selectedAuditors}
+          onAuditorsChange={setSelectedAuditors}
+          newAreaName={newAreaName}
+          onNewAreaNameChange={setNewAreaName}
+          onCreateArea={handleCreateArea}
+          submitLabel="Iniciar auditoria"
+          loading={loading}
+          onSubmit={handleCreateAudit}
+        />
+      )}
 
-          <AuditAuditorPicker
-            value={selectedAuditors}
-            onChange={setSelectedAuditors}
-            disabled={loading}
-          />
-
-          <button
-            type="button"
-            className="a5s-btn"
-            disabled={
-              !form.area_id || !form.area_responsible.trim() || selectedAuditors.length === 0
-            }
-            onClick={() => void handleCreateAudit()}
-          >
-            Iniciar auditoria
-          </button>
-        </section>
+      {view === "edit" && (
+        <AuditHeaderForm
+          title="Editar cabeçalho"
+          areas={areas}
+          form={form}
+          onFormChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+          selectedAuditors={selectedAuditors}
+          onAuditorsChange={setSelectedAuditors}
+          newAreaName={newAreaName}
+          onNewAreaNameChange={setNewAreaName}
+          onCreateArea={handleCreateArea}
+          submitLabel="Salvar alterações"
+          loading={loading}
+          onSubmit={handleUpdateAudit}
+        />
       )}
 
       {view === "audit" && selectedAudit && (
