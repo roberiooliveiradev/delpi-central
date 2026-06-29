@@ -2170,10 +2170,6 @@
 }
 
 .dashboard-quality-action-plans .pac-team-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -2244,6 +2240,11 @@
 .dashboard-quality-action-plans .pac-team-card__leader {
   margin-bottom: 0;
   white-space: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-team-card__remove {
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .dashboard-quality-action-plans .pac-team-card__link-status {

@@ -73,12 +73,6 @@ export function TeamMemberRow({
           <span className="pac-team-card__index">Membro {index + 1}</span>
           {member.is_leader ? <span className="pac-team-card__leader-badge">Líder</span> : null}
         </div>
-        <RemoveRowButton
-          onRemove={onRemove}
-          removeDisabled={removeDisabled}
-          removeTitle={removeDisabled ? "Mantenha ao menos um membro" : "Remover membro"}
-          removeAriaLabel="Remover membro da equipe"
-        />
       </header>
 
       <div className="pac-team-card__body">
@@ -127,6 +121,13 @@ export function TeamMemberRow({
               />
               <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
             </label>
+            <RemoveRowButton
+              className="pac-team-card__remove"
+              onRemove={onRemove}
+              removeDisabled={removeDisabled}
+              removeTitle={removeDisabled ? "Mantenha ao menos um membro" : "Remover membro"}
+              removeAriaLabel="Remover membro da equipe"
+            />
           </div>
         </div>
 
