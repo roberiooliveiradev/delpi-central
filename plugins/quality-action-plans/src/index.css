@@ -2208,7 +2208,7 @@
 }
 
 .dashboard-quality-action-plans .pac-team-card__fields {
-  grid-template-columns: auto minmax(0, 1.5fr) minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr) auto auto;
   align-items: end;
   gap: 12px;
 }
@@ -2225,20 +2225,16 @@
   min-width: 0;
 }
 
-.dashboard-quality-action-plans .pac-input-action-row {
+.dashboard-quality-action-plans .pac-team-card__delpi {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
+  align-items: center;
+  align-self: end;
+  margin-bottom: 2px;
 }
 
-.dashboard-quality-action-plans .pac-input-action-row__input {
-  flex: 1;
-  min-width: 0;
-}
-
-.dashboard-quality-action-plans .pac-input-action-row__btn {
-  flex-shrink: 0;
-  align-self: stretch;
+.dashboard-quality-action-plans .pac-team-card__delpi-btn {
+  min-height: var(--pac-control-height);
+  white-space: nowrap;
 }
 
 .dashboard-quality-action-plans .pac-team-card__leader {
@@ -3002,12 +2998,23 @@
 
   .dashboard-quality-action-plans .pac-team-card__name,
   .dashboard-quality-action-plans .pac-team-card__department,
+  .dashboard-quality-action-plans .pac-team-card__delpi,
   .dashboard-quality-action-plans .pac-team-card__leader {
     grid-column: 2;
   }
 
+  .dashboard-quality-action-plans .pac-team-card__delpi {
+    justify-content: flex-start;
+    margin-bottom: 0;
+  }
+
+  .dashboard-quality-action-plans .pac-team-card__delpi-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .dashboard-quality-action-plans .pac-team-card__drag {
-    grid-row: 1 / span 2;
+    grid-row: 1 / span 4;
     align-self: start;
     margin-bottom: 0;
     padding-top: 28px;

@@ -90,25 +90,14 @@ export function TeamMemberRow({
             <label className="pac-field__label" htmlFor={`rnc-team-name-${index}`}>
               <FieldLabel label="Nome" hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberUserLink} />
             </label>
-            <div className="pac-input-action-row">
-              <input
-                id={`rnc-team-name-${index}`}
-                className="pac-field__control pac-input-action-row__input"
-                type="text"
-                value={member.member_name}
-                placeholder="Nome do membro ou pesquise na Delpi…"
-                onChange={(event) => patch({ member_name: event.target.value })}
-              />
-              <button
-                type="button"
-                className="pac-ghost-btn pac-input-action-row__btn"
-                aria-label="Pesquisar usuário na Delpi"
-                onClick={() => setModalOpen(true)}
-              >
-                <Search size={16} aria-hidden="true" />
-                <span>Delpi</span>
-              </button>
-            </div>
+            <input
+              id={`rnc-team-name-${index}`}
+              className="pac-field__control"
+              type="text"
+              value={member.member_name}
+              placeholder="Nome do membro ou pesquise na Delpi…"
+              onChange={(event) => patch({ member_name: event.target.value })}
+            />
           </div>
 
           <TextField
@@ -119,6 +108,18 @@ export function TeamMemberRow({
             value={member.department ?? ""}
             onChange={(department) => patch({ department })}
           />
+
+          <div className="pac-team-card__delpi">
+            <button
+              type="button"
+              className="pac-ghost-btn pac-team-card__delpi-btn"
+              aria-label="Pesquisar usuário na Delpi"
+              onClick={() => setModalOpen(true)}
+            >
+              <Search size={16} aria-hidden="true" />
+              <span>Delpi</span>
+            </button>
+          </div>
 
           <label className="pac-checkbox pac-team-card__leader">
             <input
