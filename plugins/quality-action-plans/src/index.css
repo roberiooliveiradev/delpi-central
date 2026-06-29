@@ -2094,6 +2094,119 @@
   gap: 16px;
 }
 
+.dashboard-quality-action-plans .pac-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-quality-action-plans .pac-team-card {
+  padding: 12px 14px;
+  border-radius: var(--pac-control-radius);
+  border: 1px solid color-mix(in srgb, var(--pac-card-border) 88%, transparent);
+  background: color-mix(in srgb, var(--pac-card-bg) 96%, var(--pac-input-bg));
+}
+
+.dashboard-quality-action-plans .pac-team-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-quality-action-plans .pac-team-card__header-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-team-card__heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-team-card__index {
+  font-weight: 600;
+  color: var(--pac-text);
+}
+
+.dashboard-quality-action-plans .pac-team-card__leader-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--pac-font-xs);
+  font-weight: 600;
+  color: var(--pac-accent);
+  background: color-mix(in srgb, var(--pac-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pac-accent) 24%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-team-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-input-action-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-input-action-row__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-input-action-row__btn {
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.dashboard-quality-action-plans .pac-team-card__details {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-team-card__leader {
+  align-self: end;
+  margin-bottom: 10px;
+}
+
+.dashboard-quality-action-plans .pac-team-card__link-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 6px 0 0;
+  font-size: var(--pac-font-sm);
+  line-height: 1.4;
+}
+
+.dashboard-quality-action-plans .pac-text-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--pac-font-sm);
+  color: var(--pac-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dashboard-quality-action-plans .pac-text-btn--danger {
+  color: var(--pac-danger);
+}
+
 .dashboard-quality-action-plans .pac-team-list-item {
   display: flex;
   flex-direction: column;
@@ -2207,7 +2320,8 @@
   box-shadow: inset 0 3px 0 var(--pac-accent);
 }
 
-.dashboard-quality-action-plans .pac-team-row.pac-row--drag-over {
+.dashboard-quality-action-plans .pac-team-row.pac-row--drag-over,
+.dashboard-quality-action-plans .pac-team-card.pac-row--drag-over {
   box-shadow: inset 0 3px 0 var(--pac-accent);
   border-radius: var(--pac-control-radius);
 }
