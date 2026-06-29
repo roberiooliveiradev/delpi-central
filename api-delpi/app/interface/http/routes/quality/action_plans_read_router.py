@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Body, File, Form, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from app.domain.services.quality_action_plans.pac_quality_datetime_service import (
+    validate_optional_iso_datetime,
+)
 
 from app.domain.services.quality_action_plans.ishikawa_causes_service import (
     ISHIKAWA_CATEGORY_FIELDS,
@@ -87,7 +91,22 @@ def _pac_openapi(operation_id: str, subpath: str) -> dict:
     )
 
 
-class CreateActionPlanBody(BaseModel):
+class _PlanTimestampValidationMixin(BaseModel):
+    detected_at: str | None = None
+    reported_at: str | None = None
+
+    @field_validator("detected_at", "reported_at", mode="before")
+    @classmethod
+    def _validate_plan_timestamps(cls, value: object, info) -> str | None:
+        field_name = str(getattr(info, "field_name", "data/hora"))
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError(f"{field_name} deve ser texto em formato ISO 8601.")
+        return validate_optional_iso_datetime(value, field_name=field_name)
+
+
+class CreateActionPlanBody(_PlanTimestampValidationMixin):
     title: str = Field(..., min_length=2, max_length=500)
     customer_name: str | None = Field(default=None, max_length=300)
     customer_code: str | None = Field(default=None, max_length=20)
@@ -102,8 +121,6 @@ class CreateActionPlanBody(BaseModel):
     product_description: str | None = Field(default=None, max_length=500)
     batch_number: str | None = Field(default=None, max_length=100)
     reported_problem: str | None = None
-    detected_at: str | None = None
-    reported_at: str | None = None
     severity: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
     status: str = Field(default="triage", pattern="^(draft|triage)$")
     owner_user_id: str | None = Field(default=None, max_length=100)
@@ -125,7 +142,7 @@ class CreateActionPlanBody(BaseModel):
     client_nc_registry: str | None = Field(default=None, max_length=100)
 
 
-class UpdateActionPlanBody(BaseModel):
+class UpdateActionPlanBody(_PlanTimestampValidationMixin):
     title: str | None = Field(default=None, min_length=2, max_length=500)
     customer_name: str | None = Field(default=None, max_length=300)
     customer_code: str | None = Field(default=None, max_length=20)
@@ -140,8 +157,6 @@ class UpdateActionPlanBody(BaseModel):
     product_description: str | None = Field(default=None, max_length=500)
     batch_number: str | None = Field(default=None, max_length=100)
     reported_problem: str | None = None
-    detected_at: str | None = None
-    reported_at: str | None = None
     severity: str | None = Field(default=None, pattern="^(low|medium|high|critical)$")
     owner_user_id: str | None = Field(default=None, max_length=100)
     branch_code: str | None = Field(default=None, pattern="^(01|02)$")
