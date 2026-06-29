@@ -4,6 +4,7 @@ import { getLineOpPrevisao } from "./opAllocation";
 
 export type SortKey =
   | "nome_cliente"
+  | "loja_cadastro"
   | "filial"
   | "pedido"
   | "pedido_cliente"
@@ -42,6 +43,9 @@ export function sortPedidosItems(
     switch (key) {
       case "nome_cliente":
         result = compareStrings(a.nome_cliente, b.nome_cliente);
+        break;
+      case "loja_cadastro":
+        result = compareStrings(a.loja_cadastro, b.loja_cadastro);
         break;
       case "filial":
         result = compareStrings(a.filial, b.filial);

@@ -75,14 +75,12 @@ function renderCell(
         <div className="pva-cell-stack">
           <strong>{row.nome_cliente || "—"}</strong>
           <span className="pva-cell-muted">
-            {formatEntityTypeWithCodeStore(
-              row.tipo_entidade,
-              row.codigo_cadastro,
-              row.loja_cadastro,
-            )}
+            {formatEntityTypeWithCodeStore(row.tipo_entidade, row.codigo_cadastro, null)}
           </span>
         </div>
       );
+    case "loja_cadastro":
+      return row.loja_cadastro || "—";
     case "filial":
       return row.filial || "—";
     case "pedido":

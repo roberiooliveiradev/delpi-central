@@ -13,6 +13,8 @@ function itemExportValue(item: PedidosVendaAbertosItem, key: TableColumnKey): Ex
   switch (key) {
     case "nome_cliente":
       return item.nome_cliente || "";
+    case "loja_cadastro":
+      return item.loja_cadastro || "";
     case "filial":
       return item.filial || "";
     case "pedido":
