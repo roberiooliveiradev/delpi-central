@@ -32,6 +32,7 @@ import {
 } from "../components/CriterionScorePicker";
 import {
   SHIFTS,
+  auditListSubtitle,
   branchFromPathname,
   canAccessNc,
   ncActionLabel,
@@ -227,7 +228,7 @@ export function Audit5sPage({ pathname }: Props) {
     return map;
   }, [selectedAudit]);
 
-  const activeSensoName = sensoName(activeSenso, sensoNamesByOrder.get(activeSenso));
+  const activeSensoName = sensoName(activeSenso, sensoNamesByOrder.get(activeSenso), branch);
 
   const resyncSelectedAudit = useCallback(async () => {
     if (!selectedAudit) return;
@@ -243,7 +244,7 @@ export function Audit5sPage({ pathname }: Props) {
     selectedAudit && (view === "audit" || view === "nc"),
   );
 
-  const { connected, presence, observationTyping, notice, dismissNotice, signalObservationTyping, stopObservationTyping } =
+  const { connected, connectionError, presence, observationTyping, notice, dismissNotice, signalObservationTyping, stopObservationTyping } =
     useAudit5sRealtime({
     auditId: selectedAudit?.id ?? null,
     enabled: realtimeEnabled,
@@ -380,7 +381,7 @@ export function Audit5sPage({ pathname }: Props) {
           ? "Registre ações corretivas para os critérios com nota baixa desta auditoria."
           : view === "dashboard"
             ? "Acompanhe a evolução das auditorias com filtros e gráficos gerenciais."
-            : "Avaliação colaborativa dos 5 sensos — Utilização, Ordenação, Limpeza, Padronização e Disciplina.";
+            : auditListSubtitle(branch);
 
   return (
     <div
@@ -510,6 +511,7 @@ export function Audit5sPage({ pathname }: Props) {
         <section className="a5s-panel">
           <AuditRealtimeBar
             connected={connected}
+            connectionError={connectionError}
             presence={presence}
             notice={notice}
             onDismissNotice={dismissNotice}
@@ -630,6 +632,7 @@ export function Audit5sPage({ pathname }: Props) {
         <>
           <AuditRealtimeBar
             connected={connected}
+            connectionError={connectionError}
             presence={presence}
             notice={notice}
             onDismissNotice={dismissNotice}

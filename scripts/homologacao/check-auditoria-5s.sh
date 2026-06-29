@@ -8,6 +8,9 @@ TOKEN="${TOKEN:-}"
 echo "[check] remoteEntry.js"
 curl -fsSI "${BASE_URL}/apps/auditoria-5s/assets/remoteEntry.js" | head -1
 
+echo "[check] socket.io handshake (api-delpi)"
+curl -fsS "${BASE_URL}/apps/api-delpi/socket.io/?EIO=4&transport=polling" | python3 -c "import sys; b=sys.stdin.read(); assert b.startswith('0'), b[:80]; print('OK socket.io handshake')"
+
 if [ -n "$TOKEN" ]; then
   echo "[check] criteria API"
   curl -fsS \

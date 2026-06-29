@@ -45,6 +45,7 @@ export function useAudit5sRealtime({
   const clientIdRef = useRef(getClientId());
 
   const [connected, setConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [presence, setPresence] = useState<AuditPresenceUser[]>([]);
   const [observationTyping, setObservationTyping] = useState<
     Record<string, AuditTypingUser[]>
@@ -141,21 +142,37 @@ export function useAudit5sRealtime({
       clearTypingRefreshTimer();
       activeTypingCriterionRef.current = null;
       setConnected(false);
+      setConnectionError(null);
       setPresence([]);
       setObservationTyping({});
       return;
     }
 
     const token = getAccessToken();
-    if (!token) return;
+    if (!token) {
+      setConnected(false);
+      setConnectionError("Sessão expirada — faça login novamente.");
+      return;
+    }
 
     const socket = io(window.location.origin, {
       path: AUDIT_5S_SOCKET_PATH,
       transports: ["websocket", "polling"],
       reconnection: true,
+      reconnectionAttempts: Infinity,
       autoConnect: true,
       auth: { token },
     });
+
+    const refreshSocketAuth = () => {
+      const nextToken = getAccessToken();
+      if (nextToken) {
+        socket.auth = { token: nextToken };
+        setConnectionError(null);
+      }
+    };
+
+    socket.io.on("reconnect_attempt", refreshSocketAuth);
 
     socketRef.current = socket;
 
@@ -168,6 +185,7 @@ export function useAudit5sRealtime({
 
     const handleConnect = () => {
       setConnected(true);
+      setConnectionError(null);
       joinCurrentAudit();
       onResyncRef.current();
     };
@@ -178,6 +196,11 @@ export function useAudit5sRealtime({
       setObservationTyping({});
       activeTypingCriterionRef.current = null;
       clearTypingRefreshTimer();
+    };
+
+    const handleConnectError = (error: Error) => {
+      setConnected(false);
+      setConnectionError(error.message || "Falha na conexão em tempo real.");
     };
 
     const handleResponseUpdated = (payload: AuditResponseUpdatedEvent) => {
@@ -242,6 +265,7 @@ export function useAudit5sRealtime({
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
     socket.on("audit5s.response.updated", handleResponseUpdated);
     socket.on("audit5s.audit.updated", handleAuditUpdated);
     socket.on("audit5s.presence.updated", handlePresenceUpdated);
@@ -257,9 +281,11 @@ export function useAudit5sRealtime({
       }
 
       socket.removeAllListeners();
+      socket.io.off("reconnect_attempt", refreshSocketAuth);
       socket.disconnect();
       socketRef.current = null;
       setConnected(false);
+      setConnectionError(null);
       setPresence([]);
       setObservationTyping({});
     };
@@ -288,6 +314,7 @@ export function useAudit5sRealtime({
 
   return {
     connected,
+    connectionError,
     presence,
     observationTyping,
     notice,

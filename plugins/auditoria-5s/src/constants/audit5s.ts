@@ -13,7 +13,7 @@ export const SCORE_OPTIONS = [
   { value: 5, label: "5 — Bom" },
 ] as const;
 
-/** Catálogo v1 — fallback quando o nome ainda não veio da API. */
+/** Catálogo v1 (filial 02) — fallback quando o nome ainda não veio da API. */
 export const SENSOS = [
   { order: 1, name: "Utilização" },
   { order: 2, name: "Ordenação" },
@@ -22,11 +22,28 @@ export const SENSOS = [
   { order: 5, name: "Disciplina" },
 ] as const;
 
-export function sensoName(order: number, nameFromApi?: string): string {
+/** Catálogo v2 (filial 01) — senso 5 = Autodisciplina. */
+export const SENSOS_FILIAL_01 = [
+  { order: 1, name: "Utilização" },
+  { order: 2, name: "Ordenação" },
+  { order: 3, name: "Limpeza" },
+  { order: 4, name: "Padronização" },
+  { order: 5, name: "Autodisciplina" },
+] as const;
+
+export function sensoName(order: number, nameFromApi?: string, branch?: "01" | "02" | null): string {
   if (nameFromApi?.trim()) {
     return nameFromApi.trim();
   }
-  return SENSOS.find((item) => item.order === order)?.name ?? `Senso ${order}`;
+  const catalog = branch === "01" ? SENSOS_FILIAL_01 : SENSOS;
+  return catalog.find((item) => item.order === order)?.name ?? `Senso ${order}`;
+}
+
+export function auditListSubtitle(branch: "01" | "02"): string {
+  if (branch === "01") {
+    return "Avaliação colaborativa dos 5 sensos — Utilização, Ordenação, Limpeza, Padronização e Autodisciplina.";
+  }
+  return "Avaliação colaborativa dos 5 sensos — Utilização, Ordenação, Limpeza, Padronização e Disciplina.";
 }
 
 export function branchFromPathname(pathname?: string): "01" | "02" | null {

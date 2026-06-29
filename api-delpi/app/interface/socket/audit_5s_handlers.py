@@ -42,7 +42,18 @@ def _claims_display_name(claims: dict[str, Any]) -> str:
 
 
 async def _broadcast_presence(audit_id: str) -> None:
-    users = list(_audit_presence.get(audit_id, {}).values())
+    members = _audit_presence.get(audit_id, {})
+    # Um usuário pode ter várias abas (vários sid); presença exibe uma entrada por user_id.
+    users_by_id: dict[str, dict[str, str]] = {}
+    for entry in members.values():
+        user_id = str(entry.get("user_id") or "").strip()
+        if not user_id:
+            continue
+        users_by_id[user_id] = {
+            "user_id": user_id,
+            "display_name": str(entry.get("display_name") or "Usuário"),
+        }
+    users = list(users_by_id.values())
     await sio.emit(
         "audit5s.presence.updated",
         {"audit_id": audit_id, "users": users},

@@ -11,7 +11,8 @@ Aplicação operacional de auditoria 5S para a equipe de qualidade: avaliação 
 | Documento | Conteúdo |
 |-----------|----------|
 | [ROADMAP.md](./ROADMAP.md) | **Roadmap completo** — fases, arquitetura, API, permissões e critérios de pronto |
-| [CRITERIOS-CATALOGO.md](./CRITERIOS-CATALOGO.md) | **48 critérios** por senso (catálogo v1) |
+| [CRITERIOS-CATALOGO.md](./CRITERIOS-CATALOGO.md) | **48 critérios** por senso (catálogo v1 — filial 02) |
+| [CRITERIOS-CATALOGO-FILIAL-01.md](./CRITERIOS-CATALOGO-FILIAL-01.md) | **15 critérios** por senso (catálogo v2 — filial 01) |
 | [REGRAS-NEGOCIO.md](./REGRAS-NEGOCIO.md) | Turnos, áreas, validação, fórmulas e status |
 
 Documentos previstos nas próximas etapas:

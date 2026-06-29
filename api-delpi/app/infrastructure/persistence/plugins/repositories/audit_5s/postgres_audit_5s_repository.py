@@ -12,6 +12,10 @@ from app.application.services.audit_5s.scoring_service import (
     is_evaluation_complete,
     is_nc_candidate,
 )
+from app.application.services.audit_5s.catalog_service import (
+    DEFAULT_CATALOG_VERSION,
+    fallback_catalog_version,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -23,7 +27,21 @@ from app.shared.utils.person_name import format_person_name
 
 
 class PostgresAudit5sRepository(PluginBaseRepository):
-    CATALOG_VERSION = 1
+    CATALOG_VERSION = DEFAULT_CATALOG_VERSION
+
+    def resolve_catalog_version(self, branch_code: str) -> int:
+        row = self.fetch_one(
+            """
+            SELECT catalog_version
+              FROM quality.audit_5s_branch_catalog
+             WHERE branch_code = %s
+               AND active = TRUE
+            """,
+            (branch_code,),
+        )
+        if row:
+            return int(row["catalog_version"])
+        return fallback_catalog_version(branch_code)
 
     def list_areas(self, branch_code: str, *, active_only: bool = True) -> list[dict[str, Any]]:
         query = """
@@ -68,9 +86,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                    c.catalog_version,
                    s.id AS senso_id,
                    s.sort_order AS senso_order,
-                   s.name AS senso_name
+                   COALESCE(sn.name, s.name) AS senso_name
               FROM quality.audit_5s_criteria c
               JOIN quality.audit_5s_sensos s ON s.id = c.senso_id
+              LEFT JOIN quality.audit_5s_catalog_senso_names sn
+                ON sn.catalog_version = c.catalog_version
+               AND sn.senso_sort_order = s.sort_order
              WHERE c.catalog_version = %s
                AND c.active = TRUE
                AND s.active = TRUE
@@ -212,7 +233,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             (
                 branch_code,
                 audit_code,
-                self.CATALOG_VERSION,
+                self.resolve_catalog_version(branch_code),
                 audit_date,
                 area_id,
                 area_responsible.strip(),
