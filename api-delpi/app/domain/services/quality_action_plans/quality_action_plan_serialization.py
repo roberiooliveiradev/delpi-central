@@ -12,6 +12,8 @@ PLAN_SELECT = """
            p.code,
            p.title,
            p.customer_name,
+           p.customer_code,
+           p.customer_store,
            p.customer_contact,
            p.nonconformity_scope,
            p.customer_template,

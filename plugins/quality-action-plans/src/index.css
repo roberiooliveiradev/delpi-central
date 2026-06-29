@@ -2120,6 +2120,132 @@
   font-size: var(--pac-font-md);
 }
 
+.dashboard-quality-action-plans .pac-plan-status-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0 20px;
+  padding: 12px 14px;
+  border-radius: var(--pac-control-radius);
+  border: 1px solid color-mix(in srgb, var(--pac-card-border) 88%, transparent);
+  background: color-mix(in srgb, var(--pac-card-bg) 92%, var(--pac-input-bg));
+}
+
+.dashboard-quality-action-plans .pac-plan-status-bar__actions {
+  align-items: flex-end;
+}
+
+.dashboard-quality-action-plans .pac-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.dashboard-quality-action-plans .pac-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--pac-accent) 28%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-accent) 10%, var(--pac-card-bg));
+  color: var(--pac-text);
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-tag-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--pac-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-quality-action-plans .pac-lookup {
+  position: relative;
+}
+
+.dashboard-quality-action-plans .pac-lookup__toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--pac-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-quality-action-plans .pac-lookup--open .pac-lookup__toggle,
+.dashboard-quality-action-plans .pac-lookup__toggle:hover {
+  color: var(--pac-text);
+  background: color-mix(in srgb, var(--pac-card-border) 35%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-field--lookup .pac-field__control {
+  padding-right: 40px;
+}
+
+.dashboard-quality-action-plans .pac-lookup__panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow: auto;
+  border-radius: var(--pac-control-radius);
+  border: 1px solid var(--pac-card-border);
+  background: var(--pac-card-bg);
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-lookup__status,
+.dashboard-quality-action-plans .pac-lookup__empty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--pac-text-muted);
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-lookup__status--error {
+  color: var(--pac-danger);
+}
+
+.dashboard-quality-action-plans .pac-lookup__list {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+
+.dashboard-quality-action-plans .pac-lookup__option {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--pac-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dashboard-quality-action-plans .pac-lookup__option:hover {
+  background: color-mix(in srgb, var(--pac-accent) 12%, var(--pac-card-bg));
+}
+
 .dashboard-quality-action-plans .pac-section-subtitle {
   margin: 4px 0 0;
   font-size: var(--pac-font-sm);

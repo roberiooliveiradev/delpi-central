@@ -90,6 +90,8 @@ def _pac_openapi(operation_id: str, subpath: str) -> dict:
 class CreateActionPlanBody(BaseModel):
     title: str = Field(..., min_length=2, max_length=500)
     customer_name: str | None = Field(default=None, max_length=300)
+    customer_code: str | None = Field(default=None, max_length=20)
+    customer_store: str | None = Field(default=None, max_length=10)
     customer_contact: str | None = Field(default=None, max_length=300)
     source_type: str | None = Field(
         default=None,
@@ -126,6 +128,8 @@ class CreateActionPlanBody(BaseModel):
 class UpdateActionPlanBody(BaseModel):
     title: str | None = Field(default=None, min_length=2, max_length=500)
     customer_name: str | None = Field(default=None, max_length=300)
+    customer_code: str | None = Field(default=None, max_length=20)
+    customer_store: str | None = Field(default=None, max_length=10)
     customer_contact: str | None = Field(default=None, max_length=300)
     source_type: str | None = Field(
         default=None,
@@ -550,6 +554,8 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
                 title=body.title,
                 **_creator_identity_kwargs(),
                 customer_name=body.customer_name,
+                customer_code=body.customer_code,
+                customer_store=body.customer_store,
                 customer_contact=body.customer_contact,
                 source_type=body.source_type,
                 source_reference=body.source_reference,

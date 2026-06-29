@@ -31,6 +31,8 @@ export type CreatePlanPayload = {
   severity: string;
   status: string;
   customer_name?: string;
+  customer_code?: string;
+  customer_store?: string;
   product_code?: string;
   batch_number?: string;
   department?: string;
@@ -43,6 +45,8 @@ export type CreatePlanPayload = {
 export type UpdatePlanPayload = {
   title?: string;
   customer_name?: string;
+  customer_code?: string;
+  customer_store?: string;
   customer_contact?: string;
   product_code?: string;
   product_description?: string;

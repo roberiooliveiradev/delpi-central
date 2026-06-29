@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Download,
-  Save,
 } from "lucide-react";
 
 import {
@@ -29,6 +28,7 @@ import { IshikawaFishboneDiagram } from "../components/IshikawaFishboneDiagram";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
+import { PlanProblemSection, buildIdentificationUpdatePayload } from "../components/PlanProblemSection";
 import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
 import { formatActorDisplay } from "../utils/actorDisplay";
 import {
@@ -41,26 +41,18 @@ import {
   Rnc8dSaveActions,
   Rnc8dTeamSection,
 } from "../components/rnc8d/Rnc8dSections";
-import { ScopeBadge, SeverityBadge, StatusBadge } from "../components/StatusBadge";
 import { SaveStatusBanner } from "../components/SaveStatusBanner";
 import { FormActions } from "../components/ui/FormActions";
 import { SectionCard } from "../components/ui/SectionCard";
 import { SelectField } from "../components/ui/SelectField";
 import { StatusPipeline } from "../components/ui/StatusPipeline";
 import { TextAreaField } from "../components/ui/TextAreaField";
-import { TextField } from "../components/ui/TextField";
 import {
-  branchLabel,
   dashboardPath,
   EFFECTIVENESS_STATUSES,
   listPath,
-  PAC_BRANCH_OPTIONS,
-  PAC_NONCONFORMITY_SCOPES,
-  PAC_SOURCE_TYPES,
-  PLAN_SEVERITIES,
   PLAN_STATUSES,
 } from "../constants/actionPlans";
-import { RNC8D_SHARED_FIELD_LABELS } from "../constants/rnc8dSharedFields";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type {
   ActionPlanDetail,
@@ -82,7 +74,7 @@ import {
   parseFiveWhysForm,
   type FiveWhysForm,
 } from "../utils/fiveWhys";
-import { formatSymptomTags, parseSymptomTags } from "../utils/symptomTags";
+import { parseStoredTaggedList } from "../utils/taggedList";
 
 type Props = {
   planId: string;
@@ -121,14 +113,16 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [auditLog, setAuditLog] = useState<PlanAuditLogEntry[]>([]);
   const [identificationForm, setIdentificationForm] = useState({
     title: "",
+    customer_code: "",
+    customer_store: "",
     customer_name: "",
     product_code: "",
     product_description: "",
     batch_number: "",
     department: "",
-    failure_mode: "",
-    problem_category: "",
-    symptom_tags_text: "",
+    failure_modes: [] as string[],
+    problem_categories: [] as string[],
+    symptom_tags: [] as string[],
     reported_problem: "",
     severity: "medium",
     branch_code: "01",
@@ -176,14 +170,16 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       setEffectivenessRejectionReason("");
       setIdentificationForm({
         title: data.plan.title ?? "",
+        customer_code: data.plan.customer_code ?? "",
+        customer_store: data.plan.customer_store ?? "",
         customer_name: data.plan.customer_name ?? "",
         product_code: data.plan.product_code ?? "",
         product_description: data.plan.product_description ?? "",
         batch_number: data.plan.batch_number ?? "",
         department: data.plan.department ?? "",
-        failure_mode: data.plan.failure_mode ?? "",
-        problem_category: data.plan.problem_category ?? "",
-        symptom_tags_text: formatSymptomTags(data.plan.symptom_tags),
+        failure_modes: parseStoredTaggedList(data.plan.failure_mode),
+        problem_categories: parseStoredTaggedList(data.plan.problem_category),
+        symptom_tags: data.plan.symptom_tags ?? [],
         reported_problem: data.plan.reported_problem ?? "",
         severity: data.plan.severity ?? "medium",
         branch_code: data.plan.branch_code ?? "01",
@@ -235,7 +231,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const plan = detail?.plan;
   const terminalStatuses = new Set(["completed", "cancelled"]);
   const isTerminalPlan = plan ? terminalStatuses.has(plan.status) : false;
-  const statusOptions = PLAN_STATUSES.map((item) => ({ value: item.value, label: item.label }));
   const reopenStatusOptions = PLAN_STATUSES.filter(
     (item) => !terminalStatuses.has(item.value) && item.value !== "draft",
   ).map((item) => ({ value: item.value, label: item.label }));
@@ -359,309 +354,65 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               hint={PAC_HELP_TOOLTIPS.detail.statusPipeline}
             />
             {showRnc8dFlow && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
-            <div className="pac-form-grid">
-              <TextField
-                id="pac-detail-title"
-                label="Título"
-                hint={PAC_HELP_TOOLTIPS.detail.title}
-                value={identificationForm.title}
-                onChange={(title) => setIdentificationForm((c) => ({ ...c, title }))}
-                fullWidth
-              />
-              <TextField
-                id="pac-detail-customer"
-                label="Cliente"
-                hint={PAC_HELP_TOOLTIPS.detail.customer}
-                value={identificationForm.customer_name}
-                onChange={(customer_name) =>
-                  setIdentificationForm((c) => ({ ...c, customer_name }))
-                }
-              />
-              <SelectField
-                id="pac-detail-branch"
-                label="Filial"
-                hint={PAC_HELP_TOOLTIPS.filters.branch}
-                options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
-                value={identificationForm.branch_code}
-                onChange={(branch_code) => setIdentificationForm((c) => ({ ...c, branch_code }))}
-                searchable={false}
-              />
-              <SelectField
-                id="pac-detail-scope"
-                label="Escopo NC"
-                hint={PAC_HELP_TOOLTIPS.filters.scope}
-                options={PAC_NONCONFORMITY_SCOPES.map((item) => ({
-                  value: item.value,
-                  label: item.label,
-                }))}
-                value={identificationForm.nonconformity_scope}
-                onChange={(nonconformity_scope) =>
-                  setIdentificationForm((c) => ({ ...c, nonconformity_scope }))
-                }
-                searchable={false}
-              />
-              <TextField
-                id="pac-detail-product"
-                label={
-                  showRnc8dFlow
-                    ? RNC8D_SHARED_FIELD_LABELS.productCode
-                    : "Código produto"
-                }
-                hint={PAC_HELP_TOOLTIPS.detail.productCode}
-                value={identificationForm.product_code}
-                onChange={(product_code) => setIdentificationForm((c) => ({ ...c, product_code }))}
-              />
-              <TextField
-                id="pac-detail-product-desc"
-                label={
-                  showRnc8dFlow
-                    ? RNC8D_SHARED_FIELD_LABELS.productDescription
-                    : "Descrição produto"
-                }
-                hint={PAC_HELP_TOOLTIPS.detail.productDescription}
-                value={identificationForm.product_description}
-                onChange={(product_description) =>
-                  setIdentificationForm((c) => ({ ...c, product_description }))
-                }
-              />
-              <TextField
-                id="pac-detail-batch"
-                label={
-                  showRnc8dFlow ? RNC8D_SHARED_FIELD_LABELS.supplierBatch : "Lote"
-                }
-                hint={PAC_HELP_TOOLTIPS.detail.supplierBatch}
-                value={identificationForm.batch_number}
-                onChange={(batch_number) => setIdentificationForm((c) => ({ ...c, batch_number }))}
-              />
-              <TextField
-                id="pac-detail-department"
-                label="Área"
-                hint={PAC_HELP_TOOLTIPS.detail.department}
-                value={identificationForm.department}
-                onChange={(department) => setIdentificationForm((c) => ({ ...c, department }))}
-              />
-              <TextField
-                id="pac-detail-failure"
-                label="Modo de falha"
-                hint={PAC_HELP_TOOLTIPS.detail.failureMode}
-                value={identificationForm.failure_mode}
-                onChange={(failure_mode) => setIdentificationForm((c) => ({ ...c, failure_mode }))}
-              />
-              <TextField
-                id="pac-detail-problem-category"
-                label="Categoria do problema"
-                hint={PAC_HELP_TOOLTIPS.detail.problemCategory}
-                value={identificationForm.problem_category}
-                onChange={(problem_category) =>
-                  setIdentificationForm((c) => ({ ...c, problem_category }))
-                }
-              />
-              <TextField
-                id="pac-detail-symptom-tags"
-                label="Tags de sintoma"
-                hint={PAC_HELP_TOOLTIPS.detail.symptomTags}
-                value={identificationForm.symptom_tags_text}
-                onChange={(symptom_tags_text) =>
-                  setIdentificationForm((c) => ({ ...c, symptom_tags_text }))
-                }
-                placeholder="oxidacao, trinca"
-              />
-              <SelectField
-                id="pac-detail-severity"
-                label="Severidade"
-                hint={PAC_HELP_TOOLTIPS.filters.severity}
-                options={PLAN_SEVERITIES.map((item) => ({ value: item.value, label: item.label }))}
-                value={identificationForm.severity}
-                onChange={(severity) => setIdentificationForm((c) => ({ ...c, severity }))}
-                searchable
-              />
-              <SelectField
-                id="pac-detail-source-type"
-                label="Canal (source_type)"
-                hint={PAC_HELP_TOOLTIPS.form.source}
-                options={[{ value: "", label: "Não informado" }, ...PAC_SOURCE_TYPES.map((item) => ({ value: item.value, label: item.label }))]}
-                value={identificationForm.source_type}
-                onChange={(source_type) =>
-                  setIdentificationForm((c) => ({ ...c, source_type }))
-                }
-                searchable
-              />
-              <TextField
-                id="pac-detail-source-reference"
-                label="Referência do canal"
-                hint={PAC_HELP_TOOLTIPS.detail.sourceReference}
-                value={identificationForm.source_reference}
-                onChange={(source_reference) =>
-                  setIdentificationForm((c) => ({ ...c, source_reference }))
-                }
-              />
-              {showRnc8dFlow ? (
-                <TextField
-                  id="pac-detail-nc-registry"
-                  label={RNC8D_SHARED_FIELD_LABELS.clientNcRegistry}
-                  hint={PAC_HELP_TOOLTIPS.detail.clientNcRegistry}
-                  value={identificationForm.client_nc_registry}
-                  onChange={(client_nc_registry) =>
-                    setIdentificationForm((c) => ({ ...c, client_nc_registry }))
-                  }
-                />
-              ) : null}
-            </div>
-            {showRnc8dFlow ? (
-              <>
-                <h3 className="pac-subsection-title">Material e nota fiscal</h3>
-                <Rnc8dHeaderFields value={rnc8dForm} onChange={setRnc8dForm} />
-              </>
-            ) : null}
-            <TextAreaField
-              id="pac-detail-problem"
-              label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
-              hint={PAC_HELP_TOOLTIPS.form.description}
-              value={identificationForm.reported_problem}
-              onChange={(reported_problem) =>
-                setIdentificationForm((c) => ({ ...c, reported_problem }))
+            <PlanProblemSection
+              showRnc8dFlow={showRnc8dFlow}
+              planStatus={plan.status}
+              planBranchCode={plan.branch_code}
+              planScope={plan.nonconformity_scope}
+              planSeverity={plan.severity}
+              isTerminalPlan={isTerminalPlan}
+              identificationForm={identificationForm}
+              onIdentificationChange={setIdentificationForm}
+              statusValue={statusValue}
+              onStatusChange={setStatusValue}
+              reopenReason={reopenReason}
+              onReopenReasonChange={setReopenReason}
+              reopenTargetStatus={reopenTargetStatus}
+              onReopenTargetStatusChange={setReopenTargetStatus}
+              reopenStatusOptions={reopenStatusOptions}
+              saving={saving}
+              onSaveStatus={() =>
+                void runSave("status", async () => {
+                  await updatePlanStatus(planId, statusValue);
+                })
               }
-              fullWidth
+              onReopen={() =>
+                void runSave("reopen", async () => {
+                  await reopenPlan(planId, reopenReason, reopenTargetStatus);
+                  setReopenReason("");
+                })
+              }
+              onSaveIdentification={() =>
+                void runSave("identification", async () => {
+                  const payload = buildIdentificationUpdatePayload(identificationForm);
+                  const shared = {
+                    client_nc_registry: identificationForm.client_nc_registry,
+                    customer_name: identificationForm.customer_name,
+                    product_code: identificationForm.product_code,
+                    product_description: identificationForm.product_description,
+                    batch_number: identificationForm.batch_number,
+                    reported_problem: identificationForm.reported_problem,
+                  };
+                  await updateActionPlan(planId, payload);
+                  if (showRnc8dFlow) {
+                    await upsertRnc8dReport(
+                      planId,
+                      sanitizeRnc8dReportPayload(
+                        mergeSharedIdentificationIntoRnc8d(rnc8dForm, shared),
+                      ),
+                    );
+                  }
+                })
+              }
+              materialSection={
+                showRnc8dFlow ? (
+                  <>
+                    <h3 className="pac-subsection-title">Material e nota fiscal</h3>
+                    <Rnc8dHeaderFields value={rnc8dForm} onChange={setRnc8dForm} />
+                  </>
+                ) : null
+              }
             />
-            <FormActions align="end">
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "identification"}
-                onClick={() =>
-                  void runSave("identification", async () => {
-                    const shared = {
-                      client_nc_registry: identificationForm.client_nc_registry,
-                      customer_name: identificationForm.customer_name,
-                      product_code: identificationForm.product_code,
-                      product_description: identificationForm.product_description,
-                      batch_number: identificationForm.batch_number,
-                      reported_problem: identificationForm.reported_problem,
-                    };
-                    await updateActionPlan(planId, {
-                      title: identificationForm.title.trim() || undefined,
-                      customer_name: identificationForm.customer_name.trim() || undefined,
-                      product_code: identificationForm.product_code.trim() || undefined,
-                      product_description: identificationForm.product_description.trim() || undefined,
-                      batch_number: identificationForm.batch_number.trim() || undefined,
-                      department: identificationForm.department.trim() || undefined,
-                      failure_mode: identificationForm.failure_mode.trim() || undefined,
-                      problem_category: identificationForm.problem_category.trim() || undefined,
-                      symptom_tags: (() => {
-                        const tags = parseSymptomTags(identificationForm.symptom_tags_text);
-                        return tags.length ? tags : undefined;
-                      })(),
-                      reported_problem: identificationForm.reported_problem.trim() || undefined,
-                      severity: identificationForm.severity,
-                      branch_code: identificationForm.branch_code,
-                      nonconformity_scope: identificationForm.nonconformity_scope,
-                      client_nc_registry: identificationForm.client_nc_registry.trim() || undefined,
-                      source_type: identificationForm.source_type.trim() || undefined,
-                      source_reference: identificationForm.source_reference.trim() || undefined,
-                    });
-                    if (showRnc8dFlow) {
-                      await upsertRnc8dReport(
-                        planId,
-                        sanitizeRnc8dReportPayload(
-                          mergeSharedIdentificationIntoRnc8d(rnc8dForm, shared),
-                        ),
-                      );
-                    }
-                  })
-                }
-              >
-                <Save size={16} />
-                {saving === "identification" ? "Salvando…" : "Salvar identificação"}
-              </button>
-            </FormActions>
-            <dl className="pac-dl pac-dl--compact">
-              <div>
-                <dt>Status atual</dt>
-                <dd>
-                  <StatusBadge status={plan.status} />
-                </dd>
-              </div>
-              <div>
-                <dt>Filial</dt>
-                <dd>{branchLabel(plan.branch_code)}</dd>
-              </div>
-              <div>
-                <dt>Escopo</dt>
-                <dd>
-                  <ScopeBadge scope={plan.nonconformity_scope} />
-                </dd>
-              </div>
-              <div>
-                <dt>Severidade</dt>
-                <dd>
-                  <SeverityBadge severity={plan.severity} />
-                </dd>
-              </div>
-            </dl>
-            <div className="pac-inline-form">
-              {isTerminalPlan ? (
-                <>
-                  <TextAreaField
-                    id="pac-reopen-reason"
-                    label="Motivo da reabertura"
-                    hint={PAC_HELP_TOOLTIPS.detail.reopenReason}
-                    value={reopenReason}
-                    onChange={setReopenReason}
-                    placeholder="Descreva por que o plano precisa ser reaberto…"
-                    rows={3}
-                    fullWidth
-                  />
-                  <SelectField
-                    id="pac-plan-reopen-status"
-                    label="Retomar em"
-                    hint={PAC_HELP_TOOLTIPS.detail.reopenTargetStatus}
-                    options={reopenStatusOptions}
-                    value={reopenTargetStatus}
-                    onChange={setReopenTargetStatus}
-                    searchable={false}
-                  />
-                  <button
-                    type="button"
-                    className="pac-primary-btn"
-                    disabled={saving === "reopen" || reopenReason.trim().length < 5}
-                    onClick={() =>
-                      void runSave("reopen", async () => {
-                        await reopenPlan(planId, reopenReason, reopenTargetStatus);
-                        setReopenReason("");
-                      })
-                    }
-                  >
-                    <Save size={16} />
-                    {saving === "reopen" ? "Reabrindo…" : "Reabrir plano"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <SelectField
-                    id="pac-plan-status"
-                    label="Atualizar status"
-                    hint={PAC_HELP_TOOLTIPS.detail.updateStatus}
-                    options={statusOptions}
-                    value={statusValue}
-                    onChange={setStatusValue}
-                    searchable
-                  />
-                  <button
-                    type="button"
-                    className="pac-primary-btn"
-                    disabled={saving === "status"}
-                    onClick={() =>
-                      void runSave("status", async () => {
-                        await updatePlanStatus(planId, statusValue);
-                      })
-                    }
-                  >
-                    <Save size={16} />
-                    {saving === "status" ? "Salvando…" : "Salvar status"}
-                  </button>
-                </>
-              )}
-            </div>
           </SectionCard>
 
           <SimilarCasesPanel planId={planId} onNavigate={onNavigate} />

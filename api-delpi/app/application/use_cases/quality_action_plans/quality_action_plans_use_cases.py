@@ -45,6 +45,8 @@ class CreateQualityActionPlanRequest:
     created_by_name: str | None = None
     created_by_email: str | None = None
     customer_name: str | None = None
+    customer_code: str | None = None
+    customer_store: str | None = None
     customer_contact: str | None = None
     nonconformity_scope: str | None = None
     source_type: str | None = None
@@ -103,6 +105,8 @@ class CreateQualityActionPlanUseCase:
                 "created_by_name": request.created_by_name,
                 "created_by_email": request.created_by_email,
                 "customer_name": request.customer_name,
+                "customer_code": request.customer_code,
+                "customer_store": request.customer_store,
                 "customer_contact": request.customer_contact,
                 "nonconformity_scope": nonconformity_scope,
                 "source_type": request.source_type,
@@ -136,6 +140,8 @@ class CreateQualityActionPlanUseCase:
 class UpdateQualityActionPlanRequest:
     title: str | None = None
     customer_name: str | None = None
+    customer_code: str | None = None
+    customer_store: str | None = None
     customer_contact: str | None = None
     source_type: str | None = None
     source_reference: str | None = None

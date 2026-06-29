@@ -20,6 +20,8 @@ export type ActionPlanSummary = {
   code?: string;
   title: string;
   customer_name?: string | null;
+  customer_code?: string | null;
+  customer_store?: string | null;
   product_code?: string | null;
   branch_code?: string | null;
   nonconformity_scope?: NonconformityScope;

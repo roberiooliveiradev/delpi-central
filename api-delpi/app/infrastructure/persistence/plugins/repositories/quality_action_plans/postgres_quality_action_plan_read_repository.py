@@ -1458,7 +1458,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         row = self.execute_returning_one(
             """
             INSERT INTO quality.quality_action_plans (
-                code, title, customer_name, customer_contact, nonconformity_scope,
+                code, title, customer_name, customer_code, customer_store, customer_contact, nonconformity_scope,
                 customer_template, client_nc_registry,
                 source_type, source_reference,
                 product_code, product_description, batch_number, reported_problem,
@@ -1466,8 +1466,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 branch_code, department, problem_category, symptom_tags, root_cause_category,
                 failure_mode, recurrence_key
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             RETURNING id, code, status
             """,
@@ -1475,6 +1475,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 code,
                 fields["title"],
                 fields.get("customer_name"),
+                fields.get("customer_code"),
+                fields.get("customer_store"),
                 fields.get("customer_contact"),
                 fields.get("nonconformity_scope", "external"),
                 fields.get("customer_template", "generic"),
@@ -1548,6 +1550,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         allowed = {
             "title",
             "customer_name",
+            "customer_code",
+            "customer_store",
             "customer_contact",
             "nonconformity_scope",
             "source_type",
