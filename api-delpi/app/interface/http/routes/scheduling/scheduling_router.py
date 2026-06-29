@@ -54,6 +54,12 @@ class UpdateResourceBody(BaseModel):
     active: bool | None = None
 
 
+class RecurrenceBody(BaseModel):
+    frequency: str = Field(..., pattern="^(weekly|monthly)$")
+    until: datetime
+    interval: int = Field(default=1, ge=1, le=4)
+
+
 class CreateBookingBody(BaseModel):
     branch_code: str = Field(..., pattern="^(ES|SC)$")
     resource_id: str
@@ -61,6 +67,7 @@ class CreateBookingBody(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
     start_at: datetime
     end_at: datetime
+    recurrence: RecurrenceBody | None = None
 
 
 def _current_user_id() -> str:
@@ -264,6 +271,40 @@ def create_booking(body: CreateBookingBody):
         if not resource.get("active", True):
             return error_response("Recurso inativo.", status_code=400)
 
+        if body.recurrence:
+            if body.recurrence.until < body.start_at:
+                return error_response(
+                    "A data final da recorrência deve ser igual ou posterior ao início.",
+                    status_code=400,
+                )
+            data = repo.create_recurring_bookings(
+                resource_id=body.resource_id,
+                branch_code=body.branch_code,
+                title=body.title,
+                notes=body.notes,
+                start_at=body.start_at,
+                end_at=body.end_at,
+                booked_by_user_id=_current_user_id(),
+                booked_by_name=_current_user_name(),
+                frequency=body.recurrence.frequency,
+                until=body.recurrence.until,
+                interval=body.recurrence.interval,
+            )
+            created_count = int(data.get("total_created", 0))
+            skipped_count = int(data.get("total_skipped", 0))
+            if skipped_count:
+                message = (
+                    f"Série recorrente criada com {created_count} reserva(s). "
+                    f"{skipped_count} horário(s) ignorado(s) por conflito."
+                )
+            else:
+                message = f"Série recorrente criada com {created_count} reserva(s)."
+            return api_delpi_success(
+                data,
+                operation_id="create_scheduling_recurring_booking",
+                message=message,
+            )
+
         data = repo.create_booking(
             resource_id=body.resource_id,
             branch_code=body.branch_code,
@@ -290,7 +331,10 @@ def create_booking(body: CreateBookingBody):
 
 @router.patch("/bookings/{booking_id}/cancel")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
-def cancel_booking(booking_id: str):
+def cancel_booking(
+    booking_id: str,
+    scope: str = Query(default="occurrence", pattern="^(occurrence|future|all)$"),
+):
     try:
         repo = build_scheduling_repository()
         booking = repo.get_booking(booking_id)
@@ -311,16 +355,29 @@ def cancel_booking(booking_id: str):
         if booking.get("status") == "cancelled":
             return error_response("Reserva já cancelada.", status_code=400)
 
-        data = repo.cancel_booking(booking_id)
+        if scope in ("future", "all") and not booking.get("recurrence_series_id"):
+            return error_response(
+                "Esta reserva não faz parte de uma série recorrente.",
+                status_code=400,
+            )
+
+        data = repo.cancel_booking(booking_id, scope=scope)  # type: ignore[arg-type]
         if not data:
             return error_response("Não foi possível cancelar a reserva.", status_code=400)
-        data["resource_name"] = booking.get("resource_name")
-        data["resource_type"] = booking.get("resource_type")
+
+        cancelled_count = int(data.get("cancelled_count", 1))
+        if cancelled_count > 1:
+            message = f"{cancelled_count} reservas da série canceladas com sucesso."
+        else:
+            message = "Reserva cancelada com sucesso."
+
         return api_delpi_success(
             data,
             operation_id="cancel_scheduling_booking",
-            message="Reserva cancelada com sucesso.",
+            message=message,
         )
+    except PluginsRepositoryError as exc:
+        return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro ao cancelar reserva: {exc}")
         return error_response("Erro interno ao cancelar reserva.", status_code=500)

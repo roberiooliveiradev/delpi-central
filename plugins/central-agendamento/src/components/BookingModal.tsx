@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { addHours, format } from "date-fns";
+import { addHours, addMonths, addWeeks, format } from "date-fns";
+import { Calendar, CalendarDays, CalendarRange } from "lucide-react";
 
-import type { SchedulingResource } from "../api/schedulingApi";
+import type { RecurrenceFrequency, RecurrencePayload, SchedulingResource } from "../api/schedulingApi";
 import type { BranchCode } from "../constants/scheduling";
+
+type RecurrenceMode = "none" | RecurrenceFrequency;
 
 type Props = {
   open: boolean;
@@ -19,6 +22,7 @@ type Props = {
     notes?: string;
     start_at: string;
     end_at: string;
+    recurrence?: RecurrencePayload;
   }) => Promise<void>;
 };
 
@@ -27,12 +31,41 @@ function toLocalInputValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function toLocalDateValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 function endOneHourAfterStart(startValue: string): string {
   if (!startValue) return "";
   const start = new Date(startValue);
   if (Number.isNaN(start.getTime())) return "";
   return toLocalInputValue(addHours(start, 1));
 }
+
+function defaultUntilDate(startValue: string, mode: RecurrenceMode): string {
+  if (!startValue) return "";
+  const start = new Date(startValue);
+  if (Number.isNaN(start.getTime())) return "";
+  const until = mode === "monthly" ? addMonths(start, 6) : addWeeks(start, 8);
+  return toLocalDateValue(until);
+}
+
+const RECURRENCE_LABELS: Record<RecurrenceFrequency, string> = {
+  weekly: "Semanal",
+  monthly: "Mensal",
+};
+
+const RECURRENCE_CHOICES: Array<{
+  mode: RecurrenceMode;
+  label: string;
+  hint: string;
+  icon: typeof Calendar;
+}> = [
+  { mode: "none", label: "Não repetir", hint: "Reserva única", icon: Calendar },
+  { mode: "weekly", label: "Semanal", hint: "Mesmo dia da semana", icon: CalendarDays },
+  { mode: "monthly", label: "Mensal", hint: "Mesmo dia do mês", icon: CalendarRange },
+];
 
 export function BookingModal({
   open,
@@ -51,6 +84,8 @@ export function BookingModal({
   const [startValue, setStartValue] = useState("");
   const [endValue, setEndValue] = useState("");
   const [endTouched, setEndTouched] = useState(false);
+  const [recurrenceMode, setRecurrenceMode] = useState<RecurrenceMode>("none");
+  const [untilDate, setUntilDate] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,6 +94,7 @@ export function BookingModal({
     setTitle("");
     setNotes("");
     setEndTouched(false);
+    setRecurrenceMode("none");
     const initialStart = defaultStart ? toLocalInputValue(defaultStart) : "";
     setStartValue(initialStart);
     if (defaultEnd) {
@@ -68,6 +104,7 @@ export function BookingModal({
     } else {
       setEndValue("");
     }
+    setUntilDate(initialStart ? defaultUntilDate(initialStart, "weekly") : "");
     setError(null);
   }, [open, defaultResourceId, defaultStart, defaultEnd, resources]);
 
@@ -80,13 +117,23 @@ export function BookingModal({
 
     if (!endTouched) {
       setEndValue(endOneHourAfterStart(value));
-      return;
+    } else {
+      const start = new Date(value);
+      const end = new Date(endValue);
+      if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end <= start) {
+        setEndValue(endOneHourAfterStart(value));
+      }
     }
 
-    const start = new Date(value);
-    const end = new Date(endValue);
-    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end <= start) {
-      setEndValue(endOneHourAfterStart(value));
+    if (recurrenceMode !== "none") {
+      setUntilDate(defaultUntilDate(value, recurrenceMode));
+    }
+  }
+
+  function handleRecurrenceModeChange(mode: RecurrenceMode) {
+    setRecurrenceMode(mode);
+    if (mode !== "none" && startValue) {
+      setUntilDate(defaultUntilDate(startValue, mode));
     }
   }
 
@@ -117,6 +164,27 @@ export function BookingModal({
       return;
     }
 
+    let recurrence: RecurrencePayload | undefined;
+    if (recurrenceMode !== "none") {
+      if (!untilDate) {
+        setError("Informe até quando a reserva deve se repetir.");
+        return;
+      }
+      const until = new Date(`${untilDate}T23:59:59`);
+      if (Number.isNaN(until.getTime())) {
+        setError("Data final da recorrência inválida.");
+        return;
+      }
+      if (until < start) {
+        setError("A data final da recorrência deve ser igual ou posterior ao início.");
+        return;
+      }
+      recurrence = {
+        frequency: recurrenceMode,
+        until: until.toISOString(),
+      };
+    }
+
     try {
       await onSubmit({
         resource_id: resourceId,
@@ -124,6 +192,7 @@ export function BookingModal({
         notes: notes.trim() || undefined,
         start_at: start.toISOString(),
         end_at: end.toISOString(),
+        recurrence,
       });
       onClose();
     } catch (err) {
@@ -198,6 +267,53 @@ export function BookingModal({
             </label>
           </div>
 
+          <fieldset className="ca-fieldset">
+            <legend>Repetir</legend>
+            <div className="ca-recurrence-options" role="radiogroup" aria-label="Repetição">
+              {RECURRENCE_CHOICES.map(({ mode, label, hint, icon: Icon }) => {
+                const selected = recurrenceMode === mode;
+                return (
+                  <label
+                    key={mode}
+                    className={`ca-recurrence-option${selected ? " ca-recurrence-option--selected" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      className="ca-recurrence-option__input"
+                      name="recurrence"
+                      value={mode}
+                      checked={selected}
+                      onChange={() => handleRecurrenceModeChange(mode)}
+                    />
+                    <span className="ca-recurrence-option__icon" aria-hidden="true">
+                      <Icon size={18} strokeWidth={1.75} />
+                    </span>
+                    <span className="ca-recurrence-option__text">
+                      <span className="ca-recurrence-option__label">{label}</span>
+                      <span className="ca-recurrence-option__hint">{hint}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {recurrenceMode !== "none" ? (
+            <label className="ca-field">
+              <span>Repetir até</span>
+              <input
+                type="date"
+                value={untilDate}
+                onChange={(event) => setUntilDate(event.target.value)}
+                required
+              />
+              <p className="ca-muted ca-field-hint">
+                A reserva será criada {RECURRENCE_LABELS[recurrenceMode].toLowerCase()} no mesmo
+                horário até a data informada.
+              </p>
+            </label>
+          ) : null}
+
           <label className="ca-field">
             <span>Observações</span>
             <textarea
@@ -222,7 +338,11 @@ export function BookingModal({
               Cancelar
             </button>
             <button type="submit" className="ca-btn ca-btn--primary" disabled={loading}>
-              {loading ? "Reservando..." : "Confirmar reserva"}
+              {loading
+                ? "Reservando..."
+                : recurrenceMode === "none"
+                  ? "Confirmar reserva"
+                  : "Confirmar série recorrente"}
             </button>
           </div>
         </form>

@@ -22,6 +22,8 @@ export type SchedulingResource = {
   updated_at: string;
 };
 
+export type RecurrenceFrequency = "weekly" | "monthly";
+
 export type SchedulingBooking = {
   id: string;
   resource_id: string;
@@ -33,11 +35,48 @@ export type SchedulingBooking = {
   booked_by_user_id: string;
   booked_by_name: string;
   status: "confirmed" | "cancelled";
+  recurrence_series_id?: string | null;
+  recurrence_frequency?: RecurrenceFrequency | null;
   created_at: string;
   updated_at: string;
   resource_name?: string;
   resource_type?: ResourceType;
 };
+
+export type RecurrencePayload = {
+  frequency: RecurrenceFrequency;
+  until: string;
+  interval?: number;
+};
+
+export type CreateBookingPayload = {
+  branch_code: BranchCode;
+  resource_id: string;
+  title: string;
+  notes?: string;
+  start_at: string;
+  end_at: string;
+  recurrence?: RecurrencePayload;
+};
+
+export type RecurringBookingResult = {
+  series_id: string;
+  frequency: RecurrenceFrequency;
+  created: SchedulingBooking[];
+  skipped: Array<{ start_at: string; end_at: string; reason: string }>;
+  total_created: number;
+  total_skipped: number;
+};
+
+export type CreateBookingResult = SchedulingBooking | RecurringBookingResult;
+
+export function isRecurringBookingResult(
+  result: CreateBookingResult,
+): result is RecurringBookingResult {
+  return "series_id" in result && "created" in result;
+}
+
+export type CancelScope = "occurrence" | "future" | "all";
 
 export type MeProfile = {
   id: string;
@@ -111,24 +150,21 @@ export async function fetchBookings(
   return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
-export async function createBooking(payload: {
-  branch_code: BranchCode;
-  resource_id: string;
-  title: string;
-  notes?: string;
-  start_at: string;
-  end_at: string;
-}): Promise<SchedulingBooking> {
-  const envelope = await httpPost<ApiEnvelope<SchedulingBooking>>(
+export async function createBooking(payload: CreateBookingPayload): Promise<CreateBookingResult> {
+  const envelope = await httpPost<ApiEnvelope<CreateBookingResult>>(
     `${API_BASE}/bookings`,
     payload,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
-export async function cancelBooking(bookingId: string): Promise<SchedulingBooking> {
-  const envelope = await httpPatch<ApiEnvelope<SchedulingBooking>>(
-    `${API_BASE}/bookings/${bookingId}/cancel`,
+export async function cancelBooking(
+  bookingId: string,
+  scope: CancelScope = "occurrence",
+): Promise<SchedulingBooking & { cancelled_count?: number }> {
+  const params = new URLSearchParams({ scope });
+  const envelope = await httpPatch<ApiEnvelope<SchedulingBooking & { cancelled_count?: number }>>(
+    `${API_BASE}/bookings/${bookingId}/cancel?${params.toString()}`,
     {},
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");

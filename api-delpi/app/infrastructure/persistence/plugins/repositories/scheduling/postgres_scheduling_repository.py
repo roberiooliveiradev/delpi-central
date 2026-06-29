@@ -2,14 +2,40 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from psycopg.errors import ExclusionViolation
 
+from app.domain.services.scheduling_recurrence_service import (
+    RecurrenceFrequency,
+    RecurrenceValidationError,
+    expand_recurrence_slots,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
 )
+
+CancelScope = Literal["occurrence", "future", "all"]
+
+_BOOKING_SELECT = """
+    SELECT b.id,
+           b.resource_id,
+           b.branch_code,
+           b.title,
+           b.notes,
+           b.start_at,
+           b.end_at,
+           b.booked_by_user_id,
+           b.booked_by_name,
+           b.status,
+           b.recurrence_series_id,
+           b.created_at,
+           b.updated_at,
+           r.name AS resource_name,
+           r.resource_type,
+           rs.frequency AS recurrence_frequency
+"""
 
 
 class BookingConflictError(PluginsRepositoryError):
@@ -180,23 +206,11 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         resource_id: str | None = None,
         include_cancelled: bool = False,
     ) -> list[dict[str, Any]]:
-        query = """
-            SELECT b.id,
-                   b.resource_id,
-                   b.branch_code,
-                   b.title,
-                   b.notes,
-                   b.start_at,
-                   b.end_at,
-                   b.booked_by_user_id,
-                   b.booked_by_name,
-                   b.status,
-                   b.created_at,
-                   b.updated_at,
-                   r.name AS resource_name,
-                   r.resource_type
+        query = f"""
+            {_BOOKING_SELECT}
               FROM scheduling.bookings b
               JOIN scheduling.resources r ON r.id = b.resource_id
+              LEFT JOIN scheduling.recurrence_series rs ON rs.id = b.recurrence_series_id
              WHERE b.branch_code = %s
                AND b.start_at < %s
                AND b.end_at > %s
@@ -212,23 +226,11 @@ class PostgresSchedulingRepository(PluginBaseRepository):
 
     def get_booking(self, booking_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
-            """
-            SELECT b.id,
-                   b.resource_id,
-                   b.branch_code,
-                   b.title,
-                   b.notes,
-                   b.start_at,
-                   b.end_at,
-                   b.booked_by_user_id,
-                   b.booked_by_name,
-                   b.status,
-                   b.created_at,
-                   b.updated_at,
-                   r.name AS resource_name,
-                   r.resource_type
+            f"""
+            {_BOOKING_SELECT}
               FROM scheduling.bookings b
               JOIN scheduling.resources r ON r.id = b.resource_id
+              LEFT JOIN scheduling.recurrence_series rs ON rs.id = b.recurrence_series_id
              WHERE b.id = %s
             """,
             (booking_id,),
@@ -295,6 +297,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                           booked_by_user_id,
                           booked_by_name,
                           status,
+                          recurrence_series_id,
                           created_at,
                           updated_at
                 """,
@@ -326,7 +329,239 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             row["resource_type"] = resource["resource_type"]
         return row
 
-    def cancel_booking(self, booking_id: str) -> dict[str, Any] | None:
+    def create_recurring_bookings(
+        self,
+        *,
+        resource_id: str,
+        branch_code: str,
+        title: str,
+        notes: str | None,
+        start_at: datetime,
+        end_at: datetime,
+        booked_by_user_id: str,
+        booked_by_name: str,
+        frequency: str,
+        until: datetime,
+        interval: int = 1,
+    ) -> dict[str, Any]:
+        try:
+            slots = expand_recurrence_slots(
+                start_at=start_at,
+                end_at=end_at,
+                frequency=frequency,  # type: ignore[arg-type]
+                until=until,
+                interval=interval,
+            )
+        except RecurrenceValidationError as exc:
+            raise PluginsRepositoryError(str(exc)) from exc
+
+        resource = self.get_resource(resource_id)
+        if not resource:
+            raise PluginsRepositoryError("Recurso não encontrado.")
+
+        created: list[dict[str, Any]] = []
+        skipped: list[dict[str, Any]] = []
+
+        try:
+            series_row = self.execute_returning_one(
+                """
+                INSERT INTO scheduling.recurrence_series (
+                    branch_code,
+                    resource_id,
+                    frequency,
+                    interval_count,
+                    series_start,
+                    series_end,
+                    title,
+                    notes,
+                    booked_by_user_id,
+                    booked_by_name
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id,
+                          branch_code,
+                          resource_id,
+                          frequency,
+                          interval_count,
+                          series_start,
+                          series_end,
+                          title,
+                          notes,
+                          booked_by_user_id,
+                          booked_by_name,
+                          created_at,
+                          updated_at
+                """,
+                (
+                    branch_code,
+                    resource_id,
+                    frequency,
+                    interval,
+                    start_at,
+                    until,
+                    title.strip(),
+                    notes,
+                    booked_by_user_id,
+                    booked_by_name,
+                ),
+                auto_commit=False,
+            )
+            if not series_row:
+                raise PluginsRepositoryError("Falha ao criar série recorrente.")
+
+            series_id = str(series_row["id"])
+
+            for slot_start, slot_end in slots:
+                if self.has_booking_conflict(resource_id, slot_start, slot_end):
+                    skipped.append(
+                        {
+                            "start_at": slot_start.isoformat(),
+                            "end_at": slot_end.isoformat(),
+                            "reason": "Recurso já reservado neste horário.",
+                        }
+                    )
+                    continue
+
+                try:
+                    row = self.execute_returning_one(
+                        """
+                        INSERT INTO scheduling.bookings (
+                            resource_id,
+                            branch_code,
+                            title,
+                            notes,
+                            start_at,
+                            end_at,
+                            booked_by_user_id,
+                            booked_by_name,
+                            recurrence_series_id
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id,
+                                  resource_id,
+                                  branch_code,
+                                  title,
+                                  notes,
+                                  start_at,
+                                  end_at,
+                                  booked_by_user_id,
+                                  booked_by_name,
+                                  status,
+                                  recurrence_series_id,
+                                  created_at,
+                                  updated_at
+                        """,
+                        (
+                            resource_id,
+                            branch_code,
+                            title.strip(),
+                            notes,
+                            slot_start,
+                            slot_end,
+                            booked_by_user_id,
+                            booked_by_name,
+                            series_id,
+                        ),
+                        auto_commit=False,
+                    )
+                except ExclusionViolation:
+                    skipped.append(
+                        {
+                            "start_at": slot_start.isoformat(),
+                            "end_at": slot_end.isoformat(),
+                            "reason": "Recurso já reservado neste horário.",
+                        }
+                    )
+                    continue
+
+                if row:
+                    row["resource_name"] = resource["name"]
+                    row["resource_type"] = resource["resource_type"]
+                    row["recurrence_frequency"] = frequency
+                    created.append(row)
+
+            if not created:
+                self.rollback()
+                raise BookingConflictError(
+                    "Nenhuma ocorrência pôde ser reservada. Todos os horários estão ocupados."
+                )
+
+            self.commit()
+        except BookingConflictError:
+            self.rollback()
+            raise
+        except Exception:
+            self.rollback()
+            raise
+
+        return {
+            "series_id": series_id,
+            "frequency": frequency,
+            "created": created,
+            "skipped": skipped,
+            "total_created": len(created),
+            "total_skipped": len(skipped),
+        }
+
+    def cancel_booking(
+        self,
+        booking_id: str,
+        *,
+        scope: CancelScope = "occurrence",
+    ) -> dict[str, Any]:
+        booking = self.get_booking(booking_id)
+        if not booking:
+            raise PluginsRepositoryError("Reserva não encontrada.")
+        if booking.get("status") == "cancelled":
+            raise PluginsRepositoryError("Reserva já cancelada.")
+
+        series_id = booking.get("recurrence_series_id")
+        if not series_id or scope == "occurrence":
+            row = self._cancel_single_booking(booking_id)
+            if not row:
+                raise PluginsRepositoryError("Não foi possível cancelar a reserva.")
+            row["resource_name"] = booking.get("resource_name")
+            row["resource_type"] = booking.get("resource_type")
+            row["recurrence_frequency"] = booking.get("recurrence_frequency")
+            row["cancelled_count"] = 1
+            return row
+
+        if scope == "future":
+            rows = self.fetch_all(
+                """
+                UPDATE scheduling.bookings
+                   SET status = 'cancelled',
+                       updated_at = NOW()
+                 WHERE recurrence_series_id = %s
+                   AND status = 'confirmed'
+                   AND start_at >= %s
+                RETURNING id
+                """,
+                (series_id, booking["start_at"]),
+            )
+        else:
+            rows = self.fetch_all(
+                """
+                UPDATE scheduling.bookings
+                   SET status = 'cancelled',
+                       updated_at = NOW()
+                 WHERE recurrence_series_id = %s
+                   AND status = 'confirmed'
+                RETURNING id
+                """,
+                (series_id,),
+            )
+
+        if not rows:
+            raise PluginsRepositoryError("Não foi possível cancelar as reservas da série.")
+
+        cancelled_count = len(rows)
+        row = self.get_booking(booking_id) or booking
+        row["resource_name"] = booking.get("resource_name")
+        row["resource_type"] = booking.get("resource_type")
+        row["recurrence_frequency"] = booking.get("recurrence_frequency")
+        row["cancelled_count"] = cancelled_count
+        return row
+
+    def _cancel_single_booking(self, booking_id: str) -> dict[str, Any] | None:
         return self.execute_returning_one(
             """
             UPDATE scheduling.bookings
@@ -344,6 +579,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                       booked_by_user_id,
                       booked_by_name,
                       status,
+                      recurrence_series_id,
                       created_at,
                       updated_at
             """,
