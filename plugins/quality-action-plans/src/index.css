@@ -2336,6 +2336,112 @@
   width: min(960px, 100%);
 }
 
+/* Modal é renderizado via portal fora de .dashboard-quality-action-plans — estilos locais */
+.pac-modal--customer-search .pac-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pac-modal--customer-search .pac-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pac-modal--customer-search .pac-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #111);
+}
+
+.pac-modal--customer-search .pac-field__control {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #d8dce3);
+  padding: 8px 12px;
+  background: var(--surface, #fff);
+  color: var(--text, #111);
+  font: inherit;
+}
+
+.pac-modal--customer-search .pac-field__control:focus {
+  outline: 2px solid color-mix(in srgb, var(--pac-accent, #089bdb) 45%, transparent);
+  outline-offset: 1px;
+}
+
+:root[data-theme="dark"] .pac-modal--customer-search .pac-field__control {
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 88%, transparent);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.pac-modal--customer-search .pac-primary-btn,
+.pac-modal--customer-search .pac-ghost-btn {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font: inherit;
+}
+
+.pac-modal--customer-search .pac-primary-btn {
+  border: none;
+  background: var(--pac-accent, #089bdb);
+  color: #fff;
+}
+
+.pac-modal--customer-search .pac-primary-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.pac-modal--customer-search .pac-ghost-btn {
+  margin: 0;
+  border: 1px solid var(--border, #d8dce3);
+  background: transparent;
+  color: var(--text, #111);
+}
+
+.pac-modal--customer-search .pac-table-wrap {
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--border, #d8dce3) 85%, transparent);
+  border-radius: 12px;
+}
+
+.pac-modal--customer-search .pac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.pac-modal--customer-search .pac-table th,
+.pac-modal--customer-search .pac-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border, #d8dce3) 80%, transparent);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.pac-modal--customer-search .pac-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--surface, #fff) 92%, var(--pac-accent, #089bdb) 8%);
+  color: var(--pac-text-muted, #5c6570);
+  font-weight: 700;
+}
+
+.pac-modal--customer-search .pac-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .pac-customer-section__toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -2346,7 +2452,7 @@
 .pac-customer-search-modal {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .pac-customer-search-modal__hint {
@@ -2357,25 +2463,74 @@
   margin: 0;
 }
 
-.pac-customer-search-modal__actions {
+.pac-customer-search-modal__toolbar {
   display: flex;
-  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.pac-customer-search-modal__results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 220px;
+}
+
+.pac-customer-search-modal__status {
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--border, #d8dce3) 90%, transparent);
+  border-radius: 12px;
+}
+
+.pac-customer-search-modal__results-header {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pac-text-muted, #5c6570);
 }
 
 .pac-customer-search-modal__error {
   margin: 0;
-  color: var(--pac-danger, #c0392b);
-  font-size: var(--pac-font-md);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #c0392b 12%, transparent);
+  color: #c0392b;
+  font-size: 14px;
 }
 
 .pac-customer-search-modal__table {
-  max-height: min(52vh, 480px);
+  max-height: min(52vh, 420px);
   overflow: auto;
+}
+
+.pac-customer-search-modal__row {
+  cursor: pointer;
+}
+
+.pac-customer-search-modal__row:hover td,
+.pac-customer-search-modal__row:focus-visible td {
+  background: color-mix(in srgb, var(--pac-accent, #089bdb) 10%, transparent);
+}
+
+.pac-customer-search-modal__select-cell {
+  width: 120px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .pac-customer-search-modal__select {
   margin: 0;
   white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .pac-modal--customer-search .pac-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .pac-evidence-preview-modal__image {

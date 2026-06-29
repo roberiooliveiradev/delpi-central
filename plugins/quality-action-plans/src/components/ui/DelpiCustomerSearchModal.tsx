@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 
 import {
@@ -58,6 +58,13 @@ export function DelpiCustomerSearchModal({
     setSearched(false);
     setLoading(false);
   }, [initialFilters, open]);
+
+  const clearFilters = () => {
+    setFilters({ code: "", store: "", name: "" });
+    setItems([]);
+    setError(null);
+    setSearched(false);
+  };
 
   const runSearch = async () => {
     const normalized = normalizeFilters(filters);
@@ -136,53 +143,89 @@ export function DelpiCustomerSearchModal({
           />
         </div>
 
-        <div className="pac-customer-search-modal__actions">
+        <div className="pac-customer-search-modal__toolbar">
+          <button
+            type="button"
+            className="pac-ghost-btn"
+            disabled={loading}
+            onClick={clearFilters}
+          >
+            <X size={16} aria-hidden="true" />
+            Limpar filtros
+          </button>
           <button type="submit" className="pac-primary-btn" disabled={loading}>
             <Search size={16} aria-hidden="true" />
-            {loading ? "Buscando…" : "Buscar"}
+            {loading ? "Buscando…" : "Buscar clientes"}
           </button>
         </div>
 
-        {error ? <p className="pac-customer-search-modal__error">{error}</p> : null}
+        <div className="pac-customer-search-modal__results" aria-live="polite">
+          {error ? <p className="pac-customer-search-modal__error">{error}</p> : null}
 
-        {loading ? <p className="pac-muted">Buscando clientes…</p> : null}
+          {loading ? <p className="pac-muted pac-customer-search-modal__status">Buscando clientes…</p> : null}
 
-        {!loading && searched && !error ? (
-          items.length === 0 ? (
-            <p className="pac-muted">Nenhum cliente encontrado.</p>
-          ) : (
-            <div className="pac-table-wrap pac-customer-search-modal__table">
-              <table className="pac-table">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Loja</th>
-                    <th>Nome</th>
-                    <th aria-label="Ações" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <tr key={`${item.code}-${item.store}-${item.name}`}>
-                      <td>{item.code}</td>
-                      <td>{item.store || "—"}</td>
-                      <td>{item.name || "—"}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="pac-ghost-btn pac-customer-search-modal__select"
-                          onClick={() => handleSelect(item)}
-                        >
-                          Selecionar
-                        </button>
-                      </td>
+          {!loading && !searched && !error ? (
+            <p className="pac-muted pac-customer-search-modal__status">
+              Preencha os filtros e clique em Buscar clientes.
+            </p>
+          ) : null}
+
+          {!loading && searched && !error && items.length === 0 ? (
+            <p className="pac-muted pac-customer-search-modal__status">Nenhum cliente encontrado.</p>
+          ) : null}
+
+          {!loading && items.length > 0 ? (
+            <>
+              <p className="pac-customer-search-modal__results-header">
+                {items.length} resultado{items.length === 1 ? "" : "s"} (máx. {CUSTOMER_SEARCH_PAGE_SIZE})
+              </p>
+              <div className="pac-table-wrap pac-customer-search-modal__table">
+                <table className="pac-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Loja</th>
+                      <th>Nome do cliente</th>
+                      <th aria-label="Ações" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        ) : null}
+                  </thead>
+                  <tbody>
+                    {items.map((item) => (
+                      <tr
+                        key={`${item.code}-${item.store}-${item.name}`}
+                        className="pac-customer-search-modal__row"
+                        tabIndex={0}
+                        onClick={() => handleSelect(item)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleSelect(item);
+                          }
+                        }}
+                      >
+                        <td>{item.code}</td>
+                        <td>{item.store || "—"}</td>
+                        <td>{item.name || "—"}</td>
+                        <td className="pac-customer-search-modal__select-cell">
+                          <button
+                            type="button"
+                            className="pac-ghost-btn pac-customer-search-modal__select"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleSelect(item);
+                            }}
+                          >
+                            Selecionar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : null}
+        </div>
       </form>
     </Modal>
   );

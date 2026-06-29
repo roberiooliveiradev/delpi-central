@@ -24,7 +24,7 @@ def search_customers_route(
     page_size: int = Query(20, ge=1, le=100),
 ):
     try:
-        if not any((code or "").strip(), (name or "").strip(), (store or "").strip()):
+        if not any(part.strip() for part in ((code or ""), (name or ""), (store or ""))):
             return error_response("Informe code, name ou store para buscar clientes.")
 
         use_case = build_search_customers_use_case()
