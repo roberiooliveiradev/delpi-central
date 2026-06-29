@@ -468,12 +468,16 @@ export async function deletePlanEvidence(planId: string, evidenceId: string): Pr
 }
 
 export async function downloadPlanEvidenceFile(planId: string, evidenceId: string, filename: string): Promise<void> {
-  const { httpDownloadBlob } = await import("./httpClient");
-  const blob = await httpDownloadBlob(`${API_BASE}/${planId}/evidences/${evidenceId}/file`);
+  const blob = await fetchPlanEvidenceFileBlob(planId, evidenceId);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+export async function fetchPlanEvidenceFileBlob(planId: string, evidenceId: string): Promise<Blob> {
+  const { httpDownloadBlob } = await import("./httpClient");
+  return httpDownloadBlob(`${API_BASE}/${planId}/evidences/${evidenceId}/file`);
 }

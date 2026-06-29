@@ -185,6 +185,7 @@
   border: 1px solid var(--pac-card-border);
   background: transparent;
   color: var(--pac-text);
+  margin: 6px 0;
 }
 
 .dashboard-quality-action-plans .pac-nav {
@@ -863,7 +864,7 @@
   outline: none;
 }
 
-/* Portal no body: layout mínimo antes de --ready (medição de largura do balão) */
+/* Portal no body: estilos globais (fora de .dashboard-quality-action-plans) */
 .pac-help-tooltip__bubble--fixed {
   position: fixed;
   z-index: 10000;
@@ -871,34 +872,29 @@
   min-width: 200px;
   box-sizing: border-box;
   pointer-events: none;
-}
-
-.dashboard-quality-action-plans .pac-help-tooltip__bubble--fixed {
-  position: fixed;
-  bottom: auto;
-  right: auto;
-  z-index: 10000;
   opacity: 0;
   visibility: hidden;
-  transform: none;
-  pointer-events: none;
-  min-width: 200px;
-  max-width: min(280px, calc(100vw - 24px));
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid var(--pac-card-border);
-  background: color-mix(in srgb, var(--pac-card-bg) 96%, var(--pac-accent));
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-  font-size: var(--pac-font-xs);
+  border: 1px solid var(--border, #e6e6e6);
+  background: var(--surface, #ffffff);
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+  font-size: 12px;
   font-weight: 400;
   line-height: 1.45;
-  color: var(--pac-text);
+  color: var(--text, #111111);
   white-space: normal;
   text-align: left;
   transition: opacity 0.15s ease;
 }
 
-.dashboard-quality-action-plans .pac-help-tooltip__bubble--fixed.pac-help-tooltip__bubble--ready,
+:root[data-theme="dark"] .pac-help-tooltip__bubble--fixed {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 88%, #089bdb 12%);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
+}
+
 .pac-help-tooltip__bubble--fixed.pac-help-tooltip__bubble--ready {
   opacity: 1;
   visibility: visible;
@@ -2027,6 +2023,98 @@
   gap: 16px;
 }
 
+.dashboard-quality-action-plans .pac-team-row {
+  grid-template-columns: auto repeat(2, minmax(0, 1fr)) auto auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-team-row__drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 10px;
+}
+
+.dashboard-quality-action-plans .pac-team-row__leader {
+  align-self: end;
+  margin-bottom: 10px;
+}
+
+.dashboard-quality-action-plans .pac-team-row__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 6px;
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-add-row {
+  margin-top: 10px;
+}
+
+.dashboard-quality-action-plans .pac-table__actions-col {
+  width: 44px;
+}
+
+.dashboard-quality-action-plans .pac-table__drag-col {
+  width: 36px;
+  padding-left: 8px;
+  padding-right: 4px;
+  vertical-align: middle;
+}
+
+.dashboard-quality-action-plans .pac-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--pac-text-muted);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.dashboard-quality-action-plans .pac-drag-handle:hover {
+  color: var(--pac-accent);
+  background: color-mix(in srgb, var(--pac-accent) 10%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-drag-handle:active {
+  cursor: grabbing;
+}
+
+.dashboard-quality-action-plans .pac-row--dragging {
+  opacity: 0.48;
+}
+
+.dashboard-quality-action-plans tr.pac-row--drag-over > td {
+  box-shadow: inset 0 3px 0 var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-team-row.pac-row--drag-over {
+  box-shadow: inset 0 3px 0 var(--pac-accent);
+  border-radius: var(--pac-control-radius);
+}
+
+.dashboard-quality-action-plans .pac-row-order-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-table--containment th,
+.dashboard-quality-action-plans .pac-table--documentation th {
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-rnc8d-doc-hint {
+  margin: 12px 0 8px;
+}
+
 .dashboard-quality-action-plans .pac-subsection-title {
   margin: 16px 0 8px;
   font-size: var(--pac-font-md);
@@ -2041,9 +2129,116 @@
   display: none;
 }
 
-.dashboard-quality-action-plans .pac-evidence-upload__actions {
+.dashboard-quality-action-plans .pac-evidence-upload__footer {
   display: flex;
   align-items: flex-end;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-evidence-upload__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.pac-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, #000 48%, transparent);
+}
+
+.pac-modal {
+  width: min(920px, 100%);
+  max-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e6e6e6);
+  background: var(--surface, #ffffff);
+  box-shadow: 0 24px 64px color-mix(in srgb, #000 28%, transparent);
+  color: var(--text, #111111);
+}
+
+:root[data-theme="dark"] .pac-modal {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 92%, #089bdb 8%);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.pac-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border, #e6e6e6) 80%, transparent);
+}
+
+:root[data-theme="dark"] .pac-modal__header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.pac-modal__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pac-modal__body {
+  padding: 16px 18px 18px;
+  overflow: auto;
+}
+
+.pac-modal--evidence-preview .pac-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pac-evidence-preview-modal__image {
+  display: block;
+  width: 100%;
+  max-height: min(68vh, 720px);
+  object-fit: contain;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-2, #eef2f7) 70%, transparent);
+}
+
+.pac-evidence-preview-modal__pdf {
+  width: 100%;
+  min-height: min(68vh, 720px);
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.pac-evidence-preview-modal__status {
+  margin: 0;
+  padding: 32px 12px;
+  text-align: center;
+}
+
+.pac-evidence-preview-modal__description {
+  margin: 0;
+}
+
+.pac-evidence-preview-modal__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: var(--pac-font-xs, 12px);
+  color: var(--pac-text-muted, rgba(17, 17, 17, 0.7));
 }
 
 .dashboard-quality-action-plans .pac-evidence-name {

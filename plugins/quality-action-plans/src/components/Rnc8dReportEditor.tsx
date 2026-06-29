@@ -8,12 +8,14 @@ import {
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FormActions } from "./ui/FormActions";
 import { FieldLabel } from "./ui/HelpTooltip";
+import { DragHandle, RemoveRowButton } from "./ui/RowActions";
 import { ReadOnlyField } from "./ui/ReadOnlyField";
 import { SectionCard } from "./ui/SectionCard";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
-import type { Rnc8dReportPayload, Rnc8dTemplatePayload } from "../types/rnc8d";
+import type { Rnc8dContainmentRow, Rnc8dReportPayload, Rnc8dTemplatePayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
+import { useDragReorder } from "../hooks/useDragReorder";
 
 type Props = {
   value: Rnc8dReportPayload;
@@ -23,11 +25,11 @@ type Props = {
   saving?: boolean;
 };
 
-const CONTAINMENT_LABELS: Record<string, string> = {
-  end_customer: "Cliente final",
-  client_plant: "Cliente (planta)",
-  supplier: "Fornecedor",
-};
+const CONTAINMENT_AREAS = [
+  { value: "end_customer", label: "Cliente final" },
+  { value: "client_plant", label: "Cliente (planta)" },
+  { value: "supplier", label: "Fornecedor" },
+] as const;
 
 function updatePayload(
   current: Rnc8dReportPayload,
@@ -48,18 +50,54 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
   const effectiveness = payload.effectiveness ?? {};
   const preventive = payload.preventive ?? {};
   const containment = payload.containment ?? emptyRnc8dPayload().containment ?? [];
-  const documentation = payload.documentation_updates ?? [{}, {}, {}, {}];
+  const documentation = payload.documentation_updates?.length
+    ? payload.documentation_updates
+    : [{}];
   const team = value.team_members ?? [];
 
-  function setContainmentRow(
-    area: "end_customer" | "client_plant" | "supplier",
-    field: string,
-    fieldValue: string,
-  ) {
-    const rows = containment.map((row) =>
-      row.area === area ? { ...row, [field]: fieldValue } : row,
+  const teamDrag = useDragReorder(team, (team_members) => onChange({ ...value, team_members }));
+  const containmentDrag = useDragReorder(containment, (next) =>
+    onChange(updatePayload(value, { containment: next })),
+  );
+  const documentationDrag = useDragReorder(documentation, (next) =>
+    onChange(updatePayload(value, { documentation_updates: next })),
+  );
+
+  function updateContainmentRow(index: number, patch: Partial<Rnc8dContainmentRow>) {
+    const next = containment.map((row, rowIndex) =>
+      rowIndex === index ? { ...row, ...patch } : row,
     );
-    onChange(updatePayload(value, { containment: rows }));
+    onChange(updatePayload(value, { containment: next }));
+  }
+
+  function removeContainmentRow(index: number) {
+    if (containment.length <= 1) return;
+    onChange(updatePayload(value, { containment: containment.filter((_, i) => i !== index) }));
+  }
+
+  function addContainmentRow() {
+    onChange(
+      updatePayload(value, {
+        containment: [...containment, { area: "end_customer" }],
+      }),
+    );
+  }
+
+  function removeDocumentationRow(index: number) {
+    if (documentation.length <= 1) return;
+    onChange(
+      updatePayload(value, {
+        documentation_updates: documentation.filter((_, i) => i !== index),
+      }),
+    );
+  }
+
+  function addDocumentationRow() {
+    onChange(
+      updatePayload(value, {
+        documentation_updates: [...documentation, {}],
+      }),
+    );
   }
 
   return (
@@ -258,7 +296,16 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
       <SectionCard title="2. Equipe de análise" hint={PAC_HELP_TOOLTIPS.rnc8d.team}>
         <div className="pac-team-list">
           {team.map((member, index) => (
-            <div key={`${member.member_name}-${index}`} className="pac-form-grid pac-team-row">
+            <div
+              key={`team-${index}`}
+              className={teamDrag.rowClassName("pac-form-grid pac-team-row", index)}
+              {...teamDrag.rowDropProps(index)}
+            >
+              <div className="pac-team-row__drag">
+                {teamDrag.canDrag ? (
+                  <DragHandle dragProps={teamDrag.handleDragProps(index)} />
+                ) : null}
+              </div>
               <TextField
                 id={`rnc-team-name-${index}`}
                 label={member.is_leader ? "Líder" : "Membro"}
@@ -281,7 +328,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                   onChange({ ...value, team_members: next });
                 }}
               />
-              <label className="pac-checkbox">
+              <label className="pac-checkbox pac-team-row__leader">
                 <input
                   type="checkbox"
                   checked={Boolean(member.is_leader)}
@@ -295,6 +342,19 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                 />
                 <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
               </label>
+              <div className="pac-team-row__remove">
+                <RemoveRowButton
+                  onRemove={() =>
+                    onChange({
+                      ...value,
+                      team_members: team.filter((_, itemIndex) => itemIndex !== index),
+                    })
+                  }
+                  removeDisabled={team.length <= 1}
+                  removeTitle={team.length <= 1 ? "Mantenha ao menos um membro" : "Remover membro"}
+                  removeAriaLabel="Remover membro da equipe"
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -314,33 +374,75 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
 
       <SectionCard title="3. Ação de contenção" hint={PAC_HELP_TOOLTIPS.rnc8d.containment}>
         <div className="pac-table-wrap">
-          <table className="pac-table">
+          <table className="pac-table pac-table--containment">
             <thead>
               <tr>
-                <th>Área</th>
-                <th>Quantidade</th>
-                <th>Plano de ação</th>
-                <th>Responsável</th>
-                <th>Data</th>
+                <th className="pac-table__drag-col" aria-label="Ordenar" />
+                <th>
+                  <FieldLabel label="Área" hint={PAC_HELP_TOOLTIPS.rnc8d.containmentArea} />
+                </th>
+                <th>
+                  <FieldLabel label="Quantidade" hint={PAC_HELP_TOOLTIPS.rnc8d.containmentQty} />
+                </th>
+                <th>
+                  <FieldLabel label="Plano de ação" hint={PAC_HELP_TOOLTIPS.rnc8d.containmentActionPlan} />
+                </th>
+                <th>
+                  <FieldLabel label="Responsável" hint={PAC_HELP_TOOLTIPS.rnc8d.containmentResponsible} />
+                </th>
+                <th>
+                  <FieldLabel label="Data" hint={PAC_HELP_TOOLTIPS.rnc8d.containmentDate} />
+                </th>
+                <th className="pac-table__actions-col" aria-label="Ações" />
               </tr>
             </thead>
             <tbody>
-              {containment.map((row) => (
-                <tr key={row.area}>
-                  <td>{CONTAINMENT_LABELS[row.area] ?? row.area}</td>
+              {containment.map((row, index) => (
+                <tr
+                  key={`containment-${index}-${row.area}`}
+                  className={containmentDrag.rowClassName("", index)}
+                  {...containmentDrag.rowDropProps(index)}
+                >
+                  <td className="pac-table__drag-col">
+                    {containmentDrag.canDrag ? (
+                      <DragHandle dragProps={containmentDrag.handleDragProps(index)} />
+                    ) : null}
+                  </td>
+                  <td>
+                    <select
+                      className="pac-field__control"
+                      value={row.area}
+                      aria-label="Área da contenção"
+                      onChange={(event) =>
+                        updateContainmentRow(index, {
+                          area: event.target.value as Rnc8dContainmentRow["area"],
+                        })
+                      }
+                    >
+                      {CONTAINMENT_AREAS.map((area) => (
+                        <option key={area.value} value={area.value}>
+                          {area.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td>
                     <input
                       className="pac-field__control"
                       value={row.quantity ?? ""}
-                      onChange={(event) => setContainmentRow(row.area, "quantity", event.target.value)}
+                      aria-label="Quantidade"
+                      onChange={(event) =>
+                        updateContainmentRow(index, { quantity: event.target.value })
+                      }
                     />
                   </td>
                   <td>
                     <input
                       className="pac-field__control"
                       value={row.action_plan ?? ""}
+                      aria-label="Plano de ação"
                       onChange={(event) =>
-                        setContainmentRow(row.area, "action_plan", event.target.value)
+                        updateContainmentRow(index, { action_plan: event.target.value })
                       }
                     />
                   </td>
@@ -348,8 +450,9 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                     <input
                       className="pac-field__control"
                       value={row.responsible ?? ""}
+                      aria-label="Responsável"
                       onChange={(event) =>
-                        setContainmentRow(row.area, "responsible", event.target.value)
+                        updateContainmentRow(index, { responsible: event.target.value })
                       }
                     />
                   </td>
@@ -358,7 +461,18 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                       className="pac-field__control"
                       type="date"
                       value={row.date ?? ""}
-                      onChange={(event) => setContainmentRow(row.area, "date", event.target.value)}
+                      aria-label="Data"
+                      onChange={(event) => updateContainmentRow(index, { date: event.target.value })}
+                    />
+                  </td>
+                  <td className="pac-table-actions">
+                    <RemoveRowButton
+                      onRemove={() => removeContainmentRow(index)}
+                      removeDisabled={containment.length <= 1}
+                      removeTitle={
+                        containment.length <= 1 ? "Mantenha ao menos uma linha" : "Remover linha"
+                      }
+                      removeAriaLabel="Remover linha de contenção"
                     />
                   </td>
                 </tr>
@@ -366,6 +480,9 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
             </tbody>
           </table>
         </div>
+        <button type="button" className="pac-ghost-btn pac-rnc8d-add-row" onClick={addContainmentRow}>
+          Adicionar linha de contenção
+        </button>
       </SectionCard>
 
       <SectionCard title="6. Verificação da eficácia" hint={PAC_HELP_TOOLTIPS.rnc8d.effectivenessSection}>
@@ -491,21 +608,39 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
           <FieldLabel label="Atualização de documentos" hint={PAC_HELP_TOOLTIPS.rnc8d.documentation} />
         </p>
         <div className="pac-table-wrap">
-          <table className="pac-table">
+          <table className="pac-table pac-table--documentation">
             <thead>
               <tr>
-                <th>Documento afetado</th>
-                <th>Responsável</th>
-                <th>Data</th>
+                <th className="pac-table__drag-col" aria-label="Ordenar" />
+                <th>
+                  <FieldLabel label="Documento afetado" hint={PAC_HELP_TOOLTIPS.rnc8d.docAffected} />
+                </th>
+                <th>
+                  <FieldLabel label="Responsável" hint={PAC_HELP_TOOLTIPS.rnc8d.docResponsible} />
+                </th>
+                <th>
+                  <FieldLabel label="Data" hint={PAC_HELP_TOOLTIPS.rnc8d.docDate} />
+                </th>
+                <th className="pac-table__actions-col" aria-label="Ações" />
               </tr>
             </thead>
             <tbody>
               {documentation.map((doc, index) => (
-                <tr key={index}>
+                <tr
+                  key={`doc-${index}`}
+                  className={documentationDrag.rowClassName("", index)}
+                  {...documentationDrag.rowDropProps(index)}
+                >
+                  <td className="pac-table__drag-col">
+                    {documentationDrag.canDrag ? (
+                      <DragHandle dragProps={documentationDrag.handleDragProps(index)} />
+                    ) : null}
+                  </td>
                   <td>
                     <input
                       className="pac-field__control"
                       value={doc.document ?? ""}
+                      aria-label="Documento afetado"
                       onChange={(event) => {
                         const next = [...documentation];
                         next[index] = { ...doc, document: event.target.value };
@@ -517,6 +652,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                     <input
                       className="pac-field__control"
                       value={doc.responsible ?? ""}
+                      aria-label="Responsável pelo documento"
                       onChange={(event) => {
                         const next = [...documentation];
                         next[index] = { ...doc, responsible: event.target.value };
@@ -529,6 +665,7 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                       className="pac-field__control"
                       type="date"
                       value={doc.date ?? ""}
+                      aria-label="Data do documento"
                       onChange={(event) => {
                         const next = [...documentation];
                         next[index] = { ...doc, date: event.target.value };
@@ -536,11 +673,24 @@ export function Rnc8dReportEditor({ value, sharedIdentification, onChange, onSav
                       }}
                     />
                   </td>
+                  <td className="pac-table-actions">
+                    <RemoveRowButton
+                      onRemove={() => removeDocumentationRow(index)}
+                      removeDisabled={documentation.length <= 1}
+                      removeTitle={
+                        documentation.length <= 1 ? "Mantenha ao menos uma linha" : "Remover linha"
+                      }
+                      removeAriaLabel="Remover linha de documento"
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <button type="button" className="pac-ghost-btn pac-rnc8d-add-row" onClick={addDocumentationRow}>
+          Adicionar documento
+        </button>
         <TextField
           id="rnc-closure"
           label="Fechamento 8D (uso do cliente)"

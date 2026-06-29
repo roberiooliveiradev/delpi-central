@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
-import { Download, Trash2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, Eye, Trash2, Upload } from "lucide-react";
 
 import {
   deletePlanEvidence,
   downloadPlanEvidenceFile,
+  fetchPlanEvidenceFileBlob,
   uploadPlanEvidence,
 } from "../api/actionPlansApi";
 import type { PlanAction } from "../types/actionPlan";
@@ -11,8 +12,8 @@ import type { PlanEvidence } from "../types/rnc8d";
 import { formatDateTime } from "../utils/format";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { StateAlert } from "./StateAlert";
+import { Modal } from "./ui/Modal";
 import { SectionCard } from "./ui/SectionCard";
-import { FieldLabel } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
 
@@ -59,6 +60,108 @@ function formatSize(bytes?: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function isImageEvidence(evidence: PlanEvidence): boolean {
+  return evidence.type === "image" || Boolean(evidence.mime_type?.startsWith("image/"));
+}
+
+function isPdfEvidence(evidence: PlanEvidence): boolean {
+  return evidence.type === "pdf" || evidence.mime_type === "application/pdf";
+}
+
+function isPreviewableEvidence(evidence: PlanEvidence): boolean {
+  return isImageEvidence(evidence) || isPdfEvidence(evidence);
+}
+
+function evidenceTitle(evidence: PlanEvidence): string {
+  return evidence.file_name ?? evidence.description ?? evidence.id;
+}
+
+function EvidencePreviewContent({
+  planId,
+  evidence,
+}: {
+  planId: string;
+  evidence: PlanEvidence;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isPreviewableEvidence(evidence)) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadPreview() {
+      setLoading(true);
+      setError(null);
+      try {
+        const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        objectUrlRef.current = url;
+        setPreviewUrl(url);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Não foi possível carregar a pré-visualização.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadPreview();
+
+    return () => {
+      cancelled = true;
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, [planId, evidence.id, evidence.type, evidence.mime_type]);
+
+  const title = evidenceTitle(evidence);
+
+  if (loading) {
+    return <p className="pac-muted pac-evidence-preview-modal__status">Carregando pré-visualização…</p>;
+  }
+
+  if (error) {
+    return <p className="pac-muted pac-evidence-preview-modal__status">{error}</p>;
+  }
+
+  if (isImageEvidence(evidence) && previewUrl) {
+    return (
+      <img
+        src={previewUrl}
+        alt={title}
+        className="pac-evidence-preview-modal__image"
+      />
+    );
+  }
+
+  if (isPdfEvidence(evidence) && previewUrl) {
+    return (
+      <iframe
+        src={previewUrl}
+        title={`Pré-visualização: ${title}`}
+        className="pac-evidence-preview-modal__pdf"
+      />
+    );
+  }
+
+  return (
+    <p className="pac-muted pac-evidence-preview-modal__status">
+      Pré-visualização não disponível para este tipo de arquivo.
+    </p>
+  );
+}
+
 export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [evidenceType, setEvidenceType] = useState("image");
@@ -67,6 +170,7 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewEvidence, setPreviewEvidence] = useState<PlanEvidence | null>(null);
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -93,6 +197,9 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
     setError(null);
     try {
       await deletePlanEvidence(planId, evidenceId);
+      if (previewEvidence?.id === evidenceId) {
+        setPreviewEvidence(null);
+      }
       await onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao remover evidência.");
@@ -151,10 +258,7 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
           onChange={setDescription}
           fullWidth
         />
-        <div className="pac-evidence-upload__actions">
-          <p className="pac-field pac-field--full pac-evidence-upload__file-label">
-            <FieldLabel label="Arquivo" hint={PAC_HELP_TOOLTIPS.evidence.upload} />
-          </p>
+        <div className="pac-evidence-upload__footer pac-field--full">
           <input
             ref={fileInputRef}
             type="file"
@@ -166,12 +270,13 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
           />
           <button
             type="button"
-            className="pac-primary-btn"
+            className="pac-primary-btn pac-evidence-upload__btn"
             disabled={uploading}
+            title={PAC_HELP_TOOLTIPS.evidence.upload}
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload size={16} />
-            {uploading ? "Enviando…" : "Anexar arquivo"}
+            <Upload size={16} aria-hidden="true" />
+            <span>{uploading ? "Enviando…" : "Anexar arquivo"}</span>
           </button>
         </div>
       </div>
@@ -211,9 +316,22 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
                   <td>{formatSize(evidence.size_bytes)}</td>
                   <td>{formatDateTime(evidence.created_at)}</td>
                   <td className="pac-table-actions">
+                    {isPreviewableEvidence(evidence) ? (
+                      <button
+                        type="button"
+                        className="pac-ghost-btn pac-ghost-btn--icon"
+                        aria-label="Pré-visualizar evidência"
+                        title="Pré-visualizar"
+                        onClick={() => setPreviewEvidence(evidence)}
+                      >
+                        <Eye size={16} />
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="pac-ghost-btn pac-ghost-btn--icon"
+                      aria-label="Baixar evidência"
+                      title="Baixar"
                       onClick={() =>
                         void downloadPlanEvidenceFile(
                           planId,
@@ -227,6 +345,8 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
                     <button
                       type="button"
                       className="pac-ghost-btn pac-ghost-btn--icon"
+                      aria-label="Remover evidência"
+                      title="Remover"
                       onClick={() => void handleDelete(evidence.id)}
                     >
                       <Trash2 size={16} />
@@ -240,6 +360,29 @@ export function EvidencePanel({ planId, evidences, actions = [], onChanged }: Pr
       ) : (
         <p className="pac-muted">Nenhuma evidência anexada ainda.</p>
       )}
+
+      <Modal
+        open={previewEvidence != null}
+        title={previewEvidence ? evidenceTitle(previewEvidence) : "Pré-visualização"}
+        className="pac-modal--evidence-preview"
+        onClose={() => setPreviewEvidence(null)}
+      >
+        {previewEvidence ? (
+          <div className="pac-evidence-preview-modal">
+            <EvidencePreviewContent planId={planId} evidence={previewEvidence} />
+            {previewEvidence.description ? (
+              <p className="pac-muted pac-evidence-preview-modal__description">
+                {previewEvidence.description}
+              </p>
+            ) : null}
+            <div className="pac-evidence-preview-modal__meta">
+              <span>{previewEvidence.type}</span>
+              <span>{formatSize(previewEvidence.size_bytes)}</span>
+              <span>{formatDateTime(previewEvidence.created_at)}</span>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </SectionCard>
   );
 }
