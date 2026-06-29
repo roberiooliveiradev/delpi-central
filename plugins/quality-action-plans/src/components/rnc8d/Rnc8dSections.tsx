@@ -224,17 +224,6 @@ export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
                 {teamDrag.canDrag ? <DragHandle dragProps={teamDrag.handleDragProps(index)} /> : null}
               </div>
               <TextField
-                id={`rnc-team-name-${index}`}
-                label={member.is_leader ? "Líder" : "Membro"}
-                hint={member.is_leader ? PAC_HELP_TOOLTIPS.rnc8d.teamLeader : PAC_HELP_TOOLTIPS.rnc8d.team}
-                value={member.member_name}
-                onChange={(member_name) => {
-                  const next = [...team];
-                  next[index] = { ...member, member_name };
-                  onChange({ ...value, team_members: next });
-                }}
-              />
-              <TextField
                 id={`rnc-team-dept-${index}`}
                 label="Área"
                 hint={PAC_HELP_TOOLTIPS.detail.department}
@@ -277,6 +266,12 @@ export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
               idPrefix={`rnc-team-link-${index}`}
               memberUserId={member.member_user_id}
               memberName={member.member_name}
+              isLeader={Boolean(member.is_leader)}
+              onNameChange={(member_name) => {
+                const next = [...team];
+                next[index] = { ...member, member_name };
+                onChange({ ...value, team_members: next });
+              }}
               onLink={(member_user_id, displayName) => {
                 const next = [...team];
                 next[index] = {

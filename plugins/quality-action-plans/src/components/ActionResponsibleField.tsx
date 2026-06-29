@@ -76,22 +76,24 @@ export function ActionResponsibleField({
         <DelpiUserLinkSection
           idPrefix={`${idPrefix}-directory`}
           userId={value.responsibleUserId}
-          displayName={value.responsibleName}
-          label="Vincular usuário Delpi"
-          hint={PAC_HELP_TOOLTIPS.form.actionResponsibleUserLink}
+          nameLabel="Nome do responsável"
+          nameHint={PAC_HELP_TOOLTIPS.form.actionResponsible}
+          nameValue={value.responsibleName}
+          onNameChange={(responsibleName) => onChange({ ...value, responsibleName })}
+          linkHint={PAC_HELP_TOOLTIPS.form.actionResponsibleUserLink}
           unlinkedNote="Sem vínculo com usuário Delpi — a ação não entra na Minha fila até selecionar alguém na pesquisa."
           onLink={handleDirectoryLink}
           onUnlink={() => onChange({ ...value, responsibleUserId: null })}
         />
-      ) : null}
-
-      <TextField
-        id={`${idPrefix}-name`}
-        label="Nome do responsável"
-        hint={PAC_HELP_TOOLTIPS.form.actionResponsible}
-        value={value.responsibleName}
-        onChange={(responsibleName) => onChange({ ...value, responsibleName })}
-      />
+      ) : (
+        <TextField
+          id={`${idPrefix}-name`}
+          label="Nome do responsável"
+          hint={PAC_HELP_TOOLTIPS.form.actionResponsible}
+          value={value.responsibleName}
+          onChange={(responsibleName) => onChange({ ...value, responsibleName })}
+        />
+      )}
 
       {usesTeamFlow && !value.responsibleUserId ? (
         <p className="pac-muted pac-action-responsible__note">

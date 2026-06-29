@@ -5,16 +5,17 @@ import type { DirectoryUser } from "../api/directoryApi";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatPersonName } from "../utils/formatPersonName";
 import { DelpiUserSearchModal } from "./ui/DelpiUserSearchModal";
-import { FieldLabel } from "./ui/HelpTooltip";
-import { ReadOnlyField } from "./ui/ReadOnlyField";
+import { TextField } from "./ui/TextField";
 
 type Props = {
   idPrefix: string;
   userId: string | null | undefined;
-  displayName: string;
+  nameLabel: string;
+  nameHint?: string;
+  nameValue: string;
+  onNameChange: (name: string) => void;
   linkedEmail?: string | null;
-  label?: string;
-  hint?: string;
+  linkHint?: string;
   unlinkedNote?: string;
   onLink: (userId: string, displayName: string, email?: string) => void;
   onUnlink: () => void;
@@ -23,10 +24,12 @@ type Props = {
 export function DelpiUserLinkSection({
   idPrefix,
   userId,
-  displayName,
+  nameLabel,
+  nameHint,
+  nameValue,
+  onNameChange,
   linkedEmail,
-  label = "Vincular usuário Delpi",
-  hint = PAC_HELP_TOOLTIPS.rnc8d.teamMemberUserLink,
+  linkHint = PAC_HELP_TOOLTIPS.rnc8d.teamMemberUserLink,
   unlinkedNote = PAC_HELP_TOOLTIPS.rnc8d.teamMemberUnlinked,
   onLink,
   onUnlink,
@@ -34,12 +37,12 @@ export function DelpiUserLinkSection({
   const [modalOpen, setModalOpen] = useState(false);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
-  const resolvedName = userId ? displayName || "Usuário vinculado" : "";
-  const resolvedEmail = userId ? linkedEmail ?? sessionEmail ?? "—" : "";
+  const resolvedEmail = userId ? linkedEmail ?? sessionEmail : null;
 
   function handleSelect(user: DirectoryUser) {
     const name = formatPersonName(user.name) || user.email;
     setSessionEmail(user.email);
+    onNameChange(name);
     onLink(user.id, name, user.email);
   }
 
@@ -50,16 +53,13 @@ export function DelpiUserLinkSection({
 
   return (
     <div className="pac-user-link-section">
-      <label className="pac-field__label" htmlFor={`${idPrefix}-search-trigger`}>
-        <FieldLabel label={label} hint={hint} />
-      </label>
-
       <div className="pac-customer-section">
         <div className="pac-customer-section__toolbar">
           <button
             id={`${idPrefix}-search-trigger`}
             type="button"
             className="pac-ghost-btn"
+            aria-label="Pesquisar usuário na Delpi"
             onClick={() => setModalOpen(true)}
           >
             <Search size={16} aria-hidden="true" />
@@ -72,21 +72,20 @@ export function DelpiUserLinkSection({
           ) : null}
         </div>
 
-        <div className="pac-form-grid">
-          <ReadOnlyField
-            id={`${idPrefix}-delpi-name`}
-            label="Nome Delpi"
-            hint={PAC_HELP_TOOLTIPS.tables.directoryUserName}
-            value={resolvedName || "—"}
-          />
-          <ReadOnlyField
-            id={`${idPrefix}-delpi-email`}
-            label="E-mail Delpi"
-            hint={PAC_HELP_TOOLTIPS.tables.directoryUserEmail}
-            value={resolvedEmail || "—"}
-          />
-        </div>
+        <TextField
+          id={`${idPrefix}-name`}
+          label={nameLabel}
+          hint={nameHint ?? linkHint}
+          value={nameValue}
+          onChange={onNameChange}
+        />
       </div>
+
+      {resolvedEmail ? (
+        <p className="pac-muted pac-user-link-section__email">
+          E-mail Delpi: {resolvedEmail}
+        </p>
+      ) : null}
 
       {!userId ? <p className="pac-muted pac-user-link-section__note">{unlinkedNote}</p> : null}
 
@@ -97,7 +96,7 @@ export function DelpiUserLinkSection({
       <DelpiUserSearchModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        initialQuery={displayName.trim() || undefined}
+        initialQuery={nameValue.trim() || undefined}
         onSelect={handleSelect}
       />
     </div>
