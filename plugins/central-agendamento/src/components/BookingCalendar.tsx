@@ -65,18 +65,24 @@ function toEvent(booking: SchedulingBooking, resources: SchedulingResource[]): C
     bookedByName: booking.booked_by_name,
     notes: booking.notes,
     bookedByUserId: booking.booked_by_user_id,
+    recurrenceSeriesId: booking.recurrence_series_id,
+    recurrenceFrequency: booking.recurrence_frequency,
   };
 }
 
 function CalendarEventBlock({ event }: EventProps<CalendarEvent>) {
   const segment = event.multiDaySegment;
   const showDetails = !segment?.isMiddle;
+  const isRecurring = Boolean(event.recurrenceSeriesId);
 
   return (
     <div className={`ca-cal-event${segment?.isMiddle ? " ca-cal-event--middle-day" : ""}`}>
       {showDetails ? (
         <>
-          <span className="ca-cal-event__resource">{event.resourceName}</span>
+          <span className="ca-cal-event__resource">
+            {isRecurring ? <span className="ca-cal-event__repeat" aria-hidden="true">↻ </span> : null}
+            {event.resourceName}
+          </span>
           <span className="ca-cal-event__title">{event.title}</span>
           <span className="ca-cal-event__meta">{event.bookedByName}</span>
         </>

@@ -9,7 +9,9 @@ import {
   createBooking,
   createResource,
   fetchResources,
+  isRecurringBookingResult,
   updateResource,
+  type CancelScope,
   type SchedulingResource,
 } from "../api/schedulingApi";
 import { BookingCalendar, type CalendarEvent } from "../components/BookingCalendar";
@@ -97,24 +99,37 @@ export function SchedulingPage({ pathname }: Props) {
     notes?: string;
     start_at: string;
     end_at: string;
+    recurrence?: { frequency: "weekly" | "monthly"; until: string };
   }) {
     if (!branch) return;
     setActionLoading(true);
     try {
-      await createBooking({ branch_code: branch, ...payload });
-      setSuccess("Reserva confirmada com sucesso.");
+      const result = await createBooking({ branch_code: branch, ...payload });
+      if (isRecurringBookingResult(result)) {
+        const skipped = result.total_skipped;
+        if (skipped > 0) {
+          setSuccess(
+            `Série criada com ${result.total_created} reserva(s). ${skipped} horário(s) ignorado(s) por conflito.`,
+          );
+        } else {
+          setSuccess(`Série recorrente criada com ${result.total_created} reserva(s).`);
+        }
+      } else {
+        setSuccess("Reserva confirmada com sucesso.");
+      }
       await reload();
     } finally {
       setActionLoading(false);
     }
   }
 
-  async function handleCancelBooking() {
+  async function handleCancelBooking(scope: CancelScope = "occurrence") {
     if (!selectedEvent) return;
     setActionLoading(true);
     try {
-      await cancelBooking(selectedEvent.bookingId);
-      setSuccess("Reserva cancelada.");
+      const result = await cancelBooking(selectedEvent.bookingId, scope);
+      const count = result.cancelled_count ?? 1;
+      setSuccess(count > 1 ? `${count} reservas canceladas.` : "Reserva cancelada.");
       await reload();
     } finally {
       setActionLoading(false);

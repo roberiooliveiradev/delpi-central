@@ -413,6 +413,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "update_scheduling_resource": RouteContract("scheduling_resource", "scalar"),
     "list_scheduling_bookings": RouteContract("scheduling_booking", "paged_list"),
     "create_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
+    "create_scheduling_recurring_booking": RouteContract("scheduling_booking", "composite_analysis"),
     "cancel_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     # Sistema (metadados Protheus)
     "search_tables_by_description": RouteContract("protheus_table", "paged_list"),

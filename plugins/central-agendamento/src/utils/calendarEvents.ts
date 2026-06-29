@@ -33,6 +33,8 @@ export type CalendarEvent = {
   bookedByName: string;
   notes: string | null;
   bookedByUserId: string;
+  recurrenceSeriesId?: string | null;
+  recurrenceFrequency?: "weekly" | "monthly" | null;
   multiDaySegment?: MultiDaySegmentMeta;
 };
 
