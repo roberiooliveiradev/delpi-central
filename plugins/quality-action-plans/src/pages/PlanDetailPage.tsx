@@ -29,6 +29,7 @@ import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
 import { PlanProblemSection, buildIdentificationUpdatePayload } from "../components/PlanProblemSection";
+import { PlanStatusSection } from "../components/PlanStatusSection";
 import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
 import { formatActorDisplay } from "../utils/actorDisplay";
 import {
@@ -332,28 +333,19 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       {plan ? (
         <div className="pac-detail-grid">
           <SectionCard
-            title={showRnc8dFlow ? "Problema e cabeçalho 8D" : "Problema"}
-            hint={PAC_HELP_TOOLTIPS.sections.problem}
-            subtitle={
-              showRnc8dFlow
-                ? "Identificação do plano e complementos da planilha (material, NF e contato)."
-                : undefined
-            }
+            title="Status do plano"
+            hint={PAC_HELP_TOOLTIPS.sections.planStatus}
           >
             <StatusPipeline
               currentStatus={plan.status}
               hint={PAC_HELP_TOOLTIPS.detail.statusPipeline}
             />
-            {showRnc8dFlow && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
-            <PlanProblemSection
-              showRnc8dFlow={showRnc8dFlow}
+            <PlanStatusSection
               planStatus={plan.status}
               planBranchCode={plan.branch_code}
               planScope={plan.nonconformity_scope}
               planSeverity={plan.severity}
               isTerminalPlan={isTerminalPlan}
-              identificationForm={identificationForm}
-              onIdentificationChange={setIdentificationForm}
               statusValue={statusValue}
               onStatusChange={setStatusValue}
               reopenReason={reopenReason}
@@ -373,6 +365,24 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   setReopenReason("");
                 })
               }
+            />
+          </SectionCard>
+
+          <SectionCard
+            title={showRnc8dFlow ? "Problema e cabeçalho 8D" : "Problema"}
+            hint={PAC_HELP_TOOLTIPS.sections.problem}
+            subtitle={
+              showRnc8dFlow
+                ? "Identificação do plano e complementos da planilha (material, NF e contato)."
+                : undefined
+            }
+          >
+            {showRnc8dFlow && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
+            <PlanProblemSection
+              showRnc8dFlow={showRnc8dFlow}
+              identificationForm={identificationForm}
+              onIdentificationChange={setIdentificationForm}
+              saving={saving}
               onSaveIdentification={() =>
                 void runSave("identification", async () => {
                   const payload = buildIdentificationUpdatePayload(identificationForm);

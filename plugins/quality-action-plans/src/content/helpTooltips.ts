@@ -46,6 +46,7 @@ export const PAC_HELP_TOOLTIPS = {
   },
   sections: {
     problem: "Resumo do relato, severidade, escopo e identificação principal da NC.",
+    planStatus: "Fluxo operacional do plano, estágio atual e alteração de status.",
     audit: "Histórico de eventos do plano (criação, alterações, eficácia, reabertura).",
     template: "Relatório estruturado do cliente (ex.: 8D) quando o plano usa template dedicado.",
     ishikawa:

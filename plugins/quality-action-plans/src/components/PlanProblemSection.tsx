@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
 import { Save, Search } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
 import {
   searchDelpiProducts,
   type DelpiProductLookupItem,
 } from "../api/delpiLookupApi";
-import { ScopeBadge, SeverityBadge, StatusBadge } from "./StatusBadge";
 import { CreatableMultiSelectField } from "./ui/CreatableMultiSelectField";
 import { DelpiAsyncLookupField } from "./ui/DelpiAsyncLookupField";
 import { DelpiCustomerSearchModal } from "./ui/DelpiCustomerSearchModal";
@@ -16,16 +15,13 @@ import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
 import {
-  branchLabel,
   PAC_BRANCH_OPTIONS,
   PAC_NONCONFORMITY_SCOPES,
   PAC_SOURCE_TYPES,
   PLAN_SEVERITIES,
-  PLAN_STATUSES,
 } from "../constants/actionPlans";
 import { RNC8D_SHARED_FIELD_LABELS } from "../constants/rnc8dSharedFields";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
-import type { PlanStatus } from "../types/actionPlan";
 import { serializeTaggedList } from "../utils/taggedList";
 
 export type PlanIdentificationFormState = {
@@ -51,25 +47,11 @@ export type PlanIdentificationFormState = {
 
 type PlanProblemSectionProps = {
   showRnc8dFlow: boolean;
-  planStatus: PlanStatus;
-  planBranchCode?: string | null;
-  planScope?: string | null;
-  planSeverity?: string | null;
-  isTerminalPlan: boolean;
   identificationForm: PlanIdentificationFormState;
   onIdentificationChange: (
     updater: (current: PlanIdentificationFormState) => PlanIdentificationFormState,
   ) => void;
-  statusValue: string;
-  onStatusChange: (value: string) => void;
-  reopenReason: string;
-  onReopenReasonChange: (value: string) => void;
-  reopenTargetStatus: string;
-  onReopenTargetStatusChange: (value: string) => void;
-  reopenStatusOptions: { value: string; label: string }[];
   saving: string | null;
-  onSaveStatus: () => void;
-  onReopen: () => void;
   onSaveIdentification: () => void;
   materialSection?: ReactNode;
 };
@@ -80,32 +62,13 @@ function formatProductLabel(item: DelpiProductLookupItem): string {
 
 export function PlanProblemSection({
   showRnc8dFlow,
-  planStatus,
-  planBranchCode,
-  planScope,
-  planSeverity,
-  isTerminalPlan,
   identificationForm,
   onIdentificationChange,
-  statusValue,
-  onStatusChange,
-  reopenReason,
-  onReopenReasonChange,
-  reopenTargetStatus,
-  onReopenTargetStatusChange,
-  reopenStatusOptions,
   saving,
-  onSaveStatus,
-  onReopen,
   onSaveIdentification,
   materialSection,
 }: PlanProblemSectionProps) {
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
-
-  const statusOptions = useMemo(
-    () => PLAN_STATUSES.map((item) => ({ value: item.value, label: item.label })),
-    [],
-  );
 
   const searchProducts = useCallback(async (query: string, signal: AbortSignal) => {
     const looksLikeCode = /^[0-9A-Za-z./-]+$/.test(query.trim());
@@ -128,88 +91,6 @@ export function PlanProblemSection({
 
   return (
     <>
-      <div className="pac-plan-status-bar">
-        <dl className="pac-dl pac-dl--compact">
-          <div>
-            <dt>Status atual</dt>
-            <dd>
-              <StatusBadge status={planStatus} />
-            </dd>
-          </div>
-          <div>
-            <dt>Filial</dt>
-            <dd>{branchLabel(planBranchCode)}</dd>
-          </div>
-          <div>
-            <dt>Escopo</dt>
-            <dd>
-              <ScopeBadge scope={planScope} />
-            </dd>
-          </div>
-          <div>
-            <dt>Severidade</dt>
-            <dd>
-              <SeverityBadge severity={planSeverity ?? "medium"} />
-            </dd>
-          </div>
-        </dl>
-        <div className="pac-inline-form pac-plan-status-bar__actions">
-          {isTerminalPlan ? (
-            <>
-              <TextAreaField
-                id="pac-reopen-reason"
-                label="Motivo da reabertura"
-                hint={PAC_HELP_TOOLTIPS.detail.reopenReason}
-                value={reopenReason}
-                onChange={onReopenReasonChange}
-                placeholder="Descreva por que o plano precisa ser reaberto…"
-                rows={3}
-                fullWidth
-              />
-              <SelectField
-                id="pac-plan-reopen-status"
-                label="Retomar em"
-                hint={PAC_HELP_TOOLTIPS.detail.reopenTargetStatus}
-                options={reopenStatusOptions}
-                value={reopenTargetStatus}
-                onChange={onReopenTargetStatusChange}
-                searchable={false}
-              />
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "reopen" || reopenReason.trim().length < 5}
-                onClick={onReopen}
-              >
-                <Save size={16} />
-                {saving === "reopen" ? "Reabrindo…" : "Reabrir plano"}
-              </button>
-            </>
-          ) : (
-            <>
-              <SelectField
-                id="pac-plan-status"
-                label="Atualizar status"
-                hint={PAC_HELP_TOOLTIPS.detail.updateStatus}
-                options={statusOptions}
-                value={statusValue}
-                onChange={onStatusChange}
-                searchable
-              />
-              <button
-                type="button"
-                className="pac-primary-btn"
-                disabled={saving === "status"}
-                onClick={onSaveStatus}
-              >
-                <Save size={16} />
-                {saving === "status" ? "Salvando…" : "Salvar status"}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
       <h3 className="pac-subsection-title">Identificação geral</h3>
       <div className="pac-form-grid">
         <TextField
