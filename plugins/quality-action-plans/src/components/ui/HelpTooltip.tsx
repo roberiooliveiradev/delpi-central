@@ -30,6 +30,8 @@ type BubblePosition = {
 const VIEWPORT_MARGIN = 12;
 const BUBBLE_GAP = 8;
 const BUBBLE_MAX_WIDTH = "min(280px, calc(100vw - 24px))";
+/** Acima de .pac-modal-overlay (10050) e tooltips do portal (~10060). */
+const TOOLTIP_Z_INDEX = 10200;
 
 type ViewportMetrics = {
   width: number;
@@ -113,7 +115,7 @@ function bubbleLayoutStyle(
 ): CSSProperties {
   const base: CSSProperties = {
     position: "fixed",
-    zIndex: 10000,
+    zIndex: TOOLTIP_Z_INDEX,
     maxWidth: BUBBLE_MAX_WIDTH,
     minWidth: 200,
     boxSizing: "border-box",
