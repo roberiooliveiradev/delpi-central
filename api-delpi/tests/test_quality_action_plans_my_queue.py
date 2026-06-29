@@ -34,6 +34,40 @@ def test_list_my_queue_overdue_only_filter():
     assert "a.due_date < CURRENT_DATE" in list_query
 
 
+def test_update_action_clears_responsible_user_id():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.execute_returning_one = MagicMock(
+        return_value={
+            "id": "act-1",
+            "plan_id": "plan-1",
+            "action_type": "corrective",
+            "description": "Teste",
+            "responsible_user_id": None,
+            "responsible_name": "Ana",
+            "department": None,
+            "due_date": None,
+            "status": "pending",
+            "evidence_required": False,
+            "cause_track": None,
+            "completed_at": None,
+            "created_at": None,
+            "updated_at": None,
+        }
+    )
+    repo.commit = MagicMock()
+
+    repo.update_action(
+        "plan-1",
+        "act-1",
+        {"responsible_user_id": None},
+        updated_by="user-1",
+    )
+
+    sql, params = repo.execute_returning_one.call_args[0]
+    assert "responsible_user_id = %s" in sql
+    assert None in params
+
+
 def test_list_my_queue_maps_rows():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo.fetch_one = MagicMock(

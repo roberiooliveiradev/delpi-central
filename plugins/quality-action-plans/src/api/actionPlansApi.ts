@@ -269,6 +269,7 @@ export async function upsertFiveWhys(
 export type NewPlanActionPayload = {
   action_type: string;
   description: string;
+  responsible_user_id?: string | null;
   responsible_name?: string;
   department?: string;
   due_date?: string;
@@ -292,6 +293,7 @@ export async function createPlanActions(
 export type UpdatePlanActionPayload = {
   action_type?: string;
   description?: string;
+  responsible_user_id?: string | null;
   responsible_name?: string;
   department?: string;
   due_date?: string;

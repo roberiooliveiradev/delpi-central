@@ -7,6 +7,10 @@ import {
   updatePlanAction,
   type UpdatePlanActionPayload,
 } from "../api/actionPlansApi";
+import {
+  ActionResponsibleField,
+  type ActionResponsibleValue,
+} from "./ActionResponsibleField";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
 import { FieldLabel, TableHeaderCell } from "./ui/HelpTooltip";
@@ -35,17 +39,22 @@ const CAUSE_TRACK_OPTIONS = [
 type ActionFormState = {
   actionType: string;
   description: string;
-  responsible: string;
+  responsible: ActionResponsibleValue;
   dueDate: string;
   causeTrack: string;
   status: string;
   evidenceRequired: boolean;
 };
 
+const EMPTY_RESPONSIBLE: ActionResponsibleValue = {
+  responsibleUserId: null,
+  responsibleName: "",
+};
+
 const EMPTY_FORM: ActionFormState = {
   actionType: "corrective",
   description: "",
-  responsible: "",
+  responsible: EMPTY_RESPONSIBLE,
   dueDate: "",
   causeTrack: "",
   status: "pending",
@@ -58,7 +67,7 @@ type Props = {
   evidences: PlanEvidence[];
   saving: string | null;
   onSave: (key: string, action: () => Promise<void>) => Promise<void>;
-  /** Quando informado (fluxo 8D), responsável vira select da equipe cadastrada. */
+  /** Quando informado (fluxo 8D), permite escolher membro da equipe além do vínculo Delpi. */
   responsibleOptions?: SelectOption[];
 };
 
@@ -66,7 +75,10 @@ function toFormState(action: PlanAction): ActionFormState {
   return {
     actionType: action.action_type,
     description: action.description,
-    responsible: action.responsible_name ?? "",
+    responsible: {
+      responsibleUserId: action.responsible_user_id ?? null,
+      responsibleName: action.responsible_name ?? "",
+    },
     dueDate: action.due_date?.slice(0, 10) ?? "",
     causeTrack: action.cause_track ?? "",
     status: action.status,
@@ -74,11 +86,22 @@ function toFormState(action: PlanAction): ActionFormState {
   };
 }
 
+function responsiblePayload(responsible: ActionResponsibleValue): Pick<
+  UpdatePlanActionPayload,
+  "responsible_name" | "responsible_user_id"
+> {
+  const name = responsible.responsibleName.trim();
+  return {
+    responsible_name: name || undefined,
+    responsible_user_id: responsible.responsibleUserId,
+  };
+}
+
 function toUpdatePayload(form: ActionFormState): UpdatePlanActionPayload {
   return {
     action_type: form.actionType,
     description: form.description.trim(),
-    responsible_name: form.responsible.trim() || undefined,
+    ...responsiblePayload(form.responsible),
     due_date: form.dueDate || undefined,
     cause_track: form.causeTrack || undefined,
     status: form.status,
@@ -136,11 +159,13 @@ export function PlanActionsPanel({
       if (!form.description.trim()) {
         throw new Error("Informe a descrição da ação.");
       }
+      const responsible = responsiblePayload(form.responsible);
       await createPlanActions(planId, [
         {
           action_type: form.actionType,
           description: form.description.trim(),
-          responsible_name: form.responsible.trim() || undefined,
+          responsible_name: responsible.responsible_name,
+          responsible_user_id: responsible.responsible_user_id || undefined,
           due_date: form.dueDate || undefined,
           cause_track: form.causeTrack || undefined,
           status: form.status,
@@ -196,7 +221,19 @@ export function PlanActionsPanel({
                         : "—"}
                   </td>
                   <td>{action.description}</td>
-                  <td>{action.responsible_name ?? "—"}</td>
+                  <td>
+                    <span className="pac-action-responsible-cell">
+                      <span>{action.responsible_name ?? "—"}</span>
+                      {action.responsible_user_id ? (
+                        <span
+                          className="pac-badge pac-badge--linked"
+                          title={PAC_HELP_TOOLTIPS.form.actionResponsibleLinked}
+                        >
+                          Fila
+                        </span>
+                      ) : null}
+                    </span>
+                  </td>
                   <td>{formatDate(action.due_date)}</td>
                   <td className="pac-table-cell--evidence">
                     <span
@@ -269,27 +306,6 @@ export function PlanActionsPanel({
             onChange={(causeTrack) => setForm((current) => ({ ...current, causeTrack }))}
             searchable={false}
           />
-          {responsibleOptions ? (
-            <SelectField
-              id="pac-action-responsible"
-              label="Responsável"
-              hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberSelect}
-              options={responsibleOptions}
-              value={form.responsible}
-              onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
-              searchable
-              allowEmpty
-              emptyLabel="Selecione…"
-            />
-          ) : (
-            <TextField
-              id="pac-action-responsible"
-              label="Responsável"
-              hint={PAC_HELP_TOOLTIPS.form.actionResponsible}
-              value={form.responsible}
-              onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
-            />
-          )}
           <TextField
             id="pac-action-due"
             label="Prazo"
@@ -308,6 +324,12 @@ export function PlanActionsPanel({
             searchable={false}
           />
         </div>
+
+        <ActionResponsibleField
+          value={form.responsible}
+          teamOptions={responsibleOptions}
+          onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
+        />
 
         <TextAreaField
           id="pac-action-desc"

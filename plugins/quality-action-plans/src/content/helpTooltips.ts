@@ -77,6 +77,12 @@ export const PAC_HELP_TOOLTIPS = {
     actionEvidence:
       "Quando marcado, exige anexo de evidência antes de concluir a ação.",
     actionResponsible: "Pessoa ou equipe responsável pela execução da ação.",
+    actionResponsibleUserLink:
+      "Busque um usuário Delpi pelo nome ou e-mail. Opcional — habilita a Minha fila e notificações para essa pessoa.",
+    actionResponsibleLinked:
+      "Usuário vinculado por ID — a ação entra na Minha fila dele enquanto estiver aberta.",
+    actionResponsibleNameOnly:
+      "Somente o nome foi informado, sem usuário Delpi vinculado.",
     actionDueDate: "Prazo acordado para conclusão da ação.",
     actionStatus: "Situação atual da ação (pendente, em andamento, concluída, etc.).",
     actionDescription: "O que será feito — descrição objetiva da ação corretiva ou de contenção.",

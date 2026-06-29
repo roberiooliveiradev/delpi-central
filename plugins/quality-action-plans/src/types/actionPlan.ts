@@ -217,6 +217,7 @@ export type PlanAction = {
   id: string;
   action_type: string;
   description: string;
+  responsible_user_id?: string | null;
   responsible_name?: string | null;
   department?: string | null;
   due_date?: string | null;

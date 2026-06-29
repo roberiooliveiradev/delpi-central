@@ -2092,10 +2092,15 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "evidence_required",
             "cause_track",
         }
+        nullable_fields = {"responsible_user_id", "responsible_name", "department", "due_date", "cause_track"}
         updates = {
             key: value
             for key, value in fields.items()
-            if key in allowed and (value is not None or key == "cause_track")
+            if key in allowed
+            and (
+                value is not None
+                or key in nullable_fields
+            )
         }
         if not updates:
             row = self.fetch_one(
