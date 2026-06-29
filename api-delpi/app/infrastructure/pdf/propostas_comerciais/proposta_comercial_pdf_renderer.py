@@ -166,14 +166,24 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         condicoes = detail.get("condicoes") or {}
         vendedor = detail.get("vendedor") or {}
         itens = detail.get("itens") or []
-        observacoes = str(detail.get("observacoes") or "").strip()
+        observacoes = _compose_observacoes_text(
+            str(detail.get("observacoes") or "").strip(),
+            itens,
+        )
 
         story: list[Flowable] = []
         story.extend(self._build_document_header(cabecalho, empresa, styles))
         story.append(Spacer(1, 2 * mm))
         story.extend(self._build_client_contact_cards(cliente, contato, styles))
         story.append(Spacer(1, 3 * mm))
-        story.extend(self._build_items_section(itens, cabecalho, styles, detail.get("rotulos") or {}))
+        story.extend(
+            self._build_items_section(
+                itens,
+                styles,
+                detail.get("rotulos") or {},
+                exibir_coluna_valor_liquido=_exibir_coluna_valor_liquido(detail),
+            )
+        )
         story.append(Spacer(1, 3 * mm))
         story.extend(self._build_conditions_section(cabecalho, condicoes, styles))
         story.append(Spacer(1, 2.5 * mm))
@@ -317,22 +327,30 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
     def _build_items_section(
         self,
         itens: list[dict],
-        cabecalho: dict,
         styles: dict[str, ParagraphStyle],
         rotulos: dict,
+        *,
+        exibir_coluna_valor_liquido: bool = True,
     ) -> list[Flowable]:
+        descricao_width = (50 * mm if exibir_coluna_valor_liquido else 74 * mm) + 18 * mm
         headers = [
             _rotulo_coluna_itens(rotulos, "item", "Item"),
             _rotulo_coluna_itens(rotulos, "produto", "Ref. Delpi"),
             _rotulo_coluna_itens(rotulos, "referencia_cliente", "Ref. Cliente"),
-            _rotulo_coluna_itens(rotulos, "ncm", "NCM"),
             _rotulo_coluna_itens(rotulos, "descricao", "Descrição"),
             _rotulo_coluna_itens(rotulos, "valor_bruto", "Bruto R$/mil"),
-            _rotulo_coluna_itens(rotulos, "valor_liquido", "Líquido R$/mil"),
-            _rotulo_coluna_itens(rotulos, "prazo", "Prazo"),
-            _rotulo_coluna_itens(rotulos, "lote_minimo", "Lote mín."),
         ]
-        widths = [10 * mm, 15 * mm, 15 * mm, 18 * mm, 50 * mm, 24 * mm, 24 * mm, 12 * mm, 12 * mm]
+        widths = [8 * mm, 15 * mm, 18 * mm, descricao_width, 24 * mm]
+        if exibir_coluna_valor_liquido:
+            headers.append(_rotulo_coluna_itens(rotulos, "valor_liquido", "Líquido R$/mil"))
+            widths.append(24 * mm)
+        headers.extend(
+            [
+                _rotulo_coluna_itens(rotulos, "prazo", "Prazo"),
+                _rotulo_coluna_itens(rotulos, "lote_minimo", "Lote mín."),
+            ]
+        )
+        widths.extend([12 * mm, 12 * mm])
 
         rows: list[list[Flowable | str]] = [
             [_table_header_cell(label, styles) for label in headers]
@@ -343,77 +361,51 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             prazo_text = "—" if prazo in (None, "") else f"{prazo} dias"
             lote = item.get("lote_minimo")
             lote_text = "—" if lote in (None, "") else str(lote)
-            rows.append(
-                [
-                    Paragraph(_escape(_display(item.get("item"))), styles["tableCellCenter"]),
-                    Paragraph(_escape(_display(item.get("produto"))), styles["tableCell"]),
-                    Paragraph(_escape(_display(item.get("referencia_cliente"))), styles["tableCell"]),
-                    Paragraph(_escape(_display(item.get("ncm"))), styles["tableCellNcm"]),
-                    Paragraph(_escape_multiline(_display(item.get("descricao"))), styles["tableCell"]),
-                    Paragraph(
-                        _escape(_display(item.get("valor_bruto_r_mil_formatado") or item.get("preco_unitario"))),
-                        styles["tableCellMoney"],
-                    ),
+            row: list[Flowable | str] = [
+                Paragraph(_escape(_display(item.get("item"))), styles["tableCellCenter"]),
+                Paragraph(_escape(_display(item.get("produto"))), styles["tableCell"]),
+                Paragraph(_escape(_display(item.get("referencia_cliente"))), styles["tableCell"]),
+                Paragraph(_escape_multiline(_display(item.get("descricao"))), styles["tableCell"]),
+                Paragraph(
+                    _escape(_display(item.get("valor_bruto_r_mil_formatado") or item.get("preco_unitario"))),
+                    styles["tableCellMoney"],
+                ),
+            ]
+            if exibir_coluna_valor_liquido:
+                row.append(
                     Paragraph(
                         _escape(_display(item.get("valor_liquido_r_mil_formatado"))),
                         styles["tableCellMoney"],
-                    ),
+                    )
+                )
+            row.extend(
+                [
                     Paragraph(_escape(prazo_text), styles["tableCellCenter"]),
                     Paragraph(_escape(lote_text), styles["tableCellCenter"]),
                 ]
             )
+            rows.append(row)
 
-        soma = cabecalho.get("soma_valores_r_mil")
-        total_liquido = cabecalho.get("total_liquido_r_mil_formatado")
-        has_total = bool(soma and soma != "—")
-        has_total_liquido = bool(total_liquido and total_liquido != "—")
-        total_proposta_label = _rotulo_total_proposta(rotulos)
-        if has_total or has_total_liquido:
-            rows.append(
-                [
-                    "",
-                    "",
-                    "",
-                    "",
-                    Paragraph(f"<b>{_escape(total_proposta_label)}</b>", styles["tableCell"]),
-                    Paragraph(
-                        f"<b>{_escape(_display(soma))}</b>" if has_total else "",
-                        styles["tableCellMoneyBold"],
-                    ),
-                    Paragraph(
-                        f"<b>{_escape(_display(total_liquido))}</b>" if has_total_liquido else "",
-                        styles["tableCellMoneyBold"],
-                    ),
-                    "",
-                    "",
-                ]
-            )
-
-        has_total_row = has_total or has_total_liquido
         table = Table(rows, colWidths=widths, repeatRows=1)
-        style_commands = [
-            ("BACKGROUND", (0, 0), (-1, 0), SURFACE_MUTED),
-            ("TEXTCOLOR", (0, 0), (-1, 0), DELPI_BLUE),
-            ("LINEBELOW", (0, 0), (-1, 0), 0.8, DELPI_BLUE),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -2 if has_total_row else -1), [WHITE, SURFACE_SOFT]),
-            ("BOX", (0, 0), (-1, -1), 0.35, LINE),
-            ("INNERGRID", (0, 0), (-1, -2 if has_total_row else -1), 0.25, LINE),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("LEFTPADDING", (0, 0), (-1, -1), 3),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-            ("LEFTPADDING", (3, 0), (3, -1), 2),
-            ("RIGHTPADDING", (3, 0), (3, -1), 2),
-        ]
-        if has_total_row:
-            style_commands.extend(
+        table.setStyle(
+            TableStyle(
                 [
-                    ("LINEABOVE", (0, -1), (-1, -1), 0.6, LINE),
-                    ("BACKGROUND", (0, -1), (-1, -1), SURFACE_SOFT),
+                    ("BACKGROUND", (0, 0), (-1, 0), SURFACE_MUTED),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), DELPI_BLUE),
+                    ("LINEBELOW", (0, 0), (-1, 0), 0.8, DELPI_BLUE),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, SURFACE_SOFT]),
+                    ("BOX", (0, 0), (-1, -1), 0.35, LINE),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.25, LINE),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("LEFTPADDING", (3, 0), (3, -1), 2),
+                    ("RIGHTPADDING", (3, 0), (3, -1), 2),
                 ]
             )
-        table.setStyle(TableStyle(style_commands))
+        )
         return _section_block("Itens", [table], styles, title_spacing=2 * mm)
 
     def _build_conditions_section(
@@ -925,6 +917,31 @@ def _format_frete_display(value: str) -> str:
     return normalized
 
 
+def _compose_observacoes_text(observacoes: str, itens: list[dict]) -> str:
+    ncm_lines: list[str] = []
+    for item in itens:
+        ncm = _display(item.get("ncm"), empty="")
+        if not ncm:
+            continue
+        item_label = _display(item.get("item"), empty="—")
+        ncm_lines.append(f"Item {item_label} — NCM {ncm}")
+
+    if not ncm_lines:
+        return observacoes
+
+    ncm_block = "NCM:\n" + "\n".join(ncm_lines)
+    if observacoes:
+        return f"{observacoes}\n\n{ncm_block}"
+    return ncm_block
+
+
+def _exibir_coluna_valor_liquido(detail: dict) -> bool:
+    value = detail.get("exibir_coluna_valor_liquido")
+    if value is None:
+        return True
+    return bool(value)
+
+
 def _rotulo_coluna_itens(rotulos: dict, key: str, default: str) -> str:
     if not isinstance(rotulos, dict):
         return default
@@ -936,16 +953,6 @@ def _rotulo_coluna_itens(rotulos: dict, key: str, default: str) -> str:
         return default
     text = str(value).strip()
     return text or default
-
-
-def _rotulo_total_proposta(rotulos: dict) -> str:
-    if not isinstance(rotulos, dict):
-        return "Total da proposta"
-    value = rotulos.get("total_proposta")
-    if value is None:
-        return "Total da proposta"
-    text = str(value).strip()
-    return text or "Total da proposta"
 
 
 def _escape(value: str) -> str:

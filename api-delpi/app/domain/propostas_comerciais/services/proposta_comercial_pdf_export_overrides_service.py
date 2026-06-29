@@ -46,6 +46,10 @@ class PropostaComercialPdfExportOverridesService:
                 overrides["observacoes"]
             )
 
+        if "exibir_coluna_valor_liquido" in overrides:
+            value = overrides["exibir_coluna_valor_liquido"]
+            result["exibir_coluna_valor_liquido"] = True if value is None else bool(value)
+
         for section, allowed_fields in _ALLOWED_NESTED_FIELDS.items():
             section_overrides = overrides.get(section)
             if not isinstance(section_overrides, dict):

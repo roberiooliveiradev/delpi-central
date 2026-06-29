@@ -2,6 +2,7 @@ import type {
   PedidosVendaAbertosItem,
   PedidosVendaAbertosSummary,
 } from "../types/pedidosVendaAbertos";
+import { formatEntityCodeStore } from "./entityCodeStore";
 import { isDeliveryOverdue, isWithinDateRange } from "./dates";
 import {
   getLineStatus,
@@ -71,7 +72,13 @@ export function filterPedidosItems(
         includesInsensitive(item.pedido, q) ||
         includesInsensitive(item.pedido_cliente, q) ||
         includesInsensitive(item.produto, q) ||
-        includesInsensitive(item.codigo_cliente, q);
+        includesInsensitive(item.codigo_cliente, q) ||
+        includesInsensitive(item.codigo_cadastro, q) ||
+        includesInsensitive(item.loja_cadastro, q) ||
+        includesInsensitive(
+          formatEntityCodeStore(item.codigo_cadastro, item.loja_cadastro) ?? undefined,
+          q,
+        );
       if (!matchesSearch) return false;
     }
 

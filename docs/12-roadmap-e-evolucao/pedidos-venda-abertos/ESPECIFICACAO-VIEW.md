@@ -30,7 +30,9 @@ Todos os campos abaixo devem ser selecionados **explicitamente** no repository (
 | `pedido` | string | Número do pedido Protheus | Busca livre |
 | `linha` | string | Linha do item no pedido | Chave composta |
 | `produto` | string | Código/descrição do produto | Busca livre |
-| `codigo_cliente` | string | Código do cliente no cadastro | Busca livre |
+| `codigo_cliente` | string | Part number / código do produto no cliente | Busca livre; coluna dedicada na tabela |
+| `codigo_cadastro` | string | Código Protheus do cliente/fornecedor (`SC5.C5_CLIENTE`) | Exibir na 1ª coluna como `tipo "codigo-loja"` |
+| `loja_cadastro` | string | Loja Protheus (`SC5.C5_LOJACLI`) | Complementa `codigo_cadastro` na 1ª coluna |
 | `quantidade` | number | Quantidade pedida | Formato pt-BR na UI |
 | `entregue` | number | Quantidade já entregue | |
 | `saldo` | number | Quantidade em aberto | `quantidade - entregue` (validar na view) |

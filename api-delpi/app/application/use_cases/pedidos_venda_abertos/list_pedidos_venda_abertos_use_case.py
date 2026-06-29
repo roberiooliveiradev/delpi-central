@@ -40,6 +40,8 @@ def _normalize_item(row: dict) -> dict:
         "linha": _as_str(row.get("linha")),
         "produto": _as_str(row.get("produto")),
         "codigo_cliente": _as_str(row.get("codigo_cliente")),
+        "codigo_cadastro": _as_str(row.get("codigo_cadastro")),
+        "loja_cadastro": _as_str(row.get("loja_cadastro")),
         "quantidade": _as_float(row.get("quantidade")),
         "entregue": _as_float(row.get("entregue")),
         "saldo": _as_float(row.get("saldo")),

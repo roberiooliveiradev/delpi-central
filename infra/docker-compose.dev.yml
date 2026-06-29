@@ -762,6 +762,7 @@ services:
         "8000",
         "--root-path",
         "/apps/api-delpi",
+        "--reload",
       ]
     
     env_file:

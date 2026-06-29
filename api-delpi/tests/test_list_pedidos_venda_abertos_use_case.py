@@ -18,7 +18,9 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
                 "pedido": "100",
                 "linha": "01",
                 "produto": "90300079",
-                "codigo_cliente": "C001",
+                "codigo_cliente": "PN-903",
+                "codigo_cadastro": "10047758",
+                "loja_cadastro": "11",
                 "quantidade": 10,
                 "entregue": 4,
                 "saldo": 6,
@@ -53,3 +55,6 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
     payload = result.to_dict()
     assert payload["summary"]["valor_total_aberto"] == 603.0
     assert payload["items"][0]["nome_cliente"] == "CLIENTE A"
+    assert payload["items"][0]["codigo_cliente"] == "PN-903"
+    assert payload["items"][0]["codigo_cadastro"] == "10047758"
+    assert payload["items"][0]["loja_cadastro"] == "11"

@@ -488,6 +488,23 @@
   font-size: 16px;
 }
 
+.pc-export-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: var(--pc-font-md);
+  color: var(--pc-text);
+  cursor: pointer;
+}
+
+.pc-export-option input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--pc-primary);
+}
+
 .pc-export-section > .pc-form-field {
   margin-bottom: 12px;
 }

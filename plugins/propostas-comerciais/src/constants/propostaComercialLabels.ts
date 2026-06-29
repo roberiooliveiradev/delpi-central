@@ -48,18 +48,14 @@ export const DEFAULT_RESUMO_LABELS: Record<PropostaComercialResumoLabelKey, stri
   cliente: "Cliente",
 };
 
-export const DEFAULT_TOTAL_PROPOSTA_LABEL = "Total da proposta";
-
 export type PropostaComercialRotulosDraft = {
   colunas_itens: Record<PropostaComercialItemColumnKey, string>;
   resumo: Record<PropostaComercialResumoLabelKey, string>;
-  total_proposta: string;
 };
 
 export function buildDefaultRotulosDraft(): PropostaComercialRotulosDraft {
   return {
     colunas_itens: { ...DEFAULT_ITEM_COLUMN_LABELS },
     resumo: { ...DEFAULT_RESUMO_LABELS },
-    total_proposta: DEFAULT_TOTAL_PROPOSTA_LABEL,
   };
 }
