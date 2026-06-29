@@ -14,7 +14,7 @@ def _product_code_prefix_clause(column: str) -> str:
 
 SC2_PA_PRODUCT_CODE_PREFIX_SQL = _product_code_prefix_clause("OP.C2_PRODUTO")
 
-# OTD considera só OP mãe (sequência 001) — entrega do PA, não OPs vinculadas (002+).
+# OTD considera só OP mãe (sequência 001) — entrega consolidada, não OPs vinculadas (002+).
 SC2_MOTHER_OP_SEQUENCE_SQL = "RTRIM(LTRIM(OP.C2_SEQUEN)) = '001'"
 
 # Variante para consultas com alias LINKED em OPs vinculadas.

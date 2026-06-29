@@ -90,8 +90,8 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 - SQL: CTE `H6_RANKED` (uma varredura em SH6010 por período) + join na view — evita `OUTER APPLY` correlacionado em bulk.
 - Cache: resposta completa em `query_cache` (namespace `eficiencia-fabril-appointments`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 - Console: `operation_id=list_eficiencia_fabril_appointments`; caller `eficiencia-fabril` — após o primeiro load do período, recargas devem ser cache hit (&lt; 500 ms).
-| GET | `/production/on_time_delivery_pct` | OTD produção (%) — OPs de PA (`SB1010.B1_TIPO = 'PA'`) com `C2_PRODUTO` prefixo 9 ou 8 e sequência mãe `001`. |
-| GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs de PA (prefixos 9/8 e sequência `001`) e filtro `status` (`on_time` / `late`). |
+| GET | `/production/on_time_delivery_pct` | OTD produção (%) — OPs mãe (`C2_SEQUEN = '001'`) finalizadas no período. |
+| GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs mãe (sequência `001`) e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
 
 **Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Changelog jun/2026 (tempos, fórmulas, auto-refresh): [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).

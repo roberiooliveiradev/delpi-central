@@ -3,7 +3,6 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.production_repositories.production_pa_sql_filters import (
     SC2_MOTHER_OP_SEQUENCE_SQL,
-    SC2_PA_PRODUCT_CODE_PREFIX_SQL,
 )
 from app.application.dto.production.get_production_otd_request import (
     GetProductionOtdRequest,
@@ -20,14 +19,7 @@ from app.domain.ports.production.on_time_delivery_repository_port import (
     OnTimeDeliveryRepositoryPort,
 )
 
-_SC2_PA_JOIN = """
-    INNER JOIN SB1010 P_PA WITH (NOLOCK)
-        ON P_PA.B1_COD = OP.C2_PRODUTO
-       AND P_PA.D_E_L_E_T_ = ''
-       AND P_PA.B1_TIPO = 'PA'
-"""
-
-_LIST_OPS_CTE = f"""
+_LIST_OPS_CTE = """
     OPS_KEYS AS (
         SELECT
             OP.C2_FILIAL AS branch,
@@ -37,9 +29,8 @@ _LIST_OPS_CTE = f"""
             OP.C2_DATPRF,
             OP.C2_DATRF,
             MIN(RTRIM(LTRIM(OP.C2_PRODUTO))) AS product_code
-        FROM SC2010 OP
-        {{pa_join}}
-        WHERE {{where_clause}}
+        FROM SC2010 OP WITH (NOLOCK)
+        WHERE {where_clause}
         GROUP BY
             OP.C2_FILIAL,
             OP.C2_NUM,
@@ -68,7 +59,7 @@ _LIST_OPS_CTE = f"""
                 ELSE 'late'
             END AS status
         FROM OPS_KEYS k
-        LEFT JOIN SB1010 P_PA
+        LEFT JOIN SB1010 P_PA WITH (NOLOCK)
             ON P_PA.B1_COD = k.product_code
            AND P_PA.D_E_L_E_T_ = ''
     )
@@ -93,7 +84,6 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         qb.raw("OP.C2_DATPRF IS NOT NULL")
         qb.raw("OP.C2_DATRF IS NOT NULL")
         qb.date_range("OP.C2_DATPRF", start_date, end_date)
-        qb.raw(SC2_PA_PRODUCT_CODE_PREFIX_SQL)
         qb.raw(SC2_MOTHER_OP_SEQUENCE_SQL)
 
         return qb.build()
@@ -174,7 +164,6 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
                     OP.C2_DATPRF,
                     OP.C2_DATRF
                 FROM SC2010 OP WITH (NOLOCK)
-                {_SC2_PA_JOIN}
                 WHERE {where_clause}
             )
             SELECT
@@ -231,7 +220,6 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
                     OP.C2_DATPRF,
                     OP.C2_DATRF
                 FROM SC2010 OP WITH (NOLOCK)
-                {_SC2_PA_JOIN}
                 WHERE {where_clause}
             )
             SELECT
@@ -268,10 +256,7 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
         )
         status_clause = self._status_filter_clause(request.status)
         order_clause = self._list_order_clause(request)
-        list_cte = _LIST_OPS_CTE.format(
-            pa_join=_SC2_PA_JOIN,
-            where_clause=where_clause,
-        )
+        list_cte = _LIST_OPS_CTE.format(where_clause=where_clause)
 
         count_sql = f"""
             WITH {list_cte}

@@ -455,10 +455,9 @@ SUPPLIES_OTD = agent_route(
 PRODUCTION_OTD = agent_route(
     summary="OTD produção — resumo e ordens (SC2010)",
     description=(
-        "Painel de OTD de produção: resumo (OPs de PA no prazo/atrasadas, % OTD) e listagem paginada "
-        "de ordens finalizadas (SC2010 com SB1010.B1_TIPO = 'PA'; C2_DATPRF × C2_DATRF). "
+        "Painel de OTD de produção: resumo (OPs no prazo/atrasadas, % OTD) e listagem paginada "
+        "de ordens finalizadas (SC2010 com C2_DATPRF × C2_DATRF). "
         "Considera apenas OP mãe (C2_SEQUEN = '001', sufixo …001 em C2_OP), excluindo OPs vinculadas. "
-        "PA elegível: C2_PRODUTO com prefixo 9 ou 8. "
         "Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. "
         "Use para listar OPs atrasadas ou no prazo, detalhar entrega de produção ou exportar ordens. "
         "Para apenas o percentual agregado sem listagem, prefira GET /production/on_time_delivery_pct. "

@@ -17,7 +17,7 @@ export const DP_HELP_TOOLTIPS = {
     depreciation:
       "Percentual da depreciação fabril sobre a ROL no período.",
     oee: "Média de eficiência dos apontamentos válidos (0–199%) na view fabril compartilhada.",
-    otd: "Percentual de OPs mãe (sequência 001) de PA com prefixo 9 ou 8, finalizadas dentro do prazo previsto.",
+    otd: "Percentual de OPs mãe (sequência 001) finalizadas dentro do prazo previsto.",
     comparisonChart:
       "Comparativo dos cinco indicadores principais do painel no período e unidade selecionados.",
     oeeEvolution:
@@ -65,7 +65,7 @@ export const DP_HELP_TOOLTIPS = {
     },
   },
   otd: {
-    kpiOtd: "Percentual de OPs mãe (sequência 001) de PA (prefixos 9 ou 8) finalizadas no prazo em relação ao total encerrado no período.",
+    kpiOtd: "Percentual de OPs mãe (sequência 001) finalizadas no prazo em relação ao total encerrado no período.",
     kpiOnTime: "Quantidade de ordens finalizadas até a data prevista (due date).",
     kpiLate: "Quantidade de ordens finalizadas após a data prevista.",
     chartEvolution: "Evolução do OTD no tempo conforme a granularidade escolhida.",
@@ -73,7 +73,7 @@ export const DP_HELP_TOOLTIPS = {
       status: "Restringe a listagem a OPs no prazo, atrasadas ou exibe todas.",
     },
     table: {
-      section: "Ordens de produção mãe (sequência 001) de PA com prefixo 9 ou 8, finalizadas no período. OPs vinculadas (002+) não entram no OTD.",
+      section: "Ordens de produção mãe (sequência 001) finalizadas no período. OPs vinculadas (002+) não entram no OTD.",
       status: "No prazo ou atrasada conforme comparação entre data de conclusão e data prevista.",
       branch: "Unidade TOTVS da ordem.",
       productionOrder: "Identificador da ordem de produção.",
