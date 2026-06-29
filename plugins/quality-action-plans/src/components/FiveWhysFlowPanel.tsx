@@ -6,7 +6,7 @@ import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FormActions } from "./ui/FormActions";
 import { FieldLabel, TitleWithHelp } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
-import { TextField } from "./ui/TextField";
+import { TextAreaField } from "./ui/TextAreaField";
 import type { FiveWhysForm, FiveWhyStep } from "../utils/fiveWhys";
 import { isFilledWhyStep, serializeFiveWhysForm } from "../utils/fiveWhys";
 
@@ -203,12 +203,13 @@ export function FiveWhysFlowPanel({ planId, form, saving, onChange, onSave }: Pr
       ))}
 
       <div className="pac-form-grid pac-whys-flow__footer">
-        <TextField
+        <TextAreaField
           id="pac-root-cause"
           label="Causa raiz"
           hint={PAC_HELP_TOOLTIPS.form.rootCause}
           value={form.root_cause}
           onChange={(root_cause) => onChange({ ...form, root_cause })}
+          rows={4}
           fullWidth
         />
         <SelectField
