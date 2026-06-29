@@ -1,22 +1,27 @@
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useState, type DragEvent } from "react";
 
-import { searchDirectoryUsers, type DirectoryUser } from "../api/directoryApi";
+import type { DirectoryUser } from "../api/directoryApi";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { TeamMember } from "../types/rnc8d";
 import { formatPersonName } from "../utils/formatPersonName";
 import { FieldLabel } from "./ui/HelpTooltip";
-import { DragHandle, RemoveRowButton } from "./ui/RowActions";
+import { DragHandle, type DragHandleProps, RemoveRowButton } from "./ui/RowActions";
 import { TextField } from "./ui/TextField";
 import { DelpiUserSearchModal } from "./ui/DelpiUserSearchModal";
+
+type RowDropProps = {
+  onDragOver: (event: DragEvent) => void;
+  onDrop: (event: DragEvent) => void;
+};
 
 type Props = {
   index: number;
   member: TeamMember;
   rowClassName: string;
-  rowDropProps: Record<string, unknown>;
+  rowDropProps: RowDropProps;
   canDrag: boolean;
-  dragProps: Record<string, unknown> | null;
+  dragProps: DragHandleProps | null;
   removeDisabled: boolean;
   onChange: (member: TeamMember) => void;
   onLeaderToggle: (checked: boolean) => void;

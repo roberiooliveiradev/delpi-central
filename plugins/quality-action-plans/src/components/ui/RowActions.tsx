@@ -1,7 +1,7 @@
 import { GripVertical, X } from "lucide-react";
 import type { DragEvent, HTMLAttributes } from "react";
 
-type DragHandleProps = {
+export type DragHandleProps = {
   draggable: boolean;
   onDragStart: (event: DragEvent) => void;
   onDragEnd: () => void;
