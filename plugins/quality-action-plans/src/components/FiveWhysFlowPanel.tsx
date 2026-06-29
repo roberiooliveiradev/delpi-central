@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { upsertFiveWhys } from "../api/actionPlansApi";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FormActions } from "./ui/FormActions";
+import { SectionSaveButton } from "./ui/SectionSaveButton";
 import { FieldLabel, TitleWithHelp } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
@@ -44,6 +45,7 @@ type Props = {
   planId: string;
   form: FiveWhysForm;
   saving: string | null;
+  dirty?: boolean;
   onChange: (form: FiveWhysForm) => void;
   onSave: (key: string, action: () => Promise<void>) => Promise<void>;
 };
@@ -187,7 +189,7 @@ function WhysFlowTrack({
   );
 }
 
-export function FiveWhysFlowPanel({ planId, form, saving, onChange, onSave }: Props) {
+export function FiveWhysFlowPanel({ planId, form, saving, dirty = false, onChange, onSave }: Props) {
   const busy = saving === "five-whys";
 
   return (
@@ -224,18 +226,17 @@ export function FiveWhysFlowPanel({ planId, form, saving, onChange, onSave }: Pr
       </div>
 
       <FormActions>
-        <button
-          type="button"
-          className="pac-primary-btn"
-          disabled={busy}
-          onClick={() =>
+        <SectionSaveButton
+          saveKey="five-whys"
+          saving={saving}
+          dirty={dirty}
+          label="Salvar porquês"
+          onSave={() =>
             void onSave("five-whys", async () => {
               await upsertFiveWhys(planId, serializeFiveWhysForm(form));
             })
           }
-        >
-          {busy ? "Salvando…" : "Salvar porquês"}
-        </button>
+        />
       </FormActions>
     </>
   );

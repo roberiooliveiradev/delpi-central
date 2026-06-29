@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Save, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import {
@@ -10,6 +10,7 @@ import { CreatableMultiSelectField } from "./ui/CreatableMultiSelectField";
 import { DelpiAsyncLookupField } from "./ui/DelpiAsyncLookupField";
 import { DelpiCustomerSearchModal } from "./ui/DelpiCustomerSearchModal";
 import { FormActions } from "./ui/FormActions";
+import { SectionSaveButton } from "./ui/SectionSaveButton";
 import { ReadOnlyField } from "./ui/ReadOnlyField";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
@@ -53,6 +54,9 @@ type PlanProblemSectionProps = {
   ) => void;
   saving: string | null;
   onSaveIdentification: () => void;
+  dirtyIdentification?: boolean;
+  onSaveMaterial?: () => void;
+  dirtyMaterial?: boolean;
   materialSection?: ReactNode;
 };
 
@@ -66,6 +70,9 @@ export function PlanProblemSection({
   onIdentificationChange,
   saving,
   onSaveIdentification,
+  dirtyIdentification = false,
+  onSaveMaterial,
+  dirtyMaterial = false,
   materialSection,
 }: PlanProblemSectionProps) {
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
@@ -310,6 +317,17 @@ export function PlanProblemSection({
       </div>
 
       {materialSection}
+      {onSaveMaterial ? (
+        <FormActions align="end">
+          <SectionSaveButton
+            saveKey="rnc8d-material"
+            saving={saving}
+            onSave={onSaveMaterial}
+            dirty={dirtyMaterial}
+            label="Salvar material e NF"
+          />
+        </FormActions>
+      ) : null}
 
       <TextAreaField
         id="pac-detail-problem"
@@ -320,15 +338,13 @@ export function PlanProblemSection({
         fullWidth
       />
       <FormActions align="end">
-        <button
-          type="button"
-          className="pac-primary-btn"
-          disabled={saving === "identification"}
-          onClick={onSaveIdentification}
-        >
-          <Save size={16} />
-          {saving === "identification" ? "Salvando…" : "Salvar identificação"}
-        </button>
+        <SectionSaveButton
+          saveKey="identification"
+          saving={saving}
+          onSave={onSaveIdentification}
+          dirty={dirtyIdentification}
+          label="Salvar identificação"
+        />
       </FormActions>
     </>
   );

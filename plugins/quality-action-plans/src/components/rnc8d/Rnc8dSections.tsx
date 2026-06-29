@@ -1,11 +1,16 @@
-import { Save } from "lucide-react";
 import { useMemo } from "react";
 
+import type { PlanAction } from "../../types/actionPlan";
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useDragReorder } from "../../hooks/useDragReorder";
 import type { Rnc8dContainmentRow, Rnc8dReportPayload, Rnc8dTemplatePayload } from "../../types/rnc8d";
 import { emptyRnc8dPayload } from "../../types/rnc8d";
+import {
+  findTeamMemberBindings,
+  formatTeamMemberBindingMessage,
+} from "../../utils/teamMemberBindings";
 import { buildTeamMemberSelectOptions } from "../../utils/teamMemberOptions";
+import { SectionSaveButton } from "../ui/SectionSaveButton";
 import { TeamMemberRow } from "../TeamMemberRow";
 import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
@@ -20,6 +25,40 @@ export type Rnc8dSectionsProps = {
   value: Rnc8dReportPayload;
   onChange: (value: Rnc8dReportPayload) => void;
 };
+
+export type Rnc8dSectionSaveProps = {
+  saveKey: string;
+  saving: string | null;
+  onSave?: () => void;
+  dirty?: boolean;
+  saveLabel?: string;
+};
+
+type Rnc8dSectionProps = Rnc8dSectionsProps & Rnc8dSectionSaveProps;
+
+function Rnc8dSectionFooter({
+  saveKey,
+  saving,
+  onSave,
+  dirty = false,
+  saveLabel,
+}: Rnc8dSectionSaveProps) {
+  if (!onSave) {
+    return null;
+  }
+
+  return (
+    <FormActions align="end">
+      <SectionSaveButton
+        saveKey={saveKey}
+        saving={saving}
+        onSave={onSave}
+        dirty={dirty}
+        label={saveLabel}
+      />
+    </FormActions>
+  );
+}
 
 const CONTAINMENT_AREAS = [
   { value: "end_customer", label: "Cliente final" },
@@ -155,7 +194,15 @@ export function Rnc8dHeaderSection({ value, onChange }: Rnc8dSectionsProps) {
   );
 }
 
-export function Rnc8dNcDescriptionSection({ value, onChange }: Rnc8dSectionsProps) {
+export function Rnc8dNcDescriptionSection({
+  value,
+  onChange,
+  saveKey,
+  saving,
+  onSave,
+  dirty,
+  saveLabel = "Salvar descrição NC",
+}: Rnc8dSectionProps) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
   const nc = payload.nc_description ?? {};
 
@@ -203,11 +250,31 @@ export function Rnc8dNcDescriptionSection({ value, onChange }: Rnc8dSectionsProp
           fullWidth
         />
       </div>
+      <Rnc8dSectionFooter
+        saveKey={saveKey}
+        saving={saving}
+        onSave={onSave}
+        dirty={dirty}
+        saveLabel={saveLabel}
+      />
     </SectionCard>
   );
 }
 
-export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
+export function Rnc8dTeamSection({
+  value,
+  onChange,
+  saveKey,
+  saving,
+  onSave,
+  dirty,
+  saveLabel = "Salvar equipe",
+  planActions,
+  onBindingConflict,
+}: Rnc8dSectionProps & {
+  planActions?: PlanAction[];
+  onBindingConflict?: (message: string) => void;
+}) {
   const team = value.team_members ?? [];
   const teamDrag = useDragReorder(team, (team_members) => onChange({ ...value, team_members }));
   const linkedUserIds = team
@@ -240,12 +307,23 @@ export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
               }));
               onChange({ ...value, team_members: next });
             }}
-            onRemove={() =>
+            onRemove={() => {
+              const member = team[index];
+              const bindings = findTeamMemberBindings(member, {
+                rnc8dForm: value,
+                actions: planActions,
+              });
+              if (bindings.length) {
+                onBindingConflict?.(
+                  formatTeamMemberBindingMessage(member.member_name, bindings),
+                );
+                return;
+              }
               onChange({
                 ...value,
                 team_members: team.filter((_, itemIndex) => itemIndex !== index),
-              })
-            }
+              });
+            }}
           />
         ))}
       </div>
@@ -261,11 +339,26 @@ export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
       >
         Adicionar membro
       </button>
+      <Rnc8dSectionFooter
+        saveKey={saveKey}
+        saving={saving}
+        onSave={onSave}
+        dirty={dirty}
+        saveLabel={saveLabel}
+      />
     </SectionCard>
   );
 }
 
-export function Rnc8dContainmentSection({ value, onChange }: Rnc8dSectionsProps) {
+export function Rnc8dContainmentSection({
+  value,
+  onChange,
+  saveKey,
+  saving,
+  onSave,
+  dirty,
+  saveLabel = "Salvar contenção",
+}: Rnc8dSectionProps) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
   const containment = payload.containment ?? emptyRnc8dPayload().containment ?? [];
   const teamOptions = useMemo(
@@ -421,11 +514,26 @@ export function Rnc8dContainmentSection({ value, onChange }: Rnc8dSectionsProps)
       >
         Adicionar linha de contenção
       </button>
+      <Rnc8dSectionFooter
+        saveKey={saveKey}
+        saving={saving}
+        onSave={onSave}
+        dirty={dirty}
+        saveLabel={saveLabel}
+      />
     </SectionCard>
   );
 }
 
-export function Rnc8dEffectivenessSection({ value, onChange }: Rnc8dSectionsProps) {
+export function Rnc8dEffectivenessSection({
+  value,
+  onChange,
+  saveKey,
+  saving,
+  onSave,
+  dirty,
+  saveLabel = "Salvar eficácia (8D)",
+}: Rnc8dSectionProps) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
   const effectiveness = payload.effectiveness ?? {};
 
@@ -494,11 +602,26 @@ export function Rnc8dEffectivenessSection({ value, onChange }: Rnc8dSectionsProp
           }
         />
       </div>
+      <Rnc8dSectionFooter
+        saveKey={saveKey}
+        saving={saving}
+        onSave={onSave}
+        dirty={dirty}
+        saveLabel={saveLabel}
+      />
     </SectionCard>
   );
 }
 
-export function Rnc8dPreventiveSection({ value, onChange }: Rnc8dSectionsProps) {
+export function Rnc8dPreventiveSection({
+  value,
+  onChange,
+  saveKey,
+  saving,
+  onSave,
+  dirty,
+  saveLabel = "Salvar preventiva",
+}: Rnc8dSectionProps) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
   const preventive = payload.preventive ?? {};
   const documentation = payload.documentation_updates?.length
@@ -688,11 +811,26 @@ export function Rnc8dPreventiveSection({ value, onChange }: Rnc8dSectionsProps) 
       >
         Adicionar documento
       </button>
+      <Rnc8dSectionFooter
+        saveKey={saveKey}
+        saving={saving}
+        onSave={onSave}
+        dirty={dirty}
+        saveLabel={saveLabel}
+      />
     </SectionCard>
   );
 }
 
-export function Rnc8dClosureSection({ value, onChange }: Rnc8dSectionsProps) {
+export function Rnc8dClosureSection({
+  value,
+  onChange,
+  saveKey,
+  saving,
+  onSave,
+  dirty,
+  saveLabel = "Salvar fechamento",
+}: Rnc8dSectionProps) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
 
   return (
@@ -705,23 +843,13 @@ export function Rnc8dClosureSection({ value, onChange }: Rnc8dSectionsProps) {
         onChange={(client_closure_note) => onChange(updatePayload(value, { client_closure_note }))}
         fullWidth
       />
+      <Rnc8dSectionFooter
+        saveKey={saveKey}
+        saving={saving}
+        onSave={onSave}
+        dirty={dirty}
+        saveLabel={saveLabel}
+      />
     </SectionCard>
-  );
-}
-
-export function Rnc8dSaveActions({
-  onSave,
-  saving,
-}: {
-  onSave: () => void | Promise<void>;
-  saving?: boolean;
-}) {
-  return (
-    <FormActions>
-      <button type="button" className="pac-primary-btn" disabled={saving} onClick={() => void onSave()}>
-        <Save size={16} />
-        {saving ? "Salvando…" : "Salvar relatório 8D"}
-      </button>
-    </FormActions>
   );
 }

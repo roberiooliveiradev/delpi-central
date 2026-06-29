@@ -3,6 +3,7 @@ import { Cog, FlaskConical, Leaf, Plus, Ruler, Trash2, Users, Wrench } from "luc
 import type { LucideIcon } from "lucide-react";
 
 import { FormActions } from "./ui/FormActions";
+import { SectionSaveButton } from "./ui/SectionSaveButton";
 import { TitleWithHelp } from "./ui/HelpTooltip";
 import { TextAreaField } from "./ui/TextAreaField";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -82,7 +83,8 @@ type Props = {
   notes: string;
   onChange: (next: IshikawaCausesForm) => void;
   onNotesChange: (notes: string) => void;
-  saving?: boolean;
+  saving?: string | null;
+  dirty?: boolean;
   onSave: () => void;
 };
 
@@ -174,7 +176,8 @@ export function IshikawaFishboneDiagram({
   notes,
   onChange,
   onNotesChange,
-  saving = false,
+  saving = null,
+  dirty = false,
   onSave,
 }: Props) {
   return (
@@ -245,9 +248,13 @@ export function IshikawaFishboneDiagram({
       />
 
       <FormActions>
-        <button type="button" className="pac-primary-btn" disabled={saving} onClick={onSave}>
-          {saving ? "Salvando…" : "Salvar Ishikawa"}
-        </button>
+        <SectionSaveButton
+          saveKey="ishikawa"
+          saving={saving}
+          dirty={dirty}
+          label="Salvar Ishikawa"
+          onSave={onSave}
+        />
       </FormActions>
     </div>
   );

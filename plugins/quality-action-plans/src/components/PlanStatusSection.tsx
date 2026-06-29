@@ -2,6 +2,7 @@ import { Save } from "lucide-react";
 import { useMemo } from "react";
 
 import { ScopeBadge, SeverityBadge, StatusBadge } from "./StatusBadge";
+import { SectionSaveButton } from "./ui/SectionSaveButton";
 import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { branchLabel, PLAN_STATUSES } from "../constants/actionPlans";
@@ -22,6 +23,7 @@ type PlanStatusSectionProps = {
   onReopenTargetStatusChange: (value: string) => void;
   reopenStatusOptions: { value: string; label: string }[];
   saving: string | null;
+  dirtyStatus?: boolean;
   onSaveStatus: () => void;
   onReopen: () => void;
 };
@@ -40,6 +42,7 @@ export function PlanStatusSection({
   onReopenTargetStatusChange,
   reopenStatusOptions,
   saving,
+  dirtyStatus = false,
   onSaveStatus,
   onReopen,
 }: PlanStatusSectionProps) {
@@ -117,15 +120,14 @@ export function PlanStatusSection({
               onChange={onStatusChange}
               searchable
             />
-            <button
-              type="button"
-              className="pac-primary-btn"
-              disabled={saving === "status"}
-              onClick={onSaveStatus}
-            >
-              <Save size={16} />
-              {saving === "status" ? "Salvando…" : "Salvar status"}
-            </button>
+            <SectionSaveButton
+              saveKey="status"
+              saving={saving}
+              onSave={onSaveStatus}
+              dirty={dirtyStatus}
+              label="Salvar status"
+              align="start"
+            />
           </>
         )}
       </div>

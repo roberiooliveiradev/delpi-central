@@ -18,12 +18,14 @@ import {
   submitEffectivenessReview,
   updateActionPlan,
   updatePlanStatus,
+  upsertFiveWhys,
   upsertIshikawa,
   upsertRnc8dReport,
 } from "../api/actionPlansApi";
 import { EvidencePanel } from "../components/EvidencePanel";
 import { FiveWhysFlowPanel } from "../components/FiveWhysFlowPanel";
 import { PlanActionsPanel } from "../components/PlanActionsPanel";
+import { PlanGlobalSaveBar } from "../components/PlanGlobalSaveBar";
 import { IshikawaFishboneDiagram } from "../components/IshikawaFishboneDiagram";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
@@ -39,10 +41,10 @@ import {
   Rnc8dHeaderFields,
   Rnc8dNcDescriptionSection,
   Rnc8dPreventiveSection,
-  Rnc8dSaveActions,
   Rnc8dTeamSection,
 } from "../components/rnc8d/Rnc8dSections";
 import { SaveStatusBanner } from "../components/SaveStatusBanner";
+import { SectionSaveButton } from "../components/ui/SectionSaveButton";
 import { FormActions } from "../components/ui/FormActions";
 import { SectionCard } from "../components/ui/SectionCard";
 import { SelectField } from "../components/ui/SelectField";
@@ -72,8 +74,16 @@ import {
 import {
   emptyFiveWhysForm,
   parseFiveWhysForm,
+  serializeFiveWhysForm,
   type FiveWhysForm,
 } from "../utils/fiveWhys";
+import {
+  buildPlanDetailSnapshot,
+  computePlanDirtySections,
+  hasAnyRnc8dDirtySection,
+  isPlanSectionDirty,
+  type PlanDetailSnapshot,
+} from "../utils/planDetailDirtyState";
 import { parseStoredTaggedList } from "../utils/taggedList";
 
 type Props = {
@@ -110,6 +120,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [reopenReason, setReopenReason] = useState("");
   const [reopenTargetStatus, setReopenTargetStatus] = useState("in_progress");
   const [saving, setSaving] = useState<string | null>(null);
+  const [savedSnapshot, setSavedSnapshot] = useState<PlanDetailSnapshot | null>(null);
   const [auditLog, setAuditLog] = useState<PlanAuditLogEntry[]>([]);
   const [identificationForm, setIdentificationForm] = useState({
     title: "",
@@ -144,8 +155,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       );
       setIshikawaCausesForm(parseIshikawaCausesForm(data.ishikawa));
       setIshikawaNotes(data.ishikawa?.notes ?? "");
-      setFiveWhysForm(parseFiveWhysForm(data.five_whys));
-      setRnc8dForm({
+      const nextFiveWhysForm = parseFiveWhysForm(data.five_whys);
+      setFiveWhysForm(nextFiveWhysForm);
+      const nextRnc8dForm: Rnc8dReportPayload = {
         client_nc_registry: data.plan.client_nc_registry ?? "",
         customer_name: data.plan.customer_name ?? "",
         customer_contact: data.plan.customer_contact ?? "",
@@ -160,15 +172,17 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         team_members: data.team_members?.length
           ? data.team_members
           : [{ member_name: "", department: "", is_leader: true }],
-      });
-      setEffectivenessStatus(
+      };
+      setRnc8dForm(nextRnc8dForm);
+      const nextEffectivenessStatus =
         data.plan.effectiveness_proposed_status
-          ?? data.plan.effectiveness_status
-          ?? "pending",
-      );
-      setEffectivenessNotes(data.plan.effectiveness_notes ?? "");
+        ?? data.plan.effectiveness_status
+        ?? "pending";
+      setEffectivenessStatus(nextEffectivenessStatus);
+      const nextEffectivenessNotes = data.plan.effectiveness_notes ?? "";
+      setEffectivenessNotes(nextEffectivenessNotes);
       setEffectivenessRejectionReason("");
-      setIdentificationForm({
+      const nextIdentification = {
         title: data.plan.title ?? "",
         customer_code: data.plan.customer_code ?? "",
         customer_store: data.plan.customer_store ?? "",
@@ -187,7 +201,20 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         client_nc_registry: data.plan.client_nc_registry ?? "",
         source_type: data.plan.source_type ?? "",
         source_reference: data.plan.source_reference ?? "",
-      });
+      };
+      setIdentificationForm(nextIdentification);
+      setSavedSnapshot(
+        buildPlanDetailSnapshot({
+          status: data.plan.status,
+          identification: nextIdentification,
+          rnc8dForm: nextRnc8dForm,
+          fiveWhysForm: nextFiveWhysForm,
+          ishikawaCausesForm: parseIshikawaCausesForm(data.ishikawa),
+          ishikawaNotes: data.ishikawa?.notes ?? "",
+          effectivenessStatus: nextEffectivenessStatus,
+          effectivenessNotes: nextEffectivenessNotes,
+        }),
+      );
       try {
         const audit = await fetchPlanAuditLog(planId);
         setAuditLog(audit.items);
@@ -255,6 +282,126 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const submittableEffectivenessOptions = EFFECTIVENESS_STATUSES.filter((item) =>
     ["effective", "partially_effective", "ineffective"].includes(item.value),
   );
+
+  const currentSnapshot = useMemo<PlanDetailSnapshot>(
+    () => ({
+      status: statusValue,
+      identification: identificationForm,
+      rnc8dForm,
+      fiveWhysForm,
+      ishikawaCausesForm,
+      ishikawaNotes,
+      effectivenessStatus,
+      effectivenessNotes,
+    }),
+    [
+      statusValue,
+      identificationForm,
+      rnc8dForm,
+      fiveWhysForm,
+      ishikawaCausesForm,
+      ishikawaNotes,
+      effectivenessStatus,
+      effectivenessNotes,
+    ],
+  );
+
+  const dirtySections = useMemo(
+    () => computePlanDirtySections(savedSnapshot, currentSnapshot, { showRnc8dFlow }),
+    [savedSnapshot, currentSnapshot, showRnc8dFlow],
+  );
+
+  const isDirty = useCallback(
+    (section: Parameters<typeof isPlanSectionDirty>[1]) =>
+      isPlanSectionDirty(dirtySections, section),
+    [dirtySections],
+  );
+
+  const saveRnc8dReport = useCallback(async () => {
+    await upsertRnc8dReport(
+      planId,
+      sanitizeRnc8dReportPayload(
+        mergeSharedIdentificationIntoRnc8d(rnc8dForm, sharedIdentification),
+      ),
+    );
+  }, [planId, rnc8dForm, sharedIdentification]);
+
+  const saveIdentification = useCallback(async () => {
+    const payload = buildIdentificationUpdatePayload(identificationForm);
+    await updateActionPlan(planId, payload);
+    if (showRnc8dFlow) {
+      await saveRnc8dReport();
+    }
+  }, [identificationForm, planId, saveRnc8dReport, showRnc8dFlow]);
+
+  async function runGlobalSave() {
+    if (!dirtySections.length) {
+      return;
+    }
+
+    setSaving("global");
+    setError(null);
+    setSuccess(null);
+
+    try {
+      if (isDirty("status")) {
+        await updatePlanStatus(planId, statusValue);
+      }
+
+      const identificationDirty = isDirty("identification");
+      const rnc8dDirty = hasAnyRnc8dDirtySection(dirtySections);
+
+      if (identificationDirty) {
+        await saveIdentification();
+      } else if (rnc8dDirty) {
+        await saveRnc8dReport();
+      }
+
+      if (isDirty("five-whys")) {
+        await upsertFiveWhys(planId, serializeFiveWhysForm(fiveWhysForm));
+      }
+
+      if (isDirty("ishikawa")) {
+        await upsertIshikawa(
+          planId,
+          serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+        );
+      }
+
+      if (isDirty("effectiveness-pac")) {
+        await recordEffectivenessReview(
+          planId,
+          effectivenessStatus,
+          effectivenessNotes.trim() || undefined,
+        );
+      }
+
+      const count = dirtySections.length;
+      setSuccess(
+        count === 1
+          ? "Alterações salvas."
+          : `Alterações salvas (${count} blocos).`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar.");
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!dirtySections.length) {
+      return undefined;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirtySections.length]);
 
   async function handleExportRnc8d() {
     setError(null);
@@ -328,6 +475,11 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           setError(null);
         }}
       />
+      <PlanGlobalSaveBar
+        dirtySections={dirtySections}
+        saving={saving}
+        onSaveAll={() => void runGlobalSave()}
+      />
       {loading && !detail ? <p className="pac-muted">Carregando detalhe…</p> : null}
 
       {plan ? (
@@ -354,6 +506,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               onReopenTargetStatusChange={setReopenTargetStatus}
               reopenStatusOptions={reopenStatusOptions}
               saving={saving}
+              dirtyStatus={isDirty("status")}
               onSaveStatus={() =>
                 void runSave("status", async () => {
                   await updatePlanStatus(planId, statusValue);
@@ -383,28 +536,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               identificationForm={identificationForm}
               onIdentificationChange={setIdentificationForm}
               saving={saving}
-              onSaveIdentification={() =>
-                void runSave("identification", async () => {
-                  const payload = buildIdentificationUpdatePayload(identificationForm);
-                  const shared = {
-                    client_nc_registry: identificationForm.client_nc_registry,
-                    customer_name: identificationForm.customer_name,
-                    product_code: identificationForm.product_code,
-                    product_description: identificationForm.product_description,
-                    batch_number: identificationForm.batch_number,
-                    reported_problem: identificationForm.reported_problem,
-                  };
-                  await updateActionPlan(planId, payload);
-                  if (showRnc8dFlow) {
-                    await upsertRnc8dReport(
-                      planId,
-                      sanitizeRnc8dReportPayload(
-                        mergeSharedIdentificationIntoRnc8d(rnc8dForm, shared),
-                      ),
-                    );
-                  }
-                })
+              dirtyIdentification={isDirty("identification")}
+              onSaveIdentification={() => void runSave("identification", saveIdentification)}
+              onSaveMaterial={
+                showRnc8dFlow
+                  ? () => void runSave("rnc8d-material", saveRnc8dReport)
+                  : undefined
               }
+              dirtyMaterial={isDirty("rnc8d-material")}
               materialSection={
                 showRnc8dFlow ? (
                   <>
@@ -420,9 +559,32 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
           {showRnc8dFlow ? (
             <>
-              <Rnc8dNcDescriptionSection value={rnc8dForm} onChange={setRnc8dForm} />
-              <Rnc8dTeamSection value={rnc8dForm} onChange={setRnc8dForm} />
-              <Rnc8dContainmentSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <Rnc8dNcDescriptionSection
+                value={rnc8dForm}
+                onChange={setRnc8dForm}
+                saveKey="rnc8d-nc"
+                saving={saving}
+                dirty={isDirty("rnc8d-nc")}
+                onSave={() => void runSave("rnc8d-nc", saveRnc8dReport)}
+              />
+              <Rnc8dTeamSection
+                value={rnc8dForm}
+                onChange={setRnc8dForm}
+                saveKey="rnc8d-team"
+                saving={saving}
+                dirty={isDirty("rnc8d-team")}
+                onSave={() => void runSave("rnc8d-team", saveRnc8dReport)}
+                planActions={detail.actions}
+                onBindingConflict={setError}
+              />
+              <Rnc8dContainmentSection
+                value={rnc8dForm}
+                onChange={setRnc8dForm}
+                saveKey="rnc8d-containment"
+                saving={saving}
+                dirty={isDirty("rnc8d-containment")}
+                onSave={() => void runSave("rnc8d-containment", saveRnc8dReport)}
+              />
 
               <SectionCard
                 title="4. Estudo da causa do defeito (5 Porquês)"
@@ -432,6 +594,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   planId={planId}
                   form={fiveWhysForm}
                   saving={saving}
+                  dirty={isDirty("five-whys")}
                   onChange={setFiveWhysForm}
                   onSave={runSave}
                 />
@@ -444,7 +607,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   notes={ishikawaNotes}
                   onChange={setIshikawaCausesForm}
                   onNotesChange={setIshikawaNotes}
-                  saving={saving === "ishikawa"}
+                  saving={saving}
+                  dirty={isDirty("ishikawa")}
                   onSave={() =>
                     void runSave("ishikawa", async () => {
                       await upsertIshikawa(
@@ -470,7 +634,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 />
               </SectionCard>
 
-              <Rnc8dEffectivenessSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <Rnc8dEffectivenessSection
+                value={rnc8dForm}
+                onChange={setRnc8dForm}
+                saveKey="rnc8d-effectiveness-8d"
+                saving={saving}
+                dirty={isDirty("rnc8d-effectiveness-8d")}
+                onSave={() => void runSave("rnc8d-effectiveness-8d", saveRnc8dReport)}
+              />
             </>
           ) : (
             <>
@@ -488,7 +659,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   notes={ishikawaNotes}
                   onChange={setIshikawaCausesForm}
                   onNotesChange={setIshikawaNotes}
-                  saving={saving === "ishikawa"}
+                  saving={saving}
+                  dirty={isDirty("ishikawa")}
                   onSave={() =>
                     void runSave("ishikawa", async () => {
                       await upsertIshikawa(
@@ -505,6 +677,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   planId={planId}
                   form={fiveWhysForm}
                   saving={saving}
+                  dirty={isDirty("five-whys")}
                   onChange={setFiveWhysForm}
                   onSave={runSave}
                 />
@@ -591,6 +764,23 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               />
             ) : null}
             <FormActions>
+              {isDirty("effectiveness-pac") && !isEffectivenessPendingApproval ? (
+                <SectionSaveButton
+                  saveKey="effectiveness-pac"
+                  saving={saving}
+                  dirty={isDirty("effectiveness-pac")}
+                  label="Salvar eficácia (rascunho)"
+                  onSave={() =>
+                    void runSave("effectiveness-pac", async () => {
+                      await recordEffectivenessReview(
+                        planId,
+                        effectivenessStatus,
+                        effectivenessNotes.trim() || undefined,
+                      );
+                    })
+                  }
+                />
+              ) : null}
               {!isEffectivenessPendingApproval ? (
                 <button
                   type="button"
@@ -680,7 +870,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
           {showRnc8dFlow ? (
             <>
-              <Rnc8dPreventiveSection value={rnc8dForm} onChange={setRnc8dForm} />
+              <Rnc8dPreventiveSection
+                value={rnc8dForm}
+                onChange={setRnc8dForm}
+                saveKey="rnc8d-preventive"
+                saving={saving}
+                dirty={isDirty("rnc8d-preventive")}
+                onSave={() => void runSave("rnc8d-preventive", saveRnc8dReport)}
+              />
               <EvidencePanel
                 planId={planId}
                 evidences={detail.evidences ?? []}
@@ -689,19 +886,13 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 title="7. Evidências das ações"
                 subtitle="Anexe prints, PDFs e documentos do processo (planilha: Inserir evidências)."
               />
-              <Rnc8dClosureSection value={rnc8dForm} onChange={setRnc8dForm} />
-              <Rnc8dSaveActions
-                saving={saving === "rnc-8d"}
-                onSave={() =>
-                  runSave("rnc-8d", async () => {
-                    await upsertRnc8dReport(
-                      planId,
-                      sanitizeRnc8dReportPayload(
-                        mergeSharedIdentificationIntoRnc8d(rnc8dForm, sharedIdentification),
-                      ),
-                    );
-                  })
-                }
+              <Rnc8dClosureSection
+                value={rnc8dForm}
+                onChange={setRnc8dForm}
+                saveKey="rnc8d-closure"
+                saving={saving}
+                dirty={isDirty("rnc8d-closure")}
+                onSave={() => void runSave("rnc8d-closure", saveRnc8dReport)}
               />
             </>
           ) : null}
