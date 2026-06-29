@@ -44,6 +44,7 @@ def search_integration_directory_users():
                 app_id=app_id,
                 permission_code=permission_code,
                 browse=browse,
+                mask_email=False,
             )
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)

@@ -240,7 +240,7 @@ export const PAC_HELP_TOOLTIPS = {
     customerName: "Razão social ou nome fantasia do cliente.",
     selectCustomer: "Selecionar este cliente para preencher o plano.",
     directoryUserName: "Nome do usuário na plataforma Delpi.",
-    directoryUserEmail: "E-mail mascarado do usuário (LGPD).",
+    directoryUserEmail: "E-mail do usuário na plataforma Delpi.",
     selectDirectoryUser: "Vincular este usuário Delpi ao membro ou responsável.",
     reorder: "Arraste para reordenar as linhas da tabela.",
   },

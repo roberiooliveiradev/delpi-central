@@ -871,7 +871,7 @@
 /* Portal no body: estilos globais (fora de .dashboard-quality-action-plans) */
 .pac-help-tooltip__bubble--fixed {
   position: fixed;
-  z-index: 10000;
+  z-index: 10100;
   max-width: min(280px, calc(100vw - 24px));
   min-width: 200px;
   box-sizing: border-box;

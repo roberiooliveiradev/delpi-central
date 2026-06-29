@@ -113,6 +113,22 @@ def test_search_directory_users_filters_by_app_access():
     assert result[0]["id"] == str(allowed_id)
 
 
+def test_search_directory_users_can_return_full_email_for_integrations():
+    user_id = uuid4()
+    users = [_user(user_id, name="Ana", email="ana@delpi.com")]
+
+    uow = MagicMock()
+    uow.users.list_paginated.return_value = (users, 1)
+
+    result = SearchDirectoryUsersUseCase(uow).execute(
+        query="ana",
+        browse=False,
+        mask_email=False,
+    )
+
+    assert result[0]["email"] == "ana@delpi.com"
+
+
 def test_directory_user_eligibility_matches_permission_code():
     user_id = uuid4()
     user = _user(user_id)

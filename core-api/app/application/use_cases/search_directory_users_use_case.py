@@ -31,6 +31,7 @@ class SearchDirectoryUsersUseCase:
         permission_code: str | None = None,
         exclude_user_id: str | None = None,
         browse: bool = False,
+        mask_email: bool = True,
     ) -> list[dict]:
         normalized = (query or "").strip()
 
@@ -66,7 +67,7 @@ class SearchDirectoryUsersUseCase:
                 {
                     "id": str(user.id),
                     "name": user.name,
-                    "email": _mask_email(user.email),
+                    "email": _mask_email(user.email) if mask_email else user.email,
                 }
             )
 
