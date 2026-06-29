@@ -109,7 +109,7 @@ export function TeamMemberRow({
             onChange={(department) => patch({ department })}
           />
 
-          <div className="pac-team-card__delpi">
+          <div className="pac-team-card__trail">
             <button
               type="button"
               className="pac-ghost-btn pac-team-card__delpi-btn"
@@ -119,16 +119,15 @@ export function TeamMemberRow({
               <Search size={16} aria-hidden="true" />
               <span>Delpi</span>
             </button>
+            <label className="pac-checkbox pac-team-card__leader">
+              <input
+                type="checkbox"
+                checked={Boolean(member.is_leader)}
+                onChange={(event) => onLeaderToggle(event.target.checked)}
+              />
+              <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
+            </label>
           </div>
-
-          <label className="pac-checkbox pac-team-card__leader">
-            <input
-              type="checkbox"
-              checked={Boolean(member.is_leader)}
-              onChange={(event) => onLeaderToggle(event.target.checked)}
-            />
-            <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
-          </label>
         </div>
 
         <p className="pac-team-card__link-status pac-muted">
