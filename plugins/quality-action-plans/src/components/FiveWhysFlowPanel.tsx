@@ -7,8 +7,8 @@ import { FormActions } from "./ui/FormActions";
 import { FieldLabel, TitleWithHelp } from "./ui/HelpTooltip";
 import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
-import type { FiveWhysForm } from "../utils/fiveWhys";
-import { serializeFiveWhysForm } from "../utils/fiveWhys";
+import type { FiveWhysForm, FiveWhyStep } from "../utils/fiveWhys";
+import { isFilledWhyStep, serializeFiveWhysForm } from "../utils/fiveWhys";
 
 const CONFIDENCE_OPTIONS = [
   { value: "low", label: "Baixa" },
@@ -51,7 +51,7 @@ type Props = {
 function updateTrack(
   form: FiveWhysForm,
   track: TrackKey,
-  updater: (steps: string[]) => string[],
+  updater: (steps: FiveWhyStep[]) => FiveWhyStep[],
 ): FiveWhysForm {
   return { ...form, [track]: updater(form[track]) };
 }
@@ -63,23 +63,27 @@ function WhysFlowTrack({
   onChange,
 }: {
   config: TrackConfig;
-  steps: string[];
+  steps: FiveWhyStep[];
   disabled: boolean;
-  onChange: (steps: string[]) => void;
+  onChange: (steps: FiveWhyStep[]) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  function setStep(index: number, value: string) {
-    onChange(steps.map((item, currentIndex) => (currentIndex === index ? value : item)));
+  function setStep(index: number, patch: Partial<FiveWhyStep>) {
+    onChange(
+      steps.map((item, currentIndex) =>
+        currentIndex === index ? { ...item, ...patch } : item,
+      ),
+    );
   }
 
   function removeStep(index: number) {
     const next = steps.filter((_, currentIndex) => currentIndex !== index);
-    onChange(next.length ? next : [""]);
+    onChange(next.length ? next : [{ question: "", answer: "" }]);
   }
 
   function addStep() {
-    onChange([...steps, ""]);
+    onChange([...steps, { question: "", answer: "" }]);
     requestAnimationFrame(() => {
       const container = scrollRef.current;
       if (!container) {
@@ -120,26 +124,49 @@ function WhysFlowTrack({
                     type="button"
                     className="pac-ghost-btn pac-ghost-btn--icon pac-ghost-btn--danger"
                     title="Remover porquê"
-                    disabled={disabled || (steps.length === 1 && !step.trim())}
+                    disabled={disabled || (steps.length === 1 && !isFilledWhyStep(step))}
                     onClick={() => removeStep(index)}
                   >
                     <Trash2 size={14} />
                   </button>
                 </div>
-                <label className="pac-whys-flow__step-label" htmlFor={`pac-whys-${config.key}-${index}`}>
+
+                <label
+                  className="pac-whys-flow__step-label"
+                  htmlFor={`pac-whys-${config.key}-${index}-question`}
+                >
                   <FieldLabel
-                    label={`${index + 1}º porquê`}
-                    hint={PAC_HELP_TOOLTIPS.detail.fiveWhysStep}
+                    label={`${index + 1}º porquê — pergunta`}
+                    hint={PAC_HELP_TOOLTIPS.detail.fiveWhysQuestion}
                   />
                 </label>
                 <textarea
-                  id={`pac-whys-${config.key}-${index}`}
-                  className="pac-whys-flow__input"
-                  value={step}
-                  placeholder={`${index + 1}º porquê`}
-                  rows={4}
+                  id={`pac-whys-${config.key}-${index}-question`}
+                  className="pac-whys-flow__input pac-whys-flow__input--question"
+                  value={step.question}
+                  placeholder="Por que…?"
+                  rows={2}
                   disabled={disabled}
-                  onChange={(event) => setStep(index, event.target.value)}
+                  onChange={(event) => setStep(index, { question: event.target.value })}
+                />
+
+                <label
+                  className="pac-whys-flow__step-label"
+                  htmlFor={`pac-whys-${config.key}-${index}-answer`}
+                >
+                  <FieldLabel
+                    label="Resposta"
+                    hint={PAC_HELP_TOOLTIPS.detail.fiveWhysAnswer}
+                  />
+                </label>
+                <textarea
+                  id={`pac-whys-${config.key}-${index}-answer`}
+                  className="pac-whys-flow__input pac-whys-flow__input--answer"
+                  value={step.answer}
+                  placeholder="Porque…"
+                  rows={3}
+                  disabled={disabled}
+                  onChange={(event) => setStep(index, { answer: event.target.value })}
                 />
               </div>
             </div>

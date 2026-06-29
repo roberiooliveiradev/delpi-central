@@ -8,6 +8,8 @@ from typing import Any
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image as XlImage
 
+from app.domain.services.quality_action_plans.five_whys_service import format_why_step_cell
+
 TEMPLATE_PATH = (
     Path(__file__).resolve().parents[3]
     / "content"
@@ -244,14 +246,14 @@ def build_rnc_8d_workbook(
     occurrence_cols = ["E", "G", "I", "K", "M"]
     occurrence_whys = five_whys.get("occurrence_whys") or []
     for index, col in enumerate(occurrence_cols):
-        value = occurrence_whys[index] if index < len(occurrence_whys) else None
-        _set(ws, f"{col}44", value)
+        raw = occurrence_whys[index] if index < len(occurrence_whys) else None
+        _set(ws, f"{col}44", format_why_step_cell(raw) if raw is not None else None)
 
     detection_cols = ["E", "G", "I", "K", "M"]
     detection_whys = five_whys.get("detection_whys") or []
     for index, col in enumerate(detection_cols):
-        value = detection_whys[index] if index < len(detection_whys) else None
-        _set(ws, f"{col}49", value)
+        raw = detection_whys[index] if index < len(detection_whys) else None
+        _set(ws, f"{col}49", format_why_step_cell(raw) if raw is not None else None)
 
     corrective_actions = [
         a for a in actions if a.get("action_type") == "corrective" or a.get("cause_track")

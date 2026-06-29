@@ -1776,9 +1776,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 0 0 220px;
-  width: 220px;
-  min-height: 140px;
+  flex: 0 0 240px;
+  width: 240px;
+  min-height: 220px;
   padding: 10px;
   border: 1px dashed color-mix(in srgb, var(--pac-text) 28%, var(--pac-card-border));
   border-radius: var(--pac-control-radius);
@@ -1807,7 +1807,6 @@
 
 .dashboard-quality-action-plans .pac-whys-flow__input {
   width: 100%;
-  min-height: 88px;
   resize: vertical;
   border: 1px solid var(--pac-card-border);
   border-radius: var(--pac-control-radius);
@@ -1817,13 +1816,21 @@
   font: inherit;
 }
 
+.dashboard-quality-action-plans .pac-whys-flow__input--question {
+  min-height: 56px;
+}
+
+.dashboard-quality-action-plans .pac-whys-flow__input--answer {
+  min-height: 72px;
+}
+
 .dashboard-quality-action-plans .pac-whys-flow__add {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   align-self: center;
   flex: 0 0 auto;
-  min-height: 140px;
+  min-height: 220px;
   margin-left: 12px;
   padding: 12px 14px;
   white-space: nowrap;

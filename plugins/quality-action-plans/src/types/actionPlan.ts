@@ -194,9 +194,16 @@ export type IshikawaAnalysis = {
   notes?: string | null;
 };
 
+export type FiveWhyStep = {
+  question: string;
+  answer: string;
+};
+
+export type FiveWhysStepValue = string | FiveWhyStep;
+
 export type FiveWhysAnalysis = {
-  occurrence_whys?: string[] | null;
-  detection_whys?: string[] | null;
+  occurrence_whys?: FiveWhysStepValue[] | null;
+  detection_whys?: FiveWhysStepValue[] | null;
   root_cause?: string | null;
   confidence_level?: string | null;
   /** @deprecated legado — use occurrence_whys */

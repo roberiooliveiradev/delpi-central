@@ -111,6 +111,8 @@ export const PAC_HELP_TOOLTIPS = {
     promotePattern: "Registra este plano como padrão de solução reutilizável (eficácia comprovada).",
     fiveWhysOccurrence: "Cadeia de porquês sobre por que o problema ocorreu.",
     fiveWhysDetection: "Cadeia de porquês sobre por que o problema não foi detectado antes.",
+    fiveWhysQuestion: "Formule a pergunta deste passo (ex.: Por que o defeito ocorreu?).",
+    fiveWhysAnswer: "Responda à pergunta acima; o próximo passo parte desta resposta.",
     fiveWhysStep: "Responda ao porquê anterior nesta trilha até chegar à causa provável.",
     timelineFilter: "Filtra eventos da linha do tempo por categoria.",
   },

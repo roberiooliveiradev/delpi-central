@@ -218,9 +218,14 @@ class IshikawaBody(BaseModel):
         return normalized
 
 
+class FiveWhyStepBody(BaseModel):
+    question: str = ""
+    answer: str = ""
+
+
 class FiveWhysBody(BaseModel):
-    occurrence_whys: list[str] | None = None
-    detection_whys: list[str] | None = None
+    occurrence_whys: list[str | FiveWhyStepBody] | None = None
+    detection_whys: list[str | FiveWhyStepBody] | None = None
     root_cause: str | None = None
     confidence_level: str | None = Field(default=None, pattern="^(low|medium|high)$")
     why_1: str | None = None
