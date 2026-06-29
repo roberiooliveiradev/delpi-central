@@ -68,6 +68,8 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | GET/PATCH/DELETE | `/me/portal-tour` | Progresso do tour gamificado do portal — ver [portal-tour.md](../06-portal-frontend/portal-tour.md) |
 | GET | `/me/portal-tour/catalog` | Catálogo de desafios disponíveis ao usuário (RBAC + novidades) |
 | GET | `/me/portal-tour/achievements` | Conquistas do tour (selos desbloqueados) |
+| GET | `/me/directory/users` | Busca usuários Delpi (exclui o caller); query `q`, `limit`, `app`, `permission` |
+| POST | `/me/directory/users/lookup` | Resolve nomes por `{ "ids": ["uuid", ...] }` |
 
 Arquivo: `portal_tour_controller.py` (`portal_tour_bp`).
 
@@ -246,13 +248,16 @@ Arquivo tour admin: `portal_tour_controller.py` (`admin_portal_tour_bp`).
 
 ### Integrações (token de serviço)
 
-Arquivo: `app_usage_controller.py`. Autenticação: `Authorization: Bearer <CORE_API_INTEGRATIONS_SERVICE_TOKEN>` (não JWT de usuário).
+Arquivos: `app_usage_controller.py`, `integrations_directory_controller.py`. Autenticação: `Authorization: Bearer <CORE_API_INTEGRATIONS_SERVICE_TOKEN>` ou `X-Delpi-Service-Token` (não JWT de usuário).
 
 | Método | Path | Descrição |
 |--------|------|-----------|
 | POST | `/integrations/app-usage/record` | Registra uso originado de api-delpi ou outro backend; body: `appId`, `userId`, `routePath`; header opcional `X-Delpi-Caller-App` |
+| GET | `/integrations/directory/users` | Busca usuários ativos elegíveis por app; query `q` (mín. 2), `limit` (1–20), `app` (default `quality-action-plans`), `permission` (opcional) |
 
-Respostas: `201 recorded` com consentimento; `200 skipped: usage_tracking_consent` sem consentimento. Ver [rastreamento-uso-apps.md](./rastreamento-uso-apps.md).
+Respostas app-usage: `201 recorded` com consentimento; `200 skipped: usage_tracking_consent` sem consentimento. Ver [rastreamento-uso-apps.md](./rastreamento-uso-apps.md).
+
+Resposta directory: `{ "items": [{ "id", "name", "email" }] }` — e-mail mascarado (LGPD). Consumidores: api-delpi `GET /quality/action-plans/assignable-users`, api-pac-quality `pac_search_assignable_users`. Ver [diretorio-usuarios-integracoes.md](./diretorio-usuarios-integracoes.md).
 
 `GET /admin/statistics` retorna contagens e rankings (ex.: papéis/grupos mais usados, apps por tipo, logins 7/30 dias). Campo `users.online` integra o store de presença; `apps.usage` integra uso de plugins. Ver [event-driven-e-socket.md](../01-arquitetura/event-driven-e-socket.md) §12.1 e §12.2.
 

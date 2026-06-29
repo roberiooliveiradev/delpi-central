@@ -101,7 +101,7 @@ Regra crítica: o token emitido ao browser usa o issuer **público** (`localhost
 | `API_DELPI_JWT_SECRET` | Legado/auxiliar — validação principal é Keycloak |
 | `GOOGLE_SHEETS_*`, `TRANSFORMA_MAIS_*`, `QUALITY_*`, `FINANCIAL_*`, etc. | Integrações planilhas (indicadores) |
 | `CORE_API_BASE_URL` | URL interna da Core API (ex.: `http://core-api:8000`) |
-| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | Token para POST `/integrations/app-usage/record` |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | Token S2S: `POST /integrations/app-usage/record`, `GET /integrations/directory/users` |
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | Token de serviço interno (bypass auth em rotas protegidas) |
 | `APP_USAGE_TRACKING_ENABLED` | `true` — middleware registra uso na Core API |
 | `APP_USAGE_APP_ID` | Id do app na Core API (default `api-delpi`) |

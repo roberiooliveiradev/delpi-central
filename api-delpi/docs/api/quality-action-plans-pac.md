@@ -4,7 +4,7 @@ CRUD e leitura consolidada de **planos de ação central de qualidade** (PAC), p
 
 **Plugin consumidor:** `plugins/quality-action-plans`  
 **Agente GPT (escrita alternativa):** `api-pac-quality` em `pac-api.minhadelpi.com.br` — mesma base Postgres, autenticação por API key.  
-**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V016)
+**Migrations:** `api-delpi/migrations/plugins/quality-action-plans/` (V001–V019)
 
 **Formato:** envelope `{ success, message, data, meta }` (Playbook 10).
 
@@ -37,6 +37,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | GET | `/quality/action-plans/overdue` | `list_quality_action_plans_overdue` | Planos com ações vencidas |
 | GET | `/quality/action-plans/recurrence` | `list_quality_action_plans_recurrence` | Agrupamento por `recurrence_key` (reincidência) |
 | GET | `/quality/action-plans/my-queue` | `list_quality_action_plan_my_queue` | Fila pessoal — ações do usuário autenticado (`responsible_user_id`) |
+| GET | `/quality/action-plans/assignable-users` | `list_quality_action_plan_assignable_users` | Busca usuários Delpi elegíveis para responsável / equipe 8D (proxy Core API) |
 | GET | `/quality/action-plans/evidences/search` | `search_quality_action_plan_evidences` | Busca textual em evidências (nome, descrição, trecho) |
 | GET | `/quality/solution-patterns` | `list_quality_solution_patterns` | Padrões de solução testados |
 | GET | `/quality/action-plans/{plan_id}` | `get_quality_action_plan_detail` | Detalhe completo |
@@ -78,6 +79,32 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 **Query:** `branch_code`, `overdue_only` (bool), `page`, `page_size` — usuário via JWT (`responsible_user_id` da ação)
 
 **`data`:** `user_id`, `summary` (`open_actions`, `overdue_actions`), `items[]` (ação + contexto do plano), `pagination`
+
+### GET `/quality/action-plans/assignable-users`
+
+**Query:** `q` (mín. 2 caracteres), `limit` (1–20, padrão `10`)
+
+**`data`:** `{ "items": [{ "id": "uuid", "name": "...", "email": "a***@dominio.com" }] }` — `meta.entity` = `directory_user`, `meta.shape` = `paged_list`
+
+**Origem:** proxy S2S para `GET /core-api/integrations/directory/users?app=quality-action-plans`. Requer `CORE_API_BASE_URL` e `CORE_API_INTEGRATIONS_SERVICE_TOKEN` na api-delpi; sem configuração retorna lista vazia.
+
+**Uso:** vincular `responsible_user_id` em ações e `member_user_id` em `team_members` do relatório 8D (Minha fila e notificações).
+
+---
+
+## Delegação S2S (api-pac-quality)
+
+Com `PAC_DELEGATE_TRANSACTIONAL_TO_API_DELPI=true`, a **api-pac-quality** repassa CRUD transacional para esta API usando `API_DELPI_INTERNAL_SERVICE_TOKEN` (JWT `internal-service`).
+
+**Middleware `pac_service_actor_middleware`:** em rotas `/quality/action-plans/*`, quando o JWT é de serviço interno e há `X-Delpi-Actor-Id`, o ator efetivo passa a ser o analista GPT:
+
+```http
+X-Delpi-Actor-Id: <uuid ou pac-gpt-agent>
+X-Delpi-Actor-Name: Nome do analista (opcional)
+X-Delpi-Actor-Email: email@empresa.com (opcional)
+```
+
+Histórico, audit log e evidências gravam `created_by_*` / `actor_*` / `uploaded_by_*` (migration V017).
 
 ---
 
@@ -159,10 +186,12 @@ Vínculos com Kaizen ou Auditoria 5S não usam mais colunas em `quality_action_p
 
 **Storage:** variável `PAC_EVIDENCE_UPLOAD_DIR` (default `/app/data/pac-quality-evidences`).
 
-### Relatório 8D (V006)
+### Relatório 8D (V006+)
 
 - `customer_template`: `generic` ou `rnc_8d`
 - `template_payload`: JSON com seções do formulário (contenção, NC, eficácia, preventiva, documentação)
+- `team_members[]`: `member_name` (obrigatório), `member_user_id` (opcional — UUID Delpi via `assignable-users`), `is_leader`, `department`, `sort_order` (V019)
+- Ações do plano podem herdar `responsible_user_id` do membro da equipe vinculado no plugin MFE
 - Template Excel: `api-delpi/app/content/templates/quality/rnc_8d_template.xlsx` (copiar no deploy)
 - Export inclui imagens de evidência na aba `Anexos(Evidencias)` (tipos `image` ou `mime` `image/*`)
 
@@ -206,6 +235,16 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 | V014 | Ishikawa 6M — causas por categoria em JSONB |
 | V015 | 5 Porquês — trilhas `occurrence_whys` / `detection_whys` em JSONB |
 | V016 | Remove colunas de vínculo Kaizen/5S; integrações futuras via tabelas auxiliares |
+| V017 | Nome/e-mail do ator em histórico, audit log e evidências |
+| V018 | `customer_code` e `customer_store` (cliente Protheus SA1) no plano |
+| V019 | `member_user_id` na equipe de análise 8D (`quality_analysis_team_members`) |
+
+### Variáveis — diretório e delegação PAC
+
+| Variável | Uso |
+|----------|-----|
+| `CORE_API_BASE_URL` | Base da Core API (ex.: `http://delpi-core-api:8000`) |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | Token S2S para `GET /integrations/directory/users` |
 
 ---
 

@@ -233,6 +233,8 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 | GET | `/quality/action-plans/dashboard` | PAC-R |
 | GET | `/quality/action-plans` | PAC-R |
 | GET | `/quality/action-plans/overdue` | PAC-R |
+| GET | `/quality/action-plans/my-queue` | PAC-R |
+| GET | `/quality/action-plans/assignable-users` | PAC-R |
 | GET | `/quality/action-plans/{plan_id}` | PAC-R |
 | POST | `/quality/action-plans` | PAC-W |
 | PATCH | `/quality/action-plans/{plan_id}/status` | PAC-W |

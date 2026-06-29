@@ -22,7 +22,8 @@ A Core API é o backend de **governança** da Minha DELPI: JWT/Keycloak, RBAC, p
 
 | Arquivo | Conteúdo |
 |---|---|
-| [controllers-e-rotas.md](./controllers-e-rotas.md) | Endpoints `/health`, `/me`, `/admin/apps`, `/admin/rbac` |
+| [controllers-e-rotas.md](./controllers-e-rotas.md) | Endpoints `/health`, `/me`, `/admin/apps`, `/admin/rbac`, integrações S2S |
+| [diretorio-usuarios-integracoes.md](./diretorio-usuarios-integracoes.md) | `GET /integrations/directory/users` — PAC assignable users |
 | [rastreamento-uso-apps.md](./rastreamento-uso-apps.md) | Uso de apps, integração api-delpi, LGPD, caller app |
 | [visao-geral-core-api.md](./visao-geral-core-api.md) | Visão geral (enxuta) |
 | [modelos-de-banco.md](./modelos-de-banco.md) | Models SQLAlchemy (`postgres-core`) |
@@ -55,6 +56,7 @@ Python 3 · Flask · SQLAlchemy · Flask-Migrate · Socket.IO (eventlet)
 | `me_bp` | `/` | `me_controller.py` |
 | `admin_apps_bp` | `/admin/apps` | `apps_controller.py` |
 | `rbac_bp` | `/admin/rbac/...` | `rbac_controller.py` |
+| `integrations_directory_bp` | `/integrations/directory` | `integrations_directory_controller.py` |
 
 ---
 

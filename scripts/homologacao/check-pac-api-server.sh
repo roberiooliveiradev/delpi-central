@@ -36,7 +36,7 @@ if missing:
 print('OK openapi Onda 1', len(required), 'rotas obrigatórias')
 "
 
-echo "[check] OpenAPI — fluxo analista (24 operações, máx. 30)"
+echo "[check] OpenAPI — fluxo analista (26 operações, máx. 30)"
 curl -fsS "${PAC_API_URL}/openapi.json" | python3 -c "
 import json, sys
 schema = json.load(sys.stdin)
@@ -51,7 +51,7 @@ for path_item in paths.values():
             if op_id:
                 ops.append(op_id)
 max_ops = 30
-expected = 24
+expected = 26
 if len(ops) > max_ops:
     print(f'ERRO: OpenAPI tem {len(ops)} operações (máx {max_ops})', file=sys.stderr)
     sys.exit(1)

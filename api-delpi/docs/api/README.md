@@ -53,7 +53,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
-| [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD e leitura de planos de ação (plugin). |
+| [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD, assignable-users, delegação S2S api-pac, equipe 8D (`member_user_id`). |
 | [11-guia-agente-chat.md](./11-guia-agente-chat.md) | Mapa intenção → rota para agentes do Minha DELPI Chat (OpenAPI). |
 | [13-producao-operacional.md](./13-producao-operacional.md) | Playbook 15 — consumo, OPs, perdas, programação, ranking de compras (sem SQL). |
 | [14-desenhos-pdf.md](./14-desenhos-pdf.md) | Biblioteca PDF de desenhos DELPI (FILESERVER) + integração chat. |
