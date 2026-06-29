@@ -5,7 +5,7 @@ import {
   type TableColumnPreferences,
 } from "./tableColumns";
 
-const STORAGE_KEY = "pedidos-venda-abertos:table-columns:v3";
+const STORAGE_KEY = "pedidos-venda-abertos:table-columns:v4";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

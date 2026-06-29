@@ -2,6 +2,7 @@ import type { SortKey } from "./sortItems";
 
 export type TableColumnKey =
   | "nome_cliente"
+  | "loja_cadastro"
   | "filial"
   | "pedido"
   | "pedido_cliente"
@@ -26,6 +27,7 @@ export type TableColumnDef = {
 
 export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "nome_cliente", label: "Cliente", sortable: true },
+  { key: "loja_cadastro", label: "Loja", sortable: true, className: "pva-table__col--compact" },
   { key: "filial", label: "Filial", sortable: true, className: "pva-table__col--compact" },
   { key: "pedido", label: "Pedido", sortable: true },
   { key: "pedido_cliente", label: "Pedido cliente", sortable: true },
