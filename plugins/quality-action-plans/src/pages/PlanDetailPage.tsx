@@ -35,7 +35,7 @@ import {
   Rnc8dClosureSection,
   Rnc8dContainmentSection,
   Rnc8dEffectivenessSection,
-  Rnc8dHeaderSection,
+  Rnc8dHeaderFields,
   Rnc8dNcDescriptionSection,
   Rnc8dPreventiveSection,
   Rnc8dSaveActions,
@@ -69,6 +69,7 @@ import type {
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
 import { mergeSharedIdentificationIntoRnc8d, sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
+import { buildTeamMemberSelectOptions } from "../utils/teamMemberOptions";
 import { formatDateTime } from "../utils/format";
 import {
   emptyIshikawaCausesForm,
@@ -253,6 +254,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     }),
     [identificationForm],
   );
+  const teamMemberOptions = useMemo(
+    () =>
+      buildTeamMemberSelectOptions(
+        rnc8dForm.team_members,
+        detail?.actions?.map((action) => action.responsible_name),
+      ),
+    [rnc8dForm.team_members, detail?.actions],
+  );
   const effectivenessApprovalStatus = plan?.effectiveness_approval_status ?? null;
   const isEffectivenessPendingApproval = effectivenessApprovalStatus === "pending_review";
   const isEffectivenessRejected = effectivenessApprovalStatus === "rejected";
@@ -336,7 +345,15 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
       {plan ? (
         <div className="pac-detail-grid">
-          <SectionCard title="Problema" hint={PAC_HELP_TOOLTIPS.sections.problem}>
+          <SectionCard
+            title={showRnc8dFlow ? "Problema e cabeçalho 8D" : "Problema"}
+            hint={PAC_HELP_TOOLTIPS.sections.problem}
+            subtitle={
+              showRnc8dFlow
+                ? "Identificação do plano e complementos da planilha (material, NF e contato)."
+                : undefined
+            }
+          >
             <StatusPipeline
               currentStatus={plan.status}
               hint={PAC_HELP_TOOLTIPS.detail.statusPipeline}
@@ -489,17 +506,23 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   }
                 />
               ) : null}
-              <TextAreaField
-                id="pac-detail-problem"
-                label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
-                hint={PAC_HELP_TOOLTIPS.form.description}
-                value={identificationForm.reported_problem}
-                onChange={(reported_problem) =>
-                  setIdentificationForm((c) => ({ ...c, reported_problem }))
-                }
-                fullWidth
-              />
             </div>
+            {showRnc8dFlow ? (
+              <>
+                <h3 className="pac-subsection-title">Material e nota fiscal</h3>
+                <Rnc8dHeaderFields value={rnc8dForm} onChange={setRnc8dForm} />
+              </>
+            ) : null}
+            <TextAreaField
+              id="pac-detail-problem"
+              label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
+              hint={PAC_HELP_TOOLTIPS.form.description}
+              value={identificationForm.reported_problem}
+              onChange={(reported_problem) =>
+                setIdentificationForm((c) => ({ ...c, reported_problem }))
+              }
+              fullWidth
+            />
             <FormActions align="end">
               <button
                 type="button"
@@ -645,7 +668,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
           {showRnc8dFlow ? (
             <>
-              <Rnc8dHeaderSection value={rnc8dForm} onChange={setRnc8dForm} />
               <Rnc8dNcDescriptionSection value={rnc8dForm} onChange={setRnc8dForm} />
               <Rnc8dTeamSection value={rnc8dForm} onChange={setRnc8dForm} />
               <Rnc8dContainmentSection value={rnc8dForm} onChange={setRnc8dForm} />
@@ -692,6 +714,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   evidences={detail.evidences ?? []}
                   saving={saving}
                   onSave={runSave}
+                  responsibleOptions={teamMemberOptions}
                 />
               </SectionCard>
 

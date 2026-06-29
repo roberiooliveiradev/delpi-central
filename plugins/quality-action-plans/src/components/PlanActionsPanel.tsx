@@ -22,6 +22,7 @@ import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDate } from "../utils/format";
+import type { SelectOption } from "./ui/types";
 
 const CAUSE_TRACK_OPTIONS = [
   { value: "", label: "—" },
@@ -55,6 +56,8 @@ type Props = {
   evidences: PlanEvidence[];
   saving: string | null;
   onSave: (key: string, action: () => Promise<void>) => Promise<void>;
+  /** Quando informado (fluxo 8D), responsável vira select da equipe cadastrada. */
+  responsibleOptions?: SelectOption[];
 };
 
 function toFormState(action: PlanAction): ActionFormState {
@@ -81,7 +84,14 @@ function toUpdatePayload(form: ActionFormState): UpdatePlanActionPayload {
   };
 }
 
-export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }: Props) {
+export function PlanActionsPanel({
+  planId,
+  actions,
+  evidences,
+  saving,
+  onSave,
+  responsibleOptions,
+}: Props) {
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [form, setForm] = useState<ActionFormState>(EMPTY_FORM);
 
@@ -253,13 +263,27 @@ export function PlanActionsPanel({ planId, actions, evidences, saving, onSave }:
             onChange={(causeTrack) => setForm((current) => ({ ...current, causeTrack }))}
             searchable={false}
           />
-          <TextField
-            id="pac-action-responsible"
-            label="Responsável"
-            hint={PAC_HELP_TOOLTIPS.form.actionResponsible}
-            value={form.responsible}
-            onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
-          />
+          {responsibleOptions ? (
+            <SelectField
+              id="pac-action-responsible"
+              label="Responsável"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberSelect}
+              options={responsibleOptions}
+              value={form.responsible}
+              onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
+              searchable
+              allowEmpty
+              emptyLabel="Selecione…"
+            />
+          ) : (
+            <TextField
+              id="pac-action-responsible"
+              label="Responsável"
+              hint={PAC_HELP_TOOLTIPS.form.actionResponsible}
+              value={form.responsible}
+              onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
+            />
+          )}
           <TextField
             id="pac-action-due"
             label="Prazo"

@@ -145,6 +145,7 @@ export const PAC_HELP_TOOLTIPS = {
     attentionEmail: "E-mail para envio do relatório ao cliente.",
     team: "Equipe multidisciplinar responsável pela análise 8D (D1).",
     teamLeader: "Indica o membro líder da equipe de análise.",
+    teamMemberSelect: "Membros cadastrados na seção 2. Cadastre a equipe antes de atribuir responsáveis.",
     containment: "Ações imediatas por área (cliente final, planta, fornecedor) — D3.",
     containmentArea: "Onde a contenção se aplica: cliente final, planta do cliente ou fornecedor.",
     containmentQty: "Quantidade de material ou lotes afetados na contenção.",

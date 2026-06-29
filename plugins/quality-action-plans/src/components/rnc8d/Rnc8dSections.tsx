@@ -1,13 +1,17 @@
 import { Save } from "lucide-react";
+import { useMemo } from "react";
 
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useDragReorder } from "../../hooks/useDragReorder";
 import type { Rnc8dContainmentRow, Rnc8dReportPayload, Rnc8dTemplatePayload } from "../../types/rnc8d";
 import { emptyRnc8dPayload } from "../../types/rnc8d";
+import { buildTeamMemberSelectOptions } from "../../utils/teamMemberOptions";
+import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
 import { FieldLabel } from "../ui/HelpTooltip";
 import { DragHandle, RemoveRowButton } from "../ui/RowActions";
 import { SectionCard } from "../ui/SectionCard";
+import { TableMemberSelect } from "../ui/TableMemberSelect";
 import { TextAreaField } from "../ui/TextAreaField";
 import { TextField } from "../ui/TextField";
 
@@ -35,110 +39,117 @@ function updatePayload(
   };
 }
 
-export function Rnc8dHeaderSection({ value, onChange }: Rnc8dSectionsProps) {
+export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
 
+  return (
+    <div className="pac-form-grid">
+      <TextField
+        id="rnc-contact"
+        label="Contato"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.contact}
+        value={value.customer_contact ?? ""}
+        onChange={(customer_contact) => onChange({ ...value, customer_contact })}
+      />
+      <TextField
+        id="rnc-phone"
+        label="Telefone"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.phone}
+        value={payload.contact_phone ?? ""}
+        onChange={(contact_phone) => onChange(updatePayload(value, { contact_phone }))}
+      />
+      <TextField
+        id="rnc-purchase-order"
+        label="Ordem compra / posição"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.purchaseOrder}
+        value={payload.purchase_order ?? ""}
+        onChange={(purchase_order) => onChange(updatePayload(value, { purchase_order }))}
+      />
+      <TextField
+        id="rnc-invoice"
+        label="Nota fiscal"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.invoice}
+        value={payload.invoice_number ?? ""}
+        onChange={(invoice_number) => onChange(updatePayload(value, { invoice_number }))}
+      />
+      <TextField
+        id="rnc-invoice-date"
+        label="Data digitação NF"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.invoiceDate}
+        type="date"
+        value={payload.invoice_date ?? ""}
+        onChange={(invoice_date) => onChange(updatePayload(value, { invoice_date }))}
+      />
+      <TextField
+        id="rnc-defective-qty"
+        label="Quantidade defeituosa"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQty}
+        value={payload.defective_quantity ?? ""}
+        onChange={(defective_quantity) => onChange(updatePayload(value, { defective_quantity }))}
+      />
+      <TextField
+        id="rnc-client-batch"
+        label="Lote do cliente"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.clientBatch}
+        value={payload.client_batch ?? ""}
+        onChange={(client_batch) => onChange(updatePayload(value, { client_batch }))}
+      />
+      <TextField
+        id="rnc-batch-qty"
+        label="Quantidade lote"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.batchQty}
+        value={payload.batch_quantity ?? ""}
+        onChange={(batch_quantity) => onChange(updatePayload(value, { batch_quantity }))}
+      />
+      <TextField
+        id="rnc-disposition"
+        label="Disposição"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.disposition}
+        value={payload.disposition ?? ""}
+        onChange={(disposition) => onChange(updatePayload(value, { disposition }))}
+      />
+      <TextField
+        id="rnc-rejected-qty"
+        label="Quantidade rejeitada"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQty}
+        value={payload.rejected_quantity ?? ""}
+        onChange={(rejected_quantity) => onChange(updatePayload(value, { rejected_quantity }))}
+      />
+      <TextField
+        id="rnc-return-by"
+        label="Devolver relatório até"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.returnBy}
+        type="date"
+        value={payload.return_by ?? ""}
+        onChange={(return_by) => onChange(updatePayload(value, { return_by }))}
+      />
+      <TextField
+        id="rnc-attention"
+        label="Atenção para"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.attentionTo}
+        value={payload.attention_to ?? ""}
+        onChange={(attention_to) => onChange(updatePayload(value, { attention_to }))}
+      />
+      <TextField
+        id="rnc-email"
+        label="E-mail"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.attentionEmail}
+        value={payload.attention_email ?? ""}
+        onChange={(attention_email) => onChange(updatePayload(value, { attention_email }))}
+      />
+    </div>
+  );
+}
+
+/** @deprecated Preferir `Rnc8dHeaderFields` embutido no painel Problema. */
+export function Rnc8dHeaderSection({ value, onChange }: Rnc8dSectionsProps) {
   return (
     <SectionCard
       title="Cabeçalho — material e nota fiscal"
       hint={PAC_HELP_TOOLTIPS.rnc8d.identification}
       subtitle="Complemento da planilha 8D. Cliente, material, lote fornecedor e registro NC ficam no painel Problema."
     >
-      <div className="pac-form-grid">
-        <TextField
-          id="rnc-contact"
-          label="Contato"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.contact}
-          value={value.customer_contact ?? ""}
-          onChange={(customer_contact) => onChange({ ...value, customer_contact })}
-        />
-        <TextField
-          id="rnc-phone"
-          label="Telefone"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.phone}
-          value={payload.contact_phone ?? ""}
-          onChange={(contact_phone) => onChange(updatePayload(value, { contact_phone }))}
-        />
-        <TextField
-          id="rnc-purchase-order"
-          label="Ordem compra / posição"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.purchaseOrder}
-          value={payload.purchase_order ?? ""}
-          onChange={(purchase_order) => onChange(updatePayload(value, { purchase_order }))}
-        />
-        <TextField
-          id="rnc-invoice"
-          label="Nota fiscal"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.invoice}
-          value={payload.invoice_number ?? ""}
-          onChange={(invoice_number) => onChange(updatePayload(value, { invoice_number }))}
-        />
-        <TextField
-          id="rnc-invoice-date"
-          label="Data digitação NF"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.invoiceDate}
-          type="date"
-          value={payload.invoice_date ?? ""}
-          onChange={(invoice_date) => onChange(updatePayload(value, { invoice_date }))}
-        />
-        <TextField
-          id="rnc-defective-qty"
-          label="Quantidade defeituosa"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQty}
-          value={payload.defective_quantity ?? ""}
-          onChange={(defective_quantity) => onChange(updatePayload(value, { defective_quantity }))}
-        />
-        <TextField
-          id="rnc-client-batch"
-          label="Lote do cliente"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.clientBatch}
-          value={payload.client_batch ?? ""}
-          onChange={(client_batch) => onChange(updatePayload(value, { client_batch }))}
-        />
-        <TextField
-          id="rnc-batch-qty"
-          label="Quantidade lote"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.batchQty}
-          value={payload.batch_quantity ?? ""}
-          onChange={(batch_quantity) => onChange(updatePayload(value, { batch_quantity }))}
-        />
-        <TextField
-          id="rnc-disposition"
-          label="Disposição"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.disposition}
-          value={payload.disposition ?? ""}
-          onChange={(disposition) => onChange(updatePayload(value, { disposition }))}
-        />
-        <TextField
-          id="rnc-rejected-qty"
-          label="Quantidade rejeitada"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQty}
-          value={payload.rejected_quantity ?? ""}
-          onChange={(rejected_quantity) => onChange(updatePayload(value, { rejected_quantity }))}
-        />
-        <TextField
-          id="rnc-return-by"
-          label="Devolver relatório até"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.returnBy}
-          type="date"
-          value={payload.return_by ?? ""}
-          onChange={(return_by) => onChange(updatePayload(value, { return_by }))}
-        />
-        <TextField
-          id="rnc-attention"
-          label="Atenção para"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.attentionTo}
-          value={payload.attention_to ?? ""}
-          onChange={(attention_to) => onChange(updatePayload(value, { attention_to }))}
-        />
-        <TextField
-          id="rnc-email"
-          label="E-mail"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.attentionEmail}
-          value={payload.attention_email ?? ""}
-          onChange={(attention_email) => onChange(updatePayload(value, { attention_email }))}
-        />
-      </div>
+      <Rnc8dHeaderFields value={value} onChange={onChange} />
     </SectionCard>
   );
 }
@@ -282,6 +293,14 @@ export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
 export function Rnc8dContainmentSection({ value, onChange }: Rnc8dSectionsProps) {
   const payload = value.template_payload ?? emptyRnc8dPayload();
   const containment = payload.containment ?? emptyRnc8dPayload().containment ?? [];
+  const teamOptions = useMemo(
+    () =>
+      buildTeamMemberSelectOptions(
+        value.team_members,
+        containment.map((row) => row.responsible),
+      ),
+    [value.team_members, containment],
+  );
   const containmentDrag = useDragReorder(containment, (next) =>
     onChange(updatePayload(value, { containment: next })),
   );
@@ -374,13 +393,11 @@ export function Rnc8dContainmentSection({ value, onChange }: Rnc8dSectionsProps)
                   />
                 </td>
                 <td>
-                  <input
-                    className="pac-field__control"
+                  <TableMemberSelect
                     value={row.responsible ?? ""}
-                    aria-label="Responsável"
-                    onChange={(event) =>
-                      updateContainmentRow(index, { responsible: event.target.value })
-                    }
+                    options={teamOptions}
+                    ariaLabel="Responsável"
+                    onChange={(responsible) => updateContainmentRow(index, { responsible })}
                   />
                 </td>
                 <td>
@@ -469,11 +486,13 @@ export function Rnc8dEffectivenessSection({ value, onChange }: Rnc8dSectionsProp
           }
           fullWidth
         />
-        <TextField
+        <TeamMemberSelectField
           id="rnc-verification-responsible"
           label="Responsável pela verificação"
           hint={PAC_HELP_TOOLTIPS.rnc8d.verificationResponsible}
           value={effectiveness.verification_responsible ?? ""}
+          teamMembers={value.team_members}
+          extraValues={[effectiveness.verification_responsible]}
           onChange={(verification_responsible) =>
             onChange(
               updatePayload(value, { effectiveness: { ...effectiveness, verification_responsible } }),
@@ -501,6 +520,17 @@ export function Rnc8dPreventiveSection({ value, onChange }: Rnc8dSectionsProps) 
   const documentation = payload.documentation_updates?.length
     ? payload.documentation_updates
     : [{}];
+  const teamOptions = useMemo(
+    () =>
+      buildTeamMemberSelectOptions(
+        value.team_members,
+        [
+          preventive.evaluation_responsible,
+          ...documentation.map((doc) => doc.responsible),
+        ],
+      ),
+    [value.team_members, preventive.evaluation_responsible, documentation],
+  );
   const documentationDrag = useDragReorder(documentation, (next) =>
     onChange(updatePayload(value, { documentation_updates: next })),
   );
@@ -544,11 +574,13 @@ export function Rnc8dPreventiveSection({ value, onChange }: Rnc8dSectionsProps) 
         fullWidth
       />
       <div className="pac-form-grid">
-        <TextField
+        <TeamMemberSelectField
           id="rnc-eval-responsible"
           label="Responsável pela avaliação"
           hint={PAC_HELP_TOOLTIPS.rnc8d.evalResponsible}
           value={preventive.evaluation_responsible ?? ""}
+          teamMembers={value.team_members}
+          extraValues={[preventive.evaluation_responsible]}
           onChange={(evaluation_responsible) =>
             onChange(
               updatePayload(value, { preventive: { ...preventive, evaluation_responsible } }),
@@ -615,13 +647,13 @@ export function Rnc8dPreventiveSection({ value, onChange }: Rnc8dSectionsProps) 
                   />
                 </td>
                 <td>
-                  <input
-                    className="pac-field__control"
+                  <TableMemberSelect
                     value={doc.responsible ?? ""}
-                    aria-label="Responsável pelo documento"
-                    onChange={(event) => {
+                    options={teamOptions}
+                    ariaLabel="Responsável pelo documento"
+                    onChange={(responsible) => {
                       const next = [...documentation];
-                      next[index] = { ...doc, responsible: event.target.value };
+                      next[index] = { ...doc, responsible };
                       onChange(updatePayload(value, { documentation_updates: next }));
                     }}
                   />
