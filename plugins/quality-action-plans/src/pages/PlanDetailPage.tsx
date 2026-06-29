@@ -61,7 +61,6 @@ import type {
 import type { Rnc8dReportPayload } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
 import { mergeSharedIdentificationIntoRnc8d, sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
-import { buildTeamMemberSelectOptions } from "../utils/teamMemberOptions";
 import { formatDateTime } from "../utils/format";
 import {
   emptyIshikawaCausesForm,
@@ -248,14 +247,6 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       reported_problem: identificationForm.reported_problem,
     }),
     [identificationForm],
-  );
-  const teamMemberOptions = useMemo(
-    () =>
-      buildTeamMemberSelectOptions(
-        rnc8dForm.team_members,
-        detail?.actions?.map((action) => action.responsible_name),
-      ),
-    [rnc8dForm.team_members, detail?.actions],
   );
   const effectivenessApprovalStatus = plan?.effectiveness_approval_status ?? null;
   const isEffectivenessPendingApproval = effectivenessApprovalStatus === "pending_review";
@@ -465,7 +456,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   evidences={detail.evidences ?? []}
                   saving={saving}
                   onSave={runSave}
-                  responsibleOptions={teamMemberOptions}
+                  teamMembers={rnc8dForm.team_members}
                 />
               </SectionCard>
 

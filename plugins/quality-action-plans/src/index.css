@@ -2087,6 +2087,49 @@
   gap: 16px;
 }
 
+.dashboard-quality-action-plans .pac-team-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--pac-border) 70%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-team-list-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dashboard-quality-action-plans .pac-team-member-link {
+  margin-left: 36px;
+}
+
+.dashboard-quality-action-plans .pac-team-member-link--linked {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--pac-radius-sm);
+  background: color-mix(in srgb, var(--pac-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pac-accent) 22%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-team-member-link__icon {
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-team-member-link__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-team-member-link__note {
+  margin: 4px 0 0;
+}
+
 .dashboard-quality-action-plans .pac-team-row {
   grid-template-columns: auto repeat(2, minmax(0, 1fr)) auto auto;
   align-items: end;

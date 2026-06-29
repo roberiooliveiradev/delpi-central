@@ -1,4 +1,3 @@
-import { UserRound, X } from "lucide-react";
 import { useCallback } from "react";
 
 import { searchDirectoryUsers } from "../api/directoryApi";
@@ -8,6 +7,8 @@ import { formatPersonName } from "../utils/formatPersonName";
 import { DelpiAsyncLookupField, type DelpiLookupOption } from "./ui/DelpiAsyncLookupField";
 import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
+import type { TeamMember } from "../types/rnc8d";
+import { buildTeamMemberSelectOptions } from "../utils/teamMemberOptions";
 import type { SelectOption } from "./ui/types";
 
 export type ActionResponsibleValue = {
@@ -19,15 +20,32 @@ type Props = {
   idPrefix?: string;
   value: ActionResponsibleValue;
   onChange: (value: ActionResponsibleValue) => void;
+  /** Equipe 8D — vínculo Delpi é definido na seção 2; aqui só seleciona o membro. */
+  teamMembers?: TeamMember[];
   teamOptions?: SelectOption[];
 };
+
+function resolveTeamMember(
+  teamMembers: TeamMember[] | undefined,
+  name: string,
+): TeamMember | undefined {
+  const normalized = name.trim();
+  if (!normalized) return undefined;
+  return teamMembers?.find((member) => member.member_name?.trim() === normalized);
+}
 
 export function ActionResponsibleField({
   idPrefix = "pac-action-responsible",
   value,
   onChange,
+  teamMembers,
   teamOptions,
 }: Props) {
+  const usesTeamFlow = Boolean(teamMembers?.length || teamOptions);
+  const options =
+    teamOptions ??
+    (teamMembers?.length ? buildTeamMemberSelectOptions(teamMembers, [value.responsibleName]) : undefined);
+
   const searchUsers = useCallback(async (query: string, signal: AbortSignal) => {
     const users = await searchDirectoryUsers(query, {
       limit: 10,
@@ -51,28 +69,22 @@ export function ActionResponsibleField({
     });
   }
 
-  function handleUnlink() {
-    onChange({
-      ...value,
-      responsibleUserId: null,
-    });
-  }
-
   function handleTeamChange(teamName: string) {
+    const member = resolveTeamMember(teamMembers, teamName);
     onChange({
-      responsibleUserId: null,
+      responsibleUserId: member?.member_user_id ?? null,
       responsibleName: teamName,
     });
   }
 
   return (
     <div className="pac-field pac-field--full pac-action-responsible">
-      {teamOptions ? (
+      {options ? (
         <SelectField
           id={`${idPrefix}-team`}
           label="Membro da equipe 8D"
           hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberSelect}
-          options={teamOptions}
+          options={options}
           value={value.responsibleName}
           onChange={handleTeamChange}
           searchable
@@ -81,26 +93,7 @@ export function ActionResponsibleField({
         />
       ) : null}
 
-      {value.responsibleUserId ? (
-        <div className="pac-action-responsible__linked">
-          <span className="pac-action-responsible__linked-icon" aria-hidden="true">
-            <UserRound size={16} />
-          </span>
-          <div className="pac-action-responsible__linked-copy">
-            <strong>{value.responsibleName || "Usuário vinculado"}</strong>
-            <span className="pac-muted">{PAC_HELP_TOOLTIPS.form.actionResponsibleLinked}</span>
-          </div>
-          <button
-            type="button"
-            className="pac-ghost-btn pac-ghost-btn--icon pac-action-responsible__unlink"
-            title="Remover vínculo com usuário Delpi"
-            onClick={handleUnlink}
-          >
-            <X size={16} aria-hidden="true" />
-            <span>Desvincular</span>
-          </button>
-        </div>
-      ) : (
+      {!usesTeamFlow && !value.responsibleUserId ? (
         <DelpiAsyncLookupField
           id={`${idPrefix}-directory`}
           label="Vincular usuário Delpi"
@@ -112,7 +105,7 @@ export function ActionResponsibleField({
           placeholder="Buscar por nome ou e-mail…"
           minQueryLength={2}
         />
-      )}
+      ) : null}
 
       <TextField
         id={`${idPrefix}-name`}
@@ -122,10 +115,22 @@ export function ActionResponsibleField({
         onChange={(responsibleName) => onChange({ ...value, responsibleName })}
       />
 
-      {!value.responsibleUserId ? (
+      {usesTeamFlow && !value.responsibleUserId ? (
+        <p className="pac-muted pac-action-responsible__note">
+          {PAC_HELP_TOOLTIPS.form.actionResponsibleTeamUnlinked}
+        </p>
+      ) : null}
+
+      {!usesTeamFlow && !value.responsibleUserId ? (
         <p className="pac-muted pac-action-responsible__note">
           Sem vínculo com usuário Delpi — a ação não entra na Minha fila até buscar e selecionar alguém
           acima.
+        </p>
+      ) : null}
+
+      {value.responsibleUserId ? (
+        <p className="pac-muted pac-action-responsible__note">
+          {PAC_HELP_TOOLTIPS.form.actionResponsibleLinked}
         </p>
       ) : null}
     </div>

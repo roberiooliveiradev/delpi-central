@@ -71,6 +71,7 @@ export type Rnc8dTemplatePayload = {
 export type TeamMember = {
   id?: string;
   member_name: string;
+  member_user_id?: string | null;
   department?: string;
   is_leader?: boolean;
   sort_order?: number;

@@ -26,7 +26,7 @@ import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDate } from "../utils/format";
-import type { SelectOption } from "./ui/types";
+import type { TeamMember } from "../types/rnc8d";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -67,8 +67,8 @@ type Props = {
   evidences: PlanEvidence[];
   saving: string | null;
   onSave: (key: string, action: () => Promise<void>) => Promise<void>;
-  /** Quando informado (fluxo 8D), permite escolher membro da equipe além do vínculo Delpi. */
-  responsibleOptions?: SelectOption[];
+  /** Equipe 8D (seção 2) — responsável herda member_user_id do membro vinculado. */
+  teamMembers?: TeamMember[];
 };
 
 function toFormState(action: PlanAction): ActionFormState {
@@ -115,7 +115,7 @@ export function PlanActionsPanel({
   evidences,
   saving,
   onSave,
-  responsibleOptions,
+  teamMembers,
 }: Props) {
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [form, setForm] = useState<ActionFormState>(EMPTY_FORM);
@@ -327,7 +327,7 @@ export function PlanActionsPanel({
 
         <ActionResponsibleField
           value={form.responsible}
-          teamOptions={responsibleOptions}
+          teamMembers={teamMembers}
           onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
         />
 

@@ -12,6 +12,7 @@ function normalizedTeamMembers(members: TeamMember[] | undefined): TeamMember[] 
       ...member,
       member_name: member.member_name?.trim() ?? "",
       department: member.department?.trim() || undefined,
+      member_user_id: member.member_user_id?.trim() || undefined,
     }))
     .filter((member) => member.member_name.length > 0);
 

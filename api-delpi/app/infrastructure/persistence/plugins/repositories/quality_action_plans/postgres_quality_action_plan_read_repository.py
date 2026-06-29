@@ -203,7 +203,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         team_members = self.fetch_all(
             """
-            SELECT id, plan_id, member_name, department, is_leader, sort_order, created_at
+            SELECT id, plan_id, member_name, member_user_id, department, is_leader, sort_order, created_at
               FROM quality.quality_analysis_team_members
              WHERE plan_id = %s
              ORDER BY is_leader DESC, sort_order ASC, created_at ASC
@@ -2502,12 +2502,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 self.execute(
                     """
                     INSERT INTO quality.quality_analysis_team_members (
-                        plan_id, member_name, department, is_leader, sort_order
-                    ) VALUES (%s, %s, %s, %s, %s)
+                        plan_id, member_name, member_user_id, department, is_leader, sort_order
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
                     """,
                     (
                         plan_id,
                         member.get("member_name") or member.get("name"),
+                        member.get("member_user_id"),
                         member.get("department"),
                         bool(member.get("is_leader")),
                         member.get("sort_order", index),

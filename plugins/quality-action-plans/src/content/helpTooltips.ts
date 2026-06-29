@@ -81,8 +81,8 @@ export const PAC_HELP_TOOLTIPS = {
       "Busque um usuário Delpi com acesso ao PAC (nome ou e-mail). Opcional — habilita a Minha fila e notificações para essa pessoa.",
     actionResponsibleLinked:
       "Usuário vinculado por ID — a ação entra na Minha fila dele enquanto estiver aberta.",
-    actionResponsibleNameOnly:
-      "Somente o nome foi informado, sem usuário Delpi vinculado.",
+    actionResponsibleTeamUnlinked:
+      "Este membro ainda não tem usuário Delpi vinculado na seção 2. Vincule na equipe de análise para habilitar a Minha fila.",
     actionDueDate: "Prazo acordado para conclusão da ação.",
     actionStatus: "Situação atual da ação (pendente, em andamento, concluída, etc.).",
     actionDescription: "O que será feito — descrição objetiva da ação corretiva ou de contenção.",
@@ -151,7 +151,12 @@ export const PAC_HELP_TOOLTIPS = {
     attentionEmail: "E-mail para envio do relatório ao cliente.",
     team: "Equipe multidisciplinar responsável pela análise 8D (D1).",
     teamLeader: "Indica o membro líder da equipe de análise.",
-    teamMemberSelect: "Membros cadastrados na seção 2. Cadastre a equipe antes de atribuir responsáveis.",
+    teamMemberSelect: "Membros cadastrados na seção 2. O vínculo Delpi é feito nesta seção.",
+    teamMemberUserLink:
+      "Busque um usuário Delpi com acesso ao PAC. Ações que atribuírem este membro entram na Minha fila dele.",
+    teamMemberLinked: "Usuário Delpi vinculado a este membro da equipe.",
+    teamMemberUnlinked:
+      "Sem vínculo — ações com este membro não entram na Minha fila até vincular um usuário Delpi.",
     containment: "Ações imediatas por área (cliente final, planta, fornecedor) — D3.",
     containmentArea: "Onde a contenção se aplica: cliente final, planta do cliente ou fornecedor.",
     containmentQty: "Quantidade de material ou lotes afetados na contenção.",

@@ -6,6 +6,7 @@ import { useDragReorder } from "../../hooks/useDragReorder";
 import type { Rnc8dContainmentRow, Rnc8dReportPayload, Rnc8dTemplatePayload } from "../../types/rnc8d";
 import { emptyRnc8dPayload } from "../../types/rnc8d";
 import { buildTeamMemberSelectOptions } from "../../utils/teamMemberOptions";
+import { TeamMemberDelpiLinkField } from "../TeamMemberDelpiLinkField";
 import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
 import { FieldLabel, HelpTooltip, TableHeaderCell } from "../ui/HelpTooltip";
@@ -214,63 +215,83 @@ export function Rnc8dTeamSection({ value, onChange }: Rnc8dSectionsProps) {
     <SectionCard title="2. Membros da equipe de análise" hint={PAC_HELP_TOOLTIPS.rnc8d.team}>
       <div className="pac-team-list">
         {team.map((member, index) => (
-          <div
-            key={`team-${index}`}
-            className={teamDrag.rowClassName("pac-form-grid pac-team-row", index)}
-            {...teamDrag.rowDropProps(index)}
-          >
-            <div className="pac-team-row__drag">
-              {teamDrag.canDrag ? <DragHandle dragProps={teamDrag.handleDragProps(index)} /> : null}
-            </div>
-            <TextField
-              id={`rnc-team-name-${index}`}
-              label={member.is_leader ? "Líder" : "Membro"}
-              hint={member.is_leader ? PAC_HELP_TOOLTIPS.rnc8d.teamLeader : PAC_HELP_TOOLTIPS.rnc8d.team}
-              value={member.member_name}
-              onChange={(member_name) => {
-                const next = [...team];
-                next[index] = { ...member, member_name };
-                onChange({ ...value, team_members: next });
-              }}
-            />
-            <TextField
-              id={`rnc-team-dept-${index}`}
-              label="Área"
-              hint={PAC_HELP_TOOLTIPS.detail.department}
-              value={member.department ?? ""}
-              onChange={(department) => {
-                const next = [...team];
-                next[index] = { ...member, department };
-                onChange({ ...value, team_members: next });
-              }}
-            />
-            <label className="pac-checkbox pac-team-row__leader">
-              <input
-                type="checkbox"
-                checked={Boolean(member.is_leader)}
-                onChange={(event) => {
-                  const next = team.map((item, itemIndex) => ({
-                    ...item,
-                    is_leader: itemIndex === index ? event.target.checked : false,
-                  }));
+          <div key={`team-${index}`} className="pac-team-list-item">
+            <div
+              className={teamDrag.rowClassName("pac-form-grid pac-team-row", index)}
+              {...teamDrag.rowDropProps(index)}
+            >
+              <div className="pac-team-row__drag">
+                {teamDrag.canDrag ? <DragHandle dragProps={teamDrag.handleDragProps(index)} /> : null}
+              </div>
+              <TextField
+                id={`rnc-team-name-${index}`}
+                label={member.is_leader ? "Líder" : "Membro"}
+                hint={member.is_leader ? PAC_HELP_TOOLTIPS.rnc8d.teamLeader : PAC_HELP_TOOLTIPS.rnc8d.team}
+                value={member.member_name}
+                onChange={(member_name) => {
+                  const next = [...team];
+                  next[index] = { ...member, member_name };
                   onChange({ ...value, team_members: next });
                 }}
               />
-              <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
-            </label>
-            <div className="pac-team-row__remove">
-              <RemoveRowButton
-                onRemove={() =>
-                  onChange({
-                    ...value,
-                    team_members: team.filter((_, itemIndex) => itemIndex !== index),
-                  })
-                }
-                removeDisabled={team.length <= 1}
-                removeTitle={team.length <= 1 ? "Mantenha ao menos um membro" : "Remover membro"}
-                removeAriaLabel="Remover membro da equipe"
+              <TextField
+                id={`rnc-team-dept-${index}`}
+                label="Área"
+                hint={PAC_HELP_TOOLTIPS.detail.department}
+                value={member.department ?? ""}
+                onChange={(department) => {
+                  const next = [...team];
+                  next[index] = { ...member, department };
+                  onChange({ ...value, team_members: next });
+                }}
               />
+              <label className="pac-checkbox pac-team-row__leader">
+                <input
+                  type="checkbox"
+                  checked={Boolean(member.is_leader)}
+                  onChange={(event) => {
+                    const next = team.map((item, itemIndex) => ({
+                      ...item,
+                      is_leader: itemIndex === index ? event.target.checked : false,
+                    }));
+                    onChange({ ...value, team_members: next });
+                  }}
+                />
+                <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
+              </label>
+              <div className="pac-team-row__remove">
+                <RemoveRowButton
+                  onRemove={() =>
+                    onChange({
+                      ...value,
+                      team_members: team.filter((_, itemIndex) => itemIndex !== index),
+                    })
+                  }
+                  removeDisabled={team.length <= 1}
+                  removeTitle={team.length <= 1 ? "Mantenha ao menos um membro" : "Remover membro"}
+                  removeAriaLabel="Remover membro da equipe"
+                />
+              </div>
             </div>
+            <TeamMemberDelpiLinkField
+              idPrefix={`rnc-team-link-${index}`}
+              memberUserId={member.member_user_id}
+              memberName={member.member_name}
+              onLink={(member_user_id, displayName) => {
+                const next = [...team];
+                next[index] = {
+                  ...member,
+                  member_user_id,
+                  member_name: displayName || member.member_name,
+                };
+                onChange({ ...value, team_members: next });
+              }}
+              onUnlink={() => {
+                const next = [...team];
+                next[index] = { ...member, member_user_id: null };
+                onChange({ ...value, team_members: next });
+              }}
+            />
           </div>
         ))}
       </div>
