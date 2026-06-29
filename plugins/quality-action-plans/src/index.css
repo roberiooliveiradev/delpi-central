@@ -2150,7 +2150,17 @@
 .dashboard-quality-action-plans .pac-team-card__body {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-team-card__fields {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
+  align-items: end;
   gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-team-card__name {
+  min-width: 0;
 }
 
 .dashboard-quality-action-plans .pac-input-action-row {
@@ -2169,15 +2179,10 @@
   align-self: stretch;
 }
 
-.dashboard-quality-action-plans .pac-team-card__details {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 12px;
-}
-
 .dashboard-quality-action-plans .pac-team-card__leader {
   align-self: end;
   margin-bottom: 10px;
+  white-space: nowrap;
 }
 
 .dashboard-quality-action-plans .pac-team-card__link-status {
@@ -2927,6 +2932,14 @@
 
   .dashboard-quality-action-plans .pac-dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-quality-action-plans .pac-team-card__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-quality-action-plans .pac-team-card__leader {
+    margin-bottom: 0;
   }
 
   .dashboard-quality-action-plans .pac-ishikawa-grid {

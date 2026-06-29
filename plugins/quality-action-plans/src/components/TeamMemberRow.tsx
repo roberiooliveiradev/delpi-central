@@ -83,46 +83,32 @@ export function TeamMemberRow({
       </header>
 
       <div className="pac-team-card__body">
-        <div className="pac-field pac-field--full pac-team-card__name">
-          <label className="pac-field__label" htmlFor={`rnc-team-name-${index}`}>
-            <FieldLabel label="Nome" hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberUserLink} />
-          </label>
-          <div className="pac-input-action-row">
-            <input
-              id={`rnc-team-name-${index}`}
-              className="pac-field__control pac-input-action-row__input"
-              type="text"
-              value={member.member_name}
-              placeholder="Nome do membro ou pesquise na Delpi…"
-              onChange={(event) => patch({ member_name: event.target.value })}
-            />
-            <button
-              type="button"
-              className="pac-ghost-btn pac-input-action-row__btn"
-              aria-label="Pesquisar usuário na Delpi"
-              onClick={() => setModalOpen(true)}
-            >
-              <Search size={16} aria-hidden="true" />
-              <span>Delpi</span>
-            </button>
+        <div className="pac-form-grid pac-team-card__fields">
+          <div className="pac-field pac-team-card__name">
+            <label className="pac-field__label" htmlFor={`rnc-team-name-${index}`}>
+              <FieldLabel label="Nome" hint={PAC_HELP_TOOLTIPS.rnc8d.teamMemberUserLink} />
+            </label>
+            <div className="pac-input-action-row">
+              <input
+                id={`rnc-team-name-${index}`}
+                className="pac-field__control pac-input-action-row__input"
+                type="text"
+                value={member.member_name}
+                placeholder="Nome do membro ou pesquise na Delpi…"
+                onChange={(event) => patch({ member_name: event.target.value })}
+              />
+              <button
+                type="button"
+                className="pac-ghost-btn pac-input-action-row__btn"
+                aria-label="Pesquisar usuário na Delpi"
+                onClick={() => setModalOpen(true)}
+              >
+                <Search size={16} aria-hidden="true" />
+                <span>Delpi</span>
+              </button>
+            </div>
           </div>
-          <p className="pac-team-card__link-status pac-muted">
-            {isLinked ? (
-              <>
-                {linkedEmail ? <span>E-mail Delpi: {linkedEmail}</span> : null}
-                {linkedEmail ? <span aria-hidden="true"> · </span> : null}
-                <span>{PAC_HELP_TOOLTIPS.rnc8d.teamMemberLinked}</span>
-                <button type="button" className="pac-text-btn pac-text-btn--danger" onClick={handleUnlink}>
-                  Desvincular
-                </button>
-              </>
-            ) : (
-              PAC_HELP_TOOLTIPS.rnc8d.teamMemberUnlinked
-            )}
-          </p>
-        </div>
 
-        <div className="pac-form-grid pac-team-card__details">
           <TextField
             id={`rnc-team-dept-${index}`}
             label="Área"
@@ -130,6 +116,7 @@ export function TeamMemberRow({
             value={member.department ?? ""}
             onChange={(department) => patch({ department })}
           />
+
           <label className="pac-checkbox pac-team-card__leader">
             <input
               type="checkbox"
@@ -139,6 +126,21 @@ export function TeamMemberRow({
             <FieldLabel label="Líder da equipe" hint={PAC_HELP_TOOLTIPS.rnc8d.teamLeader} />
           </label>
         </div>
+
+        <p className="pac-team-card__link-status pac-muted">
+          {isLinked ? (
+            <>
+              {linkedEmail ? <span>E-mail Delpi: {linkedEmail}</span> : null}
+              {linkedEmail ? <span aria-hidden="true"> · </span> : null}
+              <span>{PAC_HELP_TOOLTIPS.rnc8d.teamMemberLinked}</span>
+              <button type="button" className="pac-text-btn pac-text-btn--danger" onClick={handleUnlink}>
+                Desvincular
+              </button>
+            </>
+          ) : (
+            PAC_HELP_TOOLTIPS.rnc8d.teamMemberUnlinked
+          )}
+        </p>
       </div>
 
       <DelpiUserSearchModal
