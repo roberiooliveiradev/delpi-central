@@ -2029,6 +2029,14 @@
   gap: 4px;
 }
 
+.dashboard-quality-action-plans .pac-action-responsibles-chips--inline {
+  align-items: center;
+}
+
+.dashboard-quality-action-plans .pac-action-responsibles-chips--inline .pac-action-responsibles-chip__name {
+  white-space: nowrap;
+}
+
 .dashboard-quality-action-plans .pac-action-responsibles-chip {
   display: inline-flex;
   align-items: center;

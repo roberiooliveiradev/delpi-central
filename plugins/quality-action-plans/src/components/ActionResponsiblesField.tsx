@@ -60,7 +60,7 @@ export function ActionResponsiblesField({
         disabled={disabled}
       />
       {value.length ? (
-        <ActionResponsiblesChips responsibles={value} layout="stack" showQueueBadge />
+        <ActionResponsiblesChips responsibles={value} layout="inline" showQueueBadge />
       ) : null}
       {linkedCount > 0 ? (
         <p className="pac-muted pac-action-responsible__note">
