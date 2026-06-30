@@ -34,6 +34,15 @@ def test_list_my_queue_overdue_only_filter():
     assert "a.due_date < CURRENT_DATE" in list_query
 
 
+def test_list_my_queue_include_completed_filter():
+    _count_query, list_query, _params = _capture_my_queue_query(
+        user_id="user-42",
+        include_completed=True,
+    )
+    assert "a.status <> 'cancelled'" in list_query
+    assert "a.status NOT IN ('completed', 'cancelled')" not in list_query
+
+
 def test_update_action_clears_responsible_user_id():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo.execute_returning_one = MagicMock(

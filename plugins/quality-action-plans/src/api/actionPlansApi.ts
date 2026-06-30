@@ -91,6 +91,7 @@ export async function fetchOverduePlans(params: ListParams = {}): Promise<PagedP
 type MyQueueParams = {
   branch_code?: string;
   overdue_only?: boolean;
+  include_completed?: boolean;
   page?: number;
   page_size?: number;
 };
@@ -99,6 +100,7 @@ export async function fetchMyQueue(params: MyQueueParams = {}): Promise<MyQueueR
   const search = new URLSearchParams();
   if (params.branch_code) search.set("branch_code", params.branch_code);
   if (params.overdue_only) search.set("overdue_only", "true");
+  if (params.include_completed) search.set("include_completed", "true");
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));
   const query = search.toString() ? `?${search.toString()}` : "";

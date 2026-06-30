@@ -1,4 +1,5 @@
 import { Eye } from "lucide-react";
+import { useState } from "react";
 
 import {
   ACTION_STATUS_OPTIONS,
@@ -19,8 +20,58 @@ type Props = {
   emptyMessage?: string;
   savingActionId?: string | null;
   onNavigate: (path: string) => void;
-  onStatusChange: (item: MyQueueItem, status: string) => void;
+  onStatusChange: (item: MyQueueItem, status: string) => void | Promise<void>;
 };
+
+function actionStatusLabel(status: string): string {
+  return ACTION_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
+}
+
+function QueueActionStatusSelect({
+  item,
+  disabled,
+  onStatusChange,
+}: {
+  item: MyQueueItem;
+  disabled: boolean;
+  onStatusChange: (item: MyQueueItem, status: string) => void | Promise<void>;
+}) {
+  const [resetKey, setResetKey] = useState(0);
+  const currentStatus = ACTION_STATUS_OPTIONS.some((option) => option.value === item.action_status)
+    ? item.action_status
+    : "pending";
+
+  return (
+    <select
+      key={`${item.action_id}-${currentStatus}-${resetKey}`}
+      className="pac-table-select pac-table-select--status"
+      defaultValue={currentStatus}
+      aria-label={`Status da ação ${item.plan_code ?? item.action_id}`}
+      title={PAC_HELP_TOOLTIPS.tables.actionStatus}
+      disabled={disabled}
+      onChange={(event) => {
+        const nextStatus = event.target.value;
+        if (nextStatus === currentStatus) {
+          return;
+        }
+        const confirmed = window.confirm(
+          `Alterar o status da ação para "${actionStatusLabel(nextStatus)}"?`,
+        );
+        if (!confirmed) {
+          setResetKey((value) => value + 1);
+          return;
+        }
+        void onStatusChange(item, nextStatus);
+      }}
+    >
+      {ACTION_STATUS_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function MyQueueTable({
   items,
@@ -80,24 +131,11 @@ export function MyQueueTable({
                 <span>{formatDate(item.due_date)}</span>
               </td>
               <td>
-                <select
-                  className="pac-table-select pac-table-select--status"
-                  value={
-                    ACTION_STATUS_OPTIONS.some((option) => option.value === item.action_status)
-                      ? item.action_status
-                      : "pending"
-                  }
-                  aria-label={`Status da ação ${item.plan_code ?? item.action_id}`}
-                  title={PAC_HELP_TOOLTIPS.tables.actionStatus}
+                <QueueActionStatusSelect
+                  item={item}
                   disabled={savingActionId === item.action_id}
-                  onChange={(event) => onStatusChange(item, event.target.value)}
-                >
-                  {ACTION_STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  onStatusChange={onStatusChange}
+                />
               </td>
               <td>{branchLabel(item.branch_code)}</td>
               <td>{item.customer_name ?? "—"}</td>

@@ -12,6 +12,8 @@ export const PAC_HELP_TOOLTIPS = {
     rootCause: "Texto ou categoria da causa raiz registrada no plano.",
     overdueOnly:
       "Mostra apenas planos com ações ou prazos em atraso conforme regras de SLA do PAC.",
+    includeCompleted:
+      "Inclui na listagem ações já marcadas como concluídas (planos ainda em andamento).",
     refresh: "Recarrega a listagem com os filtros atuais.",
     clear: "Remove todos os filtros aplicados.",
   },

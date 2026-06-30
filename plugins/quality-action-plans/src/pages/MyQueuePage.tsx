@@ -6,10 +6,11 @@ import { MyQueueTable } from "../components/MyQueueTable";
 import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { FilterBar } from "../components/ui/FilterBar";
+import { FilterCheckboxField } from "../components/ui/FilterCheckboxField";
 import { MultiSelectField } from "../components/ui/MultiSelectField";
 import { PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { FieldLabel, TitleWithHelp } from "../components/ui/HelpTooltip";
+import { TitleWithHelp } from "../components/ui/HelpTooltip";
 import type { MyQueueItem, MyQueueSummary } from "../types/myQueue";
 
 type Props = {
@@ -23,6 +24,7 @@ export function MyQueuePage({ onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [includeCompleted, setIncludeCompleted] = useState(false);
   const [savingActionId, setSavingActionId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -32,6 +34,7 @@ export function MyQueuePage({ onNavigate }: Props) {
       const data = await fetchMyQueue({
         branch_code: branches.length === 1 ? branches[0] : undefined,
         overdue_only: overdueOnly || undefined,
+        include_completed: includeCompleted || undefined,
         page_size: 200,
       });
       setItems(data.items);
@@ -41,7 +44,7 @@ export function MyQueuePage({ onNavigate }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [branches, overdueOnly]);
+  }, [branches, includeCompleted, overdueOnly]);
 
   useEffect(() => {
     void load();
@@ -51,6 +54,19 @@ export function MyQueuePage({ onNavigate }: Props) {
     if (branches.length <= 1) return items;
     return items.filter((item) => branches.includes(item.branch_code ?? ""));
   }, [branches, items]);
+
+  const emptyMessage = useMemo(() => {
+    if (overdueOnly && includeCompleted) {
+      return "Nenhuma ação atrasada (aberta ou concluída) atribuída a você.";
+    }
+    if (overdueOnly) {
+      return "Nenhuma ação atrasada atribuída a você.";
+    }
+    if (includeCompleted) {
+      return "Nenhuma ação atribuída a você neste recorte.";
+    }
+    return "Nenhuma ação pendente atribuída a você.";
+  }, [includeCompleted, overdueOnly]);
 
   async function handleStatusChange(item: MyQueueItem, status: string) {
     if (status === item.action_status) {
@@ -92,30 +108,31 @@ export function MyQueuePage({ onNavigate }: Props) {
         ) : null}
 
         <FilterBar compact>
-        <MultiSelectField
-          id="pac-queue-branch"
-          label="Filial"
-          hint={PAC_HELP_TOOLTIPS.filters.branch}
-          options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
-          selectedValues={branches}
-          onChange={setBranches}
-          emptyLabel="Todas"
-          searchable={false}
-        />
-        <div className="pac-filter-box pac-filter-box--checkbox">
-          <span className="pac-field__label pac-field__label-row">
-            <FieldLabel label="Somente atrasadas" hint={PAC_HELP_TOOLTIPS.filters.overdueOnly} />
-          </span>
-          <label className="pac-checkbox pac-filter-checkbox" htmlFor="pac-queue-overdue">
-            <input
-              id="pac-queue-overdue"
-              type="checkbox"
-              checked={overdueOnly}
-              onChange={(event) => setOverdueOnly(event.target.checked)}
-            />
-            <span>Ativar filtro</span>
-          </label>
-        </div>
+          <MultiSelectField
+            id="pac-queue-branch"
+            label="Filial"
+            hint={PAC_HELP_TOOLTIPS.filters.branch}
+            options={PAC_BRANCH_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
+            selectedValues={branches}
+            onChange={setBranches}
+            emptyLabel="Todas"
+            searchable={false}
+          />
+          <FilterCheckboxField
+            id="pac-queue-overdue"
+            label="Somente atrasadas"
+            hint={PAC_HELP_TOOLTIPS.filters.overdueOnly}
+            checked={overdueOnly}
+            onChange={setOverdueOnly}
+          />
+          <FilterCheckboxField
+            id="pac-queue-completed"
+            label="Mostrar concluídas"
+            hint={PAC_HELP_TOOLTIPS.filters.includeCompleted}
+            checked={includeCompleted}
+            onChange={setIncludeCompleted}
+            checkboxLabel="Incluir concluídas"
+          />
         </FilterBar>
 
         <section className="pac-card">
@@ -131,11 +148,7 @@ export function MyQueuePage({ onNavigate }: Props) {
             items={visibleItems}
             loading={loading}
             savingActionId={savingActionId}
-            emptyMessage={
-              overdueOnly
-                ? "Nenhuma ação atrasada atribuída a você."
-                : "Nenhuma ação pendente atribuída a você."
-            }
+            emptyMessage={emptyMessage}
             onNavigate={onNavigate}
             onStatusChange={(item, status) => void handleStatusChange(item, status)}
           />

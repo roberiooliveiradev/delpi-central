@@ -544,6 +544,7 @@ def search_action_plan_evidences(
 def list_my_action_queue(
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
     overdue_only: bool = Query(default=False),
+    include_completed: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -557,6 +558,7 @@ def list_my_action_queue(
                 user_id=user_id,
                 branch_code=branch_code,
                 overdue_only=overdue_only,
+                include_completed=include_completed,
                 page=page,
                 page_size=page_size,
             ),

@@ -1109,22 +1109,31 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         user_id: str,
         branch_code: str | None = None,
         overdue_only: bool = False,
+        include_completed: bool = False,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
-        filters = [
+        base_filters = [
             "p.deleted_at IS NULL",
             "p.status NOT IN ('completed', 'cancelled')",
-            "a.status NOT IN ('completed', 'cancelled')",
             "a.responsible_user_id = %s",
         ]
         params: list[Any] = [user_id]
         if branch_code:
-            filters.append("p.branch_code = %s")
+            base_filters.append("p.branch_code = %s")
             params.append(branch_code)
         if overdue_only:
-            filters.append("a.due_date < CURRENT_DATE")
-        where_clause = " AND ".join(filters)
+            base_filters.append("a.due_date < CURRENT_DATE")
+
+        summary_filters = [*base_filters, "a.status NOT IN ('completed', 'cancelled')"]
+        summary_where = " AND ".join(summary_filters)
+
+        list_filters = list(base_filters)
+        if include_completed:
+            list_filters.append("a.status <> 'cancelled'")
+        else:
+            list_filters.append("a.status NOT IN ('completed', 'cancelled')")
+        list_where = " AND ".join(list_filters)
 
         summary_row = self.fetch_one(
             f"""
@@ -1134,7 +1143,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    )::int AS overdue_actions
               FROM quality.quality_actions a
               JOIN quality.quality_action_plans p ON p.id = a.plan_id
-             WHERE {where_clause}
+             WHERE {summary_where}
             """,
             tuple(params),
         )
@@ -1144,7 +1153,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             SELECT COUNT(*)::int AS total
               FROM quality.quality_actions a
               JOIN quality.quality_action_plans p ON p.id = a.plan_id
-             WHERE {where_clause}
+             WHERE {list_where}
             """,
             tuple(params),
         )
@@ -1173,7 +1182,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    p.product_code
               FROM quality.quality_actions a
               JOIN quality.quality_action_plans p ON p.id = a.plan_id
-             WHERE {where_clause}
+             WHERE {list_where}
              ORDER BY is_overdue DESC,
                       a.due_date NULLS LAST,
                       a.created_at ASC
