@@ -22,6 +22,10 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
 )
 
+from app.domain.services.quality_action_plans.quality_action_plan_reference_service import (
+    classify_plan_reference,
+    normalize_plan_code,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_sla_service import (
     CRITICAL_STALL_DAYS,
     resolve_action_queue_sla,
@@ -120,6 +124,38 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
 
     """Leitura e escrita PAC Qualidade (plugin + agente GPT via api-pac-quality)."""
 
+    def _coerce_plan_id(self, plan_ref: str) -> str | None:
+        normalized = (plan_ref or "").strip()
+        if not normalized:
+            return None
+
+        kind = classify_plan_reference(normalized)
+        if kind == "invalid":
+            return None
+
+        if kind == "uuid":
+            row = self.fetch_one(
+                """
+                SELECT id::text AS id
+                  FROM quality.quality_action_plans
+                 WHERE id = %s::uuid
+                   AND deleted_at IS NULL
+                """,
+                (normalized,),
+            )
+            return row["id"] if row else None
+
+        row = self.fetch_one(
+            """
+            SELECT id::text AS id
+              FROM quality.quality_action_plans
+             WHERE code = %s
+               AND deleted_at IS NULL
+            """,
+            (normalize_plan_code(normalized),),
+        )
+        return row["id"] if row else None
+
     def list_plans(
         self,
         *,
@@ -130,6 +166,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         owner_user_id: str | None = None,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        code: str | None = None,
         department: str | None = None,
         root_cause_category: str | None = None,
         failure_mode: str | None = None,
@@ -161,6 +198,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if nonconformity_scope:
             filters.append("p.nonconformity_scope = %s")
             params.append(nonconformity_scope)
+        if code:
+            filters.append("p.code = %s")
+            params.append(normalize_plan_code(code))
         if department:
             filters.append("p.department ILIKE %s")
             params.append(f"%{department.strip()}%")
@@ -222,6 +262,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         }
 
     def get_plan_detail(self, plan_id: str) -> dict[str, Any] | None:
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return None
+        plan_id = resolved
+
         plan_row = self.fetch_one(
             f"""
             {PLAN_SELECT}
@@ -1666,7 +1711,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return plan
 
     def update_plan(self, plan_id: str, fields: dict[str, Any]) -> dict[str, Any] | None:
-        current = self.get_plan_by_id(plan_id)
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return None
+        current = self.get_plan_by_id(resolved)
         if not current:
             return None
 
@@ -1708,7 +1756,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
 
         set_parts = [f"{column} = %s" for column in updates]
         set_parts.append("updated_at = NOW()")
-        params = list(updates.values()) + [plan_id]
+        params = list(updates.values()) + [resolved]
 
         self.execute(
             f"""
@@ -1721,7 +1769,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             auto_commit=False,
         )
         self.append_history(
-            plan_id=plan_id,
+            plan_id=resolved,
             event_type="plan_updated",
             created_by=fields.get("updated_by_user_id", "system"),
             created_by_name=_optional_actor_text(fields.get("updated_by_name")),
@@ -1732,7 +1780,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         actor = str(fields.get("updated_by_user_id") or "system")
         self.append_audit_log(
             entity_type="quality_action_plan",
-            entity_id=plan_id,
+            entity_id=resolved,
             event_type="plan_updated",
             actor_user_id=actor,
             actor_name=_optional_actor_text(fields.get("updated_by_name")),
@@ -1741,15 +1789,18 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             auto_commit=False,
         )
         self.commit()
-        return self.get_plan_by_id(plan_id)
+        return self.get_plan_by_id(resolved)
 
     def get_plan_by_id(self, plan_id: str) -> dict[str, Any] | None:
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return None
         row = self.fetch_one(
             f"""
             {PLAN_SELECT}
              WHERE p.id = %s AND p.deleted_at IS NULL
             """,
-            (plan_id,),
+            (resolved,),
         )
         return serialize_plan_row(row) if row else None
 
@@ -1763,7 +1814,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_email: str | None = None,
         comment: str | None = None,
     ) -> dict[str, Any] | None:
-        current = self.get_plan_by_id(plan_id)
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return None
+        current = self.get_plan_by_id(resolved)
         if not current:
             return None
 
@@ -1778,14 +1832,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                SET status = %s, updated_at = NOW(){closed_at_sql}
              WHERE id = %s AND deleted_at IS NULL
             """,
-            (status, plan_id),
+            (status, resolved),
             auto_commit=False,
         )
         history_event = (
             "plan_closed" if status in _TERMINAL_PLAN_STATUSES else "status_changed"
         )
         self.append_history(
-            plan_id=plan_id,
+            plan_id=resolved,
             event_type=history_event,
             created_by=updated_by,
             created_by_name=updated_by_name,
@@ -1798,7 +1852,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if status in _TERMINAL_PLAN_STATUSES:
             self.append_audit_log(
                 entity_type="quality_action_plan",
-                entity_id=plan_id,
+                entity_id=resolved,
                 event_type="plan_closed",
                 actor_user_id=updated_by,
                 actor_name=updated_by_name,
@@ -1811,7 +1865,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 auto_commit=False,
             )
         self.commit()
-        return self.get_plan_by_id(plan_id)
+        return self.get_plan_by_id(resolved)
 
     def reopen_plan(
         self,
@@ -1823,7 +1877,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        current = self.get_plan_by_id(plan_id)
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return None
+        current = self.get_plan_by_id(resolved)
         if not current:
             return None
 
@@ -1843,11 +1900,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    updated_at = NOW()
              WHERE id = %s AND deleted_at IS NULL
             """,
-            (target_status, plan_id),
+            (target_status, resolved),
             auto_commit=False,
         )
         self.append_history(
-            plan_id=plan_id,
+            plan_id=resolved,
             event_type="plan_reopened",
             created_by=updated_by,
             created_by_name=updated_by_name,
@@ -1859,7 +1916,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         self.append_audit_log(
             entity_type="quality_action_plan",
-            entity_id=plan_id,
+            entity_id=resolved,
             event_type="plan_reopened",
             actor_user_id=updated_by,
             actor_name=updated_by_name,
@@ -1872,7 +1929,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             auto_commit=False,
         )
         self.commit()
-        return self.get_plan_by_id(plan_id)
+        return self.get_plan_by_id(resolved)
 
     def delete_plan(
         self,
@@ -1882,7 +1939,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        current = self.get_plan_by_id(plan_id)
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return None
+        current = self.get_plan_by_id(resolved)
         if not current:
             return None
 
@@ -1896,11 +1956,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    updated_at = NOW()
              WHERE id = %s AND deleted_at IS NULL
             """,
-            (plan_id,),
+            (resolved,),
             auto_commit=False,
         )
         self.append_history(
-            plan_id=plan_id,
+            plan_id=resolved,
             event_type="plan_deleted",
             created_by=updated_by,
             created_by_name=updated_by_name,
@@ -1911,7 +1971,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         self.append_audit_log(
             entity_type="quality_action_plan",
-            entity_id=plan_id,
+            entity_id=resolved,
             event_type="plan_deleted",
             actor_user_id=updated_by,
             actor_name=updated_by_name,
@@ -1923,7 +1983,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             auto_commit=False,
         )
         self.commit()
-        return {"id": str(plan_id), "code": code, "deleted": True}
+        return {"id": str(resolved), "code": code, "deleted": True}
 
     def append_history(
         self,
@@ -2001,7 +2061,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
-        if not self._plan_exists(plan_id):
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
             return {
                 "items": [],
                 "pagination": {
@@ -2011,6 +2072,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     "total_pages": 1,
                 },
             }
+        plan_id = resolved
 
         page = max(page, 1)
         page_size = min(max(page_size, 1), 100)
@@ -2073,20 +2135,22 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         }
 
     def _plan_exists(self, plan_id: str) -> bool:
-        row = self.fetch_one(
-            "SELECT id FROM quality.quality_action_plans WHERE id = %s AND deleted_at IS NULL",
-            (plan_id,),
-        )
-        return row is not None
+        return self._coerce_plan_id(plan_id) is not None
 
     def action_belongs_to_plan(self, plan_id: str, action_id: str) -> bool:
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return False
         row = self.fetch_one(
             "SELECT id FROM quality.quality_actions WHERE id = %s AND plan_id = %s",
-            (action_id, plan_id),
+            (action_id, resolved),
         )
         return row is not None
 
     def get_action(self, plan_id: str, action_id: str) -> dict[str, Any] | None:
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return None
         row = self.fetch_one(
             """
             SELECT id, plan_id, action_type, description, responsible_user_id,
@@ -2095,7 +2159,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
               FROM quality.quality_actions
              WHERE id = %s AND plan_id = %s
             """,
-            (action_id, plan_id),
+            (action_id, resolved),
         )
         return serialize_row(row, id_keys=("id", "plan_id")) if row else None
 
@@ -2111,6 +2175,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return int((row or {}).get("total") or 0)
 
     def list_incomplete_plan_actions(self, plan_id: str) -> list[dict[str, Any]]:
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return []
         rows = self.fetch_all(
             """
             SELECT id, plan_id, action_type, description, status
@@ -2119,7 +2186,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                AND status NOT IN ('completed', 'cancelled')
              ORDER BY created_at ASC
             """,
-            (plan_id,),
+            (resolved,),
         )
         return [
             serialize_row(row, id_keys=("id", "plan_id")) or {}
@@ -2136,7 +2203,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
 
         causes_json = ishikawa_causes_json(fields)
@@ -2187,7 +2255,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
 
         whys_json = five_whys_json(fields)
@@ -2244,7 +2313,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         created_by_name: str | None = None,
         created_by_email: str | None = None,
     ) -> list[dict[str, Any]] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
         if not actions:
             return []
@@ -2297,6 +2367,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
+            return None
+
         allowed = {
             "action_type",
             "description",
@@ -2373,6 +2447,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
+            return None
         if not self.action_belongs_to_plan(plan_id, action_id):
             return None
 
@@ -2411,7 +2488,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
 
         current = self.get_plan_by_id(plan_id)
@@ -2474,7 +2552,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
 
         current = self.get_plan_by_id(plan_id)
@@ -2532,7 +2611,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
 
         current = self.get_plan_by_id(plan_id)
@@ -2631,7 +2711,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
 
         self.execute(
@@ -2685,7 +2766,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
     ) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
 
         template_payload = fields.get("template_payload") or {}
@@ -2858,7 +2940,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         }
 
     def list_evidences(self, plan_id: str, *, q: str | None = None) -> list[dict[str, Any]]:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return []
 
         filters = ["plan_id = %s"]
@@ -2891,6 +2974,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return [serialize_row(row, id_keys=("id", "plan_id", "action_id")) or {} for row in rows if row]
 
     def get_evidence(self, plan_id: str, evidence_id: str) -> dict[str, Any] | None:
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
+            return None
         row = self.fetch_one(
             """
             SELECT id, plan_id, type, file_name, file_url, text_excerpt,
@@ -2905,7 +2991,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return serialize_row(row, id_keys=("id", "plan_id", "action_id")) if row else None
 
     def create_evidence(self, plan_id: str, fields: dict[str, Any]) -> dict[str, Any] | None:
-        if not self._plan_exists(plan_id):
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
             return None
         action_id = fields.get("action_id")
         if action_id and not self.action_belongs_to_plan(plan_id, str(action_id)):
@@ -2944,6 +3031,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         return serialize_row(row, id_keys=("id", "plan_id", "action_id")) if row else None
 
     def delete_evidence(self, plan_id: str, evidence_id: str) -> dict[str, Any] | None:
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
+            return None
         row = self.fetch_one(
             """
             SELECT id, plan_id, stored_name

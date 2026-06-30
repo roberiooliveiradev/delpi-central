@@ -39,3 +39,9 @@ def test_list_plans_overdue_only_filter():
     assert "quality_actions" in query
     assert "due_date < CURRENT_DATE" in query
     assert "p.status NOT IN ('completed', 'cancelled')" in query
+
+
+def test_list_plans_code_filter():
+    query, params = _capture_list_query(code="pac-2026-0029")
+    assert "p.code = %s" in query
+    assert "PAC-2026-0029" in params

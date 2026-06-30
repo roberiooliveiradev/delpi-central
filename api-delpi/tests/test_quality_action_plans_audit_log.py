@@ -31,7 +31,7 @@ def test_create_plan_writes_audit_log():
 
 def test_list_plan_audit_log_maps_rows():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
-    repo._plan_exists = MagicMock(return_value=True)
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
     repo.fetch_one = MagicMock(return_value={"total": 1})
     repo.fetch_all = MagicMock(
         return_value=[

@@ -9,6 +9,7 @@ from app.infrastructure.persistence.plugins.repositories.quality_action_plans.po
 
 def test_update_plan_allows_customer_product_reference() -> None:
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
     repo.get_plan_by_id = MagicMock(
         side_effect=[
             {"id": "plan-1", "code": "PAC-2026-0001"},
