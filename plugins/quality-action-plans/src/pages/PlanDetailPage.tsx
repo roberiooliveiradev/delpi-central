@@ -459,6 +459,16 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     }
   }, [identificationForm, planId, saveRnc8dReport, showRnc8dFlow]);
 
+  const saveProblemHeader = useCallback(async () => {
+    if (isDirty("identification")) {
+      await saveIdentification();
+      return;
+    }
+    if (isDirty("rnc8d-material")) {
+      await saveRnc8dReport();
+    }
+  }, [saveIdentification, saveRnc8dReport, isDirty]);
+
   async function runGlobalSave() {
     if (!dirtySections.length) {
       return;
@@ -722,14 +732,18 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   identificationForm={identificationForm}
                   onIdentificationChange={setIdentificationForm}
                   saving={saving}
-                  dirtyIdentification={isDirty("identification")}
-                  onSaveIdentification={() => void runSave("identification", saveIdentification)}
-                  onSaveMaterial={
-                    showRnc8dFlow
-                      ? () => void runSave("rnc8d-material", saveRnc8dReport)
-                      : undefined
+                  dirtyIdentification={
+                    isDirty("identification") || isDirty("rnc8d-material")
                   }
-                  dirtyMaterial={isDirty("rnc8d-material")}
+                  identificationSaveKey={
+                    isDirty("identification") ? "identification" : "rnc8d-material"
+                  }
+                  onSaveIdentification={() =>
+                    void runSave(
+                      isDirty("identification") ? "identification" : "rnc8d-material",
+                      saveProblemHeader,
+                    )
+                  }
                   materialSection={
                     showRnc8dFlow ? (
                       <>

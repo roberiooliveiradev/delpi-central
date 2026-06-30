@@ -55,8 +55,7 @@ type PlanProblemSectionProps = {
   saving: string | null;
   onSaveIdentification: () => void;
   dirtyIdentification?: boolean;
-  onSaveMaterial?: () => void;
-  dirtyMaterial?: boolean;
+  identificationSaveKey?: string;
   materialSection?: ReactNode;
 };
 
@@ -71,8 +70,7 @@ export function PlanProblemSection({
   saving,
   onSaveIdentification,
   dirtyIdentification = false,
-  onSaveMaterial,
-  dirtyMaterial = false,
+  identificationSaveKey = "identification",
   materialSection,
 }: PlanProblemSectionProps) {
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
@@ -319,17 +317,6 @@ export function PlanProblemSection({
       </div>
 
       {materialSection}
-      {onSaveMaterial ? (
-        <FormActions align="end">
-          <SectionSaveButton
-            saveKey="rnc8d-material"
-            saving={saving}
-            onSave={onSaveMaterial}
-            dirty={dirtyMaterial}
-            label="Salvar material e NF"
-          />
-        </FormActions>
-      ) : null}
 
       <TextAreaField
         id="pac-detail-problem"
@@ -341,11 +328,13 @@ export function PlanProblemSection({
       />
       <FormActions align="end">
         <SectionSaveButton
-          saveKey="identification"
+          saveKey={identificationSaveKey}
           saving={saving}
           onSave={onSaveIdentification}
           dirty={dirtyIdentification}
-          label="Salvar identificação"
+          label={
+            showRnc8dFlow ? "Salvar problema e cabeçalho 8D" : "Salvar identificação"
+          }
         />
       </FormActions>
     </>
