@@ -112,7 +112,25 @@ class PacEvidenceStorage:
             if path.is_file():
                 return path
 
+        fallback = self._find_by_stored_name(normalized_name)
+        if fallback is not None:
+            return fallback
+
         raise PacEvidenceStorageError("Arquivo não encontrado.")
+
+    def _find_by_stored_name(self, stored_name: str) -> Path | None:
+        base = self.base_dir.resolve()
+        matches = [
+            path.resolve()
+            for path in self.base_dir.rglob(stored_name)
+            if path.is_file() and str(path.resolve()).startswith(str(base))
+        ]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            matches.sort(key=lambda item: item.stat().st_mtime, reverse=True)
+            return matches[0]
+        return None
 
     def delete_file(self, *, plan_id: str, stored_name: str) -> None:
         path = self.resolve_file(plan_id=plan_id, stored_name=stored_name)

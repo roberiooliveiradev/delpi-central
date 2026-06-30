@@ -54,3 +54,18 @@ def test_resolve_evidence_file_missing_raises(tmp_path: Path) -> None:
             stored_name="missing.xlsx",
             plan_id_candidates=["PAC-2026-0002"],
         )
+
+
+def test_resolve_evidence_file_rglob_fallback_when_folder_mismatch(tmp_path: Path) -> None:
+    stored_name = "orphan.xlsx"
+    wrong_dir = tmp_path / "legacy-folder"
+    wrong_dir.mkdir(parents=True)
+    (wrong_dir / stored_name).write_bytes(b"orphan")
+
+    storage = PacEvidenceStorage(base_dir=str(tmp_path))
+    resolved = storage.resolve_evidence_file(
+        stored_name=stored_name,
+        plan_id_candidates=["uuid-does-not-match"],
+    )
+
+    assert resolved.name == stored_name
