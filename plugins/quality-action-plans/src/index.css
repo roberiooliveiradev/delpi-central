@@ -2678,6 +2678,43 @@
   overflow: auto;
 }
 
+.pac-modal--confirm {
+  width: min(440px, 100%);
+}
+
+.pac-confirm-modal__message {
+  margin: 0 0 1.25rem;
+  font-size: 14px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--text, #111111) 88%, transparent);
+  white-space: pre-line;
+}
+
+:root[data-theme="dark"] .pac-confirm-modal__message {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.pac-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--pac-danger, #b42318) 55%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--pac-danger, #b42318) 88%, #000 12%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pac-danger-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .pac-modal--evidence-preview .pac-modal__body {
   display: flex;
   flex-direction: column;

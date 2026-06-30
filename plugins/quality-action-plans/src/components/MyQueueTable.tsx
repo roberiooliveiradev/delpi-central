@@ -8,6 +8,7 @@ import {
   detailPath,
 } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import type { MyQueueItem } from "../types/myQueue";
 import { formatDate } from "../utils/format";
 import { TableHeaderCell } from "./ui/HelpTooltip";
@@ -31,10 +32,12 @@ function QueueActionStatusSelect({
   item,
   disabled,
   onStatusChange,
+  onRequestStatusChange,
 }: {
   item: MyQueueItem;
   disabled: boolean;
   onStatusChange: (item: MyQueueItem, status: string) => void | Promise<void>;
+  onRequestStatusChange: (item: MyQueueItem, status: string) => Promise<boolean>;
 }) {
   const [resetKey, setResetKey] = useState(0);
   const currentStatus = ACTION_STATUS_OPTIONS.some((option) => option.value === item.action_status)
@@ -54,14 +57,14 @@ function QueueActionStatusSelect({
         if (nextStatus === currentStatus) {
           return;
         }
-        const confirmed = window.confirm(
-          `Alterar o status da ação para "${actionStatusLabel(nextStatus)}"?`,
-        );
-        if (!confirmed) {
-          setResetKey((value) => value + 1);
-          return;
-        }
-        void onStatusChange(item, nextStatus);
+        void (async () => {
+          const confirmed = await onRequestStatusChange(item, nextStatus);
+          if (!confirmed) {
+            setResetKey((value) => value + 1);
+            return;
+          }
+          await onStatusChange(item, nextStatus);
+        })();
       }}
     >
       {ACTION_STATUS_OPTIONS.map((option) => (
@@ -81,6 +84,16 @@ export function MyQueueTable({
   onNavigate,
   onStatusChange,
 }: Props) {
+  const { confirm, confirmDialog } = useConfirmDialog();
+
+  async function requestStatusChange(_item: MyQueueItem, nextStatus: string) {
+    return confirm({
+      title: "Alterar status",
+      message: `Alterar o status da ação para "${actionStatusLabel(nextStatus)}"?`,
+      confirmLabel: "Alterar",
+    });
+  }
+
   if (loading) {
     return <p className="pac-muted">Carregando sua fila…</p>;
   }
@@ -90,7 +103,9 @@ export function MyQueueTable({
   }
 
   return (
-    <div className="pac-table-wrap">
+    <>
+      {confirmDialog}
+      <div className="pac-table-wrap">
       <table className="pac-table">
         <thead>
           <tr>
@@ -135,6 +150,7 @@ export function MyQueueTable({
                   item={item}
                   disabled={savingActionId === item.action_id}
                   onStatusChange={onStatusChange}
+                  onRequestStatusChange={requestStatusChange}
                 />
               </td>
               <td>{branchLabel(item.branch_code)}</td>
@@ -154,5 +170,6 @@ export function MyQueueTable({
         </tbody>
       </table>
     </div>
+    </>
   );
 }

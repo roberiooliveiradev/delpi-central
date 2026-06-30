@@ -71,6 +71,7 @@ import {
   usePlanSectionEdit,
   type PlanSectionEditBindings,
 } from "../hooks/usePlanSectionEdit";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import type {
   ActionPlanDetail,
   PlanAuditLogEntry,
@@ -156,6 +157,7 @@ function resolveEditSectionForSaveKey(saveKey: string): PlanSectionEditKey | nul
 
 export function PlanDetailPage({ planId, onNavigate }: Props) {
   const { profile } = usePacPermissions();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -572,11 +574,13 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   async function handleDeletePlan() {
     if (!plan || !planDeleteAllowed) return;
     const label = plan.code ? `${plan.code} — ${plan.title}` : plan.title;
-    if (
-      !window.confirm(
-        `Excluir o plano "${label}"?\n\nEsta ação remove o plano das listagens. Evidências e histórico permanecem no banco, mas o plano deixa de ser acessível.`,
-      )
-    ) {
+    const confirmed = await confirm({
+      title: "Excluir plano",
+      message: `Excluir o plano "${label}"?\n\nEsta ação remove o plano das listagens. Evidências e histórico permanecem no banco, mas o plano deixa de ser acessível.`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     setDeleting(true);
@@ -593,6 +597,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
   return (
     <>
+      {confirmDialog}
       <PageHeader
         title={plan?.title ?? "Detalhe do plano"}
         subtitle={plan?.code ? `Código ${plan.code}` : "Carregando…"}

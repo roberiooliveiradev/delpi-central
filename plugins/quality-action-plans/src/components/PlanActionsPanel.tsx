@@ -23,6 +23,7 @@ import {
   actionTypeLabel,
 } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDate } from "../utils/format";
@@ -117,6 +118,7 @@ export function PlanActionsPanel({
   onSave,
   teamMembers,
 }: Props) {
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [form, setForm] = useState<ActionFormState>(EMPTY_FORM);
 
@@ -132,7 +134,13 @@ export function PlanActionsPanel({
 
   async function handleDelete(action: PlanAction) {
     const label = action.description.trim().slice(0, 80);
-    if (!window.confirm(`Remover a ação "${label}"?`)) {
+    const confirmed = await confirm({
+      title: "Remover ação",
+      message: `Remover a ação "${label}"?`,
+      confirmLabel: "Remover",
+      variant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
     await onSave(`delete-action-${action.id}`, async () => {
@@ -185,6 +193,7 @@ export function PlanActionsPanel({
 
   return (
     <>
+      {confirmDialog}
       <RequiredEvidenceAlert actions={actions} evidences={evidences} />
 
       {actions.length ? (
