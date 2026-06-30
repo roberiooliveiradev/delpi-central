@@ -38,7 +38,6 @@ SUPPLIER_BY_BRANCH = {
 ANNEX_SHEET_CANDIDATES = ("Anexos(Evidencias)", "Anexos", "Attachment")
 ANNEX_IMAGE_MAX_WIDTH_PX = 480
 IMAGE_MIME_PREFIX = "image/"
-WEG_DATE_NUMBER_FORMAT = "DD/MM/YYYY"
 
 
 def resolve_rnc_8d_template_path(template_key: str | None = None) -> Path:
@@ -96,9 +95,7 @@ def _set_date(ws, cell: str, value: str | date | datetime | None) -> None:
     parsed = _excel_date(value)
     if parsed is None:
         return
-    target = _resolve_writable_cell(ws, cell)
-    ws[target].value = parsed
-    ws[target].number_format = WEG_DATE_NUMBER_FORMAT
+    _set(ws, cell, parsed.strftime("%d/%m/%Y"))
 
 
 def _action_responsible_label(action: dict[str, Any]) -> str | None:

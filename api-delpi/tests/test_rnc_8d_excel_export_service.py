@@ -109,7 +109,7 @@ def test_build_rnc_8d_workbook_writes_why_answers_only():
 
 
 @pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
-def test_build_rnc_8d_workbook_formats_dates_as_brazilian():
+def test_build_rnc_8d_workbook_formats_dates_as_brazilian_text():
     detail = {
         "plan": {
             "branch_code": "01",
@@ -121,8 +121,8 @@ def test_build_rnc_8d_workbook_formats_dates_as_brazilian():
     content = build_rnc_8d_workbook(detail, template_key="weg_wfr20997")
     from openpyxl import load_workbook
 
-    ws = load_workbook(io.BytesIO(content))["R8D"]
-    assert ws["K1"].number_format == "DD/MM/YYYY"
+    ws = load_workbook(io.BytesIO(content), data_only=True)["R8D"]
+    assert ws["K1"].value == "29/06/2028"
 
 
 @pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")

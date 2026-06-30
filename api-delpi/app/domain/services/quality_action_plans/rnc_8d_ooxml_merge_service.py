@@ -21,17 +21,122 @@ STALE_CONTENT_TYPE_PARTS = ("/xl/calcChain.xml", "/xl/sharedStrings.xml")
 
 SHEET1_DRAWING_ASSET_MARKERS = ("drawing1", "image1.png")
 
+CELL_REF_PATTERN = re.compile(r'^<c r="(?P<ref>[A-Z]{1,3}[0-9]+)"')
+CELL_OPEN_PATTERN = re.compile(r'^<c r="(?P<ref>[A-Z]{1,3}[0-9]+)"(?P<attrs>[^>/]*)(/?)>', re.DOTALL)
+CELL_TYPE_PATTERN = re.compile(r'\bt="([^"]+)"')
 
-def _replace_sheet_data(*, template_sheet: bytes, filled_sheet: bytes) -> bytes:
+
+def _parse_sheet_cells(sheet_data_xml: str) -> dict[str, str]:
+    cells: dict[str, str] = {}
+    cursor = 0
+    while True:
+        start = sheet_data_xml.find('<c r="', cursor)
+        if start < 0:
+            break
+        self_closing = sheet_data_xml.find("/>", start)
+        closing = sheet_data_xml.find("</c>", start)
+        if self_closing >= 0 and (closing < 0 or self_closing < closing):
+            end = self_closing + 2
+        else:
+            if closing < 0:
+                break
+            end = closing + 4
+        chunk = sheet_data_xml[start:end]
+        ref_match = CELL_REF_PATTERN.match(chunk)
+        if ref_match is None:
+            cursor = start + 4
+            continue
+        cells[ref_match.group("ref")] = chunk
+        cursor = end
+    return cells
+
+
+def _cell_inner(cell_xml: str) -> str:
+    if cell_xml.endswith("/>"):
+        return ""
+    match = re.match(r"<c[^>]*>(.*)</c>", cell_xml, re.DOTALL)
+    return match.group(1) if match else ""
+
+
+def _cell_has_content(cell_xml: str) -> bool:
+    inner = _cell_inner(cell_xml).strip()
+    if inner:
+        return True
+    if cell_xml.endswith("/>"):
+        return False
+    return bool(inner)
+
+
+def _merge_cell_xml(template_cell: str | None, filled_cell: str) -> str:
+    if template_cell is None:
+        return filled_cell
+    if not _cell_has_content(filled_cell):
+        return template_cell
+
+    open_match = CELL_OPEN_PATTERN.match(template_cell)
+    if open_match is None:
+        return filled_cell
+
+    attrs = open_match.group("attrs")
+    filled_attrs = CELL_OPEN_PATTERN.match(filled_cell)
+    if filled_attrs is not None:
+        type_match = CELL_TYPE_PATTERN.search(filled_attrs.group("attrs"))
+        if type_match is not None:
+            attrs = CELL_TYPE_PATTERN.sub("", attrs)
+            attrs = f'{attrs} t="{type_match.group(1)}"'
+
+    merged_open = f'<c r="{open_match.group("ref")}"{attrs}>'
+    return f"{merged_open}{_cell_inner(filled_cell)}</c>"
+
+
+def _row_number(cell_ref: str) -> int:
+    return int(re.search(r"(\d+)", cell_ref).group(1))
+
+
+def _merge_sheet_data(*, template_sheet: bytes, filled_sheet: bytes) -> bytes:
     filled_text = filled_sheet.decode("utf-8")
     template_text = template_sheet.decode("utf-8")
     filled_data = SHEET_DATA_PATTERN.search(filled_text)
+    template_data = SHEET_DATA_PATTERN.search(template_text)
     if filled_data is None:
         return template_sheet
-    if SHEET_DATA_PATTERN.search(template_text) is None:
+    if template_data is None:
         return filled_sheet
-    merged = SHEET_DATA_PATTERN.sub(filled_data.group(0), template_text, count=1)
+
+    template_sheet_data = template_data.group(0)
+    filled_sheet_data = filled_data.group(0)
+    template_cells = _parse_sheet_cells(template_sheet_data)
+    filled_cells = _parse_sheet_cells(filled_sheet_data)
+
+    merged_sheet_data = template_sheet_data
+    for ref, filled_cell in filled_cells.items():
+        merged_cell = _merge_cell_xml(template_cells.get(ref), filled_cell)
+        template_cell = template_cells.get(ref)
+        if template_cell is not None:
+            merged_sheet_data = merged_sheet_data.replace(template_cell, merged_cell, 1)
+        else:
+            merged_sheet_data = _insert_cell_in_sheet_data(
+                merged_sheet_data,
+                cell_ref=ref,
+                cell_xml=merged_cell,
+            )
+
+    merged = template_text.replace(template_sheet_data, merged_sheet_data, 1)
     return merged.encode("utf-8")
+
+
+def _insert_cell_in_sheet_data(sheet_data_xml: str, *, cell_ref: str, cell_xml: str) -> str:
+    row_number = _row_number(cell_ref)
+    row_pattern = re.compile(
+        rf'(<row\b[^>]*\br="{row_number}"[^>]*>)(.*?)(</row>)',
+        re.DOTALL,
+    )
+    match = row_pattern.search(sheet_data_xml)
+    if match is None:
+        return sheet_data_xml + cell_xml
+    row_body = match.group(2)
+    updated_row = f"{match.group(1)}{row_body}{cell_xml}{match.group(3)}"
+    return sheet_data_xml.replace(match.group(0), updated_row, 1)
 
 
 def _sheet_has_drawing(sheet_xml: bytes | None) -> bool:
@@ -112,7 +217,7 @@ def merge_template_visual_assets(*, template_path: Path, filled_bytes: bytes) ->
     filled_sheet1 = filled_files.get("xl/worksheets/sheet1.xml")
     template_sheet1 = template_files.get("xl/worksheets/sheet1.xml")
     if filled_sheet1 and template_sheet1:
-        output["xl/worksheets/sheet1.xml"] = _replace_sheet_data(
+        output["xl/worksheets/sheet1.xml"] = _merge_sheet_data(
             template_sheet=template_sheet1,
             filled_sheet=filled_sheet1,
         )
@@ -120,7 +225,7 @@ def merge_template_visual_assets(*, template_path: Path, filled_bytes: bytes) ->
     filled_sheet2 = filled_files.get("xl/worksheets/sheet2.xml")
     template_sheet2 = template_files.get("xl/worksheets/sheet2.xml")
     if filled_sheet2 and template_sheet2 and not _sheet_has_drawing(filled_sheet2):
-        output["xl/worksheets/sheet2.xml"] = _replace_sheet_data(
+        output["xl/worksheets/sheet2.xml"] = _merge_sheet_data(
             template_sheet=template_sheet2,
             filled_sheet=filled_sheet2,
         )
@@ -132,7 +237,7 @@ def merge_template_visual_assets(*, template_path: Path, filled_bytes: bytes) ->
         )
     )
 
-    for meta_part in ("docProps/core.xml", "docProps/app.xml", "xl/styles.xml"):
+    for meta_part in ("docProps/core.xml", "docProps/app.xml"):
         if meta_part in filled_files:
             output[meta_part] = filled_files[meta_part]
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import re
 import zipfile
 from pathlib import Path
 
@@ -58,6 +59,12 @@ def test_merge_template_visual_assets_preserves_template_ooxml_shell():
         sheet1 = merged_zip.read("xl/worksheets/sheet1.xml").decode()
         assert 'drawing r:id="rId2"' in sheet1
         assert "ignoredErrors" in sheet1
+
+        with zipfile.ZipFile(_TEMPLATE, "r") as template_zip:
+            template_sheet = template_zip.read("xl/worksheets/sheet1.xml").decode()
+        template_cell_count = len(re.findall(r'<c r="', template_sheet))
+        merged_cell_count = len(re.findall(r'<c r="', sheet1))
+        assert merged_cell_count >= template_cell_count
 
 
 @pytest.mark.skipif(not _TEMPLATE.is_file(), reason="Template WEG ausente")
