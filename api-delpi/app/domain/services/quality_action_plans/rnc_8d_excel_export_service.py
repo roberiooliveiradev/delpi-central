@@ -13,10 +13,13 @@ from app.domain.services.quality_action_plans.action_responsibles_service import
     format_responsible_display_name,
     responsibles_from_legacy_action,
 )
-from app.domain.services.quality_action_plans.five_whys_service import format_why_step_cell
+from app.domain.services.quality_action_plans.five_whys_service import format_why_step_answer_cell
 from app.domain.services.quality_action_plans.rnc_8d_export_template_service import (
     resolve_export_template_key_for_plan,
     resolve_export_template_path,
+)
+from app.domain.services.quality_action_plans.rnc_8d_ooxml_merge_service import (
+    merge_template_visual_assets,
 )
 
 TEMPLATE_FIXTURE_PATH = (
@@ -35,6 +38,7 @@ SUPPLIER_BY_BRANCH = {
 ANNEX_SHEET_CANDIDATES = ("Anexos(Evidencias)", "Anexos", "Attachment")
 ANNEX_IMAGE_MAX_WIDTH_PX = 480
 IMAGE_MIME_PREFIX = "image/"
+WEG_DATE_NUMBER_FORMAT = "DD/MM/YYYY"
 
 
 def resolve_rnc_8d_template_path(template_key: str | None = None) -> Path:
@@ -86,6 +90,15 @@ def _set(ws, cell: str, value: Any) -> None:
     if text == "":
         return
     ws[_resolve_writable_cell(ws, cell)] = text
+
+
+def _set_date(ws, cell: str, value: str | date | datetime | None) -> None:
+    parsed = _excel_date(value)
+    if parsed is None:
+        return
+    target = _resolve_writable_cell(ws, cell)
+    ws[target].value = parsed
+    ws[target].number_format = WEG_DATE_NUMBER_FORMAT
 
 
 def _action_responsible_label(action: dict[str, Any]) -> str | None:
@@ -196,9 +209,7 @@ def _fill_weg_wfr20997_sheet(
     _set(ws, "E7", payload.get("material_specification"))
     _set(ws, "E8", payload.get("purchase_order"))
     _set(ws, "E9", payload.get("invoice_number"))
-    invoice_date = _excel_date(payload.get("invoice_date"))
-    if invoice_date:
-        _set(ws, "E10", invoice_date)
+    _set_date(ws, "E10", payload.get("invoice_date"))
     _set(ws, "E11", payload.get("defective_quantity"))
     _set(ws, "E12", payload.get("return_invoice_number"))
     _set(ws, "J5", plan.get("customer_contact"))
@@ -212,9 +223,7 @@ def _fill_weg_wfr20997_sheet(
 
     if classification.get("end_customer"):
         _set(ws, "K3", plan.get("customer_name"))
-    report_date = _excel_date(payload.get("report_date") or plan.get("reported_at"))
-    if report_date:
-        _set(ws, "K1", report_date)
+    _set_date(ws, "K1", payload.get("report_date") or plan.get("reported_at"))
 
     _set(ws, "A15", nc.get("characteristic") or payload.get("nc_characteristic"))
     _set(ws, "E15", nc.get("specified"))
@@ -222,9 +231,7 @@ def _fill_weg_wfr20997_sheet(
     _set(ws, "I15", verified)
     _set(ws, "C18", nc.get("observations") or payload.get("observations"))
 
-    return_by = _excel_date(payload.get("return_by"))
-    if return_by:
-        _set(ws, "D21", return_by)
+    _set_date(ws, "D21", payload.get("return_by"))
     _set(ws, "G21", payload.get("attention_to"))
     _set(ws, "J21", payload.get("attention_email"))
 
@@ -253,21 +260,19 @@ def _fill_weg_wfr20997_sheet(
         _set(ws, f"E{row}", item.get("quantity"))
         _set(ws, f"G{row}", item.get("action_plan"))
         _set(ws, f"J{row}", item.get("responsible"))
-        containment_date = _excel_date(item.get("date"))
-        if containment_date:
-            _set(ws, f"M{row}", containment_date)
+        _set_date(ws, f"M{row}", item.get("date"))
 
     occurrence_cols = ["E", "G", "I", "K", "M"]
     occurrence_whys = five_whys.get("occurrence_whys") or []
     for index, col in enumerate(occurrence_cols):
         raw = occurrence_whys[index] if index < len(occurrence_whys) else None
-        _set(ws, f"{col}44", format_why_step_cell(raw) if raw is not None else None)
+        _set(ws, f"{col}44", format_why_step_answer_cell(raw) if raw is not None else None)
 
     detection_cols = ["E", "G", "I", "K", "M"]
     detection_whys = five_whys.get("detection_whys") or []
     for index, col in enumerate(detection_cols):
         raw = detection_whys[index] if index < len(detection_whys) else None
-        _set(ws, f"{col}49", format_why_step_cell(raw) if raw is not None else None)
+        _set(ws, f"{col}49", format_why_step_answer_cell(raw) if raw is not None else None)
 
     corrective_actions = [
         a for a in actions if a.get("action_type") == "corrective" or a.get("cause_track")
@@ -282,34 +287,26 @@ def _fill_weg_wfr20997_sheet(
             _set(ws, f"D{row}", "Detecção")
         _set(ws, f"F{row}", action.get("description"))
         _set(ws, f"J{row}", _action_responsible_label(action))
-        due = _excel_date(action.get("due_date"))
-        if due:
-            _set(ws, f"M{row}", due)
+        _set_date(ws, f"M{row}", action.get("due_date"))
 
     resolved = effectiveness.get("resolved_how") or plan.get("effectiveness_notes")
     _set(ws, "D64", resolved)
     _set(ws, "D71", effectiveness.get("ok_material_date"))
     _set(ws, "F71", effectiveness.get("new_parts_identification"))
     _set(ws, "J71", effectiveness.get("verification_responsible"))
-    verification_date = _excel_date(effectiveness.get("verification_date"))
-    if verification_date:
-        _set(ws, "L71", verification_date)
+    _set_date(ws, "L71", effectiveness.get("verification_date"))
 
     _set(ws, "D73", preventive.get("how_avoid_future"))
     _set(ws, "D77", preventive.get("other_processes_products"))
     _set(ws, "D84", preventive.get("evaluation_responsible"))
-    evaluation_date = _excel_date(preventive.get("evaluation_completion_date"))
-    if evaluation_date:
-        _set(ws, "I84", evaluation_date)
+    _set_date(ws, "I84", preventive.get("evaluation_completion_date"))
 
     doc_rows = [86, 87, 88, 89]
     for index, doc in enumerate(documentation[:4]):
         row = doc_rows[index]
         _set(ws, f"F{row}", doc.get("document"))
         _set(ws, f"I{row}", doc.get("responsible"))
-        doc_date = _excel_date(doc.get("date"))
-        if doc_date:
-            _set(ws, f"K{row}", doc_date)
+        _set_date(ws, f"K{row}", doc.get("date"))
 
     closure = payload.get("client_closure_note")
     _set(ws, "D108", closure or "Conforme status da nota QM.")
@@ -349,4 +346,10 @@ def build_rnc_8d_workbook(
 
     buffer = io.BytesIO()
     wb.save(buffer)
-    return buffer.getvalue()
+    filled_bytes = buffer.getvalue()
+    if resolved_key == "weg_wfr20997":
+        return merge_template_visual_assets(
+            template_path=template_path,
+            filled_bytes=filled_bytes,
+        )
+    return filled_bytes

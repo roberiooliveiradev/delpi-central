@@ -1,5 +1,6 @@
 from app.domain.services.quality_action_plans.five_whys_service import (
     five_whys_track_lines,
+    format_why_step_answer_cell,
     format_why_step_cell,
     normalize_five_whys_payload,
     normalize_whys_list,
@@ -91,3 +92,11 @@ def test_format_why_step_cell_uses_two_lines_when_both_fields_exist():
         format_why_step_cell({"question": "Por quê?", "answer": "Porque sim."})
         == "Por quê?\nPorque sim."
     )
+
+
+def test_format_why_step_answer_cell_exports_answer_only():
+    assert (
+        format_why_step_answer_cell({"question": "Por quê falhou?", "answer": "Material errado."})
+        == "Material errado."
+    )
+    assert format_why_step_answer_cell("Só resposta legada") == "Só resposta legada"

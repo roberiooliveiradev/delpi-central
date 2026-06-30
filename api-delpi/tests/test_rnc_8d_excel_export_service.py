@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import io
+import zipfile
 from pathlib import Path
 
 import pytest
-from PIL import Image
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None  # type: ignore[assignment,misc]
 
 from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
     build_rnc_8d_workbook,
@@ -16,6 +21,8 @@ _TEMPLATE_PATH = resolve_rnc_8d_template_path("weg_wfr20997")
 
 
 def _minimal_png_bytes() -> bytes:
+    if Image is None:
+        pytest.skip("Pillow ausente")
     buffer = io.BytesIO()
     Image.new("RGB", (8, 8), color=(200, 40, 40)).save(buffer, format="PNG")
     return buffer.getvalue()
@@ -65,6 +72,57 @@ def test_build_rnc_8d_workbook_fills_registry_cell():
     assert ws["I4"].value == "215571003"
     assert "14297268" in str(ws["E6"].value)
     assert ws["J8"].value == "10019632175"
+
+
+@pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
+def test_build_rnc_8d_workbook_preserves_weg_drawings():
+    detail = {
+        "plan": {"client_nc_registry": "215571003", "branch_code": "01", "template_payload": {}},
+        "team_members": [],
+        "actions": [],
+    }
+    content = build_rnc_8d_workbook(detail, template_key="weg_wfr20997")
+    with zipfile.ZipFile(io.BytesIO(content)) as exported:
+        names = set(exported.namelist())
+        assert "xl/drawings/drawing1.xml" in names
+        sheet1 = exported.read("xl/worksheets/sheet1.xml").decode()
+        assert 'drawing r:id="rId2"' in sheet1
+
+
+@pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
+def test_build_rnc_8d_workbook_writes_why_answers_only():
+    detail = {
+        "plan": {"branch_code": "01", "template_payload": {}},
+        "team_members": [],
+        "actions": [],
+        "five_whys": {
+            "occurrence_whys": [
+                {"question": "Por quê ocorreu?", "answer": "Falha na montagem."},
+            ],
+        },
+    }
+    content = build_rnc_8d_workbook(detail, template_key="weg_wfr20997")
+    from openpyxl import load_workbook
+
+    ws = load_workbook(io.BytesIO(content), data_only=True)["R8D"]
+    assert ws["E44"].value == "Falha na montagem."
+
+
+@pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
+def test_build_rnc_8d_workbook_formats_dates_as_brazilian():
+    detail = {
+        "plan": {
+            "branch_code": "01",
+            "template_payload": {"report_date": "2028-06-29"},
+        },
+        "team_members": [],
+        "actions": [],
+    }
+    content = build_rnc_8d_workbook(detail, template_key="weg_wfr20997")
+    from openpyxl import load_workbook
+
+    ws = load_workbook(io.BytesIO(content))["R8D"]
+    assert ws["K1"].number_format == "DD/MM/YYYY"
 
 
 @pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")

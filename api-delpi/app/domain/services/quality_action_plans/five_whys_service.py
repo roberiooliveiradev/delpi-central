@@ -93,6 +93,18 @@ def format_why_step_cell(step: Any) -> str | None:
     return question or answer or None
 
 
+def format_why_step_answer_cell(step: Any) -> str | None:
+    """Resposta isolada para células do template WEG (rótulos Portanto/PQ são fórmulas)."""
+    normalized = normalize_whys_step(step)
+    if normalized is None:
+        return None
+    answer = normalized["answer"].strip()
+    if answer:
+        return answer
+    question = normalized["question"].strip()
+    return question or None
+
+
 def _legacy_track_values(fields: dict[str, Any], keys: tuple[str, ...]) -> list[str]:
     items: list[str] = []
     for key in keys:
