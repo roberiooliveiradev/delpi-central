@@ -41,6 +41,7 @@ type DraftState = {
   contatoTelefone: string;
   condicaoDescricao: string;
   condicaoIcms: string;
+  condicaoPisCofins: string;
   condicaoIpi: string;
   condicaoFrete: string;
   condicaoEmbalagem: string;
@@ -59,6 +60,7 @@ function buildItemDrafts(items: PropostaComercialItem[]): PropostaComercialItemT
     descricao: item.descricao ?? "",
     referencia_cliente: item.referencia_cliente ?? "",
     ncm: item.ncm ?? "",
+    prazo_dias: item.prazo_dias != null ? String(item.prazo_dias) : "",
   }));
 }
 
@@ -71,6 +73,7 @@ function buildDraft(detail: PropostaComercialDetail): DraftState {
     contatoTelefone: detail.contato.telefone ?? "",
     condicaoDescricao: detail.condicoes.descricao ?? "",
     condicaoIcms: detail.condicoes.icms ?? "",
+    condicaoPisCofins: detail.condicoes.pis_cofins ?? "9,25% INCLUSO",
     condicaoIpi: detail.condicoes.ipi ?? "",
     condicaoFrete: detail.condicoes.frete ?? "",
     condicaoEmbalagem: detail.condicoes.embalagem ?? "",
@@ -140,6 +143,10 @@ function buildItemOverrides(
       patch.ncm = draft.ncm;
       hasChange = true;
     }
+    if (draft.prazo_dias !== (original.prazo_dias != null ? String(original.prazo_dias) : "")) {
+      patch.prazo_dias = draft.prazo_dias;
+      hasChange = true;
+    }
 
     if (hasChange) {
       overrides.push(patch);
@@ -167,6 +174,7 @@ function buildOverrides(
     condicoes: {
       descricao: draft.condicaoDescricao,
       icms: draft.condicaoIcms || null,
+      pis_cofins: draft.condicaoPisCofins,
       ipi: draft.condicaoIpi,
       frete: draft.condicaoFrete,
       embalagem: draft.condicaoEmbalagem,
@@ -274,7 +282,10 @@ export function PropostaComercialPdfExportModal({
 
   const updateItemField = (
     itemKey: string,
-    field: keyof Pick<PropostaComercialItemTextDraft, "descricao" | "referencia_cliente" | "ncm">,
+    field: keyof Pick<
+      PropostaComercialItemTextDraft,
+      "descricao" | "referencia_cliente" | "ncm" | "prazo_dias"
+    >,
     value: string,
   ) => {
     setDraft((current) => ({
@@ -448,6 +459,11 @@ export function PropostaComercialPdfExportModal({
             label="ICMS"
             value={draft.condicaoIcms}
             onChange={(value) => updateDraft({ condicaoIcms: value })}
+          />
+          <Field
+            label="PIS/COFINS"
+            value={draft.condicaoPisCofins}
+            onChange={(value) => updateDraft({ condicaoPisCofins: value })}
           />
           <Field label="IPI" value={draft.condicaoIpi} onChange={(value) => updateDraft({ condicaoIpi: value })} />
           <Field

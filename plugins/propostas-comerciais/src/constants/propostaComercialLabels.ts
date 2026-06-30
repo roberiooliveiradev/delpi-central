@@ -36,7 +36,7 @@ export const DEFAULT_ITEM_COLUMN_LABELS: Record<PropostaComercialItemColumnKey, 
   valor_liquido: "Valor líquido R$/mil",
   total: "Total R$/mil",
   prazo: "Prazo",
-  lote_minimo: "Lote mín.",
+  lote_minimo: "Lote mín./mil",
 };
 
 export const DEFAULT_RESUMO_LABELS: Record<PropostaComercialResumoLabelKey, string> = {

@@ -9,10 +9,10 @@ from app.domain.propostas_comerciais.services.proposta_comercial_formatter impor
 
 _ALLOWED_NESTED_FIELDS: dict[str, frozenset[str]] = {
     "contato": frozenset({"nome", "departamento", "email", "telefone"}),
-    "condicoes": frozenset({"descricao", "icms", "ipi", "frete", "embalagem"}),
+    "condicoes": frozenset({"descricao", "icms", "pis_cofins", "ipi", "frete", "embalagem"}),
     "vendedor": frozenset({"nome", "cargo", "email", "telefone"}),
 }
-_ITEM_TEXT_FIELDS = frozenset({"descricao", "referencia_cliente", "ncm"})
+_ITEM_TEXT_FIELDS = frozenset({"descricao", "referencia_cliente", "ncm", "prazo_dias"})
 _ROTULO_COLUNAS_KEYS = frozenset(
     {
         "item",
@@ -112,6 +112,15 @@ class PropostaComercialPdfExportOverridesService:
                 if field not in override or override[field] is None:
                     continue
                 value = override[field]
+                if field == "prazo_dias":
+                    text = str(value).strip()
+                    if not text:
+                        item[field] = None
+                    elif text.isdigit():
+                        item[field] = int(text)
+                    else:
+                        item[field] = text
+                    continue
                 item[field] = str(value).strip() if isinstance(value, str) else value
 
     @staticmethod

@@ -73,6 +73,7 @@ export type PropostaComercialCondicoes = {
   codigo: string;
   descricao: string;
   icms: string | null;
+  pis_cofins: string;
   ipi: string;
   frete: string;
   embalagem: string;
@@ -115,7 +116,8 @@ export type PropostaComercialItem = {
   valor_total: string | null;
   valor_total_numerico: number;
   prazo_dias: number | null;
-  lote_minimo: number | null;
+  lote_minimo: string | null;
+  lote_minimo_numerico?: number | null;
 };
 
 export type PropostaComercialDetail = {
@@ -134,6 +136,7 @@ export type PropostaComercialPdfItemTextOverrides = {
   descricao?: string;
   referencia_cliente?: string;
   ncm?: string;
+  prazo_dias?: string | number | null;
 };
 
 export type PropostaComercialItemTextDraft = {
@@ -141,6 +144,7 @@ export type PropostaComercialItemTextDraft = {
   descricao: string;
   referencia_cliente: string;
   ncm: string;
+  prazo_dias: string;
 };
 
 export type PropostaComercialPdfRotulosOverrides = {
@@ -170,7 +174,7 @@ export type PropostaComercialPdfExportOverrides = {
   observacoes?: string;
   contato?: Partial<Pick<PropostaComercialContato, "nome" | "departamento" | "email" | "telefone">>;
   condicoes?: Partial<
-    Pick<PropostaComercialCondicoes, "descricao" | "icms" | "ipi" | "frete" | "embalagem">
+    Pick<PropostaComercialCondicoes, "descricao" | "icms" | "pis_cofins" | "ipi" | "frete" | "embalagem">
   >;
   vendedor?: Partial<Pick<PropostaComercialVendedor, "nome" | "cargo" | "email" | "telefone">>;
   itens?: PropostaComercialPdfItemTextOverrides[];

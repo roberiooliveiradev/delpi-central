@@ -97,7 +97,21 @@ class PropostaComercialFormatter:
         return int(number)
 
     @staticmethod
+    def format_lote_minimo_mil(value: Any) -> str | None:
+        if value is None or value == "":
+            return None
+        try:
+            number = float(value) / 100.0
+        except (TypeError, ValueError):
+            return None
+        if math.isnan(number):
+            return None
+        formatted = f"{number:,.3f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return formatted
+
+    @staticmethod
     def format_minimum_lot(value: Any) -> int | None:
+        """Valor bruto do lote mínimo no Protheus (antes da conversão para milheiro)."""
         if value is None or value == "":
             return None
         try:
@@ -179,6 +193,7 @@ class PropostaComercialFormatter:
         return number
 
     FONTE_VALOR_LIQUIDO = "calculo_formacao_preco_icms_efetivo_pis_cofins"
+    PIS_COFINS_CONDICAO_PADRAO = "9,25% INCLUSO"
     CODIGO_PLANILHA_REDUCAO_ICMS = "000007"
     PERCENTUAL_REDUCAO_ICMS = 90.0
     FATOR_ICMS_APOS_REDUCAO = 0.10
@@ -355,6 +370,7 @@ class PropostaComercialFormatter:
                 "codigo": cls.trim(header.get("condicao_codigo")),
                 "descricao": cls.trim(header.get("condicao_descricao")),
                 "icms": cls.format_icms_rate(header.get("icms")),
+                "pis_cofins": cls.PIS_COFINS_CONDICAO_PADRAO,
                 "ipi": cls.trim(header.get("ipi")),
                 "frete": cls.format_frete(header.get("frete")),
                 "embalagem": cls.format_embalagem(header.get("embalagem")),
@@ -436,7 +452,8 @@ class PropostaComercialFormatter:
             "valor_total": cls.format_currency(row.get("valor_total")),
             "valor_total_numerico": float(row.get("valor_total") or 0),
             "prazo_dias": cls.format_integer_days(row.get("prazo_dias")),
-            "lote_minimo": cls.format_minimum_lot(row.get("lote_minimo")),
+            "lote_minimo_numerico": cls.format_minimum_lot(row.get("lote_minimo")),
+            "lote_minimo": cls.format_lote_minimo_mil(row.get("lote_minimo")),
         }
 
     @staticmethod

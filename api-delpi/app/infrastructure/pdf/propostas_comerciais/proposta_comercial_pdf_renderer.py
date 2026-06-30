@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
@@ -347,7 +348,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         headers.extend(
             [
                 _rotulo_coluna_itens(rotulos, "prazo", "Prazo"),
-                _rotulo_coluna_itens(rotulos, "lote_minimo", "Lote mín."),
+                _rotulo_coluna_itens(rotulos, "lote_minimo", "Lote mín./mil"),
             ]
         )
         widths.extend([12 * mm, 12 * mm])
@@ -357,8 +358,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         ]
 
         for item in itens:
-            prazo = item.get("prazo_dias")
-            prazo_text = "—" if prazo in (None, "") else f"{prazo} dias"
+            prazo_text = _format_prazo_display(item.get("prazo_dias"))
             lote = item.get("lote_minimo")
             lote_text = "—" if lote in (None, "") else str(lote)
             row: list[Flowable | str] = [
@@ -420,6 +420,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         entries = [
             ("Condição de pagamento", _display(condicoes.get("descricao"))),
             ("ICMS", _format_icms_display(_display(condicoes.get("icms")))),
+            ("PIS/COFINS", _display(condicoes.get("pis_cofins"))),
             ("IPI", _display(condicoes.get("ipi"))),
             ("Embalagem", _format_embalagem_display(_display(condicoes.get("embalagem")))),
             ("Frete", _format_frete_display(_display(condicoes.get("frete")))),
@@ -884,6 +885,20 @@ def _build_styles() -> dict[str, ParagraphStyle]:
             textColor=TEXT,
         ),
     }
+
+
+def _format_prazo_display(value: Any) -> str:
+    if value in (None, ""):
+        return "—"
+    text = str(value).strip()
+    if not text:
+        return "—"
+    if text.isdigit():
+        return f"{text} dias"
+    lowered = text.lower()
+    if lowered.endswith("dias") or lowered.endswith("dia"):
+        return text
+    return text
 
 
 def _format_icms_display(value: str) -> str:
