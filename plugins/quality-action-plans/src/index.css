@@ -159,33 +159,39 @@
 
 .dashboard-quality-action-plans .pac-header-actions {
   display: flex;
+  align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
 .dashboard-quality-action-plans .pac-primary-btn,
 .dashboard-quality-action-plans .pac-ghost-btn {
+  height: var(--pac-control-height);
   min-height: var(--pac-control-height);
   border-radius: var(--pac-control-radius);
-  padding: 10px 14px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  margin: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   cursor: pointer;
   font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .dashboard-quality-action-plans .pac-primary-btn {
-  border: none;
+  border-color: transparent;
   background: var(--pac-accent);
   color: #fff;
 }
 
 .dashboard-quality-action-plans .pac-ghost-btn {
-  border: 1px solid var(--pac-card-border);
+  border-color: var(--pac-card-border);
   background: transparent;
   color: var(--pac-text);
-  margin: 6px 0;
 }
 
 .dashboard-quality-action-plans .pac-nav {
@@ -1047,8 +1053,9 @@
 }
 
 .dashboard-quality-action-plans .pac-btn--sm {
+  height: 32px;
   min-height: 32px;
-  padding: 4px 10px;
+  padding: 0 10px;
   font-size: var(--pac-font-xs);
 }
 
@@ -1971,8 +1978,11 @@
 }
 
 .dashboard-quality-action-plans .pac-ghost-btn--icon {
+  width: 32px;
+  height: 32px;
   min-height: 32px;
-  padding: 6px 8px;
+  padding: 0;
+  justify-content: center;
 }
 
 .dashboard-quality-action-plans .pac-ghost-btn--danger {
@@ -2690,19 +2700,24 @@
 
 .pac-modal--customer-search .pac-primary-btn,
 .pac-modal--customer-search .pac-ghost-btn {
+  height: 40px;
   min-height: 40px;
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  margin: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   cursor: pointer;
   font-weight: 600;
+  line-height: 1.2;
   font: inherit;
 }
 
 .pac-modal--customer-search .pac-primary-btn {
-  border: none;
+  border-color: transparent;
   background: var(--pac-accent, #089bdb);
   color: #fff;
 }
@@ -2713,8 +2728,7 @@
 }
 
 .pac-modal--customer-search .pac-ghost-btn {
-  margin: 0;
-  border: 1px solid var(--border, #d8dce3);
+  border-color: var(--border, #d8dce3);
   background: transparent;
   color: var(--text, #111);
 }
@@ -2937,6 +2951,7 @@
 
 .dashboard-quality-action-plans .pac-table-actions {
   display: flex;
+  align-items: center;
   gap: 4px;
   white-space: nowrap;
 }
@@ -2972,6 +2987,7 @@
 .dashboard-quality-action-plans .pac-effectiveness-reject-panel__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
 }
