@@ -135,7 +135,13 @@ def collect_image_annexes_for_export(
         if not stored_name:
             continue
         try:
-            file_path = storage.resolve_file(plan_id=plan_id, stored_name=stored_name)
+            file_path = storage.resolve_evidence_file(
+                stored_name=stored_name,
+                plan_id_candidates=storage.plan_id_candidates(
+                    plan_ref=plan_id,
+                    evidence=evidence,
+                ),
+            )
             annexes.append(
                 {
                     "file_name": evidence.get("file_name") or stored_name,

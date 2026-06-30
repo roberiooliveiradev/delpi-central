@@ -22,6 +22,8 @@ ONDA1_OPERATION_IDS = frozenset(
         "export_quality_action_plan_rnc_8d",
         "list_quality_action_plan_evidences",
         "attach_quality_action_plan_evidence",
+        "download_quality_action_plan_evidence",
+        "get_quality_action_plan_evidence_content",
         "delete_quality_action_plan_evidence",
     }
 )

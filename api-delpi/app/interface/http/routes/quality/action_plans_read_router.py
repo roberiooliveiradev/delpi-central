@@ -32,6 +32,9 @@ from app.application.services.quality_action_plans.pac_evidence_storage import (
     PacEvidenceStorage,
     PacEvidenceStorageError,
 )
+from app.domain.services.quality_action_plans.pac_evidence_text_extraction_service import (
+    extract_evidence_text,
+)
 from app.application.use_cases.quality_action_plans.quality_action_plan_analysis_use_cases import (
     CreateActionItemRequest,
     EffectivenessReviewRequest,
@@ -1345,20 +1348,29 @@ async def upload_plan_evidence(
 ):
     try:
         content = await file.read()
+        repo = build_quality_action_plan_read_repository()
+        resolved_plan_id = repo._coerce_plan_id(plan_id)
+        if not resolved_plan_id:
+            return not_found_response("Plano de ação não encontrado.")
         storage = PacEvidenceStorage()
         storage.validate_upload(mime_type=file.content_type, size_bytes=len(content))
         stored_name = storage.save(
-            plan_id=plan_id,
+            plan_id=resolved_plan_id,
             original_name=file.filename or "evidence.bin",
             content=content,
             mime_type=file.content_type,
         )
-        repo = build_quality_action_plan_read_repository()
-        if action_id and not repo.action_belongs_to_plan(plan_id, action_id):
-            storage.delete_file(plan_id=plan_id, stored_name=stored_name)
+        extraction = extract_evidence_text(
+            content=content,
+            mime_type=file.content_type,
+            file_name=file.filename,
+        )
+        text_excerpt = extraction.get("text_content") or None
+        if action_id and not repo.action_belongs_to_plan(resolved_plan_id, action_id):
+            storage.delete_file(plan_id=resolved_plan_id, stored_name=stored_name)
             return error_response("Ação não pertence a este plano.", status_code=422)
         data = repo.create_evidence(
-            plan_id,
+            resolved_plan_id,
             {
                 "type": evidence_type,
                 "file_name": file.filename,
@@ -1367,13 +1379,14 @@ async def upload_plan_evidence(
                 "size_bytes": len(content),
                 "section": section,
                 "description": description,
+                "text_excerpt": text_excerpt,
                 "knowledge_visible": knowledge_visible,
                 **_uploader_identity_kwargs(),
                 "action_id": action_id,
             },
         )
         if not data:
-            storage.delete_file(plan_id=plan_id, stored_name=stored_name)
+            storage.delete_file(plan_id=resolved_plan_id, stored_name=stored_name)
             return not_found_response("Plano de ação não encontrado.")
         return api_delpi_success(
             data,
@@ -1387,7 +1400,13 @@ async def upload_plan_evidence(
         return error_response("Erro interno ao anexar evidência.", status_code=500)
 
 
-@router.get("/{plan_id}/evidences/{evidence_id}/file")
+@router.get(
+    "/{plan_id}/evidences/{evidence_id}/file",
+    **_pac_openapi(
+        "download_quality_action_plan_evidence",
+        "/{plan_id}/evidences/{evidence_id}/file",
+    ),
+)
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def download_plan_evidence(plan_id: str, evidence_id: str):
     try:
@@ -1396,9 +1415,9 @@ def download_plan_evidence(plan_id: str, evidence_id: str):
         if not evidence or not evidence.get("stored_name"):
             return not_found_response("Evidência não encontrada.")
         storage = PacEvidenceStorage()
-        file_path = storage.resolve_file(
-            plan_id=plan_id,
+        file_path = storage.resolve_evidence_file(
             stored_name=str(evidence["stored_name"]),
+            plan_id_candidates=storage.plan_id_candidates(plan_ref=plan_id, evidence=evidence),
         )
         return FileResponse(
             path=file_path,
@@ -1410,6 +1429,58 @@ def download_plan_evidence(plan_id: str, evidence_id: str):
     except Exception as exc:
         log_error(f"Erro ao baixar evidência {evidence_id}: {exc}")
         return error_response("Erro interno ao baixar evidência.", status_code=500)
+
+
+@router.get(
+    "/{plan_id}/evidences/{evidence_id}/content",
+    **_pac_openapi(
+        "get_quality_action_plan_evidence_content",
+        "/{plan_id}/evidences/{evidence_id}/content",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def get_plan_evidence_content(plan_id: str, evidence_id: str):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        evidence = repo.get_evidence(plan_id, evidence_id)
+        if not evidence:
+            return not_found_response("Evidência não encontrada.")
+        stored_name = str(evidence.get("stored_name") or "").strip()
+        text_excerpt = str(evidence.get("text_excerpt") or "").strip()
+        extraction_payload: dict[str, object] | None = None
+        if stored_name:
+            storage = PacEvidenceStorage()
+            file_path = storage.resolve_evidence_file(
+                stored_name=stored_name,
+                plan_id_candidates=storage.plan_id_candidates(plan_ref=plan_id, evidence=evidence),
+            )
+            extraction_payload = extract_evidence_text(
+                content=file_path.read_bytes(),
+                mime_type=evidence.get("mime_type"),
+                file_name=evidence.get("file_name"),
+            )
+        text_content = text_excerpt or str((extraction_payload or {}).get("text_content") or "")
+        return api_delpi_success(
+            {
+                "id": evidence.get("id"),
+                "plan_id": evidence.get("plan_id"),
+                "file_name": evidence.get("file_name"),
+                "mime_type": evidence.get("mime_type"),
+                "type": evidence.get("type"),
+                "section": evidence.get("section"),
+                "description": evidence.get("description"),
+                "text_content": text_content,
+                "extraction": extraction_payload,
+                "download_path": f"/quality/action-plans/{plan_id}/evidences/{evidence_id}/file",
+            },
+            operation_id="get_quality_action_plan_evidence_content",
+            message="Conteúdo da evidência recuperado.",
+        )
+    except (PluginsRepositoryError, PacEvidenceStorageError) as exc:
+        return error_response(str(exc), status_code=404)
+    except Exception as exc:
+        log_error(f"Erro ao ler conteúdo da evidência {evidence_id}: {exc}")
+        return error_response("Erro interno ao ler conteúdo da evidência.", status_code=500)
 
 
 @router.delete(
@@ -1424,11 +1495,16 @@ def delete_plan_evidence(plan_id: str, evidence_id: str):
         if not evidence:
             return not_found_response("Evidência não encontrada.")
         if evidence.get("stored_name"):
+            storage = PacEvidenceStorage()
             try:
-                PacEvidenceStorage().delete_file(
-                    plan_id=plan_id,
+                file_path = storage.resolve_evidence_file(
                     stored_name=str(evidence["stored_name"]),
+                    plan_id_candidates=storage.plan_id_candidates(
+                        plan_ref=plan_id,
+                        evidence=evidence,
+                    ),
                 )
+                file_path.unlink(missing_ok=True)
             except PacEvidenceStorageError:
                 pass
         return api_delpi_success(

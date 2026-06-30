@@ -3,6 +3,7 @@ from __future__ import annotations
 import mimetypes
 import shutil
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from app.config import settings
@@ -32,6 +33,23 @@ class PacEvidenceStorage:
     def __init__(self, base_dir: str | None = None) -> None:
         self.base_dir = Path(base_dir or settings.PAC_EVIDENCE_UPLOAD_DIR)
         self.base_dir.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def plan_id_candidates(*, plan_ref: str, evidence: dict[str, Any] | None = None) -> list[str]:
+        from app.domain.services.quality_action_plans.quality_action_plan_reference_service import (
+            normalize_plan_code,
+        )
+
+        candidates: list[str] = []
+        if evidence and evidence.get("plan_id"):
+            candidates.append(str(evidence["plan_id"]))
+        ref = (plan_ref or "").strip()
+        if ref:
+            candidates.append(ref)
+            normalized_code = normalize_plan_code(ref)
+            if normalized_code and normalized_code not in candidates:
+                candidates.append(normalized_code)
+        return candidates
 
     def validate_upload(self, *, mime_type: str | None, size_bytes: int) -> None:
         if size_bytes <= 0:
@@ -66,13 +84,35 @@ class PacEvidenceStorage:
         return stored_name
 
     def resolve_file(self, *, plan_id: str, stored_name: str) -> Path:
-        path = (self.base_dir / plan_id / stored_name).resolve()
-        base = self.base_dir.resolve()
-        if not str(path).startswith(str(base)):
-            raise PacEvidenceStorageError("Caminho de arquivo inválido.")
-        if not path.is_file():
+        return self.resolve_evidence_file(
+            stored_name=stored_name,
+            plan_id_candidates=[plan_id],
+        )
+
+    def resolve_evidence_file(
+        self,
+        *,
+        stored_name: str,
+        plan_id_candidates: list[str],
+    ) -> Path:
+        normalized_name = (stored_name or "").strip()
+        if not normalized_name:
             raise PacEvidenceStorageError("Arquivo não encontrado.")
-        return path
+
+        base = self.base_dir.resolve()
+        seen: set[str] = set()
+        for candidate in plan_id_candidates:
+            plan_key = (candidate or "").strip()
+            if not plan_key or plan_key in seen:
+                continue
+            seen.add(plan_key)
+            path = (self.base_dir / plan_key / normalized_name).resolve()
+            if not str(path).startswith(str(base)):
+                raise PacEvidenceStorageError("Caminho de arquivo inválido.")
+            if path.is_file():
+                return path
+
+        raise PacEvidenceStorageError("Arquivo não encontrado.")
 
     def delete_file(self, *, plan_id: str, stored_name: str) -> None:
         path = self.resolve_file(plan_id=plan_id, stored_name=stored_name)
