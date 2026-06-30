@@ -342,6 +342,46 @@
   color: #b45309;
 }
 
+.dashboard-quality-action-plans .pac-badge--open-actions {
+  gap: 5px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--pac-warning, #f59e0b) 18%, var(--pac-card-bg));
+  color: var(--pac-warning, #d97706);
+  border: 1px solid color-mix(in srgb, var(--pac-warning, #f59e0b) 32%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-quality-action-plans .pac-badge--open-actions {
+  background: color-mix(in srgb, #f59e0b 24%, var(--pac-card-bg));
+  color: #fbbf24;
+  border-color: color-mix(in srgb, #fbbf24 42%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-badge--open-actions.pac-badge--interactive {
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.dashboard-quality-action-plans .pac-badge--open-actions.pac-badge--interactive:hover {
+  background: color-mix(in srgb, var(--pac-warning, #f59e0b) 28%, var(--pac-card-bg));
+  border-color: color-mix(in srgb, var(--pac-warning, #f59e0b) 48%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-badge--open-actions.pac-badge--interactive:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pac-warning, #f59e0b) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.dashboard-quality-action-plans .pac-state--warning {
+  border-color: color-mix(in srgb, var(--pac-warning, #f59e0b) 38%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-warning, #f59e0b) 8%, var(--pac-card-bg));
+  color: var(--pac-text);
+}
+
 .dashboard-quality-action-plans .pac-metric-card {
   background: var(--pac-card-bg);
   border: 1px solid var(--pac-card-border);
@@ -2406,6 +2446,16 @@
   width: 44px;
 }
 
+.dashboard-quality-action-plans .pac-table__actions-col--icons {
+  width: auto;
+  min-width: 88px;
+}
+
+.dashboard-quality-action-plans .pac-table__actions-cell {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .dashboard-quality-action-plans .pac-table__drag-col {
   width: 36px;
   padding-left: 8px;
@@ -3036,9 +3086,10 @@
 }
 
 .dashboard-quality-action-plans .pac-table-actions {
-  display: flex;
+  display: inline-flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   white-space: nowrap;
 }
 

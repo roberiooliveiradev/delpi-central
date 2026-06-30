@@ -8,6 +8,7 @@ import {
 } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
 import { PageHeader } from "../components/PageHeader";
+import { OpenPlanActionsBadge } from "../components/OpenPlanActionsBadge";
 import { ScopeBadge, SeverityBadge } from "../components/StatusBadge";
 import { StateAlert } from "../components/StateAlert";
 import { TableHeaderCell } from "../components/ui/HelpTooltip";
@@ -197,15 +198,10 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                       <td>{formatEffectivenessSubmittedBy(plan)}</td>
                       <td>
                         <div className="pac-table-actions">
-                          {plan.incomplete_actions_count ? (
-                            <span
-                              className="pac-state pac-state--warning pac-btn--sm"
-                              style={{ marginRight: "0.35rem", whiteSpace: "nowrap" }}
-                              title="Há ações do plano ainda não concluídas"
-                            >
-                              {plan.incomplete_actions_count} ação(ões) aberta(s)
-                            </span>
-                          ) : null}
+                          <OpenPlanActionsBadge
+                            count={plan.incomplete_actions_count ?? 0}
+                            onClick={() => onNavigate(detailPath(plan.id))}
+                          />
                           <button
                             type="button"
                             className="pac-icon-btn"

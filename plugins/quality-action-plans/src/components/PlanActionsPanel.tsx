@@ -256,7 +256,8 @@ export function PlanActionsPanel({
                   <td>
                     {ACTION_STATUSES[action.status as keyof typeof ACTION_STATUSES] ?? action.status}
                   </td>
-                  <td className="pac-table-actions">
+                  <td className="pac-table__actions-cell">
+                    <div className="pac-table-actions">
                     <button
                       type="button"
                       className="pac-ghost-btn pac-ghost-btn--icon"
@@ -275,6 +276,7 @@ export function PlanActionsPanel({
                     >
                       <Trash2 size={16} />
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}

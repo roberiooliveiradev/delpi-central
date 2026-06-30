@@ -10,6 +10,13 @@ export function listIncompletePlanActions(actions: PlanAction[]): PlanAction[] {
   return actions.filter((action) => !TERMINAL_ACTION_STATUSES.has(action.status));
 }
 
+export function openPlanActionsCountLabel(count: number): string {
+  if (count === 1) {
+    return "1 ação aberta";
+  }
+  return `${count} ações abertas`;
+}
+
 function actionSnippet(action: PlanAction): string {
   const description = action.description.trim();
   if (!description) {

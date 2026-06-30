@@ -156,7 +156,7 @@ export function MyQueueTable({
             <TableHeaderCell
               label="Ações"
               hint={T.rowActions}
-              className="pac-table__actions-col"
+              className="pac-table__actions-col pac-table__actions-col--icons"
             />
           </tr>
         </thead>
@@ -214,7 +214,8 @@ export function MyQueueTable({
               </td>
               <td>{branchLabel(item.branch_code)}</td>
               <td>{item.customer_name ?? "—"}</td>
-              <td className="pac-table-actions">
+              <td className="pac-table__actions-cell">
+                <div className="pac-table-actions">
                 {item.action_status !== "completed" && item.action_status !== "cancelled" ? (
                   <button
                     type="button"
@@ -238,6 +239,7 @@ export function MyQueueTable({
                 >
                   <Eye size={16} />
                 </button>
+                </div>
               </td>
             </tr>
           ))}

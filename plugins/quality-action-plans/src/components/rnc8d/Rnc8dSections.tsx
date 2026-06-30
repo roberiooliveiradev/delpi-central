@@ -578,7 +578,8 @@ export function Rnc8dContainmentSection({
                     onChange={(event) => updateContainmentRow(index, { date: event.target.value })}
                   />
                 </td>
-                <td className="pac-table-actions">
+                <td className="pac-table__actions-cell">
+                  <div className="pac-table-actions">
                   <RemoveRowButton
                     onRemove={() => removeContainmentRow(index)}
                     removeDisabled={containment.length <= 1}
@@ -587,6 +588,7 @@ export function Rnc8dContainmentSection({
                     }
                     removeAriaLabel="Remover linha de contenção"
                   />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -886,7 +888,8 @@ export function Rnc8dPreventiveSection({
                     }}
                   />
                 </td>
-                <td className="pac-table-actions">
+                <td className="pac-table__actions-cell">
+                  <div className="pac-table-actions">
                   <RemoveRowButton
                     onRemove={() => removeDocumentationRow(index)}
                     removeDisabled={documentation.length <= 1}
@@ -895,6 +898,7 @@ export function Rnc8dPreventiveSection({
                     }
                     removeAriaLabel="Remover linha de documento"
                   />
+                  </div>
                 </td>
               </tr>
             ))}

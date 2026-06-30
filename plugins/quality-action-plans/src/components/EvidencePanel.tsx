@@ -335,7 +335,8 @@ export function EvidencePanel({
                   <td>{formatSize(evidence.size_bytes)}</td>
                   <td>{formatDateTime(evidence.created_at)}</td>
                   {!readOnly ? (
-                  <td className="pac-table-actions">
+                  <td className="pac-table__actions-cell">
+                    <div className="pac-table-actions">
                     {isPreviewableEvidence(evidence) ? (
                       <button
                         type="button"
@@ -371,6 +372,7 @@ export function EvidencePanel({
                     >
                       <Trash2 size={16} />
                     </button>
+                    </div>
                   </td>
                   ) : null}
                 </tr>
