@@ -56,6 +56,7 @@ export function MyQueueEvidenceModal({ item, open, onClose, onUploaded }: Props)
     <Modal
       open={open}
       title="Anexar evidência à ação"
+      className="pac-modal--my-queue-evidence"
       onClose={() => {
         if (!uploading) {
           onClose();
@@ -63,30 +64,35 @@ export function MyQueueEvidenceModal({ item, open, onClose, onUploaded }: Props)
       }}
     >
       {item ? (
-        <>
-          <p className="pac-muted pac-my-queue-evidence-modal__context">
-            {item.plan_code ?? item.plan_id} — {item.description}
+        <div className="pac-my-queue-evidence-modal">
+          <p className="pac-my-queue-evidence-modal__context">
+            <strong>{item.plan_code ?? item.plan_id}</strong>
+            <span className="pac-my-queue-evidence-modal__context-text">{item.description}</span>
           </p>
           {error ? <StateAlert variant="error">{error}</StateAlert> : null}
-          <SelectField
-            id="pac-queue-evidence-type"
-            label="Tipo do arquivo"
-            hint={PAC_HELP_TOOLTIPS.form.actionEvidence}
-            options={EVIDENCE_TYPE_OPTIONS.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
-            value={evidenceType}
-            onChange={setEvidenceType}
-            searchable={false}
-          />
-          <TextField
-            id="pac-queue-evidence-desc"
-            label="Descrição (opcional)"
-            hint={PAC_HELP_TOOLTIPS.form.actionEvidence}
-            value={description}
-            onChange={setDescription}
-          />
+          <div className="pac-my-queue-evidence-modal__fields">
+            <SelectField
+              id="pac-queue-evidence-type"
+              label="Tipo do arquivo"
+              hint={PAC_HELP_TOOLTIPS.form.actionEvidence}
+              options={EVIDENCE_TYPE_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+              value={evidenceType}
+              onChange={setEvidenceType}
+              searchable={false}
+            />
+            <TextField
+              id="pac-queue-evidence-desc"
+              label="Descrição (opcional)"
+              hint={PAC_HELP_TOOLTIPS.form.actionEvidence}
+              value={description}
+              onChange={setDescription}
+              fullWidth
+              placeholder="Ex.: foto do lote bloqueado, e-mail do cliente…"
+            />
+          </div>
           <input
             ref={fileInputRef}
             type="file"
@@ -102,6 +108,14 @@ export function MyQueueEvidenceModal({ item, open, onClose, onUploaded }: Props)
           <FormActions align="end">
             <button
               type="button"
+              className="pac-ghost-btn"
+              disabled={uploading}
+              onClick={onClose}
+            >
+              Fechar
+            </button>
+            <button
+              type="button"
               className="pac-primary-btn"
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
@@ -109,16 +123,8 @@ export function MyQueueEvidenceModal({ item, open, onClose, onUploaded }: Props)
               <Upload size={16} aria-hidden="true" />
               {uploading ? "Enviando…" : "Selecionar arquivo"}
             </button>
-            <button
-              type="button"
-              className="pac-ghost-btn"
-              disabled={uploading}
-              onClick={onClose}
-            >
-              Fechar
-            </button>
           </FormActions>
-        </>
+        </div>
       ) : null}
     </Modal>
   );

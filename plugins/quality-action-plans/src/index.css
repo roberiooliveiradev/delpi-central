@@ -2075,10 +2075,6 @@
   border: 1px solid color-mix(in srgb, var(--pac-warning, #d97706) 28%, transparent);
 }
 
-.dashboard-quality-action-plans .pac-my-queue-evidence-modal__context {
-  margin: 0 0 12px;
-}
-
 .dashboard-quality-action-plans .pac-save-banner {
   position: sticky;
   top: 12px;
@@ -2747,6 +2743,158 @@
 
 .pac-modal--confirm {
   width: min(440px, 100%);
+}
+
+.pac-modal--my-queue-evidence {
+  width: min(520px, 100%);
+}
+
+.pac-modal--my-queue-evidence .pac-my-queue-evidence-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pac-modal--my-queue-evidence .pac-my-queue-evidence-modal__context {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border, #d8dce3) 88%, transparent);
+  background: color-mix(in srgb, var(--surface, #fff) 92%, var(--pac-accent, #089bdb) 8%);
+  font-size: 13px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--text, #111) 78%, transparent);
+}
+
+:root[data-theme="dark"] .pac-modal--my-queue-evidence .pac-my-queue-evidence-modal__context {
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 90%, transparent);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.pac-modal--my-queue-evidence .pac-my-queue-evidence-modal__context strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text, #111);
+}
+
+:root[data-theme="dark"] .pac-modal--my-queue-evidence .pac-my-queue-evidence-modal__context strong {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.pac-modal--my-queue-evidence .pac-my-queue-evidence-modal__context-text {
+  display: block;
+}
+
+.pac-modal--my-queue-evidence .pac-my-queue-evidence-modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pac-modal--my-queue-evidence .pac-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pac-modal--my-queue-evidence .pac-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #111);
+}
+
+:root[data-theme="dark"] .pac-modal--my-queue-evidence .pac-field__label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pac-modal--my-queue-evidence .pac-field__control,
+.pac-modal--my-queue-evidence .pac-select__trigger {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #d8dce3);
+  padding: 8px 12px;
+  background: var(--surface, #fff);
+  color: var(--text, #111);
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.pac-modal--my-queue-evidence .pac-select {
+  width: 100%;
+}
+
+.pac-modal--my-queue-evidence .pac-field__control:focus,
+.pac-modal--my-queue-evidence .pac-select__trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pac-accent, #089bdb) 45%, transparent);
+  outline-offset: 1px;
+}
+
+:root[data-theme="dark"] .pac-modal--my-queue-evidence .pac-field__control,
+:root[data-theme="dark"] .pac-modal--my-queue-evidence .pac-select__trigger {
+  background: color-mix(in srgb, var(--surface-2, #1b2030) 88%, transparent);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.pac-modal--my-queue-evidence .pac-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border, #d8dce3) 80%, transparent);
+}
+
+:root[data-theme="dark"] .pac-modal--my-queue-evidence .pac-form-actions {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.pac-modal--my-queue-evidence .pac-primary-btn,
+.pac-modal--my-queue-evidence .pac-ghost-btn {
+  height: 40px;
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.2;
+  font: inherit;
+}
+
+.pac-modal--my-queue-evidence .pac-primary-btn {
+  border-color: transparent;
+  background: var(--pac-accent, #089bdb);
+  color: #fff;
+}
+
+.pac-modal--my-queue-evidence .pac-primary-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.pac-modal--my-queue-evidence .pac-ghost-btn {
+  border-color: var(--border, #d8dce3);
+  background: transparent;
+  color: var(--text, #111);
+}
+
+:root[data-theme="dark"] .pac-modal--my-queue-evidence .pac-ghost-btn {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .pac-confirm-modal__message {
