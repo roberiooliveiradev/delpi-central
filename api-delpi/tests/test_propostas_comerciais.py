@@ -181,6 +181,8 @@ def test_formatter_formats_document_fields() -> None:
     assert PropostaComercialFormatter.format_currency(40041.56) == "R$ 40.041,56"
     assert PropostaComercialFormatter.format_date("20260612") == "12/06/2026"
     assert PropostaComercialFormatter.format_integer_days(45.0) == 45
+    assert PropostaComercialFormatter.format_lote_minimo_mil(3000.0) == "30,000"
+    assert PropostaComercialFormatter.format_lote_minimo_mil(0.0) == "0,000"
     assert PropostaComercialFormatter.format_minimum_lot(1000.0) == 1000
     assert PropostaComercialFormatter.format_icms_rate(12.0) == "12%"
     assert PropostaComercialFormatter.format_frete("F").startswith("FOB")
@@ -244,6 +246,7 @@ def _sample_detail() -> dict:
             "codigo": "007",
             "descricao": "45 D.D.L.",
             "icms": "12%",
+            "pis_cofins": "9,25% INCLUSO",
             "ipi": "5% CHICOTES ELETRICOS",
             "frete": "FOB — frete por conta do comprador",
             "embalagem": "Embalagem padrão DELPI",
@@ -280,7 +283,8 @@ def _sample_detail() -> dict:
                 "valor_total": "R$ 40.041,56",
                 "valor_total_numerico": 40041.56,
                 "prazo_dias": 45,
-                "lote_minimo": 0,
+                "lote_minimo_numerico": 0,
+                "lote_minimo": "0,000",
             }
         ],
     }
@@ -401,6 +405,7 @@ def test_get_proposta_comercial_use_case_groups_detail() -> None:
     assert result["empresa"]["inscricao_estadual"] == "253282144"
     assert result["empresa"]["cep"] == "89257-207"
     assert result["condicoes"]["icms"] == "12%"
+    assert result["condicoes"]["pis_cofins"] == "9,25% INCLUSO"
     assert result["condicoes"]["frete"].startswith("FOB")
     assert result["cliente"]["cnpj"] == "08.774.764/0003-08"
     assert result["cliente"]["tipo_cadastro"] == "cliente"
@@ -764,7 +769,7 @@ def test_pdf_export_overrides_service_merges_editable_fields_only() -> None:
         {
             "observacoes": " Texto ajustado \n",
             "vendedor": {"nome": "Vendedor Editado", "cargo": "COMERCIAL"},
-            "condicoes": {"descricao": "30 D.D.L."},
+            "condicoes": {"descricao": "30 D.D.L.", "pis_cofins": "10% INCLUSO"},
             "contato": {"email": "novo@example.com"},
             "cabecalho": {"numero_ov": "OV999999"},
             "itens": [
@@ -778,6 +783,7 @@ def test_pdf_export_overrides_service_merges_editable_fields_only() -> None:
                     "descricao": " Descricao ajustada ",
                     "referencia_cliente": " REF-EDIT ",
                     "ncm": " 1234.56.78 ",
+                    "prazo_dias": "30",
                     "produto": "99999999",
                 },
             ],
@@ -794,6 +800,7 @@ def test_pdf_export_overrides_service_merges_editable_fields_only() -> None:
     assert merged["vendedor"]["cargo"] == "COMERCIAL"
     assert merged["vendedor"]["email"] == "comercial2@delpi.com.br"
     assert merged["condicoes"]["descricao"] == "30 D.D.L."
+    assert merged["condicoes"]["pis_cofins"] == "10% INCLUSO"
     assert merged["contato"]["email"] == "novo@example.com"
     assert merged["cabecalho"]["numero_ov"] == "OV003581"
     assert merged["itens"][0]["item"] == "01"
@@ -801,6 +808,7 @@ def test_pdf_export_overrides_service_merges_editable_fields_only() -> None:
     assert merged["itens"][0]["descricao"] == "Descricao ajustada"
     assert merged["itens"][0]["referencia_cliente"] == "REF-EDIT"
     assert merged["itens"][0]["ncm"] == "1234.56.78"
+    assert merged["itens"][0]["prazo_dias"] == 30
     assert merged["rotulos"]["colunas_itens"]["valor_bruto"] == "Bruto customizado"
     assert merged["rotulos"]["resumo"]["total_r_mil"] == "Total geral"
     assert merged["rotulos"]["total_proposta"] == "Total editado"

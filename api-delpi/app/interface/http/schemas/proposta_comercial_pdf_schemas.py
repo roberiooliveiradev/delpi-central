@@ -17,6 +17,7 @@ class PropostaComercialPdfCondicoesOverrides(BaseModel):
 
     descricao: str | None = None
     icms: str | None = None
+    pis_cofins: str | None = None
     ipi: str | None = None
     frete: str | None = None
     embalagem: str | None = None
@@ -38,6 +39,7 @@ class PropostaComercialPdfItemOverrides(BaseModel):
     descricao: str | None = None
     referencia_cliente: str | None = None
     ncm: str | None = None
+    prazo_dias: str | int | None = None
 
 
 class PropostaComercialPdfColunasItensRotulos(BaseModel):
@@ -102,7 +104,7 @@ class PropostaComercialPdfExportRequest(BaseModel):
                 if not item_key:
                     continue
                 sanitized = {"item": item_key}
-                for field in ("descricao", "referencia_cliente", "ncm"):
+                for field in ("descricao", "referencia_cliente", "ncm", "prazo_dias"):
                     value = item.get(field)
                     if value is not None:
                         sanitized[field] = value

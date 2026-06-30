@@ -190,6 +190,7 @@ export function PropostaComercialDetailPage({ propostaInterna }: PropostaComerci
                   { label: "Código", value: displayValue(data.condicoes.codigo) },
                   { label: "Descrição", value: displayValue(data.condicoes.descricao), wide: true },
                   { label: "ICMS", value: displayValue(data.condicoes.icms) },
+                  { label: "PIS/COFINS", value: displayValue(data.condicoes.pis_cofins) },
                   { label: "IPI", value: displayValue(data.condicoes.ipi) },
                   { label: "Embalagem", value: displayValue(data.condicoes.embalagem) },
                   { label: "Frete", value: displayValue(data.condicoes.frete) },

@@ -7,7 +7,7 @@ import {
   ITEM_COLUMN_KEYS,
   type PropostaComercialItemColumnKey,
 } from "../constants/propostaComercialLabels";
-import { displayValue } from "../utils/format";
+import { displayValue, formatLoteMinimoMil } from "../utils/format";
 
 type ItensTableReadOnlyProps = {
   items: PropostaComercialItem[];
@@ -22,7 +22,10 @@ type ItensTableEditableProps = {
   columnLabels: Record<PropostaComercialItemColumnKey, string>;
   onItemFieldChange: (
     itemKey: string,
-    field: keyof Pick<PropostaComercialItemTextDraft, "descricao" | "referencia_cliente" | "ncm">,
+    field: keyof Pick<
+      PropostaComercialItemTextDraft,
+      "descricao" | "referencia_cliente" | "ncm" | "prazo_dias"
+    >,
     value: string,
   ) => void;
   onColumnLabelChange: (field: PropostaComercialItemColumnKey, value: string) => void;
@@ -166,8 +169,23 @@ export function ItensTable(props: ItensTableProps) {
                   {displayValue(item.valor_liquido_r_mil_formatado)}
                 </td>
                 <td data-label={columnLabels.total}>{displayValue(item.valor_total)}</td>
-                <td data-label={columnLabels.prazo}>{displayValue(item.prazo_dias)}</td>
-                <td data-label={columnLabels.lote_minimo}>{displayValue(item.lote_minimo)}</td>
+                <td data-label={columnLabels.prazo}>
+                  {props.editable && draft ? (
+                    <TableCellInput
+                      compact
+                      aria-label={`Prazo do item ${item.item}`}
+                      value={draft.prazo_dias}
+                      onChange={(value) =>
+                        props.onItemFieldChange(item.item, "prazo_dias", value)
+                      }
+                    />
+                  ) : (
+                    displayValue(item.prazo_dias)
+                  )}
+                </td>
+                <td data-label={columnLabels.lote_minimo}>
+                  {formatLoteMinimoMil(item.lote_minimo_numerico ?? item.lote_minimo)}
+                </td>
               </tr>
             );
           })}
