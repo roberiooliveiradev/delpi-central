@@ -73,3 +73,42 @@ def test_build_rnc_8d_pdf_returns_pdf_bytes():
     content = build_rnc_8d_pdf(detail)
     assert content.startswith(b"%PDF")
     assert len(content) > 1500
+
+
+def test_build_rnc_8d_pdf_actions_table_with_long_descriptions():
+    detail = _sample_detail()
+    detail["plan"]["client_nc_registry"] = "217436500"
+    detail["plan"]["template_payload"] = {"nc_description": {"characteristic": "Configuração"}}
+    detail["actions"] = [
+        {
+            "action_type": "containment",
+            "description": (
+                "Bloquear imediatamente estoque, WIP e produto acabado nas filiais A1 e A2 "
+                "até conclusão da inspeção 100% do lote reclamado."
+            ),
+            "responsible_name": "Robson Oliveira",
+            "due_date": "2026-07-04",
+            "status": "pending",
+        },
+        {
+            "action_type": "corrective",
+            "description": (
+                "Realizar inspeção 100% do lote reclamado e segregar unidades com divergência "
+                "de componente ou configuração elétrica."
+            ),
+            "responsible_name": "Robson Oliveira",
+            "due_date": "2026-07-11",
+            "status": "pending",
+        },
+        {
+            "action_type": "training",
+            "description": "Treinar operadores da linha de montagem no procedimento revisado.",
+            "responsible_name": "Robson Oliveira",
+            "due_date": "2026-07-18",
+            "status": "pending",
+        },
+    ]
+
+    content = build_rnc_8d_pdf(detail)
+    assert content.startswith(b"%PDF")
+    assert len(content) > 2000

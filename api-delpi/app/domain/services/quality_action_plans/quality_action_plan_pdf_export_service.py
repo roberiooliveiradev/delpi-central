@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 from datetime import date, datetime
 from typing import Any
+from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -24,6 +25,8 @@ from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import
 TITLE_COLOR = colors.HexColor("#013866")
 LINE_COLOR = colors.HexColor("#E2E8F0")
 MUTED = colors.HexColor("#64748B")
+PAGE_MARGIN_MM = 14
+CONTENT_WIDTH = A4[0] - 2 * PAGE_MARGIN_MM * mm
 
 STATUS_LABELS = {
     "draft": "Rascunho",
@@ -160,16 +163,58 @@ def _styles() -> dict[str, ParagraphStyle]:
     }
 
 
-def _kv_table(rows: list[tuple[str, str]], *, col_widths: tuple[float, float] = (45 * mm, 125 * mm)) -> Table:
-    data = [[Paragraph(f"<b>{label}</b>", _styles()["body"]), Paragraph(_text(value), _styles()["body"])] for label, value in rows]
-    table = Table(data, colWidths=col_widths, hAlign="LEFT")
+def _para(value: Any, *, max_len: int = 1500, bold: bool = False) -> Paragraph:
+    text = escape(_text(value, max_len=max_len))
+    if bold:
+        text = f"<b>{text}</b>"
+    return Paragraph(text, _styles()["body"])
+
+
+def _table_padding_style() -> list[tuple[Any, ...]]:
+    return [
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+    ]
+
+
+def _header_table_style() -> list[tuple[Any, ...]]:
+    return [
+        ("BACKGROUND", (0, 0), (-1, 0), TITLE_COLOR),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 8),
+    ]
+
+
+def _grid_table_style(*, zebra: bool = True) -> list[tuple[Any, ...]]:
+    style: list[tuple[Any, ...]] = [
+        *_table_padding_style(),
+        ("FONTSIZE", (0, 1), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.25, LINE_COLOR),
+    ]
+    if zebra:
+        style.append(("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]))
+    return style
+
+
+def _kv_table(
+    rows: list[tuple[str, str]],
+    *,
+    col_widths: tuple[float, float] | None = None,
+) -> Table:
+    label_width = CONTENT_WIDTH * 0.28
+    value_width = CONTENT_WIDTH - label_width
+    widths = col_widths or (label_width, value_width)
+    data = [[_para(label, bold=True), _para(value)] for label, value in rows]
+    table = Table(data, colWidths=widths, hAlign="LEFT")
     table.setStyle(
         TableStyle(
             [
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                *_table_padding_style(),
                 ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINE_COLOR),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
             ]
         )
     )
@@ -181,7 +226,7 @@ def _bullet_list(items: list[str]) -> list[Any]:
     style = _styles()["body"]
     for item in items:
         if item.strip():
-            flow.append(Paragraph(f"• {_text(item, max_len=800)}", style))
+            flow.append(Paragraph(f"• {escape(_text(item, max_len=800))}", style))
     return flow
 
 
@@ -245,37 +290,139 @@ def _five_whys_items(five_whys: dict[str, Any] | None) -> list[str]:
 def _actions_table(actions: list[dict[str, Any]]) -> Table | None:
     if not actions:
         return None
+
     header = ["Tipo", "Descrição", "Responsável", "Prazo", "Status"]
-    rows = [
-        [
-            ACTION_TYPE_LABELS.get(str(item.get("action_type") or ""), _text(item.get("action_type"))),
-            _text(item.get("description"), max_len=500),
-            _text(item.get("responsible_name") or item.get("responsible_user_id")),
-            _format_date(item.get("due_date")),
-            ACTION_STATUS_LABELS.get(str(item.get("status") or ""), _text(item.get("status"))),
-        ]
-        for item in actions
+    col_widths = [
+        CONTENT_WIDTH * 0.13,
+        CONTENT_WIDTH * 0.41,
+        CONTENT_WIDTH * 0.18,
+        CONTENT_WIDTH * 0.14,
+        CONTENT_WIDTH * 0.14,
     ]
-    table = Table(
-        [header, *rows],
-        colWidths=[24 * mm, 68 * mm, 28 * mm, 22 * mm, 22 * mm],
-        hAlign="LEFT",
-        repeatRows=1,
-    )
-    table.setStyle(
-        TableStyle(
+
+    data: list[list[Any]] = [header]
+    for item in actions:
+        data.append(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), TITLE_COLOR),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("GRID", (0, 0), (-1, -1), 0.25, LINE_COLOR),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                _para(
+                    ACTION_TYPE_LABELS.get(
+                        str(item.get("action_type") or ""),
+                        _text(item.get("action_type")),
+                    ),
+                    max_len=80,
+                ),
+                _para(item.get("description"), max_len=2000),
+                _para(item.get("responsible_name") or item.get("responsible_user_id"), max_len=120),
+                _para(_format_date(item.get("due_date")), max_len=40),
+                _para(
+                    ACTION_STATUS_LABELS.get(
+                        str(item.get("status") or ""),
+                        _text(item.get("status")),
+                    ),
+                    max_len=80,
+                ),
             ]
         )
-    )
+
+    table = Table(data, colWidths=col_widths, hAlign="LEFT", repeatRows=1)
+    table.setStyle(TableStyle([*_header_table_style(), *_grid_table_style()]))
+    return table
+
+
+def _containment_table(rows: list[dict[str, Any]]) -> Table | None:
+    if not rows:
+        return None
+
+    area_labels = {
+        "end_customer": "Cliente final",
+        "client_plant": "Planta do cliente",
+        "supplier": "Fornecedor",
+    }
+    header = ["Área", "Qtd.", "Plano de ação", "Responsável", "Data"]
+    col_widths = [
+        CONTENT_WIDTH * 0.16,
+        CONTENT_WIDTH * 0.10,
+        CONTENT_WIDTH * 0.40,
+        CONTENT_WIDTH * 0.18,
+        CONTENT_WIDTH * 0.16,
+    ]
+    data: list[list[Any]] = [header]
+    for row in rows:
+        area = area_labels.get(str(row.get("area") or ""), _text(row.get("area")))
+        data.append(
+            [
+                _para(area, max_len=80),
+                _para(row.get("quantity"), max_len=40),
+                _para(row.get("action_plan"), max_len=1200),
+                _para(row.get("responsible"), max_len=120),
+                _para(_format_date(row.get("date")), max_len=40),
+            ]
+        )
+
+    table = Table(data, colWidths=col_widths, hAlign="LEFT", repeatRows=1)
+    table.setStyle(TableStyle([*_header_table_style(), *_grid_table_style()]))
+    return table
+
+
+def _team_table(members: list[dict[str, Any]]) -> Table | None:
+    if not members:
+        return None
+
+    header = ["Nome", "Área", "Função"]
+    col_widths = [
+        CONTENT_WIDTH * 0.40,
+        CONTENT_WIDTH * 0.35,
+        CONTENT_WIDTH * 0.25,
+    ]
+    data: list[list[Any]] = [header]
+    for member in members:
+        name = _text(member.get("member_name"))
+        if name == "—":
+            continue
+        role = "Líder" if member.get("is_leader") else "Membro"
+        data.append(
+            [
+                _para(name, max_len=120),
+                _para(member.get("department"), max_len=120),
+                _para(role, max_len=40),
+            ]
+        )
+
+    if len(data) <= 1:
+        return None
+
+    table = Table(data, colWidths=col_widths, hAlign="LEFT", repeatRows=1)
+    table.setStyle(TableStyle([*_header_table_style(), *_grid_table_style()]))
+    return table
+
+
+def _documentation_table(rows: list[dict[str, Any]]) -> Table | None:
+    if not rows:
+        return None
+
+    header = ["Documento", "Responsável", "Data"]
+    col_widths = [
+        CONTENT_WIDTH * 0.50,
+        CONTENT_WIDTH * 0.30,
+        CONTENT_WIDTH * 0.20,
+    ]
+    data: list[list[Any]] = [header]
+    for item in rows:
+        if not any(item.get(key) for key in ("document", "responsible", "date")):
+            continue
+        data.append(
+            [
+                _para(item.get("document"), max_len=800),
+                _para(item.get("responsible"), max_len=120),
+                _para(_format_date(item.get("date")), max_len=40),
+            ]
+        )
+
+    if len(data) <= 1:
+        return None
+
+    table = Table(data, colWidths=col_widths, hAlign="LEFT", repeatRows=1)
+    table.setStyle(TableStyle([*_header_table_style(), *_grid_table_style()]))
     return table
 
 
@@ -293,10 +440,10 @@ def _build_pdf(story: list[Any]) -> bytes:
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        leftMargin=14 * mm,
-        rightMargin=14 * mm,
-        topMargin=14 * mm,
-        bottomMargin=14 * mm,
+        leftMargin=PAGE_MARGIN_MM * mm,
+        rightMargin=PAGE_MARGIN_MM * mm,
+        topMargin=PAGE_MARGIN_MM * mm,
+        bottomMargin=PAGE_MARGIN_MM * mm,
         title="PAC Qualidade",
     )
     doc.build(story)
@@ -400,36 +547,21 @@ def build_rnc_8d_pdf(detail: dict[str, Any]) -> bytes:
     ]
     _append_section(story, "D2 — Descrição da NC", [_kv_table(nc_rows)])
 
-    team_lines = []
-    for member in team:
-        role = "Líder" if member.get("is_leader") else "Membro"
-        team_lines.append(
-            f"{role}: {_text(member.get('member_name'))} · {_text(member.get('department'))}"
-        )
-    _append_section(story, "D3 — Equipe", _bullet_list(team_lines))
+    team_table = _team_table(team)
+    if team_table is not None:
+        _append_section(story, "D3 — Equipe", [team_table])
+    else:
+        _append_section(story, "D3 — Equipe", _bullet_list([]))
 
-    containment_lines = []
-    area_labels = {
-        "end_customer": "Cliente final",
-        "client_plant": "Planta do cliente",
-        "supplier": "Fornecedor",
-    }
-    for row in containment_rows:
-        area = area_labels.get(str(row.get("area") or ""), _text(row.get("area")))
-        containment_lines.append(
-            f"{area}: qtd {_text(row.get('quantity'))} · ação {_text(row.get('action_plan'))} · "
-            f"resp. {_text(row.get('responsible'))} · {_format_date(row.get('date'))}"
-        )
-    _append_section(story, "D4 — Contenção", _bullet_list(containment_lines))
+    containment_table = _containment_table(containment_rows)
+    if containment_table is not None:
+        _append_section(story, "D4 — Contenção", [containment_table])
+    else:
+        _append_section(story, "D4 — Contenção", _bullet_list([]))
 
     _append_section(story, "D4 — Análise de causa", _bullet_list(_five_whys_items(five_whys)))
 
-    corrective = [
-        action
-        for action in actions
-        if action.get("action_type") == "corrective" or action.get("cause_track")
-    ]
-    actions_table = _actions_table(corrective or actions)
+    actions_table = _actions_table(actions)
     if actions_table is not None:
         _append_section(story, "D5 — Ações corretivas", [actions_table])
 
@@ -457,12 +589,11 @@ def build_rnc_8d_pdf(detail: dict[str, Any]) -> bytes:
     ]
     _append_section(story, "D7 — Ação preventiva", [_kv_table(preventive_rows)])
 
-    documentation_lines = [
-        f"{_text(item.get('document'))} · resp. {_text(item.get('responsible'))} · {_format_date(item.get('date'))}"
-        for item in documentation
-        if any(item.get(key) for key in ("document", "responsible", "date"))
-    ]
-    _append_section(story, "D8 — Padronização / documentação", _bullet_list(documentation_lines))
+    documentation_table = _documentation_table(documentation)
+    if documentation_table is not None:
+        _append_section(story, "D8 — Padronização / documentação", [documentation_table])
+    else:
+        _append_section(story, "D8 — Padronização / documentação", _bullet_list([]))
 
     evidence_items = _evidence_items(detail.get("evidences") or [])
     _append_section(story, "Anexos / evidências", _bullet_list(evidence_items))
