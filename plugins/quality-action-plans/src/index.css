@@ -778,6 +778,18 @@
   font-size: var(--pac-font-sm);
 }
 
+.dashboard-quality-action-plans .pac-table-select--status {
+  width: 100%;
+  min-width: 9.5rem;
+  max-width: 11rem;
+  padding: 4px 8px;
+}
+
+.dashboard-quality-action-plans .pac-table-select:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .dashboard-quality-action-plans .pac-badge--scope-internal {
   background: color-mix(in srgb, var(--pac-accent) 12%, transparent);
   color: var(--pac-accent);

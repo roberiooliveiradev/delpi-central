@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { fetchMyQueue } from "../api/actionPlansApi";
+import { fetchMyQueue, updatePlanAction } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
 import { MyQueueTable } from "../components/MyQueueTable";
 import { PageHeader } from "../components/PageHeader";
@@ -23,6 +23,7 @@ export function MyQueuePage({ onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [savingActionId, setSavingActionId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,6 +51,22 @@ export function MyQueuePage({ onNavigate }: Props) {
     if (branches.length <= 1) return items;
     return items.filter((item) => branches.includes(item.branch_code ?? ""));
   }, [branches, items]);
+
+  async function handleStatusChange(item: MyQueueItem, status: string) {
+    if (status === item.action_status) {
+      return;
+    }
+    setSavingActionId(item.action_id);
+    setError(null);
+    try {
+      await updatePlanAction(item.plan_id, item.action_id, { status });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao atualizar status da ação.");
+    } finally {
+      setSavingActionId(null);
+    }
+  }
 
   return (
     <>
@@ -113,12 +130,14 @@ export function MyQueuePage({ onNavigate }: Props) {
           <MyQueueTable
             items={visibleItems}
             loading={loading}
+            savingActionId={savingActionId}
             emptyMessage={
               overdueOnly
                 ? "Nenhuma ação atrasada atribuída a você."
                 : "Nenhuma ação pendente atribuída a você."
             }
             onNavigate={onNavigate}
+            onStatusChange={(item, status) => void handleStatusChange(item, status)}
           />
         </section>
       </div>

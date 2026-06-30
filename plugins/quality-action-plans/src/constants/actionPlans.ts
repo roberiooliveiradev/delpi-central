@@ -133,6 +133,11 @@ export const ACTION_STATUSES: Record<string, string> = {
   overdue: "Atrasada",
 };
 
+/** Status editáveis na UI (exclui «atrasada», derivada do prazo). */
+export const ACTION_STATUS_OPTIONS = Object.entries(ACTION_STATUSES)
+  .filter(([value]) => value !== "overdue")
+  .map(([value, label]) => ({ value, label }));
+
 export const EFFECTIVENESS_STATUSES: Array<{ value: string; label: string }> = [
   { value: "pending", label: "Pendente" },
   { value: "effective", label: "Eficaz" },

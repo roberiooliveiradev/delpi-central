@@ -1,7 +1,7 @@
 import { Eye } from "lucide-react";
 
 import {
-  ACTION_STATUSES,
+  ACTION_STATUS_OPTIONS,
   actionTypeLabel,
   branchLabel,
   detailPath,
@@ -17,10 +17,19 @@ type Props = {
   items: MyQueueItem[];
   loading?: boolean;
   emptyMessage?: string;
+  savingActionId?: string | null;
   onNavigate: (path: string) => void;
+  onStatusChange: (item: MyQueueItem, status: string) => void;
 };
 
-export function MyQueueTable({ items, loading, emptyMessage, onNavigate }: Props) {
+export function MyQueueTable({
+  items,
+  loading,
+  emptyMessage,
+  savingActionId,
+  onNavigate,
+  onStatusChange,
+}: Props) {
   if (loading) {
     return <p className="pac-muted">Carregando sua fila…</p>;
   }
@@ -70,7 +79,26 @@ export function MyQueueTable({ items, loading, emptyMessage, onNavigate }: Props
                 ) : null}
                 <span>{formatDate(item.due_date)}</span>
               </td>
-              <td>{ACTION_STATUSES[item.action_status] ?? item.action_status}</td>
+              <td>
+                <select
+                  className="pac-table-select pac-table-select--status"
+                  value={
+                    ACTION_STATUS_OPTIONS.some((option) => option.value === item.action_status)
+                      ? item.action_status
+                      : "pending"
+                  }
+                  aria-label={`Status da ação ${item.plan_code ?? item.action_id}`}
+                  title={PAC_HELP_TOOLTIPS.tables.actionStatus}
+                  disabled={savingActionId === item.action_id}
+                  onChange={(event) => onStatusChange(item, event.target.value)}
+                >
+                  {ACTION_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </td>
               <td>{branchLabel(item.branch_code)}</td>
               <td>{item.customer_name ?? "—"}</td>
               <td>
