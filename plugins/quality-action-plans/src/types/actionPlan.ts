@@ -38,6 +38,7 @@ export type ActionPlanSummary = {
   effectiveness_proposed_status?: string | null;
   effectiveness_submitted_at?: string | null;
   effectiveness_submitted_by?: string | null;
+  effectiveness_submitted_by_name?: string | null;
 };
 
 export type Pagination = {
@@ -159,6 +160,7 @@ export type DashboardEffectivenessPendingPlanAlert = {
   effectiveness_proposed_status?: string | null;
   effectiveness_submitted_at?: string | null;
   effectiveness_submitted_by?: string | null;
+  effectiveness_submitted_by_name?: string | null;
 };
 
 export type DashboardEffectivenessPendingAlert = {
@@ -279,6 +281,7 @@ export type ActionPlanDetail = {
     effectiveness_proposed_status?: string | null;
     effectiveness_submitted_at?: string | null;
     effectiveness_submitted_by?: string | null;
+    effectiveness_submitted_by_name?: string | null;
     effectiveness_reviewed_at?: string | null;
     effectiveness_reviewed_by?: string | null;
     effectiveness_rejection_reason?: string | null;

@@ -44,6 +44,7 @@ PLAN_SELECT = """
            p.effectiveness_proposed_status,
            p.effectiveness_submitted_at,
            p.effectiveness_submitted_by,
+           p.effectiveness_submitted_by_name,
            p.effectiveness_reviewed_at,
            p.effectiveness_reviewed_by,
            p.effectiveness_rejection_reason,

@@ -916,7 +916,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    p.severity,
                    p.effectiveness_proposed_status,
                    p.effectiveness_submitted_at,
-                   p.effectiveness_submitted_by
+                   p.effectiveness_submitted_by,
+                   p.effectiveness_submitted_by_name
               FROM quality.quality_action_plans p
              WHERE {where_clause}
              ORDER BY p.effectiveness_submitted_at ASC NULLS LAST, p.code ASC
@@ -941,6 +942,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                         else row.get("effectiveness_submitted_at")
                     ),
                     "effectiveness_submitted_by": row.get("effectiveness_submitted_by"),
+                    "effectiveness_submitted_by_name": row.get("effectiveness_submitted_by_name"),
                 }
                 for row in top_rows
             ],
@@ -2272,6 +2274,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    effectiveness_notes = %s,
                    effectiveness_submitted_at = NOW(),
                    effectiveness_submitted_by = %s,
+                   effectiveness_submitted_by_name = %s,
                    effectiveness_reviewed_at = NULL,
                    effectiveness_reviewed_by = NULL,
                    effectiveness_rejection_reason = NULL,
@@ -2282,6 +2285,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields["effectiveness_status"],
                 fields.get("notes"),
                 updated_by,
+                updated_by_name,
                 plan_id,
             ),
             auto_commit=False,
@@ -2477,6 +2481,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    effectiveness_proposed_status = NULL,
                    effectiveness_submitted_at = NULL,
                    effectiveness_submitted_by = NULL,
+                   effectiveness_submitted_by_name = NULL,
                    effectiveness_reviewed_at = NOW(),
                    effectiveness_reviewed_by = %s,
                    effectiveness_rejection_reason = NULL,

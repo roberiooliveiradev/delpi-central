@@ -31,9 +31,12 @@ def test_submit_effectiveness_review_writes_history_and_audit_log():
         "plan-1",
         {"effectiveness_status": "effective", "notes": "Evidência anexada."},
         updated_by="analyst-01",
+        updated_by_name="Ana Analista",
     )
 
     assert result is not None
+    execute_args = repo.execute.call_args[0][1]
+    assert execute_args[3] == "Ana Analista"
     repo.append_history.assert_called_once()
     assert repo.append_history.call_args.kwargs["event_type"] == "effectiveness_submitted"
     repo.append_audit_log.assert_called_once()

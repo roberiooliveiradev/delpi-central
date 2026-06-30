@@ -8,6 +8,7 @@ import {
   EFFECTIVENESS_STATUSES,
 } from "../../constants/actionPlans";
 import type { DashboardEffectivenessPendingAlert } from "../../types/actionPlan";
+import { formatEffectivenessSubmittedBy } from "../../utils/actorDisplay";
 import { KpiCard } from "../ui/KpiCard";
 import { SectionCard } from "../ui/SectionCard";
 
@@ -80,8 +81,8 @@ export function DashboardEffectivenessPendingCard({
                   </strong>
                   <p className="pac-muted">
                     {branchLabel(plan.branch_code)} · proposta: {proposedLabel(plan.effectiveness_proposed_status)}
-                    {plan.effectiveness_submitted_by
-                      ? ` · por ${plan.effectiveness_submitted_by}`
+                    {plan.effectiveness_submitted_by || plan.effectiveness_submitted_by_name
+                      ? ` · por ${formatEffectivenessSubmittedBy(plan)}`
                       : ""}
                   </p>
                 </div>

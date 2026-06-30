@@ -21,6 +21,7 @@ import {
 } from "../constants/actionPlans";
 import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
+import { formatEffectivenessSubmittedBy } from "../utils/actorDisplay";
 import { usePacPermissions } from "../context/PacPermissionsContext";
 
 const T = PAC_HELP_TOOLTIPS.tables;
@@ -193,7 +194,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                       </td>
                       <td>{proposedLabel(plan.effectiveness_proposed_status)}</td>
                       <td>{formatDateTime(plan.effectiveness_submitted_at)}</td>
-                      <td>{plan.effectiveness_submitted_by ?? "—"}</td>
+                      <td>{formatEffectivenessSubmittedBy(plan)}</td>
                       <td>
                         <div className="pac-table-actions">
                           <button
