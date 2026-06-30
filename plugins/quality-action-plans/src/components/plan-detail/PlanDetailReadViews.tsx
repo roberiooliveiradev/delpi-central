@@ -316,13 +316,15 @@ export function PlanProblemReadContent({
         </>
       ) : null}
 
-      <ReadOnlyField
-        label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
-        hint={PAC_HELP_TOOLTIPS.form.description}
-        value={identification.reported_problem}
-        fullWidth
-        multiline
-      />
+      <section className="pac-ficha-section pac-ficha-section--separated">
+        <ReadOnlyField
+          label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
+          hint={PAC_HELP_TOOLTIPS.form.description}
+          value={identification.reported_problem}
+          fullWidth
+          multiline
+        />
+      </section>
     </div>
   );
 }

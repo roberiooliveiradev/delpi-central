@@ -2583,6 +2583,12 @@
   color: var(--pac-text);
 }
 
+.dashboard-quality-action-plans .pac-subsection-title:not(:first-child) {
+  margin-top: 4px;
+  padding-top: calc(var(--pac-section-gap) - 4px);
+  border-top: 1px solid color-mix(in srgb, var(--pac-card-border) 62%, transparent);
+}
+
 .dashboard-quality-action-plans .pac-plan-status-bar {
   display: flex;
   flex-direction: column;
@@ -3905,7 +3911,14 @@
 }
 
 .dashboard-quality-action-plans .pac-section-read .pac-subsection-title:not(:first-child) {
-  margin-top: 12px;
+  margin-top: 4px;
+  padding-top: calc(var(--pac-section-gap) - 4px);
+}
+
+.dashboard-quality-action-plans .pac-ficha-section--separated {
+  margin-top: 4px;
+  padding-top: calc(var(--pac-section-gap) - 4px);
+  border-top: 1px solid color-mix(in srgb, var(--pac-card-border) 62%, transparent);
 }
 
 .dashboard-quality-action-plans .pac-ficha-section {

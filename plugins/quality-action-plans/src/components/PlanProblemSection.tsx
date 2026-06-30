@@ -372,14 +372,16 @@ export function PlanProblemSection({
 
       {materialSection}
 
-      <TextAreaField
-        id="pac-detail-problem"
-        label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
-        hint={PAC_HELP_TOOLTIPS.form.description}
-        value={identificationForm.reported_problem}
-        onChange={(reported_problem) => setField("reported_problem", reported_problem)}
-        fullWidth
-      />
+      <section className="pac-ficha-section pac-ficha-section--separated">
+        <TextAreaField
+          id="pac-detail-problem"
+          label={RNC8D_SHARED_FIELD_LABELS.reportedProblem}
+          hint={PAC_HELP_TOOLTIPS.form.description}
+          value={identificationForm.reported_problem}
+          onChange={(reported_problem) => setField("reported_problem", reported_problem)}
+          fullWidth
+        />
+      </section>
       <FormActions align="end">
         <SectionSaveButton
           saveKey={identificationSaveKey}
