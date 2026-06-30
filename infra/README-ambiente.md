@@ -193,6 +193,32 @@ Guia completo: [`minha-delpi-ai-api/docs/operations/chat-attachment-storage.md`]
 
 ---
 
+## Evidências PAC e anexos Auditoria 5S (api-delpi)
+
+Uploads de evidências do plugin **quality-action-plans** e anexos de NC da **auditoria-5s** ficam no filesystem do container `api-delpi`, path padrão `/app/data/pac-evidences` e `/app/data/audit-5s-nc`.
+
+**Sem volume no host**, `docker compose up -d --force-recreate api-delpi` apaga os binários — o Postgres (`plugins_hub`) mantém o registro e o download retorna **«Arquivo não encontrado»**.
+
+| Variável | Default no container | Host (volume) |
+|----------|----------------------|---------------|
+| `PAC_EVIDENCE_UPLOAD_DIR` | `/app/data/pac-evidences` | `${DELPI_DATA_HOST_DIR}/pac-evidences` |
+| `AUDIT_5S_NC_UPLOAD_DIR` | `/app/data/audit-5s-nc` | `${DELPI_DATA_HOST_DIR}/audit-5s-nc` |
+
+```bash
+# srv-api (produção)
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/audit-5s-nc
+# em infra/.env:
+DELPI_DATA_HOST_DIR=/var/lib/delpi
+
+cd ~/projetos/delpi-central/infra
+docker compose -f docker-compose.yml up -d --force-recreate api-delpi
+docker exec delpi-api-delpi ls -la /app/data/pac-evidences
+```
+
+Anexos enviados **antes** deste volume precisam ser **reenviados** (não há backup automático).
+
+---
+
 ## Produção CPU (srv-api, 4 vCPU · ~15 GB)
 
 Perfil enxuto: **`infra/.env.prod.cpu.example`** — só tuning do host e overrides `false` (router, agentic, semantic rank, colunas R16, LanguageTool). O restante vem do default do `docker-compose.yml` prod.

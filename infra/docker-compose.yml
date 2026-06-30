@@ -889,6 +889,8 @@ services:
       SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID: ${SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID:-}
 
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
+      PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
+      AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -901,6 +903,11 @@ services:
       - keycloak
       - postgres-plugins
       - transformometro-api
+
+    volumes:
+      # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-nc:/app/data/audit-5s-nc
 
     networks:
       - delpi-network

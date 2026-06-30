@@ -9,6 +9,7 @@
 
 - [ ] Migration V006 **e V007** aplicadas (`quality-action-plans`)
 - [ ] Template `rnc_8d_template.xlsx` no servidor (`PAC_EVIDENCE_UPLOAD_DIR` / pasta de templates)
+- [ ] Volume persistente de evidências PAC (`${DELPI_DATA_HOST_DIR}/pac-evidences` → `/app/data/pac-evidences` no `api-delpi`)
 - [ ] Plugin publicado (`remoteEntry.js` 200)
 - [ ] JWT com `quality-action-plans.read` + `.write`
 - [ ] `PAC_QUALITY_API_KEY` configurada (testes do agente)

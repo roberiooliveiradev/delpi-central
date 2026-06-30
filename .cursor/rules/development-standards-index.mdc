@@ -13,6 +13,7 @@ alwaysApply: true
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
 | `presentation-operational-decoupling.mdc` | Apresentação operacional — cobertura, consolidado, dataAnswer vs markdown; **definição de desacoplamento** |
 | `clean-code-architecture-guardrails.mdc` | Desvio de camada, patch local, contrato metadata ambíguo |
+| `persistent-upload-storage.mdc` | **Upload em disco** — volume no Compose; nunca só filesystem do container |
 | `test-and-commit.mdc` | Ao concluir alteração de código — testes; commit só se pedido |
 
 ## Chat e API (`minha-delpi-ai-api`)
@@ -42,6 +43,7 @@ alwaysApply: true
 |-------|--------|
 | `api-delpi-response-contract.mdc` | Envelope, `meta`, `route_contract_registry`, RBAC |
 | `sql-query-development.mdc` | SQL TOTVS — práticas, medição de latência/peso, NOLOCK, cache |
+| `persistent-upload-storage.mdc` | Evidências PAC, anexos NC, qualquer `*_UPLOAD_DIR` |
 
 ## Frontend (`plugins/minha-delpi-chat`)
 
@@ -62,6 +64,7 @@ Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
 Nova intenção operacional → operational-api-routing → api_route_domains.json
 Texto novo ao usuário   → assistant-content-json
 Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)
+Upload / anexo em disco     → persistent-upload-storage → volume Compose + DELPI_DATA_HOST_DIR
 ```
 
 ## Ordem de prioridade em conflito

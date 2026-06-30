@@ -27,8 +27,19 @@ Não entregar só o endpoint. Ver também: `development-standards-index.mdc`, `a
 | 4 | Chat-critical: `openapi_agent_metadata.agent_route()` | interface/http |
 | 5 | Permissão em `api_delpi_permissions.py` | security |
 | 6 | Smoke: `meta.operationId` + `meta.entity` | `api-delpi/tests/` |
+| 7 | **Upload multipart/binário:** volume persistente no Compose | `persistent-upload-storage.mdc` |
 
 Shapes: `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` — ver playbook-10 § 4.3.
+
+### Rotas com upload de arquivo
+
+Se a rota aceita `UploadFile`, `multipart` ou grava em `*_UPLOAD_DIR`:
+
+1. Volume `${DELPI_DATA_HOST_DIR}/<subdir>` → path do container em **prod e dev** compose.
+2. Documentar em `infra/README-ambiente.md` e `env.local.example`.
+3. Smoke pós-`force-recreate`: metadado no banco **e** arquivo no host.
+
+**Proibido:** persistir anexo de usuário só no filesystem efêmero do container ou em `/tmp`.
 
 ---
 

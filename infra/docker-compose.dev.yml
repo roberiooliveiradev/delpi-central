@@ -827,6 +827,8 @@ services:
 
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
       DRAWING_PDF_LIBRARY_DIR: ${DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
+      PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
+      AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -840,6 +842,9 @@ services:
       - ../shared:/shared
       # FILESERVER corporativo (X:\DESENHOS DELPI EM PDF) — ver infra/env.local.example
       - ${DRAWING_PDF_FILESERVER_HOST_PATH:-/mnt/x/DESENHOS DELPI EM PDF}:/drawing-pdfs:ro
+      # Evidências PAC e anexos Auditoria 5S — persistir no host (sobrevive a rebuild do container)
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-nc:/app/data/audit-5s-nc
 
     depends_on:
       keycloak:

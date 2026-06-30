@@ -184,7 +184,9 @@ Vínculos com Kaizen ou Auditoria 5S não usam mais colunas em `quality_action_p
 | `description` | string | Opcional |
 | `knowledge_visible` | bool | Default `true` |
 
-**Storage:** variável `PAC_EVIDENCE_UPLOAD_DIR` (default `/app/data/pac-quality-evidences`).
+**Storage:** variável `PAC_EVIDENCE_UPLOAD_DIR` (default `/app/data/pac-evidences`).
+
+**Deploy:** montar volume persistente no host — ver `infra/docker-compose.yml` (`${DELPI_DATA_HOST_DIR}/pac-evidences`). Sem volume, anexos são perdidos em `docker compose up --force-recreate api-delpi` (metadado permanece no Postgres).
 
 ### Relatório 8D (V006+)
 

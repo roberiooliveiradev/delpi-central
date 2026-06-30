@@ -33,6 +33,7 @@ Interromper ou sinalizar com **«⚠ Desvio de clean architecture»** quando:
 5. **Teste que asserta comportamento errado** só para passar CI, em vez de corrigir a regra.
 6. **Lógica de apresentação/intenção duplicada** em `Send*` e `Stream*` sem extrair para serviço base.
 7. **Acoplamento por rota** — novo `*_presenter.py`, `visualBuilders`/`tableAssembly`, ramo legacy no pipeline, ou serviço `ChatOperational{Route}*` em vez de schema-driven + `profileKey` (ver `schema-first-presentation-delivered.mdc`).
+8. **Upload sem volume persistente** — `*_UPLOAD_DIR`, `*Storage.save`, `write_bytes` em disco sem bind mount no Compose → ver `persistent-upload-storage.mdc`.
 
 Formato do aviso (obrigatório quando aplicável):
 

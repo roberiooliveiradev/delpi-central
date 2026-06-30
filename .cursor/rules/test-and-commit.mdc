@@ -17,6 +17,7 @@ Executar o que couber ao escopo antes de considerar a tarefa concluída:
 | MFE chat | `npm run build` ou `npm test` em `plugins/minha-delpi-chat` |
 | Gates apresentação | `scripts/audit_presentation_coverage.py --check-profiles` |
 | Nova rota | Ver gates em **`new-api-route-checklist.mdc`** § 4 |
+| Upload em disco | Volume no Compose + doc README — **`persistent-upload-storage.mdc`** |
 
 Corrigir falhas antes de entregar. Resumir no fim: testes executados (pass/fail).
 

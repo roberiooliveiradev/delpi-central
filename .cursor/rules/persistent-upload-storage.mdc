@@ -1,0 +1,56 @@
+---
+description: Uploads de usuário — volume persistente obrigatório; nunca só no filesystem do container
+alwaysApply: true
+---
+
+# Storage persistente de uploads
+
+## Princípio
+
+**Metadado no banco + binário no disco** são um par indissociável. Se o binário some no deploy, o registro vira lixo e o download retorna «Arquivo não encontrado».
+
+**Nunca** tratar upload de negócio (evidência PAC, anexo NC, PDF chat, fonte de projeto) como arquivo **temporário** do container.
+
+## O que NÃO fazer
+
+- Gravar em `/app/data/...`, `/tmp/...` ou qualquer path **sem** volume montado no `docker-compose.yml` / `docker-compose.dev.yml`.
+- Confiar que `mkdir` no startup «resolve» — recriar o container apaga tudo.
+- Introduzir `*_UPLOAD_DIR` / `*_STORAGE_PATH` no código sem espelhar no Compose + `env*.example` + `infra/README-ambiente.md`.
+- Usar storage temporário «só até o deploy» — anexo de usuário é **durável** até delete explícito.
+
+## O que fazer
+
+| Passo | Onde |
+|-------|------|
+| Variável de path | `app/config.py` — default dentro do container (ex.: `/app/data/pac-evidences`) |
+| Volume host | `infra/docker-compose.yml` e `docker-compose.dev.yml` — `${DELPI_DATA_HOST_DIR}/<subdir>:/app/data/<subdir>` |
+| Base no host | `DELPI_DATA_HOST_DIR` — dev: `${HOME}/.delpi`; prod: `/var/lib/delpi` |
+| Doc operação | `infra/README-ambiente.md` — tabela path container × host |
+| Homologação | Recreate do serviço → arquivo ainda existe no host |
+
+Padrão canônico (igual chat attachments):
+
+```yaml
+volumes:
+  - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
+```
+
+Serviços com upload hoje: `api-delpi` (PAC, Auditoria 5S), `minha-delpi-ai-api` (anexos chat, fontes).
+
+## Checklist antes de merge (upload novo ou alterado)
+
+- [ ] Existe `*_UPLOAD_DIR` ou serviço `*Storage` que chama `write_bytes` / `save` em disco?
+- [ ] Volume correspondente nos **dois** composes (prod + dev)?
+- [ ] `env.local.example` / `append-missing-env-production.sh` / README atualizados?
+- [ ] Homologação documenta recreate sem perda de arquivo?
+- [ ] **Não** há path só em `/tmp` para dado que o usuário espera baixar depois.
+
+## Processamento temporário (permitido)
+
+Arquivo **só durante a request** (ex.: ler Excel em memória, PDF para export) — OK em `/tmp` ou `BytesIO`, desde que o artefato durável (se houver) já tenha sido salvo no volume persistente.
+
+## Referências
+
+- `infra/README-ambiente.md` — § Anexos persistentes + § Evidências PAC
+- `api-delpi/docs/api/quality-action-plans-pac.md` — storage PAC
+- `minha-delpi-ai-api/docs/operations/chat-attachment-storage.md` — chat
