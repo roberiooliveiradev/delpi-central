@@ -86,6 +86,68 @@ def resolve_plan_sla(
     }
 
 
+_TERMINAL_ACTION_STATUSES = frozenset({"completed", "cancelled"})
+
+
+def resolve_action_queue_sla(
+    *,
+    due_date: datetime | date | str | None,
+    action_status: str | None,
+    completed_at: datetime | date | str | None = None,
+    is_overdue: bool | None = None,
+    completed_late: bool | None = None,
+    reference: datetime | None = None,
+) -> dict[str, Any]:
+    status = str(action_status or "").lower()
+    if status == "completed":
+        late = completed_late
+        if late is None:
+            due = _as_utc_datetime(due_date)
+            done = _as_utc_datetime(completed_at)
+            late = bool(
+                due is not None
+                and done is not None
+                and done.date() > due.date()
+            )
+        return {
+            "is_overdue": False,
+            "completed_late": late,
+            "is_due_soon": False,
+            "days_until_due": None,
+            "due_sla_level": "completed_late" if late else "ok",
+        }
+    if status in _TERMINAL_ACTION_STATUSES:
+        return {
+            "is_overdue": False,
+            "completed_late": False,
+            "is_due_soon": False,
+            "days_until_due": None,
+            "due_sla_level": "ok",
+        }
+
+    open_overdue = is_overdue
+    if open_overdue is None:
+        due = _as_utc_datetime(due_date)
+        end = reference or datetime.now(timezone.utc)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=timezone.utc)
+        else:
+            end = end.astimezone(timezone.utc)
+        open_overdue = bool(due is not None and due.date() < end.date())
+
+    sla = resolve_action_due_sla(
+        due_date=due_date,
+        is_overdue=open_overdue,
+        reference=reference,
+    )
+    return {
+        **sla,
+        "is_overdue": open_overdue,
+        "completed_late": False,
+        "is_due_soon": sla["due_sla_level"] == "due_soon",
+    }
+
+
 def resolve_action_due_sla(
     *,
     due_date: datetime | date | str | None,

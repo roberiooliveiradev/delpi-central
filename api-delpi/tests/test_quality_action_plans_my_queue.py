@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date, datetime, timezone
 from unittest.mock import MagicMock
 
 from app.infrastructure.persistence.plugins.repositories.quality_action_plans.postgres_quality_action_plan_read_repository import (
@@ -31,7 +32,15 @@ def test_list_my_queue_filters_by_responsible_user():
 
 def test_list_my_queue_overdue_only_filter():
     _count_query, list_query, _params = _capture_my_queue_query(user_id="user-42", overdue_only=True)
+    assert "a.status NOT IN ('completed', 'cancelled')" in list_query
     assert "a.due_date < CURRENT_DATE" in list_query
+
+
+def test_list_my_queue_sql_excludes_completed_from_overdue_flag():
+    _count_query, list_query, _params = _capture_my_queue_query(user_id="user-42")
+    assert "a.status NOT IN ('completed', 'cancelled')" in list_query
+    assert "completed_late" in list_query
+    assert "a.completed_at" in list_query
 
 
 def test_list_my_queue_include_completed_filter():
@@ -39,8 +48,10 @@ def test_list_my_queue_include_completed_filter():
         user_id="user-42",
         include_completed=True,
     )
-    assert "a.status <> 'cancelled'" in list_query
-    assert "a.status NOT IN ('completed', 'cancelled')" not in list_query
+    assert "WHERE" in list_query
+    where_clause = list_query.split("WHERE", 1)[1].split("ORDER BY", 1)[0]
+    assert "a.status <> 'cancelled'" in where_clause
+    assert "a.status NOT IN ('completed', 'cancelled')" not in where_clause
 
 
 def test_update_action_clears_responsible_user_id():
@@ -82,7 +93,7 @@ def test_list_my_queue_maps_rows():
     repo.fetch_one = MagicMock(
         side_effect=[
             {"open_actions": 1, "overdue_actions": 1},
-            {"total": 1},
+            {"total": 2},
         ]
     )
     repo.fetch_all = MagicMock(
@@ -96,8 +107,10 @@ def test_list_my_queue_maps_rows():
                 "responsible_name": "Ana",
                 "department": "Qualidade",
                 "due_date": None,
+                "completed_at": None,
                 "action_status": "in_progress",
                 "is_overdue": False,
+                "completed_late": False,
                 "plan_code": "PAC-001",
                 "plan_title": "Oxidação",
                 "plan_status": "in_progress",
@@ -106,13 +119,38 @@ def test_list_my_queue_maps_rows():
                 "nonconformity_scope": "external",
                 "customer_name": "Cliente A",
                 "product_code": "90261805",
-            }
+            },
+            {
+                "action_id": "act-2",
+                "plan_id": "plan-1",
+                "action_type": "corrective",
+                "description": "Fechar NC",
+                "responsible_user_id": "user-42",
+                "responsible_name": "Ana",
+                "department": "Qualidade",
+                "due_date": date(2026, 6, 20),
+                "completed_at": datetime(2026, 6, 24, 10, 0, tzinfo=timezone.utc),
+                "action_status": "completed",
+                "is_overdue": False,
+                "completed_late": True,
+                "plan_code": "PAC-001",
+                "plan_title": "Oxidação",
+                "plan_status": "in_progress",
+                "plan_severity": "high",
+                "branch_code": "01",
+                "nonconformity_scope": "external",
+                "customer_name": "Cliente A",
+                "product_code": "90261805",
+            },
         ]
     )
 
-    result = repo.list_my_queue(user_id="user-42")
+    result = repo.list_my_queue(user_id="user-42", include_completed=True)
 
     assert result["user_id"] == "user-42"
     assert result["summary"]["open_actions"] == 1
     assert result["items"][0]["plan_code"] == "PAC-001"
     assert result["items"][0]["action_type"] == "corrective"
+    assert result["items"][1]["is_overdue"] is False
+    assert result["items"][1]["completed_late"] is True
+    assert result["items"][1]["completed_at"] is not None

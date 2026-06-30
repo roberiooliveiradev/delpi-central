@@ -24,7 +24,7 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
 
 from app.domain.services.quality_action_plans.quality_action_plan_sla_service import (
     CRITICAL_STALL_DAYS,
-    resolve_action_due_sla,
+    resolve_action_queue_sla,
 )
 
 
@@ -1125,7 +1125,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             base_filters.append("p.branch_code = %s")
             params.append(branch_code)
         if overdue_only:
-            base_filters.append("a.due_date < CURRENT_DATE")
+            base_filters.append(
+                "a.status NOT IN ('completed', 'cancelled')"
+                " AND a.due_date IS NOT NULL"
+                " AND a.due_date < CURRENT_DATE"
+            )
 
         summary_filters = [*base_filters, "a.status NOT IN ('completed', 'cancelled')"]
         summary_where = " AND ".join(summary_filters)
@@ -1172,8 +1176,19 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    a.responsible_name,
                    a.department,
                    a.due_date,
+                   a.completed_at,
                    a.status AS action_status,
-                   (a.due_date IS NOT NULL AND a.due_date < CURRENT_DATE) AS is_overdue,
+                   (
+                       a.status NOT IN ('completed', 'cancelled')
+                       AND a.due_date IS NOT NULL
+                       AND a.due_date < CURRENT_DATE
+                   ) AS is_overdue,
+                   (
+                       a.status = 'completed'
+                       AND a.due_date IS NOT NULL
+                       AND a.completed_at IS NOT NULL
+                       AND a.completed_at::date > a.due_date
+                   ) AS completed_late,
                    p.code AS plan_code,
                    p.title AS plan_title,
                    p.status AS plan_status,
@@ -1196,11 +1211,22 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         items: list[dict[str, Any]] = []
         for row in rows:
             due_date = row.get("due_date")
+            completed_at = row.get("completed_at")
             due_date_value = (
                 due_date.isoformat() if hasattr(due_date, "isoformat") else due_date
             )
-            is_overdue = bool(row.get("is_overdue"))
-            due_sla = resolve_action_due_sla(due_date=due_date, is_overdue=is_overdue)
+            completed_at_value = (
+                completed_at.isoformat()
+                if hasattr(completed_at, "isoformat")
+                else completed_at
+            )
+            queue_sla = resolve_action_queue_sla(
+                due_date=due_date,
+                action_status=row.get("action_status"),
+                completed_at=completed_at,
+                is_overdue=bool(row.get("is_overdue")),
+                completed_late=bool(row.get("completed_late")),
+            )
             items.append(
                 {
                     "action_id": str(row["action_id"]),
@@ -1211,11 +1237,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     "responsible_name": row.get("responsible_name"),
                     "department": row.get("department"),
                     "due_date": due_date_value,
+                    "completed_at": completed_at_value,
                     "action_status": row.get("action_status"),
-                    "is_overdue": is_overdue,
-                    "is_due_soon": due_sla["due_sla_level"] == "due_soon",
-                    "days_until_due": due_sla["days_until_due"],
-                    "due_sla_level": due_sla["due_sla_level"],
+                    "is_overdue": queue_sla["is_overdue"],
+                    "completed_late": queue_sla["completed_late"],
+                    "is_due_soon": queue_sla["is_due_soon"],
+                    "days_until_due": queue_sla["days_until_due"],
+                    "due_sla_level": queue_sla["due_sla_level"],
                     "plan_code": row.get("plan_code"),
                     "plan_title": row.get("plan_title"),
                     "plan_status": row.get("plan_status"),

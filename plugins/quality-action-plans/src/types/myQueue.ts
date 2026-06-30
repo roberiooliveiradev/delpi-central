@@ -12,11 +12,13 @@ export type MyQueueItem = {
   responsible_name?: string | null;
   department?: string | null;
   due_date?: string | null;
+  completed_at?: string | null;
   action_status: string;
   is_overdue: boolean;
+  completed_late?: boolean;
   is_due_soon?: boolean;
   days_until_due?: number | null;
-  due_sla_level?: "ok" | "due_soon" | "overdue";
+  due_sla_level?: "ok" | "due_soon" | "overdue" | "completed_late";
   plan_code?: string | null;
   plan_title?: string | null;
   plan_status: string;

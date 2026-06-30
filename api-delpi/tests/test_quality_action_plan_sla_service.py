@@ -8,6 +8,7 @@ from app.domain.services.quality_action_plans.quality_action_plan_sla_service im
     PLAN_SLA_DAYS_BY_SEVERITY,
     calendar_days_since,
     resolve_action_due_sla,
+    resolve_action_queue_sla,
     resolve_plan_sla,
 )
 
@@ -83,3 +84,41 @@ def test_calendar_days_since_handles_iso_string():
 
 def test_action_due_soon_window_is_two_days():
     assert ACTION_DUE_SOON_DAYS == 2
+
+
+def test_resolve_action_queue_sla_open_overdue():
+    now = datetime(2026, 6, 25, 12, 0, tzinfo=timezone.utc)
+    sla = resolve_action_queue_sla(
+        due_date=(now - timedelta(days=2)).date(),
+        action_status="pending",
+        reference=now,
+    )
+    assert sla["is_overdue"] is True
+    assert sla["completed_late"] is False
+    assert sla["due_sla_level"] == "overdue"
+
+
+def test_resolve_action_queue_sla_completed_not_overdue_even_past_due():
+    now = datetime(2026, 6, 25, 12, 0, tzinfo=timezone.utc)
+    sla = resolve_action_queue_sla(
+        due_date=(now - timedelta(days=5)).date(),
+        action_status="completed",
+        completed_at=now,
+        reference=now,
+    )
+    assert sla["is_overdue"] is False
+    assert sla["completed_late"] is True
+    assert sla["due_sla_level"] == "completed_late"
+
+
+def test_resolve_action_queue_sla_completed_on_time():
+    now = datetime(2026, 6, 25, 12, 0, tzinfo=timezone.utc)
+    sla = resolve_action_queue_sla(
+        due_date=(now + timedelta(days=2)).date(),
+        action_status="completed",
+        completed_at=now,
+        reference=now,
+    )
+    assert sla["is_overdue"] is False
+    assert sla["completed_late"] is False
+    assert sla["due_sla_level"] == "ok"
