@@ -12,6 +12,7 @@ import {
   type ActionResponsibleValue,
 } from "./ActionResponsibleField";
 import { ActionResponsiblesField } from "./ActionResponsiblesField";
+import { ActionResponsiblesChips } from "./ActionResponsiblesChips";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
 import { FieldLabel, TableHeaderCell } from "./ui/HelpTooltip";
@@ -28,11 +29,9 @@ import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import type { ActionResponsible, PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import {
-  formatActionResponsiblesDisplay,
-  hasLinkedQueueResponsibles,
-  legacyResponsibleFromResponsibles,
   responsiblesFromAction,
   responsiblesToPayload,
+  legacyResponsibleFromResponsibles,
 } from "../utils/actionResponsibles";
 import { formatDate } from "../utils/format";
 import type { TeamMember } from "../types/rnc8d";
@@ -260,17 +259,7 @@ export function PlanActionsPanel({
                   </td>
                   <td>{action.description}</td>
                   <td>
-                    <span className="pac-action-responsible-cell">
-                      <span>{formatActionResponsiblesDisplay(action)}</span>
-                      {hasLinkedQueueResponsibles(action) ? (
-                        <span
-                          className="pac-badge pac-badge--linked"
-                          title={PAC_HELP_TOOLTIPS.form.actionResponsibleLinked}
-                        >
-                          Fila
-                        </span>
-                      ) : null}
-                    </span>
+                    <ActionResponsiblesChips action={action} layout="stack" />
                   </td>
                   <td>{formatDate(action.due_date)}</td>
                   <td className="pac-table-cell--evidence">

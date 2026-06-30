@@ -1,4 +1,5 @@
 import { MultiSelectField } from "./ui/MultiSelectField";
+import { ActionResponsiblesChips } from "./ActionResponsiblesChips";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ActionResponsible } from "../types/actionPlan";
 import type { TeamMember } from "../types/rnc8d";
@@ -31,6 +32,7 @@ export function ActionResponsiblesField({
   );
   const options = buildTeamMemberSelectOptions(teamMembers, extraNames);
   const linkedCount = value.filter((item) => item.user_id?.trim()).length;
+  const unlinkedCount = value.length - linkedCount;
 
   function handleChange(names: string[]) {
     onChange(
@@ -57,13 +59,16 @@ export function ActionResponsiblesField({
         searchable
         disabled={disabled}
       />
+      {value.length ? (
+        <ActionResponsiblesChips responsibles={value} layout="stack" showQueueBadge />
+      ) : null}
       {linkedCount > 0 ? (
         <p className="pac-muted pac-action-responsible__note">
           {linkedCount === 1
             ? "1 responsável vinculado entra na Minha fila e recebe alertas de prazo."
             : `${linkedCount} responsáveis vinculados entram na Minha fila e recebem alertas de prazo.`}
         </p>
-      ) : value.length > 0 ? (
+      ) : unlinkedCount > 0 ? (
         <p className="pac-muted pac-action-responsible__note">
           {PAC_HELP_TOOLTIPS.form.actionResponsibleTeamUnlinked}
         </p>

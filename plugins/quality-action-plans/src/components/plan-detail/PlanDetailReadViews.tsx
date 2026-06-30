@@ -23,7 +23,7 @@ import type { FiveWhysForm } from "../../utils/fiveWhys";
 import { isFilledWhyStep } from "../../utils/fiveWhys";
 import type { IshikawaCausesForm } from "../../utils/ishikawaCauses";
 import { ISHIKAWA_CATEGORY_KEYS } from "../../utils/ishikawaCauses";
-import { formatActionResponsiblesDisplay } from "../../utils/actionResponsibles";
+import { ActionResponsiblesChips } from "../ActionResponsiblesChips";
 import { formatDate } from "../../utils/format";
 import type { PlanStatus } from "../../types/actionPlan";
 
@@ -512,7 +512,9 @@ export function PlanActionsReadContent({ actions }: { actions: PlanAction[] }) {
             <tr key={action.id}>
               <td>{actionTypeLabel(action.action_type)}</td>
               <td>{action.description}</td>
-              <td>{formatActionResponsiblesDisplay(action)}</td>
+              <td>
+                <ActionResponsiblesChips action={action} layout="stack" />
+              </td>
               <td>{formatDate(action.due_date)}</td>
               <td>{ACTION_STATUSES[action.status] ?? action.status}</td>
             </tr>

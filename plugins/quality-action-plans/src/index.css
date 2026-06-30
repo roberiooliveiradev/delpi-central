@@ -2014,6 +2014,61 @@
   flex-wrap: wrap;
 }
 
+.dashboard-quality-action-plans .pac-action-responsibles-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-quality-action-plans .pac-action-responsibles-chips--stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.dashboard-quality-action-plans .pac-action-responsibles-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--pac-card-border) 88%, transparent);
+  background: color-mix(in srgb, var(--pac-input-bg) 92%, var(--pac-card-bg));
+  font-size: var(--pac-font-xs);
+  line-height: 1.35;
+}
+
+.dashboard-quality-action-plans .pac-action-responsibles-chip--linked {
+  border-color: color-mix(in srgb, var(--pac-accent) 28%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-accent) 10%, var(--pac-card-bg));
+}
+
+.dashboard-quality-action-plans .pac-action-responsibles-chip__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-quality-action-plans .pac-action-responsibles-chip__queue {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--pac-accent);
+  background: color-mix(in srgb, var(--pac-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pac-accent) 24%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-action-responsibles .pac-action-responsibles-chips {
+  margin-top: 2px;
+}
+
 .dashboard-quality-action-plans .pac-badge--linked {
   background: color-mix(in srgb, var(--pac-accent) 14%, transparent);
   color: var(--pac-accent);
