@@ -1,6 +1,7 @@
 import { Eye } from "lucide-react";
 
 import { branchLabel, detailPath } from "../constants/actionPlans";
+import { evidenceSectionLabel } from "../constants/evidence";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EvidenceSearchHit } from "../types/evidenceSearch";
 import { formatDateTime } from "../utils/format";
@@ -50,7 +51,7 @@ export function EvidenceSearchTable({ items, loading, emptyMessage, onNavigate }
               <td>{item.plan_code ?? "—"}</td>
               <td>{branchLabel(item.branch_code)}</td>
               <td>{item.product_code ?? "—"}</td>
-              <td>{item.section ?? "—"}</td>
+              <td>{evidenceSectionLabel(item.section)}</td>
               <td>{item.description ?? item.text_excerpt ?? "—"}</td>
               <td>{formatDateTime(item.created_at)}</td>
               <td>

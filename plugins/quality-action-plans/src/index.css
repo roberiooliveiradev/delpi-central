@@ -2571,6 +2571,21 @@
   font-size: var(--pac-font-sm);
 }
 
+.dashboard-quality-action-plans .pac-evidence-upload--with-actions {
+  grid-template-columns: minmax(150px, 0.85fr) minmax(150px, 0.85fr) minmax(300px, 1.8fr);
+}
+
+.dashboard-quality-action-plans .pac-evidence-upload--with-actions .pac-field--action-link {
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-table-cell--linked-action {
+  min-width: 12rem;
+  max-width: 22rem;
+  white-space: normal;
+  line-height: 1.35;
+}
+
 .dashboard-quality-action-plans .pac-evidence-upload__input {
   display: none;
 }
@@ -3109,6 +3124,10 @@
   }
 
   .dashboard-quality-action-plans .pac-ishikawa-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-quality-action-plans .pac-evidence-upload--with-actions {
     grid-template-columns: 1fr;
   }
 

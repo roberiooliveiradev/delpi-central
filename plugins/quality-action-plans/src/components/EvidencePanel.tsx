@@ -7,6 +7,13 @@ import {
   fetchPlanEvidenceFileBlob,
   uploadPlanEvidence,
 } from "../api/actionPlansApi";
+import { actionTypeLabel } from "../constants/actionPlans";
+import {
+  EVIDENCE_SECTION_OPTIONS,
+  EVIDENCE_TYPE_OPTIONS,
+  evidenceSectionLabel,
+  evidenceTypeLabel,
+} from "../constants/evidence";
 import type { PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
 import { formatDateTime } from "../utils/format";
@@ -19,28 +26,6 @@ import { SelectField } from "./ui/SelectField";
 import { TextField } from "./ui/TextField";
 
 const T = PAC_HELP_TOOLTIPS.tables;
-
-const EVIDENCE_TYPES = [
-  { value: "image", label: "Imagem" },
-  { value: "pdf", label: "PDF" },
-  { value: "spreadsheet", label: "Planilha" },
-  { value: "email", label: "E-mail" },
-  { value: "message", label: "Mensagem" },
-  { value: "manual_text", label: "Texto" },
-  { value: "other", label: "Outro" },
-];
-
-const EVIDENCE_SECTIONS = [
-  { value: "general", label: "Geral" },
-  { value: "nc_description", label: "Descrição NC" },
-  { value: "containment", label: "Contenção" },
-  { value: "root_cause", label: "Causa raiz" },
-  { value: "corrective", label: "Ação corretiva" },
-  { value: "effectiveness", label: "Eficácia" },
-  { value: "preventive", label: "Preventiva" },
-  { value: "documentation", label: "Documentação" },
-  { value: "attachments", label: "Anexos (aba evidências)" },
-];
 
 type Props = {
   planId: string;
@@ -55,11 +40,20 @@ type Props = {
   readOnly?: boolean;
 };
 
-function actionLabel(action: PlanAction): string {
-  const prefix = action.action_type.replace(/_/g, " ");
-  const text = action.description.trim();
-  const snippet = text.length > 48 ? `${text.slice(0, 48)}…` : text;
-  return `${prefix}: ${snippet}`;
+function linkedActionLabel(action: PlanAction): string {
+  const type = actionTypeLabel(action.action_type);
+  const text = action.description.trim() || "Sem descrição";
+  const snippet = text.length > 64 ? `${text.slice(0, 64)}…` : text;
+  return `${type} · ${snippet}`;
+}
+
+function linkedActionCell(
+  actionId: string | null | undefined,
+  actionById: Map<string, PlanAction>,
+): string {
+  if (!actionId) return "—";
+  const action = actionById.get(actionId);
+  return action ? linkedActionLabel(action) : actionId.slice(0, 8);
 }
 
 function formatSize(bytes?: number | null): string {
@@ -226,7 +220,7 @@ export function EvidencePanel({
 
   const actionOptions = [
     { value: "", label: "Nenhuma (plano geral)" },
-    ...actions.map((action) => ({ value: action.id, label: actionLabel(action) })),
+    ...actions.map((action) => ({ value: action.id, label: linkedActionLabel(action) })),
   ];
   const actionById = new Map(actions.map((action) => [action.id, action]));
 
@@ -235,12 +229,16 @@ export function EvidencePanel({
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 
       {!readOnly ? (
-      <div className="pac-form-grid pac-evidence-upload">
+      <div
+        className={`pac-form-grid pac-evidence-upload${
+          actions.length ? " pac-evidence-upload--with-actions" : ""
+        }`}
+      >
         <SelectField
           id="pac-evidence-type"
           label="Tipo"
           hint={PAC_HELP_TOOLTIPS.evidence.type}
-          options={EVIDENCE_TYPES}
+          options={[...EVIDENCE_TYPE_OPTIONS]}
           value={evidenceType}
           onChange={setEvidenceType}
           searchable={false}
@@ -249,7 +247,7 @@ export function EvidencePanel({
           id="pac-evidence-section"
           label="Seção 8D"
           hint={PAC_HELP_TOOLTIPS.evidence.section}
-          options={EVIDENCE_SECTIONS}
+          options={[...EVIDENCE_SECTION_OPTIONS]}
           value={section}
           onChange={setSection}
           searchable={false}
@@ -257,12 +255,13 @@ export function EvidencePanel({
         {actions.length ? (
           <SelectField
             id="pac-evidence-action"
+            className="pac-field--action-link"
             label="Vincular à ação"
             hint={PAC_HELP_TOOLTIPS.evidence.linkedAction}
             options={actionOptions}
             value={actionId}
             onChange={setActionId}
-            searchable={actions.length > 6}
+            searchable={actions.length > 4}
           />
         ) : null}
         <TextField
@@ -328,12 +327,10 @@ export function EvidencePanel({
                       ) : null}
                     </div>
                   </td>
-                  <td>{evidence.type}</td>
-                  <td>{evidence.section ?? "general"}</td>
-                  <td>
-                    {evidence.action_id
-                      ? actionById.get(evidence.action_id)?.description ?? evidence.action_id.slice(0, 8)
-                      : "—"}
+                  <td>{evidenceTypeLabel(evidence.type)}</td>
+                  <td>{evidenceSectionLabel(evidence.section)}</td>
+                  <td className="pac-table-cell--linked-action">
+                    {linkedActionCell(evidence.action_id, actionById)}
                   </td>
                   <td>{formatSize(evidence.size_bytes)}</td>
                   <td>{formatDateTime(evidence.created_at)}</td>
@@ -400,7 +397,7 @@ export function EvidencePanel({
               </p>
             ) : null}
             <div className="pac-evidence-preview-modal__meta">
-              <span>{previewEvidence.type}</span>
+              <span>{evidenceTypeLabel(previewEvidence.type)}</span>
               <span>{formatSize(previewEvidence.size_bytes)}</span>
               <span>{formatDateTime(previewEvidence.created_at)}</span>
             </div>
