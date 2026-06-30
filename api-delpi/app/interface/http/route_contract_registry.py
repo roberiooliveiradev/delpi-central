@@ -342,6 +342,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "attach_quality_action_plan_evidence": RouteContract("quality_action_plan_evidence", "scalar"),
     "download_quality_action_plan_evidence": RouteContract("quality_action_plan_evidence", "document_export"),
     "get_quality_action_plan_evidence_content": RouteContract("quality_action_plan_evidence", "composite_analysis"),
+    "update_quality_action_plan_evidence": RouteContract("quality_action_plan_evidence", "scalar"),
     "delete_quality_action_plan_evidence": RouteContract("quality_action_plan_evidence", "scalar"),
     "get_quality_action_plan_similar_cases": RouteContract(
         "quality_action_plan_similar_cases", "composite_analysis"

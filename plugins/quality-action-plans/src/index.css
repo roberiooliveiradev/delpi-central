@@ -2786,9 +2786,10 @@
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-queue__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  align-items: start;
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item {
@@ -2796,18 +2797,26 @@
   border-radius: 10px;
   background: var(--pac-card-bg);
   overflow: hidden;
+  min-width: 0;
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item--expanded {
+  grid-column: 1 / -1;
   border-color: color-mix(in srgb, var(--pac-accent) 40%, var(--pac-card-border));
 }
 
-.dashboard-quality-action-plans .pac-evidence-pending-item__row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+.dashboard-quality-action-plans .pac-evidence-pending-item__card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item__card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-thumb {
@@ -2822,6 +2831,12 @@
   border: 1px solid var(--pac-card-border);
   background: color-mix(in srgb, var(--pac-card-bg) 88%, var(--pac-accent) 12%);
   color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-thumb--grid {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-thumb__image {
@@ -2840,6 +2855,7 @@
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item__main {
+  width: 100%;
   min-width: 0;
   padding: 0;
   border: none;
@@ -2855,36 +2871,43 @@
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item__name {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: var(--pac-font-sm);
   font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
+  display: block;
+  margin-top: 4px;
   font-size: var(--pac-font-xs);
   color: var(--pac-text-muted);
+  line-height: 1.35;
+  text-align: left;
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item__actions {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item__details {
-  padding: 0 12px 12px 58px;
+  padding: 0 12px 12px;
   border-top: 1px solid color-mix(in srgb, var(--pac-card-border) 80%, transparent);
 }
 
+.dashboard-quality-action-plans .pac-evidence-pending-item--expanded .pac-evidence-pending-item__details {
+  padding-top: 12px;
+}
+
 .dashboard-quality-action-plans .pac-evidence-pending-item__details--with-action {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .dashboard-quality-action-plans .pac-evidence-pending-item__locked-action {
@@ -3481,6 +3504,21 @@
   gap: 2px;
 }
 
+.dashboard-quality-action-plans .pac-evidence-edit-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-quality-action-plans .pac-evidence-edit-modal__file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--pac-font-sm);
+}
+
 .dashboard-quality-action-plans .pac-table-actions {
   display: inline-flex;
   flex-wrap: nowrap;
@@ -3649,19 +3687,13 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-quality-action-plans .pac-evidence-pending-queue__list {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-quality-action-plans .pac-evidence-pending-item__details,
   .dashboard-quality-action-plans .pac-evidence-pending-item__details--with-action {
     grid-template-columns: 1fr;
-    padding-left: 12px;
-  }
-
-  .dashboard-quality-action-plans .pac-evidence-pending-item__row {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .dashboard-quality-action-plans .pac-evidence-pending-item__actions {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
   }
 
   .dashboard-quality-action-plans .pac-inline-form {

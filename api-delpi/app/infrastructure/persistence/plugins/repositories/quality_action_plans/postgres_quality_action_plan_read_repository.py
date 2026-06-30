@@ -3051,5 +3051,54 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         return serialize_row(row, id_keys=("id", "plan_id"))
 
+    def update_evidence(
+        self,
+        plan_id: str,
+        evidence_id: str,
+        fields: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        plan_id = self._coerce_plan_id(plan_id)
+        if not plan_id:
+            return None
+        if not self.get_evidence(plan_id, evidence_id):
+            return None
+
+        allowed = {"type", "section", "description", "action_id", "knowledge_visible"}
+        nullable = {"description", "action_id"}
+        updates: dict[str, Any] = {}
+
+        for key, value in fields.items():
+            if key not in allowed:
+                continue
+            if key == "action_id":
+                if value is None or value == "":
+                    updates["action_id"] = None
+                elif not self.action_belongs_to_plan(plan_id, str(value)):
+                    return None
+                else:
+                    updates["action_id"] = value
+            elif value is not None or key in nullable:
+                updates[key] = value
+
+        if not updates:
+            return self.get_evidence(plan_id, evidence_id)
+
+        set_parts = [f"{column} = %s" for column in updates]
+        params = list(updates.values()) + [evidence_id, plan_id]
+        row = self.execute_returning_one(
+            f"""
+            UPDATE quality.quality_problem_evidences
+               SET {", ".join(set_parts)}
+             WHERE id = %s AND plan_id = %s
+            RETURNING id, plan_id, type, file_name, file_url, text_excerpt,
+                      stored_name, mime_type, size_bytes, section, description,
+                      knowledge_visible, uploaded_by, uploaded_by_name, uploaded_by_email,
+                      action_id, created_at
+            """,
+            tuple(params),
+            auto_commit=True,
+        )
+        return serialize_row(row, id_keys=("id", "plan_id", "action_id")) if row else None
+
 
 PostgresQualityActionPlanReadRepository = PostgresQualityActionPlanRepository

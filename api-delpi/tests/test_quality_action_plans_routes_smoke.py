@@ -147,6 +147,41 @@ def test_list_evidences_route_returns_operation_id(mock_build) -> None:
     assert len(body.get("data", [])) == 1
 
 
+@patch(
+    "app.interface.http.routes.quality.action_plans_read_router.build_quality_action_plan_read_repository"
+)
+def test_update_evidence_route_returns_operation_id(mock_build) -> None:
+    from app.interface.http.routes.quality.action_plans_read_router import (
+        UpdateEvidenceBody,
+        update_plan_evidence,
+    )
+
+    mock_repo = MagicMock()
+    mock_repo._coerce_plan_id.return_value = "plan-1"
+    mock_repo.update_evidence.return_value = {
+        "id": "ev-1",
+        "type": "pdf",
+        "section": "corrective",
+        "description": "Atualizado",
+    }
+    mock_build.return_value = mock_repo
+
+    response = update_plan_evidence(
+        "plan-1",
+        "ev-1",
+        body=UpdateEvidenceBody(
+            evidence_type="pdf",
+            section="corrective",
+            description="Atualizado",
+        ),
+    )
+    body = _body(response)
+
+    assert body.get("success") is True
+    assert body.get("meta", {}).get("operationId") == "update_quality_action_plan_evidence"
+    assert body.get("data", {}).get("description") == "Atualizado"
+
+
 @pytest.fixture
 def pac_client() -> TestClient:
     from fastapi import FastAPI

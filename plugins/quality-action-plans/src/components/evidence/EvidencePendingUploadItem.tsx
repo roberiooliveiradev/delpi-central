@@ -63,8 +63,42 @@ export function EvidencePendingUploadItem({
       <article
         className={`pac-evidence-pending-item${expanded ? " pac-evidence-pending-item--expanded" : ""}`}
       >
-        <div className="pac-evidence-pending-item__row">
-          <EvidencePendingFileThumb file={item.file} />
+        <div className="pac-evidence-pending-item__card">
+          <div className="pac-evidence-pending-item__card-top">
+            <EvidencePendingFileThumb file={item.file} className="pac-evidence-pending-thumb--grid" />
+            <div className="pac-evidence-pending-item__actions">
+              <button
+                type="button"
+                className="pac-ghost-btn pac-ghost-btn--icon"
+                aria-label={`Pré-visualizar ${item.file.name}`}
+                title="Pré-visualizar"
+                disabled={disabled}
+                onClick={() => setPreviewOpen(true)}
+              >
+                <Eye size={16} />
+              </button>
+              <button
+                type="button"
+                className="pac-ghost-btn pac-ghost-btn--icon"
+                aria-label={expanded ? "Recolher detalhes" : "Preencher detalhes"}
+                title={expanded ? "Recolher" : "Preencher"}
+                disabled={disabled}
+                onClick={() => setExpanded((current) => !current)}
+              >
+                {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              <button
+                type="button"
+                className="pac-ghost-btn pac-ghost-btn--icon"
+                aria-label={`Remover ${item.file.name} da fila`}
+                title="Remover da fila"
+                disabled={disabled}
+                onClick={() => onRemove(item.id)}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
 
           <button
             type="button"
@@ -75,44 +109,9 @@ export function EvidencePendingUploadItem({
           >
             <span className="pac-evidence-pending-item__name">{item.file.name}</span>
             <span className="pac-evidence-pending-item__meta">
-              <span>{formatEvidenceFileSize(item.file.size)}</span>
-              <span aria-hidden="true">·</span>
-              <span>{summaryParts.join(" · ")}</span>
+              {formatEvidenceFileSize(item.file.size)} · {summaryParts.join(" · ")}
             </span>
           </button>
-
-          <div className="pac-evidence-pending-item__actions">
-            <button
-              type="button"
-              className="pac-ghost-btn pac-ghost-btn--icon"
-              aria-label={`Pré-visualizar ${item.file.name}`}
-              title="Pré-visualizar"
-              disabled={disabled}
-              onClick={() => setPreviewOpen(true)}
-            >
-              <Eye size={16} />
-            </button>
-            <button
-              type="button"
-              className="pac-ghost-btn pac-ghost-btn--icon"
-              aria-label={expanded ? "Recolher detalhes" : "Preencher detalhes"}
-              title={expanded ? "Recolher" : "Preencher"}
-              disabled={disabled}
-              onClick={() => setExpanded((current) => !current)}
-            >
-              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            <button
-              type="button"
-              className="pac-ghost-btn pac-ghost-btn--icon"
-              aria-label={`Remover ${item.file.name} da fila`}
-              title="Remover da fila"
-              disabled={disabled}
-              onClick={() => onRemove(item.id)}
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
         </div>
 
         {expanded ? (

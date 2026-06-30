@@ -1296,6 +1296,17 @@
       "deprecated": false
     },
     {
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}",
+      "operationId": "update_quality_action_plan_evidence",
+      "summary": "Indicador — Quality action plan evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
       "method": "GET",
       "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/file",
       "operationId": "download_plan_evidence_quality_action_plans__plan_id__evidences__evidence_id__file_get",

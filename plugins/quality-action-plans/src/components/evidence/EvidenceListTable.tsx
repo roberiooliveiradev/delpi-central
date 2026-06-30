@@ -1,4 +1,4 @@
-import { Download, Eye, Trash2 } from "lucide-react";
+import { Download, Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -19,6 +19,7 @@ import {
   linkedActionCell,
 } from "./evidenceAttachmentUtils";
 import { EvidencePreviewModal } from "./EvidencePreviewModal";
+import { EvidenceEditModal } from "./EvidenceEditModal";
 import { canPreviewEvidence } from "./evidencePreviewUtils";
 
 const T = PAC_HELP_TOOLTIPS.tables;
@@ -42,6 +43,7 @@ export function EvidenceListTable({
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [previewEvidence, setPreviewEvidence] = useState<PlanEvidence | null>(null);
+  const [editEvidence, setEditEvidence] = useState<PlanEvidence | null>(null);
   const actionById = new Map(actions.map((action) => [action.id, action]));
   const showActionsColumn = true;
 
@@ -132,15 +134,26 @@ export function EvidenceListTable({
                         <Download size={16} />
                       </button>
                       {!readOnly ? (
-                        <button
-                          type="button"
-                          className="pac-ghost-btn pac-ghost-btn--icon"
-                          aria-label="Remover evidência"
-                          title="Remover"
-                          onClick={() => void handleDelete(evidence.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            className="pac-ghost-btn pac-ghost-btn--icon"
+                            aria-label="Editar evidência"
+                            title="Editar"
+                            onClick={() => setEditEvidence(evidence)}
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="pac-ghost-btn pac-ghost-btn--icon"
+                            aria-label="Remover evidência"
+                            title="Remover"
+                            onClick={() => void handleDelete(evidence.id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
                       ) : null}
                     </div>
                   </td>
@@ -156,6 +169,15 @@ export function EvidenceListTable({
         evidence={previewEvidence}
         open={previewEvidence != null}
         onClose={() => setPreviewEvidence(null)}
+      />
+
+      <EvidenceEditModal
+        planId={planId}
+        evidence={editEvidence}
+        actions={actions}
+        open={editEvidence != null}
+        onClose={() => setEditEvidence(null)}
+        onSaved={onChanged}
       />
     </>
   );

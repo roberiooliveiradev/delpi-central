@@ -33,7 +33,7 @@ export function EvidencePendingUploadList({
             Ainda não anexados ({items.length})
           </h4>
           <p className="pac-muted pac-evidence-pending-queue__hint">
-            Expanda cada linha para tipo, seção 8D e vínculo. Use o olho para prévia local.
+            Cards em grade — expanda para tipo, seção 8D e vínculo. Use o olho para prévia local.
           </p>
         </div>
       </header>

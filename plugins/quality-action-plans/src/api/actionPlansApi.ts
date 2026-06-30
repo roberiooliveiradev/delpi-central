@@ -490,6 +490,30 @@ export async function deletePlanEvidence(planId: string, evidenceId: string): Pr
   unwrapApiDelpiEnvelope(envelope, "Erro ao remover evidência.");
 }
 
+export async function updatePlanEvidence(
+  planId: string,
+  evidenceId: string,
+  options: {
+    evidenceType?: string;
+    section?: string;
+    actionId?: string | null;
+    description?: string | null;
+    knowledgeVisible?: boolean;
+  },
+): Promise<PlanEvidence> {
+  const body: Record<string, unknown> = {};
+  if (options.evidenceType !== undefined) body.evidence_type = options.evidenceType;
+  if (options.section !== undefined) body.section = options.section;
+  if (options.actionId !== undefined) body.action_id = options.actionId;
+  if (options.description !== undefined) body.description = options.description;
+  if (options.knowledgeVisible !== undefined) body.knowledge_visible = options.knowledgeVisible;
+  const envelope = await httpPatch<ApiEnvelope<PlanEvidence>>(
+    `${API_BASE}/${planId}/evidences/${evidenceId}`,
+    body,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar evidência.");
+}
+
 export async function downloadPlanEvidenceFile(planId: string, evidenceId: string, filename: string): Promise<void> {
   const blob = await fetchPlanEvidenceFileBlob(planId, evidenceId);
   const url = URL.createObjectURL(blob);

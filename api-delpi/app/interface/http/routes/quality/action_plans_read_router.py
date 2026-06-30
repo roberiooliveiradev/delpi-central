@@ -324,6 +324,23 @@ class RejectEffectivenessReviewBody(BaseModel):
     reason: str = Field(..., min_length=5, max_length=2000)
 
 
+class UpdateEvidenceBody(BaseModel):
+    evidence_type: str | None = Field(
+        default=None,
+        pattern="^(email|message|spreadsheet|pdf|image|manual_text|system_reference|other)$",
+    )
+    section: str | None = Field(
+        default=None,
+        pattern=(
+            "^(general|nc_description|containment|root_cause|corrective|"
+            "effectiveness|preventive|documentation|attachments)$"
+        ),
+    )
+    description: str | None = None
+    action_id: str | None = None
+    knowledge_visible: bool | None = None
+
+
 def _current_user_id() -> str:
     user = get_current_user()
     if user is None:
@@ -1481,6 +1498,53 @@ def get_plan_evidence_content(plan_id: str, evidence_id: str):
     except Exception as exc:
         log_error(f"Erro ao ler conteúdo da evidência {evidence_id}: {exc}")
         return error_response("Erro interno ao ler conteúdo da evidência.", status_code=500)
+
+
+@router.patch(
+    "/{plan_id}/evidences/{evidence_id}",
+    **_pac_openapi("update_quality_action_plan_evidence", "/{plan_id}/evidences/{evidence_id}"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def update_plan_evidence(plan_id: str, evidence_id: str, body: UpdateEvidenceBody = Body(...)):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        resolved_plan_id = repo._coerce_plan_id(plan_id)
+        if not resolved_plan_id:
+            return not_found_response("Plano de ação não encontrado.")
+        payload: dict[str, object] = {}
+        if body.evidence_type is not None:
+            payload["type"] = body.evidence_type
+        if body.section is not None:
+            payload["section"] = body.section
+        if body.description is not None:
+            payload["description"] = body.description or None
+        if body.action_id is not None:
+            payload["action_id"] = body.action_id or None
+        if body.knowledge_visible is not None:
+            payload["knowledge_visible"] = body.knowledge_visible
+        if not payload:
+            evidence = repo.get_evidence(resolved_plan_id, evidence_id)
+            if not evidence:
+                return not_found_response("Evidência não encontrada.")
+            return api_delpi_success(
+                evidence,
+                operation_id="update_quality_action_plan_evidence",
+                message="Evidência recuperada.",
+            )
+        data = repo.update_evidence(resolved_plan_id, evidence_id, payload)
+        if data is None:
+            existing = repo.get_evidence(resolved_plan_id, evidence_id)
+            if not existing:
+                return not_found_response("Evidência não encontrada.")
+            return error_response("Ação não pertence a este plano.", status_code=422)
+        return api_delpi_success(
+            data,
+            operation_id="update_quality_action_plan_evidence",
+            message="Evidência atualizada.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao atualizar evidência {evidence_id}: {exc}")
+        return error_response("Erro ao atualizar evidência.", status_code=500)
 
 
 @router.delete(
