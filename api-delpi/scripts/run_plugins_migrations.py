@@ -147,6 +147,20 @@ def get_applied_migrations(conn: Any, schema_name: str) -> dict[str, dict[str, A
     return {row["version"]: row for row in rows}
 
 
+MIGRATION_ADVISORY_LOCK_KEY = 904_221_001
+
+
+def acquire_migration_lock(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.execute("SET lock_timeout = '30s';")
+        cur.execute("SELECT pg_advisory_lock(%s);", (MIGRATION_ADVISORY_LOCK_KEY,))
+
+
+def release_migration_lock(conn: Any) -> None:
+    with conn.cursor() as cur:
+        cur.execute("SELECT pg_advisory_unlock(%s);", (MIGRATION_ADVISORY_LOCK_KEY,))
+
+
 def apply_migration(conn: Any, schema_name: str, path: Path) -> None:
     version, name = parse_version_and_name(path)
     checksum = calculate_checksum(path)
@@ -156,6 +170,7 @@ def apply_migration(conn: Any, schema_name: str, path: Path) -> None:
 
     try:
         with conn.cursor() as cur:
+            cur.execute("SET lock_timeout = '30s';")
             cur.execute(sql)
             cur.execute(
                 f"""
@@ -217,31 +232,39 @@ def reset_plugin_migrations(plugin_slug: str) -> None:
             ) from exc
 
 
-def run_plugin_migrations(plugin_slug: str) -> None:
+def run_plugin_migrations(plugin_slug: str, *, conn: Any | None = None) -> None:
+    if conn is not None:
+        _run_plugin_migrations_with_conn(conn, plugin_slug)
+        return
+
+    with get_connection() as owned_conn:
+        _run_plugin_migrations_with_conn(owned_conn, plugin_slug)
+
+
+def _run_plugin_migrations_with_conn(conn: Any, plugin_slug: str) -> None:
     schema_name = slug_to_schema(plugin_slug)
     files = list_migration_files(plugin_slug)
 
-    with get_connection() as conn:
-        ensure_migrations_table(conn, schema_name)
-        validate_migration_history(conn, schema_name, files)
+    ensure_migrations_table(conn, schema_name)
+    validate_migration_history(conn, schema_name, files)
 
-        applied = get_applied_migrations(conn, schema_name)
-        pending = []
+    applied = get_applied_migrations(conn, schema_name)
+    pending = []
 
-        for path in files:
-            version, _ = parse_version_and_name(path)
-            if version not in applied:
-                pending.append(path)
+    for path in files:
+        version, _ = parse_version_and_name(path)
+        if version not in applied:
+            pending.append(path)
 
-        if not pending:
-            print(f"[{plugin_slug}] Nenhuma migration pendente.")
-            return
+    if not pending:
+        print(f"[{plugin_slug}] Nenhuma migration pendente.")
+        return
 
-        print(f"[{plugin_slug}] Executando migrations...")
-        for path in pending:
-            apply_migration(conn, schema_name, path)
+    print(f"[{plugin_slug}] Executando migrations...")
+    for path in pending:
+        apply_migration(conn, schema_name, path)
 
-        print(f"[{plugin_slug}] Migrations aplicadas com sucesso.")
+    print(f"[{plugin_slug}] Migrations aplicadas com sucesso.")
 
 
 def show_plugin_status(plugin_slug: str) -> None:
@@ -281,14 +304,19 @@ def list_plugin_slugs() -> list[str]:
 
 
 def run_all_plugins_migrations() -> None:
-    for plugin_slug in list_plugin_slugs():
+    with get_connection() as conn:
+        acquire_migration_lock(conn)
         try:
-            run_plugin_migrations(plugin_slug)
-        except MigrationError as exc:
-            if "Nenhuma migration encontrada" in str(exc):
-                print(f"[{plugin_slug}] Sem migrations ainda. Ignorando.")
-                continue
-            raise
+            for plugin_slug in list_plugin_slugs():
+                try:
+                    run_plugin_migrations(plugin_slug, conn=conn)
+                except MigrationError as exc:
+                    if "Nenhuma migration encontrada" in str(exc):
+                        print(f"[{plugin_slug}] Sem migrations ainda. Ignorando.")
+                        continue
+                    raise
+        finally:
+            release_migration_lock(conn)
 
 
 def show_all_plugins_status() -> None:
