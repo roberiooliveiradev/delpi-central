@@ -55,6 +55,7 @@ from app.composition.quality_action_plans_composer import (
     build_submit_effectiveness_review_use_case,
     build_update_plan_action_use_case,
     build_delete_plan_action_use_case,
+    build_delete_quality_action_plan_use_case,
     build_update_quality_action_plan_status_use_case,
     build_update_quality_action_plan_use_case,
     build_upsert_five_whys_use_case,
@@ -831,6 +832,28 @@ def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar plano PAC {plan_id}: {exc}")
         return error_response("Erro ao atualizar plano.", status_code=500)
+
+
+@router.delete("/{plan_id}", **_pac_openapi("delete_quality_action_plan", "/{plan_id}"))
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def delete_action_plan(plan_id: str):
+    try:
+        result = build_delete_quality_action_plan_use_case().execute(
+            plan_id,
+            **_actor_write_kwargs(),
+        )
+        if not result:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            result,
+            operation_id="delete_quality_action_plan",
+            message="Plano de ação excluído.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao excluir plano PAC {plan_id}: {exc}")
+        return error_response("Erro ao excluir plano.", status_code=500)
 
 
 @router.patch(

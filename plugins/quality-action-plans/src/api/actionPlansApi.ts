@@ -217,6 +217,15 @@ export async function updateActionPlan(
   return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar plano de ação.");
 }
 
+export async function deleteActionPlan(
+  planId: string,
+): Promise<{ id: string; code?: string | null; deleted: boolean }> {
+  const envelope = await httpDelete<ApiEnvelope<{ id: string; code?: string | null; deleted: boolean }>>(
+    `${API_BASE}/${planId}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao excluir plano de ação.");
+}
+
 export async function updatePlanStatus(
   planId: string,
   status: string,

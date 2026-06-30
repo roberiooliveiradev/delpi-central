@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
     ReopenQualityActionPlanUseCase,
     UpdateQualityActionPlanStatusUseCase,
@@ -37,6 +39,84 @@ def test_reopen_plan_writes_history_and_audit_log():
     repo.append_audit_log.assert_called_once()
     assert repo.append_audit_log.call_args.kwargs["event_type"] == "plan_reopened"
     repo.commit.assert_called_once()
+
+
+def test_delete_plan_writes_history_and_audit_log():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.get_plan_by_id = MagicMock(
+        side_effect=[
+            {"id": "plan-1", "code": "PAC-2026-0001", "title": "Teste"},
+            None,
+        ]
+    )
+    repo.execute = MagicMock()
+    repo.append_history = MagicMock()
+    repo.append_audit_log = MagicMock()
+    repo.commit = MagicMock()
+
+    result = repo.delete_plan(
+        "plan-1",
+        updated_by="coord-01",
+        updated_by_name="Coordenador",
+    )
+
+    assert result == {"id": "plan-1", "code": "PAC-2026-0001", "deleted": True}
+    repo.append_history.assert_called_once()
+    assert repo.append_history.call_args.kwargs["event_type"] == "plan_deleted"
+    repo.append_audit_log.assert_called_once()
+    assert repo.append_audit_log.call_args.kwargs["event_type"] == "plan_deleted"
+    repo.commit.assert_called_once()
+
+
+def test_delete_plan_use_case_blocks_pending_effectiveness():
+    repo = MagicMock()
+    repo.get_plan_by_id.return_value = {
+        "id": "plan-1",
+        "effectiveness_approval_status": "pending_review",
+    }
+    from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
+        DeleteQualityActionPlanUseCase,
+    )
+
+    use_case = DeleteQualityActionPlanUseCase(repo)
+    try:
+        use_case.execute("plan-1", updated_by="user-1")
+        raised = False
+    except ValueError as exc:
+        raised = True
+        assert "eficácia pendente" in str(exc).lower()
+    assert raised
+    repo.delete_plan.assert_not_called()
+
+
+def test_delete_plan_use_case_blocks_completed_plan():
+    repo = MagicMock()
+    repo.get_plan_by_id.return_value = {"id": "plan-1", "status": "completed"}
+    from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
+        DeleteQualityActionPlanUseCase,
+    )
+
+    use_case = DeleteQualityActionPlanUseCase(repo)
+    with pytest.raises(ValueError, match="concluído"):
+        use_case.execute("plan-1", updated_by="user-1")
+    repo.delete_plan.assert_not_called()
+
+
+def test_delete_plan_use_case_blocks_approved_effectiveness():
+    repo = MagicMock()
+    repo.get_plan_by_id.return_value = {
+        "id": "plan-1",
+        "status": "in_progress",
+        "effectiveness_approval_status": "approved",
+    }
+    from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
+        DeleteQualityActionPlanUseCase,
+    )
+
+    use_case = DeleteQualityActionPlanUseCase(repo)
+    with pytest.raises(ValueError, match="eficácia aprovada"):
+        use_case.execute("plan-1", updated_by="user-1")
+    repo.delete_plan.assert_not_called()
 
 
 def test_reopen_plan_rejects_non_terminal_status():

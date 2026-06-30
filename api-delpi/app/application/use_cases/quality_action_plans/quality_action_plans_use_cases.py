@@ -10,6 +10,9 @@ from app.domain.services.quality_action_plans.pac_quality_branch_service import 
 from app.domain.services.quality_action_plans.pac_quality_nonconformity_scope_service import (
     validate_nonconformity_scope,
 )
+from app.domain.services.quality_action_plans.quality_action_plan_delete_policy import (
+    assert_plan_deletable,
+)
 
 
 class QualityActionPlanRepository(Protocol):
@@ -33,6 +36,17 @@ class QualityActionPlanRepository(Protocol):
         target_status: str,
         reason: str,
         updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
+    ) -> dict[str, Any] | None: ...
+
+    def delete_plan(
+        self,
+        plan_id: str,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
     ) -> dict[str, Any] | None: ...
 
     def update_plan(self, plan_id: str, fields: dict[str, Any]) -> dict[str, Any] | None: ...
@@ -298,6 +312,30 @@ class ReopenQualityActionPlanUseCase:
             plan_id,
             target_status=resolved_target,
             reason=normalized_reason,
+            updated_by=updated_by,
+            updated_by_name=updated_by_name,
+            updated_by_email=updated_by_email,
+        )
+
+
+class DeleteQualityActionPlanUseCase:
+    def __init__(self, repository: QualityActionPlanRepository) -> None:
+        self._repository = repository
+
+    def execute(
+        self,
+        plan_id: str,
+        *,
+        updated_by: str,
+        updated_by_name: str | None = None,
+        updated_by_email: str | None = None,
+    ) -> dict[str, Any] | None:
+        current = self._repository.get_plan_by_id(plan_id)
+        if not current:
+            return None
+        assert_plan_deletable(current)
+        return self._repository.delete_plan(
+            plan_id,
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,

@@ -157,6 +157,13 @@
   font-size: var(--pac-font-md);
 }
 
+.dashboard-quality-action-plans .pac-header-delete-hint {
+  max-width: 16rem;
+  font-size: var(--pac-font-xs);
+  line-height: 1.35;
+  text-align: right;
+}
+
 .dashboard-quality-action-plans .pac-header-actions {
   display: flex;
   align-items: center;

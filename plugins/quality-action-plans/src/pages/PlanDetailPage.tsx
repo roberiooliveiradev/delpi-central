@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Download,
+  Trash2,
 } from "lucide-react";
 
 import {
   approveEffectivenessReview,
+  deleteActionPlan,
   exportPlanPdf,
   exportRnc8dPdf,
   exportRnc8dSpreadsheet,
@@ -99,6 +101,7 @@ import {
   type PlanDetailSnapshot,
   type PlanSectionEditKey,
 } from "../utils/planDetailDirtyState";
+import { canDeleteActionPlan, planDeleteBlockedReason } from "../utils/planDeletePolicy";
 import { parseStoredTaggedList } from "../utils/taggedList";
 
 type Props = {
@@ -109,6 +112,7 @@ type Props = {
 const AUDIT_EVENT_LABELS: Record<string, string> = {
   plan_created: "Plano criado",
   plan_updated: "Identificação atualizada",
+  plan_deleted: "Plano excluído",
   plan_closed: "Plano encerrado",
   plan_reopened: "Plano reaberto",
   effectiveness_submitted: "Eficácia submetida",
@@ -151,6 +155,7 @@ function resolveEditSectionForSaveKey(saveKey: string): PlanSectionEditKey | nul
 export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [statusValue, setStatusValue] = useState("");
@@ -330,6 +335,8 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const effectivenessApprovalStatus = plan?.effectiveness_approval_status ?? null;
   const isEffectivenessPendingApproval = effectivenessApprovalStatus === "pending_review";
   const isEffectivenessRejected = effectivenessApprovalStatus === "rejected";
+  const planDeleteAllowed = canDeleteActionPlan(plan);
+  const planDeleteBlockReason = planDeleteBlockedReason(plan);
   const submittableEffectivenessOptions = EFFECTIVENESS_STATUSES.filter((item) =>
     ["effective", "partially_effective", "ineffective"].includes(item.value),
   );
@@ -541,6 +548,28 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     }
   }
 
+  async function handleDeletePlan() {
+    if (!plan || !planDeleteAllowed) return;
+    const label = plan.code ? `${plan.code} — ${plan.title}` : plan.title;
+    if (
+      !window.confirm(
+        `Excluir o plano "${label}"?\n\nEsta ação remove o plano das listagens. Evidências e histórico permanecem no banco, mas o plano deixa de ser acessível.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteActionPlan(planId);
+      onNavigate(listPath());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir plano.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -570,6 +599,22 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   PDF 8D
                 </button>
               </>
+            ) : null}
+            {planDeleteAllowed ? (
+              <button
+                type="button"
+                className="pac-ghost-btn pac-ghost-btn--danger"
+                disabled={deleting}
+                title="Excluir plano de ação"
+                onClick={() => void handleDeletePlan()}
+              >
+                <Trash2 size={16} />
+                {deleting ? "Excluindo…" : "Excluir plano"}
+              </button>
+            ) : planDeleteBlockReason ? (
+              <span className="pac-muted pac-header-delete-hint" title={planDeleteBlockReason}>
+                {planDeleteBlockReason}
+              </span>
             ) : null}
           </>
         }
