@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { Cog, FlaskConical, Leaf, Plus, Ruler, Trash2, Users, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -112,6 +113,46 @@ function removeCause(
   return { ...form, [key]: nextItems.length ? nextItems : [""] };
 }
 
+function resizeCauseTextarea(element: HTMLTextAreaElement) {
+  element.style.height = "auto";
+  element.style.height = `${element.scrollHeight}px`;
+}
+
+function CauseTextarea({
+  value,
+  onChange,
+  placeholder,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  ariaLabel: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      resizeCauseTextarea(ref.current);
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      className="pac-field__control pac-field__control--textarea pac-fishbone-branch__input"
+      value={value}
+      rows={2}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      onChange={(event) => {
+        resizeCauseTextarea(event.currentTarget);
+        onChange(event.target.value);
+      }}
+    />
+  );
+}
+
 function BranchPanel({
   branch,
   causes,
@@ -143,12 +184,11 @@ function BranchPanel({
       <ul className="pac-fishbone-branch__causes">
         {causes.map((cause, index) => (
           <li key={`${branch.key}-${index}`} className="pac-fishbone-branch__cause">
-            <input
-              className="pac-field__control pac-fishbone-branch__input"
+            <CauseTextarea
               value={cause}
-              onChange={(event) => onCauseChange(index, event.target.value)}
+              onChange={(nextValue) => onCauseChange(index, nextValue)}
               placeholder={`Causa ${index + 1}`}
-              aria-label={`${branch.label} — causa ${index + 1}`}
+              ariaLabel={`${branch.label} — causa ${index + 1}`}
             />
             <button
               type="button"

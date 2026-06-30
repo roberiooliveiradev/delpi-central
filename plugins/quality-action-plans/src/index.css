@@ -1621,15 +1621,21 @@
 
 .dashboard-quality-action-plans .pac-fishbone-branch__cause {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
 }
 
 .dashboard-quality-action-plans .pac-fishbone-branch__input {
   flex: 1;
   min-width: 0;
-  min-height: 36px;
+  min-height: 52px;
+  max-height: 160px;
+  resize: vertical;
+  overflow-y: auto;
   font-size: var(--pac-font-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .dashboard-quality-action-plans .pac-fishbone-branch__remove {
@@ -3364,6 +3370,11 @@
 
 .dashboard-quality-action-plans .pac-ficha-list li + li {
   margin-top: 4px;
+}
+
+.dashboard-quality-action-plans .pac-ficha-list--pre-wrap li {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .dashboard-quality-action-plans .pac-ficha-list li strong {

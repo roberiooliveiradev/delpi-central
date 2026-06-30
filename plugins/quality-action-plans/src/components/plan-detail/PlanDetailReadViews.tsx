@@ -460,7 +460,7 @@ export function IshikawaReadContent({
             <section key={key} className="pac-ficha-section">
               <h3 className="pac-subsection-title">{ISHIKAWA_LABELS[key] ?? key}</h3>
               {items.length ? (
-                <ul className="pac-ficha-list">
+                <ul className="pac-ficha-list pac-ficha-list--pre-wrap">
                   {items.map((item, index) => (
                     <li key={`${key}-${index}`}>{item}</li>
                   ))}
