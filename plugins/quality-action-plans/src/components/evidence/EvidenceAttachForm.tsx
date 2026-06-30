@@ -11,10 +11,8 @@ import {
   inferEvidenceTypeFromFile,
 } from "./evidenceAttachmentUtils";
 import { EvidenceFileDropzone } from "./EvidenceFileDropzone";
-import {
-  EvidencePendingUploadItem,
-  type EvidencePendingUpload,
-} from "./EvidencePendingUploadItem";
+import { EvidencePendingUploadList } from "./EvidencePendingUploadList";
+import type { EvidencePendingUpload } from "./EvidencePendingUploadItem";
 
 type Props = {
   planId: string;
@@ -112,25 +110,14 @@ export function EvidenceAttachForm({
       />
 
       {pending.length ? (
-        <div className="pac-evidence-pending-list">
-          <p className="pac-evidence-pending-list__title">
-            Arquivos na fila ({pending.length})
-          </p>
-          <p className="pac-muted pac-evidence-pending-list__hint">
-            Ajuste tipo, seção 8D e vínculo de cada arquivo antes de enviar.
-          </p>
-          {pending.map((item) => (
-            <EvidencePendingUploadItem
-              key={item.id}
-              item={item}
-              actions={actions}
-              lockActionId={lockActionId}
-              disabled={disabled || uploading}
-              onChange={updatePending}
-              onRemove={removePending}
-            />
-          ))}
-        </div>
+        <EvidencePendingUploadList
+          items={pending}
+          actions={actions}
+          lockActionId={lockActionId}
+          disabled={disabled || uploading}
+          onChange={updatePending}
+          onRemove={removePending}
+        />
       ) : (
         <p className="pac-muted pac-evidence-attach-form__empty">
           Nenhum arquivo na fila. Use a área acima para adicionar anexos.

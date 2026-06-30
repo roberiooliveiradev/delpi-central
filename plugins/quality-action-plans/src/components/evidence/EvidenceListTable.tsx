@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from "react";
 import { Download, Eye, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import {
   deletePlanEvidence,
   downloadPlanEvidenceFile,
-  fetchPlanEvidenceFileBlob,
 } from "../../api/actionPlansApi";
 import {
   evidenceSectionLabel,
@@ -14,12 +13,13 @@ import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { PlanAction } from "../../types/actionPlan";
 import type { PlanEvidence } from "../../types/rnc8d";
 import { formatDateTime } from "../../utils/format";
-import { Modal } from "../ui/Modal";
 import { TableHeaderCell } from "../ui/HelpTooltip";
 import {
   formatEvidenceFileSize,
   linkedActionCell,
 } from "./evidenceAttachmentUtils";
+import { EvidencePreviewModal } from "./EvidencePreviewModal";
+import { canPreviewEvidence } from "./evidencePreviewUtils";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -32,108 +32,6 @@ type Props = {
   compact?: boolean;
 };
 
-function isImageEvidence(evidence: PlanEvidence): boolean {
-  return evidence.type === "image" || Boolean(evidence.mime_type?.startsWith("image/"));
-}
-
-function isPdfEvidence(evidence: PlanEvidence): boolean {
-  return evidence.type === "pdf" || evidence.mime_type === "application/pdf";
-}
-
-function isPreviewableEvidence(evidence: PlanEvidence): boolean {
-  return isImageEvidence(evidence) || isPdfEvidence(evidence);
-}
-
-function evidenceTitle(evidence: PlanEvidence): string {
-  return evidence.file_name ?? evidence.description ?? evidence.id;
-}
-
-function EvidencePreviewContent({
-  planId,
-  evidence,
-}: {
-  planId: string;
-  evidence: PlanEvidence;
-}) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isPreviewableEvidence(evidence)) {
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadPreview() {
-      setLoading(true);
-      setError(null);
-      try {
-        const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        objectUrlRef.current = url;
-        setPreviewUrl(url);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Não foi possível carregar a pré-visualização.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadPreview();
-
-    return () => {
-      cancelled = true;
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
-    };
-  }, [planId, evidence.id, evidence.type, evidence.mime_type]);
-
-  const title = evidenceTitle(evidence);
-
-  if (loading) {
-    return <p className="pac-muted pac-evidence-preview-modal__status">Carregando pré-visualização…</p>;
-  }
-
-  if (error) {
-    return <p className="pac-muted pac-evidence-preview-modal__status">{error}</p>;
-  }
-
-  if (isImageEvidence(evidence) && previewUrl) {
-    return (
-      <img
-        src={previewUrl}
-        alt={title}
-        className="pac-evidence-preview-modal__image"
-      />
-    );
-  }
-
-  if (isPdfEvidence(evidence) && previewUrl) {
-    return (
-      <iframe
-        src={previewUrl}
-        title={`Pré-visualização: ${title}`}
-        className="pac-evidence-preview-modal__pdf"
-      />
-    );
-  }
-
-  return (
-    <p className="pac-muted pac-evidence-preview-modal__status">
-      Pré-visualização não disponível para este tipo de arquivo.
-    </p>
-  );
-}
-
 export function EvidenceListTable({
   planId,
   evidences,
@@ -145,6 +43,7 @@ export function EvidenceListTable({
   const [error, setError] = useState<string | null>(null);
   const [previewEvidence, setPreviewEvidence] = useState<PlanEvidence | null>(null);
   const actionById = new Map(actions.map((action) => [action.id, action]));
+  const showActionsColumn = true;
 
   async function handleDelete(evidenceId: string) {
     setError(null);
@@ -176,7 +75,7 @@ export function EvidenceListTable({
               <TableHeaderCell label="Ação" hint={T.linkedAction} />
               <TableHeaderCell label="Tamanho" hint={T.fileSize} />
               <TableHeaderCell label="Enviado em" hint={T.uploadedAt} />
-              {!readOnly ? (
+              {showActionsColumn ? (
                 <TableHeaderCell
                   label="Ações"
                   hint={T.evidenceActions}
@@ -203,10 +102,10 @@ export function EvidenceListTable({
                 </td>
                 <td>{formatEvidenceFileSize(evidence.size_bytes)}</td>
                 <td>{formatDateTime(evidence.created_at)}</td>
-                {!readOnly ? (
+                {showActionsColumn ? (
                   <td className="pac-table__actions-cell">
                     <div className="pac-table-actions">
-                      {isPreviewableEvidence(evidence) ? (
+                      {canPreviewEvidence(evidence) ? (
                         <button
                           type="button"
                           className="pac-ghost-btn pac-ghost-btn--icon"
@@ -232,15 +131,17 @@ export function EvidenceListTable({
                       >
                         <Download size={16} />
                       </button>
-                      <button
-                        type="button"
-                        className="pac-ghost-btn pac-ghost-btn--icon"
-                        aria-label="Remover evidência"
-                        title="Remover"
-                        onClick={() => void handleDelete(evidence.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {!readOnly ? (
+                        <button
+                          type="button"
+                          className="pac-ghost-btn pac-ghost-btn--icon"
+                          aria-label="Remover evidência"
+                          title="Remover"
+                          onClick={() => void handleDelete(evidence.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      ) : null}
                     </div>
                   </td>
                 ) : null}
@@ -250,28 +151,12 @@ export function EvidenceListTable({
         </table>
       </div>
 
-      <Modal
+      <EvidencePreviewModal
+        planId={planId}
+        evidence={previewEvidence}
         open={previewEvidence != null}
-        title={previewEvidence ? evidenceTitle(previewEvidence) : "Pré-visualização"}
-        className="pac-modal--evidence-preview"
         onClose={() => setPreviewEvidence(null)}
-      >
-        {previewEvidence ? (
-          <div className="pac-evidence-preview-modal">
-            <EvidencePreviewContent planId={planId} evidence={previewEvidence} />
-            {previewEvidence.description ? (
-              <p className="pac-muted pac-evidence-preview-modal__description">
-                {previewEvidence.description}
-              </p>
-            ) : null}
-            <div className="pac-evidence-preview-modal__meta">
-              <span>{evidenceTypeLabel(previewEvidence.type)}</span>
-              <span>{formatEvidenceFileSize(previewEvidence.size_bytes)}</span>
-              <span>{formatDateTime(previewEvidence.created_at)}</span>
-            </div>
-          </div>
-        ) : null}
-      </Modal>
+      />
     </>
   );
 }

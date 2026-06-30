@@ -17,6 +17,23 @@ def _decode_text(content: bytes) -> str:
     return content.decode("utf-8", errors="replace")
 
 
+def _extract_docx_text(content: bytes) -> str:
+    import xml.etree.ElementTree as ET
+    import zipfile
+
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        xml_bytes = archive.read("word/document.xml")
+    root = ET.fromstring(xml_bytes)
+    namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    paragraphs: list[str] = []
+    for paragraph in root.iter(f"{namespace}p"):
+        parts = [node.text for node in paragraph.iter(f"{namespace}t") if node.text]
+        line = "".join(parts).strip()
+        if line:
+            paragraphs.append(line)
+    return "\n\n".join(paragraphs)
+
+
 def _extract_xlsx_text(content: bytes) -> str:
     workbook = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
     parts: list[str] = []
@@ -58,6 +75,16 @@ def extract_evidence_text(
     } or name.endswith((".xlsx", ".xls")):
         extracted = _extract_xlsx_text(content)
         format_label = "spreadsheet"
+    elif mime in {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+    } or name.endswith((".docx", ".doc")):
+        if name.endswith(".docx") or "wordprocessingml" in mime:
+            extracted = _extract_docx_text(content)
+            format_label = "document"
+        else:
+            format_label = "document"
+            extracted = ""
     elif mime == "application/pdf" or name.endswith(".pdf"):
         format_label = "pdf"
         extracted = ""
@@ -72,5 +99,5 @@ def extract_evidence_text(
         "text_content": normalized,
         "char_count": len(normalized),
         "truncated": truncated,
-        "extractable": bool(normalized) or format_label in {"text", "spreadsheet"},
+        "extractable": bool(normalized) or format_label in {"text", "spreadsheet", "document"},
     }

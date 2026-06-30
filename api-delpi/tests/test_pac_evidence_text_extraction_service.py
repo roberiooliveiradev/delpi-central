@@ -41,3 +41,24 @@ def test_extract_evidence_text_from_plain_text() -> None:
 
     assert payload["format"] == "text"
     assert "Relato" in payload["text_content"]
+
+
+def test_extract_evidence_text_from_docx() -> None:
+    import zipfile
+
+    document_xml = (
+        b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        b'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        b"<w:body><w:p><w:r><w:t>Relato Word</w:t></w:r></w:p></w:body></w:document>"
+    )
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("word/document.xml", document_xml)
+    payload = extract_evidence_text(
+        content=buffer.getvalue(),
+        mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        file_name="relato.docx",
+    )
+
+    assert payload["format"] == "document"
+    assert "Relato Word" in payload["text_content"]

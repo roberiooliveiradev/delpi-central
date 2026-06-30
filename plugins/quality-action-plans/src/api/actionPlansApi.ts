@@ -504,3 +504,28 @@ export async function fetchPlanEvidenceFileBlob(planId: string, evidenceId: stri
   const { httpDownloadBlob } = await import("./httpClient");
   return httpDownloadBlob(`${API_BASE}/${planId}/evidences/${evidenceId}/file`);
 }
+
+export type PlanEvidenceContent = {
+  id: string;
+  file_name?: string | null;
+  mime_type?: string | null;
+  type?: string;
+  text_content?: string;
+  extraction?: {
+    format?: string;
+    text_content?: string;
+    char_count?: number;
+    truncated?: boolean;
+    extractable?: boolean;
+  } | null;
+};
+
+export async function fetchPlanEvidenceContent(
+  planId: string,
+  evidenceId: string,
+): Promise<PlanEvidenceContent> {
+  const envelope = await httpGet<ApiEnvelope<PlanEvidenceContent>>(
+    `${API_BASE}/${planId}/evidences/${evidenceId}/content`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar conteúdo da evidência.");
+}
