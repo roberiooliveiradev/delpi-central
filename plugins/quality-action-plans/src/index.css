@@ -2683,6 +2683,139 @@
   white-space: nowrap;
 }
 
+.dashboard-quality-action-plans .pac-evidence-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-quality-action-plans .pac-evidence-panel__existing-title {
+  margin: 0 0 10px;
+  font-size: var(--pac-font-sm);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-evidence-attach-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-quality-action-plans .pac-evidence-attach-form__empty {
+  margin: 0;
+}
+
+.dashboard-quality-action-plans .pac-evidence-attach-form__submit {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dashboard-quality-action-plans .pac-evidence-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 148px;
+  padding: 20px 16px;
+  border: 1.5px dashed color-mix(in srgb, var(--pac-accent) 42%, var(--pac-card-border));
+  border-radius: var(--pac-control-radius);
+  background: color-mix(in srgb, var(--pac-accent) 4%, var(--pac-card-bg));
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dashboard-quality-action-plans .pac-evidence-dropzone:hover:not(.pac-evidence-dropzone--disabled),
+.dashboard-quality-action-plans .pac-evidence-dropzone--active {
+  border-color: var(--pac-accent);
+  background: color-mix(in srgb, var(--pac-accent) 10%, var(--pac-card-bg));
+}
+
+.dashboard-quality-action-plans .pac-evidence-dropzone--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-quality-action-plans .pac-evidence-dropzone__input {
+  display: none;
+}
+
+.dashboard-quality-action-plans .pac-evidence-dropzone__icon {
+  color: var(--pac-accent);
+}
+
+.dashboard-quality-action-plans .pac-evidence-dropzone__title {
+  margin: 0;
+  font-size: var(--pac-font-sm);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-evidence-dropzone__hint {
+  margin: 0;
+  max-width: 36rem;
+  font-size: var(--pac-font-xs);
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-list__title {
+  margin: 0;
+  font-size: var(--pac-font-sm);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-list__hint {
+  margin: -4px 0 0;
+  font-size: var(--pac-font-xs);
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item {
+  padding: 14px;
+  border: 1px solid var(--pac-card-border);
+  border-radius: var(--pac-control-radius);
+  background: color-mix(in srgb, var(--pac-card-bg) 92%, var(--pac-accent) 8%);
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item__file {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item__file strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item__fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item__fields--with-action {
+  grid-template-columns: minmax(140px, 0.9fr) minmax(140px, 0.9fr) minmax(220px, 1.4fr);
+}
+
+.dashboard-quality-action-plans .pac-evidence-pending-item__locked-action {
+  margin: 6px 0 0;
+  font-size: var(--pac-font-sm);
+  line-height: 1.35;
+}
+
 .pac-modal-overlay {
   position: fixed;
   inset: 0;
@@ -3398,6 +3531,11 @@
   }
 
   .dashboard-quality-action-plans .pac-evidence-upload--with-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-quality-action-plans .pac-evidence-pending-item__fields,
+  .dashboard-quality-action-plans .pac-evidence-pending-item__fields--with-action {
     grid-template-columns: 1fr;
   }
 

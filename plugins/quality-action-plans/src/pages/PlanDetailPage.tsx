@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Download,
+  Paperclip,
   Trash2,
 } from "lucide-react";
 
@@ -886,6 +887,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 isEditing={bindSection("evidences").isEditing}
                 onEdit={bindSection("evidences").onEdit}
                 onCancelEdit={bindSection("evidences").onCancelEdit}
+                editLabel="Anexar"
+                cancelLabel="Fechar"
+                EditIcon={Paperclip}
                 readContent={
                   <EvidencePanel
                     planId={planId}
@@ -1208,6 +1212,9 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 isEditing={bindSection("evidences").isEditing}
                 onEdit={bindSection("evidences").onEdit}
                 onCancelEdit={bindSection("evidences").onCancelEdit}
+                editLabel="Anexar"
+                cancelLabel="Fechar"
+                EditIcon={Paperclip}
                 readContent={
                   <EvidencePanel
                     planId={planId}

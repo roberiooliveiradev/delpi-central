@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Pencil, X } from "lucide-react";
 
 import { SectionCard } from "./SectionCard";
@@ -16,6 +17,10 @@ type EditableSectionCardProps = {
   headerExtra?: ReactNode;
   /** Quando false, oculta o botão Editar (somente leitura). */
   editable?: boolean;
+  /** Rótulos customizados (ex.: evidências → Anexar / Fechar). */
+  editLabel?: string;
+  cancelLabel?: string;
+  EditIcon?: LucideIcon;
 };
 
 export function EditableSectionCard({
@@ -30,6 +35,9 @@ export function EditableSectionCard({
   editContent,
   headerExtra,
   editable = true,
+  editLabel = "Editar",
+  cancelLabel = "Cancelar",
+  EditIcon = Pencil,
 }: EditableSectionCardProps) {
   return (
     <SectionCard
@@ -44,12 +52,12 @@ export function EditableSectionCard({
             isEditing ? (
               <button type="button" className="pac-ghost-btn" onClick={onCancelEdit}>
                 <X size={16} aria-hidden="true" />
-                Cancelar
+                {cancelLabel}
               </button>
             ) : (
               <button type="button" className="pac-ghost-btn" onClick={onEdit}>
-                <Pencil size={16} aria-hidden="true" />
-                Editar
+                <EditIcon size={16} aria-hidden="true" />
+                {editLabel}
               </button>
             )
           ) : null}
