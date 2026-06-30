@@ -224,12 +224,20 @@ export type FiveWhysAnalysis = {
   detection_why_5?: string | null;
 };
 
+export type ActionResponsible = {
+  id?: string;
+  user_id?: string | null;
+  display_name: string;
+  sort_order?: number;
+};
+
 export type PlanAction = {
   id: string;
   action_type: string;
   description: string;
   responsible_user_id?: string | null;
   responsible_name?: string | null;
+  responsibles?: ActionResponsible[];
   department?: string | null;
   due_date?: string | null;
   status: string;

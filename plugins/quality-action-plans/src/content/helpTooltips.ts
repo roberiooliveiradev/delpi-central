@@ -87,6 +87,8 @@ export const PAC_HELP_TOOLTIPS = {
       "Usuário vinculado por ID — a ação entra na Minha fila dele enquanto estiver aberta.",
     actionResponsibleTeamUnlinked:
       "Este membro ainda não tem usuário Delpi vinculado na seção 2. Vincule na equipe de análise para habilitar a Minha fila.",
+    actionResponsibles:
+      "Selecione um ou mais membros da equipe 8D. Cada um com usuário Delpi vinculado recebe a ação na Minha fila e alertas de prazo.",
     actionDueDate: "Prazo acordado para conclusão da ação.",
     actionStatus: "Situação atual da ação (pendente, em andamento, concluída, etc.).",
     actionDescription: "O que será feito — descrição objetiva da ação corretiva ou de contenção.",

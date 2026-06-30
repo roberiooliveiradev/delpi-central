@@ -89,7 +89,7 @@ class DispatchPacQualityNotificationsUseCase:
             )
             action_id = str(row.get("action_id") or row.get("id") or "")
             plan_id = str(row.get("plan_id") or "")
-            dedupe_key = f"pac:action_due:{action_id}:{due_label}"
+            dedupe_key = f"pac:action_due:{action_id}:{recipient}:{due_label}"
             candidates.append(
                 build_action_due_notification(
                     action_id=action_id,

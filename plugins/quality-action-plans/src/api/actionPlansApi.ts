@@ -292,6 +292,7 @@ export type NewPlanActionPayload = {
   description: string;
   responsible_user_id?: string | null;
   responsible_name?: string;
+  responsibles?: Array<{ user_id?: string | null; display_name: string }>;
   department?: string;
   due_date?: string;
   status?: string;
@@ -316,6 +317,7 @@ export type UpdatePlanActionPayload = {
   description?: string;
   responsible_user_id?: string | null;
   responsible_name?: string;
+  responsibles?: Array<{ user_id?: string | null; display_name: string }>;
   department?: string;
   due_date?: string;
   status?: string;

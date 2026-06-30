@@ -79,16 +79,24 @@ export function findTeamMemberBindings(
   });
 
   for (const action of context.actions ?? []) {
-    if (matchesMemberName(action.responsible_name, name)) {
-      bindings.push({
-        block: "Ações corretivas",
-        detail: action.description.trim().slice(0, 60) || "Ação sem descrição",
-      });
-    } else if (matchesMemberUserId(action.responsible_user_id, userId)) {
-      bindings.push({
-        block: "Ações corretivas",
-        detail: action.description.trim().slice(0, 60) || "Ação vinculada por usuário Delpi",
-      });
+    const responsibles = action.responsibles?.length
+      ? action.responsibles
+      : [{ display_name: action.responsible_name, user_id: action.responsible_user_id }];
+    for (const responsible of responsibles) {
+      if (matchesMemberName(responsible.display_name, name)) {
+        bindings.push({
+          block: "Ações corretivas",
+          detail: action.description.trim().slice(0, 60) || "Ação sem descrição",
+        });
+        break;
+      }
+      if (matchesMemberUserId(responsible.user_id, userId)) {
+        bindings.push({
+          block: "Ações corretivas",
+          detail: action.description.trim().slice(0, 60) || "Ação vinculada por usuário Delpi",
+        });
+        break;
+      }
     }
   }
 

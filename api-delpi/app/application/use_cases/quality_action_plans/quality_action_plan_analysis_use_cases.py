@@ -89,11 +89,18 @@ class UpsertFiveWhysRequest:
 
 
 @dataclass(frozen=True)
+class ActionResponsibleRequest:
+    display_name: str
+    user_id: str | None = None
+
+
+@dataclass(frozen=True)
 class CreateActionItemRequest:
     action_type: str
     description: str
     responsible_user_id: str | None = None
     responsible_name: str | None = None
+    responsibles: list[ActionResponsibleRequest] | None = None
     department: str | None = None
     due_date: str | None = None
     status: str = "pending"
@@ -239,6 +246,15 @@ class CreatePlanActionsUseCase:
                     "description": action.description.strip(),
                     "responsible_user_id": action.responsible_user_id,
                     "responsible_name": action.responsible_name,
+                    "responsibles": (
+                        [
+                            {"user_id": item.user_id, "display_name": item.display_name.strip()}
+                            for item in action.responsibles
+                            if item.display_name.strip()
+                        ]
+                        if action.responsibles is not None
+                        else None
+                    ),
                     "department": action.department,
                     "due_date": action.due_date,
                     "status": action.status,

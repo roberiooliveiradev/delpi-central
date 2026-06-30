@@ -36,7 +36,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 | GET | `/quality/action-plans` | `list_quality_action_plans` | Listagem paginada |
 | GET | `/quality/action-plans/overdue` | `list_quality_action_plans_overdue` | Planos com ações vencidas |
 | GET | `/quality/action-plans/recurrence` | `list_quality_action_plans_recurrence` | Agrupamento por `recurrence_key` (reincidência) |
-| GET | `/quality/action-plans/my-queue` | `list_quality_action_plan_my_queue` | Fila pessoal — ações do usuário autenticado (`responsible_user_id`) |
+| GET | `/quality/action-plans/my-queue` | `list_quality_action_plan_my_queue` | Fila pessoal — ações em que o usuário autenticado é responsável (`quality_action_responsibles`) |
 | GET | `/quality/action-plans/assignable-users` | `list_quality_action_plan_assignable_users` | Busca usuários Delpi elegíveis para responsável / equipe 8D (proxy Core API) |
 | GET | `/quality/action-plans/evidences/search` | `search_quality_action_plan_evidences` | Busca textual em evidências (nome, descrição, trecho) |
 | GET | `/quality/solution-patterns` | `list_quality_solution_patterns` | Padrões de solução testados |

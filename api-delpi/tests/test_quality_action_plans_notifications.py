@@ -70,9 +70,8 @@ def test_list_actions_due_within_days_query() -> None:
     repo.list_actions_due_within_days(days_ahead=2)
 
     query = repo.fetch_all.call_args[0][0]
-    assert "due_date > CURRENT_DATE" in query
-    assert "due_date <= CURRENT_DATE + make_interval(days => %s)" in query
-    assert repo.fetch_all.call_args[0][1] == (2,)
+    assert "quality_action_responsibles" in query
+    assert repo.fetch_all.call_args[0][1] == (2, 2)
 
 
 def test_dispatch_use_case_dry_run_counts_candidates() -> None:

@@ -11,6 +11,7 @@ import {
   ActionResponsibleField,
   type ActionResponsibleValue,
 } from "./ActionResponsibleField";
+import { ActionResponsiblesField } from "./ActionResponsiblesField";
 import { RequiredEvidenceAlert } from "./RequiredEvidenceAlert";
 import { FormActions } from "./ui/FormActions";
 import { FieldLabel, TableHeaderCell } from "./ui/HelpTooltip";
@@ -24,8 +25,15 @@ import {
 } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
-import type { PlanAction } from "../types/actionPlan";
+import type { ActionResponsible, PlanAction } from "../types/actionPlan";
 import type { PlanEvidence } from "../types/rnc8d";
+import {
+  formatActionResponsiblesDisplay,
+  hasLinkedQueueResponsibles,
+  legacyResponsibleFromResponsibles,
+  responsiblesFromAction,
+  responsiblesToPayload,
+} from "../utils/actionResponsibles";
 import { formatDate } from "../utils/format";
 import type { TeamMember } from "../types/rnc8d";
 
@@ -40,14 +48,15 @@ const CAUSE_TRACK_OPTIONS = [
 type ActionFormState = {
   actionType: string;
   description: string;
-  responsible: ActionResponsibleValue;
+  responsibles: ActionResponsible[];
+  legacyResponsible: ActionResponsibleValue;
   dueDate: string;
   causeTrack: string;
   status: string;
   evidenceRequired: boolean;
 };
 
-const EMPTY_RESPONSIBLE: ActionResponsibleValue = {
+const EMPTY_LEGACY_RESPONSIBLE: ActionResponsibleValue = {
   responsibleUserId: null,
   responsibleName: "",
 };
@@ -55,7 +64,8 @@ const EMPTY_RESPONSIBLE: ActionResponsibleValue = {
 const EMPTY_FORM: ActionFormState = {
   actionType: "corrective",
   description: "",
-  responsible: EMPTY_RESPONSIBLE,
+  responsibles: [],
+  legacyResponsible: EMPTY_LEGACY_RESPONSIBLE,
   dueDate: "",
   causeTrack: "",
   status: "pending",
@@ -73,12 +83,15 @@ type Props = {
 };
 
 function toFormState(action: PlanAction): ActionFormState {
+  const responsibles = responsiblesFromAction(action);
+  const legacy = legacyResponsibleFromResponsibles(responsibles);
   return {
     actionType: action.action_type,
     description: action.description,
-    responsible: {
-      responsibleUserId: action.responsible_user_id ?? null,
-      responsibleName: action.responsible_name ?? "",
+    responsibles,
+    legacyResponsible: {
+      responsibleUserId: legacy.responsible_user_id ?? null,
+      responsibleName: legacy.responsible_name ?? "",
     },
     dueDate: action.due_date?.slice(0, 10) ?? "",
     causeTrack: action.cause_track ?? "",
@@ -87,22 +100,36 @@ function toFormState(action: PlanAction): ActionFormState {
   };
 }
 
-function responsiblePayload(responsible: ActionResponsibleValue): Pick<
-  UpdatePlanActionPayload,
-  "responsible_name" | "responsible_user_id"
-> {
-  const name = responsible.responsibleName.trim();
+function responsiblesPayload(form: ActionFormState, usesTeamFlow: boolean) {
+  const responsibles = usesTeamFlow
+    ? responsiblesToPayload(form.responsibles)
+    : responsiblesToPayload([
+        {
+          display_name: form.legacyResponsible.responsibleName,
+          user_id: form.legacyResponsible.responsibleUserId,
+        },
+      ]);
+  const legacy = legacyResponsibleFromResponsibles(
+    responsibles.map((item) => ({
+      display_name: item.display_name,
+      user_id: item.user_id ?? null,
+    })),
+  );
   return {
-    responsible_name: name || undefined,
-    responsible_user_id: responsible.responsibleUserId,
+    responsibles,
+    responsible_name: legacy.responsible_name,
+    responsible_user_id: legacy.responsible_user_id,
   };
 }
 
-function toUpdatePayload(form: ActionFormState): UpdatePlanActionPayload {
+function toUpdatePayload(form: ActionFormState, usesTeamFlow: boolean): UpdatePlanActionPayload {
+  const responsible = responsiblesPayload(form, usesTeamFlow);
   return {
     action_type: form.actionType,
     description: form.description.trim(),
-    ...responsiblePayload(form.responsible),
+    responsibles: responsible.responsibles,
+    responsible_name: responsible.responsible_name,
+    responsible_user_id: responsible.responsible_user_id,
     due_date: form.dueDate || undefined,
     cause_track: form.causeTrack || undefined,
     status: form.status,
@@ -121,6 +148,7 @@ export function PlanActionsPanel({
   const { confirm, confirmDialog } = useConfirmDialog();
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [form, setForm] = useState<ActionFormState>(EMPTY_FORM);
+  const usesTeamFlow = Boolean(teamMembers?.length);
 
   function resetForm() {
     setEditingActionId(null);
@@ -157,7 +185,7 @@ export function PlanActionsPanel({
         if (!form.description.trim()) {
           throw new Error("Informe a descrição da ação.");
         }
-        await updatePlanAction(planId, editingActionId, toUpdatePayload(form));
+        await updatePlanAction(planId, editingActionId, toUpdatePayload(form, usesTeamFlow));
         resetForm();
       });
       return;
@@ -167,11 +195,12 @@ export function PlanActionsPanel({
       if (!form.description.trim()) {
         throw new Error("Informe a descrição da ação.");
       }
-      const responsible = responsiblePayload(form.responsible);
+      const responsible = responsiblesPayload(form, usesTeamFlow);
       await createPlanActions(planId, [
         {
           action_type: form.actionType,
           description: form.description.trim(),
+          responsibles: responsible.responsibles,
           responsible_name: responsible.responsible_name,
           responsible_user_id: responsible.responsible_user_id || undefined,
           due_date: form.dueDate || undefined,
@@ -232,8 +261,8 @@ export function PlanActionsPanel({
                   <td>{action.description}</td>
                   <td>
                     <span className="pac-action-responsible-cell">
-                      <span>{action.responsible_name ?? "—"}</span>
-                      {action.responsible_user_id ? (
+                      <span>{formatActionResponsiblesDisplay(action)}</span>
+                      {hasLinkedQueueResponsibles(action) ? (
                         <span
                           className="pac-badge pac-badge--linked"
                           title={PAC_HELP_TOOLTIPS.form.actionResponsibleLinked}
@@ -336,11 +365,19 @@ export function PlanActionsPanel({
           />
         </div>
 
-        <ActionResponsibleField
-          value={form.responsible}
-          teamMembers={teamMembers}
-          onChange={(responsible) => setForm((current) => ({ ...current, responsible }))}
-        />
+        {usesTeamFlow ? (
+          <ActionResponsiblesField
+            value={form.responsibles}
+            teamMembers={teamMembers}
+            onChange={(responsibles) => setForm((current) => ({ ...current, responsibles }))}
+          />
+        ) : (
+          <ActionResponsibleField
+            value={form.legacyResponsible}
+            teamMembers={teamMembers}
+            onChange={(legacyResponsible) => setForm((current) => ({ ...current, legacyResponsible }))}
+          />
+        )}
 
         <TextAreaField
           id="pac-action-desc"

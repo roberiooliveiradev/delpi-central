@@ -22,6 +22,11 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
 )
 
+from app.domain.services.quality_action_plans.action_responsibles_service import (
+    build_legacy_action_responsible_fields,
+    normalize_responsibles_payload,
+    responsibles_from_legacy_action,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_reference_service import (
     classify_plan_reference,
     normalize_plan_code,
@@ -347,9 +352,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "evidences": [
                 serialize_row(row, id_keys=("id", "plan_id", "action_id")) for row in evidences if row
             ],
-            "actions": [
-                serialize_row(row, id_keys=("id", "plan_id")) for row in actions if row
-            ],
+            "actions": self._serialize_actions_with_responsibles(actions),
             "history": [
                 serialize_row(row, id_keys=("id", "plan_id")) for row in history if row
             ],
@@ -1237,9 +1240,17 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         base_filters = [
             "p.deleted_at IS NULL",
             "p.status NOT IN ('completed', 'cancelled')",
-            "a.responsible_user_id = %s",
+            (
+                "(EXISTS ("
+                " SELECT 1 FROM quality.quality_action_responsibles ar"
+                "  WHERE ar.action_id = a.id"
+                "    AND ar.user_id IS NOT NULL"
+                "    AND trim(ar.user_id) <> ''"
+                "    AND ar.user_id = %s"
+                ") OR a.responsible_user_id = %s)"
+            ),
         ]
-        params: list[Any] = [user_id]
+        params: list[Any] = [user_id, user_id]
         if branch_code:
             base_filters.append("p.branch_code = %s")
             params.append(branch_code)
@@ -1405,6 +1416,24 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    a.plan_id,
                    a.description,
                    a.due_date,
+                   ar.user_id AS responsible_user_id,
+                   p.code AS plan_code,
+                   p.title AS plan_title
+              FROM quality.quality_actions a
+              JOIN quality.quality_action_plans p ON p.id = a.plan_id
+              JOIN quality.quality_action_responsibles ar ON ar.action_id = a.id
+             WHERE p.deleted_at IS NULL
+               AND a.status NOT IN ('completed', 'cancelled')
+               AND a.due_date IS NOT NULL
+               AND a.due_date > CURRENT_DATE
+               AND a.due_date <= CURRENT_DATE + make_interval(days => %s)
+               AND ar.user_id IS NOT NULL
+               AND trim(ar.user_id) <> ''
+            UNION
+            SELECT a.id AS action_id,
+                   a.plan_id,
+                   a.description,
+                   a.due_date,
                    a.responsible_user_id,
                    p.code AS plan_code,
                    p.title AS plan_title
@@ -1417,9 +1446,16 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                AND a.due_date <= CURRENT_DATE + make_interval(days => %s)
                AND a.responsible_user_id IS NOT NULL
                AND trim(a.responsible_user_id) <> ''
-             ORDER BY a.due_date ASC, p.code ASC
+               AND NOT EXISTS (
+                   SELECT 1
+                     FROM quality.quality_action_responsibles ar2
+                    WHERE ar2.action_id = a.id
+                      AND ar2.user_id IS NOT NULL
+                      AND trim(ar2.user_id) <> ''
+               )
+             ORDER BY due_date ASC, plan_code ASC
             """,
-            (days_ahead,),
+            (days_ahead, days_ahead),
         )
         result: list[dict[str, Any]] = []
         for row in rows:
@@ -2147,6 +2183,113 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         return row is not None
 
+    def _fetch_action_responsibles_map(
+        self,
+        action_ids: list[str],
+    ) -> dict[str, list[dict[str, Any]]]:
+        if not action_ids:
+            return {}
+        rows = self.fetch_all(
+            """
+            SELECT id, action_id, user_id, display_name, sort_order
+              FROM quality.quality_action_responsibles
+             WHERE action_id = ANY(%s::uuid[])
+             ORDER BY sort_order ASC, created_at ASC
+            """,
+            (action_ids,),
+        )
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for row in rows:
+            action_id = str(row["action_id"])
+            grouped.setdefault(action_id, []).append(
+                {
+                    "id": str(row["id"]),
+                    "user_id": row.get("user_id"),
+                    "display_name": row.get("display_name"),
+                    "sort_order": row.get("sort_order"),
+                }
+            )
+        return grouped
+
+    def _serialize_actions_with_responsibles(
+        self,
+        rows: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        serialized = [
+            serialize_row(row, id_keys=("id", "plan_id")) or {}
+            for row in rows
+            if row
+        ]
+        if not serialized:
+            return []
+        responsibles_map = self._fetch_action_responsibles_map(
+            [str(action["id"]) for action in serialized if action.get("id")]
+        )
+        result: list[dict[str, Any]] = []
+        for action in serialized:
+            action_id = str(action.get("id") or "")
+            responsibles = responsibles_map.get(action_id) or responsibles_from_legacy_action(action)
+            if (
+                len(responsibles) == 1
+                and " / " in str(responsibles[0].get("display_name") or "")
+            ):
+                responsibles = normalize_responsibles_payload(
+                    None,
+                    legacy_user_id=responsibles[0].get("user_id"),
+                    legacy_name=responsibles[0].get("display_name"),
+                )
+            legacy_user_id, legacy_name = build_legacy_action_responsible_fields(responsibles)
+            enriched = {
+                **action,
+                "responsibles": responsibles,
+                "responsible_user_id": legacy_user_id,
+                "responsible_name": legacy_name,
+            }
+            result.append(enriched)
+        return result
+
+    def _replace_action_responsibles(
+        self,
+        action_id: str,
+        responsibles: list[dict[str, Any]],
+        *,
+        auto_commit: bool = False,
+    ) -> None:
+        self.execute(
+            "DELETE FROM quality.quality_action_responsibles WHERE action_id = %s",
+            (action_id,),
+            auto_commit=auto_commit,
+        )
+        for index, item in enumerate(responsibles):
+            self.execute(
+                """
+                INSERT INTO quality.quality_action_responsibles (
+                    action_id, user_id, display_name, sort_order
+                ) VALUES (%s, %s, %s, %s)
+                """,
+                (
+                    action_id,
+                    item.get("user_id"),
+                    item["display_name"],
+                    index,
+                ),
+                auto_commit=auto_commit,
+            )
+
+    def _resolve_action_responsibles_from_fields(
+        self,
+        fields: dict[str, Any],
+    ) -> list[dict[str, Any]] | None:
+        if "responsibles" in fields:
+            return normalize_responsibles_payload(fields.get("responsibles"))
+        if "responsible_user_id" in fields or "responsible_name" in fields:
+            return normalize_responsibles_payload(
+                None,
+                legacy_user_id=fields.get("responsible_user_id"),
+                legacy_name=fields.get("responsible_name"),
+            )
+        return None
+
     def get_action(self, plan_id: str, action_id: str) -> dict[str, Any] | None:
         resolved = self._coerce_plan_id(plan_id)
         if not resolved:
@@ -2161,7 +2304,10 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             """,
             (action_id, resolved),
         )
-        return serialize_row(row, id_keys=("id", "plan_id")) if row else None
+        if not row:
+            return None
+        items = self._serialize_actions_with_responsibles([row])
+        return items[0] if items else None
 
     def count_evidences_for_action(self, action_id: str) -> int:
         row = self.fetch_one(
@@ -2321,6 +2467,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
 
         created: list[dict[str, Any]] = []
         for action in actions:
+            responsibles = normalize_responsibles_payload(
+                action.get("responsibles"),
+                legacy_user_id=action.get("responsible_user_id"),
+                legacy_name=action.get("responsible_name"),
+            )
+            legacy_user_id, legacy_name = build_legacy_action_responsible_fields(responsibles)
             row = self.execute_returning_one(
                 """
                 INSERT INTO quality.quality_actions (
@@ -2335,8 +2487,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     plan_id,
                     action["action_type"],
                     action["description"],
-                    action.get("responsible_user_id"),
-                    action.get("responsible_name"),
+                    legacy_user_id,
+                    legacy_name,
                     action.get("department"),
                     action.get("due_date"),
                     action.get("status", "pending"),
@@ -2346,6 +2498,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 auto_commit=False,
             )
             if row:
+                action_id = str(row["id"])
+                self._replace_action_responsibles(action_id, responsibles, auto_commit=False)
                 created.append(serialize_row(row, id_keys=("id", "plan_id")) or {})
                 self.append_history(
                     plan_id=plan_id,
@@ -2355,7 +2509,21 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     auto_commit=False,
                 )
         self.commit()
-        return created
+        if not created:
+            return []
+        return self._serialize_actions_with_responsibles(
+            self.fetch_all(
+                """
+                SELECT id, plan_id, action_type, description, responsible_user_id,
+                       responsible_name, department, due_date, status,
+                       evidence_required, cause_track, completed_at, created_at, updated_at
+                  FROM quality.quality_actions
+                 WHERE id = ANY(%s::uuid[])
+                 ORDER BY created_at ASC
+                """,
+                ([str(item["id"]) for item in created],),
+            )
+        )
 
     def update_action(
         self,
@@ -2371,6 +2539,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if not plan_id:
             return None
 
+        responsibles = self._resolve_action_responsibles_from_fields(fields)
         allowed = {
             "action_type",
             "description",
@@ -2392,18 +2561,27 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 or key in nullable_fields
             )
         }
+        if responsibles is not None:
+            legacy_user_id, legacy_name = build_legacy_action_responsible_fields(responsibles)
+            updates["responsible_user_id"] = legacy_user_id
+            updates["responsible_name"] = legacy_name
+
+        if not updates and responsibles is None:
+            return self.get_action(plan_id, action_id)
+
         if not updates:
-            row = self.fetch_one(
-                """
-                SELECT id, plan_id, action_type, description, responsible_user_id,
-                       responsible_name, department, due_date, status,
-                       evidence_required, completed_at, created_at, updated_at
-                  FROM quality.quality_actions
-                 WHERE id = %s AND plan_id = %s
-                """,
-                (action_id, plan_id),
+            existing = self.get_action(plan_id, action_id)
+            if not existing:
+                return None
+            self._replace_action_responsibles(action_id, responsibles or [], auto_commit=False)
+            self.append_history(
+                plan_id=plan_id,
+                event_type="action_updated",
+                **self._history_author(updated_by, updated_by_name, updated_by_email),
+                auto_commit=False,
             )
-            return serialize_row(row, id_keys=("id", "plan_id")) if row else None
+            self.commit()
+            return self.get_action(plan_id, action_id)
 
         set_parts = [f"{column} = %s" for column in updates]
         params: list[Any] = list(updates.values())
@@ -2419,7 +2597,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
              WHERE id = %s AND plan_id = %s
             RETURNING id, plan_id, action_type, description, responsible_user_id,
                       responsible_name, department, due_date, status,
-                      evidence_required, completed_at, created_at, updated_at
+                      evidence_required, cause_track, completed_at, created_at, updated_at
             """,
             tuple(params),
             auto_commit=False,
@@ -2427,6 +2605,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if not row:
             self.rollback()
             return None
+
+        if responsibles is not None:
+            self._replace_action_responsibles(action_id, responsibles, auto_commit=False)
 
         event = "action_completed" if fields.get("status") == "completed" else "action_updated"
         self.append_history(
@@ -2436,7 +2617,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             auto_commit=False,
         )
         self.commit()
-        return serialize_row(row, id_keys=("id", "plan_id"))
+        return self.get_action(plan_id, action_id)
 
     def delete_action(
         self,

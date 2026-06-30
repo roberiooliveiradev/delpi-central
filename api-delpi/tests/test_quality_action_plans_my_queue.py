@@ -26,7 +26,7 @@ def _capture_my_queue_query(**kwargs):
 
 def test_list_my_queue_filters_by_responsible_user():
     _count_query, list_query, params = _capture_my_queue_query(user_id="user-42")
-    assert "a.responsible_user_id = %s" in list_query
+    assert "quality_action_responsibles" in list_query
     assert "user-42" in params
 
 
@@ -58,6 +58,7 @@ def test_list_my_queue_include_completed_filter():
 
 def test_update_action_clears_responsible_user_id():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")  # type: ignore[method-assign]
     repo.execute_returning_one = MagicMock(
         return_value={
             "id": "act-1",
@@ -65,7 +66,7 @@ def test_update_action_clears_responsible_user_id():
             "action_type": "corrective",
             "description": "Teste",
             "responsible_user_id": None,
-            "responsible_name": "Ana",
+            "responsible_name": None,
             "department": None,
             "due_date": None,
             "status": "pending",
@@ -76,18 +77,22 @@ def test_update_action_clears_responsible_user_id():
             "updated_at": None,
         }
     )
+    repo.execute = MagicMock()
     repo.commit = MagicMock()
+    repo.append_history = MagicMock()
+    repo.get_action = MagicMock(return_value={"id": "act-1", "responsibles": []})
 
     repo.update_action(
         "plan-1",
         "act-1",
-        {"responsible_user_id": None},
+        {"responsible_user_id": None, "responsible_name": None},
         updated_by="user-1",
     )
 
     sql, params = repo.execute_returning_one.call_args[0]
     assert "responsible_user_id = %s" in sql
     assert None in params
+    repo.execute.assert_called()
 
 
 def test_list_my_queue_maps_rows():

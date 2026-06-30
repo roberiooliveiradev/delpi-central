@@ -36,6 +36,7 @@ from app.domain.services.quality_action_plans.pac_evidence_text_extraction_servi
     extract_evidence_text,
 )
 from app.application.use_cases.quality_action_plans.quality_action_plan_analysis_use_cases import (
+    ActionResponsibleRequest,
     CreateActionItemRequest,
     EffectivenessReviewRequest,
     UpsertFiveWhysRequest,
@@ -246,6 +247,11 @@ class FiveWhysBody(BaseModel):
     detection_why_5: str | None = None
 
 
+class ActionResponsibleBody(BaseModel):
+    display_name: str = Field(..., min_length=1, max_length=200)
+    user_id: str | None = Field(default=None, max_length=100)
+
+
 class ActionItemBody(BaseModel):
     action_type: str = Field(
         ...,
@@ -254,6 +260,7 @@ class ActionItemBody(BaseModel):
     description: str = Field(..., min_length=3)
     responsible_user_id: str | None = None
     responsible_name: str | None = None
+    responsibles: list[ActionResponsibleBody] | None = None
     department: str | None = None
     due_date: str | None = None
     status: str = Field(default="pending", pattern="^(pending|in_progress|blocked)$")
@@ -273,6 +280,7 @@ class UpdateActionBody(BaseModel):
     description: str | None = Field(default=None, min_length=3)
     responsible_user_id: str | None = None
     responsible_name: str | None = None
+    responsibles: list[ActionResponsibleBody] | None = None
     department: str | None = None
     due_date: str | None = None
     status: str | None = Field(
@@ -1006,7 +1014,22 @@ def upsert_five_whys(plan_id: str, body: FiveWhysBody = Body(...)):
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def create_plan_actions(plan_id: str, body: CreateActionsBody = Body(...)):
     try:
-        actions = [CreateActionItemRequest(**item.model_dump()) for item in body.actions]
+        actions = [
+            CreateActionItemRequest(
+                **{
+                    **item.model_dump(),
+                    "responsibles": (
+                        [
+                            ActionResponsibleRequest(**responsible.model_dump())
+                            for responsible in item.responsibles
+                        ]
+                        if item.responsibles is not None
+                        else None
+                    ),
+                }
+            )
+            for item in body.actions
+        ]
         result = build_create_plan_actions_use_case().execute(
             plan_id,
             actions,
