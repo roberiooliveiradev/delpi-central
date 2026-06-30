@@ -4,8 +4,14 @@ import { useCallback, useState } from "react";
 
 import {
   searchDelpiProducts,
-  type DelpiProductLookupItem,
 } from "../api/delpiLookupApi";
+import {
+  formatCustomerReferenceOptionLabel,
+  formatProductCodeOptionLabel,
+  looksLikeDelpiProductCodeQuery,
+  toProductLookupMeta,
+  type DelpiProductLookupMeta,
+} from "../utils/delpiProductLookup";
 import { CreatableMultiSelectField } from "./ui/CreatableMultiSelectField";
 import { DelpiAsyncLookupField } from "./ui/DelpiAsyncLookupField";
 import { DelpiCustomerSearchModal } from "./ui/DelpiCustomerSearchModal";
@@ -31,6 +37,7 @@ export type PlanIdentificationFormState = {
   customer_store: string;
   customer_name: string;
   product_code: string;
+  customer_product_reference: string;
   product_description: string;
   batch_number: string;
   department: string;
@@ -59,8 +66,17 @@ type PlanProblemSectionProps = {
   materialSection?: ReactNode;
 };
 
-function formatProductLabel(item: DelpiProductLookupItem): string {
-  return item.description ? `${item.code} — ${item.description}` : item.code;
+function applyProductSelection(
+  onIdentificationChange: PlanProblemSectionProps["onIdentificationChange"],
+  meta: DelpiProductLookupMeta,
+) {
+  onIdentificationChange((current) => ({
+    ...current,
+    product_code: meta.code,
+    product_description: meta.description || current.product_description,
+    customer_product_reference:
+      meta.customerReference || current.customer_product_reference,
+  }));
 }
 
 export function PlanProblemSection({
@@ -75,17 +91,37 @@ export function PlanProblemSection({
 }: PlanProblemSectionProps) {
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
 
-  const searchProducts = useCallback(async (query: string, signal: AbortSignal) => {
-    const looksLikeCode = /^[0-9A-Za-z./-]+$/.test(query.trim());
+  const searchProductsByCode = useCallback(async (query: string, signal: AbortSignal) => {
+    const trimmed = query.trim();
     const items = await searchDelpiProducts(
-      looksLikeCode ? { code: query, signal } : { description: query, signal },
+      looksLikeDelpiProductCodeQuery(trimmed)
+        ? { code: trimmed, signal }
+        : { description: trimmed, signal },
     );
-    return items.map((item) => ({
-      value: item.code,
-      label: formatProductLabel(item),
-      meta: { code: item.code, description: item.description },
-    }));
+    return items.map((item) => {
+      const meta = toProductLookupMeta(item);
+      return {
+        value: meta.code,
+        label: formatProductCodeOptionLabel(meta),
+        meta,
+      };
+    });
   }, []);
+
+  const searchProductsByCustomerReference = useCallback(
+    async (query: string, signal: AbortSignal) => {
+      const items = await searchDelpiProducts({ customerReference: query, signal });
+      return items.map((item) => {
+        const meta = toProductLookupMeta(item);
+        return {
+          value: meta.customerReference || meta.code,
+          label: formatCustomerReferenceOptionLabel(meta),
+          meta,
+        };
+      });
+    },
+    [],
+  );
 
   const setField = <K extends keyof PlanIdentificationFormState>(
     key: K,
@@ -212,7 +248,7 @@ export function PlanProblemSection({
 
       <h3 className="pac-subsection-title">Material</h3>
       <div className="pac-form-grid">
-        <DelpiAsyncLookupField
+        <DelpiAsyncLookupField<DelpiProductLookupMeta>
           id="pac-detail-product"
           label={
             showRnc8dFlow ? RNC8D_SHARED_FIELD_LABELS.productCode : "Código produto"
@@ -220,14 +256,32 @@ export function PlanProblemSection({
           hint={PAC_HELP_TOOLTIPS.detail.productCode}
           value={identificationForm.product_code}
           onChange={(product_code) => setField("product_code", product_code)}
-          searchOptions={searchProducts}
+          searchOptions={searchProductsByCode}
           onSelect={(option) => {
-            onIdentificationChange((current) => ({
-              ...current,
-              product_code: option.meta?.code ?? option.value,
-              product_description: option.meta?.description ?? current.product_description,
-            }));
+            if (option.meta) {
+              applyProductSelection(onIdentificationChange, option.meta);
+            }
           }}
+        />
+        <DelpiAsyncLookupField<DelpiProductLookupMeta>
+          id="pac-detail-customer-product-reference"
+          label={
+            showRnc8dFlow
+              ? RNC8D_SHARED_FIELD_LABELS.customerProductReference
+              : "Referência do cliente"
+          }
+          hint={PAC_HELP_TOOLTIPS.detail.customerProductReference}
+          value={identificationForm.customer_product_reference}
+          onChange={(customer_product_reference) =>
+            setField("customer_product_reference", customer_product_reference)
+          }
+          searchOptions={searchProductsByCustomerReference}
+          onSelect={(option) => {
+            if (option.meta) {
+              applyProductSelection(onIdentificationChange, option.meta);
+            }
+          }}
+          placeholder="Referência B1_REFEREN…"
         />
         <TextField
           id="pac-detail-product-desc"
@@ -350,6 +404,7 @@ export function buildIdentificationUpdatePayload(form: PlanIdentificationFormSta
     customer_store: form.customer_store.trim() || undefined,
     customer_name: form.customer_name.trim() || undefined,
     product_code: form.product_code.trim() || undefined,
+    customer_product_reference: form.customer_product_reference.trim() || undefined,
     product_description: form.product_description.trim() || undefined,
     batch_number: form.batch_number.trim() || undefined,
     department: form.department.trim() || undefined,

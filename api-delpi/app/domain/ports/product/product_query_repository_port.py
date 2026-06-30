@@ -19,8 +19,9 @@ class ProductQueryRepositoryPort(ABC):
         code: Optional[str],
         group: Optional[str],
         description: Optional[str],
-        page: int,
-        page_size: int,
+        customer_reference: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 50,
         sort=Optional[str],
         direction=Optional[str]
     ) -> Page[Product]:

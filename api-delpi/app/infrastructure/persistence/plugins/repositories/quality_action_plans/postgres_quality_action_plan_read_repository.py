@@ -1583,13 +1583,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 code, title, customer_name, customer_code, customer_store, customer_contact, nonconformity_scope,
                 customer_template, client_nc_registry,
                 source_type, source_reference,
-                product_code, product_description, batch_number, reported_problem,
+                product_code, product_description, customer_product_reference, batch_number, reported_problem,
                 detected_at, reported_at, severity, status, created_by_user_id, owner_user_id,
                 branch_code, department, problem_category, symptom_tags, root_cause_category,
                 failure_mode, recurrence_key
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             RETURNING id, code, status
             """,
@@ -1607,6 +1607,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields.get("source_reference"),
                 fields.get("product_code"),
                 fields.get("product_description"),
+                fields.get("customer_product_reference"),
                 fields.get("batch_number"),
                 fields.get("reported_problem"),
                 fields.get("detected_at"),
@@ -1680,6 +1681,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "source_reference",
             "product_code",
             "product_description",
+            "customer_product_reference",
             "batch_number",
             "reported_problem",
             "detected_at",

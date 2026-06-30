@@ -14,6 +14,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         code=None,
         group=None,
         description=None,
+        customer_reference=None,
         page=1,
         page_size=50,
         sort=None,
@@ -40,6 +41,15 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         if group:
             where_clauses.append("SB1.B1_GRUPO = ?")
             where_params.append(group)
+
+        # -----------------------------
+        # CUSTOMER REFERENCE (B1_REFEREN)
+        # -----------------------------
+
+        if customer_reference:
+            ref_clean = customer_reference.strip()
+            where_clauses.append("SB1.B1_REFEREN COLLATE Latin1_General_CI_AI LIKE ?")
+            where_params.append(f"{ref_clean}%")
 
         # -----------------------------
         # DESCRIPTION SEARCH
@@ -96,6 +106,16 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
 
         if sort_column:
             order_clause = f"{sort_column} {direction}"
+        elif customer_reference:
+            order_clause = """
+                CASE
+                    WHEN SB1.B1_TIPO = 'PA' AND SB1.B1_COD LIKE '9026%' THEN 0
+                    WHEN SB1.B1_TIPO = 'PA' THEN 1
+                    ELSE 2
+                END,
+                SB1.B1_REFEREN,
+                SB1.B1_COD
+            """
         else:
             order_clause = "relevance_score DESC, SB1.B1_DESC, SB1.B1_COD"
 

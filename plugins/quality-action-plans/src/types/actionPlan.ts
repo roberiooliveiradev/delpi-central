@@ -23,6 +23,7 @@ export type ActionPlanSummary = {
   customer_code?: string | null;
   customer_store?: string | null;
   product_code?: string | null;
+  customer_product_reference?: string | null;
   branch_code?: string | null;
   nonconformity_scope?: NonconformityScope;
   severity: PlanSeverity;
@@ -269,6 +270,7 @@ export type ActionPlanDetail = {
   plan: ActionPlanSummary & {
     customer_contact?: string | null;
     product_description?: string | null;
+    customer_product_reference?: string | null;
     batch_number?: string | null;
     reported_problem?: string | null;
     department?: string | null;

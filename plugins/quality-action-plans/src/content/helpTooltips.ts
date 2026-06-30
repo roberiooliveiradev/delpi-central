@@ -96,7 +96,9 @@ export const PAC_HELP_TOOLTIPS = {
   detail: {
     title: "Nome curto do plano para listagens, buscas e relatórios.",
     customer: "Cliente ou demandante associado à não conformidade.",
-    productCode: "Código do material ou produto no cadastro (TOTVS).",
+    productCode: "Código do material ou produto no cadastro Delpi (TOTVS).",
+    customerProductReference:
+      "Referência do cliente no cadastro do produto (SB1010.B1_REFEREN). Também serve para localizar o PA Delpi.",
     productDescription: "Descrição técnica do material ou item afetado.",
     supplierBatch: "Lote do fornecedor ou lote interno vinculado à ocorrência.",
     department: "Área ou departamento onde o problema foi detectado ou tratado.",

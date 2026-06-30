@@ -67,6 +67,7 @@ class CreateQualityActionPlanRequest:
     source_reference: str | None = None
     product_code: str | None = None
     product_description: str | None = None
+    customer_product_reference: str | None = None
     batch_number: str | None = None
     reported_problem: str | None = None
     detected_at: str | None = None
@@ -127,6 +128,7 @@ class CreateQualityActionPlanUseCase:
                 "source_reference": request.source_reference,
                 "product_code": request.product_code,
                 "product_description": request.product_description,
+                "customer_product_reference": request.customer_product_reference,
                 "batch_number": request.batch_number,
                 "reported_problem": request.reported_problem,
                 "detected_at": request.detected_at,
@@ -161,6 +163,7 @@ class UpdateQualityActionPlanRequest:
     source_reference: str | None = None
     product_code: str | None = None
     product_description: str | None = None
+    customer_product_reference: str | None = None
     batch_number: str | None = None
     reported_problem: str | None = None
     detected_at: str | None = None

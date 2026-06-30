@@ -13,6 +13,7 @@ type PagedLookupResponse<T> = {
 export type DelpiProductLookupItem = {
   code: string;
   description: string;
+  customerReference?: string;
 };
 
 export type DelpiCustomerLookupItem = {
@@ -31,6 +32,19 @@ function buildQuery(params: Record<string, string | number | undefined>): string
   return query ? `?${query}` : "";
 }
 
+function mapProductItem(item: Record<string, unknown>): DelpiProductLookupItem | null {
+  const code = String(item.code ?? "").trim();
+  if (!code) return null;
+  const customerReference = String(
+    item.customer_reference ?? item.customerReference ?? "",
+  ).trim();
+  return {
+    code,
+    description: String(item.description ?? "").trim(),
+    customerReference: customerReference || undefined,
+  };
+}
+
 async function fetchPaged<T>(
   url: string,
   fallbackMessage: string,
@@ -43,12 +57,14 @@ async function fetchPaged<T>(
 export async function searchDelpiProducts(params: {
   code?: string;
   description?: string;
+  customerReference?: string;
   pageSize?: number;
   signal?: AbortSignal;
 }): Promise<DelpiProductLookupItem[]> {
   const query = buildQuery({
     code: params.code?.trim(),
     description: params.description?.trim(),
+    customer_reference: params.customerReference?.trim(),
     page: 1,
     page_size: params.pageSize ?? 15,
   });
@@ -58,11 +74,8 @@ export async function searchDelpiProducts(params: {
     params.signal,
   );
   return data.items
-    .map((item) => ({
-      code: String(item.code ?? "").trim(),
-      description: String(item.description ?? "").trim(),
-    }))
-    .filter((item) => item.code);
+    .map((item) => mapProductItem(item))
+    .filter((item): item is DelpiProductLookupItem => item !== null);
 }
 
 export async function fetchDelpiProductSummary(
@@ -76,12 +89,7 @@ export async function fetchDelpiProductSummary(
     { signal },
   );
   const data = unwrapApiDelpiEnvelope(envelope, "Erro ao carregar produto.");
-  const productCode = String(data.code ?? normalized).trim();
-  if (!productCode) return null;
-  return {
-    code: productCode,
-    description: String(data.description ?? "").trim(),
-  };
+  return mapProductItem({ ...data, code: data.code ?? normalized });
 }
 
 export async function searchDelpiCustomers(params: {

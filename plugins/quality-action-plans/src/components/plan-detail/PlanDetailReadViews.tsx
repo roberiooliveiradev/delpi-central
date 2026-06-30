@@ -179,6 +179,15 @@ export function PlanProblemReadContent({
         <ReadOnlyField
           label={
             showRnc8dFlow
+              ? RNC8D_SHARED_FIELD_LABELS.customerProductReference
+              : "Referência do cliente"
+          }
+          hint={PAC_HELP_TOOLTIPS.detail.customerProductReference}
+          value={identification.customer_product_reference}
+        />
+        <ReadOnlyField
+          label={
+            showRnc8dFlow
               ? RNC8D_SHARED_FIELD_LABELS.productDescription
               : "Descrição produto"
           }

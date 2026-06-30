@@ -121,6 +121,7 @@ class CreateActionPlanBody(_PlanTimestampValidationMixin):
     source_reference: str | None = Field(default=None, max_length=500)
     product_code: str | None = Field(default=None, max_length=50)
     product_description: str | None = Field(default=None, max_length=500)
+    customer_product_reference: str | None = Field(default=None, max_length=100)
     batch_number: str | None = Field(default=None, max_length=100)
     reported_problem: str | None = None
     severity: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
@@ -157,6 +158,7 @@ class UpdateActionPlanBody(_PlanTimestampValidationMixin):
     source_reference: str | None = Field(default=None, max_length=500)
     product_code: str | None = Field(default=None, max_length=50)
     product_description: str | None = Field(default=None, max_length=500)
+    customer_product_reference: str | None = Field(default=None, max_length=100)
     batch_number: str | None = Field(default=None, max_length=100)
     reported_problem: str | None = None
     severity: str | None = Field(default=None, pattern="^(low|medium|high|critical)$")
@@ -292,6 +294,7 @@ class Rnc8dReportBody(BaseModel):
     customer_contact: str | None = Field(default=None, max_length=300)
     product_code: str | None = Field(default=None, max_length=50)
     product_description: str | None = Field(default=None, max_length=500)
+    customer_product_reference: str | None = Field(default=None, max_length=100)
     batch_number: str | None = Field(default=None, max_length=100)
     reported_problem: str | None = None
     template_payload: dict | None = None

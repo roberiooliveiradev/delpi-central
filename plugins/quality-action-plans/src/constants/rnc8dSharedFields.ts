@@ -2,6 +2,7 @@ export const RNC8D_SHARED_FIELD_LABELS = {
   clientNcRegistry: "Registro NC (cliente)",
   customer: "Cliente",
   productCode: "Código material",
+  customerProductReference: "Referência do cliente",
   productDescription: "Descrição material",
   supplierBatch: "Lote fornecedor",
   reportedProblem: "Relato do problema",

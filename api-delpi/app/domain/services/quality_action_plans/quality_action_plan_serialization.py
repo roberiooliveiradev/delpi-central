@@ -23,6 +23,7 @@ PLAN_SELECT = """
            p.source_reference,
            p.product_code,
            p.product_description,
+           p.customer_product_reference,
            p.batch_number,
            p.reported_problem,
            p.detected_at,
