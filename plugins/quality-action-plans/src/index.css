@@ -2941,6 +2941,50 @@
   white-space: nowrap;
 }
 
+.dashboard-quality-action-plans .pac-table__reject-row > td {
+  padding: 0 12px 12px;
+  background: color-mix(in srgb, var(--pac-card-bg) 92%, var(--pac-input-bg));
+  border-bottom: 1px solid var(--pac-card-border);
+}
+
+.dashboard-quality-action-plans .pac-effectiveness-reject-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--pac-control-radius);
+  border: 1px solid color-mix(in srgb, var(--pac-card-border) 88%, transparent);
+  background: var(--pac-input-bg);
+}
+
+.dashboard-quality-action-plans .pac-effectiveness-reject-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-effectiveness-reject-panel__hint {
+  margin: 4px 0 0;
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-effectiveness-reject-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-effectiveness-reject-panel .pac-field__control--textarea {
+  min-height: 140px;
+}
+
+.dashboard-quality-action-plans .pac-btn--active {
+  border-color: color-mix(in srgb, var(--pac-accent) 55%, var(--pac-card-border));
+  background: color-mix(in srgb, var(--pac-accent) 10%, var(--pac-card-bg));
+}
+
 /* ——— Responsivo ——— */
 @media (max-width: 1100px) {
   .dashboard-quality-action-plans .pac-charts-grid {

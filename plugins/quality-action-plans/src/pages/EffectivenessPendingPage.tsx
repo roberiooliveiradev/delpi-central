@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Eye } from "lucide-react";
+import { Fragment, useCallback, useEffect, useState } from "react";
+import { Eye, X } from "lucide-react";
 
 import {
   approveEffectivenessReview,
@@ -85,14 +85,28 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
     try {
       await rejectEffectivenessReview(planId, reason);
       setSuccess("Submissão rejeitada.");
-      setRejectPlanId(null);
-      setRejectReason("");
+      closeRejectForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao rejeitar eficácia.");
     } finally {
       setSavingId(null);
     }
+  }
+
+  function closeRejectForm() {
+    setRejectPlanId(null);
+    setRejectReason("");
+  }
+
+  function openRejectForm(planId: string) {
+    if (rejectPlanId === planId) {
+      closeRejectForm();
+      return;
+    }
+    setRejectPlanId(planId);
+    setRejectReason("");
+    setError(null);
   }
 
   return (
@@ -139,71 +153,107 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
               </thead>
               <tbody>
                 {items.map((plan) => (
-                  <tr key={plan.id}>
-                    <td>{plan.code ?? "—"}</td>
-                    <td>{plan.title}</td>
-                    <td>{branchLabel(plan.branch_code)}</td>
-                    <td>
-                      <ScopeBadge scope={plan.nonconformity_scope} />
-                    </td>
-                    <td>
-                      <SeverityBadge severity={plan.severity} />
-                    </td>
-                    <td>{proposedLabel(plan.effectiveness_proposed_status)}</td>
-                    <td>{formatDateTime(plan.effectiveness_submitted_at)}</td>
-                    <td>{plan.effectiveness_submitted_by ?? "—"}</td>
-                    <td>
-                      <div className="pac-table-actions">
-                        <button
-                          type="button"
-                          className="pac-icon-btn"
-                          title="Ver plano"
-                          onClick={() => onNavigate(detailPath(plan.id))}
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="pac-primary-btn pac-btn--sm"
-                          disabled={savingId === plan.id}
-                          onClick={() => void handleApprove(plan.id)}
-                        >
-                          Aprovar
-                        </button>
-                        <button
-                          type="button"
-                          className="pac-ghost-btn pac-btn--sm"
-                          disabled={savingId === plan.id}
-                          onClick={() => {
-                            setRejectPlanId(plan.id);
-                            setRejectReason("");
-                          }}
-                        >
-                          Rejeitar
-                        </button>
-                      </div>
-                      {rejectPlanId === plan.id ? (
-                        <div className="pac-inline-form" style={{ marginTop: "8px", minWidth: "240px" }}>
-                          <TextAreaField
-                            id={`pac-reject-${plan.id}`}
-                            label="Motivo"
-                            value={rejectReason}
-                            onChange={setRejectReason}
-                            placeholder="Motivo da rejeição"
-                            fullWidth
-                          />
+                  <Fragment key={plan.id}>
+                    <tr>
+                      <td>{plan.code ?? "—"}</td>
+                      <td>{plan.title}</td>
+                      <td>{branchLabel(plan.branch_code)}</td>
+                      <td>
+                        <ScopeBadge scope={plan.nonconformity_scope} />
+                      </td>
+                      <td>
+                        <SeverityBadge severity={plan.severity} />
+                      </td>
+                      <td>{proposedLabel(plan.effectiveness_proposed_status)}</td>
+                      <td>{formatDateTime(plan.effectiveness_submitted_at)}</td>
+                      <td>{plan.effectiveness_submitted_by ?? "—"}</td>
+                      <td>
+                        <div className="pac-table-actions">
+                          <button
+                            type="button"
+                            className="pac-icon-btn"
+                            title="Ver plano"
+                            onClick={() => onNavigate(detailPath(plan.id))}
+                          >
+                            <Eye size={16} />
+                          </button>
                           <button
                             type="button"
                             className="pac-primary-btn pac-btn--sm"
-                            disabled={savingId === plan.id || rejectReason.trim().length < 5}
-                            onClick={() => void handleReject(plan.id)}
+                            disabled={savingId === plan.id}
+                            onClick={() => void handleApprove(plan.id)}
                           >
-                            Confirmar rejeição
+                            Aprovar
+                          </button>
+                          <button
+                            type="button"
+                            className={`pac-ghost-btn pac-btn--sm${
+                              rejectPlanId === plan.id ? " pac-btn--active" : ""
+                            }`}
+                            disabled={savingId === plan.id}
+                            onClick={() => openRejectForm(plan.id)}
+                          >
+                            {rejectPlanId === plan.id ? "Cancelar" : "Rejeitar"}
                           </button>
                         </div>
-                      ) : null}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    {rejectPlanId === plan.id ? (
+                      <tr className="pac-table__reject-row">
+                        <td colSpan={9}>
+                          <div className="pac-effectiveness-reject-panel">
+                            <div className="pac-effectiveness-reject-panel__header">
+                              <div>
+                                <strong>Motivo da rejeição</strong>
+                                <p className="pac-muted pac-effectiveness-reject-panel__hint">
+                                  {plan.code ?? plan.id} — descreva o que deve ser corrigido antes de
+                                  uma nova submissão.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                className="pac-ghost-btn pac-ghost-btn--icon"
+                                aria-label="Fechar formulário de rejeição"
+                                title="Fechar"
+                                disabled={savingId === plan.id}
+                                onClick={closeRejectForm}
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
+                            <TextAreaField
+                              id={`pac-reject-${plan.id}`}
+                              label="Motivo"
+                              hint={PAC_HELP_TOOLTIPS.detail.effectivenessRejection}
+                              value={rejectReason}
+                              onChange={setRejectReason}
+                              placeholder="Descreva o motivo da rejeição (mínimo 5 caracteres)"
+                              rows={6}
+                              fullWidth
+                            />
+                            <div className="pac-effectiveness-reject-panel__actions">
+                              <button
+                                type="button"
+                                className="pac-ghost-btn"
+                                disabled={savingId === plan.id}
+                                onClick={closeRejectForm}
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                className="pac-primary-btn"
+                                disabled={savingId === plan.id || rejectReason.trim().length < 5}
+                                onClick={() => void handleReject(plan.id)}
+                              >
+                                {savingId === plan.id ? "Salvando…" : "Confirmar rejeição"}
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
