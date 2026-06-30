@@ -79,6 +79,10 @@ from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import
     build_rnc_8d_workbook,
     collect_image_annexes_for_export,
 )
+from app.domain.services.quality_action_plans.rnc_8d_export_template_service import (
+    list_export_templates,
+    resolve_export_template_key_for_plan,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.core.responses import error_response, not_found_response
@@ -147,6 +151,7 @@ class CreateActionPlanBody(_PlanTimestampValidationMixin):
         pattern="^(generic|rnc_8d)$",
     )
     client_nc_registry: str | None = Field(default=None, max_length=100)
+    export_template_key: str | None = Field(default=None, max_length=50)
 
 
 class UpdateActionPlanBody(_PlanTimestampValidationMixin):
@@ -180,6 +185,7 @@ class UpdateActionPlanBody(_PlanTimestampValidationMixin):
         pattern="^(generic|rnc_8d)$",
     )
     client_nc_registry: str | None = Field(default=None, max_length=100)
+    export_template_key: str | None = Field(default=None, max_length=50)
 
 
 class UpdateActionPlanStatusBody(BaseModel):
@@ -640,6 +646,7 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
                 recurrence_key=body.recurrence_key,
                 customer_template=body.customer_template,
                 client_nc_registry=body.client_nc_registry,
+                export_template_key=body.export_template_key,
             )
         )
         detail = build_quality_action_plan_read_repository().get_plan_detail(str(plan["id"]))
@@ -680,6 +687,19 @@ def list_assignable_users(
     return api_delpi_success(
         {"items": items},
         operation_id="list_quality_action_plan_assignable_users",
+    )
+
+
+@router.get(
+    "/export-templates",
+    **_pac_openapi("list_quality_action_plan_export_templates", "/export-templates"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def list_rnc_8d_export_templates():
+    return api_delpi_success(
+        {"items": list_export_templates()},
+        operation_id="list_quality_action_plan_export_templates",
+        message="Catálogo de templates Excel 8D.",
     )
 
 
@@ -1265,20 +1285,28 @@ def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
     **_pac_openapi("export_quality_action_plan_rnc_8d", "/{plan_id}/export/rnc-8d"),
 )
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
-def export_rnc_8d_spreadsheet(plan_id: str):
+def export_rnc_8d_spreadsheet(
+    plan_id: str,
+    template_key: str | None = Query(default=None, alias="template_key"),
+):
     try:
         repo = build_quality_action_plan_read_repository()
         detail = repo.get_plan_detail(plan_id)
         if not detail:
             return not_found_response("Plano de ação não encontrado.")
+        plan = detail.get("plan") or {}
+        resolved_key = resolve_export_template_key_for_plan(plan, requested_key=template_key)
         storage = PacEvidenceStorage()
         image_annexes = collect_image_annexes_for_export(
             plan_id=plan_id,
             evidences=detail.get("evidences") or [],
             storage=storage,
         )
-        content = build_rnc_8d_workbook(detail, image_annexes=image_annexes)
-        plan = detail.get("plan") or {}
+        content = build_rnc_8d_workbook(
+            detail,
+            image_annexes=image_annexes,
+            template_key=resolved_key,
+        )
         registry = plan.get("client_nc_registry") or plan.get("code") or plan_id[:8]
         filename = f"RNC_{registry}_8D.xlsx"
         return Response(
@@ -1286,6 +1314,8 @@ def export_rnc_8d_spreadsheet(plan_id: str):
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
+    except KeyError as exc:
+        return error_response(str(exc), status_code=400)
     except FileNotFoundError as exc:
         return error_response(str(exc), status_code=500)
     except Exception as exc:

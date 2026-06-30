@@ -12,7 +12,7 @@ from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import
     resolve_rnc_8d_template_path,
 )
 
-_TEMPLATE_PATH = resolve_rnc_8d_template_path()
+_TEMPLATE_PATH = resolve_rnc_8d_template_path("weg_wfr20997")
 
 
 def _minimal_png_bytes() -> bytes:

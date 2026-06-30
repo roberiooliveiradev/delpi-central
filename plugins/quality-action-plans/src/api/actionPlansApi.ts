@@ -428,8 +428,28 @@ export async function upsertRnc8dReport(
   return unwrapApiDelpiEnvelope(envelope, "Erro ao salvar relatório 8D.");
 }
 
-export async function exportRnc8dSpreadsheet(planId: string, filename: string): Promise<void> {
-  await downloadExportFile(`${API_BASE}/${planId}/export/rnc-8d`, filename);
+export type ExportTemplateOption = {
+  key: string;
+  label: string;
+  description?: string;
+  customer_name_hints?: string[];
+  customer_codes?: string[];
+};
+
+export async function listRnc8dExportTemplates(): Promise<ExportTemplateOption[]> {
+  const envelope = await httpGet<ApiEnvelope<{ items: ExportTemplateOption[] }>>(
+    `${API_BASE}/export-templates`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar templates de exportação 8D.").items;
+}
+
+export async function exportRnc8dSpreadsheet(
+  planId: string,
+  filename: string,
+  templateKey?: string,
+): Promise<void> {
+  const query = templateKey ? `?template_key=${encodeURIComponent(templateKey)}` : "";
+  await downloadExportFile(`${API_BASE}/${planId}/export/rnc-8d${query}`, filename);
 }
 
 export async function exportPlanPdf(planId: string, filename: string): Promise<void> {

@@ -74,7 +74,8 @@ scripts/data/*_report.json
 *.csv
 *.xlsx
 *.docx
-!app/content/templates/quality/rnc_8d_template.xlsx
+!app/content/templates/quality/weg_wfr20997_template.xlsx
+!app/content/templates/quality/delpi_8d_template.xlsx
 !tests/fixtures/quality/rnc_8d_template_minimal.xlsx
 
 # ---- 🧪 Testes ----

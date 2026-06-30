@@ -1,0 +1,21 @@
+{
+  "defaultTemplateKey": "weg_wfr20997",
+  "templates": [
+    {
+      "key": "weg_wfr20997",
+      "label": "WEG — WFR-20997",
+      "description": "Modelo oficial WEG para fornecedores (materiais adquiridos).",
+      "file": "weg_wfr20997_template.xlsx",
+      "customerNameHints": ["weg"],
+      "customerCodes": []
+    },
+    {
+      "key": "delpi_8d",
+      "label": "DELPI — Relatório 8D",
+      "description": "Modelo DELPI para apresentação a clientes.",
+      "file": "delpi_8d_template.xlsx",
+      "customerNameHints": [],
+      "customerCodes": []
+    }
+  ]
+}

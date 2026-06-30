@@ -1662,14 +1662,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             """
             INSERT INTO quality.quality_action_plans (
                 code, title, customer_name, customer_code, customer_store, customer_contact, nonconformity_scope,
-                customer_template, client_nc_registry,
+                customer_template, client_nc_registry, export_template_key,
                 source_type, source_reference,
                 product_code, product_description, customer_product_reference, batch_number, reported_problem,
                 detected_at, reported_at, severity, status, created_by_user_id, owner_user_id,
                 branch_code, department, problem_category, symptom_tags, root_cause_category,
                 failure_mode, recurrence_key
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             RETURNING id, code, status
@@ -1684,6 +1684,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields.get("nonconformity_scope", "external"),
                 fields.get("customer_template", "generic"),
                 fields.get("client_nc_registry"),
+                fields.get("export_template_key"),
                 fields.get("source_type"),
                 fields.get("source_reference"),
                 fields.get("product_code"),
@@ -1781,6 +1782,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "recurrence_key",
             "customer_template",
             "client_nc_registry",
+            "export_template_key",
         }
         updates = {
             key: value

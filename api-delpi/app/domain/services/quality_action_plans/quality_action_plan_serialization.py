@@ -17,6 +17,7 @@ PLAN_SELECT = """
            p.customer_contact,
            p.nonconformity_scope,
            p.customer_template,
+           p.export_template_key,
            p.client_nc_registry,
            p.template_payload,
            p.source_type,

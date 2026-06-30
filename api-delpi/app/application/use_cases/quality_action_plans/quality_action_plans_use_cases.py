@@ -10,6 +10,9 @@ from app.domain.services.quality_action_plans.pac_quality_branch_service import 
 from app.domain.services.quality_action_plans.pac_quality_nonconformity_scope_service import (
     validate_nonconformity_scope,
 )
+from app.domain.services.quality_action_plans.rnc_8d_export_template_service import (
+    get_export_template_entry,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_delete_policy import (
     assert_plan_deletable,
 )
@@ -84,6 +87,7 @@ class CreateQualityActionPlanRequest:
     recurrence_key: str | None = None
     customer_template: str | None = None
     client_nc_registry: str | None = None
+    export_template_key: str | None = None
 
 
 class CreateQualityActionPlanUseCase:
@@ -112,6 +116,9 @@ class CreateQualityActionPlanUseCase:
             raise ValueError("customer_template inválido.")
         if nonconformity_scope == "internal" and customer_template != "generic":
             raise ValueError("Plano interno não pode usar template rnc_8d.")
+        export_template_key = (request.export_template_key or "").strip() or None
+        if export_template_key and get_export_template_entry(export_template_key) is None:
+            raise ValueError("export_template_key inválido.")
 
         plan = self._repository.create_plan(
             {
@@ -145,6 +152,7 @@ class CreateQualityActionPlanUseCase:
                 "recurrence_key": recurrence_key,
                 "customer_template": customer_template,
                 "client_nc_registry": request.client_nc_registry,
+                "export_template_key": export_template_key,
             }
         )
         if self._intelligence_sync and plan.get("id"):
@@ -180,6 +188,7 @@ class UpdateQualityActionPlanRequest:
     recurrence_key: str | None = None
     customer_template: str | None = None
     client_nc_registry: str | None = None
+    export_template_key: str | None = None
 
 
 class UpdateQualityActionPlanUseCase:
@@ -210,6 +219,11 @@ class UpdateQualityActionPlanUseCase:
             "rnc_8d",
         }:
             raise ValueError("customer_template inválido.")
+        if request.export_template_key is not None:
+            export_key = str(request.export_template_key).strip()
+            if export_key and get_export_template_entry(export_key) is None:
+                raise ValueError("export_template_key inválido.")
+            fields["export_template_key"] = export_key or None
         fields["updated_by_user_id"] = updated_by
         fields["updated_by_name"] = updated_by_name
         fields["updated_by_email"] = updated_by_email

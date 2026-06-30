@@ -4003,3 +4003,33 @@
 .dashboard-quality-action-plans .pac-table--compact-read td {
   padding: 6px 10px;
 }
+
+.dashboard-quality-action-plans .pac-export-template-picker {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dashboard-quality-action-plans .pac-export-template-select {
+  min-width: 11rem;
+  max-width: 16rem;
+  height: 2.25rem;
+  padding: 0 0.65rem;
+  border: 1px solid var(--pac-card-border, #d8dce3);
+  border-radius: 8px;
+  background: var(--pac-card-bg, #fff);
+  color: var(--pac-text, #111);
+  font: inherit;
+  font-size: var(--pac-font-sm, 0.875rem);
+}
+
+.dashboard-quality-action-plans .pac-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

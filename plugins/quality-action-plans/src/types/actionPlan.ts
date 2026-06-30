@@ -301,6 +301,7 @@ export type ActionPlanDetail = {
     source_reference?: string | null;
     customer_template?: string;
     client_nc_registry?: string | null;
+    export_template_key?: string | null;
     template_payload?: Rnc8dTemplatePayload;
   };
   ishikawa?: IshikawaAnalysis | null;

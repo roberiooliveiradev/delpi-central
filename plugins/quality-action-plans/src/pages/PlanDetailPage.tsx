@@ -14,6 +14,7 @@ import {
   exportRnc8dSpreadsheet,
   fetchActionPlanDetail,
   fetchPlanAuditLog,
+  listRnc8dExportTemplates,
   promoteSolutionPattern,
   recordEffectivenessReview,
   rejectEffectivenessReview,
@@ -163,6 +164,10 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exportTemplates, setExportTemplates] = useState<
+    Awaited<ReturnType<typeof listRnc8dExportTemplates>>
+  >([]);
+  const [exportTemplateKey, setExportTemplateKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [statusValue, setStatusValue] = useState("");
@@ -533,6 +538,47 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   }
 
   useEffect(() => {
+    if (!showRnc8dFlow) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    void listRnc8dExportTemplates()
+      .then((items) => {
+        if (cancelled) {
+          return;
+        }
+        setExportTemplates(items);
+        const planKey = plan?.export_template_key?.trim();
+        if (planKey && items.some((item) => item.key === planKey)) {
+          setExportTemplateKey(planKey);
+          return;
+        }
+        const customerName = (plan?.customer_name ?? "").toLowerCase();
+        const hinted = items.find((item) =>
+          (item.customer_name_hints ?? []).some((hint) =>
+            customerName.includes(String(hint).toLowerCase()),
+          ),
+        );
+        const fallback =
+          hinted?.key
+          ?? items.find((item) => item.key === "weg_wfr20997")?.key
+          ?? items[0]?.key
+          ?? "";
+        setExportTemplateKey(fallback);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setExportTemplates([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showRnc8dFlow, plan?.export_template_key, plan?.customer_name]);
+
+  useEffect(() => {
     if (!dirtySections.length) {
       return undefined;
     }
@@ -549,7 +595,11 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     setError(null);
     try {
       const registry = plan?.client_nc_registry || plan?.code || planId.slice(0, 8);
-      await exportRnc8dSpreadsheet(planId, `RNC_${registry}_8D.xlsx`);
+      await exportRnc8dSpreadsheet(
+        planId,
+        `RNC_${registry}_8D.xlsx`,
+        exportTemplateKey || undefined,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao gerar planilha.");
     }
@@ -620,6 +670,23 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             </button>
             {showRnc8dFlow ? (
               <>
+                {exportTemplates.length > 0 ? (
+                  <label className="pac-export-template-picker">
+                    <span className="pac-sr-only">Template Excel 8D</span>
+                    <select
+                      className="pac-select pac-export-template-select"
+                      value={exportTemplateKey}
+                      onChange={(event) => setExportTemplateKey(event.target.value)}
+                      title="Modelo de planilha 8D"
+                    >
+                      {exportTemplates.map((item) => (
+                        <option key={item.key} value={item.key}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <button type="button" className="pac-primary-btn" onClick={() => void handleExportRnc8d()}>
                   <Download size={16} />
                   Excel 8D

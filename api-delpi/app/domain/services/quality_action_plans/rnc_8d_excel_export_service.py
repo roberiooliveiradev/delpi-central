@@ -1,46 +1,31 @@
 from __future__ import annotations
 
 import io
-import os
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image as XlImage
+from openpyxl.utils import coordinate_to_tuple, get_column_letter
 
+from app.domain.services.quality_action_plans.action_responsibles_service import (
+    format_responsible_display_name,
+    responsibles_from_legacy_action,
+)
 from app.domain.services.quality_action_plans.five_whys_service import format_why_step_cell
+from app.domain.services.quality_action_plans.rnc_8d_export_template_service import (
+    resolve_export_template_key_for_plan,
+    resolve_export_template_path,
+)
 
-
-def _api_delpi_root() -> Path:
-    return Path(__file__).resolve().parents[4]
-
-
-def _template_candidates() -> list[Path]:
-    root = _api_delpi_root()
-    env_path = (os.environ.get("RNC_8D_TEMPLATE_PATH") or "").strip()
-    candidates: list[Path] = []
-    if env_path:
-        candidates.append(Path(env_path))
-    candidates.extend(
-        [
-            root / "app" / "content" / "templates" / "quality" / "rnc_8d_template.xlsx",
-            root / "tests" / "fixtures" / "quality" / "rnc_8d_template_minimal.xlsx",
-        ]
-    )
-    return candidates
-
-
-def resolve_rnc_8d_template_path() -> Path:
-    candidates = _template_candidates()
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    return candidates[0]
-
-
-TEMPLATE_PATH = _api_delpi_root() / "app" / "content" / "templates" / "quality" / "rnc_8d_template.xlsx"
-TEMPLATE_FIXTURE_PATH = _api_delpi_root() / "tests" / "fixtures" / "quality" / "rnc_8d_template_minimal.xlsx"
+TEMPLATE_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "tests"
+    / "fixtures"
+    / "quality"
+    / "rnc_8d_template_minimal.xlsx"
+)
 
 SUPPLIER_BY_BRANCH = {
     "01": "12243 - Delpi Componentes Ltda EPP",
@@ -50,6 +35,16 @@ SUPPLIER_BY_BRANCH = {
 ANNEX_SHEET_CANDIDATES = ("Anexos(Evidencias)", "Anexos", "Attachment")
 ANNEX_IMAGE_MAX_WIDTH_PX = 480
 IMAGE_MIME_PREFIX = "image/"
+
+
+def resolve_rnc_8d_template_path(template_key: str | None = None) -> Path:
+    key = template_key or "weg_wfr20997"
+    try:
+        return resolve_export_template_path(key)
+    except (KeyError, FileNotFoundError):
+        if TEMPLATE_FIXTURE_PATH.is_file():
+            return TEMPLATE_FIXTURE_PATH
+        raise
 
 
 def _excel_date(value: str | date | datetime | None) -> date | None:
@@ -73,13 +68,29 @@ def _excel_date(value: str | date | datetime | None) -> date | None:
         return None
 
 
+def _resolve_writable_cell(ws: Any, cell: str) -> str:
+    row, column = coordinate_to_tuple(cell)
+    for merged_range in ws.merged_cells.ranges:
+        if (
+            merged_range.min_row <= row <= merged_range.max_row
+            and merged_range.min_col <= column <= merged_range.max_col
+        ):
+            return f"{get_column_letter(merged_range.min_col)}{merged_range.min_row}"
+    return cell
+
+
 def _set(ws, cell: str, value: Any) -> None:
     if value is None:
         return
     text = str(value).strip() if not isinstance(value, (date, datetime, int, float)) else value
     if text == "":
         return
-    ws[cell] = text
+    ws[_resolve_writable_cell(ws, cell)] = text
+
+
+def _action_responsible_label(action: dict[str, Any]) -> str | None:
+    label = format_responsible_display_name(responsibles_from_legacy_action(action))
+    return label or None
 
 
 def is_image_evidence(evidence: dict[str, Any]) -> bool:
@@ -162,32 +173,21 @@ def collect_image_annexes_for_export(
     return annexes
 
 
-def build_rnc_8d_workbook(
-    detail: dict[str, Any],
+def _fill_weg_wfr20997_sheet(
+    ws: Any,
     *,
-    image_annexes: list[dict[str, Any]] | None = None,
-) -> bytes:
-    template_path = resolve_rnc_8d_template_path()
-    if not template_path.is_file():
-        raise FileNotFoundError(f"Template 8D não encontrado: {template_path}")
-
-    plan = detail.get("plan") or {}
-    payload = plan.get("template_payload") or {}
-    if not isinstance(payload, dict):
-        payload = {}
-
-    wb = load_workbook(template_path)
-    ws = wb["R8D"]
-
+    plan: dict[str, Any],
+    payload: dict[str, Any],
+    team: list[dict[str, Any]],
+    five_whys: dict[str, Any],
+    actions: list[dict[str, Any]],
+) -> None:
     nc = payload.get("nc_description") or {}
     classification = payload.get("classification") or {}
     effectiveness = payload.get("effectiveness") or {}
     preventive = payload.get("preventive") or {}
     containment_rows = payload.get("containment") or []
     documentation = payload.get("documentation_updates") or []
-    team = detail.get("team_members") or []
-    five_whys = detail.get("five_whys") or {}
-    actions = detail.get("actions") or []
 
     branch = plan.get("branch_code") or "01"
     _set(ws, "I4", plan.get("client_nc_registry"))
@@ -198,7 +198,7 @@ def build_rnc_8d_workbook(
     _set(ws, "E9", payload.get("invoice_number"))
     invoice_date = _excel_date(payload.get("invoice_date"))
     if invoice_date:
-        ws["E10"] = invoice_date
+        _set(ws, "E10", invoice_date)
     _set(ws, "E11", payload.get("defective_quantity"))
     _set(ws, "E12", payload.get("return_invoice_number"))
     _set(ws, "J5", plan.get("customer_contact"))
@@ -214,7 +214,7 @@ def build_rnc_8d_workbook(
         _set(ws, "K3", plan.get("customer_name"))
     report_date = _excel_date(payload.get("report_date") or plan.get("reported_at"))
     if report_date:
-        ws["K1"] = report_date
+        _set(ws, "K1", report_date)
 
     _set(ws, "A15", nc.get("characteristic") or payload.get("nc_characteristic"))
     _set(ws, "E15", nc.get("specified"))
@@ -224,7 +224,7 @@ def build_rnc_8d_workbook(
 
     return_by = _excel_date(payload.get("return_by"))
     if return_by:
-        ws["D21"] = return_by
+        _set(ws, "D21", return_by)
     _set(ws, "G21", payload.get("attention_to"))
     _set(ws, "J21", payload.get("attention_email"))
 
@@ -255,7 +255,7 @@ def build_rnc_8d_workbook(
         _set(ws, f"J{row}", item.get("responsible"))
         containment_date = _excel_date(item.get("date"))
         if containment_date:
-            ws[f"M{row}"] = containment_date
+            _set(ws, f"M{row}", containment_date)
 
     occurrence_cols = ["E", "G", "I", "K", "M"]
     occurrence_whys = five_whys.get("occurrence_whys") or []
@@ -281,10 +281,10 @@ def build_rnc_8d_workbook(
         elif track == "detection":
             _set(ws, f"D{row}", "Detecção")
         _set(ws, f"F{row}", action.get("description"))
-        _set(ws, f"J{row}", action.get("responsible_name"))
+        _set(ws, f"J{row}", _action_responsible_label(action))
         due = _excel_date(action.get("due_date"))
         if due:
-            ws[f"M{row}"] = due
+            _set(ws, f"M{row}", due)
 
     resolved = effectiveness.get("resolved_how") or plan.get("effectiveness_notes")
     _set(ws, "D64", resolved)
@@ -293,14 +293,14 @@ def build_rnc_8d_workbook(
     _set(ws, "J71", effectiveness.get("verification_responsible"))
     verification_date = _excel_date(effectiveness.get("verification_date"))
     if verification_date:
-        ws["L71"] = verification_date
+        _set(ws, "L71", verification_date)
 
     _set(ws, "D73", preventive.get("how_avoid_future"))
     _set(ws, "D77", preventive.get("other_processes_products"))
     _set(ws, "D84", preventive.get("evaluation_responsible"))
     evaluation_date = _excel_date(preventive.get("evaluation_completion_date"))
     if evaluation_date:
-        ws["I84"] = evaluation_date
+        _set(ws, "I84", evaluation_date)
 
     doc_rows = [86, 87, 88, 89]
     for index, doc in enumerate(documentation[:4]):
@@ -309,10 +309,39 @@ def build_rnc_8d_workbook(
         _set(ws, f"I{row}", doc.get("responsible"))
         doc_date = _excel_date(doc.get("date"))
         if doc_date:
-            ws[f"K{row}"] = doc_date
+            _set(ws, f"K{row}", doc_date)
 
     closure = payload.get("client_closure_note")
     _set(ws, "D108", closure or "Conforme status da nota QM.")
+
+
+def build_rnc_8d_workbook(
+    detail: dict[str, Any],
+    *,
+    image_annexes: list[dict[str, Any]] | None = None,
+    template_key: str | None = None,
+) -> bytes:
+    plan = detail.get("plan") or {}
+    resolved_key = resolve_export_template_key_for_plan(plan, requested_key=template_key)
+    template_path = resolve_export_template_path(resolved_key)
+    if not template_path.is_file():
+        raise FileNotFoundError(f"Template 8D não encontrado: {template_path}")
+
+    payload = plan.get("template_payload") or {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    wb = load_workbook(template_path)
+    ws = wb["R8D"]
+
+    _fill_weg_wfr20997_sheet(
+        ws,
+        plan=plan,
+        payload=payload,
+        team=detail.get("team_members") or [],
+        five_whys=detail.get("five_whys") or {},
+        actions=detail.get("actions") or [],
+    )
 
     annex_ws = _resolve_annex_sheet(wb)
     if annex_ws is not None and image_annexes:
