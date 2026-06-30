@@ -289,8 +289,8 @@ export function PlanActionsPanel({
         {isEditing ? (
           <div className="pac-new-action-form__banner">
             <span>Editando ação selecionada</span>
-            <button type="button" className="pac-ghost-btn pac-ghost-btn--icon" onClick={resetForm}>
-              <X size={16} />
+            <button type="button" className="pac-ghost-btn" onClick={resetForm}>
+              <X size={16} aria-hidden="true" />
               <span>Cancelar</span>
             </button>
           </div>
