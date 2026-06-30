@@ -642,6 +642,8 @@ export function EffectivenessPacReadContent({
   );
 }
 
+// Helper de rótulo reutilizado no cabeçalho do detalhe.
+// eslint-disable-next-line react-refresh/only-export-components
 export function labelForPlanStatus(value: string): string {
   return PLAN_STATUSES.find((item) => item.value === value)?.label ?? value;
 }

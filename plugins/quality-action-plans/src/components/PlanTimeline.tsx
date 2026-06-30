@@ -26,23 +26,16 @@ type Props = {
   detail: ActionPlanDetail;
 };
 
-function categoryIcon(category: TimelineCategory) {
-  switch (category) {
-    case "actions":
-      return ClipboardList;
-    case "evidence":
-      return Paperclip;
-    case "effectiveness":
-      return CheckCircle2;
-    case "analysis":
-      return Search;
-    default:
-      return FileText;
-  }
-}
+const CATEGORY_ICONS = {
+  status: FileText,
+  actions: ClipboardList,
+  evidence: Paperclip,
+  effectiveness: CheckCircle2,
+  analysis: Search,
+} as const satisfies Record<TimelineCategory, typeof FileText>;
 
 function TimelineItem({ entry }: { entry: PlanTimelineEntry }) {
-  const Icon = categoryIcon(entry.category);
+  const Icon = CATEGORY_ICONS[entry.category] ?? FileText;
 
   return (
     <li className="pac-timeline-entry">

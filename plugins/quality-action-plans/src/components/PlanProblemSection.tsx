@@ -341,6 +341,8 @@ export function PlanProblemSection({
   );
 }
 
+// Utilitário de payload compartilhado com PlanFormPage.
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildIdentificationUpdatePayload(form: PlanIdentificationFormState) {
   return {
     title: form.title.trim() || undefined,

@@ -2022,6 +2022,16 @@
   color: var(--pac-accent);
 }
 
+.dashboard-quality-action-plans .pac-evidence-chip__label--missing.pac-evidence-chip__label--static {
+  background: color-mix(in srgb, var(--pac-warning, #d97706) 16%, transparent);
+  color: var(--pac-warning, #d97706);
+  border: 1px solid color-mix(in srgb, var(--pac-warning, #d97706) 28%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-my-queue-evidence-modal__context {
+  margin: 0 0 12px;
+}
+
 .dashboard-quality-action-plans .pac-save-banner {
   position: sticky;
   top: 12px;

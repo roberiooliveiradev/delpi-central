@@ -13,6 +13,8 @@ export type MyQueueItem = {
   department?: string | null;
   due_date?: string | null;
   completed_at?: string | null;
+  evidence_required?: boolean;
+  evidence_count?: number;
   action_status: string;
   is_overdue: boolean;
   completed_late?: boolean;

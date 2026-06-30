@@ -151,6 +151,7 @@ export function MyQueuePage({ onNavigate }: Props) {
             emptyMessage={emptyMessage}
             onNavigate={onNavigate}
             onStatusChange={(item, status) => void handleStatusChange(item, status)}
+            onEvidenceUploaded={load}
           />
         </section>
       </div>

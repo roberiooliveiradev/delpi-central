@@ -41,6 +41,8 @@ def test_list_my_queue_sql_excludes_completed_from_overdue_flag():
     assert "a.status NOT IN ('completed', 'cancelled')" in list_query
     assert "completed_late" in list_query
     assert "a.completed_at" in list_query
+    assert "a.evidence_required" in list_query
+    assert "evidence_count" in list_query
 
 
 def test_list_my_queue_include_completed_filter():
@@ -108,6 +110,8 @@ def test_list_my_queue_maps_rows():
                 "department": "Qualidade",
                 "due_date": None,
                 "completed_at": None,
+                "evidence_required": False,
+                "evidence_count": 0,
                 "action_status": "in_progress",
                 "is_overdue": False,
                 "completed_late": False,
@@ -130,6 +134,8 @@ def test_list_my_queue_maps_rows():
                 "department": "Qualidade",
                 "due_date": date(2026, 6, 20),
                 "completed_at": datetime(2026, 6, 24, 10, 0, tzinfo=timezone.utc),
+                "evidence_required": True,
+                "evidence_count": 2,
                 "action_status": "completed",
                 "is_overdue": False,
                 "completed_late": True,
@@ -154,3 +160,5 @@ def test_list_my_queue_maps_rows():
     assert result["items"][1]["is_overdue"] is False
     assert result["items"][1]["completed_late"] is True
     assert result["items"][1]["completed_at"] is not None
+    assert result["items"][1]["evidence_required"] is True
+    assert result["items"][1]["evidence_count"] == 2

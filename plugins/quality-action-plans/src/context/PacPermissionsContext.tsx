@@ -74,6 +74,8 @@ export function PacPermissionsProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Hook exportado junto ao provider (padrão React Context).
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePacPermissions(): PacPermissionsContextValue {
   const context = useContext(PacPermissionsContext);
   if (!context) {

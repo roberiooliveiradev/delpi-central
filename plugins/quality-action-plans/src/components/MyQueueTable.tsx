@@ -1,4 +1,4 @@
-import { Eye } from "lucide-react";
+import { Eye, Paperclip } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -11,7 +11,12 @@ import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import type { MyQueueItem } from "../types/myQueue";
 import { formatDate } from "../utils/format";
+import {
+  queueItemEvidenceLabel,
+  queueItemMissingRequiredEvidence,
+} from "../utils/myQueueEvidence";
 import { TableHeaderCell } from "./ui/HelpTooltip";
+import { MyQueueEvidenceModal } from "./MyQueueEvidenceModal";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -22,6 +27,7 @@ type Props = {
   savingActionId?: string | null;
   onNavigate: (path: string) => void;
   onStatusChange: (item: MyQueueItem, status: string) => void | Promise<void>;
+  onEvidenceUploaded?: () => void | Promise<void>;
 };
 
 function actionStatusLabel(status: string): string {
@@ -43,6 +49,7 @@ function QueueActionStatusSelect({
   const currentStatus = ACTION_STATUS_OPTIONS.some((option) => option.value === item.action_status)
     ? item.action_status
     : "pending";
+  const missingEvidence = queueItemMissingRequiredEvidence(item);
 
   return (
     <select
@@ -50,7 +57,11 @@ function QueueActionStatusSelect({
       className="pac-table-select pac-table-select--status"
       defaultValue={currentStatus}
       aria-label={`Status da ação ${item.plan_code ?? item.action_id}`}
-      title={PAC_HELP_TOOLTIPS.tables.actionStatus}
+      title={
+        missingEvidence
+          ? "Anexe evidência antes de concluir esta ação."
+          : PAC_HELP_TOOLTIPS.tables.actionStatus
+      }
       disabled={disabled}
       onChange={(event) => {
         const nextStatus = event.target.value;
@@ -68,7 +79,11 @@ function QueueActionStatusSelect({
       }}
     >
       {ACTION_STATUS_OPTIONS.map((option) => (
-        <option key={option.value} value={option.value}>
+        <option
+          key={option.value}
+          value={option.value}
+          disabled={option.value === "completed" && missingEvidence}
+        >
           {option.label}
         </option>
       ))}
@@ -83,10 +98,21 @@ export function MyQueueTable({
   savingActionId,
   onNavigate,
   onStatusChange,
+  onEvidenceUploaded,
 }: Props) {
   const { confirm, confirmDialog } = useConfirmDialog();
+  const [evidenceItem, setEvidenceItem] = useState<MyQueueItem | null>(null);
 
-  async function requestStatusChange(_item: MyQueueItem, nextStatus: string) {
+  async function requestStatusChange(item: MyQueueItem, nextStatus: string) {
+    if (nextStatus === "completed" && queueItemMissingRequiredEvidence(item)) {
+      await confirm({
+        title: "Evidência obrigatória",
+        message:
+          "Esta ação exige evidência vinculada. Anexe um arquivo antes de marcar como concluída.",
+        confirmLabel: "Entendi",
+      });
+      return false;
+    }
     return confirm({
       title: "Alterar status",
       message: `Alterar o status da ação para "${actionStatusLabel(nextStatus)}"?`,
@@ -105,6 +131,16 @@ export function MyQueueTable({
   return (
     <>
       {confirmDialog}
+      <MyQueueEvidenceModal
+        item={evidenceItem}
+        open={evidenceItem != null}
+        onClose={() => setEvidenceItem(null)}
+        onUploaded={async () => {
+          if (onEvidenceUploaded) {
+            await onEvidenceUploaded();
+          }
+        }}
+      />
       <div className="pac-table-wrap">
       <table className="pac-table">
         <thead>
@@ -113,6 +149,7 @@ export function MyQueueTable({
             <TableHeaderCell label="Ação" hint={T.action} />
             <TableHeaderCell label="Tipo" hint={T.actionType} />
             <TableHeaderCell label="Prazo" hint={T.dueDate} />
+            <TableHeaderCell label="Evidência" hint={T.evidenceRequired} />
             <TableHeaderCell label="Status" hint={T.actionStatus} />
             <TableHeaderCell label="Filial" hint={T.branch} />
             <TableHeaderCell label="Cliente" hint={T.customer} />
@@ -154,6 +191,19 @@ export function MyQueueTable({
                   </p>
                 ) : null}
               </td>
+              <td className="pac-table-cell--evidence">
+                <span
+                  className={`pac-evidence-chip__label pac-evidence-chip__label--static${
+                    item.evidence_required ? " pac-evidence-chip__label--required" : ""
+                  }${
+                    item.evidence_required && queueItemMissingRequiredEvidence(item)
+                      ? " pac-evidence-chip__label--missing"
+                      : ""
+                  }`}
+                >
+                  {queueItemEvidenceLabel(item)}
+                </span>
+              </td>
               <td>
                 <QueueActionStatusSelect
                   item={item}
@@ -164,7 +214,22 @@ export function MyQueueTable({
               </td>
               <td>{branchLabel(item.branch_code)}</td>
               <td>{item.customer_name ?? "—"}</td>
-              <td>
+              <td className="pac-table-actions">
+                {item.action_status !== "completed" && item.action_status !== "cancelled" ? (
+                  <button
+                    type="button"
+                    className="pac-ghost-btn pac-ghost-btn--icon"
+                    title={
+                      item.evidence_required
+                        ? "Anexar evidência obrigatória"
+                        : "Anexar evidência"
+                    }
+                    disabled={savingActionId === item.action_id}
+                    onClick={() => setEvidenceItem(item)}
+                  >
+                    <Paperclip size={16} />
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="pac-icon-btn"

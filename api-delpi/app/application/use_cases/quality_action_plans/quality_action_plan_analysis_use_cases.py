@@ -28,6 +28,12 @@ class QualityActionPlanAnalysisRepository(Protocol):
         self, plan_id: str, action_id: str, fields: dict[str, Any], *, updated_by: str
     ) -> dict[str, Any] | None: ...
 
+    def get_action(
+        self, plan_id: str, action_id: str
+    ) -> dict[str, Any] | None: ...
+
+    def count_evidences_for_action(self, action_id: str) -> int: ...
+
     def delete_action(
         self, plan_id: str, action_id: str, *, updated_by: str
     ) -> dict[str, Any] | None: ...
@@ -404,6 +410,16 @@ class UpdatePlanActionUseCase:
             raise ValueError(f"action_type inválido: {action_type}")
         if fields.get("cause_track") == "":
             fields = {**fields, "cause_track": None}
+        if status == "completed":
+            action = self._repository.get_action(plan_id, action_id)
+            if not action:
+                return None
+            if action.get("evidence_required") and self._repository.count_evidences_for_action(
+                action_id
+            ) < 1:
+                raise ValueError(
+                    "Não é possível concluir a ação sem evidência vinculada."
+                )
         return self._repository.update_action(
             plan_id,
             action_id,

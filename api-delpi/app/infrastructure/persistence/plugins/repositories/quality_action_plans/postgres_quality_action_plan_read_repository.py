@@ -1177,6 +1177,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    a.department,
                    a.due_date,
                    a.completed_at,
+                   a.evidence_required,
+                   COALESCE(ev.evidence_count, 0) AS evidence_count,
                    a.status AS action_status,
                    (
                        a.status NOT IN ('completed', 'cancelled')
@@ -1199,6 +1201,11 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    p.product_code
               FROM quality.quality_actions a
               JOIN quality.quality_action_plans p ON p.id = a.plan_id
+              LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS evidence_count
+                      FROM quality.quality_problem_evidences e
+                     WHERE e.action_id = a.id
+                   ) ev ON TRUE
              WHERE {list_where}
              ORDER BY is_overdue DESC,
                       a.due_date NULLS LAST,
@@ -1238,6 +1245,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     "department": row.get("department"),
                     "due_date": due_date_value,
                     "completed_at": completed_at_value,
+                    "evidence_required": bool(row.get("evidence_required")),
+                    "evidence_count": int(row.get("evidence_count") or 0),
                     "action_status": row.get("action_status"),
                     "is_overdue": queue_sla["is_overdue"],
                     "completed_late": queue_sla["completed_late"],
@@ -2000,6 +2009,30 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             (action_id, plan_id),
         )
         return row is not None
+
+    def get_action(self, plan_id: str, action_id: str) -> dict[str, Any] | None:
+        row = self.fetch_one(
+            """
+            SELECT id, plan_id, action_type, description, responsible_user_id,
+                   responsible_name, department, due_date, status,
+                   evidence_required, cause_track, completed_at, created_at, updated_at
+              FROM quality.quality_actions
+             WHERE id = %s AND plan_id = %s
+            """,
+            (action_id, plan_id),
+        )
+        return serialize_row(row, id_keys=("id", "plan_id")) if row else None
+
+    def count_evidences_for_action(self, action_id: str) -> int:
+        row = self.fetch_one(
+            """
+            SELECT COUNT(*)::int AS total
+              FROM quality.quality_problem_evidences
+             WHERE action_id = %s
+            """,
+            (action_id,),
+        )
+        return int((row or {}).get("total") or 0)
 
     def upsert_ishikawa(
         self,
