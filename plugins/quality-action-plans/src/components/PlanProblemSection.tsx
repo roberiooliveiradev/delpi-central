@@ -176,11 +176,13 @@ export function PlanProblemSection({
             label="Código do cliente (Delpi)"
             hint={PAC_HELP_TOOLTIPS.detail.customer}
             value={identificationForm.customer_code}
+            appearance="field"
           />
           <ReadOnlyField
             id="pac-detail-customer-store"
             label="Loja"
             value={identificationForm.customer_store}
+            appearance="field"
           />
           <TextField
             id="pac-detail-customer-name"

@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import type { PlanAction } from "../../types/actionPlan";
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import type { PlanSectionEditBindings } from "../../hooks/usePlanSectionEdit";
 import { useDragReorder } from "../../hooks/useDragReorder";
 import type { Rnc8dContainmentRow, Rnc8dReportPayload, Rnc8dTemplatePayload } from "../../types/rnc8d";
 import { emptyRnc8dPayload } from "../../types/rnc8d";
@@ -10,7 +11,16 @@ import {
   formatTeamMemberBindingMessage,
 } from "../../utils/teamMemberBindings";
 import { buildTeamMemberSelectOptions } from "../../utils/teamMemberOptions";
+import {
+  Rnc8dClosureRead,
+  Rnc8dContainmentRead,
+  Rnc8dEffectivenessRead,
+  Rnc8dNcDescriptionRead,
+  Rnc8dPreventiveRead,
+  Rnc8dTeamRead,
+} from "../plan-detail/PlanDetailReadViews";
 import { SectionSaveButton } from "../ui/SectionSaveButton";
+import { EditableSectionCard } from "../ui/EditableSectionCard";
 import { TeamMemberRow } from "../TeamMemberRow";
 import { TeamMemberSelectField } from "./TeamMemberSelectField";
 import { FormActions } from "../ui/FormActions";
@@ -34,7 +44,38 @@ export type Rnc8dSectionSaveProps = {
   saveLabel?: string;
 };
 
-type Rnc8dSectionProps = Rnc8dSectionsProps & Rnc8dSectionSaveProps;
+type Rnc8dSectionProps = Rnc8dSectionsProps & Rnc8dSectionSaveProps & {
+  sectionEdit: PlanSectionEditBindings;
+};
+
+function Rnc8dSectionShell({
+  title,
+  hint,
+  subtitle,
+  sectionEdit,
+  readContent,
+  editContent,
+}: {
+  title: string;
+  hint?: string;
+  subtitle?: string;
+  sectionEdit: PlanSectionEditBindings;
+  readContent: ReactNode;
+  editContent: ReactNode;
+}) {
+  return (
+    <EditableSectionCard
+      title={title}
+      hint={hint}
+      subtitle={subtitle}
+      isEditing={sectionEdit.isEditing}
+      onEdit={sectionEdit.onEdit}
+      onCancelEdit={sectionEdit.onCancelEdit}
+      readContent={readContent}
+      editContent={editContent}
+    />
+  );
+}
 
 function Rnc8dSectionFooter({
   saveKey,
@@ -228,6 +269,7 @@ export function Rnc8dHeaderSection({ value, onChange }: Rnc8dSectionsProps) {
 export function Rnc8dNcDescriptionSection({
   value,
   onChange,
+  sectionEdit,
   saveKey,
   saving,
   onSave,
@@ -238,63 +280,72 @@ export function Rnc8dNcDescriptionSection({
   const nc = payload.nc_description ?? {};
 
   return (
-    <SectionCard title="1. Descrição da não conformidade" hint={PAC_HELP_TOOLTIPS.rnc8d.ncDescription}>
-      <p className="pac-muted pac-field-hint">
-        Na planilha, a coluna <strong>Verificado</strong> é o campo <strong>Relato do problema</strong> no painel
-        Problema.
-      </p>
-      <div className="pac-form-grid">
-        <TextField
-          id="rnc-nc-char"
-          label="Característica"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.characteristic}
-          value={nc.characteristic ?? ""}
-          onChange={(characteristic) =>
-            onChange(updatePayload(value, { nc_description: { ...nc, characteristic } }))
-          }
-          fullWidth
-        />
-        <TextField
-          id="rnc-nc-spec"
-          label="Especificado"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.specified}
-          value={nc.specified ?? ""}
-          onChange={(specified) =>
-            onChange(updatePayload(value, { nc_description: { ...nc, specified } }))
-          }
-          fullWidth
-        />
-        <TextAreaField
-          id="rnc-nc-obs"
-          label="Observações"
-          hint={PAC_HELP_TOOLTIPS.rnc8d.observations}
-          value={nc.observations ?? payload.observations ?? ""}
-          onChange={(observations) =>
-            onChange(
-              updatePayload(value, {
-                nc_description: { ...nc, observations },
-                observations,
-              }),
-            )
-          }
-          rows={2}
-          fullWidth
-        />
-      </div>
-      <Rnc8dSectionFooter
-        saveKey={saveKey}
-        saving={saving}
-        onSave={onSave}
-        dirty={dirty}
-        saveLabel={saveLabel}
-      />
-    </SectionCard>
+    <Rnc8dSectionShell
+      title="1. Descrição da não conformidade"
+      hint={PAC_HELP_TOOLTIPS.rnc8d.ncDescription}
+      sectionEdit={sectionEdit}
+      readContent={<Rnc8dNcDescriptionRead value={value} />}
+      editContent={
+        <>
+          <p className="pac-muted pac-field-hint">
+            Na planilha, a coluna <strong>Verificado</strong> é o campo <strong>Relato do problema</strong> no painel
+            Problema.
+          </p>
+          <div className="pac-form-grid">
+            <TextField
+              id="rnc-nc-char"
+              label="Característica"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.characteristic}
+              value={nc.characteristic ?? ""}
+              onChange={(characteristic) =>
+                onChange(updatePayload(value, { nc_description: { ...nc, characteristic } }))
+              }
+              fullWidth
+            />
+            <TextField
+              id="rnc-nc-spec"
+              label="Especificado"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.specified}
+              value={nc.specified ?? ""}
+              onChange={(specified) =>
+                onChange(updatePayload(value, { nc_description: { ...nc, specified } }))
+              }
+              fullWidth
+            />
+            <TextAreaField
+              id="rnc-nc-obs"
+              label="Observações"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.observations}
+              value={nc.observations ?? payload.observations ?? ""}
+              onChange={(observations) =>
+                onChange(
+                  updatePayload(value, {
+                    nc_description: { ...nc, observations },
+                    observations,
+                  }),
+                )
+              }
+              rows={2}
+              fullWidth
+            />
+          </div>
+          <Rnc8dSectionFooter
+            saveKey={saveKey}
+            saving={saving}
+            onSave={onSave}
+            dirty={dirty}
+            saveLabel={saveLabel}
+          />
+        </>
+      }
+    />
   );
 }
 
 export function Rnc8dTeamSection({
   value,
   onChange,
+  sectionEdit,
   saveKey,
   saving,
   onSave,
@@ -313,72 +364,81 @@ export function Rnc8dTeamSection({
     .filter((id): id is string => Boolean(id));
 
   return (
-    <SectionCard title="2. Membros da equipe de análise" hint={PAC_HELP_TOOLTIPS.rnc8d.team}>
-      <div className="pac-team-list">
-        {team.map((member, index) => (
-          <TeamMemberRow
-            key={`team-${index}`}
-            index={index}
-            member={member}
-            excludedUserIds={linkedUserIds}
-            rowClassName={teamDrag.rowClassName("pac-team-card", index)}
-            rowDropProps={teamDrag.rowDropProps(index)}
-            canDrag={teamDrag.canDrag}
-            dragProps={teamDrag.canDrag ? teamDrag.handleDragProps(index) : null}
-            removeDisabled={team.length <= 1}
-            onChange={(nextMember) => {
-              const next = [...team];
-              next[index] = nextMember;
-              onChange({ ...value, team_members: next });
-            }}
-            onLeaderToggle={(checked) => {
-              const next = team.map((item, itemIndex) => ({
-                ...item,
-                is_leader: itemIndex === index ? checked : false,
-              }));
-              onChange({ ...value, team_members: next });
-            }}
-            onRemove={() => {
-              const member = team[index];
-              const bindings = findTeamMemberBindings(member, {
-                rnc8dForm: value,
-                actions: planActions,
-              });
-              if (bindings.length) {
-                onBindingConflict?.(
-                  formatTeamMemberBindingMessage(member.member_name, bindings),
-                );
-                return;
-              }
+    <Rnc8dSectionShell
+      title="2. Membros da equipe de análise"
+      hint={PAC_HELP_TOOLTIPS.rnc8d.team}
+      sectionEdit={sectionEdit}
+      readContent={<Rnc8dTeamRead members={value.team_members} />}
+      editContent={
+        <>
+          <div className="pac-team-list">
+            {team.map((member, index) => (
+              <TeamMemberRow
+                key={`team-${index}`}
+                index={index}
+                member={member}
+                excludedUserIds={linkedUserIds}
+                rowClassName={teamDrag.rowClassName("pac-team-card", index)}
+                rowDropProps={teamDrag.rowDropProps(index)}
+                canDrag={teamDrag.canDrag}
+                dragProps={teamDrag.canDrag ? teamDrag.handleDragProps(index) : null}
+                removeDisabled={team.length <= 1}
+                onChange={(nextMember) => {
+                  const next = [...team];
+                  next[index] = nextMember;
+                  onChange({ ...value, team_members: next });
+                }}
+                onLeaderToggle={(checked) => {
+                  const next = team.map((item, itemIndex) => ({
+                    ...item,
+                    is_leader: itemIndex === index ? checked : false,
+                  }));
+                  onChange({ ...value, team_members: next });
+                }}
+                onRemove={() => {
+                  const member = team[index];
+                  const bindings = findTeamMemberBindings(member, {
+                    rnc8dForm: value,
+                    actions: planActions,
+                  });
+                  if (bindings.length) {
+                    onBindingConflict?.(
+                      formatTeamMemberBindingMessage(member.member_name, bindings),
+                    );
+                    return;
+                  }
+                  onChange({
+                    ...value,
+                    team_members: team.filter((_, itemIndex) => itemIndex !== index),
+                  });
+                }}
+              />
+            ))}
+          </div>
+          <Rnc8dSectionToolbar
+            addLabel="Adicionar membro"
+            onAdd={() =>
               onChange({
                 ...value,
-                team_members: team.filter((_, itemIndex) => itemIndex !== index),
-              });
-            }}
+                team_members: [...team, { member_name: "", department: "", is_leader: false }],
+              })
+            }
+            saveKey={saveKey}
+            saving={saving}
+            onSave={onSave}
+            dirty={dirty}
+            saveLabel={saveLabel}
           />
-        ))}
-      </div>
-      <Rnc8dSectionToolbar
-        addLabel="Adicionar membro"
-        onAdd={() =>
-          onChange({
-            ...value,
-            team_members: [...team, { member_name: "", department: "", is_leader: false }],
-          })
-        }
-        saveKey={saveKey}
-        saving={saving}
-        onSave={onSave}
-        dirty={dirty}
-        saveLabel={saveLabel}
-      />
-    </SectionCard>
+        </>
+      }
+    />
   );
 }
 
 export function Rnc8dContainmentSection({
   value,
   onChange,
+  sectionEdit,
   saveKey,
   saving,
   onSave,
@@ -412,7 +472,13 @@ export function Rnc8dContainmentSection({
   }
 
   return (
-    <SectionCard title="3. Ação de contenção" hint={PAC_HELP_TOOLTIPS.rnc8d.containment}>
+    <Rnc8dSectionShell
+      title="3. Ação de contenção"
+      hint={PAC_HELP_TOOLTIPS.rnc8d.containment}
+      sectionEdit={sectionEdit}
+      readContent={<Rnc8dContainmentRead value={value} />}
+      editContent={
+        <>
       <div className="pac-table-wrap">
         <table className="pac-table pac-table--containment">
           <thead>
@@ -542,13 +608,16 @@ export function Rnc8dContainmentSection({
         dirty={dirty}
         saveLabel={saveLabel}
       />
-    </SectionCard>
+        </>
+      }
+    />
   );
 }
 
 export function Rnc8dEffectivenessSection({
   value,
   onChange,
+  sectionEdit,
   saveKey,
   saving,
   onSave,
@@ -559,10 +628,13 @@ export function Rnc8dEffectivenessSection({
   const effectiveness = payload.effectiveness ?? {};
 
   return (
-    <SectionCard
+    <Rnc8dSectionShell
       title="6. Verificação da eficácia da ação corretiva"
       hint={PAC_HELP_TOOLTIPS.rnc8d.effectivenessSection}
-    >
+      sectionEdit={sectionEdit}
+      readContent={<Rnc8dEffectivenessRead value={value} />}
+      editContent={
+        <>
       <TextAreaField
         id="rnc-effectiveness-resolved"
         label="O problema foi resolvido? Como?"
@@ -630,13 +702,16 @@ export function Rnc8dEffectivenessSection({
         dirty={dirty}
         saveLabel={saveLabel}
       />
-    </SectionCard>
+        </>
+      }
+    />
   );
 }
 
 export function Rnc8dPreventiveSection({
   value,
   onChange,
+  sectionEdit,
   saveKey,
   saving,
   onSave,
@@ -673,10 +748,13 @@ export function Rnc8dPreventiveSection({
   }
 
   return (
-    <SectionCard
+    <Rnc8dSectionShell
       title="7. Ação preventiva e evidência das ações"
       hint={PAC_HELP_TOOLTIPS.rnc8d.preventiveSection}
-    >
+      sectionEdit={sectionEdit}
+      readContent={<Rnc8dPreventiveRead value={value} />}
+      editContent={
+        <>
       <TextAreaField
         id="rnc-preventive-how"
         label="Como evitar no futuro?"
@@ -834,13 +912,16 @@ export function Rnc8dPreventiveSection({
         dirty={dirty}
         saveLabel={saveLabel}
       />
-    </SectionCard>
+        </>
+      }
+    />
   );
 }
 
 export function Rnc8dClosureSection({
   value,
   onChange,
+  sectionEdit,
   saveKey,
   saving,
   onSave,
@@ -850,7 +931,13 @@ export function Rnc8dClosureSection({
   const payload = value.template_payload ?? emptyRnc8dPayload();
 
   return (
-    <SectionCard title="8. Fechamento do relatório 8D" hint={PAC_HELP_TOOLTIPS.rnc8d.clientClosure}>
+    <Rnc8dSectionShell
+      title="8. Fechamento do relatório 8D"
+      hint={PAC_HELP_TOOLTIPS.rnc8d.clientClosure}
+      sectionEdit={sectionEdit}
+      readContent={<Rnc8dClosureRead value={value} />}
+      editContent={
+        <>
       <TextField
         id="rnc-closure"
         label="Fechamento 8D (uso do cliente)"
@@ -866,6 +953,8 @@ export function Rnc8dClosureSection({
         dirty={dirty}
         saveLabel={saveLabel}
       />
-    </SectionCard>
+        </>
+      }
+    />
   );
 }

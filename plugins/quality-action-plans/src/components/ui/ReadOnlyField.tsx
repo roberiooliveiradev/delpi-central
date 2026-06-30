@@ -7,6 +7,8 @@ type ReadOnlyFieldProps = {
   value?: string | null;
   fullWidth?: boolean;
   multiline?: boolean;
+  /** `ficha` = texto puro (modo leitura); `field` = aparência de campo (somente leitura no formulário). */
+  appearance?: "ficha" | "field";
 };
 
 function displayValue(value?: string | null): string {
@@ -21,12 +23,14 @@ export function ReadOnlyField({
   value,
   fullWidth = false,
   multiline = false,
+  appearance = "ficha",
 }: ReadOnlyFieldProps) {
+  const isFicha = appearance === "ficha";
   const fieldClass = [
     "pac-field",
-    "pac-readonly-field",
+    isFicha ? "pac-ficha-field" : "pac-readonly-field",
     fullWidth ? "pac-field--full" : "",
-    multiline ? "pac-readonly-field--multiline" : "",
+    multiline ? (isFicha ? "pac-ficha-field--multiline" : "pac-readonly-field--multiline") : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -41,7 +45,7 @@ export function ReadOnlyField({
       </span>
       <p
         id={id}
-        className="pac-readonly-field__value"
+        className={isFicha ? "pac-ficha-field__value" : "pac-readonly-field__value"}
         aria-labelledby={labelId}
       >
         {text === "—" ? <span className="pac-muted">{text}</span> : text}

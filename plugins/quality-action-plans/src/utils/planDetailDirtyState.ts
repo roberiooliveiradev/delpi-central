@@ -235,3 +235,73 @@ export function isPlanSectionDirty(
 export function hasAnyRnc8dDirtySection(sections: PlanDirtySection[]): boolean {
   return sections.some((section) => section.startsWith("rnc8d-"));
 }
+
+/** Chaves de edição na UI (podem agrupar mais de um bloco dirty). */
+export type PlanSectionEditKey =
+  | PlanDirtySection
+  | "problem"
+  | "evidences"
+  | "actions";
+
+export function revertRnc8dFormSection(
+  current: Rnc8dReportPayload,
+  snapshot: Rnc8dReportPayload,
+  section:
+    | "rnc8d-material"
+    | "rnc8d-nc"
+    | "rnc8d-team"
+    | "rnc8d-containment"
+    | "rnc8d-effectiveness-8d"
+    | "rnc8d-preventive"
+    | "rnc8d-closure",
+): Rnc8dReportPayload {
+  const snapPayload = snapshot.template_payload ?? emptyRnc8dPayload();
+  const currentPayload = current.template_payload ?? emptyRnc8dPayload();
+  const nextPayload: Rnc8dTemplatePayload = { ...currentPayload };
+
+  switch (section) {
+    case "rnc8d-material": {
+      const next = { ...current, template_payload: nextPayload };
+      next.customer_contact = snapshot.customer_contact ?? "";
+      for (const key of RNC8D_MATERIAL_PAYLOAD_KEYS) {
+        (nextPayload as Record<string, unknown>)[key] = snapPayload[key] ?? "";
+      }
+      return next;
+    }
+    case "rnc8d-nc":
+      nextPayload.nc_description = { ...(snapPayload.nc_description ?? {}) };
+      nextPayload.observations = snapPayload.observations ?? "";
+      return { ...current, template_payload: nextPayload };
+    case "rnc8d-team":
+      return {
+        ...current,
+        team_members: (snapshot.team_members ?? []).map((member) => ({ ...member })),
+      };
+    case "rnc8d-containment":
+      nextPayload.containment = (snapPayload.containment ?? []).map((row) => ({ ...row }));
+      return { ...current, template_payload: nextPayload };
+    case "rnc8d-effectiveness-8d":
+      nextPayload.effectiveness = { ...(snapPayload.effectiveness ?? {}) };
+      return { ...current, template_payload: nextPayload };
+    case "rnc8d-preventive":
+      nextPayload.preventive = { ...(snapPayload.preventive ?? {}) };
+      nextPayload.documentation_updates = (snapPayload.documentation_updates ?? []).map(
+        (row) => ({ ...row }),
+      );
+      return { ...current, template_payload: nextPayload };
+    case "rnc8d-closure":
+      nextPayload.client_closure_note = snapPayload.client_closure_note ?? "";
+      return { ...current, template_payload: nextPayload };
+    default:
+      return current;
+  }
+}
+
+export function cloneFiveWhysForm(form: FiveWhysForm): FiveWhysForm {
+  return {
+    occurrence: form.occurrence.map((step) => ({ ...step })),
+    detection: form.detection.map((step) => ({ ...step })),
+    root_cause: form.root_cause,
+    confidence_level: form.confidence_level,
+  };
+}

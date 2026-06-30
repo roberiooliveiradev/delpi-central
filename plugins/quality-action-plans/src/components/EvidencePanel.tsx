@@ -49,6 +49,10 @@ type Props = {
   onChanged: () => void | Promise<void>;
   title?: string;
   subtitle?: string;
+  /** Sem wrapper SectionCard — uso dentro de EditableSectionCard. */
+  bare?: boolean;
+  /** Somente listagem (sem upload nem exclusão). */
+  readOnly?: boolean;
 };
 
 function actionLabel(action: PlanAction): string {
@@ -174,6 +178,8 @@ export function EvidencePanel({
   onChanged,
   title = "Banco de conhecimento e evidências",
   subtitle = "Anexe prints, PDFs, planilhas e documentos do processo. Visível para o analista e para o agente GPT.",
+  bare = false,
+  readOnly = false,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [evidenceType, setEvidenceType] = useState("image");
@@ -224,14 +230,11 @@ export function EvidencePanel({
   ];
   const actionById = new Map(actions.map((action) => [action.id, action]));
 
-  return (
-    <SectionCard
-      title={title}
-      hint={PAC_HELP_TOOLTIPS.sections.evidences}
-      subtitle={subtitle}
-    >
+  const body = (
+    <>
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 
+      {!readOnly ? (
       <div className="pac-form-grid pac-evidence-upload">
         <SelectField
           id="pac-evidence-type"
@@ -292,10 +295,11 @@ export function EvidencePanel({
           </button>
         </div>
       </div>
+      ) : null}
 
       {evidences.length ? (
-        <div className="pac-table-wrap">
-          <table className="pac-table">
+        <div className={`pac-table-wrap${readOnly ? " pac-table-wrap--compact-read" : ""}`}>
+          <table className={`pac-table${readOnly ? " pac-table--compact-read" : ""}`}>
             <thead>
               <tr>
                 <TableHeaderCell label="Arquivo" hint={T.file} />
@@ -304,11 +308,13 @@ export function EvidencePanel({
                 <TableHeaderCell label="Ação" hint={T.linkedAction} />
                 <TableHeaderCell label="Tamanho" hint={T.fileSize} />
                 <TableHeaderCell label="Enviado em" hint={T.uploadedAt} />
+                {!readOnly ? (
                 <TableHeaderCell
                   label="Ações"
                   hint={T.evidenceActions}
                   className="pac-table__actions-col"
                 />
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -331,6 +337,7 @@ export function EvidencePanel({
                   </td>
                   <td>{formatSize(evidence.size_bytes)}</td>
                   <td>{formatDateTime(evidence.created_at)}</td>
+                  {!readOnly ? (
                   <td className="pac-table-actions">
                     {isPreviewableEvidence(evidence) ? (
                       <button
@@ -368,6 +375,7 @@ export function EvidencePanel({
                       <Trash2 size={16} />
                     </button>
                   </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -399,6 +407,20 @@ export function EvidencePanel({
           </div>
         ) : null}
       </Modal>
+    </>
+  );
+
+  if (bare) {
+    return body;
+  }
+
+  return (
+    <SectionCard
+      title={title}
+      hint={PAC_HELP_TOOLTIPS.sections.evidences}
+      subtitle={subtitle}
+    >
+      {body}
     </SectionCard>
   );
 }

@@ -2413,6 +2413,9 @@
 .dashboard-quality-action-plans .pac-subsection-title {
   margin: 16px 0 8px;
   font-size: var(--pac-font-md);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--pac-text);
 }
 
 .dashboard-quality-action-plans .pac-plan-status-bar {
@@ -3136,4 +3139,143 @@
 .dashboard-quality-action-plans .pac-required-evidence-list {
   margin: 8px 0 0;
   padding-left: 18px;
+}
+
+/* ——— Modo leitura: ficha (texto organizado, sem aparência de input) ——— */
+.dashboard-quality-action-plans .pac-section-read {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-ficha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-ficha-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-ficha-field .pac-field__label {
+  font-size: var(--pac-font-xs);
+  font-weight: 600;
+  color: var(--pac-text-muted);
+  line-height: 1.35;
+}
+
+.dashboard-quality-action-plans .pac-ficha-field__value {
+  margin: 0;
+  font-size: var(--pac-font-sm);
+  line-height: 1.5;
+  color: var(--pac-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dashboard-quality-action-plans .pac-ficha-field--multiline .pac-ficha-field__value {
+  margin-top: 2px;
+}
+
+.dashboard-quality-action-plans .pac-section-read .pac-subsection-title {
+  margin: 0 0 8px;
+}
+
+.dashboard-quality-action-plans .pac-section-read .pac-subsection-title:not(:first-child) {
+  margin-top: 12px;
+}
+
+.dashboard-quality-action-plans .pac-ficha-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-quality-action-plans .pac-ficha-text,
+.dashboard-quality-action-plans .pac-ficha-list {
+  margin: 0;
+  font-size: var(--pac-font-sm);
+  line-height: 1.5;
+  color: var(--pac-text);
+}
+
+.dashboard-quality-action-plans .pac-ficha-list {
+  padding-left: 20px;
+}
+
+.dashboard-quality-action-plans .pac-ficha-list li + li {
+  margin-top: 4px;
+}
+
+.dashboard-quality-action-plans .pac-ficha-list li strong {
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-dl--read dt {
+  font-size: var(--pac-font-xs);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--pac-text-muted);
+}
+
+.dashboard-quality-action-plans .pac-dl--read dd {
+  font-size: var(--pac-font-sm);
+  line-height: 1.5;
+  color: var(--pac-text);
+}
+
+.dashboard-quality-action-plans .pac-readonly-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pac-section-gap);
+}
+
+.dashboard-quality-action-plans .pac-readonly-ishikawa-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--pac-grid-gap);
+}
+
+.dashboard-quality-action-plans .pac-readonly-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-quality-action-plans .pac-readonly-list--numbered {
+  list-style: decimal;
+  padding-left: 20px;
+}
+
+.dashboard-quality-action-plans .pac-readonly-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--pac-card-border) 55%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-readonly-list__primary {
+  font-weight: 500;
+}
+
+.dashboard-quality-action-plans .pac-readonly-list__meta {
+  font-size: var(--pac-font-xs);
+  color: var(--pac-text-muted);
+}
+
+.dashboard-quality-action-plans .pac-table--compact-read {
+  font-size: var(--pac-font-sm);
+}
+
+.dashboard-quality-action-plans .pac-table--compact-read th,
+.dashboard-quality-action-plans .pac-table--compact-read td {
+  padding: 6px 10px;
 }

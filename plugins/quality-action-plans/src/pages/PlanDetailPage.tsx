@@ -32,6 +32,14 @@ import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
 import { PlanProblemSection, buildIdentificationUpdatePayload } from "../components/PlanProblemSection";
 import { PlanStatusSection } from "../components/PlanStatusSection";
+import {
+  EffectivenessPacReadContent,
+  FiveWhysReadContent,
+  IshikawaReadContent,
+  PlanActionsReadContent,
+  PlanProblemReadContent,
+  PlanStatusReadContent,
+} from "../components/plan-detail/PlanDetailReadViews";
 import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
 import { formatActorDisplay } from "../utils/actorDisplay";
 import {
@@ -45,10 +53,10 @@ import {
 } from "../components/rnc8d/Rnc8dSections";
 import { SaveStatusBanner } from "../components/SaveStatusBanner";
 import { SectionSaveButton } from "../components/ui/SectionSaveButton";
+import { EditableSectionCard } from "../components/ui/EditableSectionCard";
 import { FormActions } from "../components/ui/FormActions";
 import { SectionCard } from "../components/ui/SectionCard";
 import { SelectField } from "../components/ui/SelectField";
-import { StatusPipeline } from "../components/ui/StatusPipeline";
 import { TextAreaField } from "../components/ui/TextAreaField";
 import {
   dashboardPath,
@@ -57,6 +65,10 @@ import {
   PLAN_STATUSES,
 } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  usePlanSectionEdit,
+  type PlanSectionEditBindings,
+} from "../hooks/usePlanSectionEdit";
 import type {
   ActionPlanDetail,
   PlanAuditLogEntry,
@@ -79,10 +91,13 @@ import {
 } from "../utils/fiveWhys";
 import {
   buildPlanDetailSnapshot,
+  cloneFiveWhysForm,
   computePlanDirtySections,
   hasAnyRnc8dDirtySection,
   isPlanSectionDirty,
+  revertRnc8dFormSection,
   type PlanDetailSnapshot,
+  type PlanSectionEditKey,
 } from "../utils/planDetailDirtyState";
 import { parseStoredTaggedList } from "../utils/taggedList";
 
@@ -101,6 +116,37 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   effectiveness_reviewed: "Eficácia registrada",
   effectiveness_approval_rejected: "Submissão rejeitada",
 };
+
+const SAVE_KEY_TO_EDIT_SECTION: Partial<Record<string, PlanSectionEditKey>> = {
+  identification: "problem",
+  "rnc8d-material": "problem",
+  reopen: "status",
+  "effectiveness-submit": "effectiveness-pac",
+  "effectiveness-approve": "effectiveness-pac",
+  "effectiveness-reject": "effectiveness-pac",
+  effectiveness: "effectiveness-pac",
+  "promote-pattern": "effectiveness-pac",
+};
+
+function resolveEditSectionForSaveKey(saveKey: string): PlanSectionEditKey | null {
+  const mapped = SAVE_KEY_TO_EDIT_SECTION[saveKey];
+  if (mapped) {
+    return mapped;
+  }
+  if (
+    saveKey === "status"
+    || saveKey === "problem"
+    || saveKey === "evidences"
+    || saveKey === "actions"
+    || saveKey.startsWith("rnc8d-")
+    || saveKey === "five-whys"
+    || saveKey === "ishikawa"
+    || saveKey === "effectiveness-pac"
+  ) {
+    return saveKey as PlanSectionEditKey;
+  }
+  return null;
+}
 
 export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
@@ -122,6 +168,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const [saving, setSaving] = useState<string | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState<PlanDetailSnapshot | null>(null);
   const [auditLog, setAuditLog] = useState<PlanAuditLogEntry[]>([]);
+  const sectionEdit = usePlanSectionEdit();
   const [identificationForm, setIdentificationForm] = useState({
     title: "",
     customer_code: "",
@@ -248,6 +295,10 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       await action();
       setSuccess("Alterações salvas.");
       await load();
+      const editKey = resolveEditSectionForSaveKey(key);
+      if (editKey) {
+        sectionEdit.stopEdit(editKey);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar.");
     } finally {
@@ -317,6 +368,62 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     [dirtySections],
   );
 
+  const handleCancelEdit = useCallback(
+    (key: PlanSectionEditKey) => {
+      if (savedSnapshot) {
+        switch (key) {
+          case "status":
+            setStatusValue(savedSnapshot.status);
+            setReopenReason("");
+            break;
+          case "problem":
+            setIdentificationForm({ ...savedSnapshot.identification });
+            setRnc8dForm((current) =>
+              revertRnc8dFormSection(current, savedSnapshot.rnc8dForm, "rnc8d-material"),
+            );
+            break;
+          case "rnc8d-nc":
+          case "rnc8d-team":
+          case "rnc8d-containment":
+          case "rnc8d-effectiveness-8d":
+          case "rnc8d-preventive":
+          case "rnc8d-closure":
+            setRnc8dForm((current) =>
+              revertRnc8dFormSection(current, savedSnapshot.rnc8dForm, key),
+            );
+            break;
+          case "five-whys":
+            setFiveWhysForm(cloneFiveWhysForm(savedSnapshot.fiveWhysForm));
+            break;
+          case "ishikawa":
+            setIshikawaCausesForm({ ...savedSnapshot.ishikawaCausesForm });
+            setIshikawaNotes(savedSnapshot.ishikawaNotes);
+            break;
+          case "effectiveness-pac":
+            setEffectivenessStatus(savedSnapshot.effectivenessStatus);
+            setEffectivenessNotes(savedSnapshot.effectivenessNotes);
+            setEffectivenessRejectionReason("");
+            break;
+          case "evidences":
+          case "actions":
+          default:
+            break;
+        }
+      }
+      sectionEdit.stopEdit(key);
+    },
+    [savedSnapshot, sectionEdit],
+  );
+
+  const bindSection = useCallback(
+    (key: PlanSectionEditKey): PlanSectionEditBindings => ({
+      isEditing: sectionEdit.isEditing(key),
+      onEdit: () => sectionEdit.startEdit(key),
+      onCancelEdit: () => handleCancelEdit(key),
+    }),
+    [sectionEdit, handleCancelEdit],
+  );
+
   const saveRnc8dReport = useCallback(async () => {
     await upsertRnc8dReport(
       planId,
@@ -383,6 +490,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           : `Alterações salvas (${count} blocos).`,
       );
       await load();
+      sectionEdit.stopAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar.");
     } finally {
@@ -484,44 +592,52 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
       {plan ? (
         <div className="pac-detail-grid">
-          <SectionCard
+          <EditableSectionCard
             title="Status do plano"
             hint={PAC_HELP_TOOLTIPS.sections.planStatus}
-          >
-            <StatusPipeline
-              currentStatus={plan.status}
-              hint={PAC_HELP_TOOLTIPS.detail.statusPipeline}
-            />
-            <PlanStatusSection
-              planStatus={plan.status}
-              planBranchCode={plan.branch_code}
-              planScope={plan.nonconformity_scope}
-              planSeverity={plan.severity}
-              isTerminalPlan={isTerminalPlan}
-              statusValue={statusValue}
-              onStatusChange={setStatusValue}
-              reopenReason={reopenReason}
-              onReopenReasonChange={setReopenReason}
-              reopenTargetStatus={reopenTargetStatus}
-              onReopenTargetStatusChange={setReopenTargetStatus}
-              reopenStatusOptions={reopenStatusOptions}
-              saving={saving}
-              dirtyStatus={isDirty("status")}
-              onSaveStatus={() =>
-                void runSave("status", async () => {
-                  await updatePlanStatus(planId, statusValue);
-                })
-              }
-              onReopen={() =>
-                void runSave("reopen", async () => {
-                  await reopenPlan(planId, reopenReason, reopenTargetStatus);
-                  setReopenReason("");
-                })
-              }
-            />
-          </SectionCard>
+            isEditing={bindSection("status").isEditing}
+            onEdit={bindSection("status").onEdit}
+            onCancelEdit={bindSection("status").onCancelEdit}
+            readContent={
+              <PlanStatusReadContent
+                planStatus={plan.status}
+                planBranchCode={plan.branch_code}
+                planScope={plan.nonconformity_scope}
+                planSeverity={plan.severity}
+              />
+            }
+            editContent={
+              <PlanStatusSection
+                planStatus={plan.status}
+                planBranchCode={plan.branch_code}
+                planScope={plan.nonconformity_scope}
+                planSeverity={plan.severity}
+                isTerminalPlan={isTerminalPlan}
+                statusValue={statusValue}
+                onStatusChange={setStatusValue}
+                reopenReason={reopenReason}
+                onReopenReasonChange={setReopenReason}
+                reopenTargetStatus={reopenTargetStatus}
+                onReopenTargetStatusChange={setReopenTargetStatus}
+                reopenStatusOptions={reopenStatusOptions}
+                saving={saving}
+                dirtyStatus={isDirty("status")}
+                onSaveStatus={() =>
+                  void runSave("status", async () => {
+                    await updatePlanStatus(planId, statusValue);
+                  })
+                }
+                onReopen={() =>
+                  void runSave("reopen", async () => {
+                    await reopenPlan(planId, reopenReason, reopenTargetStatus);
+                    setReopenReason("");
+                  })
+                }
+              />
+            }
+          />
 
-          <SectionCard
+          <EditableSectionCard
             title={showRnc8dFlow ? "Problema e cabeçalho 8D" : "Problema"}
             hint={PAC_HELP_TOOLTIPS.sections.problem}
             subtitle={
@@ -529,31 +645,47 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 ? "Identificação do plano e complementos da planilha (material, NF e contato)."
                 : undefined
             }
-          >
-            {showRnc8dFlow && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
-            <PlanProblemSection
-              showRnc8dFlow={showRnc8dFlow}
-              identificationForm={identificationForm}
-              onIdentificationChange={setIdentificationForm}
-              saving={saving}
-              dirtyIdentification={isDirty("identification")}
-              onSaveIdentification={() => void runSave("identification", saveIdentification)}
-              onSaveMaterial={
-                showRnc8dFlow
-                  ? () => void runSave("rnc8d-material", saveRnc8dReport)
-                  : undefined
-              }
-              dirtyMaterial={isDirty("rnc8d-material")}
-              materialSection={
-                showRnc8dFlow ? (
-                  <>
-                    <h3 className="pac-subsection-title">Material e nota fiscal</h3>
-                    <Rnc8dHeaderFields value={rnc8dForm} onChange={setRnc8dForm} />
-                  </>
-                ) : null
-              }
-            />
-          </SectionCard>
+            isEditing={bindSection("problem").isEditing}
+            onEdit={bindSection("problem").onEdit}
+            onCancelEdit={bindSection("problem").onCancelEdit}
+            readContent={
+              <>
+                {showRnc8dFlow && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
+                <PlanProblemReadContent
+                  showRnc8dFlow={showRnc8dFlow}
+                  identification={identificationForm}
+                  rnc8dForm={rnc8dForm}
+                />
+              </>
+            }
+            editContent={
+              <>
+                {showRnc8dFlow && detail ? <Rnc8dDisciplineProgress detail={detail} /> : null}
+                <PlanProblemSection
+                  showRnc8dFlow={showRnc8dFlow}
+                  identificationForm={identificationForm}
+                  onIdentificationChange={setIdentificationForm}
+                  saving={saving}
+                  dirtyIdentification={isDirty("identification")}
+                  onSaveIdentification={() => void runSave("identification", saveIdentification)}
+                  onSaveMaterial={
+                    showRnc8dFlow
+                      ? () => void runSave("rnc8d-material", saveRnc8dReport)
+                      : undefined
+                  }
+                  dirtyMaterial={isDirty("rnc8d-material")}
+                  materialSection={
+                    showRnc8dFlow ? (
+                      <>
+                        <h3 className="pac-subsection-title">Material e nota fiscal</h3>
+                        <Rnc8dHeaderFields value={rnc8dForm} onChange={setRnc8dForm} />
+                      </>
+                    ) : null
+                  }
+                />
+              </>
+            }
+          />
 
           <SimilarCasesPanel planId={planId} onNavigate={onNavigate} />
 
@@ -562,6 +694,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <Rnc8dNcDescriptionSection
                 value={rnc8dForm}
                 onChange={setRnc8dForm}
+                sectionEdit={bindSection("rnc8d-nc")}
                 saveKey="rnc8d-nc"
                 saving={saving}
                 dirty={isDirty("rnc8d-nc")}
@@ -570,6 +703,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <Rnc8dTeamSection
                 value={rnc8dForm}
                 onChange={setRnc8dForm}
+                sectionEdit={bindSection("rnc8d-team")}
                 saveKey="rnc8d-team"
                 saving={saving}
                 dirty={isDirty("rnc8d-team")}
@@ -580,63 +714,85 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               <Rnc8dContainmentSection
                 value={rnc8dForm}
                 onChange={setRnc8dForm}
+                sectionEdit={bindSection("rnc8d-containment")}
                 saveKey="rnc8d-containment"
                 saving={saving}
                 dirty={isDirty("rnc8d-containment")}
                 onSave={() => void runSave("rnc8d-containment", saveRnc8dReport)}
               />
 
-              <SectionCard
+              <EditableSectionCard
                 title="4. Estudo da causa do defeito (5 Porquês)"
                 hint={PAC_HELP_TOOLTIPS.sections.fiveWhys}
-              >
-                <FiveWhysFlowPanel
-                  planId={planId}
-                  form={fiveWhysForm}
-                  saving={saving}
-                  dirty={isDirty("five-whys")}
-                  onChange={setFiveWhysForm}
-                  onSave={runSave}
-                />
-              </SectionCard>
+                isEditing={bindSection("five-whys").isEditing}
+                onEdit={bindSection("five-whys").onEdit}
+                onCancelEdit={bindSection("five-whys").onCancelEdit}
+                readContent={<FiveWhysReadContent form={fiveWhysForm} />}
+                editContent={
+                  <FiveWhysFlowPanel
+                    planId={planId}
+                    form={fiveWhysForm}
+                    saving={saving}
+                    dirty={isDirty("five-whys")}
+                    onChange={setFiveWhysForm}
+                    onSave={runSave}
+                  />
+                }
+              />
 
-              <SectionCard title="4. Ishikawa (6M)" hint={PAC_HELP_TOOLTIPS.sections.ishikawa}>
-                <IshikawaFishboneDiagram
-                  problem={plan.reported_problem || plan.title}
-                  causes={ishikawaCausesForm}
-                  notes={ishikawaNotes}
-                  onChange={setIshikawaCausesForm}
-                  onNotesChange={setIshikawaNotes}
-                  saving={saving}
-                  dirty={isDirty("ishikawa")}
-                  onSave={() =>
-                    void runSave("ishikawa", async () => {
-                      await upsertIshikawa(
-                        planId,
-                        serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
-                      );
-                    })
-                  }
-                />
-              </SectionCard>
+              <EditableSectionCard
+                title="4. Ishikawa (6M)"
+                hint={PAC_HELP_TOOLTIPS.sections.ishikawa}
+                isEditing={bindSection("ishikawa").isEditing}
+                onEdit={bindSection("ishikawa").onEdit}
+                onCancelEdit={bindSection("ishikawa").onCancelEdit}
+                readContent={
+                  <IshikawaReadContent causes={ishikawaCausesForm} notes={ishikawaNotes} />
+                }
+                editContent={
+                  <IshikawaFishboneDiagram
+                    problem={plan.reported_problem || plan.title}
+                    causes={ishikawaCausesForm}
+                    notes={ishikawaNotes}
+                    onChange={setIshikawaCausesForm}
+                    onNotesChange={setIshikawaNotes}
+                    saving={saving}
+                    dirty={isDirty("ishikawa")}
+                    onSave={() =>
+                      void runSave("ishikawa", async () => {
+                        await upsertIshikawa(
+                          planId,
+                          serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+                        );
+                      })
+                    }
+                  />
+                }
+              />
 
-              <SectionCard
+              <EditableSectionCard
                 title="5. Ação corretiva proposta"
                 hint={PAC_HELP_TOOLTIPS.sections.actions}
-              >
-                <PlanActionsPanel
-                  planId={planId}
-                  actions={detail.actions}
-                  evidences={detail.evidences ?? []}
-                  saving={saving}
-                  onSave={runSave}
-                  teamMembers={rnc8dForm.team_members}
-                />
-              </SectionCard>
+                isEditing={bindSection("actions").isEditing}
+                onEdit={bindSection("actions").onEdit}
+                onCancelEdit={bindSection("actions").onCancelEdit}
+                readContent={<PlanActionsReadContent actions={detail.actions} />}
+                editContent={
+                  <PlanActionsPanel
+                    planId={planId}
+                    actions={detail.actions}
+                    evidences={detail.evidences ?? []}
+                    saving={saving}
+                    onSave={runSave}
+                    teamMembers={rnc8dForm.team_members}
+                  />
+                }
+              />
 
               <Rnc8dEffectivenessSection
                 value={rnc8dForm}
                 onChange={setRnc8dForm}
+                sectionEdit={bindSection("rnc8d-effectiveness-8d")}
                 saveKey="rnc8d-effectiveness-8d"
                 saving={saving}
                 dirty={isDirty("rnc8d-effectiveness-8d")}
@@ -645,57 +801,104 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             </>
           ) : (
             <>
-              <EvidencePanel
-                planId={planId}
-                evidences={detail.evidences ?? []}
-                actions={detail.actions ?? []}
-                onChanged={load}
+              <EditableSectionCard
+                title="Banco de conhecimento e evidências"
+                hint={PAC_HELP_TOOLTIPS.sections.evidences}
+                subtitle="Anexe prints, PDFs, planilhas e documentos do processo. Visível para o analista e para o agente GPT."
+                isEditing={bindSection("evidences").isEditing}
+                onEdit={bindSection("evidences").onEdit}
+                onCancelEdit={bindSection("evidences").onCancelEdit}
+                readContent={
+                  <EvidencePanel
+                    planId={planId}
+                    evidences={detail.evidences ?? []}
+                    actions={detail.actions ?? []}
+                    onChanged={load}
+                    bare
+                    readOnly
+                  />
+                }
+                editContent={
+                  <EvidencePanel
+                    planId={planId}
+                    evidences={detail.evidences ?? []}
+                    actions={detail.actions ?? []}
+                    onChanged={load}
+                    bare
+                  />
+                }
               />
 
-              <SectionCard title="Ishikawa (6M)" hint={PAC_HELP_TOOLTIPS.sections.ishikawa}>
-                <IshikawaFishboneDiagram
-                  problem={plan.reported_problem || plan.title}
-                  causes={ishikawaCausesForm}
-                  notes={ishikawaNotes}
-                  onChange={setIshikawaCausesForm}
-                  onNotesChange={setIshikawaNotes}
-                  saving={saving}
-                  dirty={isDirty("ishikawa")}
-                  onSave={() =>
-                    void runSave("ishikawa", async () => {
-                      await upsertIshikawa(
-                        planId,
-                        serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
-                      );
-                    })
-                  }
-                />
-              </SectionCard>
+              <EditableSectionCard
+                title="Ishikawa (6M)"
+                hint={PAC_HELP_TOOLTIPS.sections.ishikawa}
+                isEditing={bindSection("ishikawa").isEditing}
+                onEdit={bindSection("ishikawa").onEdit}
+                onCancelEdit={bindSection("ishikawa").onCancelEdit}
+                readContent={
+                  <IshikawaReadContent causes={ishikawaCausesForm} notes={ishikawaNotes} />
+                }
+                editContent={
+                  <IshikawaFishboneDiagram
+                    problem={plan.reported_problem || plan.title}
+                    causes={ishikawaCausesForm}
+                    notes={ishikawaNotes}
+                    onChange={setIshikawaCausesForm}
+                    onNotesChange={setIshikawaNotes}
+                    saving={saving}
+                    dirty={isDirty("ishikawa")}
+                    onSave={() =>
+                      void runSave("ishikawa", async () => {
+                        await upsertIshikawa(
+                          planId,
+                          serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+                        );
+                      })
+                    }
+                  />
+                }
+              />
 
-              <SectionCard title="Estudo de causa — Porquês" hint={PAC_HELP_TOOLTIPS.sections.fiveWhys}>
-                <FiveWhysFlowPanel
-                  planId={planId}
-                  form={fiveWhysForm}
-                  saving={saving}
-                  dirty={isDirty("five-whys")}
-                  onChange={setFiveWhysForm}
-                  onSave={runSave}
-                />
-              </SectionCard>
+              <EditableSectionCard
+                title="Estudo de causa — Porquês"
+                hint={PAC_HELP_TOOLTIPS.sections.fiveWhys}
+                isEditing={bindSection("five-whys").isEditing}
+                onEdit={bindSection("five-whys").onEdit}
+                onCancelEdit={bindSection("five-whys").onCancelEdit}
+                readContent={<FiveWhysReadContent form={fiveWhysForm} />}
+                editContent={
+                  <FiveWhysFlowPanel
+                    planId={planId}
+                    form={fiveWhysForm}
+                    saving={saving}
+                    dirty={isDirty("five-whys")}
+                    onChange={setFiveWhysForm}
+                    onSave={runSave}
+                  />
+                }
+              />
 
-              <SectionCard title="Ações corretivas e plano" hint={PAC_HELP_TOOLTIPS.sections.actions}>
-                <PlanActionsPanel
-                  planId={planId}
-                  actions={detail.actions}
-                  evidences={detail.evidences ?? []}
-                  saving={saving}
-                  onSave={runSave}
-                />
-              </SectionCard>
+              <EditableSectionCard
+                title="Ações corretivas e plano"
+                hint={PAC_HELP_TOOLTIPS.sections.actions}
+                isEditing={bindSection("actions").isEditing}
+                onEdit={bindSection("actions").onEdit}
+                onCancelEdit={bindSection("actions").onCancelEdit}
+                readContent={<PlanActionsReadContent actions={detail.actions} />}
+                editContent={
+                  <PlanActionsPanel
+                    planId={planId}
+                    actions={detail.actions}
+                    evidences={detail.evidences ?? []}
+                    saving={saving}
+                    onSave={runSave}
+                  />
+                }
+              />
             </>
           )}
 
-          <SectionCard
+          <EditableSectionCard
             title={showRnc8dFlow ? "6. Registro de eficácia (PAC)" : "Eficácia"}
             hint={PAC_HELP_TOOLTIPS.sections.effectiveness}
             subtitle={
@@ -703,7 +906,41 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 ? "Fluxo de aprovação do coordenador — complementa a seção 6 da planilha 8D."
                 : undefined
             }
-          >
+            isEditing={bindSection("effectiveness-pac").isEditing}
+            onEdit={bindSection("effectiveness-pac").onEdit}
+            onCancelEdit={bindSection("effectiveness-pac").onCancelEdit}
+            readContent={
+              <>
+                {isEffectivenessPendingApproval ? (
+                  <div className="pac-state" style={{ marginBottom: "0.75rem" }}>
+                    <strong>Aguardando aprovação do coordenador.</strong>
+                    {plan.effectiveness_proposed_status ? (
+                      <span>
+                        {" "}
+                        Resultado proposto:{" "}
+                        {EFFECTIVENESS_STATUSES.find(
+                          (item) => item.value === plan.effectiveness_proposed_status,
+                        )?.label ?? plan.effectiveness_proposed_status}
+                        .
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+                {isEffectivenessRejected && plan.effectiveness_rejection_reason ? (
+                  <div className="pac-state pac-state--error" style={{ marginBottom: "0.75rem" }}>
+                    <strong>Submissão rejeitada:</strong> {plan.effectiveness_rejection_reason}
+                  </div>
+                ) : null}
+                <EffectivenessPacReadContent
+                  status={effectivenessStatus}
+                  notes={effectivenessNotes}
+                  proposedStatus={plan.effectiveness_proposed_status}
+                  rejectionReason={plan.effectiveness_rejection_reason}
+                />
+              </>
+            }
+            editContent={
+              <>
             {isEffectivenessPendingApproval ? (
               <div className="pac-state" style={{ marginBottom: "0.75rem" }}>
                 <strong>Aguardando aprovação do coordenador.</strong>
@@ -866,29 +1103,52 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 </button>
               ) : null}
             </FormActions>
-          </SectionCard>
+              </>
+            }
+          />
 
           {showRnc8dFlow ? (
             <>
               <Rnc8dPreventiveSection
                 value={rnc8dForm}
                 onChange={setRnc8dForm}
+                sectionEdit={bindSection("rnc8d-preventive")}
                 saveKey="rnc8d-preventive"
                 saving={saving}
                 dirty={isDirty("rnc8d-preventive")}
                 onSave={() => void runSave("rnc8d-preventive", saveRnc8dReport)}
               />
-              <EvidencePanel
-                planId={planId}
-                evidences={detail.evidences ?? []}
-                actions={detail.actions ?? []}
-                onChanged={load}
+              <EditableSectionCard
                 title="7. Evidências das ações"
+                hint={PAC_HELP_TOOLTIPS.sections.evidences}
                 subtitle="Anexe prints, PDFs e documentos do processo (planilha: Inserir evidências)."
+                isEditing={bindSection("evidences").isEditing}
+                onEdit={bindSection("evidences").onEdit}
+                onCancelEdit={bindSection("evidences").onCancelEdit}
+                readContent={
+                  <EvidencePanel
+                    planId={planId}
+                    evidences={detail.evidences ?? []}
+                    actions={detail.actions ?? []}
+                    onChanged={load}
+                    bare
+                    readOnly
+                  />
+                }
+                editContent={
+                  <EvidencePanel
+                    planId={planId}
+                    evidences={detail.evidences ?? []}
+                    actions={detail.actions ?? []}
+                    onChanged={load}
+                    bare
+                  />
+                }
               />
               <Rnc8dClosureSection
                 value={rnc8dForm}
                 onChange={setRnc8dForm}
+                sectionEdit={bindSection("rnc8d-closure")}
                 saveKey="rnc8d-closure"
                 saving={saving}
                 dirty={isDirty("rnc8d-closure")}
