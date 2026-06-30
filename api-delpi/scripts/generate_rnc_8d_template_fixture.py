@@ -9,14 +9,16 @@ from openpyxl import Workbook
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "tests" / "fixtures" / "quality" / "rnc_8d_template_minimal.xlsx"
+CONTENT_TARGET = ROOT / "app" / "content" / "templates" / "quality" / "rnc_8d_template.xlsx"
 
 
 def main() -> int:
     TARGET.parent.mkdir(parents=True, exist_ok=True)
+    CONTENT_TARGET.parent.mkdir(parents=True, exist_ok=True)
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "RNC 8D"
+    ws.title = "R8D"
     ws["I4"] = ""
     ws["C8"] = ""
     ws["C9"] = ""
@@ -25,7 +27,9 @@ def main() -> int:
     annex["A1"] = "Evidências"
 
     wb.save(TARGET)
+    wb.save(CONTENT_TARGET)
     print(f"[OK] Template mínimo gerado: {TARGET}")
+    print(f"[OK] Template de deploy gerado: {CONTENT_TARGET}")
     return 0
 
 

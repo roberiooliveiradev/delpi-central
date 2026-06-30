@@ -74,6 +74,8 @@ scripts/data/*_report.json
 *.csv
 *.xlsx
 *.docx
+!app/content/templates/quality/rnc_8d_template.xlsx
+!tests/fixtures/quality/rnc_8d_template_minimal.xlsx
 
 # ---- 🧪 Testes ----
 .coverage

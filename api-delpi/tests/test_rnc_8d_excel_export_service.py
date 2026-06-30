@@ -7,10 +7,12 @@ import pytest
 from PIL import Image
 
 from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import (
-    TEMPLATE_PATH,
     build_rnc_8d_workbook,
     is_image_evidence,
+    resolve_rnc_8d_template_path,
 )
+
+_TEMPLATE_PATH = resolve_rnc_8d_template_path()
 
 
 def _minimal_png_bytes() -> bytes:
@@ -25,7 +27,7 @@ def test_is_image_evidence_detects_mime_and_type():
     assert not is_image_evidence({"mime_type": "application/pdf", "type": "pdf"})
 
 
-@pytest.mark.skipif(not TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
+@pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
 def test_build_rnc_8d_workbook_fills_registry_cell():
     detail = {
         "plan": {
@@ -65,7 +67,7 @@ def test_build_rnc_8d_workbook_fills_registry_cell():
     assert ws["J8"].value == "10019632175"
 
 
-@pytest.mark.skipif(not TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
+@pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
 def test_build_rnc_8d_workbook_embeds_annex_images():
     detail = {
         "plan": {"client_nc_registry": "215571003", "branch_code": "01", "template_payload": {}},

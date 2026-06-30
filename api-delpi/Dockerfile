@@ -55,6 +55,8 @@ RUN pip install --no-cache-dir -e /shared[fastapi]
 
 COPY api-delpi /app
 
+RUN python scripts/generate_rnc_8d_template_fixture.py
+
 EXPOSE 8000
 
 

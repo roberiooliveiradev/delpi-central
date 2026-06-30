@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -10,29 +11,36 @@ from openpyxl.drawing.image import Image as XlImage
 
 from app.domain.services.quality_action_plans.five_whys_service import format_why_step_cell
 
-TEMPLATE_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "content"
-    / "templates"
-    / "quality"
-    / "rnc_8d_template.xlsx"
-)
 
-TEMPLATE_FIXTURE_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "tests"
-    / "fixtures"
-    / "quality"
-    / "rnc_8d_template_minimal.xlsx"
-)
+def _api_delpi_root() -> Path:
+    return Path(__file__).resolve().parents[4]
+
+
+def _template_candidates() -> list[Path]:
+    root = _api_delpi_root()
+    env_path = (os.environ.get("RNC_8D_TEMPLATE_PATH") or "").strip()
+    candidates: list[Path] = []
+    if env_path:
+        candidates.append(Path(env_path))
+    candidates.extend(
+        [
+            root / "app" / "content" / "templates" / "quality" / "rnc_8d_template.xlsx",
+            root / "tests" / "fixtures" / "quality" / "rnc_8d_template_minimal.xlsx",
+        ]
+    )
+    return candidates
 
 
 def resolve_rnc_8d_template_path() -> Path:
-    if TEMPLATE_PATH.is_file():
-        return TEMPLATE_PATH
-    if TEMPLATE_FIXTURE_PATH.is_file():
-        return TEMPLATE_FIXTURE_PATH
-    return TEMPLATE_PATH
+    candidates = _template_candidates()
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return candidates[0]
+
+
+TEMPLATE_PATH = _api_delpi_root() / "app" / "content" / "templates" / "quality" / "rnc_8d_template.xlsx"
+TEMPLATE_FIXTURE_PATH = _api_delpi_root() / "tests" / "fixtures" / "quality" / "rnc_8d_template_minimal.xlsx"
 
 SUPPLIER_BY_BRANCH = {
     "01": "12243 - Delpi Componentes Ltda EPP",
