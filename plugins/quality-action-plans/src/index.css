@@ -554,6 +554,7 @@
 .dashboard-quality-action-plans .pac-state--error {
   border-color: color-mix(in srgb, var(--pac-danger) 35%, var(--pac-card-border));
   color: var(--pac-danger);
+  white-space: pre-wrap;
 }
 
 .dashboard-quality-action-plans .pac-muted {

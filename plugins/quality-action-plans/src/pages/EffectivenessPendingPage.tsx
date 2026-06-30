@@ -197,6 +197,15 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                       <td>{formatEffectivenessSubmittedBy(plan)}</td>
                       <td>
                         <div className="pac-table-actions">
+                          {plan.incomplete_actions_count ? (
+                            <span
+                              className="pac-state pac-state--warning pac-btn--sm"
+                              style={{ marginRight: "0.35rem", whiteSpace: "nowrap" }}
+                              title="Há ações do plano ainda não concluídas"
+                            >
+                              {plan.incomplete_actions_count} ação(ões) aberta(s)
+                            </span>
+                          ) : null}
                           <button
                             type="button"
                             className="pac-icon-btn"

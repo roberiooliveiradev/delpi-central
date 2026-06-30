@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchActionPlans, fetchDashboard } from "../api/actionPlansApi";
 import { AppNav } from "../components/AppNav";
@@ -14,10 +14,17 @@ import { DashboardTimingKpis } from "../components/dashboard/DashboardTimingKpis
 import { PageHeader } from "../components/PageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { SelectField } from "../components/ui/SelectField";
+import { TextField } from "../components/ui/TextField";
 import { FilterBar } from "../components/ui/FilterBar";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { listPath, overduePath, recurrencePath, PAC_BRANCH_OPTIONS, PAC_NONCONFORMITY_SCOPES } from "../constants/actionPlans";
 import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import {
+  buildDashboardApiParams,
+  EMPTY_DASHBOARD_FILTERS,
+  type DashboardFilterState,
+} from "../utils/dashboardFilters";
 import { usePacPermissions } from "../context/PacPermissionsContext";
 
 type Props = {
@@ -30,20 +37,30 @@ export function DashboardPage({ onNavigate }: Props) {
   const [plans, setPlans] = useState<ActionPlanSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [branchCode, setBranchCode] = useState("");
-  const [scope, setScope] = useState("");
+  const [filters, setFilters] = useState<DashboardFilterState>(EMPTY_DASHBOARD_FILTERS);
+
+  const debouncedCustomer = useDebouncedValue(filters.customerName);
+  const debouncedProduct = useDebouncedValue(filters.productCode);
+  const debouncedFailureMode = useDebouncedValue(filters.failureMode);
+
+  const apiFilters = useMemo(
+    (): DashboardFilterState => ({
+      ...filters,
+      customerName: debouncedCustomer,
+      productCode: debouncedProduct,
+      failureMode: debouncedFailureMode,
+    }),
+    [filters, debouncedCustomer, debouncedProduct, debouncedFailureMode],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const query = buildDashboardApiParams(apiFilters);
       const [dashboardData, plansData] = await Promise.all([
-        fetchDashboard(branchCode || undefined, scope || undefined),
-        fetchActionPlans({
-          branch_code: branchCode || undefined,
-          nonconformity_scope: scope || undefined,
-          page_size: 200,
-        }),
+        fetchDashboard(query),
+        fetchActionPlans({ ...query, page_size: 200 }),
       ]);
       setSummary(dashboardData);
       setPlans(plansData.items);
@@ -52,7 +69,7 @@ export function DashboardPage({ onNavigate }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [branchCode, scope]);
+  }, [apiFilters]);
 
   useEffect(() => {
     void load();
@@ -67,6 +84,10 @@ export function DashboardPage({ onNavigate }: Props) {
     { value: "", label: "Todos os escopos" },
     ...PAC_NONCONFORMITY_SCOPES.map((item) => ({ value: item.value, label: item.label })),
   ];
+
+  function patchFilters(partial: Partial<DashboardFilterState>) {
+    setFilters((current) => ({ ...current, ...partial }));
+  }
 
   return (
     <>
@@ -89,14 +110,14 @@ export function DashboardPage({ onNavigate }: Props) {
       />
       <AppNav active="dashboard" onNavigate={onNavigate} />
 
-      <FilterBar compact>
+      <FilterBar>
         <SelectField
           id="pac-dashboard-branch"
           label="Filial"
           hint={PAC_HELP_TOOLTIPS.filters.branch}
           options={branchOptions}
-          value={branchCode}
-          onChange={setBranchCode}
+          value={filters.branchCode}
+          onChange={(branchCode) => patchFilters({ branchCode })}
           searchable
         />
         <SelectField
@@ -104,9 +125,36 @@ export function DashboardPage({ onNavigate }: Props) {
           label="Escopo NC"
           hint={PAC_HELP_TOOLTIPS.filters.scope}
           options={scopeOptions}
-          value={scope}
-          onChange={setScope}
+          value={filters.scope}
+          onChange={(scope) => patchFilters({ scope })}
           searchable={false}
+        />
+        <TextField
+          id="pac-dashboard-customer"
+          label="Cliente"
+          hint={PAC_HELP_TOOLTIPS.filters.customer}
+          value={filters.customerName}
+          onChange={(customerName) => patchFilters({ customerName })}
+          placeholder="Filtrar por cliente"
+          type="search"
+        />
+        <TextField
+          id="pac-dashboard-product"
+          label="Produto"
+          hint={PAC_HELP_TOOLTIPS.filters.product}
+          value={filters.productCode}
+          onChange={(productCode) => patchFilters({ productCode })}
+          placeholder="Código do produto"
+          type="search"
+        />
+        <TextField
+          id="pac-dashboard-failure-mode"
+          label="Modo de falha"
+          hint={PAC_HELP_TOOLTIPS.filters.failureMode}
+          value={filters.failureMode}
+          onChange={(failureMode) => patchFilters({ failureMode })}
+          placeholder="Ex.: oxidação, trinca"
+          type="search"
         />
       </FilterBar>
 

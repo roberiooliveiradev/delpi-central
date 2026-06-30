@@ -44,6 +44,7 @@ import {
 } from "../components/plan-detail/PlanDetailReadViews";
 import { Rnc8dDisciplineProgress } from "../components/Rnc8dDisciplineProgress";
 import { formatActorDisplay } from "../utils/actorDisplay";
+import { IncompletePlanActionsNotice } from "../components/IncompletePlanActionsNotice";
 import {
   Rnc8dClosureSection,
   Rnc8dContainmentSection,
@@ -1037,6 +1038,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 <strong>Submissão rejeitada:</strong> {plan.effectiveness_rejection_reason}
               </div>
             ) : null}
+            <IncompletePlanActionsNotice actions={detail?.actions ?? []} />
             <div className="pac-form-grid">
               <SelectField
                 id="pac-effectiveness-status"

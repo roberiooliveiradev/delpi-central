@@ -7,6 +7,7 @@ export const PAC_HELP_TOOLTIPS = {
     branch: "Filial TOTVS (01 ou 02). Vazio = todas as filiais.",
     customer: "Filtra planos pelo nome do cliente informado na identificação.",
     product: "Código do produto vinculado à NC.",
+    failureMode: "Texto do modo de falha registrado no plano (busca parcial).",
     owner: "Responsável pelo plano (usuário ou identificador cadastrado).",
     department: "Área ou departamento associado ao problema.",
     rootCause: "Texto ou categoria da causa raiz registrada no plano.",

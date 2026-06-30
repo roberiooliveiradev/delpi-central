@@ -9,8 +9,6 @@ from app.domain.services.quality_action_plans.five_whys_service import (
 from app.domain.services.quality_action_plans.ishikawa_causes_service import (
     normalize_ishikawa_payload,
 )
-
-
 class QualityActionPlanAnalysisRepository(Protocol):
     def upsert_ishikawa(
         self, plan_id: str, fields: dict[str, Any], *, updated_by: str
@@ -33,6 +31,8 @@ class QualityActionPlanAnalysisRepository(Protocol):
     ) -> dict[str, Any] | None: ...
 
     def count_evidences_for_action(self, action_id: str) -> int: ...
+
+    def list_incomplete_plan_actions(self, plan_id: str) -> list[dict[str, Any]]: ...
 
     def delete_action(
         self, plan_id: str, action_id: str, *, updated_by: str

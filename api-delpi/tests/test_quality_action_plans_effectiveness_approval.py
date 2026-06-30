@@ -165,3 +165,29 @@ def test_approve_use_case_triggers_intelligence_sync():
     use_case.execute("plan-1", updated_by="coord-01")
 
     sync.execute.assert_called_once_with("plan-1")
+
+
+def test_submit_use_case_allows_incomplete_actions():
+    repo = MagicMock()
+    repo.submit_effectiveness_review.return_value = {"id": "plan-1"}
+    use_case = SubmitEffectivenessReviewUseCase(repo)
+
+    result = use_case.execute(
+        "plan-1",
+        EffectivenessReviewRequest(effectiveness_status="effective"),
+        updated_by="user-1",
+    )
+
+    assert result == {"id": "plan-1"}
+    repo.submit_effectiveness_review.assert_called_once()
+
+
+def test_approve_use_case_allows_incomplete_actions():
+    repo = MagicMock()
+    repo.approve_effectiveness_review.return_value = {"id": "plan-1"}
+    use_case = ApproveEffectivenessReviewUseCase(repo)
+
+    result = use_case.execute("plan-1", updated_by="coord-01")
+
+    assert result == {"id": "plan-1"}
+    repo.approve_effectiveness_review.assert_called_once()

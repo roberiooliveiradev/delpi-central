@@ -39,6 +39,7 @@ export type ActionPlanSummary = {
   effectiveness_submitted_at?: string | null;
   effectiveness_submitted_by?: string | null;
   effectiveness_submitted_by_name?: string | null;
+  incomplete_actions_count?: number;
 };
 
 export type Pagination = {

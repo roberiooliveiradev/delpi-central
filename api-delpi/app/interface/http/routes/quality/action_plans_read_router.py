@@ -392,6 +392,9 @@ _TERMINAL_PLAN_STATUSES = frozenset({"completed", "cancelled"})
 def get_action_plans_dashboard(
     branch_code: str | None = Query(default=None, pattern="^(01|02)$"),
     nonconformity_scope: str | None = Query(default=None, pattern="^(internal|external)$"),
+    product_code: str | None = Query(default=None, max_length=50),
+    customer_name: str | None = Query(default=None, max_length=200),
+    failure_mode: str | None = Query(default=None, max_length=300),
     months: int = Query(default=12, ge=1, le=36),
 ):
     try:
@@ -400,6 +403,9 @@ def get_action_plans_dashboard(
             repo.get_dashboard_summary(
                 branch_code=branch_code,
                 nonconformity_scope=nonconformity_scope,
+                product_code=product_code,
+                customer_name=customer_name,
+                failure_mode=failure_mode,
                 months=months,
             ),
             operation_id="get_quality_action_plans_dashboard",
@@ -658,6 +664,7 @@ def list_action_plans(
     nonconformity_scope: str | None = Query(default=None, pattern="^(internal|external)$"),
     department: str | None = Query(default=None),
     root_cause_category: str | None = Query(default=None),
+    failure_mode: str | None = Query(default=None, max_length=300),
     overdue_only: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
@@ -675,6 +682,7 @@ def list_action_plans(
                 nonconformity_scope=nonconformity_scope,
                 department=department,
                 root_cause_category=root_cause_category,
+                failure_mode=failure_mode,
                 overdue_only=overdue_only,
                 page=page,
                 page_size=page_size,

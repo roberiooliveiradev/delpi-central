@@ -32,6 +32,60 @@ _TERMINAL_PLAN_STATUSES = frozenset({"completed", "cancelled"})
 _STALL_DAYS_CRITICAL = CRITICAL_STALL_DAYS
 
 
+def _append_dashboard_plan_filters(
+    filters: list[str],
+    params: list[Any],
+    *,
+    prefix: str = "",
+    branch_code: str | None = None,
+    nonconformity_scope: str | None = None,
+    product_code: str | None = None,
+    customer_name: str | None = None,
+    failure_mode: str | None = None,
+) -> None:
+    column = f"{prefix}." if prefix else ""
+    if branch_code:
+        filters.append(f"{column}branch_code = %s")
+        params.append(branch_code)
+    if nonconformity_scope:
+        filters.append(f"{column}nonconformity_scope = %s")
+        params.append(nonconformity_scope)
+    if product_code:
+        term = product_code.strip()
+        if term:
+            filters.append(f"{column}product_code ILIKE %s")
+            params.append(f"%{term}%")
+    if customer_name:
+        term = customer_name.strip()
+        if term:
+            filters.append(f"{column}customer_name ILIKE %s")
+            params.append(f"%{term}%")
+    if failure_mode:
+        term = failure_mode.strip()
+        if term:
+            filters.append(f"{column}failure_mode ILIKE %s")
+            params.append(f"%{term}%")
+
+
+def _dashboard_has_entity_filters(
+    *,
+    branch_code: str | None = None,
+    nonconformity_scope: str | None = None,
+    product_code: str | None = None,
+    customer_name: str | None = None,
+    failure_mode: str | None = None,
+) -> bool:
+    return any(
+        [
+            branch_code,
+            nonconformity_scope,
+            (product_code or "").strip(),
+            (customer_name or "").strip(),
+            (failure_mode or "").strip(),
+        ]
+    )
+
+
 def _optional_actor_text(value: Any) -> str | None:
     if value is None:
         return None
@@ -78,6 +132,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         nonconformity_scope: str | None = None,
         department: str | None = None,
         root_cause_category: str | None = None,
+        failure_mode: str | None = None,
         overdue_only: bool = False,
         page: int = 1,
         page_size: int = 50,
@@ -92,8 +147,8 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             filters.append("p.severity = %s")
             params.append(severity)
         if product_code:
-            filters.append("p.product_code = %s")
-            params.append(product_code)
+            filters.append("p.product_code ILIKE %s")
+            params.append(f"%{product_code.strip()}%")
         if customer_name:
             filters.append("p.customer_name ILIKE %s")
             params.append(f"%{customer_name.strip()}%")
@@ -123,6 +178,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 )"""
             )
             params.extend([root_term, root_term])
+        if failure_mode:
+            filters.append("p.failure_mode ILIKE %s")
+            params.append(f"%{failure_mode.strip()}%")
         if overdue_only:
             filters.append("p.status NOT IN ('completed', 'cancelled')")
             filters.append(
@@ -257,17 +315,27 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         months: int = 12,
     ) -> dict[str, Any]:
-        branch_filter = ""
-        scope_filter = ""
-        params: list[Any] = []
-        if branch_code:
-            branch_filter = " AND branch_code = %s"
-            params.append(branch_code)
-        if nonconformity_scope:
-            scope_filter = " AND nonconformity_scope = %s"
-            params.append(nonconformity_scope)
+        slice_kwargs = {
+            "branch_code": branch_code,
+            "nonconformity_scope": nonconformity_scope,
+            "product_code": product_code,
+            "customer_name": customer_name,
+            "failure_mode": failure_mode,
+        }
+        main_filters = ["deleted_at IS NULL"]
+        main_params: list[Any] = []
+        _append_dashboard_plan_filters(main_filters, main_params, **slice_kwargs)
+        main_where = " AND ".join(main_filters)
+
+        join_filters = ["p.deleted_at IS NULL"]
+        join_params: list[Any] = []
+        _append_dashboard_plan_filters(join_filters, join_params, prefix="p", **slice_kwargs)
+        join_where = " AND ".join(join_filters)
 
         row = self.fetch_one(
             f"""
@@ -295,38 +363,32 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                       AND nonconformity_scope = 'external'
                 ) AS open_external
               FROM quality.quality_action_plans
-             WHERE deleted_at IS NULL
-               {branch_filter}
-               {scope_filter}
+             WHERE {main_where}
             """,
-            tuple(params),
+            tuple(main_params),
         )
         overdue_row = self.fetch_one(
             f"""
             SELECT COUNT(*) AS overdue_actions
               FROM quality.quality_actions a
               JOIN quality.quality_action_plans p ON p.id = a.plan_id
-             WHERE p.deleted_at IS NULL
+             WHERE {join_where}
                AND a.status NOT IN ('completed', 'cancelled')
                AND a.due_date < CURRENT_DATE
-               {branch_filter.replace("branch_code", "p.branch_code") if branch_filter else ""}
-               {scope_filter.replace("nonconformity_scope", "p.nonconformity_scope") if scope_filter else ""}
             """,
-            tuple(params),
+            tuple(join_params),
         )
         overdue_plans_row = self.fetch_one(
             f"""
             SELECT COUNT(DISTINCT p.id) AS overdue_plans
               FROM quality.quality_action_plans p
               JOIN quality.quality_actions a ON a.plan_id = p.id
-             WHERE p.deleted_at IS NULL
+             WHERE {join_where}
                AND p.status NOT IN ('completed', 'cancelled')
                AND a.status NOT IN ('completed', 'cancelled')
                AND a.due_date < CURRENT_DATE
-               {branch_filter.replace("branch_code", "p.branch_code") if branch_filter else ""}
-               {scope_filter.replace("nonconformity_scope", "p.nonconformity_scope") if scope_filter else ""}
             """,
-            tuple(params),
+            tuple(join_params),
         )
         result = {
             "open_plans": int((row or {}).get("open_plans") or 0),
@@ -342,39 +404,24 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             result["branch_code"] = branch_code
         if nonconformity_scope:
             result["nonconformity_scope"] = nonconformity_scope
-        if branch_code or nonconformity_scope:
-            result["timing"] = self._fetch_timing_kpis(
-                branch_code=branch_code,
-                nonconformity_scope=nonconformity_scope,
-                months=months,
-            )
-            result["breakdowns"] = self._fetch_breakdowns(
-                branch_code=branch_code,
-                nonconformity_scope=nonconformity_scope,
-                months=months,
-            )
-            result["rankings"] = self._fetch_rankings(
-                branch_code=branch_code,
-                nonconformity_scope=nonconformity_scope,
-                months=months,
-            )
-            result["recurrence_alert"] = self._fetch_recurrence_alert(
-                branch_code=branch_code,
-                nonconformity_scope=nonconformity_scope,
-                months=months,
-            )
+        if product_code and product_code.strip():
+            result["product_code"] = product_code.strip()
+        if customer_name and customer_name.strip():
+            result["customer_name"] = customer_name.strip()
+        if failure_mode and failure_mode.strip():
+            result["failure_mode"] = failure_mode.strip()
+        if _dashboard_has_entity_filters(**slice_kwargs):
+            result["timing"] = self._fetch_timing_kpis(months=months, **slice_kwargs)
+            result["breakdowns"] = self._fetch_breakdowns(months=months, **slice_kwargs)
+            result["rankings"] = self._fetch_rankings(months=months, **slice_kwargs)
+            result["recurrence_alert"] = self._fetch_recurrence_alert(months=months, **slice_kwargs)
             result["effectiveness_by_action_type"] = self._fetch_effectiveness_by_action_type(
-                branch_code=branch_code,
-                nonconformity_scope=nonconformity_scope,
                 months=months,
+                **slice_kwargs,
             )
-            result["stalled_alert"] = self._fetch_stalled_alert(
-                branch_code=branch_code,
-                nonconformity_scope=nonconformity_scope,
-            )
+            result["stalled_alert"] = self._fetch_stalled_alert(**slice_kwargs)
             result["effectiveness_pending_alert"] = self._fetch_effectiveness_pending_alert(
-                branch_code=branch_code,
-                nonconformity_scope=nonconformity_scope,
+                **slice_kwargs,
             )
             return result
 
@@ -429,38 +476,17 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             for row in by_scope_rows
             if row.get("nonconformity_scope")
         ]
-        result["timing"] = self._fetch_timing_kpis(
-            branch_code=branch_code,
-            nonconformity_scope=nonconformity_scope,
-            months=months,
-        )
-        result["breakdowns"] = self._fetch_breakdowns(
-            branch_code=branch_code,
-            nonconformity_scope=nonconformity_scope,
-            months=months,
-        )
-        result["rankings"] = self._fetch_rankings(
-            branch_code=branch_code,
-            nonconformity_scope=nonconformity_scope,
-            months=months,
-        )
-        result["recurrence_alert"] = self._fetch_recurrence_alert(
-            branch_code=branch_code,
-            nonconformity_scope=nonconformity_scope,
-            months=months,
-        )
+        result["timing"] = self._fetch_timing_kpis(months=months, **slice_kwargs)
+        result["breakdowns"] = self._fetch_breakdowns(months=months, **slice_kwargs)
+        result["rankings"] = self._fetch_rankings(months=months, **slice_kwargs)
+        result["recurrence_alert"] = self._fetch_recurrence_alert(months=months, **slice_kwargs)
         result["effectiveness_by_action_type"] = self._fetch_effectiveness_by_action_type(
-            branch_code=branch_code,
-            nonconformity_scope=nonconformity_scope,
             months=months,
+            **slice_kwargs,
         )
-        result["stalled_alert"] = self._fetch_stalled_alert(
-            branch_code=branch_code,
-            nonconformity_scope=nonconformity_scope,
-        )
+        result["stalled_alert"] = self._fetch_stalled_alert(**slice_kwargs)
         result["effectiveness_pending_alert"] = self._fetch_effectiveness_pending_alert(
-            branch_code=branch_code,
-            nonconformity_scope=nonconformity_scope,
+            **slice_kwargs,
         )
         return result
 
@@ -469,16 +495,22 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         months: int = 12,
     ) -> dict[str, Any]:
         filters = ["deleted_at IS NULL"]
         params: list[Any] = [months, months, months, months]
-        if branch_code:
-            filters.append("branch_code = %s")
-            params.append(branch_code)
-        if nonconformity_scope:
-            filters.append("nonconformity_scope = %s")
-            params.append(nonconformity_scope)
+        _append_dashboard_plan_filters(
+            filters,
+            params,
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            product_code=product_code,
+            customer_name=customer_name,
+            failure_mode=failure_mode,
+        )
         where_clause = " AND ".join(filters)
 
         row = self.fetch_one(
@@ -541,17 +573,24 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         months: int = 12,
         limit: int = 8,
     ) -> dict[str, Any]:
         plan_filters = ["p.deleted_at IS NULL", "p.created_at >= NOW() - make_interval(months => %s)"]
         plan_params: list[Any] = [months]
-        if branch_code:
-            plan_filters.append("p.branch_code = %s")
-            plan_params.append(branch_code)
-        if nonconformity_scope:
-            plan_filters.append("p.nonconformity_scope = %s")
-            plan_params.append(nonconformity_scope)
+        _append_dashboard_plan_filters(
+            plan_filters,
+            plan_params,
+            prefix="p",
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            product_code=product_code,
+            customer_name=customer_name,
+            failure_mode=failure_mode,
+        )
         plan_where = " AND ".join(plan_filters)
 
         root_cause_rows = self.fetch_all(
@@ -631,17 +670,24 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         months: int = 12,
         limit: int = 8,
     ) -> dict[str, Any]:
         plan_filters = ["p.deleted_at IS NULL", "p.created_at >= NOW() - make_interval(months => %s)"]
         plan_params: list[Any] = [months]
-        if branch_code:
-            plan_filters.append("p.branch_code = %s")
-            plan_params.append(branch_code)
-        if nonconformity_scope:
-            plan_filters.append("p.nonconformity_scope = %s")
-            plan_params.append(nonconformity_scope)
+        _append_dashboard_plan_filters(
+            plan_filters,
+            plan_params,
+            prefix="p",
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            product_code=product_code,
+            customer_name=customer_name,
+            failure_mode=failure_mode,
+        )
         plan_where = " AND ".join(plan_filters)
 
         def _map_ranking_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -717,17 +763,24 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         months: int = 12,
         limit: int = 5,
     ) -> dict[str, Any]:
         filters = ["p.deleted_at IS NULL", "p.recurrence_key IS NOT NULL"]
         filter_params: list[Any] = []
-        if branch_code:
-            filters.append("p.branch_code = %s")
-            filter_params.append(branch_code)
-        if nonconformity_scope:
-            filters.append("p.nonconformity_scope = %s")
-            filter_params.append(nonconformity_scope)
+        _append_dashboard_plan_filters(
+            filters,
+            filter_params,
+            prefix="p",
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            product_code=product_code,
+            customer_name=customer_name,
+            failure_mode=failure_mode,
+        )
         where_clause = " AND ".join(filters)
         # Placeholders aparecem na ordem: janela no SELECT, filtros no WHERE, janela no HAVING.
         summary_params = [months, *filter_params, months]
@@ -810,6 +863,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         stall_days: int = _STALL_DAYS_CRITICAL,
         limit: int = 8,
     ) -> dict[str, Any]:
@@ -820,12 +876,16 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "p.updated_at < NOW() - make_interval(days => %s)",
         ]
         params: list[Any] = [stall_days]
-        if branch_code:
-            filters.append("p.branch_code = %s")
-            params.append(branch_code)
-        if nonconformity_scope:
-            filters.append("p.nonconformity_scope = %s")
-            params.append(nonconformity_scope)
+        _append_dashboard_plan_filters(
+            filters,
+            params,
+            prefix="p",
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            product_code=product_code,
+            customer_name=customer_name,
+            failure_mode=failure_mode,
+        )
         where_clause = " AND ".join(filters)
 
         summary_row = self.fetch_one(
@@ -883,6 +943,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         limit: int = 8,
     ) -> dict[str, Any]:
         filters = [
@@ -890,12 +953,16 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "p.effectiveness_approval_status = 'pending_review'",
         ]
         params: list[Any] = []
-        if branch_code:
-            filters.append("p.branch_code = %s")
-            params.append(branch_code)
-        if nonconformity_scope:
-            filters.append("p.nonconformity_scope = %s")
-            params.append(nonconformity_scope)
+        _append_dashboard_plan_filters(
+            filters,
+            params,
+            prefix="p",
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            product_code=product_code,
+            customer_name=customer_name,
+            failure_mode=failure_mode,
+        )
         where_clause = " AND ".join(filters)
 
         summary_row = self.fetch_one(
@@ -953,6 +1020,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         *,
         branch_code: str | None = None,
         nonconformity_scope: str | None = None,
+        product_code: str | None = None,
+        customer_name: str | None = None,
+        failure_mode: str | None = None,
         months: int = 12,
     ) -> dict[str, Any]:
         plan_filters = [
@@ -962,12 +1032,16 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "p.effectiveness_status NOT IN ('pending', 'not_verified')",
         ]
         plan_params: list[Any] = [months]
-        if branch_code:
-            plan_filters.append("p.branch_code = %s")
-            plan_params.append(branch_code)
-        if nonconformity_scope:
-            plan_filters.append("p.nonconformity_scope = %s")
-            plan_params.append(nonconformity_scope)
+        _append_dashboard_plan_filters(
+            plan_filters,
+            plan_params,
+            prefix="p",
+            branch_code=branch_code,
+            nonconformity_scope=nonconformity_scope,
+            product_code=product_code,
+            customer_name=customer_name,
+            failure_mode=failure_mode,
+        )
         plan_where = " AND ".join(plan_filters)
 
         overall_row = self.fetch_one(
@@ -2034,6 +2108,23 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         return int((row or {}).get("total") or 0)
 
+    def list_incomplete_plan_actions(self, plan_id: str) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            """
+            SELECT id, plan_id, action_type, description, status
+              FROM quality.quality_actions
+             WHERE plan_id = %s
+               AND status NOT IN ('completed', 'cancelled')
+             ORDER BY created_at ASC
+            """,
+            (plan_id,),
+        )
+        return [
+            serialize_row(row, id_keys=("id", "plan_id")) or {}
+            for row in rows
+            if row
+        ]
+
     def upsert_ishikawa(
         self,
         plan_id: str,
@@ -2502,11 +2593,20 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         offset = (page - 1) * page_size
         rows = self.fetch_all(
             f"""
+            SELECT sub.*,
+                   (
+                     SELECT COUNT(*)::int
+                       FROM quality.quality_actions a
+                      WHERE a.plan_id = sub.id
+                        AND a.status NOT IN ('completed', 'cancelled')
+                   ) AS incomplete_actions_count
+              FROM (
             {PLAN_SELECT}
              WHERE p.deleted_at IS NULL
                AND p.effectiveness_approval_status = 'pending_review'
              ORDER BY p.effectiveness_submitted_at ASC NULLS LAST, p.created_at ASC
              LIMIT %s OFFSET %s
+              ) sub
             """,
             (page_size, offset),
         )

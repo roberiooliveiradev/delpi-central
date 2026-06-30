@@ -56,6 +56,51 @@ def test_dashboard_summary_with_branch_passes_single_sql_param():
   assert repo.fetch_one.call_args_list[0][0][1] == ("01",)
 
 
+def test_dashboard_summary_with_product_filter_passes_ilike_param():
+    repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo.fetch_one = MagicMock(
+        side_effect=[
+            {
+                "open_plans": 2,
+                "critical_open": 0,
+                "waiting_validation": 0,
+                "completed_this_month": 0,
+                "open_internal": 1,
+                "open_external": 1,
+            },
+            {"overdue_actions": 0},
+            {"overdue_plans": 0},
+            {
+                "avg_closure_days": None,
+                "closure_sample_size": 0,
+                "avg_time_to_effectiveness_days": None,
+                "effectiveness_sample_size": 0,
+            },
+            {
+                "groups_detected": 0,
+                "plans_in_window": 0,
+                "open_plans_in_recurrence": 0,
+            },
+            {
+                "reviewed_plans": 0,
+                "effective_plans": 0,
+                "partially_effective_plans": 0,
+                "ineffective_plans": 0,
+            },
+            {"stalled_plans": 0},
+            {"pending_plans": 0},
+        ]
+    )
+    repo.fetch_all = MagicMock(return_value=[])
+
+    result = repo.get_dashboard_summary(product_code="H5-SMOKE")
+
+    assert result["product_code"] == "H5-SMOKE"
+    main_query = repo.fetch_one.call_args_list[0][0][0]
+    assert "product_code ILIKE" in main_query
+    assert repo.fetch_one.call_args_list[0][0][1] == ("%H5-SMOKE%",)
+
+
 def test_dashboard_rankings_maps_rows():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo.fetch_all = MagicMock(

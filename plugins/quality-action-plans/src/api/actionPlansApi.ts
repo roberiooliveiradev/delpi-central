@@ -39,6 +39,7 @@ type ListParams = {
   nonconformity_scope?: string;
   department?: string;
   root_cause_category?: string;
+  failure_mode?: string;
   overdue_only?: boolean;
   page?: number;
   page_size?: number;
@@ -55,6 +56,7 @@ function buildQuery(params: ListParams): string {
   if (params.nonconformity_scope) search.set("nonconformity_scope", params.nonconformity_scope);
   if (params.department) search.set("department", params.department);
   if (params.root_cause_category) search.set("root_cause_category", params.root_cause_category);
+  if (params.failure_mode) search.set("failure_mode", params.failure_mode);
   if (params.overdue_only) search.set("overdue_only", "true");
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));
@@ -62,13 +64,21 @@ function buildQuery(params: ListParams): string {
   return query ? `?${query}` : "";
 }
 
-export async function fetchDashboard(
-  branchCode?: string,
-  nonconformityScope?: string,
-): Promise<DashboardSummary> {
+export type DashboardQueryParams = {
+  branch_code?: string;
+  nonconformity_scope?: string;
+  product_code?: string;
+  customer_name?: string;
+  failure_mode?: string;
+};
+
+export async function fetchDashboard(params: DashboardQueryParams = {}): Promise<DashboardSummary> {
   const search = new URLSearchParams();
-  if (branchCode) search.set("branch_code", branchCode);
-  if (nonconformityScope) search.set("nonconformity_scope", nonconformityScope);
+  if (params.branch_code) search.set("branch_code", params.branch_code);
+  if (params.nonconformity_scope) search.set("nonconformity_scope", params.nonconformity_scope);
+  if (params.product_code) search.set("product_code", params.product_code);
+  if (params.customer_name) search.set("customer_name", params.customer_name);
+  if (params.failure_mode) search.set("failure_mode", params.failure_mode);
   const query = search.toString() ? `?${search.toString()}` : "";
   const envelope = await httpGet<ApiEnvelope<DashboardSummary>>(`${API_BASE}/dashboard${query}`);
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar dashboard PAC.");
