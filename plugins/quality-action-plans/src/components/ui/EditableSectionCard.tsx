@@ -14,6 +14,8 @@ type EditableSectionCardProps = {
   readContent: ReactNode;
   editContent: ReactNode;
   headerExtra?: ReactNode;
+  /** Quando false, oculta o botão Editar (somente leitura). */
+  editable?: boolean;
 };
 
 export function EditableSectionCard({
@@ -27,6 +29,7 @@ export function EditableSectionCard({
   readContent,
   editContent,
   headerExtra,
+  editable = true,
 }: EditableSectionCardProps) {
   return (
     <SectionCard
@@ -37,17 +40,19 @@ export function EditableSectionCard({
       actions={
         <>
           {headerExtra}
-          {isEditing ? (
-            <button type="button" className="pac-ghost-btn" onClick={onCancelEdit}>
-              <X size={16} aria-hidden="true" />
-              Cancelar
-            </button>
-          ) : (
-            <button type="button" className="pac-ghost-btn" onClick={onEdit}>
-              <Pencil size={16} aria-hidden="true" />
-              Editar
-            </button>
-          )}
+          {editable ? (
+            isEditing ? (
+              <button type="button" className="pac-ghost-btn" onClick={onCancelEdit}>
+                <X size={16} aria-hidden="true" />
+                Cancelar
+              </button>
+            ) : (
+              <button type="button" className="pac-ghost-btn" onClick={onEdit}>
+                <Pencil size={16} aria-hidden="true" />
+                Editar
+              </button>
+            )
+          ) : null}
         </>
       }
     >

@@ -18,12 +18,14 @@ import { FilterBar } from "../components/ui/FilterBar";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { listPath, overduePath, recurrencePath, PAC_BRANCH_OPTIONS, PAC_NONCONFORMITY_SCOPES } from "../constants/actionPlans";
 import type { ActionPlanSummary, DashboardSummary } from "../types/actionPlan";
+import { usePacPermissions } from "../context/PacPermissionsContext";
 
 type Props = {
   onNavigate: (path: string) => void;
 };
 
 export function DashboardPage({ onNavigate }: Props) {
+  const { canValidateEffectiveness } = usePacPermissions();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [plans, setPlans] = useState<ActionPlanSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -125,11 +127,13 @@ export function DashboardPage({ onNavigate }: Props) {
             loading={loading}
             onNavigate={onNavigate}
           />
-          <DashboardEffectivenessPendingCard
-            alert={summary.effectiveness_pending_alert}
-            loading={loading}
-            onNavigate={onNavigate}
-          />
+          {canValidateEffectiveness ? (
+            <DashboardEffectivenessPendingCard
+              alert={summary.effectiveness_pending_alert}
+              loading={loading}
+              onNavigate={onNavigate}
+            />
+          ) : null}
           <DashboardBreakdownCharts breakdowns={summary.breakdowns} />
           <DashboardEffectivenessCharts
             effectiveness={summary.effectiveness_by_action_type}

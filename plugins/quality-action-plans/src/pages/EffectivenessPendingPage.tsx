@@ -15,11 +15,13 @@ import { TextAreaField } from "../components/ui/TextAreaField";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   branchLabel,
+  dashboardPath,
   detailPath,
   EFFECTIVENESS_STATUSES,
 } from "../constants/actionPlans";
 import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
+import { usePacPermissions } from "../context/PacPermissionsContext";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -33,6 +35,7 @@ function proposedLabel(value?: string | null): string {
 }
 
 export function EffectivenessPendingPage({ onNavigate }: Props) {
+  const { canValidateEffectiveness, loading: permissionsLoading } = usePacPermissions();
   const [items, setItems] = useState<ActionPlanSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +45,12 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
   const [rejectReason, setRejectReason] = useState("");
 
   const load = useCallback(async () => {
+    if (!canValidateEffectiveness) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -52,7 +61,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canValidateEffectiveness]);
 
   useEffect(() => {
     void load();
@@ -116,9 +125,27 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
         subtitle="Fila de submissões aguardando validação do coordenador."
       />
       <AppNav active="effectiveness-pending" onNavigate={onNavigate} />
-      {error ? <StateAlert variant="error">{error}</StateAlert> : null}
-      {success ? <StateAlert variant="success">{success}</StateAlert> : null}
+      {!permissionsLoading && !canValidateEffectiveness ? (
+        <StateAlert>
+          Você não tem permissão para validar eficácia. Solicite a permissão{" "}
+          <strong>quality-action-plans.validate-effectiveness</strong> ao administrador.
+          <div style={{ marginTop: "0.75rem" }}>
+            <button
+              type="button"
+              className="pac-ghost-btn"
+              onClick={() => onNavigate(dashboardPath())}
+            >
+              Voltar ao resumo
+            </button>
+          </div>
+        </StateAlert>
+      ) : null}
+      {canValidateEffectiveness && error ? <StateAlert variant="error">{error}</StateAlert> : null}
+      {canValidateEffectiveness && success ? (
+        <StateAlert variant="success">{success}</StateAlert>
+      ) : null}
 
+      {canValidateEffectiveness ? (
       <section className="pac-card">
         <div className="pac-section-card__header pac-table-header">
           <h2 className="pac-section-title">Pendentes</h2>
@@ -260,6 +287,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
           </div>
         )}
       </section>
+      ) : null}
     </>
   );
 }

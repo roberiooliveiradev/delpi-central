@@ -12,6 +12,7 @@ import { RecurrencePage } from "./RecurrencePage";
 import { SolutionPatternsPage } from "./SolutionPatternsPage";
 import { EffectivenessPendingPage } from "./EffectivenessPendingPage";
 import { EvidencesSearchPage } from "./EvidencesSearchPage";
+import { PacPermissionsProvider } from "../context/PacPermissionsContext";
 
 type Props = {
   pathname?: string;
@@ -34,41 +35,27 @@ export function ActionPlansPage({ pathname }: Props) {
     setPlanId(next.planId);
   }
 
+  let page = <DashboardPage onNavigate={handleNavigate} />;
+
   if (view === "detail" && planId) {
-    return <PlanDetailPage planId={planId} onNavigate={handleNavigate} />;
+    page = <PlanDetailPage planId={planId} onNavigate={handleNavigate} />;
+  } else if (view === "new") {
+    page = <PlanFormPage onNavigate={handleNavigate} />;
+  } else if (view === "list") {
+    page = <PlansListPage onNavigate={handleNavigate} />;
+  } else if (view === "overdue") {
+    page = <OverduePage onNavigate={handleNavigate} />;
+  } else if (view === "my-queue") {
+    page = <MyQueuePage onNavigate={handleNavigate} />;
+  } else if (view === "effectiveness-pending") {
+    page = <EffectivenessPendingPage onNavigate={handleNavigate} />;
+  } else if (view === "recurrence") {
+    page = <RecurrencePage onNavigate={handleNavigate} />;
+  } else if (view === "solutions") {
+    page = <SolutionPatternsPage onNavigate={handleNavigate} />;
+  } else if (view === "evidences") {
+    page = <EvidencesSearchPage onNavigate={handleNavigate} />;
   }
 
-  if (view === "new") {
-    return <PlanFormPage onNavigate={handleNavigate} />;
-  }
-
-  if (view === "list") {
-    return <PlansListPage onNavigate={handleNavigate} />;
-  }
-
-  if (view === "overdue") {
-    return <OverduePage onNavigate={handleNavigate} />;
-  }
-
-  if (view === "my-queue") {
-    return <MyQueuePage onNavigate={handleNavigate} />;
-  }
-
-  if (view === "effectiveness-pending") {
-    return <EffectivenessPendingPage onNavigate={handleNavigate} />;
-  }
-
-  if (view === "recurrence") {
-    return <RecurrencePage onNavigate={handleNavigate} />;
-  }
-
-  if (view === "solutions") {
-    return <SolutionPatternsPage onNavigate={handleNavigate} />;
-  }
-
-  if (view === "evidences") {
-    return <EvidencesSearchPage onNavigate={handleNavigate} />;
-  }
-
-  return <DashboardPage onNavigate={handleNavigate} />;
+  return <PacPermissionsProvider>{page}</PacPermissionsProvider>;
 }

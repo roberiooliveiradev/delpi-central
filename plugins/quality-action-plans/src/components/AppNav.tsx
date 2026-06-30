@@ -9,6 +9,7 @@ import {
   effectivenessPendingPath,
   type AppView,
 } from "../constants/actionPlans";
+import { usePacPermissions } from "../context/PacPermissionsContext";
 
 type Props = {
   active: AppView;
@@ -27,9 +28,15 @@ const TABS: Array<{ view: AppView; label: string; path: string }> = [
 ];
 
 export function AppNav({ active, onNavigate }: Props) {
+  const { canValidateEffectiveness } = usePacPermissions();
+
+  const tabs = TABS.filter(
+    (tab) => tab.view !== "effectiveness-pending" || canValidateEffectiveness,
+  );
+
   return (
     <nav className="pac-nav" aria-label="Navegação PAC Qualidade">
-      {TABS.map((tab) => (
+      {tabs.map((tab) => (
         <button
           key={tab.view}
           type="button"

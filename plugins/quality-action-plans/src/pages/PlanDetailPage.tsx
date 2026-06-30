@@ -102,6 +102,8 @@ import {
   type PlanSectionEditKey,
 } from "../utils/planDetailDirtyState";
 import { canDeleteActionPlan, planDeleteBlockedReason } from "../utils/planDeletePolicy";
+import { resolveEffectivenessUiPermissions } from "../utils/pacPermissions";
+import { usePacPermissions } from "../context/PacPermissionsContext";
 import { parseStoredTaggedList } from "../utils/taggedList";
 
 type Props = {
@@ -153,6 +155,7 @@ function resolveEditSectionForSaveKey(saveKey: string): PlanSectionEditKey | nul
 }
 
 export function PlanDetailPage({ planId, onNavigate }: Props) {
+  const { profile } = usePacPermissions();
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -339,6 +342,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   const planDeleteBlockReason = planDeleteBlockedReason(plan);
   const submittableEffectivenessOptions = EFFECTIVENESS_STATUSES.filter((item) =>
     ["effective", "partially_effective", "ineffective"].includes(item.value),
+  );
+  const effectivenessUi = useMemo(
+    () =>
+      resolveEffectivenessUiPermissions({
+        profile,
+        isPendingApproval: isEffectivenessPendingApproval,
+      }),
+    [profile, isEffectivenessPendingApproval],
   );
 
   const currentSnapshot = useMemo<PlanDetailSnapshot>(
@@ -954,6 +965,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             isEditing={bindSection("effectiveness-pac").isEditing}
             onEdit={bindSection("effectiveness-pac").onEdit}
             onCancelEdit={bindSection("effectiveness-pac").onCancelEdit}
+            editable={effectivenessUi.canEditSection}
             readContent={
               <>
                 {isEffectivenessPendingApproval ? (
@@ -1034,7 +1046,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 disabled={isEffectivenessPendingApproval}
               />
             </div>
-            {isEffectivenessPendingApproval ? (
+            {effectivenessUi.showRejectionReasonField ? (
               <TextAreaField
                 id="pac-effectiveness-rejection-reason"
                 label="Motivo da rejeição (coordenador)"
@@ -1046,7 +1058,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               />
             ) : null}
             <FormActions>
-              {isDirty("effectiveness-pac") && !isEffectivenessPendingApproval ? (
+              {effectivenessUi.canSaveDraft && isDirty("effectiveness-pac") ? (
                 <SectionSaveButton
                   saveKey="effectiveness-pac"
                   saving={saving}
@@ -1063,7 +1075,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   }
                 />
               ) : null}
-              {!isEffectivenessPendingApproval ? (
+              {effectivenessUi.canSubmit ? (
                 <button
                   type="button"
                   className="pac-primary-btn"
@@ -1082,56 +1094,59 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     ? "Salvando…"
                     : "Submeter para aprovação"}
                 </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="pac-primary-btn"
-                    disabled={saving === "effectiveness-approve"}
-                    onClick={() =>
-                      void runSave("effectiveness-approve", async () => {
-                        await approveEffectivenessReview(planId);
-                      })
-                    }
-                  >
-                    {saving === "effectiveness-approve" ? "Salvando…" : "Aprovar eficácia"}
-                  </button>
-                  <button
-                    type="button"
-                    className="pac-ghost-btn"
-                    disabled={
-                      saving === "effectiveness-reject"
-                      || effectivenessRejectionReason.trim().length < 5
-                    }
-                    onClick={() =>
-                      void runSave("effectiveness-reject", async () => {
-                        await rejectEffectivenessReview(
-                          planId,
-                          effectivenessRejectionReason.trim(),
-                        );
-                      })
-                    }
-                  >
-                    {saving === "effectiveness-reject" ? "Salvando…" : "Rejeitar submissão"}
-                  </button>
-                </>
-              )}
-              <button
-                type="button"
-                className="pac-ghost-btn"
-                disabled={saving === "effectiveness" || isEffectivenessPendingApproval}
-                onClick={() =>
-                  void runSave("effectiveness", async () => {
-                    await recordEffectivenessReview(
-                      planId,
-                      effectivenessStatus,
-                      effectivenessNotes.trim() || undefined,
-                    );
-                  })
-                }
-              >
-                {saving === "effectiveness" ? "Salvando…" : "Registrar direto (coordenador)"}
-              </button>
+              ) : null}
+              {effectivenessUi.canApprove ? (
+                <button
+                  type="button"
+                  className="pac-primary-btn"
+                  disabled={saving === "effectiveness-approve"}
+                  onClick={() =>
+                    void runSave("effectiveness-approve", async () => {
+                      await approveEffectivenessReview(planId);
+                    })
+                  }
+                >
+                  {saving === "effectiveness-approve" ? "Salvando…" : "Aprovar eficácia"}
+                </button>
+              ) : null}
+              {effectivenessUi.canReject ? (
+                <button
+                  type="button"
+                  className="pac-ghost-btn"
+                  disabled={
+                    saving === "effectiveness-reject"
+                    || effectivenessRejectionReason.trim().length < 5
+                  }
+                  onClick={() =>
+                    void runSave("effectiveness-reject", async () => {
+                      await rejectEffectivenessReview(
+                        planId,
+                        effectivenessRejectionReason.trim(),
+                      );
+                    })
+                  }
+                >
+                  {saving === "effectiveness-reject" ? "Salvando…" : "Rejeitar submissão"}
+                </button>
+              ) : null}
+              {effectivenessUi.canRecordDirect ? (
+                <button
+                  type="button"
+                  className="pac-ghost-btn"
+                  disabled={saving === "effectiveness"}
+                  onClick={() =>
+                    void runSave("effectiveness", async () => {
+                      await recordEffectivenessReview(
+                        planId,
+                        effectivenessStatus,
+                        effectivenessNotes.trim() || undefined,
+                      );
+                    })
+                  }
+                >
+                  {saving === "effectiveness" ? "Salvando…" : "Registrar direto (coordenador)"}
+                </button>
+              ) : null}
               {["effective", "partially_effective"].includes(plan.effectiveness_status ?? "") ? (
                 <button
                   type="button"
