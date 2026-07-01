@@ -8,6 +8,7 @@ import {
   Calendar,
   Check,
   Megaphone,
+  Activity,
   MessageCircle,
   Sparkles,
   Star,
@@ -92,6 +93,7 @@ const CATEGORY_ICONS: Record<NotificationCategory, LucideIcon> = {
   access: Bell,
   custom: Bell,
   controle_mp: MessageCircle,
+  api_console: Activity,
 };
 
 const CATEGORY_LABELS: Record<NotificationCategory, string> = {
@@ -103,6 +105,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   access: "Acesso",
   custom: "Personalizada",
   controle_mp: "Controle MP",
+  api_console: "Console API DELPI",
 };
 
 export function NotificationCard({

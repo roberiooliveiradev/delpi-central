@@ -16,6 +16,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   access: "Acesso",
   custom: "Personalizada",
   controle_mp: "Controle MP",
+  api_console: "Console API DELPI",
 };
 
 type Props = {

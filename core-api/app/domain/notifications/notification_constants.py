@@ -11,6 +11,7 @@ ALLOWED_NOTIFICATION_CATEGORIES = frozenset({
     "access",
     "custom",
     "controle_mp",
+    "api_console",
 })
 
 ALLOWED_PRESENTATION_MODES = frozenset({"text", "html", "template"})
@@ -26,4 +27,5 @@ CATEGORY_DEFAULT_ICONS = {
     "access": "key-round",
     "custom": "bell",
     "controle_mp": "message-circle",
+    "api_console": "activity",
 }

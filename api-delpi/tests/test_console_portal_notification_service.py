@@ -41,5 +41,6 @@ def test_send_console_alert_portal_notifications_posts_to_core_api() -> None:
     client.post.assert_called_once()
     payload = client.post.call_args.kwargs["json"]
     assert payload["sourceApp"] == "api-delpi-console"
+    assert payload["category"] == "api_console"
     assert payload["broadcast"] is True
     assert payload["action"]["target"] == "/apps/api-delpi-console/alertas"

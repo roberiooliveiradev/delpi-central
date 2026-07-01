@@ -72,7 +72,7 @@ def send_console_alert_portal_notifications(alerts: list[dict[str, Any]]) -> boo
             "title": f"Console API DELPI — {code}",
             "message": _build_notification_message(alert),
             "type": _alert_notification_type(severity),
-            "category": "system",
+            "category": "api_console",
             "sourceApp": _CONSOLE_APP_ID,
             "action": {
                 "type": "portal_route",

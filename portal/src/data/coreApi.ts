@@ -64,7 +64,8 @@ export type NotificationCategory =
   | "announcement"
   | "access"
   | "custom"
-  | "controle_mp";
+  | "controle_mp"
+  | "api_console";
 
 export type NotificationPresentation = "text" | "html" | "template";
 

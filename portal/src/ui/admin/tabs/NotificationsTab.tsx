@@ -46,6 +46,7 @@ const NOTIFICATION_CATEGORIES: { value: NotificationCategory; label: string }[] 
   { value: "announcement", label: "Comunicado" },
   { value: "custom", label: "Personalizada" },
   { value: "controle_mp", label: "Controle MP" },
+  { value: "api_console", label: "Console API DELPI" },
 ];
 
 const PRESENTATION_MODES: {
