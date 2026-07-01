@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "categories": {
+    "system": {
+      "label": "Sistema",
+      "icon": "bell",
+      "mutable": false,
+      "kind": "platform"
+    },
+    "welcome": {
+      "label": "Boas-vindas",
+      "icon": "sparkles",
+      "mutable": true,
+      "kind": "platform"
+    },
+    "birthday": {
+      "label": "Aniversário",
+      "icon": "cake",
+      "mutable": true,
+      "kind": "platform"
+    },
+    "company_event": {
+      "label": "Evento",
+      "icon": "calendar",
+      "mutable": true,
+      "kind": "platform"
+    },
+    "announcement": {
+      "label": "Comunicado",
+      "icon": "megaphone",
+      "mutable": true,
+      "kind": "platform"
+    },
+    "access": {
+      "label": "Acesso",
+      "icon": "key-round",
+      "mutable": true,
+      "kind": "platform"
+    },
+    "custom": {
+      "label": "Personalizada",
+      "icon": "bell",
+      "mutable": true,
+      "kind": "platform"
+    },
+    "controle_mp": {
+      "label": "Controle MP",
+      "icon": "message-circle",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["controle_mp"],
+      "pluginId": "controle-mp"
+    },
+    "api_console": {
+      "label": "Console API DELPI",
+      "icon": "activity",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["api-delpi-console"],
+      "pluginId": "api-delpi-console"
+    },
+    "quality_action_plans": {
+      "label": "Planos de ação (PAC)",
+      "icon": "clipboard-list",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["quality-action-plans"],
+      "pluginId": "quality-action-plans"
+    }
+  },
+  "legacyCategoryAliases": {
+    "quality": "quality_action_plans"
+  }
+}

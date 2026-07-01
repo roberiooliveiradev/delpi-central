@@ -28,6 +28,8 @@ import {
   singleDeleteConfirmMessage,
 } from "./dispatchHistoryHelpers";
 import { NotificationDispatchDetailModal } from "./NotificationDispatchDetailModal";
+import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
+import { buildNotificationCategoryOptions } from "../../utils/notificationCatalog";
 
 import "./NotificationDispatchHistory.css";
 
@@ -53,18 +55,6 @@ const REVOKED_OPTIONS: { value: NotificationDispatchRevokedFilter; label: string
   { value: "revoked", label: "Removidos" },
 ];
 
-const CATEGORY_OPTIONS: { value: NotificationCategory | ""; label: string }[] = [
-  { value: "", label: "Todas as categorias" },
-  { value: "system", label: "Sistema" },
-  { value: "welcome", label: "Boas-vindas" },
-  { value: "birthday", label: "Aniversário" },
-  { value: "company_event", label: "Evento" },
-  { value: "announcement", label: "Comunicado" },
-  { value: "custom", label: "Personalizada" },
-  { value: "controle_mp", label: "Controle MP" },
-  { value: "api_console", label: "Console API DELPI" },
-];
-
 type NotificationDispatchHistoryProps = {
   coreApi: CoreApi;
   onEditDispatch?: (dispatchId: string) => void;
@@ -75,6 +65,11 @@ export function NotificationDispatchHistory({
   onEditDispatch,
 }: NotificationDispatchHistoryProps) {
   const confirm = useConfirmDialog();
+  const { catalog } = useNotificationCatalog();
+  const categoryOptions = useMemo(
+    () => buildNotificationCategoryOptions(catalog, { includeAll: true }),
+    [catalog],
+  );
   const [items, setItems] = useState<NotificationDispatchItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -330,7 +325,7 @@ export function NotificationDispatchHistory({
               }
               aria-label="Filtrar por categoria"
             >
-              {CATEGORY_OPTIONS.map((option) => (
+              {categoryOptions.map((option) => (
                 <option key={option.value || "all"} value={option.value}>
                   {option.label}
                 </option>

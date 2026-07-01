@@ -1,5 +1,6 @@
 # app/application/use_cases/update_notification_preferences_use_case.py
 
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.application.unit_of_work import UnitOfWork
 from app.application.use_cases.get_notification_preferences_use_case import (
     GetNotificationPreferencesUseCase,
@@ -15,7 +16,10 @@ class UpdateNotificationPreferencesUseCase:
         self.uow = uow
 
     def execute(self, user_id: str, *, muted_categories: list[str]) -> NotificationPreferencesResult:
-        safe_muted = normalize_muted_categories(muted_categories)
+        safe_muted = normalize_muted_categories(
+            muted_categories,
+            mutable_categories=NotificationCatalogService.get().mutable_categories,
+        )
         self.uow.notification_preferences.set_muted_categories(user_id, safe_muted)
 
         self.uow.collect_event(

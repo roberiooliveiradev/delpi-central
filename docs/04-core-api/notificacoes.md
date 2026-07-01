@@ -47,7 +47,7 @@ Model: `app/infrastructure/db/models/notification.py`.
 | `title` | Título opcional |
 | `message` | Texto principal / fallback |
 | `type` | Severidade visual: `info`, `success`, `warning`, `error` |
-| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `access`, `custom`, `controle_mp`, `api_console` |
+| `category` | IDs do [catálogo](./notification-catalog.md) (`notification_catalog.json`) |
 | `presentation` | `text`, `html`, `template` |
 | `html_content` | HTML sanitizado (`bleach`) |
 | `action_type`, `action_label`, `action_target` | CTA (`portal_route`, `external_url`) |
@@ -86,6 +86,7 @@ Todas exigem `@require_auth()`.
 | PATCH | `/me/notifications/<id>/important` | `SetNotificationImportantUseCase` — body `{ "isImportant": true \| false }` |
 | DELETE | `/me/notifications/<id>` | `DeleteNotificationUseCase` (soft delete: `deleted_at`) |
 | GET | `/me/notifications/preferences` | `GetNotificationPreferencesUseCase` |
+| GET | `/me/notifications/catalog` | Catálogo canônico (`notification_catalog.json`) |
 | PATCH | `/me/notifications/preferences` | `UpdateNotificationPreferencesUseCase` — body `{ "mutedCategories": ["announcement", ...] }` |
 | POST | `/me/notifications/test` | `NotifyUserUseCase` (desabilitado quando `FLASK_ENV=production`) |
 
@@ -176,7 +177,7 @@ Usado pelo modal RBAC do Portal para papéis, grupos e data de nascimento. Body 
 | Parâmetro | Valores | Default |
 |-----------|---------|---------|
 | `status` | `all`, `unread`, `read` | `all` |
-| `category` | `system`, `welcome`, `birthday`, `company_event`, `announcement`, `access`, `custom`, `controle_mp`, `api_console` | — |
+| `category` | IDs do [catálogo de notificações](./notification-catalog.md) | — |
 | `important` | `true` (somente importantes) | — |
 | `limit` | 1–100 | `20` |
 | `offset` | ≥ 0 | `0` |

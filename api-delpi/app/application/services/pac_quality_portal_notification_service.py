@@ -54,7 +54,7 @@ def send_pac_portal_notification(
         "title": title,
         "message": message,
         "type": notification_type,
-        "category": "quality",
+        "category": "quality_action_plans",
         "sourceApp": _PAC_SOURCE_APP,
         "action": {
             "type": "portal_route",

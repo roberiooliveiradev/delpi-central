@@ -66,7 +66,7 @@ from app.application.use_cases.get_notification_preferences_use_case import (
 from app.application.use_cases.update_notification_preferences_use_case import (
     UpdateNotificationPreferencesUseCase,
 )
-from app.domain.notifications.notification_constants import ALLOWED_NOTIFICATION_CATEGORIES
+from app.application.services.notification_catalog_service import NotificationCatalogService
 
 from app.application.use_cases.notify_user_use_case import (
     NotifyUserUseCase,
@@ -270,7 +270,7 @@ def list_notifications_history():
     category = request.args.get("category")
     if category:
         category = category.strip().lower()
-        if category not in ALLOWED_NOTIFICATION_CATEGORIES:
+        if category not in NotificationCatalogService.get().allowed_categories:
             return api_error("invalid_category", "invalid notification category", status=400)
 
     important_param = request.args.get("important", "").strip().lower()
@@ -416,6 +416,20 @@ def get_notification_preferences():
         {
             "mutedCategories": result.muted_categories,
             "mutableCategories": result.mutable_categories,
+            "categories": result.categories,
+        }
+    ), 200
+
+
+@me_bp.route("/me/notifications/catalog", methods=["GET"])
+@require_auth()
+def get_notification_catalog():
+    catalog = NotificationCatalogService.get()
+    return jsonify(
+        {
+            "version": catalog.version,
+            "categories": catalog.to_api_categories(),
+            "legacyCategoryAliases": catalog.legacy_category_aliases,
         }
     ), 200
 
@@ -442,6 +456,7 @@ def update_notification_preferences():
         {
             "mutedCategories": result.muted_categories,
             "mutableCategories": result.mutable_categories,
+            "categories": result.categories,
         }
     ), 200
 

@@ -10,11 +10,10 @@ import bleach
 
 from app.domain.notifications.notification_constants import (
     ALLOWED_ACTION_TYPES,
-    ALLOWED_NOTIFICATION_CATEGORIES,
     ALLOWED_NOTIFICATION_TYPES,
     ALLOWED_PRESENTATION_MODES,
-    CATEGORY_DEFAULT_ICONS,
 )
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.domain.notifications.notification_templates import NotificationTemplateSpec
 from app.domain.notifications.notification_variables import ALL_KNOWN_VARIABLE_KEYS
 from app.domain.notifications.template_rendering import TemplateRenderError, render_template_text
@@ -133,10 +132,11 @@ class NotificationContentService:
                     f"type must be one of: {', '.join(sorted(ALLOWED_NOTIFICATION_TYPES))}"
                 )
 
-            normalized_category = (category or "system").strip().lower()
-            if normalized_category not in ALLOWED_NOTIFICATION_CATEGORIES:
+            normalized_category = NotificationCatalogService.get().resolve_category(category)
+            allowed_categories = NotificationCatalogService.get().allowed_categories
+            if normalized_category not in allowed_categories:
                 raise NotificationContentValidationError(
-                    f"category must be one of: {', '.join(sorted(ALLOWED_NOTIFICATION_CATEGORIES))}"
+                    f"category must be one of: {', '.join(sorted(allowed_categories))}"
                 )
 
         if recipient_context and normalized_presentation in {"text", "html"}:
@@ -165,7 +165,9 @@ class NotificationContentService:
 
         action = self._normalize_action(action_type, action_label, action_target)
 
-        normalized_icon = (icon or "").strip() or CATEGORY_DEFAULT_ICONS.get(normalized_category)
+        normalized_icon = (icon or "").strip() or NotificationCatalogService.get().category_default_icons.get(
+            normalized_category
+        )
 
         if recipient_context and normalized_presentation == "html":
             action_label_rendered = action.label
@@ -324,8 +326,9 @@ class NotificationContentService:
         if len(rendered_message) > 500:
             raise NotificationContentValidationError("rendered message must be at most 500 characters")
 
-        normalized_category = (category or spec.category).strip().lower()
-        if normalized_category not in ALLOWED_NOTIFICATION_CATEGORIES:
+        normalized_category = NotificationCatalogService.get().resolve_category(category or spec.category)
+        allowed_categories = NotificationCatalogService.get().allowed_categories
+        if normalized_category not in allowed_categories:
             normalized_category = spec.category
 
         normalized_type = (notification_type or spec.default_type).strip().lower()

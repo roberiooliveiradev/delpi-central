@@ -56,16 +56,23 @@ export interface DashboardResponse {
 
 export type NotificationType = "info" | "success" | "warning" | "error";
 
-export type NotificationCategory =
-  | "system"
-  | "welcome"
-  | "birthday"
-  | "company_event"
-  | "announcement"
-  | "access"
-  | "custom"
-  | "controle_mp"
-  | "api_console";
+export type NotificationCategory = string;
+
+export type NotificationCatalogCategoryItem = {
+  id: string;
+  label: string;
+  icon: string;
+  mutable: boolean;
+  kind: string;
+  sourceApps?: string[];
+  pluginId?: string;
+};
+
+export type NotificationCatalogResponse = {
+  version: number;
+  categories: NotificationCatalogCategoryItem[];
+  legacyCategoryAliases?: Record<string, string>;
+};
 
 export type NotificationPresentation = "text" | "html" | "template";
 
@@ -105,6 +112,7 @@ export interface NotificationAction {
 export interface NotificationPreferencesResponse {
   mutedCategories: NotificationCategory[];
   mutableCategories: NotificationCategory[];
+  categories: NotificationCatalogCategoryItem[];
 }
 
 export interface NotificationItem {
@@ -563,25 +571,25 @@ export class CoreApi {
     );
   }
 
+  getNotificationCatalog() {
+    return this.client.get<NotificationCatalogResponse>("/core-api/me/notifications/catalog");
+  }
+
   getNotificationPreferences() {
-    return this.client.get<{
-      mutedCategories?: NotificationCategory[];
-      mutableCategories?: NotificationCategory[];
-    }>("/core-api/me/notifications/preferences").then((data) => ({
+    return this.client.get<NotificationPreferencesResponse>("/core-api/me/notifications/preferences").then((data) => ({
       mutedCategories: data.mutedCategories ?? [],
       mutableCategories: data.mutableCategories ?? [],
+      categories: data.categories ?? [],
     }));
   }
 
   updateNotificationPreferences(mutedCategories: NotificationCategory[]) {
     return this.client
-      .patch<{
-        mutedCategories?: NotificationCategory[];
-        mutableCategories?: NotificationCategory[];
-      }>("/core-api/me/notifications/preferences", { mutedCategories })
+      .patch<NotificationPreferencesResponse>("/core-api/me/notifications/preferences", { mutedCategories })
       .then((data) => ({
         mutedCategories: data.mutedCategories ?? [],
         mutableCategories: data.mutableCategories ?? [],
+        categories: data.categories ?? [],
       }));
   }
 

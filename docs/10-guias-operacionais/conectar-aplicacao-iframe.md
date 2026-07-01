@@ -248,15 +248,18 @@ O token de integração deve ser **idêntico** em `delpi-central/infra/.env` e n
 
 Detalhe técnico: [embedded-app-deep-links.md](../05-portal/embedded-app-deep-links.md).
 
-### 5.4 Nova categoria de notificação
+### 5.4 Nova categoria / app emissor
 
-Apps no monorepo com categoria dedicada: `controle_mp`.
+**Fonte única:** `core-api/app/content/notification_catalog.json`.
 
-Se o app usar categoria nova (ex.: `meu_app`):
+Checklist completo: [notification-catalog.md](../04-core-api/notification-catalog.md).
 
-1. Adicionar em `core-api/app/domain/notifications/notification_constants.py`
-2. Adicionar label/ícone no portal (`NotificationCard`, preferências, Admin)
-3. Rebuild Core API + Portal
+Resumo:
+
+1. Adicionar entrada em `notification_catalog.json` (`kind: "app"` com `sourceApps` + `pluginId`).
+2. Espelhar fallback em `portal/src/utils/notificationCatalog.ts`.
+3. No backend emissor, usar `category` e `sourceApp` do catálogo no `POST /integrations/notifications`.
+4. Rodar `python scripts/check_notification_catalog.py --check` e rebuild Core API + Portal.
 
 ---
 

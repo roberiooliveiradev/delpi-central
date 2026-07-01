@@ -31,23 +31,14 @@ import {
   snapshotFromDispatchPayload,
   type DispatchFormSnapshot,
 } from "../../../components/notifications/dispatchEditForm";
+import { useNotificationCatalog } from "../../../state/NotificationCatalogContext";
+import { buildNotificationCategoryOptions } from "../../../utils/notificationCatalog";
 
 import "./NotificationsTab.css";
 
 type AdminNotificationsView = "send" | "history";
 
 const NOTIFICATION_TYPES: NotificationType[] = ["info", "success", "warning", "error"];
-
-const NOTIFICATION_CATEGORIES: { value: NotificationCategory; label: string }[] = [
-  { value: "system", label: "Sistema" },
-  { value: "welcome", label: "Boas-vindas" },
-  { value: "birthday", label: "Aniversário" },
-  { value: "company_event", label: "Evento da empresa" },
-  { value: "announcement", label: "Comunicado" },
-  { value: "custom", label: "Personalizada" },
-  { value: "controle_mp", label: "Controle MP" },
-  { value: "api_console", label: "Console API DELPI" },
-];
 
 const PRESENTATION_MODES: {
   value: NotificationPresentation;
@@ -71,6 +62,11 @@ const ACTION_TYPES: { value: NotificationActionType | "none"; label: string }[] 
 
 export function NotificationsTab() {
   const { getAccessToken, refreshToken, user } = useContext(AuthContext);
+  const { catalog } = useNotificationCatalog();
+  const notificationCategories = useMemo(
+    () => buildNotificationCategoryOptions(catalog),
+    [catalog],
+  );
 
   const apiClient = useMemo(
     () =>
@@ -621,7 +617,7 @@ export function NotificationsTab() {
                       value={category}
                       onChange={(event) => setCategory(event.target.value as NotificationCategory)}
                     >
-                      {NOTIFICATION_CATEGORIES.map((item) => (
+                      {notificationCategories.map((item) => (
                         <option key={item.value} value={item.value}>
                           {item.label}
                         </option>

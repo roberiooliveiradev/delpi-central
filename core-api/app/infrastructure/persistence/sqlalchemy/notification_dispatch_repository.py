@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.application.dto.list_notification_dispatches_filters import (
     ListNotificationDispatchesFilters,
 )
-from app.domain.notifications.notification_constants import ALLOWED_NOTIFICATION_CATEGORIES
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.domain.ports.notification_dispatch_repository import (
     NotificationDispatchDTO,
     NotificationDispatchRepository,
@@ -114,7 +114,7 @@ class SqlAlchemyNotificationDispatchRepository(NotificationDispatchRepository):
 
         if filters.category:
             normalized_category = filters.category.strip().lower()
-            if normalized_category in ALLOWED_NOTIFICATION_CATEGORIES:
+            if normalized_category in NotificationCatalogService.get().allowed_categories:
                 query = query.filter(NotificationDispatch.category == normalized_category)
 
         if filters.source_app:

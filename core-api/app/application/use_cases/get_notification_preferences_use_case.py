@@ -2,14 +2,15 @@
 
 from dataclasses import dataclass
 
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.application.unit_of_work import UnitOfWork
-from app.domain.notifications.notification_preference_policy import MUTABLE_NOTIFICATION_CATEGORIES
 
 
 @dataclass
 class NotificationPreferencesResult:
     muted_categories: list[str]
     mutable_categories: list[str]
+    categories: list[dict[str, object]]
 
 
 class GetNotificationPreferencesUseCase:
@@ -18,8 +19,10 @@ class GetNotificationPreferencesUseCase:
         self.uow = uow
 
     def execute(self, user_id: str) -> NotificationPreferencesResult:
+        catalog = NotificationCatalogService.get()
         muted = self.uow.notification_preferences.get_muted_categories(user_id)
         return NotificationPreferencesResult(
             muted_categories=muted,
-            mutable_categories=sorted(MUTABLE_NOTIFICATION_CATEGORIES),
+            mutable_categories=sorted(catalog.mutable_categories),
+            categories=catalog.to_api_categories(),
         )

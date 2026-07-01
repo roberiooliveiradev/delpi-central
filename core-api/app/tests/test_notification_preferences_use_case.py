@@ -2,6 +2,7 @@
 
 from unittest.mock import MagicMock
 
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.application.use_cases.dispatch_notifications_use_case import (
     DispatchNotificationsUseCase,
 )
@@ -13,7 +14,11 @@ from app.domain.notifications.notification_preference_policy import normalize_mu
 
 
 def test_normalize_muted_categories_ignores_system_and_invalid():
-    assert normalize_muted_categories(["announcement", "system", "invalid", "announcement"]) == [
+    mutable = NotificationCatalogService.get().mutable_categories
+    assert normalize_muted_categories(
+        ["announcement", "system", "invalid", "announcement"],
+        mutable_categories=mutable,
+    ) == [
         "announcement",
     ]
 

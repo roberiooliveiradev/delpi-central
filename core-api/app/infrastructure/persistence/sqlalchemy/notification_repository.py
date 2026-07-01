@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.domain.notifications.notification_constants import ALLOWED_NOTIFICATION_CATEGORIES
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.domain.ports.notification_repository import (
     NotificationRepository,
     NotificationDTO,
@@ -97,7 +97,7 @@ class SqlAlchemyNotificationRepository(NotificationRepository):
 
         if category:
             normalized = category.strip().lower()
-            if normalized in ALLOWED_NOTIFICATION_CATEGORIES:
+            if normalized in NotificationCatalogService.get().allowed_categories:
                 query = query.filter(Notification.category == normalized)
 
         if important_only:

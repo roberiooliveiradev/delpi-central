@@ -5,13 +5,9 @@ from __future__ import annotations
 from uuid import UUID
 
 from app.application.services.app_authorization_service import AppAuthorizationService
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.application.unit_of_work import UnitOfWork
 from app.domain.services.permission_resolver import PermissionResolver
-
-# sourceApp lógico (integrações) → id do plugin no portal
-_SOURCE_APP_PLUGIN_ALIASES: dict[str, str] = {
-    "controle_mp": "controle-mp",
-}
 
 
 def resolve_notification_app_id(
@@ -30,6 +26,7 @@ def resolve_notification_app_id(
         return None
 
     app_ids = {app.id for app in apps}
+    source_app_aliases = NotificationCatalogService.get().source_app_plugin_aliases
 
     candidates: list[str] = []
 
@@ -45,7 +42,7 @@ def resolve_notification_app_id(
             continue
         candidates.append(key)
         candidates.append(key.replace("_", "-"))
-        mapped = _SOURCE_APP_PLUGIN_ALIASES.get(key)
+        mapped = source_app_aliases.get(key)
         if mapped:
             candidates.append(mapped)
 

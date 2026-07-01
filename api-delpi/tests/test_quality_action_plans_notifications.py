@@ -46,7 +46,7 @@ def test_send_pac_portal_notification_posts_to_core_api() -> None:
     payload = client.post.call_args.kwargs["json"]
     assert payload["userIds"] == ["user-42"]
     assert payload["sourceApp"] == "quality-action-plans"
-    assert payload["category"] == "quality"
+    assert payload["category"] == "quality_action_plans"
 
 
 def test_build_action_due_notification_message() -> None:

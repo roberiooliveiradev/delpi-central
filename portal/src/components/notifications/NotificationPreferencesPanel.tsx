@@ -3,21 +3,11 @@ import { Settings2 } from "lucide-react";
 
 import { AuthContext } from "../../state/AuthContext";
 import { ApiClient } from "../../data/apiClient";
-import { CoreApi, type NotificationCategory } from "../../data/coreApi";
+import { CoreApi, type NotificationCategory, type NotificationCatalogCategoryItem } from "../../data/coreApi";
+import { getNotificationCategoryLabel } from "../../utils/notificationCatalog";
+import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
 
 import "./NotificationPreferencesPanel.css";
-
-const CATEGORY_LABELS: Record<NotificationCategory, string> = {
-  system: "Sistema",
-  welcome: "Boas-vindas",
-  birthday: "Aniversário",
-  company_event: "Evento",
-  announcement: "Comunicado",
-  access: "Acesso",
-  custom: "Personalizada",
-  controle_mp: "Controle MP",
-  api_console: "Console API DELPI",
-};
 
 type Props = {
   coreApi?: CoreApi;
@@ -31,6 +21,7 @@ export function NotificationPreferencesPanel({
   variant = "embedded",
 }: Props) {
   const { getAccessToken, refreshToken } = useContext(AuthContext);
+  const { catalog } = useNotificationCatalog();
 
   const coreApi = useMemo(() => {
     if (coreApiProp) {
@@ -48,6 +39,9 @@ export function NotificationPreferencesPanel({
 
   const [mutableCategories, setMutableCategories] = useState<NotificationCategory[]>([]);
   const [mutedCategories, setMutedCategories] = useState<NotificationCategory[]>([]);
+  const [catalogCategories, setCatalogCategories] = useState<NotificationCatalogCategoryItem[]>(
+    catalog.categories,
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +54,9 @@ export function NotificationPreferencesPanel({
       const data = await coreApi.getNotificationPreferences();
       setMutableCategories(data.mutableCategories);
       setMutedCategories(data.mutedCategories);
+      if (data.categories.length > 0) {
+        setCatalogCategories(data.categories);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar preferências");
     } finally {
@@ -87,6 +84,9 @@ export function NotificationPreferencesPanel({
     try {
       const data = await coreApi.updateNotificationPreferences(mutedCategories);
       setMutedCategories(data.mutedCategories);
+      if (data.categories.length > 0) {
+        setCatalogCategories(data.categories);
+      }
       setSaved(true);
       onSaved?.();
     } catch (err) {
@@ -95,6 +95,14 @@ export function NotificationPreferencesPanel({
       setSaving(false);
     }
   }
+
+  const catalogForLabels = useMemo(
+    () => ({
+      version: catalog.version,
+      categories: catalogCategories.length > 0 ? catalogCategories : catalog.categories,
+    }),
+    [catalog.version, catalog.categories, catalogCategories],
+  );
 
   const rootClassName =
     variant === "page"
@@ -145,7 +153,7 @@ export function NotificationPreferencesPanel({
                   />
                   <span>
                     <span className="notification-preferences__label">
-                      {CATEGORY_LABELS[category]}
+                      {getNotificationCategoryLabel(category, catalogForLabels)}
                     </span>
                     <span className="notification-preferences__hint">
                       {isMuted ? "Silenciada — não receberá novos envios" : "Recebendo"}

@@ -3,20 +3,17 @@
 import { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Bell,
-  Cake,
-  Calendar,
   Check,
-  Megaphone,
-  Activity,
-  MessageCircle,
-  Sparkles,
   Star,
   Trash2,
-  type LucideIcon,
 } from "lucide-react";
 
-import type { NotificationCategory, NotificationItem } from "../../data/coreApi";
+import type { NotificationItem } from "../../data/coreApi";
+import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
+import {
+  getNotificationCategoryIcon,
+  getNotificationCategoryLabel,
+} from "../../utils/notificationCatalog";
 import { AuthContext } from "../../state/AuthContext";
 import { openAppLauncher, shouldOpenAppLauncher } from "../../utils/appLauncher";
 import { executeNotificationAction } from "../../utils/notificationNavigation";
@@ -84,30 +81,6 @@ function formatNotificationDate(iso: string): string {
   });
 }
 
-const CATEGORY_ICONS: Record<NotificationCategory, LucideIcon> = {
-  system: Bell,
-  welcome: Sparkles,
-  birthday: Cake,
-  company_event: Calendar,
-  announcement: Megaphone,
-  access: Bell,
-  custom: Bell,
-  controle_mp: MessageCircle,
-  api_console: Activity,
-};
-
-const CATEGORY_LABELS: Record<NotificationCategory, string> = {
-  system: "Sistema",
-  welcome: "Boas-vindas",
-  birthday: "Aniversário",
-  company_event: "Evento",
-  announcement: "Comunicado",
-  access: "Acesso",
-  custom: "Personalizada",
-  controle_mp: "Controle MP",
-  api_console: "Console API DELPI",
-};
-
 export function NotificationCard({
   notification,
   onMarkRead,
@@ -122,6 +95,7 @@ export function NotificationCard({
 }: NotificationCardProps) {
   const navigate = useNavigate();
   const { apps } = useContext(AuthContext);
+  const { catalog } = useNotificationCatalog();
 
   const appBasePaths = useMemo(
     () => apps.map((item) => normalizeAppPath(item.basePath)),
@@ -130,7 +104,8 @@ export function NotificationCard({
 
   const layout = variant ?? (compact ? "compact" : "page");
   const isPage = layout === "page";
-  const Icon = CATEGORY_ICONS[notification.category] ?? Bell;
+  const Icon = getNotificationCategoryIcon(notification.category, catalog);
+  const categoryLabel = getNotificationCategoryLabel(notification.category, catalog);
   const templateId = getTemplateIdFromMetadata(notification.metadata);
   const templateDefinition =
     notification.presentation === "template"
@@ -232,7 +207,7 @@ export function NotificationCard({
                 </span>
               ) : null}
               <span className="notification-card__category">
-                {CATEGORY_LABELS[notification.category]}
+                {categoryLabel}
               </span>
               {formattedDate ? (
                 <time className="notification-card__time" dateTime={notification.createdAt}>
@@ -334,7 +309,7 @@ export function NotificationCard({
               </span>
             ) : null}
             <span className="notification-card__category">
-              {CATEGORY_LABELS[notification.category]}
+              {categoryLabel}
             </span>
             {!notification.read ? <span className="notification-card__dot" aria-hidden="true" /> : null}
           </div>

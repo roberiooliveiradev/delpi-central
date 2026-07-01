@@ -23,6 +23,11 @@ import {
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
 import { NotificationPreferencesPanel } from "../components/notifications/NotificationPreferencesPanel";
+import { useNotificationCatalog } from "../state/NotificationCatalogContext";
+import {
+  buildNotificationCategoryOptions,
+  getNotificationCategoryLabel,
+} from "../utils/notificationCatalog";
 
 import "./NotificationsPage.css";
 
@@ -41,19 +46,12 @@ const STATUS_TABS: { value: NotificationHistoryStatus; label: string }[] = [
   { value: "read", label: "Lidas" },
 ];
 
-const CATEGORY_OPTIONS: { value: NotificationCategory | ""; label: string }[] = [
-  { value: "", label: "Todas as categorias" },
-  { value: "system", label: "Sistema" },
-  { value: "welcome", label: "Boas-vindas" },
-  { value: "birthday", label: "Aniversário" },
-  { value: "company_event", label: "Evento" },
-  { value: "announcement", label: "Comunicado" },
-  { value: "custom", label: "Personalizada" },
-  { value: "controle_mp", label: "Controle MP" },
-  { value: "api_console", label: "Console API DELPI" },
-];
-
 export function NotificationsPage() {
+  const { catalog } = useNotificationCatalog();
+  const categoryOptions = useMemo(
+    () => buildNotificationCategoryOptions(catalog, { includeAll: true }),
+    [catalog],
+  );
   const {
     getAccessToken,
     refreshToken,
@@ -336,7 +334,7 @@ export function NotificationsPage() {
                   }
                   aria-label="Filtrar por categoria"
                 >
-                  {CATEGORY_OPTIONS.map((option) => (
+                  {categoryOptions.map((option) => (
                     <option key={option.value || "all"} value={option.value}>
                       {option.label}
                     </option>
@@ -367,7 +365,7 @@ export function NotificationsPage() {
               {!loading && status === "read" ? " · lidas" : null}
               {!loading && importantOnly ? " · importantes" : null}
               {!loading && category
-                ? ` · ${CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category}`
+                ? ` · ${getNotificationCategoryLabel(category, catalog)}`
                 : null}
             </p>
 

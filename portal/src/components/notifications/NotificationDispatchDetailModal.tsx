@@ -7,11 +7,12 @@ import { Modal } from "../Modal";
 import { useConfirmDialog } from "../ConfirmDialogProvider";
 import type {
   CoreApi,
-  NotificationCategory,
   NotificationDispatchDetail,
   NotificationDispatchRecipient,
 } from "../../data/coreApi";
 import { canDeleteDispatch, singleDeleteConfirmMessage } from "./dispatchHistoryHelpers";
+import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
+import { getNotificationCategoryLabel } from "../../utils/notificationCatalog";
 
 import "./NotificationDispatchDetailModal.css";
 
@@ -20,18 +21,6 @@ const STATUS_LABELS: Record<string, string> = {
   processing: "Processando",
   completed: "Concluído",
   failed: "Falhou",
-};
-
-const CATEGORY_LABELS: Record<NotificationCategory, string> = {
-  system: "Sistema",
-  welcome: "Boas-vindas",
-  birthday: "Aniversário",
-  company_event: "Evento",
-  announcement: "Comunicado",
-  access: "Acesso",
-  custom: "Personalizada",
-  controle_mp: "Controle MP",
-  api_console: "Console API DELPI",
 };
 
 const RECIPIENT_PREVIEW_LIMIT = 80;
@@ -117,6 +106,7 @@ export function NotificationDispatchDetailModal({
   onDeleted,
 }: Props) {
   const confirm = useConfirmDialog();
+  const { catalog } = useNotificationCatalog();
   const [detail, setDetail] = useState<NotificationDispatchDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -254,7 +244,7 @@ export function NotificationDispatchDetailModal({
               </div>
               <div>
                 <dt>Categoria</dt>
-                <dd>{CATEGORY_LABELS[detail.category] ?? detail.category}</dd>
+                <dd>{getNotificationCategoryLabel(detail.category, catalog)}</dd>
               </div>
               <div>
                 <dt>Formato</dt>
