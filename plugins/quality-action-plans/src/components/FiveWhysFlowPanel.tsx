@@ -48,6 +48,7 @@ type Props = {
   dirty?: boolean;
   onChange: (form: FiveWhysForm) => void;
   onSave: (key: string, action: () => Promise<void>) => Promise<void>;
+  expectedRevisionNumber?: number | null;
 };
 
 function updateTrack(
@@ -189,7 +190,15 @@ function WhysFlowTrack({
   );
 }
 
-export function FiveWhysFlowPanel({ planId, form, saving, dirty = false, onChange, onSave }: Props) {
+export function FiveWhysFlowPanel({
+  planId,
+  form,
+  saving,
+  dirty = false,
+  onChange,
+  onSave,
+  expectedRevisionNumber,
+}: Props) {
   const busy = saving === "five-whys";
 
   return (
@@ -233,7 +242,11 @@ export function FiveWhysFlowPanel({ planId, form, saving, dirty = false, onChang
           label="Salvar porquês"
           onSave={() =>
             void onSave("five-whys", async () => {
-              await upsertFiveWhys(planId, serializeFiveWhysForm(form));
+              await upsertFiveWhys(
+                planId,
+                serializeFiveWhysForm(form),
+                expectedRevisionNumber,
+              );
             })
           }
         />

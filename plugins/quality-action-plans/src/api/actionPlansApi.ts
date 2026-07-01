@@ -22,6 +22,10 @@ import type {
 import type { CreatePlanPayload, UpdatePlanPayload } from "../types/planForm";
 import type { PlanEvidence, Rnc8dReportPayload } from "../types/rnc8d";
 import { sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
+import {
+  expectedPlanRevisionQuery,
+  withExpectedPlanRevision,
+} from "../utils/planRevisionLock";
 import type { PlanSimilarCasesResult } from "../types/similarCases";
 import type { PagedRecurrenceResponse } from "../types/recurrence";
 import type { PagedSolutionPatternsResponse } from "../types/solutionPattern";
@@ -244,10 +248,14 @@ export async function updatePlanStatus(
   planId: string,
   status: string,
   comment?: string,
+  expectedRevisionNumber?: number | null,
 ): Promise<ActionPlanSummary> {
   const envelope = await httpPatch<ApiEnvelope<ActionPlanSummary>>(
     `${API_BASE}/${planId}/status`,
-    { status, comment: comment?.trim() || undefined },
+    withExpectedPlanRevision(
+      { status, comment: comment?.trim() || undefined },
+      expectedRevisionNumber,
+    ),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar status do plano.");
 }
@@ -256,13 +264,17 @@ export async function reopenPlan(
   planId: string,
   reason: string,
   targetStatus?: string,
+  expectedRevisionNumber?: number | null,
 ): Promise<ActionPlanSummary> {
   const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
     `${API_BASE}/${planId}/reopen`,
-    {
-      reason: reason.trim(),
-      target_status: targetStatus || undefined,
-    },
+    withExpectedPlanRevision(
+      {
+        reason: reason.trim(),
+        target_status: targetStatus || undefined,
+      },
+      expectedRevisionNumber,
+    ),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao reabrir plano.");
 }
@@ -270,10 +282,11 @@ export async function reopenPlan(
 export async function upsertIshikawa(
   planId: string,
   body: IshikawaAnalysis,
+  expectedRevisionNumber?: number | null,
 ): Promise<IshikawaAnalysis> {
   const envelope = await httpPut<ApiEnvelope<IshikawaAnalysis>>(
     `${API_BASE}/${planId}/ishikawa`,
-    body,
+    withExpectedPlanRevision(body, expectedRevisionNumber),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao salvar Ishikawa.");
 }
@@ -281,10 +294,11 @@ export async function upsertIshikawa(
 export async function upsertFiveWhys(
   planId: string,
   body: FiveWhysAnalysis,
+  expectedRevisionNumber?: number | null,
 ): Promise<FiveWhysAnalysis> {
   const envelope = await httpPut<ApiEnvelope<FiveWhysAnalysis>>(
     `${API_BASE}/${planId}/five-whys`,
-    body,
+    withExpectedPlanRevision(body, expectedRevisionNumber),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao salvar 5 Porquês.");
 }
@@ -305,10 +319,11 @@ export type NewPlanActionPayload = {
 export async function createPlanActions(
   planId: string,
   actions: NewPlanActionPayload[],
+  expectedRevisionNumber?: number | null,
 ): Promise<PlanAction[]> {
   const envelope = await httpPost<ApiEnvelope<{ items: PlanAction[] }>>(
     `${API_BASE}/${planId}/actions`,
-    { actions },
+    withExpectedPlanRevision({ actions }, expectedRevisionNumber),
   );
   const data = unwrapApiDelpiEnvelope(envelope, "Erro ao registrar ações.");
   return data.items;
@@ -331,10 +346,11 @@ export async function updatePlanAction(
   planId: string,
   actionId: string,
   body: UpdatePlanActionPayload,
+  expectedRevisionNumber?: number | null,
 ): Promise<PlanAction> {
   const envelope = await httpPatch<ApiEnvelope<PlanAction>>(
     `${API_BASE}/${planId}/actions/${actionId}`,
-    body,
+    withExpectedPlanRevision(body, expectedRevisionNumber),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar ação.");
 }
@@ -342,9 +358,10 @@ export async function updatePlanAction(
 export async function deletePlanAction(
   planId: string,
   actionId: string,
+  expectedRevisionNumber?: number | null,
 ): Promise<{ id: string; deleted: boolean }> {
   const envelope = await httpDelete<ApiEnvelope<{ id: string; deleted: boolean }>>(
-    `${API_BASE}/${planId}/actions/${actionId}`,
+    `${API_BASE}/${planId}/actions/${actionId}${expectedPlanRevisionQuery(expectedRevisionNumber)}`,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao remover ação.");
 }
@@ -353,13 +370,17 @@ export async function recordEffectivenessReview(
   planId: string,
   effectivenessStatus: string,
   notes?: string,
+  expectedRevisionNumber?: number | null,
 ): Promise<ActionPlanSummary> {
   const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
     `${API_BASE}/${planId}/effectiveness-review`,
-    {
-      effectiveness_status: effectivenessStatus,
-      notes: notes?.trim() || undefined,
-    },
+    withExpectedPlanRevision(
+      {
+        effectiveness_status: effectivenessStatus,
+        notes: notes?.trim() || undefined,
+      },
+      expectedRevisionNumber,
+    ),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao registrar eficácia.");
 }
@@ -368,20 +389,27 @@ export async function submitEffectivenessReview(
   planId: string,
   effectivenessStatus: string,
   notes?: string,
+  expectedRevisionNumber?: number | null,
 ): Promise<ActionPlanSummary> {
   const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
     `${API_BASE}/${planId}/effectiveness-review/submit`,
-    {
-      effectiveness_status: effectivenessStatus,
-      notes: notes?.trim() || undefined,
-    },
+    withExpectedPlanRevision(
+      {
+        effectiveness_status: effectivenessStatus,
+        notes: notes?.trim() || undefined,
+      },
+      expectedRevisionNumber,
+    ),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao submeter eficácia.");
 }
 
-export async function approveEffectivenessReview(planId: string): Promise<ActionPlanSummary> {
+export async function approveEffectivenessReview(
+  planId: string,
+  expectedRevisionNumber?: number | null,
+): Promise<ActionPlanSummary> {
   const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
-    `${API_BASE}/${planId}/effectiveness-review/approve`,
+    `${API_BASE}/${planId}/effectiveness-review/approve${expectedPlanRevisionQuery(expectedRevisionNumber)}`,
     {},
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao aprovar eficácia.");
@@ -390,10 +418,11 @@ export async function approveEffectivenessReview(planId: string): Promise<Action
 export async function rejectEffectivenessReview(
   planId: string,
   reason: string,
+  expectedRevisionNumber?: number | null,
 ): Promise<ActionPlanSummary> {
   const envelope = await httpPost<ApiEnvelope<ActionPlanSummary>>(
     `${API_BASE}/${planId}/effectiveness-review/reject`,
-    { reason: reason.trim() },
+    withExpectedPlanRevision({ reason: reason.trim() }, expectedRevisionNumber),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao rejeitar eficácia.");
 }
@@ -454,10 +483,11 @@ export async function restorePlanRevision(
 export async function upsertRnc8dReport(
   planId: string,
   body: Rnc8dReportPayload,
+  expectedRevisionNumber?: number | null,
 ): Promise<ActionPlanDetail> {
   const envelope = await httpPut<ApiEnvelope<ActionPlanDetail>>(
     `${API_BASE}/${planId}/rnc-8d`,
-    sanitizeRnc8dReportPayload(body),
+    withExpectedPlanRevision(sanitizeRnc8dReportPayload(body), expectedRevisionNumber),
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao salvar relatório 8D.");
 }

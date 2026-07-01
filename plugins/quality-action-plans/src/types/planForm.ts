@@ -69,6 +69,7 @@ export type UpdatePlanPayload = {
   customer_template?: string;
   source_type?: string;
   source_reference?: string;
+  expected_revision_number?: number;
 };
 
 export function emptyPlanFormValues(): PlanFormValues {

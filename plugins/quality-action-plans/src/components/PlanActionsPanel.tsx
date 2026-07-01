@@ -79,6 +79,7 @@ type Props = {
   onSave: (key: string, action: () => Promise<void>) => Promise<void>;
   /** Equipe 8D (seção 2) — responsável herda member_user_id do membro vinculado. */
   teamMembers?: TeamMember[];
+  expectedRevisionNumber?: number | null;
 };
 
 function toFormState(action: PlanAction): ActionFormState {
@@ -143,6 +144,7 @@ export function PlanActionsPanel({
   saving,
   onSave,
   teamMembers,
+  expectedRevisionNumber,
 }: Props) {
   const { confirm, confirmDialog } = useConfirmDialog();
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
@@ -171,7 +173,7 @@ export function PlanActionsPanel({
       return;
     }
     await onSave(`delete-action-${action.id}`, async () => {
-      await deletePlanAction(planId, action.id);
+      await deletePlanAction(planId, action.id, expectedRevisionNumber);
       if (editingActionId === action.id) {
         resetForm();
       }
@@ -184,7 +186,12 @@ export function PlanActionsPanel({
         if (!form.description.trim()) {
           throw new Error("Informe a descrição da ação.");
         }
-        await updatePlanAction(planId, editingActionId, toUpdatePayload(form, usesTeamFlow));
+        await updatePlanAction(
+          planId,
+          editingActionId,
+          toUpdatePayload(form, usesTeamFlow),
+          expectedRevisionNumber,
+        );
         resetForm();
       });
       return;
@@ -195,19 +202,23 @@ export function PlanActionsPanel({
         throw new Error("Informe a descrição da ação.");
       }
       const responsible = responsiblesPayload(form, usesTeamFlow);
-      await createPlanActions(planId, [
-        {
-          action_type: form.actionType,
-          description: form.description.trim(),
-          responsibles: responsible.responsibles,
-          responsible_name: responsible.responsible_name,
-          responsible_user_id: responsible.responsible_user_id || undefined,
-          due_date: form.dueDate || undefined,
-          cause_track: form.causeTrack || undefined,
-          status: form.status,
-          evidence_required: form.evidenceRequired,
-        },
-      ]);
+      await createPlanActions(
+        planId,
+        [
+          {
+            action_type: form.actionType,
+            description: form.description.trim(),
+            responsibles: responsible.responsibles,
+            responsible_name: responsible.responsible_name,
+            responsible_user_id: responsible.responsible_user_id || undefined,
+            due_date: form.dueDate || undefined,
+            cause_track: form.causeTrack || undefined,
+            status: form.status,
+            evidence_required: form.evidenceRequired,
+          },
+        ],
+        expectedRevisionNumber,
+      );
       resetForm();
     });
   }

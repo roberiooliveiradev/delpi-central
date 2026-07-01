@@ -69,12 +69,12 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
     void load();
   }, [load]);
 
-  async function handleApprove(planId: string) {
+  async function handleApprove(planId: string, expectedRevisionNumber?: number | null) {
     setSavingId(planId);
     setError(null);
     setSuccess(null);
     try {
-      await approveEffectivenessReview(planId);
+      await approveEffectivenessReview(planId, expectedRevisionNumber);
       setSuccess("Eficácia aprovada.");
       await load();
     } catch (err) {
@@ -84,7 +84,10 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
     }
   }
 
-  async function handleReject(planId: string) {
+  async function handleReject(
+    planId: string,
+    expectedRevisionNumber?: number | null,
+  ) {
     const reason = rejectReason.trim();
     if (reason.length < 5) {
       setError("Informe o motivo da rejeição com ao menos 5 caracteres.");
@@ -94,7 +97,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
     setError(null);
     setSuccess(null);
     try {
-      await rejectEffectivenessReview(planId, reason);
+      await rejectEffectivenessReview(planId, reason, expectedRevisionNumber);
       setSuccess("Submissão rejeitada.");
       closeRejectForm();
       await load();
@@ -214,7 +217,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                             type="button"
                             className="pac-primary-btn pac-btn--sm"
                             disabled={savingId === plan.id}
-                            onClick={() => void handleApprove(plan.id)}
+                            onClick={() => void handleApprove(plan.id, plan.current_revision_number)}
                           >
                             Aprovar
                           </button>
@@ -277,7 +280,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                                 type="button"
                                 className="pac-primary-btn"
                                 disabled={savingId === plan.id || rejectReason.trim().length < 5}
-                                onClick={() => void handleReject(plan.id)}
+                                onClick={() => void handleReject(plan.id, plan.current_revision_number)}
                               >
                                 {savingId === plan.id ? "Salvando…" : "Confirmar rejeição"}
                               </button>

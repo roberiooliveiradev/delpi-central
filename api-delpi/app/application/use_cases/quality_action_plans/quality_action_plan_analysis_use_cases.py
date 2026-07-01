@@ -485,6 +485,7 @@ class DeletePlanActionUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
         return self._repository.delete_action(
             plan_id,
@@ -492,4 +493,5 @@ class DeletePlanActionUseCase:
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
+            expected_revision_number=expected_revision_number,
         )

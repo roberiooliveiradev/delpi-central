@@ -108,6 +108,7 @@ import {
   type PlanSectionEditKey,
 } from "../utils/planDetailDirtyState";
 import { canDeleteActionPlan, planDeleteBlockedReason } from "../utils/planDeletePolicy";
+import { withExpectedPlanRevision } from "../utils/planRevisionLock";
 import { resolveEffectivenessUiPermissions } from "../utils/pacPermissions";
 import { usePacPermissions } from "../context/PacPermissionsContext";
 import { parseStoredTaggedList } from "../utils/taggedList";
@@ -330,6 +331,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
   }
 
   const plan = detail?.plan;
+  const expectedRevisionNumber = plan?.current_revision_number;
   const terminalStatuses = new Set(["completed", "cancelled"]);
   const isTerminalPlan = plan ? terminalStatuses.has(plan.status) : false;
   const reopenStatusOptions = PLAN_STATUSES.filter(
@@ -463,16 +465,20 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       sanitizeRnc8dReportPayload(
         mergeSharedIdentificationIntoRnc8d(rnc8dForm, sharedIdentification),
       ),
+      expectedRevisionNumber,
     );
-  }, [planId, rnc8dForm, sharedIdentification]);
+  }, [planId, rnc8dForm, sharedIdentification, expectedRevisionNumber]);
 
   const saveIdentification = useCallback(async () => {
     const payload = buildIdentificationUpdatePayload(identificationForm);
-    await updateActionPlan(planId, payload);
+    await updateActionPlan(
+      planId,
+      withExpectedPlanRevision(payload, expectedRevisionNumber),
+    );
     if (showRnc8dFlow) {
       await saveRnc8dReport();
     }
-  }, [identificationForm, planId, saveRnc8dReport, showRnc8dFlow]);
+  }, [identificationForm, planId, saveRnc8dReport, showRnc8dFlow, expectedRevisionNumber]);
 
   const saveProblemHeader = useCallback(async () => {
     if (isDirty("identification")) {
@@ -495,7 +501,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
     try {
       if (isDirty("status")) {
-        await updatePlanStatus(planId, statusValue);
+        await updatePlanStatus(planId, statusValue, undefined, expectedRevisionNumber);
       }
 
       const identificationDirty = isDirty("identification");
@@ -508,13 +514,18 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       }
 
       if (isDirty("five-whys")) {
-        await upsertFiveWhys(planId, serializeFiveWhysForm(fiveWhysForm));
+        await upsertFiveWhys(
+          planId,
+          serializeFiveWhysForm(fiveWhysForm),
+          expectedRevisionNumber,
+        );
       }
 
       if (isDirty("ishikawa")) {
         await upsertIshikawa(
           planId,
           serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+          expectedRevisionNumber,
         );
       }
 
@@ -523,6 +534,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           planId,
           effectivenessStatus,
           effectivenessNotes.trim() || undefined,
+          expectedRevisionNumber,
         );
       }
 
@@ -770,12 +782,17 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                 dirtyStatus={isDirty("status")}
                 onSaveStatus={() =>
                   void runSave("status", async () => {
-                    await updatePlanStatus(planId, statusValue);
+                    await updatePlanStatus(planId, statusValue, undefined, expectedRevisionNumber);
                   })
                 }
                 onReopen={() =>
                   void runSave("reopen", async () => {
-                    await reopenPlan(planId, reopenReason, reopenTargetStatus);
+                    await reopenPlan(
+                      planId,
+                      reopenReason,
+                      reopenTargetStatus,
+                      expectedRevisionNumber,
+                    );
                     setReopenReason("");
                   })
                 }
@@ -886,6 +903,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     dirty={isDirty("five-whys")}
                     onChange={setFiveWhysForm}
                     onSave={runSave}
+                    expectedRevisionNumber={expectedRevisionNumber}
                   />
                 }
               />
@@ -913,6 +931,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         await upsertIshikawa(
                           planId,
                           serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+                          expectedRevisionNumber,
                         );
                       })
                     }
@@ -935,6 +954,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     saving={saving}
                     onSave={runSave}
                     teamMembers={rnc8dForm.team_members}
+                    expectedRevisionNumber={expectedRevisionNumber}
                   />
                 }
               />
@@ -1005,6 +1025,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         await upsertIshikawa(
                           planId,
                           serializeIshikawaCausesForm(ishikawaCausesForm, ishikawaNotes),
+                          expectedRevisionNumber,
                         );
                       })
                     }
@@ -1027,6 +1048,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     dirty={isDirty("five-whys")}
                     onChange={setFiveWhysForm}
                     onSave={runSave}
+                    expectedRevisionNumber={expectedRevisionNumber}
                   />
                 }
               />
@@ -1045,6 +1067,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                     evidences={detail.evidences ?? []}
                     saving={saving}
                     onSave={runSave}
+                    expectedRevisionNumber={expectedRevisionNumber}
                   />
                 }
               />
@@ -1168,6 +1191,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         planId,
                         effectivenessStatus,
                         effectivenessNotes.trim() || undefined,
+                        expectedRevisionNumber,
                       );
                     })
                   }
@@ -1184,6 +1208,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         planId,
                         effectivenessStatus,
                         effectivenessNotes.trim() || undefined,
+                        expectedRevisionNumber,
                       );
                     })
                   }
@@ -1200,7 +1225,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   disabled={saving === "effectiveness-approve"}
                   onClick={() =>
                     void runSave("effectiveness-approve", async () => {
-                      await approveEffectivenessReview(planId);
+                      await approveEffectivenessReview(planId, expectedRevisionNumber);
                     })
                   }
                 >
@@ -1220,6 +1245,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                       await rejectEffectivenessReview(
                         planId,
                         effectivenessRejectionReason.trim(),
+                        expectedRevisionNumber,
                       );
                     })
                   }
@@ -1238,6 +1264,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                         planId,
                         effectivenessStatus,
                         effectivenessNotes.trim() || undefined,
+                        expectedRevisionNumber,
                       );
                     })
                   }

@@ -1259,11 +1259,16 @@ def update_plan_action(plan_id: str, action_id: str, body: UpdateActionBody = Bo
     **_pac_openapi("delete_quality_action_plan_action", "/{plan_id}/actions/{action_id}"),
 )
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
-def delete_plan_action(plan_id: str, action_id: str):
+def delete_plan_action(
+    plan_id: str,
+    action_id: str,
+    expected_revision_number: int | None = Query(default=None, ge=0),
+):
     try:
         result = build_delete_plan_action_use_case().execute(
             plan_id,
             action_id,
+            expected_revision_number=expected_revision_number,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1273,6 +1278,8 @@ def delete_plan_action(plan_id: str, action_id: str):
             operation_id="delete_quality_action_plan_action",
             message="Ação removida.",
         )
+    except ValueError as exc:
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao remover ação {action_id}: {exc}")
         return error_response("Erro ao remover ação.", status_code=500)
@@ -1319,12 +1326,14 @@ def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Bo
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def submit_effectiveness_review(plan_id: str, body: SubmitEffectivenessReviewBody = Body(...)):
     try:
+        payload, expected_revision = _split_expected_revision(body.model_dump(exclude_unset=True))
         result = build_submit_effectiveness_review_use_case().execute(
             plan_id,
             EffectivenessReviewRequest(
-                effectiveness_status=body.effectiveness_status,
-                notes=body.notes,
+                effectiveness_status=payload["effectiveness_status"],
+                notes=payload.get("notes"),
             ),
+            expected_revision_number=expected_revision,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1349,10 +1358,14 @@ def submit_effectiveness_review(plan_id: str, body: SubmitEffectivenessReviewBod
     ),
 )
 @require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
-def approve_effectiveness_review(plan_id: str):
+def approve_effectiveness_review(
+    plan_id: str,
+    expected_revision_number: int | None = Query(default=None, ge=0),
+):
     try:
         result = build_approve_effectiveness_review_use_case().execute(
             plan_id,
+            expected_revision_number=expected_revision_number,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1385,6 +1398,7 @@ def reject_effectiveness_review(
         result = build_reject_effectiveness_review_use_case().execute(
             plan_id,
             reason=body.reason,
+            expected_revision_number=body.expected_revision_number,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1409,9 +1423,7 @@ def reject_effectiveness_review(
 def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
     try:
         repo = build_quality_action_plan_read_repository()
-        result = repo.upsert_rnc_8d_report(
-            plan_id,
-            {
+        fields = {
                 "customer_template": "rnc_8d",
                 "client_nc_registry": body.client_nc_registry,
                 "customer_name": body.customer_name,
@@ -1424,7 +1436,12 @@ def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
                 if body.team_members is not None
                 else None,
                 **pick_plan_contact_fields(body.model_dump()),
-            },
+            }
+        if body.expected_revision_number is not None:
+            fields["expected_revision_number"] = body.expected_revision_number
+        result = repo.upsert_rnc_8d_report(
+            plan_id,
+            fields,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1434,6 +1451,8 @@ def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
             operation_id="upsert_quality_action_plan_rnc_8d",
             message="Relatório 8D salvo.",
         )
+    except ValueError as exc:
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao salvar relatório 8D do plano {plan_id}: {exc}")
         return error_response("Erro ao salvar relatório 8D.", status_code=500)
