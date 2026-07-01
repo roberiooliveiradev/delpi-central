@@ -125,3 +125,25 @@ def test_restore_plan_revision_requires_actor() -> None:
                 updated_by="",
             )
         )
+
+
+def test_restore_plan_revision_blocks_governed_plan() -> None:
+    repo = MagicMock()
+    repo.get_plan_by_id.return_value = {
+        "id": "p1",
+        "status": "in_progress",
+        "effectiveness_approval_status": "approved",
+    }
+    repo.plan_was_ever_completed.return_value = False
+    use_case = RestorePlanRevisionUseCase(repo)
+
+    with pytest.raises(ValueError, match="eficácia aprovada"):
+        use_case.execute(
+            RestorePlanRevisionRequest(
+                plan_id="p1",
+                revision_number=2,
+                updated_by="user-1",
+            )
+        )
+
+    repo.restore_plan_revision.assert_not_called()

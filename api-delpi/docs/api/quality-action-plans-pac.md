@@ -211,6 +211,20 @@ Soft delete: grava `deleted_at`, remove o plano das listagens e do índice de ca
 
 **Bloqueios:** plano com status `completed`, plano que já foi concluído (mesmo reaberto), eficácia `pending_review` ou `approved`. O detalhe expõe `was_ever_completed` para o plugin desabilitar o botão de exclusão.
 
+### Revisões versionadas (V027)
+
+Snapshots append-only em `quality_action_plan_revisions`; cada gravação relevante incrementa `current_revision_number`.
+
+| Método | Rota | `operationId` |
+|--------|------|----------------|
+| GET | `/quality/action-plans/{plan_id}/revisions` | `list_quality_action_plan_revisions` |
+| GET | `/quality/action-plans/{plan_id}/revisions/{revision_number}` | `get_quality_action_plan_revision` |
+| POST | `/quality/action-plans/{plan_id}/revisions/{revision_number}/restore` | `restore_quality_action_plan_revision` |
+
+**Restore:** aplica o snapshot da revisão N e cria uma **nova** revisão (`change_scope: restore`); histórico anterior permanece. **Bloqueios:** mesmas regras de governança da exclusão (`was_ever_completed`, eficácia aprovada ou pendente). Evidências no snapshot são só metadados — arquivos no volume não são apagados.
+
+Doc: `docs/roadmaps/playbook-pac-plan-revisions-jun2026.md`
+
 ### Status do plano
 
 `draft` → `triage` → `containment` → `root_cause_analysis` → `action_plan_defined` → `in_progress` → `waiting_validation` → `completed` | `cancelled`
@@ -256,6 +270,7 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 | V019 | `member_user_id` na equipe de análise 8D (`quality_analysis_team_members`) |
 | V024 | `export_template_key` no plano (modelo Excel 8D preferido) |
 | V025 | Papéis de contato: `customer_contact_*`, `delpi_contact_*` + `contact_roles` no detalhe |
+| V027 | Revisões versionadas (`quality_action_plan_revisions`, `current_revision_number`, restore) |
 
 ### Variáveis — diretório e delegação PAC
 

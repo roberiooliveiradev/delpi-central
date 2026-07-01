@@ -4,7 +4,16 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 
+from app.domain.services.quality_action_plans.quality_action_plan_delete_policy import (
+    assert_plan_revision_restorable,
+)
+
+
 class PacPlanRevisionRepository(Protocol):
+    def get_plan_by_id(self, plan_id: str) -> dict[str, Any] | None: ...
+
+    def plan_was_ever_completed(self, plan_id: str) -> bool: ...
+
     def list_plan_revisions(
         self,
         plan_id: str,
@@ -75,6 +84,14 @@ class RestorePlanRevisionUseCase:
             raise ValueError("revision_number inválido.")
         if not (request.updated_by or "").strip():
             raise ValueError("updated_by é obrigatório.")
+
+        current = self._repository.get_plan_by_id(request.plan_id)
+        if not current:
+            return None
+
+        was_ever_completed = self._repository.plan_was_ever_completed(request.plan_id)
+        assert_plan_revision_restorable(current, was_ever_completed=was_ever_completed)
+
         return self._repository.restore_plan_revision(
             request.plan_id,
             request.revision_number,

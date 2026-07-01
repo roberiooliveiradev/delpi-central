@@ -63,6 +63,7 @@ PLAN_SELECT = """
            p.effectiveness_reviewed_by,
            p.effectiveness_rejection_reason,
            p.recurrence_key,
+           p.current_revision_number,
            p.created_at,
            p.updated_at,
            p.closed_at
