@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.domain.notifications.notification_preference_policy import IMMUTABLE_NOTIFICATION_CATEGORIES
+from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.domain.ports.notification_preference_repository import NotificationPreferenceRepository
 from app.infrastructure.db.models.user_notification_preference import UserNotificationPreference
 
@@ -37,13 +37,13 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
 
     def is_category_muted(self, user_id: str, category: str) -> bool:
         normalized = (category or "").strip().lower()
-        if normalized in IMMUTABLE_NOTIFICATION_CATEGORIES:
+        if normalized not in NotificationCatalogService.get().mutable_categories:
             return False
         return normalized in self.get_muted_categories(user_id)
 
     def filter_user_ids_accepting_category(self, user_ids: list[str], category: str) -> list[str]:
         normalized_category = (category or "").strip().lower()
-        if normalized_category in IMMUTABLE_NOTIFICATION_CATEGORIES:
+        if normalized_category not in NotificationCatalogService.get().mutable_categories:
             return list(user_ids)
 
         if not user_ids:
