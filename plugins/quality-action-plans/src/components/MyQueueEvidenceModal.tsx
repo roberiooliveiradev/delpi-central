@@ -1,3 +1,4 @@
+import { actionTypeLabel } from "../constants/actionPlans";
 import type { PlanAction } from "../types/actionPlan";
 import type { MyQueueItem } from "../types/myQueue";
 import { EvidenceAttachForm } from "./evidence/EvidenceAttachForm";
@@ -30,15 +31,20 @@ export function MyQueueEvidenceModal({ item, open, onClose, onUploaded }: Props)
     <Modal
       open={open}
       title="Anexar evidência à ação"
-      className="pac-modal--my-queue-evidence"
+      className="pac-modal--my-queue-evidence pac-modal--evidence"
       onClose={onClose}
     >
       {item ? (
         <div className="pac-my-queue-evidence-modal">
-          <p className="pac-my-queue-evidence-modal__context">
-            <strong>{item.plan_code ?? item.plan_id}</strong>
-            <span className="pac-my-queue-evidence-modal__context-text">{item.description}</span>
-          </p>
+          <div className="pac-my-queue-evidence-modal__context">
+            <div className="pac-my-queue-evidence-modal__context-head">
+              <strong>{item.plan_code ?? item.plan_id}</strong>
+              <span className="pac-my-queue-evidence-modal__action-type">
+                {actionTypeLabel(item.action_type)}
+              </span>
+            </div>
+            <p className="pac-my-queue-evidence-modal__context-text">{item.description}</p>
+          </div>
           <EvidenceAttachForm
             planId={item.plan_id}
             actions={[queueItemAsAction(item)]}

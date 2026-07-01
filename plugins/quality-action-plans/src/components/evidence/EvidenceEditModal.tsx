@@ -66,17 +66,21 @@ export function EvidenceEditModal({
     <Modal
       open={open}
       title="Editar evidência"
-      className="pac-modal--evidence-edit"
+      className="pac-modal--evidence-edit pac-modal--evidence"
       onClose={() => {
         if (!saving) onClose();
       }}
     >
       {evidence ? (
         <div className="pac-evidence-edit-modal">
-          <p className="pac-evidence-edit-modal__file">
-            <strong>{evidence.file_name ?? evidence.id}</strong>
-            <span className="pac-muted">{formatEvidenceFileSize(evidence.size_bytes)}</span>
-          </p>
+          <div className="pac-evidence-edit-modal__file-card">
+            <p className="pac-evidence-edit-modal__file-name">
+              {evidence.file_name ?? evidence.id}
+            </p>
+            <p className="pac-evidence-edit-modal__file-size">
+              {formatEvidenceFileSize(evidence.size_bytes)}
+            </p>
+          </div>
           {error ? <StateAlert variant="error">{error}</StateAlert> : null}
           <EvidenceMetadataForm
             idPrefix={`edit-${evidence.id}`}

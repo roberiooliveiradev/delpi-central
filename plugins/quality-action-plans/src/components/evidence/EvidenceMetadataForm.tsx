@@ -5,7 +5,7 @@ import {
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { PlanAction } from "../../types/actionPlan";
 import { SelectField } from "../ui/SelectField";
-import { TextField } from "../ui/TextField";
+import { TextAreaField } from "../ui/TextAreaField";
 import { linkedActionLabel } from "./evidenceAttachmentUtils";
 
 type Props = {
@@ -91,12 +91,13 @@ export function EvidenceMetadataForm({
           />
         )
       ) : null}
-      <TextField
+      <TextAreaField
         id={`${idPrefix}-desc`}
         label="Descrição"
         hint={PAC_HELP_TOOLTIPS.evidence.description}
         value={description}
         onChange={onDescriptionChange}
+        rows={3}
         fullWidth
         disabled={disabled}
       />
