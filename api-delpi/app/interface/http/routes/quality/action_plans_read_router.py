@@ -35,6 +35,10 @@ from app.application.services.quality_action_plans.pac_evidence_storage import (
 from app.domain.services.quality_action_plans.pac_evidence_text_extraction_service import (
     extract_evidence_text,
 )
+from app.application.use_cases.quality_action_plans.pac_plan_revision_use_cases import (
+    ListPlanRevisionsRequest,
+    RestorePlanRevisionRequest,
+)
 from app.application.use_cases.quality_action_plans.quality_action_plan_analysis_use_cases import (
     ActionResponsibleRequest,
     CreateActionItemRequest,
@@ -55,10 +59,13 @@ from app.composition.quality_action_plans_composer import (
     build_create_quality_action_plan_use_case,
     build_dispatch_pac_quality_notifications_use_case,
     build_list_pending_effectiveness_reviews_use_case,
+    build_get_plan_revision_use_case,
+    build_list_plan_revisions_use_case,
     build_quality_action_plan_read_repository,
     build_record_effectiveness_review_use_case,
     build_reject_effectiveness_review_use_case,
     build_reopen_quality_action_plan_use_case,
+    build_restore_plan_revision_use_case,
     build_submit_effectiveness_review_use_case,
     build_update_plan_action_use_case,
     build_delete_plan_action_use_case,
@@ -897,6 +904,91 @@ def list_plan_audit_log(
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao listar auditoria do plano PAC {plan_id}: {exc}")
         return error_response("Erro ao consultar auditoria.", status_code=500)
+
+
+@router.get(
+    "/{plan_id}/revisions",
+    **_pac_openapi("list_quality_action_plan_revisions", "/{plan_id}/revisions"),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def list_plan_revisions(
+    plan_id: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        if not repo.get_plan_by_id(plan_id):
+            return not_found_response("Plano de ação não encontrado.")
+        result = build_list_plan_revisions_use_case().execute(
+            ListPlanRevisionsRequest(plan_id=plan_id, page=page, page_size=page_size),
+        )
+        return api_delpi_success(
+            result,
+            operation_id="list_quality_action_plan_revisions",
+            message="Revisões do plano.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar revisões do plano PAC {plan_id}: {exc}")
+        return error_response("Erro ao consultar revisões.", status_code=500)
+
+
+@router.get(
+    "/{plan_id}/revisions/{revision_number}",
+    **_pac_openapi(
+        "get_quality_action_plan_revision",
+        "/{plan_id}/revisions/{revision_number}",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
+def get_plan_revision(plan_id: str, revision_number: int):
+    try:
+        repo = build_quality_action_plan_read_repository()
+        if not repo.get_plan_by_id(plan_id):
+            return not_found_response("Plano de ação não encontrado.")
+        revision = build_get_plan_revision_use_case().execute(plan_id, revision_number)
+        if not revision:
+            return not_found_response("Revisão não encontrada.")
+        return api_delpi_success(
+            revision,
+            operation_id="get_quality_action_plan_revision",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao buscar revisão {revision_number} do plano PAC {plan_id}: {exc}")
+        return error_response("Erro ao consultar revisão.", status_code=500)
+
+
+@router.post(
+    "/{plan_id}/revisions/{revision_number}/restore",
+    **_pac_openapi(
+        "restore_quality_action_plan_revision",
+        "/{plan_id}/revisions/{revision_number}/restore",
+    ),
+)
+@require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
+def restore_plan_revision(plan_id: str, revision_number: int):
+    try:
+        detail = build_restore_plan_revision_use_case().execute(
+            RestorePlanRevisionRequest(
+                plan_id=plan_id,
+                revision_number=revision_number,
+                **_actor_write_kwargs(),
+            ),
+        )
+        if not detail:
+            return not_found_response("Plano de ação não encontrado.")
+        return api_delpi_success(
+            detail,
+            operation_id="restore_quality_action_plan_revision",
+            message="Plano restaurado para a revisão selecionada.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao restaurar revisão {revision_number} do plano PAC {plan_id}: {exc}")
+        return error_response("Erro ao restaurar revisão.", status_code=500)
 
 
 @router.patch("/{plan_id}", **_pac_openapi("update_quality_action_plan", "/{plan_id}"))

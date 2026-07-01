@@ -1,3 +1,8 @@
+from app.application.use_cases.quality_action_plans.pac_plan_revision_use_cases import (
+    GetPlanRevisionUseCase,
+    ListPlanRevisionsUseCase,
+    RestorePlanRevisionUseCase,
+)
 from app.application.use_cases.quality_action_plans.dispatch_pac_quality_notifications_use_case import (
     DispatchPacQualityNotificationsUseCase,
 )
@@ -108,3 +113,15 @@ def build_reject_effectiveness_review_use_case() -> RejectEffectivenessReviewUse
 
 def build_list_pending_effectiveness_reviews_use_case() -> ListPendingEffectivenessReviewsUseCase:
     return ListPendingEffectivenessReviewsUseCase(build_quality_action_plan_repository())
+
+
+def build_list_plan_revisions_use_case() -> ListPlanRevisionsUseCase:
+    return ListPlanRevisionsUseCase(build_quality_action_plan_repository())
+
+
+def build_get_plan_revision_use_case() -> GetPlanRevisionUseCase:
+    return GetPlanRevisionUseCase(build_quality_action_plan_repository())
+
+
+def build_restore_plan_revision_use_case() -> RestorePlanRevisionUseCase:
+    return RestorePlanRevisionUseCase(build_quality_action_plan_repository())

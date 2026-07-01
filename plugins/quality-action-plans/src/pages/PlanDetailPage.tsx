@@ -31,6 +31,7 @@ import { FiveWhysFlowPanel } from "../components/FiveWhysFlowPanel";
 import { PlanActionsPanel } from "../components/PlanActionsPanel";
 import { PlanGlobalSaveBar } from "../components/PlanGlobalSaveBar";
 import { IshikawaFishboneDiagram } from "../components/IshikawaFishboneDiagram";
+import { PlanRevisionsSection } from "../components/PlanRevisionsSection";
 import { PlanTimeline } from "../components/PlanTimeline";
 import { SimilarCasesPanel } from "../components/SimilarCasesPanel";
 import { PageHeader } from "../components/PageHeader";
@@ -126,6 +127,7 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   effectiveness_approved: "Eficácia aprovada",
   effectiveness_reviewed: "Eficácia registrada",
   effectiveness_approval_rejected: "Submissão rejeitada",
+  plan_revision_restored: "Revisão restaurada",
 };
 
 const SAVE_KEY_TO_EDIT_SECTION: Partial<Record<string, PlanSectionEditKey>> = {
@@ -160,7 +162,7 @@ function resolveEditSectionForSaveKey(saveKey: string): PlanSectionEditKey | nul
 }
 
 export function PlanDetailPage({ planId, onNavigate }: Props) {
-  const { profile } = usePacPermissions();
+  const { profile, canWrite } = usePacPermissions();
   const { confirm, confirmDialog } = useConfirmDialog();
   const [detail, setDetail] = useState<ActionPlanDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1317,6 +1319,13 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
           ) : null}
 
           <PlanTimeline detail={detail} />
+
+          <PlanRevisionsSection
+            planId={planId}
+            canWrite={canWrite}
+            onRestored={load}
+            confirm={confirm}
+          />
 
           {auditLog.length > 0 ? (
             <SectionCard title="Auditoria (governança)" hint={PAC_HELP_TOOLTIPS.sections.audit}>

@@ -51,6 +51,8 @@ export const PAC_HELP_TOOLTIPS = {
     problem: "Resumo do relato, severidade, escopo e identificação principal da NC.",
     planStatus: "Fluxo operacional do plano, estágio atual e alteração de status.",
     audit: "Histórico de eventos do plano (criação, alterações, eficácia, reabertura).",
+    revisions:
+      "Versões restauráveis do plano. Cada gravação relevante gera um snapshot; restaurar cria uma nova revisão sem apagar o histórico.",
     template: "Relatório estruturado do cliente (ex.: 8D) quando o plano usa template dedicado.",
     ishikawa:
       "Diagrama espinha de peixe (6M): hipóteses de causa por Máquina, Método, Material, Mão de obra, Medição e Meio ambiente.",

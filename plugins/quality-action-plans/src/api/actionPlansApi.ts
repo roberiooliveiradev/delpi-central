@@ -14,6 +14,8 @@ import type {
   FiveWhysAnalysis,
   IshikawaAnalysis,
   PagedAuditLogResponse,
+  PagedPlanRevisionsResponse,
+  PlanRevisionDetail,
   PagedPlansResponse,
   PlanAction,
 } from "../types/actionPlan";
@@ -415,6 +417,38 @@ export async function fetchPlanAuditLog(
     `${API_BASE}/${planId}/audit-log?page=${page}&page_size=${pageSize}`,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar auditoria do plano.");
+}
+
+export async function fetchPlanRevisions(
+  planId: string,
+  page = 1,
+  pageSize = 20,
+): Promise<PagedPlanRevisionsResponse> {
+  const envelope = await httpGet<ApiEnvelope<PagedPlanRevisionsResponse>>(
+    `${API_BASE}/${planId}/revisions?page=${page}&page_size=${pageSize}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar revisões do plano.");
+}
+
+export async function fetchPlanRevision(
+  planId: string,
+  revisionNumber: number,
+): Promise<PlanRevisionDetail> {
+  const envelope = await httpGet<ApiEnvelope<PlanRevisionDetail>>(
+    `${API_BASE}/${planId}/revisions/${revisionNumber}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar revisão do plano.");
+}
+
+export async function restorePlanRevision(
+  planId: string,
+  revisionNumber: number,
+): Promise<ActionPlanDetail> {
+  const envelope = await httpPost<ApiEnvelope<ActionPlanDetail>>(
+    `${API_BASE}/${planId}/revisions/${revisionNumber}/restore`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao restaurar revisão do plano.");
 }
 
 export async function upsertRnc8dReport(

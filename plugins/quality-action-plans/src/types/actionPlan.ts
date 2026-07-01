@@ -275,6 +275,29 @@ export type PagedAuditLogResponse = {
   pagination: Pagination;
 };
 
+export type PlanRevisionSummary = {
+  id: string;
+  plan_id: string;
+  revision_number: number;
+  snapshot_schema_version: number;
+  change_scope: string;
+  change_summary?: string | null;
+  restored_from_revision?: number | null;
+  created_by?: string | null;
+  created_by_name?: string | null;
+  created_by_email?: string | null;
+  created_at?: string;
+};
+
+export type PlanRevisionDetail = PlanRevisionSummary & {
+  snapshot: Record<string, unknown>;
+};
+
+export type PagedPlanRevisionsResponse = {
+  items: PlanRevisionSummary[];
+  pagination: Pagination;
+};
+
 export type ActionPlanDetail = {
   plan: ActionPlanSummary & {
     customer_contact?: string | null;

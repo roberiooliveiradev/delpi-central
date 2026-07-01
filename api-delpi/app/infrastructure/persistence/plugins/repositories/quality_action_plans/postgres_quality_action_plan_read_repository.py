@@ -23,6 +23,19 @@ from app.domain.services.quality_action_plans.quality_action_plan_serialization 
     serialize_plan_row,
     serialize_row,
 )
+from app.domain.services.quality_action_plans.pac_plan_revision_snapshot_service import (
+    REVISION_SCOPE_ACTIONS,
+    REVISION_SCOPE_CREATED,
+    REVISION_SCOPE_EFFECTIVENESS,
+    REVISION_SCOPE_FIVE_WHYS,
+    REVISION_SCOPE_IDENTIFICATION,
+    REVISION_SCOPE_ISHIKAWA,
+    REVISION_SCOPE_RNC_8D,
+    REVISION_SCOPE_STATUS,
+)
+from app.infrastructure.persistence.plugins.repositories.quality_action_plans.quality_action_plan_revision_mixin import (
+    QualityActionPlanRevisionMixin,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -108,7 +121,10 @@ def _optional_actor_text(value: Any) -> str | None:
     return text or None
 
 
-class PostgresQualityActionPlanRepository(PluginBaseRepository):
+class PostgresQualityActionPlanRepository(
+    QualityActionPlanRevisionMixin,
+    PluginBaseRepository,
+):
     @staticmethod
     def _history_author(
         user_id: str,
@@ -272,7 +288,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
         }
 
-    def get_plan_detail(self, plan_id: str) -> dict[str, Any] | None:
+    def get_plan_detail(self, plan_id: str, *, include_history: bool = True) -> dict[str, Any] | None:
         resolved = self._coerce_plan_id(plan_id)
         if not resolved:
             return None
@@ -336,17 +352,19 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             """,
             (plan_id,),
         )
-        history = self.fetch_all(
-            """
-            SELECT id, plan_id, event_type, old_value, new_value, comment,
-                   created_by, created_by_name, created_by_email, created_at
-              FROM quality.quality_action_history
-             WHERE plan_id = %s
-             ORDER BY created_at DESC
-             LIMIT 100
-            """,
-            (plan_id,),
-        )
+        history = []
+        if include_history:
+            history = self.fetch_all(
+                """
+                SELECT id, plan_id, event_type, old_value, new_value, comment,
+                       created_by, created_by_name, created_by_email, created_at
+                  FROM quality.quality_action_history
+                 WHERE plan_id = %s
+                 ORDER BY created_at DESC
+                 LIMIT 100
+                """,
+                (plan_id,),
+            )
 
         return {
             "plan": self._serialize_plan_with_delete_flags(plan_row, plan_id),
@@ -1755,6 +1773,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
             auto_commit=False,
         )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_CREATED,
+            created_by=fields["created_by_user_id"],
+            created_by_name=actor_name,
+            created_by_email=actor_email,
+            auto_commit=False,
+        )
         self.commit()
         plan = self.get_plan_by_id(plan_id)
         if not plan:
@@ -1846,6 +1872,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             payload={"fields": sorted(updates.keys())},
             auto_commit=False,
         )
+        self.record_plan_revision(
+            resolved,
+            change_scope=REVISION_SCOPE_IDENTIFICATION,
+            created_by=str(fields.get("updated_by_user_id") or "system"),
+            created_by_name=_optional_actor_text(fields.get("updated_by_name")),
+            created_by_email=_optional_actor_text(fields.get("updated_by_email")),
+            auto_commit=False,
+        )
         self.commit()
         return self.get_plan_by_id(resolved)
 
@@ -1922,6 +1956,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 },
                 auto_commit=False,
             )
+        self.record_plan_revision(
+            resolved,
+            change_scope=REVISION_SCOPE_STATUS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
+            auto_commit=False,
+        )
         self.commit()
         return self.get_plan_by_id(resolved)
 
@@ -1984,6 +2026,15 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 "target_status": target_status,
                 "reason": reason,
             },
+            auto_commit=False,
+        )
+        self.record_plan_revision(
+            resolved,
+            change_scope=REVISION_SCOPE_STATUS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
+            change_summary="Plano reaberto.",
             auto_commit=False,
         )
         self.commit()
@@ -2458,6 +2509,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             **self._history_author(updated_by, updated_by_name, updated_by_email),
             auto_commit=False,
         )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_ISHIKAWA,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
+            auto_commit=False,
+        )
         self.commit()
         return serialize_ishikawa_row(row)
 
@@ -2514,6 +2573,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             event_type="five_whys_updated",
             **self._history_author(updated_by, updated_by_name, updated_by_email),
             new_value=fields.get("root_cause"),
+            auto_commit=False,
+        )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_FIVE_WHYS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
             auto_commit=False,
         )
         self.commit()
@@ -2577,6 +2644,15 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                     new_value=action["description"][:200],
                     auto_commit=False,
                 )
+        if created:
+            self.record_plan_revision(
+                plan_id,
+                change_scope=REVISION_SCOPE_ACTIONS,
+                created_by=created_by,
+                created_by_name=created_by_name,
+                created_by_email=created_by_email,
+                auto_commit=False,
+            )
         self.commit()
         if not created:
             return []
@@ -2649,6 +2725,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 **self._history_author(updated_by, updated_by_name, updated_by_email),
                 auto_commit=False,
             )
+            self.record_plan_revision(
+                plan_id,
+                change_scope=REVISION_SCOPE_ACTIONS,
+                created_by=updated_by,
+                created_by_name=updated_by_name,
+                created_by_email=updated_by_email,
+                auto_commit=False,
+            )
             self.commit()
             return self.get_action(plan_id, action_id)
 
@@ -2683,6 +2767,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             plan_id=plan_id,
             event_type=event,
             **self._history_author(updated_by, updated_by_name, updated_by_email),
+            auto_commit=False,
+        )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_ACTIONS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
             auto_commit=False,
         )
         self.commit()
@@ -2724,6 +2816,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             event_type="action_deleted",
             **self._history_author(updated_by, updated_by_name, updated_by_email),
             old_value=(row.get("description") or "")[:200],
+            auto_commit=False,
+        )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_ACTIONS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
             auto_commit=False,
         )
         self.commit()
@@ -2791,6 +2891,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
             auto_commit=False,
         )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_EFFECTIVENESS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
+            auto_commit=False,
+        )
         self.commit()
         return self.get_plan_by_id(plan_id)
 
@@ -2849,6 +2957,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
             auto_commit=False,
         )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_EFFECTIVENESS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
+            auto_commit=False,
+        )
         self.commit()
         return self.get_plan_by_id(plan_id)
 
@@ -2902,6 +3018,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 "reason": reason,
                 "submitted_by": current.get("effectiveness_submitted_by"),
             },
+            auto_commit=False,
+        )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_EFFECTIVENESS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
             auto_commit=False,
         )
         self.commit()
@@ -3004,6 +3128,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             },
             auto_commit=False,
         )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_EFFECTIVENESS,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
+            auto_commit=False,
+        )
         self.commit()
         return self.get_plan_by_id(plan_id)
 
@@ -3100,6 +3232,14 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             event_type="plan_updated",
             **self._history_author(updated_by, updated_by_name, updated_by_email),
             comment="Relatório 8D (materiais adquiridos) atualizado.",
+            auto_commit=False,
+        )
+        self.record_plan_revision(
+            plan_id,
+            change_scope=REVISION_SCOPE_RNC_8D,
+            created_by=updated_by,
+            created_by_name=updated_by_name,
+            created_by_email=updated_by_email,
             auto_commit=False,
         )
         self.commit()
