@@ -108,6 +108,33 @@ export async function httpPatchForm<T>(
   return parseJson<T>(response);
 }
 
+async function jsonRequest<T>(
+  method: "POST" | "PATCH" | "PUT",
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
+export function httpPostJson<T>(url: string, body: unknown, options?: RequestOptions): Promise<T> {
+  return jsonRequest<T>("POST", url, body, options);
+}
+
+export function httpPatchJson<T>(url: string, body: unknown, options?: RequestOptions): Promise<T> {
+  return jsonRequest<T>("PATCH", url, body, options);
+}
+
+export function httpPutJson<T>(url: string, body: unknown, options?: RequestOptions): Promise<T> {
+  return jsonRequest<T>("PUT", url, body, options);
+}
+
 export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "DELETE",

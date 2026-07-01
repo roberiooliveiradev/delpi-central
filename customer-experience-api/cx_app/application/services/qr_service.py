@@ -24,6 +24,11 @@ def build_feedback_url(token: str) -> str:
     return _public_url(token, settings.CX_PUBLIC_FEEDBACK_PATH)
 
 
+def build_form_url(token: str) -> str:
+    """URL pública de um formulário personalizável (estilo Google Forms)."""
+    return _public_url(token, settings.CX_PUBLIC_FORM_PATH)
+
+
 class QrService:
     def __init__(self, base_dir: str | None = None) -> None:
         self.base_dir = Path(base_dir or settings.CX_QR_DIR)
@@ -60,6 +65,10 @@ class QrService:
     def generate_feedback(self, *, token: str) -> str:
         """QR da página de formulário de feedback. Retorna o nome do arquivo."""
         return self._write(url=build_feedback_url(token), stored_name=f"{token}-feedback.png")
+
+    def generate_form(self, *, token: str) -> str:
+        """QR de um formulário personalizável. Retorna o nome do arquivo."""
+        return self._write(url=build_form_url(token), stored_name=f"form-{token}.png")
 
     def read(self, filename: str) -> bytes | None:
         target = self.base_dir / filename

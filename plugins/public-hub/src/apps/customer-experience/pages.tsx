@@ -1,12 +1,15 @@
 import type { AppPublicPages } from "../../shell/types";
 import {
   fetchFeedbackStatus,
+  fetchPublicForm,
   fetchPublicParticipant,
   type FeedbackStatus,
+  type PublicForm,
   type PublicParticipant,
 } from "./api";
 import { ThanksView } from "./ThanksPage";
 import { FeedbackView } from "./FeedbackPage";
+import { FormView } from "./FormPage";
 
 export const customerExperiencePages: AppPublicPages = {
   thanks: {
@@ -22,5 +25,11 @@ export const customerExperiencePages: AppPublicPages = {
     render: (data, ctx) => (
       <FeedbackView token={ctx.token} status={data as FeedbackStatus} />
     ),
+  },
+  form: {
+    documentTitle: "Formulário — DELPI",
+    notFoundMessage: "Este formulário não está mais disponível.",
+    load: ({ token }) => fetchPublicForm(token),
+    render: (data) => <FormView form={data as PublicForm} />,
   },
 };

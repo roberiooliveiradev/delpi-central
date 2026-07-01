@@ -102,3 +102,92 @@ export async function submitFeedback(
   }
   return { ok: false, status: response.status, message };
 }
+
+// ----- Formulários (estilo Google Forms) -----------------------------------
+
+export type PublicQuestionType =
+  | "rating"
+  | "short_text"
+  | "long_text"
+  | "single_choice"
+  | "multi_choice"
+  | "yes_no";
+
+export type PublicQuestion = {
+  id: string;
+  type: PublicQuestionType;
+  label: string;
+  helpText: string | null;
+  required: boolean;
+  options: string[];
+};
+
+export type PublicForm = {
+  token: string;
+  title: string;
+  description: string | null;
+  questions: PublicQuestion[];
+};
+
+export async function fetchPublicForm(token: string): Promise<PublicForm | null> {
+  const response = await fetch(`${API_BASE}/public/forms/${encodeURIComponent(token)}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Não foi possível carregar o formulário.");
+  }
+  const envelope = (await response.json()) as ApiEnvelope<PublicForm>;
+  if (envelope.success === false) {
+    return null;
+  }
+  return envelope.data;
+}
+
+export type FormAnswerPayload = {
+  questionId: string;
+  text?: string | null;
+  rating?: number | null;
+  choices?: string[];
+};
+
+export type SubmitFormPayload = {
+  respondentName: string;
+  respondentCompany: string | null;
+  answers: FormAnswerPayload[];
+};
+
+export type SubmitFormResult =
+  | { ok: true }
+  | { ok: false; status: number; message: string };
+
+export async function submitFormResponse(
+  token: string,
+  payload: SubmitFormPayload,
+): Promise<SubmitFormResult> {
+  const response = await fetch(
+    `${API_BASE}/public/forms/${encodeURIComponent(token)}/responses`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (response.ok) {
+    return { ok: true };
+  }
+
+  let message = "Não foi possível enviar suas respostas. Tente novamente.";
+  try {
+    const envelope = (await response.json()) as ApiEnvelope<unknown>;
+    if (envelope?.message) {
+      message = envelope.message;
+    }
+  } catch {
+    // resposta sem corpo JSON — mantém mensagem padrão
+  }
+  return { ok: false, status: response.status, message };
+}

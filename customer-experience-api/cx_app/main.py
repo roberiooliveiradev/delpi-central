@@ -9,6 +9,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from cx_app.config import settings
 from cx_app.core.responses import fail
+from cx_app.interface.http.routes.form_routes import public_router as public_form_router
+from cx_app.interface.http.routes.form_routes import router as form_router
 from cx_app.interface.http.routes.participant_routes import router as participant_router
 from cx_app.interface.http.routes.public_routes import router as public_router
 from cx_app.middleware.auth_middleware import jwt_middleware
@@ -89,4 +91,6 @@ def health():
 
 
 app.include_router(participant_router)
+app.include_router(form_router)
 app.include_router(public_router)
+app.include_router(public_form_router)

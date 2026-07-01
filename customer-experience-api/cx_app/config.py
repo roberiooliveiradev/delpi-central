@@ -38,6 +38,10 @@ class Settings:
     CX_PUBLIC_FEEDBACK_PATH: str = _get_env(
         "CX_PUBLIC_FEEDBACK_PATH", default="/p/customer-experience/feedback"
     )
+    # Caminho público dos formulários personalizáveis (estilo Google Forms).
+    CX_PUBLIC_FORM_PATH: str = _get_env(
+        "CX_PUBLIC_FORM_PATH", default="/p/customer-experience/form"
+    )
 
     # Storage persistente (regra persistent-upload-storage.mdc).
     CX_PHOTO_UPLOAD_DIR: str = _get_env(
