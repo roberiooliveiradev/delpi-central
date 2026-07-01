@@ -938,6 +938,8 @@ services:
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-nc:/app/data/audit-5s-nc
+      # Logs de aplicação persistentes (sobrevivem a deploy/recreate)
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/api-delpi-logs:/app/logs
 
     networks:
       - delpi-network

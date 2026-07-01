@@ -219,6 +219,32 @@ Anexos enviados **antes** deste volume precisam ser **reenviados** (não há bac
 
 ---
 
+## Logs de aplicação persistentes (api-delpi)
+
+A `api-delpi` grava logs diários em arquivo (`app/utils/logger.py` → `logs/api_YYYYMMDD.log`, relativo ao WORKDIR `/app` → `/app/logs`).
+
+- **Dev** (`docker-compose.dev.yml`): já persistem porque o serviço monta o código-fonte (`../api-delpi:/app`), então `/app/logs` cai em `api-delpi/logs` no host.
+- **Prod** (`docker-compose.yml`): **sem volume**, `docker compose up -d --force-recreate api-delpi` apaga o histórico. Volume adicionado:
+
+| Path no container | Host (volume) |
+|-------------------|---------------|
+| `/app/logs` | `${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/api-delpi-logs` |
+
+```bash
+# srv-api (produção)
+sudo mkdir -p /var/lib/delpi/api-delpi-logs
+# em infra/.env: DELPI_DATA_HOST_DIR=/var/lib/delpi
+
+cd ~/projetos/delpi-central/infra
+docker compose -f docker-compose.yml up -d --force-recreate api-delpi
+docker exec delpi-api-delpi ls -la /app/logs
+tail -f /var/lib/delpi/api-delpi-logs/api_$(date +%Y%m%d).log
+```
+
+A **`api-pac-context`** (stack standalone) segue o mesmo padrão: `app/utils/logger.py` → `logs/ctx_YYYYMMDD.log`, com volume `${PAC_CONTEXT_LOG_DIR:-./logs}:/app/logs` no `api-pac-context/docker-compose.yml` (default: `./logs` ao lado do compose).
+
+---
+
 ## Foto do visitante e QR (customer-experience-api)
 
 Fotos dos participantes e imagens de QR do plugin **customer-experience** ficam no filesystem do container `customer-experience-api`, paths padrão `/app/data/customer-experience/photos` e `/app/data/customer-experience/qr`.
