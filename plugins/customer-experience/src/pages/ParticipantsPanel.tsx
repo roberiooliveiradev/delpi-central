@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   Copy,
-  MessageSquare,
   Pencil,
   Power,
   QrCode,
@@ -17,7 +16,6 @@ import {
   createParticipant,
   deactivateParticipant,
   deleteParticipant,
-  downloadFeedbackQr,
   downloadQr,
   listParticipants,
   updateParticipant,
@@ -173,15 +171,6 @@ export function ParticipantsPanel() {
     }
   };
 
-  const handleDownloadFeedbackQr = async (participant: Participant) => {
-    try {
-      const blob = await downloadFeedbackQr(participant.id);
-      triggerDownload(blob, `qr-feedback-${slug(participant)}.png`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao baixar QR de feedback.");
-    }
-  };
-
   const handleCopyLink = async (participant: Participant) => {
     if (!participant.publicUrl) return;
     try {
@@ -189,16 +178,6 @@ export function ParticipantsPanel() {
       setFeedback("Link de agradecimento copiado.");
     } catch {
       setFeedback(participant.publicUrl);
-    }
-  };
-
-  const handleCopyFeedbackLink = async (participant: Participant) => {
-    if (!participant.feedbackPublicUrl) return;
-    try {
-      await navigator.clipboard.writeText(participant.feedbackPublicUrl);
-      setFeedback("Link de feedback copiado.");
-    } catch {
-      setFeedback(participant.feedbackPublicUrl);
     }
   };
 
@@ -422,22 +401,6 @@ export function ParticipantsPanel() {
                       type="button"
                       onClick={() => handleCopyLink(participant)}
                       title="Copiar link de agradecimento"
-                    >
-                      <Copy size={16} /> Link
-                    </button>
-                    <button
-                      className="cx-button cx-button--ghost"
-                      type="button"
-                      onClick={() => handleDownloadFeedbackQr(participant)}
-                      title="Baixar QR do formulário de feedback"
-                    >
-                      <MessageSquare size={16} /> QR feedback
-                    </button>
-                    <button
-                      className="cx-button cx-button--ghost"
-                      type="button"
-                      onClick={() => handleCopyFeedbackLink(participant)}
-                      title="Copiar link do formulário de feedback"
                     >
                       <Copy size={16} /> Link
                     </button>
