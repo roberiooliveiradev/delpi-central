@@ -168,7 +168,9 @@ Histórico, audit log e evidências gravam `created_by_*` / `actor_*` / `uploade
 
 ### PATCH `/quality/action-plans/{plan_id}`
 
-Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_contact`, `product_code`, `product_description`, `batch_number`, `reported_problem`, `severity`, `branch_code`, `nonconformity_scope`, `department`, `failure_mode`, `customer_template` (`generic` \| `rnc_8d`), `client_nc_registry`, etc.
+Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_contact`, `customer_contact_email`, `customer_contact_phone`, `delpi_contact_name`, `delpi_contact_area`, `delpi_sales_rep`, `delpi_quality_contact`, `product_code`, `product_description`, `batch_number`, `reported_problem`, `severity`, `branch_code`, `nonconformity_scope`, `department`, `failure_mode`, `customer_template` (`generic` \| `rnc_8d`), `client_nc_registry`, `export_template_key`, etc.
+
+No detalhe (`GET /{plan_id}`), o payload inclui `contact_roles` — visão resolvida dos papéis de contato (cliente vs DELPI) para leitura e export 8D.
 
 **Status:** altere apenas via `PATCH /{plan_id}/status` — não envie `status` neste PATCH de identificação.
 
@@ -192,10 +194,12 @@ Vínculos com Kaizen ou Auditoria 5S não usam mais colunas em `quality_action_p
 ### Relatório 8D (V006+)
 
 - `customer_template`: `generic` ou `rnc_8d`
-- `template_payload`: JSON com seções do formulário (contenção, NC, eficácia, preventiva, documentação)
+- `template_payload`: JSON com seções do formulário (contenção, NC, eficácia, preventiva, documentação). Campo legado `attention_to` sincroniza com `customer_contact` quando aplicável.
+- **Contatos (V025):** `customer_contact*` = pessoa no cliente (WEG: G21/J21); `delpi_contact_*` = interlocutores DELPI (WEG: J5/J6 via `delpi_contact_name` + `template_payload.contact_phone`)
 - `team_members[]`: `member_name` (obrigatório), `member_user_id` (opcional — UUID Delpi via `assignable-users`), `is_leader`, `department`, `sort_order` (V019)
 - Ações do plano podem herdar `responsible_user_id` do membro da equipe vinculado no plugin MFE
-- Template Excel: `api-delpi/app/content/templates/quality/rnc_8d_template.xlsx` (copiar no deploy)
+- Export Excel 8D: `GET .../export/rnc-8d?template_key=weg_wfr20997` (ou `delpi_8d`) — preenchimento por cópia do template (preserva desenhos/setas WEG)
+- Catálogo de templates: `GET /quality/action-plans/export-templates`
 - Export inclui imagens de evidência na aba `Anexos(Evidencias)` (tipos `image` ou `mime` `image/*`)
 
 ### Status do plano
@@ -241,6 +245,8 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 | V017 | Nome/e-mail do ator em histórico, audit log e evidências |
 | V018 | `customer_code` e `customer_store` (cliente Protheus SA1) no plano |
 | V019 | `member_user_id` na equipe de análise 8D (`quality_analysis_team_members`) |
+| V024 | `export_template_key` no plano (modelo Excel 8D preferido) |
+| V025 | Papéis de contato: `customer_contact_*`, `delpi_contact_*` + `contact_roles` no detalhe |
 
 ### Variáveis — diretório e delegação PAC
 
