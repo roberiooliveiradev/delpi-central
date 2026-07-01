@@ -101,7 +101,7 @@ POST restore(revision_number)
 |------|--------|
 | **1 (atual)** | Restore permitido se plano não excluído (`deleted_at IS NULL`) |
 | **2** | Bloquear restore se `was_ever_completed` ou eficácia aprovada (alinhar à política de exclusão) | ✅ |
-| **2** | `expected_revision_number` opcional nas escritas (concorrência otimista, padrão Auditoria 5S) |
+| **2** | `expected_revision_number` opcional nas escritas (concorrência otimista, padrão Auditoria 5S) | ✅ |
 | **3** | Diff por seção na UI; retenção (ex.: últimas 50 revisões) |
 
 ## Frontend (`quality-action-plans`)
@@ -110,11 +110,13 @@ POST restore(revision_number)
 |------|---------|
 | **1b** | Aba/lista de revisões + botão Restaurar + confirmação | ✅ |
 | **2** | Comparar revisão vs. atual (campos principais + diff expandível) | ✅ parcial |
+| **2** | Enviar `expected_revision_number` em todas as gravações do detalhe do plano | ✅ |
 
 ## Testes obrigatórios
 
 - `test_pac_plan_revision_snapshot_service.py` — build/validate snapshot
 - `test_quality_action_plan_revision_repository.py` — record + restore (mock SQL)
+- `test_pac_plan_revision_lock_service.py` — assert de revisão esperada (409)
 - Regressão: gravação gera `revision_number` incrementado
 
 ## Referências
@@ -139,3 +141,5 @@ POST restore(revision_number)
 | Frontend lista + restore | ✅ fase 1b |
 | Governança `was_ever_completed` no restore | ✅ fase 2 |
 | `current_revision_number` no detalhe do plano | ✅ |
+| `expected_revision_number` nas escritas (API + plugin) | ✅ fase 2 |
+| Testes lock otimista | ✅ |

@@ -223,6 +223,8 @@ Snapshots append-only em `quality_action_plan_revisions`; cada gravação releva
 
 **Restore:** aplica o snapshot da revisão N e cria uma **nova** revisão (`change_scope: restore`); histórico anterior permanece. **Bloqueios:** mesmas regras de governança da exclusão (`was_ever_completed`, eficácia aprovada ou pendente). Evidências no snapshot são só metadados — arquivos no volume não são apagados.
 
+**Concorrência otimista:** rotas de escrita aceitam `expected_revision_number` (body ou query, conforme o verbo). Quando informado e diferente de `current_revision_number`, a API responde **409** com mensagem de conflito. O plugin envia o valor do detalhe do plano em identificação, status, análises, ações, 8D e eficácia. Omitido = sem lock (compatível com clientes antigos).
+
 Doc: `docs/roadmaps/playbook-pac-plan-revisions-jun2026.md`
 
 ### Status do plano
