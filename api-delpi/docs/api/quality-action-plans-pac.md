@@ -172,6 +172,8 @@ Campos opcionais (envie só o que mudou): `title`, `customer_name`, `customer_co
 
 No detalhe (`GET /{plan_id}`), o payload inclui `contact_roles` — visão resolvida dos papéis de contato (cliente vs DELPI) para leitura e export 8D.
 
+**Cabeçalho material/NF (8D):** chaves em `template_payload` — `purchase_order`, `invoice_number`, `invoice_date`, `defective_quantity`, `client_batch`, `batch_quantity`, `disposition`, `rejected_quantity`, `return_by`, `contact_phone`. Gravação via `PUT /{plan_id}/rnc-8d` (`pac_upsert_rnc_8d`), não no PATCH de identificação.
+
 **Status:** altere apenas via `PATCH /{plan_id}/status` — não envie `status` neste PATCH de identificação.
 
 Vínculos com Kaizen ou Auditoria 5S não usam mais colunas em `quality_action_plans` (removidas na migration V016); amarrações futuras devem usar tabelas auxiliares dedicadas.
