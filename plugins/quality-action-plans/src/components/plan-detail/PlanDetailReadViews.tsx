@@ -10,7 +10,7 @@ import {
   branchLabel,
 } from "../../constants/actionPlans";
 import { RNC8D_SHARED_FIELD_LABELS } from "../../constants/rnc8dSharedFields";
-import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { DELPI_CONTACT_AREA_OPTIONS } from "../../utils/contactRoles";
 import type { PlanAction } from "../../types/actionPlan";
 import type { Rnc8dReportPayload, Rnc8dTemplatePayload, TeamMember } from "../../types/rnc8d";
 import { emptyRnc8dPayload } from "../../types/rnc8d";
@@ -256,11 +256,45 @@ export function PlanProblemReadContent({
           <h3 className="pac-subsection-title">Material e nota fiscal</h3>
           <ReadOnlyGrid>
             <ReadOnlyField
-              label="Contato"
+              label="Contato no cliente"
               hint={PAC_HELP_TOOLTIPS.rnc8d.contact}
               value={rnc8dForm.customer_contact}
             />
-            <ReadOnlyField label="Telefone" hint={PAC_HELP_TOOLTIPS.rnc8d.phone} value={payload.contact_phone} />
+            <ReadOnlyField
+              label="E-mail do cliente"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.customerEmail}
+              value={rnc8dForm.customer_contact_email}
+            />
+            <ReadOnlyField
+              label="Telefone do cliente"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.customerPhone}
+              value={rnc8dForm.customer_contact_phone}
+            />
+            <ReadOnlyField
+              label="Contato DELPI"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.delpiContact}
+              value={rnc8dForm.delpi_contact_name}
+            />
+            <ReadOnlyField
+              label="Área DELPI"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.delpiContactArea}
+              value={
+                DELPI_CONTACT_AREA_OPTIONS.find(
+                  (option) => option.value === rnc8dForm.delpi_contact_area,
+                )?.label ?? rnc8dForm.delpi_contact_area
+              }
+            />
+            <ReadOnlyField
+              label="Vendedor DELPI"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.delpiSalesRep}
+              value={rnc8dForm.delpi_sales_rep}
+            />
+            <ReadOnlyField
+              label="Qualidade DELPI"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.delpiQualityContact}
+              value={rnc8dForm.delpi_quality_contact}
+            />
+            <ReadOnlyField label="Telefone DELPI" hint={PAC_HELP_TOOLTIPS.rnc8d.phone} value={payload.contact_phone} />
             <ReadOnlyField
               label="Ordem compra / posição"
               hint={PAC_HELP_TOOLTIPS.rnc8d.purchaseOrder}
@@ -301,16 +335,6 @@ export function PlanProblemReadContent({
               label="Devolver relatório até"
               hint={PAC_HELP_TOOLTIPS.rnc8d.returnBy}
               value={payload.return_by}
-            />
-            <ReadOnlyField
-              label="Atenção para"
-              hint={PAC_HELP_TOOLTIPS.rnc8d.attentionTo}
-              value={payload.attention_to}
-            />
-            <ReadOnlyField
-              label="E-mail"
-              hint={PAC_HELP_TOOLTIPS.rnc8d.attentionEmail}
-              value={payload.attention_email}
             />
           </ReadOnlyGrid>
         </>

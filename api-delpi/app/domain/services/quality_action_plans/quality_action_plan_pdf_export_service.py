@@ -21,6 +21,16 @@ from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import
     SUPPLIER_BY_BRANCH,
     _material_label,
 )
+from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
+    format_delpi_contact_area_label,
+    resolve_customer_contact_email,
+    resolve_customer_contact_name,
+    resolve_customer_contact_phone,
+    resolve_delpi_contact_area,
+    resolve_delpi_contact_phone,
+    resolve_delpi_primary_contact_name,
+    resolve_delpi_quality_contact,
+)
 
 TITLE_COLOR = colors.HexColor("#013866")
 LINE_COLOR = colors.HexColor("#E2E8F0")
@@ -532,10 +542,24 @@ def build_rnc_8d_pdf(detail: dict[str, Any]) -> bytes:
         ("Nota fiscal", _text(payload.get("invoice_number"))),
         ("Quantidade defeituosa", _text(payload.get("defective_quantity"))),
         ("Cliente final", _text(plan.get("customer_name") if classification.get("end_customer") else None)),
-        ("Contato", _text(plan.get("customer_contact"))),
+        ("Contato no cliente", _text(resolve_customer_contact_name(plan))),
+        ("E-mail do cliente", _text(resolve_customer_contact_email(plan))),
+        ("Telefone do cliente", _text(resolve_customer_contact_phone(plan))),
+        (
+            "Contato DELPI",
+            _text(resolve_delpi_primary_contact_name(plan)),
+        ),
+        (
+            "Área DELPI",
+            _text(format_delpi_contact_area_label(resolve_delpi_contact_area(plan))),
+        ),
+        ("Vendedor DELPI", _text(plan.get("delpi_sales_rep"))),
+        ("Qualidade DELPI", _text(resolve_delpi_quality_contact(plan))),
+        ("Telefone DELPI", _text(resolve_delpi_contact_phone(plan))),
         ("Lote cliente", _text(payload.get("client_batch"))),
         ("Lote interno", _text(plan.get("batch_number"))),
         ("Disposição", _text(payload.get("disposition"))),
+        ("Devolver relatório até", _format_date(payload.get("return_by"))),
     ]
     _append_section(story, "D1 — Identificação", [_kv_table(identification_rows)])
 

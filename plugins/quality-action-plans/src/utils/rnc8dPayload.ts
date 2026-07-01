@@ -1,5 +1,6 @@
 import type { Rnc8dReportPayload, TeamMember } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
+import { syncLegacyAttentionFields } from "./contactRoles";
 import type { Rnc8dSharedIdentification } from "../constants/rnc8dSharedFields";
 
 function normalizedTeamMembers(members: TeamMember[] | undefined): TeamMember[] | undefined {
@@ -22,7 +23,7 @@ function normalizedTeamMembers(members: TeamMember[] | undefined): TeamMember[] 
 /** Remove equipe vazia antes do PUT /rnc-8d (evita 422 por member_name min_length). */
 export function sanitizeRnc8dReportPayload(payload: Rnc8dReportPayload): Rnc8dReportPayload {
   const team_members = normalizedTeamMembers(payload.team_members);
-  const rest = { ...payload };
+  const rest = syncLegacyAttentionFields({ ...payload });
   delete rest.team_members;
 
   if (team_members) {

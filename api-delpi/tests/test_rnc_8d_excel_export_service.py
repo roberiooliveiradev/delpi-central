@@ -109,6 +109,29 @@ def test_build_rnc_8d_workbook_writes_why_answers_only():
 
 
 @pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
+def test_build_rnc_8d_workbook_maps_customer_and_delpi_contacts_to_weg_cells():
+    detail = {
+        "plan": {
+            "branch_code": "01",
+            "customer_contact": "Igor Sfalsin Zamperlini",
+            "customer_contact_email": "wmo-rnc@weg.net",
+            "delpi_contact_name": "Laercio Koch",
+            "template_payload": {"contact_phone": "47 3370 5502"},
+        },
+        "team_members": [],
+        "actions": [],
+    }
+    content = build_rnc_8d_workbook(detail, template_key="weg_wfr20997")
+    from openpyxl import load_workbook
+
+    ws = load_workbook(io.BytesIO(content), data_only=True)["R8D"]
+    assert ws["J5"].value == "Laercio Koch"
+    assert ws["J6"].value == "47 3370 5502"
+    assert ws["G21"].value == "Igor Sfalsin Zamperlini"
+    assert ws["J21"].value == "wmo-rnc@weg.net"
+
+
+@pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
 def test_build_rnc_8d_workbook_formats_dates_as_brazilian_text():
     detail = {
         "plan": {

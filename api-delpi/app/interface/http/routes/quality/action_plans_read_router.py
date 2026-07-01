@@ -46,6 +46,9 @@ from app.application.use_cases.quality_action_plans.quality_action_plans_use_cas
     CreateQualityActionPlanRequest,
     UpdateQualityActionPlanRequest,
 )
+from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
+    pick_plan_contact_fields,
+)
 from app.composition.quality_action_plans_composer import (
     build_approve_effectiveness_review_use_case,
     build_create_plan_actions_use_case,
@@ -122,6 +125,15 @@ class CreateActionPlanBody(_PlanTimestampValidationMixin):
     customer_code: str | None = Field(default=None, max_length=20)
     customer_store: str | None = Field(default=None, max_length=10)
     customer_contact: str | None = Field(default=None, max_length=300)
+    customer_contact_email: str | None = Field(default=None, max_length=300)
+    customer_contact_phone: str | None = Field(default=None, max_length=100)
+    delpi_contact_name: str | None = Field(default=None, max_length=300)
+    delpi_contact_area: str | None = Field(
+        default=None,
+        pattern="^(comercial|qualidade|pcp|engenharia|outro)$",
+    )
+    delpi_sales_rep: str | None = Field(default=None, max_length=300)
+    delpi_quality_contact: str | None = Field(default=None, max_length=300)
     source_type: str | None = Field(
         default=None,
         pattern="^(email|message|spreadsheet|pdf|image|manual_text|system_reference|other)$",
@@ -160,6 +172,15 @@ class UpdateActionPlanBody(_PlanTimestampValidationMixin):
     customer_code: str | None = Field(default=None, max_length=20)
     customer_store: str | None = Field(default=None, max_length=10)
     customer_contact: str | None = Field(default=None, max_length=300)
+    customer_contact_email: str | None = Field(default=None, max_length=300)
+    customer_contact_phone: str | None = Field(default=None, max_length=100)
+    delpi_contact_name: str | None = Field(default=None, max_length=300)
+    delpi_contact_area: str | None = Field(
+        default=None,
+        pattern="^(comercial|qualidade|pcp|engenharia|outro)$",
+    )
+    delpi_sales_rep: str | None = Field(default=None, max_length=300)
+    delpi_quality_contact: str | None = Field(default=None, max_length=300)
     source_type: str | None = Field(
         default=None,
         pattern="^(email|message|spreadsheet|pdf|image|manual_text|system_reference|other)$",
@@ -309,6 +330,15 @@ class Rnc8dReportBody(BaseModel):
     client_nc_registry: str | None = Field(default=None, max_length=100)
     customer_name: str | None = Field(default=None, max_length=300)
     customer_contact: str | None = Field(default=None, max_length=300)
+    customer_contact_email: str | None = Field(default=None, max_length=300)
+    customer_contact_phone: str | None = Field(default=None, max_length=100)
+    delpi_contact_name: str | None = Field(default=None, max_length=300)
+    delpi_contact_area: str | None = Field(
+        default=None,
+        pattern="^(comercial|qualidade|pcp|engenharia|outro)$",
+    )
+    delpi_sales_rep: str | None = Field(default=None, max_length=300)
+    delpi_quality_contact: str | None = Field(default=None, max_length=300)
     product_code: str | None = Field(default=None, max_length=50)
     product_description: str | None = Field(default=None, max_length=500)
     customer_product_reference: str | None = Field(default=None, max_length=100)
@@ -625,6 +655,12 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
                 customer_code=body.customer_code,
                 customer_store=body.customer_store,
                 customer_contact=body.customer_contact,
+                customer_contact_email=body.customer_contact_email,
+                customer_contact_phone=body.customer_contact_phone,
+                delpi_contact_name=body.delpi_contact_name,
+                delpi_contact_area=body.delpi_contact_area,
+                delpi_sales_rep=body.delpi_sales_rep,
+                delpi_quality_contact=body.delpi_quality_contact,
                 source_type=body.source_type,
                 source_reference=body.source_reference,
                 product_code=body.product_code,
@@ -1256,7 +1292,6 @@ def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
                 "customer_template": "rnc_8d",
                 "client_nc_registry": body.client_nc_registry,
                 "customer_name": body.customer_name,
-                "customer_contact": body.customer_contact,
                 "product_code": body.product_code,
                 "product_description": body.product_description,
                 "batch_number": body.batch_number,
@@ -1265,6 +1300,7 @@ def upsert_rnc_8d_report(plan_id: str, body: Rnc8dReportBody = Body(...)):
                 "team_members": [member.model_dump() for member in body.team_members]
                 if body.team_members is not None
                 else None,
+                **pick_plan_contact_fields(body.model_dump()),
             },
             **_actor_write_kwargs(),
         )

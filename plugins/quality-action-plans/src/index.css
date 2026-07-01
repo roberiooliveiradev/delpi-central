@@ -803,6 +803,24 @@
   gap: var(--pac-grid-gap);
 }
 
+.dashboard-quality-action-plans .pac-form-grid__subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pac-text-muted, #64748b);
+}
+
+.dashboard-quality-action-plans .pac-form-grid__subtitle--full {
+  grid-column: 1 / -1;
+  padding-top: 0.25rem;
+}
+
+.dashboard-quality-action-plans .pac-form-grid__subtitle:not(:first-child) {
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--pac-card-border) 70%, transparent);
+}
+
 .dashboard-quality-action-plans .pac-filter-box--full {
   grid-column: 1 / -1;
 }

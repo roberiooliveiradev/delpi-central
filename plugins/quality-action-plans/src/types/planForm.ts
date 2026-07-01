@@ -48,6 +48,12 @@ export type UpdatePlanPayload = {
   customer_code?: string;
   customer_store?: string;
   customer_contact?: string;
+  customer_contact_email?: string;
+  customer_contact_phone?: string;
+  delpi_contact_name?: string;
+  delpi_contact_area?: string;
+  delpi_sales_rep?: string;
+  delpi_quality_contact?: string;
   product_code?: string;
   product_description?: string;
   batch_number?: string;

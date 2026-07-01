@@ -12,6 +12,15 @@ from app.domain.services.quality_action_plans.action_responsibles_service import
     format_responsible_display_name,
     responsibles_from_legacy_action,
 )
+from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
+    resolve_customer_contact_email,
+    resolve_customer_contact_name,
+    resolve_delpi_contact_area,
+    resolve_delpi_contact_phone,
+    resolve_delpi_primary_contact_name,
+    resolve_delpi_quality_contact,
+    format_delpi_contact_area_label,
+)
 from app.domain.services.quality_action_plans.five_whys_service import format_why_step_answer_cell
 from app.domain.services.quality_action_plans.rnc_8d_export_template_service import (
     resolve_export_template_key_for_plan,
@@ -201,8 +210,8 @@ def build_weg_wfr20997_cell_values(
     put_date("E10", payload.get("invoice_date"))
     put("E11", payload.get("defective_quantity"))
     put("E12", payload.get("return_invoice_number"))
-    put("J5", plan.get("customer_contact"))
-    put("J6", payload.get("contact_phone"))
+    put("J5", resolve_delpi_primary_contact_name(plan))
+    put("J6", resolve_delpi_contact_phone(plan))
     put("J7", payload.get("contact_fax"))
     put("J8", payload.get("client_batch"))
     put("J9", plan.get("batch_number"))
@@ -220,8 +229,8 @@ def build_weg_wfr20997_cell_values(
     put("C18", nc.get("observations") or payload.get("observations"))
 
     put_date("D21", payload.get("return_by"))
-    put("G21", payload.get("attention_to"))
-    put("J21", payload.get("attention_email"))
+    put("G21", resolve_customer_contact_name(plan))
+    put("J21", resolve_customer_contact_email(plan))
 
     leader = next((member for member in team if member.get("is_leader")), team[0] if team else None)
     members = [member for member in team if not member.get("is_leader")]

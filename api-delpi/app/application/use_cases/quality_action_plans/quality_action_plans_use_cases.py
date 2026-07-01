@@ -65,6 +65,12 @@ class CreateQualityActionPlanRequest:
     customer_code: str | None = None
     customer_store: str | None = None
     customer_contact: str | None = None
+    customer_contact_email: str | None = None
+    customer_contact_phone: str | None = None
+    delpi_contact_name: str | None = None
+    delpi_contact_area: str | None = None
+    delpi_sales_rep: str | None = None
+    delpi_quality_contact: str | None = None
     nonconformity_scope: str | None = None
     source_type: str | None = None
     source_reference: str | None = None
@@ -130,6 +136,12 @@ class CreateQualityActionPlanUseCase:
                 "customer_code": request.customer_code,
                 "customer_store": request.customer_store,
                 "customer_contact": request.customer_contact,
+                "customer_contact_email": request.customer_contact_email,
+                "customer_contact_phone": request.customer_contact_phone,
+                "delpi_contact_name": request.delpi_contact_name,
+                "delpi_contact_area": request.delpi_contact_area,
+                "delpi_sales_rep": request.delpi_sales_rep,
+                "delpi_quality_contact": request.delpi_quality_contact,
                 "nonconformity_scope": nonconformity_scope,
                 "source_type": request.source_type,
                 "source_reference": request.source_reference,
@@ -167,6 +179,12 @@ class UpdateQualityActionPlanRequest:
     customer_code: str | None = None
     customer_store: str | None = None
     customer_contact: str | None = None
+    customer_contact_email: str | None = None
+    customer_contact_phone: str | None = None
+    delpi_contact_name: str | None = None
+    delpi_contact_area: str | None = None
+    delpi_sales_rep: str | None = None
+    delpi_quality_contact: str | None = None
     source_type: str | None = None
     source_reference: str | None = None
     product_code: str | None = None

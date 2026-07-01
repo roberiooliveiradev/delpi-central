@@ -12,6 +12,9 @@ from app.domain.services.quality_action_plans.ishikawa_causes_service import (
     ishikawa_causes_json,
     serialize_ishikawa_row,
 )
+from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
+    merge_attention_fields_into_template_payload,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_serialization import (
     PLAN_SELECT,
     serialize_plan_row,
@@ -1661,7 +1664,9 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         row = self.execute_returning_one(
             """
             INSERT INTO quality.quality_action_plans (
-                code, title, customer_name, customer_code, customer_store, customer_contact, nonconformity_scope,
+                code, title, customer_name, customer_code, customer_store, customer_contact,
+                customer_contact_email, customer_contact_phone, delpi_contact_name, delpi_contact_area,
+                delpi_sales_rep, delpi_quality_contact, nonconformity_scope,
                 customer_template, client_nc_registry, export_template_key,
                 source_type, source_reference,
                 product_code, product_description, customer_product_reference, batch_number, reported_problem,
@@ -1669,7 +1674,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 branch_code, department, problem_category, symptom_tags, root_cause_category,
                 failure_mode, recurrence_key
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             RETURNING id, code, status
@@ -1681,6 +1686,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields.get("customer_code"),
                 fields.get("customer_store"),
                 fields.get("customer_contact"),
+                fields.get("customer_contact_email"),
+                fields.get("customer_contact_phone"),
+                fields.get("delpi_contact_name"),
+                fields.get("delpi_contact_area"),
+                fields.get("delpi_sales_rep"),
+                fields.get("delpi_quality_contact"),
                 fields.get("nonconformity_scope", "external"),
                 fields.get("customer_template", "generic"),
                 fields.get("client_nc_registry"),
@@ -1761,6 +1772,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             "customer_code",
             "customer_store",
             "customer_contact",
+            "customer_contact_email",
+            "customer_contact_phone",
+            "delpi_contact_name",
+            "delpi_contact_area",
+            "delpi_sales_rep",
+            "delpi_quality_contact",
             "nonconformity_scope",
             "source_type",
             "source_reference",
@@ -2953,7 +2970,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if not plan_id:
             return None
 
-        template_payload = fields.get("template_payload") or {}
+        template_payload = merge_attention_fields_into_template_payload(
+            fields.get("template_payload"),
+            customer_contact=fields.get("customer_contact"),
+            customer_contact_email=fields.get("customer_contact_email"),
+            customer_contact_phone=fields.get("customer_contact_phone"),
+        )
         self.execute(
             """
             UPDATE quality.quality_action_plans
@@ -2961,6 +2983,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                    client_nc_registry = COALESCE(%s, client_nc_registry),
                    customer_name = COALESCE(%s, customer_name),
                    customer_contact = COALESCE(%s, customer_contact),
+                   customer_contact_email = COALESCE(%s, customer_contact_email),
+                   customer_contact_phone = COALESCE(%s, customer_contact_phone),
+                   delpi_contact_name = COALESCE(%s, delpi_contact_name),
+                   delpi_contact_area = COALESCE(%s, delpi_contact_area),
+                   delpi_sales_rep = COALESCE(%s, delpi_sales_rep),
+                   delpi_quality_contact = COALESCE(%s, delpi_quality_contact),
                    product_code = COALESCE(%s, product_code),
                    product_description = COALESCE(%s, product_description),
                    batch_number = COALESCE(%s, batch_number),
@@ -2974,6 +3002,12 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
                 fields.get("client_nc_registry"),
                 fields.get("customer_name"),
                 fields.get("customer_contact"),
+                fields.get("customer_contact_email"),
+                fields.get("customer_contact_phone"),
+                fields.get("delpi_contact_name"),
+                fields.get("delpi_contact_area"),
+                fields.get("delpi_sales_rep"),
+                fields.get("delpi_quality_contact"),
                 fields.get("product_code"),
                 fields.get("product_description"),
                 fields.get("batch_number"),

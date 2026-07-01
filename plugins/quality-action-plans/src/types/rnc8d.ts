@@ -60,6 +60,7 @@ export type Rnc8dTemplatePayload = {
   return_by?: string;
   attention_to?: string;
   attention_email?: string;
+  customer_contact_phone?: string;
   nc_description?: Rnc8dNcDescription;
   containment?: Rnc8dContainmentRow[];
   effectiveness?: Rnc8dEffectiveness;
@@ -97,6 +98,12 @@ export type Rnc8dReportPayload = {
   client_nc_registry?: string;
   customer_name?: string;
   customer_contact?: string;
+  customer_contact_email?: string;
+  customer_contact_phone?: string;
+  delpi_contact_name?: string;
+  delpi_contact_area?: string;
+  delpi_sales_rep?: string;
+  delpi_quality_contact?: string;
   product_code?: string;
   product_description?: string;
   batch_number?: string;

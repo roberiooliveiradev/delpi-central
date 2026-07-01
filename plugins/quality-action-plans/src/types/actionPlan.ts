@@ -277,6 +277,23 @@ export type PagedAuditLogResponse = {
 export type ActionPlanDetail = {
   plan: ActionPlanSummary & {
     customer_contact?: string | null;
+    customer_contact_email?: string | null;
+    customer_contact_phone?: string | null;
+    delpi_contact_name?: string | null;
+    delpi_contact_area?: string | null;
+    delpi_sales_rep?: string | null;
+    delpi_quality_contact?: string | null;
+    contact_roles?: {
+      customer_contact?: string | null;
+      customer_contact_email?: string | null;
+      customer_contact_phone?: string | null;
+      delpi_contact_name?: string | null;
+      delpi_contact_area?: string | null;
+      delpi_contact_area_label?: string | null;
+      delpi_sales_rep?: string | null;
+      delpi_quality_contact?: string | null;
+      delpi_contact_phone?: string | null;
+    };
     product_description?: string | null;
     customer_product_reference?: string | null;
     batch_number?: string | null;

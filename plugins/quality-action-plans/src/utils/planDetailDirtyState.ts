@@ -58,9 +58,17 @@ const RNC8D_MATERIAL_PAYLOAD_KEYS = [
   "disposition",
   "rejected_quantity",
   "return_by",
-  "attention_to",
-  "attention_email",
 ] as const satisfies readonly (keyof Rnc8dTemplatePayload)[];
+
+const RNC8D_CONTACT_ROLE_KEYS = [
+  "customer_contact",
+  "customer_contact_email",
+  "customer_contact_phone",
+  "delpi_contact_name",
+  "delpi_contact_area",
+  "delpi_sales_rep",
+  "delpi_quality_contact",
+] as const;
 
 function stableJson(value: unknown): string {
   return JSON.stringify(value);
@@ -80,9 +88,10 @@ function normalizedTeamMembers(members: TeamMember[] | undefined): TeamMember[] 
 
 function pickMaterialSlice(form: Rnc8dReportPayload) {
   const payload = form.template_payload ?? emptyRnc8dPayload();
-  const slice: Record<string, unknown> = {
-    customer_contact: form.customer_contact?.trim() ?? "",
-  };
+  const slice: Record<string, unknown> = {};
+  for (const key of RNC8D_CONTACT_ROLE_KEYS) {
+    slice[key] = form[key] ?? "";
+  }
   for (const key of RNC8D_MATERIAL_PAYLOAD_KEYS) {
     slice[key] = payload[key] ?? "";
   }
@@ -262,7 +271,9 @@ export function revertRnc8dFormSection(
   switch (section) {
     case "rnc8d-material": {
       const next = { ...current, template_payload: nextPayload };
-      next.customer_contact = snapshot.customer_contact ?? "";
+      for (const key of RNC8D_CONTACT_ROLE_KEYS) {
+        (next as Record<string, unknown>)[key] = snapshot[key] ?? "";
+      }
       for (const key of RNC8D_MATERIAL_PAYLOAD_KEYS) {
         (nextPayload as Record<string, unknown>)[key] = snapPayload[key] ?? "";
       }

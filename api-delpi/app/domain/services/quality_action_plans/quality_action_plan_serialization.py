@@ -3,6 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
+    build_contact_roles_view,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_sla_service import (
     enrich_plan_row_sla,
 )
@@ -15,6 +18,12 @@ PLAN_SELECT = """
            p.customer_code,
            p.customer_store,
            p.customer_contact,
+           p.customer_contact_email,
+           p.customer_contact_phone,
+           p.delpi_contact_name,
+           p.delpi_contact_area,
+           p.delpi_sales_rep,
+           p.delpi_quality_contact,
            p.nonconformity_scope,
            p.customer_template,
            p.export_template_key,
@@ -77,4 +86,5 @@ def serialize_plan_row(row: dict[str, Any]) -> dict[str, Any]:
         result["symptom_tags"] = []
     if result.get("template_payload") is None:
         result["template_payload"] = {}
+    result["contact_roles"] = build_contact_roles_view(result)
     return enrich_plan_row_sla(result)

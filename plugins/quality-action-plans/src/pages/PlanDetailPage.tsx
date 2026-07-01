@@ -79,8 +79,8 @@ import type {
   ActionPlanDetail,
   PlanAuditLogEntry,
 } from "../types/actionPlan";
-import type { Rnc8dReportPayload } from "../types/rnc8d";
-import { emptyRnc8dPayload } from "../types/rnc8d";
+import { hydrateContactRolesFromPlan } from "../utils/contactRoles";
+import { emptyRnc8dPayload, type Rnc8dReportPayload } from "../types/rnc8d";
 import { mergeSharedIdentificationIntoRnc8d, sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
 import { formatDateTime } from "../utils/format";
 import {
@@ -222,10 +222,11 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
       setIshikawaNotes(data.ishikawa?.notes ?? "");
       const nextFiveWhysForm = parseFiveWhysForm(data.five_whys);
       setFiveWhysForm(nextFiveWhysForm);
+      const contactRoles = hydrateContactRolesFromPlan(data.plan);
       const nextRnc8dForm: Rnc8dReportPayload = {
         client_nc_registry: data.plan.client_nc_registry ?? "",
         customer_name: data.plan.customer_name ?? "",
-        customer_contact: data.plan.customer_contact ?? "",
+        ...contactRoles,
         product_code: data.plan.product_code ?? "",
         product_description: data.plan.product_description ?? "",
         batch_number: data.plan.batch_number ?? "",

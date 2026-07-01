@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 
 import type { PlanAction } from "../../types/actionPlan";
+import { DELPI_CONTACT_AREA_OPTIONS } from "../../utils/contactRoles";
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { PlanSectionEditBindings } from "../../hooks/usePlanSectionEdit";
 import { useDragReorder } from "../../hooks/useDragReorder";
@@ -156,16 +157,74 @@ export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
 
   return (
     <div className="pac-form-grid">
+      <h4 className="pac-form-grid__subtitle pac-form-grid__subtitle--full">Contato no cliente</h4>
       <TextField
-        id="rnc-contact"
-        label="Contato"
+        id="rnc-customer-contact"
+        label="Contato no cliente"
         hint={PAC_HELP_TOOLTIPS.rnc8d.contact}
         value={value.customer_contact ?? ""}
         onChange={(customer_contact) => onChange({ ...value, customer_contact })}
       />
       <TextField
+        id="rnc-customer-email"
+        label="E-mail do cliente"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.customerEmail}
+        value={value.customer_contact_email ?? ""}
+        onChange={(customer_contact_email) => onChange({ ...value, customer_contact_email })}
+      />
+      <TextField
+        id="rnc-customer-phone"
+        label="Telefone do cliente"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.customerPhone}
+        value={value.customer_contact_phone ?? ""}
+        onChange={(customer_contact_phone) => onChange({ ...value, customer_contact_phone })}
+      />
+
+      <h4 className="pac-form-grid__subtitle pac-form-grid__subtitle--full">Interlocutores DELPI</h4>
+      <TextField
+        id="rnc-delpi-contact"
+        label="Contato DELPI"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.delpiContact}
+        value={value.delpi_contact_name ?? ""}
+        onChange={(delpi_contact_name) => onChange({ ...value, delpi_contact_name })}
+      />
+      <label className="pac-field">
+        <span className="pac-field__label">
+          Área DELPI
+          <HelpTooltip text={PAC_HELP_TOOLTIPS.rnc8d.delpiContactArea} />
+        </span>
+        <select
+          className="pac-field__input"
+          value={value.delpi_contact_area ?? ""}
+          onChange={(event) =>
+            onChange({ ...value, delpi_contact_area: event.target.value || undefined })
+          }
+        >
+          <option value="">Selecione…</option>
+          {DELPI_CONTACT_AREA_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <TextField
+        id="rnc-delpi-sales-rep"
+        label="Vendedor DELPI"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.delpiSalesRep}
+        value={value.delpi_sales_rep ?? ""}
+        onChange={(delpi_sales_rep) => onChange({ ...value, delpi_sales_rep })}
+      />
+      <TextField
+        id="rnc-delpi-quality-contact"
+        label="Qualidade DELPI"
+        hint={PAC_HELP_TOOLTIPS.rnc8d.delpiQualityContact}
+        value={value.delpi_quality_contact ?? ""}
+        onChange={(delpi_quality_contact) => onChange({ ...value, delpi_quality_contact })}
+      />
+      <TextField
         id="rnc-phone"
-        label="Telefone"
+        label="Telefone DELPI"
         hint={PAC_HELP_TOOLTIPS.rnc8d.phone}
         value={payload.contact_phone ?? ""}
         onChange={(contact_phone) => onChange(updatePayload(value, { contact_phone }))}
@@ -234,20 +293,6 @@ export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
         type="date"
         value={payload.return_by ?? ""}
         onChange={(return_by) => onChange(updatePayload(value, { return_by }))}
-      />
-      <TextField
-        id="rnc-attention"
-        label="Atenção para"
-        hint={PAC_HELP_TOOLTIPS.rnc8d.attentionTo}
-        value={payload.attention_to ?? ""}
-        onChange={(attention_to) => onChange(updatePayload(value, { attention_to }))}
-      />
-      <TextField
-        id="rnc-email"
-        label="E-mail"
-        hint={PAC_HELP_TOOLTIPS.rnc8d.attentionEmail}
-        value={payload.attention_email ?? ""}
-        onChange={(attention_email) => onChange(updatePayload(value, { attention_email }))}
       />
     </div>
   );
