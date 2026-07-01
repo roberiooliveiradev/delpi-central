@@ -58,7 +58,9 @@ export function EvidencePreviewContent({ planId, evidence }: Props) {
         if (mode === "spreadsheet") {
           const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
           if (cancelled) return;
-          const data = await parseSpreadsheetPreview(blob);
+          const data = await parseSpreadsheetPreview(blob, {
+            fileName: evidence.file_name ?? undefined,
+          });
           if (cancelled) return;
           setSpreadsheetData(data);
           return;

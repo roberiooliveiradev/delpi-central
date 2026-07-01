@@ -48,7 +48,7 @@ export function EvidenceLocalPreviewContent({ file }: Props) {
         }
 
         if (mode === "spreadsheet") {
-          const data = await parseSpreadsheetPreview(file);
+          const data = await parseSpreadsheetPreview(file, { fileName: file.name });
           if (cancelled) return;
           setSpreadsheetData(data);
           return;

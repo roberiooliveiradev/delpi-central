@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@originjs/vite-plugin-federation": "^1.4.1",
+    "exceljs": "^4.4.0",
     "lucide-react": "^0.576.0",
     "mammoth": "^1.12.0",
     "react": "^19.2.0",

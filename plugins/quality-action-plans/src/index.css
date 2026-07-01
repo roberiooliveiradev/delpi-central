@@ -3651,9 +3651,13 @@
   min-width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-family: "Segoe UI", Calibri, Arial, sans-serif;
-  font-size: 11px;
+  font-family: Calibri, "Segoe UI", Arial, sans-serif;
+  font-size: 11pt;
   line-height: 1.2;
+}
+
+.pac-spreadsheet-preview__corner-col {
+  width: 42px;
 }
 
 .pac-spreadsheet-preview__corner,
@@ -3695,18 +3699,19 @@
 }
 
 .pac-spreadsheet-preview__cell {
-  min-width: 88px;
+  min-width: 48px;
   width: 88px;
-  max-width: 280px;
-  height: 21px;
-  padding: 2px 6px;
+  max-width: 420px;
+  min-height: 21px;
+  padding: 1px 4px;
   border: 1px solid var(--pac-sheet-grid);
   background: var(--pac-sheet-bg);
   color: var(--pac-sheet-cell-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  vertical-align: middle;
+  vertical-align: bottom;
+  box-sizing: border-box;
 }
 
 .pac-spreadsheet-preview__tabs {
