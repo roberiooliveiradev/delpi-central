@@ -11,6 +11,7 @@ import {
 } from "../../constants/actionPlans";
 import { RNC8D_SHARED_FIELD_LABELS } from "../../constants/rnc8dSharedFields";
 import { DELPI_CONTACT_AREA_OPTIONS } from "../../utils/contactRoles";
+import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { PlanAction } from "../../types/actionPlan";
 import type { Rnc8dReportPayload, Rnc8dTemplatePayload, TeamMember } from "../../types/rnc8d";
 import { emptyRnc8dPayload } from "../../types/rnc8d";

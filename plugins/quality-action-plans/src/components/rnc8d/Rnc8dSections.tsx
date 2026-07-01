@@ -191,7 +191,7 @@ export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
       <label className="pac-field">
         <span className="pac-field__label">
           Área DELPI
-          <HelpTooltip text={PAC_HELP_TOOLTIPS.rnc8d.delpiContactArea} />
+          <HelpTooltip content={PAC_HELP_TOOLTIPS.rnc8d.delpiContactArea} />
         </span>
         <select
           className="pac-field__input"
