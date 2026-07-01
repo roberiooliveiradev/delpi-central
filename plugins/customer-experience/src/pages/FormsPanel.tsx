@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Copy,
   FileText,
+  GripVertical,
   Plus,
   Power,
   QrCode,
@@ -353,19 +354,30 @@ function FormEditor({
   const [questions, setQuestions] = useState<FormQuestion[]>(form.questions);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Índice sendo arrastado (habilita `draggable` só ao segurar a alça, para não
+  // atrapalhar a seleção de texto nos inputs) e o índice sob o cursor.
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
 
   const update = (index: number, patch: Partial<FormQuestion>) => {
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, ...patch } : q)));
   };
 
-  const move = (index: number, delta: number) => {
+  const reorder = (from: number, to: number) => {
     setQuestions((prev) => {
+      if (to < 0 || to >= prev.length || from === to) return prev;
       const next = [...prev];
-      const target = index + delta;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
       return next;
     });
+  };
+
+  const move = (index: number, delta: number) => reorder(index, index + delta);
+
+  const resetDrag = () => {
+    setDragIndex(null);
+    setOverIndex(null);
   };
 
   const addQuestion = () => setQuestions((prev) => [...prev, blankQuestion()]);
@@ -447,8 +459,37 @@ function FormEditor({
 
       <div className="cx-question-list">
         {questions.map((q, index) => (
-          <section className="cx-card cx-question" key={index}>
+          <section
+            className={`cx-card cx-question${dragIndex === index ? " is-dragging" : ""}${
+              overIndex === index && dragIndex !== null && dragIndex !== index ? " is-over" : ""
+            }`}
+            key={index}
+            draggable={dragIndex === index}
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+            }}
+            onDragOver={(e) => {
+              if (dragIndex === null) return;
+              e.preventDefault();
+              if (overIndex !== index) setOverIndex(index);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragIndex !== null) reorder(dragIndex, index);
+              resetDrag();
+            }}
+            onDragEnd={resetDrag}
+          >
             <div className="cx-question__head">
+              <span
+                className="cx-drag"
+                title="Arraste para reordenar"
+                aria-label="Arraste para reordenar a pergunta"
+                onMouseDown={() => setDragIndex(index)}
+                onMouseUp={resetDrag}
+              >
+                <GripVertical size={16} />
+              </span>
               <span className="cx-question__num">{index + 1}</span>
               <select
                 className="cx-select"
@@ -462,10 +503,22 @@ function FormEditor({
                 ))}
               </select>
               <div className="cx-question__move">
-                <button className="cx-icon-btn" type="button" onClick={() => move(index, -1)} title="Mover para cima">
+                <button
+                  className="cx-icon-btn"
+                  type="button"
+                  onClick={() => move(index, -1)}
+                  disabled={index === 0}
+                  title="Mover para cima"
+                >
                   <ChevronUp size={16} />
                 </button>
-                <button className="cx-icon-btn" type="button" onClick={() => move(index, 1)} title="Mover para baixo">
+                <button
+                  className="cx-icon-btn"
+                  type="button"
+                  onClick={() => move(index, 1)}
+                  disabled={index === questions.length - 1}
+                  title="Mover para baixo"
+                >
                   <ChevronDown size={16} />
                 </button>
                 <button className="cx-icon-btn cx-icon-btn--danger" type="button" onClick={() => removeQuestion(index)} title="Remover">
@@ -529,7 +582,7 @@ function FormEditor({
                 checked={q.required}
                 onChange={(e) => update(index, { required: e.target.checked })}
               />
-              Resposta obrigatória
+              <span>Resposta obrigatória</span>
             </label>
           </section>
         ))}

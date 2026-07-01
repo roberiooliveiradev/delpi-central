@@ -463,11 +463,48 @@
   gap: 14px;
 }
 
+.cx-question {
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.cx-question.is-dragging {
+  opacity: 0.55;
+}
+
+.cx-question.is-over {
+  box-shadow: 0 0 0 2px var(--cx-accent);
+}
+
 .cx-question__head {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.cx-drag {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--cx-muted);
+  cursor: grab;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.cx-drag:hover {
+  color: var(--cx-text);
+  background: color-mix(in srgb, var(--cx-text) 8%, transparent);
+}
+
+.cx-drag:active {
+  cursor: grabbing;
+}
+
+.cx-drag svg {
+  display: block;
 }
 
 .cx-question__num {
@@ -504,18 +541,30 @@
   place-items: center;
   width: 32px;
   height: 32px;
+  padding: 0;
   border-radius: 8px;
   border: 1px solid var(--cx-border);
   background: transparent;
   color: var(--cx-muted);
   cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.cx-icon-btn:hover {
+.cx-icon-btn svg {
+  display: block;
+}
+
+.cx-icon-btn:hover:not(:disabled) {
   color: var(--cx-text);
 }
 
-.cx-icon-btn--danger:hover {
+.cx-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cx-icon-btn--danger:hover:not(:disabled) {
   color: var(--danger, #f04438);
   border-color: color-mix(in srgb, var(--danger, #f04438) 40%, transparent);
 }
@@ -543,19 +592,42 @@
   color: var(--cx-text);
 }
 
-.cx-check {
+/* Escopo em .cx-editor para vencer estilos globais de `label` do portal host
+   (que centralizavam e quebravam o texto do checkbox). */
+.cx-editor .cx-check {
   display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--cx-border);
+  border-radius: 10px;
   font-size: 14px;
+  font-weight: 500;
   color: var(--cx-text);
+  text-align: left;
   cursor: pointer;
 }
 
-.cx-check input {
+.cx-editor .cx-check:hover {
+  border-color: color-mix(in srgb, var(--cx-accent) 45%, var(--cx-border));
+}
+
+.cx-editor .cx-check input {
   width: 16px;
   height: 16px;
+  margin: 0;
+  flex-shrink: 0;
   accent-color: var(--cx-accent);
+  cursor: pointer;
+}
+
+.cx-editor .cx-check span {
+  white-space: nowrap;
 }
 
 .cx-button--dashed {
