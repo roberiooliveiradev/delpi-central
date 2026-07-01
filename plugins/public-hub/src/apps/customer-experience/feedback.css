@@ -1,0 +1,214 @@
+/* View de feedback (customer-experience). Palco/fundo é transversal (pub-stage). */
+
+.cxfb {
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  color: #eaf2f8;
+}
+
+.cxfb-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--pub-accent);
+  margin-bottom: 14px;
+}
+
+.cxfb-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.5rem, 5.2vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+}
+
+.cxfb-subtitle {
+  margin: 0 auto 22px;
+  max-width: 400px;
+  font-size: clamp(0.95rem, 2.6vw, 1.05rem);
+  line-height: 1.55;
+  color: #b9cad8;
+}
+
+.cxfb-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  padding: 24px 22px;
+  text-align: left;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+.cxfb-field {
+  display: block;
+  border: 0;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.cxfb-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.cxfb-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #cddae6;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+/* Estrelas */
+.cxfb-stars {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.cxfb-star {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: clamp(2rem, 9vw, 2.6rem);
+  line-height: 1;
+  padding: 2px 4px;
+  color: rgba(255, 255, 255, 0.22);
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.cxfb-star:hover,
+.cxfb-star:focus-visible {
+  transform: scale(1.12);
+  outline: none;
+}
+
+.cxfb-star.is-on {
+  color: #ffce4d;
+  text-shadow: 0 4px 14px rgba(255, 206, 77, 0.45);
+}
+
+.cxfb-rating-label {
+  display: block;
+  text-align: center;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pub-accent);
+  min-height: 18px;
+}
+
+.cxfb-textarea {
+  width: 100%;
+  resize: vertical;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(9, 20, 30, 0.55);
+  color: #eef4f9;
+  font: inherit;
+  font-size: 15px;
+  padding: 12px 14px;
+  min-height: 74px;
+}
+
+.cxfb-textarea::placeholder {
+  color: #7e93a5;
+}
+
+.cxfb-textarea:focus {
+  outline: none;
+  border-color: var(--pub-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pub-accent) 25%, transparent);
+}
+
+.cxfb-error {
+  margin: 16px 0 0;
+  color: #ff9d9d;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.cxfb-submit {
+  width: 100%;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #05263a;
+  cursor: pointer;
+  background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
+  box-shadow: 0 14px 30px rgba(8, 155, 219, 0.4);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.cxfb-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.cxfb-submit:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* Estado de mensagem (sucesso / já respondido) */
+.cxfb--message {
+  animation: cxfb-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cxfb-check {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 38px;
+  font-weight: 800;
+  color: #05263a;
+  background: linear-gradient(140deg, #ffffff, #d9f2fb);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+}
+
+.cxfb-signature {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--pub-accent);
+}
+
+.cxfb-signature__line {
+  width: 36px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--pub-accent));
+}
+
+@keyframes cxfb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cxfb--message {
+    animation: none;
+  }
+  .cxfb-star {
+    transition: none;
+  }
+}

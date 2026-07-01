@@ -1,0 +1,13 @@
+fastapi
+pydantic
+uvicorn[standard]
+python-multipart
+python-dotenv
+PyJWT
+psycopg[binary]
+python-jose[cryptography]
+httpx
+qrcode[pil]
+pillow
+pytest
+requests

@@ -219,6 +219,33 @@ Anexos enviados **antes** deste volume precisam ser **reenviados** (não há bac
 
 ---
 
+## Foto do visitante e QR (customer-experience-api)
+
+Fotos dos participantes e imagens de QR do plugin **customer-experience** ficam no filesystem do container `customer-experience-api`, paths padrão `/app/data/customer-experience/photos` e `/app/data/customer-experience/qr`.
+
+**Sem volume no host**, `docker compose up -d --force-recreate customer-experience-api` apaga os binários — o Postgres (schema `customer_experience`) mantém o registro e a página pública de agradecimento não exibe a foto.
+
+| Variável | Default no container | Host (volume) |
+|----------|----------------------|---------------|
+| `CUSTOMER_EXPERIENCE_PHOTO_UPLOAD_DIR` | `/app/data/customer-experience/photos` | `${DELPI_DATA_HOST_DIR}/customer-experience/photos` |
+| `CUSTOMER_EXPERIENCE_QR_DIR` | `/app/data/customer-experience/qr` | `${DELPI_DATA_HOST_DIR}/customer-experience/qr` |
+
+```bash
+# srv-api (produção)
+sudo mkdir -p /var/lib/delpi/customer-experience/photos /var/lib/delpi/customer-experience/qr
+# em infra/.env: DELPI_DATA_HOST_DIR=/var/lib/delpi
+
+cd ~/projetos/delpi-central/infra
+docker compose -f docker-compose.yml up -d --force-recreate customer-experience-api
+docker exec delpi-customer-experience-api ls -la /app/data/customer-experience/photos
+```
+
+A página pública de agradecimento é servida **fora do portal** (sem login) pelo **shell público genérico** `public-hub` (container `delpi-public-hub`), com dados vindos do endpoint público `GET /apps/customer-experience-api/public/participants/{token}`.
+
+O `public-hub` é o **irmão público do portal**: um único SPA estático que roteia páginas públicas de vários apps por `/p/{app}/{page}/{token}` (canônico). O QR atual usa o alias legado `/welcome/{token}` → `customer-experience/thanks`, mantido no gateway e no nginx do container para não quebrar códigos já impressos. Novos apps públicos registram suas views em `plugins/public-hub/src/apps/<app>/` + `src/shell/registry.ts`, sem criar um novo container por app.
+
+---
+
 ## Produção CPU (srv-api, 4 vCPU · ~15 GB)
 
 Perfil enxuto: **`infra/.env.prod.cpu.example`** — só tuning do host e overrides `false` (router, agentic, semantic rank, colunas R16, LanguageTool). O restante vem do default do `docker-compose.yml` prod.

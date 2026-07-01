@@ -678,6 +678,36 @@ services:
     networks:
       - delpi-network
 
+  customer-experience:
+    build:
+      context: ../plugins/customer-experience
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-customer-experience
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+  public-hub:
+    build:
+      context: ../plugins/public-hub
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-public-hub
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   inspecoes-entrada:
     build:
       context: ../plugins/inspecoes-entrada
@@ -1071,6 +1101,68 @@ services:
         condition: service_started
       api-delpi:
         condition: service_healthy
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  customer-experience-api:
+    build:
+      context: ..
+      dockerfile: customer-experience-api/Dockerfile
+
+    container_name: delpi-customer-experience-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      CX_API_ROOT_PATH: /apps/customer-experience-api
+      CX_RUN_MIGRATIONS_ON_STARTUP: ${CX_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      CX_PUBLIC_WELCOME_PATH: /welcome
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      CUSTOMER_EXPERIENCE_PHOTO_UPLOAD_DIR: /app/data/customer-experience/photos
+      CUSTOMER_EXPERIENCE_QR_DIR: /app/data/customer-experience/qr
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      core-api:
+        condition: service_started
+
+    volumes:
+      # Foto do visitante e QR — persistir fora do container (sobrevive a deploy)
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/customer-experience/photos:/app/data/customer-experience/photos
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/customer-experience/qr:/app/data/customer-experience/qr
 
     logging:
       driver: "json-file"
