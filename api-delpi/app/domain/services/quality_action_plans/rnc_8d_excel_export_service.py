@@ -22,6 +22,9 @@ from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_
     format_delpi_contact_area_label,
 )
 from app.domain.services.quality_action_plans.five_whys_service import format_why_step_answer_cell
+from app.domain.services.quality_action_plans.rnc_8d_quantity_field_service import (
+    resolve_quantity_display,
+)
 from app.domain.services.quality_action_plans.rnc_8d_export_template_service import (
     resolve_export_template_key_for_plan,
     resolve_export_template_path,
@@ -208,16 +211,16 @@ def build_weg_wfr20997_cell_values(
     put("E8", payload.get("purchase_order"))
     put("E9", payload.get("invoice_number"))
     put_date("E10", payload.get("invoice_date"))
-    put("E11", payload.get("defective_quantity"))
+    put("E11", resolve_quantity_display(payload, "defective_quantity", "defective_quantity_unit"))
     put("E12", payload.get("return_invoice_number"))
     put("J5", resolve_delpi_primary_contact_name(plan))
     put("J6", resolve_delpi_contact_phone(plan))
     put("J7", payload.get("contact_fax"))
     put("J8", payload.get("client_batch"))
     put("J9", plan.get("batch_number"))
-    put("J10", payload.get("batch_quantity"))
+    put("J10", resolve_quantity_display(payload, "batch_quantity", "batch_quantity_unit"))
     put("J11", payload.get("disposition"))
-    put("J12", payload.get("rejected_quantity"))
+    put("J12", resolve_quantity_display(payload, "rejected_quantity", "rejected_quantity_unit"))
 
     if classification.get("end_customer"):
         put("K3", plan.get("customer_name"))

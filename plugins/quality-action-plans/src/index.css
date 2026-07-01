@@ -821,6 +821,20 @@
   border-top: 1px solid color-mix(in srgb, var(--pac-card-border) 70%, transparent);
 }
 
+.dashboard-quality-action-plans .pac-quantity-unit-field {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.9fr) minmax(8rem, 1.1fr);
+  gap: var(--pac-grid-gap);
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .dashboard-quality-action-plans .pac-quantity-unit-field {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+}
+
 .dashboard-quality-action-plans .pac-filter-box--full {
   grid-column: 1 / -1;
 }

@@ -15,6 +15,9 @@ from app.domain.services.quality_action_plans.ishikawa_causes_service import (
 from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
     merge_attention_fields_into_template_payload,
 )
+from app.domain.services.quality_action_plans.rnc_8d_quantity_field_service import (
+    normalize_template_payload_quantity_fields,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_serialization import (
     PLAN_SELECT,
     serialize_plan_row,
@@ -2970,11 +2973,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         if not plan_id:
             return None
 
-        template_payload = merge_attention_fields_into_template_payload(
-            fields.get("template_payload"),
-            customer_contact=fields.get("customer_contact"),
-            customer_contact_email=fields.get("customer_contact_email"),
-            customer_contact_phone=fields.get("customer_contact_phone"),
+        template_payload = normalize_template_payload_quantity_fields(
+            merge_attention_fields_into_template_payload(
+                fields.get("template_payload"),
+                customer_contact=fields.get("customer_contact"),
+                customer_contact_email=fields.get("customer_contact_email"),
+                customer_contact_phone=fields.get("customer_contact_phone"),
+            )
         )
         self.execute(
             """

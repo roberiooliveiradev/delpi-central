@@ -6,6 +6,9 @@ from typing import Any
 from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
     build_contact_roles_view,
 )
+from app.domain.services.quality_action_plans.rnc_8d_quantity_field_service import (
+    normalize_template_payload_quantity_fields,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_sla_service import (
     enrich_plan_row_sla,
 )
@@ -86,5 +89,9 @@ def serialize_plan_row(row: dict[str, Any]) -> dict[str, Any]:
         result["symptom_tags"] = []
     if result.get("template_payload") is None:
         result["template_payload"] = {}
+    else:
+        result["template_payload"] = normalize_template_payload_quantity_fields(
+            result.get("template_payload")
+        )
     result["contact_roles"] = build_contact_roles_view(result)
     return enrich_plan_row_sla(result)

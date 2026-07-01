@@ -11,6 +11,7 @@ import {
 } from "../../constants/actionPlans";
 import { RNC8D_SHARED_FIELD_LABELS } from "../../constants/rnc8dSharedFields";
 import { DELPI_CONTACT_AREA_OPTIONS } from "../../utils/contactRoles";
+import { quantityInputValue, unitInputValue } from "../../utils/rnc8dQuantityFields";
 import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { PlanAction } from "../../types/actionPlan";
 import type { Rnc8dReportPayload, Rnc8dTemplatePayload, TeamMember } from "../../types/rnc8d";
@@ -310,7 +311,12 @@ export function PlanProblemReadContent({
             <ReadOnlyField
               label="Quantidade defeituosa"
               hint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQty}
-              value={payload.defective_quantity}
+              value={quantityInputValue(payload.defective_quantity)}
+            />
+            <ReadOnlyField
+              label="Unidade (defeituosa)"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQtyUnit}
+              value={unitInputValue(payload.defective_quantity_unit)}
             />
             <ReadOnlyField
               label="Lote do cliente"
@@ -320,7 +326,12 @@ export function PlanProblemReadContent({
             <ReadOnlyField
               label="Quantidade lote"
               hint={PAC_HELP_TOOLTIPS.rnc8d.batchQty}
-              value={payload.batch_quantity}
+              value={quantityInputValue(payload.batch_quantity)}
+            />
+            <ReadOnlyField
+              label="Unidade (lote)"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.batchQtyUnit}
+              value={unitInputValue(payload.batch_quantity_unit)}
             />
             <ReadOnlyField
               label="Disposição"
@@ -330,7 +341,12 @@ export function PlanProblemReadContent({
             <ReadOnlyField
               label="Quantidade rejeitada"
               hint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQty}
-              value={payload.rejected_quantity}
+              value={quantityInputValue(payload.rejected_quantity)}
+            />
+            <ReadOnlyField
+              label="Unidade (rejeitada)"
+              hint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQtyUnit}
+              value={unitInputValue(payload.rejected_quantity_unit)}
             />
             <ReadOnlyField
               label="Devolver relatório até"

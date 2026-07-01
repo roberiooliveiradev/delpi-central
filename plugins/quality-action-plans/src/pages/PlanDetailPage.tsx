@@ -81,6 +81,7 @@ import type {
 } from "../types/actionPlan";
 import { hydrateContactRolesFromPlan } from "../utils/contactRoles";
 import { emptyRnc8dPayload, type Rnc8dReportPayload } from "../types/rnc8d";
+import { normalizeRnc8dQuantityFields } from "../utils/rnc8dQuantityFields";
 import { mergeSharedIdentificationIntoRnc8d, sanitizeRnc8dReportPayload } from "../utils/rnc8dPayload";
 import { formatDateTime } from "../utils/format";
 import {
@@ -231,10 +232,10 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         product_description: data.plan.product_description ?? "",
         batch_number: data.plan.batch_number ?? "",
         reported_problem: data.plan.reported_problem ?? "",
-        template_payload: {
+        template_payload: normalizeRnc8dQuantityFields({
           ...emptyRnc8dPayload(),
           ...(data.plan.template_payload ?? {}),
-        },
+        }),
         team_members: data.team_members?.length
           ? data.team_members
           : [{ member_name: "", department: "", is_leader: true }],

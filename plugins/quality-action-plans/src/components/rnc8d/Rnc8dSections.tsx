@@ -31,6 +31,12 @@ import { SectionCard } from "../ui/SectionCard";
 import { TableMemberSelect } from "../ui/TableMemberSelect";
 import { TextAreaField } from "../ui/TextAreaField";
 import { TextField } from "../ui/TextField";
+import { Rnc8dQuantityUnitField } from "./Rnc8dQuantityUnitField";
+import {
+  parseQuantityValue,
+  quantityInputValue,
+  unitInputValue,
+} from "../../utils/rnc8dQuantityFields";
 
 export type Rnc8dSectionsProps = {
   value: Rnc8dReportPayload;
@@ -251,12 +257,27 @@ export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
         value={payload.invoice_date ?? ""}
         onChange={(invoice_date) => onChange(updatePayload(value, { invoice_date }))}
       />
-      <TextField
-        id="rnc-defective-qty"
-        label="Quantidade defeituosa"
-        hint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQty}
-        value={payload.defective_quantity ?? ""}
-        onChange={(defective_quantity) => onChange(updatePayload(value, { defective_quantity }))}
+      <Rnc8dQuantityUnitField
+        quantityId="rnc-defective-qty"
+        unitId="rnc-defective-qty-unit"
+        quantityLabel="Quantidade defeituosa"
+        unitLabel="Unidade"
+        quantityHint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQty}
+        unitHint={PAC_HELP_TOOLTIPS.rnc8d.defectiveQtyUnit}
+        quantityValue={quantityInputValue(payload.defective_quantity)}
+        unitValue={unitInputValue(payload.defective_quantity_unit)}
+        onQuantityChange={(raw) => {
+          const quantity = parseQuantityValue(raw);
+          onChange(
+            updatePayload(value, {
+              defective_quantity: quantity,
+              defective_quantity_unit: payload.defective_quantity_unit,
+            }),
+          );
+        }}
+        onUnitChange={(defective_quantity_unit) =>
+          onChange(updatePayload(value, { defective_quantity_unit: defective_quantity_unit || undefined }))
+        }
       />
       <TextField
         id="rnc-client-batch"
@@ -265,12 +286,27 @@ export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
         value={payload.client_batch ?? ""}
         onChange={(client_batch) => onChange(updatePayload(value, { client_batch }))}
       />
-      <TextField
-        id="rnc-batch-qty"
-        label="Quantidade lote"
-        hint={PAC_HELP_TOOLTIPS.rnc8d.batchQty}
-        value={payload.batch_quantity ?? ""}
-        onChange={(batch_quantity) => onChange(updatePayload(value, { batch_quantity }))}
+      <Rnc8dQuantityUnitField
+        quantityId="rnc-batch-qty"
+        unitId="rnc-batch-qty-unit"
+        quantityLabel="Quantidade lote"
+        unitLabel="Unidade"
+        quantityHint={PAC_HELP_TOOLTIPS.rnc8d.batchQty}
+        unitHint={PAC_HELP_TOOLTIPS.rnc8d.batchQtyUnit}
+        quantityValue={quantityInputValue(payload.batch_quantity)}
+        unitValue={unitInputValue(payload.batch_quantity_unit)}
+        onQuantityChange={(raw) => {
+          const quantity = parseQuantityValue(raw);
+          onChange(
+            updatePayload(value, {
+              batch_quantity: quantity,
+              batch_quantity_unit: payload.batch_quantity_unit,
+            }),
+          );
+        }}
+        onUnitChange={(batch_quantity_unit) =>
+          onChange(updatePayload(value, { batch_quantity_unit: batch_quantity_unit || undefined }))
+        }
       />
       <TextField
         id="rnc-disposition"
@@ -279,12 +315,27 @@ export function Rnc8dHeaderFields({ value, onChange }: Rnc8dSectionsProps) {
         value={payload.disposition ?? ""}
         onChange={(disposition) => onChange(updatePayload(value, { disposition }))}
       />
-      <TextField
-        id="rnc-rejected-qty"
-        label="Quantidade rejeitada"
-        hint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQty}
-        value={payload.rejected_quantity ?? ""}
-        onChange={(rejected_quantity) => onChange(updatePayload(value, { rejected_quantity }))}
+      <Rnc8dQuantityUnitField
+        quantityId="rnc-rejected-qty"
+        unitId="rnc-rejected-qty-unit"
+        quantityLabel="Quantidade rejeitada"
+        unitLabel="Unidade"
+        quantityHint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQty}
+        unitHint={PAC_HELP_TOOLTIPS.rnc8d.rejectedQtyUnit}
+        quantityValue={quantityInputValue(payload.rejected_quantity)}
+        unitValue={unitInputValue(payload.rejected_quantity_unit)}
+        onQuantityChange={(raw) => {
+          const quantity = parseQuantityValue(raw);
+          onChange(
+            updatePayload(value, {
+              rejected_quantity: quantity,
+              rejected_quantity_unit: payload.rejected_quantity_unit,
+            }),
+          );
+        }}
+        onUnitChange={(rejected_quantity_unit) =>
+          onChange(updatePayload(value, { rejected_quantity_unit: rejected_quantity_unit || undefined }))
+        }
       />
       <TextField
         id="rnc-return-by"

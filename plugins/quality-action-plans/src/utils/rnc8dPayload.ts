@@ -1,6 +1,7 @@
 import type { Rnc8dReportPayload, TeamMember } from "../types/rnc8d";
 import { emptyRnc8dPayload } from "../types/rnc8d";
 import { syncLegacyAttentionFields } from "./contactRoles";
+import { normalizeRnc8dQuantityFields } from "./rnc8dQuantityFields";
 import type { Rnc8dSharedIdentification } from "../constants/rnc8dSharedFields";
 
 function normalizedTeamMembers(members: TeamMember[] | undefined): TeamMember[] | undefined {
@@ -25,12 +26,15 @@ export function sanitizeRnc8dReportPayload(payload: Rnc8dReportPayload): Rnc8dRe
   const team_members = normalizedTeamMembers(payload.team_members);
   const rest = syncLegacyAttentionFields({ ...payload });
   delete rest.team_members;
+  const template_payload = rest.template_payload
+    ? normalizeRnc8dQuantityFields(rest.template_payload)
+    : rest.template_payload;
 
   if (team_members) {
-    return { ...rest, team_members };
+    return { ...rest, template_payload, team_members };
   }
 
-  return rest;
+  return { ...rest, template_payload };
 }
 
 /** Replica identificação do painel Problema no payload do relatório 8D (export/PDF). */

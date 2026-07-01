@@ -53,10 +53,13 @@ const RNC8D_MATERIAL_PAYLOAD_KEYS = [
   "invoice_number",
   "invoice_date",
   "defective_quantity",
+  "defective_quantity_unit",
   "client_batch",
   "batch_quantity",
+  "batch_quantity_unit",
   "disposition",
   "rejected_quantity",
+  "rejected_quantity_unit",
   "return_by",
 ] as const satisfies readonly (keyof Rnc8dTemplatePayload)[];
 

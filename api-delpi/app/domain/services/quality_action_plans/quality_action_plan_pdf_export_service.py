@@ -21,6 +21,9 @@ from app.domain.services.quality_action_plans.rnc_8d_excel_export_service import
     SUPPLIER_BY_BRANCH,
     _material_label,
 )
+from app.domain.services.quality_action_plans.rnc_8d_quantity_field_service import (
+    resolve_quantity_display,
+)
 from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
     format_delpi_contact_area_label,
     resolve_customer_contact_email,
@@ -540,7 +543,9 @@ def build_rnc_8d_pdf(detail: dict[str, Any]) -> bytes:
         ("Especificação", _text(payload.get("material_specification"))),
         ("Pedido de compra", _text(payload.get("purchase_order"))),
         ("Nota fiscal", _text(payload.get("invoice_number"))),
-        ("Quantidade defeituosa", _text(payload.get("defective_quantity"))),
+        ("Quantidade defeituosa", _text(resolve_quantity_display(payload, "defective_quantity", "defective_quantity_unit"))),
+        ("Quantidade lote", _text(resolve_quantity_display(payload, "batch_quantity", "batch_quantity_unit"))),
+        ("Quantidade rejeitada", _text(resolve_quantity_display(payload, "rejected_quantity", "rejected_quantity_unit"))),
         ("Cliente final", _text(plan.get("customer_name") if classification.get("end_customer") else None)),
         ("Contato no cliente", _text(resolve_customer_contact_name(plan))),
         ("E-mail do cliente", _text(resolve_customer_contact_email(plan))),
