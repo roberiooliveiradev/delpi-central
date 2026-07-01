@@ -113,6 +113,16 @@
   gap: 14px;
 }
 
+.cx-form__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cx-form__actions .cx-button {
+  flex: 1 1 auto;
+}
+
 .cx-field {
   display: flex;
   flex-direction: column;

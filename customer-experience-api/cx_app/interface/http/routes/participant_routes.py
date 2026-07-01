@@ -184,6 +184,36 @@ def deactivate_participant(request: Request, participant_id: str):
     return ok(data, message="Link público desativado.")
 
 
+@router.post("/{participant_id}/activate")
+def activate_participant(request: Request, participant_id: str):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, CX_MANAGE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    try:
+        data = build_participant_service().activate(participant_id)
+    except ParticipantNotFoundError:
+        return fail("Participante não encontrado.", 404)
+    return ok(data, message="Link público reativado.")
+
+
+@router.delete("/{participant_id}")
+def delete_participant(request: Request, participant_id: str):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, CX_MANAGE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    try:
+        build_participant_service().delete(participant_id)
+    except ParticipantNotFoundError:
+        return fail("Participante não encontrado.", 404)
+    return ok(None, message="Participante excluído.")
+
+
 @router.get("/{participant_id}/qr")
 def download_qr(request: Request, participant_id: str):
     user = resolve_user(request)

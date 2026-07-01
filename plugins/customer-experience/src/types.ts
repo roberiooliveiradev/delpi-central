@@ -33,3 +33,12 @@ export type CreateParticipantInput = {
   thankYouMessage?: string;
   photo: File;
 };
+
+export type UpdateParticipantInput = {
+  fullName?: string;
+  companyName?: string;
+  visitDate?: string;
+  participantInfo?: string;
+  thankYouMessage?: string;
+  photo?: File;
+};

@@ -120,6 +120,14 @@ class ParticipantRepository:
     def set_active(self, participant_id: str, is_active: bool) -> dict[str, Any] | None:
         return self.update(participant_id, {"is_active": is_active})
 
+    def delete(self, participant_id: str) -> bool:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"DELETE FROM {_TABLE} WHERE id = %s", (participant_id,))
+                deleted = cur.rowcount > 0
+            conn.commit()
+        return deleted
+
     def increment_view_count(self, token: str) -> None:
         with get_connection() as conn:
             with conn.cursor() as cur:

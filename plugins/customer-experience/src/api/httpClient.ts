@@ -94,6 +94,29 @@ export async function httpPost<T>(url: string, options: RequestOptions = {}): Pr
   return parseJson<T>(response);
 }
 
+export async function httpPatchForm<T>(
+  url: string,
+  formData: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: formData,
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
+export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
 export async function httpDownloadBlob(url: string, options: RequestOptions = {}): Promise<Blob> {
   const response = await fetch(url, {
     method: "GET",

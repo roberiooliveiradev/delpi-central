@@ -3,17 +3,24 @@ import {
   CheckCircle2,
   Copy,
   MessageSquare,
+  Pencil,
+  Power,
   QrCode,
   Search,
+  Trash2,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import {
+  activateParticipant,
   createParticipant,
   deactivateParticipant,
+  deleteParticipant,
   downloadFeedbackQr,
   downloadQr,
   listParticipants,
+  updateParticipant,
 } from "../api/participantsApi";
 import type { Participant } from "../types";
 
@@ -37,7 +44,9 @@ export function CustomerExperiencePage() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formCardRef = useRef<HTMLElement>(null);
 
   const loadParticipants = useCallback(async (company?: string) => {
     setLoading(true);
@@ -79,31 +88,63 @@ export function CustomerExperiencePage() {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
+    setEditingId(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const startEdit = (participant: Participant) => {
+    setEditingId(participant.id);
+    setError(null);
+    setForm({
+      fullName: participant.fullName,
+      companyName: participant.companyName,
+      visitDate: participant.visitDate,
+      participantInfo: participant.participantInfo ?? "",
+      thankYouMessage: participant.thankYouMessage ?? "",
+    });
+    setPhoto(null);
+    setPhotoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    if (!photo) {
+    if (!editingId && !photo) {
       setError("Selecione uma foto do participante.");
       return;
     }
     setSaving(true);
     try {
-      await createParticipant({
-        fullName: form.fullName,
-        companyName: form.companyName,
-        visitDate: form.visitDate,
-        participantInfo: form.participantInfo || undefined,
-        thankYouMessage: form.thankYouMessage || undefined,
-        photo,
-      });
-      setFeedback("Participante cadastrado e QR code gerado.");
+      if (editingId) {
+        await updateParticipant(editingId, {
+          fullName: form.fullName,
+          companyName: form.companyName,
+          visitDate: form.visitDate,
+          participantInfo: form.participantInfo || undefined,
+          thankYouMessage: form.thankYouMessage || undefined,
+          photo: photo ?? undefined,
+        });
+        setFeedback("Participante atualizado.");
+      } else {
+        await createParticipant({
+          fullName: form.fullName,
+          companyName: form.companyName,
+          visitDate: form.visitDate,
+          participantInfo: form.participantInfo || undefined,
+          thankYouMessage: form.thankYouMessage || undefined,
+          photo: photo as File,
+        });
+        setFeedback("Participante cadastrado e QR code gerado.");
+      }
       resetForm();
       await loadParticipants();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao cadastrar participante.");
+      setError(err instanceof Error ? err.message : "Erro ao salvar participante.");
     } finally {
       setSaving(false);
     }
@@ -171,6 +212,31 @@ export function CustomerExperiencePage() {
     }
   };
 
+  const handleActivate = async (participant: Participant) => {
+    try {
+      await activateParticipant(participant.id);
+      setFeedback("Link público reativado.");
+      await loadParticipants();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao reativar link.");
+    }
+  };
+
+  const handleDelete = async (participant: Participant) => {
+    const confirmed = window.confirm(
+      `Excluir definitivamente "${participant.fullName}"? Foto, QR codes e feedback serão removidos.`,
+    );
+    if (!confirmed) return;
+    try {
+      await deleteParticipant(participant.id);
+      if (editingId === participant.id) resetForm();
+      setFeedback("Participante excluído.");
+      await loadParticipants();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir participante.");
+    }
+  };
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return participants;
@@ -207,9 +273,10 @@ export function CustomerExperiencePage() {
       )}
 
       <div className="cx-layout">
-        <section className="cx-card cx-form-card">
+        <section className="cx-card cx-form-card" ref={formCardRef}>
           <h2 className="cx-card__title">
-            <UserPlus size={18} /> Novo participante
+            {editingId ? <Pencil size={18} /> : <UserPlus size={18} />}
+            {editingId ? "Editar participante" : "Novo participante"}
           </h2>
           <form className="cx-form" onSubmit={handleSubmit}>
             <label className="cx-field">
@@ -265,7 +332,10 @@ export function CustomerExperiencePage() {
             </label>
 
             <label className="cx-field">
-              <span>Foto do participante</span>
+              <span>
+                Foto do participante
+                {editingId && " (opcional — deixe vazio para manter a atual)"}
+              </span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -278,9 +348,25 @@ export function CustomerExperiencePage() {
               <img className="cx-photo-preview" src={photoPreview} alt="Prévia da foto" />
             )}
 
-            <button className="cx-button cx-button--primary" type="submit" disabled={saving}>
-              {saving ? "Cadastrando..." : "Cadastrar e gerar QR"}
-            </button>
+            <div className="cx-form__actions">
+              <button className="cx-button cx-button--primary" type="submit" disabled={saving}>
+                {saving
+                  ? "Salvando..."
+                  : editingId
+                    ? "Salvar alterações"
+                    : "Cadastrar e gerar QR"}
+              </button>
+              {editingId && (
+                <button
+                  className="cx-button cx-button--ghost"
+                  type="button"
+                  onClick={resetForm}
+                  disabled={saving}
+                >
+                  <X size={16} /> Cancelar
+                </button>
+              )}
+            </div>
           </form>
         </section>
 
@@ -358,16 +444,41 @@ export function CustomerExperiencePage() {
                     >
                       <Copy size={16} /> Link
                     </button>
-                    {participant.isActive && (
+                    <button
+                      className="cx-button cx-button--ghost"
+                      type="button"
+                      onClick={() => startEdit(participant)}
+                      title="Editar participante"
+                    >
+                      <Pencil size={16} /> Editar
+                    </button>
+                    {participant.isActive ? (
                       <button
                         className="cx-button cx-button--danger-ghost"
                         type="button"
                         onClick={() => handleDeactivate(participant)}
                         title="Desativar link público"
                       >
-                        Desativar
+                        <Power size={16} /> Desativar
+                      </button>
+                    ) : (
+                      <button
+                        className="cx-button cx-button--ghost"
+                        type="button"
+                        onClick={() => handleActivate(participant)}
+                        title="Reativar link público"
+                      >
+                        <Power size={16} /> Ativar
                       </button>
                     )}
+                    <button
+                      className="cx-button cx-button--danger-ghost"
+                      type="button"
+                      onClick={() => handleDelete(participant)}
+                      title="Excluir participante"
+                    >
+                      <Trash2 size={16} /> Excluir
+                    </button>
                   </div>
                 </li>
               ))}

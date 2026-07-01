@@ -115,6 +115,24 @@ class ParticipantService:
             raise ParticipantNotFoundError(participant_id)
         return self.to_admin_view(updated)
 
+    def activate(self, participant_id: str) -> dict[str, Any]:
+        updated = self.repository.set_active(participant_id, True)
+        if not updated:
+            raise ParticipantNotFoundError(participant_id)
+        return self.to_admin_view(updated)
+
+    def delete(self, participant_id: str) -> None:
+        row = self.repository.get_by_id(participant_id)
+        if not row:
+            raise ParticipantNotFoundError(participant_id)
+
+        # Remove os arquivos primeiro (best-effort); a linha e o feedback (FK ON
+        # DELETE CASCADE) saem do banco em seguida.
+        self.photo_storage.delete(row.get("photo_filename"))
+        self.qr_service.delete(row.get("qr_filename"))
+        self.qr_service.delete(row.get("feedback_qr_filename"))
+        self.repository.delete(participant_id)
+
     # ----- consultas -------------------------------------------------------
 
     def get_admin(self, participant_id: str) -> dict[str, Any]:
