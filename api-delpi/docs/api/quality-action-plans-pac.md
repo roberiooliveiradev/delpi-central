@@ -46,7 +46,7 @@ Registrar manifesto: `plugins/quality-action-plans/scripts/register-manifest.sh`
 
 | Chave | Conteúdo |
 |-------|----------|
-| `plan` | Cabeçalho do plano (incl. `customer_template`, `client_nc_registry`, `template_payload`) |
+| `plan` | Cabeçalho do plano (incl. `customer_template`, `client_nc_registry`, `template_payload`, `was_ever_completed`) |
 | `ishikawa` | Análise Ishikawa ou `null` |
 | `five_whys` | 5 Porquês (ocorrência + `detection_why_*`) ou `null` |
 | `team_members` | Equipe de análise (relatório 8D) |
@@ -115,6 +115,7 @@ Histórico, audit log e evidências gravam `created_by_*` / `actor_*` / `uploade
 | POST | `/quality/action-plans` | `create_quality_action_plan` | Criar plano |
 | PATCH | `/quality/action-plans/{plan_id}` | `update_quality_action_plan` | Atualizar identificação do plano |
 | PATCH | `/quality/action-plans/{plan_id}/status` | `update_quality_action_plan_status` | Atualizar status |
+| DELETE | `/quality/action-plans/{plan_id}` | `delete_quality_action_plan` | Marcar plano como excluído (soft delete) |
 | POST | `/quality/action-plans/{plan_id}/reopen` | `reopen_quality_action_plan` | Reabrir plano `completed`/`cancelled` |
 | PUT | `/quality/action-plans/{plan_id}/ishikawa` | `upsert_quality_action_plan_ishikawa` | Ishikawa (upsert) |
 | PUT | `/quality/action-plans/{plan_id}/five-whys` | `upsert_quality_action_plan_five_whys` | 5 Porquês duplo (upsert) |
@@ -203,6 +204,12 @@ Vínculos com Kaizen ou Auditoria 5S não usam mais colunas em `quality_action_p
 - Export Excel 8D: `GET .../export/rnc-8d?template_key=weg_wfr20997` (ou `delpi_8d`) — preenchimento por cópia do template (preserva desenhos/setas WEG)
 - Catálogo de templates: `GET /quality/action-plans/export-templates`
 - Export inclui imagens de evidência na aba `Anexos(Evidencias)` (tipos `image` ou `mime` `image/*`)
+
+### DELETE `/quality/action-plans/{plan_id}`
+
+Soft delete: grava `deleted_at`, remove o plano das listagens e do índice de casos similares, marca evidências com `knowledge_visible = false` e registra `plan_deleted` no histórico e na auditoria. **Arquivos anexados permanecem no volume** (`PAC_EVIDENCE_UPLOAD_DIR`), mas deixam de ser acessíveis pela API e não entram em buscas de conhecimento.
+
+**Bloqueios:** plano com status `completed`, plano que já foi concluído (mesmo reaberto), eficácia `pending_review` ou `approved`. O detalhe expõe `was_ever_completed` para o plugin desabilitar o botão de exclusão.
 
 ### Status do plano
 

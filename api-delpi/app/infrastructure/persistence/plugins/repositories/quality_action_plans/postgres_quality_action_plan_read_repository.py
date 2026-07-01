@@ -349,7 +349,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
 
         return {
-            "plan": serialize_plan_row(plan_row),
+            "plan": self._serialize_plan_with_delete_flags(plan_row, plan_id),
             "ishikawa": serialize_ishikawa_row(ishikawa),
             "five_whys": serialize_five_whys_row(five_whys),
             "team_members": [
@@ -2009,6 +2009,23 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
 
         self.execute(
             """
+            UPDATE quality.quality_problem_evidences
+               SET knowledge_visible = FALSE
+             WHERE plan_id = %s
+            """,
+            (resolved,),
+            auto_commit=False,
+        )
+        self.execute(
+            """
+            DELETE FROM quality.quality_case_similarity_index
+             WHERE plan_id = %s
+            """,
+            (resolved,),
+            auto_commit=False,
+        )
+        self.execute(
+            """
             UPDATE quality.quality_action_plans
                SET deleted_at = NOW(),
                    updated_at = NOW()
@@ -2042,6 +2059,36 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         )
         self.commit()
         return {"id": str(resolved), "code": code, "deleted": True}
+
+    def plan_was_ever_completed(self, plan_id: str) -> bool:
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            return False
+        row = self.fetch_one(
+            """
+            SELECT 1
+              FROM quality.quality_action_history
+             WHERE plan_id = %s
+               AND (
+                    (event_type = 'plan_closed' AND new_value = 'completed')
+                    OR (event_type = 'status_changed' AND new_value = 'completed')
+               )
+             LIMIT 1
+            """,
+            (resolved,),
+        )
+        return row is not None
+
+    def _serialize_plan_with_delete_flags(
+        self,
+        plan_row: dict[str, Any],
+        plan_id: str,
+    ) -> dict[str, Any]:
+        plan = serialize_plan_row(plan_row)
+        plan["was_ever_completed"] = (
+            self.plan_was_ever_completed(plan_id) or plan.get("status") == "completed"
+        )
+        return plan
 
     def append_history(
         self,
@@ -3076,6 +3123,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
         like = f"%{term}%"
         filters = [
             "p.deleted_at IS NULL",
+            "e.knowledge_visible = TRUE",
             """(
                 e.file_name ILIKE %s
                 OR e.stored_name ILIKE %s
@@ -3163,7 +3211,7 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
 
     def list_evidences(self, plan_id: str, *, q: str | None = None) -> list[dict[str, Any]]:
         plan_id = self._coerce_plan_id(plan_id)
-        if not plan_id:
+        if not plan_id or not self.get_plan_by_id(plan_id):
             return []
 
         filters = ["plan_id = %s"]
@@ -3201,12 +3249,13 @@ class PostgresQualityActionPlanRepository(PluginBaseRepository):
             return None
         row = self.fetch_one(
             """
-            SELECT id, plan_id, type, file_name, file_url, text_excerpt,
-                   stored_name, mime_type, size_bytes, section, description,
-                   knowledge_visible, uploaded_by, uploaded_by_name, uploaded_by_email,
-                   action_id, created_at
-              FROM quality.quality_problem_evidences
-             WHERE id = %s AND plan_id = %s
+            SELECT e.id, e.plan_id, e.type, e.file_name, e.file_url, e.text_excerpt,
+                   e.stored_name, e.mime_type, e.size_bytes, e.section, e.description,
+                   e.knowledge_visible, e.uploaded_by, e.uploaded_by_name, e.uploaded_by_email,
+                   e.action_id, e.created_at
+              FROM quality.quality_problem_evidences e
+              JOIN quality.quality_action_plans p ON p.id = e.plan_id
+             WHERE e.id = %s AND e.plan_id = %s AND p.deleted_at IS NULL
             """,
             (evidence_id, plan_id),
         )

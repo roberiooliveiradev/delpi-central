@@ -41,11 +41,13 @@ def test_reopen_plan_writes_history_and_audit_log():
     repo.commit.assert_called_once()
 
 
-def test_delete_plan_writes_history_and_audit_log():
+def test_delete_plan_soft_deletes_and_excludes_from_knowledge():
+    plan_uuid = "f0e274de-cc4b-4b68-b9cb-881408f9374b"
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
+    repo._coerce_plan_id = MagicMock(return_value=plan_uuid)
     repo.get_plan_by_id = MagicMock(
         side_effect=[
-            {"id": "plan-1", "code": "PAC-2026-0001", "title": "Teste"},
+            {"id": plan_uuid, "code": "PAC-2026-0001", "title": "Teste"},
             None,
         ]
     )
@@ -55,12 +57,19 @@ def test_delete_plan_writes_history_and_audit_log():
     repo.commit = MagicMock()
 
     result = repo.delete_plan(
-        "plan-1",
+        plan_uuid,
         updated_by="coord-01",
         updated_by_name="Coordenador",
     )
 
-    assert result == {"id": "plan-1", "code": "PAC-2026-0001", "deleted": True}
+    assert result == {"id": plan_uuid, "code": "PAC-2026-0001", "deleted": True}
+    assert repo.execute.call_count == 3
+    knowledge_sql = repo.execute.call_args_list[0][0][0]
+    assert "knowledge_visible = FALSE" in knowledge_sql
+    similarity_sql = repo.execute.call_args_list[1][0][0]
+    assert "quality_case_similarity_index" in similarity_sql
+    soft_delete_sql = repo.execute.call_args_list[2][0][0]
+    assert "deleted_at = NOW()" in soft_delete_sql
     repo.append_history.assert_called_once()
     assert repo.append_history.call_args.kwargs["event_type"] == "plan_deleted"
     repo.append_audit_log.assert_called_once()
@@ -74,6 +83,7 @@ def test_delete_plan_use_case_blocks_pending_effectiveness():
         "id": "plan-1",
         "effectiveness_approval_status": "pending_review",
     }
+    repo.plan_was_ever_completed.return_value = False
     from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
         DeleteQualityActionPlanUseCase,
     )
@@ -92,12 +102,27 @@ def test_delete_plan_use_case_blocks_pending_effectiveness():
 def test_delete_plan_use_case_blocks_completed_plan():
     repo = MagicMock()
     repo.get_plan_by_id.return_value = {"id": "plan-1", "status": "completed"}
+    repo.plan_was_ever_completed.return_value = False
     from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
         DeleteQualityActionPlanUseCase,
     )
 
     use_case = DeleteQualityActionPlanUseCase(repo)
     with pytest.raises(ValueError, match="concluído"):
+        use_case.execute("plan-1", updated_by="user-1")
+    repo.delete_plan.assert_not_called()
+
+
+def test_delete_plan_use_case_blocks_reopened_after_completion():
+    repo = MagicMock()
+    repo.get_plan_by_id.return_value = {"id": "plan-1", "status": "containment"}
+    repo.plan_was_ever_completed.return_value = True
+    from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
+        DeleteQualityActionPlanUseCase,
+    )
+
+    use_case = DeleteQualityActionPlanUseCase(repo)
+    with pytest.raises(ValueError, match="reabertura"):
         use_case.execute("plan-1", updated_by="user-1")
     repo.delete_plan.assert_not_called()
 
@@ -109,6 +134,7 @@ def test_delete_plan_use_case_blocks_approved_effectiveness():
         "status": "in_progress",
         "effectiveness_approval_status": "approved",
     }
+    repo.plan_was_ever_completed.return_value = False
     from app.application.use_cases.quality_action_plans.quality_action_plans_use_cases import (
         DeleteQualityActionPlanUseCase,
     )

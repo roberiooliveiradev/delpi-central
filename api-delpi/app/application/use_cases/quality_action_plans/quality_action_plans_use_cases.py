@@ -23,6 +23,8 @@ class QualityActionPlanRepository(Protocol):
 
     def get_plan_by_id(self, plan_id: str) -> dict[str, Any] | None: ...
 
+    def plan_was_ever_completed(self, plan_id: str) -> bool: ...
+
     def update_plan_status(
         self,
         plan_id: str,
@@ -368,7 +370,11 @@ class DeleteQualityActionPlanUseCase:
         current = self._repository.get_plan_by_id(plan_id)
         if not current:
             return None
-        assert_plan_deletable(current)
+        was_ever_completed = (
+            self._repository.plan_was_ever_completed(plan_id)
+            or current.get("status") == "completed"
+        )
+        assert_plan_deletable(current, was_ever_completed=was_ever_completed)
         return self._repository.delete_plan(
             plan_id,
             updated_by=updated_by,

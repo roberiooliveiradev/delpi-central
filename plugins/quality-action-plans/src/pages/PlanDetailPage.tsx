@@ -632,7 +632,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
     const label = plan.code ? `${plan.code} — ${plan.title}` : plan.title;
     const confirmed = await confirm({
       title: "Excluir plano",
-      message: `Excluir o plano "${label}"?\n\nEsta ação remove o plano das listagens. Evidências e histórico permanecem no banco, mas o plano deixa de ser acessível.`,
+      message: `Excluir o plano "${label}"?\n\nO plano deixará de ser listado e usado como conhecimento, incluindo arquivos anexados. Os dados permanecem armazenados para auditoria, mas não estarão mais acessíveis no sistema.`,
       confirmLabel: "Excluir",
       variant: "danger",
     });
