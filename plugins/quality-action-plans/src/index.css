@@ -4898,23 +4898,312 @@ button.pac-spreadsheet-preview__tab:not(.is-active):hover {
   border: 0;
 }
 
-.dashboard-quality-action-plans .pac-revision-diff__section + .pac-revision-diff__section {
-  margin-top: 0.85rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--pac-card-border, #e5e7eb);
+/* ——— Revisões do plano ——— */
+.dashboard-quality-action-plans .pac-revisions-overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
-.dashboard-quality-action-plans .pac-revision-diff__section-title {
-  margin: 0 0 0.35rem;
+.dashboard-quality-action-plans .pac-revisions-overview__metric {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 88px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--pac-card-border, #e5e7eb);
+  background: color-mix(in srgb, var(--pac-card-bg, #fff) 92%, var(--pac-accent, #2563eb) 8%);
+}
+
+.dashboard-quality-action-plans .pac-revisions-overview__metric--muted {
+  background: var(--pac-input-bg, #f8fafc);
+}
+
+.dashboard-quality-action-plans .pac-revisions-overview__label {
+  font-size: var(--pac-font-xs, 0.75rem);
+  color: var(--pac-muted, #64748b);
+}
+
+.dashboard-quality-action-plans .pac-revisions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-quality-action-plans .pac-revision-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--pac-card-border, #e5e7eb);
+  background: var(--pac-card-bg, #fff);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-quality-action-plans .pac-revision-card--current {
+  border-color: color-mix(in srgb, var(--pac-accent, #2563eb) 35%, var(--pac-card-border, #e5e7eb));
+  background: color-mix(in srgb, var(--pac-accent, #2563eb) 5%, var(--pac-card-bg, #fff));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pac-accent, #2563eb) 12%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-revision-card--expanded {
+  border-color: color-mix(in srgb, var(--pac-accent, #2563eb) 28%, var(--pac-card-border, #e5e7eb));
+}
+
+.dashboard-quality-action-plans .pac-revision-card__marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--pac-accent, #2563eb) 12%, transparent);
+  color: var(--pac-accent, #2563eb);
+}
+
+.dashboard-quality-action-plans .pac-revision-card--current .pac-revision-card__marker {
+  background: color-mix(in srgb, var(--pac-accent, #2563eb) 18%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-revision-card__body {
+  min-width: 0;
+}
+
+.dashboard-quality-action-plans .pac-revision-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+}
+
+.dashboard-quality-action-plans .pac-revision-card__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-revision-card__number {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--pac-text, #0f172a);
+}
+
+.dashboard-quality-action-plans .pac-revision-card__date {
+  font-size: var(--pac-font-sm, 0.875rem);
+  white-space: nowrap;
+}
+
+.dashboard-quality-action-plans .pac-revision-card__restore-from {
+  font-size: var(--pac-font-xs, 0.75rem);
+  color: var(--pac-muted, #64748b);
+}
+
+.dashboard-quality-action-plans .pac-revision-card__summary {
+  margin: 0 0 6px;
+  font-size: var(--pac-font-sm, 0.875rem);
+  line-height: 1.45;
+}
+
+.dashboard-quality-action-plans .pac-revision-card__author {
+  margin: 0 0 10px;
+  font-size: var(--pac-font-xs, 0.75rem);
+}
+
+.dashboard-quality-action-plans .pac-revision-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-quality-action-plans .pac-revision-card__current-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pac-font-xs, 0.75rem);
+  color: var(--pac-muted, #64748b);
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-current {
+  background: color-mix(in srgb, var(--pac-accent, #2563eb) 14%, transparent);
+  color: var(--pac-accent, #2563eb);
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-created,
+.dashboard-quality-action-plans .pac-badge--revision-default {
+  background: color-mix(in srgb, var(--pac-success, #16a34a) 12%, transparent);
+  color: var(--pac-success, #16a34a);
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-identification,
+.dashboard-quality-action-plans .pac-badge--revision-rnc8d {
+  background: color-mix(in srgb, var(--pac-accent, #2563eb) 12%, transparent);
+  color: var(--pac-accent, #2563eb);
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-status {
+  background: color-mix(in srgb, #6366f1 12%, transparent);
+  color: #6366f1;
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-analysis {
+  background: color-mix(in srgb, var(--pac-warning, #d97706) 14%, transparent);
+  color: var(--pac-warning, #d97706);
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-actions {
+  background: color-mix(in srgb, #0ea5e9 12%, transparent);
+  color: #0ea5e9;
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-effectiveness {
+  background: color-mix(in srgb, var(--pac-success, #16a34a) 12%, transparent);
+  color: var(--pac-success, #16a34a);
+}
+
+.dashboard-quality-action-plans .pac-badge--revision-restore {
+  background: color-mix(in srgb, #9333ea 12%, transparent);
+  color: #9333ea;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in srgb, var(--pac-card-border, #e5e7eb) 80%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-revision-diff--loading,
+.dashboard-quality-action-plans .pac-revision-diff--empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--pac-input-bg, #f8fafc);
+}
+
+.dashboard-quality-action-plans .pac-revision-diff--empty svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--pac-muted, #64748b);
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__empty-title {
+  margin: 0 0 4px;
   font-size: var(--pac-font-sm, 0.875rem);
   font-weight: 600;
 }
 
-.dashboard-quality-action-plans .pac-revision-diff__list {
-  margin: 0;
-  padding-left: 1.1rem;
+.dashboard-quality-action-plans .pac-revision-diff__header {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: var(--pac-font-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--pac-text, #0f172a);
 }
 
-.dashboard-quality-action-plans .pac-revision-diff__list li + li {
-  margin-top: 0.25rem;
+.dashboard-quality-action-plans .pac-revision-diff__section + .pac-revision-diff__section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--pac-card-border, #e5e7eb);
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__section-title {
+  margin: 0 0 8px;
+  font-size: var(--pac-font-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__grid {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__grid-head,
+.dashboard-quality-action-plans .pac-revision-diff__grid-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__grid-head {
+  font-size: var(--pac-font-xs, 0.75rem);
+  font-weight: 700;
+  color: var(--pac-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__grid-row {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--pac-input-bg, #f8fafc);
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__field {
+  font-size: var(--pac-font-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__value {
+  font-size: var(--pac-font-sm, 0.875rem);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__value--current {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--pac-accent, #2563eb) 8%, var(--pac-card-bg, #fff));
+  border: 1px solid color-mix(in srgb, var(--pac-accent, #2563eb) 18%, transparent);
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__value--revision {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--pac-warning, #d97706) 8%, var(--pac-card-bg, #fff));
+  border: 1px solid color-mix(in srgb, var(--pac-warning, #d97706) 18%, transparent);
+}
+
+@media (max-width: 768px) {
+  .dashboard-quality-action-plans .pac-revision-card {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-quality-action-plans .pac-revision-card__marker {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dashboard-quality-action-plans .pac-revision-diff__grid-head {
+    display: none;
+  }
+
+  .dashboard-quality-action-plans .pac-revision-diff__grid-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .dashboard-quality-action-plans .pac-revision-diff__value--current::before {
+    content: "Atual: ";
+    font-weight: 700;
+    color: var(--pac-muted, #64748b);
+  }
+
+  .dashboard-quality-action-plans .pac-revision-diff__value--revision::before {
+    content: "Revisão: ";
+    font-weight: 700;
+    color: var(--pac-muted, #64748b);
+  }
 }
