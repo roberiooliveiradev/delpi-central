@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, Body, File, Form, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.domain.services.quality_action_plans.pac_plan_revision_lock_service import (
+    REVISION_CONFLICT_MESSAGE,
+)
 from app.domain.services.quality_action_plans.pac_quality_datetime_service import (
     validate_optional_iso_datetime,
 )
@@ -126,6 +131,23 @@ class _PlanTimestampValidationMixin(BaseModel):
         return validate_optional_iso_datetime(value, field_name=field_name)
 
 
+class ExpectedPlanRevisionFields(BaseModel):
+    expected_revision_number: int | None = Field(default=None, ge=0)
+
+
+def _value_error_response(exc: ValueError):
+    status_code = 409 if str(exc) == REVISION_CONFLICT_MESSAGE else 400
+    return error_response(str(exc), status_code=status_code)
+
+
+def _split_expected_revision(payload: dict[str, Any]) -> tuple[dict[str, Any], int | None]:
+    data = dict(payload)
+    expected = data.pop("expected_revision_number", None)
+    if expected is not None:
+        expected = int(expected)
+    return data, expected
+
+
 class CreateActionPlanBody(_PlanTimestampValidationMixin):
     title: str = Field(..., min_length=2, max_length=500)
     customer_name: str | None = Field(default=None, max_length=300)
@@ -173,7 +195,7 @@ class CreateActionPlanBody(_PlanTimestampValidationMixin):
     export_template_key: str | None = Field(default=None, max_length=50)
 
 
-class UpdateActionPlanBody(_PlanTimestampValidationMixin):
+class UpdateActionPlanBody(_PlanTimestampValidationMixin, ExpectedPlanRevisionFields):
     title: str | None = Field(default=None, min_length=2, max_length=500)
     customer_name: str | None = Field(default=None, max_length=300)
     customer_code: str | None = Field(default=None, max_length=20)
@@ -216,7 +238,7 @@ class UpdateActionPlanBody(_PlanTimestampValidationMixin):
     export_template_key: str | None = Field(default=None, max_length=50)
 
 
-class UpdateActionPlanStatusBody(BaseModel):
+class UpdateActionPlanStatusBody(ExpectedPlanRevisionFields):
     status: str = Field(
         ...,
         pattern=(
@@ -227,7 +249,7 @@ class UpdateActionPlanStatusBody(BaseModel):
     comment: str | None = None
 
 
-class ReopenActionPlanBody(BaseModel):
+class ReopenActionPlanBody(ExpectedPlanRevisionFields):
     reason: str = Field(..., min_length=5, max_length=2000)
     target_status: str | None = Field(
         default=None,
@@ -238,7 +260,7 @@ class ReopenActionPlanBody(BaseModel):
     )
 
 
-class IshikawaBody(BaseModel):
+class IshikawaBody(ExpectedPlanRevisionFields):
     machine: list[str] | None = None
     method_process: list[str] | None = None
     material: list[str] | None = None
@@ -264,7 +286,7 @@ class FiveWhyStepBody(BaseModel):
     answer: str = ""
 
 
-class FiveWhysBody(BaseModel):
+class FiveWhysBody(ExpectedPlanRevisionFields):
     occurrence_whys: list[str | FiveWhyStepBody] | None = None
     detection_whys: list[str | FiveWhyStepBody] | None = None
     root_cause: str | None = None
@@ -302,11 +324,11 @@ class ActionItemBody(BaseModel):
     cause_track: str | None = Field(default=None, pattern="^(occurrence|detection)$")
 
 
-class CreateActionsBody(BaseModel):
+class CreateActionsBody(ExpectedPlanRevisionFields):
     actions: list[ActionItemBody] = Field(..., min_length=1)
 
 
-class UpdateActionBody(BaseModel):
+class UpdateActionBody(ExpectedPlanRevisionFields):
     action_type: str | None = Field(
         default=None,
         pattern="^(containment|corrective|preventive|verification|standardization|training)$",
@@ -333,7 +355,7 @@ class TeamMemberBody(BaseModel):
     sort_order: int = 0
 
 
-class Rnc8dReportBody(BaseModel):
+class Rnc8dReportBody(ExpectedPlanRevisionFields):
     client_nc_registry: str | None = Field(default=None, max_length=100)
     customer_name: str | None = Field(default=None, max_length=300)
     customer_contact: str | None = Field(default=None, max_length=300)
@@ -355,7 +377,7 @@ class Rnc8dReportBody(BaseModel):
     team_members: list[TeamMemberBody] | None = None
 
 
-class EffectivenessReviewBody(BaseModel):
+class EffectivenessReviewBody(ExpectedPlanRevisionFields):
     effectiveness_status: str = Field(
         ...,
         pattern="^(pending|effective|partially_effective|ineffective|not_verified)$",
@@ -363,7 +385,7 @@ class EffectivenessReviewBody(BaseModel):
     notes: str | None = None
 
 
-class SubmitEffectivenessReviewBody(BaseModel):
+class SubmitEffectivenessReviewBody(ExpectedPlanRevisionFields):
     effectiveness_status: str = Field(
         ...,
         pattern="^(effective|partially_effective|ineffective)$",
@@ -371,7 +393,7 @@ class SubmitEffectivenessReviewBody(BaseModel):
     notes: str | None = None
 
 
-class RejectEffectivenessReviewBody(BaseModel):
+class RejectEffectivenessReviewBody(ExpectedPlanRevisionFields):
     reason: str = Field(..., min_length=5, max_length=2000)
 
 
@@ -613,7 +635,7 @@ def search_action_plan_evidences(
             operation_id="search_quality_action_plan_evidences",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro na busca de evidências PAC: {exc}")
         return error_response("Erro ao buscar evidências.", status_code=500)
@@ -701,7 +723,7 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
             message="Plano de ação criado com sucesso.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao criar plano PAC: {exc}")
         return error_response(str(exc), status_code=500)
@@ -806,7 +828,7 @@ def get_plan_similar_cases(plan_id: str):
             message="Casos similares carregados.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao buscar casos similares do plano {plan_id}: {exc}")
         return error_response("Erro ao consultar casos similares.", status_code=500)
@@ -831,7 +853,7 @@ def promote_solution_pattern(plan_id: str):
             message="Padrão de solução registrado.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao promover padrão do plano {plan_id}: {exc}")
         return error_response("Erro ao promover padrão de solução.", status_code=500)
@@ -954,7 +976,7 @@ def get_plan_revision(plan_id: str, revision_number: int):
             operation_id="get_quality_action_plan_revision",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao buscar revisão {revision_number} do plano PAC {plan_id}: {exc}")
         return error_response("Erro ao consultar revisão.", status_code=500)
@@ -985,7 +1007,7 @@ def restore_plan_revision(plan_id: str, revision_number: int):
             message="Plano restaurado para a revisão selecionada.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao restaurar revisão {revision_number} do plano PAC {plan_id}: {exc}")
         return error_response("Erro ao restaurar revisão.", status_code=500)
@@ -1019,7 +1041,7 @@ def update_action_plan(plan_id: str, body: UpdateActionPlanBody = Body(...)):
             message="Plano atualizado.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar plano PAC {plan_id}: {exc}")
         return error_response("Erro ao atualizar plano.", status_code=500)
@@ -1041,7 +1063,7 @@ def delete_action_plan(plan_id: str):
             message="Plano de ação excluído.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao excluir plano PAC {plan_id}: {exc}")
         return error_response("Erro ao excluir plano.", status_code=500)
@@ -1063,6 +1085,7 @@ def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = B
             status=body.status,
             **_actor_write_kwargs(),
             comment=body.comment,
+            expected_revision_number=body.expected_revision_number,
         )
         if not plan:
             return not_found_response("Plano de ação não encontrado.")
@@ -1072,7 +1095,7 @@ def update_action_plan_status(plan_id: str, body: UpdateActionPlanStatusBody = B
             message="Status atualizado com sucesso.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar status do plano PAC {plan_id}: {exc}")
         return error_response("Erro ao atualizar status do plano.", status_code=500)
@@ -1090,6 +1113,7 @@ def reopen_action_plan(plan_id: str, body: ReopenActionPlanBody = Body(...)):
             reason=body.reason,
             target_status=body.target_status,
             **_actor_write_kwargs(),
+            expected_revision_number=body.expected_revision_number,
         )
         if not plan:
             return not_found_response("Plano de ação não encontrado.")
@@ -1099,7 +1123,7 @@ def reopen_action_plan(plan_id: str, body: ReopenActionPlanBody = Body(...)):
             message="Plano reaberto com sucesso.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao reabrir plano PAC {plan_id}: {exc}")
         return error_response("Erro ao reabrir plano.", status_code=500)
@@ -1112,9 +1136,11 @@ def reopen_action_plan(plan_id: str, body: ReopenActionPlanBody = Body(...)):
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def upsert_ishikawa(plan_id: str, body: IshikawaBody = Body(...)):
     try:
+        payload, expected_revision = _split_expected_revision(body.model_dump(exclude_unset=True))
         result = build_upsert_ishikawa_use_case().execute(
             plan_id,
-            UpsertIshikawaRequest(**body.model_dump()),
+            UpsertIshikawaRequest(**payload),
+            expected_revision_number=expected_revision,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1136,9 +1162,11 @@ def upsert_ishikawa(plan_id: str, body: IshikawaBody = Body(...)):
 @require_any_permission(QUALITY_ACTION_PLANS_WRITE_PERMISSIONS)
 def upsert_five_whys(plan_id: str, body: FiveWhysBody = Body(...)):
     try:
+        payload, expected_revision = _split_expected_revision(body.model_dump(exclude_unset=True))
         result = build_upsert_five_whys_use_case().execute(
             plan_id,
-            UpsertFiveWhysRequest(**body.model_dump()),
+            UpsertFiveWhysRequest(**payload),
+            expected_revision_number=expected_revision,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1149,7 +1177,7 @@ def upsert_five_whys(plan_id: str, body: FiveWhysBody = Body(...)):
             message="5 Porquês registrados.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao salvar 5 Porquês do plano {plan_id}: {exc}")
         return error_response("Erro ao registrar 5 Porquês.", status_code=500)
@@ -1181,6 +1209,7 @@ def create_plan_actions(plan_id: str, body: CreateActionsBody = Body(...)):
         result = build_create_plan_actions_use_case().execute(
             plan_id,
             actions,
+            expected_revision_number=body.expected_revision_number,
             **_actor_create_kwargs(),
         )
         if result is None:
@@ -1191,7 +1220,7 @@ def create_plan_actions(plan_id: str, body: CreateActionsBody = Body(...)):
             message="Ações registradas.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao criar ações do plano {plan_id}: {exc}")
         return error_response("Erro ao registrar ações.", status_code=500)
@@ -1219,7 +1248,7 @@ def update_plan_action(plan_id: str, action_id: str, body: UpdateActionBody = Bo
             message="Ação atualizada.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar ação {action_id}: {exc}")
         return error_response("Erro ao atualizar ação.", status_code=500)
@@ -1256,12 +1285,14 @@ def delete_plan_action(plan_id: str, action_id: str):
 @require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
 def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Body(...)):
     try:
+        payload, expected_revision = _split_expected_revision(body.model_dump(exclude_unset=True))
         result = build_record_effectiveness_review_use_case().execute(
             plan_id,
             EffectivenessReviewRequest(
-                effectiveness_status=body.effectiveness_status,
-                notes=body.notes,
+                effectiveness_status=payload["effectiveness_status"],
+                notes=payload.get("notes"),
             ),
+            expected_revision_number=expected_revision,
             **_actor_write_kwargs(),
         )
         if not result:
@@ -1272,7 +1303,7 @@ def record_effectiveness_review(plan_id: str, body: EffectivenessReviewBody = Bo
             message="Eficácia registrada.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao registrar eficácia do plano {plan_id}: {exc}")
         return error_response("Erro ao registrar eficácia.", status_code=500)
@@ -1304,7 +1335,7 @@ def submit_effectiveness_review(plan_id: str, body: SubmitEffectivenessReviewBod
             message="Eficácia submetida para aprovação.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao submeter eficácia do plano {plan_id}: {exc}")
         return error_response("Erro ao submeter eficácia.", status_code=500)
@@ -1332,7 +1363,7 @@ def approve_effectiveness_review(plan_id: str):
             message="Eficácia aprovada.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao aprovar eficácia do plano {plan_id}: {exc}")
         return error_response("Erro ao aprovar eficácia.", status_code=500)
@@ -1364,7 +1395,7 @@ def reject_effectiveness_review(
             message="Submissão de eficácia rejeitada.",
         )
     except ValueError as exc:
-        return error_response(str(exc), status_code=400)
+        return _value_error_response(exc)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao rejeitar eficácia do plano {plan_id}: {exc}")
         return error_response("Erro ao rejeitar eficácia.", status_code=500)

@@ -209,6 +209,7 @@ class UpdateQualityActionPlanRequest:
     customer_template: str | None = None
     client_nc_registry: str | None = None
     export_template_key: str | None = None
+    expected_revision_number: int | None = None
 
 
 class UpdateQualityActionPlanUseCase:
@@ -276,6 +277,7 @@ class UpdateQualityActionPlanStatusUseCase:
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
         comment: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> dict[str, Any] | None:
         if status not in self.VALID_STATUSES:
             raise ValueError(f"status inválido: {status}")
@@ -297,6 +299,7 @@ class UpdateQualityActionPlanStatusUseCase:
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
             comment=comment,
+            expected_revision_number=expected_revision_number,
         )
 
 
@@ -328,6 +331,7 @@ class ReopenQualityActionPlanUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> dict[str, Any] | None:
         normalized_reason = (reason or "").strip()
         if len(normalized_reason) < 5:
@@ -352,6 +356,7 @@ class ReopenQualityActionPlanUseCase:
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
+            expected_revision_number=expected_revision_number,
         )
 
 

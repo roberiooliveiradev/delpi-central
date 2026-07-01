@@ -1795,6 +1795,8 @@ class PostgresQualityActionPlanRepository(
         if not current:
             return None
 
+        self._guard_write_revision(resolved, None, fields=fields)
+
         allowed = {
             "title",
             "customer_name",
@@ -1905,6 +1907,7 @@ class PostgresQualityActionPlanRepository(
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
         comment: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> dict[str, Any] | None:
         resolved = self._coerce_plan_id(plan_id)
         if not resolved:
@@ -1912,6 +1915,8 @@ class PostgresQualityActionPlanRepository(
         current = self.get_plan_by_id(resolved)
         if not current:
             return None
+
+        self._guard_write_revision(resolved, expected_revision_number)
 
         previous_status = current.get("status")
         closed_at_sql = ""
@@ -1976,6 +1981,7 @@ class PostgresQualityActionPlanRepository(
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> dict[str, Any] | None:
         resolved = self._coerce_plan_id(plan_id)
         if not resolved:
@@ -1983,6 +1989,8 @@ class PostgresQualityActionPlanRepository(
         current = self.get_plan_by_id(resolved)
         if not current:
             return None
+
+        self._guard_write_revision(resolved, expected_revision_number)
 
         previous_status = current.get("status")
         if previous_status not in _TERMINAL_PLAN_STATUSES:
@@ -2473,6 +2481,8 @@ class PostgresQualityActionPlanRepository(
         if not plan_id:
             return None
 
+        self._guard_write_revision(plan_id, None, fields=fields)
+
         causes_json = ishikawa_causes_json(fields)
         row = self.execute_returning_one(
             """
@@ -2532,6 +2542,8 @@ class PostgresQualityActionPlanRepository(
         plan_id = self._coerce_plan_id(plan_id)
         if not plan_id:
             return None
+
+        self._guard_write_revision(plan_id, None, fields=fields)
 
         whys_json = five_whys_json(fields)
         row = self.execute_returning_one(
@@ -2594,12 +2606,15 @@ class PostgresQualityActionPlanRepository(
         created_by: str,
         created_by_name: str | None = None,
         created_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> list[dict[str, Any]] | None:
         plan_id = self._coerce_plan_id(plan_id)
         if not plan_id:
             return None
         if not actions:
             return []
+
+        self._guard_write_revision(plan_id, expected_revision_number)
 
         created: list[dict[str, Any]] = []
         for action in actions:
@@ -2683,6 +2698,8 @@ class PostgresQualityActionPlanRepository(
         plan_id = self._coerce_plan_id(plan_id)
         if not plan_id:
             return None
+
+        self._guard_write_revision(plan_id, None, fields=fields)
 
         responsibles = self._resolve_action_responsibles_from_fields(fields)
         allowed = {
@@ -2788,12 +2805,15 @@ class PostgresQualityActionPlanRepository(
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> dict[str, Any] | None:
         plan_id = self._coerce_plan_id(plan_id)
         if not plan_id:
             return None
         if not self.action_belongs_to_plan(plan_id, action_id):
             return None
+
+        self._guard_write_revision(plan_id, expected_revision_number)
 
         row = self.fetch_one(
             """
@@ -2847,6 +2867,8 @@ class PostgresQualityActionPlanRepository(
             return None
         if current.get("effectiveness_approval_status") == "pending_review":
             raise ValueError("Já existe submissão de eficácia aguardando aprovação.")
+
+        self._guard_write_revision(plan_id, None, fields=fields)
 
         self.execute(
             """
@@ -2909,6 +2931,7 @@ class PostgresQualityActionPlanRepository(
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> dict[str, Any] | None:
         plan_id = self._coerce_plan_id(plan_id)
         if not plan_id:
@@ -2922,6 +2945,8 @@ class PostgresQualityActionPlanRepository(
         proposed = current.get("effectiveness_proposed_status")
         if not proposed:
             raise ValueError("Submissão sem resultado proposto.")
+
+        self._guard_write_revision(plan_id, expected_revision_number)
 
         self.execute(
             """
@@ -2976,6 +3001,7 @@ class PostgresQualityActionPlanRepository(
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ) -> dict[str, Any] | None:
         plan_id = self._coerce_plan_id(plan_id)
         if not plan_id:
@@ -2986,6 +3012,8 @@ class PostgresQualityActionPlanRepository(
             return None
         if current.get("effectiveness_approval_status") != "pending_review":
             raise ValueError("Não há submissão de eficácia pendente de aprovação.")
+
+        self._guard_write_revision(plan_id, expected_revision_number)
 
         self.execute(
             """
@@ -3089,6 +3117,8 @@ class PostgresQualityActionPlanRepository(
         if not plan_id:
             return None
 
+        self._guard_write_revision(plan_id, None, fields=fields)
+
         self.execute(
             """
             UPDATE quality.quality_action_plans
@@ -3151,6 +3181,8 @@ class PostgresQualityActionPlanRepository(
         plan_id = self._coerce_plan_id(plan_id)
         if not plan_id:
             return None
+
+        self._guard_write_revision(plan_id, None, fields=fields)
 
         template_payload = normalize_template_payload_quantity_fields(
             merge_attention_fields_into_template_payload(

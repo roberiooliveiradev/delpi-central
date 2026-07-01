@@ -9,6 +9,9 @@ from app.domain.services.quality_action_plans.action_responsibles_service import
 )
 from app.domain.services.quality_action_plans.five_whys_service import five_whys_json
 from app.domain.services.quality_action_plans.ishikawa_causes_service import ishikawa_causes_json
+from app.domain.services.quality_action_plans.pac_plan_revision_lock_service import (
+    assert_expected_revision_number,
+)
 from app.domain.services.quality_action_plans.pac_plan_revision_snapshot_service import (
     REVISION_SCOPE_RESTORE,
     VALID_REVISION_SCOPES,
@@ -22,6 +25,49 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import Plugin
 
 
 class QualityActionPlanRevisionMixin:
+    def _pop_expected_revision(self, fields: dict[str, Any]) -> int | None:
+        raw = fields.pop("expected_revision_number", None)
+        if raw is None:
+            return None
+        return int(raw)
+
+    def _assert_expected_plan_revision(
+        self,
+        plan_id: str,
+        expected_revision_number: int | None,
+    ) -> None:
+        if expected_revision_number is None:
+            return
+        resolved = self._coerce_plan_id(plan_id)
+        if not resolved:
+            raise PluginsRepositoryError("Plano não encontrado.")
+        row = self.fetch_one(
+            """
+            SELECT current_revision_number
+              FROM quality.quality_action_plans
+             WHERE id = %s AND deleted_at IS NULL
+            """,
+            (resolved,),
+        )
+        if not row:
+            raise PluginsRepositoryError("Plano não encontrado.")
+        assert_expected_revision_number(
+            row.get("current_revision_number"),
+            expected_revision_number,
+        )
+
+    def _guard_write_revision(
+        self,
+        plan_id: str,
+        expected_revision_number: int | None = None,
+        *,
+        fields: dict[str, Any] | None = None,
+    ) -> None:
+        expected = expected_revision_number
+        if fields is not None and expected is None:
+            expected = self._pop_expected_revision(fields)
+        self._assert_expected_plan_revision(plan_id, expected)
+
     def record_plan_revision(
         self,
         plan_id: str,

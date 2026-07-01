@@ -127,6 +127,15 @@ SUBMITTABLE_EFFECTIVENESS = frozenset(
 )
 
 
+def _with_expected_revision(
+    fields: dict[str, Any],
+    expected_revision_number: int | None,
+) -> dict[str, Any]:
+    if expected_revision_number is None:
+        return fields
+    return {**fields, "expected_revision_number": expected_revision_number}
+
+
 class UpsertIshikawaUseCase:
     def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
         self._repository = repository
@@ -139,20 +148,22 @@ class UpsertIshikawaUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
+        fields = normalize_ishikawa_payload(
+            {
+                "machine": request.machine,
+                "method_process": request.method_process,
+                "material": request.material,
+                "manpower": request.manpower,
+                "measurement": request.measurement,
+                "environment": request.environment,
+                "notes": request.notes,
+            }
+        )
         return self._repository.upsert_ishikawa(
             plan_id,
-            normalize_ishikawa_payload(
-                {
-                    "machine": request.machine,
-                    "method_process": request.method_process,
-                    "material": request.material,
-                    "manpower": request.manpower,
-                    "measurement": request.measurement,
-                    "environment": request.environment,
-                    "notes": request.notes,
-                }
-            ),
+            _with_expected_revision(fields, expected_revision_number),
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
@@ -176,29 +187,31 @@ class UpsertFiveWhysUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
         if request.confidence_level and request.confidence_level not in {"low", "medium", "high"}:
             raise ValueError("confidence_level inválido.")
+        fields = normalize_five_whys_payload(
+            {
+                "occurrence_whys": request.occurrence_whys,
+                "detection_whys": request.detection_whys,
+                "root_cause": request.root_cause,
+                "confidence_level": request.confidence_level,
+                "why_1": request.why_1,
+                "why_2": request.why_2,
+                "why_3": request.why_3,
+                "why_4": request.why_4,
+                "why_5": request.why_5,
+                "detection_why_1": request.detection_why_1,
+                "detection_why_2": request.detection_why_2,
+                "detection_why_3": request.detection_why_3,
+                "detection_why_4": request.detection_why_4,
+                "detection_why_5": request.detection_why_5,
+            }
+        )
         result = self._repository.upsert_five_whys(
             plan_id,
-            normalize_five_whys_payload(
-                {
-                    "occurrence_whys": request.occurrence_whys,
-                    "detection_whys": request.detection_whys,
-                    "root_cause": request.root_cause,
-                    "confidence_level": request.confidence_level,
-                    "why_1": request.why_1,
-                    "why_2": request.why_2,
-                    "why_3": request.why_3,
-                    "why_4": request.why_4,
-                    "why_5": request.why_5,
-                    "detection_why_1": request.detection_why_1,
-                    "detection_why_2": request.detection_why_2,
-                    "detection_why_3": request.detection_why_3,
-                    "detection_why_4": request.detection_why_4,
-                    "detection_why_5": request.detection_why_5,
-                }
-            ),
+            _with_expected_revision(fields, expected_revision_number),
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
@@ -229,6 +242,7 @@ class CreatePlanActionsUseCase:
         created_by: str,
         created_by_name: str | None = None,
         created_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
         if not actions:
             raise ValueError("Informe ao menos uma ação.")
@@ -268,6 +282,7 @@ class CreatePlanActionsUseCase:
             created_by=created_by,
             created_by_name=created_by_name,
             created_by_email=created_by_email,
+            expected_revision_number=expected_revision_number,
         )
 
 
@@ -288,15 +303,19 @@ class RecordEffectivenessReviewUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
         if request.effectiveness_status not in VALID_EFFECTIVENESS:
             raise ValueError("effectiveness_status inválido.")
         plan = self._repository.record_effectiveness_review(
             plan_id,
-            {
-                "effectiveness_status": request.effectiveness_status,
-                "notes": request.notes,
-            },
+            _with_expected_revision(
+                {
+                    "effectiveness_status": request.effectiveness_status,
+                    "notes": request.notes,
+                },
+                expected_revision_number,
+            ),
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
@@ -318,6 +337,7 @@ class SubmitEffectivenessReviewUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
         if request.effectiveness_status not in SUBMITTABLE_EFFECTIVENESS:
             raise ValueError(
@@ -325,10 +345,13 @@ class SubmitEffectivenessReviewUseCase:
             )
         return self._repository.submit_effectiveness_review(
             plan_id,
-            {
-                "effectiveness_status": request.effectiveness_status,
-                "notes": request.notes,
-            },
+            _with_expected_revision(
+                {
+                    "effectiveness_status": request.effectiveness_status,
+                    "notes": request.notes,
+                },
+                expected_revision_number,
+            ),
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
@@ -351,12 +374,14 @@ class ApproveEffectivenessReviewUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
         plan = self._repository.approve_effectiveness_review(
             plan_id,
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
+            expected_revision_number=expected_revision_number,
         )
         if plan and self._intelligence_sync:
             self._intelligence_sync.execute(plan_id)
@@ -377,6 +402,7 @@ class RejectEffectivenessReviewUseCase:
         updated_by: str,
         updated_by_name: str | None = None,
         updated_by_email: str | None = None,
+        expected_revision_number: int | None = None,
     ):
         cleaned = (reason or "").strip()
         if len(cleaned) < self.MIN_REASON_LENGTH:
@@ -387,6 +413,7 @@ class RejectEffectivenessReviewUseCase:
             updated_by=updated_by,
             updated_by_name=updated_by_name,
             updated_by_email=updated_by_email,
+            expected_revision_number=expected_revision_number,
         )
 
 
