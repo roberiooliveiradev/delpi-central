@@ -7,7 +7,6 @@ from typing import Any
 
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image as XlImage
-from openpyxl.utils import coordinate_to_tuple, get_column_letter
 
 from app.domain.services.quality_action_plans.action_responsibles_service import (
     format_responsible_display_name,
@@ -18,8 +17,11 @@ from app.domain.services.quality_action_plans.rnc_8d_export_template_service imp
     resolve_export_template_key_for_plan,
     resolve_export_template_path,
 )
-from app.domain.services.quality_action_plans.rnc_8d_ooxml_merge_service import (
-    merge_template_visual_assets,
+from app.domain.services.quality_action_plans.rnc_8d_template_fill_service import (
+    fill_template_workbook,
+    load_merged_cell_anchors,
+    overlay_zip_parts,
+    put_cell_value,
 )
 
 TEMPLATE_FIXTURE_PATH = (
@@ -38,10 +40,11 @@ SUPPLIER_BY_BRANCH = {
 ANNEX_SHEET_CANDIDATES = ("Anexos(Evidencias)", "Anexos", "Attachment")
 ANNEX_IMAGE_MAX_WIDTH_PX = 480
 IMAGE_MIME_PREFIX = "image/"
+WEG_TEMPLATE_KEY = "weg_wfr20997"
 
 
 def resolve_rnc_8d_template_path(template_key: str | None = None) -> Path:
-    key = template_key or "weg_wfr20997"
+    key = template_key or WEG_TEMPLATE_KEY
     try:
         return resolve_export_template_path(key)
     except (KeyError, FileNotFoundError):
@@ -71,31 +74,11 @@ def _excel_date(value: str | date | datetime | None) -> date | None:
         return None
 
 
-def _resolve_writable_cell(ws: Any, cell: str) -> str:
-    row, column = coordinate_to_tuple(cell)
-    for merged_range in ws.merged_cells.ranges:
-        if (
-            merged_range.min_row <= row <= merged_range.max_row
-            and merged_range.min_col <= column <= merged_range.max_col
-        ):
-            return f"{get_column_letter(merged_range.min_col)}{merged_range.min_row}"
-    return cell
-
-
-def _set(ws, cell: str, value: Any) -> None:
-    if value is None:
-        return
-    text = str(value).strip() if not isinstance(value, (date, datetime, int, float)) else value
-    if text == "":
-        return
-    ws[_resolve_writable_cell(ws, cell)] = text
-
-
-def _set_date(ws, cell: str, value: str | date | datetime | None) -> None:
+def _format_date_value(value: str | date | datetime | None) -> str | None:
     parsed = _excel_date(value)
     if parsed is None:
-        return
-    _set(ws, cell, parsed.strftime("%d/%m/%Y"))
+        return None
+    return parsed.strftime("%d/%m/%Y")
 
 
 def _action_responsible_label(action: dict[str, Any]) -> str | None:
@@ -183,15 +166,24 @@ def collect_image_annexes_for_export(
     return annexes
 
 
-def _fill_weg_wfr20997_sheet(
-    ws: Any,
+def build_weg_wfr20997_cell_values(
     *,
+    template_path: Path,
     plan: dict[str, Any],
     payload: dict[str, Any],
     team: list[dict[str, Any]],
     five_whys: dict[str, Any],
     actions: list[dict[str, Any]],
-) -> None:
+) -> dict[str, str]:
+    anchors = load_merged_cell_anchors(template_path)
+    values: dict[str, str] = {}
+
+    def put(cell: str, value: object | None) -> None:
+        put_cell_value(values, anchors, cell, value)
+
+    def put_date(cell: str, value: str | date | datetime | None) -> None:
+        put(cell, _format_date_value(value))
+
     nc = payload.get("nc_description") or {}
     classification = payload.get("classification") or {}
     effectiveness = payload.get("effectiveness") or {}
@@ -200,48 +192,46 @@ def _fill_weg_wfr20997_sheet(
     documentation = payload.get("documentation_updates") or []
 
     branch = plan.get("branch_code") or "01"
-    _set(ws, "I4", plan.get("client_nc_registry"))
-    _set(ws, "E5", payload.get("supplier_name") or SUPPLIER_BY_BRANCH.get(branch, SUPPLIER_BY_BRANCH["01"]))
-    _set(ws, "E6", _material_label(plan))
-    _set(ws, "E7", payload.get("material_specification"))
-    _set(ws, "E8", payload.get("purchase_order"))
-    _set(ws, "E9", payload.get("invoice_number"))
-    _set_date(ws, "E10", payload.get("invoice_date"))
-    _set(ws, "E11", payload.get("defective_quantity"))
-    _set(ws, "E12", payload.get("return_invoice_number"))
-    _set(ws, "J5", plan.get("customer_contact"))
-    _set(ws, "J6", payload.get("contact_phone"))
-    _set(ws, "J7", payload.get("contact_fax"))
-    _set(ws, "J8", payload.get("client_batch"))
-    _set(ws, "J9", plan.get("batch_number"))
-    _set(ws, "J10", payload.get("batch_quantity"))
-    _set(ws, "J11", payload.get("disposition"))
-    _set(ws, "J12", payload.get("rejected_quantity"))
+    put("I4", plan.get("client_nc_registry"))
+    put("E5", payload.get("supplier_name") or SUPPLIER_BY_BRANCH.get(branch, SUPPLIER_BY_BRANCH["01"]))
+    put("E6", _material_label(plan))
+    put("E7", payload.get("material_specification"))
+    put("E8", payload.get("purchase_order"))
+    put("E9", payload.get("invoice_number"))
+    put_date("E10", payload.get("invoice_date"))
+    put("E11", payload.get("defective_quantity"))
+    put("E12", payload.get("return_invoice_number"))
+    put("J5", plan.get("customer_contact"))
+    put("J6", payload.get("contact_phone"))
+    put("J7", payload.get("contact_fax"))
+    put("J8", payload.get("client_batch"))
+    put("J9", plan.get("batch_number"))
+    put("J10", payload.get("batch_quantity"))
+    put("J11", payload.get("disposition"))
+    put("J12", payload.get("rejected_quantity"))
 
     if classification.get("end_customer"):
-        _set(ws, "K3", plan.get("customer_name"))
-    _set_date(ws, "K1", payload.get("report_date") or plan.get("reported_at"))
+        put("K3", plan.get("customer_name"))
+    put_date("K1", payload.get("report_date") or plan.get("reported_at"))
 
-    _set(ws, "A15", nc.get("characteristic") or payload.get("nc_characteristic"))
-    _set(ws, "E15", nc.get("specified"))
-    verified = nc.get("verified") or plan.get("reported_problem")
-    _set(ws, "I15", verified)
-    _set(ws, "C18", nc.get("observations") or payload.get("observations"))
+    put("A15", nc.get("characteristic") or payload.get("nc_characteristic"))
+    put("E15", nc.get("specified"))
+    put("I15", nc.get("verified") or plan.get("reported_problem"))
+    put("C18", nc.get("observations") or payload.get("observations"))
 
-    _set_date(ws, "D21", payload.get("return_by"))
-    _set(ws, "G21", payload.get("attention_to"))
-    _set(ws, "J21", payload.get("attention_email"))
+    put_date("D21", payload.get("return_by"))
+    put("G21", payload.get("attention_to"))
+    put("J21", payload.get("attention_email"))
 
-    leader = next((m for m in team if m.get("is_leader")), team[0] if team else None)
-    members = [m for m in team if not m.get("is_leader")]
+    leader = next((member for member in team if member.get("is_leader")), team[0] if team else None)
+    members = [member for member in team if not member.get("is_leader")]
     if leader:
-        _set(ws, "D23", leader.get("member_name"))
-        _set(ws, "H23", leader.get("department"))
-    member_rows = [25, 26, 27, 28]
+        put("D23", leader.get("member_name"))
+        put("H23", leader.get("department"))
     for index, member in enumerate(members[:4]):
-        row = member_rows[index]
-        _set(ws, f"D{row}", member.get("member_name"))
-        _set(ws, f"H{row}", member.get("department"))
+        row = [25, 26, 27, 28][index]
+        put(f"D{row}", member.get("member_name"))
+        put(f"H{row}", member.get("department"))
 
     area_row_map = {
         "end_customer": 35,
@@ -254,59 +244,82 @@ def _fill_weg_wfr20997_sheet(
         row = area_row_map.get(area_key)
         if not row:
             continue
-        _set(ws, f"E{row}", item.get("quantity"))
-        _set(ws, f"G{row}", item.get("action_plan"))
-        _set(ws, f"J{row}", item.get("responsible"))
-        _set_date(ws, f"M{row}", item.get("date"))
+        put(f"E{row}", item.get("quantity"))
+        put(f"G{row}", item.get("action_plan"))
+        put(f"J{row}", item.get("responsible"))
+        put_date(f"M{row}", item.get("date"))
 
     occurrence_cols = ["E", "G", "I", "K", "M"]
     occurrence_whys = five_whys.get("occurrence_whys") or []
     for index, col in enumerate(occurrence_cols):
         raw = occurrence_whys[index] if index < len(occurrence_whys) else None
-        _set(ws, f"{col}44", format_why_step_answer_cell(raw) if raw is not None else None)
+        put(f"{col}44", format_why_step_answer_cell(raw) if raw is not None else None)
 
     detection_cols = ["E", "G", "I", "K", "M"]
     detection_whys = five_whys.get("detection_whys") or []
     for index, col in enumerate(detection_cols):
         raw = detection_whys[index] if index < len(detection_whys) else None
-        _set(ws, f"{col}49", format_why_step_answer_cell(raw) if raw is not None else None)
+        put(f"{col}49", format_why_step_answer_cell(raw) if raw is not None else None)
 
     corrective_actions = [
-        a for a in actions if a.get("action_type") == "corrective" or a.get("cause_track")
+        action for action in actions if action.get("action_type") == "corrective" or action.get("cause_track")
     ]
-    action_rows = [56, 57, 58, 59, 60]
     for index, action in enumerate(corrective_actions[:5]):
-        row = action_rows[index]
+        row = [56, 57, 58, 59, 60][index]
         track = action.get("cause_track")
         if track == "occurrence":
-            _set(ws, f"D{row}", "Ocorrência")
+            put(f"D{row}", "Ocorrência")
         elif track == "detection":
-            _set(ws, f"D{row}", "Detecção")
-        _set(ws, f"F{row}", action.get("description"))
-        _set(ws, f"J{row}", _action_responsible_label(action))
-        _set_date(ws, f"M{row}", action.get("due_date"))
+            put(f"D{row}", "Detecção")
+        put(f"F{row}", action.get("description"))
+        put(f"J{row}", _action_responsible_label(action))
+        put_date(f"M{row}", action.get("due_date"))
 
-    resolved = effectiveness.get("resolved_how") or plan.get("effectiveness_notes")
-    _set(ws, "D64", resolved)
-    _set(ws, "D71", effectiveness.get("ok_material_date"))
-    _set(ws, "F71", effectiveness.get("new_parts_identification"))
-    _set(ws, "J71", effectiveness.get("verification_responsible"))
-    _set_date(ws, "L71", effectiveness.get("verification_date"))
+    put("D63", effectiveness.get("resolved_how") or plan.get("effectiveness_notes"))
+    put_date("D70", effectiveness.get("ok_material_date"))
+    put("F70", effectiveness.get("new_parts_identification"))
+    put("J70", effectiveness.get("verification_responsible"))
+    put_date("L70", effectiveness.get("verification_date"))
 
-    _set(ws, "D73", preventive.get("how_avoid_future"))
-    _set(ws, "D77", preventive.get("other_processes_products"))
-    _set(ws, "D84", preventive.get("evaluation_responsible"))
-    _set_date(ws, "I84", preventive.get("evaluation_completion_date"))
+    put("D72", preventive.get("how_avoid_future"))
+    put("D77", preventive.get("other_processes_products"))
+    put("D83", preventive.get("evaluation_responsible"))
+    put_date("I83", preventive.get("evaluation_completion_date"))
 
-    doc_rows = [86, 87, 88, 89]
+    doc_rows = [85, 86, 87, 88]
     for index, doc in enumerate(documentation[:4]):
         row = doc_rows[index]
-        _set(ws, f"F{row}", doc.get("document"))
-        _set(ws, f"I{row}", doc.get("responsible"))
-        _set_date(ws, f"K{row}", doc.get("date"))
+        put(f"F{row}", doc.get("document"))
+        put(f"I{row}", doc.get("responsible"))
+        put_date(f"K{row}", doc.get("date"))
 
     closure = payload.get("client_closure_note")
-    _set(ws, "D108", closure or "Conforme status da nota QM.")
+    if closure:
+        put("D107", closure)
+    return values
+
+
+def _append_annex_images_to_workbook(
+    workbook_bytes: bytes,
+    image_annexes: list[dict[str, Any]],
+) -> bytes:
+    workbook = load_workbook(io.BytesIO(workbook_bytes))
+    annex_ws = _resolve_annex_sheet(workbook)
+    if annex_ws is None:
+        return workbook_bytes
+
+    _embed_annex_images(annex_ws, image_annexes)
+    annex_buffer = io.BytesIO()
+    workbook.save(annex_buffer)
+    return overlay_zip_parts(
+        base_bytes=workbook_bytes,
+        overlay_bytes=annex_buffer.getvalue(),
+        prefixes=(
+            "xl/worksheets/sheet2.xml",
+            "xl/worksheets/_rels/sheet2.xml.rels",
+            "xl/drawings/drawing2",
+        ),
+    )
 
 
 def build_rnc_8d_workbook(
@@ -325,11 +338,8 @@ def build_rnc_8d_workbook(
     if not isinstance(payload, dict):
         payload = {}
 
-    wb = load_workbook(template_path)
-    ws = wb["R8D"]
-
-    _fill_weg_wfr20997_sheet(
-        ws,
+    cell_values = build_weg_wfr20997_cell_values(
+        template_path=template_path,
         plan=plan,
         payload=payload,
         team=detail.get("team_members") or [],
@@ -337,16 +347,7 @@ def build_rnc_8d_workbook(
         actions=detail.get("actions") or [],
     )
 
-    annex_ws = _resolve_annex_sheet(wb)
-    if annex_ws is not None and image_annexes:
-        _embed_annex_images(annex_ws, image_annexes)
-
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    filled_bytes = buffer.getvalue()
-    if resolved_key == "weg_wfr20997":
-        return merge_template_visual_assets(
-            template_path=template_path,
-            filled_bytes=filled_bytes,
-        )
-    return filled_bytes
+    workbook_bytes = fill_template_workbook(template_path=template_path, cell_values=cell_values)
+    if image_annexes:
+        return _append_annex_images_to_workbook(workbook_bytes, image_annexes)
+    return workbook_bytes

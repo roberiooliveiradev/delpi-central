@@ -126,6 +126,57 @@ def test_build_rnc_8d_workbook_formats_dates_as_brazilian_text():
 
 
 @pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
+def test_build_rnc_8d_workbook_maps_lower_sections_to_content_cells():
+    detail = {
+        "plan": {
+            "branch_code": "01",
+            "effectiveness_notes": "Problema resolvido com retrabalho.",
+            "template_payload": {
+                "effectiveness": {
+                    "ok_material_date": "2026-02-09",
+                    "new_parts_identification": "Etiqueta verde",
+                    "verification_responsible": "Carla Demeneck",
+                    "verification_date": "2026-02-12",
+                },
+                "preventive": {
+                    "how_avoid_future": "Revisar desvio no PCP.",
+                    "other_processes_products": "Aplicar em todos os chicotes.",
+                    "evaluation_responsible": "Elaine Marquardt",
+                    "evaluation_completion_date": "2026-04-05",
+                },
+                "documentation_updates": [
+                    {"document": "IT-123", "responsible": "Laercio Koch", "date": "2026-03-01"},
+                ],
+                "client_closure_note": "NC encerrada após validação do cliente.",
+            },
+        },
+        "team_members": [],
+        "actions": [],
+    }
+    content = build_rnc_8d_workbook(detail, template_key="weg_wfr20997")
+    from openpyxl import load_workbook
+
+    ws_values = load_workbook(io.BytesIO(content), data_only=True)["R8D"]
+    ws_formulas = load_workbook(io.BytesIO(content))["R8D"]
+
+    assert ws_values["D63"].value == "Problema resolvido com retrabalho."
+    assert ws_values["D70"].value == "09/02/2026"
+    assert ws_values["F70"].value == "Etiqueta verde"
+    assert ws_values["J70"].value == "Carla Demeneck"
+    assert ws_values["L70"].value == "12/02/2026"
+    assert ws_values["D72"].value == "Revisar desvio no PCP."
+    assert ws_values["D77"].value == "Aplicar em todos os chicotes."
+    assert ws_values["D83"].value == "Elaine Marquardt"
+    assert ws_values["I83"].value == "05/04/2026"
+    assert ws_values["F85"].value == "IT-123"
+    assert ws_values["I85"].value == "Laercio Koch"
+    assert ws_values["K85"].value == "01/03/2026"
+    assert ws_values["D107"].value == "NC encerrada após validação do cliente."
+    assert str(ws_formulas["D71"].value or "").startswith("=IF(C1=1")
+    assert str(ws_formulas["D84"].value or "").startswith("=IF(C1=1")
+
+
+@pytest.mark.skipif(not _TEMPLATE_PATH.is_file(), reason="Template 8D ausente")
 def test_build_rnc_8d_workbook_embeds_annex_images():
     detail = {
         "plan": {"client_nc_registry": "215571003", "branch_code": "01", "template_payload": {}},

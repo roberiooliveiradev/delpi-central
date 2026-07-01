@@ -1,6 +1,6 @@
 import type { PlanEvidence } from "../../types/rnc8d";
 
-export type EvidencePreviewMode = "image" | "pdf" | "text" | "none";
+export type EvidencePreviewMode = "image" | "pdf" | "text" | "spreadsheet" | "docx" | "none";
 
 function fileName(evidence: PlanEvidence): string {
   return (evidence.file_name ?? "").toLowerCase();
@@ -23,7 +23,6 @@ export function isTextEvidence(evidence: PlanEvidence): boolean {
   const type = mime(evidence);
   return (
     evidence.type === "manual_text"
-    || evidence.type === "spreadsheet"
     || type.startsWith("text/")
     || name.endsWith(".txt")
     || name.endsWith(".csv")
@@ -56,13 +55,9 @@ export function isDocumentEvidence(evidence: PlanEvidence): boolean {
 export function resolveEvidencePreviewMode(evidence: PlanEvidence): EvidencePreviewMode {
   if (isImageEvidence(evidence)) return "image";
   if (isPdfEvidence(evidence)) return "pdf";
-  if (
-    isTextEvidence(evidence)
-    || isSpreadsheetEvidence(evidence)
-    || isDocumentEvidence(evidence)
-  ) {
-    return "text";
-  }
+  if (isSpreadsheetEvidence(evidence)) return "spreadsheet";
+  if (isDocumentEvidence(evidence)) return "docx";
+  if (isTextEvidence(evidence)) return "text";
   return "none";
 }
 
@@ -79,6 +74,22 @@ export function resolveLocalFilePreviewMode(file: File): EvidencePreviewMode {
   const name = file.name.toLowerCase();
   if (mime.startsWith("image/")) return "image";
   if (mime === "application/pdf") return "pdf";
+  if (
+    mime.includes("spreadsheet")
+    || mime.includes("excel")
+    || name.endsWith(".xlsx")
+    || name.endsWith(".xls")
+  ) {
+    return "spreadsheet";
+  }
+  if (
+    mime.includes("wordprocessingml")
+    || mime === "application/msword"
+    || name.endsWith(".docx")
+    || name.endsWith(".doc")
+  ) {
+    return "docx";
+  }
   if (mime.startsWith("text/") || name.endsWith(".txt") || name.endsWith(".csv")) {
     return "text";
   }

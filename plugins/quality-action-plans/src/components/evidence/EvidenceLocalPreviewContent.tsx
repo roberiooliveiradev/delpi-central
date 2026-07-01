@@ -5,6 +5,10 @@ import {
   canPreviewLocalFile,
   resolveLocalFilePreviewMode,
 } from "./evidencePreviewUtils";
+import { parseSpreadsheetPreview, type SpreadsheetPreviewData } from "./spreadsheetPreviewModel";
+import { SpreadsheetPreview } from "./SpreadsheetPreview";
+import { parseDocxPreview, type DocxPreviewData } from "./docxPreviewModel";
+import { DocxPreview } from "./DocxPreview";
 
 type Props = {
   file: File;
@@ -13,6 +17,8 @@ type Props = {
 export function EvidenceLocalPreviewContent({ file }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetPreviewData | null>(null);
+  const [docxData, setDocxData] = useState<DocxPreviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -26,6 +32,8 @@ export function EvidenceLocalPreviewContent({ file }: Props) {
       setError(null);
       setPreviewUrl(null);
       setTextContent(null);
+      setSpreadsheetData(null);
+      setDocxData(null);
 
       try {
         if (mode === "image" || mode === "pdf") {
@@ -36,6 +44,20 @@ export function EvidenceLocalPreviewContent({ file }: Props) {
           }
           objectUrlRef.current = url;
           setPreviewUrl(url);
+          return;
+        }
+
+        if (mode === "spreadsheet") {
+          const data = await parseSpreadsheetPreview(file);
+          if (cancelled) return;
+          setSpreadsheetData(data);
+          return;
+        }
+
+        if (mode === "docx") {
+          const data = await parseDocxPreview(file);
+          if (cancelled) return;
+          setDocxData(data);
           return;
         }
 
@@ -54,9 +76,7 @@ export function EvidenceLocalPreviewContent({ file }: Props) {
           return;
         }
 
-        setError(
-          "Prévia local limitada a imagem, PDF e texto. Após enviar, planilhas e documentos Office podem ser visualizados na lista de anexos.",
-        );
+        setError("Pré-visualização não disponível para este tipo de arquivo.");
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Não foi possível carregar a pré-visualização.");
@@ -112,6 +132,14 @@ export function EvidenceLocalPreviewContent({ file }: Props) {
         className="pac-evidence-preview-modal__pdf"
       />
     );
+  }
+
+  if (spreadsheetData) {
+    return <SpreadsheetPreview data={spreadsheetData} />;
+  }
+
+  if (docxData) {
+    return <DocxPreview data={docxData} title={file.name} />;
   }
 
   if (textContent) {

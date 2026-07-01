@@ -11,6 +11,10 @@ import {
   isPdfEvidence,
   resolveEvidencePreviewMode,
 } from "./evidencePreviewUtils";
+import { parseSpreadsheetPreview, type SpreadsheetPreviewData } from "./spreadsheetPreviewModel";
+import { SpreadsheetPreview } from "./SpreadsheetPreview";
+import { parseDocxPreview, type DocxPreviewData } from "./docxPreviewModel";
+import { DocxPreview } from "./DocxPreview";
 
 type Props = {
   planId: string;
@@ -20,6 +24,8 @@ type Props = {
 export function EvidencePreviewContent({ planId, evidence }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetPreviewData | null>(null);
+  const [docxData, setDocxData] = useState<DocxPreviewData | null>(null);
   const [truncated, setTruncated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +41,8 @@ export function EvidencePreviewContent({ planId, evidence }: Props) {
       setError(null);
       setPreviewUrl(null);
       setTextContent(null);
+      setSpreadsheetData(null);
+      setDocxData(null);
       setTruncated(false);
 
       try {
@@ -44,6 +52,24 @@ export function EvidencePreviewContent({ planId, evidence }: Props) {
           const url = URL.createObjectURL(blob);
           objectUrlRef.current = url;
           setPreviewUrl(url);
+          return;
+        }
+
+        if (mode === "spreadsheet") {
+          const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
+          if (cancelled) return;
+          const data = await parseSpreadsheetPreview(blob);
+          if (cancelled) return;
+          setSpreadsheetData(data);
+          return;
+        }
+
+        if (mode === "docx") {
+          const blob = await fetchPlanEvidenceFileBlob(planId, evidence.id);
+          if (cancelled) return;
+          const data = await parseDocxPreview(blob);
+          if (cancelled) return;
+          setDocxData(data);
           return;
         }
 
@@ -107,6 +133,14 @@ export function EvidencePreviewContent({ planId, evidence }: Props) {
         className="pac-evidence-preview-modal__pdf"
       />
     );
+  }
+
+  if (spreadsheetData) {
+    return <SpreadsheetPreview data={spreadsheetData} />;
+  }
+
+  if (docxData) {
+    return <DocxPreview data={docxData} title={title} />;
   }
 
   if (textContent) {
