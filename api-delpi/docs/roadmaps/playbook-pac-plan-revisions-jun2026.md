@@ -78,6 +78,7 @@ quality.quality_action_plans.current_revision_number
 Mutação existente (update_plan, upsert_ishikawa, …)
   → SQL da mutação (auto_commit=False)
   → record_plan_revision(scope, summary, actor)
+  → prune revisões além de PAC_PLAN_REVISION_RETENTION_LIMIT (50)
   → history/audit existentes
   → commit
 ```
@@ -102,21 +103,24 @@ POST restore(revision_number)
 | **1 (atual)** | Restore permitido se plano não excluído (`deleted_at IS NULL`) |
 | **2** | Bloquear restore se `was_ever_completed` ou eficácia aprovada (alinhar à política de exclusão) | ✅ |
 | **2** | `expected_revision_number` opcional nas escritas (concorrência otimista, padrão Auditoria 5S) | ✅ |
-| **3** | Diff por seção na UI; retenção (ex.: últimas 50 revisões) |
+| **3** | Diff por seção na UI; retenção (ex.: últimas 50 revisões) | ✅ |
 
 ## Frontend (`quality-action-plans`)
 
 | Fase | Entrega |
 |------|---------|
 | **1b** | Aba/lista de revisões + botão Restaurar + confirmação | ✅ |
-| **2** | Comparar revisão vs. atual (campos principais + diff expandível) | ✅ parcial |
+| **2** | Comparar revisão vs. atual (campos principais + diff expandível) | ✅ |
 | **2** | Enviar `expected_revision_number` em todas as gravações do detalhe do plano | ✅ |
+| **3** | Diff por seção (identificação, Ishikawa, 5 Porquês, ações, equipe, evidências, eficácia) | ✅ |
+| **3** | Retenção automática das últimas 50 revisões por plano | ✅ |
 
 ## Testes obrigatórios
 
 - `test_pac_plan_revision_snapshot_service.py` — build/validate snapshot
 - `test_quality_action_plan_revision_repository.py` — record + restore (mock SQL)
 - `test_pac_plan_revision_lock_service.py` — assert de revisão esperada (409)
+- `test_pac_plan_revision_retention.py` — retenção + record/restore (mock SQL)
 - Regressão: gravação gera `revision_number` incrementado
 
 ## Referências
@@ -143,3 +147,5 @@ POST restore(revision_number)
 | `current_revision_number` no detalhe do plano | ✅ |
 | `expected_revision_number` nas escritas (API + plugin) | ✅ fase 2 |
 | Testes lock otimista | ✅ |
+| Diff por seção na UI | ✅ fase 3 |
+| Retenção (50 revisões/plano) | ✅ fase 3 |

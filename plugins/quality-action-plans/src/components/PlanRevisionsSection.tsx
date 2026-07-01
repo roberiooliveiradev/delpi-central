@@ -10,7 +10,10 @@ import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ActionPlanDetail, PlanRevisionSummary } from "../types/actionPlan";
 import { formatActorDisplay } from "../utils/actorDisplay";
 import { formatDateTime } from "../utils/format";
-import { buildRevisionPlanDiff } from "../utils/planRevisionDiff";
+import {
+  buildRevisionSnapshotDiff,
+  type RevisionDiffSection,
+} from "../utils/planRevisionDiff";
 import {
   canRestorePlanRevision,
   planRestoreBlockedReason,
@@ -18,20 +21,29 @@ import {
 import { revisionScopeLabel } from "../utils/planRevisionLabels";
 import { SectionCard } from "./ui/SectionCard";
 
+const REVISION_RETENTION_LIMIT = 50;
+
 type Props = {
   planId: string;
-  plan: ActionPlanDetail["plan"] | null | undefined;
+  detail: ActionPlanDetail | null | undefined;
   canWrite: boolean;
   onRestored: () => Promise<void>;
   confirm: (options: { title: string; message: string }) => Promise<boolean>;
 };
 
-export function PlanRevisionsSection({ planId, plan, canWrite, onRestored, confirm }: Props) {
+export function PlanRevisionsSection({
+  planId,
+  detail,
+  canWrite,
+  onRestored,
+  confirm,
+}: Props) {
+  const plan = detail?.plan;
   const [items, setItems] = useState<PlanRevisionSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState<number | null>(null);
   const [expandedRevision, setExpandedRevision] = useState<number | null>(null);
-  const [expandedDiff, setExpandedDiff] = useState<string[]>([]);
+  const [expandedDiffSections, setExpandedDiffSections] = useState<RevisionDiffSection[]>([]);
   const [loadingDiff, setLoadingDiff] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,33 +74,27 @@ export function PlanRevisionsSection({ planId, plan, canWrite, onRestored, confi
   async function toggleDiff(revisionNumber: number) {
     if (expandedRevision === revisionNumber) {
       setExpandedRevision(null);
-      setExpandedDiff([]);
+      setExpandedDiffSections([]);
       return;
     }
 
-    if (!plan) {
+    if (!detail) {
       return;
     }
 
     setExpandedRevision(revisionNumber);
     setLoadingDiff(revisionNumber);
-    setExpandedDiff([]);
+    setExpandedDiffSections([]);
     try {
-      const detail = await fetchPlanRevision(planId, revisionNumber);
-      const snapshotPlan = detail.snapshot?.plan;
-      const rows = buildRevisionPlanDiff(
-        plan,
-        typeof snapshotPlan === "object" && snapshotPlan !== null
-          ? (snapshotPlan as Record<string, unknown>)
-          : {},
-      );
-      setExpandedDiff(rows.map(
-        (row) => `${row.label}: atual «${row.current}» · na revisão «${row.revision}»`,
-      ));
+      const revisionDetail = await fetchPlanRevision(planId, revisionNumber);
+      const snapshot =
+        revisionDetail.snapshot && typeof revisionDetail.snapshot === "object"
+          ? revisionDetail.snapshot
+          : {};
+      setExpandedDiffSections(buildRevisionSnapshotDiff(detail, snapshot));
     } catch (err) {
-      setExpandedDiff([
-        err instanceof Error ? err.message : "Erro ao carregar diff da revisão.",
-      ]);
+      setError(err instanceof Error ? err.message : "Erro ao carregar diff da revisão.");
+      setExpandedRevision(null);
     } finally {
       setLoadingDiff(null);
     }
@@ -119,7 +125,7 @@ export function PlanRevisionsSection({ planId, plan, canWrite, onRestored, confi
       await onRestored();
       await load();
       setExpandedRevision(null);
-      setExpandedDiff([]);
+      setExpandedDiffSections([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao restaurar revisão.");
     } finally {
@@ -134,7 +140,7 @@ export function PlanRevisionsSection({ planId, plan, canWrite, onRestored, confi
   return (
     <SectionCard
       title="Revisões do plano"
-      subtitle="Snapshots restauráveis de cada alteração relevante."
+      subtitle={`Snapshots restauráveis de cada alteração relevante. Mantidas as últimas ${REVISION_RETENTION_LIMIT} revisões por plano.`}
       hint={PAC_HELP_TOOLTIPS.sections.revisions}
     >
       {restoreBlockReason ? (
@@ -238,19 +244,27 @@ export function PlanRevisionsSection({ planId, plan, canWrite, onRestored, confi
                         <td colSpan={6}>
                           <div className="pac-revision-diff">
                             <p className="pac-muted pac-revision-diff__title">
-                              Diferenças em relação ao estado atual (campos principais)
+                              Diferenças por seção em relação ao estado atual
                             </p>
                             {loadingDiff === revision.revision_number ? (
                               <p className="pac-muted">Carregando comparação…</p>
-                            ) : expandedDiff.length > 0 ? (
-                              <ul className="pac-revision-diff__list">
-                                {expandedDiff.map((line) => (
-                                  <li key={line}>{line}</li>
-                                ))}
-                              </ul>
+                            ) : expandedDiffSections.length > 0 ? (
+                              expandedDiffSections.map((section) => (
+                                <div key={section.key} className="pac-revision-diff__section">
+                                  <h4 className="pac-revision-diff__section-title">{section.title}</h4>
+                                  <ul className="pac-revision-diff__list">
+                                    {section.rows.map((row) => (
+                                      <li key={`${section.key}-${row.label}`}>
+                                        <strong>{row.label}:</strong>{" "}
+                                        atual «{row.current}» · na revisão «{row.revision}»
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))
                             ) : (
                               <p className="pac-muted">
-                                Nenhuma diferença nos campos principais em relação ao estado atual.
+                                Nenhuma diferença nas seções comparadas em relação ao estado atual.
                               </p>
                             )}
                           </div>

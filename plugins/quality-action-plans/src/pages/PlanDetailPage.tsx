@@ -1349,7 +1349,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
 
           <PlanRevisionsSection
             planId={planId}
-            plan={plan}
+            detail={detail}
             canWrite={canWrite}
             onRestored={load}
             confirm={confirm}

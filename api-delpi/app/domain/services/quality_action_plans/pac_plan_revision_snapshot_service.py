@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any
 
 SNAPSHOT_SCHEMA_VERSION = 1
+PAC_PLAN_REVISION_RETENTION_LIMIT = 50
 
 REVISION_SCOPE_CREATED = "created"
 REVISION_SCOPE_IDENTIFICATION = "identification"

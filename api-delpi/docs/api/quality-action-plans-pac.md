@@ -225,6 +225,8 @@ Snapshots append-only em `quality_action_plan_revisions`; cada gravação releva
 
 **Concorrência otimista:** rotas de escrita aceitam `expected_revision_number` (body ou query, conforme o verbo). Quando informado e diferente de `current_revision_number`, a API responde **409** com mensagem de conflito. O plugin envia o valor do detalhe do plano em identificação, status, análises, ações, 8D e eficácia. Omitido = sem lock (compatível com clientes antigos).
 
+**Retenção:** após cada nova revisão, a api-delpi remove entradas antigas além das **50** mais recentes por plano (`PAC_PLAN_REVISION_RETENTION_LIMIT`). Números de revisão continuam monotônicos; apenas linhas expiradas são purgadas.
+
 Doc: `docs/roadmaps/playbook-pac-plan-revisions-jun2026.md`
 
 ### Status do plano

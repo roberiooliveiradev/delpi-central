@@ -4897,3 +4897,24 @@ button.pac-spreadsheet-preview__tab:not(.is-active):hover {
   white-space: nowrap;
   border: 0;
 }
+
+.dashboard-quality-action-plans .pac-revision-diff__section + .pac-revision-diff__section {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--pac-card-border, #e5e7eb);
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__section-title {
+  margin: 0 0 0.35rem;
+  font-size: var(--pac-font-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.dashboard-quality-action-plans .pac-revision-diff__list li + li {
+  margin-top: 0.25rem;
+}

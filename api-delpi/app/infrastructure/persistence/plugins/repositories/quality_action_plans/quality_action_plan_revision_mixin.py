@@ -13,6 +13,7 @@ from app.domain.services.quality_action_plans.pac_plan_revision_lock_service imp
     assert_expected_revision_number,
 )
 from app.domain.services.quality_action_plans.pac_plan_revision_snapshot_service import (
+    PAC_PLAN_REVISION_RETENTION_LIMIT,
     REVISION_SCOPE_RESTORE,
     VALID_REVISION_SCOPES,
     build_snapshot_from_detail,
@@ -67,6 +68,41 @@ class QualityActionPlanRevisionMixin:
         if fields is not None and expected is None:
             expected = self._pop_expected_revision(fields)
         self._assert_expected_plan_revision(plan_id, expected)
+
+    def _prune_old_plan_revisions(
+        self,
+        plan_id: str,
+        *,
+        keep: int = PAC_PLAN_REVISION_RETENTION_LIMIT,
+        auto_commit: bool = False,
+    ) -> None:
+        if keep <= 0:
+            return
+        cutoff_row = self.fetch_one(
+            """
+            SELECT revision_number AS cutoff
+              FROM quality.quality_action_plan_revisions
+             WHERE plan_id = %s
+             ORDER BY revision_number DESC
+             OFFSET %s
+             LIMIT 1
+            """,
+            (plan_id, keep),
+        )
+        if not cutoff_row:
+            return
+        cutoff = int(cutoff_row.get("cutoff") or 0)
+        if cutoff <= 0:
+            return
+        self.execute(
+            """
+            DELETE FROM quality.quality_action_plan_revisions
+             WHERE plan_id = %s
+               AND revision_number <= %s
+            """,
+            (plan_id, cutoff),
+            auto_commit=auto_commit,
+        )
 
     def record_plan_revision(
         self,
@@ -144,6 +180,7 @@ class QualityActionPlanRevisionMixin:
             (next_revision, resolved),
             auto_commit=auto_commit,
         )
+        self._prune_old_plan_revisions(resolved, auto_commit=auto_commit)
         return next_revision
 
     def list_plan_revisions(
