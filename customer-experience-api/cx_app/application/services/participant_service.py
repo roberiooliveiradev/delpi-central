@@ -4,11 +4,7 @@ from datetime import date
 from typing import Any
 
 from cx_app.application.services.photo_storage import PhotoStorage
-from cx_app.application.services.qr_service import (
-    QrService,
-    build_feedback_url,
-    build_public_url,
-)
+from cx_app.application.services.qr_service import QrService, build_public_url
 from cx_app.application.services.token_service import generate_public_token
 from cx_app.config import settings
 from cx_app.domain.participant import ParticipantInput, ParticipantUpdate
@@ -48,7 +44,6 @@ class ParticipantService:
             content=photo_bytes, mime_type=photo_mime
         )
         qr_filename = self.qr_service.generate(token=token)
-        feedback_qr_filename = self.qr_service.generate_feedback(token=token)
 
         row = self.repository.create(
             {
@@ -60,7 +55,6 @@ class ParticipantService:
                 "photo_filename": photo_filename,
                 "photo_mime": normalized_mime,
                 "qr_filename": qr_filename,
-                "feedback_qr_filename": feedback_qr_filename,
                 "thank_you_message": data.thank_you_message,
                 "created_by": created_by,
                 "created_by_name": created_by_name,
@@ -126,11 +120,9 @@ class ParticipantService:
         if not row:
             raise ParticipantNotFoundError(participant_id)
 
-        # Remove os arquivos primeiro (best-effort); a linha e o feedback (FK ON
-        # DELETE CASCADE) saem do banco em seguida.
+        # Remove os arquivos primeiro (best-effort); a linha sai do banco em seguida.
         self.photo_storage.delete(row.get("photo_filename"))
         self.qr_service.delete(row.get("qr_filename"))
-        self.qr_service.delete(row.get("feedback_qr_filename"))
         self.repository.delete(participant_id)
 
     # ----- consultas -------------------------------------------------------
@@ -179,27 +171,6 @@ class ParticipantService:
             return None
         return content, "image/png"
 
-    def read_feedback_qr_by_id(self, participant_id: str) -> tuple[bytes, str] | None:
-        row = self.repository.get_by_id(participant_id)
-        if not row:
-            return None
-
-        filename = row.get("feedback_qr_filename")
-        content = self.qr_service.read(filename or "") if filename else None
-
-        # Geração lazy para participantes criados antes do QR de feedback existir.
-        if content is None:
-            token = row.get("public_token")
-            if not token:
-                return None
-            filename = self.qr_service.generate_feedback(token=token)
-            self.repository.update(participant_id, {"feedback_qr_filename": filename})
-            content = self.qr_service.read(filename)
-            if content is None:
-                return None
-
-        return content, "image/png"
-
     # ----- apresentação ----------------------------------------------------
 
     def to_admin_view(self, row: dict[str, Any]) -> dict[str, Any]:
@@ -214,9 +185,7 @@ class ParticipantService:
             "thankYouMessage": row.get("thank_you_message"),
             "photoUrl": f"{_API_BASE}/public/participants/{token}/photo",
             "qrUrl": f"{_API_BASE}/participants/{row.get('id')}/qr",
-            "feedbackQrUrl": f"{_API_BASE}/participants/{row.get('id')}/feedback-qr",
             "publicUrl": build_public_url(token) if token else None,
-            "feedbackPublicUrl": build_feedback_url(token) if token else None,
             "viewCount": row.get("view_count"),
             "isActive": row.get("is_active"),
             "createdByName": row.get("created_by_name"),

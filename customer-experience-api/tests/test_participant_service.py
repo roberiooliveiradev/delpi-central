@@ -71,9 +71,6 @@ class FakeQrService:
     def generate(self, *, token: str) -> str:
         return f"{token}.png"
 
-    def generate_feedback(self, *, token: str) -> str:
-        return f"{token}-feedback.png"
-
     def delete(self, filename: str | None) -> None:
         self.deleted.append(filename)
 
@@ -99,7 +96,6 @@ def _existing_row() -> dict:
             "photo_filename": "old-photo.jpg",
             "photo_mime": "image/jpeg",
             "qr_filename": "tok.png",
-            "feedback_qr_filename": "tok-feedback.png",
             "is_active": True,
             "view_count": 3,
             "created_at": "2026-07-01T12:00:00Z",
@@ -108,7 +104,7 @@ def _existing_row() -> dict:
     }
 
 
-def test_create_generates_both_qr_codes_and_saves_photo():
+def test_create_generates_qr_code_and_saves_photo():
     service, repo, photo, _ = _service()
     view = service.create(
         ParticipantInput(
@@ -128,7 +124,6 @@ def test_create_generates_both_qr_codes_and_saves_photo():
     assert len(photo.saved) == 1
     stored = repo.rows["p1"]
     assert stored["qr_filename"].endswith(".png")
-    assert stored["feedback_qr_filename"].endswith("-feedback.png")
 
 
 def test_update_changes_fields_and_replaces_photo():
@@ -176,7 +171,6 @@ def test_delete_removes_row_photo_and_qr_files():
     assert "p1" not in repo.rows
     assert "old-photo.jpg" in photo.deleted
     assert "tok.png" in qr.deleted
-    assert "tok-feedback.png" in qr.deleted
 
 
 def test_delete_unknown_raises_not_found():

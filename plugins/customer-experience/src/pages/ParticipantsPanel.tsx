@@ -203,7 +203,7 @@ export function ParticipantsPanel() {
 
   const handleDelete = async (participant: Participant) => {
     const confirmed = window.confirm(
-      `Excluir definitivamente "${participant.fullName}"? Foto, QR codes e feedback serão removidos.`,
+      `Excluir definitivamente "${participant.fullName}"? Foto e QR code serão removidos.`,
     );
     if (!confirmed) return;
     try {

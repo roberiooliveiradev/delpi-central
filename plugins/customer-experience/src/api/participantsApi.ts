@@ -86,6 +86,3 @@ export async function downloadQr(id: string): Promise<Blob> {
   return httpDownloadBlob(`${PARTICIPANTS}/${id}/qr`);
 }
 
-export async function downloadFeedbackQr(id: string): Promise<Blob> {
-  return httpDownloadBlob(`${PARTICIPANTS}/${id}/feedback-qr`);
-}

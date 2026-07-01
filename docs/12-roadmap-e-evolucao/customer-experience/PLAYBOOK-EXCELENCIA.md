@@ -178,7 +178,7 @@ Como **não existe precedente** de página pública no portal, este playbook def
 - **Config-driven** (`src/shell/registry.ts`): cada app expõe `AppPublicPages` com `load(token)` + `render(data)`. O shell (`PublicShell.tsx`) cuida do transversal (marca DELPI, loading, not-found, erro, `noindex`).
 - **Adicionar um novo app público:** criar `src/apps/<app>/pages.tsx` (+ views/CSS/`api.ts`) e registrar em `registry.ts`. Sem novo container, sem novo location no gateway (já cobre `/p/`).
 - Cada view só faz `GET` no endpoint público da sua API. Nenhuma escrita nem token de sessão.
-- **Formulário público de feedback (implementado jul/2026):** página `feedback` do app `customer-experience` (`/p/customer-experience/feedback/{token}`), **página pública separada e independente** da de agradecimento — cada uma com seu **QR próprio** (2 QRs por participante) e seu carregamento de dados. Sem CTA ligando uma à outra. Prova de que o shell **não** muda ao ganhar página: só entrou uma view em `src/apps/customer-experience/` + registro no `pages.tsx`.
+- **Formulários personalizáveis (estilo Google Forms, jul/2026):** página `form` do app `customer-experience` (`/p/customer-experience/form/{token}`), **página pública independente** da de agradecimento — cada formulário tem seu **QR próprio**. O visitante informa nome/empresa e responde perguntas customizáveis (rating, texto, escolha, sim/não). Prova de que o shell **não** muda ao ganhar página: só entrou uma view em `src/apps/customer-experience/` + registro no `pages.tsx`. O antigo feedback fixo por participante foi **removido** (migration `V005`) em favor deste módulo.
 
 ### 5.2 Endpoint público da API (só leitura, por token)
 ```
@@ -192,25 +192,23 @@ GET /apps/customer-experience-api/public/participants/{token}
 - **Nunca** devolve `id`, `created_by`, `public_token` de outros nem lista — só o registro do token.
 - `photoUrl` aponta para outro endpoint público de imagem: `GET /public/participants/{token}/photo` (stream do volume).
 
-**Feedback do visitante (só escrita por token, 1 por participante):**
+**Formulários (estilo Google Forms) — leitura/escrita pública por token:**
 ```
-GET  /apps/customer-experience-api/public/participants/{token}/feedback
-→ 200 { fullName, submitted }              # submitted = já respondeu?
+GET  /apps/customer-experience-api/public/forms/{token}
+→ 200 { title, description, questions[] }   # perguntas ativas do formulário
 → 404 se token inexistente ou is_active = false
 
-POST /apps/customer-experience-api/public/participants/{token}/feedback
-     body { rating: 1..5, likedMost?, suggestions? }
-→ 201 { rating, likedMost, suggestions, createdAt }
-→ 404 token inexistente/inativo · 409 já respondido · 422 nota fora de 1..5
+POST /apps/customer-experience-api/public/forms/{token}/responses
+     body { respondentName, respondentCompany?, answers[] }
+→ 201 · 404 token inexistente/inativo · 422 resposta inválida
 ```
-- Tabela `customer_experience.feedback` (migration `V002`): FK `participant_id` → `participants(id) ON DELETE CASCADE`, `rating` com `CHECK (1..5)`, `UNIQUE(participant_id)` (1 feedback por token).
-- Serviço `FeedbackService` (unit-testado com repos fake): valida participante ativo, nota 1..5, unicidade; trunca textos em 2000 chars.
-- Anti-abuso: `UNIQUE` no banco + `limit_req` do gateway na rota `/apps/customer-experience-api/`.
+- Tabelas `customer_experience.forms`, `form_questions`, `form_responses`, `form_answers` (migration `V004`). Perguntas têm soft-delete (`is_active`) para preservar histórico de respostas.
+- Serviços `FormService` / `FormResponseService` (unit-testados com repos fake): validam tipo de pergunta, obrigatoriedade e agregam o dashboard.
+- Anti-abuso: `limit_req` do gateway na rota `/apps/customer-experience-api/`.
 
-**Dois QRs por participante (páginas separadas):**
-- QR de **agradecimento** → `/welcome/{token}` (alias) / `/p/customer-experience/thanks/{token}`; download admin `GET /participants/{id}/qr`.
-- QR de **feedback** → `/p/customer-experience/feedback/{token}` (`CX_PUBLIC_FEEDBACK_PATH`); download admin `GET /participants/{id}/feedback-qr`.
-- Coluna `feedback_qr_filename` (migration `V003`); gerado no cadastro e **lazy** para participantes antigos (persistido no primeiro download). Admin expõe `qrUrl`/`publicUrl` e `feedbackQrUrl`/`feedbackPublicUrl` + botões «QR feedback» / «Link».
+**QR de agradecimento (página separada):**
+- QR de **agradecimento** → `/welcome/{token}` (alias) / `/p/customer-experience/thanks/{token}`; download admin `GET /participants/{id}/qr`. Admin expõe `qrUrl`/`publicUrl`.
+- O feedback fixo por participante (tabela `feedback`, coluna `feedback_qr_filename`, migrations `V002`/`V003`) foi **removido** pela migration `V005`; use o módulo de Formulários.
 
 ### 5.3 Conteúdo da página (texto ao usuário: pt-BR)
 - Foto do participante em destaque.

@@ -2,7 +2,7 @@
 
 `public-hub` é o **irmão público do portal Minha DELPI**: um único SPA estático (Vite + React, **sem** Module Federation e **sem** Keycloak) que serve **páginas públicas sem login** de vários apps, roteadas por token.
 
-Ele existe porque o portal (`/portal`) tem gate de autenticação global (`location /` → login). Páginas que precisam ser abertas por qualquer pessoa (ex.: agradecimento por QR, formulário de feedback) **não** podem morar dentro do portal — vivem aqui, atrás de um prefixo de gateway próprio.
+Ele existe porque o portal (`/portal`) tem gate de autenticação global (`location /` → login). Páginas que precisam ser abertas por qualquer pessoa (ex.: agradecimento por QR, formulários personalizáveis) **não** podem morar dentro do portal — vivem aqui, atrás de um prefixo de gateway próprio.
 
 > **Regra de ouro:** páginas públicas **só leem/gravam por token opaco**. Nunca há sessão, cookie de login ou dado sensível de terceiros. Cada view fala apenas com o endpoint `/public/...` da API do seu app.
 
@@ -12,7 +12,7 @@ Ele existe porque o portal (`/portal`) tem gate de autenticação global (`locat
 
 | Tipo | Formato | Exemplo |
 |---|---|---|
-| **Canônico** | `/p/{app}/{page}/{token}` | `/p/customer-experience/feedback/abc123` |
+| **Canônico** | `/p/{app}/{page}/{token}` | `/p/customer-experience/form/abc123` |
 | **Alias legado** | `/welcome/{token}` → `customer-experience/thanks` | mantém QR já impressos |
 
 O gateway (`gateway/nginx.conf` e `nginx.dev.conf`) já encaminha **todo** `^~ /p/` para o container `delpi-public-hub`, **antes** do catch-all `location /` do portal. **Um app novo não precisa mexer no gateway.**
@@ -171,14 +171,14 @@ Pronto. **Não** é preciso: novo container, nova `location` no gateway, nem man
 
 ## Exemplo de referência: `customer-experience`
 
-Duas páginas **públicas separadas e independentes**, cada uma com seu QR próprio:
+Páginas **públicas separadas e independentes**, cada uma com seu QR próprio:
 
 | Página | Rota | `load` |
 |---|---|---|
 | Agradecimento | `/p/customer-experience/thanks/{token}` (alias `/welcome/{token}`) | `GET /apps/customer-experience-api/public/participants/{token}` |
-| Feedback | `/p/customer-experience/feedback/{token}` | `GET /apps/customer-experience-api/public/participants/{token}/feedback` |
+| Formulário | `/p/customer-experience/form/{token}` | `GET /apps/customer-experience-api/public/forms/{token}` |
 
-Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FeedbackPage.tsx`, `pages.tsx`).
+Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
 ---
 

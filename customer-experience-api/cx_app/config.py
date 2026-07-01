@@ -34,10 +34,6 @@ class Settings:
 
     # Caminho público (fora do portal) da página de agradecimento (QR de congratulação).
     CX_PUBLIC_WELCOME_PATH: str = _get_env("CX_PUBLIC_WELCOME_PATH", default="/welcome")
-    # Caminho público da página de formulário de feedback (QR próprio, separado).
-    CX_PUBLIC_FEEDBACK_PATH: str = _get_env(
-        "CX_PUBLIC_FEEDBACK_PATH", default="/p/customer-experience/feedback"
-    )
     # Caminho público dos formulários personalizáveis (estilo Google Forms).
     CX_PUBLIC_FORM_PATH: str = _get_env(
         "CX_PUBLIC_FORM_PATH", default="/p/customer-experience/form"

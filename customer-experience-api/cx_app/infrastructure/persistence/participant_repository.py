@@ -12,7 +12,7 @@ _TABLE = f'"{CX_SCHEMA_NAME}".participants'
 
 _COLUMNS = (
     "id, public_token, full_name, company_name, visit_date, participant_info, "
-    "photo_filename, photo_mime, qr_filename, feedback_qr_filename, thank_you_message, "
+    "photo_filename, photo_mime, qr_filename, thank_you_message, "
     "view_count, is_active, created_by, created_by_name, created_at, updated_at"
 )
 
@@ -26,11 +26,11 @@ class ParticipantRepository:
                     INSERT INTO {_TABLE}
                         (public_token, full_name, company_name, visit_date,
                          participant_info, photo_filename, photo_mime, qr_filename,
-                         feedback_qr_filename, thank_you_message, created_by, created_by_name)
+                         thank_you_message, created_by, created_by_name)
                     VALUES
                         (%(public_token)s, %(full_name)s, %(company_name)s, %(visit_date)s,
                          %(participant_info)s, %(photo_filename)s, %(photo_mime)s, %(qr_filename)s,
-                         %(feedback_qr_filename)s, %(thank_you_message)s, %(created_by)s, %(created_by_name)s)
+                         %(thank_you_message)s, %(created_by)s, %(created_by_name)s)
                     RETURNING {_COLUMNS}
                     """,
                     data,

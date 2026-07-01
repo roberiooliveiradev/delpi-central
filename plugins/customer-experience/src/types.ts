@@ -8,9 +8,7 @@ export type Participant = {
   thankYouMessage: string | null;
   photoUrl: string;
   qrUrl: string;
-  feedbackQrUrl: string;
   publicUrl: string | null;
-  feedbackPublicUrl: string | null;
   viewCount: number;
   isActive: boolean;
   createdByName: string | null;

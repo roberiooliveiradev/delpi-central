@@ -233,20 +233,3 @@ def download_qr(request: Request, participant_id: str):
     )
 
 
-@router.get("/{participant_id}/feedback-qr")
-def download_feedback_qr(request: Request, participant_id: str):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, CX_READ)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-
-    result = build_participant_service().read_feedback_qr_by_id(participant_id)
-    if result is None:
-        return fail("QR code de feedback não encontrado.", 404)
-    content, mime = result
-    return Response(
-        content=content,
-        media_type=mime,
-        headers={"Content-Disposition": f'attachment; filename="qr-feedback-{participant_id}.png"'},
-    )
