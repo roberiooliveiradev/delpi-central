@@ -384,6 +384,9 @@ export function ParticipantsPanel() {
                 {hasActiveFilters ? `${filtered.length}/${total}` : total}
               </span>
             </h2>
+          </div>
+
+          <div className="cx-filters">
             <div className="cx-search">
               <Search size={16} />
               <input
@@ -393,9 +396,6 @@ export function ParticipantsPanel() {
                 placeholder="Buscar por nome"
               />
             </div>
-          </div>
-
-          <div className="cx-filters">
             <CompanyMultiSelect
               options={companyOptions}
               selected={companyFilter}
