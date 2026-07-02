@@ -13,7 +13,7 @@ from app.application.security.api_delpi_permissions import (
 )
 from app.application.services.kaizen.kaizen_evidence_storage import KaizenEvidenceStorageError
 from app.composition.kaizen_composer import (
-    build_import_kaizens_from_sheet_use_case,
+    build_import_kaizens_use_case,
     build_kaizen_evidence_repository,
     build_kaizen_evidence_storage,
     build_kaizen_repository,
@@ -70,8 +70,13 @@ class KaizenRecordBody(BaseModel):
     change_reason: str | None = None
 
 
-class ImportKaizensFromSheetBody(BaseModel):
+KAIZEN_EXPORT_VERSION = 1
+
+
+class ImportKaizensBody(BaseModel):
+    items: list[dict] = Field(default_factory=list)
     dry_run: bool = False
+    skip_existing: bool = True
 
 
 class UpdateKaizenRecordBody(BaseModel):
@@ -201,23 +206,55 @@ def create_kaizen_record(body: KaizenRecordBody = Body(...)):
         return error_response("Erro interno ao cadastrar kaizen.", status_code=500)
 
 
-@router.post("/import-from-sheet")
-@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
-def import_kaizens_from_sheet(body: ImportKaizensFromSheetBody = Body(default_factory=ImportKaizensFromSheetBody)):
+@router.get("/export")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def export_kaizen_records():
     try:
-        use_case = build_import_kaizens_from_sheet_use_case()
+        from datetime import datetime, timezone
+
+        repo = build_kaizen_repository()
+        items = repo.export_records()
+        return api_delpi_success(
+            {
+                "version": KAIZEN_EXPORT_VERSION,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "count": len(items),
+                "items": items,
+            },
+            operation_id="export_kaizen_records",
+            shape="scalar",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao exportar kaizens: {exc}")
+        return error_response(str(exc), status_code=500)
+    except Exception as exc:
+        log_error(f"Erro ao exportar kaizens: {exc}")
+        return error_response("Erro interno ao exportar kaizens.", status_code=500)
+
+
+@router.post("/import")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def import_kaizen_records(body: ImportKaizensBody = Body(...)):
+    try:
+        if not body.items:
+            return error_response("Nenhum kaizen para importar (items vazio).", status_code=400)
+
+        use_case = build_import_kaizens_use_case()
         result = use_case.execute(
+            body.items,
             created_by_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
             dry_run=body.dry_run,
+            skip_existing=body.skip_existing,
         )
         return api_delpi_success(
             result.to_dict(),
-            operation_id="import_kaizens_from_sheet",
+            operation_id="import_kaizen_records",
             shape="scalar",
         )
     except Exception as exc:
-        log_error(f"Erro ao importar kaizens da planilha: {exc}")
-        return error_response("Erro interno ao importar kaizens da planilha.", status_code=500)
+        log_error(f"Erro ao importar kaizens: {exc}")
+        return error_response("Erro interno ao importar kaizens.", status_code=500)
 
 
 @router.get("/{record_id}", **QUALITY_KAIZEN_RECORD_BY_ID)

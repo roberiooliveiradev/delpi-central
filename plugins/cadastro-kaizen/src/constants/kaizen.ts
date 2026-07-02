@@ -7,8 +7,8 @@ import type {
 } from "../types/kaizen";
 
 export const BRANCHES = [
-  { code: "01", label: "Filial 01" },
-  { code: "02", label: "Filial 02" },
+  { code: "01", label: "Santa Catarina" },
+  { code: "02", label: "Espírito Santo" },
 ] as const;
 
 export const SAVINGS_TYPES: Array<{ value: SavingsType; label: string }> = [
@@ -158,10 +158,12 @@ export function formValuesToPayload(values: KaizenFormValues): Record<string, un
   };
 }
 
+export const APP_BASE = "/apps/cadastro-kaizen";
+
 export type View = "dashboard" | "list" | "new" | "edit" | "detail";
 
 export function parseRoute(pathname?: string): { view: View; id?: string } {
-  const path = (pathname ?? "/apps/cadastro-kaizen").replace(/\/+$/, "");
+  const path = (pathname ?? APP_BASE).replace(/\/+$/, "");
   if (path.endsWith("/dashboard")) return { view: "dashboard" };
   if (path.endsWith("/novo")) return { view: "new" };
   const detailMatch = path.match(/\/detalhe\/([^/]+)$/);
@@ -172,19 +174,19 @@ export function parseRoute(pathname?: string): { view: View; id?: string } {
 }
 
 export function listPath(): string {
-  return "/apps/cadastro-kaizen";
+  return APP_BASE;
 }
 
 export function dashboardPath(): string {
-  return "/apps/cadastro-kaizen/dashboard";
+  return `${APP_BASE}/dashboard`;
 }
 
 export function newPath(): string {
-  return "/apps/cadastro-kaizen/novo";
+  return `${APP_BASE}/novo`;
 }
 
 export function detailPath(id: string): string {
-  return `/apps/cadastro-kaizen/detalhe/${id}`;
+  return `${APP_BASE}/detalhe/${id}`;
 }
 
 export function editPath(id: string): string {

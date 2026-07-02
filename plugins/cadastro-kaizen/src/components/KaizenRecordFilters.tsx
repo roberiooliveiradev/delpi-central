@@ -24,7 +24,7 @@ export function KaizenRecordFilters({
   return (
     <section className="kz-filters-row" aria-label="Filtros de kaizen">
       <div className="kz-filter-box">
-        <label htmlFor="kz-filter-branch">Filial</label>
+        <label htmlFor="kz-filter-branch">Unidade</label>
         <select
           id="kz-filter-branch"
           value={branch}

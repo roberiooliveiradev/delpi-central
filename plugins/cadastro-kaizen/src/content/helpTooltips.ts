@@ -1,6 +1,6 @@
 export const KAIZEN_HELP_TOOLTIPS = {
   sections: {
-    identification: "Dados que identificam o kaizen: título, filial, setor e categoria da melhoria.",
+    identification: "Dados que identificam o kaizen: título, unidade, setor e categoria da melhoria.",
     process:
       "Contexto do processo: o que era feito antes, qual o problema, o que mudou e o resultado esperado.",
     participants:
@@ -22,7 +22,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
   },
   fields: {
     title: "Nome curto e objetivo da melhoria (ex.: 'Suporte para tablet no carrinho').",
-    branch: "Filial onde o kaizen foi implantado.",
+    branch: "Unidade onde o kaizen foi implantado.",
     sector: "Área ou setor responsável pela melhoria.",
     category: "Classificação da melhoria (segurança, qualidade, produtividade, ergonomia…).",
     processDescription: "Como o processo funcionava antes da melhoria.",

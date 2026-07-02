@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FolderOpen, Trash2 } from "lucide-react";
 
-import { deleteKaizenRecord, fetchKaizenRecords, importKaizensFromSheet } from "../api/kaizenApi";
+import {
+  deleteKaizenRecord,
+  exportKaizenRecords,
+  fetchKaizenRecords,
+  importKaizenRecords,
+  type KaizenExportFile,
+} from "../api/kaizenApi";
 import type { DataTableColumn } from "../components/data/DataTable";
 import { DataTableSection } from "../components/data/DataTableSection";
 import {
@@ -14,7 +20,7 @@ import { StateAlert } from "../components/StateAlert";
 import { detailPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency } from "../utils/format";
-import { savingsTypeLabel, statusLabel } from "../utils/labels";
+import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -23,9 +29,11 @@ type Props = {
 export function KaizenListPage({ onNavigate }: Props) {
   const [items, setItems] = useState<KaizenRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [branch, setBranch] = useState("");
   const [status, setStatus] = useState("");
   const [savingsType, setSavingsType] = useState("");
@@ -54,27 +62,67 @@ export function KaizenListPage({ onNavigate }: Props) {
     void load();
   }, [load]);
 
-  const handleImport = useCallback(async () => {
-    const confirmed = window.confirm(
-      "Importar kaizens ativos da planilha Google Sheets para o PostgreSQL?",
-    );
-    if (!confirmed) return;
-
-    setImporting(true);
+  const handleExport = useCallback(async () => {
+    setExporting(true);
     setError(null);
     setSuccess(null);
     try {
-      const result = await importKaizensFromSheet();
-      setSuccess(
-        `Importação concluída: ${result.created} criado(s), ${result.skipped} ignorado(s), ${result.errors} erro(s).`,
-      );
-      await load();
+      const data = await exportKaizenRecords();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `kaizens-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setSuccess(`Exportação concluída: ${data.count} kaizen(s) no arquivo.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao importar kaizens da planilha.");
+      setError(err instanceof Error ? err.message : "Erro ao exportar kaizens.");
     } finally {
-      setImporting(false);
+      setExporting(false);
     }
-  }, [load]);
+  }, []);
+
+  const handleImportFile = useCallback(
+    async (file: File) => {
+      setImporting(true);
+      setError(null);
+      setSuccess(null);
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text) as KaizenExportFile | Array<Record<string, unknown>>;
+        const items = Array.isArray(parsed) ? parsed : parsed.items;
+        if (!Array.isArray(items) || items.length === 0) {
+          throw new Error("Arquivo JSON sem kaizens (campo \"items\" vazio).");
+        }
+        const result = await importKaizenRecords(items);
+        setSuccess(
+          `Importação concluída: ${result.created} criado(s), ${result.skipped} ignorado(s), ${result.errors} erro(s).`,
+        );
+        await load();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao importar kaizens do arquivo JSON.",
+        );
+      } finally {
+        setImporting(false);
+      }
+    },
+    [load],
+  );
+
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (file) void handleImportFile(file);
+    },
+    [handleImportFile],
+  );
 
   const handleDelete = useCallback(
     async (record: KaizenRecord) => {
@@ -93,7 +141,7 @@ export function KaizenListPage({ onNavigate }: Props) {
 
   const columns = useMemo<DataTableColumn<KaizenRecord>[]>(
     () => [
-      { key: "branch", header: "Filial", render: (row) => row.branch_code },
+      { key: "branch", header: "Unidade", render: (row) => unitLabel(row.branch_code) },
       { key: "title", header: "Título", render: (row) => row.title },
       { key: "accountable", header: "Responsável", render: (row) => row.accountable ?? "—" },
       {
@@ -160,11 +208,21 @@ export function KaizenListPage({ onNavigate }: Props) {
           <KaizenListHeaderActions
             onNew={() => onNavigate(newPath())}
             onRefresh={() => void load()}
-            onImport={() => void handleImport()}
+            onExport={() => void handleExport()}
+            onImport={() => fileInputRef.current?.click()}
             loading={loading}
+            exporting={exporting}
             importing={importing}
           />
         }
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
       />
 
       <KaizenRecordFilters
@@ -193,6 +251,7 @@ export function KaizenListPage({ onNavigate }: Props) {
         getSearchText={(row) =>
           [
             row.branch_code,
+            unitLabel(row.branch_code),
             row.title,
             row.accountable,
             row.sector,

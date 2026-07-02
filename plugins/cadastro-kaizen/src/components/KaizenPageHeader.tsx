@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Sparkles, Upload } from "lucide-react";
 
 type KaizenPageHeaderProps = {
   title: string;
@@ -48,28 +48,44 @@ export function KaizenPageHeader({
 type ListHeaderActionsProps = {
   onNew: () => void;
   onRefresh: () => void;
+  onExport?: () => void;
   onImport?: () => void;
   loading?: boolean;
+  exporting?: boolean;
   importing?: boolean;
 };
 
 export function KaizenListHeaderActions({
   onNew,
   onRefresh,
+  onExport,
   onImport,
   loading,
+  exporting,
   importing,
 }: ListHeaderActionsProps) {
   return (
     <>
+      {onExport ? (
+        <button
+          type="button"
+          className="kz-ghost-btn"
+          onClick={onExport}
+          disabled={exporting}
+        >
+          <Download size={16} aria-hidden="true" />
+          {exporting ? "Exportando…" : "Exportar JSON"}
+        </button>
+      ) : null}
       {onImport ? (
         <button
           type="button"
           className="kz-ghost-btn"
           onClick={onImport}
-          disabled={loading || importing}
+          disabled={importing}
         >
-          {importing ? "Importando…" : "Importar planilha"}
+          <Upload size={16} aria-hidden="true" />
+          {importing ? "Importando…" : "Importar JSON"}
         </button>
       ) : null}
       <button type="button" className="kz-primary-btn" onClick={onNew}>

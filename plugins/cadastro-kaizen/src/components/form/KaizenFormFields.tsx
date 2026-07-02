@@ -20,7 +20,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
     <>
       <FormSection title="Identificação">
         <div className="kz-field">
-          <label htmlFor="kz-branch">Filial *</label>
+          <label htmlFor="kz-branch">Unidade *</label>
           <select
             id="kz-branch"
             required

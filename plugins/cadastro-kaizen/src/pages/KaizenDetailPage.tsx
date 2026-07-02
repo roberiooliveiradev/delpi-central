@@ -364,7 +364,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       <EditableSectionCard
         title="Identificação"
         hint={KAIZEN_HELP_TOOLTIPS.sections.identification}
-        description="Filial, equipe e descrição do processo"
+        description="Unidade, equipe e descrição do processo"
         isEditing={isEditing("identificacao")}
         onEdit={() => startEdit("identificacao")}
         onCancel={() => cancelSection("identificacao")}
@@ -373,7 +373,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         editable={editable}
         readContent={
           <div className="kz-read-grid">
-            <ReadOnlyField label="Filial" value={BRANCH_LABEL[view.branch_code] ?? view.branch_code} />
+            <ReadOnlyField label="Unidade" value={BRANCH_LABEL[view.branch_code] ?? view.branch_code} />
             <ReadOnlyField label="Setor" value={view.sector} />
             <ReadOnlyField label="Categoria" value={view.category} />
             <ReadOnlyField label="Investimento" value={formatCurrency(view.investment)} />
@@ -402,7 +402,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         editContent={
           <div className="kz-form-grid">
             <div className="kz-field">
-              <label htmlFor="kz-d-branch">Filial *</label>
+              <label htmlFor="kz-d-branch">Unidade *</label>
               <select
                 id="kz-d-branch"
                 value={form.branch_code}

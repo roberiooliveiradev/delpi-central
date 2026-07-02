@@ -8,7 +8,7 @@ const DIFF_FIELDS: Array<{ key: string; label: string; kind?: "status" }> = [
   { key: "realized_daily_savings", label: "Realizada/dia" },
   { key: "date_implemented", label: "Implantação" },
   { key: "title", label: "Título" },
-  { key: "branch_code", label: "Filial" },
+  { key: "branch_code", label: "Unidade" },
 ];
 
 function formatSnapshotValue(value: unknown, kind?: "status"): string {

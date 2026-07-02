@@ -51,6 +51,24 @@ export async function fetchKaizenRecords(params: ListParams = {}): Promise<Kaize
   return unwrapApiDelpiEnvelope(envelope, "Erro ao listar kaizens.");
 }
 
+const MAX_PAGE_SIZE = 200;
+
+/** Busca todos os kaizens paginando (a API limita page_size a 200). */
+export async function fetchAllKaizenRecords(
+  params: Omit<ListParams, "page" | "page_size"> = {},
+): Promise<KaizenRecord[]> {
+  const all: KaizenRecord[] = [];
+  let page = 1;
+  for (;;) {
+    const data = await fetchKaizenRecords({ ...params, page, page_size: MAX_PAGE_SIZE });
+    all.push(...data.items);
+    const totalPages = data.pagination?.total_pages ?? 1;
+    if (page >= totalPages || data.items.length === 0) break;
+    page += 1;
+  }
+  return all;
+}
+
 export async function fetchKaizenRecord(id: string): Promise<KaizenRecord> {
   const envelope = await httpGet<ApiEnvelope<KaizenRecord>>(`${API_BASE}/${id}`);
   return unwrapApiDelpiEnvelope(envelope, "Erro ao buscar kaizen.");
@@ -76,21 +94,38 @@ export async function deleteKaizenRecord(id: string): Promise<void> {
   unwrapApiDelpiEnvelope(envelope, "Erro ao excluir kaizen.");
 }
 
-export type ImportKaizensFromSheetResult = {
+// ---------------------------------------------------------------- exportar / importar JSON
+
+export type KaizenExportFile = {
+  version: number;
+  generated_at?: string;
+  source?: string;
+  count: number;
+  items: Array<Record<string, unknown>>;
+};
+
+export type ImportKaizensResult = {
   created: number;
   skipped: number;
   errors: number;
   items: Array<Record<string, unknown>>;
 };
 
-export async function importKaizensFromSheet(
-  dryRun = false,
-): Promise<ImportKaizensFromSheetResult> {
-  const envelope = await httpPost<ApiEnvelope<ImportKaizensFromSheetResult>>(
-    `${API_BASE}/import-from-sheet`,
-    { dry_run: dryRun },
-  );
-  return unwrapApiDelpiEnvelope(envelope, "Erro ao importar kaizens da planilha.");
+export async function exportKaizenRecords(): Promise<KaizenExportFile> {
+  const envelope = await httpGet<ApiEnvelope<KaizenExportFile>>(`${API_BASE}/export`);
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao exportar kaizens.");
+}
+
+export async function importKaizenRecords(
+  items: Array<Record<string, unknown>>,
+  options: { dryRun?: boolean; skipExisting?: boolean } = {},
+): Promise<ImportKaizensResult> {
+  const envelope = await httpPost<ApiEnvelope<ImportKaizensResult>>(`${API_BASE}/import`, {
+    items,
+    dry_run: options.dryRun ?? false,
+    skip_existing: options.skipExisting ?? true,
+  });
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao importar kaizens.");
 }
 
 // ---------------------------------------------------------------- revisões

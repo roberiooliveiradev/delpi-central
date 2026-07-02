@@ -185,27 +185,43 @@ def test_quality_kaizen_records_create_returns_meta(mock_build) -> None:
     )
 
 
-@patch("app.interface.http.routes.quality.kaizen_records_router.build_import_kaizens_from_sheet_use_case")
-def test_quality_kaizen_import_from_sheet_returns_meta(mock_build) -> None:
-    from app.application.use_cases.kaizen.import_kaizens_from_sheet_use_case import (
-        ImportKaizensFromSheetResult,
-    )
-    from app.interface.http.routes.quality.kaizen_records_router import (
-        ImportKaizensFromSheetBody,
-        import_kaizens_from_sheet,
+@patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
+def test_quality_kaizen_export_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import export_kaizen_records
+
+    mock_repo = MagicMock()
+    mock_repo.export_records.return_value = [{"branch_code": "01", "title": "Kaizen teste"}]
+    mock_build.return_value = mock_repo
+
+    response = export_kaizen_records()
+    _assert_meta(
+        _body(response),
+        operation_id="export_kaizen_records",
+        shape="scalar",
     )
 
-    mock_build.return_value.execute.return_value = ImportKaizensFromSheetResult(
+
+@patch("app.interface.http.routes.quality.kaizen_records_router.build_import_kaizens_use_case")
+def test_quality_kaizen_import_returns_meta(mock_build) -> None:
+    from app.application.use_cases.kaizen.import_kaizens_use_case import ImportKaizensResult
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        ImportKaizensBody,
+        import_kaizen_records,
+    )
+
+    mock_build.return_value.execute.return_value = ImportKaizensResult(
         created=1,
         skipped=0,
         errors=0,
         items=[],
     )
 
-    response = import_kaizens_from_sheet(body=ImportKaizensFromSheetBody())
+    response = import_kaizen_records(
+        body=ImportKaizensBody(items=[{"branch_code": "01", "title": "Kaizen teste"}]),
+    )
     _assert_meta(
         _body(response),
-        operation_id="import_kaizens_from_sheet",
+        operation_id="import_kaizen_records",
         shape="scalar",
     )
 

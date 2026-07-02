@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 206,
+  "operation_count": 269,
   "operations": [
     {
       "method": "GET",
@@ -134,6 +134,26 @@
       "tags": [
         "Cultura DELPI",
         "Cultura DELPI"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/customers/search",
+      "operationId": "search_customers_route_customers_search_get",
+      "summary": "Search Customers Route",
+      "tags": [
+        "Clientes"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/department-idd",
+      "operationId": "get_dashboard_department_idd_dashboard_department_idd_get",
+      "summary": "Get Dashboard Department Idd",
+      "tags": [
+        "Dashboard"
       ],
       "deprecated": false
     },
@@ -1133,6 +1153,16 @@
     },
     {
       "method": "GET",
+      "path": "/public/quality-labels/inspection/{token}",
+      "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
+      "summary": "Get Public Inspection",
+      "tags": [
+        "Quality Labels (público)"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/purchases/top-products",
       "operationId": "get_purchases_top_products",
       "summary": "Produtos mais comprados no período",
@@ -1165,9 +1195,119 @@
     },
     {
       "method": "GET",
+      "path": "/quality/action-plans/assignable-users",
+      "operationId": "list_quality_action_plan_assignable_users",
+      "summary": "Lista paginada — Directory user",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/quality/action-plans/dashboard",
       "operationId": "get_quality_action_plans_dashboard",
       "summary": "Indicador — Quality action plan dashboard",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/effectiveness-review/pending",
+      "operationId": "list_quality_action_plan_pending_effectiveness_reviews",
+      "summary": "Lista paginada — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/evidences/search",
+      "operationId": "search_quality_action_plan_evidences",
+      "summary": "Lista paginada — Quality action plan evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/export-templates",
+      "operationId": "list_quality_action_plan_export_templates",
+      "summary": "Lista paginada — Quality action plan export template",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/intelligence/knowledge-graph",
+      "operationId": "get_quality_action_plan_knowledge_graph",
+      "summary": "Análise consolidada — Quality action plan knowledge graph",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — inteligência"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/intelligence/recurrence-opening-assessment",
+      "operationId": "assess_quality_action_plan_recurrence_on_opening",
+      "summary": "Análise consolidada — Quality action plan recurrence opening assessment",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — inteligência"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/intelligence/suggest-evidence-tags",
+      "operationId": "suggest_quality_action_plan_evidence_tags",
+      "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — inteligência"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/intelligence/suggest-evidence-tags/from-image",
+      "operationId": "suggest_quality_action_plan_evidence_tags_from_image",
+      "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — inteligência"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/my-queue",
+      "operationId": "list_quality_action_plan_my_queue",
+      "summary": "Lista paginada — Quality action plan action",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/notifications/dispatch",
+      "operationId": "dispatch_quality_action_plan_notifications",
+      "summary": "Indicador — Quality action plan notifications",
       "tags": [
         "Qualidade",
         "PAC Qualidade — planos de ação"
@@ -1197,10 +1337,10 @@
       "deprecated": false
     },
     {
-      "method": "GET",
-      "path": "/quality/action-plans/my-queue",
-      "operationId": "list_quality_action_plan_my_queue",
-      "summary": "Fila pessoal — ações do usuário autenticado",
+      "method": "DELETE",
+      "path": "/quality/action-plans/{plan_id}",
+      "operationId": "delete_quality_action_plan",
+      "summary": "Indicador — Quality action plan",
       "tags": [
         "Qualidade",
         "PAC Qualidade — planos de ação"
@@ -1241,6 +1381,17 @@
       "deprecated": false
     },
     {
+      "method": "DELETE",
+      "path": "/quality/action-plans/{plan_id}/actions/{action_id}",
+      "operationId": "delete_quality_action_plan_action",
+      "summary": "Indicador — Quality action plan action",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
       "method": "PATCH",
       "path": "/quality/action-plans/{plan_id}/actions/{action_id}",
       "operationId": "update_quality_action_plan_action",
@@ -1252,9 +1403,53 @@
       "deprecated": false
     },
     {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/audit-log",
+      "operationId": "list_quality_action_plan_audit_log",
+      "summary": "Lista paginada — Quality action plan audit log",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
       "method": "POST",
       "path": "/quality/action-plans/{plan_id}/effectiveness-review",
       "operationId": "record_quality_action_plan_effectiveness",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review/approve",
+      "operationId": "approve_quality_action_plan_effectiveness_review",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review/reject",
+      "operationId": "reject_quality_action_plan_effectiveness_review",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review/submit",
+      "operationId": "submit_quality_action_plan_effectiveness_review",
       "summary": "Indicador — Quality action plan",
       "tags": [
         "Qualidade",
@@ -1308,9 +1503,31 @@
     },
     {
       "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/content",
+      "operationId": "get_quality_action_plan_evidence_content",
+      "summary": "Análise consolidada — Quality action plan evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/file",
-      "operationId": "download_plan_evidence_quality_action_plans__plan_id__evidences__evidence_id__file_get",
-      "summary": "Download Plan Evidence",
+      "operationId": "download_quality_action_plan_evidence",
+      "summary": "Consulta — Quality action plan evidence",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/export/pdf",
+      "operationId": "export_quality_action_plan_pdf",
+      "summary": "Consulta — Quality action plan export",
       "tags": [
         "Qualidade",
         "PAC Qualidade — planos de ação"
@@ -1330,20 +1547,9 @@
     },
     {
       "method": "GET",
-      "path": "/quality/action-plans/{plan_id}/export/pdf",
-      "operationId": "export_quality_action_plan_pdf",
-      "summary": "Exportar resumo do plano em PDF",
-      "tags": [
-        "Qualidade",
-        "PAC Qualidade — planos de ação"
-      ],
-      "deprecated": false
-    },
-    {
-      "method": "GET",
       "path": "/quality/action-plans/{plan_id}/export/rnc-8d/pdf",
       "operationId": "export_quality_action_plan_rnc_8d_pdf",
-      "summary": "Exportar relatório 8D em PDF",
+      "summary": "Consulta — Quality action plan export",
       "tags": [
         "Qualidade",
         "PAC Qualidade — planos de ação"
@@ -1366,6 +1572,61 @@
       "path": "/quality/action-plans/{plan_id}/ishikawa",
       "operationId": "upsert_quality_action_plan_ishikawa",
       "summary": "Indicador — Quality action plan ishikawa",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/promote-solution-pattern",
+      "operationId": "promote_quality_action_plan_solution_pattern",
+      "summary": "Indicador — Quality solution pattern",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/reopen",
+      "operationId": "reopen_quality_action_plan",
+      "summary": "Indicador — Quality action plan",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/revisions",
+      "operationId": "list_quality_action_plan_revisions",
+      "summary": "Lista paginada — Quality action plan revision",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/revisions/{revision_number}",
+      "operationId": "get_quality_action_plan_revision",
+      "summary": "Análise consolidada — Quality action plan revision",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — planos de ação"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/revisions/{revision_number}/restore",
+      "operationId": "restore_quality_action_plan_revision",
+      "summary": "Análise consolidada — Quality action plan",
       "tags": [
         "Qualidade",
         "PAC Qualidade — planos de ação"
@@ -1465,6 +1726,17 @@
       "path": "/quality/audit-5s/audits/{audit_id}",
       "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
       "summary": "Get Audit",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "operationId": "update_audit_quality_audit_5s_audits__audit_id__patch",
+      "summary": "Update Audit",
       "tags": [
         "Qualidade",
         "Auditoria 5S"
@@ -1701,10 +1973,21 @@
       "deprecated": false
     },
     {
+      "method": "GET",
+      "path": "/quality/kaizens/records/export",
+      "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
+      "summary": "Export Kaizen Records",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
       "method": "POST",
-      "path": "/quality/kaizens/records/import-from-sheet",
-      "operationId": "import_kaizens_from_sheet_quality_kaizens_records_import_from_sheet_post",
-      "summary": "Import Kaizens From Sheet",
+      "path": "/quality/kaizens/records/import",
+      "operationId": "import_kaizen_records_quality_kaizens_records_import_post",
+      "summary": "Import Kaizen Records",
       "tags": [
         "Qualidade",
         "Kaizen — cadastro"
@@ -1746,6 +2029,171 @@
     },
     {
       "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/at",
+      "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
+      "summary": "Get Kaizen At Date",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/audit-log",
+      "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
+      "summary": "List Kaizen Audit Log",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/evidences",
+      "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
+      "summary": "List Kaizen Evidences",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/kaizens/records/{record_id}/evidences",
+      "operationId": "attach_kaizen_evidence_quality_kaizens_records__record_id__evidences_post",
+      "summary": "Attach Kaizen Evidence",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
+      "operationId": "delete_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__delete",
+      "summary": "Delete Kaizen Evidence",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
+      "operationId": "update_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__patch",
+      "summary": "Update Kaizen Evidence",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
+      "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
+      "summary": "Download Kaizen Evidence",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/history",
+      "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
+      "summary": "List Kaizen History",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/revisions",
+      "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
+      "summary": "List Kaizen Revisions",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/revisions/{revision_number}",
+      "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
+      "summary": "Get Kaizen Revision",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/savings-timeline",
+      "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
+      "summary": "Get Kaizen Savings Timeline",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/kaizens/records/{record_id}/versions",
+      "operationId": "create_kaizen_version_quality_kaizens_records__record_id__versions_post",
+      "summary": "Create Kaizen Version",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
+      "operationId": "delete_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__delete",
+      "summary": "Delete Kaizen Version",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
+      "operationId": "update_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__put",
+      "summary": "Update Kaizen Version",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}/implement",
+      "operationId": "implement_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__implement_post",
+      "summary": "Implement Kaizen Version",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
       "path": "/quality/kaizens/summary",
       "operationId": "get_kaizen_summary",
       "summary": "Kaizens — resumo e listagem (Google Sheets)",
@@ -1761,6 +2209,193 @@
       "summary": "Detalhe do kaizen (Google Sheets)",
       "tags": [
         "Qualidade"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels",
+      "operationId": "list_labels_quality_labels_get",
+      "summary": "List Labels",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/labels",
+      "operationId": "create_label_quality_labels_post",
+      "summary": "Create Label",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/audit-events",
+      "operationId": "list_audit_events_quality_labels_audit_events_get",
+      "summary": "List Audit Events",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/checklist-template",
+      "operationId": "list_checklist_template_quality_labels_checklist_template_get",
+      "summary": "List Checklist Template",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/inspectors/me",
+      "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
+      "summary": "Get My Inspector",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/labels/inspectors/me",
+      "operationId": "save_my_inspector_quality_labels_inspectors_me_put",
+      "summary": "Save My Inspector",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/inspectors/me/signature",
+      "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
+      "summary": "Get My Signature",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/quality/labels/inspectors/me/signature",
+      "operationId": "upload_my_signature_quality_labels_inspectors_me_signature_post",
+      "summary": "Upload My Signature",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/lookup-op/{production_order}",
+      "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
+      "summary": "Lookup Op",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/search-ops",
+      "operationId": "search_ops_quality_labels_search_ops_get",
+      "summary": "Search Ops",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/quality/labels/{label_id}",
+      "operationId": "delete_label_quality_labels__label_id__delete",
+      "summary": "Delete Label",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/{label_id}",
+      "operationId": "get_label_quality_labels__label_id__get",
+      "summary": "Get Label",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/labels/{label_id}/active",
+      "operationId": "set_label_active_quality_labels__label_id__active_patch",
+      "summary": "Set Label Active",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/{label_id}/certificate",
+      "operationId": "get_certificate_quality_labels__label_id__certificate_get",
+      "summary": "Get Certificate",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/labels/{label_id}/certificate",
+      "operationId": "save_certificate_quality_labels__label_id__certificate_put",
+      "summary": "Save Certificate",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/{label_id}/certificate/pdf",
+      "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
+      "summary": "Get Certificate Pdf",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/labels/{label_id}/qr",
+      "operationId": "get_label_qr_quality_labels__label_id__qr_get",
+      "summary": "Get Label Qr",
+      "tags": [
+        "Qualidade",
+        "Quality Labels"
       ],
       "deprecated": false
     },
@@ -1858,6 +2493,17 @@
       "tags": [
         "Qualidade",
         "Qualidade — PPM"
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/quality/solution-patterns",
+      "operationId": "list_quality_solution_patterns",
+      "summary": "Lista paginada — Quality solution pattern",
+      "tags": [
+        "Qualidade",
+        "PAC Qualidade — padrões de solução"
       ],
       "deprecated": false
     },

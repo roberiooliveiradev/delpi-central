@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from app.domain.services.kaizen import kaizen_revision_service as revision_service
@@ -151,6 +152,79 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 "total_pages": max((total + page_size - 1) // page_size, 1),
             },
         }
+
+    # ------------------------------------------------------------------ exportação (backup/migração)
+
+    _EXPORT_FIELDS = (
+        "branch_code",
+        "title",
+        "accountable",
+        "sector",
+        "investment",
+        "savings_type",
+        "seconds_per_occurrence",
+        "occurrences_per_day",
+        "hourly_cost",
+        "quantity_saved_per_day",
+        "unit_material_cost",
+        "fixed_daily_savings",
+        "realized_daily_savings",
+        "status",
+        "date_implemented",
+        "date_discontinued",
+        "notes",
+        "process_description",
+        "problem_description",
+        "improvement_description",
+        "expected_result",
+        "category",
+    )
+
+    def export_records(self) -> list[dict[str, Any]]:
+        """Todos os kaizens vivos no formato importável por ``create_record`` (com participantes)."""
+        rows = self.fetch_all(
+            f"""
+            {_KAIZEN_SELECT}
+             WHERE k.deleted_at IS NULL
+             ORDER BY k.created_at
+            """,
+        )
+        if not rows:
+            return []
+
+        ids = [str(row["id"]) for row in rows]
+        participants = self.fetch_all(
+            """
+            SELECT kaizen_id, name, role, user_id
+              FROM quality.kaizen_participants
+             WHERE kaizen_id = ANY(%s)
+             ORDER BY CASE role WHEN 'responsavel' THEN 0 WHEN 'participante' THEN 1 ELSE 2 END,
+                      created_at
+            """,
+            (ids,),
+        )
+        by_kaizen: dict[str, list[dict[str, Any]]] = {}
+        for item in participants:
+            by_kaizen.setdefault(str(item["kaizen_id"]), []).append(
+                {"name": item["name"], "role": item["role"], "user_id": item.get("user_id")}
+            )
+
+        exported: list[dict[str, Any]] = []
+        for row in rows:
+            fields = {key: self._json_safe(row.get(key)) for key in self._EXPORT_FIELDS}
+            fields["participants"] = by_kaizen.get(str(row["id"]), [])
+            exported.append(fields)
+        return exported
+
+    @staticmethod
+    def _json_safe(value: Any) -> Any:
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, date):
+            return value.isoformat()
+        if isinstance(value, Decimal):
+            return float(value)
+        return value
 
     def get_record(self, record_id: str, *, with_participants: bool = True) -> dict[str, Any] | None:
         record = self.fetch_one(

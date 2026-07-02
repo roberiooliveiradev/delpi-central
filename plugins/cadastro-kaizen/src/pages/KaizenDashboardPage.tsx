@@ -2,22 +2,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
+  CalendarCheck,
   CheckCircle2,
-  Clock,
   PiggyBank,
   Sparkles,
+  TrendingUp,
   Wrench,
 } from "lucide-react";
 
-import { fetchKaizenRecords } from "../api/kaizenApi";
+import { fetchAllKaizenRecords } from "../api/kaizenApi";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
-import { detailPath, newPath } from "../constants/kaizen";
+import { BRANCHES, detailPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency, formatDate, formatInteger } from "../utils/format";
 import { computeKaizenStats, type CountBucket } from "../utils/kaizenStats";
-import { statusLabel } from "../utils/labels";
+import { statusLabel, unitLabel } from "../utils/labels";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -94,13 +95,16 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
   const [records, setRecords] = useState<KaizenRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unit, setUnit] = useState("");
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchKaizenRecords({ page_size: 500 });
-      setRecords(data.items);
+      const items = await fetchAllKaizenRecords();
+      setRecords(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar indicadores.");
     } finally {
@@ -112,7 +116,28 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
     void load();
   }, [load]);
 
-  const stats = useMemo(() => computeKaizenStats(records), [records]);
+  const unitFiltered = useMemo(
+    () => (unit ? records.filter((record) => record.branch_code === unit) : records),
+    [records, unit],
+  );
+
+  const hasFilters = Boolean(unit || dateStart || dateEnd);
+
+  const clearFilters = useCallback(() => {
+    setUnit("");
+    setDateStart("");
+    setDateEnd("");
+  }, []);
+
+  const stats = useMemo(
+    () => computeKaizenStats(unitFiltered, { dateStart, dateEnd }),
+    [unitFiltered, dateStart, dateEnd],
+  );
+
+  const savingsHint = stats.hasPeriod
+    ? "no período selecionado"
+    : "acumulado (validade de 1 ano)";
+  const implantedHint = stats.hasPeriod ? "no período selecionado" : "total implantados";
 
   return (
     <>
@@ -137,6 +162,54 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
         }
       />
 
+      {records.length > 0 ? (
+        <section className="kz-filters-row" aria-label="Filtros do painel">
+          <div className="kz-filter-box">
+            <label htmlFor="kz-dash-unit">Unidade</label>
+            <select
+              id="kz-dash-unit"
+              value={unit}
+              onChange={(event) => setUnit(event.target.value)}
+            >
+              <option value="">Todas</option>
+              {BRANCHES.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="kz-filter-box">
+            <label htmlFor="kz-dash-date-start">Data inicial</label>
+            <input
+              id="kz-dash-date-start"
+              type="date"
+              value={dateStart}
+              onChange={(event) => setDateStart(event.target.value)}
+            />
+          </div>
+
+          <div className="kz-filter-box">
+            <label htmlFor="kz-dash-date-end">Data final</label>
+            <input
+              id="kz-dash-date-end"
+              type="date"
+              value={dateEnd}
+              onChange={(event) => setDateEnd(event.target.value)}
+            />
+          </div>
+
+          {hasFilters ? (
+            <div className="kz-filter-box kz-filter-box--action">
+              <button type="button" className="kz-ghost-btn" onClick={clearFilters}>
+                Limpar filtros
+              </button>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {loading && records.length === 0 ? (
         <StateAlert>Carregando indicadores…</StateAlert>
@@ -146,9 +219,27 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
         <StateAlert>Nenhum kaizen cadastrado ainda.</StateAlert>
       ) : null}
 
-      {records.length > 0 ? (
+      {records.length > 0 && stats.total === 0 ? (
+        <StateAlert>Nenhum kaizen para os filtros selecionados.</StateAlert>
+      ) : null}
+
+      {stats.total > 0 ? (
         <>
           <section className="kz-kpi-grid">
+            <KpiCard
+              icon={<PiggyBank size={22} />}
+              tone="success"
+              label="Ganhos financeiros"
+              value={formatCurrency(stats.periodSavings)}
+              sub={savingsHint}
+            />
+            <KpiCard
+              icon={<CalendarCheck size={22} />}
+              tone="accent"
+              label="Kaizens implantados"
+              value={formatInteger(stats.periodImplantedCount)}
+              sub={implantedHint}
+            />
             <KpiCard
               icon={<Sparkles size={22} />}
               tone="accent"
@@ -157,25 +248,18 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
               sub={`${formatInteger(stats.implantados)} implantados`}
             />
             <KpiCard
-              icon={<CheckCircle2 size={22} />}
+              icon={<TrendingUp size={22} />}
               tone="success"
               label="Ganho anual vigente"
               value={formatCurrency(stats.activeAnnualSavings)}
               sub={`${formatInteger(stats.activeCount)} kaizens contabilizando`}
             />
             <KpiCard
-              icon={<PiggyBank size={22} />}
-              tone="accent"
+              icon={<CheckCircle2 size={22} />}
+              tone="muted"
               label="Ganho realizado / ano"
               value={formatCurrency(stats.realizedAnnualSavings)}
               sub="Economia efetivamente medida"
-            />
-            <KpiCard
-              icon={<Clock size={22} />}
-              tone="warning"
-              label="Em andamento"
-              value={formatInteger(stats.emAndamento)}
-              sub={`${formatInteger(stats.descontinuados + stats.cancelados)} encerrados`}
             />
             <KpiCard
               icon={<Wrench size={22} />}
@@ -187,13 +271,18 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
           </section>
 
           <div className="kz-dash-grid">
+            <section className="kz-card kz-dash-panel kz-dash-panel--wide">
+              <h2 className="kz-dash-panel__title">Kaizens implantados por mês</h2>
+              <BarList buckets={stats.implantedByMonth} toneOf={() => "success"} />
+            </section>
+
             <section className="kz-card kz-dash-panel">
               <h2 className="kz-dash-panel__title">Por situação</h2>
               <BarList buckets={stats.byStatus} toneOf={(b) => STATUS_TONE[b.key] ?? "accent"} />
             </section>
 
             <section className="kz-card kz-dash-panel">
-              <h2 className="kz-dash-panel__title">Por filial</h2>
+              <h2 className="kz-dash-panel__title">Por unidade</h2>
               <BarList buckets={stats.byBranch} />
             </section>
 
@@ -236,7 +325,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
                       >
                         <span className="kz-validity-row__title">{item.record.title}</span>
                         <span className="kz-validity-row__meta">
-                          Filial {item.record.branch_code} • vence {formatDate(item.validUntil)}
+                          {unitLabel(item.record.branch_code)} • vence {formatDate(item.validUntil)}
                         </span>
                       </button>
                       <span
@@ -266,7 +355,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
                     >
                       <span className="kz-recent-row__title">{record.title}</span>
                       <span className="kz-recent-row__meta">
-                        Filial {record.branch_code} • {statusLabel(record.status)}
+                        {unitLabel(record.branch_code)} • {statusLabel(record.status)}
                         {record.date_implemented ? ` • ${formatDate(record.date_implemented)}` : ""}
                       </span>
                     </button>
