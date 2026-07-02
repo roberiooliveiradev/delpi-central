@@ -330,6 +330,7 @@ cd plugins/cadastro-kaizen && npm run ci
 | Documento | Conteúdo |
 |-----------|----------|
 | [status-atual.md](./status-atual.md) | Snapshot rápido do que está pronto |
+| [PLAYBOOK-EVOLUCAO-KAIZEN.md](./PLAYBOOK-EVOLUCAO-KAIZEN.md) | Evolução (modo visual/edição, evidências, revisões versionadas, campos ricos) — Fases 6+ |
 | [plugins/cadastro-kaizen/README.md](../../../plugins/cadastro-kaizen/README.md) | Guia operacional |
 | [plugins/cadastro-kaizen/docs/DOCUMENTACAO.md](../../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) | Contratos HTTP e arquitetura |
 | [api-delpi/docs/api/06-modulos-departamentais.md](../../../api-delpi/docs/api/06-modulos-departamentais.md) | Rotas qualidade |
