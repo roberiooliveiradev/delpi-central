@@ -150,11 +150,28 @@
   border-color: transparent;
 }
 
-.cx-form-card__toggle {
+.cx-form-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cx-form-card__header .cx-card__title {
+  margin: 0;
+}
+
+.cx-form-card__title-text {
+  white-space: nowrap;
+}
+
+/* Faixa (rail) quando colapsado na horizontal. */
+.cx-form-card__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -165,25 +182,19 @@
   cursor: pointer;
 }
 
-.cx-form-card__toggle .cx-card__title {
+.cx-form-card__rail .cx-card__title {
+  flex-direction: column;
+  gap: 10px;
   margin: 0;
 }
 
-.cx-form-card__title-text {
-  white-space: nowrap;
-}
-
-.cx-form-card__toggle .cx-form-card__caret {
+.cx-form-card__rail .cx-form-card__caret {
   color: var(--cx-muted);
   flex-shrink: 0;
 }
 
-.cx-form-card__toggle:hover .cx-form-card__caret {
+.cx-form-card__rail:hover .cx-form-card__caret {
   color: var(--cx-text);
-}
-
-.cx-form-card__toggle + .cx-form {
-  margin-top: 16px;
 }
 
 /* Colapso na horizontal: coluna do formulário vira uma faixa estreita. */
@@ -193,21 +204,6 @@
 
 .cx-form-card--collapsed {
   padding: 14px 6px;
-}
-
-.cx-form-card--collapsed .cx-form-card__toggle {
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.cx-form-card--collapsed .cx-form-card__caret {
-  order: -1;
-}
-
-.cx-form-card--collapsed .cx-card__title {
-  flex-direction: column;
-  gap: 10px;
 }
 
 .cx-form-card--collapsed .cx-form-card__title-text {
@@ -810,14 +806,11 @@
   .cx-form-card--collapsed {
     padding: var(--cx-pad);
   }
-  .cx-form-card--collapsed .cx-form-card__toggle {
+  .cx-form-card__rail {
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
-  .cx-form-card--collapsed .cx-form-card__caret {
-    order: 0;
-  }
-  .cx-form-card--collapsed .cx-card__title {
+  .cx-form-card__rail .cx-card__title {
     flex-direction: row;
   }
   .cx-form-card--collapsed .cx-form-card__title-text {

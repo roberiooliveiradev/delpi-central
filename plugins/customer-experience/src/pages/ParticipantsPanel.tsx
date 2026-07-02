@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
   ChevronRight,
   Copy,
   FilterX,
@@ -100,6 +99,13 @@ export function ParticipantsPanel() {
     });
     setEditingId(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const openNewForm = () => {
+    resetForm();
+    setError(null);
+    setFormCollapsed(false);
+    formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const startEdit = (participant: Participant) => {
@@ -293,26 +299,37 @@ export function ParticipantsPanel() {
           className={`cx-card cx-form-card${formCollapsed ? " cx-form-card--collapsed" : ""}`}
           ref={formCardRef}
         >
-          <button
-            type="button"
-            className="cx-form-card__toggle"
-            aria-expanded={!formCollapsed}
-            title={formCollapsed ? "Expandir formulário" : "Recolher formulário"}
-            onClick={() => setFormCollapsed((v) => !v)}
-          >
-            <span className="cx-card__title">
-              {editingId ? <Pencil size={18} /> : <UserPlus size={18} />}
-              <span className="cx-form-card__title-text">
-                {editingId ? "Editar participante" : "Novo participante"}
-              </span>
-            </span>
-            {formCollapsed ? (
+          {formCollapsed ? (
+            <button
+              type="button"
+              className="cx-form-card__rail"
+              title="Expandir formulário"
+              onClick={() => setFormCollapsed(false)}
+            >
               <ChevronRight size={18} className="cx-form-card__caret" />
-            ) : (
-              <ChevronLeft size={18} className="cx-form-card__caret" />
-            )}
-          </button>
-          {!formCollapsed && (
+              <span className="cx-card__title">
+                {editingId ? <Pencil size={18} /> : <UserPlus size={18} />}
+                <span className="cx-form-card__title-text">
+                  {editingId ? "Editar participante" : "Novo participante"}
+                </span>
+              </span>
+            </button>
+          ) : (
+          <>
+          <div className="cx-form-card__header">
+            <h2 className="cx-card__title">
+              {editingId ? <Pencil size={18} /> : <UserPlus size={18} />}
+              {editingId ? "Editar participante" : "Novo participante"}
+            </h2>
+            <button
+              type="button"
+              className="cx-button cx-button--ghost"
+              onClick={() => setFormCollapsed(true)}
+              title="Fechar formulário"
+            >
+              <X size={16} /> Fechar
+            </button>
+          </div>
           <form className="cx-form" onSubmit={handleSubmit}>
             <label className="cx-field">
               <span>Nome completo</span>
@@ -397,6 +414,7 @@ export function ParticipantsPanel() {
               )}
             </div>
           </form>
+          </>
           )}
         </section>
 
@@ -408,6 +426,13 @@ export function ParticipantsPanel() {
                 {hasActiveFilters ? `${filtered.length}/${total}` : total}
               </span>
             </h2>
+            <button
+              className="cx-button cx-button--primary"
+              type="button"
+              onClick={openNewForm}
+            >
+              <UserPlus size={16} /> Novo participante
+            </button>
           </div>
 
           <div className="cx-filters">
