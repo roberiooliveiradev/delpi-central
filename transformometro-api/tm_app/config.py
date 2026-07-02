@@ -26,6 +26,20 @@ class Settings:
         str(_get_env("TM_DASHBOARD_AUTO_RECALC", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    # Cache de resultado do dashboard em tempo real (fonte única = motor live).
+    TM_DASHBOARD_QUERY_CACHE: bool = (
+        str(_get_env("TM_DASHBOARD_QUERY_CACHE", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS: int = int(
+        _get_env("TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS", default="120") or "120"
+    )
+    # Manutenção da tabela materializada legada ``dashboard_calculos`` no hook de CRUD.
+    # Padrão desligado: o dashboard e o Transforma+ leem do motor live (com query cache).
+    TM_DASHBOARD_PERSIST_CACHE: bool = (
+        str(_get_env("TM_DASHBOARD_PERSIST_CACHE", default="false") or "false").lower()
+        in {"1", "true", "yes", "on"}
+    )
 
     KEYCLOAK_JWKS_URL: str | None = _get_env("KEYCLOAK_JWKS_URL")
     KEYCLOAK_ISSUER: str | None = _get_env("KEYCLOAK_ISSUER")

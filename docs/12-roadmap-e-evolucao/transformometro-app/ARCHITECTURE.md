@@ -177,6 +177,8 @@ Todas as cadastrais com `deletado`, `created_at`, `updated_at`.
 
 A tabela `dashboard_calculos` **não é a fonte primária da regra de negócio**. Ela é um cache materializado auxiliar. As rotas atuais do dashboard calculam os dados em tempo real a partir das tabelas cadastrais, usando `DashboardLiveService` + `DashboardCalculatorService`. Portanto, toda alteração de regra de cálculo deve ser implementada primeiro no cálculo em tempo real e, depois, refletida no recálculo materializado.
 
+> **jul/2026 — fonte única + query cache.** UI, snapshot/chat e Transforma+ S2S leem do motor live com `DashboardQueryCache` (TTL + invalidação por geração; `tm_app/application/services/dashboard_query_cache.py`). O hook de CRUD (`DashboardRecalcHookService`) **só invalida o cache em O(1)** — sem recálculo pesado no caminho de escrita. A tabela materializada `dashboard_calculos` e o `DashboardRecalcService` são **opt-in** via `TM_DASHBOARD_PERSIST_CACHE` (default `false`); quando populada, o snapshot a usa como fast-path. Como o motor live prorrateia por dia, faixas de tempo `YYYY-MM-DD` valem em todas as leituras. Flags: `TM_DASHBOARD_QUERY_CACHE`, `TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS`, `TM_DASHBOARD_PERSIST_CACHE`.
+
 Regra obrigatória: o resultado gravado em `dashboard_calculos` deve bater com o resultado em tempo real para a mesma competência, revisão, processo, filtros e vigências. O `DashboardRecalcService` deve usar o mesmo `DashboardCalculatorService` e os mesmos patches/regras de vigência usados pelo fluxo live.
 
 Recálculo do cache:

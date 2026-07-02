@@ -4,6 +4,8 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 
 > **Regra jul/2026 — média por instância.** Cada instância tem baseline/parâmetros próprios. A economia consolidada de um processo é a **média aritmética das instâncias ativas no mês** (`Σ economia_instância / nº_instâncias_ativas`); investimento, horas e ROI seguem a mesma média. Recorte por unidade/setor mostra o **valor real** da instância (média de 1 = ela mesma). Fonte da regra: `transformometro-api/docs/regras-de-calculo.md`.
 
+> **Arquitetura jul/2026 — fonte única + query cache.** A planilha materializada `dashboard_calculos` deixou de ser a fonte: UI, snapshot/chat e Transforma+ leem do **motor live** (`DashboardLiveService`) com `DashboardQueryCache` (TTL + invalidação por geração). O CRUD **não** dispara mais recálculo pesado — apenas invalida o cache em O(1). Faixas de tempo por dia (`YYYY-MM-DD`) passam a valer em todas as leituras. A tabela materializada e o recálculo viram **opt-in** (`TM_DASHBOARD_PERSIST_CACHE`). Flags: `TM_DASHBOARD_QUERY_CACHE` (on), `TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS` (120), `TM_DASHBOARD_PERSIST_CACHE` (off).
+
 ## Fonte de dados e pipeline (runtime)
 
 | Camada | Papel |
@@ -30,6 +32,7 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 | Cache dashboard UUID + denorm | ✅ V017; recalc obrigatório pós-migration |
 | **Views leitura rápida** | ✅ V020; snapshot instâncias + evolução mensal |
 | **Média por instância** (motor + cache) | ✅ jul/2026; `_calculate_monthly_series` por instância, `calc_rules` divide por `instancias_ativas_mes`, cache/views **V021** (agregação 2 níveis) |
+| **Fonte única + query cache** | ✅ jul/2026; `DashboardQueryCache` (TTL+geração), hook invalida O(1), Transforma+/snapshot via motor live, tabela materializada opt-in (`TM_DASHBOARD_PERSIST_CACHE`) |
 | **Transforma+ S2S via cache** | ✅ `engineering_transforma_mais.py` (fallback live) |
 | Visões dashboard `view` | ✅ API + toggle MFE + `access_scope` |
 | Duplicar **instância** (replicar timeline) | ✅ `POST /instancias/{id}/duplicar` |
@@ -45,7 +48,7 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 
 Com `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no compose e `infra/.env`), o container **`delpi-transformometro-api`** aplica V001–V021 pendentes no **startup** (`run_migrations_on_startup` no lifespan FastAPI). Falha de migration **impede** a API de subir.
 
-> **V021** redefine `processo_competencia_snapshot` e `dashboard_competencia_evolucao` com a média por instância (agregação em 2 níveis). Após aplicar, rodar **recalc full** para o cache refletir a nova regra.
+> **V021** redefine `processo_competencia_snapshot` e `dashboard_competencia_evolucao` com a média por instância (agregação em 2 níveis). Só relevante se `TM_DASHBOARD_PERSIST_CACHE=true` (leitura legada da tabela) — nesse caso, rodar **recalc full** após aplicar. Com o padrão (fonte única live), as views/tabela não são usadas.
 
 Conferir:
 

@@ -158,9 +158,31 @@ Alertas de economia líquida negativa usam `economia_liquida_mes` já calculada 
 
 `ProcessRevisionCompareService` agrega por revisão: economia bruta, líquida, investimento único, recorrente, recursos compartilhados e investimento total.
 
-## Cache `dashboard_calculos`
+## Fonte única (motor live) + cache de consulta
 
-Leituras SQL no `DashboardCalculoRepository` expõem `investimento_total` e `custo_recursos_compartilhados_total` com as mesmas fórmulas. Após mudança de regra, executar recálculo completo do cache.
+**A fonte de verdade do dashboard é o motor live** (`DashboardLiveService` sobre `calc_rules`), não a planilha materializada. Isso vale para a UI, o snapshot/chat e o Transforma+ S2S. Vantagens: um único caminho de cálculo (sem divergência live × cache) e **faixas de tempo por dia** (prorrata `YYYY-MM-DD`) em todas as leituras.
+
+### `DashboardQueryCache` (TTL + invalidação por geração)
+
+Para não recomputar a cada polling sobre a **conexão Postgres única compartilhada**, os resultados são cacheados por uma janela curta:
+
+- `tm_app/application/services/dashboard_query_cache.py` — singleton de processo, thread-safe.
+- Cacheia `load_raw()` (as 8 queries de cadastro) e os resultados das leituras (`build_summary`, `calculation_rows`, ranking, família, `processo_competencia_rows`, export, lista de instâncias).
+- **Invalidação por geração:** qualquer mutação de CRUD chama `dashboard_query_cache.invalidate()` — **O(1), em memória, sem recálculo pesado** no caminho de escrita. A próxima leitura recomputa preguiçosamente. Se um CRUD ocorre no meio de uma leitura, o valor obsoleto não é cacheado (checa geração antes de gravar).
+
+| Flag | Default | Efeito |
+|------|---------|--------|
+| `TM_DASHBOARD_QUERY_CACHE` | `true` | Liga/desliga o cache de consulta |
+| `TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS` | `120` | Janela do TTL |
+| `TM_DASHBOARD_PERSIST_CACHE` | `false` | Mantém a tabela materializada legada `dashboard_calculos` no hook de CRUD |
+
+### Hook de CRUD (`DashboardRecalcHookService`)
+
+Toda mutação **apenas invalida** o query cache (O(1)). O recálculo pesado da tabela `dashboard_calculos` só roda quando `TM_DASHBOARD_AUTO_RECALC=true` **e** `TM_DASHBOARD_PERSIST_CACHE=true` (leitura legada opt-in). Por padrão, o recálculo pesado no CRUD deixa de existir.
+
+### Cache materializado `dashboard_calculos` (legado, opt-in)
+
+A tabela e as views V017–V021 permanecem para quem liga `TM_DASHBOARD_PERSIST_CACHE`. Quando populada, o snapshot lê dela como **fast-path**; caso contrário, o snapshot computa do motor live (mesmo contrato de campos). Leituras SQL no `DashboardCalculoRepository` expõem `investimento_total` e `custo_recursos_compartilhados_total` com as mesmas fórmulas. Após mudança de regra, executar recálculo completo do cache.
 
 ### Média por instância no cache (agregação em 2 níveis)
 
@@ -175,9 +197,9 @@ Cobre: `query_resumo`, `query_evolucao`, `query_ranking_processos`, `query_proce
 
 > `dashboard_competencia_evolucao` é **consolidada por empresa** (colunas de filial/setor nulas). Recortes por unidade/setor da evolução vêm de `query_evolucao` (filtro no grão de linha), não da view.
 
-### Recálculo automático (CRUD)
+### Persistência legada da tabela (CRUD)
 
-Com `TM_DASHBOARD_AUTO_RECALC=true` (padrão), mutações CRUD disparam `DashboardRecalcHookService`:
+Só quando `TM_DASHBOARD_AUTO_RECALC=true` **e** `TM_DASHBOARD_PERSIST_CACHE=true`, o hook também atualiza `dashboard_calculos`:
 
 | Escopo | Gatilho |
 |--------|---------|
@@ -185,20 +207,21 @@ Com `TM_DASHBOARD_AUTO_RECALC=true` (padrão), mutações CRUD disparam `Dashboa
 | `revisao_id` | exclusão de revisão sem escopo de processo |
 | recálculo **full** | recurso compartilhado, custo de recurso, vínculo revisão↔recurso (rateio global) |
 
-Desabilitar: `TM_DASHBOARD_AUTO_RECALC=false`.
+Sem `TM_DASHBOARD_PERSIST_CACHE`, o hook só invalida o query cache — a tabela não é mantida.
 
 ### Leitura para chat / integrações
 
-Endpoints sobre o cache materializado (não recalculam):
+Endpoints de leitura analítica — **fonte única = motor live** (com query cache); usam a tabela materializada só como fast-path quando `TM_DASHBOARD_PERSIST_CACHE` está populado:
 
 | Rota | Conteúdo |
 |------|----------|
-| `GET /dashboard/snapshot/meta` | contagem e `latest_calculated_at` |
-| `GET /dashboard/snapshot/resumo` | agregados do cache |
-| `GET /dashboard/snapshot/processos` | view `processo_competencia_snapshot` |
-| `GET /dashboard/snapshot/linhas` | linhas `dashboard_calculos` (revisão × competência) |
+| `GET /dashboard/snapshot/meta` | modo (`live`/`persisted`) e freshness |
+| `GET /dashboard/snapshot/resumo` | agregados (chaves do `query_resumo`) |
+| `GET /dashboard/snapshot/processos` | processo × competência (média por instância) |
+| `GET /dashboard/snapshot/linhas` | linhas revisão × competência |
+| `GET /dashboard/snapshot/instancias` | instâncias operacionais (economia diária, payback) |
 
-O dashboard interativo (`GET /dashboard/resumo`, etc.) continua em tempo real via `DashboardLiveService`.
+O dashboard interativo (`GET /dashboard/resumo`, etc.) e o Transforma+ S2S também usam `DashboardLiveService` — todos aceitam faixa de tempo por dia.
 
 ## Histórico de revisões
 

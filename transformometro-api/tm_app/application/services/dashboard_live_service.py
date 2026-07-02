@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import functools
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable
 
+from tm_app.application.services.dashboard_query_cache import dashboard_query_cache
 from tm_app.application.services.dashboard_view_scope_service import (
     DashboardScopeFilters,
     DashboardViewScopeService,
@@ -15,8 +17,40 @@ from tm_app.infrastructure.persistence.repositories.dashboard_data_repository im
 )
 
 
+def load_raw_cached() -> TransformometroRawData:
+    """Cadastro bruto com cache curto compartilhado (namespace ``raw``).
+
+    Fonte única para todas as leituras em tempo real (dashboard e Transforma+),
+    evitando as 8 queries de ``load_raw`` a cada chamada sobre a conexão única.
+    """
+    return dashboard_query_cache.get_or_compute(
+        "raw", (), lambda: DashboardDataRepository().load_raw()
+    )
+
+
+def _cached_query(namespace: str) -> Callable:
+    """Cacheia o resultado de um método de leitura pelo recorte/período (kwargs)."""
+
+    def decorator(fn: Callable) -> Callable:
+        @functools.wraps(fn)
+        def wrapper(self: "DashboardLiveService", *args: Any, **kwargs: Any) -> Any:
+            key = (args, tuple(sorted(kwargs.items())))
+            return dashboard_query_cache.get_or_compute(
+                namespace, key, lambda: fn(self, *args, **kwargs)
+            )
+
+        return wrapper
+
+    return decorator
+
+
 class DashboardLiveService:
-    """Consultas do dashboard calculadas em tempo real a partir do cadastro."""
+    """Consultas do dashboard calculadas em tempo real a partir do cadastro.
+
+    Fonte única de verdade do dashboard. Os resultados são cacheados por uma janela
+    curta (``DashboardQueryCache``) e invalidados no CRUD, evitando recomputar sobre
+    a conexão Postgres única a cada polling/integração.
+    """
 
     COMPARABLE_SCENARIOS = DashboardCalculatorService.COMPARABLE_SCENARIOS
 
@@ -24,6 +58,10 @@ class DashboardLiveService:
         self._calculator = DashboardCalculatorService()
         self._data_repo = DashboardDataRepository()
         self._scope = DashboardViewScopeService()
+
+    def _load_raw_cached(self) -> TransformometroRawData:
+        """Carrega o cadastro bruto (8 queries) com cache curto — reutilizado por todas as leituras."""
+        return load_raw_cached()
 
     def load_filtered_raw(
         self,
@@ -37,7 +75,7 @@ class DashboardLiveService:
         resolved = scope or self._scope.resolve(
             view=view, filial_id=filial_id, setor_id=setor_id
         )
-        raw = self._data_repo.load_raw()
+        raw = self._load_raw_cached()
         return self._scope.filter_raw_preserving_resource_rateio(
             raw,
             resolved,
@@ -45,6 +83,7 @@ class DashboardLiveService:
             familia_processo=familia_processo,
         )
 
+    @_cached_query("calc_rows")
     def calculation_rows(
         self,
         *,
@@ -69,6 +108,7 @@ class DashboardLiveService:
         )
         return rows
 
+    @_cached_query("summary")
     def build_summary(
         self,
         *,
@@ -123,6 +163,7 @@ class DashboardLiveService:
         )
         return list(summary.get("evolucao_mensal") or [])
 
+    @_cached_query("ranking")
     def query_ranking_processos(
         self,
         *,
@@ -288,6 +329,7 @@ class DashboardLiveService:
             monthly_breakdown=monthly_breakdown,
         )
 
+    @_cached_query("familia")
     def query_resumo_por_familia(
         self,
         *,
@@ -345,6 +387,7 @@ class DashboardLiveService:
         items.sort(key=lambda item: float(item.get("economia_liquida_mes") or 0), reverse=True)
         return items
 
+    @_cached_query("proc_liquida")
     def query_process_monthly_liquida(
         self,
         *,
@@ -403,6 +446,110 @@ class DashboardLiveService:
             )
         return result
 
+    @_cached_query("proc_comp")
+    def processo_competencia_rows(
+        self,
+        *,
+        view: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        familia_processo: str | None = None,
+        processo_id: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Linhas processo × competência com a **média por instância** (equivalente à view
+        ``processo_competencia_snapshot``), computadas em tempo real.
+
+        Cada métrica é ``Σ (valor_linha / instancias_ativas_mes)`` — a mesma semântica de
+        ``AVG`` entre instâncias usada no cache SQL e em ``query_process_monthly_liquida``.
+        """
+        rows = self.calculation_rows(
+            view=view,
+            filial_id=filial_id,
+            setor_id=setor_id,
+            familia_processo=familia_processo,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+        )
+        raw = self.load_filtered_raw(
+            view=view,
+            filial_id=filial_id,
+            setor_id=setor_id,
+            familia_processo=familia_processo,
+        )
+        processos_by_id = {
+            str(p.get("processo_id")): p for p in raw.processos if p.get("processo_id")
+        }
+
+        _METRICS = (
+            "economia_bruta",
+            "economia_liquida_mes",
+            "investimento_unico_mes",
+            "custo_recorrente_mes",
+            "custo_recursos_compartilhados_mes",
+            "horas_economizadas_mes",
+        )
+        aggregated: dict[tuple[str, str], dict[str, Any]] = {}
+        for row in rows:
+            if str(row.get("cenario_tipo") or "").lower() not in self.COMPARABLE_SCENARIOS:
+                continue
+            pid = str(row.get("processo_id") or "")
+            comp = str(row.get("competencia") or "")
+            if not pid or not comp:
+                continue
+            if processo_id and pid != str(processo_id):
+                continue
+            divisor = float(row.get("instancias_ativas_mes") or 1) or 1.0
+            bucket = aggregated.setdefault(
+                (pid, comp),
+                {metric: 0.0 for metric in _METRICS} | {"_revisoes": set()},
+            )
+            for metric in _METRICS:
+                bucket[metric] += float(row.get(metric) or 0) / divisor
+            rid = row.get("revisao_id")
+            if rid is not None:
+                bucket["_revisoes"].add(str(rid))
+
+        result: list[dict[str, Any]] = []
+        for (pid, comp), bucket in aggregated.items():
+            proc = processos_by_id.get(pid, {})
+            investimento_total = (
+                bucket["investimento_unico_mes"]
+                + bucket["custo_recorrente_mes"]
+                + bucket["custo_recursos_compartilhados_mes"]
+            )
+            result.append(
+                {
+                    "processo_id": pid,
+                    "codigo_processo": proc.get("codigo_processo"),
+                    "nome_processo": proc.get("nome_processo"),
+                    "filial_id": proc.get("filial_id"),
+                    "setor_id": proc.get("setor_id"),
+                    "instancia_id": None,
+                    "familia_processo": proc.get("familia_processo"),
+                    "agrupador_ferramenta": proc.get("agrupador_ferramenta"),
+                    "competencia": comp,
+                    "revisoes_no_mes": len(bucket["_revisoes"]),
+                    "economia_bruta": round(bucket["economia_bruta"], 2),
+                    "economia_liquida_mes": round(bucket["economia_liquida_mes"], 2),
+                    "investimento_unico_mes": round(bucket["investimento_unico_mes"], 2),
+                    "custo_recorrente_mes": round(bucket["custo_recorrente_mes"], 2),
+                    "custo_recursos_compartilhados_mes": round(
+                        bucket["custo_recursos_compartilhados_mes"], 2
+                    ),
+                    "investimento_total_mes": round(investimento_total, 2),
+                    "horas_economizadas_mes": round(bucket["horas_economizadas_mes"], 2),
+                    "calculated_at": None,
+                }
+            )
+        result.sort(
+            key=lambda r: (r["competencia"], float(r["economia_liquida_mes"])),
+            reverse=True,
+        )
+        return result
+
+    @_cached_query("export")
     def query_export_rows(
         self,
         *,
@@ -458,6 +605,7 @@ class DashboardLiveService:
             )
         return export_rows
 
+    @_cached_query("proc_list")
     def list_processos_calculados(
         self,
         *,
