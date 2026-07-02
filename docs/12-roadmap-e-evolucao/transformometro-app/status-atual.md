@@ -1,10 +1,12 @@
 # Status atual — Transformômetro
 
-Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = **média das instâncias ativas** — motor, cache/views V021).
+Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = **média das instâncias ativas** — motor, cache/views V021; consolidação cadastral multi-unidade).
 
 > **Regra jul/2026 — média por instância.** Cada instância tem baseline/parâmetros próprios. A economia consolidada de um processo é a **média aritmética das instâncias ativas no mês** (`Σ economia_instância / nº_instâncias_ativas`); investimento, horas e ROI seguem a mesma média. Recorte por unidade/setor mostra o **valor real** da instância (média de 1 = ela mesma). Fonte da regra: `transformometro-api/docs/regras-de-calculo.md`.
 
 > **Arquitetura jul/2026 — fonte única + query cache.** A planilha materializada `dashboard_calculos` deixou de ser a fonte: UI, snapshot/chat e Transforma+ leem do **motor live** (`DashboardLiveService`) com `DashboardQueryCache` (TTL + invalidação por geração). O CRUD **não** dispara mais recálculo pesado — apenas invalida o cache em O(1). Faixas de tempo por dia (`YYYY-MM-DD`) passam a valer em todas as leituras. A tabela materializada e o recálculo viram **opt-in** (`TM_DASHBOARD_PERSIST_CACHE`). Flags: `TM_DASHBOARD_QUERY_CACHE` (on), `TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS` (120), `TM_DASHBOARD_PERSIST_CACHE` (off).
+
+> **Regra jul/2026 — instância multi-unidade.** Instâncias com `todas_filiais_ativas` compartilham uma timeline entre filiais. Na visão consolidada, `economia_bruta`, `economia_liquida_mes` e `horas_economizadas_mes` da instância escalam pelo nº de filiais ativas (`escopo_unidades`); recursos compartilhados **não** multiplicam. Cadastro legado duplicado por filial deve ser consolidado via **export JSON → edição manual → import replace** ([json-backup.md](../../../transformometro-api/docs/json-backup.md) § Consolidação cadastral). Detalhe: [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) § Instância multi-unidade.
 
 > **Regra jul/2026 — validade de 1 ano por revisão.** A economia de uma revisão comparável só conta por **12 meses** a partir do início (`data_implantacao`/`data_inicio_vigencia`); a partir do **aniversário** (`início + 12m`, exclusivo) deixa de ser contabilizada (`calc_rules.review_validity_end_date` / `review_effective_end_date`). Uma **nova revisão implantada** (`revisao_ativa`) assume o cálculo com seu próprio ciclo de 12 meses; sem sucessora, o ambiente passa a contribuir 0. O dashboard acompanha as que vencem nos **próximos 90 dias** (`GET /dashboard/vencimentos`, painel “Revisões a vencer”; campos `data_vencimento`/`dias_para_vencer`/`status_vigencia`).
 
@@ -43,6 +45,7 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 | **RBAC filial** server-side | ✅ S10; manifesto com permissões escopadas |
 | CRUD completo + dashboard Fase 4 | ✅ |
 | Backup JSON 1.1 | ✅ bundles `filiais`, `processo_instancias`, `processo_instancia_setores` |
+| **Consolidação cadastral** (multi-unidade) | ✅ import + runbook manual jul/2026; motor com multiplicador (`escopo_unidades` default 1) |
 | Testes API | ✅ `scripts/ci-transformometro-api.sh` (123+) |
 | Build MFE | ✅ Docker build `transformometro` |
 | Documentação Playbook 18 | ✅ modelagem, arquitetura, regras de cálculo, status |
@@ -92,10 +95,22 @@ print('total instancias:', d.get('total'), 'items:', len(d.get('items') or []))
 "
 ```
 
+## Consolidação cadastral em produção (one-shot)
+
+1. `git pull` + rebuild `transformometro-api` (commit com import multi-unidade + calculador).
+2. **Export** backup: `python scripts/import_cadastro_json.py export -o backup-pre-consolidacao.json`.
+3. Aplicar bundle consolidado (edição manual conforme [json-backup.md](../../../transformometro-api/docs/json-backup.md)).
+4. `preview` + `apply --mode replace --yes`.
+5. Recalc / smoke dashboard (3 visões, instâncias multi-unidade no MFE).
+
+JSONs de operação **não** entram no git (`fixtures/cadastro/*.json` gitignored).
+
 ## Pendente (operacional)
 
 | Item | Responsável |
 |------|-------------|
+| **Consolidação cadastral** em produção (passos acima) | Ops |
+| **`escopo_unidades`** no live/recalc (multiplicador consolidado) | Dev |
 | Deploy produção com runbook acima | Ops |
 | Atribuir permissões escopadas na Core API / Portal RBAC (quem precisar) | Ops |
 | Planilha somente leitura | Google Workspace |

@@ -27,6 +27,33 @@ economia(empresa, mês)   = Σ economia(processo, mês)      # consolidado soma 
 
 **Implementação (row-level).** Cada linha `(revisão, competência)` carrega `instancias_ativas_mes` = nº de instâncias ativas do processo naquele mês no conjunto atual. A agregação (`calc_rules.prorate_dashboard_row_for_period` / `aggregate_period_from_rows`) divide as métricas por esse fator antes de somar — assim `Σ (linha / N)` reproduz a média-soma, e no recorte por unidade `N = 1` devolve o valor real.
 
+## Instância multi-unidade (`todas_filiais_ativas`)
+
+**Conceito (jul/2026).** Uma instância com `todas_filiais_ativas = true` representa **um único ambiente operacional** replicado em todas as filiais ativas (timeline, baseline e medições compartilhadas). Substitui duplicatas cadastrais `(processo × filial)` quando os parâmetros são idênticos.
+
+```text
+multiplicador = escopo_unidades   se todas_filiais_ativas
+              = 1                 caso contrário (instância por filial ou recorte filial/departamento)
+
+economia_instância_escalada(mês) =
+  economia_bruta_revisão × multiplicador
+  (idem horas_economizadas_mes; economia_liquida_mes após custos da própria linha)
+```
+
+| Métrica | Escala com multiplicador? |
+|---------|---------------------------|
+| `economia_bruta`, `economia_liquida_mes`, `horas_economizadas_mes` | Sim, **por instância** antes da média entre instâncias do processo |
+| Investimento único / recorrente da revisão | Não (permanece o valor cadastrado na timeline) |
+| Recursos compartilhados | Não — rateio continua via `escopo_recurso` / pool global |
+
+- **Visão consolidada:** `escopo_unidades` = nº de filiais ativas no recorte analítico (ex.: 2 unidades → economia da instância multi-unidade conta **2×**).
+- **Visão filial ou departamento:** multiplicador **1** (uma unidade no recorte).
+- **Processo com várias instâncias:** após escalar cada instância, aplica-se a **média** entre instâncias ativas no mês (regra anterior).
+
+**Implementação:** `DashboardCalculatorService._instance_unit_multiplier`, `_scale_instance_economy_row`; parâmetro `escopo_unidades` em `build_dashboard_rows` / `build_summary` (default `1`).
+
+> **Backlog técnico:** propagar `escopo_unidades` a partir da contagem de filiais ativas em `DashboardLiveService` e `DashboardRecalcService` na visão consolidada — até lá, o default `1` mantém economia **sem** multiplicar (comportamento conservador).
+
 ## Economia líquida (mensal)
 
 ```text

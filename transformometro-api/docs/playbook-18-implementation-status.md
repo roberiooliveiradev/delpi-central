@@ -2,7 +2,7 @@
 
 Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md`](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md)
 
-Última atualização: jun/2026
+Última atualização: jul/2026
 
 ## Sprints concluídos
 
@@ -103,6 +103,18 @@ Rotas CRUD adicionais:
 
 Módulo canônico: `ProcessoInstanciaRepository` · junction sync em `_sync_setores`.
 
+### Consolidação cadastral (jul/2026)
+
+| Entrega | Status |
+|---------|--------|
+| Import JSON aceita `filial_id` nulo com `todas_filiais_ativas` | ✅ `JsonBackupService` |
+| Validação `processo_instancia_setores` (FK + duplicatas) | ✅ `JsonBackupService` |
+| Motor: multiplicador de economia multi-unidade | ✅ `DashboardCalculatorService` (`escopo_unidades`) |
+| Propagar `escopo_unidades` no live/recalc consolidado | ⏳ backlog |
+| Runbook export → edição manual → replace | ✅ [json-backup.md](json-backup.md) § Consolidação cadastral |
+
+Exemplo de redução validada em dev: 49 processos / 49 instâncias → **25 processos / 27 instâncias** (21 multi-unidade, 2 divergentes com 2 instâncias/filial, 2 singletons).
+
 ## RBAC por filial (S10)
 
 Permissões escopadas (manifesto `transformometro.manifest.json`):
@@ -191,7 +203,8 @@ Consumidores ativos: `plugins/transformometro` (cadastro), `dashboard-engineerin
 | [PLAYBOOK-18](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md) | Plano e checklist §9 |
 | [PLAYBOOK-MODELAGEM](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-MODELAGEM.md) | Entidades, instâncias, escopo, pipeline |
 | [ARCHITECTURE](../../docs/12-roadmap-e-evolucao/transformometro-app/ARCHITECTURE.md) | Diagramas, rotas, RBAC, MFE |
-| [regras-de-calculo.md](regras-de-calculo.md) | Fórmulas + `escopo_recurso` + visões |
+| [regras-de-calculo.md](regras-de-calculo.md) | Fórmulas + `escopo_recurso` + visões + multi-unidade |
+| [json-backup.md](json-backup.md) | Export/import JSON + consolidação cadastral manual |
 | [OPERATIONS](../../docs/12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md) | Runbook deploy e troubleshooting |
 | [migrations/README.md](../migrations/README.md) | V001–V020 |
 

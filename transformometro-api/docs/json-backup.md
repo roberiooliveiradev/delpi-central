@@ -38,8 +38,19 @@ Ordem lógica de dependência:
 2. **`setores`** — cadastro de setores (`setor_id`, `nome_setor`, `status_setor`, …)
 3. **`setor_filiais`** — vínculos N:N (`setor_id`, `filial_id`); substituídos integralmente na importação
 4. **`processos`** — FK `setor_id` obrigatória e referenciada em `setores`
-5. **`processo_instancias`** — instância operacional (processo × filial × setor)
-6. **`recursos_compartilhados`**, **`revisoes`** (com `instancia_id`), **`medicoes`**, **`investimentos`**, **`recurso_custos`**, **`revisao_recursos_compartilhados`**
+5. **`processo_instancias`** — instância operacional (processo × filial × setor **ou** multi-unidade)
+6. **`processo_instancia_setores`** — vínculos N:N instância ↔ setor (`instancia_id`, `setor_id`)
+7. **`recursos_compartilhados`**, **`revisoes`** (com `instancia_id`), **`medicoes`**, **`investimentos`**, **`recurso_custos`**, **`revisao_recursos_compartilhados`**
+
+### Instância multi-unidade (`todas_filiais_ativas`)
+
+| Campo | Regra |
+|-------|--------|
+| `todas_filiais_ativas` | `true` quando a mesma timeline vale para **todas** as filiais ativas |
+| `filial_id` | **Nullable** quando `todas_filiais_ativas = true` (validação de import aceita ausência de FK) |
+| `processo_instancia_setores` | Obrigatório amarrar setores à instância; pares `(instancia_id, setor_id)` únicos |
+
+Substitui o anti-padrão legado de **um processo duplicado por filial** com o mesmo nome.
 
 ## Modos de importação
 
@@ -76,6 +87,68 @@ python scripts/import_cadastro_json.py apply -i fixtures/cadastro/backup-legado.
 ```
 
 Implementação: `tm_app/cli/cadastro_json_cli.py` · wrapper `scripts/import_cadastro_json.py`.
+
+Arquivos JSON operacionais (export/correção) ficam **fora do git** — use `fixtures/cadastro/` (gitignored) ou `scripts/out/` local.
+
+## Consolidação cadastral manual (jul/2026)
+
+Migração one-shot de bases que ainda tinham **processos duplicados por filial** (modelo pré–Playbook 18) para **processo-mestre + instâncias**. Não há script versionado no repositório: o fluxo é **export → edição do JSON → import replace**.
+
+### Quando usar
+
+- Mesmo processo cadastrado duas vezes (SC + ES) com revisões equivalentes.
+- Objetivo: reduzir cadastro, renumerar `codigo_processo` (PROC-0001…) e usar instância multi-unidade onde os parâmetros são idênticos.
+
+### Regras de transformação
+
+| Situação | Resultado no JSON |
+|----------|-------------------|
+| Duplicatas **idênticas** (mesmo nome, mesmas medições/investimentos) | **1** processo + **1** instância com `todas_filiais_ativas: true`, `filial_id: null` |
+| Duplicatas **divergentes** (baseline/volumes diferentes entre filiais) | **1** processo + **2** instâncias (uma por filial, `todas_filiais_ativas: false`) |
+| Processo só em uma filial | **1** processo + **1** instância na filial |
+| Processo vazio / sem revisões úteis | Descartar do bundle |
+| Rateio de recursos entre duplicatas | Manter **só o peso do canônico** escolhido |
+
+Renumerar `codigo_processo` sequencialmente (PROC-0001, PROC-0002, …) **sem buracos**, na ordem desejada de exibição.
+
+### Checklist antes do `apply --mode replace`
+
+1. **Backup** com `export` no ambiente de origem (produção exige backup explícito antes do replace).
+2. `schema_version: "1.1"` e chaves Playbook 18 presentes (`filiais`, `processo_instancias`, `processo_instancia_setores`).
+3. Em cada instância importável: `status_instancia: "ativo"`, `deletado: false`.
+4. `created_at` / `updated_at` preenchidos nas instâncias (o export enriquecido pode omitir — copiar da revisão mais antiga ou do processo).
+5. Remover campos **só de export** que não existem na tabela (`setores` embutidos, `codigo_setor` derivado, etc.) — manter só colunas persistidas.
+6. Revisões apontam para `instancia_id` correto após merge de duplicatas.
+7. `preview --mode replace` **sem erros** (FK, duplicata em `processo_instancia_setores`, `filial_id` ausente indevido).
+
+### Comandos (produção)
+
+```bash
+cd transformometro-api
+set -a && source ../infra/.env && set +a
+
+python scripts/import_cadastro_json.py export -o backup-pre-consolidacao.json
+# editar manualmente → cadastro-consolidado.json
+
+python scripts/import_cadastro_json.py preview -i cadastro-consolidado.json --mode replace
+python scripts/import_cadastro_json.py apply -i cadastro-consolidado.json --mode replace --yes
+```
+
+O `apply` em modo `replace` trunca o cadastro, insere o bundle e dispara recálculo do cache (`dashboard_calculos`) quando `TM_DASHBOARD_PERSIST_CACHE` estiver ativo.
+
+### Validação pós-import
+
+```bash
+docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistence.plugins.migrations_runner status
+docker exec -i delpi-transformometro-api sh -lc 'python - <<PY
+from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
+print(DashboardRecalcService().recalculate())
+PY'
+```
+
+Smoke: dashboard consolidado, filtro por filial, processo → painel de instâncias (multi-unidade vs por filial).
+
+Regra de economia multi-unidade no motor: [regras-de-calculo.md](regras-de-calculo.md) § Instância multi-unidade.
 
 ## Código
 
