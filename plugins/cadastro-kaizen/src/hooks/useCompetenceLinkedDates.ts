@@ -1,16 +1,19 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   applyCompetenceChange,
   applyDateRangeChange,
+  resolveLinkedDateFilters,
   type LinkedDateFilters,
 } from "../utils/competence";
 
-const EMPTY: LinkedDateFilters = { dateStart: "", dateEnd: "", competence: "" };
-
-/** Mantém competência (YYYY-MM) e intervalo de datas sincronizados, como no dashboard-quality. */
-export function useCompetenceLinkedDates(initial: LinkedDateFilters = EMPTY) {
-  const [state, setState] = useState<LinkedDateFilters>(initial);
+/**
+ * Mantém competência (YYYY-MM) e intervalo de datas sincronizados, como no dashboard-quality.
+ * Sem valores iniciais, começa no mês vigente; `reset` volta ao mesmo padrão.
+ */
+export function useCompetenceLinkedDates(initial?: LinkedDateFilters) {
+  const initialState = useMemo(() => resolveLinkedDateFilters(initial ?? {}), [initial]);
+  const [state, setState] = useState<LinkedDateFilters>(initialState);
 
   const setCompetence = useCallback((value: string) => {
     setState(applyCompetenceChange(value));
@@ -25,10 +28,10 @@ export function useCompetenceLinkedDates(initial: LinkedDateFilters = EMPTY) {
   }, []);
 
   const replaceAll = useCallback((next: LinkedDateFilters) => {
-    setState(next);
+    setState(resolveLinkedDateFilters(next));
   }, []);
 
-  const reset = useCallback(() => setState(EMPTY), []);
+  const reset = useCallback(() => setState(resolveLinkedDateFilters({})), []);
 
   return {
     dateStart: state.dateStart,

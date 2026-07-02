@@ -475,7 +475,8 @@
 }
 
 /* Dentro do formulário as seções são cards; o espaçamento vem do gap do .kz-form. */
-.dashboard-cadastro-kaizen .kz-form .kz-section-card {
+.dashboard-cadastro-kaizen .kz-form .kz-section-card,
+.dashboard-cadastro-kaizen .kz-form .kz-form-progress {
   margin-bottom: 0;
 }
 
@@ -495,6 +496,7 @@
   border: 1px solid var(--kz-card-border);
   border-radius: var(--kz-control-radius);
   background: color-mix(in srgb, var(--kz-accent) 4%, var(--kz-card-bg));
+  margin-bottom: var(--kz-section-gap);
 }
 
 .dashboard-cadastro-kaizen .kz-form-progress__header {
@@ -1170,8 +1172,8 @@
 }
 
 .dashboard-cadastro-kaizen .kz-pending__details {
-  display: grid;
-  grid-template-columns: 130px 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   padding-top: 10px;
   border-top: 1px dashed var(--kz-card-border);
@@ -1187,15 +1189,36 @@
   color: var(--kz-text-muted);
 }
 
+.dashboard-cadastro-kaizen .kz-pending__field--stage {
+  max-width: 200px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__field--desc {
+  flex: 1;
+}
+
 .dashboard-cadastro-kaizen .kz-pending__field select,
-.dashboard-cadastro-kaizen .kz-pending__field input {
-  min-height: 36px;
+.dashboard-cadastro-kaizen .kz-pending__field input,
+.dashboard-cadastro-kaizen .kz-pending__field textarea {
   border-radius: var(--kz-control-radius);
   border: 1px solid var(--kz-input-border);
   padding: 6px 10px;
   background: var(--kz-input-bg);
   color: var(--kz-input-text);
   font-weight: 400;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__field select,
+.dashboard-cadastro-kaizen .kz-pending__field input {
+  min-height: 36px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__field textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.4;
 }
 
 .dashboard-cadastro-kaizen .kz-pending__remove {
@@ -1214,12 +1237,6 @@
 
 .dashboard-cadastro-kaizen .kz-pending__remove:hover:not(:disabled) {
   background: color-mix(in srgb, var(--kz-danger) 10%, transparent);
-}
-
-@media (max-width: 480px) {
-  .dashboard-cadastro-kaizen .kz-pending__details {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Formulário de link externo */
@@ -1371,10 +1388,11 @@
 
 .dashboard-cadastro-kaizen .kz-multi-select__panel {
   position: absolute;
-  z-index: 50;
+  z-index: 120;
   top: calc(100% + 4px);
   left: 0;
   right: 0;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1382,7 +1400,7 @@
   border-radius: var(--kz-control-radius);
   border: 1px solid var(--kz-card-border);
   background: var(--kz-card-bg);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
 
 .dashboard-cadastro-kaizen .kz-multi-select__search {
@@ -1392,6 +1410,7 @@
   border: 1px solid var(--kz-input-border);
   background: var(--kz-input-bg);
   color: var(--kz-input-text);
+  box-sizing: border-box;
 }
 
 .dashboard-cadastro-kaizen .kz-multi-select__actions {
@@ -1418,12 +1437,17 @@
 
 .dashboard-cadastro-kaizen .kz-multi-select__option {
   display: flex;
+  flex-flow: row nowrap;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
+  margin: 0;
   padding: 7px 8px;
   border-radius: 8px;
   cursor: pointer;
   font-size: var(--kz-font-sm);
+  font-weight: 400;
+  line-height: 1.25;
   color: var(--kz-text);
 }
 
@@ -1431,8 +1455,27 @@
   background: color-mix(in srgb, var(--kz-accent) 10%, transparent);
 }
 
-.dashboard-cadastro-kaizen .kz-multi-select__option input {
+/* Checkbox não pode herdar o estilo de input de filtro (vira caixa grande). */
+.dashboard-cadastro-kaizen .kz-multi-select__option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  box-shadow: none;
+  background: none;
   accent-color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .dashboard-cadastro-kaizen .kz-multi-select__empty {
@@ -2149,13 +2192,15 @@
 }
 
 .dashboard-cadastro-kaizen .kz-dash-panel--validity,
-.dashboard-cadastro-kaizen .kz-dash-panel--wide {
+.dashboard-cadastro-kaizen .kz-dash-panel--wide,
+.dashboard-cadastro-kaizen .kz-dash-panel--recent {
   grid-column: 1 / -1;
 }
 
 @media (max-width: 720px) {
   .dashboard-cadastro-kaizen .kz-dash-panel--validity,
-  .dashboard-cadastro-kaizen .kz-dash-panel--wide {
+  .dashboard-cadastro-kaizen .kz-dash-panel--wide,
+  .dashboard-cadastro-kaizen .kz-dash-panel--recent {
     grid-column: span 1;
   }
 }

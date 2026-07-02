@@ -59,3 +59,43 @@ export function applyDateRangeChange(dateStart: string, dateEnd: string): Linked
     competence: dateRangeToCompetence(dateStart, dateEnd),
   };
 }
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+/** Hoje em YYYY-MM-DD (horário local). */
+export function todayInputValue(reference = new Date()): string {
+  return `${reference.getFullYear()}-${pad2(reference.getMonth() + 1)}-${pad2(reference.getDate())}`;
+}
+
+/** Primeiro dia do mês corrente em YYYY-MM-DD (horário local). */
+export function firstDayOfMonthInputValue(reference = new Date()): string {
+  return `${reference.getFullYear()}-${pad2(reference.getMonth() + 1)}-01`;
+}
+
+/**
+ * Resolve o estado inicial dos filtros de data. Prioriza competência salva, depois
+ * intervalo salvo e, na ausência de ambos, usa o mês vigente como padrão — igual ao
+ * dashboard-quality.
+ */
+export function resolveLinkedDateFilters(input: {
+  dateStart?: string;
+  dateEnd?: string;
+  competence?: string;
+  defaultDateStart?: string;
+  defaultDateEnd?: string;
+}): LinkedDateFilters {
+  if (input.competence && isValidCompetence(input.competence)) {
+    return applyCompetenceChange(input.competence);
+  }
+
+  const defaultStart = input.defaultDateStart ?? firstDayOfMonthInputValue();
+  const defaultEnd = input.defaultDateEnd ?? todayInputValue();
+
+  const dateStart =
+    input.dateStart && ISO_DATE_RE.test(input.dateStart) ? input.dateStart : defaultStart;
+  const dateEnd = input.dateEnd && ISO_DATE_RE.test(input.dateEnd) ? input.dateEnd : defaultEnd;
+
+  return { dateStart, dateEnd, competence: dateRangeToCompetence(dateStart, dateEnd) };
+}

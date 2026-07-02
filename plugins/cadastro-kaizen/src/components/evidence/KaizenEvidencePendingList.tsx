@@ -125,7 +125,7 @@ function PendingItem({
 
       {open ? (
         <div className="kz-pending__details" id={detailsId}>
-          <label className="kz-pending__field">
+          <label className="kz-pending__field kz-pending__field--stage">
             <span>Etapa</span>
             <select
               value={item.stage}
@@ -139,10 +139,11 @@ function PendingItem({
               <option value="geral">Geral</option>
             </select>
           </label>
-          <label className="kz-pending__field">
+          <label className="kz-pending__field kz-pending__field--desc">
             <span>Descrição</span>
-            <input
-              placeholder="Descrição (opcional)"
+            <textarea
+              rows={3}
+              placeholder="Descreva o que a evidência mostra (opcional)"
               value={item.description}
               disabled={disabled}
               onChange={(event) => onChange(item.id, { description: event.target.value })}
