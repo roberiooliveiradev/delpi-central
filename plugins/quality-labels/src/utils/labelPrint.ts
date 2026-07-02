@@ -83,14 +83,14 @@ function buildLabelStyles(): string {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.6mm;
-      padding: 1.5mm 1.5mm;
+      gap: 0.35mm;
+      padding: 1mm 1.2mm;
       width: 46mm;
       text-align: center;
     }
     .tag__qr img {
-      width: 19mm;
-      height: 19mm;
+      width: 23mm;
+      height: 23mm;
       display: block;
     }
     .tag__caption {
@@ -137,7 +137,7 @@ function buildLabelStyles(): string {
       justify-content: center;
     }
     .tag__logo svg {
-      width: 18mm;
+      width: 11mm;
       max-width: 100%;
       height: auto;
       display: block;
@@ -150,9 +150,12 @@ function buildLabelStyles(): string {
       fill: #000000 !important;
     }
     .tag__seal svg {
-      width: 9.5mm;
-      height: 9.5mm;
+      width: 14.5mm;
+      height: 14.5mm;
       display: block;
+    }
+    .tag__brand {
+      justify-content: space-between;
     }
     .hint {
       margin-top: 4mm;
