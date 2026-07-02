@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "customer-experience",
   "name": "Experiência do Cliente",
-  "description": "Programa de recepção de visitantes de empresas clientes: cadastro, QR code e página pública de agradecimento.",
+  "description": "Programa de recepção de visitantes: cadastro de participantes, QR de agradecimento e formulários personalizáveis.",
   "category": "relacionamento",
   "icon": "qr-code",
   "version": "0.1.0",
@@ -13,31 +13,49 @@
     {
       "code": "customer-experience.access",
       "name": "Acessar Experiência do Cliente",
-      "description": "Permissão base do módulo Experiência do Cliente.",
+      "description": "Permissão base para abrir o módulo Experiência do Cliente no portal.",
       "module": "customer-experience"
     },
     {
-      "code": "customer-experience.read",
+      "code": "customer-experience.participants.read",
       "name": "Visualizar participantes",
-      "description": "Consultar participantes e QR codes do programa.",
+      "description": "Consultar participantes, QR codes e links de agradecimento.",
       "module": "customer-experience"
     },
     {
-      "code": "customer-experience.write",
+      "code": "customer-experience.participants.write",
       "name": "Cadastrar participantes",
       "description": "Criar e editar participantes, foto e mensagem de agradecimento.",
       "module": "customer-experience"
     },
     {
-      "code": "customer-experience.manage",
+      "code": "customer-experience.participants.manage",
       "name": "Gerenciar participantes",
-      "description": "Desativar links públicos e operações administrativas do programa.",
+      "description": "Desativar links públicos, reativar e excluir participantes.",
+      "module": "customer-experience"
+    },
+    {
+      "code": "customer-experience.forms.read",
+      "name": "Visualizar formulários",
+      "description": "Consultar formulários, respostas e dashboards do programa.",
+      "module": "customer-experience"
+    },
+    {
+      "code": "customer-experience.forms.write",
+      "name": "Editar formulários",
+      "description": "Criar formulários e editar perguntas do programa.",
+      "module": "customer-experience"
+    },
+    {
+      "code": "customer-experience.forms.manage",
+      "name": "Gerenciar formulários",
+      "description": "Publicar, despublicar e excluir formulários e respostas.",
       "module": "customer-experience"
     },
     {
       "code": "customer-experience.admin",
       "name": "Administrar Experiência do Cliente",
-      "description": "Configuração e governança do módulo Experiência do Cliente.",
+      "description": "Configuração e governança completa do módulo Experiência do Cliente.",
       "module": "customer-experience"
     }
   ],
@@ -45,7 +63,7 @@
     {
       "path": "/apps/customer-experience",
       "label": "Experiência do Cliente",
-      "permission": "customer-experience.read",
+      "permission": "customer-experience.access",
       "icon": "qr-code",
       "order": 40,
       "showInMenu": true,

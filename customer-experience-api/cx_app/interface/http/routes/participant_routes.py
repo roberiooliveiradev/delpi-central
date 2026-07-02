@@ -10,7 +10,12 @@ from cx_app.application.services.photo_storage import PhotoValidationError
 from cx_app.composition.cx_composer import build_participant_service
 from cx_app.core.auth_actor import actor_name_from_request, actor_sub_from_request
 from cx_app.core.responses import fail, ok
-from cx_app.core.security import CX_MANAGE, CX_READ, CX_WRITE, assert_permission
+from cx_app.core.security import (
+    CX_PARTICIPANTS_MANAGE,
+    CX_PARTICIPANTS_READ,
+    CX_PARTICIPANTS_WRITE,
+    assert_permission,
+)
 from cx_app.domain.participant import ParticipantInput, ParticipantUpdate
 from cx_app.interface.http.auth_http import resolve_user
 
@@ -43,7 +48,7 @@ async def create_participant(
 ):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_WRITE)
+        assert_permission(user, CX_PARTICIPANTS_WRITE)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -87,7 +92,7 @@ def list_participants(
 ):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_READ)
+        assert_permission(user, CX_PARTICIPANTS_READ)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -111,7 +116,7 @@ def list_participants(
 def get_participant(request: Request, participant_id: str):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_READ)
+        assert_permission(user, CX_PARTICIPANTS_READ)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -135,7 +140,7 @@ async def update_participant(
 ):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_WRITE)
+        assert_permission(user, CX_PARTICIPANTS_WRITE)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -173,7 +178,7 @@ async def update_participant(
 def deactivate_participant(request: Request, participant_id: str):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_MANAGE)
+        assert_permission(user, CX_PARTICIPANTS_MANAGE)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -188,7 +193,7 @@ def deactivate_participant(request: Request, participant_id: str):
 def activate_participant(request: Request, participant_id: str):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_MANAGE)
+        assert_permission(user, CX_PARTICIPANTS_MANAGE)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -203,7 +208,7 @@ def activate_participant(request: Request, participant_id: str):
 def delete_participant(request: Request, participant_id: str):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_MANAGE)
+        assert_permission(user, CX_PARTICIPANTS_MANAGE)
     except PermissionError as exc:
         return fail(str(exc), 403)
 
@@ -218,7 +223,7 @@ def delete_participant(request: Request, participant_id: str):
 def download_qr(request: Request, participant_id: str):
     user = resolve_user(request)
     try:
-        assert_permission(user, CX_READ)
+        assert_permission(user, CX_PARTICIPANTS_READ)
     except PermissionError as exc:
         return fail(str(exc), 403)
 

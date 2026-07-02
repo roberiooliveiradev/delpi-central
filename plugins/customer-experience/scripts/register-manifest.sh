@@ -22,4 +22,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua customer-experience.read/write/manage aos perfis de recepção/comercial/RH."
+echo "[OK] Atribua customer-experience.access e as permissões de participantes/formulários aos perfis."

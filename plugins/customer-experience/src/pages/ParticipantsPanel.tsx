@@ -28,6 +28,7 @@ import { CompanyField } from "../components/CompanyField";
 import { CompanyMultiSelect } from "../components/CompanyMultiSelect";
 import { PhotoDropzone } from "../components/PhotoDropzone";
 import { printQrLabel } from "../utils/qrLabelPrint";
+import { useCxPermissions } from "../context/CxPermissionsContext";
 import type { Participant } from "../types";
 
 const EMPTY_FORM = {
@@ -39,6 +40,7 @@ const EMPTY_FORM = {
 };
 
 export function ParticipantsPanel() {
+  const { canWriteParticipants, canManageParticipants } = useCxPermissions();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -294,7 +296,12 @@ export function ParticipantsPanel() {
         </div>
       )}
 
-      <div className={`cx-layout${formCollapsed ? " cx-layout--form-collapsed" : ""}`}>
+      <div
+        className={`cx-layout${
+          !canWriteParticipants ? " cx-layout--list-only" : formCollapsed ? " cx-layout--form-collapsed" : ""
+        }`}
+      >
+        {canWriteParticipants && (
         <section
           className={`cx-card cx-form-card${formCollapsed ? " cx-form-card--collapsed" : ""}`}
           ref={formCardRef}
@@ -414,6 +421,7 @@ export function ParticipantsPanel() {
           </>
           )}
         </section>
+        )}
 
         <section className="cx-card cx-list-card">
           <div className="cx-list-card__head">
@@ -423,13 +431,15 @@ export function ParticipantsPanel() {
                 {hasActiveFilters ? `${filtered.length}/${total}` : total}
               </span>
             </h2>
-            <button
-              className="cx-button cx-button--primary"
-              type="button"
-              onClick={openNewForm}
-            >
-              <UserPlus size={16} /> Novo participante
-            </button>
+            {canWriteParticipants && (
+              <button
+                className="cx-button cx-button--primary"
+                type="button"
+                onClick={openNewForm}
+              >
+                <UserPlus size={16} /> Novo participante
+              </button>
+            )}
           </div>
 
           <div className="cx-filters">
@@ -538,41 +548,46 @@ export function ParticipantsPanel() {
                     >
                       <Copy size={16} /> Link
                     </button>
-                    <button
-                      className="cx-button cx-button--ghost"
-                      type="button"
-                      onClick={() => startEdit(participant)}
-                      title="Editar participante"
-                    >
-                      <Pencil size={16} /> Editar
-                    </button>
-                    {participant.isActive ? (
-                      <button
-                        className="cx-button cx-button--danger-ghost"
-                        type="button"
-                        onClick={() => handleDeactivate(participant)}
-                        title="Desativar link público"
-                      >
-                        <Power size={16} /> Desativar
-                      </button>
-                    ) : (
+                    {canWriteParticipants && (
                       <button
                         className="cx-button cx-button--ghost"
                         type="button"
-                        onClick={() => handleActivate(participant)}
-                        title="Reativar link público"
+                        onClick={() => startEdit(participant)}
+                        title="Editar participante"
                       >
-                        <Power size={16} /> Ativar
+                        <Pencil size={16} /> Editar
                       </button>
                     )}
-                    <button
-                      className="cx-button cx-button--danger-ghost"
-                      type="button"
-                      onClick={() => handleDelete(participant)}
-                      title="Excluir participante"
-                    >
-                      <Trash2 size={16} /> Excluir
-                    </button>
+                    {canManageParticipants &&
+                      (participant.isActive ? (
+                        <button
+                          className="cx-button cx-button--danger-ghost"
+                          type="button"
+                          onClick={() => handleDeactivate(participant)}
+                          title="Desativar link público"
+                        >
+                          <Power size={16} /> Desativar
+                        </button>
+                      ) : (
+                        <button
+                          className="cx-button cx-button--ghost"
+                          type="button"
+                          onClick={() => handleActivate(participant)}
+                          title="Reativar link público"
+                        >
+                          <Power size={16} /> Ativar
+                        </button>
+                      ))}
+                    {canManageParticipants && (
+                      <button
+                        className="cx-button cx-button--danger-ghost"
+                        type="button"
+                        onClick={() => handleDelete(participant)}
+                        title="Excluir participante"
+                      >
+                        <Trash2 size={16} /> Excluir
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}

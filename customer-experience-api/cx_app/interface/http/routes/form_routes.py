@@ -17,7 +17,12 @@ from cx_app.composition.cx_composer import (
 )
 from cx_app.core.auth_actor import actor_name_from_request, actor_sub_from_request
 from cx_app.core.responses import fail, ok
-from cx_app.core.security import CX_MANAGE, CX_READ, CX_WRITE, assert_permission
+from cx_app.core.security import (
+    CX_FORMS_MANAGE,
+    CX_FORMS_READ,
+    CX_FORMS_WRITE,
+    assert_permission,
+)
 from cx_app.domain.form import AnswerInput, FormInput, FormUpdate, QuestionInput, ResponseInput
 from cx_app.interface.http.auth_http import resolve_user
 
@@ -78,7 +83,7 @@ def _guard(request: Request, permission: str):
 
 @router.post("")
 def create_form(request: Request, payload: FormPayload):
-    denied = _guard(request, CX_WRITE)
+    denied = _guard(request, CX_FORMS_WRITE)
     if denied:
         return denied
     try:
@@ -94,7 +99,7 @@ def create_form(request: Request, payload: FormPayload):
 
 @router.get("")
 def list_forms(request: Request):
-    denied = _guard(request, CX_READ)
+    denied = _guard(request, CX_FORMS_READ)
     if denied:
         return denied
     return ok({"items": build_form_service().list_admin()}, message="Formulários listados.")
@@ -102,7 +107,7 @@ def list_forms(request: Request):
 
 @router.get("/{form_id}")
 def get_form(request: Request, form_id: str):
-    denied = _guard(request, CX_READ)
+    denied = _guard(request, CX_FORMS_READ)
     if denied:
         return denied
     try:
@@ -114,7 +119,7 @@ def get_form(request: Request, form_id: str):
 
 @router.patch("/{form_id}")
 def update_form(request: Request, form_id: str, payload: FormUpdatePayload):
-    denied = _guard(request, CX_WRITE)
+    denied = _guard(request, CX_FORMS_WRITE)
     if denied:
         return denied
     try:
@@ -130,7 +135,7 @@ def update_form(request: Request, form_id: str, payload: FormUpdatePayload):
 
 @router.put("/{form_id}/questions")
 def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
-    denied = _guard(request, CX_WRITE)
+    denied = _guard(request, CX_FORMS_WRITE)
     if denied:
         return denied
     try:
@@ -157,7 +162,7 @@ def set_questions(request: Request, form_id: str, payload: QuestionsPayload):
 
 @router.post("/{form_id}/activate")
 def activate_form(request: Request, form_id: str):
-    denied = _guard(request, CX_MANAGE)
+    denied = _guard(request, CX_FORMS_MANAGE)
     if denied:
         return denied
     try:
@@ -169,7 +174,7 @@ def activate_form(request: Request, form_id: str):
 
 @router.post("/{form_id}/deactivate")
 def deactivate_form(request: Request, form_id: str):
-    denied = _guard(request, CX_MANAGE)
+    denied = _guard(request, CX_FORMS_MANAGE)
     if denied:
         return denied
     try:
@@ -181,7 +186,7 @@ def deactivate_form(request: Request, form_id: str):
 
 @router.delete("/{form_id}")
 def delete_form(request: Request, form_id: str):
-    denied = _guard(request, CX_MANAGE)
+    denied = _guard(request, CX_FORMS_MANAGE)
     if denied:
         return denied
     try:
@@ -193,7 +198,7 @@ def delete_form(request: Request, form_id: str):
 
 @router.get("/{form_id}/qr")
 def download_form_qr(request: Request, form_id: str):
-    denied = _guard(request, CX_READ)
+    denied = _guard(request, CX_FORMS_READ)
     if denied:
         return denied
     result = build_form_service().read_qr_by_id(form_id)
@@ -214,7 +219,7 @@ def list_form_responses(
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
-    denied = _guard(request, CX_READ)
+    denied = _guard(request, CX_FORMS_READ)
     if denied:
         return denied
     try:
@@ -228,7 +233,7 @@ def list_form_responses(
 
 @router.get("/{form_id}/dashboard")
 def form_dashboard(request: Request, form_id: str):
-    denied = _guard(request, CX_READ)
+    denied = _guard(request, CX_FORMS_READ)
     if denied:
         return denied
     try:

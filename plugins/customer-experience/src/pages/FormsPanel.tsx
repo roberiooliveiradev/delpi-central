@@ -36,6 +36,7 @@ import type {
   FormSummary,
   QuestionType,
 } from "../types";
+import { useCxPermissions } from "../context/CxPermissionsContext";
 
 const TYPE_LABELS: Record<QuestionType, string> = {
   rating: "Nota (estrelas 1–5)",
@@ -175,6 +176,7 @@ function FormsList({
   onChanged: (msg: string) => void;
   onError: (msg: string) => void;
 }) {
+  const { canWriteForms, canManageForms } = useCxPermissions();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
@@ -249,7 +251,8 @@ function FormsList({
   };
 
   return (
-    <div className="cx-layout">
+    <div className={`cx-layout${canWriteForms ? "" : " cx-layout--list-only"}`}>
+      {canWriteForms && (
       <section className="cx-card cx-form-card">
         <h2 className="cx-card__title">
           <Plus size={18} /> Novo formulário
@@ -278,6 +281,7 @@ function FormsList({
           </button>
         </form>
       </section>
+      )}
 
       <section className="cx-card cx-list-card">
         <h2 className="cx-card__title">
@@ -306,9 +310,6 @@ function FormsList({
                   <span>{form.responseCount} resposta(s)</span>
                 </div>
                 <div className="cx-participant__actions">
-                  <button className="cx-button cx-button--ghost" type="button" onClick={() => onEdit(form.id)}>
-                    <ClipboardList size={16} /> Perguntas
-                  </button>
                   <button className="cx-button cx-button--ghost" type="button" onClick={() => onDashboard(form.id)}>
                     <BarChart3 size={16} /> Respostas
                   </button>
@@ -318,16 +319,25 @@ function FormsList({
                   <button className="cx-button cx-button--ghost" type="button" onClick={() => copyLink(form)}>
                     <Copy size={16} /> Link
                   </button>
-                  <button className="cx-button cx-button--ghost" type="button" onClick={() => togglePublish(form)}>
-                    <Power size={16} /> {form.isActive ? "Despublicar" : "Publicar"}
-                  </button>
-                  <button
-                    className="cx-button cx-button--danger-ghost"
-                    type="button"
-                    onClick={() => remove(form)}
-                  >
-                    <Trash2 size={16} /> Excluir
-                  </button>
+                  {canWriteForms && (
+                    <button className="cx-button cx-button--ghost" type="button" onClick={() => onEdit(form.id)}>
+                      <ClipboardList size={16} /> Perguntas
+                    </button>
+                  )}
+                  {canManageForms && (
+                    <>
+                      <button className="cx-button cx-button--ghost" type="button" onClick={() => togglePublish(form)}>
+                        <Power size={16} /> {form.isActive ? "Despublicar" : "Publicar"}
+                      </button>
+                      <button
+                        className="cx-button cx-button--danger-ghost"
+                        type="button"
+                        onClick={() => remove(form)}
+                      >
+                        <Trash2 size={16} /> Excluir
+                      </button>
+                    </>
+                  )}
                 </div>
               </li>
             ))}
