@@ -13,6 +13,12 @@ export const KAIZEN_HELP_TOOLTIPS = {
       "Registro visual do processo. Anexe fotos do Antes e Depois, PDFs, planilhas e documentos, ou um link externo.",
     revisions:
       "Histórico de versões do kaizen. Cada melhoria, correção ou mudança de status cria uma revisão numerada com vigência.",
+    improvements:
+      "Cada melhoria é uma versão do processo com sua própria economia, evidências e validade de 1 ano. Lançar uma nova melhoria num kaizen implantado renova o aniversário e recomeça a contagem de ganhos.",
+    changelog:
+      "Registro de alterações do kaizen como um todo, para auditoria: linha do tempo de eventos e trilha de governança imutável.",
+    audit:
+      "Trilha de governança imutável (append-only): criação, mudanças de status e exclusão, com autor e data.",
   },
   fields: {
     title: "Nome curto e objetivo da melhoria (ex.: 'Suporte para tablet no carrinho').",
@@ -38,5 +44,13 @@ export const KAIZEN_HELP_TOOLTIPS = {
     upload: "Arraste um ou vários arquivos, ou clique para escolher na pasta. Depois defina a etapa de cada um e envie.",
     stage: "Antes / Depois documentam a transformação; Geral para anexos que não são comparativos.",
     link: "Use para referenciar um arquivo ou página externa em vez de anexar o binário.",
+  },
+  improvements: {
+    launch:
+      "Registra uma nova versão do processo com economia e datas próprias. A partir da data informada conta uma nova validade de 1 ano para os ganhos.",
+    periodGain:
+      "Soma dos ganhos de todas as melhorias vigentes no intervalo, respeitando a validade de 1 ano de cada uma.",
+    currentSavings:
+      "Economia que está sendo contabilizada hoje: a melhoria vigente dentro da sua validade de 1 ano.",
   },
 } as const;

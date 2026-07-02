@@ -75,8 +75,51 @@ export type KaizenRevision = {
   effective_until: string | null;
   snapshot: Record<string, unknown>;
   snapshot_schema_version: number;
+  daily_savings: number | null;
+  annual_savings: number | null;
+  savings_valid_until: string | null;
   created_by_user_id: string;
+  created_by_name: string | null;
   created_at: string;
+};
+
+export type KaizenHistoryEvent = {
+  id: string;
+  kaizen_id: string;
+  event_type: string;
+  old_value: string | null;
+  new_value: string | null;
+  comment: string | null;
+  created_by_user_id: string;
+  created_by_name: string | null;
+  created_at: string;
+};
+
+export type KaizenAuditEntry = {
+  id: string;
+  kaizen_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  actor_user_id: string;
+  actor_name: string | null;
+  created_at: string;
+};
+
+export type KaizenSavingsTimelineImprovement = KaizenRevision;
+
+export type KaizenSavingsTimeline = {
+  kaizen_id: string;
+  date_start: string | null;
+  date_end: string | null;
+  period_savings: number;
+  current: {
+    revision_number: number | null;
+    daily_savings: number | null;
+    annual_savings: number | null;
+    valid_until: string | null;
+    active: boolean;
+  };
+  improvements: KaizenSavingsTimelineImprovement[];
 };
 
 export type KaizenEvidenceStage = "antes" | "depois" | "geral";
@@ -85,6 +128,7 @@ export type KaizenEvidenceType = "attachment" | "photo" | "document" | "link";
 export type KaizenEvidence = {
   id: string;
   kaizen_id: string;
+  revision_id: string | null;
   type: KaizenEvidenceType;
   stage: KaizenEvidenceStage;
   file_name: string | null;

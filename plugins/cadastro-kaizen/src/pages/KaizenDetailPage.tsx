@@ -9,7 +9,8 @@ import { ReadOnlyField } from "../components/ui/ReadOnlyField";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { StatusPipeline } from "../components/detail/StatusPipeline";
 import { KaizenEvidencePanel } from "../components/detail/KaizenEvidencePanel";
-import { KaizenRevisionTimeline } from "../components/detail/KaizenRevisionTimeline";
+import { KaizenImprovementsPanel } from "../components/detail/KaizenImprovementsPanel";
+import { KaizenChangeLog } from "../components/detail/KaizenChangeLog";
 import { KaizenParticipantsField } from "../components/form/KaizenParticipantsField";
 import {
   BRANCHES,
@@ -22,7 +23,7 @@ import {
 } from "../constants/kaizen";
 import type { KaizenFormValues, KaizenRecord, KaizenRevision } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
-import { savingsTypeLabel, statusLabel } from "../utils/labels";
+import { savingsTypeLabel } from "../utils/labels";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
 
 type Props = {
@@ -60,6 +61,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
   const [record, setRecord] = useState<KaizenRecord | null>(null);
   const [form, setForm] = useState<KaizenFormValues | null>(null);
   const [revisions, setRevisions] = useState<KaizenRevision[]>([]);
+  const [reloadTick, setReloadTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +82,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       setRecord(loaded);
       setForm(recordToFormValues(loaded));
       setRevisions(revs);
+      setReloadTick((tick) => tick + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar kaizen.");
     } finally {
@@ -505,35 +508,62 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         <header className="kz-section-card__header">
           <div>
             <h2 className="kz-section-card__title">
-              Evidências do processo
+              Evidências gerais do processo
               <HelpTooltip
                 content={KAIZEN_HELP_TOOLTIPS.sections.evidences}
                 ariaLabel="Ajuda: evidências do processo"
               />
             </h2>
-            <p className="kz-section-card__desc">Registro visual Antes / Depois e anexos</p>
+            <p className="kz-section-card__desc">
+              Registro visual Antes / Depois e anexos do kaizen. Evidências específicas de cada
+              melhoria ficam na seção Melhorias.
+            </p>
           </div>
         </header>
-        <KaizenEvidencePanel kaizenId={record.id} readOnly={false} />
+        <KaizenEvidencePanel kaizenId={record.id} readOnly={false} revisionId={null} />
       </section>
 
-      {/* Revisões */}
+      {/* Melhorias do processo */}
       <section className="kz-card kz-section-card">
         <header className="kz-section-card__header">
           <div>
             <h2 className="kz-section-card__title">
-              Revisões
+              Melhorias do processo
               <HelpTooltip
-                content={KAIZEN_HELP_TOOLTIPS.sections.revisions}
-                ariaLabel="Ajuda: revisões"
+                content={KAIZEN_HELP_TOOLTIPS.sections.improvements}
+                ariaLabel="Ajuda: melhorias do processo"
               />
             </h2>
             <p className="kz-section-card__desc">
-              Histórico de versões e mudanças relevantes ({statusLabel(record.status)})
+              Cada melhoria tem economia, evidências e validade de 1 ano próprias. Lançar uma nova
+              renova o aniversário do kaizen.
             </p>
           </div>
         </header>
-        <KaizenRevisionTimeline revisions={revisions} />
+        <KaizenImprovementsPanel
+          record={record}
+          revisions={revisions}
+          onLaunched={() => void load()}
+        />
+      </section>
+
+      {/* Registro de alterações */}
+      <section className="kz-card kz-section-card">
+        <header className="kz-section-card__header">
+          <div>
+            <h2 className="kz-section-card__title">
+              Registro de alterações
+              <HelpTooltip
+                content={KAIZEN_HELP_TOOLTIPS.sections.changelog}
+                ariaLabel="Ajuda: registro de alterações"
+              />
+            </h2>
+            <p className="kz-section-card__desc">
+              Auditoria do kaizen como um todo: linha do tempo, versões e governança.
+            </p>
+          </div>
+        </header>
+        <KaizenChangeLog kaizenId={record.id} revisions={revisions} reloadKey={reloadTick} />
       </section>
     </>
   );

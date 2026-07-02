@@ -186,6 +186,7 @@ def create_kaizen_record(body: KaizenRecordBody = Body(...)):
         data = repo.create_record(
             fields=_body_to_fields(body),
             created_by_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
         )
         return api_delpi_success(data, operation_id="create_kaizen_record")
     except PluginsRepositoryError as exc:
@@ -242,6 +243,7 @@ def update_kaizen_record(record_id: str, body: UpdateKaizenRecordBody = Body(...
             record_id,
             fields=fields,
             updated_by_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
         )
         if data is None:
             return not_found_response("Kaizen não encontrado.")
@@ -259,7 +261,11 @@ def update_kaizen_record(record_id: str, body: UpdateKaizenRecordBody = Body(...
 def delete_kaizen_record(record_id: str):
     try:
         repo = build_kaizen_repository()
-        deleted = repo.delete_record(record_id, updated_by_user_id=_current_user_id())
+        deleted = repo.delete_record(
+            record_id,
+            updated_by_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
         if not deleted:
             return not_found_response("Kaizen não encontrado.")
         return api_delpi_success(
@@ -320,6 +326,67 @@ def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data 
         return error_response("Erro interno ao buscar estado do kaizen na data.", status_code=500)
 
 
+# ---------------------------------------------------------------- registro de alterações
+
+
+@router.get("/{record_id}/history")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def list_kaizen_history(record_id: str):
+    try:
+        repo = build_kaizen_repository()
+        if repo.get_record(record_id, with_participants=False) is None:
+            return not_found_response("Kaizen não encontrado.")
+        items = repo.list_history(record_id)
+        return api_delpi_success(
+            {"items": items},
+            operation_id="list_kaizen_history",
+            shape="paged_list",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar histórico do kaizen: {exc}")
+        return error_response("Erro interno ao listar histórico do kaizen.", status_code=500)
+
+
+@router.get("/{record_id}/audit-log")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def list_kaizen_audit_log(record_id: str):
+    try:
+        repo = build_kaizen_repository()
+        if repo.get_record(record_id, with_participants=False) is None:
+            return not_found_response("Kaizen não encontrado.")
+        items = repo.list_audit_log(record_id)
+        return api_delpi_success(
+            {"items": items},
+            operation_id="list_kaizen_audit_log",
+            shape="paged_list",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar auditoria do kaizen: {exc}")
+        return error_response("Erro interno ao listar auditoria do kaizen.", status_code=500)
+
+
+@router.get("/{record_id}/savings-timeline")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def get_kaizen_savings_timeline(
+    record_id: str,
+    date_start: str | None = Query(default=None),
+    date_end: str | None = Query(default=None),
+):
+    try:
+        repo = build_kaizen_repository()
+        if repo.get_record(record_id, with_participants=False) is None:
+            return not_found_response("Kaizen não encontrado.")
+        data = repo.savings_timeline(record_id, date_start=date_start, date_end=date_end)
+        return api_delpi_success(
+            data,
+            operation_id="get_kaizen_savings_timeline",
+            shape="scalar",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao calcular ganhos por período do kaizen: {exc}")
+        return error_response("Erro interno ao calcular ganhos por período.", status_code=500)
+
+
 # ---------------------------------------------------------------- evidências
 
 
@@ -347,6 +414,7 @@ async def attach_kaizen_evidence(
     stage: str = Form(default="geral"),
     description: str | None = Form(default=None),
     external_url: str | None = Form(default=None),
+    revision_id: str | None = Form(default=None),
     file: UploadFile | None = File(default=None),
 ):
     try:
@@ -359,6 +427,7 @@ async def attach_kaizen_evidence(
             "type": evidence_type,
             "stage": stage,
             "description": description,
+            "revision_id": revision_id or None,
             "uploaded_by_user_id": _current_user_id(),
             "uploaded_by_name": _current_user_name(),
         }

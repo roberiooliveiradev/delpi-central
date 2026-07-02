@@ -18,6 +18,9 @@
 | Ficha visual + edição por seção (MFE) | ✅ `KaizenDetailPage` + pipeline + timeline (dev) |
 | Resultado real vs. estimado (F5) | ✅ Migration V032 + efetividade na ficha (dev) |
 | Validade da economia (1 ano) | ✅ `kaizen_savings_validity` — cap no ganho + `savings_active`/`savings_valid_until` (dev) |
+| Melhorias como revisões (economia/evidências/validade próprias) | ✅ Migration V033 + `kaizen_savings_timeline` + seção Melhorias + `/savings-timeline` (dev) |
+| Evidências por melhoria (revisão) | ✅ `kaizen_evidences.revision_id` + painel por melhoria (dev) |
+| Registro de alterações (auditoria 3 camadas) | ✅ `kaizen_history` + `kaizen_audit_log` (append-only) + `/history` `/audit-log` (dev) |
 | Cálculo temporal do dashboard (revisões) | 📋 Especificado — [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md) (Fase 6b/6c) |
 
 ## O que já funciona
@@ -29,7 +32,15 @@
 - Cálculo automático de economia diária/anual
 - **Revisões versionadas**: mudança de status/economia gera revisão (baseline →
   implantação → melhoria), com vigência e estado por data (`/revisions`, `/at`)
-- **Evidências do processo** com galeria Antes/Depois, upload (arquivo/link) e download
+- **Melhorias do processo** (revisão = melhoria): lançar nova melhoria num kaizen
+  implantado sem criar outro; cada melhoria tem economia, evidências e **validade de
+  1 ano próprias**. O ganho por período soma as melhorias vigentes (`/savings-timeline`,
+  domínio `kaizen_savings_timeline`) — uma nova melhoria renova o aniversário.
+- **Evidências do processo** com galeria Antes/Depois, upload multi-arquivo (dropzone),
+  link e download; evidências **gerais** (kaizen) ou **por melhoria** (`revision_id`)
+- **Registro de alterações** (padrão PAC, 3 camadas): linha do tempo operacional
+  (`kaizen_history`), versões/diffs (`kaizen_revisions`) e governança append-only
+  (`kaizen_audit_log`)
 - **Múltiplos responsáveis/participantes** (accountable segue como principal)
 - Importar planilha (botão na UI ou `POST .../import-from-sheet`)
 - Permissões `cadastro-kaizen.view` / `cadastro-kaizen.manage`

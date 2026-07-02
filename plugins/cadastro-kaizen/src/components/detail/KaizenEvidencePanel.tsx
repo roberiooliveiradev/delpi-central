@@ -29,6 +29,13 @@ import {
 type KaizenEvidencePanelProps = {
   kaizenId: string;
   readOnly: boolean;
+  /**
+   * Quando definido, o painel exibe apenas evidências desta melhoria (revisão) e marca
+   * novos uploads com ela. Quando `null`, exibe apenas evidências gerais (sem revisão).
+   * Quando ausente (`undefined`), exibe todas as evidências.
+   */
+  revisionId?: string | null;
+  compact?: boolean;
 };
 
 const STAGE_LABELS: Record<KaizenEvidenceStage, string> = {
@@ -114,7 +121,12 @@ async function downloadEvidence(kaizenId: string, evidence: KaizenEvidence) {
   }
 }
 
-export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelProps) {
+export function KaizenEvidencePanel({
+  kaizenId,
+  readOnly,
+  revisionId,
+  compact = false,
+}: KaizenEvidencePanelProps) {
   const [evidences, setEvidences] = useState<KaizenEvidence[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,13 +144,20 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
     setLoading(true);
     setError(null);
     try {
-      setEvidences(await fetchKaizenEvidences(kaizenId));
+      const all = await fetchKaizenEvidences(kaizenId);
+      const filtered =
+        revisionId === undefined
+          ? all
+          : revisionId === null
+            ? all.filter((item) => !item.revision_id)
+            : all.filter((item) => item.revision_id === revisionId);
+      setEvidences(filtered);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao listar evidências.");
     } finally {
       setLoading(false);
     }
-  }, [kaizenId]);
+  }, [kaizenId, revisionId]);
 
   useEffect(() => {
     void load();
@@ -190,6 +209,7 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
           type,
           file: item.file,
           description: item.description.trim() || undefined,
+          revisionId: revisionId ?? undefined,
         });
       }
       setPending([]);
@@ -211,6 +231,7 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
         type: "link",
         externalUrl: externalUrl.trim(),
         description: linkDescription.trim() || undefined,
+        revisionId: revisionId ?? undefined,
       });
       setExternalUrl("");
       setLinkDescription("");
@@ -234,7 +255,7 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
   }
 
   return (
-    <div className="kz-evidence-panel">
+    <div className={`kz-evidence-panel${compact ? " kz-evidence-panel--compact" : ""}`}>
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 
       <div className="kz-evidence-gallery">

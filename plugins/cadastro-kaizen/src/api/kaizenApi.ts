@@ -10,12 +10,15 @@ import {
   type ApiEnvelope,
 } from "./httpClient";
 import type {
+  KaizenAuditEntry,
   KaizenEvidence,
   KaizenEvidenceStage,
   KaizenEvidenceType,
+  KaizenHistoryEvent,
   KaizenListResponse,
   KaizenRecord,
   KaizenRevision,
+  KaizenSavingsTimeline,
 } from "../types/kaizen";
 
 const API_BASE = "/apps/api-delpi/quality/kaizens/records";
@@ -99,6 +102,36 @@ export async function fetchKaizenRevisions(id: string): Promise<KaizenRevision[]
   return unwrapApiDelpiEnvelope(envelope, "Erro ao listar revisões.").items;
 }
 
+// ---------------------------------------------------------------- registro de alterações
+
+export async function fetchKaizenHistory(id: string): Promise<KaizenHistoryEvent[]> {
+  const envelope = await httpGet<ApiEnvelope<{ items: KaizenHistoryEvent[] }>>(
+    `${API_BASE}/${id}/history`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao listar histórico.").items;
+}
+
+export async function fetchKaizenAuditLog(id: string): Promise<KaizenAuditEntry[]> {
+  const envelope = await httpGet<ApiEnvelope<{ items: KaizenAuditEntry[] }>>(
+    `${API_BASE}/${id}/audit-log`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao listar auditoria.").items;
+}
+
+export async function fetchKaizenSavingsTimeline(
+  id: string,
+  params: { dateStart?: string; dateEnd?: string } = {},
+): Promise<KaizenSavingsTimeline> {
+  const search = new URLSearchParams();
+  if (params.dateStart) search.set("date_start", params.dateStart);
+  if (params.dateEnd) search.set("date_end", params.dateEnd);
+  const query = search.toString();
+  const envelope = await httpGet<ApiEnvelope<KaizenSavingsTimeline>>(
+    `${API_BASE}/${id}/savings-timeline${query ? `?${query}` : ""}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao calcular ganhos por período.");
+}
+
 // ---------------------------------------------------------------- evidências
 
 export async function fetchKaizenEvidences(id: string): Promise<KaizenEvidence[]> {
@@ -116,12 +149,14 @@ export async function uploadKaizenEvidence(
     type: KaizenEvidenceType;
     description?: string;
     externalUrl?: string;
+    revisionId?: string;
   },
 ): Promise<KaizenEvidence> {
   const form = new FormData();
   form.set("stage", params.stage);
   form.set("evidence_type", params.type);
   if (params.description) form.set("description", params.description);
+  if (params.revisionId) form.set("revision_id", params.revisionId);
   if (params.type === "link") {
     form.set("external_url", params.externalUrl ?? "");
   } else if (params.file) {

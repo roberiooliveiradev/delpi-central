@@ -7,6 +7,7 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import Plugin
 _EVIDENCE_SELECT = """
     SELECT e.id,
            e.kaizen_id,
+           e.revision_id,
            e.type,
            e.stage,
            e.file_name,
@@ -60,13 +61,14 @@ class PostgresKaizenEvidenceRepository(PluginBaseRepository):
         row = self.execute_returning_one(
             """
             INSERT INTO quality.kaizen_evidences (
-                kaizen_id, type, stage, file_name, stored_name, mime_type, size_bytes,
+                kaizen_id, revision_id, type, stage, file_name, stored_name, mime_type, size_bytes,
                 description, external_url, uploaded_by_user_id, uploaded_by_name
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
                 kaizen_id,
+                fields.get("revision_id"),
                 evidence_type,
                 stage,
                 fields.get("file_name"),

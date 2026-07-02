@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from app.domain.services.kaizen import kaizen_revision_service as revision_service
+from app.domain.services.kaizen import kaizen_savings_timeline as savings_timeline_service
 from app.domain.services.kaizen import kaizen_savings_validity
 from app.domain.services.kaizen.kaizen_savings_calculator import enrich_savings_fields
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
@@ -243,14 +244,17 @@ class PostgresKaizenRepository(PluginBaseRepository):
         change_reason: str | None,
         effective_from: str,
         created_by_user_id: str,
-    ) -> None:
+        created_by_name: str | None = None,
+    ) -> str:
         snapshot = revision_service.build_snapshot(record)
-        self.execute(
+        row = self.execute_returning_one(
             """
             INSERT INTO quality.kaizen_revisions (
                 kaizen_id, revision_number, change_type, change_summary, change_reason,
-                effective_from, effective_until, snapshot, created_by_user_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, NULL, %s::jsonb, %s)
+                effective_from, effective_until, snapshot, daily_savings, annual_savings,
+                created_by_user_id, created_by_name
+            ) VALUES (%s, %s, %s, %s, %s, %s, NULL, %s::jsonb, %s, %s, %s, %s)
+            RETURNING id
             """,
             (
                 kaizen_id,
@@ -260,10 +264,105 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 change_reason,
                 effective_from,
                 json.dumps(snapshot),
+                record.get("daily_savings"),
+                record.get("annual_savings"),
                 created_by_user_id,
+                created_by_name,
             ),
             auto_commit=False,
         )
+        return str(row["id"]) if row else ""
+
+    # ------------------------------------------------------------------ auditoria (history + governança)
+
+    def _append_history(
+        self,
+        kaizen_id: str,
+        *,
+        event_type: str,
+        old_value: str | None = None,
+        new_value: str | None = None,
+        comment: str | None = None,
+        actor_user_id: str,
+        actor_name: str | None = None,
+    ) -> None:
+        self.execute(
+            """
+            INSERT INTO quality.kaizen_history (
+                kaizen_id, event_type, old_value, new_value, comment,
+                created_by_user_id, created_by_name
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """,
+            (kaizen_id, event_type, old_value, new_value, comment, actor_user_id, actor_name),
+            auto_commit=False,
+        )
+
+    def _append_audit_log(
+        self,
+        kaizen_id: str,
+        *,
+        event_type: str,
+        payload: dict[str, Any] | None = None,
+        actor_user_id: str,
+        actor_name: str | None = None,
+    ) -> None:
+        self.execute(
+            """
+            INSERT INTO quality.kaizen_audit_log (
+                kaizen_id, event_type, payload, actor_user_id, actor_name
+            ) VALUES (%s, %s, %s::jsonb, %s, %s)
+            """,
+            (kaizen_id, event_type, json.dumps(payload or {}), actor_user_id, actor_name),
+            auto_commit=False,
+        )
+
+    def list_history(self, kaizen_id: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT id, kaizen_id, event_type, old_value, new_value, comment,
+                   created_by_user_id, created_by_name, created_at
+              FROM quality.kaizen_history
+             WHERE kaizen_id = %s
+             ORDER BY created_at DESC
+             LIMIT 200
+            """,
+            (kaizen_id,),
+        )
+
+    def list_audit_log(self, kaizen_id: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT id, kaizen_id, event_type, payload, actor_user_id, actor_name, created_at
+              FROM quality.kaizen_audit_log
+             WHERE kaizen_id = %s
+             ORDER BY created_at DESC
+             LIMIT 200
+            """,
+            (kaizen_id,),
+        )
+
+    def savings_timeline(
+        self,
+        kaizen_id: str,
+        *,
+        date_start: str | None = None,
+        date_end: str | None = None,
+    ) -> dict[str, Any]:
+        from datetime import date as _date
+
+        revisions = self.list_revisions(kaizen_id)
+        start = _date.fromisoformat(date_start) if date_start else None
+        end = _date.fromisoformat(date_end) if date_end else None
+        total = savings_timeline_service.period_savings(revisions, start, end)
+        current = savings_timeline_service.current_active_savings(revisions)
+        return {
+            "kaizen_id": kaizen_id,
+            "date_start": date_start,
+            "date_end": date_end,
+            "period_savings": total,
+            "current": current,
+            "improvements": revisions,
+        }
 
     def _close_current_revision(self, kaizen_id: str, effective_until: str) -> None:
         self.execute(
@@ -278,17 +377,22 @@ class PostgresKaizenRepository(PluginBaseRepository):
         )
 
     def list_revisions(self, kaizen_id: str) -> list[dict[str, Any]]:
-        return self.fetch_all(
+        rows = self.fetch_all(
             """
             SELECT id, kaizen_id, revision_number, change_type, change_summary, change_reason,
                    effective_from, effective_until, snapshot, snapshot_schema_version,
-                   created_by_user_id, created_at
+                   daily_savings, annual_savings, created_by_user_id, created_by_name, created_at
               FROM quality.kaizen_revisions
              WHERE kaizen_id = %s
              ORDER BY revision_number DESC
             """,
             (kaizen_id,),
         )
+        for row in rows:
+            row["savings_valid_until"] = kaizen_savings_validity.savings_valid_until(
+                row.get("effective_from")
+            )
+        return rows
 
     def get_revision(self, kaizen_id: str, revision_number: int) -> dict[str, Any] | None:
         return self.fetch_one(
@@ -326,6 +430,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         *,
         fields: dict[str, Any],
         created_by_user_id: str,
+        actor_name: str | None = None,
     ) -> dict[str, Any]:
         participants = self._normalize_participants(fields.get("participants"))
         fields = {k: v for k, v in fields.items() if k != "participants"}
@@ -404,6 +509,25 @@ class PostgresKaizenRepository(PluginBaseRepository):
             change_reason=fields.get("change_reason"),
             effective_from=effective_from,
             created_by_user_id=created_by_user_id,
+            created_by_name=actor_name,
+        )
+        self._append_history(
+            kaizen_id,
+            event_type="kaizen_created",
+            new_value=str(enriched.get("title") or "").strip() or None,
+            actor_user_id=created_by_user_id,
+            actor_name=actor_name,
+        )
+        self._append_audit_log(
+            kaizen_id,
+            event_type="kaizen_created",
+            payload={
+                "title": str(enriched.get("title") or "").strip(),
+                "status": enriched.get("status", "em_andamento"),
+                "annual_savings": enriched.get("annual_savings"),
+            },
+            actor_user_id=created_by_user_id,
+            actor_name=actor_name,
         )
         self.commit()
 
@@ -420,6 +544,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         *,
         fields: dict[str, Any],
         updated_by_user_id: str,
+        actor_name: str | None = None,
     ) -> dict[str, Any] | None:
         current = self.get_record(record_id)
         if not current:
@@ -539,12 +664,83 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 change_reason=change_reason,
                 effective_from=effective_from,
                 created_by_user_id=updated_by_user_id,
+                created_by_name=actor_name,
+            )
+            self._record_update_audit(
+                record_id,
+                current=current,
+                enriched=enriched,
+                changed_fields=changed_fields,
+                change_type=change_type,
+                change_summary=change_summary,
+                revision_number=new_revision_number,
+                actor_user_id=updated_by_user_id,
+                actor_name=actor_name,
             )
 
         self.commit()
         return self.get_record(record_id)
 
-    def delete_record(self, record_id: str, *, updated_by_user_id: str) -> bool:
+    def _record_update_audit(
+        self,
+        kaizen_id: str,
+        *,
+        current: dict[str, Any],
+        enriched: dict[str, Any],
+        changed_fields: list[str],
+        change_type: str,
+        change_summary: str | None,
+        revision_number: int,
+        actor_user_id: str,
+        actor_name: str | None,
+    ) -> None:
+        status_changed = "status" in changed_fields
+        if status_changed:
+            self._append_history(
+                kaizen_id,
+                event_type="status_changed",
+                old_value=current.get("status"),
+                new_value=enriched.get("status"),
+                comment=change_summary,
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+            self._append_audit_log(
+                kaizen_id,
+                event_type="status_changed",
+                payload={
+                    "from": current.get("status"),
+                    "to": enriched.get("status"),
+                    "revision": revision_number,
+                },
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+        else:
+            event_type = "improvement_added" if change_type == "melhoria" else "kaizen_updated"
+            self._append_history(
+                kaizen_id,
+                event_type=event_type,
+                new_value=change_summary,
+                comment=change_summary,
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+            self._append_audit_log(
+                kaizen_id,
+                event_type=event_type,
+                payload={"fields": changed_fields, "revision": revision_number},
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+
+    def delete_record(
+        self,
+        record_id: str,
+        *,
+        updated_by_user_id: str,
+        actor_name: str | None = None,
+    ) -> bool:
         row = self.execute_returning_one(
             """
             UPDATE quality.kaizens
@@ -556,5 +752,22 @@ class PostgresKaizenRepository(PluginBaseRepository):
             RETURNING id
             """,
             (updated_by_user_id, record_id),
+            auto_commit=False,
         )
-        return row is not None
+        if row is None:
+            self.rollback()
+            return False
+        self._append_history(
+            record_id,
+            event_type="kaizen_deleted",
+            actor_user_id=updated_by_user_id,
+            actor_name=actor_name,
+        )
+        self._append_audit_log(
+            record_id,
+            event_type="kaizen_deleted",
+            actor_user_id=updated_by_user_id,
+            actor_name=actor_name,
+        )
+        self.commit()
+        return True
