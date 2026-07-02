@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
 
@@ -282,17 +283,42 @@ def test_factory_status_explicit_dashboard_keeps_full_bundle_for_toolbar():
 
 def test_stock_text_first_quality_preserves_lazy_table_and_narrative():
     meta = _build(_STOCK_FIXTURE, _STOCK_PATH, user_message=_STOCK_MESSAGE)
-    markdown = str(meta.get("textPresentation", {}).get("markdown") or "")
 
     assert meta.get("explicitSessionFormat") is None, (
         "text-first automático não deve marcar formato explícito da sessão"
     )
-    assert "90269001" in markdown
     assert meta.get("presentationDecision", {}).get("layoutMode") == "single"
-    assert any(
-        isinstance(table, dict) and table.get("role") == "list"
-        for table in (meta.get("tablePresentations") or [])
-    ), "tabela lazy list deve permanecer para refinamento «ver como tabela»"
+
+    # Contrato delivered-pure: a prosa é narrada pelo LLM (data-only decoupled),
+    # então textPresentation.markdown fica vazio e a narrativa vive em dataAnswer
+    # (a tabela lazy permanece para o refinamento «ver como tabela»).
+    assert meta.get("dataOnlyPresentation") is True, (
+        "estoque em text-first automático deve delegar a prosa ao LLM (data-only)"
+    )
+    assert str(meta.get("proseDeliveryMode") or "") == "llm"
+
+    table = meta.get("tablePresentation")
+
+    assert isinstance(table, dict) and (table.get("rows") or table.get("columns")), (
+        "tabela lazy deve permanecer para refinamento «ver como tabela»"
+    )
+
+    table_blob = json.dumps(table, ensure_ascii=False, default=str)
+
+    assert "90269001" in table_blob, (
+        "código do produto consultado deve constar nos dados da tabela"
+    )
+
+    data_answer = meta.get("dataAnswer") or {}
+    data_answer_blob = json.dumps(data_answer, ensure_ascii=False, default=str)
+    archive = meta.get("templateProseArchive") or {}
+
+    assert data_answer.get("summary") or archive.get("textPresentationMarkdown"), (
+        "narrativa de estoque deve ser preservada para o LLM narrar o turno"
+    )
+    assert "saldo" in data_answer_blob.lower() or "estoque" in data_answer_blob.lower(), (
+        "resumo de estoque (saldo/posições) deve alimentar a narrativa"
+    )
 
 
 def test_structure_exclusivity_auto_quality_without_duplicate_panels():
