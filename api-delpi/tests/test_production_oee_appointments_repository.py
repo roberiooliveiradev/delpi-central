@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from app.application.dto.production.get_production_oee_request import (
     GetProductionOeeRequest,
 )
+from app.application.dto.production.production_request import ProductionRequest
 from app.application.models.page import Page
 from app.application.services.production.production_kpi_cache import (
     production_oee_appointments_bundle_cache_key,
@@ -103,14 +104,41 @@ def test_oee_appointments_materialized_cache_reused_across_pages() -> None:
     assert len(second_page.items) == 10
 
 
-def test_oee_by_branch_sql_groups_by_raw_filial_column() -> None:
-    import inspect
-
-    source = inspect.getsource(
-        OverallEquipmentEffectivenessRepository._load_overall_equipment_effectiveness_by_branch
+def test_oee_by_branch_derives_from_daily_series_without_extra_scan() -> None:
+    repository = OverallEquipmentEffectivenessRepository()
+    request = ProductionRequest(
+        branch=None,
+        start_date="2026-05-01",
+        end_date="2026-05-31",
     )
-    assert "GROUP BY EF.FILIAL" in source
-    assert "GROUP BY RTRIM(LTRIM(EF.FILIAL))" not in source
+    daily_rows = [
+        {
+            "production_date": "2026-05-10",
+            "branch": "01",
+            "oee_pct": 80.0,
+            "appointment_count": 2,
+            "efficiency_sum": 170.0,
+            "efficiency_sample_count": 2,
+        },
+        {
+            "production_date": "2026-05-11",
+            "branch": "01",
+            "oee_pct": 90.0,
+            "appointment_count": 1,
+            "efficiency_sum": 90.0,
+            "efficiency_sample_count": 1,
+        },
+    ]
+
+    with patch.object(
+        OverallEquipmentEffectivenessRepository,
+        "list_oee_kpi_by_day_and_branch",
+        return_value=daily_rows,
+    ) as daily_loader:
+        rows = repository._load_overall_equipment_effectiveness_by_branch(request)
+
+    daily_loader.assert_called_once()
+    assert rows == [{"branch": "01", "oee_pct": round((170.0 + 90.0) / 3, 2)}]
 
 
 def test_oee_appointment_summary_and_list_reuse_bundle() -> None:

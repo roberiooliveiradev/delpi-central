@@ -32,6 +32,9 @@ from app.domain.production.production_efficiency_valid_range import (
     parse_efficiency_bands,
     resolve_production_list_status_filter_clause,
 )
+from app.domain.services.production.production_oee_series_aggregation_service import (
+    resolve_period_oee_by_branch,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_appointment_filters import (
@@ -54,7 +57,6 @@ from app.infrastructure.persistence.totvs.production_fabril.production_fabril_sh
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_oee_kpi_sql import (
     OEE_FABRIL_KPI_AVG_SELECT,
-    OEE_FABRIL_KPI_BY_BRANCH_SELECT,
     OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT,
 )
 from app.infrastructure.persistence.totvs.production_repositories.production_oee_sql import (
@@ -265,27 +267,11 @@ class OverallEquipmentEffectivenessRepository(
         if not request.start_date or not request.end_date:
             return []
 
-        where_clause, where_params = build_fabril_view_filters(
-            date_start=request.start_date,
-            date_end=request.end_date,
-            branch=request.branch,
-            status_ok_only=True,
-            efficiency_cap_pct=PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
-            column_prefix="EF",
-        )
-
-        sql = f"""
-            {OEE_FABRIL_KPI_BY_BRANCH_SELECT}
-            WHERE {where_clause}
-              AND RTRIM(LTRIM(EF.FILIAL)) <> ''
-            GROUP BY EF.FILIAL
-            ORDER BY branch
-        """
-
-        with self:
-            rows = self.execute_query(sql, where_params)
-
-        return rows or []
+        # Deriva o OEE do período por filial da agregação diária (mesma view,
+        # mesmos filtros), evitando um segundo scan pesado da view fabril.
+        # A série diária já é cacheada em `production-oee-series-daily`.
+        daily_rows = self.list_oee_kpi_by_day_and_branch(request)
+        return resolve_period_oee_by_branch(daily_rows)
 
     def list_oee_kpi_by_day_and_branch(
         self,
@@ -312,7 +298,6 @@ class OverallEquipmentEffectivenessRepository(
         sql = f"""
             {OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT}
             WHERE {where_clause}
-              AND RTRIM(LTRIM(EF.FILIAL)) <> ''
             GROUP BY EF.DATA_PRODUCAO, EF.FILIAL
             ORDER BY production_date, branch
         """

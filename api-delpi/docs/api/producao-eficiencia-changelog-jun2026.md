@@ -118,6 +118,50 @@ Console: `operation_id` = `get_overall_equipment_effectiveness_pct` — hash ant
 
 ---
 
+## 7.1 Performance série OEE (`get_production_oee_series`) — jul/2026
+
+Alerta **Saúde SQL** (`slow_sql`): a série diária (`OverallEquipmentEffectivenessRepository._load_oee_kpi_by_day_and_branch`, `operation_id = get_production_oee_series`) atingiu **~4970 ms** (limiar 2500 ms).
+
+### Causa
+
+| Fator | Detalhe |
+|-------|---------|
+| Scans redundantes | Cada refresh do dashboard fazia **dois** scans pesados da mesma view fabril com os mesmos filtros: KPI por filial (`GROUP BY filial`) **e** série por dia (`GROUP BY dia+filial`). A série já contém todos os componentes do KPI. |
+| Predicado não-sargável duplicado | `AND RTRIM(LTRIM(EF.FILIAL)) <> ''` no repository além do `<> ''` + `FILIAL IN ('01','02')` já emitidos por `build_fabril_view_filters`. |
+| Custo residual | A view `vw_Apontamentos_Eficiencia` faz join de 6 tabelas Protheus (SH6010, SHY010, SC2010, SYS_USR, SH1010, SBZ010); o join domina o custo do scan a frio. |
+
+### Correção (api-delpi)
+
+| Artefato | Mudança |
+|----------|---------|
+| `production_fabril_oee_kpi_sql.py` | `OEE_FABRIL_KPI_BY_DAY_AND_BRANCH_SELECT` passa a expor componentes brutos `efficiency_sum` (`SUM`) e `efficiency_sample_count` (`COUNT` de não-nulos) |
+| `production_oee_series_aggregation_service.py` | `resolve_period_oee_by_branch` deriva o OEE do período por filial das linhas diárias (`Σsum / Σcount`, arredondado uma única vez) — **exatamente** igual a `ROUND(AVG(EFICIENCIA_PERCENTUAL), 2)` |
+| `overall_equipment_effectiveness_repository.py` | `_load_overall_equipment_effectiveness_by_branch` deriva da série diária (`list_oee_kpi_by_day_and_branch`, cacheada) — **elimina** o scan separado `OEE_FABRIL_KPI_BY_BRANCH_SELECT`; removido o predicado `FILIAL <> ''` redundante da série diária |
+
+### Efeito esperado
+
+- KPI OEE por filial + série passam a compartilhar **um único** scan da view (cache `production-oee-series-daily`), reduzindo a repetição de `slow_sql`.
+- Resultados **idênticos** (derivação matematicamente equivalente ao `AVG`).
+
+### Recomendação DBA (custo residual a frio)
+
+O tempo restante a frio (~1–2 s) é do join da view. Para reduzir abaixo do limiar de forma durável, avaliar no SQL Server:
+
+- Índice nas tabelas-base cobrindo **filial + data** de produção (SH6010: `H6_FILIAL`, `H6_DTPROD`), alinhado aos filtros da view.
+- Alternativa: view indexada / tabela materializada de apontamentos de eficiência para leitura analítica.
+
+### Testes
+
+```bash
+docker exec delpi-api-delpi python -m pytest \
+  tests/test_production_oee_kpi_sql.py tests/test_chart_query_cache.py \
+  tests/test_production_oee_appointments_repository.py \
+  tests/test_get_production_oee_series_use_case.py tests/test_get_production_oee_use_case.py \
+  tests/unit/domain/services/test_production_oee_series_aggregation_service.py -q
+```
+
+---
+
 ## 8. Deploy após as mudanças
 
 ```bash

@@ -26,6 +26,8 @@ SELECT
     CONVERT(VARCHAR(10), EF.DATA_PRODUCAO, 23) AS production_date,
     RTRIM(LTRIM(EF.FILIAL)) AS branch,
     ROUND(AVG(TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT)), 2) AS oee_pct,
-    COUNT(*) AS appointment_count
+    COUNT(*) AS appointment_count,
+    SUM(TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT)) AS efficiency_sum,
+    COUNT(TRY_CAST(EF.EFICIENCIA_PERCENTUAL AS FLOAT)) AS efficiency_sample_count
 {OEE_FABRIL_KPI_FROM}
 """
