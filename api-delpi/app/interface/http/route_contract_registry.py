@@ -257,6 +257,10 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_quality_labels": RouteContract("quality_label", "paged_list"),
     "get_quality_label": RouteContract("quality_label", "scalar"),
     "set_quality_label_active": RouteContract("quality_label", "scalar"),
+    "delete_quality_label": RouteContract("quality_label", "scalar"),
+    "list_quality_label_audit_events": RouteContract(
+        "quality_label_audit_event", "paged_list"
+    ),
     "get_public_quality_label_inspection": RouteContract(
         "quality_label_public_inspection", "scalar"
     ),

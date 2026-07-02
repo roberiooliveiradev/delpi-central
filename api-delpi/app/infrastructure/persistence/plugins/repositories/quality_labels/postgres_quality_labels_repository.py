@@ -114,6 +114,17 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             (is_active, label_id),
         )
 
+    def delete_label(self, *, label_id: str) -> bool:
+        row = self.execute_returning_one(
+            """
+            DELETE FROM quality_labels.inspection_labels
+             WHERE id = %s
+            RETURNING id
+            """,
+            (label_id,),
+        )
+        return row is not None
+
     def get_by_id(self, label_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
             f"SELECT {_COLUMNS} FROM quality_labels.inspection_labels WHERE id = %s",

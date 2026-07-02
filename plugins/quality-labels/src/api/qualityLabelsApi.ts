@@ -1,6 +1,7 @@
-import { httpGet, httpGetBlob, httpPatch, httpPost } from "./httpClient";
+import { httpDelete, httpGet, httpGetBlob, httpPatch, httpPost } from "./httpClient";
 import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
+  AuditEventsPage,
   CreateLabelPayload,
   LabelsPage,
   OpLookup,
@@ -91,6 +92,37 @@ export async function setLabelActive(
     { signal },
   );
   return unwrapApiDelpiEnvelope(response, "Erro ao atualizar a etiqueta.");
+}
+
+export async function deleteLabel(labelId: string, signal?: AbortSignal): Promise<void> {
+  const response = await httpDelete<ApiSuccessResponse<{ id: string; deleted: boolean }>>(
+    `${QUALITY_LABELS_API_BASE}/${labelId}`,
+    { signal },
+  );
+  unwrapApiDelpiEnvelope(response, "Erro ao excluir a etiqueta.");
+}
+
+export async function listAuditEvents(
+  params: {
+    search?: string;
+    eventTypes?: string[];
+    limit?: number;
+    offset?: number;
+  } = {},
+  signal?: AbortSignal,
+): Promise<AuditEventsPage> {
+  const query = new URLSearchParams();
+  if (params.search) query.set("search", params.search);
+  if (params.eventTypes && params.eventTypes.length > 0)
+    query.set("eventTypes", params.eventTypes.join(","));
+  if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.offset != null) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  const response = await httpGet<ApiSuccessResponse<AuditEventsPage>>(
+    `${QUALITY_LABELS_API_BASE}/audit-events${qs ? `?${qs}` : ""}`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar a auditoria.");
 }
 
 export function labelQrUrl(labelId: string): string {

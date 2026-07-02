@@ -106,6 +106,32 @@ def search_ops(
         return error_response("Erro interno ao buscar as OPs.", status_code=500)
 
 
+@router.get("/audit-events")
+@require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
+def list_audit_events(
+    search: Optional[str] = None,
+    eventTypes: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    try:
+        service = build_quality_labels_service()
+        data = service.list_audit_events(
+            search=search,
+            event_types=_parse_branches(eventTypes),
+            limit=limit,
+            offset=offset,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="list_quality_label_audit_events",
+            message="Eventos de auditoria recuperados com sucesso.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar auditoria de etiquetas de qualidade: {exc}")
+        return error_response("Erro interno ao listar a auditoria.", status_code=500)
+
+
 @router.get("/lookup-op/{production_order}")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def lookup_op(production_order: str, branch: Optional[str] = None):
@@ -216,7 +242,12 @@ def get_label_qr(label_id: str):
 def set_label_active(label_id: str, body: Annotated[SetActiveBody, Body(...)]):
     try:
         service = build_quality_labels_service()
-        data = service.set_active(label_id=label_id, is_active=body.isActive)
+        data = service.set_active(
+            label_id=label_id,
+            is_active=body.isActive,
+            actor_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
         if data is None:
             return not_found_response("Etiqueta não encontrada.")
         return api_delpi_success(
@@ -227,3 +258,25 @@ def set_label_active(label_id: str, body: Annotated[SetActiveBody, Body(...)]):
     except Exception as exc:
         log_error(f"Erro ao atualizar situação da etiqueta: {exc}")
         return error_response("Erro interno ao atualizar a etiqueta.", status_code=500)
+
+
+@router.delete("/{label_id}")
+@require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
+def delete_label(label_id: str):
+    try:
+        service = build_quality_labels_service()
+        deleted = service.delete_label(
+            label_id=label_id,
+            actor_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
+        if not deleted:
+            return not_found_response("Etiqueta não encontrada.")
+        return api_delpi_success(
+            {"id": label_id, "deleted": True},
+            operation_id="delete_quality_label",
+            message="Etiqueta excluída com sucesso.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao excluir etiqueta de qualidade: {exc}")
+        return error_response("Erro interno ao excluir a etiqueta.", status_code=500)

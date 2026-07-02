@@ -82,6 +82,39 @@ export type QualityLabel = {
   hasAuditMetadata?: boolean;
 };
 
+export type AuditEventType =
+  | "label_created"
+  | "label_activated"
+  | "label_deactivated"
+  | "label_deleted"
+  | "label_viewed";
+
+export type AuditEvent = {
+  id: string;
+  eventType: AuditEventType | string;
+  labelId: string | null;
+  productionOrder: string | null;
+  productCode: string | null;
+  branch: string | null;
+  branchName: string | null;
+  result: QualityLabelResult | string | null;
+  actorUserId: string | null;
+  actorName: string | null;
+  detail: Record<string, unknown>;
+  createdAt: string | null;
+};
+
+export type AuditEventsPage = {
+  items: AuditEvent[];
+  summary: Record<string, number>;
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    is_complete: boolean;
+  };
+};
+
 export type CreateLabelPayload = {
   productionOrder: string;
   branch?: string | null;

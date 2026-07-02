@@ -509,11 +509,20 @@
 }
 
 .ql-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.ql-badge__icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
 }
 
 .ql-badge--on {
@@ -524,6 +533,16 @@
 .ql-badge--off {
   background: color-mix(in srgb, #c62828 14%, var(--ql-surface));
   color: #c62828;
+}
+
+.ql-badge--danger {
+  background: color-mix(in srgb, #c62828 18%, var(--ql-surface));
+  color: #b71c1c;
+}
+
+.ql-badge--info {
+  background: color-mix(in srgb, var(--ql-accent) 16%, var(--ql-surface));
+  color: var(--ql-accent);
 }
 
 .ql-table__actions-col {
@@ -555,6 +574,11 @@
 .ql-icon-btn:hover {
   color: var(--ql-accent);
   border-color: color-mix(in srgb, var(--ql-accent) 40%, var(--ql-border));
+}
+
+.ql-icon-btn--danger:hover {
+  color: #c62828;
+  border-color: color-mix(in srgb, #c62828 45%, var(--ql-border));
 }
 
 .ql-icon-btn:disabled {
@@ -790,4 +814,107 @@
   .ql-modal-overlay {
     padding: 12px;
   }
+}
+
+/* Abas (Etiquetas / Auditoria) */
+.ql-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--ql-border);
+}
+
+.ql-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ql-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.ql-tab:hover {
+  color: var(--ql-title);
+}
+
+.ql-tab--active {
+  color: var(--ql-accent);
+  border-bottom-color: var(--ql-accent);
+}
+
+.ql-tab .ql-icon {
+  width: 17px;
+  height: 17px;
+}
+
+/* Auditoria: cartões-resumo clicáveis (também servem de filtro) */
+.ql-audit-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.ql-audit-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: var(--ql-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ql-audit-stat:hover {
+  border-color: color-mix(in srgb, var(--ql-accent) 40%, var(--ql-border));
+}
+
+.ql-audit-stat--active {
+  border-color: var(--ql-accent);
+  box-shadow: 0 0 0 1px var(--ql-accent) inset;
+}
+
+.ql-audit-stat__icon {
+  display: inline-grid;
+  place-items: center;
+  color: var(--ql-accent);
+}
+
+.ql-audit-stat__value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ql-title);
+  line-height: 1;
+}
+
+.ql-audit-stat__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ql-muted);
+}
+
+.ql-list__count {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ql-accent);
+  background: color-mix(in srgb, var(--ql-accent) 14%, var(--ql-surface));
+  vertical-align: middle;
+}
+
+.ql-cell-nowrap {
+  white-space: nowrap;
 }

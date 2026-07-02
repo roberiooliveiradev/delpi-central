@@ -117,6 +117,16 @@ export async function httpPatch<T>(
   return parseJson<T>(response);
 }
 
+export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+
+  return parseJson<T>(response);
+}
+
 export async function httpGetBlob(url: string, options: RequestOptions = {}): Promise<Blob> {
   const response = await fetch(url, {
     method: "GET",

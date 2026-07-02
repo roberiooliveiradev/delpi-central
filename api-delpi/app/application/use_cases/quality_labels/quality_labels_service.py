@@ -19,12 +19,22 @@ from app.application.use_cases.production.get_production_order_by_op_use_case im
 from app.application.use_cases.production.search_production_orders_by_op_use_case import (
     SearchProductionOrdersByOpUseCase,
 )
+from app.infrastructure.persistence.plugins.repositories.quality_labels.postgres_quality_labels_audit_repository import (
+    PostgresQualityLabelsAuditRepository,
+)
 from app.infrastructure.persistence.plugins.repositories.quality_labels.postgres_quality_labels_repository import (
     PostgresQualityLabelsRepository,
     unit_name,
 )
+from app.utils.logger import log_error
 
 _TOKEN_NBYTES = 24
+
+EVENT_CREATED = "label_created"
+EVENT_ACTIVATED = "label_activated"
+EVENT_DEACTIVATED = "label_deactivated"
+EVENT_DELETED = "label_deleted"
+EVENT_VIEWED = "label_viewed"
 
 
 class QualityLabelsError(Exception):
@@ -44,12 +54,14 @@ class QualityLabelsService:
         production_order_use_case: GetProductionOrderByOpUseCase,
         search_orders_use_case: SearchProductionOrdersByOpUseCase,
         audit_metadata_service: QualityLabelsAuditMetadataService,
+        audit_repository: PostgresQualityLabelsAuditRepository,
     ) -> None:
         self._repository = repository
         self._qr_service = qr_service
         self._production_order_use_case = production_order_use_case
         self._search_orders_use_case = search_orders_use_case
         self._audit_metadata_service = audit_metadata_service
+        self._audit_repository = audit_repository
 
     def search_ops(
         self,
@@ -139,6 +151,12 @@ class QualityLabelsService:
 
         payload = self._repository.to_admin_payload(row, include_audit_metadata=True)
         payload["publicUrl"] = build_public_url(token)
+        self._record_event(
+            EVENT_CREATED,
+            row=row,
+            actor_user_id=inspector_user_id,
+            actor_name=inspector_name,
+        )
         return payload
 
     def list_labels(
@@ -173,11 +191,67 @@ class QualityLabelsService:
         payload["publicUrl"] = build_public_url(row["public_token"])
         return payload
 
-    def set_active(self, *, label_id: str, is_active: bool) -> dict[str, Any] | None:
+    def set_active(
+        self,
+        *,
+        label_id: str,
+        is_active: bool,
+        actor_user_id: str | None = None,
+        actor_name: str | None = None,
+    ) -> dict[str, Any] | None:
         row = self._repository.set_active(label_id=label_id, is_active=is_active)
         if row is None:
             return None
+        self._record_event(
+            EVENT_ACTIVATED if is_active else EVENT_DEACTIVATED,
+            row=row,
+            actor_user_id=actor_user_id,
+            actor_name=actor_name,
+        )
         return self._repository.to_admin_payload(row)
+
+    def delete_label(
+        self,
+        *,
+        label_id: str,
+        actor_user_id: str | None = None,
+        actor_name: str | None = None,
+    ) -> bool:
+        row = self._repository.get_by_id(label_id)
+        if row is None:
+            return False
+        self._qr_service.delete(row.get("qr_filename"))
+        deleted = self._repository.delete_label(label_id=label_id)
+        if deleted:
+            self._record_event(
+                EVENT_DELETED,
+                row=row,
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+        return deleted
+
+    def list_audit_events(
+        self,
+        *,
+        search: str | None,
+        event_types: list[str] | None,
+        limit: int,
+        offset: int,
+    ) -> dict[str, Any]:
+        rows, total = self._audit_repository.list_events(
+            search=search, event_types=event_types, limit=limit, offset=offset
+        )
+        return {
+            "items": [self._audit_repository.to_payload(row) for row in rows],
+            "summary": self._audit_repository.count_by_type(),
+            "pagination": {
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "is_complete": offset + len(rows) >= total,
+            },
+        }
 
     def read_qr(self, *, label_id: str) -> bytes | None:
         row = self._repository.get_by_id(label_id)
@@ -190,7 +264,36 @@ class QualityLabelsService:
         if row is None or not row.get("is_active", True):
             return None
         self._repository.increment_view_count(token)
+        self._record_event(
+            EVENT_VIEWED,
+            row=row,
+            actor_user_id=None,
+            actor_name="Cliente (acesso público)",
+        )
         return self._repository.to_public_payload(row)
+
+    def _record_event(
+        self,
+        event_type: str,
+        *,
+        row: dict[str, Any],
+        actor_user_id: str | None,
+        actor_name: str | None,
+    ) -> None:
+        # Auditoria não pode quebrar a operação principal (já persistida).
+        try:
+            self._audit_repository.insert_event(
+                event_type=event_type,
+                label_id=str(row["id"]) if row.get("id") else None,
+                production_order=row.get("production_order"),
+                product_code=row.get("product_code"),
+                branch=row.get("branch"),
+                result=row.get("result"),
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+        except Exception as exc:  # noqa: BLE001 - auditoria é best-effort
+            log_error(f"Falha ao registrar evento de auditoria ({event_type}): {exc}")
 
     @staticmethod
     def _order_unit(order: dict[str, Any]) -> str | None:

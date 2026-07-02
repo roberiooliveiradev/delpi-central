@@ -16,11 +16,13 @@ import {
   RefreshCw,
   Search,
   Tag,
+  Trash2,
 } from "lucide-react";
 
 import { HttpRequestError } from "../api/httpClient";
 import {
   createLabel,
+  deleteLabel,
   fetchLabelQrBlob,
   listLabels,
   lookupOp,
@@ -245,6 +247,25 @@ export function QualityLabelsAdminPage() {
     }
   }
 
+  async function handleDelete(label: QualityLabel) {
+    const confirmed = window.confirm(
+      `Excluir definitivamente a etiqueta da OP ${label.productionOrder} (${label.productCode})?\n\nEsta ação não pode ser desfeita. O registro sai da lista, mas o evento fica na auditoria.`,
+    );
+    if (!confirmed) return;
+    setBusyId(label.id);
+    setError(null);
+    setSuccess(null);
+    try {
+      await deleteLabel(label.id);
+      setLabels((prev) => prev.filter((item) => item.id !== label.id));
+      setSuccess(`Etiqueta da OP ${label.productionOrder} excluída.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir a etiqueta.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleToggleActive(label: QualityLabel) {
     setBusyId(label.id);
     setError(null);
@@ -263,19 +284,7 @@ export function QualityLabelsAdminPage() {
   }
 
   return (
-    <div className="quality-labels">
-      <div className="quality-labels-page">
-        <div className="ql-inner">
-          <header className="ql-hero">
-            <p className="ql-eyebrow">Qualidade</p>
-            <span className="ql-eyebrow-mark" />
-            <h1 className="ql-title">Etiquetas da Qualidade</h1>
-            <p className="ql-subtitle">
-              Informe a ordem de produção (OP) para registrar a inspeção e gerar a etiqueta
-              com QR code. O cliente lê o QR e acessa os dados da inspeção.
-            </p>
-          </header>
-
+    <>
           {error && <div className="ql-state ql-state--error"><p>{error}</p></div>}
           {success && <div className="ql-state ql-state--success"><p>{success}</p></div>}
 
@@ -533,6 +542,15 @@ export function QualityLabelsAdminPage() {
                             >
                               <Power className="ql-icon" />
                             </button>
+                            <button
+                              type="button"
+                              className="ql-icon-btn ql-icon-btn--danger"
+                              title="Excluir etiqueta"
+                              onClick={() => void handleDelete(label)}
+                              disabled={busyId === label.id}
+                            >
+                              <Trash2 className="ql-icon" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -542,12 +560,10 @@ export function QualityLabelsAdminPage() {
               </div>
             )}
           </section>
-        </div>
-      </div>
 
       {auditLabel && (
         <AuditMetadataModal label={auditLabel} onClose={() => setAuditLabel(null)} />
       )}
-    </div>
+    </>
   );
 }
