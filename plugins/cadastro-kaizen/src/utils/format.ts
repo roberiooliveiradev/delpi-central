@@ -14,3 +14,10 @@ export function formatInteger(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return numberFormatter.format(value);
 }
+
+export function formatDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("pt-BR");
+}

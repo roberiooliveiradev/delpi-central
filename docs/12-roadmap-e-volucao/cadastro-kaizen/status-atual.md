@@ -16,6 +16,8 @@
 | Evidências (Antes/Depois) | ✅ Migration V030 + volume + rotas `/evidences` (dev) |
 | Campos ricos + múltiplos responsáveis | ✅ Migration V031 + `kaizen_participants` (dev) |
 | Ficha visual + edição por seção (MFE) | ✅ `KaizenDetailPage` + pipeline + timeline (dev) |
+| Resultado real vs. estimado (F5) | ✅ Migration V032 + efetividade na ficha (dev) |
+| Validade da economia (1 ano) | ✅ `kaizen_savings_validity` — cap no ganho + `savings_active`/`savings_valid_until` (dev) |
 | Cálculo temporal do dashboard (revisões) | 📋 Especificado — [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md) (Fase 6b/6c) |
 
 ## O que já funciona

@@ -8,6 +8,7 @@ from app.application.dto.kaizen.kaizen_summary_request import KaizenSummaryReque
 from app.application.dto.kaizen.kaizen_summary_response import KaizenSummaryResponse
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
+from app.domain.services.kaizen import kaizen_savings_validity
 
 
 class KaizenRepository(KaizenQueryRepositoryPort):
@@ -232,14 +233,12 @@ class KaizenRepository(KaizenQueryRepositoryPort):
         start = self._parse_date_safe(range_start) if range_start else impl_date
         end = self._parse_date_safe(range_end) if range_end else date.today()
 
-        if start is None or end is None:
-            return 0
-
-        effective_start = max(impl_date, start)
-        if effective_start > end:
-            return 0
-
-        return (end - effective_start).days + 1
+        # Regra de negócio: economia válida por 1 ano a partir da implantação.
+        return kaizen_savings_validity.active_days_in_range(
+            implemented=impl_date,
+            range_start=start,
+            range_end=end,
+        )
 
     def _calculate_kaizen_total_savings(
         self,

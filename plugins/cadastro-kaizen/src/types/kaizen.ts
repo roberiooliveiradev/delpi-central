@@ -39,6 +39,8 @@ export type KaizenRecord = {
   expected_result: string | null;
   category: string | null;
   current_revision_number: number | null;
+  savings_valid_until: string | null;
+  savings_active: boolean;
   participants?: KaizenParticipant[];
   created_at: string;
   updated_at: string;

@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from app.domain.services.kaizen import kaizen_revision_service as revision_service
+from app.domain.services.kaizen import kaizen_savings_validity
 from app.domain.services.kaizen.kaizen_savings_calculator import enrich_savings_fields
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
@@ -69,6 +70,21 @@ class PostgresKaizenRepository(PluginBaseRepository):
         self._submodule_id_cache = str(row["id"])
         return self._submodule_id_cache
 
+    # ------------------------------------------------------------------ validade da economia
+
+    @staticmethod
+    def _enrich_savings_validity(record: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Anexa a validade da economia (regra de 1 ano) ao registro lido."""
+        if record is None:
+            return None
+        implemented = record.get("date_implemented")
+        record["savings_valid_until"] = kaizen_savings_validity.savings_valid_until(implemented)
+        record["savings_active"] = kaizen_savings_validity.is_savings_active(
+            implemented,
+            status=record.get("status"),
+        )
+        return record
+
     # ------------------------------------------------------------------ listagem
 
     def list_records(
@@ -124,7 +140,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         )
 
         return {
-            "items": rows,
+            "items": [self._enrich_savings_validity(row) for row in rows],
             "pagination": {
                 "page": page,
                 "page_size": page_size,
@@ -144,7 +160,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         )
         if record and with_participants:
             record["participants"] = self._load_participants(record_id)
-        return record
+        return self._enrich_savings_validity(record)
 
     # ------------------------------------------------------------------ participantes
 

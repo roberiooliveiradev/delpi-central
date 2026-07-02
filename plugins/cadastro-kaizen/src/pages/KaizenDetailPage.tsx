@@ -19,7 +19,7 @@ import {
   recordToFormValues,
 } from "../constants/kaizen";
 import type { KaizenFormValues, KaizenRecord, KaizenRevision } from "../types/kaizen";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
 import { savingsTypeLabel, statusLabel } from "../utils/labels";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
 
@@ -44,6 +44,14 @@ function effectivenessLabel(record: KaizenRecord): string {
   if (estimated == null || realized == null || estimated === 0) return "—";
   const ratio = Math.round((realized / estimated) * 100);
   return `${ratio}% do estimado`;
+}
+
+function savingsAccountingLabel(record: KaizenRecord): string {
+  if (!record.date_implemented) return "Sem data de implantação";
+  if (record.savings_active) {
+    return `Sim, até ${formatDate(record.savings_valid_until)}`;
+  }
+  return `Não (validade encerrada em ${formatDate(record.savings_valid_until)})`;
 }
 
 export function KaizenDetailPage({ recordId, onNavigate }: Props) {
@@ -387,6 +395,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
             <ReadOnlyField label="Realizada / dia" value={formatCurrency(record.realized_daily_savings)} />
             <ReadOnlyField label="Realizada / ano" value={formatCurrency(record.realized_annual_savings)} />
             <ReadOnlyField label="Efetividade" value={effectivenessLabel(record)} />
+            <ReadOnlyField
+              label="Contabiliza ganhos"
+              value={savingsAccountingLabel(record)}
+              wide
+            />
             <ReadOnlyField label="Segundos / ocorrência" value={record.seconds_per_occurrence} />
             <ReadOnlyField label="Ocorrências / dia" value={record.occurrences_per_day} />
             <ReadOnlyField label="Custo hora (R$)" value={record.hourly_cost} />
