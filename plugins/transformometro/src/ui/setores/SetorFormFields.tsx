@@ -58,7 +58,7 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
         </select>
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
-        <span className="ds-field-label">Filiais vinculadas *</span>
+        <span className="ds-field-label">Unidades vinculadas *</span>
         <div className="tm-inst-setores-grid">
           {options.filiais.map((filial) => (
             <label key={filial.id} className="tm-inst-setor-option ds-check-label">

@@ -470,6 +470,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--ds-section-gap);
+  margin-bottom: var(--ds-section-gap);
 }
 
 .dashboard-transformometro .tm-panel-stack > .ds-card {

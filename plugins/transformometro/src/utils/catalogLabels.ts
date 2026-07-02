@@ -1,7 +1,7 @@
 const ESCOPO_RECURSO_LABELS: Record<string, string> = {
   empresa: "Empresa (pool global)",
-  filial: "Filial (mesma filial da instância)",
-  setor: "Departamento (filial × setor)",
+  filial: "Unidade (mesma unidade da instância)",
+  setor: "Departamento (unidade × setor)",
 };
 
 export function labelEscopoRecurso(value?: string | null): string {

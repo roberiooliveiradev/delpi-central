@@ -164,7 +164,7 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             )
         filial = FilialRepository(connection=self._connection).get(filial_codigo)
         if not filial:
-            raise ProcessoInstanciaDomainError("Filial inválida.")
+            raise ProcessoInstanciaDomainError("Unidade inválida.")
         return filial
 
     def _resolve_setores(
@@ -182,7 +182,7 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
         for setor_codigo in setor_refs:
             if not todas_filiais_ativas:
                 if not filial_codigo:
-                    raise ProcessoInstanciaDomainError("Filial obrigatória para validar setores.")
+                    raise ProcessoInstanciaDomainError("Unidade obrigatória para validar setores.")
                 if not setor_repo.is_active_for_filial(setor_codigo, filial_codigo):
                     validate_instancia_par(
                         setor_ativo_na_filial=False,
@@ -382,12 +382,41 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             raise ProcessoInstanciaDomainError("Instância não encontrada.")
 
         setor_refs = self._normalize_setor_refs(data)
-        todas_filiais_ativas = bool(existing.get("todas_filiais_ativas"))
-        filial_codigo = str(existing.get("codigo_filial") or existing.get("filial_id") or "").strip() or None
+        existing_todas = bool(existing.get("todas_filiais_ativas"))
+
+        # Escopo alvo: usa o que veio no payload; sem chave, mantém o atual.
+        if data.get("todas_filiais_ativas") is None:
+            target_todas = existing_todas
+        else:
+            target_todas = bool(data.get("todas_filiais_ativas"))
+        filial_atual = str(existing.get("codigo_filial") or existing.get("filial_id") or "").strip() or None
+        target_filial_codigo = (
+            None if target_todas else (str(data.get("filial_id") or "").strip() or filial_atual)
+        )
+        scope_changed = bool(data.get("scope_changed"))
+
+        target_filial: dict[str, Any] | None = None
+        if not target_todas:
+            target_filial = self._resolve_filial(
+                filial_codigo=target_filial_codigo,
+                todas_filiais_ativas=False,
+            )
+
+        if scope_changed:
+            conflito = self._find_existing(
+                processo_id=str(existing["processo_id"]),
+                filial_uuid=str(target_filial["filial_id"]) if target_filial else None,
+                todas_filiais_ativas=target_todas,
+            )
+            if conflito and str(conflito["instancia_id"]) != str(instancia_id):
+                raise ProcessoInstanciaDomainError(
+                    "Já existe uma instância deste processo para o escopo de destino."
+                )
+
         setores = self._resolve_setores(
             setor_refs,
-            filial_codigo=filial_codigo,
-            todas_filiais_ativas=todas_filiais_ativas,
+            filial_codigo=target_filial_codigo,
+            todas_filiais_ativas=target_todas,
         )
 
         self.execute_returning_one(
@@ -395,6 +424,8 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             UPDATE transformometro.processo_instancias
             SET rotulo_instancia = %s,
                 status_instancia = %s,
+                todas_filiais_ativas = %s,
+                filial_id = %s::uuid,
                 updated_at = NOW()
             WHERE instancia_id = %s::uuid
               AND deletado = FALSE
@@ -403,6 +434,8 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             (
                 data.get("rotulo_instancia"),
                 data.get("status_instancia", existing.get("status_instancia") or "ativo"),
+                target_todas,
+                target_filial["filial_id"] if target_filial else None,
                 instancia_id,
             ),
             auto_commit=False,

@@ -368,6 +368,8 @@ export function updateInstancia(
     setor_ids: string[];
     rotulo_instancia?: string;
     status_instancia?: string;
+    filial_id?: string;
+    todas_filiais_ativas?: boolean;
   },
   getAccessToken?: () => string | undefined
 ) {

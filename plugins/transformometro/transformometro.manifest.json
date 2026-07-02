@@ -109,7 +109,7 @@
     },
     {
       "path": "/apps/transformometro/filiais",
-      "label": "Filiais",
+      "label": "Unidades",
       "permission": "transformometro.processes.manage",
       "icon": "building",
       "entry": null,

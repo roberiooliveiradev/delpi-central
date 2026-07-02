@@ -48,7 +48,7 @@ export function ProcessoFormFields({
       {showInstanciaFields ? (
         <>
           <div className="ds-filter-box">
-            <label htmlFor="tm-proc-filial">Filial *</label>
+            <label htmlFor="tm-proc-filial">Unidade *</label>
             <select
               id="tm-proc-filial"
               value={form.filial_id}

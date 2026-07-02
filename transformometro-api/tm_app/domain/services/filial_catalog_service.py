@@ -16,7 +16,7 @@ def normalize_codigo_filial(value: str) -> str:
 
 def validate_codigos_filiais(codigos: list[str], active_codigos: set[str]) -> None:
     if not codigos:
-        raise ValueError("Informe ao menos uma filial.")
+        raise ValueError("Informe ao menos uma unidade.")
     invalid = sorted({codigo for codigo in codigos if codigo not in active_codigos})
     if invalid:
         raise ValueError(f"filial_id inválido: {', '.join(invalid)}")

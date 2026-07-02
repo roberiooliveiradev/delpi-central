@@ -104,7 +104,7 @@ class FilialRepository(PluginBaseRepository):
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
         codigo_filial = normalize_codigo_filial(data["codigo_filial"])
         if self.get(codigo_filial):
-            raise ValueError(f"Filial com código '{codigo_filial}' já existe.")
+            raise ValueError(f"Unidade com código '{codigo_filial}' já existe.")
 
         row = self.execute_returning_one(
             """
@@ -119,7 +119,7 @@ class FilialRepository(PluginBaseRepository):
             ),
         )
         if row is None:
-            raise RuntimeError("Falha ao criar filial.")
+            raise RuntimeError("Falha ao criar unidade.")
         return row
 
     def update(self, filial_ref: str, data: dict[str, Any]) -> dict[str, Any] | None:
@@ -152,13 +152,13 @@ class FilialRepository(PluginBaseRepository):
         codigo = str(existing["codigo_filial"])
         if self.count_processos(codigo) > 0:
             raise ValueError(
-                "Não é possível excluir filial vinculada a processos. "
-                "Altere os processos ou desative a filial."
+                "Não é possível excluir unidade vinculada a processos. "
+                "Altere os processos ou desative a unidade."
             )
         if self.count_setor_vinculos(codigo) > 0:
             raise ValueError(
-                "Não é possível excluir filial vinculada a setores. "
-                "Remova os vínculos ou desative a filial."
+                "Não é possível excluir unidade vinculada a setores. "
+                "Remova os vínculos ou desative a unidade."
             )
 
         row = self.execute_returning_one(
@@ -194,5 +194,5 @@ class FilialRepository(PluginBaseRepository):
             (codigo, nome_filial.strip(), status_filial),
         )
         if row is None:
-            raise RuntimeError(f"Falha ao upsert filial {codigo}.")
+            raise RuntimeError(f"Falha ao upsert unidade {codigo}.")
         return row

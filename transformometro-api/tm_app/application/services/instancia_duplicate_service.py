@@ -62,7 +62,7 @@ class InstanciaDuplicateService:
             and target_setor.lower() in source_setores
         ):
             raise ValueError(
-                "Destino igual à instância origem. Informe outra filial ou setor."
+                "Destino igual à instância origem. Informe outra unidade ou setor."
             )
 
         processo_id = str(source["processo_id"])
@@ -83,7 +83,7 @@ class InstanciaDuplicateService:
             target_id = str(target["instancia_id"])
             if target_id == str(source["instancia_id"]):
                 raise ValueError(
-                    "Destino igual à instância origem. Informe outra filial ou setor."
+                    "Destino igual à instância origem. Informe outra unidade ou setor."
                 )
 
             if rev_repo.list_by_instancia(target_id):

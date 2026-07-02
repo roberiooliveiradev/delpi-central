@@ -98,7 +98,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     e.preventDefault();
     setError(null);
     if (form.filiais.length === 0) {
-      setError("Selecione ao menos uma filial para o setor.");
+      setError("Selecione ao menos uma unidade para o setor.");
       return;
     }
     const payload = payloadFromSetorForm(form, Boolean(editingId));
@@ -161,7 +161,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     },
     {
       key: "filiais",
-      header: "Filiais",
+      header: "Unidades",
       render: (row) =>
         (row.filiais ?? [])
           .map((filialId) => `${filialId} — ${filialLabels.get(filialId) ?? filialId}`)
@@ -212,7 +212,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       <TransformometroShell>
         <LoadingActivityCard
           title="Carregando setores"
-          description="Catálogo de setores vinculados às filiais."
+          description="Catálogo de setores vinculados às unidades."
           progressPercent={catalogLoadingProgress}
         />
       </TransformometroShell>
@@ -223,7 +223,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
     <TransformometroShell>
       <PageHeader
         title="Setores"
-        subtitle="Cadastro de setores e vínculo com filiais — usado nos processos"
+        subtitle="Cadastro de setores e vínculo com unidades — usado nos processos"
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.setores}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
@@ -244,13 +244,13 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <p className="ds-hint">
-        Setores ativos e vinculados à filial aparecem no formulário de{" "}
+        Setores ativos e vinculados à unidade aparecem no formulário de{" "}
         <button
           type="button"
           className="ds-ghost-btn"
           onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.filiais)}
         >
-          Filiais
+          Unidades
         </button>
         {" "}e{" "}
         <button
@@ -290,7 +290,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
         filters={
           <div className="ds-filters-row">
             <div className="ds-filter-box">
-              <label htmlFor="tm-setor-list-filial">Filial</label>
+              <label htmlFor="tm-setor-list-filial">Unidade</label>
               <select
                 id="tm-setor-list-filial"
                 value={filialFilter}
@@ -318,7 +318,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate }: Props) {
           <p className="ds-hint">
             {items.length} registro(s)
             {filialFilter
-              ? ` · filtrados para filial ${filialFilter}`
+              ? ` · filtrados para unidade ${filialFilter}`
               : ""}
           </p>
         }

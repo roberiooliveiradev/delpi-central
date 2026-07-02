@@ -12,7 +12,7 @@ EXPORT_COLUMNS: tuple[tuple[str, str], ...] = (
     ("nome_processo", "Nome processo"),
     ("familia_processo", "Família"),
     ("agrupador_ferramenta", "Agrupador ferramenta"),
-    ("filial_id", "Filial"),
+    ("filial_id", "Unidade"),
     ("setor_id", "Setor"),
     ("competencia", "Competência"),
     ("cenario_tipo", "Cenário"),

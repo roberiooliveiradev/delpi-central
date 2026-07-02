@@ -21,9 +21,9 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 };
 
 const ENTITY_LABELS: Record<string, string> = {
-  filiais: "Filiais",
+  filiais: "Unidades",
   setores: "Setores",
-  setor_filiais: "Setor × filial",
+  setor_filiais: "Setor × unidade",
   processos: "Processos",
   processo_instancias: "Instâncias de processo",
   revisoes: "Revisões",
@@ -269,10 +269,10 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                     <span className="tm-data-transfer__format-title">{FORMAT_LABELS[value]}</span>
                     <span className="tm-data-transfer__format-desc">
                       {value === "auto"
-                        ? "A API identifica se o arquivo é legado (processos com filial/setor) ou Playbook 18."
+                        ? "A API identifica se o arquivo é legado (processos com unidade/setor) ou Playbook 18."
                         : value === "legacy"
-                          ? "JSON antigo sem instâncias; filiais e revisões por instância são geradas na importação."
-                          : "Backup exportado após Playbook 18, com filiais, instâncias e revisoes.instancia_id."}
+                          ? "JSON antigo sem instâncias; unidades e revisões por instância são geradas na importação."
+                          : "Backup exportado após Playbook 18, com unidades, instâncias e revisoes.instancia_id."}
                     </span>
                   </label>
                 ))}

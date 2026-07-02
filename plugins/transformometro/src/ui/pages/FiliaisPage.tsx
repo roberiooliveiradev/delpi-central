@@ -58,7 +58,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       setItems(list.items);
       setOptions(opts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar filiais");
+      setError(err instanceof Error ? err.message : "Erro ao carregar unidades");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -116,14 +116,14 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       cancelForm();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar filial");
+      setError(err instanceof Error ? err.message : "Erro ao salvar unidade");
     }
   }
 
   async function handleDelete(filial: Filial) {
     if (
       !window.confirm(
-        `Excluir filial ${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}?`
+        `Excluir unidade ${filial.codigo_filial ?? filial.filial_id} — ${filial.nome_filial}?`
       )
     ) {
       return;
@@ -134,7 +134,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       if (editingId === filial.filial_id) cancelForm();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir filial");
+      setError(err instanceof Error ? err.message : "Erro ao excluir unidade");
     }
   }
 
@@ -148,7 +148,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     },
     {
       key: "nome_filial",
-      header: "Filial",
+      header: "Unidade",
       sortable: true,
       className: "ds-table__col--wide",
       sortValue: (row) => row.nome_filial,
@@ -198,7 +198,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
     return (
       <TransformometroShell>
         <LoadingActivityCard
-          title="Carregando filiais"
+          title="Carregando unidades"
           description="Catálogo de unidades operacionais."
           progressPercent={catalogLoadingProgress}
         />
@@ -209,8 +209,8 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
   return (
     <TransformometroShell>
       <PageHeader
-        title="Filiais"
-        subtitle="Cadastro de filiais — base para instâncias, setores e escopo do dashboard"
+        title="Unidades"
+        subtitle="Cadastro de unidades — base para instâncias, setores e escopo do dashboard"
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.filiais}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
@@ -218,7 +218,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
         actions={
           <button type="button" className="ds-primary-btn" onClick={startCreate}>
             <Plus size={16} />
-            Nova filial
+            Nova unidade
           </button>
         }
       />
@@ -231,7 +231,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <p className="ds-hint">
-        Filiais ativas aparecem nos formulários de{" "}
+        Unidades ativas aparecem nos formulários de{" "}
         <button
           type="button"
           className="ds-ghost-btn"
@@ -252,7 +252,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
 
       {showForm && options ? (
         <section ref={formSectionRef} className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">{editingId ? "Editar filial" : "Nova filial"}</h2>
+          <h2 className="ds-section-title">{editingId ? "Editar unidade" : "Nova unidade"}</h2>
           <form onSubmit={handleSubmit}>
             <FilialFormFields
               form={form}
@@ -262,7 +262,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
             />
             <div className="ds-cadastro-form__actions">
               <button type="submit" className="ds-primary-btn">
-                {editingId ? "Salvar alterações" : "Cadastrar filial"}
+                {editingId ? "Salvar alterações" : "Cadastrar unidade"}
               </button>
               <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
                 Cancelar
@@ -273,7 +273,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
       ) : null}
 
       <DataTableSection
-        title="Catálogo de filiais"
+        title="Catálogo de unidades"
         filters={
           <label className="ds-check-label">
             <input
@@ -281,7 +281,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
               checked={includeInactive}
               onChange={(e) => setIncludeInactive(e.target.checked)}
             />
-            <span>Incluir filiais inativas</span>
+            <span>Incluir unidades inativas</span>
           </label>
         }
         columns={columns}
@@ -291,7 +291,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate }: Props) {
         refreshing={refreshing}
         hideSearch
         pageSize={15}
-        emptyMessage="Nenhuma filial cadastrada. Use Nova filial para incluir."
+        emptyMessage="Nenhuma unidade cadastrada. Use Nova unidade para incluir."
         footer={<p className="ds-hint">{items.length} registro(s)</p>}
       />
     </TransformometroShell>

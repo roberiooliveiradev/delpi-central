@@ -103,7 +103,7 @@ const defaultFilters: Filters = {
 
 const VIEW_OPTIONS: { value: DashboardViewMode; label: string }[] = [
   { value: "consolidated", label: "Consolidado" },
-  { value: "filial", label: "Filial" },
+  { value: "filial", label: "Unidade" },
   { value: "department", label: "Departamento" },
 ];
 
@@ -565,7 +565,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             onChange={(value) => setFilters((prev) => ({ ...prev, dataFinal: value }))}
           />
           <label className="ds-filter-box">
-            Filial
+            Unidade
             <select
               value={filters.filialId}
               disabled={viewMode === "consolidated"}

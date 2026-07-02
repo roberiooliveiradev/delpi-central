@@ -95,6 +95,15 @@ class InstanciaUpdateBody(BaseModel):
     rotulo_instancia: Optional[str] = Field(default=None, max_length=255)
     status_instancia: str = Field(default="ativo", max_length=32)
     setor_ids: list[str] = Field(min_length=1)
+    filial_id: Optional[str] = Field(
+        default=None,
+        max_length=16,
+        description="Nova filial da instância (ignorada quando todas_filiais_ativas=true).",
+    )
+    todas_filiais_ativas: Optional[bool] = Field(
+        default=None,
+        description="Alterna a instância entre filial específica e consolidada (todas as filiais).",
+    )
 
     @model_validator(mode="after")
     def _normalize_setores(self) -> "InstanciaUpdateBody":

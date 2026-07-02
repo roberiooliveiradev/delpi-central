@@ -25,7 +25,7 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
         />
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-filial-nome">Nome da filial *</label>
+        <label htmlFor="tm-filial-nome">Nome da unidade *</label>
         <input
           id="tm-filial-nome"
           required

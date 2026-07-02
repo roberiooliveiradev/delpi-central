@@ -1,4 +1,4 @@
-FILIAIS = {"01": "Matriz", "02": "Filial"}
+FILIAIS = {"01": "Santa Catarina", "02": "Espírito Santo"}
 
 DEFAULT_SETORES = (
     "engenharia",

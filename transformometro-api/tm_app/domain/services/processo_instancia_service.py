@@ -13,5 +13,5 @@ def validate_instancia_par(
 ) -> None:
     if not setor_ativo_na_filial:
         raise ProcessoInstanciaDomainError(
-            f"setor_id '{setor_codigo}' não está vinculado à filial {filial_codigo}"
+            f"setor_id '{setor_codigo}' não está vinculado à unidade {filial_codigo}"
         )

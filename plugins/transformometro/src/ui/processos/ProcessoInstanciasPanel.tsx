@@ -19,6 +19,8 @@ type Props = {
   options: OptionsData;
   busy?: boolean;
   initialShowForm?: boolean;
+  /** IDs de instâncias que já possuem revisões (bloqueiam a troca de filial). */
+  instanciasComRevisao?: string[];
   onSelect: (instanciaId: string) => void;
   onCreate: (payload: CreatePayload) => Promise<void>;
   onUpdate: (
@@ -27,6 +29,8 @@ type Props = {
       setor_ids: string[];
       rotulo_instancia?: string;
       status_instancia?: string;
+      filial_id?: string;
+      todas_filiais_ativas?: boolean;
     }
   ) => Promise<void>;
   onDelete: (instanciaId: string) => Promise<void>;
@@ -92,6 +96,7 @@ export function ProcessoInstanciasPanel({
   options,
   busy = false,
   initialShowForm = false,
+  instanciasComRevisao = [],
   onSelect,
   onCreate,
   onUpdate,
@@ -123,6 +128,10 @@ export function ProcessoInstanciasPanel({
 
   const isCreate = !editingInstanciaId && !duplicateSourceId;
 
+  const editingHasRevisoes = editingInstanciaId
+    ? instanciasComRevisao.some((id) => id === editingInstanciaId)
+    : false;
+
   useEffect(() => {
     if (initialShowForm) {
       setShowForm(true);
@@ -145,17 +154,8 @@ export function ProcessoInstanciasPanel({
     return map;
   }, [editingInstanciaId, instancias]);
 
-  const editingFilialKey = editingInstancia ? instanciaFilialKey(editingInstancia) : "";
-
-  // Setores disponíveis conforme o modo (criar multi-filial, editar ou replicar).
+  // Setores disponíveis conforme o modo (criar/editar multi-filial ou replicar).
   const setoresDisponiveis = useMemo(() => {
-    if (editingInstancia) {
-      if (editingInstancia.todas_filiais_ativas) return options.setores;
-      return filterSetoresByFilial(
-        options.setores,
-        editingInstancia.codigo_filial ?? editingInstancia.filial_id ?? ""
-      );
-    }
     if (duplicateSourceId) {
       return filterSetoresByFilial(options.setores, filialId);
     }
@@ -173,16 +173,12 @@ export function ProcessoInstanciasPanel({
       }
     }
     return out;
-  }, [editingInstancia, duplicateSourceId, filialId, todasFiliais, filialIds, options.setores]);
+  }, [duplicateSourceId, filialId, todasFiliais, filialIds, options.setores]);
 
-  // Payloads de criação (um por filial selecionada); filtra setores válidos/livres por filial.
-  const createPayloads = useMemo<CreatePayload[]>(() => {
-    if (!isCreate) return [];
+  // Payloads por filial selecionada (novo ou editar); filtra setores válidos/livres por filial.
+  const filialPayloads = useMemo<CreatePayload[]>(() => {
+    if (duplicateSourceId || todasFiliais) return [];
     const rotuloValue = rotulo.trim() || undefined;
-    if (todasFiliais) {
-      if (setorIds.length === 0) return [];
-      return [{ todas_filiais_ativas: true, setor_ids: setorIds, rotulo_instancia: rotuloValue }];
-    }
     const payloads: CreatePayload[] = [];
     for (const fid of filialIds) {
       const filialKey = fid.trim().toLowerCase();
@@ -204,7 +200,7 @@ export function ProcessoInstanciasPanel({
     }
     return payloads;
   }, [
-    isCreate,
+    duplicateSourceId,
     rotulo,
     todasFiliais,
     setorIds,
@@ -213,12 +209,15 @@ export function ProcessoInstanciasPanel({
     usedSetorKeysByFilial,
   ]);
 
+  // Quantas instâncias o submit produz no modo criar (todas = 1 consolidada).
+  const createCount = todasFiliais ? (setorIds.length > 0 ? 1 : 0) : filialPayloads.length;
+
   // Filiais selecionadas que ficariam sem nenhum setor válido (aviso ao usuário).
   const skippedFiliais = useMemo(() => {
-    if (!isCreate || todasFiliais) return [] as string[];
-    const withPayload = new Set(createPayloads.map((p) => (p.filial_id ?? "").toLowerCase()));
+    if (duplicateSourceId || todasFiliais) return [] as string[];
+    const withPayload = new Set(filialPayloads.map((p) => (p.filial_id ?? "").toLowerCase()));
     return filialIds.filter((fid) => !withPayload.has(fid.toLowerCase()));
-  }, [isCreate, todasFiliais, createPayloads, filialIds]);
+  }, [duplicateSourceId, todasFiliais, filialPayloads, filialIds]);
 
   function resetForm() {
     setShowForm(false);
@@ -242,7 +241,9 @@ export function ProcessoInstanciasPanel({
     setDuplicateSourceId(null);
     setEditingInstanciaId(row.instancia_id);
     setTodasFiliais(Boolean(row.todas_filiais_ativas));
-    setFilialId(row.codigo_filial ?? row.filial_id ?? "01");
+    const filialAtual = row.codigo_filial ?? row.filial_id ?? "01";
+    setFilialId(filialAtual);
+    setFilialIds(row.todas_filiais_ativas ? [] : [filialAtual]);
     setSetorIds(instanciaSetorIdsForForm(row, options.setores));
     setRotulo(row.rotulo_instancia ?? "");
     setStatusInstancia(row.status_instancia ?? "ativo");
@@ -285,11 +286,6 @@ export function ProcessoInstanciasPanel({
   function setorState(setorIdValue: string): { checked: boolean; disabled: boolean; used: boolean } {
     const key = setorIdValue.toLowerCase();
     const checked = setorIds.some((id) => id.toLowerCase() === key);
-    if (editingInstanciaId) {
-      const usedByOther = (usedSetorKeysByFilial.get(editingFilialKey) ?? new Set()).has(key);
-      const disabled = usedByOther || (checked && setorIds.length <= 1);
-      return { checked, disabled, used: usedByOther };
-    }
     if (todasFiliais) {
       return { checked, disabled: false, used: false };
     }
@@ -318,7 +314,7 @@ export function ProcessoInstanciasPanel({
   async function handleDelete(row: ProcessoInstancia) {
     if (
       !window.confirm(
-        `Excluir instância ${row.todas_filiais_ativas ? "todas filiais" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`
+        `Excluir instância ${row.todas_filiais_ativas ? "todas as unidades" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`
       )
     ) {
       return;
@@ -332,16 +328,61 @@ export function ProcessoInstanciasPanel({
     }
   }
 
+  // Filial que a instância editada assume: a atual (se ainda marcada e com setor válido)
+  // ou a primeira filial marcada com setores válidos.
+  function resolveKeepFilial(): string | undefined {
+    const currentKey = editingInstancia ? instanciaFilialKey(editingInstancia) : "";
+    const currentStillValid = filialPayloads.find(
+      (p) => (p.filial_id ?? "").toLowerCase() === currentKey
+    );
+    return (currentStillValid ?? filialPayloads[0])?.filial_id;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Aviso leve quando a mudança de escopo impacta revisões existentes (não bloqueia).
+    if (editingInstanciaId && editingHasRevisoes && editingInstancia) {
+      const escopoAtual = instanciaFilialKey(editingInstancia);
+      const escopoNovo = todasFiliais
+        ? "__todas__"
+        : (resolveKeepFilial() ?? "").toLowerCase();
+      if (escopoNovo !== escopoAtual) {
+        const confirmed = window.confirm(
+          "Esta instância possui revisões. Alterar o escopo (unidade) reatribui os números ao novo destino e recalcula o dashboard. Deseja continuar?"
+        );
+        if (!confirmed) return;
+      }
+    }
     setSaving(true);
     try {
       if (editingInstanciaId) {
-        await onUpdate(editingInstanciaId, {
-          setor_ids: setorIds,
-          rotulo_instancia: rotulo.trim() || undefined,
-          status_instancia: statusInstancia,
-        });
+        if (todasFiliais) {
+          await onUpdate(editingInstanciaId, {
+            setor_ids: setorIds,
+            rotulo_instancia: rotulo.trim() || undefined,
+            status_instancia: statusInstancia,
+            todas_filiais_ativas: true,
+          });
+        } else {
+          const keep = resolveKeepFilial();
+          const keepPayload = filialPayloads.find(
+            (p) => (p.filial_id ?? "").toLowerCase() === (keep ?? "").toLowerCase()
+          );
+          if (keep && keepPayload) {
+            await onUpdate(editingInstanciaId, {
+              setor_ids: keepPayload.setor_ids,
+              rotulo_instancia: rotulo.trim() || undefined,
+              status_instancia: statusInstancia,
+              todas_filiais_ativas: false,
+              filial_id: keep,
+            });
+            // Filiais extras marcadas viram novas instâncias (fan-out, igual ao "novo").
+            for (const payload of filialPayloads) {
+              if ((payload.filial_id ?? "").toLowerCase() === keep.toLowerCase()) continue;
+              await onCreate(payload);
+            }
+          }
+        }
       } else if (duplicateSourceId) {
         await onDuplicate({
           origemInstanciaId: duplicateSourceId,
@@ -349,8 +390,16 @@ export function ProcessoInstanciasPanel({
           setor_id: setorId,
           rotulo_instancia: rotulo.trim() || undefined,
         });
+      } else if (todasFiliais) {
+        if (setorIds.length > 0) {
+          await onCreate({
+            todas_filiais_ativas: true,
+            setor_ids: setorIds,
+            rotulo_instancia: rotulo.trim() || undefined,
+          });
+        }
       } else {
-        for (const payload of createPayloads) {
+        for (const payload of filialPayloads) {
           await onCreate(payload);
         }
       }
@@ -364,10 +413,10 @@ export function ProcessoInstanciasPanel({
     () => [
       {
         key: "filial",
-        header: "Filial",
+        header: "Unidade",
         render: (row) =>
           row.todas_filiais_ativas
-            ? "Todas as filiais ativas"
+            ? "Todas as unidades ativas"
             : `${row.codigo_filial ?? row.filial_id} — ${row.nome_filial ?? ""}`.trim(),
       },
       {
@@ -427,21 +476,28 @@ export function ProcessoInstanciasPanel({
       ? "Replicar instância"
       : "Nova instância operacional";
 
+  // Instâncias extras (novas) que uma edição multi-filial criaria além da editada.
+  const editExtraCount = editingInstanciaId && !todasFiliais ? Math.max(0, filialPayloads.length - 1) : 0;
+
   const submitLabel = saving
     ? "Salvando…"
     : editingInstanciaId
-      ? "Salvar alterações"
+      ? editExtraCount > 0
+        ? `Salvar (+${editExtraCount} nova${editExtraCount > 1 ? "s" : ""})`
+        : "Salvar alterações"
       : duplicateSourceId
         ? "Replicar timeline"
-        : createPayloads.length > 1
-          ? `Criar ${createPayloads.length} instâncias`
+        : createCount > 1
+          ? `Criar ${createCount} instâncias`
           : "Criar instância";
 
   const canSubmit = editingInstanciaId
-    ? setorIds.length > 0
+    ? todasFiliais
+      ? setorIds.length > 0
+      : filialPayloads.length > 0
     : duplicateSourceId
       ? Boolean(filialId && setorId)
-      : createPayloads.length > 0;
+      : createCount > 0;
 
   const setoresGrid = (
     <div className="ds-filter-box tm-inst-form__field--full">
@@ -449,8 +505,8 @@ export function ProcessoInstanciasPanel({
       <div className="tm-check-grid" role="group" aria-label="Setores da instância">
         {setoresDisponiveis.length === 0 ? (
           <p className="ds-hint">
-            {isCreate && !todasFiliais && filialIds.length === 0
-              ? "Selecione ao menos uma filial para listar os setores."
+            {!duplicateSourceId && !todasFiliais && filialIds.length === 0
+              ? "Selecione ao menos uma unidade para listar os setores."
               : "Nenhum setor disponível para esta seleção."}
           </p>
         ) : (
@@ -496,7 +552,7 @@ export function ProcessoInstanciasPanel({
           <div>
             <h2 className="ds-section-title">Instâncias operacionais</h2>
             <p className="ds-hint">
-              Cada instância pertence a uma filial (ou a todas as ativas) e amarra um ou mais
+              Cada instância pertence a uma unidade (ou a todas as ativas) e amarra um ou mais
               setores. As revisões ficam na instância.
             </p>
           </div>
@@ -521,19 +577,20 @@ export function ProcessoInstanciasPanel({
           <h2 className="ds-section-title">{formTitle}</h2>
           {isCreate ? (
             <p className="ds-hint">
-              Marque uma ou mais filiais e os setores vinculados. Criamos uma instância por filial;
-              setores já usados em uma filial aparecem desabilitados.
+              Marque uma ou mais unidades e os setores vinculados. Criamos uma instância por unidade;
+              setores já usados em uma unidade aparecem desabilitados.
             </p>
           ) : null}
           {editingInstanciaId ? (
             <p className="ds-hint">
-              A filial não pode ser alterada quando já existem revisões. Ajuste setores, rótulo e
-              status.
+              {editingHasRevisoes
+                ? "Edição liberada. Trocar a unidade reatribui as revisões ao novo destino e recalcula o dashboard (pediremos confirmação). Unidades extras marcadas criam novas instâncias."
+                : "Edite unidades, setores, rótulo e status. A instância assume a unidade marcada; unidades extras criam novas instâncias."}
             </p>
           ) : null}
           {duplicateSourceId ? (
             <p className="ds-hint">
-              Replica a timeline (revisões, medições, investimentos e vínculos) para outra filial e
+              Replica a timeline (revisões, medições, investimentos e vínculos) para outra unidade e
               setor.
             </p>
           ) : null}
@@ -555,14 +612,14 @@ export function ProcessoInstanciasPanel({
                           }
                         }}
                       />
-                      <span>Todas as filiais ativas (instância única consolidada)</span>
+                      <span>Todas as unidades ativas (instância única consolidada)</span>
                     </label>
                   </div>
 
                   {!todasFiliais ? (
                     <div className="ds-filter-box tm-inst-form__field--full">
-                      <span className="ds-field-label">Filiais *</span>
-                      <div className="tm-check-grid" role="group" aria-label="Filiais da instância">
+                      <span className="ds-field-label">Unidades *</span>
+                      <div className="tm-check-grid" role="group" aria-label="Unidades da instância">
                         {options.filiais.map((filial) => {
                           const checked = filialIds.some(
                             (id) => id.toLowerCase() === filial.id.toLowerCase()
@@ -588,7 +645,7 @@ export function ProcessoInstanciasPanel({
 
                   {skippedFiliais.length > 0 ? (
                     <p className="ds-hint">
-                      Sem setor livre para: {skippedFiliais.join(", ")}. Essas filiais serão
+                      Sem setor livre para: {skippedFiliais.join(", ")}. Essas unidades serão
                       ignoradas.
                     </p>
                   ) : null}
@@ -599,20 +656,52 @@ export function ProcessoInstanciasPanel({
 
               {editingInstanciaId ? (
                 <>
-                  <div className="tm-inst-form__row">
-                    <div className="ds-filter-box">
-                      <label htmlFor="tm-inst-filial">Filial *</label>
-                      <select id="tm-inst-filial" value={filialId} disabled>
-                        {options.filiais.map((filial) => (
-                          <option key={filial.id} value={filial.id}>
-                            {filial.id} — {filial.label}
-                          </option>
-                        ))}
-                        {editingInstancia?.todas_filiais_ativas ? (
-                          <option value={filialId}>Todas as filiais ativas</option>
-                        ) : null}
-                      </select>
+                  <div className="ds-filter-box ds-filter-box--checkbox">
+                    <label className="ds-check-label">
+                      <input
+                        type="checkbox"
+                        checked={todasFiliais}
+                        onChange={(e) => {
+                          const next = e.target.checked;
+                          setTodasFiliais(next);
+                          if (!next) {
+                            const fallback =
+                              filialIds[0] || filialId || options.filiais[0]?.id || "01";
+                            setFilialIds([fallback]);
+                            setSetorIds(defaultSetorIds(options.setores, fallback, instancias));
+                          }
+                        }}
+                      />
+                      <span>Todas as unidades ativas (instância consolidada)</span>
+                    </label>
+                  </div>
+
+                  {!todasFiliais ? (
+                    <div className="ds-filter-box tm-inst-form__field--full">
+                      <span className="ds-field-label">Unidades *</span>
+                      <div className="tm-check-grid" role="group" aria-label="Unidades da instância">
+                        {options.filiais.map((filial) => {
+                          const checked = filialIds.some(
+                            (id) => id.toLowerCase() === filial.id.toLowerCase()
+                          );
+                          return (
+                            <label key={filial.id} className="tm-check-option">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleFilial(filial.id)}
+                              />
+                              <span>
+                                {filial.id} — {filial.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
+                  ) : null}
+
+                  <div className="tm-inst-form__row">
                     <div className="ds-filter-box">
                       <label htmlFor="tm-inst-status">Status *</label>
                       <select
@@ -625,7 +714,16 @@ export function ProcessoInstanciasPanel({
                       </select>
                     </div>
                   </div>
+
                   {setoresGrid}
+
+                  {skippedFiliais.length > 0 ? (
+                    <p className="ds-hint">
+                      Sem setor livre para: {skippedFiliais.join(", ")}. Essas unidades serão
+                      ignoradas.
+                    </p>
+                  ) : null}
+
                   {rotuloField}
                 </>
               ) : null}
@@ -634,7 +732,7 @@ export function ProcessoInstanciasPanel({
                 <>
                   <div className="tm-inst-form__row">
                     <div className="ds-filter-box">
-                      <label htmlFor="tm-inst-filial-dup">Filial destino *</label>
+                      <label htmlFor="tm-inst-filial-dup">Unidade destino *</label>
                       <select
                         id="tm-inst-filial-dup"
                         value={filialId}

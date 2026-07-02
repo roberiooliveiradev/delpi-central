@@ -31,7 +31,7 @@ export function PrintReportSummary({
           </dd>
         </div>
         <div>
-          <dt>Filial</dt>
+          <dt>Unidade</dt>
           <dd>{branchLabel}</dd>
         </div>
         <div>

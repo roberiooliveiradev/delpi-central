@@ -148,6 +148,14 @@ export function ProcessoDetailPage({
     return revisoes.filter((row) => row.instancia_id === selectedInstanciaId);
   }, [revisoes, selectedInstanciaId]);
 
+  const instanciasComRevisao = useMemo(
+    () =>
+      Array.from(
+        new Set(revisoes.map((row) => row.instancia_id).filter((id): id is string => Boolean(id)))
+      ),
+    [revisoes]
+  );
+
   useEffect(() => {
     if (!legacyRevisaoPath || !revisaoId || revisoes.length === 0) return;
     const revisao = revisoes.find((row) => row.revisao_id === revisaoId);
@@ -601,6 +609,7 @@ export function ProcessoDetailPage({
           options={options}
           busy={refreshing}
           initialShowForm={openInstanciaForm}
+          instanciasComRevisao={instanciasComRevisao}
           onSelect={navigateInstancia}
           onCreate={async (payload) => {
             await createProcessoInstancia(processoId, payload, getAccessToken);

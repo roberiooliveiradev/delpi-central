@@ -172,7 +172,7 @@ def _validate_processo_body(body: ProcessoCreateBody):
     assert_filial_ativa(body.filial_id, _active_filial_codigos())
     if not SetorRepository().is_active_for_filial(body.setor_id, body.filial_id):
         raise ValueError(
-            f"setor_id '{body.setor_id}' não está vinculado à filial {body.filial_id}"
+            f"setor_id '{body.setor_id}' não está vinculado à unidade {body.filial_id}"
         )
 
 
@@ -370,20 +370,46 @@ def get_instancia(instancia_id: str, request: Request):
 def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Request):
     if err := check_instancia_view_access(request, instancia_id):
         return err
-    existing = ProcessoInstanciaRepository().get(instancia_id)
+    repo = ProcessoInstanciaRepository()
+    existing = repo.get(instancia_id)
     if not existing:
         return fail("Instância não encontrada.", 404)
-    if not existing.get("todas_filiais_ativas"):
-        filial_codigo = str(existing.get("codigo_filial") or existing.get("filial_id") or "")
-        if err := check_manage_filial_access(request, filial_codigo):
+    filial_atual = str(existing.get("codigo_filial") or existing.get("filial_id") or "").strip()
+    existing_todas = bool(existing.get("todas_filiais_ativas"))
+    if not existing_todas:
+        if err := check_manage_filial_access(request, filial_atual):
             return err
+
+    # Escopo alvo: consolidada (todas as filiais) ou uma filial específica.
+    target_todas = body.todas_filiais_ativas if body.todas_filiais_ativas is not None else existing_todas
+    nova_filial = (body.filial_id or "").strip() or None
+    if target_todas:
+        target_filial = None
+    else:
+        target_filial = nova_filial or (filial_atual or None)
+        if not target_filial:
+            return fail("Informe a unidade da instância (ou marque todas as unidades ativas).", 400)
+
+    scope_changed = (target_todas != existing_todas) or (
+        not target_todas and (target_filial or "").lower() != filial_atual.lower()
+    )
+    if scope_changed and not target_todas:
+        if err := check_manage_filial_access(request, target_filial):
+            return err
+        try:
+            assert_filial_ativa(target_filial, _active_filial_codigos())
+        except ValueError as exc:
+            return fail(str(exc), 400)
     try:
-        row = ProcessoInstanciaRepository().update(
+        row = repo.update(
             instancia_id,
             {
                 "setor_ids": body.setor_ids,
                 "rotulo_instancia": body.rotulo_instancia,
                 "status_instancia": body.status_instancia,
+                "todas_filiais_ativas": target_todas,
+                "filial_id": target_filial,
+                "scope_changed": scope_changed,
             },
         )
     except ProcessoInstanciaDomainError as exc:
@@ -393,6 +419,9 @@ def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Requ
         return fail(format_api_error(exc), 500)
 
     _audit(request, "processo_instancia", instancia_id, "update", body.model_dump())
+    if scope_changed:
+        # Cache do dashboard é denormalizado por filial: recalcula ao mudar o escopo.
+        _recalc_after_processo(str(existing["processo_id"]))
     return ok(row_to_json(row), "Instância operacional atualizada.")
 
 
@@ -709,7 +738,7 @@ def get_filial(filial_id: str, request: Request):
         return err
     row = FilialRepository().get(filial_id)
     if not row:
-        return fail("Filial não encontrada.", 404)
+        return fail("Unidade não encontrada.", 404)
     return ok(row_to_json(row))
 
 
@@ -728,7 +757,7 @@ def create_filial(body: FilialBody, request: Request):
 
     fid = str(row["filial_id"])
     _audit(request, "filial", fid, "create", body.model_dump())
-    return ok(row_to_json(row), "Filial criada.", 201)
+    return ok(row_to_json(row), "Unidade criada.", 201)
 
 
 @router.put("/filiais/{filial_id}")
@@ -745,10 +774,10 @@ def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
         return fail(format_api_error(exc), 500)
 
     if not row:
-        return fail("Filial não encontrada.", 404)
+        return fail("Unidade não encontrada.", 404)
 
     _audit(request, "filial", str(row["filial_id"]), "update", body.model_dump())
-    return ok(row_to_json(row), "Filial atualizada.")
+    return ok(row_to_json(row), "Unidade atualizada.")
 
 
 @router.delete("/filiais/{filial_id}")
@@ -757,15 +786,15 @@ def delete_filial(filial_id: str, request: Request):
         return err
     existing = FilialRepository().get(filial_id)
     if not existing:
-        return fail("Filial não encontrada.", 404)
+        return fail("Unidade não encontrada.", 404)
     try:
         if not FilialRepository().soft_delete(filial_id):
-            return fail("Filial não encontrada.", 404)
+            return fail("Unidade não encontrada.", 404)
     except ValueError as exc:
         return fail(str(exc), 400)
 
     _audit(request, "filial", str(existing["filial_id"]), "delete", {})
-    return ok(message="Filial excluída.")
+    return ok(message="Unidade excluída.")
 
 
 # --- Setores ---

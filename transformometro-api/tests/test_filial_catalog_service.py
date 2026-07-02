@@ -20,7 +20,7 @@ def test_normalize_codigo_filial_rejects_invalid():
 
 
 def test_validate_codigos_filiais_requires_at_least_one():
-    with pytest.raises(ValueError, match="Informe ao menos uma filial"):
+    with pytest.raises(ValueError, match="Informe ao menos uma unidade"):
         validate_codigos_filiais([], {"01"})
 
 

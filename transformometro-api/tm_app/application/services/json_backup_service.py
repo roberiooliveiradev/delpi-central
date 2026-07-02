@@ -480,7 +480,7 @@ class JsonBackupService:
             filial_row = {
                 "filial_id": _legacy_filial_id(codigo),
                 "codigo_filial": codigo,
-                "nome_filial": labels.get(codigo, f"Filial {codigo}"),
+                "nome_filial": labels.get(codigo, f"Unidade {codigo}"),
                 "status_filial": "ativo",
                 "deletado": False,
             }

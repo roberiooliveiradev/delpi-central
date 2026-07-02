@@ -178,7 +178,7 @@ export function ProcessosPage({
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      { key: "filial", header: "Filial", render: (row) => row.filial_id ?? "—", sortable: true },
+      { key: "filial", header: "Unidade", render: (row) => row.filial_id ?? "—", sortable: true },
       {
         key: "setor",
         header: "Setor",
@@ -267,7 +267,7 @@ export function ProcessosPage({
           </h2>
           {!editingId ? (
             <p className="ds-hint">
-              Cadastre só o mestre aqui. Filial e setor entram na primeira instância operacional
+              Cadastre só o mestre aqui. Unidade e setor entram na primeira instância operacional
               na tela seguinte.
             </p>
           ) : null}
@@ -307,7 +307,7 @@ export function ProcessosPage({
               />
             </div>
             <div className="ds-filter-box">
-              <label htmlFor="tm-proc-list-filial">Filial</label>
+              <label htmlFor="tm-proc-list-filial">Unidade</label>
               <select
                 id="tm-proc-list-filial"
                 value={filialId}

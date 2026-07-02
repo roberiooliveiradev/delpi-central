@@ -35,7 +35,7 @@ def resolve_access_scope(request: Request) -> FilialAccessScope:
     return _scope_service.resolve(user)
 
 
-def access_denied(message: str = "Sem permissão para acessar esta filial.") -> JSONResponse:
+def access_denied(message: str = "Sem permissão para acessar esta unidade.") -> JSONResponse:
     return fail(message, 403)
 
 
@@ -92,7 +92,7 @@ def check_view_filial_access(
     scope = resolve_access_scope(request)
     codigo = resolve_filial_codigo(filial_ref)
     if not codigo:
-        return fail("Filial inválida.", 400)
+        return fail("Unidade inválida.", 400)
     if not _scope_service.can_view_filial(scope, codigo):
         return access_denied()
     return None
@@ -106,9 +106,9 @@ def check_manage_filial_access(
     user = getattr(request.state, "user", None)
     codigo = resolve_filial_codigo(filial_ref)
     if not codigo:
-        return fail("Filial inválida.", 400)
+        return fail("Unidade inválida.", 400)
     if not _scope_service.can_manage_filial(scope, codigo, user=user):
-        return access_denied("Sem permissão para gerenciar dados nesta filial.")
+        return access_denied("Sem permissão para gerenciar dados nesta unidade.")
     return None
 
 

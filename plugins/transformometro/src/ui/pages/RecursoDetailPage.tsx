@@ -268,7 +268,7 @@ export function RecursoDetailPage({
               type="search"
               className="ds-table-search__input"
               value={search}
-              placeholder="Código, processo, filial, setor…"
+              placeholder="Código, processo, unidade, setor…"
               onChange={(event) => setSearch(event.target.value)}
               aria-label="Filtrar processos vinculados"
             />
@@ -285,7 +285,7 @@ export function RecursoDetailPage({
               <thead>
                 <tr>
                   <th>Processo</th>
-                  <th>Filial</th>
+                  <th>Unidade</th>
                   <th>Setor</th>
                   <th>Revisão</th>
                   <th>Uso no processo</th>
