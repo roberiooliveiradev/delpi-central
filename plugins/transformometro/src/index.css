@@ -230,22 +230,30 @@
   color: var(--ds-text-muted);
 }
 
-.dashboard-transformometro .tm-inst-setores-grid {
+/* Grade de seleção múltipla (filiais / setores) — checkbox + label sempre inline */
+.dashboard-transformometro .tm-check-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 8px 12px;
-  max-height: 220px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px 16px;
+  max-height: 240px;
   overflow: auto;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-card-radius);
   background: var(--ds-card-bg);
 }
 
-.dashboard-transformometro .tm-inst-setor-option {
+.dashboard-transformometro .tm-check-option {
   display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  padding: 4px 2px;
+  text-align: left;
   font-size: var(--ds-font-sm);
   font-weight: 500;
   color: var(--ds-text);
@@ -253,8 +261,59 @@
   cursor: pointer;
 }
 
-.dashboard-transformometro .tm-inst-setor-option--used {
-  opacity: 0.65;
+.dashboard-transformometro .tm-check-option > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-transformometro .tm-check-option input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  border: 1px solid var(--ds-card-border);
+  border-radius: 4px;
+  background: var(--ds-input-bg);
+  accent-color: var(--ds-accent);
+  cursor: pointer;
+}
+
+.dashboard-transformometro .tm-check-option--used {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-transformometro .tm-check-option input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+.dashboard-transformometro .tm-check-option__tag {
+  flex: 0 0 auto;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+}
+
+/* Layout vertical do formulário de instância (evita campos grudados no grid) */
+.dashboard-transformometro .tm-inst-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-grid-gap);
+}
+
+.dashboard-transformometro .tm-inst-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--ds-grid-gap);
+  align-items: end;
+}
+
+.dashboard-transformometro .tm-inst-form__field--full {
+  grid-column: 1 / -1;
 }
 
 .dashboard-transformometro .ds-totvs-banner {
