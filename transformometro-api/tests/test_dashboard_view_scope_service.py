@@ -42,6 +42,32 @@ def test_view_filial_rejects_setor():
         DashboardViewScopeService().resolve(view="filial", filial_id="01", setor_id="eng")
 
 
+def test_resolve_multiplas_filiais_csv():
+    scope = DashboardViewScopeService().resolve(filial_id="01, 02 ,01")
+    assert scope.view == DashboardView.FILIAL
+    # CSV normalizado (sem duplicados/espacos) e conjunto exposto.
+    assert scope.filial_id == "01,02"
+    assert scope.filial_ids == frozenset({"01", "02"})
+
+
+def test_filter_raw_multiplas_filiais():
+    raw = TransformometroRawData(
+        processos=[
+            {"processo_id": "p1", "filial_id": "01", "setor_id": "eng"},
+            {"processo_id": "p2", "filial_id": "02", "setor_id": "eng"},
+            {"processo_id": "p3", "filial_id": "03", "setor_id": "eng"},
+        ],
+        revisoes=[
+            {"revisao_id": "r1", "processo_id": "p1", "deletado": False},
+            {"revisao_id": "r2", "processo_id": "p2", "deletado": False},
+            {"revisao_id": "r3", "processo_id": "p3", "deletado": False},
+        ],
+    )
+    filtered = DashboardCalculatorService().filter_raw(raw, filial_id="01,02")
+    ids = {p["processo_id"] for p in filtered.processos}
+    assert ids == {"p1", "p2"}
+
+
 def test_filter_raw_preserves_empresa_resource_pool():
     raw = TransformometroRawData(
         processos=[

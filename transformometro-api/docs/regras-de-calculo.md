@@ -72,7 +72,29 @@ horas_economizadas_mes = max(0, minutos_baseline − minutos_melhoria) × fraç�
 
 Cada revisão usa **seu próprio** `volume_mensal` (mesma lógica da `economia_tempo` em R$). Com volumes iguais, equivale a `(Δtempo × volume) / 60`.
 
-**Fração de vigência** (`calc_rules.review_vigencia_fraction_in_month`): só reduz quando a revisão **começa ou termina** naquele mês. Revisão ativa sem data fim usa o **mês civil inteiro** — não `hoje`.
+**Fração de vigência** (`calc_rules.review_vigencia_fraction_in_month`): só reduz quando a revisão **começa ou termina** naquele mês (incluindo o teto de validade de 1 ano). Revisão ativa sem data fim nem aniversário no mês usa o **mês civil inteiro** — não `hoje`.
+
+## Validade da revisão (1 ano)
+
+Implementação: `calc_rules.review_validity_end_date` / `review_effective_end_date`; constante `REVIEW_VALIDITY_MONTHS = 12`.
+
+- A economia de uma revisão comparável (`melhoria`, `automacao`, `correcao`) é contabilizada por **12 meses** a partir do início do cálculo (`review_calculation_start_date` = `max(data_implantacao, data_inicio_vigencia)`).
+- **Aniversário** = `início + 12 meses` (exclusivo). A partir dele a revisão **deixa de contar** (`fração_vigência = 0`), mesmo sem `data_fim_vigencia`.
+- **Fim efetivo** = `min(data_fim_vigencia, aniversário − 1 dia)` — aplicado em `review_vigencia_fraction_in_month` e em `_is_review_valid_for_month`.
+- **Supersessão**: uma **nova revisão implantada** (`revisao_ativa = true`) assume o cálculo pela seleção `revisao_ativa` (mesma lógica de sempre) e tem **seu próprio ciclo de 12 meses**. Se a revisão vigente vence sem sucessora, o processo passa a contribuir com **0** naquele ambiente.
+- Baseline **não** tem validade (não é contabilizado na economia).
+
+### Acompanhamento de vencimento (90 dias)
+
+`DashboardCalculatorService._build_review_vencimento` enriquece cada item da lista de instâncias com:
+
+| Campo | Significado |
+|---|---|
+| `data_vencimento` | Aniversário da revisão que gera economia hoje (dd/mm/aaaa) |
+| `dias_para_vencer` | Dias até o aniversário (negativo se já venceu) |
+| `status_vigencia` | `vigente` · `vencendo` (≤ 90 dias, `REVIEW_EXPIRY_ALERT_DAYS`) · `vencida` |
+
+Exposto em `GET /dashboard/vencimentos?dias=90` (`DashboardLiveService.list_vencimentos`), consumido pelo painel **“Revisões a vencer”** no dashboard do MFE.
 
 ## Recorte do dashboard (prorrata)
 

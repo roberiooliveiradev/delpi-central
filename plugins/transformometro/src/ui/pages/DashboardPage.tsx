@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
+  CalendarClock,
   Clock,
   Coins,
   Lightbulb,
@@ -12,7 +13,8 @@ import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
-import { HelpTooltip } from "../../components/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
+import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KpiCard } from "../../components/KpiCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -37,6 +39,7 @@ import {
   fetchDashboardPorFamilia,
   fetchDashboardProcessos,
   fetchDashboardResumo,
+  fetchDashboardVencimentos,
   fetchOptions,
   recalcularDashboard,
   type DashboardAlertItem,
@@ -44,6 +47,7 @@ import {
   type DashboardFamiliaItem,
   type DashboardProcessoItem,
   type DashboardResumo,
+  type DashboardVencimentoItem,
   type OptionsData,
 } from "../../data/api/transformometroApi";
 import type { ChartGranularity } from "../../types/chart";
@@ -57,11 +61,11 @@ import {
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
 import { useChartSeriesWindow } from "../../hooks/useChartSeriesWindow";
 import { currentMonthFilterRange } from "../../utils/dashboardFilters";
+import { competenceToDateRange, dateRangeToCompetence } from "../../utils/competence";
 import { horasEconomizadasDiaria } from "../../utils/calcRules";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
-import { filterSetoresByFilial } from "../../utils/setores";
 import {
   buildDashboardQueryParams,
   canSelectConsolidatedView,
@@ -89,8 +93,9 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 type Filters = {
   dataInicial: string;
   dataFinal: string;
-  filialId: string;
-  setorId: string;
+  competence: string;
+  filialIds: string[];
+  setorIds: string[];
 };
 
 type DashboardViewMode = "consolidated" | "filial" | "department";
@@ -99,8 +104,9 @@ const monthRange = currentMonthFilterRange();
 const defaultFilters: Filters = {
   dataInicial: monthRange.dataInicial,
   dataFinal: monthRange.dataFinal,
-  filialId: "",
-  setorId: "",
+  competence: dateRangeToCompetence(monthRange.dataInicial, monthRange.dataFinal),
+  filialIds: [],
+  setorIds: [],
 };
 
 const VIEW_OPTIONS: { value: DashboardViewMode; label: string }[] = [
@@ -182,6 +188,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
   const [processos, setProcessos] = useState<DashboardProcessoItem[]>([]);
   const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
+  const [vencendo, setVencendo] = useState<DashboardVencimentoItem[]>([]);
+  const [vencidas, setVencidas] = useState<DashboardVencimentoItem[]>([]);
   const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -201,18 +209,21 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         {
           dataInicial: filters.dataInicial,
           dataFinal: filters.dataFinal,
-          filialId: viewMode === "consolidated" ? "" : filters.filialId,
-          setorId: viewMode === "department" ? filters.setorId : "",
+          filialIds: viewMode === "consolidated" ? [] : filters.filialIds,
+          setorIds: viewMode === "department" ? filters.setorIds : [],
         },
         options?.access_scope
       ),
     [filters, options?.access_scope, viewMode]
   );
   const periodLabel = useMemo(() => formatPeriod(filters), [filters]);
-  const setoresFiltrados = useMemo(
-    () => filterSetoresByFilial(options?.setores ?? [], filters.filialId),
-    [options?.setores, filters.filialId]
-  );
+  const setoresFiltrados = useMemo(() => {
+    const setores = options?.setores ?? [];
+    if (filters.filialIds.length === 0) return setores;
+    return setores.filter((setor) =>
+      setor.filiais.some((filialId) => filters.filialIds.includes(filialId))
+    );
+  }, [options?.setores, filters.filialIds]);
 
   useEffect(() => {
     let cancelled = false;
@@ -222,7 +233,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         setOptions(data);
         const defaultFilial = defaultDashboardFilialFilter(data.access_scope);
         if (defaultFilial) {
-          setFilters((prev) => ({ ...prev, filialId: defaultFilial }));
+          setFilters((prev) => ({ ...prev, filialIds: [defaultFilial] }));
           setViewMode("filial");
         }
       })
@@ -235,31 +246,67 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [getAccessToken]);
 
   useEffect(() => {
-    if (viewMode === "consolidated") {
-      setFilters((prev) => ({ ...prev, setorId: "" }));
-    }
-    if (viewMode === "filial") {
-      setFilters((prev) => ({ ...prev, setorId: "" }));
+    if (viewMode === "consolidated" || viewMode === "filial") {
+      setFilters((prev) => (prev.setorIds.length ? { ...prev, setorIds: [] } : prev));
     }
   }, [viewMode]);
+
+  const handleCompetenceChange = useCallback((value: string) => {
+    if (!value) {
+      setFilters((prev) => ({ ...prev, competence: "" }));
+      return;
+    }
+    const range = competenceToDateRange(value);
+    setFilters((prev) => ({
+      ...prev,
+      competence: value,
+      dataInicial: range.dataInicial || prev.dataInicial,
+      dataFinal: range.dataFinal || prev.dataFinal,
+    }));
+  }, []);
+
+  const handleDateInicialChange = useCallback((value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      dataInicial: value,
+      competence: dateRangeToCompetence(value, prev.dataFinal),
+    }));
+  }, []);
+
+  const handleDateFinalChange = useCallback((value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      dataFinal: value,
+      competence: dateRangeToCompetence(prev.dataInicial, value),
+    }));
+  }, []);
 
   const load = useCallback(async () => {
     setRefreshing(true);
     setError(null);
     try {
-      const [resumoData, evolucaoData, processosData, alertasData, familiaData] =
-        await Promise.all([
-          fetchDashboardResumo(getAccessToken, params),
-          fetchDashboardEvolucao(getAccessToken, params),
-          fetchDashboardProcessos(getAccessToken, params),
-          fetchDashboardAlertas(getAccessToken, params),
-          fetchDashboardPorFamilia(getAccessToken, params),
-        ]);
+      const [
+        resumoData,
+        evolucaoData,
+        processosData,
+        alertasData,
+        familiaData,
+        vencimentosData,
+      ] = await Promise.all([
+        fetchDashboardResumo(getAccessToken, params),
+        fetchDashboardEvolucao(getAccessToken, params),
+        fetchDashboardProcessos(getAccessToken, params),
+        fetchDashboardAlertas(getAccessToken, params),
+        fetchDashboardPorFamilia(getAccessToken, params),
+        fetchDashboardVencimentos(getAccessToken, params),
+      ]);
       setResumo(resumoData);
       setEvolucao(evolucaoData.items);
       setProcessos(processosData.items);
       setAlertas(alertasData.items);
       setPorFamilia(familiaData.items);
+      setVencendo(vencimentosData.vencendo ?? []);
+      setVencidas(vencimentosData.vencidas ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard");
     } finally {
@@ -552,83 +599,79 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             onChange={(next) => {
               setViewMode(next);
               if (next === "consolidated") {
-                setFilters((prev) => ({ ...prev, filialId: "", setorId: "" }));
+                setFilters((prev) => ({ ...prev, filialIds: [], setorIds: [] }));
               }
-              if (next === "filial" && !filters.filialId) {
+              if (next === "filial" && filters.filialIds.length === 0) {
                 const fallback =
                   options?.filiais[0]?.id ?? defaultDashboardFilialFilter(options?.access_scope);
                 if (fallback) {
-                  setFilters((prev) => ({ ...prev, filialId: fallback, setorId: "" }));
+                  setFilters((prev) => ({ ...prev, filialIds: [fallback], setorIds: [] }));
                 }
               }
             }}
           />
+          <label className="ds-filter-box ds-field">
+            <FieldLabel
+              label="Competência"
+              hint={TM_HELP_TOOLTIPS.dashboard.competencia}
+            />
+            <input
+              type="month"
+              value={filters.competence}
+              onChange={(e) => handleCompetenceChange(e.target.value)}
+            />
+          </label>
           <DateField
             label="Data inicial"
             value={filters.dataInicial}
-            onChange={(value) => setFilters((prev) => ({ ...prev, dataInicial: value }))}
+            onChange={handleDateInicialChange}
           />
           <DateField
             label="Data final"
             value={filters.dataFinal}
-            onChange={(value) => setFilters((prev) => ({ ...prev, dataFinal: value }))}
+            onChange={handleDateFinalChange}
           />
-          <label className="ds-filter-box">
-            <span className="tm-field__label">
-              Unidade
-              <HelpTooltip
-                content={TM_HELP_TOOLTIPS.dashboard.unidade}
-                ariaLabel="Ajuda: Unidade"
-              />
-            </span>
-            <select
-              value={filters.filialId}
-              disabled={viewMode === "consolidated"}
-              onChange={(e) => {
-                const nextFilial = e.target.value;
-                setFilters((prev) => ({
+          <MultiSelectField
+            label="Unidade"
+            labelHint={TM_HELP_TOOLTIPS.dashboard.unidade}
+            options={(options?.filiais ?? []).map((filial) => ({
+              value: filial.id,
+              label: `${filial.id} — ${filial.label}`,
+            }))}
+            selectedValues={filters.filialIds}
+            onChange={(values) =>
+              setFilters((prev) => {
+                const allowedSetores = new Set(
+                  (options?.setores ?? [])
+                    .filter((setor) =>
+                      setor.filiais.some((filialId) => values.includes(filialId))
+                    )
+                    .map((setor) => setor.id)
+                );
+                return {
                   ...prev,
-                  filialId: nextFilial,
-                  setorId:
-                    nextFilial && prev.setorId
-                      ? filterSetoresByFilial(options?.setores ?? [], nextFilial).some(
-                          (setor) => setor.id === prev.setorId
-                        )
-                        ? prev.setorId
-                        : ""
-                      : prev.setorId,
-                }));
-              }}
-            >
-              <option value="">Selecione…</option>
-              {(options?.filiais ?? []).map((filial) => (
-                <option key={filial.id} value={filial.id}>
-                  {filial.id} — {filial.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="ds-filter-box">
-            <span className="tm-field__label">
-              Setor
-              <HelpTooltip
-                content={TM_HELP_TOOLTIPS.dashboard.setor}
-                ariaLabel="Ajuda: Setor"
-              />
-            </span>
-            <select
-              value={filters.setorId}
-              disabled={viewMode !== "department"}
-              onChange={(e) => setFilters((prev) => ({ ...prev, setorId: e.target.value }))}
-            >
-              <option value="">Selecione…</option>
-              {setoresFiltrados.map((setor) => (
-                <option key={setor.id} value={setor.id}>
-                  {setor.label}
-                </option>
-              ))}
-            </select>
-          </label>
+                  filialIds: values,
+                  setorIds: prev.setorIds.filter((id) => allowedSetores.has(id)),
+                };
+              })
+            }
+            emptyLabel="Selecione…"
+            disabled={viewMode === "consolidated"}
+            searchable
+          />
+          <MultiSelectField
+            label="Setor"
+            labelHint={TM_HELP_TOOLTIPS.dashboard.setor}
+            options={setoresFiltrados.map((setor) => ({
+              value: setor.id,
+              label: setor.label,
+            }))}
+            selectedValues={filters.setorIds}
+            onChange={(values) => setFilters((prev) => ({ ...prev, setorIds: values }))}
+            emptyLabel="Selecione…"
+            disabled={viewMode !== "department"}
+            searchable
+          />
       </section>
 
       <StatusAlerts
@@ -672,6 +715,56 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                   <span className="ds-alert-item__value">
                     {formatCurrency(alerta.economia_liquida_acumulada)}
                   </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CollapsiblePanel>
+      ) : null}
+
+      {vencendo.length > 0 || vencidas.length > 0 ? (
+        <CollapsiblePanel
+          className="ds-card ds-alert-panel ds-alert-panel--vencimento"
+          triggerClassName="ds-alert-panel__trigger"
+          bodyClassName="ds-alert-panel__body"
+          header={
+            <>
+              <CalendarClock size={20} aria-hidden />
+              <div className="ds-alert-panel__titles">
+                <h2 className="ds-section-title">Revisões a vencer — validade de 1 ano</h2>
+                <p className="ds-hint">
+                  A economia deixa de ser contabilizada no aniversário da revisão. Acompanhe
+                  as que vencem nos próximos 90 dias e implante uma nova revisão para renovar.
+                </p>
+              </div>
+              <span className="ds-alert-panel__count">{vencendo.length}</span>
+            </>
+          }
+        >
+          {vencidas.length > 0 ? (
+            <p className="ds-hint" style={{ marginBottom: 8 }}>
+              {vencidas.length} revisão(ões) já vencida(s) deixaram de contar na economia.
+            </p>
+          ) : null}
+          <ul className="ds-alert-list">
+            {vencendo.slice(0, 12).map((item) => (
+              <li key={item.instancia_id} className="ds-alert-item">
+                <div className="ds-alert-item__main">
+                  <span className="ds-alert-item__code">{item.codigo_processo}</span>
+                  <span className="ds-alert-item__name">{item.nome_processo}</span>
+                </div>
+                <div className="ds-alert-item__meta">
+                  <span className="ds-alert-item__badge">
+                    {item.dias_para_vencer != null
+                      ? `vence em ${item.dias_para_vencer} dias`
+                      : "vence em breve"}
+                  </span>
+                  {item.data_vencimento ? (
+                    <span className="ds-alert-item__period">{item.data_vencimento}</span>
+                  ) : null}
+                  {item.filial_id ? (
+                    <span className="ds-alert-item__value">{item.filial_id}</span>
+                  ) : null}
                 </div>
               </li>
             ))}

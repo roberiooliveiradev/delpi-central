@@ -624,3 +624,49 @@ class DashboardLiveService:
         for item in items:
             item["fonte"] = "cadastro_tempo_real"
         return items
+
+    @_cached_query("vencimentos")
+    def list_vencimentos(
+        self,
+        *,
+        dias: int = calc_rules.REVIEW_EXPIRY_ALERT_DAYS,
+        incluir_vencidas: bool = True,
+        view: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        familia_processo: str | None = None,
+    ) -> dict[str, Any]:
+        """Revisões prestes a vencer (aniversário em ``dias``) e já vencidas.
+
+        Reaproveita a lista de instâncias (com ``status_vigencia`` e ``dias_para_vencer``
+        do calculador) para acompanhamento no dashboard.
+        """
+        items = self.list_processos_calculados(
+            view=view,
+            filial_id=filial_id,
+            setor_id=setor_id,
+            familia_processo=familia_processo,
+        )
+
+        vencendo: list[dict[str, Any]] = []
+        vencidas: list[dict[str, Any]] = []
+        for item in items:
+            status = item.get("status_vigencia")
+            restante = item.get("dias_para_vencer")
+            if status == "vencida":
+                vencidas.append(item)
+            elif status == "vencendo" and (restante is None or restante <= dias):
+                vencendo.append(item)
+
+        vencendo.sort(key=lambda it: it.get("dias_para_vencer") if it.get("dias_para_vencer") is not None else 10**9)
+        vencidas.sort(key=lambda it: it.get("dias_para_vencer") if it.get("dias_para_vencer") is not None else -(10**9))
+
+        result: dict[str, Any] = {
+            "janela_dias": dias,
+            "total_vencendo": len(vencendo),
+            "vencendo": vencendo,
+        }
+        if incluir_vencidas:
+            result["total_vencidas"] = len(vencidas)
+            result["vencidas"] = vencidas
+        return result

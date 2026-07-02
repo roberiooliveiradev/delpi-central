@@ -762,6 +762,114 @@ def test_multi_instancia_consolidado_usa_media_por_competencia():
     assert _month_bruta(summary, "2025-04") == 1750.0
 
 
+def _single_instancia_raw(revisoes: list[dict], medicoes: list[dict]) -> TransformometroRawData:
+    return TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-VAL",
+                "nome_processo": "Processo validade",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        processo_instancias=[
+            {
+                "instancia_id": "i1",
+                "processo_id": "p1",
+                "filial_id": "01",
+                "codigo_filial": "01",
+                "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+                "deletado": False,
+            }
+        ],
+        revisoes=revisoes,
+        medicoes=medicoes,
+        investimentos=[],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+
+
+def test_serie_zera_apos_aniversario_de_um_ano():
+    """Revisão sem sucessora deixa de contar 12 meses após o início."""
+    calc = DashboardCalculatorService()
+    raw = _single_instancia_raw(
+        revisoes=[
+            {
+                "revisao_id": "r-base", "processo_id": "p1", "instancia_id": "i1",
+                "cenario_tipo": "baseline", "data_inicio_vigencia": "2024-01-01",
+                "revisao_ativa": False, "deletado": False,
+            },
+            {
+                "revisao_id": "r-mel", "processo_id": "p1", "instancia_id": "i1",
+                "cenario_tipo": "melhoria", "data_inicio_vigencia": "2024-06-01",
+                "data_implantacao": "2024-06-01", "revisao_ativa": True, "deletado": False,
+            },
+        ],
+        medicoes=[_medicao("r-base", 60), _medicao("r-mel", 30)],
+    )
+    summary = calc.build_summary(raw, filial_id=None, start_date=None, end_date=None)
+
+    # Último mês dentro da validade conta; aniversário (2025-06) em diante zera.
+    assert _month_bruta(summary, "2025-05") == 2500.0
+    assert _month_bruta(summary, "2025-06") == 0.0
+
+
+def test_nova_revisao_assume_calculo_com_ciclo_proprio():
+    """Nova revisão implantada assume o cálculo; a antiga (vencida) não conta mais."""
+    calc = DashboardCalculatorService()
+    raw = _single_instancia_raw(
+        revisoes=[
+            {
+                "revisao_id": "r-base", "processo_id": "p1", "instancia_id": "i1",
+                "cenario_tipo": "baseline", "data_inicio_vigencia": "2024-01-01",
+                "revisao_ativa": False, "deletado": False,
+            },
+            {
+                "revisao_id": "r-mel", "processo_id": "p1", "instancia_id": "i1",
+                "cenario_tipo": "melhoria", "data_inicio_vigencia": "2024-06-01",
+                "data_implantacao": "2024-06-01", "revisao_ativa": False, "deletado": False,
+            },
+            {
+                "revisao_id": "r-mel2", "processo_id": "p1", "instancia_id": "i1",
+                "cenario_tipo": "melhoria", "data_inicio_vigencia": "2025-05-01",
+                "data_implantacao": "2025-05-01", "revisao_ativa": True, "deletado": False,
+            },
+        ],
+        medicoes=[
+            _medicao("r-base", 60),
+            _medicao("r-mel", 30),
+            _medicao("r-mel2", 30),
+        ],
+    )
+    summary = calc.build_summary(raw, filial_id=None, start_date=None, end_date=None)
+
+    # 2025-06: r-mel já venceu, mas r-mel2 (nova) assume o cálculo.
+    assert _month_bruta(summary, "2025-06") == 2500.0
+
+
+def test_build_review_vencimento_status_por_janela():
+    calc = DashboardCalculatorService()
+    review = {
+        "cenario_tipo": "melhoria",
+        "data_inicio_vigencia": "2025-06-01",
+        "data_implantacao": "2025-06-01",
+    }
+    # Aniversário = 2026-06-01.
+    vigente = calc._build_review_vencimento(review, today=date(2026, 3, 1))
+    assert vigente["status_vigencia"] == "vigente"
+    assert vigente["data_vencimento"] == "01/06/2026"
+
+    vencendo = calc._build_review_vencimento(review, today=date(2026, 4, 1))
+    assert vencendo["status_vigencia"] == "vencendo"
+    assert 0 < vencendo["dias_para_vencer"] <= 90
+
+    vencida = calc._build_review_vencimento(review, today=date(2026, 6, 15))
+    assert vencida["status_vigencia"] == "vencida"
+
+
 def test_multi_instancia_filtro_por_unidade_mostra_valor_real():
     calc = DashboardCalculatorService()
     raw = _multi_instancia_raw()

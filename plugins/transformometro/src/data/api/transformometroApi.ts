@@ -894,6 +894,38 @@ export function fetchDashboardAlertas(
   );
 }
 
+export type DashboardVencimentoItem = {
+  instancia_id: string;
+  processo_id: string;
+  codigo_processo?: string | null;
+  nome_processo?: string | null;
+  filial_id?: string | null;
+  setor_id?: string | null;
+  data_implantacao?: string | null;
+  data_vencimento?: string | null;
+  dias_para_vencer?: number | null;
+  status_vigencia?: "vigente" | "vencendo" | "vencida" | null;
+};
+
+export type DashboardVencimentos = {
+  janela_dias: number;
+  total_vencendo: number;
+  vencendo: DashboardVencimentoItem[];
+  total_vencidas?: number;
+  vencidas?: DashboardVencimentoItem[];
+};
+
+export function fetchDashboardVencimentos(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<DashboardVencimentos>(
+    `/dashboard/vencimentos${qs}`,
+    getAccessToken
+  );
+}
+
 export type DashboardFamiliaItem = {
   familia_processo: string;
   processos: number;

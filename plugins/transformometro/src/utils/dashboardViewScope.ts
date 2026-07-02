@@ -1,13 +1,13 @@
 import type { AccessScope, DashboardViewMode } from "../data/api/transformometroApi";
 
 export type DashboardFilterState = {
-  filialId: string;
-  setorId: string;
+  filialIds: string[];
+  setorIds: string[];
 };
 
 export function resolveDashboardViewMode(filters: DashboardFilterState): DashboardViewMode {
-  if (filters.setorId && filters.filialId) return "department";
-  if (filters.filialId) return "filial";
+  if (filters.setorIds.length > 0 && filters.filialIds.length > 0) return "department";
+  if (filters.filialIds.length > 0) return "filial";
   return "consolidated";
 }
 
@@ -23,10 +23,10 @@ export function buildDashboardQueryParams(
   params.view = view;
 
   if (view === "filial" || view === "department") {
-    if (filters.filialId) params.filial_id = filters.filialId;
+    if (filters.filialIds.length > 0) params.filial_id = filters.filialIds.join(",");
   }
-  if (view === "department" && filters.setorId) {
-    params.setor_id = filters.setorId;
+  if (view === "department" && filters.setorIds.length > 0) {
+    params.setor_id = filters.setorIds.join(",");
   }
 
   if (accessScope?.mode === "scoped" && view === "consolidated" && !accessScope.can_view_consolidated) {

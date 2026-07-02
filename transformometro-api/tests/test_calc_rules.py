@@ -15,6 +15,50 @@ def test_review_vigencia_open_review_full_month():
     assert calc_rules.review_vigencia_fraction_in_month(review, date(2026, 6, 1)) == 1.0
 
 
+def test_review_validity_end_date_is_start_plus_12_months():
+    review = {
+        "cenario_tipo": "melhoria",
+        "data_inicio_vigencia": "2025-06-01",
+        "data_implantacao": "2025-06-01",
+    }
+    assert calc_rules.review_validity_end_date(review) == date(2026, 6, 1)
+    # Último dia efetivo é a véspera do aniversário.
+    assert calc_rules.review_effective_end_date(review) == date(2026, 5, 31)
+
+
+def test_review_vigencia_zero_after_anniversary():
+    review = {
+        "cenario_tipo": "melhoria",
+        "data_inicio_vigencia": "2025-06-01",
+        "data_implantacao": "2025-06-01",
+    }
+    # Mês anterior ao aniversário conta integralmente.
+    assert calc_rules.review_vigencia_fraction_in_month(review, date(2026, 5, 1)) == 1.0
+    # A partir do mês do aniversário deixa de contar.
+    assert calc_rules.review_vigencia_fraction_in_month(review, date(2026, 6, 1)) == 0.0
+
+
+def test_review_effective_end_uses_earliest_of_fim_and_anniversary():
+    review = {
+        "cenario_tipo": "melhoria",
+        "data_inicio_vigencia": "2025-06-01",
+        "data_implantacao": "2025-06-01",
+        "data_fim_vigencia": "2025-12-31",
+    }
+    # Supersessão antes do aniversário: fim de vigência prevalece.
+    assert calc_rules.review_effective_end_date(review) == date(2025, 12, 31)
+
+
+def test_baseline_review_has_no_validity_cap():
+    review = {
+        "cenario_tipo": "baseline",
+        "data_inicio_vigencia": "2025-06-01",
+        "data_implantacao": "2025-06-01",
+    }
+    assert calc_rules.review_validity_end_date(review) is None
+    assert calc_rules.review_effective_end_date(review) is None
+
+
 def test_hours_saved_proc0020_scenario():
     baseline = {"volume_mensal": 336, "tempo_medio_execucao_min": 20}
     melhoria = {"volume_mensal": 336, "tempo_medio_execucao_min": 0.5}

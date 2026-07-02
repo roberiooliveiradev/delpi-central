@@ -7,12 +7,14 @@ export const TM_HELP_TOOLTIPS = {
   dashboard: {
     view:
       "Alterna o recorte da análise: Consolidado (todas as unidades), por Unidade ou por Departamento (unidade × setor).",
+    competencia:
+      "Escolhe um mês (competência) e preenche o período automaticamente. Ao ajustar as datas para meses diferentes, a competência fica em branco.",
     dateStart: "Início do período analisado (competência mensal). Filtra economias, custos e horas.",
     dateEnd: "Fim do período analisado. O recorte considera as competências entre a data inicial e a final.",
     unidade:
-      "Restringe a análise a uma unidade operacional. Habilitado nas visões Unidade e Departamento.",
+      "Restringe a análise a uma ou mais unidades operacionais. Habilitado nas visões Unidade e Departamento.",
     setor:
-      "Restringe a análise a um setor da unidade selecionada. Disponível apenas na visão Departamento.",
+      "Restringe a análise a um ou mais setores das unidades selecionadas. Disponível apenas na visão Departamento.",
     alerts:
       "Processos com pelo menos 3 meses consecutivos de economia líquida negativa no recorte filtrado — sinal de atenção.",
     kpis: {

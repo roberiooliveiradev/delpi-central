@@ -125,6 +125,15 @@ class DashboardCalculatorService:
                 or implementation_review.get("data_inicio_vigencia")
             )
 
+        vencimento_review = display_review
+        if vencimento_review is None or not self._is_comparable_review(vencimento_review):
+            comparable = [
+                review for review in revisoes
+                if self._is_comparable_review(review) and not self._is_deleted(review)
+            ]
+            vencimento_review = self._sort_reviews(comparable)[-1] if comparable else None
+        vencimento = self._build_review_vencimento(vencimento_review)
+
         filial_codigo = self._empty_to_none(inst_row.get("codigo_filial")) or self._empty_to_none(
             process_row.get("filial_id")
         )
@@ -151,6 +160,43 @@ class DashboardCalculatorService:
             "payback_meses": self._round_final(payback_months),
             "status_processo": self._empty_to_none(process_row.get("status_processo")),
             "data_implantacao": implementation_date,
+            "data_vencimento": vencimento["data_vencimento"],
+            "dias_para_vencer": vencimento["dias_para_vencer"],
+            "status_vigencia": vencimento["status_vigencia"],
+        }
+
+    def _build_review_vencimento(
+        self,
+        review: Optional[dict],
+        *,
+        today: Optional[date] = None,
+    ) -> dict:
+        """Vencimento (aniversário) da revisão que gera economia hoje.
+
+        ``status_vigencia``: ``vencida`` (aniversário já passou), ``vencendo`` (dentro
+        da janela de alerta de 90 dias) ou ``vigente``.
+        """
+        empty = {"data_vencimento": None, "dias_para_vencer": None, "status_vigencia": None}
+        if not review:
+            return empty
+
+        anniversary = calc_rules.review_validity_end_date(review)
+        if anniversary is None:
+            return empty
+
+        ref = today or date.today()
+        dias = (anniversary - ref).days
+        if dias <= 0:
+            status = "vencida"
+        elif dias <= calc_rules.REVIEW_EXPIRY_ALERT_DAYS:
+            status = "vencendo"
+        else:
+            status = "vigente"
+
+        return {
+            "data_vencimento": self._format_display_date(anniversary),
+            "dias_para_vencer": dias,
+            "status_vigencia": status,
         }
 
     def build_dashboard_rows(self, raw: TransformometroRawData) -> List[dict]:
@@ -254,18 +300,18 @@ class DashboardCalculatorService:
         setor_id: Optional[str] = None,
         familia_processo: Optional[str] = None,
     ) -> TransformometroRawData:
-        filial = self._empty_to_none(filial_id)
-        setor = self._empty_to_none(setor_id)
+        filiais = self._scope_values(filial_id)
+        setores = self._scope_values(setor_id)
         familia = self._empty_to_none(familia_processo)
 
-        if not (filial or setor or familia):
+        if not (filiais or setores or familia):
             return raw
 
-        if raw.processo_instancias and (filial or setor):
+        if raw.processo_instancias and (filiais or setores):
             allowed_instancia_ids = {
                 str(inst["instancia_id"])
                 for inst in raw.processo_instancias
-                if self._instancia_matches_scope(inst, filial=filial, setor=setor)
+                if self._instancia_matches_scope(inst, filiais=filiais, setores=setores)
             }
             revisoes_filtradas = [
                 revisao
@@ -304,17 +350,17 @@ class DashboardCalculatorService:
             )
 
         processos_filtrados = list(raw.processos)
-        if filial:
+        if filiais:
             processos_filtrados = [
                 processo
                 for processo in processos_filtrados
-                if (self._empty_to_none(processo.get("filial_id")) or "").lower() == filial.lower()
+                if (self._empty_to_none(processo.get("filial_id")) or "").lower() in filiais
             ]
-        if setor:
+        if setores:
             processos_filtrados = [
                 processo
                 for processo in processos_filtrados
-                if (self._empty_to_none(processo.get("setor_id")) or "").lower() == setor.lower()
+                if (self._empty_to_none(processo.get("setor_id")) or "").lower() in setores
             ]
         if familia:
             processos_filtrados = [
@@ -327,34 +373,50 @@ class DashboardCalculatorService:
         return self._narrow_raw_to_processos(raw, processos_filtrados)
 
     @staticmethod
+    def _scope_values(value) -> frozenset[str]:
+        """Normaliza escopo (str CSV ou iterável) em conjunto minúsculo para comparação."""
+        if value is None:
+            return frozenset()
+        if isinstance(value, str):
+            tokens = value.split(",")
+        else:
+            tokens = list(value)
+        return frozenset(
+            text
+            for token in tokens
+            if (text := str(token).strip().lower())
+        )
+
+    @staticmethod
     def _instancia_matches_scope(
         instancia: dict,
         *,
-        filial: str | None,
-        setor: str | None,
+        filiais: frozenset[str],
+        setores: frozenset[str],
     ) -> bool:
-        if filial:
+        if filiais:
             if instancia.get("todas_filiais_ativas"):
                 pass
             else:
-                codigo = str(instancia.get("codigo_filial") or instancia.get("filial_id") or "")
-                if codigo.lower() != filial.lower():
+                codigo = str(
+                    instancia.get("codigo_filial") or instancia.get("filial_id") or ""
+                ).strip().lower()
+                if codigo not in filiais:
                     return False
-        if not setor:
+        if not setores:
             return True
-        setor_key = setor.lower()
-        setores = instancia.get("setores") or []
-        if isinstance(setores, list):
-            for item in setores:
+        instancia_setores = instancia.get("setores") or []
+        if isinstance(instancia_setores, list):
+            for item in instancia_setores:
                 if not isinstance(item, dict):
                     continue
                 for field in ("codigo_setor", "setor_id"):
                     value = str(item.get(field) or "").strip().lower()
-                    if value == setor_key:
+                    if value and value in setores:
                         return True
         for field in ("codigo_setor", "setor_id"):
             value = str(instancia.get(field) or "").strip().lower()
-            if value == setor_key:
+            if value and value in setores:
                 return True
         return False
 
@@ -1505,7 +1567,8 @@ class DashboardCalculatorService:
             return False
 
         start_date = self._review_calculation_start_date(review)
-        end_date = self._parse_date(review.get("data_fim_vigencia"))
+        # Fim efetivo já considera a validade de 12 meses (aniversário) além do fim de vigência.
+        end_date = calc_rules.review_effective_end_date(review)
 
         if start_date is None:
             return False

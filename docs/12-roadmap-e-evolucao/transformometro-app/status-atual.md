@@ -6,6 +6,8 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 
 > **Arquitetura jul/2026 — fonte única + query cache.** A planilha materializada `dashboard_calculos` deixou de ser a fonte: UI, snapshot/chat e Transforma+ leem do **motor live** (`DashboardLiveService`) com `DashboardQueryCache` (TTL + invalidação por geração). O CRUD **não** dispara mais recálculo pesado — apenas invalida o cache em O(1). Faixas de tempo por dia (`YYYY-MM-DD`) passam a valer em todas as leituras. A tabela materializada e o recálculo viram **opt-in** (`TM_DASHBOARD_PERSIST_CACHE`). Flags: `TM_DASHBOARD_QUERY_CACHE` (on), `TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS` (120), `TM_DASHBOARD_PERSIST_CACHE` (off).
 
+> **Regra jul/2026 — validade de 1 ano por revisão.** A economia de uma revisão comparável só conta por **12 meses** a partir do início (`data_implantacao`/`data_inicio_vigencia`); a partir do **aniversário** (`início + 12m`, exclusivo) deixa de ser contabilizada (`calc_rules.review_validity_end_date` / `review_effective_end_date`). Uma **nova revisão implantada** (`revisao_ativa`) assume o cálculo com seu próprio ciclo de 12 meses; sem sucessora, o ambiente passa a contribuir 0. O dashboard acompanha as que vencem nos **próximos 90 dias** (`GET /dashboard/vencimentos`, painel “Revisões a vencer”; campos `data_vencimento`/`dias_para_vencer`/`status_vigencia`).
+
 ## Fonte de dados e pipeline (runtime)
 
 | Camada | Papel |
@@ -33,6 +35,7 @@ Atualizado: **jul/2026** (instância = ambiente isolado; economia do processo = 
 | **Views leitura rápida** | ✅ V020; snapshot instâncias + evolução mensal |
 | **Média por instância** (motor + cache) | ✅ jul/2026; `_calculate_monthly_series` por instância, `calc_rules` divide por `instancias_ativas_mes`, cache/views **V021** (agregação 2 níveis) |
 | **Fonte única + query cache** | ✅ jul/2026; `DashboardQueryCache` (TTL+geração), hook invalida O(1), Transforma+/snapshot via motor live, tabela materializada opt-in (`TM_DASHBOARD_PERSIST_CACHE`) |
+| **Validade de 1 ano + vencimentos** | ✅ jul/2026; `calc_rules.review_validity_end_date`, cap em `_is_review_valid_for_month`, `GET /dashboard/vencimentos` + painel “Revisões a vencer” (90d) |
 | **Transforma+ S2S via cache** | ✅ `engineering_transforma_mais.py` (fallback live) |
 | Visões dashboard `view` | ✅ API + toggle MFE + `access_scope` |
 | Duplicar **instância** (replicar timeline) | ✅ `POST /instancias/{id}/duplicar` |

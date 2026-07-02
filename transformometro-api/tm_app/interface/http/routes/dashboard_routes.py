@@ -314,6 +314,29 @@ def dashboard_alertas(
     return ok(data, "Alertas de economia líquida negativa.")
 
 
+@router.get("/vencimentos")
+def dashboard_vencimentos(
+    request: Request,
+    dias: int = Query(default=90, ge=1, le=365),
+    incluir_vencidas: bool = Query(default=True),
+    view: str | None = Query(default=None),
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    familia_processo: str | None = None,
+):
+    if err := _scope_error_response(request, view, filial_id, setor_id):
+        return err
+    data = _live.list_vencimentos(
+        dias=dias,
+        incluir_vencidas=incluir_vencidas,
+        view=view,
+        filial_id=filial_id,
+        setor_id=setor_id,
+        familia_processo=familia_processo,
+    )
+    return ok(data, "Revisões prestes a vencer e vencidas.")
+
+
 @router.get("/por-familia")
 def dashboard_por_familia(
     request: Request,

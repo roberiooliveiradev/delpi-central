@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
 from tm_app.application.services.dashboard_live_service import DashboardLiveService
+from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -300,3 +302,63 @@ def test_process_monthly_liquida_uses_instance_average(mock_repo):
     assert len(abril) == 1
     # média (2500 + 1000) / 2 = 1750, não a soma 3500.
     assert abril[0]["economia_liquida_mes"] == 1750.0
+
+
+def _venc_processo(pid: str, mel_start: date) -> dict:
+    return {
+        "processo": {
+            "processo_id": pid, "codigo_processo": f"P-{pid}", "nome_processo": pid,
+            "status_processo": "ativo", "deletado": False,
+        },
+        "instancia": {
+            "instancia_id": f"i-{pid}", "processo_id": pid, "filial_id": "01",
+            "codigo_filial": "01", "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+            "deletado": False,
+        },
+        "revisoes": [
+            {
+                "revisao_id": f"b-{pid}", "processo_id": pid, "instancia_id": f"i-{pid}",
+                "cenario_tipo": "baseline", "data_inicio_vigencia": "2023-01-01",
+                "revisao_ativa": False, "deletado": False,
+            },
+            {
+                "revisao_id": f"m-{pid}", "processo_id": pid, "instancia_id": f"i-{pid}",
+                "cenario_tipo": "melhoria", "data_inicio_vigencia": mel_start.isoformat(),
+                "data_implantacao": mel_start.isoformat(), "revisao_ativa": True, "deletado": False,
+            },
+        ],
+        "medicoes": [
+            {"revisao_id": f"b-{pid}", "volume_mensal": 100, "tempo_medio_execucao_min": 60,
+             "custo_hora_mao_obra": 50, "deletado": False},
+            {"revisao_id": f"m-{pid}", "volume_mensal": 100, "tempo_medio_execucao_min": 30,
+             "custo_hora_mao_obra": 50, "deletado": False},
+        ],
+    }
+
+
+@patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
+def test_list_vencimentos_separa_vencendo_e_vencidas(mock_repo):
+    today = date.today()
+    # Aniversário ~ hoje+30d (vencendo), ~ hoje-1m (vencida), ~ hoje+11m (vigente).
+    procs = [
+        _venc_processo("venc", calc_rules.add_months(today + timedelta(days=30), -12)),
+        _venc_processo("vcda", calc_rules.add_months(today, -13)),
+        _venc_processo("vige", calc_rules.add_months(today, -1)),
+    ]
+    raw = TransformometroRawData(
+        processos=[p["processo"] for p in procs],
+        processo_instancias=[p["instancia"] for p in procs],
+        revisoes=[r for p in procs for r in p["revisoes"]],
+        medicoes=[m for p in procs for m in p["medicoes"]],
+        investimentos=[], recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[], recurso_custos=[],
+    )
+    mock_repo.return_value.load_raw.return_value = raw
+
+    data = DashboardLiveService().list_vencimentos(dias=90)
+
+    assert data["janela_dias"] == 90
+    assert data["total_vencendo"] == 1
+    assert data["vencendo"][0]["processo_id"] == "venc"
+    assert data["total_vencidas"] == 1
+    assert data["vencidas"][0]["processo_id"] == "vcda"

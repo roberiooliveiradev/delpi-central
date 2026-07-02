@@ -79,9 +79,11 @@ def check_dashboard_filial_access(
             return access_denied("Sem permissão para visão consolidada.")
         return None
 
-    codigo = resolve_filial_codigo(dashboard_scope.filial_id)
-    if not _scope_service.can_view_filial(scope, codigo):
-        return access_denied()
+    # Multi-seleção: o usuário precisa ter acesso a TODAS as unidades escolhidas.
+    for filial_ref in sorted(dashboard_scope.filial_ids):
+        codigo = resolve_filial_codigo(filial_ref)
+        if not _scope_service.can_view_filial(scope, codigo):
+            return access_denied()
     return None
 
 

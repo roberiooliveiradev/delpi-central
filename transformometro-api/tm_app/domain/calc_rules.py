@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import calendar
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Optional
 
 from tm_app.core.business_days import (
@@ -19,6 +19,13 @@ from tm_app.core.business_days import (
 )
 
 COMPARABLE_SCENARIOS = frozenset({"melhoria", "automacao", "correcao"})
+
+# Validade da revisão: a economia só é contabilizada por 12 meses a partir do
+# início do cálculo (implantação / vigência). A partir da data de aniversário a
+# revisão deixa de contar, salvo se uma nova revisão implantada assumir o cálculo.
+REVIEW_VALIDITY_MONTHS = 12
+# Janela de acompanhamento de revisões prestes a vencer (dashboard).
+REVIEW_EXPIRY_ALERT_DAYS = 90
 
 PERIOD_TOTAL_KEYS = (
     "economia_bruta",
@@ -124,11 +131,51 @@ def review_calculation_start_date(review: dict) -> Optional[date]:
     return implementation_date or start_date
 
 
+def add_months(base: date, months: int) -> date:
+    """Soma ``months`` a ``base`` preservando o fim de mês (ex.: 31/01 + 1m = 28/02)."""
+    total = base.month - 1 + months
+    year = base.year + total // 12
+    month = total % 12 + 1
+    last_day = calendar.monthrange(year, month)[1]
+    return date(year, month, min(base.day, last_day))
+
+
+def review_validity_end_date(review: dict) -> Optional[date]:
+    """Data de aniversário (exclusiva) da revisão comparável: ``início + 12 meses``.
+
+    A economia é contabilizada em ``[início, aniversário)``; a partir do aniversário a
+    revisão não conta mais. Revisões não comparáveis (baseline) não têm validade.
+    """
+    if not is_comparable_scenario(review.get("cenario_tipo")):
+        return None
+    start_date = review_calculation_start_date(review)
+    if start_date is None:
+        return None
+    return add_months(start_date, REVIEW_VALIDITY_MONTHS)
+
+
+def review_effective_end_date(review: dict) -> Optional[date]:
+    """Último dia efetivo de contabilização: ``min(data_fim_vigencia, aniversário-1dia)``.
+
+    ``None`` quando a revisão não tem fim de vigência nem validade (sem teto).
+    """
+    ends: list[date] = []
+    parsed_end = parse_date(review.get("data_fim_vigencia"))
+    if parsed_end is not None:
+        ends.append(parsed_end)
+    anniversary = review_validity_end_date(review)
+    if anniversary is not None:
+        ends.append(anniversary - timedelta(days=1))
+    return min(ends) if ends else None
+
+
 def review_vigencia_fraction_in_month(review: dict, month_date: date) -> float:
     """Fração de dias da competência em que a revisão está vigente.
 
-    Revisão sem ``data_fim_vigencia`` usa o mês civil inteiro (não ``date.today()``).
-    O filtro YYYY-MM-DD do dashboard prorrata depois na agregação do recorte.
+    Revisão sem fim (`data_fim_vigencia`) nem validade usa o mês civil inteiro (não
+    ``date.today()``). A validade de 12 meses limita o fim efetivo (`review_effective_end_date`),
+    zerando a contribuição a partir do aniversário. O filtro YYYY-MM-DD do dashboard
+    prorrata depois na agregação do recorte.
     """
     start_date = review_calculation_start_date(review)
     if start_date is None:
@@ -138,8 +185,8 @@ def review_vigencia_fraction_in_month(review: dict, month_date: date) -> float:
     month = month_date.month
     first_day = date(year, month, 1)
     last_day = date(year, month, calendar.monthrange(year, month)[1])
-    parsed_end = parse_date(review.get("data_fim_vigencia"))
-    end_date = parsed_end if parsed_end is not None else last_day
+    effective_end_review = review_effective_end_date(review)
+    end_date = effective_end_review if effective_end_review is not None else last_day
 
     effective_start = max(first_day, start_date)
     effective_end = min(last_day, end_date)

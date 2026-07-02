@@ -28,12 +28,22 @@ _VIEW_ALIASES = {
 @dataclass(frozen=True)
 class DashboardScopeFilters:
     view: DashboardView
+    # ``filial_id``/``setor_id`` são CSV (uma ou várias unidades/setores) para compatibilidade
+    # com os call sites existentes; ``filial_ids``/``setor_ids`` expõem o conjunto normalizado.
     filial_id: str | None
     setor_id: str | None
 
     @property
     def applies_process_filter(self) -> bool:
         return self.view != DashboardView.CONSOLIDATED
+
+    @property
+    def filial_ids(self) -> frozenset[str]:
+        return _split_csv(self.filial_id)
+
+    @property
+    def setor_ids(self) -> frozenset[str]:
+        return _split_csv(self.setor_id)
 
 
 class DashboardViewScopeService:
@@ -46,8 +56,8 @@ class DashboardViewScopeService:
         filial_id: str | None = None,
         setor_id: str | None = None,
     ) -> DashboardScopeFilters:
-        filial = _normalize_ref(filial_id)
-        setor = _normalize_ref(setor_id)
+        filial = _normalize_csv(filial_id)
+        setor = _normalize_csv(setor_id)
         resolved_view = self._resolve_view(view=view, filial_id=filial, setor_id=setor)
 
         if resolved_view == DashboardView.CONSOLIDATED:
@@ -150,6 +160,8 @@ class DashboardViewScopeService:
             "view": scope.view.value,
             "filial_id": scope.filial_id,
             "setor_id": scope.setor_id,
+            "filial_ids": sorted(scope.filial_ids),
+            "setor_ids": sorted(scope.setor_ids),
         }
 
 
@@ -158,3 +170,27 @@ def _normalize_ref(value: str | None) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _split_csv(value: str | None) -> frozenset[str]:
+    if not value:
+        return frozenset()
+    return frozenset(token.strip() for token in str(value).split(",") if token.strip())
+
+
+def _normalize_csv(value: str | None) -> str | None:
+    """Normaliza uma lista CSV de refs: remove vazios e duplicados (case-insensitive)."""
+    if value is None:
+        return None
+    seen: set[str] = set()
+    out: list[str] = []
+    for token in str(value).split(","):
+        text = token.strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+    return ",".join(out) or None
