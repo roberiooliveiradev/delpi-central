@@ -1,3 +1,5 @@
+import { FieldLabel } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import { filterSetoresByFilial, resolveSetorIdForFilial } from "../../utils/setores";
 import type { ProcessoFormState } from "./processoForm";
@@ -37,7 +39,9 @@ export function ProcessoFormFields({
         </div>
       ) : null}
       <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-proc-nome">Nome do processo *</label>
+        <label htmlFor="tm-proc-nome">
+          <FieldLabel label="Nome do processo *" hint={TM_HELP_TOOLTIPS.processos.nome} />
+        </label>
         <input
           id="tm-proc-nome"
           required
@@ -48,7 +52,9 @@ export function ProcessoFormFields({
       {showInstanciaFields ? (
         <>
           <div className="ds-filter-box">
-            <label htmlFor="tm-proc-filial">Unidade *</label>
+            <label htmlFor="tm-proc-filial">
+              <FieldLabel label="Unidade *" hint={TM_HELP_TOOLTIPS.processos.unidade} />
+            </label>
             <select
               id="tm-proc-filial"
               value={form.filial_id}
@@ -62,7 +68,9 @@ export function ProcessoFormFields({
             </select>
           </div>
           <div className="ds-filter-box">
-            <label htmlFor="tm-proc-setor">Setor *</label>
+            <label htmlFor="tm-proc-setor">
+              <FieldLabel label="Setor *" hint={TM_HELP_TOOLTIPS.processos.setor} />
+            </label>
             <select
               id="tm-proc-setor"
               value={form.setor_id}
@@ -79,7 +87,9 @@ export function ProcessoFormFields({
         </>
       ) : null}
       <div className="ds-filter-box">
-        <label htmlFor="tm-proc-status">Status *</label>
+        <label htmlFor="tm-proc-status">
+          <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.processos.status} />
+        </label>
         <select
           id="tm-proc-status"
           value={form.status_processo}
@@ -93,7 +103,9 @@ export function ProcessoFormFields({
         </select>
       </div>
       <div className="ds-filter-box">
-        <label htmlFor="tm-proc-familia">Família (rateio)</label>
+        <label htmlFor="tm-proc-familia">
+          <FieldLabel label="Família (rateio)" hint={TM_HELP_TOOLTIPS.processos.familia} />
+        </label>
         <input
           id="tm-proc-familia"
           placeholder="ex.: ia, automação"

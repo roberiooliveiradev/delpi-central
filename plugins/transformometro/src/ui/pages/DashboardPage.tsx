@@ -12,6 +12,8 @@ import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
+import { HelpTooltip } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KpiCard } from "../../components/KpiCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
@@ -144,11 +146,13 @@ function chartHint(
 
 function ChartCard({
   title,
+  titleHint,
   hint,
   toolbar,
   children,
 }: {
   title: string;
+  titleHint?: string;
   hint?: string;
   toolbar?: React.ReactNode;
   children: React.ReactNode;
@@ -157,7 +161,12 @@ function ChartCard({
     <section className="ds-card ds-chart-card">
       <div className="ds-chart-card__header">
         <div>
-          <h2 className="ds-section-title">{title}</h2>
+          <h2 className="ds-section-title">
+            {title}
+            {titleHint ? (
+              <HelpTooltip content={titleHint} ariaLabel={`Ajuda: ${title}`} />
+            ) : null}
+          </h2>
           {hint ? <p className="ds-hint">{hint}</p> : null}
         </div>
         {toolbar}
@@ -565,7 +574,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             onChange={(value) => setFilters((prev) => ({ ...prev, dataFinal: value }))}
           />
           <label className="ds-filter-box">
-            Unidade
+            <span className="tm-field__label">
+              Unidade
+              <HelpTooltip
+                content={TM_HELP_TOOLTIPS.dashboard.unidade}
+                ariaLabel="Ajuda: Unidade"
+              />
+            </span>
             <select
               value={filters.filialId}
               disabled={viewMode === "consolidated"}
@@ -594,7 +609,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             </select>
           </label>
           <label className="ds-filter-box">
-            Setor
+            <span className="tm-field__label">
+              Setor
+              <HelpTooltip
+                content={TM_HELP_TOOLTIPS.dashboard.setor}
+                ariaLabel="Ajuda: Setor"
+              />
+            </span>
             <select
               value={filters.setorId}
               disabled={viewMode !== "department"}
@@ -661,6 +682,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       <section className="ds-kpi-grid">
         <KpiCard
           title="Economia líquida"
+          titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.economiaLiquida}
           value={formatCurrency(resumo?.economia_liquida_total)}
           subtitle={`Recorte · ${periodLabel}`}
           icon={<Coins size={22} />}
@@ -668,6 +690,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <KpiCard
           title="Economia bruta"
+          titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.economiaBruta}
           value={formatCurrency(resumo?.economia_bruta_total)}
           subtitle={`Recorte · ${periodLabel}`}
           icon={<Coins size={22} />}
@@ -675,6 +698,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <KpiCard
           title="Soluções implementadas"
+          titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.solucoes}
           value={formatDecimal(resumo?.solucoes_implementadas, 0)}
           subtitle="Melhoria, automação e correção"
           icon={<Lightbulb size={22} />}
@@ -682,6 +706,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <KpiCard
           title="Horas economizadas"
+          titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.horas}
           value={formatDecimal(resumo?.horas_economizadas_total, 1)}
           subtitle={periodLabel}
           icon={<Clock size={22} />}
@@ -689,6 +714,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <KpiCard
           title="ROI acumulado"
+          titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.roi}
           value={formatRoiRatio(resumo?.roi_medio, 1)}
           subtitle={`Economia líquida / investimento · ${periodLabel}`}
           icon={<Percent size={22} />}
@@ -696,6 +722,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <KpiCard
           title="Investimento total"
+          titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.investimento}
           value={formatCurrency(resumo?.investimento_total ?? resumo?.investimento_unico_total)}
           subtitle="Único, recorrente e recursos"
           icon={<Coins size={22} />}
@@ -707,6 +734,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         <section className="ds-charts-grid ds-charts-grid--hero">
           <ChartCard
             title={savingsChartTitle}
+            titleHint={TM_HELP_TOOLTIPS.dashboard.charts.savings}
             hint={savingsChartHint}
             toolbar={
               <div className="ds-chart-card__toolbar-stack ds-no-print">
@@ -803,6 +831,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         <section className="ds-charts-grid ds-charts-grid--rankings">
           <ChartCard
             title="Top economia bruta diária"
+            titleHint={TM_HELP_TOOLTIPS.dashboard.charts.topGross}
             hint={
               topDailyChart.length > 0
                 ? "10 maiores no recorte · R$ (bruta diária)"
@@ -822,6 +851,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
           <ChartCard
             title="Top economia diária de horas"
+            titleHint={TM_HELP_TOOLTIPS.dashboard.charts.topHours}
             hint={
               topHorasDiariaChart.length > 0
                 ? "10 maiores no recorte · Horas (diária)"
@@ -844,6 +874,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {porFamilia.length > 0 ? (
         <DataTableSection
           title="Resumo por família"
+          titleHint={TM_HELP_TOOLTIPS.dashboard.charts.familia}
           hint="Processos com família preenchida no cadastro"
           columns={familiaColumns}
           rows={porFamilia}
@@ -856,6 +887,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
       <DataTableSection
         title="Processos no recorte"
+        titleHint={TM_HELP_TOOLTIPS.dashboard.charts.processos}
         hint="Competência mais recente ou período filtrado"
         columns={processColumns}
         rows={processos}

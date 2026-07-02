@@ -2,8 +2,10 @@ import { useCallback, useRef, useState } from "react";
 import { AlertTriangle, ArrowDownUp, Download, FileJson, RefreshCw, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
+import { HelpTooltip } from "../../components/HelpTooltip";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   applyJsonImport,
   downloadJsonExport,
@@ -170,7 +172,13 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                 <Download size={22} strokeWidth={1.75} />
               </span>
               <div className="tm-data-transfer__panel-text">
-                <h2 className="ds-section-title">Exportar</h2>
+                <h2 className="ds-section-title">
+                  Exportar
+                  <HelpTooltip
+                    content={TM_HELP_TOOLTIPS.dataTransfer.export}
+                    ariaLabel="Ajuda: Exportar"
+                  />
+                </h2>
                 <p className="ds-hint">
                   Gera um arquivo <code>.json</code> com todo o cadastro atual para backup ou
                   transferência entre ambientes.
@@ -247,7 +255,13 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
             </div>
 
             <div>
-              <p className="tm-data-transfer__field-label">Formato do backup</p>
+              <p className="tm-data-transfer__field-label tm-field__label">
+                Formato do backup
+                <HelpTooltip
+                  content={TM_HELP_TOOLTIPS.dataTransfer.importFormat}
+                  ariaLabel="Ajuda: Formato do backup"
+                />
+              </p>
               <div
                 className="tm-data-transfer__formats"
                 role="radiogroup"

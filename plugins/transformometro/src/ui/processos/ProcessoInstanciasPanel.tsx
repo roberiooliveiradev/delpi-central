@@ -3,8 +3,10 @@ import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
+import { FieldLabel, HelpTooltip } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
-import { filterSetoresByFilial, resolveSetorIdForFilial } from "../../utils/setores";
+import { filterSetoresByFilial } from "../../utils/setores";
 
 type CreatePayload = {
   filial_id?: string;
@@ -114,9 +116,6 @@ export function ProcessoInstanciasPanel({
   const [setorIds, setSetorIds] = useState<string[]>(() =>
     defaultSetorIds(options.setores, options.filiais[0]?.id ?? "01", instancias)
   );
-  const [setorId, setSetorId] = useState(
-    resolveSetorIdForFilial(options.setores, options.filiais[0]?.id ?? "01", "")
-  );
   const [rotulo, setRotulo] = useState("");
   const [statusInstancia, setStatusInstancia] = useState("ativo");
   const [saving, setSaving] = useState(false);
@@ -156,9 +155,6 @@ export function ProcessoInstanciasPanel({
 
   // Setores disponíveis conforme o modo (criar/editar multi-filial ou replicar).
   const setoresDisponiveis = useMemo(() => {
-    if (duplicateSourceId) {
-      return filterSetoresByFilial(options.setores, filialId);
-    }
     if (todasFiliais) return options.setores;
     if (filialIds.length === 0) return [];
     const seen = new Set<string>();
@@ -173,7 +169,7 @@ export function ProcessoInstanciasPanel({
       }
     }
     return out;
-  }, [duplicateSourceId, filialId, todasFiliais, filialIds, options.setores]);
+  }, [todasFiliais, filialIds, options.setores]);
 
   // Payloads por filial selecionada (novo ou editar); filtra setores válidos/livres por filial.
   const filialPayloads = useMemo<CreatePayload[]>(() => {
@@ -219,6 +215,25 @@ export function ProcessoInstanciasPanel({
     return filialIds.filter((fid) => !withPayload.has(fid.toLowerCase()));
   }, [duplicateSourceId, todasFiliais, filialPayloads, filialIds]);
 
+  // Replicar: pares (unidade × setor) válidos e livres — cada par vira uma cópia da timeline.
+  const duplicatePayloads = useMemo<{ filial_id: string; setor_id: string }[]>(() => {
+    if (!duplicateSourceId) return [];
+    const out: { filial_id: string; setor_id: string }[] = [];
+    for (const fid of filialIds) {
+      const filialKey = fid.trim().toLowerCase();
+      const available = new Set(
+        filterSetoresByFilial(options.setores, fid).map((setor) => setor.id.toLowerCase())
+      );
+      const used = usedSetorKeysByFilial.get(filialKey) ?? new Set<string>();
+      for (const sid of setorIds) {
+        if (available.has(sid.toLowerCase()) && !used.has(sid.toLowerCase())) {
+          out.push({ filial_id: fid, setor_id: sid });
+        }
+      }
+    }
+    return out;
+  }, [duplicateSourceId, filialIds, setorIds, options.setores, usedSetorKeysByFilial]);
+
   function resetForm() {
     setShowForm(false);
     setEditingInstanciaId(null);
@@ -254,8 +269,10 @@ export function ProcessoInstanciasPanel({
     setEditingInstanciaId(null);
     setDuplicateSourceId(row.instancia_id);
     setTodasFiliais(false);
-    setFilialId(row.codigo_filial ?? row.filial_id ?? "01");
-    setSetorId(row.codigo_setor ?? row.setor_id ?? "");
+    const filialAtual = row.codigo_filial ?? row.filial_id ?? options.filiais[0]?.id ?? "01";
+    setFilialId(filialAtual);
+    setFilialIds([filialAtual]);
+    setSetorIds([]);
     setRotulo("");
     setShowForm(true);
   }
@@ -384,12 +401,14 @@ export function ProcessoInstanciasPanel({
           }
         }
       } else if (duplicateSourceId) {
-        await onDuplicate({
-          origemInstanciaId: duplicateSourceId,
-          filial_id: filialId,
-          setor_id: setorId,
-          rotulo_instancia: rotulo.trim() || undefined,
-        });
+        for (const pair of duplicatePayloads) {
+          await onDuplicate({
+            origemInstanciaId: duplicateSourceId,
+            filial_id: pair.filial_id,
+            setor_id: pair.setor_id,
+            rotulo_instancia: rotulo.trim() || undefined,
+          });
+        }
       } else if (todasFiliais) {
         if (setorIds.length > 0) {
           await onCreate({
@@ -486,7 +505,9 @@ export function ProcessoInstanciasPanel({
         ? `Salvar (+${editExtraCount} nova${editExtraCount > 1 ? "s" : ""})`
         : "Salvar alterações"
       : duplicateSourceId
-        ? "Replicar timeline"
+        ? duplicatePayloads.length > 1
+          ? `Replicar ${duplicatePayloads.length} cópias`
+          : "Replicar timeline"
         : createCount > 1
           ? `Criar ${createCount} instâncias`
           : "Criar instância";
@@ -496,12 +517,41 @@ export function ProcessoInstanciasPanel({
       ? setorIds.length > 0
       : filialPayloads.length > 0
     : duplicateSourceId
-      ? Boolean(filialId && setorId)
+      ? duplicatePayloads.length > 0
       : createCount > 0;
+
+  const unidadesGrid = (
+    <div className="ds-filter-box tm-inst-form__field--full">
+      <span className="ds-field-label">
+        <FieldLabel label="Unidades *" hint={TM_HELP_TOOLTIPS.instancias.unidades} />
+      </span>
+      <div className="tm-check-grid" role="group" aria-label="Unidades da instância">
+        {options.filiais.map((filial) => {
+          const checked = filialIds.some(
+            (id) => id.toLowerCase() === filial.id.toLowerCase()
+          );
+          return (
+            <label key={filial.id} className="tm-check-option">
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => toggleFilial(filial.id)}
+              />
+              <span>
+                {filial.id} — {filial.label}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   const setoresGrid = (
     <div className="ds-filter-box tm-inst-form__field--full">
-      <span className="ds-field-label">Setores *</span>
+      <span className="ds-field-label">
+        <FieldLabel label="Setores *" hint={TM_HELP_TOOLTIPS.instancias.setores} />
+      </span>
       <div className="tm-check-grid" role="group" aria-label="Setores da instância">
         {setoresDisponiveis.length === 0 ? (
           <p className="ds-hint">
@@ -535,7 +585,9 @@ export function ProcessoInstanciasPanel({
 
   const rotuloField = (
     <div className="ds-filter-box tm-inst-form__field--full">
-      <label htmlFor="tm-inst-rotulo">Rótulo (opcional)</label>
+      <label htmlFor="tm-inst-rotulo">
+        <FieldLabel label="Rótulo (opcional)" hint={TM_HELP_TOOLTIPS.instancias.rotulo} />
+      </label>
       <input
         id="tm-inst-rotulo"
         value={rotulo}
@@ -590,8 +642,9 @@ export function ProcessoInstanciasPanel({
           ) : null}
           {duplicateSourceId ? (
             <p className="ds-hint">
-              Replica a timeline (revisões, medições, investimentos e vínculos) para outra unidade e
-              setor.
+              Replica a timeline (revisões, medições, investimentos e vínculos). Marque uma ou mais
+              unidades e setores de destino: cada par unidade × setor livre vira uma cópia. Setores
+              já em uso aparecem desabilitados.
             </p>
           ) : null}
           <form onSubmit={handleSubmit}>
@@ -613,33 +666,14 @@ export function ProcessoInstanciasPanel({
                         }}
                       />
                       <span>Todas as unidades ativas (instância única consolidada)</span>
+                      <HelpTooltip
+                        content={TM_HELP_TOOLTIPS.instancias.todasUnidades}
+                        ariaLabel="Ajuda: Todas as unidades ativas"
+                      />
                     </label>
                   </div>
 
-                  {!todasFiliais ? (
-                    <div className="ds-filter-box tm-inst-form__field--full">
-                      <span className="ds-field-label">Unidades *</span>
-                      <div className="tm-check-grid" role="group" aria-label="Unidades da instância">
-                        {options.filiais.map((filial) => {
-                          const checked = filialIds.some(
-                            (id) => id.toLowerCase() === filial.id.toLowerCase()
-                          );
-                          return (
-                            <label key={filial.id} className="tm-check-option">
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggleFilial(filial.id)}
-                              />
-                              <span>
-                                {filial.id} — {filial.label}
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
+                  {!todasFiliais ? unidadesGrid : null}
 
                   {setoresGrid}
 
@@ -673,37 +707,20 @@ export function ProcessoInstanciasPanel({
                         }}
                       />
                       <span>Todas as unidades ativas (instância consolidada)</span>
+                      <HelpTooltip
+                        content={TM_HELP_TOOLTIPS.instancias.todasUnidades}
+                        ariaLabel="Ajuda: Todas as unidades ativas"
+                      />
                     </label>
                   </div>
 
-                  {!todasFiliais ? (
-                    <div className="ds-filter-box tm-inst-form__field--full">
-                      <span className="ds-field-label">Unidades *</span>
-                      <div className="tm-check-grid" role="group" aria-label="Unidades da instância">
-                        {options.filiais.map((filial) => {
-                          const checked = filialIds.some(
-                            (id) => id.toLowerCase() === filial.id.toLowerCase()
-                          );
-                          return (
-                            <label key={filial.id} className="tm-check-option">
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggleFilial(filial.id)}
-                              />
-                              <span>
-                                {filial.id} — {filial.label}
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
+                  {!todasFiliais ? unidadesGrid : null}
 
                   <div className="tm-inst-form__row">
                     <div className="ds-filter-box">
-                      <label htmlFor="tm-inst-status">Status *</label>
+                      <label htmlFor="tm-inst-status">
+                        <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.instancias.status} />
+                      </label>
                       <select
                         id="tm-inst-status"
                         value={statusInstancia}
@@ -730,41 +747,10 @@ export function ProcessoInstanciasPanel({
 
               {duplicateSourceId ? (
                 <>
-                  <div className="tm-inst-form__row">
-                    <div className="ds-filter-box">
-                      <label htmlFor="tm-inst-filial-dup">Unidade destino *</label>
-                      <select
-                        id="tm-inst-filial-dup"
-                        value={filialId}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          setFilialId(next);
-                          setSetorId(resolveSetorIdForFilial(options.setores, next, setorId));
-                        }}
-                      >
-                        {options.filiais.map((filial) => (
-                          <option key={filial.id} value={filial.id}>
-                            {filial.id} — {filial.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="ds-filter-box">
-                      <label htmlFor="tm-inst-setor">Setor destino *</label>
-                      <select
-                        id="tm-inst-setor"
-                        value={setorId}
-                        onChange={(e) => setSetorId(e.target.value)}
-                        disabled={setoresDisponiveis.length === 0}
-                      >
-                        {setoresDisponiveis.map((setor) => (
-                          <option key={setor.id} value={setor.id}>
-                            {setor.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                  {unidadesGrid}
+
+                  {setoresGrid}
+
                   {rotuloField}
                 </>
               ) : null}

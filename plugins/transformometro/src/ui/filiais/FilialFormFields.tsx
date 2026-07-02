@@ -1,3 +1,5 @@
+import { FieldLabel } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import type { FilialFormState } from "./filialCatalogForm";
 
@@ -14,7 +16,9 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
   return (
     <div className="ds-filters-row ds-filters-row--extended">
       <div className="ds-filter-box">
-        <label htmlFor="tm-filial-codigo">Código TOTVS *</label>
+        <label htmlFor="tm-filial-codigo">
+          <FieldLabel label="Código TOTVS *" hint={TM_HELP_TOOLTIPS.filiais.codigo} />
+        </label>
         <input
           id="tm-filial-codigo"
           required
@@ -25,7 +29,9 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
         />
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-filial-nome">Nome da unidade *</label>
+        <label htmlFor="tm-filial-nome">
+          <FieldLabel label="Nome da unidade *" hint={TM_HELP_TOOLTIPS.filiais.nome} />
+        </label>
         <input
           id="tm-filial-nome"
           required
@@ -34,7 +40,9 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
         />
       </div>
       <div className="ds-filter-box">
-        <label htmlFor="tm-filial-status">Status *</label>
+        <label htmlFor="tm-filial-status">
+          <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.filiais.status} />
+        </label>
         <select
           id="tm-filial-status"
           value={form.status_filial}

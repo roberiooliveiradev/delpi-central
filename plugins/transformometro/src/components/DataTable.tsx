@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { HelpTooltip } from "./HelpTooltip";
+
 export type DataTableColumn<T> = {
   key: string;
   header: string;
@@ -7,6 +9,8 @@ export type DataTableColumn<T> = {
   sortable?: boolean;
   sortValue?: (row: T) => string | number | boolean | null | undefined;
   className?: string;
+  /** Texto do balão explicativo exibido ao lado do cabeçalho da coluna. */
+  headerHint?: string;
 };
 
 type DataTableProps<T> = {
@@ -61,17 +65,33 @@ export function DataTable<T>({
                   aria-sort={column.sortable ? (isSorted ? (sortDirection === "asc" ? "ascending" : "descending") : "none") : undefined}
                 >
                   {column.sortable && onSortChange ? (
-                    <button
-                      type="button"
-                      className="ds-table__sort-button"
-                      onClick={() => onSortChange(column.key)}
-                      aria-label={`Ordenar por ${column.header}`}
-                    >
-                      <span>{column.header}</span>
-                      <span className="ds-table__sort-indicator">
-                        {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
-                      </span>
-                    </button>
+                    <span className="ds-table__header-cell">
+                      <button
+                        type="button"
+                        className="ds-table__sort-button"
+                        onClick={() => onSortChange(column.key)}
+                        aria-label={`Ordenar por ${column.header}`}
+                      >
+                        <span>{column.header}</span>
+                        <span className="ds-table__sort-indicator">
+                          {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                        </span>
+                      </button>
+                      {column.headerHint ? (
+                        <HelpTooltip
+                          content={column.headerHint}
+                          ariaLabel={`Ajuda: ${column.header}`}
+                        />
+                      ) : null}
+                    </span>
+                  ) : column.headerHint ? (
+                    <span className="ds-table__header-cell">
+                      {column.header}
+                      <HelpTooltip
+                        content={column.headerHint}
+                        ariaLabel={`Ajuda: ${column.header}`}
+                      />
+                    </span>
                   ) : (
                     column.header
                   )}

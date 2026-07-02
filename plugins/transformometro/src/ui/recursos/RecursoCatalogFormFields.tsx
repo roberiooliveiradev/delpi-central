@@ -1,3 +1,5 @@
+import { FieldLabel } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import { labelBaseCompetencia, labelCriterioRateio, labelEscopoRecurso } from "../../utils/catalogLabels";
 import type { RecursoCatalogFormState } from "./recursoCatalogForm";
@@ -54,7 +56,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           />
         </label>
         <label className="ds-filter-box">
-          Tipo de custo *
+          <FieldLabel label="Tipo de custo *" hint={TM_HELP_TOOLTIPS.recursos.tipoCusto} />
           <select
             value={form.tipo_custo}
             onChange={(e) => onChange({ ...form, tipo_custo: e.target.value })}
@@ -80,7 +82,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Critério de rateio *
+          <FieldLabel label="Critério de rateio *" hint={TM_HELP_TOOLTIPS.recursos.criterioRateio} />
           <select
             value={form.criterio_rateio}
             onChange={(e) => onChange({ ...form, criterio_rateio: e.target.value })}
@@ -93,7 +95,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Escopo de rateio *
+          <FieldLabel label="Escopo de rateio *" hint={TM_HELP_TOOLTIPS.recursos.escopo} />
           <select
             value={form.escopo_recurso}
             onChange={(e) => onChange({ ...form, escopo_recurso: e.target.value })}
@@ -106,7 +108,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Base de competência *
+          <FieldLabel label="Base de competência *" hint={TM_HELP_TOOLTIPS.recursos.baseCompetencia} />
           <select
             value={form.base_competencia}
             onChange={(e) => onChange({ ...form, base_competencia: e.target.value })}

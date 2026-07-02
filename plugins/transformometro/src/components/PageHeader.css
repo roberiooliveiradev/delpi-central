@@ -41,10 +41,11 @@
     grid-template-columns: repeat(auto-fill, minmax(10.5rem, max-content));
   }
 
-.dashboard-transformometro .ds-header-actions .ds-ghost-btn,
-.dashboard-transformometro .ds-header-actions .ds-primary-btn {
-  min-height: 40px;
-  padding: 9px 12px;
+  .dashboard-transformometro .ds-header-actions .ds-ghost-btn,
+  .dashboard-transformometro .ds-header-actions .ds-primary-btn {
+    min-height: 40px;
+    padding: 9px 12px;
+  }
 }
 
 .dashboard-transformometro .ds-header-menu {
@@ -76,9 +77,10 @@
   min-width: 15.5rem;
   padding: 8px;
   border-radius: 12px;
-  border: 1px solid var(--ds-border, rgba(255, 255, 255, 0.12));
-  background: var(--ds-surface-elevated, #1a2332);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--ds-card-border, #e6e6e6);
+  background: var(--ds-card-bg, #ffffff);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  color: var(--ds-text, #111111);
 }
 
 .dashboard-transformometro .ds-header-menu__item {
@@ -97,7 +99,7 @@
 }
 
 .dashboard-transformometro .ds-header-menu__item:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--ds-accent) 10%, transparent);
 }
 
 .dashboard-transformometro .ds-header-menu__item:disabled {
@@ -108,7 +110,7 @@
 .dashboard-transformometro .ds-header-menu__divider {
   height: 1px;
   margin: 6px 0;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--ds-card-border, rgba(0, 0, 0, 0.1));
 }
 
 .dashboard-transformometro .ds-header-menu__hint {
@@ -117,7 +119,7 @@
   font-size: 11px;
   line-height: 1.35;
   opacity: 0.72;
-}
+  color: var(--ds-text-muted, rgba(17, 17, 17, 0.7));
 }
 
 @media (max-width: 760px) {

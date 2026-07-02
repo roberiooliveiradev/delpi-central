@@ -1,3 +1,5 @@
+import { FieldLabel } from "../../components/HelpTooltip";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import type { SetorFormState } from "./setorCatalogForm";
 
@@ -24,7 +26,9 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
   return (
     <div className="ds-filters-row ds-filters-row--extended">
       <div className="ds-filter-box">
-        <label htmlFor="tm-setor-codigo">Código de negócio *</label>
+        <label htmlFor="tm-setor-codigo">
+          <FieldLabel label="Código de negócio *" hint={TM_HELP_TOOLTIPS.setores.codigo} />
+        </label>
         <input
           id="tm-setor-codigo"
           required
@@ -35,7 +39,9 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
         />
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
-        <label htmlFor="tm-setor-nome">Nome do setor *</label>
+        <label htmlFor="tm-setor-nome">
+          <FieldLabel label="Nome do setor *" hint={TM_HELP_TOOLTIPS.setores.nome} />
+        </label>
         <input
           id="tm-setor-nome"
           required
@@ -44,7 +50,9 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
         />
       </div>
       <div className="ds-filter-box">
-        <label htmlFor="tm-setor-status">Status *</label>
+        <label htmlFor="tm-setor-status">
+          <FieldLabel label="Status *" hint={TM_HELP_TOOLTIPS.setores.status} />
+        </label>
         <select
           id="tm-setor-status"
           value={form.status_setor}
@@ -58,7 +66,12 @@ export function SetorFormFields({ form, options, editing, onChange }: Props) {
         </select>
       </div>
       <div className="ds-filter-box ds-filter-box--wide">
-        <span className="ds-field-label">Unidades vinculadas *</span>
+        <span className="ds-field-label">
+          <FieldLabel
+            label="Unidades vinculadas *"
+            hint={TM_HELP_TOOLTIPS.setores.unidadesVinculadas}
+          />
+        </span>
         <div className="tm-inst-setores-grid">
           {options.filiais.map((filial) => (
             <label key={filial.id} className="tm-inst-setor-option ds-check-label">
