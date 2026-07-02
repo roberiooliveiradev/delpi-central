@@ -41,13 +41,6 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-function formatDate(value: string | null): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("pt-BR");
-}
-
 function buildLabelStyles(): string {
   return `
     @page { size: auto; margin: 14mm; }
@@ -106,19 +99,6 @@ function buildLabelStyles(): string {
       color: #013866;
       line-height: 1.1;
     }
-    .tag__desc {
-      font-size: 6pt;
-      font-weight: 400;
-      color: #64748b;
-      line-height: 1.15;
-      max-width: 40mm;
-    }
-    .tag__meta {
-      font-size: 6pt;
-      font-weight: 400;
-      color: #64748b;
-      line-height: 1.25;
-    }
     /* Zona central: dobra em volta do cabo (frente x verso) */
     .tag__fold {
       position: relative;
@@ -174,10 +154,6 @@ function buildLabelStyles(): string {
 function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
   const topLabel = RESULT_LABELS[label.result] ?? "QUALIDADE";
   const productCode = escapeHtml(label.productCode);
-  const productDesc = escapeHtml(label.productDescription);
-  const op = escapeHtml(label.productionOrder);
-  const date = escapeHtml(formatDate(label.inspectedAt));
-  const inspector = escapeHtml(label.inspectorName);
   return `<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -190,7 +166,6 @@ function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
       <div class="tag__panel tag__qr">
         <img src="${qrDataUrl}" alt="QR code da inspeção" />
         <div class="tag__caption">Aponte a câmera do celular</div>
-        <div class="tag__meta">OP ${op} · ${date}</div>
       </div>
       <div class="tag__fold" aria-hidden="true">
         <span>dobre no cabo</span>
@@ -199,8 +174,6 @@ function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
         <div class="tag__logo">${delpiLogoSvg}</div>
         <div class="tag__seal">${qualitySealSvg(topLabel)}</div>
         <div class="tag__product">${productCode}</div>
-        <div class="tag__desc">${productDesc}</div>
-        <div class="tag__meta">Inspetor: ${inspector}</div>
       </div>
     </div>
     <p class="hint">

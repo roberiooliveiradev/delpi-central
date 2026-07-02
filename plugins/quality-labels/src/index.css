@@ -540,6 +540,9 @@
   place-items: center;
   width: 34px;
   height: 34px;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
   border: 1px solid var(--ql-border);
   border-radius: 10px;
   background: var(--ql-surface);
