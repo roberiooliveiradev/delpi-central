@@ -336,6 +336,73 @@ def _venc_processo(pid: str, mel_start: date) -> dict:
     }
 
 
+def _familia_setor_raw() -> TransformometroRawData:
+    def _proc(pid: str, setor: str, familia: str) -> dict:
+        return {
+            "processo_id": pid,
+            "codigo_processo": f"P-{pid}",
+            "nome_processo": pid,
+            "familia_processo": familia,
+            "status_processo": "ativo",
+            "deletado": False,
+        }
+
+    def _inst(pid: str, setor: str) -> dict:
+        return {
+            "instancia_id": f"i-{pid}",
+            "processo_id": pid,
+            "filial_id": "01",
+            "codigo_filial": "01",
+            "setores": [{"codigo_setor": setor, "setor_id": setor}],
+            "deletado": False,
+        }
+
+    def _revs(pid: str) -> list[dict]:
+        return [
+            {
+                "revisao_id": f"b-{pid}", "processo_id": pid, "instancia_id": f"i-{pid}",
+                "cenario_tipo": "baseline", "data_inicio_vigencia": "2026-01-01",
+                "revisao_ativa": False, "deletado": False,
+            },
+            {
+                "revisao_id": f"m-{pid}", "processo_id": pid, "instancia_id": f"i-{pid}",
+                "cenario_tipo": "melhoria", "data_inicio_vigencia": "2026-06-01",
+                "data_implantacao": "2026-06-01", "revisao_ativa": True, "deletado": False,
+            },
+        ]
+
+    procs = [("pc", "comercial", "Familia Comercial"), ("pe", "eng", "Familia Eng")]
+    return TransformometroRawData(
+        processos=[_proc(pid, setor, fam) for pid, setor, fam in procs],
+        processo_instancias=[_inst(pid, setor) for pid, setor, _ in procs],
+        revisoes=[r for pid, _, _ in procs for r in _revs(pid)],
+        medicoes=[
+            m
+            for pid, _, _ in procs
+            for m in (_medicao_live(f"b-{pid}", 60), _medicao_live(f"m-{pid}", 30))
+        ],
+        investimentos=[], recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[], recurso_custos=[],
+    )
+
+
+@patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
+def test_query_resumo_por_familia_filtra_por_setor(mock_repo):
+    """Visão departamento (setor) não deve dar erro e deve filtrar por família do setor."""
+    mock_repo.return_value.load_raw.return_value = _familia_setor_raw()
+
+    rows = DashboardLiveService().query_resumo_por_familia(
+        view="department",
+        filial_id="01",
+        setor_id="comercial",
+        competencia_inicio="2026-07-01",
+        competencia_fim="2026-07-31",
+    )
+
+    familias = {row["familia_processo"] for row in rows}
+    assert familias == {"Familia Comercial"}
+
+
 @patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
 def test_list_vencimentos_separa_vencendo_e_vencidas(mock_repo):
     today = date.today()

@@ -342,14 +342,16 @@ def dashboard_por_familia(
     request: Request,
     view: str | None = Query(default=None),
     filial_id: str | None = None,
+    setor_id: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ):
-    if err := _scope_error_response(request, view, filial_id, None):
+    if err := _scope_error_response(request, view, filial_id, setor_id):
         return err
     rows = _live.query_resumo_por_familia(
         view=view,
         filial_id=filial_id,
+        setor_id=setor_id,
         competencia_inicio=competencia_inicio,
         competencia_fim=competencia_fim,
     )

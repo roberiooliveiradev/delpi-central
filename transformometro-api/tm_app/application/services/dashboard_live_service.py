@@ -335,16 +335,18 @@ class DashboardLiveService:
         *,
         view: str | None = None,
         filial_id: str | None = None,
+        setor_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
         rows = self.calculation_rows(
             view=view,
             filial_id=filial_id,
+            setor_id=setor_id,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
         )
-        raw = self.load_filtered_raw(view=view, filial_id=filial_id)
+        raw = self.load_filtered_raw(view=view, filial_id=filial_id, setor_id=setor_id)
         processos_by_id = {
             str(p.get("processo_id")): p for p in raw.processos if p.get("processo_id")
         }

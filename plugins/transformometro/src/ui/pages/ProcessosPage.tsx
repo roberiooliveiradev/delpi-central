@@ -19,7 +19,7 @@ import {
   type Processo,
 } from "../../data/api/transformometroApi";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
-import { filterSetoresByFilial, setorLabel } from "../../utils/setores";
+import { setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
   emptyProcessoForm,
@@ -49,7 +49,6 @@ export function ProcessosPage({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProcessoFormState>(emptyProcessoForm);
   const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
-  const [filialId, setFilialId] = useState("");
   const [setorId, setSetorId] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQ, setSearchQ] = useState("");
@@ -57,13 +56,12 @@ export function ProcessosPage({
 
   const listParams = useMemo(() => {
     const params: Record<string, string> = {};
-    if (filialId) params.filial_id = filialId;
     if (setorId) params.setor_id = setorId;
     if (statusFilter) params.status = statusFilter;
     if (searchQ.trim()) params.q = searchQ.trim();
     if (familiaFilter.trim()) params.familia_processo = familiaFilter.trim();
     return params;
-  }, [familiaFilter, filialId, searchQ, setorId, statusFilter]);
+  }, [familiaFilter, searchQ, setorId, statusFilter]);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -161,11 +159,6 @@ export function ProcessosPage({
     }
   }
 
-  const setoresFiltrados = useMemo(
-    () => filterSetoresByFilial(options?.setores ?? [], filialId),
-    [filialId, options?.setores]
-  );
-
   const editingRow = editingId ? items.find((p) => p.processo_id === editingId) : null;
 
   const columns = useMemo<DataTableColumn<Processo>[]>(
@@ -178,7 +171,6 @@ export function ProcessosPage({
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      { key: "filial", header: "Unidade", render: (row) => row.filial_id ?? "—", sortable: true },
       {
         key: "setor",
         header: "Setor",
@@ -307,29 +299,6 @@ export function ProcessosPage({
               />
             </div>
             <div className="ds-filter-box">
-              <label htmlFor="tm-proc-list-filial">Unidade</label>
-              <select
-                id="tm-proc-list-filial"
-                value={filialId}
-                onChange={(e) => {
-                  const nextFilial = e.target.value;
-                  setFilialId(nextFilial);
-                  setSetorId((current) => {
-                    if (!nextFilial || !current) return current;
-                    const available = filterSetoresByFilial(options?.setores ?? [], nextFilial);
-                    return available.some((setor) => setor.id === current) ? current : "";
-                  });
-                }}
-              >
-                <option value="">Todas</option>
-                {(options?.filiais ?? []).map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.id} — {f.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="ds-filter-box">
               <label htmlFor="tm-proc-list-setor">Setor</label>
               <select
                 id="tm-proc-list-setor"
@@ -337,13 +306,11 @@ export function ProcessosPage({
                 onChange={(e) => setSetorId(e.target.value)}
               >
                 <option value="">Todos</option>
-                {(setoresFiltrados.length > 0 ? setoresFiltrados : (options?.setores ?? [])).map(
-                  (setor) => (
-                    <option key={setor.id} value={setor.id}>
-                      {setor.label}
-                    </option>
-                  )
-                )}
+                {(options?.setores ?? []).map((setor) => (
+                  <option key={setor.id} value={setor.id}>
+                    {setor.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="ds-filter-box">
