@@ -94,42 +94,28 @@ function buildLabelStyles(): string {
       display: block;
     }
     .tag__caption {
-      font-size: 5pt;
-      font-weight: 700;
-      color: #015488;
+      font-size: 5.5pt;
+      font-weight: 800;
+      color: #013247;
       line-height: 1.15;
       max-width: 44mm;
     }
     .tag__product {
-      font-size: 6.5pt;
-      font-weight: 800;
-      color: #013866;
+      font-size: 7.5pt;
+      font-weight: 900;
+      color: #000000;
       line-height: 1.05;
+      letter-spacing: 0.2px;
     }
     .tag__meta {
-      font-size: 4.5pt;
-      font-weight: 400;
-      color: #64748b;
+      font-size: 5pt;
+      font-weight: 700;
+      color: #1f2937;
       line-height: 1.2;
     }
-    /* Zona central: dobra em volta do cabo (frente x verso) */
+    /* Zona central: espaço de dobra em volta do cabo (frente x verso) */
     .tag__fold {
-      position: relative;
       width: 8mm;
-      border-left: 0.3mm dashed #157347;
-      border-right: 0.3mm dashed #157347;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .tag__fold span {
-      transform: rotate(-90deg);
-      white-space: nowrap;
-      font-size: 4.5pt;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: #94a3b8;
     }
     .tag__logo {
       width: 100%;
@@ -166,8 +152,19 @@ function buildLabelStyles(): string {
     }
     /* Impressão: só a etiqueta ocupa a mídia 100x30. */
     @media print {
-      body { padding: 0; display: block; }
-      .tag { border: none; width: 100mm; height: 30mm; }
+      html, body {
+        width: 100mm;
+        height: 30mm;
+        padding: 0;
+        margin: 0;
+        display: block;
+        overflow: hidden;
+      }
+      .tag {
+        border: none;
+        width: 100mm;
+        height: 30mm;
+      }
       .hint { display: none; }
     }
   `;
@@ -192,9 +189,7 @@ function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
         <div class="tag__caption">Aponte a câmera do celular</div>
         <div class="tag__meta">OP ${op} · ${date}</div>
       </div>
-      <div class="tag__fold" aria-hidden="true">
-        <span>dobre no cabo</span>
-      </div>
+      <div class="tag__fold" aria-hidden="true"></div>
       <div class="tag__panel tag__brand">
         <div class="tag__logo">${delpiLogoSvg}</div>
         <div class="tag__seal">${qualitySealSvg(topLabel)}</div>
@@ -281,7 +276,8 @@ function printViaIframe(html: string): boolean {
 export async function printQualityLabel(label: QualityLabel, qrBlob: Blob): Promise<void> {
   const qrDataUrl = await blobToDataUrl(qrBlob);
   const html = buildLabelHtml(label, qrDataUrl);
-  if (printViaWindow(html) || printViaIframe(html)) {
+  // iframe primeiro: imprime no contexto atual, sem abrir aba "about:blank".
+  if (printViaIframe(html) || printViaWindow(html)) {
     return;
   }
   throw new Error(

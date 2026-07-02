@@ -48,9 +48,9 @@ export function ThanksView({ participant }: { participant: PublicParticipant }) 
 function defaultMessage(company: string): string {
   const partner = company?.trim() ? company.trim() : "sua empresa";
   return [
-    "Hoje você não apenas conheceu a DELPI — você colocou a mão na massa e montou o seu próprio cabo, a mesma engenharia que conecta máquinas, veículos e indústrias por todo o Brasil.",
+    "Hoje você não apenas conheceu a DELPI — você colocou a mão na massa e montou o seu próprio chicote, a mesma engenharia que conecta máquinas, veículos e indústrias por todo o Brasil.",
     `Cada contato, cada terminal e cada detalhe passou pelas suas mãos. Obrigado por viver essa experiência com a gente e por construir, junto conosco, a conexão entre a DELPI e a ${partner}.`,
-    "Que essa parceria seja tão firme e resistente quanto o cabo que saiu das suas mãos. Foi uma honra ter você aqui — volte sempre!",
+    "Que essa parceria seja tão firme e resistente quanto o chicote que saiu das suas mãos. Foi uma honra ter você aqui — volte sempre!",
   ].join("\n\n");
 }
 

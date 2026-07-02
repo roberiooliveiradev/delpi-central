@@ -81,40 +81,25 @@ function buildLabelStyles(): string {
       display: block;
     }
     .tag__caption {
-      font-size: 5pt;
-      font-weight: 700;
-      color: #015488;
+      font-size: 5.5pt;
+      font-weight: 800;
+      color: #013247;
       line-height: 1.15;
       max-width: 44mm;
     }
     .tag__name {
-      font-size: 4.5pt;
-      font-weight: 600;
-      color: #013866;
+      font-size: 5pt;
+      font-weight: 800;
+      color: #000000;
       line-height: 1.15;
       max-width: 44mm;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    /* Zona central: dobra em volta do cabo (frente x verso) */
+    /* Zona central: espaço de dobra em volta do chicote (frente x verso) */
     .tag__fold {
-      position: relative;
       width: 8mm;
-      border-left: 0.3mm dashed #157347;
-      border-right: 0.3mm dashed #157347;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .tag__fold span {
-      transform: rotate(-90deg);
-      white-space: nowrap;
-      font-size: 4.5pt;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: #94a3b8;
     }
     .tag__logo {
       width: 100%;
@@ -151,8 +136,19 @@ function buildLabelStyles(): string {
     }
     /* Impressão: só a etiqueta ocupa a mídia 100x30. */
     @media print {
-      body { padding: 0; display: block; }
-      .tag { border: none; width: 100mm; height: 30mm; }
+      html, body {
+        width: 100mm;
+        height: 30mm;
+        padding: 0;
+        margin: 0;
+        display: block;
+        overflow: hidden;
+      }
+      .tag {
+        border: none;
+        width: 100mm;
+        height: 30mm;
+      }
       .hint { display: none; }
     }
   `;
@@ -175,7 +171,7 @@ function buildLabelHtml(participant: Participant, qrDataUrl: string): string {
         <div class="tag__name">${name}</div>
       </div>
       <div class="tag__fold" aria-hidden="true">
-        <span>dobre no cabo</span>
+        <span>dobre no chicote</span>
       </div>
       <div class="tag__panel tag__brand">
         <div class="tag__logo">${delpiLogoSvg}</div>
@@ -183,7 +179,7 @@ function buildLabelHtml(participant: Participant, qrDataUrl: string): string {
       </div>
     </div>
     <p class="hint">
-      Recorte na linha externa e dobre na faixa central em volta do cabo:
+      Recorte na linha externa e dobre na faixa central em volta do chicote:
       o QR code fica de um lado (frente) e a marca com o selo de qualidade do outro (verso).
     </p>
   </body>
@@ -258,12 +254,13 @@ function printViaIframe(html: string): boolean {
   return true;
 }
 
-/** Monta e envia para impressão a etiqueta do cabo (QR + marca + selo). */
+/** Monta e envia para impressão a etiqueta do chicote (QR + marca + selo). */
 export async function printQrLabel(participant: Participant, qrBlob: Blob): Promise<PrintResult> {
   try {
     const qrDataUrl = await blobToDataUrl(qrBlob);
     const html = buildLabelHtml(participant, qrDataUrl);
-    if (printViaWindow(html) || printViaIframe(html)) {
+    // iframe primeiro: imprime no contexto atual, sem abrir aba "about:blank".
+    if (printViaIframe(html) || printViaWindow(html)) {
       return { success: true };
     }
     return {

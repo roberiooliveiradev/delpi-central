@@ -536,7 +536,7 @@ export function ParticipantsPanel() {
                       className="cx-button cx-button--ghost"
                       type="button"
                       onClick={() => handlePrintLabel(participant)}
-                      title="Imprimir etiqueta para o cabo (frente e verso)"
+                      title="Imprimir etiqueta para o chicote (frente e verso)"
                     >
                       <Printer size={16} /> Imprimir etiqueta
                     </button>
