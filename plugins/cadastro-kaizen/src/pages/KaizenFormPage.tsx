@@ -7,6 +7,7 @@ import {
   updateKaizenRecord,
 } from "../api/kaizenApi";
 import { KaizenFormFields } from "../components/form/KaizenFormFields";
+import { KaizenFormProgress } from "../components/form/KaizenFormProgress";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import {
@@ -110,9 +111,11 @@ export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props)
         onBack={() => onNavigate(listPath())}
       />
 
-      <form className="kz-card kz-form" onSubmit={(event) => void handleSubmit(event)}>
+      <form className="kz-form" onSubmit={(event) => void handleSubmit(event)}>
         {error ? <StateAlert variant="error">{error}</StateAlert> : null}
         {success ? <StateAlert variant="success">{success}</StateAlert> : null}
+
+        <KaizenFormProgress values={values} />
 
         <KaizenFormFields values={values} onChange={updateField} />
 

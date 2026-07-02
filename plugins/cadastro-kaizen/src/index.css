@@ -445,6 +445,84 @@
   flex-wrap: wrap;
 }
 
+/* Dentro do formulário as seções são cards; o espaçamento vem do gap do .kz-form. */
+.dashboard-cadastro-kaizen .kz-form .kz-section-card {
+  margin-bottom: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-form-note {
+  margin: 0;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text-muted);
+  background: color-mix(in srgb, var(--kz-accent) 5%, var(--kz-card-bg));
+  border: 1px dashed var(--kz-card-border);
+  border-radius: var(--kz-control-radius);
+  padding: 10px 12px;
+}
+
+/* Barra de preenchimento do formulário (padrão quality-action-plans) */
+.dashboard-cadastro-kaizen .kz-form-progress {
+  padding: 14px 16px;
+  border: 1px solid var(--kz-card-border);
+  border-radius: var(--kz-control-radius);
+  background: color-mix(in srgb, var(--kz-accent) 4%, var(--kz-card-bg));
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__title {
+  font-weight: 700;
+  color: var(--kz-title);
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__pct {
+  font-size: var(--kz-font-sm);
+  font-weight: 600;
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--kz-card-border);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__fill {
+  display: block;
+  height: 100%;
+  background: var(--kz-accent);
+  transition: width 0.2s ease;
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-form-progress__item--done {
+  color: var(--kz-success);
+}
+
 @media (max-width: 768px) {
   .dashboard-cadastro-kaizen.dashboard-page {
     padding: 16px;

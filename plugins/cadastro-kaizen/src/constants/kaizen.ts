@@ -19,6 +19,43 @@ export const SAVINGS_TYPES: Array<{ value: SavingsType; label: string }> = [
   { value: "misto", label: "Misto" },
 ];
 
+/** Campos de parâmetro da economia (espelham `kaizen_savings_calculator`). */
+export type SavingsParamField =
+  | "seconds_per_occurrence"
+  | "occurrences_per_day"
+  | "hourly_cost"
+  | "quantity_saved_per_day"
+  | "unit_material_cost"
+  | "fixed_daily_savings";
+
+const ALL_SAVINGS_PARAM_FIELDS: SavingsParamField[] = [
+  "seconds_per_occurrence",
+  "occurrences_per_day",
+  "hourly_cost",
+  "quantity_saved_per_day",
+  "unit_material_cost",
+  "fixed_daily_savings",
+];
+
+/** Quais parâmetros a API usa para calcular a economia de cada tipo. */
+const SAVINGS_TYPE_PARAM_FIELDS: Record<SavingsType, SavingsParamField[]> = {
+  tempo: ["seconds_per_occurrence", "occurrences_per_day", "hourly_cost"],
+  material: ["quantity_saved_per_day", "unit_material_cost"],
+  financeiro: ["fixed_daily_savings"],
+  qualitativo: [],
+  misto: ALL_SAVINGS_PARAM_FIELDS,
+};
+
+/**
+ * Campos de parâmetro que fazem sentido para o tipo escolhido — usado para esconder
+ * o que não se aplica e evitar confusão. Tipo vazio ("inferir automaticamente")
+ * mostra todos, pois a inferência da API considera todos os parâmetros.
+ */
+export function visibleSavingsParamFields(type: SavingsType | ""): SavingsParamField[] {
+  if (!type) return ALL_SAVINGS_PARAM_FIELDS;
+  return SAVINGS_TYPE_PARAM_FIELDS[type] ?? ALL_SAVINGS_PARAM_FIELDS;
+}
+
 export const KAIZEN_STATUSES = [
   { value: "em_andamento", label: "Em andamento" },
   { value: "implantado", label: "Implantado" },
