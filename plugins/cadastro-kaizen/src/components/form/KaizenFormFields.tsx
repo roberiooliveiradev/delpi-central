@@ -1,5 +1,7 @@
 import { FormSection } from "./FormSection";
 import { KaizenParticipantsField } from "./KaizenParticipantsField";
+import { FieldLabel } from "../ui/HelpTooltip";
+import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   BRANCHES,
   KAIZEN_CATEGORIES,
@@ -34,7 +36,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field">
-          <label htmlFor="kz-status">Status</label>
+          <FieldLabel label="Status" htmlFor="kz-status" hint={KAIZEN_HELP_TOOLTIPS.fields.status} />
           <select
             id="kz-status"
             value={values.status}
@@ -51,7 +53,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field kz-span-2">
-          <label htmlFor="kz-title">Título *</label>
+          <FieldLabel label="Título *" htmlFor="kz-title" hint={KAIZEN_HELP_TOOLTIPS.fields.title} />
           <input
             id="kz-title"
             required
@@ -71,7 +73,11 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field">
-          <label htmlFor="kz-category">Categoria</label>
+          <FieldLabel
+            label="Categoria"
+            htmlFor="kz-category"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.category}
+          />
           <select
             id="kz-category"
             value={values.category}
@@ -96,7 +102,11 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field">
-          <label htmlFor="kz-date-implemented">Data implantação</label>
+          <FieldLabel
+            label="Data implantação"
+            htmlFor="kz-date-implemented"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
+          />
           <input
             id="kz-date-implemented"
             type="date"
@@ -124,7 +134,11 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field kz-span-2">
-          <label htmlFor="kz-process">Descrição do processo</label>
+          <FieldLabel
+            label="Descrição do processo"
+            htmlFor="kz-process"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.processDescription}
+          />
           <textarea
             id="kz-process"
             value={values.process_description}
@@ -133,7 +147,11 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field kz-span-2">
-          <label htmlFor="kz-improvement">Melhoria realizada</label>
+          <FieldLabel
+            label="Melhoria realizada"
+            htmlFor="kz-improvement"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.improvementDescription}
+          />
           <textarea
             id="kz-improvement"
             value={values.improvement_description}
@@ -144,7 +162,11 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
 
       <FormSection title="Economia">
         <div className="kz-field">
-          <label htmlFor="kz-savings-type">Tipo de economia</label>
+          <FieldLabel
+            label="Tipo de economia"
+            htmlFor="kz-savings-type"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
+          />
           <select
             id="kz-savings-type"
             value={values.savings_type}
@@ -216,7 +238,11 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field">
-          <label htmlFor="kz-realized-savings">Economia realizada/dia (R$)</label>
+          <FieldLabel
+            label="Economia realizada/dia (R$)"
+            htmlFor="kz-realized-savings"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.realizedDailySavings}
+          />
           <input
             id="kz-realized-savings"
             value={values.realized_daily_savings}

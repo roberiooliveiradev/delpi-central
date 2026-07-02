@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileText, LinkIcon, Trash2, Upload } from "lucide-react";
+import { Download, FileText, LinkIcon, Plus, Trash2, Upload } from "lucide-react";
 
 import {
   deleteKaizenEvidence,
@@ -14,6 +14,17 @@ import type {
   KaizenEvidenceType,
 } from "../../types/kaizen";
 import { StateAlert } from "../StateAlert";
+import { HelpTooltip } from "../ui/HelpTooltip";
+import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
+import {
+  KaizenEvidencePendingList,
+  type KaizenPendingUpload,
+} from "../evidence/KaizenEvidencePendingList";
+import {
+  createPendingUploadId,
+  inferEvidenceTypeFromFile,
+} from "../evidence/kaizenEvidenceUtils";
 
 type KaizenEvidencePanelProps = {
   kaizenId: string;
@@ -109,11 +120,13 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const [stage, setStage] = useState<KaizenEvidenceStage>("antes");
-  const [mode, setMode] = useState<"file" | "link">("file");
-  const [file, setFile] = useState<File | null>(null);
+  const [pending, setPending] = useState<KaizenPendingUpload[]>([]);
+  const [defaultStage, setDefaultStage] = useState<KaizenEvidenceStage>("antes");
+
+  const [showLink, setShowLink] = useState(false);
+  const [linkStage, setLinkStage] = useState<KaizenEvidenceStage>("geral");
   const [externalUrl, setExternalUrl] = useState("");
-  const [description, setDescription] = useState("");
+  const [linkDescription, setLinkDescription] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -143,25 +156,68 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
     return groups;
   }, [evidences]);
 
-  async function handleUpload() {
+  function addFiles(files: File[]) {
+    if (!files.length || uploading) return;
+    setError(null);
+    setPending((current) => [
+      ...current,
+      ...files.map((file) => ({
+        id: createPendingUploadId(),
+        file,
+        stage: defaultStage,
+        description: "",
+      })),
+    ]);
+  }
+
+  function updatePending(id: string, patch: Partial<KaizenPendingUpload>) {
+    setPending((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
+
+  function removePending(id: string) {
+    setPending((current) => current.filter((item) => item.id !== id));
+  }
+
+  async function handleUploadQueue() {
+    if (!pending.length || uploading) return;
     setUploading(true);
     setError(null);
     try {
-      const type: KaizenEvidenceType =
-        mode === "link" ? "link" : file && isImage(file.type) ? "photo" : "attachment";
-      await uploadKaizenEvidence(kaizenId, {
-        stage,
-        type,
-        file: mode === "file" ? file ?? undefined : undefined,
-        externalUrl: mode === "link" ? externalUrl : undefined,
-        description: description || undefined,
-      });
-      setFile(null);
-      setExternalUrl("");
-      setDescription("");
+      for (const item of pending) {
+        const type: KaizenEvidenceType = inferEvidenceTypeFromFile(item.file);
+        await uploadKaizenEvidence(kaizenId, {
+          stage: item.stage,
+          type,
+          file: item.file,
+          description: item.description.trim() || undefined,
+        });
+      }
+      setPending([]);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao anexar evidência.");
+      setError(err instanceof Error ? err.message : "Erro ao anexar evidências.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleAddLink() {
+    if (!externalUrl.trim() || uploading) return;
+    setUploading(true);
+    setError(null);
+    try {
+      await uploadKaizenEvidence(kaizenId, {
+        stage: linkStage,
+        type: "link",
+        externalUrl: externalUrl.trim(),
+        description: linkDescription.trim() || undefined,
+      });
+      setExternalUrl("");
+      setLinkDescription("");
+      setShowLink(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao anexar link.");
     } finally {
       setUploading(false);
     }
@@ -176,8 +232,6 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
       setError(err instanceof Error ? err.message : "Erro ao excluir evidência.");
     }
   }
-
-  const canUpload = mode === "link" ? externalUrl.trim().length > 0 : file != null;
 
   return (
     <div className="kz-evidence-panel">
@@ -267,71 +321,111 @@ export function KaizenEvidencePanel({ kaizenId, readOnly }: KaizenEvidencePanelP
 
       {!readOnly ? (
         <div className="kz-evidence-upload">
-          <div className="kz-field">
-            <label htmlFor="kz-ev-stage">Etapa</label>
-            <select
-              id="kz-ev-stage"
-              value={stage}
-              onChange={(event) => setStage(event.target.value as KaizenEvidenceStage)}
-            >
-              <option value="antes">Antes</option>
-              <option value="depois">Depois</option>
-              <option value="geral">Geral</option>
-            </select>
-          </div>
-
-          <div className="kz-field">
-            <label htmlFor="kz-ev-mode">Tipo</label>
-            <select
-              id="kz-ev-mode"
-              value={mode}
-              onChange={(event) => setMode(event.target.value as "file" | "link")}
-            >
-              <option value="file">Arquivo</option>
-              <option value="link">Link</option>
-            </select>
-          </div>
-
-          {mode === "file" ? (
-            <div className="kz-field">
-              <label htmlFor="kz-ev-file">Arquivo</label>
-              <input
-                id="kz-ev-file"
-                type="file"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          <div className="kz-evidence-upload__head">
+            <span className="kz-evidence-upload__title">
+              Adicionar evidências
+              <HelpTooltip
+                content={KAIZEN_HELP_TOOLTIPS.evidence.upload}
+                ariaLabel="Ajuda: enviar evidências"
               />
+            </span>
+            <label className="kz-evidence-upload__default-stage">
+              Etapa padrão
+              <select
+                value={defaultStage}
+                disabled={uploading}
+                onChange={(event) => setDefaultStage(event.target.value as KaizenEvidenceStage)}
+              >
+                <option value="antes">Antes</option>
+                <option value="depois">Depois</option>
+                <option value="geral">Geral</option>
+              </select>
+            </label>
+          </div>
+
+          <KaizenEvidenceDropzone disabled={uploading} onFilesSelected={addFiles} />
+
+          {pending.length ? (
+            <>
+              <KaizenEvidencePendingList
+                items={pending}
+                disabled={uploading}
+                onChange={updatePending}
+                onRemove={removePending}
+              />
+              <div className="kz-evidence-upload__submit">
+                <button
+                  type="button"
+                  className="kz-primary-btn"
+                  onClick={() => void handleUploadQueue()}
+                  disabled={uploading}
+                >
+                  <Upload size={14} aria-hidden="true" />
+                  {uploading
+                    ? "Enviando…"
+                    : pending.length > 1
+                      ? `Enviar ${pending.length} evidências`
+                      : "Enviar evidência"}
+                </button>
+              </div>
+            </>
+          ) : null}
+
+          {showLink ? (
+            <div className="kz-evidence-link">
+              <div className="kz-field">
+                <label htmlFor="kz-ev-link-stage">Etapa</label>
+                <select
+                  id="kz-ev-link-stage"
+                  value={linkStage}
+                  disabled={uploading}
+                  onChange={(event) => setLinkStage(event.target.value as KaizenEvidenceStage)}
+                >
+                  <option value="antes">Antes</option>
+                  <option value="depois">Depois</option>
+                  <option value="geral">Geral</option>
+                </select>
+              </div>
+              <div className="kz-field">
+                <label htmlFor="kz-ev-url">URL</label>
+                <input
+                  id="kz-ev-url"
+                  type="url"
+                  placeholder="https://…"
+                  value={externalUrl}
+                  disabled={uploading}
+                  onChange={(event) => setExternalUrl(event.target.value)}
+                />
+              </div>
+              <div className="kz-field kz-span-2">
+                <label htmlFor="kz-ev-link-desc">Descrição</label>
+                <input
+                  id="kz-ev-link-desc"
+                  value={linkDescription}
+                  disabled={uploading}
+                  onChange={(event) => setLinkDescription(event.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                className="kz-primary-btn"
+                onClick={() => void handleAddLink()}
+                disabled={uploading || externalUrl.trim().length === 0}
+              >
+                <LinkIcon size={14} aria-hidden="true" />
+                {uploading ? "Enviando…" : "Anexar link"}
+              </button>
             </div>
           ) : (
-            <div className="kz-field">
-              <label htmlFor="kz-ev-url">URL</label>
-              <input
-                id="kz-ev-url"
-                type="url"
-                placeholder="https://…"
-                value={externalUrl}
-                onChange={(event) => setExternalUrl(event.target.value)}
-              />
-            </div>
+            <button
+              type="button"
+              className="kz-ghost-btn kz-evidence-upload__link-toggle"
+              onClick={() => setShowLink(true)}
+            >
+              <Plus size={14} aria-hidden="true" />
+              Adicionar por link externo
+            </button>
           )}
-
-          <div className="kz-field kz-span-2">
-            <label htmlFor="kz-ev-desc">Descrição</label>
-            <input
-              id="kz-ev-desc"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </div>
-
-          <button
-            type="button"
-            className="kz-primary-btn"
-            onClick={() => void handleUpload()}
-            disabled={uploading || !canUpload}
-          >
-            <Upload size={14} aria-hidden="true" />
-            {uploading ? "Enviando…" : "Anexar evidência"}
-          </button>
         </div>
       ) : null}
     </div>

@@ -4,7 +4,9 @@ import { fetchKaizenRecord, fetchKaizenRevisions, updateKaizenRecord } from "../
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { EditableSectionCard } from "../components/ui/EditableSectionCard";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { ReadOnlyField } from "../components/ui/ReadOnlyField";
+import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { StatusPipeline } from "../components/detail/StatusPipeline";
 import { KaizenEvidencePanel } from "../components/detail/KaizenEvidencePanel";
 import { KaizenRevisionTimeline } from "../components/detail/KaizenRevisionTimeline";
@@ -161,6 +163,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       {/* Identificação */}
       <EditableSectionCard
         title="Identificação"
+        hint={KAIZEN_HELP_TOOLTIPS.sections.identification}
         description="Filial, equipe e descrição do processo"
         isEditing={isEditing("identificacao")}
         onEdit={() => startEdit("identificacao")}
@@ -305,6 +308,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       {/* Estágio */}
       <EditableSectionCard
         title="Estágio"
+        hint={KAIZEN_HELP_TOOLTIPS.sections.stage}
         description="Status operacional do kaizen (gera revisão ao mudar)"
         isEditing={isEditing("estagio")}
         onEdit={() => startEdit("estagio")}
@@ -381,6 +385,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       {/* Economia */}
       <EditableSectionCard
         title="Economia"
+        hint={KAIZEN_HELP_TOOLTIPS.sections.savings}
         description="Parâmetros e economia calculada pela API"
         isEditing={isEditing("economia")}
         onEdit={() => startEdit("economia")}
@@ -499,7 +504,13 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       <section className="kz-card kz-section-card">
         <header className="kz-section-card__header">
           <div>
-            <h2 className="kz-section-card__title">Evidências do processo</h2>
+            <h2 className="kz-section-card__title">
+              Evidências do processo
+              <HelpTooltip
+                content={KAIZEN_HELP_TOOLTIPS.sections.evidences}
+                ariaLabel="Ajuda: evidências do processo"
+              />
+            </h2>
             <p className="kz-section-card__desc">Registro visual Antes / Depois e anexos</p>
           </div>
         </header>
@@ -510,7 +521,13 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       <section className="kz-card kz-section-card">
         <header className="kz-section-card__header">
           <div>
-            <h2 className="kz-section-card__title">Revisões</h2>
+            <h2 className="kz-section-card__title">
+              Revisões
+              <HelpTooltip
+                content={KAIZEN_HELP_TOOLTIPS.sections.revisions}
+                ariaLabel="Ajuda: revisões"
+              />
+            </h2>
             <p className="kz-section-card__desc">
               Histórico de versões e mudanças relevantes ({statusLabel(record.status)})
             </p>

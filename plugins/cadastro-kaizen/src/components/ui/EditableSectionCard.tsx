@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 import { Pencil, Save, X, type LucideIcon } from "lucide-react";
 
+import { HelpTooltip } from "./HelpTooltip";
+
 type EditableSectionCardProps = {
   title: string;
+  hint?: string;
   description?: string;
   isEditing: boolean;
   onEdit: () => void;
@@ -19,6 +22,7 @@ type EditableSectionCardProps = {
 
 export function EditableSectionCard({
   title,
+  hint,
   description,
   isEditing,
   onEdit,
@@ -36,7 +40,10 @@ export function EditableSectionCard({
     <section className="kz-card kz-section-card">
       <header className="kz-section-card__header">
         <div>
-          <h2 className="kz-section-card__title">{title}</h2>
+          <h2 className="kz-section-card__title">
+            {title}
+            {hint ? <HelpTooltip content={hint} ariaLabel={`Ajuda: ${title}`} /> : null}
+          </h2>
           {description ? <p className="kz-section-card__desc">{description}</p> : null}
         </div>
         <div className="kz-section-card__actions">

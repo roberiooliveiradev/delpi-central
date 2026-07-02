@@ -466,6 +466,9 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--kz-title);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .dashboard-cadastro-kaizen .kz-section-card__desc {
@@ -844,21 +847,210 @@
 }
 
 .dashboard-cadastro-kaizen .kz-evidence-upload {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: end;
   padding-top: 14px;
   border-top: 1px dashed var(--kz-card-border);
 }
 
-.dashboard-cadastro-kaizen .kz-evidence-upload .kz-span-2 {
+.dashboard-cadastro-kaizen .kz-evidence-upload__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-upload__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--kz-font-sm);
+  font-weight: 700;
+  color: var(--kz-text);
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-upload__default-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-upload__default-stage select {
+  min-height: 34px;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-upload__submit,
+.dashboard-cadastro-kaizen .kz-evidence-upload__link-toggle {
+  align-self: flex-start;
+}
+
+/* Dropzone (arrastar e soltar) */
+.dashboard-cadastro-kaizen .kz-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 132px;
+  padding: 20px 16px;
+  border: 1.5px dashed color-mix(in srgb, var(--kz-accent) 42%, var(--kz-card-border));
+  border-radius: var(--kz-control-radius);
+  background: color-mix(in srgb, var(--kz-accent) 4%, var(--kz-card-bg));
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dashboard-cadastro-kaizen .kz-dropzone:hover:not(.kz-dropzone--disabled),
+.dashboard-cadastro-kaizen .kz-dropzone--active {
+  border-color: var(--kz-accent);
+  background: color-mix(in srgb, var(--kz-accent) 10%, var(--kz-card-bg));
+}
+
+.dashboard-cadastro-kaizen .kz-dropzone--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-cadastro-kaizen .kz-dropzone__input {
+  display: none;
+}
+
+.dashboard-cadastro-kaizen .kz-dropzone__icon {
+  color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-dropzone__title {
+  margin: 0;
+  font-size: var(--kz-font-sm);
+  font-weight: 600;
+  color: var(--kz-text);
+}
+
+.dashboard-cadastro-kaizen .kz-dropzone__hint {
+  margin: 0;
+}
+
+/* Fila de pendentes */
+.dashboard-cadastro-kaizen .kz-pending-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--kz-card-border);
+  border-radius: var(--kz-control-radius);
+  background: var(--kz-card-bg);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__thumb {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--kz-text-muted) 8%, var(--kz-card-bg));
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__name {
+  font-size: var(--kz-font-xs);
+  font-weight: 600;
+  color: var(--kz-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__size {
+  font-size: 11px;
+  color: var(--kz-text-muted);
+  flex-shrink: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__fields {
+  display: flex;
+  gap: 6px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__stage {
+  flex-shrink: 0;
+  min-height: 32px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__desc {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__remove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--kz-card-border);
+  background: transparent;
+  color: var(--kz-danger);
+  cursor: pointer;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__remove:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--kz-danger) 10%, transparent);
+}
+
+/* Formulário de link externo */
+.dashboard-cadastro-kaizen .kz-evidence-link {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--kz-card-border);
+  border-radius: var(--kz-control-radius);
+  background: color-mix(in srgb, var(--kz-text-muted) 4%, var(--kz-card-bg));
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-link .kz-span-2 {
   grid-column: span 2;
 }
 
 @media (max-width: 768px) {
   .dashboard-cadastro-kaizen .kz-read-grid .kz-span-2,
-  .dashboard-cadastro-kaizen .kz-evidence-upload .kz-span-2 {
+  .dashboard-cadastro-kaizen .kz-evidence-link .kz-span-2 {
     grid-column: span 1;
   }
 
@@ -866,9 +1058,67 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-cadastro-kaizen .kz-pending-list {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-cadastro-kaizen .kz-participant-row {
     grid-template-columns: 1fr 120px auto;
   }
+}
+
+/* Balão explicativo (HelpTooltip) */
+.dashboard-cadastro-kaizen .kz-help-tooltip {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  vertical-align: middle;
+}
+
+.dashboard-cadastro-kaizen .kz-help-tooltip--wrap {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--kz-text-muted) 60%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-help-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--kz-text-muted);
+  cursor: help;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.dashboard-cadastro-kaizen .kz-help-tooltip__trigger:hover,
+.dashboard-cadastro-kaizen .kz-help-tooltip__trigger:focus-visible {
+  color: var(--kz-accent);
+  background: color-mix(in srgb, var(--kz-accent) 10%, transparent);
+  outline: none;
+}
+
+.kz-help-tooltip__bubble {
+  border-radius: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border, #e6e6e6);
+  background: var(--surface, #ffffff);
+  color: var(--text, #111111);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  transition: opacity 0.15s ease;
+}
+
+/* Label de formulário com ajuda */
+.dashboard-cadastro-kaizen .kz-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Diff entre revisões */
