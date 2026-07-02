@@ -1,12 +1,22 @@
 import {
+  authBearerHeader,
   httpDelete,
   httpGet,
+  httpPatch,
   httpPost,
+  httpPostForm,
   httpPut,
   unwrapApiDelpiEnvelope,
   type ApiEnvelope,
 } from "./httpClient";
-import type { KaizenListResponse, KaizenRecord } from "../types/kaizen";
+import type {
+  KaizenEvidence,
+  KaizenEvidenceStage,
+  KaizenEvidenceType,
+  KaizenListResponse,
+  KaizenRecord,
+  KaizenRevision,
+} from "../types/kaizen";
 
 const API_BASE = "/apps/api-delpi/quality/kaizens/records";
 
@@ -78,4 +88,85 @@ export async function importKaizensFromSheet(
     { dry_run: dryRun },
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao importar kaizens da planilha.");
+}
+
+// ---------------------------------------------------------------- revisões
+
+export async function fetchKaizenRevisions(id: string): Promise<KaizenRevision[]> {
+  const envelope = await httpGet<ApiEnvelope<{ items: KaizenRevision[] }>>(
+    `${API_BASE}/${id}/revisions`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao listar revisões.").items;
+}
+
+// ---------------------------------------------------------------- evidências
+
+export async function fetchKaizenEvidences(id: string): Promise<KaizenEvidence[]> {
+  const envelope = await httpGet<ApiEnvelope<{ items: KaizenEvidence[] }>>(
+    `${API_BASE}/${id}/evidences`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao listar evidências.").items;
+}
+
+export async function uploadKaizenEvidence(
+  id: string,
+  params: {
+    file?: File;
+    stage: KaizenEvidenceStage;
+    type: KaizenEvidenceType;
+    description?: string;
+    externalUrl?: string;
+  },
+): Promise<KaizenEvidence> {
+  const form = new FormData();
+  form.set("stage", params.stage);
+  form.set("evidence_type", params.type);
+  if (params.description) form.set("description", params.description);
+  if (params.type === "link") {
+    form.set("external_url", params.externalUrl ?? "");
+  } else if (params.file) {
+    form.set("file", params.file);
+  }
+  const envelope = await httpPostForm<ApiEnvelope<KaizenEvidence>>(
+    `${API_BASE}/${id}/evidences`,
+    form,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao anexar evidência.");
+}
+
+export async function updateKaizenEvidence(
+  id: string,
+  evidenceId: string,
+  payload: { stage?: KaizenEvidenceStage; description?: string },
+): Promise<KaizenEvidence> {
+  const envelope = await httpPatch<ApiEnvelope<KaizenEvidence>>(
+    `${API_BASE}/${id}/evidences/${evidenceId}`,
+    payload,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar evidência.");
+}
+
+export async function deleteKaizenEvidence(id: string, evidenceId: string): Promise<void> {
+  const envelope = await httpDelete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${API_BASE}/${id}/evidences/${evidenceId}`,
+  );
+  unwrapApiDelpiEnvelope(envelope, "Erro ao excluir evidência.");
+}
+
+export function kaizenEvidenceFileUrl(id: string, evidenceId: string): string {
+  return `${API_BASE}/${id}/evidences/${evidenceId}/file`;
+}
+
+export async function fetchKaizenEvidenceObjectUrl(
+  id: string,
+  evidenceId: string,
+): Promise<string> {
+  const response = await fetch(kaizenEvidenceFileUrl(id, evidenceId), {
+    headers: authBearerHeader(),
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao carregar arquivo da evidência.");
+  }
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
 }

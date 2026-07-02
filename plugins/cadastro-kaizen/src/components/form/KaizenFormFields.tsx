@@ -1,6 +1,8 @@
 import { FormSection } from "./FormSection";
+import { KaizenParticipantsField } from "./KaizenParticipantsField";
 import {
   BRANCHES,
+  KAIZEN_CATEGORIES,
   KAIZEN_STATUSES,
   SAVINGS_TYPES,
 } from "../../constants/kaizen";
@@ -60,21 +62,28 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         </div>
 
         <div className="kz-field">
-          <label htmlFor="kz-accountable">Responsável</label>
-          <input
-            id="kz-accountable"
-            value={values.accountable}
-            onChange={(event) => onChange("accountable", event.target.value)}
-          />
-        </div>
-
-        <div className="kz-field">
           <label htmlFor="kz-sector">Área / setor</label>
           <input
             id="kz-sector"
             value={values.sector}
             onChange={(event) => onChange("sector", event.target.value)}
           />
+        </div>
+
+        <div className="kz-field">
+          <label htmlFor="kz-category">Categoria</label>
+          <select
+            id="kz-category"
+            value={values.category}
+            onChange={(event) => onChange("category", event.target.value)}
+          >
+            <option value="">Sem categoria</option>
+            {KAIZEN_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="kz-field">
@@ -103,6 +112,32 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
             type="date"
             value={values.date_discontinued}
             onChange={(event) => onChange("date_discontinued", event.target.value)}
+          />
+        </div>
+
+        <div className="kz-field kz-span-2">
+          <label>Equipe / responsáveis</label>
+          <KaizenParticipantsField
+            participants={values.participants}
+            onChange={(participants) => onChange("participants", participants)}
+          />
+        </div>
+
+        <div className="kz-field kz-span-2">
+          <label htmlFor="kz-process">Descrição do processo</label>
+          <textarea
+            id="kz-process"
+            value={values.process_description}
+            onChange={(event) => onChange("process_description", event.target.value)}
+          />
+        </div>
+
+        <div className="kz-field kz-span-2">
+          <label htmlFor="kz-improvement">Melhoria realizada</label>
+          <textarea
+            id="kz-improvement"
+            value={values.improvement_description}
+            onChange={(event) => onChange("improvement_description", event.target.value)}
           />
         </div>
       </FormSection>

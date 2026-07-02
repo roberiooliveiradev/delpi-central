@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { listPath, newPath, parseRoute } from "../constants/kaizen";
+import { detailPath, listPath, newPath, parseRoute, type View } from "../constants/kaizen";
+import { KaizenDetailPage } from "./KaizenDetailPage";
 import { KaizenFormPage } from "./KaizenFormPage";
 import { KaizenListPage } from "./KaizenListPage";
-
-type View = "list" | "new" | "edit";
 
 type Props = {
   pathname?: string;
@@ -31,19 +30,25 @@ export function CadastroKaizenPage({ pathname }: Props) {
       setRecordId(undefined);
       return;
     }
-    const editMatch = path.match(/\/editar\/([^/]+)$/);
-    if (editMatch) {
-      setView("edit");
-      setRecordId(editMatch[1]);
+    const detailMatch = path.match(/\/(?:detalhe|editar)\/([^/]+)$/);
+    if (detailMatch) {
+      setView("detail");
+      setRecordId(detailMatch[1]);
     }
   }
 
   if (view === "new") {
-    return <KaizenFormPage mode="new" onNavigate={handleNavigate} />;
+    return (
+      <KaizenFormPage
+        mode="new"
+        onNavigate={handleNavigate}
+        onCreated={(id) => handleNavigate(detailPath(id))}
+      />
+    );
   }
 
-  if (view === "edit" && recordId) {
-    return <KaizenFormPage mode="edit" recordId={recordId} onNavigate={handleNavigate} />;
+  if ((view === "detail" || view === "edit") && recordId) {
+    return <KaizenDetailPage recordId={recordId} onNavigate={handleNavigate} />;
   }
 
   return <KaizenListPage onNavigate={handleNavigate} />;

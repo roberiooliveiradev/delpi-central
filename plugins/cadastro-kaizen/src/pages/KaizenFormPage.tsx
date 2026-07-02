@@ -21,9 +21,10 @@ type Props = {
   mode: "new" | "edit";
   recordId?: string;
   onNavigate: (path: string) => void;
+  onCreated?: (id: string) => void;
 };
 
-export function KaizenFormPage({ mode, recordId, onNavigate }: Props) {
+export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props) {
   const [values, setValues] = useState<KaizenFormValues>(emptyFormValues);
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
@@ -72,8 +73,12 @@ export function KaizenFormPage({ mode, recordId, onNavigate }: Props) {
       }
 
       if (mode === "new") {
-        await createKaizenRecord(payload);
-        onNavigate(listPath());
+        const created = await createKaizenRecord(payload);
+        if (onCreated && created?.id) {
+          onCreated(created.id);
+        } else {
+          onNavigate(listPath());
+        }
         return;
       }
 

@@ -123,6 +123,35 @@ export async function httpPut<T>(
   return parseJson<T>(response);
 }
 
+export async function httpPatch<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
+export async function httpPostForm<T>(
+  url: string,
+  form: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  // Sem Content-Type manual: o browser define o boundary do multipart.
+  const response = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(),
+    body: form,
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
 export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "DELETE",
@@ -130,6 +159,10 @@ export async function httpDelete<T>(url: string, options: RequestOptions = {}): 
     signal: options.signal,
   });
   return parseJson<T>(response);
+}
+
+export function authBearerHeader(): Record<string, string> {
+  return authHeaders();
 }
 
 export type { ApiEnvelope };

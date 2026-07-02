@@ -10,26 +10,14 @@ import {
 } from "../components/KaizenPageHeader";
 import { KaizenRecordFilters } from "../components/KaizenRecordFilters";
 import { StateAlert } from "../components/StateAlert";
-import {
-  KAIZEN_STATUSES,
-  SAVINGS_TYPES,
-  editPath,
-  newPath,
-} from "../constants/kaizen";
+import { editPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency } from "../utils/format";
+import { savingsTypeLabel, statusLabel } from "../utils/labels";
 
 type Props = {
   onNavigate: (path: string) => void;
 };
-
-function savingsTypeLabel(value: string): string {
-  return SAVINGS_TYPES.find((item) => item.value === value)?.label ?? value;
-}
-
-function statusLabel(value: string): string {
-  return KAIZEN_STATUSES.find((item) => item.value === value)?.label ?? value;
-}
 
 export function KaizenListPage({ onNavigate }: Props) {
   const [items, setItems] = useState<KaizenRecord[]>([]);
