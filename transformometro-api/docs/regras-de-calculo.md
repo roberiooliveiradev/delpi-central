@@ -50,9 +50,7 @@ economia_instância_escalada(mês) =
 - **Visão filial ou departamento:** multiplicador **1** (uma unidade no recorte).
 - **Processo com várias instâncias:** após escalar cada instância, aplica-se a **média** entre instâncias ativas no mês (regra anterior).
 
-**Implementação:** `DashboardCalculatorService._instance_unit_multiplier`, `_scale_instance_economy_row`; parâmetro `escopo_unidades` em `build_dashboard_rows` / `build_summary` (default `1`).
-
-> **Backlog técnico:** propagar `escopo_unidades` a partir da contagem de filiais ativas em `DashboardLiveService` e `DashboardRecalcService` na visão consolidada — até lá, o default `1` mantém economia **sem** multiplicar (comportamento conservador).
+**Implementação:** `DashboardCalculatorService._instance_unit_multiplier`, `_scale_instance_economy_row`; parâmetro `escopo_unidades` em `build_dashboard_rows` / `build_summary`. `DashboardViewScopeService.resolve_escopo_unidades` + `count_active_filiais` propagam o valor em `DashboardLiveService`, `DashboardRecalcService` e Transforma+ (consolidado).
 
 ## Economia líquida (mensal)
 

@@ -110,7 +110,7 @@ JSONs de operação **não** entram no git (`fixtures/cadastro/*.json` gitignore
 | Item | Responsável |
 |------|-------------|
 | **Consolidação cadastral** em produção (passos acima) | Ops |
-| **`escopo_unidades`** no live/recalc (multiplicador consolidado) | Dev |
+| **`escopo_unidades`** no live/recalc (multiplicador consolidado) | ✅ jul/2026 |
 | Deploy produção com runbook acima | Ops |
 | Atribuir permissões escopadas na Core API / Portal RBAC (quem precisar) | Ops |
 | Planilha somente leitura | Google Workspace |

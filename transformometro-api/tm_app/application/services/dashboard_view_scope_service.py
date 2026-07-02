@@ -8,6 +8,15 @@ from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 
 
+def count_active_filiais() -> int:
+    """Nº de filiais ativas no cadastro (mínimo 1 para evitar zerar economia)."""
+    from tm_app.infrastructure.persistence.repositories.filial_repository import (
+        FilialRepository,
+    )
+
+    return max(1, len(FilialRepository().list_active_codigos()))
+
+
 class DashboardView(str, Enum):
     CONSOLIDATED = "consolidated"
     FILIAL = "filial"
@@ -162,7 +171,15 @@ class DashboardViewScopeService:
             "setor_id": scope.setor_id,
             "filial_ids": sorted(scope.filial_ids),
             "setor_ids": sorted(scope.setor_ids),
+            "escopo_unidades": self.resolve_escopo_unidades(scope),
         }
+
+    @staticmethod
+    def resolve_escopo_unidades(scope: DashboardScopeFilters) -> int:
+        """Multiplicador de economia para instâncias ``todas_filiais_ativas``."""
+        if scope.view != DashboardView.CONSOLIDATED:
+            return 1
+        return count_active_filiais()
 
 
 def _normalize_ref(value: str | None) -> str | None:

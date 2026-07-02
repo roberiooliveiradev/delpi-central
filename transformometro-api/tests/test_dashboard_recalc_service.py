@@ -2,10 +2,20 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from tm_app.application.services.dashboard_recalc_service import (
     DashboardRecalcService,
     _normalize_competencia_bound,
 )
+
+
+@pytest.fixture(autouse=True)
+def _default_active_filiais_count(monkeypatch):
+    monkeypatch.setattr(
+        "tm_app.application.services.dashboard_view_scope_service.count_active_filiais",
+        lambda: 2,
+    )
 
 
 def test_normalize_competencia_bound_from_iso_date():
@@ -67,6 +77,8 @@ def test_recalculate_full_truncates():
     assert result["mode"] == "full"
     assert result["rows_upserted"] == 3
     repo.replace_all.assert_called_once()
+    calc.build_dashboard_rows.assert_called_once()
+    assert calc.build_dashboard_rows.call_args.kwargs["escopo_unidades"] == 2
     repo.delete_by_processo.assert_not_called()
 
 

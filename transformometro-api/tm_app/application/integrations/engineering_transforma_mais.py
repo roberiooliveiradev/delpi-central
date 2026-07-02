@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from tm_app.application.services.dashboard_live_service import load_raw_cached
+from tm_app.application.services.dashboard_view_scope_service import count_active_filiais
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 
 
@@ -42,11 +43,13 @@ class EngineeringTransformaMaisService:
         end_date: str | None,
     ) -> dict[str, Any]:
         raw = load_raw_cached()
+        escopo_unidades = 1 if filial_id else count_active_filiais()
         summary = self._calculator.build_summary(
             raw,
             filial_id=filial_id,
             start_date=start_date,
             end_date=end_date,
+            escopo_unidades=escopo_unidades,
         )
         return _map_summary(summary)
 

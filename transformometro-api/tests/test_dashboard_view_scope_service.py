@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from tm_app.application.services.dashboard_view_scope_service import (
+    DashboardScopeFilters,
     DashboardView,
     DashboardViewScopeService,
+    count_active_filiais,
 )
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
@@ -116,3 +120,30 @@ def test_filter_raw_preserves_empresa_resource_pool():
     assert filtered.processos[0]["processo_id"] == "p1"
     assert len(filtered.recursos_compartilhados) == 1
     assert len(filtered.revisao_recursos_compartilhados) == 2
+
+
+@patch(
+    "tm_app.infrastructure.persistence.repositories.filial_repository.FilialRepository"
+)
+def test_resolve_escopo_unidades_consolidado_usa_filiais_ativas(mock_repo):
+    mock_repo.return_value.list_active_codigos.return_value = {"01", "02"}
+    scope = DashboardScopeFilters(
+        view=DashboardView.CONSOLIDATED,
+        filial_id=None,
+        setor_id=None,
+    )
+    assert DashboardViewScopeService.resolve_escopo_unidades(scope) == 2
+
+
+def test_resolve_escopo_unidades_filial_sempre_um():
+    scope = DashboardViewScopeService().resolve(filial_id="01,02")
+    assert scope.view == DashboardView.FILIAL
+    assert DashboardViewScopeService.resolve_escopo_unidades(scope) == 1
+
+
+@patch(
+    "tm_app.infrastructure.persistence.repositories.filial_repository.FilialRepository"
+)
+def test_count_active_filiais_minimo_um(mock_repo):
+    mock_repo.return_value.list_active_codigos.return_value = set()
+    assert count_active_filiais() == 1

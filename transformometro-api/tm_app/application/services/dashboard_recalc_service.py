@@ -4,6 +4,11 @@ import logging
 import time
 from typing import Any
 
+from tm_app.application.services.dashboard_view_scope_service import (
+    DashboardScopeFilters,
+    DashboardView,
+    DashboardViewScopeService,
+)
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
     DashboardCalculoRepository,
@@ -75,7 +80,17 @@ class DashboardRecalcService:
         )
 
         raw = self._data_repo.load_raw()
-        all_rows = self._calculator.build_dashboard_rows(raw)
+        escopo_unidades = DashboardViewScopeService.resolve_escopo_unidades(
+            DashboardScopeFilters(
+                view=DashboardView.CONSOLIDATED,
+                filial_id=None,
+                setor_id=None,
+            )
+        )
+        all_rows = self._calculator.build_dashboard_rows(
+            raw,
+            escopo_unidades=escopo_unidades,
+        )
 
         if not incremental:
             inserted = self._dashboard_repo.replace_all(all_rows)

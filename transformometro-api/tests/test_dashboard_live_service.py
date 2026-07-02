@@ -5,11 +5,21 @@ from datetime import date, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(autouse=True)
+def _default_active_filiais_count(monkeypatch):
+    monkeypatch.setattr(
+        "tm_app.application.services.dashboard_view_scope_service.count_active_filiais",
+        lambda: 2,
+    )
 
 
 def _load_fixture(name: str) -> TransformometroRawData:
@@ -40,6 +50,79 @@ def test_build_summary_roi_consolidated_without_double_discount(mock_repo):
     investimento = float(summary.get("investimento_total") or 0)
     if investimento > 0:
         assert abs(float(summary.get("roi_medio") or 0) - liquida / investimento) < 0.02
+
+
+@patch(
+    "tm_app.application.services.dashboard_view_scope_service.count_active_filiais"
+)
+@patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
+def test_build_summary_consolidado_escala_instancia_multi_unidade(
+    mock_repo, mock_count_filiais
+):
+    from tm_app.application.services.dashboard_query_cache import dashboard_query_cache
+    from tm_app.domain.raw_data import TransformometroRawData
+
+    dashboard_query_cache.invalidate()
+    mock_count_filiais.return_value = 2
+    raw = TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-MU",
+                "nome_processo": "Multi",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        processo_instancias=[
+            {
+                "instancia_id": "i-all",
+                "processo_id": "p1",
+                "todas_filiais_ativas": True,
+                "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+                "deletado": False,
+            }
+        ],
+        revisoes=[
+            {
+                "revisao_id": "r-base",
+                "processo_id": "p1",
+                "instancia_id": "i-all",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-01-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-mel",
+                "processo_id": "p1",
+                "instancia_id": "i-all",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-06-01",
+                "data_implantacao": "2025-06-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+        ],
+        medicoes=[
+            _medicao_live("r-base", 60),
+            _medicao_live("r-mel", 30),
+        ],
+    )
+    mock_repo.return_value.load_raw.return_value = raw
+
+    summary = DashboardLiveService().build_summary(
+        competencia_inicio="2025-06-01",
+        competencia_fim="2025-06-30",
+    )
+
+    bruta_jun = next(
+        item["economia_bruta"]
+        for item in summary["evolucao_mensal"]
+        if item["competencia"] == "2025-06"
+    )
+    assert bruta_jun == 5000.0
+    assert summary["scope"]["escopo_unidades"] == 2
 
 
 @patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from tm_app.application.services.dashboard_view_scope_service import count_active_filiais
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
     DashboardDataRepository,
@@ -26,7 +27,10 @@ class ProcessRevisionCompareService:
         raw = DashboardDataRepository().load_raw()
         raw_filtered = self._filter_raw_for_process(raw, processo_id)
         calc = DashboardCalculatorService()
-        rows = calc.build_dashboard_rows(raw_filtered)
+        rows = calc.build_dashboard_rows(
+            raw_filtered,
+            escopo_unidades=count_active_filiais(),
+        )
 
         by_revisao: dict[str, list[dict]] = {}
         for row in rows:
@@ -103,8 +107,20 @@ class ProcessRevisionCompareService:
             if str(c.get("recurso_compartilhado_id")) in target_resource_ids
         ]
 
+        instancia_ids = {
+            str(r.get("instancia_id"))
+            for r in raw.revisoes
+            if str(r.get("revisao_id")) in revisao_ids and r.get("instancia_id")
+        }
+
         return TransformometroRawData(
             processos=processos,
+            processo_instancias=[
+                i
+                for i in raw.processo_instancias
+                if str(i.get("processo_id")) == processo_id
+                or str(i.get("instancia_id")) in instancia_ids
+            ],
             revisoes=[r for r in raw.revisoes if str(r.get("revisao_id")) in revisao_ids],
             medicoes=[m for m in raw.medicoes if str(m.get("revisao_id")) in revisao_ids],
             investimentos=[

@@ -19,7 +19,6 @@ import {
   type Processo,
 } from "../../data/api/transformometroApi";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
-import { setorLabel } from "../../utils/setores";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
   emptyProcessoForm,
@@ -49,19 +48,15 @@ export function ProcessosPage({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProcessoFormState>(emptyProcessoForm);
   const { ref: formSectionRef, scrollToRef: scrollToForm } = useScrollToRef<HTMLElement>();
-  const [setorId, setSetorId] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQ, setSearchQ] = useState("");
-  const [familiaFilter, setFamiliaFilter] = useState("");
 
   const listParams = useMemo(() => {
     const params: Record<string, string> = {};
-    if (setorId) params.setor_id = setorId;
     if (statusFilter) params.status = statusFilter;
     if (searchQ.trim()) params.q = searchQ.trim();
-    if (familiaFilter.trim()) params.familia_processo = familiaFilter.trim();
     return params;
-  }, [familiaFilter, searchQ, setorId, statusFilter]);
+  }, [searchQ, statusFilter]);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -171,18 +166,6 @@ export function ProcessosPage({
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      {
-        key: "setor",
-        header: "Setor",
-        render: (row) => (row.setor_id ? setorLabel(options?.setores, row.setor_id) : "—"),
-        sortable: true,
-      },
-      {
-        key: "familia",
-        header: "Família",
-        render: (row) => row.familia_processo ?? "—",
-        sortable: true,
-      },
       { key: "status", header: "Status", render: (row) => row.status_processo, sortable: true },
       {
         key: "acoes",
@@ -225,7 +208,7 @@ export function ProcessosPage({
         ),
       },
     ],
-    [options?.setores]
+    []
   );
 
   return (
@@ -299,21 +282,6 @@ export function ProcessosPage({
               />
             </div>
             <div className="ds-filter-box">
-              <label htmlFor="tm-proc-list-setor">Setor</label>
-              <select
-                id="tm-proc-list-setor"
-                value={setorId}
-                onChange={(e) => setSetorId(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {(options?.setores ?? []).map((setor) => (
-                  <option key={setor.id} value={setor.id}>
-                    {setor.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="ds-filter-box">
               <label htmlFor="tm-proc-list-status">Status</label>
               <select
                 id="tm-proc-list-status"
@@ -327,16 +295,6 @@ export function ProcessosPage({
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="ds-filter-box">
-              <label htmlFor="tm-proc-list-familia">Família</label>
-              <input
-                id="tm-proc-list-familia"
-                type="search"
-                placeholder="ex.: ia"
-                value={familiaFilter}
-                onChange={(e) => setFamiliaFilter(e.target.value)}
-              />
             </div>
           </section>
         }

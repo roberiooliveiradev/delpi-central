@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+from tm_app.application.services.dashboard_view_scope_service import count_active_filiais
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
     DashboardDataRepository,
@@ -25,7 +26,10 @@ class RevisaoRateioDiagnosticService:
         calc = DashboardCalculatorService()
         rows = [
             row
-            for row in calc.build_dashboard_rows(raw)
+            for row in calc.build_dashboard_rows(
+                raw,
+                escopo_unidades=count_active_filiais(),
+            )
             if str(row.get("revisao_id")) == revisao_id
         ]
 

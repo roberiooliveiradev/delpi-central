@@ -94,17 +94,23 @@ class DashboardLiveService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
+        scope = self._scope.resolve(
+            view=view, filial_id=filial_id, setor_id=setor_id
+        )
         filtered = self.load_filtered_raw(
             view=view,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
+            scope=scope,
         )
+        escopo_unidades = self._scope.resolve_escopo_unidades(scope)
         context = self._calculator._build_context(filtered)
         _, rows = self._calculator._calculate_monthly_series(
             context=context,
             start_date=competencia_inicio,
             end_date=competencia_fim,
+            escopo_unidades=escopo_unidades,
         )
         return rows
 
@@ -120,11 +126,13 @@ class DashboardLiveService:
     ) -> dict[str, Any]:
         scope = self._scope.resolve(view=view, filial_id=filial_id, setor_id=setor_id)
         filtered = self.load_filtered_raw(scope=scope)
+        escopo_unidades = self._scope.resolve_escopo_unidades(scope)
         summary = self._calculator.build_summary(
             filtered,
             filial_id=None,
             start_date=competencia_inicio,
             end_date=competencia_fim,
+            escopo_unidades=escopo_unidades,
         )
         summary["roi_medio"] = self._calculate_consolidated_roi(summary)
         summary["fonte"] = "cadastro_tempo_real"

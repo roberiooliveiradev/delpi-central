@@ -889,3 +889,79 @@ def test_multi_instancia_filtro_por_unidade_mostra_valor_real():
     assert es["economia_bruta_total"] == 1000.0
     # Consolidado do mesmo mês = média das instâncias ativas.
     assert consolidado["economia_bruta_total"] == 1750.0
+
+
+def _multi_unidade_instancia_raw() -> TransformometroRawData:
+    return TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-MU",
+                "nome_processo": "Processo multi-unidade",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        processo_instancias=[
+            {
+                "instancia_id": "i-all",
+                "processo_id": "p1",
+                "filial_id": None,
+                "todas_filiais_ativas": True,
+                "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+                "deletado": False,
+            }
+        ],
+        revisoes=[
+            {
+                "revisao_id": "r-base",
+                "processo_id": "p1",
+                "instancia_id": "i-all",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-01-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-mel",
+                "processo_id": "p1",
+                "instancia_id": "i-all",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-02-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+        ],
+        medicoes=[_medicao("r-base", 60), _medicao("r-mel", 30)],
+        investimentos=[],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+
+
+def test_instancia_multi_unidade_escala_economia_por_escopo_unidades():
+    calc = DashboardCalculatorService()
+    raw = _multi_unidade_instancia_raw()
+
+    summary_1 = calc.build_summary(
+        raw, filial_id=None, start_date=None, end_date=None, escopo_unidades=1
+    )
+    summary_2 = calc.build_summary(
+        raw, filial_id=None, start_date=None, end_date=None, escopo_unidades=2
+    )
+
+    assert _month_bruta(summary_1, "2025-02") == 2500.0
+    assert _month_bruta(summary_2, "2025-02") == 5000.0
+
+
+def test_instancia_por_filial_nao_escala_com_escopo_unidades():
+    calc = DashboardCalculatorService()
+    raw = _multi_instancia_raw()
+
+    summary = calc.build_summary(
+        raw, filial_id=None, start_date=None, end_date=None, escopo_unidades=2
+    )
+
+    # Instâncias por filial: multiplicador consolidado não altera (só todas_filiais_ativas).
+    assert _month_bruta(summary, "2025-04") == 1750.0
