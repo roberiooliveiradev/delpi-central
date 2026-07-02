@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   FilterX,
   Pencil,
@@ -288,22 +288,28 @@ export function ParticipantsPanel() {
         </div>
       )}
 
-      <div className="cx-layout">
-        <section className="cx-card cx-form-card" ref={formCardRef}>
+      <div className={`cx-layout${formCollapsed ? " cx-layout--form-collapsed" : ""}`}>
+        <section
+          className={`cx-card cx-form-card${formCollapsed ? " cx-form-card--collapsed" : ""}`}
+          ref={formCardRef}
+        >
           <button
             type="button"
             className="cx-form-card__toggle"
             aria-expanded={!formCollapsed}
+            title={formCollapsed ? "Expandir formulário" : "Recolher formulário"}
             onClick={() => setFormCollapsed((v) => !v)}
           >
             <span className="cx-card__title">
               {editingId ? <Pencil size={18} /> : <UserPlus size={18} />}
-              {editingId ? "Editar participante" : "Novo participante"}
+              <span className="cx-form-card__title-text">
+                {editingId ? "Editar participante" : "Novo participante"}
+              </span>
             </span>
             {formCollapsed ? (
-              <ChevronDown size={18} className="cx-form-card__caret" />
+              <ChevronRight size={18} className="cx-form-card__caret" />
             ) : (
-              <ChevronUp size={18} className="cx-form-card__caret" />
+              <ChevronLeft size={18} className="cx-form-card__caret" />
             )}
           </button>
           {!formCollapsed && (

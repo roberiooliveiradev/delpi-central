@@ -169,6 +169,10 @@
   margin: 0;
 }
 
+.cx-form-card__title-text {
+  white-space: nowrap;
+}
+
 .cx-form-card__toggle .cx-form-card__caret {
   color: var(--cx-muted);
   flex-shrink: 0;
@@ -180,6 +184,35 @@
 
 .cx-form-card__toggle + .cx-form {
   margin-top: 16px;
+}
+
+/* Colapso na horizontal: coluna do formulário vira uma faixa estreita. */
+.cx-layout--form-collapsed {
+  grid-template-columns: 56px 1fr;
+}
+
+.cx-form-card--collapsed {
+  padding: 14px 6px;
+}
+
+.cx-form-card--collapsed .cx-form-card__toggle {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.cx-form-card--collapsed .cx-form-card__caret {
+  order: -1;
+}
+
+.cx-form-card--collapsed .cx-card__title {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cx-form-card--collapsed .cx-form-card__title-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
 }
 
 .cx-photo-preview {
@@ -257,18 +290,24 @@
   color: var(--cx-muted);
 }
 
+.cx-search svg {
+  flex-shrink: 0;
+  display: block;
+}
+
 .cx-search input {
+  flex: 1;
   font: inherit;
   font-size: 13px;
   border: none;
   background: transparent;
   color: var(--cx-text);
   outline: none;
-  min-width: 180px;
+  min-width: 0;
 }
 
 .cx-filters .cx-search {
-  flex: 1 1 220px;
+  flex: 1 1 240px;
 }
 
 .cx-state {
@@ -361,13 +400,17 @@
 
 .cx-company-input__spin {
   position: absolute;
-  right: 44px;
+  top: 50%;
+  right: 46px;
+  transform: translateY(-50%);
   color: var(--cx-muted);
 }
 
 .cx-company-input__search {
   position: absolute;
+  top: 50%;
   right: 6px;
+  transform: translateY(-50%);
   display: grid;
   place-items: center;
   width: 32px;
@@ -761,6 +804,26 @@
 }
 
 @media (max-width: 768px) {
+  .cx-layout--form-collapsed {
+    grid-template-columns: 1fr;
+  }
+  .cx-form-card--collapsed {
+    padding: var(--cx-pad);
+  }
+  .cx-form-card--collapsed .cx-form-card__toggle {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .cx-form-card--collapsed .cx-form-card__caret {
+    order: 0;
+  }
+  .cx-form-card--collapsed .cx-card__title {
+    flex-direction: row;
+  }
+  .cx-form-card--collapsed .cx-form-card__title-text {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
   .cx-filters {
     flex-direction: column;
     align-items: stretch;
