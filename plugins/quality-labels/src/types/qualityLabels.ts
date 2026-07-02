@@ -47,6 +47,9 @@ export type QualityLabel = {
   isActive: boolean;
   createdAt: string | null;
   publicUrl: string;
+  /** Snapshot TOTVS no registro — presente em create/get detalhe. */
+  auditMetadata?: Record<string, unknown>;
+  hasAuditMetadata?: boolean;
 };
 
 export type CreateLabelPayload = {

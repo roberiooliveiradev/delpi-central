@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date, datetime
 from typing import Any
 
@@ -10,7 +11,8 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
 _COLUMNS = (
     "id, public_token, production_order, branch, product_code, product_description, "
     "product_unit, order_number, inspected_at, inspector_user_id, inspector_name, "
-    "result, notes, qr_filename, view_count, is_active, created_at, updated_at"
+    "result, notes, qr_filename, view_count, is_active, audit_metadata, "
+    "created_at, updated_at"
 )
 
 # Unidades operacionais DELPI (filial TOTVS → nome legível).
@@ -38,14 +40,16 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
         inspector_name: str,
         result: str,
         notes: str | None,
+        audit_metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        metadata_json = json.dumps(audit_metadata or {})
         row = self.execute_returning_one(
             f"""
             INSERT INTO quality_labels.inspection_labels (
                 public_token, production_order, branch, product_code,
                 product_description, product_unit, order_number,
-                inspector_user_id, inspector_name, result, notes
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                inspector_user_id, inspector_name, result, notes, audit_metadata
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
             RETURNING {_COLUMNS}
             """,
             (
@@ -60,6 +64,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
                 inspector_name,
                 result,
                 notes,
+                metadata_json,
             ),
         )
         if row is None:
@@ -199,9 +204,29 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             return value.isoformat()
         return value
 
+    @staticmethod
+    def _audit_metadata(row: dict[str, Any]) -> dict[str, Any]:
+        raw = row.get("audit_metadata")
+        if raw is None:
+            return {}
+        if isinstance(raw, dict):
+            return raw
+        if isinstance(raw, str):
+            try:
+                parsed = json.loads(raw)
+                return parsed if isinstance(parsed, dict) else {}
+            except json.JSONDecodeError:
+                return {}
+        return {}
+
     @classmethod
-    def to_admin_payload(cls, row: dict[str, Any]) -> dict[str, Any]:
-        return {
+    def to_admin_payload(
+        cls,
+        row: dict[str, Any],
+        *,
+        include_audit_metadata: bool = False,
+    ) -> dict[str, Any]:
+        payload = {
             "id": str(row.get("id")),
             "publicToken": row.get("public_token"),
             "productionOrder": row.get("production_order"),
@@ -219,6 +244,11 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "isActive": row.get("is_active", True),
             "createdAt": cls._iso(row.get("created_at")),
         }
+        if include_audit_metadata:
+            metadata = cls._audit_metadata(row)
+            payload["auditMetadata"] = metadata
+            payload["hasAuditMetadata"] = bool(metadata)
+        return payload
 
     @classmethod
     def to_public_payload(cls, row: dict[str, Any]) -> dict[str, Any]:

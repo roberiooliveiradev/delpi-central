@@ -6,6 +6,9 @@ from typing import Any
 from app.application.dto.production.get_production_order_by_op_request import (
     GetProductionOrderByOpRequest,
 )
+from app.application.services.quality_labels.quality_labels_audit_metadata_service import (
+    QualityLabelsAuditMetadataService,
+)
 from app.application.services.quality_labels.quality_labels_qr_service import (
     QualityLabelsQrService,
     build_public_url,
@@ -40,11 +43,13 @@ class QualityLabelsService:
         qr_service: QualityLabelsQrService,
         production_order_use_case: GetProductionOrderByOpUseCase,
         search_orders_use_case: SearchProductionOrdersByOpUseCase,
+        audit_metadata_service: QualityLabelsAuditMetadataService,
     ) -> None:
         self._repository = repository
         self._qr_service = qr_service
         self._production_order_use_case = production_order_use_case
         self._search_orders_use_case = search_orders_use_case
+        self._audit_metadata_service = audit_metadata_service
 
     def search_ops(
         self,
@@ -101,12 +106,19 @@ class QualityLabelsService:
         inspector_name: str,
     ) -> dict[str, Any]:
         order = self._resolve_order(production_order=production_order, branch=branch)
+        resolved_op = order.get("production_order") or production_order.strip()
+        resolved_branch = order.get("branch") or branch
+
+        audit_metadata = self._audit_metadata_service.build(
+            production_order=resolved_op,
+            branch=resolved_branch,
+        )
 
         token = secrets.token_urlsafe(_TOKEN_NBYTES)
         row = self._repository.insert_label(
             public_token=token,
-            production_order=order.get("production_order") or production_order.strip(),
-            branch=order.get("branch") or branch,
+            production_order=resolved_op,
+            branch=resolved_branch,
             product_code=str(order.get("product_code") or "").strip(),
             product_description=str(order.get("product_description") or "").strip(),
             product_unit=order.get("unit") or order.get("product_unit"),
@@ -115,6 +127,7 @@ class QualityLabelsService:
             inspector_name=inspector_name,
             result=result,
             notes=notes,
+            audit_metadata=audit_metadata,
         )
 
         qr_filename = self._qr_service.generate(token=token)
@@ -124,7 +137,7 @@ class QualityLabelsService:
         )
         row = updated or row
 
-        payload = self._repository.to_admin_payload(row)
+        payload = self._repository.to_admin_payload(row, include_audit_metadata=True)
         payload["publicUrl"] = build_public_url(token)
         return payload
 
@@ -156,7 +169,7 @@ class QualityLabelsService:
         row = self._repository.get_by_id(label_id)
         if row is None:
             return None
-        payload = self._repository.to_admin_payload(row)
+        payload = self._repository.to_admin_payload(row, include_audit_metadata=True)
         payload["publicUrl"] = build_public_url(row["public_token"])
         return payload
 
