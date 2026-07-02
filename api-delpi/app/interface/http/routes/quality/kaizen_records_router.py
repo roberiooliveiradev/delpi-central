@@ -257,6 +257,29 @@ def import_kaizen_records(body: ImportKaizensBody = Body(...)):
         return error_response("Erro interno ao importar kaizens.", status_code=500)
 
 
+@router.get("/summary")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def get_kaizen_records_summary(
+    branch: str | None = Query(default=None, pattern="^(01|02)$"),
+    date_start: str | None = Query(default=None),
+    date_end: str | None = Query(default=None),
+):
+    try:
+        repo = build_kaizen_repository()
+        data = repo.summary(branch_code=branch, date_start=date_start, date_end=date_end)
+        return api_delpi_success(
+            data,
+            operation_id="get_kaizen_records_summary",
+            shape="scalar",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao calcular indicadores de kaizen: {exc}")
+        return error_response(str(exc), status_code=500)
+    except Exception as exc:
+        log_error(f"Erro ao calcular indicadores de kaizen: {exc}")
+        return error_response("Erro interno ao calcular indicadores de kaizen.", status_code=500)
+
+
 @router.get("/{record_id}", **QUALITY_KAIZEN_RECORD_BY_ID)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_record(record_id: str):

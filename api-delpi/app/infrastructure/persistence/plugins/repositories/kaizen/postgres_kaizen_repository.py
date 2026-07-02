@@ -153,6 +153,228 @@ class PostgresKaizenRepository(PluginBaseRepository):
             },
         }
 
+    # ------------------------------------------------------------------ indicadores (painel)
+
+    _EXPIRING_WINDOW_DAYS = 90
+
+    @staticmethod
+    def _as_date(value: Any) -> date | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        try:
+            return date.fromisoformat(str(value)[:10])
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _as_float(value: Any) -> float:
+        if value is None:
+            return 0.0
+        if isinstance(value, Decimal):
+            return float(value)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def summary(
+        self,
+        *,
+        branch_code: str | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
+    ) -> dict[str, Any]:
+        """Indicadores agregados do painel de kaizens, direto do Postgres.
+
+        Regras de negócio (espelham `kaizen_savings_validity` e o painel do MFE):
+
+        - **Ganhos financeiros no período**: soma de ``daily_savings × dias ativos`` de
+          TODOS os kaizens implantados (inclui os implantados antes do período que ainda
+          contabilizam), com o teto de 1 ano de validade.
+        - **Contagens/distribuições/série mensal**: escopadas pela ``date_implemented``
+          dentro do período (quando informado).
+        - **Run-rate vigente**: kaizens implantados ainda dentro da validade hoje.
+        """
+        filters = ["k.deleted_at IS NULL"]
+        params: list[Any] = []
+        if branch_code:
+            filters.append("k.branch_code = %s")
+            params.append(branch_code)
+        where_clause = " AND ".join(filters)
+
+        rows = self.fetch_all(
+            f"{_KAIZEN_SELECT} WHERE {where_clause} ORDER BY k.created_at DESC",
+            tuple(params),
+        )
+
+        start = self._as_date(date_start)
+        end = self._as_date(date_end)
+        has_period = bool(date_start or date_end)
+        today = date.today()
+
+        def implemented_date(row: dict[str, Any]) -> date | None:
+            return self._as_date(row.get("date_implemented"))
+
+        def is_implanted(row: dict[str, Any]) -> bool:
+            return row.get("status") == "implantado"
+
+        def in_period(row: dict[str, Any]) -> bool:
+            if not has_period:
+                return True
+            day = implemented_date(row)
+            if day is None:
+                return False
+            if start and day < start:
+                return False
+            if end and day > end:
+                return False
+            return True
+
+        period_rows = [row for row in rows if in_period(row)]
+
+        # Indicador 1 — ganhos financeiros no período (sobre TODOS os registros).
+        period_savings = 0.0
+        for row in rows:
+            if not is_implanted(row):
+                continue
+            daily = self._as_float(row.get("daily_savings"))
+            if not daily:
+                continue
+            days = kaizen_savings_validity.active_days_in_range(
+                implemented_date(row), start, end
+            )
+            period_savings += daily * days
+
+        # Indicador 2 — novos implantados por mês (pela date_implemented, no período).
+        implanted_period = [
+            row for row in period_rows if is_implanted(row) and implemented_date(row)
+        ]
+        month_counts: dict[str, int] = {}
+        for row in implanted_period:
+            day = implemented_date(row)
+            if day is None:
+                continue
+            key = f"{day.year:04d}-{day.month:02d}"
+            month_counts[key] = month_counts.get(key, 0) + 1
+        implanted_by_month = [
+            {"key": key, "value": value} for key, value in sorted(month_counts.items())
+        ]
+
+        # Run-rate vigente (implantados ainda dentro da validade hoje).
+        active_rows = [
+            row
+            for row in period_rows
+            if is_implanted(row)
+            and kaizen_savings_validity.is_savings_active(
+                implemented_date(row), status=row.get("status")
+            )
+        ]
+
+        def tally(items: list[dict[str, Any]], key_of) -> list[dict[str, Any]]:
+            counts: dict[str, int] = {}
+            for item in items:
+                key = key_of(item)
+                counts[key] = counts.get(key, 0) + 1
+            return [
+                {"key": key, "value": value}
+                for key, value in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+            ]
+
+        expiring_soon = []
+        for row in active_rows:
+            valid_until = kaizen_savings_validity.savings_valid_until(implemented_date(row))
+            if valid_until is None:
+                continue
+            days_left = (valid_until - today).days
+            if days_left <= self._EXPIRING_WINDOW_DAYS:
+                expiring_soon.append(
+                    {
+                        "id": str(row.get("id")),
+                        "title": row.get("title"),
+                        "branch_code": row.get("branch_code"),
+                        "valid_until": valid_until.isoformat(),
+                        "days_left": days_left,
+                    }
+                )
+        expiring_soon.sort(key=lambda item: item["days_left"])
+
+        expired_but_implanted = sum(
+            1
+            for row in period_rows
+            if is_implanted(row)
+            and implemented_date(row) is not None
+            and not kaizen_savings_validity.is_savings_active(
+                implemented_date(row), status=row.get("status")
+            )
+        )
+
+        def status_count(status: str) -> int:
+            return sum(1 for row in period_rows if row.get("status") == status)
+
+        recent_rows = sorted(
+            period_rows, key=lambda row: str(row.get("created_at") or ""), reverse=True
+        )[:6]
+        recent = [
+            {
+                "id": str(row.get("id")),
+                "title": row.get("title"),
+                "branch_code": row.get("branch_code"),
+                "status": row.get("status"),
+                "date_implemented": (
+                    implemented_date(row).isoformat() if implemented_date(row) else None
+                ),
+                "updated_at": (
+                    row["updated_at"].isoformat()
+                    if hasattr(row.get("updated_at"), "isoformat")
+                    else row.get("updated_at")
+                ),
+            }
+            for row in recent_rows
+        ]
+
+        return {
+            "filters": {
+                "branch_code": branch_code,
+                "date_start": date_start,
+                "date_end": date_end,
+            },
+            "has_period": has_period,
+            "total": len(period_rows),
+            "implantados": status_count("implantado"),
+            "em_andamento": status_count("em_andamento"),
+            "descontinuados": status_count("descontinuado"),
+            "cancelados": status_count("cancelado"),
+            "period_savings": round(period_savings, 2),
+            "period_implanted_count": len(implanted_period),
+            "active_annual_savings": round(
+                sum(self._as_float(row.get("annual_savings")) for row in active_rows), 2
+            ),
+            "realized_annual_savings": round(
+                sum(self._as_float(row.get("realized_annual_savings")) for row in active_rows),
+                2,
+            ),
+            "active_count": len(active_rows),
+            "total_investment": round(
+                sum(self._as_float(row.get("investment")) for row in period_rows), 2
+            ),
+            "expired_but_implanted": expired_but_implanted,
+            "by_status": tally(period_rows, lambda row: row.get("status") or "—"),
+            "by_branch": tally(period_rows, lambda row: row.get("branch_code") or "—"),
+            "by_savings_type": tally(period_rows, lambda row: row.get("savings_type") or "—"),
+            "by_category": tally(period_rows, lambda row: row.get("category") or "sem_categoria"),
+            "top_accountables": tally(
+                [row for row in period_rows if row.get("accountable")],
+                lambda row: row.get("accountable"),
+            )[:6],
+            "implanted_by_month": implanted_by_month,
+            "expiring_soon": expiring_soon,
+            "recent": recent,
+        }
+
     # ------------------------------------------------------------------ exportação (backup/migração)
 
     _EXPORT_FIELDS = (

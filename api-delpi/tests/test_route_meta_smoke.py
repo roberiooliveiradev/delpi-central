@@ -201,6 +201,31 @@ def test_quality_kaizen_export_returns_meta(mock_build) -> None:
     )
 
 
+@patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
+def test_quality_kaizen_records_summary_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        get_kaizen_records_summary,
+    )
+
+    mock_repo = MagicMock()
+    mock_repo.summary.return_value = {
+        "total": 0,
+        "period_savings": 0.0,
+        "period_implanted_count": 0,
+        "implanted_by_month": [],
+        "by_status": [],
+        "recent": [],
+    }
+    mock_build.return_value = mock_repo
+
+    response = get_kaizen_records_summary()
+    _assert_meta(
+        _body(response),
+        operation_id="get_kaizen_records_summary",
+        shape="scalar",
+    )
+
+
 @patch("app.interface.http.routes.quality.kaizen_records_router.build_import_kaizens_use_case")
 def test_quality_kaizen_import_returns_meta(mock_build) -> None:
     from app.application.use_cases.kaizen.import_kaizens_use_case import ImportKaizensResult

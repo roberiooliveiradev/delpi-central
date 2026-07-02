@@ -131,6 +131,50 @@ export type KaizenSavingsTimeline = {
   improvements: KaizenSavingsTimelineImprovement[];
 };
 
+export type KaizenSummaryBucket = { key: string; value: number };
+
+export type KaizenSummaryExpiring = {
+  id: string;
+  title: string;
+  branch_code: string;
+  valid_until: string;
+  days_left: number;
+};
+
+export type KaizenSummaryRecent = {
+  id: string;
+  title: string;
+  branch_code: string;
+  status: KaizenStatus;
+  date_implemented: string | null;
+  updated_at: string | null;
+};
+
+export type KaizenSummary = {
+  filters: { branch_code: string | null; date_start: string | null; date_end: string | null };
+  has_period: boolean;
+  total: number;
+  implantados: number;
+  em_andamento: number;
+  descontinuados: number;
+  cancelados: number;
+  period_savings: number;
+  period_implanted_count: number;
+  active_annual_savings: number;
+  realized_annual_savings: number;
+  active_count: number;
+  total_investment: number;
+  expired_but_implanted: number;
+  by_status: KaizenSummaryBucket[];
+  by_branch: KaizenSummaryBucket[];
+  by_savings_type: KaizenSummaryBucket[];
+  by_category: KaizenSummaryBucket[];
+  top_accountables: KaizenSummaryBucket[];
+  implanted_by_month: KaizenSummaryBucket[];
+  expiring_soon: KaizenSummaryExpiring[];
+  recent: KaizenSummaryRecent[];
+};
+
 export type KaizenEvidenceStage = "antes" | "depois" | "geral";
 export type KaizenEvidenceType = "attachment" | "photo" | "document" | "link";
 

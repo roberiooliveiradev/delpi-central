@@ -298,6 +298,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_nonconformities": RouteContract("nonconformity", "paged_list"),
     "get_kaizen_summary": RouteContract("kaizen_summary", "scalar"),
     "get_kaizen_by_id": RouteContract("kaizen", "scalar"),
+    "get_kaizen_records_summary": RouteContract("kaizen_records_summary", "scalar"),
     "list_kaizen_records": RouteContract("kaizen_record", "paged_list"),
     "create_kaizen_record": RouteContract("kaizen_record", "scalar"),
     "get_kaizen_record": RouteContract("kaizen_record", "scalar"),

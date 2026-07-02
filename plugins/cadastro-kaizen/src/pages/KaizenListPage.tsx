@@ -19,7 +19,7 @@ import { KaizenRecordFilters } from "../components/KaizenRecordFilters";
 import { StateAlert } from "../components/StateAlert";
 import { detailPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
 
 type Props = {
@@ -141,35 +141,55 @@ export function KaizenListPage({ onNavigate }: Props) {
 
   const columns = useMemo<DataTableColumn<KaizenRecord>[]>(
     () => [
-      { key: "branch", header: "Unidade", render: (row) => unitLabel(row.branch_code) },
-      { key: "title", header: "Título", render: (row) => row.title },
-      { key: "accountable", header: "Responsável", render: (row) => row.accountable ?? "—" },
+      {
+        key: "branch",
+        header: "Unidade",
+        render: (row) => unitLabel(row.branch_code),
+        sortAccessor: (row) => unitLabel(row.branch_code),
+      },
+      {
+        key: "title",
+        header: "Título",
+        render: (row) => row.title,
+        sortAccessor: (row) => row.title,
+      },
+      {
+        key: "accountable",
+        header: "Responsável",
+        render: (row) => row.accountable ?? "—",
+        sortAccessor: (row) => row.accountable,
+      },
       {
         key: "savings_type",
         header: "Tipo economia",
         render: (row) => savingsTypeLabel(row.savings_type),
+        sortAccessor: (row) => savingsTypeLabel(row.savings_type),
       },
       {
         key: "daily_savings",
         header: "Economia/dia",
         className: "kz-table__col--numeric",
         render: (row) => formatCurrency(row.daily_savings),
+        sortAccessor: (row) => row.daily_savings ?? 0,
       },
       {
         key: "annual_savings",
         header: "Economia/ano",
         className: "kz-table__col--numeric",
         render: (row) => formatCurrency(row.annual_savings),
+        sortAccessor: (row) => row.annual_savings ?? 0,
       },
       {
         key: "status",
         header: "Status",
         render: (row) => statusLabel(row.status),
+        sortAccessor: (row) => statusLabel(row.status),
       },
       {
         key: "date",
-        header: "Data",
-        render: (row) => row.date_implemented ?? "—",
+        header: "Atualizado em",
+        render: (row) => formatDate(row.updated_at),
+        sortAccessor: (row) => row.updated_at,
       },
       {
         key: "actions",
@@ -247,6 +267,7 @@ export function KaizenListPage({ onNavigate }: Props) {
         rowKey={(row) => row.id}
         loading={loading}
         emptyMessage="Nenhum kaizen cadastrado."
+        initialSort={{ key: "date", dir: "desc" }}
         searchPlaceholder="Buscar na listagem…"
         getSearchText={(row) =>
           [

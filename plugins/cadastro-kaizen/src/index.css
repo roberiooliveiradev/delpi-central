@@ -314,6 +314,32 @@
   white-space: nowrap;
 }
 
+.dashboard-cadastro-kaizen .kz-table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+}
+
+.dashboard-cadastro-kaizen .kz-table__sort:hover,
+.dashboard-cadastro-kaizen .kz-table__sort--active {
+  color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-table__sort-idle {
+  opacity: 0.35;
+}
+
+.dashboard-cadastro-kaizen .kz-table__col--numeric .kz-table__sort {
+  flex-direction: row-reverse;
+}
+
 .dashboard-cadastro-kaizen .kz-table__empty {
   text-align: center;
   color: var(--kz-text-muted);
@@ -376,12 +402,13 @@
 
 .dashboard-cadastro-kaizen .kz-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  align-items: start;
 }
 
 .dashboard-cadastro-kaizen .kz-form-grid .kz-span-2 {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .dashboard-cadastro-kaizen .kz-field {
@@ -437,8 +464,12 @@
     justify-content: center;
   }
 
+  .dashboard-cadastro-kaizen .kz-form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-cadastro-kaizen .kz-form-grid .kz-span-2 {
-    grid-column: span 1;
+    grid-column: 1 / -1;
   }
 
   .dashboard-cadastro-kaizen .kz-form-actions .kz-primary-btn,
@@ -1120,8 +1151,9 @@
 
 /* Label de formulário com ajuda */
 .dashboard-cadastro-kaizen .kz-field__label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
 }
 

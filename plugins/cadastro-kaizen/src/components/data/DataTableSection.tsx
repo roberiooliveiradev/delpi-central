@@ -1,11 +1,24 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../../hooks/useClientPagination";
-import { DataTable, type DataTableColumn } from "./DataTable";
+import { DataTable, type DataTableColumn, type SortDirection } from "./DataTable";
 import { Pagination } from "./Pagination";
 
 const DEFAULT_PAGE_SIZE = 20;
+
+type SortState = { key: string; dir: SortDirection };
+
+function compareValues(
+  a: string | number | null | undefined,
+  b: string | number | null | undefined,
+): number {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b), "pt-BR", { numeric: true, sensitivity: "base" });
+}
 
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
   return columns
@@ -32,6 +45,7 @@ export type DataTableSectionProps<T> = {
   pageSize?: number;
   searchPlaceholder?: string;
   getSearchText?: (row: T) => string;
+  initialSort?: SortState | null;
 };
 
 export function DataTableSection<T>({
@@ -45,8 +59,18 @@ export function DataTableSection<T>({
   pageSize = DEFAULT_PAGE_SIZE,
   searchPlaceholder = "Buscar na tabela…",
   getSearchText,
+  initialSort = null,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortState | null>(initialSort);
+
+  const handleSort = useCallback((key: string) => {
+    setSort((current) => {
+      if (!current || current.key !== key) return { key, dir: "asc" };
+      if (current.dir === "asc") return { key, dir: "desc" };
+      return null;
+    });
+  }, []);
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -60,7 +84,16 @@ export function DataTableSection<T>({
     });
   }, [rows, search, columns, getSearchText]);
 
-  const { page, setPage, slice, total } = useClientPagination(filteredRows, pageSize);
+  const sortedRows = useMemo(() => {
+    if (!sort) return filteredRows;
+    const column = columns.find((item) => item.key === sort.key);
+    if (!column?.sortAccessor) return filteredRows;
+    const accessor = column.sortAccessor;
+    const factor = sort.dir === "asc" ? 1 : -1;
+    return [...filteredRows].sort((a, b) => factor * compareValues(accessor(a), accessor(b)));
+  }, [filteredRows, sort, columns]);
+
+  const { page, setPage, slice, total } = useClientPagination(sortedRows, pageSize);
 
   return (
     <section className="kz-card kz-table-section" aria-busy={loading}>
@@ -92,6 +125,9 @@ export function DataTableSection<T>({
         rowKey={rowKey}
         loading={loading}
         emptyMessage={emptyMessage}
+        sortKey={sort?.key ?? null}
+        sortDir={sort?.dir ?? "asc"}
+        onSort={handleSort}
       />
 
       <Pagination

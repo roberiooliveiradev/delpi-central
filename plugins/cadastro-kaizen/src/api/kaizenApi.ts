@@ -19,6 +19,7 @@ import type {
   KaizenRecord,
   KaizenRevision,
   KaizenSavingsTimeline,
+  KaizenSummary,
 } from "../types/kaizen";
 
 const API_BASE = "/apps/api-delpi/quality/kaizens/records";
@@ -51,22 +52,23 @@ export async function fetchKaizenRecords(params: ListParams = {}): Promise<Kaize
   return unwrapApiDelpiEnvelope(envelope, "Erro ao listar kaizens.");
 }
 
-const MAX_PAGE_SIZE = 200;
+export type SummaryParams = {
+  branch?: string;
+  dateStart?: string;
+  dateEnd?: string;
+};
 
-/** Busca todos os kaizens paginando (a API limita page_size a 200). */
-export async function fetchAllKaizenRecords(
-  params: Omit<ListParams, "page" | "page_size"> = {},
-): Promise<KaizenRecord[]> {
-  const all: KaizenRecord[] = [];
-  let page = 1;
-  for (;;) {
-    const data = await fetchKaizenRecords({ ...params, page, page_size: MAX_PAGE_SIZE });
-    all.push(...data.items);
-    const totalPages = data.pagination?.total_pages ?? 1;
-    if (page >= totalPages || data.items.length === 0) break;
-    page += 1;
-  }
-  return all;
+/** Indicadores agregados do painel, calculados no backend (Postgres). */
+export async function fetchKaizenSummary(params: SummaryParams = {}): Promise<KaizenSummary> {
+  const search = new URLSearchParams();
+  if (params.branch) search.set("branch", params.branch);
+  if (params.dateStart) search.set("date_start", params.dateStart);
+  if (params.dateEnd) search.set("date_end", params.dateEnd);
+  const query = search.toString();
+  const envelope = await httpGet<ApiEnvelope<KaizenSummary>>(
+    `${API_BASE}/summary${query ? `?${query}` : ""}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar indicadores de kaizen.");
 }
 
 export async function fetchKaizenRecord(id: string): Promise<KaizenRecord> {
