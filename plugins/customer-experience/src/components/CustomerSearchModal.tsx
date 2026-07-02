@@ -25,6 +25,7 @@ export function CustomerSearchModal({
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     nameRef.current?.focus();
@@ -40,42 +41,54 @@ export function CustomerSearchModal({
 
   const runSearch = useCallback(
     async (targetPage: number) => {
+      abortRef.current?.abort();
       if (!name.trim() && !code.trim() && !store.trim()) {
-        setError("Informe nome, código ou loja para pesquisar.");
+        setItems([]);
+        setTotal(0);
+        setTotalPages(0);
+        setPage(1);
+        setSearched(false);
+        setError(null);
+        setLoading(false);
         return;
       }
+      const controller = new AbortController();
+      abortRef.current = controller;
       setLoading(true);
       setError(null);
       try {
-        const result = await searchCustomers({
-          name,
-          code,
-          store,
-          page: targetPage,
-          pageSize: PAGE_SIZE,
-        });
+        const result = await searchCustomers(
+          { name, code, store, page: targetPage, pageSize: PAGE_SIZE },
+          controller.signal,
+        );
         setItems(result.items);
         setTotal(result.total);
         setTotalPages(result.totalPages);
         setPage(result.page);
         setSearched(true);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setItems([]);
         setTotal(0);
         setTotalPages(0);
         setError(err instanceof Error ? err.message : "Erro ao buscar clientes.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     },
     [name, code, store],
   );
 
+  // Busca ao vivo: dispara automaticamente (com debounce) conforme o usuário
+  // digita em qualquer filtro; abre já com os 20 primeiros do nome pré-preenchido.
   useEffect(() => {
-    if (initialName?.trim()) void runSearch(1);
-    // Busca inicial apenas na abertura, com o nome já digitado no campo.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const timer = window.setTimeout(() => {
+      void runSearch(1);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [runSearch]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +164,7 @@ export function CustomerSearchModal({
             <p className="cx-state">Buscando clientes...</p>
           ) : items.length === 0 ? (
             <p className="cx-state">
-              {searched ? "Nenhum cliente encontrado." : "Informe um filtro e clique em Pesquisar."}
+              {searched ? "Nenhum cliente encontrado." : "Digite o nome, código ou loja para buscar."}
             </p>
           ) : (
             <table className="cx-customer-table">
