@@ -170,9 +170,7 @@ function buildLabelHtml(participant: Participant, qrDataUrl: string): string {
         <div class="tag__caption">Aponte a câmera do celular</div>
         <div class="tag__name">${name}</div>
       </div>
-      <div class="tag__fold" aria-hidden="true">
-        <span>dobre no chicote</span>
-      </div>
+      <div class="tag__fold" aria-hidden="true"></div>
       <div class="tag__panel tag__brand">
         <div class="tag__logo">${delpiLogoSvg}</div>
         <div class="tag__seal">${QUALITY_SEAL_SVG}</div>
