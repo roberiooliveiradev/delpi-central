@@ -604,6 +604,24 @@ services:
     networks:
       - delpi-network
 
+  quality-labels:
+    build:
+      context: ../plugins/quality-labels
+      dockerfile: Dockerfile
+
+    container_name: delpi-quality-labels
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/quality-labels:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   pedidos-venda-abertos:
     build:
       context: ../plugins/pedidos-venda-abertos
@@ -921,6 +939,7 @@ services:
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
       PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
+      QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -938,6 +957,7 @@ services:
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-nc:/app/data/audit-5s-nc
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/quality-labels/qr:/app/data/quality-labels/qr
       # Logs de aplicação persistentes (sobrevivem a deploy/recreate)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/api-delpi-logs:/app/logs
 

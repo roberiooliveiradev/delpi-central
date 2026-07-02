@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "quality-labels",
+  "name": "Etiquetas da Qualidade",
+  "description": "Registro de inspeção por OP e geração de etiqueta com QR code público",
+  "icon": "tag-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/quality-labels",
+  "entry": "/apps/quality-labels/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "quality-labels.view",
+      "name": "Visualizar Etiquetas da Qualidade",
+      "description": "Consultar etiquetas de inspeção registradas",
+      "module": "quality-labels"
+    },
+    {
+      "code": "quality-labels.write",
+      "name": "Registrar Etiquetas da Qualidade",
+      "description": "Registrar inspeções por OP e gerar etiquetas com QR",
+      "module": "quality-labels"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/quality-labels",
+      "label": "Etiquetas da Qualidade",
+      "permission": "quality-labels.view",
+      "icon": "tag-icon",
+      "order": 20,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

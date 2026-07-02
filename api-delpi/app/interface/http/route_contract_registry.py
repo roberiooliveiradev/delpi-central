@@ -251,6 +251,14 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_inspecoes_entrada_historico_detalhe": RouteContract(
         "inspecoes_entrada_historico_detalhe", "object"
     ),
+    "lookup_quality_label_op": RouteContract("quality_label_op_lookup", "scalar"),
+    "create_quality_label": RouteContract("quality_label", "scalar"),
+    "list_quality_labels": RouteContract("quality_label", "paged_list"),
+    "get_quality_label": RouteContract("quality_label", "scalar"),
+    "set_quality_label_active": RouteContract("quality_label", "scalar"),
+    "get_public_quality_label_inspection": RouteContract(
+        "quality_label_public_inspection", "scalar"
+    ),
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),

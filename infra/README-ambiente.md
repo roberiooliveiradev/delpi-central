@@ -203,10 +203,13 @@ Uploads de evidências do plugin **quality-action-plans** e anexos de NC da **au
 |----------|----------------------|---------------|
 | `PAC_EVIDENCE_UPLOAD_DIR` | `/app/data/pac-evidences` | `${DELPI_DATA_HOST_DIR}/pac-evidences` |
 | `AUDIT_5S_NC_UPLOAD_DIR` | `/app/data/audit-5s-nc` | `${DELPI_DATA_HOST_DIR}/audit-5s-nc` |
+| `QUALITY_LABELS_QR_DIR` | `/app/data/quality-labels/qr` | `${DELPI_DATA_HOST_DIR}/quality-labels/qr` |
+
+> As etiquetas da qualidade (**quality-labels**, CRUD dentro da `api-delpi`) guardam os PNGs de QR em `QUALITY_LABELS_QR_DIR`. Mesmo padrão: o Postgres mantém o registro da inspeção; sem volume, o QR some no recreate.
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/audit-5s-nc
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 

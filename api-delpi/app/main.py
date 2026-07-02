@@ -30,6 +30,7 @@ from app.interface.http.routes.production import production_operational_router
 from app.interface.http.routes.purchases import purchases_router
 from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
+from app.interface.http.routes.quality import quality_labels_public_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.dashboard import dashboard_router
 from app.interface.http.routes.scheduling import scheduling_router
@@ -202,6 +203,7 @@ app.include_router(production_operational_router.router)
 app.include_router(purchases_router.router)
 app.include_router(engineering_router.router)
 app.include_router(quality_router.router)
+app.include_router(quality_labels_public_router.router)
 app.include_router(hr_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(scheduling_router.router, prefix="/scheduling", tags=["Agendamento"])

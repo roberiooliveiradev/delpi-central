@@ -109,6 +109,10 @@ class Settings:
         "PAC_EVIDENCE_UPLOAD_DIR",
         default="/app/data/pac-evidences",
     )
+    QUALITY_LABELS_QR_DIR: str = _get_env(
+        "QUALITY_LABELS_QR_DIR",
+        default="/app/data/quality-labels/qr",
+    )
     DRAWING_PDF_LIBRARY_DIR: str = _get_env(
         "DRAWING_PDF_LIBRARY_DIR",
         "DESENHOS_PDF_DIR",

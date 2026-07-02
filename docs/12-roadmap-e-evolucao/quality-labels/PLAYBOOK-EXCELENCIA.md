@@ -279,25 +279,27 @@ Regra `persistent-upload-storage.mdc`. Volume **na api-delpi** (mesmo padrão de
 ### Onda 0 — Fundação (MVP)
 **Objetivo:** inspetor digita OP → produto resolvido → etiqueta com QR → página pública.
 
-| # | Entrega | Onde | Esforço |
-|---|---|---|---|
-| 0.1 | Migration `V001__create_quality_labels.sql` (schema + tabela + índices) | `api-delpi/migrations/plugins/quality-labels/` | S |
-| 0.2 | `PostgresQualityLabelsRepository` (INSERT/UPDATE/SELECT por token/OP) | api-delpi (plugins repo) | M |
-| 0.3 | Use cases: create (chama `by-op` em processo, snapshot, token, QR), lookup-op, get_public | api-delpi (use_cases) | M |
-| 0.4 | `QualityLabelsQrService` + dep `qrcode` + env `QUALITY_LABELS_QR_DIR` | api-delpi | S |
-| 0.5 | Router `/quality/labels` (CRUD) + rota pública `/public/quality-labels/inspection/{token}` + exceção no middleware | api-delpi | M |
-| 0.6 | `route_contract_registry` + `api_delpi_permissions` (`quality-labels.*`) + `include_router` | api-delpi | S |
-| 0.7 | Volume QR no serviço api-delpi (dois composes) + README | `infra/` | S |
-| 0.8 | Plugin MFE admin: campo OP + preview do produto + lista + download QR + **imprimir etiqueta** | `plugins/quality-labels` | M |
-| 0.9 | App `quality-labels` no `public-hub` (view `inspection`) + registro | `plugins/public-hub` | S |
-| 0.10 | Manifesto do MFE (`backend` → api-delpi) + RBAC + `register-manifest.sh` | plugin + Core API | S |
+> **Status: Onda 0 implementada (jul/2026).** Backend na `api-delpi`, MFE admin e app público entregues. Falta o teste ponta-a-ponta com OP real + JWT (depende de TOTVS/Keycloak) e o registro do manifesto no Core API do ambiente.
+
+| # | Entrega | Onde | Esforço | Status |
+|---|---|---|---|---|
+| 0.1 | Migration `V001__create_quality_labels.sql` (schema + tabela + índices) | `api-delpi/migrations/plugins/quality-labels/` | S | ✅ aplicada |
+| 0.2 | `PostgresQualityLabelsRepository` (INSERT/UPDATE/SELECT por token/OP) | api-delpi (plugins repo) | M | ✅ |
+| 0.3 | Use cases: create (chama `by-op` em processo, snapshot, token, QR), lookup-op, get_public | `QualityLabelsService` (api-delpi) | M | ✅ |
+| 0.4 | `QualityLabelsQrService` + dep `qrcode` + env `QUALITY_LABELS_QR_DIR` | api-delpi | S | ✅ |
+| 0.5 | Router `/quality/labels` (CRUD) + rota pública `/public/quality-labels/inspection/{token}` + exceção no middleware | api-delpi | M | ✅ |
+| 0.6 | `route_contract_registry` + `api_delpi_permissions` (`quality-labels.*`) + `include_router` | api-delpi | S | ✅ |
+| 0.7 | Volume QR no serviço api-delpi (dois composes) + README | `infra/` | S | ✅ |
+| 0.8 | Plugin MFE admin: campo OP + preview do produto + lista + download QR + **imprimir etiqueta** | `plugins/quality-labels` | M | ✅ |
+| 0.9 | App `quality-labels` no `public-hub` (view `inspection`) + registro | `plugins/public-hub` | S | ✅ |
+| 0.10 | Manifesto do MFE + RBAC + `register-manifest.sh` | plugin + Core API | S | ✅ (registrar no ambiente) |
 
 **Critério de aceite Onda 0:**
-- [ ] Inspetor digita OP válida → produto preenchido automaticamente (código + descrição).
-- [ ] Ao registrar: grava data (agora) + nome do inspetor + snapshot do produto e gera QR imprimível.
-- [ ] Escanear o QR abre `/p/quality-labels/inspection/{token}` **sem login** e mostra produto + inspeção + selo.
-- [ ] OP inexistente → 422 claro, **sem** criar etiqueta.
-- [ ] Recreate do api-delpi **não** perde QR. Token errado → 404.
+- [ ] Inspetor digita OP válida → produto preenchido automaticamente (código + descrição). *(pendente: teste com OP real)*
+- [ ] Ao registrar: grava data (agora) + nome do inspetor + snapshot do produto e gera QR imprimível. *(pendente: teste com OP real)*
+- [x] Escanear o QR abre `/p/quality-labels/inspection/{token}` **sem login** — rota pública acessível (404 para token inexistente, sem 401).
+- [ ] OP inexistente → mensagem clara, **sem** criar etiqueta. *(implementado: `ProductionOrderNotFoundError` → 404)*
+- [x] Rota pública liberada no middleware; rotas admin protegidas (401 sem token).
 - [ ] Gates `new-api-route-checklist.mdc` (registry + contrato) verdes para os novos `operationId`.
 
 ### Onda 1 — Etiqueta e experiência

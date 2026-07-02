@@ -49,6 +49,10 @@ CENTRAL_AGENDAMENTO_MANAGE_FILIAL_SC = "central-agendamento.manage.filial-sc"
 CULTURA_DELPI_VIEW = "cultura-delpi.view"
 CULTURA_DELPI_MANAGE = "cultura-delpi.manage"
 
+# --- etiquetas da qualidade ---
+QUALITY_LABELS_VIEW = "quality-labels.view"
+QUALITY_LABELS_WRITE = "quality-labels.write"
+
 # --- propostas comerciais ---
 PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 
@@ -206,6 +210,15 @@ CULTURA_DELPI_READ_PERMISSIONS = [
 
 CULTURA_DELPI_WRITE_PERMISSIONS = [
     CULTURA_DELPI_MANAGE,
+]
+
+QUALITY_LABELS_READ_PERMISSIONS = [
+    QUALITY_LABELS_VIEW,
+    QUALITY_LABELS_WRITE,
+]
+
+QUALITY_LABELS_WRITE_PERMISSIONS = [
+    QUALITY_LABELS_WRITE,
 ]
 
 PROPOSTAS_COMERCIAIS_ACCESS = [
