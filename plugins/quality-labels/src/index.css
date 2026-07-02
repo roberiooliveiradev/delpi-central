@@ -23,7 +23,7 @@
 .quality-labels-page {
   width: 100%;
   min-height: 100%;
-  padding: 32px 28px 40px 56px;
+  padding: 32px 28px 40px;
   color: var(--ql-text);
   background-color: var(--app-canvas, var(--bg, #ffffff));
   background-image: linear-gradient(
@@ -35,7 +35,8 @@
 
 .ql-inner {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .ql-hero {
