@@ -206,8 +206,8 @@ class VinculoRepository(PluginBaseRepository):
                 p.processo_id,
                 p.codigo_processo,
                 p.nome_processo,
-                p.filial_id,
-                p.setor_id,
+                f.codigo_filial AS filial_id,
+                setores.nomes AS setor_id,
                 p.status_processo,
                 p.familia_processo,
                 p.gestor_responsavel
@@ -221,6 +221,17 @@ class VinculoRepository(PluginBaseRepository):
             JOIN transformometro.processos p
               ON p.processo_id = rv.processo_id
              AND p.deletado = FALSE
+            LEFT JOIN transformometro.processo_instancias pi
+              ON pi.instancia_id = rv.instancia_id
+             AND pi.deletado = FALSE
+            LEFT JOIN transformometro.filiais f
+              ON f.filial_id = pi.filial_id
+            LEFT JOIN LATERAL (
+                SELECT string_agg(s.nome_setor, ', ' ORDER BY s.nome_setor) AS nomes
+                FROM transformometro.processo_instancia_setores pis
+                JOIN transformometro.setores s ON s.setor_id = pis.setor_id
+                WHERE pis.instancia_id = pi.instancia_id
+            ) setores ON TRUE
             WHERE v.recurso_compartilhado_id = %s
               AND v.deletado = FALSE
             ORDER BY v.ativo DESC, p.codigo_processo ASC, rv.data_inicio_vigencia DESC
