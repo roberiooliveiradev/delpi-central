@@ -269,17 +269,25 @@
     "textTitle": "Status consolidado",
     "treeTitle": "Estrutura do produto {code}",
     "treeTitleGeneric": "Estrutura do produto",
+    "genericNarrative": {
+      "introWithDescription": "Visão consolidada do produto **{code}** ({description}).",
+      "introCodeOnly": "Visão consolidada do produto **{code}**.",
+      "intro": "Visão consolidada dos dados retornados nesta consulta.",
+      "sectionsLine": "Seções analisadas: {sections}."
+    },
     "sectionRoles": {
       "structure": "structure",
       "raw_material_stock": "stock",
       "production": "list",
-      "shipping": "other"
+      "shipping": "other",
+      "materials": "list"
     },
     "sectionLabels": {
       "structure": "Estrutura (BOM)",
       "raw_material_stock": "Estoque de matérias-primas",
       "production": "Ordens de produção",
-      "shipping": "Expedição"
+      "shipping": "Expedição",
+      "materials": "Matérias-primas por impacto de custo"
     },
     "indicatorCards": [
       { "key": "total_components", "label": "Componentes", "unit": "" },
@@ -289,7 +297,13 @@
       { "key": "max_pa_producible_from_stock", "label": "PA possíveis com estoque", "unit": "" },
       { "key": "total_pa_orders", "label": "OPs de PA", "unit": "" },
       { "key": "total_pa_reported_quantity", "label": "PA apontado", "unit": "" },
-      { "key": "total_pa_shipped_quantity", "label": "PA expedido", "unit": "" }
+      { "key": "total_pa_shipped_quantity", "label": "PA expedido", "unit": "" },
+      { "key": "total_material_cost", "label": "Custo de materiais", "unit": "R$" },
+      { "key": "pa_standard_cost", "label": "Custo padrão do PA", "unit": "R$" },
+      { "key": "material_cost_vs_pa_standard_percent", "label": "Materiais x custo padrão", "unit": "%" },
+      { "key": "top_material_impact_percent", "label": "Maior impacto de MP", "unit": "%" },
+      { "key": "projected_cost_delta", "label": "Delta simulado", "unit": "R$" },
+      { "key": "adjustment_percent", "label": "Reajuste simulado", "unit": "%" }
     ]
   },
   "stackSectionFraming": {

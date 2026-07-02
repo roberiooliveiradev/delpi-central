@@ -1,6 +1,6 @@
 # Playbook 23 — Inteligência de dados compostos no chat base (`composite_analysis`)
 
-**Status:** proposto (jul/2026)
+**Status:** implementado (jul/2026) — factory-status, cost-impact-simulation; genérico por shape
 **Público:** backend chat, MFE, agentes Cursor, revisores de PR
 **Depende de:** [playbook-22-schema-first-api-actions-jun2026.md](./playbook-22-schema-first-api-actions-jun2026.md) · [presentation-delivered-pure-jun2026.md](../architecture/presentation-delivered-pure-jun2026.md)
 
@@ -102,9 +102,39 @@ build_bundle(host, data, path, entity, shape, sections)
 - Comportamento genérico por shape (novo `composite_analysis` funciona sem código novo).
 - Testes de qualidade + gates verdes; sem novos desvios de arquitetura.
 
-## 8. Histórico
+## 8. Generalização por composto agregado (cost-impact-simulation)
+
+Nem todo `composite_analysis` tem seções `structure/stock/production`. O `cost-impact-simulation` expõe **um ranking** (`materials.items`) + **métricas agregadas no root** (`summary`, `simulation`), sem seções aninhadas com `summary`. Sem tratamento, ele caía em tabela genérica sem KPI ("Foram retornados N registros. Total de rank: 15").
+
+Ajustes **genéricos** (servem a qualquer composto agregado futuro):
+
+| Ponto | Mudança |
+|---|---|
+| `ChatSchemaDrivenPresentationService._build_composite_kpi` | Além dos `summary` aninhados por seção, passa a ler `summary` / `simulation` / `indicators` no **root** (campos escalares) como fonte de cards. |
+| `ChatSchemaDrivenPresentationService._build_composite_text` | Quando o `routeNamespace` não produz linhas (dados não têm as seções factory), cai em **lead genérico** (`_build_generic_composite_text`: produto + seções analisadas). |
+| `presenter_content.json` → `compositeAnalysis` | Cards de custo (`total_material_cost`, `pa_standard_cost`, `top_material_impact_percent`, `projected_cost_delta`, `adjustment_percent`, …), `sectionRoles`/`sectionLabels` para `materials`, e templates `genericNarrative`. |
+| `presentation_profiles.json` → `cost_impact_simulation` | `stackLayoutPolicy: always` + `proseDelivery: template` (consistente com `factory_status`), para stack rico com lead preservado. |
+
+Unidade dos cards inferida por `ChatPresentationKpiAssemblyService` (`R$` → currency, `%` → percent) — sem formatação hardcoded.
+
+## 9. Validação com produtos reais (jul/2026)
+
+Testado ao vivo (api-delpi + pipeline de apresentação) com produtos em produção, comparando os componentes gerados **linha a linha** contra a fonte crua:
+
+| Rota / playbook | Produto | Resultado |
+|---|---|---|
+| `factory-status` (visão/status) | `90261299` | Stack: KPI (8 cards), dashboard (5 painéis), árvore BOM (12 nós, 0 ausentes/`unknown`), 3 tabelas. Contagens KPI batem com a fonte (11 comp., 7 MP, 0 exclusivas, 3 OPs PA). |
+| `production-status` (situação de produção) | `90261299` | Tabela + veredito factual coerente com SH6010. |
+| `cost-impact-simulation` (simulador de custos) | `90261255` | Stack: lead + KPI de custo + ranking Pareto. Custo materiais R$ 49.598,35 e maior impacto 58,74% batem com a MP #1 (10000×2,9133=29.133). Simulação +10% ok. |
+| Operacionais (`consumption/top-items`, `purchases/top-products`, `losses/top-materials`, `schedule/today`, `orders/open`) | dados reais | Tabela + avisos de cobertura corretos (truncamento, consolidado por filial). |
+
+Árvore BOM confere código (label) + descrição (subtitle) + tipo PA/PI/MP (badge) + unidade/quantidade (meta). O nó `unknown` observado antes era artefato de fixture esparso; com dados reais os componentes vêm completos.
+
+## 10. Histórico
 
 | Data | Evento |
 |---|---|
 | jul/2026 | Correção do bug factual "MP exclusiva × sem estoque" no factory-status (`presenter_content.json`). |
 | jul/2026 | Diagnóstico: `composite_analysis` perdeu apresentação rica no `1322970f3`; plano de reconstrução schema-first (este playbook). |
+| jul/2026 | Implementação schema-first do composto (factory-status): KPI + tabelas + árvore + dashboard + stack. |
+| jul/2026 | Generalização para composto agregado (cost-impact-simulation): KPI de `summary` no root + lead genérico + perfil `always`/`template`. Validado com produtos reais. |

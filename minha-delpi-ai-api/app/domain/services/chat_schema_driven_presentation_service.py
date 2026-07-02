@@ -237,7 +237,7 @@ class ChatSchemaDrivenPresentationService:
         namespace = str(profile.get("routeNamespace") or "").strip()
 
         if not namespace:
-            return None
+            return cls._build_generic_composite_text(host, root, path=path, entity=entity)
 
         product = root.get("product") if isinstance(root.get("product"), dict) else {}
         code = str(
@@ -322,6 +322,56 @@ class ChatSchemaDrivenPresentationService:
         clean_lines = [line for line in lines if str(line or "").strip()]
 
         if not clean_lines:
+            # Namespace configurado mas sem dados no formato esperado (ex.: cost-impact
+            # não tem seções structure/stock/production) → lead genérico do composto.
+            return cls._build_generic_composite_text(host, root, path=path, entity=entity)
+
+        title = cls._composite_text("textTitle") or "Status consolidado"
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": "\n\n".join(clean_lines),
+        }
+
+    @classmethod
+    def _build_generic_composite_text(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        root: dict[str, Any],
+        *,
+        path: str,
+        entity: str | None,
+    ) -> dict[str, Any] | None:
+        """Lead narrativo genérico para compostos sem routeNamespace dedicado."""
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(
+            product.get("product_code")
+            or product.get("code")
+            or host._extract_product_code_from_path(path)
+            or ""
+        ).strip()
+        description = str(product.get("description") or "").strip()
+        lines: list[str] = []
+
+        if code and description:
+            lines.append(
+                cls._generic_narrative_text("introWithDescription", code=code, description=description)
+            )
+        elif code:
+            lines.append(cls._generic_narrative_text("introCodeOnly", code=code))
+        else:
+            lines.append(cls._generic_narrative_text("intro"))
+
+        sections = cls._composite_sections(root, None)
+        labels = [label for _, label, _ in sections if str(label or "").strip()]
+
+        if labels:
+            lines.append(cls._generic_narrative_text("sectionsLine", sections=", ".join(labels)))
+
+        clean_lines = [line for line in lines if str(line or "").strip()]
+
+        if not clean_lines:
             return None
 
         title = cls._composite_text("textTitle") or "Status consolidado"
@@ -331,6 +381,24 @@ class ChatSchemaDrivenPresentationService:
             "title": title,
             "markdown": "\n\n".join(clean_lines),
         }
+
+    @classmethod
+    def _generic_narrative_text(cls, key: str, **values: str) -> str:
+        template = ChatAssistantContentService.get(
+            "presenter_content",
+            "compositeAnalysis",
+            "genericNarrative",
+            key,
+            default="",
+        )
+
+        if not template:
+            return ""
+
+        try:
+            return template.format(**values)
+        except (KeyError, IndexError):
+            return template
 
     @staticmethod
     def _section_summary(root: dict[str, Any], key: str) -> dict[str, Any] | None:
@@ -413,10 +481,19 @@ class ChatSchemaDrivenPresentationService:
             if isinstance(value, dict) and isinstance(value.get("summary"), dict):
                 merged.update(value["summary"])
 
-        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+        # Compostos com métricas agregadas no root (ex.: cost-impact expõe
+        # `summary`/`simulation` diretamente, sem seção aninhada com `summary`).
+        for root_key in ("summary", "simulation", "indicators"):
+            block = root.get(root_key)
 
-        if isinstance(indicators, dict):
-            merged.update(indicators)
+            if isinstance(block, dict):
+                merged.update(
+                    {
+                        key: val
+                        for key, val in block.items()
+                        if not isinstance(val, (dict, list))
+                    }
+                )
 
         if not merged:
             return None

@@ -419,7 +419,7 @@
     "analyser": "llm",
     "sale_pricing": "llm",
     "raw_material_price_intelligence": "llm",
-    "cost_impact_simulation": "llm",
+    "cost_impact_simulation": "template",
     "structure_exclusivity": "template",
     "last_purchase": "llm",
     "purchase_price_history": "llm",
@@ -1046,6 +1046,7 @@
         "cost_impact_simulation"
       ],
       "chartPolicy": "skip",
+      "stackLayoutPolicy": "always",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary"
     },
