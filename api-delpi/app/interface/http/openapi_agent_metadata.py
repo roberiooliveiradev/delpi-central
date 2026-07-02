@@ -763,9 +763,9 @@ DATA_SQL = agent_route(
 )
 
 QUALITY_KAIZEN_SUMMARY = agent_route(
-    summary="Kaizens — resumo e listagem (Google Sheets)",
+    summary="Kaizens — resumo e listagem (PostgreSQL)",
     description=(
-        "Resumo de melhorias kaizen da planilha de qualidade: total no período, "
+        "Resumo de melhorias kaizen cadastradas: total no período, "
         "economia acumulada (daily_savings × dias ativos) e list_kaizen. "
         "Parâmetros: title, status, branch, date_start, date_end. "
         "Sem date_start/date_end na listagem retorna todos os kaizens implantados "
@@ -778,12 +778,13 @@ QUALITY_KAIZEN_SUMMARY = agent_route(
 )
 
 QUALITY_KAIZEN_BY_ID = agent_route(
-    summary="Detalhe do kaizen (Google Sheets)",
+    summary="Detalhe do kaizen (PostgreSQL)",
     description=(
-        "Retorna ficha completa de um kaizen pelo id composto "
-        "(filial-data-título, como em list_kaizen[].id): título, status, setor, filial, "
-        "responsável, investimento, daily_savings, annual_savings e entradas do cálculo "
-        "(segundos_por_ocorrencia, ocorrencias_por_dia, custo_hora, hours_saved_per_day). "
+        "Retorna ficha completa de um kaizen pelo UUID do cadastro ou, para registros "
+        "migrados da planilha, pelo id legado composto (filial-data-título). "
+        "Inclui título, status, setor, unidade, responsável, investimento, daily_savings, "
+        "annual_savings e entradas do cálculo (seconds_per_occurrence, occurrences_per_day, "
+        "hourly_cost, hours_saved_per_day). "
         "Use quando o usuário pedir detalhe, ficha ou economia projetada de um kaizen específico — "
         "não para resumo agregado do período (prefira GET /quality/kaizens/summary)."
     ),
@@ -796,7 +797,7 @@ QUALITY_KAIZEN_RECORDS_LIST = agent_route(
         "Lista paginada de kaizens cadastrados no PostgreSQL (cadastro operacional). "
         "Filtros: filial, status, tipo de economia, título, período. "
         "Use para «kaizens cadastrados», «registros kaizen», «cadastro kaizen» — "
-        "distinto do resumo agregado da planilha Google (GET /quality/kaizens/summary)."
+        "ou para edição/CRUD quando o usuário precisa alterar um registro."
     ),
     operation_id="list_kaizen_records",
 )

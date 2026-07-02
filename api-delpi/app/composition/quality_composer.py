@@ -36,6 +36,9 @@ from app.infrastructure.persistence.google_sheets.audit_5s.audit_5s_repository i
 from app.infrastructure.persistence.google_sheets.kaizen.kaizen_repository import (
     KaizenRepository,
 )
+from app.infrastructure.persistence.plugins.repositories.kaizen.postgres_kaizen_query_repository import (
+    PostgresKaizenQueryRepository,
+)
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.persistence.totvs.nonconformity_repositories.nonconformity_query_repository import (
     NonconformityQueryRepository,
@@ -54,13 +57,18 @@ def _build_utils() -> Utils:
     return Utils()
 
 
-def _build_kaizen_repository() -> KaizenRepository:
+def _build_kaizen_sheets_repository() -> KaizenRepository:
+    """Fonte legada da planilha — mantida só para importação pontual (import-from-sheet)."""
     return KaizenRepository(
         client=_build_google_sheets_client(),
         sheet_id=settings.QUALITY_SHEET_ID,
         gid=settings.QUALITY_KAIZEN_SHEET_GID,
         utils=_build_utils(),
     )
+
+
+def _build_kaizen_query_repository() -> PostgresKaizenQueryRepository:
+    return PostgresKaizenQueryRepository(utils=_build_utils())
 
 
 def _build_audit_5s_repository() -> Audit5SRepository:
@@ -81,11 +89,11 @@ def _build_nonconformity_repository() -> NonconformityQueryRepository:
 
 
 def build_get_kaizen_summary_use_case() -> GetKaizenSummaryUseCase:
-    return GetKaizenSummaryUseCase(repository=_build_kaizen_repository())
+    return GetKaizenSummaryUseCase(repository=_build_kaizen_query_repository())
 
 
 def build_get_kaizen_by_id_use_case() -> GetKaizenByIdUseCase:
-    return GetKaizenByIdUseCase(repository=_build_kaizen_repository())
+    return GetKaizenByIdUseCase(repository=_build_kaizen_query_repository())
 
 
 def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
