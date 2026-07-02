@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { detailPath, listPath, newPath, parseRoute, type View } from "../constants/kaizen";
+import {
+  dashboardPath,
+  detailPath,
+  listPath,
+  newPath,
+  parseRoute,
+  type View,
+} from "../constants/kaizen";
+import { KaizenDashboardPage } from "./KaizenDashboardPage";
 import { KaizenDetailPage } from "./KaizenDetailPage";
 import { KaizenFormPage } from "./KaizenFormPage";
 import { KaizenListPage } from "./KaizenListPage";
@@ -20,6 +28,11 @@ export function CadastroKaizenPage({ pathname }: Props) {
   }, [externalRoute.view, externalRoute.id]);
 
   function handleNavigate(path: string) {
+    if (path === dashboardPath()) {
+      setView("dashboard");
+      setRecordId(undefined);
+      return;
+    }
     if (path === listPath()) {
       setView("list");
       setRecordId(undefined);
@@ -35,6 +48,10 @@ export function CadastroKaizenPage({ pathname }: Props) {
       setView("detail");
       setRecordId(detailMatch[1]);
     }
+  }
+
+  if (view === "dashboard") {
+    return <KaizenDashboardPage onNavigate={handleNavigate} />;
   }
 
   if (view === "new") {

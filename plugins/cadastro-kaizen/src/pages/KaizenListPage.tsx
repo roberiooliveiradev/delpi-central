@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { FolderOpen, Trash2 } from "lucide-react";
 
 import { deleteKaizenRecord, fetchKaizenRecords, importKaizensFromSheet } from "../api/kaizenApi";
 import type { DataTableColumn } from "../components/data/DataTable";
@@ -8,9 +8,10 @@ import {
   KaizenListHeaderActions,
   KaizenPageHeader,
 } from "../components/KaizenPageHeader";
+import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenRecordFilters } from "../components/KaizenRecordFilters";
 import { StateAlert } from "../components/StateAlert";
-import { editPath, newPath } from "../constants/kaizen";
+import { detailPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency } from "../utils/format";
 import { savingsTypeLabel, statusLabel } from "../utils/labels";
@@ -130,10 +131,10 @@ export function KaizenListPage({ onNavigate }: Props) {
             <button
               type="button"
               className="kz-ghost-btn"
-              onClick={() => onNavigate(editPath(row.id))}
+              onClick={() => onNavigate(detailPath(row.id))}
             >
-              <Pencil size={14} aria-hidden="true" />
-              Editar
+              <FolderOpen size={14} aria-hidden="true" />
+              Abrir
             </button>
             <button
               type="button"
@@ -154,6 +155,7 @@ export function KaizenListPage({ onNavigate }: Props) {
       <KaizenPageHeader
         title="Cadastro de Kaizens"
         subtitle="Melhorias contínuas — módulo qualidade"
+        nav={<KaizenNavTabs active="list" onNavigate={onNavigate} />}
         actions={
           <KaizenListHeaderActions
             onNew={() => onNavigate(newPath())}

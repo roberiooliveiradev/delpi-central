@@ -47,7 +47,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
   },
   improvements: {
     launch:
-      "Abre o formulário completo pré-preenchido com os dados da versão atual. Revise/edite tudo (processo, economia, equipe) e salve como rascunho — ela nasce Em andamento sem afetar a versão implantada.",
+      "Cria uma cópia da versão ativa como rascunho (Em andamento) e a seleciona. Edite as seções ali mesmo e, ao final, clique em “Salvar e tornar ativa”. A versão ativa segue contabilizando até lá.",
     periodGain:
       "Soma dos ganhos das versões que estiveram implantadas no intervalo, respeitando a validade de 1 ano de cada uma. Rascunhos não contam.",
     currentSavings:

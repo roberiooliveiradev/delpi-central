@@ -16,6 +16,7 @@ const EVENT_LABELS: Record<string, string> = {
   version_created: "Nova versão criada",
   version_updated: "Versão (rascunho) editada",
   version_implemented: "Versão implantada",
+  version_deleted: "Versão excluída",
   improvement_added: "Melhoria lançada",
   kaizen_updated: "Dados atualizados",
   kaizen_deleted: "Kaizen excluído",

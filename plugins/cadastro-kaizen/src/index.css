@@ -1350,6 +1350,177 @@
   border-left: 3px solid var(--kz-success, #16a34a);
 }
 
+/* ---------------------------------------------------------- Seletor de versões */
+
+.dashboard-cadastro-kaizen .kz-versions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: var(--kz-section-gap);
+}
+
+.dashboard-cadastro-kaizen .kz-versions__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-cadastro-kaizen .kz-versions__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-cadastro-kaizen .kz-versions__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--kz-font-md);
+  color: var(--kz-title);
+}
+
+.dashboard-cadastro-kaizen .kz-versions__count {
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+  background: color-mix(in srgb, var(--kz-text-muted) 12%, transparent);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.dashboard-cadastro-kaizen .kz-versions__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-cadastro-kaizen .kz-version-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--kz-card-border);
+  border-radius: 12px;
+  background: var(--kz-card-bg, #fff);
+  color: var(--kz-text);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.05s;
+  min-width: 84px;
+}
+
+.dashboard-cadastro-kaizen .kz-version-pill:hover {
+  border-color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-version-pill:active {
+  transform: translateY(1px);
+}
+
+.dashboard-cadastro-kaizen .kz-version-pill__num {
+  font-weight: 700;
+  font-size: var(--kz-font-sm);
+}
+
+.dashboard-cadastro-kaizen .kz-version-pill__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+}
+
+/* Versão ativa (implantada) */
+.dashboard-cadastro-kaizen .kz-version-pill--implantado {
+  border-color: color-mix(in srgb, var(--kz-success, #16a34a) 55%, var(--kz-card-border));
+}
+.dashboard-cadastro-kaizen .kz-version-pill--implantado .kz-version-pill__status {
+  color: var(--kz-success, #16a34a);
+  font-weight: 600;
+}
+
+/* Rascunho */
+.dashboard-cadastro-kaizen .kz-version-pill--em_andamento {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--kz-warning, #d97706) 55%, var(--kz-card-border));
+}
+.dashboard-cadastro-kaizen .kz-version-pill--em_andamento .kz-version-pill__status {
+  color: var(--kz-warning, #d97706);
+  font-weight: 600;
+}
+
+/* Selecionada (destaque forte) */
+.dashboard-cadastro-kaizen .kz-version-pill--selected {
+  border-color: var(--kz-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
+  background: color-mix(in srgb, var(--kz-accent) 6%, var(--kz-card-bg, #fff));
+}
+
+.dashboard-cadastro-kaizen .kz-versions__banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--kz-control-radius);
+  font-size: var(--kz-font-sm);
+  line-height: 1.45;
+}
+
+.dashboard-cadastro-kaizen .kz-versions__banner--active {
+  background: color-mix(in srgb, var(--kz-success, #16a34a) 10%, transparent);
+  color: color-mix(in srgb, var(--kz-success, #16a34a) 75%, var(--kz-text));
+}
+
+.dashboard-cadastro-kaizen .kz-versions__banner--history {
+  justify-content: space-between;
+  background: color-mix(in srgb, var(--kz-text-muted) 12%, transparent);
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-versions__banner--history .kz-versions__banner-text {
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-versions__banner--draft {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  background: color-mix(in srgb, var(--kz-warning, #d97706) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kz-warning, #d97706) 35%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-versions__banner-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: color-mix(in srgb, var(--kz-warning, #b45309) 80%, var(--kz-text));
+}
+
+.dashboard-cadastro-kaizen .kz-versions__implement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-cadastro-kaizen .kz-versions__implement-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-versions__implement-date input {
+  padding: 6px 8px;
+  border: 1px solid var(--kz-card-border);
+  border-radius: var(--kz-control-radius);
+  background: var(--kz-input-bg, #fff);
+  color: var(--kz-text);
+}
+
 /* ---------------------------------------------------------- Modal de versão */
 
 .dashboard-cadastro-kaizen .kz-modal-overlay,
@@ -1524,4 +1695,302 @@
 
 .dashboard-cadastro-kaizen .kz-evidence-panel--compact .kz-evidence-gallery {
   gap: 12px;
+}
+
+/* ============================================================ Dashboard */
+
+.dashboard-cadastro-kaizen .kz-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dashboard-cadastro-kaizen .kz-nav__link {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: var(--kz-font-sm);
+  font-weight: 600;
+  color: var(--kz-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.dashboard-cadastro-kaizen .kz-nav__link:hover {
+  color: var(--kz-accent);
+  border-color: color-mix(in srgb, var(--kz-accent) 25%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-nav__link--active {
+  color: var(--kz-accent);
+  background: color-mix(in srgb, var(--kz-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--kz-accent) 25%, transparent);
+}
+
+/* --- KPIs --- */
+
+.dashboard-cadastro-kaizen .kz-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--kz-grid-gap);
+  margin-bottom: var(--kz-section-gap);
+}
+
+.dashboard-cadastro-kaizen .kz-kpi {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--kz-card-radius);
+  border: 1px solid var(--kz-card-border);
+  background: var(--kz-card-bg);
+}
+
+.dashboard-cadastro-kaizen .kz-kpi__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-kpi__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-kpi__label {
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dashboard-cadastro-kaizen .kz-kpi__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--kz-title);
+  line-height: 1.1;
+}
+
+.dashboard-cadastro-kaizen .kz-kpi__sub {
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-kpi--accent .kz-kpi__icon {
+  background: color-mix(in srgb, var(--kz-accent) 14%, transparent);
+  color: var(--kz-accent);
+}
+.dashboard-cadastro-kaizen .kz-kpi--success .kz-kpi__icon {
+  background: color-mix(in srgb, var(--kz-success) 14%, transparent);
+  color: var(--kz-success);
+}
+.dashboard-cadastro-kaizen .kz-kpi--warning .kz-kpi__icon {
+  background: color-mix(in srgb, var(--kz-warning, #d97706) 16%, transparent);
+  color: var(--kz-warning, #d97706);
+}
+.dashboard-cadastro-kaizen .kz-kpi--danger .kz-kpi__icon {
+  background: color-mix(in srgb, var(--kz-danger) 14%, transparent);
+  color: var(--kz-danger);
+}
+.dashboard-cadastro-kaizen .kz-kpi--muted .kz-kpi__icon {
+  background: color-mix(in srgb, var(--kz-text-muted) 14%, transparent);
+  color: var(--kz-text-muted);
+}
+
+/* --- Panels grid --- */
+
+.dashboard-cadastro-kaizen .kz-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--kz-grid-gap);
+}
+
+.dashboard-cadastro-kaizen .kz-dash-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dashboard-cadastro-kaizen .kz-dash-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--kz-font-md);
+  color: var(--kz-title);
+}
+
+.dashboard-cadastro-kaizen .kz-dash-panel--validity {
+  grid-column: span 2;
+}
+
+@media (max-width: 720px) {
+  .dashboard-cadastro-kaizen .kz-dash-panel--validity {
+    grid-column: span 1;
+  }
+}
+
+/* --- Bar list --- */
+
+.dashboard-cadastro-kaizen .kz-barlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-cadastro-kaizen .kz-barlist__row {
+  display: grid;
+  grid-template-columns: minmax(80px, 30%) 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-cadastro-kaizen .kz-barlist__label {
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-cadastro-kaizen .kz-barlist__track {
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--kz-text-muted) 12%, transparent);
+  overflow: hidden;
+}
+
+.dashboard-cadastro-kaizen .kz-barlist__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 0.4s ease;
+}
+
+.dashboard-cadastro-kaizen .kz-barlist__fill--accent {
+  background: var(--kz-accent);
+}
+.dashboard-cadastro-kaizen .kz-barlist__fill--success {
+  background: var(--kz-success);
+}
+.dashboard-cadastro-kaizen .kz-barlist__fill--warning {
+  background: var(--kz-warning, #d97706);
+}
+.dashboard-cadastro-kaizen .kz-barlist__fill--danger {
+  background: var(--kz-danger);
+}
+.dashboard-cadastro-kaizen .kz-barlist__fill--muted {
+  background: color-mix(in srgb, var(--kz-text-muted) 55%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-barlist__value {
+  font-size: var(--kz-font-sm);
+  font-weight: 700;
+  color: var(--kz-title);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* --- Validity / recent lists --- */
+
+.dashboard-cadastro-kaizen .kz-validity-note {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--kz-control-radius);
+  font-size: var(--kz-font-sm);
+}
+
+.dashboard-cadastro-kaizen .kz-validity-note--expired {
+  background: color-mix(in srgb, var(--kz-danger) 10%, transparent);
+  color: color-mix(in srgb, var(--kz-danger) 80%, var(--kz-text));
+}
+
+.dashboard-cadastro-kaizen .kz-validity-list,
+.dashboard-cadastro-kaizen .kz-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-cadastro-kaizen .kz-validity-row,
+.dashboard-cadastro-kaizen .kz-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--kz-card-border);
+}
+
+.dashboard-cadastro-kaizen .kz-validity-row:last-child,
+.dashboard-cadastro-kaizen .kz-recent-row:last-child {
+  border-bottom: none;
+}
+
+.dashboard-cadastro-kaizen .kz-validity-row__link,
+.dashboard-cadastro-kaizen .kz-recent-row__link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-cadastro-kaizen .kz-validity-row__title,
+.dashboard-cadastro-kaizen .kz-recent-row__title {
+  font-size: var(--kz-font-sm);
+  font-weight: 600;
+  color: var(--kz-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-cadastro-kaizen .kz-validity-row__link:hover .kz-validity-row__title,
+.dashboard-cadastro-kaizen .kz-recent-row__link:hover .kz-recent-row__title {
+  color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-validity-row__meta,
+.dashboard-cadastro-kaizen .kz-recent-row__meta {
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-validity-badge {
+  flex-shrink: 0;
+  font-size: var(--kz-font-xs);
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--kz-warning, #d97706) 14%, transparent);
+  color: var(--kz-warning, #b45309);
+}
+
+.dashboard-cadastro-kaizen .kz-validity-badge--urgent {
+  background: color-mix(in srgb, var(--kz-danger) 14%, transparent);
+  color: var(--kz-danger);
+}
+
+.dashboard-cadastro-kaizen .kz-recent-row__chevron {
+  color: var(--kz-text-muted);
+  flex-shrink: 0;
 }

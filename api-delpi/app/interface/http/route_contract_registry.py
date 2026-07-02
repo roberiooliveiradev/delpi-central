@@ -309,6 +309,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_kaizen_at_date": RouteContract("kaizen_revision", "scalar"),
     "create_kaizen_version": RouteContract("kaizen_revision", "scalar"),
     "update_kaizen_version": RouteContract("kaizen_revision", "scalar"),
+    "delete_kaizen_version": RouteContract("kaizen_revision", "scalar"),
     "implement_kaizen_version": RouteContract("kaizen_record", "scalar"),
     "list_kaizen_history": RouteContract("kaizen_history", "paged_list"),
     "list_kaizen_audit_log": RouteContract("kaizen_audit_log", "paged_list"),

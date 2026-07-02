@@ -110,6 +110,14 @@ export function recordToFormValues(record: KaizenRecord): KaizenFormValues {
   };
 }
 
+/** Valores de formulário a partir do snapshot de uma versão (mescla sobre o cabeçalho). */
+export function snapshotToFormValues(
+  record: KaizenRecord,
+  snapshot: Partial<KaizenRecord>,
+): KaizenFormValues {
+  return recordToFormValues({ ...record, ...snapshot, id: record.id });
+}
+
 export function parseOptionalNumber(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -150,10 +158,11 @@ export function formValuesToPayload(values: KaizenFormValues): Record<string, un
   };
 }
 
-export type View = "list" | "new" | "edit" | "detail";
+export type View = "dashboard" | "list" | "new" | "edit" | "detail";
 
 export function parseRoute(pathname?: string): { view: View; id?: string } {
   const path = (pathname ?? "/apps/cadastro-kaizen").replace(/\/+$/, "");
+  if (path.endsWith("/dashboard")) return { view: "dashboard" };
   if (path.endsWith("/novo")) return { view: "new" };
   const detailMatch = path.match(/\/detalhe\/([^/]+)$/);
   if (detailMatch) return { view: "detail", id: detailMatch[1] };
@@ -164,6 +173,10 @@ export function parseRoute(pathname?: string): { view: View; id?: string } {
 
 export function listPath(): string {
   return "/apps/cadastro-kaizen";
+}
+
+export function dashboardPath(): string {
+  return "/apps/cadastro-kaizen/dashboard";
 }
 
 export function newPath(): string {

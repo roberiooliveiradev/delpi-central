@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { fetchKaizenRecord, fetchKaizenRevisions, updateKaizenRecord } from "../api/kaizenApi";
+import {
+  createKaizenVersion,
+  deleteKaizenVersion,
+  fetchKaizenRecord,
+  fetchKaizenRevisions,
+  implementKaizenVersion,
+  updateKaizenRecord,
+  updateKaizenVersion,
+} from "../api/kaizenApi";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { EditableSectionCard } from "../components/ui/EditableSectionCard";
@@ -10,6 +18,10 @@ import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { StatusPipeline } from "../components/detail/StatusPipeline";
 import { KaizenEvidencePanel } from "../components/detail/KaizenEvidencePanel";
 import { KaizenImprovementsPanel } from "../components/detail/KaizenImprovementsPanel";
+import {
+  KaizenVersionSwitcher,
+  type SelectionMode,
+} from "../components/detail/KaizenVersionSwitcher";
 import { KaizenChangeLog } from "../components/detail/KaizenChangeLog";
 import { KaizenParticipantsField } from "../components/form/KaizenParticipantsField";
 import {
@@ -20,8 +32,14 @@ import {
   formValuesToPayload,
   listPath,
   recordToFormValues,
+  snapshotToFormValues,
 } from "../constants/kaizen";
-import type { KaizenFormValues, KaizenRecord, KaizenRevision } from "../types/kaizen";
+import type {
+  KaizenFormValues,
+  KaizenRecord,
+  KaizenRevision,
+  KaizenVersionStatus,
+} from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
 import { savingsTypeLabel } from "../utils/labels";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
@@ -30,6 +48,10 @@ type Props = {
   recordId: string;
   onNavigate: (path: string) => void;
 };
+
+function versionStatusOf(revision: KaizenRevision | null): KaizenVersionStatus {
+  return (revision?.version_status as KaizenVersionStatus) ?? "implantado";
+}
 
 const BRANCH_LABEL: Record<string, string> = Object.fromEntries(
   BRANCHES.map((item) => [item.code, item.label]),
@@ -61,9 +83,13 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
   const [record, setRecord] = useState<KaizenRecord | null>(null);
   const [form, setForm] = useState<KaizenFormValues | null>(null);
   const [revisions, setRevisions] = useState<KaizenRevision[]>([]);
+  const [selectedRevision, setSelectedRevision] = useState<number | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [implementing, setImplementing] = useState(false);
+  const [deletingVersion, setDeletingVersion] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [effectiveFrom, setEffectiveFrom] = useState("");
@@ -80,7 +106,6 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         fetchKaizenRevisions(recordId).catch(() => [] as KaizenRevision[]),
       ]);
       setRecord(loaded);
-      setForm(recordToFormValues(loaded));
       setRevisions(revs);
       setReloadTick((tick) => tick + 1);
     } catch (err) {
@@ -94,12 +119,79 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
     void load();
   }, [load]);
 
+  const activeRevisionNumber = useMemo(
+    () => revisions.find((r) => r.version_status === "implantado")?.revision_number ?? null,
+    [revisions],
+  );
+
+  // Normaliza a versão selecionada: mantém a atual se ainda existir, senão volta para a ativa.
+  useEffect(() => {
+    if (!revisions.length) {
+      setSelectedRevision(null);
+      return;
+    }
+    setSelectedRevision((current) => {
+      if (current != null && revisions.some((r) => r.revision_number === current)) {
+        return current;
+      }
+      return activeRevisionNumber ?? Math.max(...revisions.map((r) => r.revision_number));
+    });
+  }, [revisions, activeRevisionNumber]);
+
+  const selectedVersion = useMemo(
+    () => revisions.find((r) => r.revision_number === selectedRevision) ?? null,
+    [revisions, selectedRevision],
+  );
+
+  // O card de versões aparece sempre (para o botão "Nova versão"), mas a lista de
+  // versões só é exibida quando há mais de uma. Com versão única, a ficha é editada
+  // diretamente como correção do cabeçalho (modo "active").
+  const hasMultipleVersions = revisions.length > 1;
+  const usesSnapshotView =
+    hasMultipleVersions && !!selectedVersion && selectedVersion.version_status !== "implantado";
+
+  const selectedStatus = versionStatusOf(selectedVersion);
+  const mode: SelectionMode = !hasMultipleVersions
+    ? "active"
+    : selectedStatus === "implantado"
+      ? "active"
+      : selectedStatus === "em_andamento"
+        ? "draft"
+        : "readonly";
+  const editable = mode !== "readonly";
+
+  // Deriva o formulário da versão selecionada (rascunho/histórico usam o snapshot).
+  useEffect(() => {
+    if (!record) return;
+    if (usesSnapshotView && selectedVersion) {
+      setForm(
+        snapshotToFormValues(record, (selectedVersion.snapshot ?? {}) as Partial<KaizenRecord>),
+      );
+    } else {
+      setForm(recordToFormValues(record));
+    }
+    stopAll();
+    setEffectiveFrom("");
+    setChangeReason("");
+  }, [record, selectedVersion, usesSnapshotView, stopAll]);
+
   function updateField<K extends keyof KaizenFormValues>(key: K, value: KaizenFormValues[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
   }
 
+  function resetForm() {
+    if (!record) return;
+    if (usesSnapshotView && selectedVersion) {
+      setForm(
+        snapshotToFormValues(record, (selectedVersion.snapshot ?? {}) as Partial<KaizenRecord>),
+      );
+    } else {
+      setForm(recordToFormValues(record));
+    }
+  }
+
   function cancelSection(key: string) {
-    if (record) setForm(recordToFormValues(record));
+    resetForm();
     setEffectiveFrom("");
     setChangeReason("");
     stopEdit(key);
@@ -107,18 +199,23 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
 
   const saveSection = useCallback(
     async (key: string, withRevisionMeta: boolean) => {
-      if (!form) return;
+      if (!form || !record) return;
       setSaving(true);
       setError(null);
       setSuccess(null);
       try {
         const payload = formValuesToPayload(form);
-        if (withRevisionMeta) {
-          if (effectiveFrom) payload.effective_from = effectiveFrom;
-          if (changeReason.trim()) payload.change_reason = changeReason.trim();
+        if (mode === "draft" && selectedRevision != null) {
+          await updateKaizenVersion(record.id, selectedRevision, payload);
+          setSuccess(`Rascunho v${selectedRevision} atualizado.`);
+        } else {
+          if (withRevisionMeta) {
+            if (effectiveFrom) payload.effective_from = effectiveFrom;
+            if (changeReason.trim()) payload.change_reason = changeReason.trim();
+          }
+          await updateKaizenRecord(record.id, payload);
+          setSuccess("Correção salva na versão ativa.");
         }
-        await updateKaizenRecord(recordId, payload);
-        setSuccess("Seção atualizada com sucesso.");
         setEffectiveFrom("");
         setChangeReason("");
         stopEdit(key);
@@ -129,7 +226,73 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         setSaving(false);
       }
     },
-    [form, effectiveFrom, changeReason, recordId, stopEdit, load],
+    [form, record, mode, selectedRevision, effectiveFrom, changeReason, stopEdit, load],
+  );
+
+  const handleCreateVersion = useCallback(async () => {
+    if (!record) return;
+    setCreating(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const cloned = {
+        ...formValuesToPayload(recordToFormValues(record)),
+        status: "em_andamento",
+      };
+      const created = await createKaizenVersion(record.id, cloned);
+      await load();
+      setSelectedRevision(created.revision_number);
+      setSuccess(
+        `Versão v${created.revision_number} criada como cópia da ativa. Edite as seções e clique em “Salvar e tornar ativa”.`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao criar nova versão.");
+    } finally {
+      setCreating(false);
+    }
+  }, [record, load]);
+
+  const handleDeleteVersion = useCallback(async () => {
+    if (!record || selectedRevision == null || mode === "active") return;
+    const confirmed = window.confirm(
+      `Excluir a versão v${selectedRevision}? As evidências dessa versão também serão removidas. Esta ação não pode ser desfeita.`,
+    );
+    if (!confirmed) return;
+    setDeletingVersion(true);
+    setError(null);
+    setSuccess(null);
+    const target = selectedRevision;
+    try {
+      await deleteKaizenVersion(record.id, target);
+      setSelectedRevision(null);
+      await load();
+      setSuccess(`Versão v${target} excluída.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir versão.");
+    } finally {
+      setDeletingVersion(false);
+    }
+  }, [record, selectedRevision, mode, load]);
+
+  const handleImplement = useCallback(
+    async (effectiveFromDate: string) => {
+      if (!record || selectedRevision == null) return;
+      setImplementing(true);
+      setError(null);
+      setSuccess(null);
+      const target = selectedRevision;
+      try {
+        await implementKaizenVersion(record.id, target, { effective_from: effectiveFromDate });
+        await load();
+        setSelectedRevision(target);
+        setSuccess(`Versão v${target} implantada — agora é a versão ativa.`);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao implantar versão.");
+      } finally {
+        setImplementing(false);
+      }
+    },
+    [record, selectedRevision, load],
   );
 
   if (loading || !record || !form) {
@@ -146,13 +309,31 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
     );
   }
 
+  const selectedLabel =
+    selectedRevision == null
+      ? "versão única"
+      : !hasMultipleVersions
+        ? `versão v${selectedRevision}`
+        : `versão v${selectedRevision}${mode === "active" ? " (ativa)" : mode === "draft" ? " (rascunho)" : " (histórico)"}`;
+
+  // Dados exibidos na leitura: cabeçalho para a versão ativa; snapshot para rascunho/histórico.
+  const view: KaizenRecord =
+    usesSnapshotView && selectedVersion
+      ? ({ ...record, ...(selectedVersion.snapshot as Partial<KaizenRecord>), id: record.id } as KaizenRecord)
+      : record;
+  const viewParticipants =
+    mode === "active"
+      ? record.participants ?? []
+      : view.accountable
+        ? [{ name: view.accountable, role: "responsavel" as const }]
+        : [];
+  const evidenceRevisionId = selectedVersion?.id ?? null;
+
   return (
     <>
       <KaizenPageHeader
         title={record.title}
-        subtitle={`Kaizen • ${BRANCH_LABEL[record.branch_code] ?? record.branch_code} • revisão v${
-          record.current_revision_number ?? 1
-        }`}
+        subtitle={`Kaizen • ${BRANCH_LABEL[record.branch_code] ?? record.branch_code} • ${selectedLabel}`}
         showBack
         onBack={() => {
           stopAll();
@@ -162,6 +343,22 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
 
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {success ? <StateAlert variant="success">{success}</StateAlert> : null}
+
+      {selectedRevision != null ? (
+        <KaizenVersionSwitcher
+          revisions={revisions}
+          selectedRevision={selectedRevision}
+          showList={hasMultipleVersions}
+          onSelect={setSelectedRevision}
+          onCreateVersion={() => void handleCreateVersion()}
+          creating={creating}
+          mode={mode}
+          onImplement={(date) => void handleImplement(date)}
+          implementing={implementing}
+          onDelete={() => void handleDeleteVersion()}
+          deleting={deletingVersion}
+        />
+      ) : null}
 
       {/* Identificação */}
       <EditableSectionCard
@@ -173,19 +370,20 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         onCancel={() => cancelSection("identificacao")}
         onSave={() => void saveSection("identificacao", false)}
         saving={saving}
+        editable={editable}
         readContent={
           <div className="kz-read-grid">
-            <ReadOnlyField label="Filial" value={BRANCH_LABEL[record.branch_code] ?? record.branch_code} />
-            <ReadOnlyField label="Setor" value={record.sector} />
-            <ReadOnlyField label="Categoria" value={record.category} />
-            <ReadOnlyField label="Investimento" value={formatCurrency(record.investment)} />
+            <ReadOnlyField label="Filial" value={BRANCH_LABEL[view.branch_code] ?? view.branch_code} />
+            <ReadOnlyField label="Setor" value={view.sector} />
+            <ReadOnlyField label="Categoria" value={view.category} />
+            <ReadOnlyField label="Investimento" value={formatCurrency(view.investment)} />
             <div className="kz-read-field kz-span-2">
               <span className="kz-read-field__label">Equipe / responsáveis</span>
               <div className="kz-chips">
-                {(record.participants ?? []).length === 0 ? (
+                {viewParticipants.length === 0 ? (
                   <span className="kz-read-field__value kz-read-field__value--empty">—</span>
                 ) : (
-                  (record.participants ?? []).map((p, index) => (
+                  viewParticipants.map((p, index) => (
                     <span key={index} className={`kz-chip kz-chip--${p.role}`}>
                       {p.name}
                       <em>{ROLE_LABEL[p.role] ?? p.role}</em>
@@ -194,11 +392,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 )}
               </div>
             </div>
-            <ReadOnlyField label="Descrição do processo" value={record.process_description} wide multiline />
-            <ReadOnlyField label="Problema / oportunidade" value={record.problem_description} wide multiline />
-            <ReadOnlyField label="Melhoria realizada" value={record.improvement_description} wide multiline />
-            <ReadOnlyField label="Resultado esperado" value={record.expected_result} wide multiline />
-            <ReadOnlyField label="Notas" value={record.notes} wide multiline />
+            <ReadOnlyField label="Descrição do processo" value={view.process_description} wide multiline />
+            <ReadOnlyField label="Problema / oportunidade" value={view.problem_description} wide multiline />
+            <ReadOnlyField label="Melhoria realizada" value={view.improvement_description} wide multiline />
+            <ReadOnlyField label="Resultado esperado" value={view.expected_result} wide multiline />
+            <ReadOnlyField label="Notas" value={view.notes} wide multiline />
           </div>
         }
         editContent={
@@ -318,14 +516,15 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         onCancel={() => cancelSection("estagio")}
         onSave={() => void saveSection("estagio", true)}
         saving={saving}
+        editable={editable}
         readContent={
           <div className="kz-read-grid">
             <div className="kz-read-field kz-span-2">
               <span className="kz-read-field__label">Situação atual</span>
-              <StatusPipeline status={record.status} />
+              <StatusPipeline status={view.status} />
             </div>
-            <ReadOnlyField label="Data implantação" value={record.date_implemented} />
-            <ReadOnlyField label="Data descontinuação" value={record.date_discontinued} />
+            <ReadOnlyField label="Data implantação" value={view.date_implemented} />
+            <ReadOnlyField label="Data descontinuação" value={view.date_discontinued} />
           </div>
         }
         editContent={
@@ -395,25 +594,26 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         onCancel={() => cancelSection("economia")}
         onSave={() => void saveSection("economia", true)}
         saving={saving}
+        editable={editable}
         readContent={
           <div className="kz-read-grid">
-            <ReadOnlyField label="Tipo de economia" value={savingsTypeLabel(record.savings_type)} />
-            <ReadOnlyField label="Estimada / dia" value={formatCurrency(record.daily_savings)} />
-            <ReadOnlyField label="Estimada / ano" value={formatCurrency(record.annual_savings)} />
-            <ReadOnlyField label="Realizada / dia" value={formatCurrency(record.realized_daily_savings)} />
-            <ReadOnlyField label="Realizada / ano" value={formatCurrency(record.realized_annual_savings)} />
-            <ReadOnlyField label="Efetividade" value={effectivenessLabel(record)} />
+            <ReadOnlyField label="Tipo de economia" value={savingsTypeLabel(view.savings_type)} />
+            <ReadOnlyField label="Estimada / dia" value={formatCurrency(view.daily_savings)} />
+            <ReadOnlyField label="Estimada / ano" value={formatCurrency(view.annual_savings)} />
+            <ReadOnlyField label="Realizada / dia" value={formatCurrency(view.realized_daily_savings)} />
+            <ReadOnlyField label="Realizada / ano" value={formatCurrency(view.realized_annual_savings)} />
+            <ReadOnlyField label="Efetividade" value={effectivenessLabel(view)} />
             <ReadOnlyField
               label="Contabiliza ganhos"
-              value={savingsAccountingLabel(record)}
+              value={savingsAccountingLabel(view)}
               wide
             />
-            <ReadOnlyField label="Segundos / ocorrência" value={record.seconds_per_occurrence} />
-            <ReadOnlyField label="Ocorrências / dia" value={record.occurrences_per_day} />
-            <ReadOnlyField label="Custo hora (R$)" value={record.hourly_cost} />
-            <ReadOnlyField label="Qtd. economizada / dia" value={record.quantity_saved_per_day} />
-            <ReadOnlyField label="Custo unit. material (R$)" value={record.unit_material_cost} />
-            <ReadOnlyField label="Economia fixa / dia (R$)" value={record.fixed_daily_savings} />
+            <ReadOnlyField label="Segundos / ocorrência" value={view.seconds_per_occurrence} />
+            <ReadOnlyField label="Ocorrências / dia" value={view.occurrences_per_day} />
+            <ReadOnlyField label="Custo hora (R$)" value={view.hourly_cost} />
+            <ReadOnlyField label="Qtd. economizada / dia" value={view.quantity_saved_per_day} />
+            <ReadOnlyField label="Custo unit. material (R$)" value={view.unit_material_cost} />
+            <ReadOnlyField label="Economia fixa / dia (R$)" value={view.fixed_daily_savings} />
           </div>
         }
         editContent={
@@ -503,48 +703,51 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         }
       />
 
-      {/* Evidências */}
+      {/* Evidências da versão selecionada */}
       <section className="kz-card kz-section-card">
         <header className="kz-section-card__header">
           <div>
             <h2 className="kz-section-card__title">
-              Evidências gerais do processo
+              Evidências da versão{selectedRevision != null ? ` v${selectedRevision}` : ""}
               <HelpTooltip
                 content={KAIZEN_HELP_TOOLTIPS.sections.evidences}
                 ariaLabel="Ajuda: evidências do processo"
               />
             </h2>
             <p className="kz-section-card__desc">
-              Registro visual Antes / Depois e anexos do kaizen. Evidências específicas de cada
-              melhoria ficam na seção Melhorias.
+              {mode === "readonly"
+                ? "Evidências desta versão histórica (somente leitura)."
+                : `Registro visual Antes / Depois e anexos ${
+                    mode === "draft" ? "deste rascunho" : "da versão ativa"
+                  }. Cada versão tem suas próprias evidências.`}
             </p>
           </div>
         </header>
-        <KaizenEvidencePanel kaizenId={record.id} readOnly={false} revisionId={null} />
+        <KaizenEvidencePanel
+          kaizenId={record.id}
+          readOnly={mode === "readonly"}
+          revisionId={evidenceRevisionId}
+        />
       </section>
 
-      {/* Versões do kaizen */}
+      {/* Ganhos e validade */}
       <section className="kz-card kz-section-card">
         <header className="kz-section-card__header">
           <div>
             <h2 className="kz-section-card__title">
-              Versões do kaizen
+              Ganhos e validade
               <HelpTooltip
-                content={KAIZEN_HELP_TOOLTIPS.sections.improvements}
-                ariaLabel="Ajuda: versões do kaizen"
+                content={KAIZEN_HELP_TOOLTIPS.improvements.periodGain}
+                ariaLabel="Ajuda: ganhos e validade"
               />
             </h2>
             <p className="kz-section-card__desc">
-              Cada versão é uma iteração completa (dados, economia e evidências próprias). Só uma
-              fica implantada por vez; ao implantar uma nova, a anterior é substituída.
+              Economia ativa hoje e ganho acumulado por período — só a versão implantada
+              contabiliza, respeitando a validade de 1 ano.
             </p>
           </div>
         </header>
-        <KaizenImprovementsPanel
-          record={record}
-          revisions={revisions}
-          onLaunched={() => void load()}
-        />
+        <KaizenImprovementsPanel record={record} revisions={revisions} />
       </section>
 
       {/* Registro de alterações */}

@@ -5,6 +5,7 @@ type KaizenPageHeaderProps = {
   title: string;
   subtitle: string;
   actions?: ReactNode;
+  nav?: ReactNode;
   showBack?: boolean;
   onBack?: () => void;
 };
@@ -13,6 +14,7 @@ export function KaizenPageHeader({
   title,
   subtitle,
   actions,
+  nav,
   showBack,
   onBack,
 }: KaizenPageHeaderProps) {
@@ -26,6 +28,7 @@ export function KaizenPageHeader({
           <p className="kz-eyebrow">DELPI • Qualidade • Cadastro</p>
           <h1>{title}</h1>
           <span className="kz-page-subtitle">{subtitle}</span>
+          {nav}
         </div>
       </div>
 

@@ -1042,6 +1042,59 @@ class PostgresKaizenRepository(PluginBaseRepository):
             auto_commit=False,
         )
 
+    def delete_version(
+        self,
+        kaizen_id: str,
+        revision_number: int,
+        *,
+        actor_user_id: str,
+        actor_name: str | None = None,
+    ) -> bool:
+        """Exclui (hard delete) uma versão NÃO ativa. A versão implantada é protegida."""
+        revision = self.get_revision(kaizen_id, revision_number)
+        if revision is None:
+            return False
+
+        status = str(revision.get("version_status") or "implantado")
+        if status == "implantado":
+            raise PluginsRepositoryError(
+                "Não é possível excluir a versão ativa (implantada). Implante outra versão antes."
+            )
+
+        revision_id = str(revision["id"])
+        # Remove evidências desta versão para não reaparecerem como gerais (FK SET NULL).
+        self.execute(
+            """
+            UPDATE quality.kaizen_evidences
+               SET deleted_at = NOW()
+             WHERE revision_id = %s
+               AND deleted_at IS NULL
+            """,
+            (revision_id,),
+            auto_commit=False,
+        )
+        self.execute(
+            "DELETE FROM quality.kaizen_revisions WHERE id = %s",
+            (revision_id,),
+            auto_commit=False,
+        )
+        self._append_history(
+            kaizen_id,
+            event_type="version_deleted",
+            old_value=f"v{revision_number}",
+            actor_user_id=actor_user_id,
+            actor_name=actor_name,
+        )
+        self._append_audit_log(
+            kaizen_id,
+            event_type="version_deleted",
+            payload={"revision": revision_number, "version_status": status},
+            actor_user_id=actor_user_id,
+            actor_name=actor_name,
+        )
+        self.commit()
+        return True
+
     def _store_version_participants(self, revision_id: str, participants_input: Any) -> None:
         """Placeholder: participantes por versão ficam no snapshot (accountable)."""
         # Participantes são derivados do snapshot da versão; sem tabela dedicada por versão.

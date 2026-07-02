@@ -139,6 +139,13 @@ export async function implementKaizenVersion(
   return unwrapApiDelpiEnvelope(envelope, "Erro ao implantar versão do kaizen.");
 }
 
+export async function deleteKaizenVersion(id: string, revisionNumber: number): Promise<void> {
+  const envelope = await httpDelete<ApiEnvelope<{ deleted: boolean }>>(
+    `${API_BASE}/${id}/versions/${revisionNumber}`,
+  );
+  unwrapApiDelpiEnvelope(envelope, "Erro ao excluir versão do kaizen.");
+}
+
 // ---------------------------------------------------------------- registro de alterações
 
 export async function fetchKaizenHistory(id: string): Promise<KaizenHistoryEvent[]> {

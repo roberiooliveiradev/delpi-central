@@ -385,6 +385,31 @@ def update_kaizen_version(
         return error_response("Erro interno ao atualizar versão do kaizen.", status_code=500)
 
 
+@router.delete("/{record_id}/versions/{revision_number}")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def delete_kaizen_version(record_id: str, revision_number: int):
+    try:
+        repo = build_kaizen_repository()
+        deleted = repo.delete_version(
+            record_id,
+            revision_number,
+            actor_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
+        if not deleted:
+            return not_found_response("Versão não encontrada.")
+        return api_delpi_success(
+            {"record_id": record_id, "revision_number": revision_number, "deleted": True},
+            operation_id="delete_kaizen_version",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao excluir versão do kaizen: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao excluir versão do kaizen: {exc}")
+        return error_response("Erro interno ao excluir versão do kaizen.", status_code=500)
+
+
 @router.post("/{record_id}/versions/{revision_number}/implement")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def implement_kaizen_version(
