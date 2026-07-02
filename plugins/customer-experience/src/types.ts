@@ -41,6 +41,23 @@ export type UpdateParticipantInput = {
   photo?: File;
 };
 
+// ----- Clientes TOTVS (api-delpi / SA1) ------------------------------------
+
+export type Customer = {
+  code: string;
+  store: string;
+  name: string;
+  blocked: string | null;
+};
+
+export type CustomerSearchResult = {
+  items: Customer[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 // ----- Formulários (estilo Google Forms) -----------------------------------
 
 export type QuestionType =

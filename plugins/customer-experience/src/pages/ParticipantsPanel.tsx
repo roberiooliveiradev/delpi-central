@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  CalendarDays,
   CheckCircle2,
   Copy,
+  FilterX,
   Pencil,
   Power,
   Printer,
@@ -21,6 +23,8 @@ import {
   listParticipants,
   updateParticipant,
 } from "../api/participantsApi";
+import { CompanyField } from "../components/CompanyField";
+import { CompanyMultiSelect } from "../components/CompanyMultiSelect";
 import { printQrLabel } from "../utils/qrLabelPrint";
 import type { Participant } from "../types";
 
@@ -39,7 +43,10 @@ export function ParticipantsPanel() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
+  const [companyFilter, setCompanyFilter] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [photo, setPhoto] = useState<File | null>(null);
@@ -52,7 +59,7 @@ export function ParticipantsPanel() {
     setLoading(true);
     setError(null);
     try {
-      const result = await listParticipants({ company, limit: 100 });
+      const result = await listParticipants({ company, limit: 200 });
       setParticipants(result.items);
       setTotal(result.total);
     } catch (err) {
@@ -230,15 +237,39 @@ export function ParticipantsPanel() {
     }
   };
 
+  const companyOptions = useMemo(() => {
+    const names = new Set<string>();
+    for (const p of participants) {
+      const name = p.companyName.trim();
+      if (name) names.add(name);
+    }
+    return [...names].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [participants]);
+
+  const hasActiveFilters =
+    nameFilter.trim() !== "" ||
+    companyFilter.length > 0 ||
+    dateFrom !== "" ||
+    dateTo !== "";
+
+  const clearFilters = () => {
+    setNameFilter("");
+    setCompanyFilter([]);
+    setDateFrom("");
+    setDateTo("");
+  };
+
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return participants;
-    return participants.filter(
-      (p) =>
-        p.fullName.toLowerCase().includes(term) ||
-        p.companyName.toLowerCase().includes(term),
-    );
-  }, [participants, search]);
+    const term = nameFilter.trim().toLowerCase();
+    const companySet = new Set(companyFilter);
+    return participants.filter((p) => {
+      if (term && !p.fullName.toLowerCase().includes(term)) return false;
+      if (companySet.size > 0 && !companySet.has(p.companyName.trim())) return false;
+      if (dateFrom && p.visitDate < dateFrom) return false;
+      if (dateTo && p.visitDate > dateTo) return false;
+      return true;
+    });
+  }, [participants, nameFilter, companyFilter, dateFrom, dateTo]);
 
   return (
     <>
@@ -271,16 +302,10 @@ export function ParticipantsPanel() {
               />
             </label>
 
-            <label className="cx-field">
-              <span>Empresa</span>
-              <input
-                type="text"
-                required
-                value={form.companyName}
-                onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                placeholder="Empresa do visitante"
-              />
-            </label>
+            <CompanyField
+              value={form.companyName}
+              onChange={(companyName) => setForm({ ...form, companyName })}
+            />
 
             <label className="cx-field">
               <span>Data da visita</span>
@@ -355,23 +380,63 @@ export function ParticipantsPanel() {
           <div className="cx-list-card__head">
             <h2 className="cx-card__title">
               <Users size={18} /> Participantes
-              <span className="cx-count">{total}</span>
+              <span className="cx-count">
+                {hasActiveFilters ? `${filtered.length}/${total}` : total}
+              </span>
             </h2>
             <div className="cx-search">
               <Search size={16} />
               <input
                 type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome ou empresa"
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+                placeholder="Buscar por nome"
               />
             </div>
           </div>
 
+          <div className="cx-filters">
+            <CompanyMultiSelect
+              options={companyOptions}
+              selected={companyFilter}
+              onChange={setCompanyFilter}
+            />
+            <label className="cx-date-filter">
+              <CalendarDays size={15} />
+              <span>De</span>
+              <input
+                type="date"
+                value={dateFrom}
+                max={dateTo || undefined}
+                onChange={(e) => setDateFrom(e.target.value)}
+              />
+            </label>
+            <label className="cx-date-filter">
+              <span>Até</span>
+              <input
+                type="date"
+                value={dateTo}
+                min={dateFrom || undefined}
+                onChange={(e) => setDateTo(e.target.value)}
+              />
+            </label>
+            {hasActiveFilters && (
+              <button
+                className="cx-button cx-button--ghost cx-filters__clear"
+                type="button"
+                onClick={clearFilters}
+              >
+                <FilterX size={15} /> Limpar filtros
+              </button>
+            )}
+          </div>
+
           {loading ? (
             <p className="cx-state">Carregando participantes...</p>
-          ) : filtered.length === 0 ? (
+          ) : participants.length === 0 ? (
             <p className="cx-state">Nenhum participante cadastrado ainda.</p>
+          ) : filtered.length === 0 ? (
+            <p className="cx-state">Nenhum participante corresponde aos filtros.</p>
           ) : (
             <ul className="cx-participant-list">
               {filtered.map((participant) => (
