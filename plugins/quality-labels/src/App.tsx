@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { ClipboardList, History } from "lucide-react";
+import { ClipboardList, History, UserCheck } from "lucide-react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { QualityLabelsAdminPage } from "./pages/QualityLabelsAdminPage";
 import { QualityLabelsAuditPage } from "./pages/QualityLabelsAuditPage";
+import { QualityLabelsInspectorPage } from "./pages/QualityLabelsInspectorPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
 };
 
-type TabId = "labels" | "audit";
+type TabId = "labels" | "inspector" | "audit";
 
 export default function App({ getAccessToken }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
@@ -44,6 +45,16 @@ export default function App({ getAccessToken }: AppProps) {
             <button
               type="button"
               role="tab"
+              aria-selected={tab === "inspector"}
+              className={`ql-tab ${tab === "inspector" ? "ql-tab--active" : ""}`}
+              onClick={() => setTab("inspector")}
+            >
+              <UserCheck className="ql-icon" />
+              Inspetor
+            </button>
+            <button
+              type="button"
+              role="tab"
               aria-selected={tab === "audit"}
               className={`ql-tab ${tab === "audit" ? "ql-tab--active" : ""}`}
               onClick={() => setTab("audit")}
@@ -53,7 +64,9 @@ export default function App({ getAccessToken }: AppProps) {
             </button>
           </nav>
 
-          {tab === "labels" ? <QualityLabelsAdminPage /> : <QualityLabelsAuditPage />}
+          {tab === "labels" && <QualityLabelsAdminPage />}
+          {tab === "inspector" && <QualityLabelsInspectorPage />}
+          {tab === "audit" && <QualityLabelsAuditPage />}
         </div>
       </div>
     </div>

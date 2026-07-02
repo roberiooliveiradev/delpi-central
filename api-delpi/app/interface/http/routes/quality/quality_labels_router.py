@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
-from fastapi import APIRouter, Body, Query, Response
+from fastapi import APIRouter, Body, File, Form, Query, Response, UploadFile
 from pydantic import BaseModel, Field, field_validator
 
 from delpi_auth.authorization import require_any_permission
@@ -12,11 +12,24 @@ from app.application.security.api_delpi_permissions import (
     QUALITY_LABELS_READ_PERMISSIONS,
     QUALITY_LABELS_WRITE_PERMISSIONS,
 )
+from app.application.services.quality_labels.quality_labels_certificate_service import (
+    QualityLabelsCertificateError,
+)
+from app.application.services.quality_labels.quality_labels_signature_storage import (
+    QualityLabelsSignatureError,
+)
 from app.application.use_cases.quality_labels.quality_labels_service import (
     ProductionOrderNotFoundError,
     QualityLabelsError,
 )
-from app.composition.quality_labels_composer import build_quality_labels_service
+from app.composition.quality_labels_composer import (
+    build_quality_labels_certificate_service,
+    build_quality_labels_inspector_service,
+    build_quality_labels_service,
+)
+from app.infrastructure.persistence.plugins.repositories.quality_labels.postgres_quality_labels_checklist_template_repository import (
+    PostgresQualityLabelsChecklistTemplateRepository,
+)
 from app.core.responses import error_response, not_found_response
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
@@ -35,6 +48,7 @@ class CreateLabelBody(BaseModel):
     branch: Optional[str] = None
     result: str = Field(default="approved")
     notes: Optional[str] = None
+    inspectedQuantity: Optional[int] = Field(default=None, ge=0)
 
     @field_validator("productionOrder", "branch", "notes", mode="before")
     @classmethod
@@ -54,6 +68,41 @@ class CreateLabelBody(BaseModel):
 
 class SetActiveBody(BaseModel):
     isActive: bool
+
+
+class InspectorProfileBody(BaseModel):
+    displayName: str = Field(min_length=1)
+    roleTitle: Optional[str] = None
+
+    @field_validator("displayName", "roleTitle", mode="before")
+    @classmethod
+    def _strip(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+
+class CertificateItemBody(BaseModel):
+    position: Optional[int] = None
+    description: str = Field(default="")
+    status: str = Field(default="A")
+    isCustom: bool = False
+
+
+class CertificateBody(BaseModel):
+    sampleType: str = Field(default="fornecimento")
+    quantity: Optional[str] = None
+    sampleQuantity: Optional[str] = None
+    customerCode: Optional[str] = None
+    customerStore: Optional[str] = None
+    customerName: Optional[str] = None
+    customerItem: Optional[str] = None
+    customerItemRev: Optional[str] = None
+    customerSource: Optional[str] = None
+    delpiNotes: Optional[str] = None
+    customerNotes: Optional[str] = None
+    items: list[CertificateItemBody] = Field(default_factory=list)
+    issue: bool = False
 
 
 def _parse_branches(raw: Optional[str]) -> list[str] | None:
@@ -132,6 +181,104 @@ def list_audit_events(
         return error_response("Erro interno ao listar a auditoria.", status_code=500)
 
 
+@router.get("/checklist-template")
+@require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
+def list_checklist_template():
+    try:
+        repository = PostgresQualityLabelsChecklistTemplateRepository()
+        rows = repository.list_active()
+        return api_delpi_success(
+            {"items": [repository.to_payload(row) for row in rows]},
+            operation_id="list_quality_label_checklist_template",
+            message="Template do checklist recuperado com sucesso.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar template do checklist: {exc}")
+        return error_response("Erro interno ao listar o template.", status_code=500)
+
+
+@router.get("/inspectors/me")
+@require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
+def get_my_inspector():
+    try:
+        service = build_quality_labels_inspector_service()
+        data = service.get_profile(user_id=_current_user_id())
+        if data is None:
+            data = {
+                "userId": _current_user_id(),
+                "displayName": _current_user_name(),
+                "roleTitle": None,
+                "hasSignature": False,
+                "signatureUpdatedAt": None,
+            }
+        return api_delpi_success(
+            data,
+            operation_id="get_quality_label_inspector",
+            message="Perfil do inspetor recuperado com sucesso.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao buscar perfil do inspetor: {exc}")
+        return error_response("Erro interno ao buscar o inspetor.", status_code=500)
+
+
+@router.put("/inspectors/me")
+@require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
+def save_my_inspector(body: Annotated[InspectorProfileBody, Body(...)]):
+    try:
+        service = build_quality_labels_inspector_service()
+        data = service.save_profile(
+            user_id=_current_user_id(),
+            display_name=body.displayName,
+            role_title=body.roleTitle,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="save_quality_label_inspector",
+            message="Perfil do inspetor salvo com sucesso.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao salvar perfil do inspetor: {exc}")
+        return error_response("Erro interno ao salvar o inspetor.", status_code=500)
+
+
+@router.post("/inspectors/me/signature")
+@require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
+async def upload_my_signature(signature: UploadFile = File(...)):
+    try:
+        content = await signature.read()
+        service = build_quality_labels_inspector_service()
+        data = service.set_signature(
+            user_id=_current_user_id(),
+            display_name=_current_user_name(),
+            content=content,
+            mime_type=signature.content_type,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="upload_quality_label_inspector_signature",
+            message="Assinatura registrada com sucesso.",
+        )
+    except QualityLabelsSignatureError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao registrar assinatura do inspetor: {exc}")
+        return error_response("Erro interno ao registrar a assinatura.", status_code=500)
+
+
+@router.get("/inspectors/me/signature")
+@require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
+def get_my_signature():
+    try:
+        service = build_quality_labels_inspector_service()
+        png = service.read_signature(user_id=_current_user_id())
+        if png is None:
+            return not_found_response("Assinatura não encontrada.")
+        return Response(content=png, media_type="image/png")
+    except Exception as exc:
+        log_error(f"Erro ao ler assinatura do inspetor: {exc}")
+        return error_response("Erro interno ao ler a assinatura.", status_code=500)
+
+
 @router.get("/lookup-op/{production_order}")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def lookup_op(production_order: str, branch: Optional[str] = None):
@@ -164,6 +311,7 @@ def create_label(body: Annotated[CreateLabelBody, Body(...)]):
             result=body.result,
             inspector_user_id=_current_user_id(),
             inspector_name=_current_user_name(),
+            inspected_quantity=body.inspectedQuantity,
         )
         return api_delpi_success(
             data,
@@ -258,6 +406,70 @@ def set_label_active(label_id: str, body: Annotated[SetActiveBody, Body(...)]):
     except Exception as exc:
         log_error(f"Erro ao atualizar situação da etiqueta: {exc}")
         return error_response("Erro interno ao atualizar a etiqueta.", status_code=500)
+
+
+@router.get("/{label_id}/certificate")
+@require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
+def get_certificate(label_id: str):
+    try:
+        service = build_quality_labels_certificate_service()
+        data = service.get_or_init(label_id=label_id)
+        return api_delpi_success(
+            data,
+            operation_id="get_quality_label_certificate",
+            message="Certificado recuperado com sucesso.",
+        )
+    except QualityLabelsCertificateError as exc:
+        return not_found_response(str(exc))
+    except Exception as exc:
+        log_error(f"Erro ao buscar certificado de qualidade: {exc}")
+        return error_response("Erro interno ao buscar o certificado.", status_code=500)
+
+
+@router.put("/{label_id}/certificate")
+@require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
+def save_certificate(label_id: str, body: Annotated[CertificateBody, Body(...)]):
+    try:
+        service = build_quality_labels_certificate_service()
+        payload: dict[str, Any] = body.model_dump()
+        payload["items"] = [item for item in payload.get("items", [])]
+        data = service.save(
+            label_id=label_id,
+            data=payload,
+            issue=bool(body.issue),
+            actor_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="save_quality_label_certificate",
+            message="Certificado salvo com sucesso.",
+        )
+    except QualityLabelsCertificateError as exc:
+        return not_found_response(str(exc))
+    except Exception as exc:
+        log_error(f"Erro ao salvar certificado de qualidade: {exc}")
+        return error_response("Erro interno ao salvar o certificado.", status_code=500)
+
+
+@router.get("/{label_id}/certificate/pdf")
+@require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
+def get_certificate_pdf(label_id: str):
+    try:
+        service = build_quality_labels_certificate_service()
+        pdf = service.read_pdf(label_id=label_id)
+        if pdf is None:
+            return not_found_response("Certificado não encontrado.")
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'inline; filename="certificado-{label_id}.pdf"'
+            },
+        )
+    except Exception as exc:
+        log_error(f"Erro ao gerar PDF do certificado: {exc}")
+        return error_response("Erro interno ao gerar o PDF.", status_code=500)
 
 
 @router.delete("/{label_id}")

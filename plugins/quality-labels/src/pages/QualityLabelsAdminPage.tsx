@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ExternalLink,
   FileSearch,
+  FileText,
   Loader2,
   Power,
   Printer,
@@ -36,6 +37,7 @@ import {
 } from "../utils/operationalUnits";
 import { UnitMultiSelect } from "../components/UnitMultiSelect";
 import { AuditMetadataModal } from "../components/AuditMetadataModal";
+import { CertificateModal } from "../components/CertificateModal";
 import type {
   OpLookup,
   OpSuggestion,
@@ -66,6 +68,7 @@ export function QualityLabelsAdminPage() {
   const [op, setOp] = useState("");
   const [branch, setBranch] = useState("");
   const [result, setResult] = useState<QualityLabelResult>("approved");
+  const [inspectedQuantity, setInspectedQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const [lookup, setLookup] = useState<OpLookup | null>(null);
 
@@ -87,6 +90,7 @@ export function QualityLabelsAdminPage() {
   const [filterBranches, setFilterBranches] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [auditLabel, setAuditLabel] = useState<QualityLabel | null>(null);
+  const [certificateLabel, setCertificateLabel] = useState<QualityLabel | null>(null);
 
   const refreshList = useCallback(
     async (searchTerm: string, branches: string[], signal?: AbortSignal) => {
@@ -213,12 +217,16 @@ export function QualityLabelsAdminPage() {
         branch: branch.trim() || null,
         result,
         notes: notes.trim() || null,
+        inspectedQuantity: inspectedQuantity.trim()
+          ? Math.max(0, Math.trunc(Number(inspectedQuantity)))
+          : null,
       });
       setSuccess(`Etiqueta registrada para ${label.productCode}.`);
       setOp("");
       setBranch("");
       setNotes("");
       setResult("approved");
+      setInspectedQuantity("");
       setLookup(null);
       setConfirmExisting(false);
       setSuggestions([]);
@@ -376,6 +384,20 @@ export function QualityLabelsAdminPage() {
                     ))}
                   </select>
                 </label>
+
+                <label className="ql-field">
+                  <span className="ql-label-text">Peças inspecionadas (opcional)</span>
+                  <input
+                    className="ql-input"
+                    type="number"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    value={inspectedQuantity}
+                    onChange={(e) => setInspectedQuantity(e.target.value)}
+                    placeholder="Ex.: 10"
+                  />
+                </label>
               </div>
 
               <label className="ql-field">
@@ -518,6 +540,14 @@ export function QualityLabelsAdminPage() {
                             <button
                               type="button"
                               className="ql-icon-btn"
+                              title="Certificado de qualidade"
+                              onClick={() => setCertificateLabel(label)}
+                            >
+                              <FileText className="ql-icon" />
+                            </button>
+                            <button
+                              type="button"
+                              className="ql-icon-btn"
                               title="Imprimir etiqueta"
                               onClick={() => void handlePrint(label)}
                               disabled={busyId === label.id}
@@ -563,6 +593,14 @@ export function QualityLabelsAdminPage() {
 
       {auditLabel && (
         <AuditMetadataModal label={auditLabel} onClose={() => setAuditLabel(null)} />
+      )}
+
+      {certificateLabel && (
+        <CertificateModal
+          label={certificateLabel}
+          onClose={() => setCertificateLabel(null)}
+          onSaved={(message) => setSuccess(message)}
+        />
       )}
     </>
   );

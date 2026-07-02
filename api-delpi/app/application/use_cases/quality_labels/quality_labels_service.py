@@ -116,6 +116,7 @@ class QualityLabelsService:
         result: str,
         inspector_user_id: str,
         inspector_name: str,
+        inspected_quantity: int | None = None,
     ) -> dict[str, Any]:
         order = self._resolve_order(production_order=production_order, branch=branch)
         resolved_op = order.get("production_order") or production_order.strip()
@@ -139,6 +140,7 @@ class QualityLabelsService:
             inspector_name=inspector_name,
             result=result,
             notes=notes,
+            inspected_quantity=inspected_quantity,
             audit_metadata=audit_metadata,
         )
 

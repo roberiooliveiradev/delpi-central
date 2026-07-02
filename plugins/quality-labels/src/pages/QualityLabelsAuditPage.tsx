@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Eye,
+  FileCheck,
+  FileText,
   PlusCircle,
   Power,
   PowerOff,
@@ -24,6 +26,8 @@ const EVENT_META: Record<string, EventMeta> = {
   label_deactivated: { label: "Desativada", badge: "ql-badge--off", icon: PowerOff },
   label_deleted: { label: "Excluída", badge: "ql-badge--danger", icon: Trash2 },
   label_viewed: { label: "Acesso público", badge: "ql-badge--info", icon: Eye },
+  certificate_saved: { label: "Certificado salvo", badge: "ql-badge--info", icon: FileText },
+  certificate_issued: { label: "Certificado emitido", badge: "ql-badge--on", icon: FileCheck },
 };
 
 const RESULT_LABELS: Record<string, string> = {
@@ -38,6 +42,8 @@ const FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "label_deactivated", label: "Desativações" },
   { value: "label_deleted", label: "Exclusões" },
   { value: "label_viewed", label: "Acessos públicos" },
+  { value: "certificate_saved", label: "Certificados salvos" },
+  { value: "certificate_issued", label: "Certificados emitidos" },
 ];
 
 function eventMeta(eventType: string): EventMeta {

@@ -1,8 +1,19 @@
-import { httpDelete, httpGet, httpGetBlob, httpPatch, httpPost } from "./httpClient";
+import {
+  httpDelete,
+  httpGet,
+  httpGetBlob,
+  httpPatch,
+  httpPost,
+  httpPostForm,
+  httpPut,
+} from "./httpClient";
 import { unwrapApiDelpiEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   AuditEventsPage,
+  Certificate,
+  CertificateSavePayload,
   CreateLabelPayload,
+  Inspector,
   LabelsPage,
   OpLookup,
   OpSuggestion,
@@ -131,4 +142,85 @@ export function labelQrUrl(labelId: string): string {
 
 export async function fetchLabelQrBlob(labelId: string, signal?: AbortSignal): Promise<Blob> {
   return httpGetBlob(labelQrUrl(labelId), { signal });
+}
+
+// ------------------------------------------------------------ Certificado
+
+export async function getCertificate(
+  labelId: string,
+  signal?: AbortSignal,
+): Promise<Certificate> {
+  const response = await httpGet<ApiSuccessResponse<Certificate>>(
+    `${QUALITY_LABELS_API_BASE}/${labelId}/certificate`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar o certificado.");
+}
+
+export async function saveCertificate(
+  labelId: string,
+  payload: CertificateSavePayload,
+  signal?: AbortSignal,
+): Promise<Certificate> {
+  const response = await httpPut<ApiSuccessResponse<Certificate>>(
+    `${QUALITY_LABELS_API_BASE}/${labelId}/certificate`,
+    payload,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao salvar o certificado.");
+}
+
+export function certificatePdfUrl(labelId: string): string {
+  return `${QUALITY_LABELS_API_BASE}/${labelId}/certificate/pdf`;
+}
+
+export async function fetchCertificatePdfBlob(
+  labelId: string,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  return httpGetBlob(certificatePdfUrl(labelId), { signal });
+}
+
+// -------------------------------------------------------------- Inspetor
+
+export async function getMyInspector(signal?: AbortSignal): Promise<Inspector> {
+  const response = await httpGet<ApiSuccessResponse<Inspector>>(
+    `${QUALITY_LABELS_API_BASE}/inspectors/me`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar o inspetor.");
+}
+
+export async function saveMyInspector(
+  payload: { displayName: string; roleTitle?: string | null },
+  signal?: AbortSignal,
+): Promise<Inspector> {
+  const response = await httpPut<ApiSuccessResponse<Inspector>>(
+    `${QUALITY_LABELS_API_BASE}/inspectors/me`,
+    payload,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao salvar o inspetor.");
+}
+
+export async function uploadMySignature(
+  blob: Blob,
+  signal?: AbortSignal,
+): Promise<Inspector> {
+  const formData = new FormData();
+  formData.append("signature", blob, "signature.png");
+  const response = await httpPostForm<ApiSuccessResponse<Inspector>>(
+    `${QUALITY_LABELS_API_BASE}/inspectors/me/signature`,
+    formData,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao registrar a assinatura.");
+}
+
+export function inspectorSignatureUrl(): string {
+  return `${QUALITY_LABELS_API_BASE}/inspectors/me/signature`;
+}
+
+export async function fetchMySignatureBlob(signal?: AbortSignal): Promise<Blob> {
+  return httpGetBlob(inspectorSignatureUrl(), { signal });
 }

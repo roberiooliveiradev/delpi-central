@@ -261,6 +261,16 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_quality_label_audit_events": RouteContract(
         "quality_label_audit_event", "paged_list"
     ),
+    "list_quality_label_checklist_template": RouteContract(
+        "quality_label_checklist_item", "object"
+    ),
+    "get_quality_label_inspector": RouteContract("quality_label_inspector", "scalar"),
+    "save_quality_label_inspector": RouteContract("quality_label_inspector", "scalar"),
+    "upload_quality_label_inspector_signature": RouteContract(
+        "quality_label_inspector", "scalar"
+    ),
+    "get_quality_label_certificate": RouteContract("quality_label_certificate", "scalar"),
+    "save_quality_label_certificate": RouteContract("quality_label_certificate", "scalar"),
     "get_public_quality_label_inspection": RouteContract(
         "quality_label_public_inspection", "scalar"
     ),

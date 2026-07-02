@@ -918,3 +918,304 @@
 .ql-cell-nowrap {
   white-space: nowrap;
 }
+
+/* ---------------------------------------------------------------- Certificado / Inspetor */
+
+.ql-modal--wide {
+  max-width: 940px;
+}
+
+.ql-btn--sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.ql-cert-section {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ql-border) 60%, transparent);
+}
+
+.ql-cert-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.ql-cert-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ql-title);
+}
+
+.ql-cert-source {
+  margin-left: 8px;
+}
+
+.ql-cert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 16px;
+}
+
+.ql-field--wide {
+  grid-column: 1 / -1;
+}
+
+.ql-field--action {
+  align-self: end;
+}
+
+.ql-cert-readonly {
+  padding: 10px 12px;
+  border: 1px dashed var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: color-mix(in srgb, var(--ql-accent) 5%, var(--ql-surface));
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ql-text);
+}
+
+/* Segmented control (tipo de fornecimento) */
+.ql-segmented {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ql-segmented__btn {
+  padding: 8px 16px;
+  border: 1px solid var(--ql-border);
+  border-radius: 999px;
+  background: var(--ql-surface);
+  color: var(--ql-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ql-segmented__btn:hover {
+  border-color: color-mix(in srgb, var(--ql-accent) 40%, var(--ql-border));
+}
+
+.ql-segmented__btn--active {
+  border-color: var(--ql-accent);
+  background: color-mix(in srgb, var(--ql-accent) 16%, var(--ql-surface));
+  color: var(--ql-title);
+}
+
+/* Checklist */
+.ql-cert-checklist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ql-cert-bulk {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ql-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ql-checklist__row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto 36px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: var(--ql-surface);
+}
+
+.ql-checklist__num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ql-muted);
+  text-align: center;
+}
+
+.ql-checklist__desc {
+  font-size: 13px;
+  color: var(--ql-text);
+}
+
+.ql-checklist__input {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.ql-checklist__spacer {
+  width: 36px;
+}
+
+/* Status buttons A / R / N/A */
+.ql-segmented--status {
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.ql-status-btn {
+  min-width: 38px;
+  padding: 6px 10px;
+  border: 1px solid var(--ql-border);
+  border-radius: 8px;
+  background: var(--ql-surface);
+  color: var(--ql-muted);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.ql-status-btn:hover {
+  border-color: color-mix(in srgb, var(--ql-accent) 35%, var(--ql-border));
+}
+
+.ql-status-btn--approved.ql-status-btn--active {
+  border-color: #2e7d32;
+  background: color-mix(in srgb, #2e7d32 20%, var(--ql-surface));
+  color: #1b5e20;
+}
+
+.ql-status-btn--rejected.ql-status-btn--active {
+  border-color: #c62828;
+  background: color-mix(in srgb, #c62828 18%, var(--ql-surface));
+  color: #b71c1c;
+}
+
+.ql-status-btn--na.ql-status-btn--active {
+  border-color: var(--ql-muted);
+  background: color-mix(in srgb, var(--ql-muted) 18%, var(--ql-surface));
+  color: var(--ql-text);
+}
+
+/* Card head (aba Inspetor) */
+.ql-card__head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.ql-card__head .ql-icon {
+  color: var(--ql-accent);
+  margin-top: 2px;
+}
+
+.ql-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ql-title);
+}
+
+.ql-card__subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ql-muted);
+}
+
+/* Assinatura */
+.ql-signature-preview {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.ql-signature-preview img {
+  max-width: 320px;
+  max-height: 120px;
+  padding: 8px 12px;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: #ffffff;
+  object-fit: contain;
+}
+
+.ql-signature-pad {
+  display: grid;
+  gap: 6px;
+}
+
+.ql-signature-canvas {
+  width: 100%;
+  max-width: 640px;
+  height: 220px;
+  border: 2px dashed color-mix(in srgb, var(--ql-accent) 35%, var(--ql-border));
+  border-radius: var(--ql-radius-sm);
+  background: #ffffff;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.ql-signature-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ql-muted);
+}
+
+.ql-signature-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.ql-signature-actions__group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ql-signature-actions__sep {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ql-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ql-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Nota de vínculo ao login */
+.ql-info-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid color-mix(in srgb, var(--ql-accent) 28%, var(--ql-border));
+  border-radius: var(--ql-radius-sm);
+  background: color-mix(in srgb, var(--ql-accent) 8%, var(--ql-surface));
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ql-text);
+}
+
+.ql-info-note .ql-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--ql-accent);
+}

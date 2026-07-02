@@ -117,6 +117,14 @@ class Settings:
         "QUALITY_LABELS_QR_DIR",
         default="/app/data/quality-labels/qr",
     )
+    QUALITY_LABELS_SIGNATURE_DIR: str = _get_env(
+        "QUALITY_LABELS_SIGNATURE_DIR",
+        default="/app/data/quality-labels/signatures",
+    )
+    QUALITY_LABELS_CERTIFICATE_DIR: str = _get_env(
+        "QUALITY_LABELS_CERTIFICATE_DIR",
+        default="/app/data/quality-labels/certificates",
+    )
     DRAWING_PDF_LIBRARY_DIR: str = _get_env(
         "DRAWING_PDF_LIBRARY_DIR",
         "DESENHOS_PDF_DIR",

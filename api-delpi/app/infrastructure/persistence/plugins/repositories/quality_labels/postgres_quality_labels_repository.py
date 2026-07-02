@@ -11,8 +11,8 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
 _COLUMNS = (
     "id, public_token, production_order, branch, product_code, product_description, "
     "product_unit, order_number, inspected_at, inspector_user_id, inspector_name, "
-    "result, notes, qr_filename, view_count, is_active, audit_metadata, "
-    "created_at, updated_at"
+    "result, notes, inspected_quantity, qr_filename, view_count, is_active, "
+    "audit_metadata, created_at, updated_at"
 )
 
 # Unidades operacionais DELPI (filial TOTVS → nome legível).
@@ -40,6 +40,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
         inspector_name: str,
         result: str,
         notes: str | None,
+        inspected_quantity: int | None = None,
         audit_metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         metadata_json = json.dumps(audit_metadata or {})
@@ -48,8 +49,9 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             INSERT INTO quality_labels.inspection_labels (
                 public_token, production_order, branch, product_code,
                 product_description, product_unit, order_number,
-                inspector_user_id, inspector_name, result, notes, audit_metadata
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                inspector_user_id, inspector_name, result, notes,
+                inspected_quantity, audit_metadata
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
             RETURNING {_COLUMNS}
             """,
             (
@@ -64,6 +66,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
                 inspector_name,
                 result,
                 notes,
+                inspected_quantity,
                 metadata_json,
             ),
         )
@@ -251,6 +254,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "inspectorName": row.get("inspector_name"),
             "result": row.get("result"),
             "notes": row.get("notes"),
+            "inspectedQuantity": row.get("inspected_quantity"),
             "viewCount": row.get("view_count", 0),
             "isActive": row.get("is_active", True),
             "createdAt": cls._iso(row.get("created_at")),

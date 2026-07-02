@@ -205,12 +205,14 @@ Uploads de evidências do plugin **quality-action-plans** e anexos de NC da **au
 | `KAIZEN_EVIDENCE_UPLOAD_DIR` | `/app/data/kaizen-evidences` | `${DELPI_DATA_HOST_DIR}/kaizen-evidences` |
 | `AUDIT_5S_NC_UPLOAD_DIR` | `/app/data/audit-5s-nc` | `${DELPI_DATA_HOST_DIR}/audit-5s-nc` |
 | `QUALITY_LABELS_QR_DIR` | `/app/data/quality-labels/qr` | `${DELPI_DATA_HOST_DIR}/quality-labels/qr` |
+| `QUALITY_LABELS_SIGNATURE_DIR` | `/app/data/quality-labels/signatures` | `${DELPI_DATA_HOST_DIR}/quality-labels/signatures` |
+| `QUALITY_LABELS_CERTIFICATE_DIR` | `/app/data/quality-labels/certificates` | `${DELPI_DATA_HOST_DIR}/quality-labels/certificates` |
 
-> As etiquetas da qualidade (**quality-labels**, CRUD dentro da `api-delpi`) guardam os PNGs de QR em `QUALITY_LABELS_QR_DIR`. Mesmo padrão: o Postgres mantém o registro da inspeção; sem volume, o QR some no recreate.
+> As etiquetas da qualidade (**quality-labels**, CRUD dentro da `api-delpi`) guardam os PNGs de QR em `QUALITY_LABELS_QR_DIR`, as assinaturas dos inspetores (PNG) em `QUALITY_LABELS_SIGNATURE_DIR` e os certificados emitidos (PDF) em `QUALITY_LABELS_CERTIFICATE_DIR`. Mesmo padrão: o Postgres mantém o registro; sem volume, os binários somem no recreate.
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/kaizen-evidences /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/kaizen-evidences /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 

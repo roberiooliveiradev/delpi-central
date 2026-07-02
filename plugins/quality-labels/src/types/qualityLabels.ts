@@ -73,6 +73,7 @@ export type QualityLabel = {
   inspectorName: string;
   result: QualityLabelResult;
   notes: string | null;
+  inspectedQuantity: number | null;
   viewCount: number;
   isActive: boolean;
   createdAt: string | null;
@@ -87,7 +88,9 @@ export type AuditEventType =
   | "label_activated"
   | "label_deactivated"
   | "label_deleted"
-  | "label_viewed";
+  | "label_viewed"
+  | "certificate_saved"
+  | "certificate_issued";
 
 export type AuditEvent = {
   id: string;
@@ -120,6 +123,7 @@ export type CreateLabelPayload = {
   branch?: string | null;
   result?: QualityLabelResult;
   notes?: string | null;
+  inspectedQuantity?: number | null;
 };
 
 export type LabelsPage = {
@@ -130,4 +134,75 @@ export type LabelsPage = {
     offset: number;
     is_complete: boolean;
   };
+};
+
+export type CertificateSampleType = "amostra" | "lote_piloto" | "fornecimento";
+
+export type CertificateItemStatus = "A" | "R" | "NA";
+
+export type CertificateItem = {
+  position: number;
+  description: string;
+  status: CertificateItemStatus;
+  isCustom: boolean;
+};
+
+export type Certificate = {
+  id: string | null;
+  labelId: string;
+  docRef: string;
+  sampleType: CertificateSampleType;
+  quantity: string | null;
+  sampleQuantity: string | null;
+  customerCode: string | null;
+  customerStore: string | null;
+  customerName: string | null;
+  customerItem: string | null;
+  customerItemRev: string | null;
+  customerSource: "totvs" | "manual";
+  delpiNotes: string | null;
+  customerNotes: string | null;
+  inspectorName: string | null;
+  status: "draft" | "issued";
+  hasPdf: boolean;
+  issuedAt: string | null;
+  updatedAt: string | null;
+  items: CertificateItem[];
+  // contexto da etiqueta
+  productionOrder: string;
+  productCode: string;
+  productDescription: string;
+  productUnit: string | null;
+  branch: string | null;
+  branchName: string | null;
+};
+
+export type CertificateSavePayload = {
+  sampleType: CertificateSampleType;
+  quantity?: string | null;
+  sampleQuantity?: string | null;
+  customerCode?: string | null;
+  customerStore?: string | null;
+  customerName?: string | null;
+  customerItem?: string | null;
+  customerItemRev?: string | null;
+  customerSource?: "totvs" | "manual";
+  delpiNotes?: string | null;
+  customerNotes?: string | null;
+  items: Array<{
+    position?: number;
+    description: string;
+    status: CertificateItemStatus;
+    isCustom?: boolean;
+  }>;
+  issue: boolean;
+};
+
+export type Inspector = {
+  id?: string;
+  userId: string;
+  displayName: string;
+  roleTitle: string | null;
+  hasSignature: boolean;
+  signatureUpdatedAt: string | null;
 };
