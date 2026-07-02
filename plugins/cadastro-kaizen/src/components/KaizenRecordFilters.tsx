@@ -1,4 +1,6 @@
 import { BRANCHES, KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
+import { FieldLabel } from "./ui/HelpTooltip";
+import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type KaizenRecordFiltersProps = {
   branch: string;
@@ -24,7 +26,7 @@ export function KaizenRecordFilters({
   return (
     <section className="kz-filters-row" aria-label="Filtros de kaizen">
       <div className="kz-filter-box">
-        <label htmlFor="kz-filter-branch">Unidade</label>
+        <FieldLabel label="Unidade" htmlFor="kz-filter-branch" hint={KAIZEN_HELP_TOOLTIPS.fields.branch} />
         <select
           id="kz-filter-branch"
           value={branch}
@@ -40,7 +42,7 @@ export function KaizenRecordFilters({
       </div>
 
       <div className="kz-filter-box">
-        <label htmlFor="kz-filter-status">Status</label>
+        <FieldLabel label="Status" htmlFor="kz-filter-status" hint={KAIZEN_HELP_TOOLTIPS.fields.status} />
         <select
           id="kz-filter-status"
           value={status}
@@ -56,7 +58,11 @@ export function KaizenRecordFilters({
       </div>
 
       <div className="kz-filter-box">
-        <label htmlFor="kz-filter-savings-type">Tipo de economia</label>
+        <FieldLabel
+          label="Tipo de economia"
+          htmlFor="kz-filter-savings-type"
+          hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
+        />
         <select
           id="kz-filter-savings-type"
           value={savingsType}
@@ -72,7 +78,11 @@ export function KaizenRecordFilters({
       </div>
 
       <div className="kz-filter-box">
-        <label htmlFor="kz-filter-title">Título</label>
+        <FieldLabel
+          label="Título"
+          htmlFor="kz-filter-title"
+          hint="Filtra os cadastros cujo título contém o texto informado."
+        />
         <input
           id="kz-filter-title"
           type="text"

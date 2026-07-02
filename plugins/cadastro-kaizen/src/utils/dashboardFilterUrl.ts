@@ -21,8 +21,19 @@ const EMPTY: DashboardFilterState = {
   competence: "",
 };
 
+const VALID_UNITS = new Set(["01", "02"]);
+
 function isIso(value: string): boolean {
   return ISO_DATE_RE.test(value);
+}
+
+/** Sanitiza a lista de unidades (uma ou mais, separadas por vírgula) mantendo só códigos válidos. */
+function sanitizeUnits(raw: string): string {
+  return raw
+    .split(",")
+    .map((token) => token.trim())
+    .filter((token) => VALID_UNITS.has(token))
+    .join(",");
 }
 
 function resolveLinked(
@@ -37,7 +48,7 @@ function resolveLinked(
 }
 
 function parseParams(params: URLSearchParams): DashboardFilterState | null {
-  const unit = params.get("unit") ?? "";
+  const unit = sanitizeUnits(params.get("unit") ?? "");
   const competence = params.get("competence") ?? "";
   const dateStart = params.get("date_start") ?? "";
   const dateEnd = params.get("date_end") ?? "";
@@ -58,7 +69,7 @@ function readFromSession(): DashboardFilterState | null {
     const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw) as Record<string, unknown>;
-    const unit = typeof data.unit === "string" ? data.unit : "";
+    const unit = typeof data.unit === "string" ? sanitizeUnits(data.unit) : "";
     const competence = typeof data.competence === "string" ? data.competence : "";
     const dateStart = typeof data.dateStart === "string" ? data.dateStart : "";
     const dateEnd = typeof data.dateEnd === "string" ? data.dateEnd : "";

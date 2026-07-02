@@ -14,7 +14,10 @@ import { fetchKaizenSummary } from "../api/kaizenApi";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
+import { FieldLabel } from "../components/ui/HelpTooltip";
+import { MultiSelectField } from "../components/ui/MultiSelectField";
 import { BRANCHES, detailPath, newPath } from "../constants/kaizen";
+import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
 import type { KaizenSummary, KaizenSummaryBucket } from "../types/kaizen";
 import {
@@ -39,6 +42,12 @@ const STATUS_TONE: Record<string, Tone> = {
   descontinuado: "muted",
   cancelado: "danger",
 };
+
+const UNIT_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
+
+function unitsFromString(value: string): string[] {
+  return value ? value.split(",").filter(Boolean) : [];
+}
 
 const MONTH_FMT = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric" });
 
@@ -119,7 +128,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
   const [summary, setSummary] = useState<KaizenSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [unit, setUnit] = useState(initialFilters.unit);
+  const [units, setUnits] = useState<string[]>(unitsFromString(initialFilters.unit));
 
   const {
     dateStart,
@@ -136,12 +145,16 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
     competence: initialFilters.competence,
   });
 
+  // O backend filtra por uma unidade (^(01|02)$). Com uma selecionada, filtra; com
+  // nenhuma ou todas, consolida (sem branch).
+  const branchParam = units.length === 1 ? units[0] : undefined;
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await fetchKaizenSummary({
-        branch: unit || undefined,
+        branch: branchParam,
         dateStart: dateStart || undefined,
         dateEnd: dateEnd || undefined,
       });
@@ -151,7 +164,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [unit, dateStart, dateEnd]);
+  }, [branchParam, dateStart, dateEnd]);
 
   useEffect(() => {
     void load();
@@ -159,14 +172,14 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
 
   // Reflete os filtros na URL (compartilhável) e no sessionStorage (troca de aba no portal).
   useEffect(() => {
-    writeDashboardFilters({ unit, dateStart, dateEnd, competence });
-  }, [unit, dateStart, dateEnd, competence]);
+    writeDashboardFilters({ unit: units.join(","), dateStart, dateEnd, competence });
+  }, [units, dateStart, dateEnd, competence]);
 
   // Navegação voltar/avançar do navegador re-aplica os filtros da URL.
   useEffect(() => {
     return subscribeDashboardFilterSync(() => {
       const next = readDashboardFilters();
-      setUnit(next.unit);
+      setUnits(unitsFromString(next.unit));
       replaceAll({
         dateStart: next.dateStart,
         dateEnd: next.dateEnd,
@@ -175,10 +188,10 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
     });
   }, [replaceAll]);
 
-  const hasFilters = Boolean(unit || dateStart || dateEnd || competence);
+  const hasFilters = Boolean(units.length || dateStart || dateEnd || competence);
 
   const clearFilters = useCallback(() => {
-    setUnit("");
+    setUnits([]);
     reset();
   }, [reset]);
 
@@ -224,20 +237,21 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
       />
 
       <section className="kz-filters-row" aria-label="Filtros do painel">
-        <div className="kz-filter-box">
-          <label htmlFor="kz-dash-unit">Unidade</label>
-          <select id="kz-dash-unit" value={unit} onChange={(event) => setUnit(event.target.value)}>
-            <option value="">Todas</option>
-            {BRANCHES.map((item) => (
-              <option key={item.code} value={item.code}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <MultiSelectField
+          label="Unidade"
+          labelHint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+          options={UNIT_OPTIONS}
+          selectedValues={units}
+          onChange={setUnits}
+          emptyLabel="Todas"
+        />
 
         <div className="kz-filter-box">
-          <label htmlFor="kz-dash-competence">Competência</label>
+          <FieldLabel
+            label="Competência"
+            htmlFor="kz-dash-competence"
+            hint="Mês de referência. Preenche automaticamente as datas inicial e final."
+          />
           <input
             id="kz-dash-competence"
             type="month"
@@ -247,7 +261,11 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
         </div>
 
         <div className="kz-filter-box">
-          <label htmlFor="kz-dash-date-start">Data inicial</label>
+          <FieldLabel
+            label="Data inicial"
+            htmlFor="kz-dash-date-start"
+            hint="Início do período considerado nos indicadores."
+          />
           <input
             id="kz-dash-date-start"
             type="date"
@@ -257,7 +275,11 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
         </div>
 
         <div className="kz-filter-box">
-          <label htmlFor="kz-dash-date-end">Data final</label>
+          <FieldLabel
+            label="Data final"
+            htmlFor="kz-dash-date-end"
+            hint="Fim do período considerado nos indicadores."
+          />
           <input
             id="kz-dash-date-end"
             type="date"

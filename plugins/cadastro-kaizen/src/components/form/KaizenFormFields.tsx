@@ -1,6 +1,7 @@
 import { FormSection } from "./FormSection";
 import { SelectField, TextAreaField, TextField } from "./FormField";
 import { KaizenParticipantsField } from "./KaizenParticipantsField";
+import { SavingsParamFields } from "./SavingsParamFields";
 import { FieldLabel } from "../ui/HelpTooltip";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
@@ -8,8 +9,6 @@ import {
   KAIZEN_CATEGORIES,
   KAIZEN_STATUSES,
   SAVINGS_TYPES,
-  visibleSavingsParamFields,
-  type SavingsParamField,
 } from "../../constants/kaizen";
 import type { KaizenFormValues } from "../../types/kaizen";
 
@@ -21,17 +20,7 @@ type KaizenFormFieldsProps = {
 const BRANCH_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
 const CATEGORY_OPTIONS = KAIZEN_CATEGORIES.map((cat) => ({ value: cat, label: cat }));
 
-const SAVINGS_PARAM_META: Record<SavingsParamField, { label: string }> = {
-  seconds_per_occurrence: { label: "Segundos por ocorrência" },
-  occurrences_per_day: { label: "Ocorrências por dia" },
-  hourly_cost: { label: "Custo hora (R$)" },
-  quantity_saved_per_day: { label: "Quantidade economizada/dia" },
-  unit_material_cost: { label: "Custo unitário material (R$)" },
-  fixed_daily_savings: { label: "Economia fixa/dia (R$)" },
-};
-
 export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
-  const savingsParamFields = visibleSavingsParamFields(values.savings_type);
   const isQualitative = values.savings_type === "qualitativo";
 
   return (
@@ -44,6 +33,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         <SelectField
           id="kz-branch"
           label="Unidade *"
+          hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
           required
           value={values.branch_code}
           onChange={(value) => onChange("branch_code", value)}
@@ -91,6 +81,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         <TextField
           id="kz-investment"
           label="Investimento (R$)"
+          hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
           inputMode="decimal"
           value={values.investment}
           onChange={(value) => onChange("investment", value)}
@@ -108,6 +99,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         <TextField
           id="kz-date-discontinued"
           label="Data descontinuação"
+          hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
           type="date"
           value={values.date_discontinued}
           onChange={(value) => onChange("date_discontinued", value)}
@@ -169,16 +161,12 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
           placeholderOption="Inferir automaticamente"
         />
 
-        {savingsParamFields.map((field) => (
-          <TextField
-            key={field}
-            id={`kz-${field.replace(/_/g, "-")}`}
-            label={SAVINGS_PARAM_META[field].label}
-            inputMode="decimal"
-            value={values[field]}
-            onChange={(value) => onChange(field, value)}
-          />
-        ))}
+        <SavingsParamFields
+          savingsType={values.savings_type}
+          values={values}
+          onChange={(field, value) => onChange(field, value)}
+          idPrefix="kz-new"
+        />
 
         <TextField
           id="kz-realized-savings"
@@ -201,6 +189,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         <TextAreaField
           id="kz-notes"
           label="Notas"
+          hint={KAIZEN_HELP_TOOLTIPS.fields.notes}
           value={values.notes}
           onChange={(value) => onChange("notes", value)}
         />

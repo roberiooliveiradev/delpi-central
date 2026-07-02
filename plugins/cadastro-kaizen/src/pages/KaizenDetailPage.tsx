@@ -12,9 +12,11 @@ import {
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { StateAlert } from "../components/StateAlert";
 import { EditableSectionCard } from "../components/ui/EditableSectionCard";
-import { HelpTooltip } from "../components/ui/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "../components/ui/HelpTooltip";
 import { ReadOnlyField } from "../components/ui/ReadOnlyField";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { SavingsParamFields, SavingsParamReadFields } from "../components/form/SavingsParamFields";
+import { KaizenFormProgress } from "../components/form/KaizenFormProgress";
 import { StatusPipeline } from "../components/detail/StatusPipeline";
 import { KaizenEvidencePanel } from "../components/detail/KaizenEvidencePanel";
 import { KaizenImprovementsPanel } from "../components/detail/KaizenImprovementsPanel";
@@ -360,6 +362,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         />
       ) : null}
 
+      <KaizenFormProgress
+        values={recordToFormValues(view)}
+        title={`Preenchimento ${selectedLabel !== "versão única" ? `da ${selectedLabel}` : "do processo"}`}
+      />
+
       {/* Identificação */}
       <EditableSectionCard
         title="Identificação"
@@ -373,12 +380,26 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         editable={editable}
         readContent={
           <div className="kz-read-grid">
-            <ReadOnlyField label="Unidade" value={BRANCH_LABEL[view.branch_code] ?? view.branch_code} />
-            <ReadOnlyField label="Setor" value={view.sector} />
-            <ReadOnlyField label="Categoria" value={view.category} />
-            <ReadOnlyField label="Investimento" value={formatCurrency(view.investment)} />
+            <ReadOnlyField
+              label="Unidade"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+              value={BRANCH_LABEL[view.branch_code] ?? view.branch_code}
+            />
+            <ReadOnlyField label="Setor" hint={KAIZEN_HELP_TOOLTIPS.fields.sector} value={view.sector} />
+            <ReadOnlyField label="Categoria" hint={KAIZEN_HELP_TOOLTIPS.fields.category} value={view.category} />
+            <ReadOnlyField
+              label="Investimento"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
+              value={formatCurrency(view.investment)}
+            />
             <div className="kz-read-field kz-span-2">
-              <span className="kz-read-field__label">Equipe / responsáveis</span>
+              <span className="kz-read-field__label">
+                Equipe / responsáveis
+                <HelpTooltip
+                  content={KAIZEN_HELP_TOOLTIPS.sections.participants}
+                  ariaLabel="Ajuda: equipe e responsáveis"
+                />
+              </span>
               <div className="kz-chips">
                 {viewParticipants.length === 0 ? (
                   <span className="kz-read-field__value kz-read-field__value--empty">—</span>
@@ -392,17 +413,47 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 )}
               </div>
             </div>
-            <ReadOnlyField label="Descrição do processo" value={view.process_description} wide multiline />
-            <ReadOnlyField label="Problema / oportunidade" value={view.problem_description} wide multiline />
-            <ReadOnlyField label="Melhoria realizada" value={view.improvement_description} wide multiline />
-            <ReadOnlyField label="Resultado esperado" value={view.expected_result} wide multiline />
-            <ReadOnlyField label="Notas" value={view.notes} wide multiline />
+            <ReadOnlyField
+              label="Descrição do processo"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.processDescription}
+              value={view.process_description}
+              wide
+              multiline
+            />
+            <ReadOnlyField
+              label="Problema / oportunidade"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.problemDescription}
+              value={view.problem_description}
+              wide
+              multiline
+            />
+            <ReadOnlyField
+              label="Melhoria realizada"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.improvementDescription}
+              value={view.improvement_description}
+              wide
+              multiline
+            />
+            <ReadOnlyField
+              label="Resultado esperado"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.expectedResult}
+              value={view.expected_result}
+              wide
+              multiline
+            />
+            <ReadOnlyField
+              label="Notas"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.notes}
+              value={view.notes}
+              wide
+              multiline
+            />
           </div>
         }
         editContent={
           <div className="kz-form-grid">
             <div className="kz-field">
-              <label htmlFor="kz-d-branch">Unidade *</label>
+              <FieldLabel label="Unidade *" htmlFor="kz-d-branch" hint={KAIZEN_HELP_TOOLTIPS.fields.branch} />
               <select
                 id="kz-d-branch"
                 value={form.branch_code}
@@ -416,7 +467,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               </select>
             </div>
             <div className="kz-field">
-              <label htmlFor="kz-d-sector">Setor</label>
+              <FieldLabel label="Setor" htmlFor="kz-d-sector" hint={KAIZEN_HELP_TOOLTIPS.fields.sector} />
               <input
                 id="kz-d-sector"
                 value={form.sector}
@@ -424,7 +475,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field">
-              <label htmlFor="kz-d-category">Categoria</label>
+              <FieldLabel label="Categoria" htmlFor="kz-d-category" hint={KAIZEN_HELP_TOOLTIPS.fields.category} />
               <select
                 id="kz-d-category"
                 value={form.category}
@@ -439,15 +490,20 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               </select>
             </div>
             <div className="kz-field">
-              <label htmlFor="kz-d-investment">Investimento (R$)</label>
+              <FieldLabel
+                label="Investimento (R$)"
+                htmlFor="kz-d-investment"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.investment}
+              />
               <input
                 id="kz-d-investment"
+                inputMode="decimal"
                 value={form.investment}
                 onChange={(event) => updateField("investment", event.target.value)}
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-title">Título *</label>
+              <FieldLabel label="Título *" htmlFor="kz-d-title" hint={KAIZEN_HELP_TOOLTIPS.fields.title} />
               <input
                 id="kz-d-title"
                 value={form.title}
@@ -456,14 +512,18 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label>Equipe / responsáveis</label>
+              <FieldLabel label="Equipe / responsáveis" hint={KAIZEN_HELP_TOOLTIPS.sections.participants} />
               <KaizenParticipantsField
                 participants={form.participants}
                 onChange={(participants) => updateField("participants", participants)}
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-process">Descrição do processo</label>
+              <FieldLabel
+                label="Descrição do processo"
+                htmlFor="kz-d-process"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.processDescription}
+              />
               <textarea
                 id="kz-d-process"
                 value={form.process_description}
@@ -471,7 +531,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-problem">Problema / oportunidade</label>
+              <FieldLabel
+                label="Problema / oportunidade"
+                htmlFor="kz-d-problem"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.problemDescription}
+              />
               <textarea
                 id="kz-d-problem"
                 value={form.problem_description}
@@ -479,7 +543,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-improvement">Melhoria realizada</label>
+              <FieldLabel
+                label="Melhoria realizada"
+                htmlFor="kz-d-improvement"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.improvementDescription}
+              />
               <textarea
                 id="kz-d-improvement"
                 value={form.improvement_description}
@@ -487,7 +555,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-expected">Resultado esperado</label>
+              <FieldLabel
+                label="Resultado esperado"
+                htmlFor="kz-d-expected"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.expectedResult}
+              />
               <textarea
                 id="kz-d-expected"
                 value={form.expected_result}
@@ -495,7 +567,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-notes">Notas</label>
+              <FieldLabel label="Notas" htmlFor="kz-d-notes" hint={KAIZEN_HELP_TOOLTIPS.fields.notes} />
               <textarea
                 id="kz-d-notes"
                 value={form.notes}
@@ -523,14 +595,22 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               <span className="kz-read-field__label">Situação atual</span>
               <StatusPipeline status={view.status} />
             </div>
-            <ReadOnlyField label="Data implantação" value={view.date_implemented} />
-            <ReadOnlyField label="Data descontinuação" value={view.date_discontinued} />
+            <ReadOnlyField
+              label="Data implantação"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
+              value={view.date_implemented}
+            />
+            <ReadOnlyField
+              label="Data descontinuação"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
+              value={view.date_discontinued}
+            />
           </div>
         }
         editContent={
           <div className="kz-form-grid">
             <div className="kz-field">
-              <label htmlFor="kz-d-status">Status</label>
+              <FieldLabel label="Status" htmlFor="kz-d-status" hint={KAIZEN_HELP_TOOLTIPS.fields.status} />
               <select
                 id="kz-d-status"
                 value={form.status}
@@ -546,7 +626,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               </select>
             </div>
             <div className="kz-field">
-              <label htmlFor="kz-d-eff">Vigente a partir de</label>
+              <FieldLabel
+                label="Vigente a partir de"
+                htmlFor="kz-d-eff"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.effectiveFrom}
+              />
               <input
                 id="kz-d-eff"
                 type="date"
@@ -555,7 +639,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field">
-              <label htmlFor="kz-d-date-impl">Data implantação</label>
+              <FieldLabel
+                label="Data implantação"
+                htmlFor="kz-d-date-impl"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
+              />
               <input
                 id="kz-d-date-impl"
                 type="date"
@@ -564,7 +652,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field">
-              <label htmlFor="kz-d-date-disc">Data descontinuação</label>
+              <FieldLabel
+                label="Data descontinuação"
+                htmlFor="kz-d-date-disc"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.dateDiscontinued}
+              />
               <input
                 id="kz-d-date-disc"
                 type="date"
@@ -573,7 +665,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-reason">Motivo da correção (registra na auditoria)</label>
+              <FieldLabel
+                label="Motivo da correção (registra na auditoria)"
+                htmlFor="kz-d-reason"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
+              />
               <input
                 id="kz-d-reason"
                 value={changeReason}
@@ -597,29 +693,53 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         editable={editable}
         readContent={
           <div className="kz-read-grid">
-            <ReadOnlyField label="Tipo de economia" value={savingsTypeLabel(view.savings_type)} />
-            <ReadOnlyField label="Estimada / dia" value={formatCurrency(view.daily_savings)} />
-            <ReadOnlyField label="Estimada / ano" value={formatCurrency(view.annual_savings)} />
-            <ReadOnlyField label="Realizada / dia" value={formatCurrency(view.realized_daily_savings)} />
-            <ReadOnlyField label="Realizada / ano" value={formatCurrency(view.realized_annual_savings)} />
-            <ReadOnlyField label="Efetividade" value={effectivenessLabel(view)} />
+            <ReadOnlyField
+              label="Tipo de economia"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
+              value={savingsTypeLabel(view.savings_type)}
+            />
+            <ReadOnlyField
+              label="Estimada / dia"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.estimatedDaily}
+              value={formatCurrency(view.daily_savings)}
+            />
+            <ReadOnlyField
+              label="Estimada / ano"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.estimatedAnnual}
+              value={formatCurrency(view.annual_savings)}
+            />
+            <ReadOnlyField
+              label="Realizada / dia"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.realizedDailySavings}
+              value={formatCurrency(view.realized_daily_savings)}
+            />
+            <ReadOnlyField
+              label="Realizada / ano"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.realizedAnnual}
+              value={formatCurrency(view.realized_annual_savings)}
+            />
+            <ReadOnlyField
+              label="Efetividade"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.effectiveness}
+              value={effectivenessLabel(view)}
+            />
             <ReadOnlyField
               label="Contabiliza ganhos"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.savingsValidity}
               value={savingsAccountingLabel(view)}
               wide
             />
-            <ReadOnlyField label="Segundos / ocorrência" value={view.seconds_per_occurrence} />
-            <ReadOnlyField label="Ocorrências / dia" value={view.occurrences_per_day} />
-            <ReadOnlyField label="Custo hora (R$)" value={view.hourly_cost} />
-            <ReadOnlyField label="Qtd. economizada / dia" value={view.quantity_saved_per_day} />
-            <ReadOnlyField label="Custo unit. material (R$)" value={view.unit_material_cost} />
-            <ReadOnlyField label="Economia fixa / dia (R$)" value={view.fixed_daily_savings} />
+            <SavingsParamReadFields savingsType={view.savings_type} record={view} />
           </div>
         }
         editContent={
           <div className="kz-form-grid">
             <div className="kz-field">
-              <label htmlFor="kz-d-savings-type">Tipo de economia</label>
+              <FieldLabel
+                label="Tipo de economia"
+                htmlFor="kz-d-savings-type"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.savingsType}
+              />
               <select
                 id="kz-d-savings-type"
                 value={form.savings_type}
@@ -635,64 +755,33 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 ))}
               </select>
             </div>
+
+            <SavingsParamFields
+              savingsType={form.savings_type}
+              values={form}
+              onChange={(field, value) => updateField(field, value)}
+              idPrefix="kz-d"
+            />
+
             <div className="kz-field">
-              <label htmlFor="kz-d-seconds">Segundos por ocorrência</label>
-              <input
-                id="kz-d-seconds"
-                value={form.seconds_per_occurrence}
-                onChange={(event) => updateField("seconds_per_occurrence", event.target.value)}
+              <FieldLabel
+                label="Economia realizada/dia (R$)"
+                htmlFor="kz-d-realized"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.realizedDailySavings}
               />
-            </div>
-            <div className="kz-field">
-              <label htmlFor="kz-d-occurrences">Ocorrências por dia</label>
-              <input
-                id="kz-d-occurrences"
-                value={form.occurrences_per_day}
-                onChange={(event) => updateField("occurrences_per_day", event.target.value)}
-              />
-            </div>
-            <div className="kz-field">
-              <label htmlFor="kz-d-hourly">Custo hora (R$)</label>
-              <input
-                id="kz-d-hourly"
-                value={form.hourly_cost}
-                onChange={(event) => updateField("hourly_cost", event.target.value)}
-              />
-            </div>
-            <div className="kz-field">
-              <label htmlFor="kz-d-qty">Quantidade economizada/dia</label>
-              <input
-                id="kz-d-qty"
-                value={form.quantity_saved_per_day}
-                onChange={(event) => updateField("quantity_saved_per_day", event.target.value)}
-              />
-            </div>
-            <div className="kz-field">
-              <label htmlFor="kz-d-unit">Custo unitário material (R$)</label>
-              <input
-                id="kz-d-unit"
-                value={form.unit_material_cost}
-                onChange={(event) => updateField("unit_material_cost", event.target.value)}
-              />
-            </div>
-            <div className="kz-field">
-              <label htmlFor="kz-d-fixed">Economia fixa/dia (R$)</label>
-              <input
-                id="kz-d-fixed"
-                value={form.fixed_daily_savings}
-                onChange={(event) => updateField("fixed_daily_savings", event.target.value)}
-              />
-            </div>
-            <div className="kz-field">
-              <label htmlFor="kz-d-realized">Economia realizada/dia (R$)</label>
               <input
                 id="kz-d-realized"
+                inputMode="decimal"
                 value={form.realized_daily_savings}
                 onChange={(event) => updateField("realized_daily_savings", event.target.value)}
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-eco-reason">Motivo da correção (registra na auditoria)</label>
+              <FieldLabel
+                label="Motivo da correção (registra na auditoria)"
+                htmlFor="kz-d-eco-reason"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.changeReason}
+              />
               <input
                 id="kz-d-eco-reason"
                 value={changeReason}

@@ -17,7 +17,11 @@
   --kz-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
   --kz-card-bg: var(--surface, #ffffff);
   --kz-card-border: var(--border, #e6e6e6);
+  --kz-input-bg: var(--surface, #ffffff);
+  --kz-input-border: var(--border, #e6e6e6);
+  --kz-input-text: var(--text, #111111);
   --kz-accent: var(--primary, #089bdb);
+  color-scheme: light;
   --kz-danger: var(--danger, #b42318);
   --kz-success: var(--success, #067647);
   --kz-font-xs: 12px;
@@ -73,6 +77,10 @@
   --kz-text-muted: rgba(255, 255, 255, 0.72);
   --kz-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
   --kz-card-border: rgba(255, 255, 255, 0.1);
+  --kz-input-bg: color-mix(in srgb, var(--surface-2, #1b2030) 60%, black);
+  --kz-input-border: rgba(255, 255, 255, 0.14);
+  --kz-input-text: rgba(255, 255, 255, 0.92);
+  color-scheme: dark;
 }
 
 .dashboard-cadastro-kaizen .kz-page-header {
@@ -215,10 +223,17 @@
 .dashboard-cadastro-kaizen .kz-filter-box select {
   min-height: var(--kz-control-height);
   border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-card-border);
+  border: 1px solid var(--kz-input-border);
   padding: 8px 12px;
-  background: var(--surface, #fff);
-  color: var(--kz-text);
+  background: var(--kz-input-bg);
+  color: var(--kz-input-text);
+}
+
+.dashboard-cadastro-kaizen .kz-filter-box input:focus-visible,
+.dashboard-cadastro-kaizen .kz-filter-box select:focus-visible {
+  outline: none;
+  border-color: var(--kz-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
 }
 
 .dashboard-cadastro-kaizen .kz-card {
@@ -428,10 +443,24 @@
 .dashboard-cadastro-kaizen .kz-field textarea {
   min-height: var(--kz-control-height);
   border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-card-border);
+  border: 1px solid var(--kz-input-border);
   padding: 8px 12px;
-  background: var(--surface, #fff);
-  color: var(--kz-text);
+  background: var(--kz-input-bg);
+  color: var(--kz-input-text);
+}
+
+.dashboard-cadastro-kaizen .kz-field input::placeholder,
+.dashboard-cadastro-kaizen .kz-field textarea::placeholder {
+  color: var(--kz-text-muted);
+  opacity: 1;
+}
+
+.dashboard-cadastro-kaizen .kz-field input:focus-visible,
+.dashboard-cadastro-kaizen .kz-field select:focus-visible,
+.dashboard-cadastro-kaizen .kz-field textarea:focus-visible {
+  outline: none;
+  border-color: var(--kz-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
 }
 
 .dashboard-cadastro-kaizen .kz-field textarea {
@@ -613,6 +642,9 @@
 }
 
 .dashboard-cadastro-kaizen .kz-read-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: var(--kz-font-xs);
   font-weight: 600;
   text-transform: uppercase;
@@ -902,12 +934,12 @@
 
 .dashboard-cadastro-kaizen .kz-evidence-column__items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 12px;
 }
 
 .dashboard-cadastro-kaizen .kz-evidence-column__items--row {
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
 .dashboard-cadastro-kaizen .kz-evidence {
@@ -957,6 +989,16 @@
   gap: 6px;
   padding: 6px 8px;
   border-top: 1px solid var(--kz-card-border);
+}
+
+/* Botões de ação não podem estourar a largura do card (evita corte). */
+.dashboard-cadastro-kaizen .kz-evidence__actions > button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 5px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dashboard-cadastro-kaizen .kz-evidence-upload {
@@ -1060,12 +1102,18 @@
 
 .dashboard-cadastro-kaizen .kz-pending {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 10px;
   padding: 10px;
   border: 1px solid var(--kz-card-border);
   border-radius: var(--kz-control-radius);
   background: var(--kz-card-bg);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .dashboard-cadastro-kaizen .kz-pending__thumb {
@@ -1086,7 +1134,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .dashboard-cadastro-kaizen .kz-pending__head {
@@ -1111,20 +1159,43 @@
   flex-shrink: 0;
 }
 
-.dashboard-cadastro-kaizen .kz-pending__fields {
+.dashboard-cadastro-kaizen .kz-pending__badge {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--kz-accent) 12%, transparent);
+  color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__details {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--kz-card-border);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__field {
   display: flex;
-  gap: 6px;
-}
-
-.dashboard-cadastro-kaizen .kz-pending__stage {
-  flex-shrink: 0;
-  min-height: 32px;
-}
-
-.dashboard-cadastro-kaizen .kz-pending__desc {
-  flex: 1;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
-  min-height: 32px;
+  font-size: var(--kz-font-xs);
+  font-weight: 600;
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__field select,
+.dashboard-cadastro-kaizen .kz-pending__field input {
+  min-height: 36px;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid var(--kz-input-border);
+  padding: 6px 10px;
+  background: var(--kz-input-bg);
+  color: var(--kz-input-text);
+  font-weight: 400;
 }
 
 .dashboard-cadastro-kaizen .kz-pending__remove {
@@ -1143,6 +1214,12 @@
 
 .dashboard-cadastro-kaizen .kz-pending__remove:hover:not(:disabled) {
   background: color-mix(in srgb, var(--kz-danger) 10%, transparent);
+}
+
+@media (max-width: 480px) {
+  .dashboard-cadastro-kaizen .kz-pending__details {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Formulário de link externo */
@@ -1228,11 +1305,140 @@
 }
 
 /* Label de formulário com ajuda */
-.dashboard-cadastro-kaizen .kz-field__label {
+.dashboard-cadastro-kaizen .kz-field__label,
+.dashboard-cadastro-kaizen .kz-filter-box > .kz-field__label {
   display: flex;
+  flex-flow: row nowrap;
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
+  width: 100%;
+  text-align: left;
+  font-size: var(--kz-font-sm);
+  font-weight: 600;
+  color: var(--kz-text-muted);
+}
+
+/* Multi-select (padrão dashboard-quality) */
+.dashboard-cadastro-kaizen .kz-multi-field {
+  min-width: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select {
+  position: relative;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--kz-control-height);
+  padding: 8px 12px;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid var(--kz-input-border);
+  background: var(--kz-input-bg);
+  color: var(--kz-input-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select--open .kz-multi-select__trigger {
+  border-color: var(--kz-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__trigger svg {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select--open .kz-multi-select__trigger svg {
+  transform: rotate(180deg);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__panel {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid var(--kz-card-border);
+  background: var(--kz-card-bg);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__search {
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--kz-input-border);
+  background: var(--kz-input-bg);
+  color: var(--kz-input-text);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.dashboard-cadastro-kaizen .kz-btn--sm {
+  padding: 4px 10px;
+  font-size: var(--kz-font-xs);
+  min-height: 30px;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__option:hover {
+  background: color-mix(in srgb, var(--kz-accent) 10%, transparent);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__option input {
+  accent-color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-multi-select__empty {
+  padding: 8px;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text-muted);
 }
 
 /* Diff entre revisões */
@@ -2109,4 +2315,171 @@
 .dashboard-cadastro-kaizen .kz-recent-row__chevron {
   color: var(--kz-text-muted);
   flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------- Modal + prévia */
+
+.dashboard-cadastro-kaizen.kz-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 12, 22, 0.55);
+  backdrop-filter: blur(2px);
+  animation: kz-view-fade-in 0.15s ease-out;
+}
+
+.dashboard-cadastro-kaizen .kz-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  max-height: min(88vh, 900px);
+  border-radius: var(--kz-card-radius);
+  border: 1px solid var(--kz-card-border);
+  background: var(--kz-card-bg);
+  color: var(--kz-text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.dashboard-cadastro-kaizen .kz-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--kz-card-border);
+}
+
+.dashboard-cadastro-kaizen .kz-modal__title {
+  margin: 0;
+  font-size: var(--kz-font-md);
+  font-weight: 700;
+  color: var(--kz-title);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-cadastro-kaizen .kz-modal__close {
+  padding: 6px;
+  min-height: 0;
+  flex-shrink: 0;
+}
+
+.dashboard-cadastro-kaizen .kz-modal__body {
+  padding: 18px;
+  overflow: auto;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-preview__status {
+  padding: 40px 12px;
+  text-align: center;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-preview__image {
+  width: 100%;
+  max-height: 68vh;
+  object-fit: contain;
+  border-radius: var(--kz-control-radius);
+  background: color-mix(in srgb, var(--kz-text-muted) 8%, var(--kz-card-bg));
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-preview__pdf {
+  width: 100%;
+  height: 68vh;
+  border: 1px solid var(--kz-card-border);
+  border-radius: var(--kz-control-radius);
+  background: #fff;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-preview__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text-muted);
+}
+
+/* Thumbs clicáveis (abrem a prévia) */
+.dashboard-cadastro-kaizen .kz-evidence__thumb-btn,
+.dashboard-cadastro-kaizen .kz-pending__thumb-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  display: block;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence__thumb-btn {
+  width: 100%;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__thumb-btn {
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+.dashboard-cadastro-kaizen .kz-evidence__thumb-btn:focus-visible,
+.dashboard-cadastro-kaizen .kz-pending__thumb-btn:focus-visible {
+  outline: 2px solid var(--kz-accent);
+  outline-offset: 2px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--kz-card-border);
+  background: transparent;
+  color: var(--kz-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__action:hover {
+  color: var(--kz-accent);
+  border-color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__action svg {
+  transition: transform 0.15s ease;
+}
+
+.dashboard-cadastro-kaizen .kz-pending__action--active {
+  color: var(--kz-accent);
+  border-color: var(--kz-accent);
+}
+
+.dashboard-cadastro-kaizen .kz-pending__action--active svg {
+  transform: rotate(180deg);
+}
+
+.dashboard-cadastro-kaizen .kz-evidence-upload__default-stage-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+@media (max-width: 640px) {
+  .dashboard-cadastro-kaizen .kz-evidence-preview__pdf {
+    height: 60vh;
+  }
 }

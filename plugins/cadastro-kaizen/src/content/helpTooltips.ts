@@ -25,6 +25,13 @@ export const KAIZEN_HELP_TOOLTIPS = {
     branch: "Unidade onde o kaizen foi implantado.",
     sector: "Área ou setor responsável pela melhoria.",
     category: "Classificação da melhoria (segurança, qualidade, produtividade, ergonomia…).",
+    investment: "Valor investido para implantar a melhoria (materiais, mão de obra, dispositivos).",
+    dateDiscontinued:
+      "Data em que a melhoria deixou de operar, quando aplicável. Interrompe a contabilização dos ganhos.",
+    notes: "Notas livres, observações e detalhes que não se encaixam nos demais campos.",
+    changeReason:
+      "Descreva o porquê da correção. O texto fica registrado na trilha de auditoria da versão.",
+    effectiveFrom: "Data a partir da qual esta versão passa a valer como implantada.",
     processDescription: "Como o processo funcionava antes da melhoria.",
     problemDescription: "Problema, desperdício ou risco que motivou o kaizen.",
     improvementDescription: "O que foi alterado no processo.",
@@ -39,6 +46,18 @@ export const KAIZEN_HELP_TOOLTIPS = {
       "Economia diária efetivamente medida após a implantação. Usada para calcular a efetividade vs. a estimativa.",
     savingsValidity:
       "O kaizen contabiliza ganhos financeiros por 1 ano a partir da implantação; depois disso deixa de somar no run-rate.",
+    estimatedDaily: "Economia diária estimada pela API a partir dos parâmetros informados.",
+    estimatedAnnual: "Projeção anual da economia estimada (diária × dias úteis do ano).",
+    realizedAnnual: "Projeção anual da economia realizada, dentro da validade de 1 ano.",
+    effectiveness: "Relação entre a economia realizada e a estimada (quão perto do previsto o ganho ficou).",
+  },
+  savingsParams: {
+    seconds_per_occurrence: "Tempo (em segundos) economizado a cada vez que o processo acontece.",
+    occurrences_per_day: "Quantas vezes por dia o processo/ganho acontece.",
+    hourly_cost: "Custo por hora usado para converter o tempo economizado em dinheiro.",
+    quantity_saved_per_day: "Quantidade de material economizada por dia (peças, kg, litros…).",
+    unit_material_cost: "Custo unitário do material economizado, na mesma unidade da quantidade.",
+    fixed_daily_savings: "Valor fixo economizado por dia, quando o ganho já é conhecido em R$.",
   },
   evidence: {
     upload: "Arraste um ou vários arquivos, ou clique para escolher na pasta. Depois defina a etapa de cada um e envie.",

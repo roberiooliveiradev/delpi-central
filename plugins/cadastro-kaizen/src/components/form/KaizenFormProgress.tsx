@@ -5,15 +5,16 @@ import type { KaizenFormValues } from "../../types/kaizen";
 
 type Props = {
   values: KaizenFormValues;
+  title?: string;
 };
 
-export function KaizenFormProgress({ values }: Props) {
+export function KaizenFormProgress({ values, title = "Preenchimento do cadastro" }: Props) {
   const { percent, done, total, items } = computeKaizenFormCompletion(values);
 
   return (
-    <div className="kz-form-progress" aria-label="Preenchimento do cadastro">
+    <div className="kz-form-progress" aria-label={title}>
       <div className="kz-form-progress__header">
-        <span className="kz-form-progress__title">Preenchimento do cadastro</span>
+        <span className="kz-form-progress__title">{title}</span>
         <span className="kz-form-progress__pct">
           {percent}% • {done}/{total}
         </span>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileText, LinkIcon, Plus, Trash2, Upload } from "lucide-react";
+import { Download, Eye, FileText, LinkIcon, Plus, Trash2, Upload } from "lucide-react";
 
 import {
   deleteKaizenEvidence,
@@ -14,7 +14,7 @@ import type {
   KaizenEvidenceType,
 } from "../../types/kaizen";
 import { StateAlert } from "../StateAlert";
-import { HelpTooltip } from "../ui/HelpTooltip";
+import { FieldLabel, HelpTooltip } from "../ui/HelpTooltip";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { KaizenEvidenceDropzone } from "../evidence/KaizenEvidenceDropzone";
 import {
@@ -25,6 +25,11 @@ import {
   createPendingUploadId,
   inferEvidenceTypeFromFile,
 } from "../evidence/kaizenEvidenceUtils";
+import { canPreviewEvidence } from "../evidence/kaizenEvidencePreview";
+import {
+  KaizenEvidencePreviewModal,
+  type EvidencePreviewSource,
+} from "../evidence/KaizenEvidencePreviewModal";
 
 type KaizenEvidencePanelProps = {
   kaizenId: string;
@@ -121,6 +126,73 @@ async function downloadEvidence(kaizenId: string, evidence: KaizenEvidence) {
   }
 }
 
+function EvidenceCard({
+  kaizenId,
+  evidence,
+  readOnly,
+  onPreview,
+  onDelete,
+}: {
+  kaizenId: string;
+  evidence: KaizenEvidence;
+  readOnly: boolean;
+  onPreview: (evidence: KaizenEvidence) => void;
+  onDelete: (evidence: KaizenEvidence) => void;
+}) {
+  const previewable = canPreviewEvidence(evidence);
+  return (
+    <figure className="kz-evidence">
+      {previewable ? (
+        <button
+          type="button"
+          className="kz-evidence__thumb-btn"
+          onClick={() => onPreview(evidence)}
+          aria-label={`Pré-visualizar ${evidence.file_name ?? "evidência"}`}
+        >
+          <EvidenceThumb kaizenId={kaizenId} evidence={evidence} />
+        </button>
+      ) : (
+        <EvidenceThumb kaizenId={kaizenId} evidence={evidence} />
+      )}
+      <figcaption className="kz-evidence__caption">
+        {evidence.description || evidence.file_name || "Evidência"}
+      </figcaption>
+      <div className="kz-evidence__actions">
+        {previewable ? (
+          <button
+            type="button"
+            className="kz-ghost-btn"
+            onClick={() => onPreview(evidence)}
+            aria-label="Pré-visualizar evidência"
+          >
+            <Eye size={12} aria-hidden="true" />
+          </button>
+        ) : null}
+        {evidence.type !== "link" ? (
+          <button
+            type="button"
+            className="kz-ghost-btn"
+            onClick={() => void downloadEvidence(kaizenId, evidence)}
+            aria-label="Baixar evidência"
+          >
+            <Download size={12} aria-hidden="true" />
+          </button>
+        ) : null}
+        {!readOnly ? (
+          <button
+            type="button"
+            className="kz-danger-btn"
+            onClick={() => onDelete(evidence)}
+            aria-label="Excluir evidência"
+          >
+            <Trash2 size={12} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+    </figure>
+  );
+}
+
 export function KaizenEvidencePanel({
   kaizenId,
   readOnly,
@@ -139,6 +211,17 @@ export function KaizenEvidencePanel({
   const [linkStage, setLinkStage] = useState<KaizenEvidenceStage>("geral");
   const [externalUrl, setExternalUrl] = useState("");
   const [linkDescription, setLinkDescription] = useState("");
+
+  const [previewSource, setPreviewSource] = useState<EvidencePreviewSource | null>(null);
+
+  const openPreview = useCallback(
+    (evidence: KaizenEvidence) => setPreviewSource({ kind: "saved", kaizenId, evidence }),
+    [kaizenId],
+  );
+  const openLocalPreview = useCallback(
+    (file: File) => setPreviewSource({ kind: "local", file }),
+    [],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -267,33 +350,14 @@ export function KaizenEvidencePanel({
                 <p className="kz-empty-hint">Sem registros.</p>
               ) : (
                 grouped[stageKey].map((evidence) => (
-                  <figure className="kz-evidence" key={evidence.id}>
-                    <EvidenceThumb kaizenId={kaizenId} evidence={evidence} />
-                    <figcaption className="kz-evidence__caption">
-                      {evidence.description || evidence.file_name || "Evidência"}
-                    </figcaption>
-                    <div className="kz-evidence__actions">
-                      {evidence.type !== "link" ? (
-                        <button
-                          type="button"
-                          className="kz-ghost-btn"
-                          onClick={() => void downloadEvidence(kaizenId, evidence)}
-                        >
-                          <Download size={12} aria-hidden="true" />
-                        </button>
-                      ) : null}
-                      {!readOnly ? (
-                        <button
-                          type="button"
-                          className="kz-danger-btn"
-                          onClick={() => void handleDelete(evidence)}
-                          aria-label="Excluir evidência"
-                        >
-                          <Trash2 size={12} aria-hidden="true" />
-                        </button>
-                      ) : null}
-                    </div>
-                  </figure>
+                  <EvidenceCard
+                    key={evidence.id}
+                    kaizenId={kaizenId}
+                    evidence={evidence}
+                    readOnly={readOnly}
+                    onPreview={openPreview}
+                    onDelete={(item) => void handleDelete(item)}
+                  />
                 ))
               )}
             </div>
@@ -306,33 +370,14 @@ export function KaizenEvidencePanel({
           <h3 className="kz-evidence-column__title">{STAGE_LABELS.geral}</h3>
           <div className="kz-evidence-column__items kz-evidence-column__items--row">
             {grouped.geral.map((evidence) => (
-              <figure className="kz-evidence" key={evidence.id}>
-                <EvidenceThumb kaizenId={kaizenId} evidence={evidence} />
-                <figcaption className="kz-evidence__caption">
-                  {evidence.description || evidence.file_name || "Evidência"}
-                </figcaption>
-                <div className="kz-evidence__actions">
-                  {evidence.type !== "link" ? (
-                    <button
-                      type="button"
-                      className="kz-ghost-btn"
-                      onClick={() => void downloadEvidence(kaizenId, evidence)}
-                    >
-                      <Download size={12} aria-hidden="true" />
-                    </button>
-                  ) : null}
-                  {!readOnly ? (
-                    <button
-                      type="button"
-                      className="kz-danger-btn"
-                      onClick={() => void handleDelete(evidence)}
-                      aria-label="Excluir evidência"
-                    >
-                      <Trash2 size={12} aria-hidden="true" />
-                    </button>
-                  ) : null}
-                </div>
-              </figure>
+              <EvidenceCard
+                key={evidence.id}
+                kaizenId={kaizenId}
+                evidence={evidence}
+                readOnly={readOnly}
+                onPreview={openPreview}
+                onDelete={(item) => void handleDelete(item)}
+              />
             ))}
           </div>
         </div>
@@ -351,7 +396,13 @@ export function KaizenEvidencePanel({
               />
             </span>
             <label className="kz-evidence-upload__default-stage">
-              Etapa padrão
+              <span className="kz-evidence-upload__default-stage-label">
+                Etapa padrão
+                <HelpTooltip
+                  content={KAIZEN_HELP_TOOLTIPS.evidence.stage}
+                  ariaLabel="Ajuda: etapa da evidência"
+                />
+              </span>
               <select
                 value={defaultStage}
                 disabled={uploading}
@@ -373,6 +424,7 @@ export function KaizenEvidencePanel({
                 disabled={uploading}
                 onChange={updatePending}
                 onRemove={removePending}
+                onPreview={openLocalPreview}
               />
               <div className="kz-evidence-upload__submit">
                 <button
@@ -395,7 +447,11 @@ export function KaizenEvidencePanel({
           {showLink ? (
             <div className="kz-evidence-link">
               <div className="kz-field">
-                <label htmlFor="kz-ev-link-stage">Etapa</label>
+                <FieldLabel
+                  label="Etapa"
+                  htmlFor="kz-ev-link-stage"
+                  hint={KAIZEN_HELP_TOOLTIPS.evidence.stage}
+                />
                 <select
                   id="kz-ev-link-stage"
                   value={linkStage}
@@ -408,7 +464,7 @@ export function KaizenEvidencePanel({
                 </select>
               </div>
               <div className="kz-field">
-                <label htmlFor="kz-ev-url">URL</label>
+                <FieldLabel label="URL" htmlFor="kz-ev-url" hint={KAIZEN_HELP_TOOLTIPS.evidence.link} />
                 <input
                   id="kz-ev-url"
                   type="url"
@@ -449,6 +505,8 @@ export function KaizenEvidencePanel({
           )}
         </div>
       ) : null}
+
+      <KaizenEvidencePreviewModal source={previewSource} onClose={() => setPreviewSource(null)} />
     </div>
   );
 }
