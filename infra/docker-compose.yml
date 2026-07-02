@@ -792,6 +792,21 @@ services:
     networks:
       - delpi-network
 
+  financeiro-centro-custo:
+    build:
+      context: ../plugins/financeiro-centro-custo
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-financeiro-centro-custo
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-engineering:
     build:
       context: ../plugins/dashboard-engineering
@@ -1236,6 +1251,7 @@ services:
       - central-agendamento
       - dashboard-supplies
       - dashboard-financial
+      - financeiro-centro-custo
       - dashboard-engineering
       - dashboard-hr
       - api-delpi-console

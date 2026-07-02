@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "financeiro-centro-custo",
+  "name": "Despesas por Centro de Custo",
+  "description": "Controle e análise de despesas por centro de custo.",
+  "category": "financeiro",
+  "icon": "landmark-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/financeiro-centro-custo",
+  "entry": "/apps/financeiro-centro-custo/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "financeiro-centro-custo.access",
+      "name": "Acessar Despesas por Centro de Custo",
+      "description": "Permite abrir o app de despesas por centro de custo no portal.",
+      "module": "financeiro-centro-custo"
+    },
+    {
+      "code": "financeiro-centro-custo.view",
+      "name": "Visualizar despesas por centro de custo",
+      "description": "Permite consultar resumo, gráficos, rankings e lançamentos de despesas.",
+      "module": "financeiro-centro-custo"
+    },
+    {
+      "code": "financeiro-centro-custo.export",
+      "name": "Exportar despesas por centro de custo",
+      "description": "Permite exportar dados do app de despesas por centro de custo.",
+      "module": "financeiro-centro-custo"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/financeiro-centro-custo",
+      "label": "Despesas por Centro de Custo",
+      "permission": "financeiro-centro-custo.access",
+      "icon": "landmark-icon",
+      "order": 27,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -274,6 +274,24 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_public_quality_label_inspection": RouteContract(
         "quality_label_public_inspection", "scalar"
     ),
+    "get_financeiro_despesas_centro_custo_filtros": RouteContract(
+        "financeiro_despesas_centro_custo_filtros", "scalar"
+    ),
+    "get_financeiro_despesas_centro_custo_resumo": RouteContract(
+        "financeiro_despesas_centro_custo_resumo", "scalar"
+    ),
+    "get_financeiro_despesas_centro_custo_serie": RouteContract(
+        "financeiro_despesas_centro_custo_serie", "list"
+    ),
+    "get_financeiro_despesas_centro_custo_ranking_centros": RouteContract(
+        "financeiro_despesas_centro_custo_ranking_centros", "list"
+    ),
+    "get_financeiro_despesas_centro_custo_ranking_fornecedores": RouteContract(
+        "financeiro_despesas_centro_custo_ranking_fornecedores", "list"
+    ),
+    "get_financeiro_despesas_centro_custo_lancamentos": RouteContract(
+        "financeiro_despesas_centro_custo_lancamento", "paged_list"
+    ),
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),
