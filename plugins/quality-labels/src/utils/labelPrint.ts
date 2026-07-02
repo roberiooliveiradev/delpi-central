@@ -72,6 +72,7 @@ function buildLabelStyles(): string {
     .tag {
       display: flex;
       align-items: stretch;
+      justify-content: space-between;
       width: 100mm;
       height: 30mm;
       border: 0.3mm dashed #9fb1c1;
@@ -85,7 +86,8 @@ function buildLabelStyles(): string {
       justify-content: center;
       gap: 0.35mm;
       padding: 1mm 1.2mm;
-      width: 46mm;
+      width: auto;
+      max-width: 44mm;
       text-align: center;
     }
     .tag__qr img {
@@ -139,9 +141,6 @@ function buildLabelStyles(): string {
       width: 14.5mm;
       height: 14.5mm;
       display: block;
-    }
-    .tag__brand {
-      justify-content: space-between;
     }
     .hint {
       margin-top: 4mm;
