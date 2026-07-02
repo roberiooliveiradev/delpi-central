@@ -27,6 +27,8 @@ _KAIZEN_SELECT = """
            k.fixed_daily_savings,
            k.daily_savings,
            k.annual_savings,
+           k.realized_daily_savings,
+           k.realized_annual_savings,
            k.status,
            k.date_implemented,
            k.date_discontinued,
@@ -326,13 +328,14 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 submodule_id, branch_code, title, accountable, sector, investment,
                 savings_type, seconds_per_occurrence, occurrences_per_day, hourly_cost,
                 quantity_saved_per_day, unit_material_cost, fixed_daily_savings,
-                daily_savings, annual_savings, status, date_implemented, date_discontinued,
+                daily_savings, annual_savings, realized_daily_savings, realized_annual_savings,
+                status, date_implemented, date_discontinued,
                 notes, process_description, problem_description, improvement_description,
                 expected_result, category, current_revision_number, created_by_user_id
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, 1, %s
+                %s, %s, %s, %s, %s, %s, 1, %s
             )
             RETURNING id
             """,
@@ -352,6 +355,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("fixed_daily_savings"),
                 enriched.get("daily_savings"),
                 enriched.get("annual_savings"),
+                enriched.get("realized_daily_savings"),
+                enriched.get("realized_annual_savings"),
                 enriched.get("status", "em_andamento"),
                 enriched.get("date_implemented"),
                 enriched.get("date_discontinued"),
@@ -440,6 +445,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
                    fixed_daily_savings = %s,
                    daily_savings = %s,
                    annual_savings = %s,
+                   realized_daily_savings = %s,
+                   realized_annual_savings = %s,
                    status = %s,
                    date_implemented = %s,
                    date_discontinued = %s,
@@ -471,6 +478,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("fixed_daily_savings"),
                 enriched.get("daily_savings"),
                 enriched.get("annual_savings"),
+                enriched.get("realized_daily_savings"),
+                enriched.get("realized_annual_savings"),
                 enriched.get("status", "em_andamento"),
                 enriched.get("date_implemented"),
                 enriched.get("date_discontinued"),

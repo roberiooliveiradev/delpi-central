@@ -65,3 +65,25 @@ def test_enrich_savings_fields_misto():
     assert enriched["savings_type"] == "misto"
     assert enriched["daily_savings"] == pytest.approx(28.33, rel=1e-2)
     assert enriched["annual_savings"] == pytest.approx(10340.45, rel=1e-2)
+
+
+def test_enrich_realized_savings_computes_annual():
+    enriched = enrich_savings_fields(
+        {
+            "branch_code": "01",
+            "title": "Teste",
+            "savings_type": "financeiro",
+            "fixed_daily_savings": 20,
+            "realized_daily_savings": 15,
+        }
+    )
+    assert enriched["realized_daily_savings"] == 15.0
+    assert enriched["realized_annual_savings"] == 5475.0
+
+
+def test_enrich_realized_savings_absent_is_none():
+    enriched = enrich_savings_fields(
+        {"branch_code": "01", "title": "Teste", "savings_type": "qualitativo"}
+    )
+    assert enriched["realized_daily_savings"] is None
+    assert enriched["realized_annual_savings"] is None

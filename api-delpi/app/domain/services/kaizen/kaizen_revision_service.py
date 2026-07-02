@@ -19,6 +19,8 @@ SNAPSHOT_FIELDS = (
     "fixed_daily_savings",
     "daily_savings",
     "annual_savings",
+    "realized_daily_savings",
+    "realized_annual_savings",
     "status",
     "date_implemented",
     "date_discontinued",
@@ -42,6 +44,7 @@ REVISION_TRIGGER_FIELDS = (
     "quantity_saved_per_day",
     "unit_material_cost",
     "fixed_daily_savings",
+    "realized_daily_savings",
     "branch_code",
     "title",
 )

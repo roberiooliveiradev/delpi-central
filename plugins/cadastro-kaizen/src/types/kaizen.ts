@@ -27,6 +27,8 @@ export type KaizenRecord = {
   fixed_daily_savings: number | null;
   daily_savings: number | null;
   annual_savings: number | null;
+  realized_daily_savings: number | null;
+  realized_annual_savings: number | null;
   status: KaizenStatus;
   date_implemented: string | null;
   date_discontinued: string | null;
@@ -107,6 +109,7 @@ export type KaizenFormValues = {
   quantity_saved_per_day: string;
   unit_material_cost: string;
   fixed_daily_savings: string;
+  realized_daily_savings: string;
   status: KaizenStatus;
   date_implemented: string;
   date_discontinued: string;

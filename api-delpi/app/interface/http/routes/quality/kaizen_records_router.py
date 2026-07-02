@@ -52,6 +52,7 @@ class KaizenRecordBody(BaseModel):
     quantity_saved_per_day: float | None = None
     unit_material_cost: float | None = None
     fixed_daily_savings: float | None = None
+    realized_daily_savings: float | None = None
     status: str = Field(
         default="em_andamento",
         pattern="^(em_andamento|implantado|descontinuado|cancelado)$",
@@ -89,6 +90,7 @@ class UpdateKaizenRecordBody(BaseModel):
     quantity_saved_per_day: float | None = None
     unit_material_cost: float | None = None
     fixed_daily_savings: float | None = None
+    realized_daily_savings: float | None = None
     status: str | None = Field(
         default=None,
         pattern="^(em_andamento|implantado|descontinuado|cancelado)$",

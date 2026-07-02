@@ -1,4 +1,43 @@
 import type { KaizenRevision, KaizenRevisionChangeType } from "../../types/kaizen";
+import { statusLabel } from "../../utils/labels";
+
+const DIFF_FIELDS: Array<{ key: string; label: string; kind?: "status" }> = [
+  { key: "status", label: "Status", kind: "status" },
+  { key: "savings_type", label: "Tipo economia" },
+  { key: "daily_savings", label: "Economia/dia" },
+  { key: "realized_daily_savings", label: "Realizada/dia" },
+  { key: "date_implemented", label: "Implantação" },
+  { key: "title", label: "Título" },
+  { key: "branch_code", label: "Filial" },
+];
+
+function formatSnapshotValue(value: unknown, kind?: "status"): string {
+  if (value == null || value === "") return "—";
+  if (kind === "status") return statusLabel(String(value));
+  return String(value);
+}
+
+type RevisionDiff = { label: string; from: string; to: string };
+
+function computeDiff(
+  current: Record<string, unknown>,
+  previous: Record<string, unknown> | undefined,
+): RevisionDiff[] {
+  if (!previous) return [];
+  const diffs: RevisionDiff[] = [];
+  for (const field of DIFF_FIELDS) {
+    const before = previous[field.key];
+    const after = current[field.key];
+    if (String(before ?? "") !== String(after ?? "")) {
+      diffs.push({
+        label: field.label,
+        from: formatSnapshotValue(before, field.kind),
+        to: formatSnapshotValue(after, field.kind),
+      });
+    }
+  }
+  return diffs;
+}
 
 const CHANGE_TYPE_LABELS: Record<KaizenRevisionChangeType, string> = {
   baseline: "Baseline",
@@ -34,11 +73,18 @@ export function KaizenRevisionTimeline({ revisions }: KaizenRevisionTimelineProp
     return <p className="kz-empty-hint">Nenhuma revisão registrada.</p>;
   }
 
+  const byNumber = new Map<number, KaizenRevision>();
+  for (const revision of revisions) {
+    byNumber.set(revision.revision_number, revision);
+  }
+
   return (
     <ol className="kz-timeline">
       {revisions.map((revision) => {
         const tone = CHANGE_TYPE_TONE[revision.change_type] ?? "muted";
         const current = revision.effective_until == null;
+        const previous = byNumber.get(revision.revision_number - 1);
+        const diffs = computeDiff(revision.snapshot ?? {}, previous?.snapshot);
         return (
           <li key={revision.id} className="kz-timeline__item">
             <div className="kz-timeline__marker" aria-hidden="true" />
@@ -55,6 +101,18 @@ export function KaizenRevisionTimeline({ revisions }: KaizenRevisionTimelineProp
               ) : null}
               {revision.change_reason ? (
                 <p className="kz-timeline__reason">{revision.change_reason}</p>
+              ) : null}
+              {diffs.length > 0 ? (
+                <ul className="kz-timeline__diff">
+                  {diffs.map((diff) => (
+                    <li key={diff.label}>
+                      <span className="kz-timeline__diff-label">{diff.label}:</span>{" "}
+                      <span className="kz-timeline__diff-from">{diff.from}</span>
+                      {" → "}
+                      <span className="kz-timeline__diff-to">{diff.to}</span>
+                    </li>
+                  ))}
+                </ul>
               ) : null}
               <p className="kz-timeline__dates">
                 Vigência: {formatDate(revision.effective_from)}

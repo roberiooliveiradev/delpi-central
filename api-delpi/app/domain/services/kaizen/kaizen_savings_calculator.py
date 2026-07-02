@@ -150,4 +150,11 @@ def enrich_savings_fields(fields: dict[str, Any]) -> dict[str, Any]:
         _to_float(enriched.get("seconds_per_occurrence")),
         _to_float(enriched.get("occurrences_per_day")),
     )
+
+    # F5: economia realizada (medida). O anual deriva do diário informado.
+    realized_daily = _to_float(enriched.get("realized_daily_savings"))
+    enriched["realized_daily_savings"] = (
+        round(realized_daily, 2) if realized_daily is not None else None
+    )
+    enriched["realized_annual_savings"] = calculate_annual_savings(realized_daily)
     return enriched

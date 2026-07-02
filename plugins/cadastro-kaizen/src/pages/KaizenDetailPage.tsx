@@ -38,6 +38,14 @@ const ROLE_LABEL: Record<string, string> = {
   apoio: "Apoio",
 };
 
+function effectivenessLabel(record: KaizenRecord): string {
+  const estimated = record.annual_savings;
+  const realized = record.realized_annual_savings;
+  if (estimated == null || realized == null || estimated === 0) return "—";
+  const ratio = Math.round((realized / estimated) * 100);
+  return `${ratio}% do estimado`;
+}
+
 export function KaizenDetailPage({ recordId, onNavigate }: Props) {
   const [record, setRecord] = useState<KaizenRecord | null>(null);
   const [form, setForm] = useState<KaizenFormValues | null>(null);
@@ -374,8 +382,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         readContent={
           <div className="kz-read-grid">
             <ReadOnlyField label="Tipo de economia" value={savingsTypeLabel(record.savings_type)} />
-            <ReadOnlyField label="Economia / dia" value={formatCurrency(record.daily_savings)} />
-            <ReadOnlyField label="Economia / ano" value={formatCurrency(record.annual_savings)} />
+            <ReadOnlyField label="Estimada / dia" value={formatCurrency(record.daily_savings)} />
+            <ReadOnlyField label="Estimada / ano" value={formatCurrency(record.annual_savings)} />
+            <ReadOnlyField label="Realizada / dia" value={formatCurrency(record.realized_daily_savings)} />
+            <ReadOnlyField label="Realizada / ano" value={formatCurrency(record.realized_annual_savings)} />
+            <ReadOnlyField label="Efetividade" value={effectivenessLabel(record)} />
             <ReadOnlyField label="Segundos / ocorrência" value={record.seconds_per_occurrence} />
             <ReadOnlyField label="Ocorrências / dia" value={record.occurrences_per_day} />
             <ReadOnlyField label="Custo hora (R$)" value={record.hourly_cost} />
@@ -449,6 +460,14 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
                 id="kz-d-fixed"
                 value={form.fixed_daily_savings}
                 onChange={(event) => updateField("fixed_daily_savings", event.target.value)}
+              />
+            </div>
+            <div className="kz-field">
+              <label htmlFor="kz-d-realized">Economia realizada/dia (R$)</label>
+              <input
+                id="kz-d-realized"
+                value={form.realized_daily_savings}
+                onChange={(event) => updateField("realized_daily_savings", event.target.value)}
               />
             </div>
             <div className="kz-field kz-span-2">

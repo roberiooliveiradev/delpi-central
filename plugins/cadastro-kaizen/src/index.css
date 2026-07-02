@@ -870,3 +870,36 @@
     grid-template-columns: 1fr 120px auto;
   }
 }
+
+/* Diff entre revisões */
+.dashboard-cadastro-kaizen .kz-timeline__diff {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--kz-text-muted) 6%, var(--kz-card-bg));
+  border: 1px solid var(--kz-card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-cadastro-kaizen .kz-timeline__diff li {
+  font-size: var(--kz-font-xs);
+  color: var(--kz-text);
+}
+
+.dashboard-cadastro-kaizen .kz-timeline__diff-label {
+  font-weight: 700;
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-timeline__diff-from {
+  text-decoration: line-through;
+  color: var(--kz-text-muted);
+}
+
+.dashboard-cadastro-kaizen .kz-timeline__diff-to {
+  font-weight: 600;
+  color: var(--kz-accent);
+}

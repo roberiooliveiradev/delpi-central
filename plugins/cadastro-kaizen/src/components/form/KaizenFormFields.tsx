@@ -214,6 +214,15 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
             onChange={(event) => onChange("fixed_daily_savings", event.target.value)}
           />
         </div>
+
+        <div className="kz-field">
+          <label htmlFor="kz-realized-savings">Economia realizada/dia (R$)</label>
+          <input
+            id="kz-realized-savings"
+            value={values.realized_daily_savings}
+            onChange={(event) => onChange("realized_daily_savings", event.target.value)}
+          />
+        </div>
       </FormSection>
 
       <section>
