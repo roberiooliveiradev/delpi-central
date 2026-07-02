@@ -412,21 +412,41 @@
   margin-bottom: 14px;
 }
 
-.cx-date-filter {
-  display: flex;
+/* Escopo forte (.dashboard-customer-experience) para vencer estilos globais de
+   `label` do portal host, que empilham/centralizam o conteúdo. */
+.dashboard-customer-experience .cx-date-filter {
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
-  padding: 6px 10px;
+  width: auto;
+  min-height: 38px;
+  margin: 0;
+  padding: 0 10px;
   border: 1px solid var(--cx-border);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   color: var(--cx-muted);
+  text-align: left;
+  white-space: nowrap;
 }
 
-.cx-date-filter input {
+.dashboard-customer-experience .cx-date-filter svg {
+  flex-shrink: 0;
+}
+
+.dashboard-customer-experience .cx-date-filter span {
+  white-space: nowrap;
+}
+
+.dashboard-customer-experience .cx-date-filter input {
   font: inherit;
   font-weight: 400;
+  width: auto;
+  margin: 0;
+  padding: 6px 0;
   border: 0;
   background: transparent;
   color: var(--cx-text);
@@ -618,6 +638,10 @@
   font-weight: 700;
 }
 
+.cx-modal__title-spin {
+  color: var(--cx-muted);
+}
+
 .cx-modal__filters {
   display: flex;
   align-items: flex-end;
@@ -632,10 +656,6 @@
 
 .cx-modal__filters .cx-field--narrow {
   flex: 0 1 110px;
-}
-
-.cx-modal__search {
-  flex: 0 0 auto;
 }
 
 .cx-modal__results {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Building2, Loader2, Search, X } from "lucide-react";
+import { Building2, Loader2, X } from "lucide-react";
 import { searchCustomers } from "../api/customersApi";
 import type { Customer } from "../types";
 
@@ -107,6 +107,7 @@ export function CustomerSearchModal({
         <div className="cx-modal__head">
           <h3 className="cx-modal__title">
             <Building2 size={18} /> Pesquisar cliente
+            {loading && <Loader2 size={15} className="cx-spin cx-modal__title-spin" />}
           </h3>
           <button
             className="cx-icon-btn"
@@ -147,10 +148,6 @@ export function CustomerSearchModal({
               placeholder="A1_LOJA"
             />
           </label>
-          <button className="cx-button cx-button--primary cx-modal__search" type="submit" disabled={loading}>
-            {loading ? <Loader2 size={16} className="cx-spin" /> : <Search size={16} />}
-            Pesquisar
-          </button>
         </form>
 
         {error && (

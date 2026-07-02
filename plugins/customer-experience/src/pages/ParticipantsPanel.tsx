@@ -412,6 +412,7 @@ export function ParticipantsPanel() {
               />
             </label>
             <label className="cx-date-filter">
+              <CalendarDays size={15} />
               <span>Até</span>
               <input
                 type="date"
