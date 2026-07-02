@@ -4,6 +4,7 @@ import {
   Copy,
   Pencil,
   Power,
+  Printer,
   QrCode,
   Search,
   Trash2,
@@ -20,6 +21,7 @@ import {
   listParticipants,
   updateParticipant,
 } from "../api/participantsApi";
+import { printQrLabel } from "../utils/qrLabelPrint";
 import type { Participant } from "../types";
 
 const EMPTY_FORM = {
@@ -168,6 +170,18 @@ export function ParticipantsPanel() {
       triggerDownload(blob, `qr-agradecimento-${slug(participant)}.png`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao baixar QR code.");
+    }
+  };
+
+  const handlePrintLabel = async (participant: Participant) => {
+    try {
+      const blob = await downloadQr(participant.id);
+      const result = await printQrLabel(participant, blob);
+      if (!result.success) {
+        setError(result.error ?? "Não foi possível imprimir a etiqueta.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao gerar a etiqueta.");
     }
   };
 
@@ -395,6 +409,14 @@ export function ParticipantsPanel() {
                       title="Baixar QR de agradecimento"
                     >
                       <QrCode size={16} /> QR agradecimento
+                    </button>
+                    <button
+                      className="cx-button cx-button--ghost"
+                      type="button"
+                      onClick={() => handlePrintLabel(participant)}
+                      title="Imprimir etiqueta para o cabo (frente e verso)"
+                    >
+                      <Printer size={16} /> Imprimir etiqueta
                     </button>
                     <button
                       className="cx-button cx-button--ghost"

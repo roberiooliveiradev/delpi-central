@@ -208,6 +208,7 @@ POST /apps/customer-experience-api/public/forms/{token}/responses
 
 **QR de agradecimento (página separada):**
 - QR de **agradecimento** → `/welcome/{token}` (alias) / `/p/customer-experience/thanks/{token}`; download admin `GET /participants/{id}/qr`. Admin expõe `qrUrl`/`publicUrl`.
+- **Etiqueta do cabo (impressão):** o admin também imprime uma etiqueta frente/verso (QR + logo Delpi + selo APROVADO QUALIDADE, monocromática) montada no cliente (`qrLabelPrint.ts`) a partir do mesmo `GET /participants/{id}/qr` — sem endpoint adicional.
 - O feedback fixo por participante (tabela `feedback`, coluna `feedback_qr_filename`, migrations `V002`/`V003`) foi **removido** pela migration `V005`; use o módulo de Formulários.
 
 ### 5.3 Conteúdo da página (texto ao usuário: pt-BR)
@@ -281,7 +282,7 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 | 0.3 | `POST/GET/PATCH /participants` + upload foto (storage persistente) | api | M |
 | 0.4 | Geração + persistência do QR no `POST /participants` | api | S |
 | 0.5 | Endpoints públicos `/public/participants/{token}` + `/photo` | api | S |
-| 0.6 | Plugin MFE admin: form cadastro + lista + download QR | `plugins/customer-experience` | M |
+| 0.6 | Plugin MFE admin: form cadastro + lista + download QR + imprimir etiqueta | `plugins/customer-experience` | M |
 | 0.7 | Shell público `public-hub` (view `customer-experience/thanks`: foto + mensagem) | `plugins/public-hub` | M |
 | 0.8 | Gateway: locations `/p/` + `/welcome/` (alias) e `/apps/customer-experience-api/` | `gateway/nginx*.conf` | S |
 | 0.9 | Serviços no `docker-compose.dev.yml` + volumes | `infra/` | S |
@@ -297,6 +298,8 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 **Objetivo:** página pública encantadora e cadastro rápido.
 
 > **Entregue (jul/2026):** página pública com foto grande em destaque (hero), revelação animada em cascata e mensagem-surpresa temática — o visitante monta um cabo na visita e, ao ler o QR, recebe um agradecimento personalizado (primeiro nome + empresa). Mensagem padrão gerada no app público quando o cadastro não define texto próprio.
+>
+> **Entregue (jul/2026) — etiqueta para o cabo (item 1.5):** botão **«Imprimir etiqueta»** no card do participante gera uma etiqueta **frente/verso para colar no cabo**: QR de agradecimento de um lado, marca Delpi + selo **APROVADO QUALIDADE** do outro, com faixa central de dobra em volta do cabo. Layout **monocromático** (logo e selo em preto). Implementação **100% client-side** em `plugins/customer-experience/src/utils/qrLabelPrint.ts` (janela de impressão + fallback iframe, espera imagens antes de `print()`), reusando o download `GET /participants/{id}/qr` — **sem novo endpoint**. A logo (`src/assets/logoDelpi.svg`, importada com `?raw` e forçada a preto via CSS) fica embutida no bundle; o selo é um SVG inline (não há asset oficial — trocar `QUALITY_SEAL_SVG` se a marca fornecer o definitivo).
 
 | # | Entrega | Esforço |
 |---|---|---|
@@ -304,7 +307,7 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
 | 1.2 | Página pública com animação/branding, OG tags para compartilhar | M |
 | 1.3 | Captura de foto pela câmera no cadastro (mobile) | M |
 | 1.4 | Personalização por empresa (logo do cliente, cor) | M |
-| 1.5 | QR imprimível em cartão/crachá (layout de impressão) | S |
+| 1.5 | ✅ QR imprimível em etiqueta frente/verso para o cabo (logo + selo, monocromático) | S |
 
 ### Onda 2 — Governança e privacidade
 | # | Entrega | Esforço |
