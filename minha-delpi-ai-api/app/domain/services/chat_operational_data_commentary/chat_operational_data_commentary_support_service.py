@@ -34,7 +34,11 @@ _Narrative = ExternalActionOperationalRouteNarrativeService
 
 class ChatOperationalDataCommentarySupportService:
     @staticmethod
-    def _presenter_format(section: str, key: str, **values: str) -> str:
+    def _presenter_format(
+        section: str,
+        key: str,
+        values: dict[str, str] | None = None,
+    ) -> str:
         from app.domain.services.chat_assistant_content_service import (
             ChatAssistantContentService,
         )
@@ -44,7 +48,7 @@ class ChatOperationalDataCommentarySupportService:
             "routePresentations",
             section,
             key,
-            **values,
+            **(values or {}),
         )
 
     @classmethod

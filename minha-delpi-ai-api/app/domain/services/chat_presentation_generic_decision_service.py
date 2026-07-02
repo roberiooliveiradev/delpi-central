@@ -23,6 +23,9 @@ from app.domain.services.chat_presentation_decision_metadata_service import (
 from app.domain.services.chat_presentation_operational_intent_decision_service import (
     ChatPresentationOperationalIntentDecisionService,
 )
+from app.domain.services.chat_presentation_prose_delivery_service import (
+    ChatPresentationProseDeliveryService,
+)
 from app.domain.services.chat_presentation_vocabulary_service import (
     ChatPresentationVocabularyService,
 )
@@ -51,14 +54,14 @@ class ChatPresentationGenericDecisionService:
             return True
 
         humanized = metadata.get("humanizedSummary")
-
-        if isinstance(humanized, dict) and (
+        has_title = isinstance(humanized, dict) and bool(
             str(humanized.get("titulo") or "").strip()
-            or any(str(line or "").strip() for line in (humanized.get("linhas") or []))
-        ):
-            return True
+        )
+        has_lines = bool(
+            ChatPresentationProseDeliveryService.resolve_humanized_lines_for_display(metadata)
+        )
 
-        return False
+        return has_title or has_lines
 
     @classmethod
     def _zero_row_reason(

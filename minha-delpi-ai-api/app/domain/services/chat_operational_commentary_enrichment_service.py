@@ -60,6 +60,7 @@ class ChatDataInsightEnrichmentService:
         ChatPresentationScalarFieldCommentaryService.apply_text_presentation(metadata, data_answer)
         cls._ensure_text_markdown_commentary(metadata, commentary)
         cls._append_narrative_closing(metadata, commentary)
+        cls._apply_template_verdict_lead(metadata, data, user_message)
 
     @classmethod
     def _merge_humanized_summary(
@@ -161,6 +162,93 @@ class ChatDataInsightEnrichmentService:
             return
 
         text_presentation["markdown"] = f"{markdown}\n{rendered}".strip()
+
+    @classmethod
+    def _apply_template_verdict_lead(
+        cls,
+        metadata: dict[str, Any],
+        data: dict[str, Any],
+        user_message: str | None,
+    ) -> None:
+        """Perfis preserve_template materializam o veredito da síntese no markdown.
+
+        A síntese é omitida do dataAnswer (evita duplicação com o template), então o
+        veredito precisa liderar o texto — caso contrário o markdown fica genérico.
+        """
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+
+        if not ChatPresentationProseDeliveryService.should_skip_question_synthesis_verdict(
+            metadata,
+        ):
+            return
+
+        text_presentation = metadata.get("textPresentation")
+
+        if not isinstance(text_presentation, dict):
+            return
+
+        message = str(user_message or metadata.get("userMessage") or "").strip()
+
+        if not message:
+            return
+
+        from app.domain.services.chat_operational_user_question_synthesis_service import (
+            ChatOperationalUserQuestionSynthesisService,
+        )
+
+        data_answer = metadata.get("dataAnswer")
+        profile_key = str(
+            (data_answer or {}).get("profileKey") if isinstance(data_answer, dict) else "",
+        ).strip()
+        entity = cls._resolve_entity_token(metadata, data)
+
+        synthesis = ChatOperationalUserQuestionSynthesisService.try_synthesize(
+            message,
+            data,
+            profile_key=profile_key,
+            entity=entity,
+        )
+
+        if not synthesis:
+            return
+
+        verdict = str(synthesis.get("summary") or "").strip()
+
+        if not verdict:
+            return
+
+        interpretation = str(synthesis.get("interpretation") or "").strip()
+        body = verdict if not interpretation else f"{verdict}\n\n{interpretation}"
+        text_presentation["markdown"] = cls._replace_scope_lead(
+            str(text_presentation.get("markdown") or ""),
+            body,
+        )
+
+    @staticmethod
+    def _resolve_entity_token(metadata: dict[str, Any], data: dict[str, Any]) -> str:
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            token = str(api_meta.get("entity") or "").strip()
+
+            if token:
+                return token
+
+        return str(data.get("entity") or "").strip()
+
+    @staticmethod
+    def _replace_scope_lead(markdown: str, body: str) -> str:
+        marker = "<!-- section:scope -->"
+        head, sep, _ = markdown.partition(marker)
+
+        if not sep:
+            title = head.strip()
+
+            return f"{title}\n\n{marker}\n\n{body}".strip() if title else body
+
+        return f"{head.rstrip()}\n\n{marker}\n\n{body}".strip()
 
     @classmethod
     def _append_narrative_closing(
