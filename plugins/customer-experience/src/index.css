@@ -150,6 +150,38 @@
   border-color: transparent;
 }
 
+.cx-form-card__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cx-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cx-form-card__toggle .cx-card__title {
+  margin: 0;
+}
+
+.cx-form-card__toggle .cx-form-card__caret {
+  color: var(--cx-muted);
+  flex-shrink: 0;
+}
+
+.cx-form-card__toggle:hover .cx-form-card__caret {
+  color: var(--cx-text);
+}
+
+.cx-form-card__toggle + .cx-form {
+  margin-top: 16px;
+}
+
 .cx-photo-preview {
   width: 100%;
   max-height: 220px;

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Copy,
   FilterX,
   Pencil,
@@ -52,6 +54,7 @@ export function ParticipantsPanel() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formCollapsed, setFormCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formCardRef = useRef<HTMLElement>(null);
 
@@ -101,6 +104,7 @@ export function ParticipantsPanel() {
 
   const startEdit = (participant: Participant) => {
     setEditingId(participant.id);
+    setFormCollapsed(false);
     setError(null);
     setForm({
       fullName: participant.fullName,
@@ -286,10 +290,23 @@ export function ParticipantsPanel() {
 
       <div className="cx-layout">
         <section className="cx-card cx-form-card" ref={formCardRef}>
-          <h2 className="cx-card__title">
-            {editingId ? <Pencil size={18} /> : <UserPlus size={18} />}
-            {editingId ? "Editar participante" : "Novo participante"}
-          </h2>
+          <button
+            type="button"
+            className="cx-form-card__toggle"
+            aria-expanded={!formCollapsed}
+            onClick={() => setFormCollapsed((v) => !v)}
+          >
+            <span className="cx-card__title">
+              {editingId ? <Pencil size={18} /> : <UserPlus size={18} />}
+              {editingId ? "Editar participante" : "Novo participante"}
+            </span>
+            {formCollapsed ? (
+              <ChevronDown size={18} className="cx-form-card__caret" />
+            ) : (
+              <ChevronUp size={18} className="cx-form-card__caret" />
+            )}
+          </button>
+          {!formCollapsed && (
           <form className="cx-form" onSubmit={handleSubmit}>
             <label className="cx-field">
               <span>Nome completo</span>
@@ -374,6 +391,7 @@ export function ParticipantsPanel() {
               )}
             </div>
           </form>
+          )}
         </section>
 
         <section className="cx-card cx-list-card">
