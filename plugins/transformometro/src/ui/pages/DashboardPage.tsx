@@ -587,7 +587,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <section className="ds-filters-row ds-no-print">
-          <SegmentToggle
+          <div className="ds-filter-box">
+            <FieldLabel label="Visão" hint={TM_HELP_TOOLTIPS.dashboard.view} />
+            <SegmentToggle
             ariaLabel="Visão analítica do dashboard"
             idPrefix="tm-dashboard-view"
             options={
@@ -610,6 +612,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
               }
             }}
           />
+          </div>
           <label className="ds-filter-box ds-field">
             <FieldLabel
               label="Competência"

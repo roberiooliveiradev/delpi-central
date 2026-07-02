@@ -14,6 +14,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   createRevisao,
   createProcessoInstancia,
@@ -633,6 +634,15 @@ export function ProcessoDetailPage({
             await load();
           }}
         />
+      ) : null}
+
+      {selectedInstancia?.todas_filiais_ativas && options ? (
+        <p className="tm-instancia-multi-banner">
+          {TM_HELP_TOOLTIPS.instancias.multiplicadorConsolidado}{" "}
+          {options.filiais.length > 1
+            ? `Unidades ativas hoje: ${options.filiais.length} (fator ×${options.filiais.length} no Consolidado).`
+            : null}
+        </p>
       ) : null}
 
       {comparativo.length > 0 ? (

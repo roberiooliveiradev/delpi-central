@@ -8,6 +8,29 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
 import { filterSetoresByFilial } from "../../utils/setores";
 
+function renderInstanciaUnidade(row: ProcessoInstancia, activeFilialCount: number) {
+  if (!row.todas_filiais_ativas) {
+    return `${row.codigo_filial ?? row.filial_id} — ${row.nome_filial ?? ""}`.trim();
+  }
+  return (
+    <span className="tm-instancia-unidade">
+      <span className="tm-instancia-unidade__title">Todas as unidades ativas</span>
+      <span className="tm-instancia-unidade__badge">Multi-unidade</span>
+      {activeFilialCount > 1 ? (
+        <span className="tm-instancia-unidade__hint">
+          Consolidado: economia e horas × {activeFilialCount} unidades
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function multiplicadorHint(activeFilialCount: number): string {
+  const base = TM_HELP_TOOLTIPS.instancias.multiplicadorConsolidado;
+  if (activeFilialCount <= 1) return base;
+  return `${base} Hoje: ${activeFilialCount} unidades ativas → fator ×${activeFilialCount} no Consolidado.`;
+}
+
 type CreatePayload = {
   filial_id?: string;
   todas_filiais_ativas?: boolean;
@@ -428,15 +451,15 @@ export function ProcessoInstanciasPanel({
     }
   }
 
+  const activeFilialCount = options.filiais.length;
+
   const columns = useMemo<DataTableColumn<ProcessoInstancia>[]>(
     () => [
       {
         key: "filial",
         header: "Unidade",
-        render: (row) =>
-          row.todas_filiais_ativas
-            ? "Todas as unidades ativas"
-            : `${row.codigo_filial ?? row.filial_id} — ${row.nome_filial ?? ""}`.trim(),
+        headerHint: TM_HELP_TOOLTIPS.instancias.colunaUnidade,
+        render: (row) => renderInstanciaUnidade(row, activeFilialCount),
       },
       {
         key: "status",
@@ -486,7 +509,7 @@ export function ProcessoInstanciasPanel({
         ),
       },
     ],
-    [busy, onSelect, saving, selectedInstanciaId]
+    [activeFilialCount, busy, onSelect, saving, selectedInstanciaId]
   );
 
   const formTitle = editingInstanciaId
@@ -602,10 +625,18 @@ export function ProcessoInstanciasPanel({
       <section className="ds-card">
         <div className="ds-table-section__header">
           <div>
-            <h2 className="ds-section-title">Instâncias operacionais</h2>
+            <h2 className="ds-section-title">
+              <span className="ds-field-label">
+                Instâncias operacionais
+                <HelpTooltip
+                  content={TM_HELP_TOOLTIPS.instancias.escopo}
+                  ariaLabel="Ajuda: Instâncias operacionais"
+                />
+              </span>
+            </h2>
             <p className="ds-hint">
-              Cada instância pertence a uma unidade (ou a todas as ativas) e amarra um ou mais
-              setores. As revisões ficam na instância.
+              Instância por unidade ou multi-unidade (todas as ativas). Revisões, baseline e
+              medições ficam na instância selecionada.
             </p>
           </div>
           <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
@@ -665,13 +696,17 @@ export function ProcessoInstanciasPanel({
                           }
                         }}
                       />
-                      <span>Todas as unidades ativas (instância única consolidada)</span>
+                      <span>Todas as unidades ativas (instância multi-unidade)</span>
                       <HelpTooltip
-                        content={TM_HELP_TOOLTIPS.instancias.todasUnidades}
-                        ariaLabel="Ajuda: Todas as unidades ativas"
+                        content={multiplicadorHint(activeFilialCount)}
+                        ariaLabel="Ajuda: Instância multi-unidade"
                       />
                     </label>
                   </div>
+
+                  {todasFiliais ? (
+                    <p className="tm-instancia-multi-banner">{multiplicadorHint(activeFilialCount)}</p>
+                  ) : null}
 
                   {!todasFiliais ? unidadesGrid : null}
 
@@ -706,13 +741,17 @@ export function ProcessoInstanciasPanel({
                           }
                         }}
                       />
-                      <span>Todas as unidades ativas (instância consolidada)</span>
+                      <span>Todas as unidades ativas (instância multi-unidade)</span>
                       <HelpTooltip
-                        content={TM_HELP_TOOLTIPS.instancias.todasUnidades}
-                        ariaLabel="Ajuda: Todas as unidades ativas"
+                        content={multiplicadorHint(activeFilialCount)}
+                        ariaLabel="Ajuda: Instância multi-unidade"
                       />
                     </label>
                   </div>
+
+                  {todasFiliais ? (
+                    <p className="tm-instancia-multi-banner">{multiplicadorHint(activeFilialCount)}</p>
+                  ) : null}
 
                   {!todasFiliais ? unidadesGrid : null}
 

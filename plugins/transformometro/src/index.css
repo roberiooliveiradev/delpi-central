@@ -453,6 +453,46 @@
   grid-column: 1 / -1;
 }
 
+.dashboard-transformometro .tm-instancia-unidade {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dashboard-transformometro .tm-instancia-unidade__title {
+  font-weight: 500;
+}
+
+.dashboard-transformometro .tm-instancia-unidade__badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ds-accent-text, #0b4a6f);
+  background: color-mix(in srgb, var(--ds-accent, #3b82f6) 18%, transparent);
+}
+
+.dashboard-transformometro .tm-instancia-unidade__hint {
+  font-size: 0.78rem;
+  color: var(--ds-text-muted, #64748b);
+  line-height: 1.35;
+}
+
+.dashboard-transformometro .tm-instancia-multi-banner {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ds-text-muted, #64748b);
+  background: color-mix(in srgb, var(--ds-accent, #3b82f6) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ds-accent, #3b82f6) 22%, transparent);
+}
+
 .dashboard-transformometro .ds-totvs-banner {
   display: flex;
   gap: 12px;
