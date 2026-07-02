@@ -90,7 +90,7 @@ class QualityLabelsService:
             "branchName": unit_name(resolved_branch),
             "productCode": order.get("product_code"),
             "productDescription": order.get("product_description"),
-            "productUnit": order.get("unit") or order.get("product_unit"),
+            "productUnit": self._order_unit(order),
             "existingLabels": existing_payloads,
             "hasActiveInspection": len(active_existing) > 0,
         }
@@ -121,7 +121,7 @@ class QualityLabelsService:
             branch=resolved_branch,
             product_code=str(order.get("product_code") or "").strip(),
             product_description=str(order.get("product_description") or "").strip(),
-            product_unit=order.get("unit") or order.get("product_unit"),
+            product_unit=self._order_unit(order),
             order_number=order.get("order_number"),
             inspector_user_id=inspector_user_id,
             inspector_name=inspector_name,
@@ -191,6 +191,15 @@ class QualityLabelsService:
             return None
         self._repository.increment_view_count(token)
         return self._repository.to_public_payload(row)
+
+    @staticmethod
+    def _order_unit(order: dict[str, Any]) -> str | None:
+        # Unidade da própria OP (C2_UM) — não passa pela conversão MI→UN da resposta operacional.
+        for key in ("order_unit", "product_unit", "unit"):
+            value = order.get(key)
+            if value not in (None, ""):
+                return str(value).strip() or None
+        return None
 
     def _resolve_order(self, *, production_order: str, branch: str | None) -> dict[str, Any]:
         normalized = (production_order or "").strip()

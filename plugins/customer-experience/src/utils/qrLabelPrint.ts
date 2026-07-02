@@ -36,8 +36,9 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 function buildLabelStyles(): string {
+  // Etiqueta no padrão da impressora: 100mm x 30mm.
   return `
-    @page { size: auto; margin: 14mm; }
+    @page { size: 100mm 30mm; margin: 0; }
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
@@ -51,17 +52,16 @@ function buildLabelStyles(): string {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 6mm;
+      padding: 4mm;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     .tag {
       display: flex;
       align-items: stretch;
-      width: 112mm;
-      height: 44mm;
-      border: 1px dashed #9fb1c1;
-      border-radius: 3mm;
+      width: 100mm;
+      height: 30mm;
+      border: 0.3mm dashed #9fb1c1;
       overflow: hidden;
       background: #ffffff;
     }
@@ -70,34 +70,39 @@ function buildLabelStyles(): string {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1.5mm;
-      padding: 3mm 2mm;
-      width: 43mm;
+      gap: 0.6mm;
+      padding: 1.5mm 1.5mm;
+      width: 46mm;
       text-align: center;
     }
     .tag__qr img {
-      width: 33mm;
-      height: 33mm;
+      width: 19mm;
+      height: 19mm;
       display: block;
     }
     .tag__caption {
-      font-size: 7pt;
+      font-size: 5pt;
       font-weight: 700;
       color: #015488;
-      line-height: 1.2;
-      max-width: 40mm;
+      line-height: 1.15;
+      max-width: 44mm;
     }
     .tag__name {
-      font-size: 6.5pt;
-      font-weight: 400;
-      color: #64748b;
+      font-size: 4.5pt;
+      font-weight: 600;
+      color: #013866;
+      line-height: 1.15;
+      max-width: 44mm;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     /* Zona central: dobra em volta do cabo (frente x verso) */
     .tag__fold {
       position: relative;
-      width: 26mm;
-      border-left: 1px dashed #157347;
-      border-right: 1px dashed #157347;
+      width: 8mm;
+      border-left: 0.3mm dashed #157347;
+      border-right: 0.3mm dashed #157347;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -105,14 +110,20 @@ function buildLabelStyles(): string {
     .tag__fold span {
       transform: rotate(-90deg);
       white-space: nowrap;
-      font-size: 6.5pt;
+      font-size: 4.5pt;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
       color: #94a3b8;
     }
+    .tag__logo {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
     .tag__logo svg {
-      width: 27mm;
+      width: 18mm;
+      max-width: 100%;
       height: auto;
       display: block;
       -webkit-print-color-adjust: exact;
@@ -124,19 +135,22 @@ function buildLabelStyles(): string {
       fill: #000000 !important;
     }
     .tag__seal svg {
-      width: 17mm;
-      height: 17mm;
+      width: 9.5mm;
+      height: 9.5mm;
       display: block;
     }
     .hint {
-      margin-top: 5mm;
+      margin-top: 4mm;
       font-size: 8pt;
       color: #64748b;
       text-align: center;
-      max-width: 112mm;
+      max-width: 100mm;
     }
+    /* Impressão: só a etiqueta ocupa a mídia 100x30. */
     @media print {
-      .hint { color: #64748b; }
+      body { padding: 0; display: block; }
+      .tag { border: none; width: 100mm; height: 30mm; }
+      .hint { display: none; }
     }
   `;
 }

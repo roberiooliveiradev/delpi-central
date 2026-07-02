@@ -399,6 +399,7 @@ class ProductionOrdersRepository(
             RTRIM(LTRIM(P.B1_DESC)) AS product_description,
             RTRIM(LTRIM(P.B1_TIPO)) AS product_type,
             RTRIM(LTRIM(P.B1_UM)) AS unit,
+            RTRIM(LTRIM(OP.C2_UM)) AS order_unit,
             RTRIM(LTRIM(P.B1_GRUPO)) AS product_group,
             RTRIM(LTRIM(OP.C2_LOCAL)) AS warehouse,
             CAST(OP.C2_QUANT AS FLOAT) AS planned_qty,
@@ -468,7 +469,7 @@ class ProductionOrdersRepository(
             RTRIM(LTRIM(OP.C2_OP)) AS production_order,
             RTRIM(LTRIM(OP.C2_PRODUTO)) AS product_code,
             RTRIM(LTRIM(P.B1_DESC)) AS product_description,
-            RTRIM(LTRIM(P.B1_UM)) AS unit
+            RTRIM(LTRIM(OP.C2_UM)) AS unit
         FROM SC2010 OP WITH (NOLOCK)
         INNER JOIN SB1010 P WITH (NOLOCK)
             ON P.B1_COD = OP.C2_PRODUTO
