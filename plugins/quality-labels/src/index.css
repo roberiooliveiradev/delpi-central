@@ -176,6 +176,78 @@
   flex: 1;
 }
 
+.ql-op-search {
+  position: relative;
+  flex: 1;
+}
+
+.ql-op-search .ql-input {
+  width: 100%;
+}
+
+.ql-op-search__spin {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: var(--ql-accent);
+  pointer-events: none;
+}
+
+.ql-suggestions {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: var(--ql-surface);
+  box-shadow: var(--ql-shadow);
+}
+
+.ql-suggestion {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ql-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ql-suggestion:hover {
+  background: color-mix(in srgb, var(--ql-accent) 10%, var(--ql-surface));
+}
+
+.ql-suggestion__op {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ql-title);
+}
+
+.ql-suggestion__product {
+  font-size: 12px;
+  color: var(--ql-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ql-suggestion__unit {
+  font-size: 11px;
+  color: var(--ql-muted);
+}
+
 .ql-btn {
   display: inline-flex;
   align-items: center;
@@ -205,6 +277,43 @@
   background: color-mix(in srgb, var(--ql-accent) 12%, var(--ql-surface));
   color: var(--ql-title);
   font-size: 14px;
+}
+
+.ql-btn--warning {
+  padding: 12px 22px;
+  background: #b26a00;
+  color: #fff;
+}
+
+.ql-warning {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, #b26a00 40%, var(--ql-border));
+  border-radius: var(--ql-radius-sm);
+  background: color-mix(in srgb, #b26a00 10%, var(--ql-surface));
+}
+
+.ql-warning .ql-icon {
+  color: #b26a00;
+  margin-top: 2px;
+}
+
+.ql-warning__title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ql-title);
+}
+
+.ql-warning__list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--ql-muted);
+  display: grid;
+  gap: 2px;
 }
 
 .ql-form__actions {
@@ -260,6 +369,87 @@
   font-size: 18px;
   font-weight: 700;
   color: var(--ql-title);
+}
+
+.ql-list__filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ql-multiselect {
+  position: relative;
+  min-width: 180px;
+}
+
+.ql-multiselect__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ql-multiselect__placeholder {
+  color: var(--ql-muted);
+}
+
+.ql-multiselect__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: var(--ql-surface);
+  box-shadow: var(--ql-shadow);
+}
+
+.ql-multiselect__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ql-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ql-multiselect__option:hover {
+  background: color-mix(in srgb, var(--ql-accent) 10%, var(--ql-surface));
+}
+
+.ql-checkbox {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 1px solid var(--ql-border);
+  border-radius: 5px;
+  background: var(--ql-surface);
+  color: #fff;
+}
+
+.ql-checkbox.is-checked {
+  background: var(--ql-accent);
+  border-color: var(--ql-accent);
+}
+
+.ql-checkbox .ql-icon {
+  width: 13px;
+  height: 13px;
 }
 
 .ql-table-wrap {
@@ -372,6 +562,8 @@
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
+  display: block;
+  vertical-align: middle;
 }
 
 .ql-spin {

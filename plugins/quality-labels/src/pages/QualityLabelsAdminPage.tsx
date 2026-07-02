@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import {
+  AlertTriangle,
   ExternalLink,
   Loader2,
   Power,
@@ -16,11 +23,18 @@ import {
   fetchLabelQrBlob,
   listLabels,
   lookupOp,
+  searchOps,
   setLabelActive,
 } from "../api/qualityLabelsApi";
 import { printQualityLabel } from "../utils/labelPrint";
+import {
+  OPERATIONAL_UNIT_OPTIONS,
+  formatOperationalUnit,
+} from "../utils/operationalUnits";
+import { UnitMultiSelect } from "../components/UnitMultiSelect";
 import type {
   OpLookup,
+  OpSuggestion,
   QualityLabel,
   QualityLabelResult,
 } from "../types/qualityLabels";
@@ -30,6 +44,12 @@ const RESULT_OPTIONS: { value: QualityLabelResult; label: string }[] = [
   { value: "rejected", label: "Reprovado" },
   { value: "conditional", label: "Condicional" },
 ];
+
+const RESULT_LABELS: Record<QualityLabelResult, string> = {
+  approved: "Aprovado",
+  rejected: "Reprovado",
+  conditional: "Condicional",
+};
 
 function formatDate(value: string | null): string {
   if (!value) return "-";
@@ -45,55 +65,140 @@ export function QualityLabelsAdminPage() {
   const [notes, setNotes] = useState("");
   const [lookup, setLookup] = useState<OpLookup | null>(null);
 
+  const [suggestions, setSuggestions] = useState<OpSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchingOps, setSearchingOps] = useState(false);
+  const opFieldRef = useRef<HTMLDivElement>(null);
+  const skipNextSearch = useRef(false);
+
   const [looking, setLooking] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmExisting, setConfirmExisting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const [labels, setLabels] = useState<QualityLabel[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterBranches, setFilterBranches] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const refreshList = useCallback(async (searchTerm: string, signal?: AbortSignal) => {
-    setLoadingList(true);
-    try {
-      const page = await listLabels({ search: searchTerm || undefined, limit: 100 }, signal);
-      setLabels(page.items);
-    } catch (err) {
-      if (!(err instanceof DOMException && err.name === "AbortError")) {
-        setError(err instanceof Error ? err.message : "Erro ao carregar as etiquetas.");
+  const refreshList = useCallback(
+    async (searchTerm: string, branches: string[], signal?: AbortSignal) => {
+      setLoadingList(true);
+      try {
+        const page = await listLabels(
+          {
+            search: searchTerm || undefined,
+            branches: branches.length > 0 ? branches : undefined,
+            limit: 100,
+          },
+          signal,
+        );
+        setLabels(page.items);
+      } catch (err) {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          setError(err instanceof Error ? err.message : "Erro ao carregar as etiquetas.");
+        }
+      } finally {
+        setLoadingList(false);
       }
-    } finally {
-      setLoadingList(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
+  // Carga inicial e reaplicação do filtro por unidade.
   useEffect(() => {
     const controller = new AbortController();
-    void refreshList("", controller.signal);
+    void refreshList(search, filterBranches, controller.signal);
     return () => controller.abort();
-  }, [refreshList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterBranches, refreshList]);
 
-  async function handleLookup() {
-    if (!op.trim()) return;
+  // Busca por proximidade da OP durante a digitação (debounce).
+  useEffect(() => {
+    const term = op.trim();
+    if (skipNextSearch.current) {
+      skipNextSearch.current = false;
+      return;
+    }
+    if (term.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    const controller = new AbortController();
+    setSearchingOps(true);
+    const handle = window.setTimeout(async () => {
+      try {
+        const items = await searchOps(
+          term,
+          branch ? [branch] : undefined,
+          controller.signal,
+        );
+        setSuggestions(items);
+        setShowSuggestions(items.length > 0);
+      } catch (err) {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          setSuggestions([]);
+        }
+      } finally {
+        setSearchingOps(false);
+      }
+    }, 350);
+    return () => {
+      controller.abort();
+      window.clearTimeout(handle);
+    };
+  }, [op, branch]);
+
+  useEffect(() => {
+    if (!showSuggestions) return;
+    function onClickOutside(event: MouseEvent) {
+      if (opFieldRef.current && !opFieldRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [showSuggestions]);
+
+  const runLookup = useCallback(async (opValue: string, branchValue: string) => {
+    if (!opValue.trim()) return;
     setLooking(true);
     setError(null);
     setSuccess(null);
     setLookup(null);
+    setConfirmExisting(false);
     try {
-      const data = await lookupOp(op.trim(), branch.trim() || undefined);
+      const data = await lookupOp(opValue.trim(), branchValue.trim() || undefined);
       setLookup(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao consultar a OP.");
     } finally {
       setLooking(false);
     }
+  }, []);
+
+  function handleSelectSuggestion(item: OpSuggestion) {
+    skipNextSearch.current = true;
+    setOp(item.productionOrder);
+    if (item.branch) setBranch(item.branch);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    void runLookup(item.productionOrder, item.branch ?? branch);
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!op.trim()) return;
+
+    if (lookup?.hasActiveInspection && !confirmExisting) {
+      setConfirmExisting(true);
+      setError(null);
+      return;
+    }
+
     setSaving(true);
     setError(null);
     setSuccess(null);
@@ -110,7 +215,9 @@ export function QualityLabelsAdminPage() {
       setNotes("");
       setResult("approved");
       setLookup(null);
-      await refreshList(search);
+      setConfirmExisting(false);
+      setSuggestions([]);
+      await refreshList(search, filterBranches);
     } catch (err) {
       if (err instanceof HttpRequestError && err.status === 404) {
         setError(err.message);
@@ -140,7 +247,11 @@ export function QualityLabelsAdminPage() {
     setError(null);
     try {
       const updated = await setLabelActive(label.id, !label.isActive);
-      setLabels((prev) => prev.map((item) => (item.id === label.id ? { ...item, isActive: updated.isActive } : item)));
+      setLabels((prev) =>
+        prev.map((item) =>
+          item.id === label.id ? { ...item, isActive: updated.isActive } : item,
+        ),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar a etiqueta.");
     } finally {
@@ -172,17 +283,49 @@ export function QualityLabelsAdminPage() {
                 <label className="ql-field">
                   <span className="ql-label-text">Ordem de produção (OP)</span>
                   <div className="ql-op-row">
-                    <input
-                      className="ql-input"
-                      value={op}
-                      onChange={(e) => setOp(e.target.value)}
-                      placeholder="Ex.: 000123"
-                      required
-                    />
+                    <div className="ql-op-search" ref={opFieldRef}>
+                      <input
+                        className="ql-input"
+                        value={op}
+                        onChange={(e) => setOp(e.target.value)}
+                        onFocus={() => {
+                          if (suggestions.length > 0) setShowSuggestions(true);
+                        }}
+                        placeholder="Digite a OP (busca automática)"
+                        autoComplete="off"
+                        required
+                      />
+                      {searchingOps && (
+                        <Loader2 className="ql-icon ql-spin ql-op-search__spin" />
+                      )}
+                      {showSuggestions && suggestions.length > 0 && (
+                        <ul className="ql-suggestions">
+                          {suggestions.map((item) => (
+                            <li key={`${item.productionOrder}-${item.branch ?? ""}`}>
+                              <button
+                                type="button"
+                                className="ql-suggestion"
+                                onClick={() => handleSelectSuggestion(item)}
+                              >
+                                <span className="ql-suggestion__op">
+                                  OP {item.productionOrder}
+                                </span>
+                                <span className="ql-suggestion__product">
+                                  {item.productCode} · {item.productDescription}
+                                </span>
+                                <span className="ql-suggestion__unit">
+                                  {formatOperationalUnit(item.branch, "—")}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                     <button
                       type="button"
                       className="ql-btn ql-btn--ghost"
-                      onClick={handleLookup}
+                      onClick={() => void runLookup(op, branch)}
                       disabled={looking || !op.trim()}
                     >
                       {looking ? <Loader2 className="ql-icon ql-spin" /> : <Search className="ql-icon" />}
@@ -192,13 +335,19 @@ export function QualityLabelsAdminPage() {
                 </label>
 
                 <label className="ql-field">
-                  <span className="ql-label-text">Filial (opcional)</span>
-                  <input
+                  <span className="ql-label-text">Unidade (opcional)</span>
+                  <select
                     className="ql-input"
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
-                    placeholder="Ex.: 01"
-                  />
+                  >
+                    <option value="">Todas as unidades</option>
+                    {OPERATIONAL_UNIT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label className="ql-field">
@@ -236,17 +385,43 @@ export function QualityLabelsAdminPage() {
                     <p className="ql-lookup__desc">{lookup.productDescription}</p>
                     <p className="ql-lookup__meta">
                       OP {lookup.productionOrder}
-                      {lookup.branch ? ` · Filial ${lookup.branch}` : ""}
+                      {lookup.branchName ? ` · ${lookup.branchName}` : ""}
                       {lookup.productUnit ? ` · ${lookup.productUnit}` : ""}
                     </p>
                   </div>
                 </div>
               )}
 
+              {lookup && lookup.existingLabels.length > 0 && (
+                <div className="ql-warning">
+                  <AlertTriangle className="ql-icon" />
+                  <div>
+                    <p className="ql-warning__title">
+                      {lookup.hasActiveInspection
+                        ? "Já existe inspeção ativa para esta OP."
+                        : "Esta OP já teve inspeções registradas."}
+                    </p>
+                    <ul className="ql-warning__list">
+                      {lookup.existingLabels.map((item) => (
+                        <li key={item.id}>
+                          {formatDate(item.inspectedAt)} · {item.inspectorName} ·{" "}
+                          {RESULT_LABELS[item.result] ?? item.result}
+                          {item.isActive ? " · Ativa" : " · Inativa"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               <div className="ql-form__actions">
-                <button type="submit" className="ql-btn ql-btn--primary" disabled={saving || !op.trim()}>
+                <button
+                  type="submit"
+                  className={`ql-btn ${confirmExisting ? "ql-btn--warning" : "ql-btn--primary"}`}
+                  disabled={saving || !op.trim()}
+                >
                   {saving ? <Loader2 className="ql-icon ql-spin" /> : <QrCode className="ql-icon" />}
-                  Registrar inspeção
+                  {confirmExisting ? "Registrar mesmo assim" : "Registrar inspeção"}
                 </button>
               </div>
             </form>
@@ -255,23 +430,30 @@ export function QualityLabelsAdminPage() {
           <section className="ql-list">
             <div className="ql-list__header">
               <h2 className="ql-list__title">Etiquetas registradas</h2>
-              <div className="ql-op-row">
-                <input
-                  className="ql-input"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar por OP, produto ou inspetor"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void refreshList(search);
-                  }}
+              <div className="ql-list__filters">
+                <UnitMultiSelect
+                  value={filterBranches}
+                  onChange={setFilterBranches}
+                  placeholder="Todas as unidades"
                 />
-                <button
-                  type="button"
-                  className="ql-btn ql-btn--ghost"
-                  onClick={() => void refreshList(search)}
-                >
-                  <RefreshCw className="ql-icon" /> Atualizar
-                </button>
+                <div className="ql-op-row">
+                  <input
+                    className="ql-input"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar por OP, produto ou inspetor"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void refreshList(search, filterBranches);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="ql-btn ql-btn--ghost"
+                    onClick={() => void refreshList(search, filterBranches)}
+                  >
+                    <RefreshCw className="ql-icon" /> Atualizar
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -286,6 +468,7 @@ export function QualityLabelsAdminPage() {
                     <tr>
                       <th>Produto</th>
                       <th>OP</th>
+                      <th>Unidade</th>
                       <th>Inspeção</th>
                       <th>Inspetor</th>
                       <th>Views</th>
@@ -301,6 +484,7 @@ export function QualityLabelsAdminPage() {
                           <span className="ql-cell-muted">{label.productDescription}</span>
                         </td>
                         <td>{label.productionOrder}</td>
+                        <td>{label.branchName ?? formatOperationalUnit(label.branch)}</td>
                         <td>{formatDate(label.inspectedAt)}</td>
                         <td>{label.inspectorName}</td>
                         <td>{label.viewCount}</td>

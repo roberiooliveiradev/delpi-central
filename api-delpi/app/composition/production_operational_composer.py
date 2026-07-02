@@ -22,6 +22,9 @@ from app.application.use_cases.production.get_production_orders_finished_use_cas
 from app.application.use_cases.production.get_production_order_by_op_use_case import (
     GetProductionOrderByOpUseCase,
 )
+from app.application.use_cases.production.search_production_orders_by_op_use_case import (
+    SearchProductionOrdersByOpUseCase,
+)
 from app.application.use_cases.production.get_production_orders_open_use_case import (
     GetProductionOrdersOpenUseCase,
 )
@@ -142,3 +145,7 @@ def build_get_production_planned_vs_real_time_use_case() -> (
 
 def build_get_production_order_by_op_use_case() -> GetProductionOrderByOpUseCase:
     return GetProductionOrderByOpUseCase(ProductionOrdersRepository())
+
+
+def build_search_production_orders_by_op_use_case() -> SearchProductionOrdersByOpUseCase:
+    return SearchProductionOrdersByOpUseCase(ProductionOrdersRepository())

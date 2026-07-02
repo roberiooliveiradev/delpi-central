@@ -55,6 +55,14 @@ class ProductionOrdersRepositoryPort(Protocol):
         product_type: str | None = None,
     ) -> dict | None: ...
 
+    def search_orders_by_op_prefix(
+        self,
+        *,
+        term: str,
+        branches: list[str] | None = None,
+        limit: int = 8,
+    ) -> list[dict]: ...
+
     def fetch_linked_pi_orders_by_production_order(
         self,
         *,

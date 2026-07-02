@@ -56,6 +56,13 @@ class SetActiveBody(BaseModel):
     isActive: bool
 
 
+def _parse_branches(raw: Optional[str]) -> list[str] | None:
+    if not raw:
+        return None
+    values = [part.strip() for part in raw.split(",") if part.strip()]
+    return values or None
+
+
 def _current_user_id() -> str:
     user = get_current_user()
     user_id = getattr(user, "id", None) if user else None
@@ -73,6 +80,30 @@ def _current_user_name() -> str:
     if isinstance(email, str) and email.strip():
         return email.strip()
     return "Inspetor"
+
+
+@router.get("/search-ops")
+@require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
+def search_ops(
+    q: str = Query(..., min_length=1),
+    branches: Optional[str] = None,
+    limit: int = Query(8, ge=1, le=20),
+):
+    try:
+        service = build_quality_labels_service()
+        data = service.search_ops(
+            term=q,
+            branches=_parse_branches(branches),
+            limit=limit,
+        )
+        return api_delpi_success(
+            {"items": data},
+            operation_id="search_quality_label_ops",
+            message="Ordens de produção encontradas.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao buscar OPs para etiqueta de qualidade: {exc}")
+        return error_response("Erro interno ao buscar as OPs.", status_code=500)
 
 
 @router.get("/lookup-op/{production_order}")
@@ -126,12 +157,18 @@ def create_label(body: Annotated[CreateLabelBody, Body(...)]):
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def list_labels(
     search: Optional[str] = None,
+    branches: Optional[str] = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):
     try:
         service = build_quality_labels_service()
-        data = service.list_labels(search=search, limit=limit, offset=offset)
+        data = service.list_labels(
+            search=search,
+            branches=_parse_branches(branches),
+            limit=limit,
+            offset=offset,
+        )
         return api_delpi_success(
             data,
             operation_id="list_quality_labels",

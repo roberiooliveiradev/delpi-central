@@ -8,6 +8,7 @@ from app.application.use_cases.quality_labels.quality_labels_service import (
 )
 from app.composition.production_operational_composer import (
     build_get_production_order_by_op_use_case,
+    build_search_production_orders_by_op_use_case,
 )
 from app.infrastructure.persistence.plugins.repositories.quality_labels.postgres_quality_labels_repository import (
     PostgresQualityLabelsRepository,
@@ -19,4 +20,5 @@ def build_quality_labels_service() -> QualityLabelsService:
         repository=PostgresQualityLabelsRepository(),
         qr_service=QualityLabelsQrService(),
         production_order_use_case=build_get_production_order_by_op_use_case(),
+        search_orders_use_case=build_search_production_orders_by_op_use_case(),
     )

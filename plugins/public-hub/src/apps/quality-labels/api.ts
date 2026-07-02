@@ -6,6 +6,7 @@ export type PublicInspection = {
   productUnit: string | null;
   productionOrder: string;
   branch: string | null;
+  branchName: string | null;
   inspectedAt: string | null;
   inspectorName: string;
   result: string;

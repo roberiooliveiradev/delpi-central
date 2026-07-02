@@ -1,9 +1,29 @@
 export type QualityLabelResult = "approved" | "rejected" | "conditional";
 
+export type ExistingLabelBrief = {
+  id: string;
+  inspectedAt: string | null;
+  inspectorName: string;
+  result: QualityLabelResult;
+  isActive: boolean;
+};
+
 export type OpLookup = {
   productionOrder: string;
   orderNumber: string | null;
   branch: string | null;
+  branchName: string | null;
+  productCode: string;
+  productDescription: string;
+  productUnit: string | null;
+  existingLabels: ExistingLabelBrief[];
+  hasActiveInspection: boolean;
+};
+
+export type OpSuggestion = {
+  productionOrder: string;
+  branch: string | null;
+  branchName: string | null;
   productCode: string;
   productDescription: string;
   productUnit: string | null;
@@ -14,6 +34,7 @@ export type QualityLabel = {
   publicToken: string;
   productionOrder: string;
   branch: string | null;
+  branchName: string | null;
   productCode: string;
   productDescription: string;
   productUnit: string | null;

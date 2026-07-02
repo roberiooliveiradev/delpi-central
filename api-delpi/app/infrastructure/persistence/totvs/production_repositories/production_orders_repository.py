@@ -447,6 +447,42 @@ class ProductionOrdersRepository(
         with self as repo:
             return repo.execute_one(sql, tuple(params))
 
+    def search_orders_by_op_prefix(
+        self,
+        *,
+        term: str,
+        branches: list[str] | None = None,
+        limit: int = 8,
+    ) -> list[dict]:
+        # Busca leve para autocomplete (prefixo da OP): TOP N, NOLOCK, seq PA principal.
+        params: list = [f"{term}%"]
+        branch_filter = ""
+        if branches:
+            placeholders = ",".join("?" for _ in branches)
+            branch_filter = f"AND OP.C2_FILIAL IN ({placeholders})"
+            params.extend(branches)
+
+        sql = f"""
+        SELECT DISTINCT TOP {int(limit)}
+            OP.C2_FILIAL AS branch,
+            RTRIM(LTRIM(OP.C2_OP)) AS production_order,
+            RTRIM(LTRIM(OP.C2_PRODUTO)) AS product_code,
+            RTRIM(LTRIM(P.B1_DESC)) AS product_description,
+            RTRIM(LTRIM(P.B1_UM)) AS unit
+        FROM SC2010 OP WITH (NOLOCK)
+        INNER JOIN SB1010 P WITH (NOLOCK)
+            ON P.B1_COD = OP.C2_PRODUTO
+           AND P.D_E_L_E_T_ = ''
+        WHERE OP.D_E_L_E_T_ = ''
+          AND RTRIM(LTRIM(OP.C2_OP)) LIKE ?
+          {branch_filter}
+          AND RTRIM(LTRIM(OP.C2_SEQUEN)) = '001'
+        ORDER BY production_order ASC
+        """
+
+        with self as repo:
+            return repo.execute_query(sql, tuple(params))
+
     def fetch_linked_pi_orders_by_production_order(
         self,
         *,

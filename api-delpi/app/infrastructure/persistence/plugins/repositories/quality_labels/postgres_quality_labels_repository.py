@@ -13,6 +13,15 @@ _COLUMNS = (
     "result, notes, qr_filename, view_count, is_active, created_at, updated_at"
 )
 
+# Unidades operacionais DELPI (filial TOTVS → nome legível).
+_UNIT_NAMES = {"01": "Santa Catarina", "02": "Espírito Santo"}
+
+
+def unit_name(code: str | None) -> str | None:
+    if not code:
+        return None
+    return _UNIT_NAMES.get(str(code).strip(), str(code).strip())
+
 
 class PostgresQualityLabelsRepository(PluginBaseRepository):
     def insert_label(
@@ -112,6 +121,27 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             (token,),
         )
 
+    def list_by_production_order(
+        self,
+        *,
+        production_order: str,
+        branch: str | None = None,
+    ) -> list[dict[str, Any]]:
+        where = "WHERE production_order = %s"
+        params: list[Any] = [production_order]
+        if branch:
+            where += " AND branch = %s"
+            params.append(branch)
+        return self.fetch_all(
+            f"""
+            SELECT {_COLUMNS}
+              FROM quality_labels.inspection_labels
+              {where}
+             ORDER BY inspected_at DESC
+            """,
+            tuple(params),
+        )
+
     def increment_view_count(self, token: str) -> None:
         self.execute(
             """
@@ -126,18 +156,25 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
         self,
         *,
         search: str | None,
+        branches: list[str] | None,
         limit: int,
         offset: int,
     ) -> tuple[list[dict[str, Any]], int]:
-        where = ""
+        clauses: list[str] = []
         params: list[Any] = []
         if search:
-            where = (
-                " WHERE production_order ILIKE %s OR product_code ILIKE %s "
-                "OR product_description ILIKE %s OR inspector_name ILIKE %s"
+            clauses.append(
+                "(production_order ILIKE %s OR product_code ILIKE %s "
+                "OR product_description ILIKE %s OR inspector_name ILIKE %s)"
             )
             like = f"%{search}%"
-            params = [like, like, like, like]
+            params.extend([like, like, like, like])
+        if branches:
+            placeholders = ",".join(["%s"] * len(branches))
+            clauses.append(f"branch IN ({placeholders})")
+            params.extend(branches)
+
+        where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
 
         total_row = self.fetch_one(
             f"SELECT COUNT(*) AS total FROM quality_labels.inspection_labels{where}",
@@ -169,6 +206,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "publicToken": row.get("public_token"),
             "productionOrder": row.get("production_order"),
             "branch": row.get("branch"),
+            "branchName": unit_name(row.get("branch")),
             "productCode": row.get("product_code"),
             "productDescription": row.get("product_description"),
             "productUnit": row.get("product_unit"),
@@ -190,6 +228,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "productUnit": row.get("product_unit"),
             "productionOrder": row.get("production_order"),
             "branch": row.get("branch"),
+            "branchName": unit_name(row.get("branch")),
             "inspectedAt": cls._iso(row.get("inspected_at")),
             "inspectorName": row.get("inspector_name"),
             "result": row.get("result"),

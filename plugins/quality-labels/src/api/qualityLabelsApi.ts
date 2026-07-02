@@ -4,10 +4,27 @@ import type {
   CreateLabelPayload,
   LabelsPage,
   OpLookup,
+  OpSuggestion,
   QualityLabel,
 } from "../types/qualityLabels";
 
 export const QUALITY_LABELS_API_BASE = "/apps/api-delpi/quality/labels";
+
+export async function searchOps(
+  term: string,
+  branches?: string[],
+  signal?: AbortSignal,
+): Promise<OpSuggestion[]> {
+  const query = new URLSearchParams();
+  query.set("q", term);
+  if (branches && branches.length > 0) query.set("branches", branches.join(","));
+  const response = await httpGet<ApiSuccessResponse<{ items: OpSuggestion[] }>>(
+    `${QUALITY_LABELS_API_BASE}/search-ops?${query.toString()}`,
+    { signal },
+  );
+  const data = unwrapApiDelpiEnvelope(response, "Erro ao buscar as OPs.");
+  return data.items ?? [];
+}
 
 export async function lookupOp(
   productionOrder: string,
@@ -35,11 +52,13 @@ export async function createLabel(
 }
 
 export async function listLabels(
-  params: { search?: string; limit?: number; offset?: number } = {},
+  params: { search?: string; branches?: string[]; limit?: number; offset?: number } = {},
   signal?: AbortSignal,
 ): Promise<LabelsPage> {
   const query = new URLSearchParams();
   if (params.search) query.set("search", params.search);
+  if (params.branches && params.branches.length > 0)
+    query.set("branches", params.branches.join(","));
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));
   const qs = query.toString();

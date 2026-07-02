@@ -13,8 +13,12 @@ from app.application.services.quality_labels.quality_labels_qr_service import (
 from app.application.use_cases.production.get_production_order_by_op_use_case import (
     GetProductionOrderByOpUseCase,
 )
+from app.application.use_cases.production.search_production_orders_by_op_use_case import (
+    SearchProductionOrdersByOpUseCase,
+)
 from app.infrastructure.persistence.plugins.repositories.quality_labels.postgres_quality_labels_repository import (
     PostgresQualityLabelsRepository,
+    unit_name,
 )
 
 _TOKEN_NBYTES = 24
@@ -35,20 +39,55 @@ class QualityLabelsService:
         repository: PostgresQualityLabelsRepository,
         qr_service: QualityLabelsQrService,
         production_order_use_case: GetProductionOrderByOpUseCase,
+        search_orders_use_case: SearchProductionOrdersByOpUseCase,
     ) -> None:
         self._repository = repository
         self._qr_service = qr_service
         self._production_order_use_case = production_order_use_case
+        self._search_orders_use_case = search_orders_use_case
+
+    def search_ops(
+        self,
+        *,
+        term: str,
+        branches: list[str] | None = None,
+        limit: int = 8,
+    ) -> list[dict[str, Any]]:
+        rows = self._search_orders_use_case.execute(
+            term=term, branches=branches, limit=limit
+        )
+        return [
+            {
+                "productionOrder": row.get("production_order"),
+                "branch": row.get("branch"),
+                "branchName": unit_name(row.get("branch")),
+                "productCode": row.get("product_code"),
+                "productDescription": row.get("product_description"),
+                "productUnit": row.get("unit") or row.get("product_unit"),
+            }
+            for row in rows
+        ]
 
     def lookup_op(self, *, production_order: str, branch: str | None = None) -> dict[str, Any]:
         order = self._resolve_order(production_order=production_order, branch=branch)
+        resolved_op = order.get("production_order") or production_order.strip()
+        resolved_branch = order.get("branch") or branch
+        existing = self._repository.list_by_production_order(
+            production_order=resolved_op,
+            branch=resolved_branch,
+        )
+        existing_payloads = [self._repository.to_admin_payload(row) for row in existing]
+        active_existing = [item for item in existing_payloads if item.get("isActive")]
         return {
-            "productionOrder": order.get("production_order") or production_order.strip(),
+            "productionOrder": resolved_op,
             "orderNumber": order.get("order_number"),
-            "branch": order.get("branch"),
+            "branch": resolved_branch,
+            "branchName": unit_name(resolved_branch),
             "productCode": order.get("product_code"),
             "productDescription": order.get("product_description"),
             "productUnit": order.get("unit") or order.get("product_unit"),
+            "existingLabels": existing_payloads,
+            "hasActiveInspection": len(active_existing) > 0,
         }
 
     def create_label(
@@ -93,10 +132,13 @@ class QualityLabelsService:
         self,
         *,
         search: str | None,
+        branches: list[str] | None,
         limit: int,
         offset: int,
     ) -> dict[str, Any]:
-        rows, total = self._repository.list_labels(search=search, limit=limit, offset=offset)
+        rows, total = self._repository.list_labels(
+            search=search, branches=branches, limit=limit, offset=offset
+        )
         items = [self._repository.to_admin_payload(row) for row in rows]
         for item, row in zip(items, rows):
             item["publicUrl"] = build_public_url(row["public_token"])

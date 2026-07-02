@@ -42,15 +42,15 @@ export function InspectionView({ inspection }: { inspection: PublicInspection })
           <dt>Ordem de produção</dt>
           <dd>{inspection.productionOrder}</dd>
         </div>
-        {inspection.branch && (
+        {(inspection.branchName || inspection.branch) && (
           <div className="qlp-detail">
-            <dt>Filial</dt>
-            <dd>{inspection.branch}</dd>
+            <dt>Unidade</dt>
+            <dd>{inspection.branchName ?? inspection.branch}</dd>
           </div>
         )}
         {inspection.productUnit && (
           <div className="qlp-detail">
-            <dt>Unidade</dt>
+            <dt>Unidade de medida</dt>
             <dd>{inspection.productUnit}</dd>
           </div>
         )}
