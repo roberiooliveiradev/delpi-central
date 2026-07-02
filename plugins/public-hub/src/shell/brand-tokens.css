@@ -1,0 +1,125 @@
+/* ============================================================================
+   Tokens de marca Minha DELPI — páginas públicas (public-hub)
+   ----------------------------------------------------------------------------
+   Fonte única de cores para o public-hub. Como este app roda FORA do runtime
+   do portal (SPA estático, sem Module Federation), ele não herda os tokens do
+   portal em tempo de execução — então espelhamos aqui os mesmos hex de marca
+   de `portal/src/index.css` (primary #089bdb, secondary #003866).
+
+   Tema: claro por padrão (:root). Escuro quando o usuário fixa
+   `data-theme="dark"` no <html> (toggle) OU quando o SO prefere escuro e o
+   usuário não fixou claro. Mesmo padrão de `portal/src/utils/theme.ts`.
+   Ao mudar um hex de marca, manter em sincronia com o portal.
+   ========================================================================== */
+
+:root {
+  /* Marca (fixa nos dois temas) */
+  --pub-primary: #089bdb;
+  --pub-secondary: #003866;
+
+  /* ----- Tema CLARO (padrão) ----- */
+  --pub-accent: #0c6fb0;
+  --pub-text: #003866;
+  --pub-text-body: #33475a;
+  --pub-text-soft: #5a6b7d;
+  --pub-text-faint: #8595a5;
+
+  --pub-card-bg: #ffffff;
+  --pub-card-border: #e4e7ec;
+  --pub-card-shadow: 0 20px 50px rgba(3, 40, 70, 0.12);
+
+  --pub-input-bg: #ffffff;
+  --pub-input-border: #d0d7de;
+  --pub-input-text: #0d1b2a;
+  --pub-placeholder: #98a6b3;
+  --pub-option-bg: #f5f8fb;
+  --pub-star-off: rgba(0, 56, 102, 0.18);
+  --pub-danger: #b42318;
+
+  --pub-logo-bg: #ffffff;
+  --pub-logo-border: #e4e7ec;
+
+  /* Texto sobre o gradiente de marca (botão primário). */
+  --pub-on-brand: #ffffff;
+
+  --pub-toggle-bg: rgba(255, 255, 255, 0.85);
+  --pub-toggle-border: #d8e1e9;
+  --pub-toggle-text: #003866;
+
+  --pub-stage-bg:
+    radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 14%, transparent), transparent),
+    radial-gradient(900px 500px at 90% 110%, color-mix(in srgb, var(--pub-accent) 10%, transparent), transparent),
+    linear-gradient(160deg, #eaf3fb, #ffffff 55%, #eef5fb);
+}
+
+/* ----- Tema ESCURO (fixado pelo usuário) ----- */
+:root[data-theme="dark"] {
+  --pub-accent: #30b8ec;
+  --pub-text: #ffffff;
+  --pub-text-body: #dbe6ef;
+  --pub-text-soft: #a9bccb;
+  --pub-text-faint: #7e93a5;
+
+  --pub-card-bg: rgba(255, 255, 255, 0.06);
+  --pub-card-border: rgba(255, 255, 255, 0.12);
+  --pub-card-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+
+  --pub-input-bg: rgba(9, 20, 30, 0.55);
+  --pub-input-border: rgba(255, 255, 255, 0.16);
+  --pub-input-text: #eef4f9;
+  --pub-placeholder: #7e93a5;
+  --pub-option-bg: rgba(9, 20, 30, 0.4);
+  --pub-star-off: rgba(255, 255, 255, 0.22);
+  --pub-danger: #ff9d9d;
+
+  --pub-logo-bg: #ffffff;
+  --pub-logo-border: transparent;
+
+  --pub-on-brand: #05263a;
+
+  --pub-toggle-bg: rgba(255, 255, 255, 0.08);
+  --pub-toggle-border: rgba(255, 255, 255, 0.18);
+  --pub-toggle-text: #eaf2f8;
+
+  --pub-stage-bg:
+    radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 38%, transparent), transparent),
+    radial-gradient(900px 500px at 90% 110%, color-mix(in srgb, var(--pub-accent) 18%, transparent), transparent),
+    linear-gradient(160deg, #041b2e, var(--pub-secondary) 55%, #041b2e);
+}
+
+/* ----- Tema ESCURO (preferência do SO, sem escolha manual de claro) ----- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pub-accent: #30b8ec;
+    --pub-text: #ffffff;
+    --pub-text-body: #dbe6ef;
+    --pub-text-soft: #a9bccb;
+    --pub-text-faint: #7e93a5;
+
+    --pub-card-bg: rgba(255, 255, 255, 0.06);
+    --pub-card-border: rgba(255, 255, 255, 0.12);
+    --pub-card-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+
+    --pub-input-bg: rgba(9, 20, 30, 0.55);
+    --pub-input-border: rgba(255, 255, 255, 0.16);
+    --pub-input-text: #eef4f9;
+    --pub-placeholder: #7e93a5;
+    --pub-option-bg: rgba(9, 20, 30, 0.4);
+    --pub-star-off: rgba(255, 255, 255, 0.22);
+    --pub-danger: #ff9d9d;
+
+    --pub-logo-bg: #ffffff;
+    --pub-logo-border: transparent;
+
+    --pub-on-brand: #05263a;
+
+    --pub-toggle-bg: rgba(255, 255, 255, 0.08);
+    --pub-toggle-border: rgba(255, 255, 255, 0.18);
+    --pub-toggle-text: #eaf2f8;
+
+    --pub-stage-bg:
+      radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--pub-primary) 38%, transparent), transparent),
+      radial-gradient(900px 500px at 90% 110%, color-mix(in srgb, var(--pub-accent) 18%, transparent), transparent),
+      linear-gradient(160deg, #041b2e, var(--pub-secondary) 55%, #041b2e);
+  }
+}

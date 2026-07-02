@@ -4,7 +4,7 @@
   width: 100%;
   max-width: 560px;
   text-align: center;
-  color: #eaf2f8;
+  color: var(--pub-text-body);
 }
 
 .cxform-eyebrow {
@@ -22,7 +22,7 @@
   font-size: clamp(1.5rem, 5.2vw, 2.1rem);
   font-weight: 800;
   line-height: 1.15;
-  color: #ffffff;
+  color: var(--pub-text);
 }
 
 .cxform-subtitle {
@@ -30,16 +30,16 @@
   max-width: 460px;
   font-size: clamp(0.95rem, 2.6vw, 1.05rem);
   line-height: 1.55;
-  color: #b9cad8;
+  color: var(--pub-text-soft);
 }
 
 .cxform-card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
   border-radius: 22px;
   padding: 24px 22px;
   text-align: left;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--pub-card-shadow);
   backdrop-filter: blur(6px);
 }
 
@@ -59,20 +59,20 @@
   font-size: 13.5px;
   font-weight: 700;
   letter-spacing: 0.3px;
-  color: #cddae6;
+  color: var(--pub-text);
   margin-bottom: 8px;
   padding: 0;
 }
 
 .cxform-req {
-  color: #ff9d9d;
+  color: var(--pub-danger);
   font-style: normal;
 }
 
 .cxform-help {
   display: block;
   font-size: 12.5px;
-  color: #93a6b6;
+  color: var(--pub-text-faint);
   margin: -2px 0 10px;
 }
 
@@ -80,9 +80,9 @@
 .cxform-textarea {
   width: 100%;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(9, 20, 30, 0.55);
-  color: #eef4f9;
+  border: 1px solid var(--pub-input-border);
+  background: var(--pub-input-bg);
+  color: var(--pub-input-text);
   font: inherit;
   font-size: 15px;
   padding: 12px 14px;
@@ -95,7 +95,7 @@
 
 .cxform-input::placeholder,
 .cxform-textarea::placeholder {
-  color: #7e93a5;
+  color: var(--pub-placeholder);
 }
 
 .cxform-input:focus,
@@ -118,7 +118,7 @@
   font-size: clamp(1.8rem, 8vw, 2.4rem);
   line-height: 1;
   padding: 2px 4px;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--pub-star-off);
   transition: transform 0.12s ease, color 0.12s ease;
 }
 
@@ -146,9 +146,9 @@
   gap: 10px;
   padding: 11px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(9, 20, 30, 0.4);
-  color: #dbe6ef;
+  border: 1px solid var(--pub-input-border);
+  background: var(--pub-option-bg);
+  color: var(--pub-text-body);
   font-size: 15px;
   cursor: pointer;
   transition: border-color 0.12s ease, background 0.12s ease;
@@ -160,7 +160,7 @@
 
 .cxform-option.is-on {
   border-color: var(--pub-accent);
-  background: color-mix(in srgb, var(--pub-accent) 16%, rgba(9, 20, 30, 0.4));
+  background: color-mix(in srgb, var(--pub-accent) 16%, var(--pub-option-bg));
 }
 
 .cxform-option input {
@@ -171,7 +171,7 @@
 
 .cxform-error {
   margin: 16px 0 0;
-  color: #ff9d9d;
+  color: var(--pub-danger);
   font-size: 13.5px;
   font-weight: 600;
 }
@@ -184,7 +184,7 @@
   padding: 14px 18px;
   font-size: 16px;
   font-weight: 700;
-  color: #05263a;
+  color: var(--pub-on-brand);
   cursor: pointer;
   background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
   box-shadow: 0 14px 30px rgba(8, 155, 219, 0.4);

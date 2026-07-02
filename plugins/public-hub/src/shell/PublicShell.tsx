@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { resolveRoute } from "./routing";
 import { publicRegistry } from "./registry";
+import { ThemeToggle } from "./ThemeToggle";
 import type { PublicPageContext, PublicPageDefinition } from "./types";
 
 type State =
@@ -82,6 +83,7 @@ export function PublicShell() {
 function Stage({ children }: { children: ReactNode }) {
   return (
     <main className="pub-stage">
+      <ThemeToggle />
       <div className="pub-logo">
         <img src="/p/logoMinhaDelpi.svg" alt="Minha DELPI" draggable={false} />
       </div>

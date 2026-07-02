@@ -4,7 +4,7 @@
   width: 100%;
   max-width: 560px;
   text-align: center;
-  color: #eaf2f8;
+  color: var(--pub-text-body);
 }
 
 .cxp-hero > * {
@@ -109,7 +109,7 @@
   font-size: clamp(1.9rem, 6.5vw, 2.7rem);
   font-weight: 800;
   line-height: 1.1;
-  color: #ffffff;
+  color: var(--pub-text);
 }
 
 .cxp-name {
@@ -123,7 +123,7 @@
   margin: 4px 0 0;
   font-size: 14px;
   font-weight: 500;
-  color: #a9bccb;
+  color: var(--pub-text-soft);
 }
 
 .cxp-message {
@@ -135,13 +135,13 @@
   margin: 0 0 14px;
   font-size: clamp(0.98rem, 2.7vw, 1.08rem);
   line-height: 1.65;
-  color: #dbe6ef;
+  color: var(--pub-text-body);
 }
 
 .cxp-message p:last-child {
   margin-bottom: 0;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--pub-text);
 }
 
 .cxp-signature {
@@ -164,7 +164,7 @@
 .cxp-date {
   margin-top: 14px;
   font-size: 12.5px;
-  color: #7e93a5;
+  color: var(--pub-text-faint);
 }
 
 @media (prefers-reduced-motion: reduce) {

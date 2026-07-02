@@ -7,6 +7,18 @@
     <meta name="theme-color" content="#003866" />
     <link rel="icon" type="image/svg+xml" href="/p/logoMinhaDelpi.svg" />
     <title>Minha DELPI</title>
+    <script>
+      // Aplica o tema salvo antes da renderização (evita flash). Sem escolha
+      // fixada, o CSS segue a preferência do sistema operacional.
+      (function () {
+        try {
+          var t = localStorage.getItem("pub-theme");
+          if (t === "light" || t === "dark") {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
