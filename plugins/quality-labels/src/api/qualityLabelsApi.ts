@@ -69,6 +69,17 @@ export async function listLabels(
   return unwrapApiDelpiEnvelope(response, "Erro ao listar as etiquetas.");
 }
 
+export async function getLabel(
+  labelId: string,
+  signal?: AbortSignal,
+): Promise<QualityLabel> {
+  const response = await httpGet<ApiSuccessResponse<QualityLabel>>(
+    `${QUALITY_LABELS_API_BASE}/${labelId}`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar o detalhe da etiqueta.");
+}
+
 export async function setLabelActive(
   labelId: string,
   isActive: boolean,

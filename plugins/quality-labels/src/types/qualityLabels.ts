@@ -1,5 +1,35 @@
 export type QualityLabelResult = "approved" | "rejected" | "conditional";
 
+export type AuditSource = {
+  operationId: string;
+  params?: Record<string, unknown>;
+  ok?: boolean;
+};
+
+export type AuditError = {
+  operationId: string;
+  message: string;
+};
+
+export type AuditMetadata = {
+  snapshotVersion?: number;
+  capturedAt?: string;
+  productionOrder?: {
+    order?: Record<string, unknown> | null;
+    linkSummary?: Record<string, unknown> | null;
+    linkedOrders?: Array<Record<string, unknown>>;
+    linkedOrdersTruncated?: boolean;
+  } | null;
+  product?: {
+    code?: string | null;
+    structure?: Record<string, unknown> | null;
+    routing?: Record<string, unknown> | null;
+    inspection?: Record<string, unknown> | null;
+  } | null;
+  sources?: AuditSource[];
+  errors?: AuditError[];
+};
+
 export type ExistingLabelBrief = {
   id: string;
   inspectedAt: string | null;
@@ -48,7 +78,7 @@ export type QualityLabel = {
   createdAt: string | null;
   publicUrl: string;
   /** Snapshot TOTVS no registro — presente em create/get detalhe. */
-  auditMetadata?: Record<string, unknown>;
+  auditMetadata?: AuditMetadata;
   hasAuditMetadata?: boolean;
 };
 

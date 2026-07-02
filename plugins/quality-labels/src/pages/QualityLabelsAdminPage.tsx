@@ -8,6 +8,7 @@ import {
 import {
   AlertTriangle,
   ExternalLink,
+  FileSearch,
   Loader2,
   Power,
   Printer,
@@ -32,6 +33,7 @@ import {
   formatOperationalUnit,
 } from "../utils/operationalUnits";
 import { UnitMultiSelect } from "../components/UnitMultiSelect";
+import { AuditMetadataModal } from "../components/AuditMetadataModal";
 import type {
   OpLookup,
   OpSuggestion,
@@ -82,6 +84,7 @@ export function QualityLabelsAdminPage() {
   const [search, setSearch] = useState("");
   const [filterBranches, setFilterBranches] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [auditLabel, setAuditLabel] = useState<QualityLabel | null>(null);
 
   const refreshList = useCallback(
     async (searchTerm: string, branches: string[], signal?: AbortSignal) => {
@@ -498,6 +501,14 @@ export function QualityLabelsAdminPage() {
                             <button
                               type="button"
                               className="ql-icon-btn"
+                              title="Ver auditoria (dados da OP/produto)"
+                              onClick={() => setAuditLabel(label)}
+                            >
+                              <FileSearch className="ql-icon" />
+                            </button>
+                            <button
+                              type="button"
+                              className="ql-icon-btn"
                               title="Imprimir etiqueta"
                               onClick={() => void handlePrint(label)}
                               disabled={busyId === label.id}
@@ -533,6 +544,10 @@ export function QualityLabelsAdminPage() {
           </section>
         </div>
       </div>
+
+      {auditLabel && (
+        <AuditMetadataModal label={auditLabel} onClose={() => setAuditLabel(null)} />
+      )}
     </div>
   );
 }
