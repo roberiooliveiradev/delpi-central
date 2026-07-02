@@ -26,6 +26,7 @@ import {
 } from "../api/participantsApi";
 import { CompanyField } from "../components/CompanyField";
 import { CompanyMultiSelect } from "../components/CompanyMultiSelect";
+import { PhotoDropzone } from "../components/PhotoDropzone";
 import { printQrLabel } from "../utils/qrLabelPrint";
 import type { Participant } from "../types";
 
@@ -53,8 +54,8 @@ export function ParticipantsPanel() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingPhotoUrl, setEditingPhotoUrl] = useState<string | null>(null);
   const [formCollapsed, setFormCollapsed] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const formCardRef = useRef<HTMLElement>(null);
 
   const loadParticipants = useCallback(async (company?: string) => {
@@ -81,24 +82,27 @@ export function ParticipantsPanel() {
     return () => window.clearTimeout(timer);
   }, [feedback]);
 
-  const onPhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
+  const handleSelectPhoto = (file: File) => {
     setPhoto(file);
     setPhotoPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
-      return file ? URL.createObjectURL(file) : null;
+      return URL.createObjectURL(file);
     });
   };
 
-  const resetForm = () => {
-    setForm({ ...EMPTY_FORM, visitDate: new Date().toISOString().slice(0, 10) });
+  const clearPhoto = () => {
     setPhoto(null);
     setPhotoPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
+  };
+
+  const resetForm = () => {
+    setForm({ ...EMPTY_FORM, visitDate: new Date().toISOString().slice(0, 10) });
+    clearPhoto();
     setEditingId(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setEditingPhotoUrl(null);
   };
 
   const openNewForm = () => {
@@ -110,6 +114,7 @@ export function ParticipantsPanel() {
 
   const startEdit = (participant: Participant) => {
     setEditingId(participant.id);
+    setEditingPhotoUrl(participant.photoUrl);
     setFormCollapsed(false);
     setError(null);
     setForm({
@@ -119,12 +124,7 @@ export function ParticipantsPanel() {
       participantInfo: participant.participantInfo ?? "",
       thankYouMessage: participant.thankYouMessage ?? "",
     });
-    setPhoto(null);
-    setPhotoPreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    clearPhoto();
     formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -377,22 +377,19 @@ export function ParticipantsPanel() {
               />
             </label>
 
-            <label className="cx-field">
+            <div className="cx-field">
               <span>
                 Foto do participante
                 {editingId && " (opcional — deixe vazio para manter a atual)"}
               </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={onPhotoChange}
+              <PhotoDropzone
+                previewUrl={photoPreview ?? editingPhotoUrl}
+                fileName={photo?.name ?? null}
+                isExisting={!photoPreview && !!editingPhotoUrl}
+                onSelect={handleSelectPhoto}
+                onClear={clearPhoto}
               />
-            </label>
-
-            {photoPreview && (
-              <img className="cx-photo-preview" src={photoPreview} alt="Prévia da foto" />
-            )}
+            </div>
 
             <div className="cx-form__actions">
               <button className="cx-button cx-button--primary" type="submit" disabled={saving}>
