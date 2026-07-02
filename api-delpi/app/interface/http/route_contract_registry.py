@@ -294,6 +294,13 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "update_kaizen_record": RouteContract("kaizen_record", "scalar"),
     "delete_kaizen_record": RouteContract("kaizen_record", "scalar"),
     "import_kaizens_from_sheet": RouteContract("kaizen_record_import", "scalar"),
+    "list_kaizen_revisions": RouteContract("kaizen_revision", "paged_list"),
+    "get_kaizen_revision": RouteContract("kaizen_revision", "scalar"),
+    "get_kaizen_at_date": RouteContract("kaizen_revision", "scalar"),
+    "list_kaizen_evidences": RouteContract("kaizen_evidence", "paged_list"),
+    "attach_kaizen_evidence": RouteContract("kaizen_evidence", "scalar"),
+    "update_kaizen_evidence": RouteContract("kaizen_evidence", "scalar"),
+    "delete_kaizen_evidence": RouteContract("kaizen_evidence", "scalar"),
     "get_quality_action_plans_dashboard": RouteContract(
         "quality_action_plan_dashboard", "scalar"
     ),

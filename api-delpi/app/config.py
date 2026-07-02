@@ -109,6 +109,10 @@ class Settings:
         "PAC_EVIDENCE_UPLOAD_DIR",
         default="/app/data/pac-evidences",
     )
+    KAIZEN_EVIDENCE_UPLOAD_DIR: str = _get_env(
+        "KAIZEN_EVIDENCE_UPLOAD_DIR",
+        default="/app/data/kaizen-evidences",
+    )
     QUALITY_LABELS_QR_DIR: str = _get_env(
         "QUALITY_LABELS_QR_DIR",
         default="/app/data/quality-labels/qr",

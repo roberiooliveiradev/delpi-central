@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body, File, Form, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from delpi_auth.authorization import require_any_permission
@@ -10,8 +11,11 @@ from app.application.security.api_delpi_permissions import (
     KAIZEN_RECORDS_READ_PERMISSIONS,
     KAIZEN_RECORDS_WRITE_PERMISSIONS,
 )
+from app.application.services.kaizen.kaizen_evidence_storage import KaizenEvidenceStorageError
 from app.composition.kaizen_composer import (
     build_import_kaizens_from_sheet_use_case,
+    build_kaizen_evidence_repository,
+    build_kaizen_evidence_storage,
     build_kaizen_repository,
 )
 from app.core.responses import error_response, not_found_response
@@ -24,6 +28,12 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import Plugin
 from app.utils.logger import log_error
 
 router = APIRouter(prefix="/kaizens/records", tags=["Kaizen — cadastro"])
+
+
+class KaizenParticipantBody(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    role: str = Field(default="participante", pattern="^(responsavel|participante|apoio)$")
+    user_id: str | None = Field(default=None, max_length=100)
 
 
 class KaizenRecordBody(BaseModel):
@@ -49,6 +59,14 @@ class KaizenRecordBody(BaseModel):
     date_implemented: str | None = None
     date_discontinued: str | None = None
     notes: str | None = None
+    process_description: str | None = None
+    problem_description: str | None = None
+    improvement_description: str | None = None
+    expected_result: str | None = None
+    category: str | None = Field(default=None, max_length=50)
+    participants: list[KaizenParticipantBody] | None = None
+    effective_from: str | None = None
+    change_reason: str | None = None
 
 
 class ImportKaizensFromSheetBody(BaseModel):
@@ -78,6 +96,19 @@ class UpdateKaizenRecordBody(BaseModel):
     date_implemented: str | None = None
     date_discontinued: str | None = None
     notes: str | None = None
+    process_description: str | None = None
+    problem_description: str | None = None
+    improvement_description: str | None = None
+    expected_result: str | None = None
+    category: str | None = Field(default=None, max_length=50)
+    participants: list[KaizenParticipantBody] | None = None
+    effective_from: str | None = None
+    change_reason: str | None = None
+
+
+class UpdateKaizenEvidenceBody(BaseModel):
+    stage: str | None = Field(default=None, pattern="^(antes|depois|geral)$")
+    description: str | None = None
 
 
 def _current_user_id() -> str:
@@ -85,6 +116,17 @@ def _current_user_id() -> str:
     if user is None:
         return "unknown"
     return str(getattr(user, "id", "unknown"))
+
+
+def _current_user_name() -> str | None:
+    user = get_current_user()
+    if user is None:
+        return None
+    for attr in ("name", "full_name", "username", "email"):
+        value = getattr(user, attr, None)
+        if value:
+            return str(value)
+    return None
 
 
 def _body_to_fields(body: BaseModel) -> dict:
@@ -225,3 +267,190 @@ def delete_kaizen_record(record_id: str):
     except Exception as exc:
         log_error(f"Erro ao excluir kaizen: {exc}")
         return error_response("Erro interno ao excluir kaizen.", status_code=500)
+
+
+# ---------------------------------------------------------------- revisões
+
+
+@router.get("/{record_id}/revisions")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def list_kaizen_revisions(record_id: str):
+    try:
+        repo = build_kaizen_repository()
+        if repo.get_record(record_id, with_participants=False) is None:
+            return not_found_response("Kaizen não encontrado.")
+        items = repo.list_revisions(record_id)
+        return api_delpi_success(
+            {"items": items},
+            operation_id="list_kaizen_revisions",
+            shape="paged_list",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar revisões do kaizen: {exc}")
+        return error_response("Erro interno ao listar revisões do kaizen.", status_code=500)
+
+
+@router.get("/{record_id}/revisions/{revision_number}")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def get_kaizen_revision(record_id: str, revision_number: int):
+    try:
+        repo = build_kaizen_repository()
+        revision = repo.get_revision(record_id, revision_number)
+        if revision is None:
+            return not_found_response("Revisão não encontrada.")
+        return api_delpi_success(revision, operation_id="get_kaizen_revision")
+    except Exception as exc:
+        log_error(f"Erro ao buscar revisão do kaizen: {exc}")
+        return error_response("Erro interno ao buscar revisão do kaizen.", status_code=500)
+
+
+@router.get("/{record_id}/at")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data YYYY-MM-DD")):
+    try:
+        repo = build_kaizen_repository()
+        revision = repo.get_revision_at(record_id, date)
+        if revision is None:
+            return not_found_response("Nenhuma revisão vigente na data informada.")
+        return api_delpi_success(revision, operation_id="get_kaizen_at_date")
+    except Exception as exc:
+        log_error(f"Erro ao buscar estado do kaizen na data: {exc}")
+        return error_response("Erro interno ao buscar estado do kaizen na data.", status_code=500)
+
+
+# ---------------------------------------------------------------- evidências
+
+
+@router.get("/{record_id}/evidences")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def list_kaizen_evidences(record_id: str):
+    try:
+        repo = build_kaizen_evidence_repository()
+        items = repo.list_evidences(record_id)
+        return api_delpi_success(
+            {"items": items},
+            operation_id="list_kaizen_evidences",
+            shape="paged_list",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar evidências do kaizen: {exc}")
+        return error_response("Erro interno ao listar evidências do kaizen.", status_code=500)
+
+
+@router.post("/{record_id}/evidences")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+async def attach_kaizen_evidence(
+    record_id: str,
+    evidence_type: str = Form(default="attachment"),
+    stage: str = Form(default="geral"),
+    description: str | None = Form(default=None),
+    external_url: str | None = Form(default=None),
+    file: UploadFile | None = File(default=None),
+):
+    try:
+        record_repo = build_kaizen_repository()
+        if record_repo.get_record(record_id, with_participants=False) is None:
+            return not_found_response("Kaizen não encontrado.")
+
+        repo = build_kaizen_evidence_repository()
+        fields: dict = {
+            "type": evidence_type,
+            "stage": stage,
+            "description": description,
+            "uploaded_by_user_id": _current_user_id(),
+            "uploaded_by_name": _current_user_name(),
+        }
+
+        if evidence_type == "link":
+            if not external_url:
+                return error_response("URL obrigatória para evidência do tipo link.", status_code=400)
+            fields["external_url"] = external_url
+        else:
+            if file is None:
+                return error_response("Arquivo obrigatório.", status_code=400)
+            content = await file.read()
+            storage = build_kaizen_evidence_storage()
+            try:
+                stored_name = storage.save(
+                    kaizen_id=record_id,
+                    original_name=file.filename or "arquivo",
+                    content=content,
+                    mime_type=file.content_type,
+                )
+            except KaizenEvidenceStorageError as exc:
+                return error_response(str(exc), status_code=400)
+            fields.update(
+                {
+                    "file_name": file.filename,
+                    "stored_name": stored_name,
+                    "mime_type": file.content_type,
+                    "size_bytes": len(content),
+                }
+            )
+
+        data = repo.create_evidence(record_id, fields)
+        return api_delpi_success(data, operation_id="attach_kaizen_evidence")
+    except Exception as exc:
+        log_error(f"Erro ao anexar evidência do kaizen: {exc}")
+        return error_response("Erro interno ao anexar evidência do kaizen.", status_code=500)
+
+
+@router.get("/{record_id}/evidences/{evidence_id}/file")
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def download_kaizen_evidence(record_id: str, evidence_id: str):
+    try:
+        repo = build_kaizen_evidence_repository()
+        evidence = repo.get_evidence(record_id, evidence_id)
+        if not evidence or not evidence.get("stored_name"):
+            return not_found_response("Evidência não encontrada.")
+        storage = build_kaizen_evidence_storage()
+        try:
+            path = storage.resolve_file(kaizen_id=record_id, stored_name=evidence["stored_name"])
+        except KaizenEvidenceStorageError:
+            return not_found_response("Arquivo não encontrado.")
+        return FileResponse(
+            path,
+            media_type=evidence.get("mime_type") or "application/octet-stream",
+            filename=evidence.get("file_name") or evidence["stored_name"],
+        )
+    except Exception as exc:
+        log_error(f"Erro ao baixar evidência do kaizen: {exc}")
+        return error_response("Erro interno ao baixar evidência do kaizen.", status_code=500)
+
+
+@router.patch("/{record_id}/evidences/{evidence_id}")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def update_kaizen_evidence(
+    record_id: str,
+    evidence_id: str,
+    body: UpdateKaizenEvidenceBody = Body(...),
+):
+    try:
+        repo = build_kaizen_evidence_repository()
+        data = repo.update_evidence(record_id, evidence_id, body.model_dump(exclude_unset=True))
+        if data is None:
+            return not_found_response("Evidência não encontrada.")
+        return api_delpi_success(data, operation_id="update_kaizen_evidence")
+    except Exception as exc:
+        log_error(f"Erro ao atualizar evidência do kaizen: {exc}")
+        return error_response("Erro interno ao atualizar evidência do kaizen.", status_code=500)
+
+
+@router.delete("/{record_id}/evidences/{evidence_id}")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def delete_kaizen_evidence(record_id: str, evidence_id: str):
+    try:
+        repo = build_kaizen_evidence_repository()
+        removed = repo.delete_evidence(record_id, evidence_id)
+        if not removed:
+            return not_found_response("Evidência não encontrada.")
+        stored_name = removed.get("stored_name")
+        if stored_name:
+            build_kaizen_evidence_storage().delete_file(kaizen_id=record_id, stored_name=stored_name)
+        return api_delpi_success(
+            {"id": evidence_id, "deleted": True},
+            operation_id="delete_kaizen_evidence",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao excluir evidência do kaizen: {exc}")
+        return error_response("Erro interno ao excluir evidência do kaizen.", status_code=500)

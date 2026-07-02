@@ -873,6 +873,7 @@ services:
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
       DRAWING_PDF_LIBRARY_DIR: ${DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
       PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
+      KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
 
@@ -890,6 +891,7 @@ services:
       - ${DRAWING_PDF_FILESERVER_HOST_PATH:-/mnt/x/DESENHOS DELPI EM PDF}:/drawing-pdfs:ro
       # Evidências PAC e anexos Auditoria 5S — persistir no host (sobrevive a rebuild do container)
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-nc:/app/data/audit-5s-nc
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/qr:/app/data/quality-labels/qr
 
