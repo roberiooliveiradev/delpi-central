@@ -13,6 +13,7 @@ import type {
   Certificate,
   CertificateSavePayload,
   CreateLabelPayload,
+  CustomerHit,
   Inspector,
   LabelsPage,
   OpLookup,
@@ -21,6 +22,32 @@ import type {
 } from "../types/qualityLabels";
 
 export const QUALITY_LABELS_API_BASE = "/apps/api-delpi/quality/labels";
+// Rota canônica de clientes TOTVS (SA1) exposta pela api-delpi via gateway.
+const CUSTOMERS_SEARCH_BASE = "/apps/api-delpi/customers/search";
+
+type RawCustomerPage = {
+  items?: Array<{ code?: string | null; store?: string | null; name?: string | null }>;
+};
+
+export async function searchCustomers(
+  term: string,
+  signal?: AbortSignal,
+): Promise<CustomerHit[]> {
+  const query = new URLSearchParams();
+  query.set("name", term);
+  query.set("page", "1");
+  query.set("page_size", "8");
+  const response = await httpGet<ApiSuccessResponse<RawCustomerPage>>(
+    `${CUSTOMERS_SEARCH_BASE}?${query.toString()}`,
+    { signal },
+  );
+  const data = unwrapApiDelpiEnvelope(response, "Erro ao buscar clientes.");
+  return (data.items ?? []).map((item) => ({
+    code: (item.code ?? "").trim(),
+    store: (item.store ?? "").trim(),
+    name: (item.name ?? "").trim(),
+  }));
+}
 
 export async function searchOps(
   term: string,

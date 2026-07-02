@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
   Eraser,
@@ -7,6 +7,7 @@ import {
   Loader2,
   Plus,
   Save,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -15,12 +16,14 @@ import {
   fetchCertificatePdfBlob,
   getCertificate,
   saveCertificate,
+  searchCustomers,
 } from "../api/qualityLabelsApi";
 import type {
   Certificate,
   CertificateItem,
   CertificateItemStatus,
   CertificateSampleType,
+  CustomerHit,
   QualityLabel,
 } from "../types/qualityLabels";
 
@@ -86,12 +89,19 @@ export function CertificateModal({ label, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState<null | "draft" | "issue">(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [customerHits, setCustomerHits] = useState<CustomerHit[]>([]);
+  const [showCustomerHits, setShowCustomerHits] = useState(false);
+  const [searchingCustomers, setSearchingCustomers] = useState(false);
+  const customerFieldRef = useRef<HTMLDivElement>(null);
+  const skipNextCustomerSearch = useRef(false);
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     getCertificate(label.id, controller.signal)
       .then((cert) => {
         setCertificate(cert);
+        skipNextCustomerSearch.current = true;
         setForm(toForm(cert));
       })
       .catch((err) => {
@@ -111,8 +121,68 @@ export function CertificateModal({ label, onClose, onSaved }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Busca de clientes TOTVS (SA1) por proximidade durante a digitação.
+  const customerName = form?.customerName ?? "";
+  useEffect(() => {
+    if (skipNextCustomerSearch.current) {
+      skipNextCustomerSearch.current = false;
+      return;
+    }
+    const term = customerName.trim();
+    if (term.length < 2) {
+      setCustomerHits([]);
+      setShowCustomerHits(false);
+      return;
+    }
+    const controller = new AbortController();
+    setSearchingCustomers(true);
+    const handle = window.setTimeout(async () => {
+      try {
+        const hits = await searchCustomers(term, controller.signal);
+        setCustomerHits(hits);
+        setShowCustomerHits(hits.length > 0);
+      } catch (err) {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          setCustomerHits([]);
+        }
+      } finally {
+        setSearchingCustomers(false);
+      }
+    }, 350);
+    return () => {
+      controller.abort();
+      window.clearTimeout(handle);
+    };
+  }, [customerName]);
+
+  useEffect(() => {
+    if (!showCustomerHits) return;
+    function onClickOutside(event: MouseEvent) {
+      if (
+        customerFieldRef.current &&
+        !customerFieldRef.current.contains(event.target as Node)
+      ) {
+        setShowCustomerHits(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [showCustomerHits]);
+
   function patch(partial: Partial<FormState>) {
     setForm((prev) => (prev ? { ...prev, ...partial } : prev));
+  }
+
+  function handleSelectCustomer(hit: CustomerHit) {
+    skipNextCustomerSearch.current = true;
+    patch({
+      customerName: hit.name,
+      customerCode: hit.code,
+      customerStore: hit.store,
+      customerSource: "manual",
+    });
+    setShowCustomerHits(false);
+    setCustomerHits([]);
   }
 
   function setItemStatus(index: number, status: CertificateItemStatus) {
@@ -193,6 +263,7 @@ export function CertificateModal({ label, onClose, onSaved }: Props) {
         issue,
       });
       setCertificate(cert);
+      skipNextCustomerSearch.current = true;
       setForm(toForm(cert));
       if (issue) {
         await openPdf();
@@ -289,12 +360,42 @@ export function CertificateModal({ label, onClose, onSaved }: Props) {
                 <div className="ql-cert-grid">
                   <label className="ql-field ql-field--wide">
                     <span className="ql-label-text">Nome do cliente</span>
-                    <input
-                      className="ql-input"
-                      value={form.customerName}
-                      onChange={(e) => patch({ customerName: e.target.value })}
-                      placeholder="Cliente"
-                    />
+                    <div className="ql-op-search" ref={customerFieldRef}>
+                      <input
+                        className="ql-input"
+                        value={form.customerName}
+                        onChange={(e) => patch({ customerName: e.target.value })}
+                        onFocus={() => {
+                          if (customerHits.length > 0) setShowCustomerHits(true);
+                        }}
+                        placeholder="Pesquisar cliente (SA1)…"
+                        autoComplete="off"
+                      />
+                      {searchingCustomers ? (
+                        <Loader2 className="ql-icon ql-spin ql-op-search__spin" />
+                      ) : (
+                        <Search className="ql-icon ql-op-search__spin" />
+                      )}
+                      {showCustomerHits && customerHits.length > 0 && (
+                        <ul className="ql-suggestions">
+                          {customerHits.map((hit) => (
+                            <li key={`${hit.code}-${hit.store}`}>
+                              <button
+                                type="button"
+                                className="ql-suggestion"
+                                onClick={() => handleSelectCustomer(hit)}
+                              >
+                                <span className="ql-suggestion__op">{hit.name}</span>
+                                <span className="ql-suggestion__unit">
+                                  Cód. {hit.code}
+                                  {hit.store ? ` · Loja ${hit.store}` : ""}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </label>
                   <label className="ql-field">
                     <span className="ql-label-text">Item do cliente</span>

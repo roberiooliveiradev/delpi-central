@@ -198,6 +198,12 @@ export type CertificateSavePayload = {
   issue: boolean;
 };
 
+export type CustomerHit = {
+  code: string;
+  store: string;
+  name: string;
+};
+
 export type Inspector = {
   id?: string;
   userId: string;
