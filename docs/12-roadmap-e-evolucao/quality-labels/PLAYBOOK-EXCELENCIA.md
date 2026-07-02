@@ -294,13 +294,15 @@ Regra `persistent-upload-storage.mdc`. Volume **na api-delpi** (mesmo padrão de
 | 0.9 | App `quality-labels` no `public-hub` (view `inspection`) + registro | `plugins/public-hub` | S | ✅ |
 | 0.10 | Manifesto do MFE + RBAC + `register-manifest.sh` | plugin + Core API | S | ✅ (registrar no ambiente) |
 
-**Critério de aceite Onda 0:**
-- [ ] Inspetor digita OP válida → produto preenchido automaticamente (código + descrição). *(pendente: teste com OP real)*
-- [ ] Ao registrar: grava data (agora) + nome do inspetor + snapshot do produto e gera QR imprimível. *(pendente: teste com OP real)*
-- [x] Escanear o QR abre `/p/quality-labels/inspection/{token}` **sem login** — rota pública acessível (404 para token inexistente, sem 401).
-- [ ] OP inexistente → mensagem clara, **sem** criar etiqueta. *(implementado: `ProductionOrderNotFoundError` → 404)*
-- [x] Rota pública liberada no middleware; rotas admin protegidas (401 sem token).
-- [ ] Gates `new-api-route-checklist.mdc` (registry + contrato) verdes para os novos `operationId`.
+**Critério de aceite Onda 0 — validado E2E (jul/2026, OP real `10381401001` / produto `90480113`):**
+- [x] Inspetor digita OP válida → produto preenchido automaticamente (código `90480113` + descrição «CABO ALIMENTACAO CWAT»).
+- [x] Ao registrar: grava data (agora) + nome do inspetor + snapshot do produto e gera QR (PNG 450×450 persistido em `~/.delpi/quality-labels/qr/`).
+- [x] Escanear o QR abre `/p/quality-labels/inspection/{token}` **sem login**; `viewCount` incrementa a cada leitura.
+- [x] OP inexistente → 404 «OP … não localizada na produção», **sem** criar etiqueta.
+- [x] Rota pública liberada no middleware; rotas admin protegidas (401 sem token); etiqueta desativada → página pública responde 404.
+- [x] `openapi.json` gera com os novos `operationId` (`create_quality_label`, `list_quality_labels`, `get_public_quality_label_inspection`, …) no `route_contract_registry`.
+
+> **Passo operacional restante:** registrar o manifesto no Core API do ambiente (`register-manifest.sh` com JWT de admin do portal) e atribuir `quality-labels.write` aos inspetores. Em produção, rebuild da imagem `api-delpi` para fixar `qrcode` do `requirements.txt`.
 
 ### Onda 1 — Etiqueta e experiência
 | # | Entrega | Esforço |
