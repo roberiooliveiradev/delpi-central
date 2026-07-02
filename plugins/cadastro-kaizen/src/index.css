@@ -1310,6 +1310,122 @@
   color: var(--kz-text-muted);
 }
 
+/* ---------------------------------------------------------- Versões (ações) */
+
+.dashboard-cadastro-kaizen .kz-improvements__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-cadastro-kaizen .kz-improvement__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--kz-card-border);
+}
+
+.dashboard-cadastro-kaizen .kz-improvement__implement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-cadastro-kaizen .kz-improvement__implement input[type="date"] {
+  padding: 6px 8px;
+  border: 1px solid var(--kz-card-border);
+  border-radius: var(--kz-control-radius);
+  background: var(--kz-input-bg, #fff);
+  color: var(--kz-text);
+}
+
+.dashboard-cadastro-kaizen .kz-improvement--em_andamento {
+  border-left: 3px solid var(--kz-warning, #d97706);
+}
+
+.dashboard-cadastro-kaizen .kz-improvement--implantado {
+  border-left: 3px solid var(--kz-success, #16a34a);
+}
+
+/* ---------------------------------------------------------- Modal de versão */
+
+.dashboard-cadastro-kaizen .kz-modal-overlay,
+.kz-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 16px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.kz-modal {
+  width: min(920px, 100%);
+  background: var(--kz-card-bg, #fff);
+  color: var(--kz-text, #0f172a);
+  border: 1px solid var(--kz-card-border, #e2e8f0);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.28);
+}
+
+.kz-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--kz-card-border, #e2e8f0);
+}
+
+.kz-modal__title {
+  margin: 0;
+  font-size: var(--kz-font-md, 1rem);
+  font-weight: 600;
+}
+
+.kz-modal__subtitle {
+  margin: 4px 0 0;
+  font-size: var(--kz-font-xs, 0.75rem);
+  color: var(--kz-text-muted, #64748b);
+  max-width: 640px;
+}
+
+.kz-modal__body {
+  padding: 20px;
+}
+
+.kz-modal__actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--kz-card-bg, #fff);
+  padding-top: 12px;
+}
+
+.kz-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--kz-text-muted, #64748b);
+  cursor: pointer;
+}
+
+.kz-icon-btn:hover {
+  background: color-mix(in srgb, var(--kz-text-muted, #64748b) 12%, transparent);
+  color: var(--kz-text, #0f172a);
+}
+
 /* ---------------------------------------------------------- Registro alterações */
 
 .dashboard-cadastro-kaizen .kz-changelog {

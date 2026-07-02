@@ -102,6 +102,43 @@ export async function fetchKaizenRevisions(id: string): Promise<KaizenRevision[]
   return unwrapApiDelpiEnvelope(envelope, "Erro ao listar revisões.").items;
 }
 
+// ---------------------------------------------------------------- versões (ciclo de vida)
+
+export async function createKaizenVersion(
+  id: string,
+  payload: Record<string, unknown>,
+): Promise<KaizenRevision> {
+  const envelope = await httpPost<ApiEnvelope<KaizenRevision>>(
+    `${API_BASE}/${id}/versions`,
+    payload,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao criar versão do kaizen.");
+}
+
+export async function updateKaizenVersion(
+  id: string,
+  revisionNumber: number,
+  payload: Record<string, unknown>,
+): Promise<KaizenRevision> {
+  const envelope = await httpPut<ApiEnvelope<KaizenRevision>>(
+    `${API_BASE}/${id}/versions/${revisionNumber}`,
+    payload,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar versão do kaizen.");
+}
+
+export async function implementKaizenVersion(
+  id: string,
+  revisionNumber: number,
+  payload: { effective_from?: string } = {},
+): Promise<KaizenRecord> {
+  const envelope = await httpPost<ApiEnvelope<KaizenRecord>>(
+    `${API_BASE}/${id}/versions/${revisionNumber}/implement`,
+    payload,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao implantar versão do kaizen.");
+}
+
 // ---------------------------------------------------------------- registro de alterações
 
 export async function fetchKaizenHistory(id: string): Promise<KaizenHistoryEvent[]> {

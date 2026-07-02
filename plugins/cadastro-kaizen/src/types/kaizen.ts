@@ -64,6 +64,14 @@ export type KaizenRevisionChangeType =
   | "descontinuacao"
   | "restauracao";
 
+// Ciclo de vida de uma VERSÃO do kaizen (revisão = versão completa do processo).
+export type KaizenVersionStatus =
+  | "em_andamento"
+  | "implantado"
+  | "descontinuado"
+  | "cancelado"
+  | "substituido";
+
 export type KaizenRevision = {
   id: string;
   kaizen_id: string;
@@ -77,6 +85,7 @@ export type KaizenRevision = {
   snapshot_schema_version: number;
   daily_savings: number | null;
   annual_savings: number | null;
+  version_status: KaizenVersionStatus | null;
   savings_valid_until: string | null;
   created_by_user_id: string;
   created_by_name: string | null;

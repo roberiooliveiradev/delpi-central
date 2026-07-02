@@ -41,6 +41,18 @@ def _as_float(value: Any) -> Optional[float]:
         return None
 
 
+# Status de versão que já esteve implantada e, portanto, contabiliza economia no período.
+_COUNTED_VERSION_STATUS = {"implantado", "substituido", "descontinuado"}
+
+
+def _version_counts(revision: dict[str, Any]) -> bool:
+    """Rascunhos (em_andamento) e cancelados nunca somam no ganho por período."""
+    status = revision.get("version_status")
+    if status is None:
+        return True  # compat: revisões antigas sem status são tratadas como implantadas
+    return status in _COUNTED_VERSION_STATUS
+
+
 def revision_last_active_day(
     effective_from: Optional[date],
     effective_until: Optional[date],
@@ -92,6 +104,8 @@ def period_savings(
     """Ganho total do período somando cada melhoria dentro da sua validade."""
     total = 0.0
     for revision in revisions:
+        if not _version_counts(revision):
+            continue
         daily = _as_float(revision.get("daily_savings"))
         if not daily:
             continue
@@ -114,6 +128,8 @@ def current_active_savings(
     """Economia vigente hoje: a melhoria ativa (se houver) dentro da validade de 1 ano."""
     reference_today = today or date.today()
     for revision in revisions:
+        if revision.get("version_status") not in (None, "implantado"):
+            continue
         effective_from = _as_date(revision.get("effective_from"))
         effective_until = _as_date(revision.get("effective_until"))
         if effective_from is None or effective_from > reference_today:

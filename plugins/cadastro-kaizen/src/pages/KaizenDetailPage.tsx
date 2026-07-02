@@ -312,7 +312,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       <EditableSectionCard
         title="Estágio"
         hint={KAIZEN_HELP_TOOLTIPS.sections.stage}
-        description="Status operacional do kaizen (gera revisão ao mudar)"
+        description="Status operacional da versão vigente (edição = correção, não cria versão)"
         isEditing={isEditing("estagio")}
         onEdit={() => startEdit("estagio")}
         onCancel={() => cancelSection("estagio")}
@@ -374,7 +374,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-reason">Motivo da mudança (registra na revisão)</label>
+              <label htmlFor="kz-d-reason">Motivo da correção (registra na auditoria)</label>
               <input
                 id="kz-d-reason"
                 value={changeReason}
@@ -492,7 +492,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               />
             </div>
             <div className="kz-field kz-span-2">
-              <label htmlFor="kz-d-eco-reason">Motivo da mudança (registra na revisão)</label>
+              <label htmlFor="kz-d-eco-reason">Motivo da correção (registra na auditoria)</label>
               <input
                 id="kz-d-eco-reason"
                 value={changeReason}
@@ -523,20 +523,20 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         <KaizenEvidencePanel kaizenId={record.id} readOnly={false} revisionId={null} />
       </section>
 
-      {/* Melhorias do processo */}
+      {/* Versões do kaizen */}
       <section className="kz-card kz-section-card">
         <header className="kz-section-card__header">
           <div>
             <h2 className="kz-section-card__title">
-              Melhorias do processo
+              Versões do kaizen
               <HelpTooltip
                 content={KAIZEN_HELP_TOOLTIPS.sections.improvements}
-                ariaLabel="Ajuda: melhorias do processo"
+                ariaLabel="Ajuda: versões do kaizen"
               />
             </h2>
             <p className="kz-section-card__desc">
-              Cada melhoria tem economia, evidências e validade de 1 ano próprias. Lançar uma nova
-              renova o aniversário do kaizen.
+              Cada versão é uma iteração completa (dados, economia e evidências próprias). Só uma
+              fica implantada por vez; ao implantar uma nova, a anterior é substituída.
             </p>
           </div>
         </header>

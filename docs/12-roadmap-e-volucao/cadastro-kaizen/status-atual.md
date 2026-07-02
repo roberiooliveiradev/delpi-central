@@ -18,8 +18,10 @@
 | Ficha visual + edição por seção (MFE) | ✅ `KaizenDetailPage` + pipeline + timeline (dev) |
 | Resultado real vs. estimado (F5) | ✅ Migration V032 + efetividade na ficha (dev) |
 | Validade da economia (1 ano) | ✅ `kaizen_savings_validity` — cap no ganho + `savings_active`/`savings_valid_until` (dev) |
-| Melhorias como revisões (economia/evidências/validade próprias) | ✅ Migration V033 + `kaizen_savings_timeline` + seção Melhorias + `/savings-timeline` (dev) |
-| Evidências por melhoria (revisão) | ✅ `kaizen_evidences.revision_id` + painel por melhoria (dev) |
+| **Versões completas (ciclo de vida)** | ✅ Migration V034 + `version_status` + `/versions` (criar/editar/implantar) + só 1 implantada por vez (dev) |
+| Melhoria = versão nova (clone + rascunho → implantar) | ✅ Modal de formulário completo + `create/implement_version`; edição inline = correção (dev) |
+| Ganho por período (só versões implantadas) | ✅ `kaizen_savings_timeline` + `/savings-timeline` (rascunho não conta) (dev) |
+| Evidências por versão | ✅ `kaizen_evidences.revision_id` + painel por versão (dev) |
 | Registro de alterações (auditoria 3 camadas) | ✅ `kaizen_history` + `kaizen_audit_log` (append-only) + `/history` `/audit-log` (dev) |
 | Cálculo temporal do dashboard (revisões) | 📋 Especificado — [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md) (Fase 6b/6c) |
 
@@ -30,14 +32,17 @@
 - Ficha visual (`detalhe/{id}`) com edição por seção (identificação, estágio, economia)
 - Excluir kaizen
 - Cálculo automático de economia diária/anual
-- **Revisões versionadas**: mudança de status/economia gera revisão (baseline →
-  implantação → melhoria), com vigência e estado por data (`/revisions`, `/at`)
-- **Melhorias do processo** (revisão = melhoria): lançar nova melhoria num kaizen
-  implantado sem criar outro; cada melhoria tem economia, evidências e **validade de
-  1 ano próprias**. O ganho por período soma as melhorias vigentes (`/savings-timeline`,
-  domínio `kaizen_savings_timeline`) — uma nova melhoria renova o aniversário.
+- **Versões completas do kaizen**: cada "melhoria" é uma **versão nova e completa**.
+  Botão **Criar nova versão** clona todos os dados num formulário completo → nasce
+  **Em andamento** (rascunho) sem afetar a versão implantada. Ao **implantar**
+  (`POST /versions/{n}/implement`), a anterior vira **Substituída** e a nova assume,
+  com aniversário de 1 ano próprio. **Só uma versão implantada por vez**. Edição inline
+  das seções = **correção** da versão vigente (não cria versão).
+- **Ganho por período**: soma só das versões que estiveram implantadas, respeitando a
+  validade de 1 ano de cada segmento (`/savings-timeline`, `kaizen_savings_timeline`) —
+  rascunhos não contam.
 - **Evidências do processo** com galeria Antes/Depois, upload multi-arquivo (dropzone),
-  link e download; evidências **gerais** (kaizen) ou **por melhoria** (`revision_id`)
+  link e download; evidências **gerais** (kaizen) ou **por versão** (`revision_id`)
 - **Registro de alterações** (padrão PAC, 3 camadas): linha do tempo operacional
   (`kaizen_history`), versões/diffs (`kaizen_revisions`) e governança append-only
   (`kaizen_audit_log`)

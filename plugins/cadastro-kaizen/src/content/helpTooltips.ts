@@ -6,7 +6,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     participants:
       "Quem conduziu e apoiou o kaizen. O primeiro responsável aparece como principal nos relatórios.",
     stage:
-      "Estágio operacional (status) e datas de implantação/descontinuação. A mudança de status gera uma revisão.",
+      "Estágio operacional (status) e datas da versão vigente. Editar aqui é uma correção da versão atual — não cria uma nova versão.",
     savings:
       "Parâmetros e economia calculada pela API. A economia estimada é comparada com a realizada (efetividade).",
     evidences:
@@ -14,7 +14,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     revisions:
       "Histórico de versões do kaizen. Cada melhoria, correção ou mudança de status cria uma revisão numerada com vigência.",
     improvements:
-      "Cada melhoria é uma versão do processo com sua própria economia, evidências e validade de 1 ano. Lançar uma nova melhoria num kaizen implantado renova o aniversário e recomeça a contagem de ganhos.",
+      "Cada versão é uma iteração completa do kaizen, com seus próprios dados, economia, evidências e validade de 1 ano. Só uma versão fica implantada por vez; ao implantar uma nova, a anterior é substituída e para de contabilizar.",
     changelog:
       "Registro de alterações do kaizen como um todo, para auditoria: linha do tempo de eventos e trilha de governança imutável.",
     audit:
@@ -30,7 +30,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     improvementDescription: "O que foi alterado no processo.",
     expectedResult: "Ganho esperado com a melhoria (qualitativo ou quantitativo).",
     status:
-      "Estágio do kaizen: em andamento, implantado, descontinuado ou cancelado. Mudar o status registra uma revisão.",
+      "Estágio da versão vigente: em andamento, implantado, descontinuado ou cancelado. Alterar aqui corrige a versão atual, sem criar uma nova.",
     dateImplemented:
       "Data em que a melhoria entrou em operação. A partir dela conta a validade de 1 ano da economia.",
     savingsType:
@@ -47,10 +47,14 @@ export const KAIZEN_HELP_TOOLTIPS = {
   },
   improvements: {
     launch:
-      "Registra uma nova versão do processo com economia e datas próprias. A partir da data informada conta uma nova validade de 1 ano para os ganhos.",
+      "Abre o formulário completo pré-preenchido com os dados da versão atual. Revise/edite tudo (processo, economia, equipe) e salve como rascunho — ela nasce Em andamento sem afetar a versão implantada.",
     periodGain:
-      "Soma dos ganhos de todas as melhorias vigentes no intervalo, respeitando a validade de 1 ano de cada uma.",
+      "Soma dos ganhos das versões que estiveram implantadas no intervalo, respeitando a validade de 1 ano de cada uma. Rascunhos não contam.",
     currentSavings:
-      "Economia que está sendo contabilizada hoje: a melhoria vigente dentro da sua validade de 1 ano.",
+      "Economia contabilizada hoje: a versão implantada vigente, dentro da sua validade de 1 ano.",
+    implement:
+      "Torna esta versão a vigente. A versão implantada anterior passa a Substituída e para de contabilizar; a nova assume a partir da data informada.",
+    editDraft:
+      "Ajusta o rascunho antes de implantar. Só versões Em andamento podem ser editadas por aqui.",
   },
 } as const;

@@ -12,6 +12,10 @@ import { KaizenRevisionTimeline } from "./KaizenRevisionTimeline";
 const EVENT_LABELS: Record<string, string> = {
   kaizen_created: "Kaizen criado",
   status_changed: "Status alterado",
+  kaizen_corrected: "Correção da versão",
+  version_created: "Nova versão criada",
+  version_updated: "Versão (rascunho) editada",
+  version_implemented: "Versão implantada",
   improvement_added: "Melhoria lançada",
   kaizen_updated: "Dados atualizados",
   kaizen_deleted: "Kaizen excluído",

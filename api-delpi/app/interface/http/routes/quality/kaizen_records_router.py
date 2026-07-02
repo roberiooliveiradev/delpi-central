@@ -113,6 +113,10 @@ class UpdateKaizenEvidenceBody(BaseModel):
     description: str | None = None
 
 
+class ImplementKaizenVersionBody(BaseModel):
+    effective_from: str | None = None
+
+
 def _current_user_id() -> str:
     user = get_current_user()
     if user is None:
@@ -324,6 +328,88 @@ def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data 
     except Exception as exc:
         log_error(f"Erro ao buscar estado do kaizen na data: {exc}")
         return error_response("Erro interno ao buscar estado do kaizen na data.", status_code=500)
+
+
+# ---------------------------------------------------------------- versões (ciclo de vida)
+
+
+@router.post("/{record_id}/versions")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def create_kaizen_version(record_id: str, body: KaizenRecordBody = Body(...)):
+    try:
+        repo = build_kaizen_repository()
+        data = repo.create_version(
+            record_id,
+            fields=_body_to_fields(body),
+            created_by_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
+        if data is None:
+            return not_found_response("Kaizen não encontrado.")
+        return api_delpi_success(data, operation_id="create_kaizen_version")
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao criar versão do kaizen: {exc}")
+        return error_response(str(exc), status_code=500)
+    except Exception as exc:
+        log_error(f"Erro ao criar versão do kaizen: {exc}")
+        return error_response("Erro interno ao criar versão do kaizen.", status_code=500)
+
+
+@router.put("/{record_id}/versions/{revision_number}")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def update_kaizen_version(
+    record_id: str,
+    revision_number: int,
+    body: UpdateKaizenRecordBody = Body(...),
+):
+    try:
+        repo = build_kaizen_repository()
+        fields = _body_to_fields(body)
+        if not fields:
+            return error_response("Nenhum campo para atualizar.", status_code=400)
+        data = repo.update_version(
+            record_id,
+            revision_number,
+            fields=fields,
+            updated_by_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
+        if data is None:
+            return not_found_response("Versão não encontrada.")
+        return api_delpi_success(data, operation_id="update_kaizen_version")
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao atualizar versão do kaizen: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao atualizar versão do kaizen: {exc}")
+        return error_response("Erro interno ao atualizar versão do kaizen.", status_code=500)
+
+
+@router.post("/{record_id}/versions/{revision_number}/implement")
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+def implement_kaizen_version(
+    record_id: str,
+    revision_number: int,
+    body: ImplementKaizenVersionBody = Body(default_factory=ImplementKaizenVersionBody),
+):
+    try:
+        repo = build_kaizen_repository()
+        data = repo.implement_version(
+            record_id,
+            revision_number,
+            effective_from=body.effective_from,
+            updated_by_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+        )
+        if data is None:
+            return not_found_response("Versão não encontrada.")
+        return api_delpi_success(data, operation_id="implement_kaizen_version")
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao implantar versão do kaizen: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao implantar versão do kaizen: {exc}")
+        return error_response("Erro interno ao implantar versão do kaizen.", status_code=500)
 
 
 # ---------------------------------------------------------------- registro de alterações

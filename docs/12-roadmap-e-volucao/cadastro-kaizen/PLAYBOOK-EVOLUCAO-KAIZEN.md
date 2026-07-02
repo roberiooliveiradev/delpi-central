@@ -41,7 +41,7 @@ O cadastro de kaizens hoje é um **CRUD plano**: uma tela de formulário (`Kaize
 7. **Append-only para histórico.** Revisões e auditoria não são editadas nem apagadas; correção = nova revisão.
 8. **Concorrência otimista.** `PUT`/`PATCH` enviam `expected_revision_number`; API responde **409** em divergência (padrão PAC `withExpectedPlanRevision`).
 9. **Validade da economia = 1 ano.** Um kaizen contabiliza ganhos financeiros por **1 ano a partir da data de implantação**; a partir do aniversário deixa de somar no run-rate (permanece no histórico). Regra pura e única em `kaizen_savings_validity` (`savings_valid_until`, `is_savings_active`, `active_days_in_range`), consumida tanto pela consolidação de ganhos quanto pelo cadastro (expõe `savings_valid_until` / `savings_active`). **Nunca** duplicar a janela de 365 dias em `if` de consolidação, presenter ou MFE.
-10. **Melhoria = revisão (V033).** Lançar uma melhoria num kaizen implantado **não** cria outro kaizen: cria uma nova revisão (`change_type='melhoria'`) com economia (`daily_savings`/`annual_savings`), vigência e **evidências próprias** (`kaizen_evidences.revision_id`). Cada melhoria tem **seu próprio aniversário de 1 ano** a partir de `effective_from`. O **ganho por período** é a soma das melhorias vigentes no intervalo, com cap de 1 ano por segmento — regra pura e única em `kaizen_savings_timeline` (`period_savings`, `current_active_savings`), exposta em `GET /savings-timeline`. **Nunca** recalcular ganho por período no MFE nem duplicar o cap.
+10. **Melhoria = VERSÃO completa (V034).** Uma melhoria é uma **versão nova e completa** do kaizen — não outra linha em `quality.kaizens`. Cada versão vive em `quality.kaizen_revisions` com `version_status` (`em_andamento` → `implantado` → `substituido`/`descontinuado`/`cancelado`), economia, vigência e **evidências próprias** (`kaizen_evidences.revision_id`). Fluxo: **criar nova versão** clona todos os dados da versão vigente num formulário completo e nasce **Em andamento** (rascunho) — a versão implantada segue contabilizando; ao **implantar** a nova (`POST /versions/{n}/implement`), a anterior vira `substituido` (`effective_until` = data de implantação) e a nova assume, com **aniversário de 1 ano próprio**. **Só uma versão `implantado` por kaizen** (índice único parcial). Edição inline das seções = **correção** da versão vigente (`update_record` atualiza o snapshot no lugar, **não** cria versão). O **ganho por período** soma só versões que estiveram implantadas (`implantado`/`substituido`/`descontinuado`), com cap de 1 ano por segmento — regra pura e única em `kaizen_savings_timeline` (`period_savings`, `current_active_savings`), exposta em `GET /savings-timeline`. **Nunca** recalcular ganho por período no MFE, duplicar o cap, nem tratar rascunho como ganho ativo.
 11. **Registro de alterações = 3 camadas (padrão PAC).** Auditoria do kaizen como um todo: `kaizen_revisions` (versões/diffs restauráveis-ready), `kaizen_history` (linha do tempo operacional de eventos) e `kaizen_audit_log` (governança **append-only**, trigger bloqueia UPDATE/DELETE). Gravadas na mesma transação da mutação em `create/update/delete_record`. **Nunca** editar/apagar auditoria; correção = nova revisão/evento.
 
 ---
@@ -51,13 +51,14 @@ O cadastro de kaizens hoje é um **CRUD plano**: uma tela de formulário (`Kaize
 ```text
 kaizen (identidade estável — quality.kaizens)
 ├── status .......... ESTÁGIO operacional (em_andamento → implantado → descontinuado | cancelado)
-├── melhorias/revisões  VERSÕES / melhorias no tempo (quality.kaizen_revisions)   ← "ideia do transformômetro"
-│     ├── revision_number (1, 2, 3…) + change_type (implantacao | melhoria | correcao | descontinuacao)
+├── versões .......... VERSÕES completas no tempo (quality.kaizen_revisions)   ← "ideia do transformômetro"
+│     ├── revision_number (1, 2, 3…) + version_status (em_andamento | implantado | substituido | descontinuado | cancelado)
 │     ├── vigência (effective_from / effective_until) + aniversário próprio (1 ano)
 │     ├── economia própria (daily_savings / annual_savings) + evidências (revision_id)
-│     └── snapshot (JSONB dos campos de negócio)
+│     └── snapshot (JSONB dos campos de negócio) — clone editável ao criar nova versão
+│     └── SÓ 1 implantado por vez (índice único parcial); implantar substitui a anterior
 ├── participantes ... 1..N responsáveis (quality.kaizen_participants)
-├── evidências ...... anexos do processo, incl. ANTES/DEPOIS — gerais ou por melhoria (quality.kaizen_evidences + volume)
+├── evidências ...... anexos do processo, incl. ANTES/DEPOIS — gerais ou por versão (quality.kaizen_evidences + volume)
 └── registro de alterações  timeline (kaizen_history) + versões (kaizen_revisions) + governança append-only (kaizen_audit_log)
 ```
 
