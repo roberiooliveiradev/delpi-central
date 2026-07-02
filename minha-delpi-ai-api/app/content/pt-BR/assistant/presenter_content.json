@@ -301,6 +301,7 @@
       { "key": "total_material_cost", "label": "Custo de materiais", "unit": "R$" },
       { "key": "pa_standard_cost", "label": "Custo padrão do PA", "unit": "R$" },
       { "key": "material_cost_vs_pa_standard_percent", "label": "Materiais x custo padrão", "unit": "%" },
+      { "key": "material_to_pa_cost_ratio", "label": "Materiais ÷ custo padrão PA", "unit": "×" },
       { "key": "top_material_impact_percent", "label": "Maior impacto de MP", "unit": "%" },
       { "key": "projected_cost_delta", "label": "Delta simulado", "unit": "R$" },
       { "key": "adjustment_percent", "label": "Reajuste simulado", "unit": "%" }

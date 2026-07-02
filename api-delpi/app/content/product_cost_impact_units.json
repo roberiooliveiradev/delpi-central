@@ -1,0 +1,17 @@
+{
+  "default": {
+    "parentCatalogPiecesPerUnit": 1
+  },
+  "parentUnits": {
+    "MI": {
+      "catalogUnit": "MI",
+      "catalogPiecesPerUnit": 1000,
+      "standardCostUnit": "MI",
+      "materialCostUnit": "MI"
+    }
+  },
+  "comparability": {
+    "maxMaterialToPaRatio": 5.0,
+    "minMaterialToPaRatio": 0.05
+  }
+}

@@ -33,6 +33,9 @@ def build_cost_impact_simulation(
     adjustment_percent: float,
     top_n: int | None,
 ) -> dict:
+    from app.domain.services.product.product_cost_impact_unit_service import (
+        ProductCostImpactUnitService,
+    )
     from app.domain.services.product.product_pa_bom_reference_service import (
         ProductPaBomReferenceService,
     )
@@ -72,8 +75,14 @@ def build_cost_impact_simulation(
             price_source=price_source,
         )
         simulated_unit_cost = unit_cost * multiplier
-        extended_cost = quantity_per_pa * unit_cost
-        simulated_extended_cost = quantity_per_pa * simulated_unit_cost
+        extended_cost = ProductCostImpactUnitService.build_extended_cost(
+            quantity_per_pa=quantity_per_pa,
+            unit_cost=unit_cost,
+        )
+        simulated_extended_cost = ProductCostImpactUnitService.build_extended_cost(
+            quantity_per_pa=quantity_per_pa,
+            unit_cost=simulated_unit_cost,
+        )
 
         enriched.append(
             {
@@ -91,12 +100,12 @@ def build_cost_impact_simulation(
     simulated_total = sum(row["simulated_extended_cost"] for row in enriched)
     projected_delta = simulated_total - total_material_cost
 
-    pa_cost_comparable = (
-        pa_standard_cost > 0
-        and total_material_cost > 0
-        and (total_material_cost / pa_standard_cost) <= 100
-        and (pa_standard_cost / total_material_cost) <= 100
+    comparability = ProductCostImpactUnitService.resolve_comparability(
+        total_material_cost=total_material_cost,
+        pa_standard_cost=pa_standard_cost,
     )
+    pa_cost_comparable = bool(comparability.get("pa_cost_comparable"))
+    material_to_pa_ratio = comparability.get("material_to_pa_cost_ratio")
 
     ranked = sorted(enriched, key=lambda row: row["extended_cost"], reverse=True)
     materials: list[dict] = []
@@ -143,6 +152,12 @@ def build_cost_impact_simulation(
 
     top_share = materials[0]["impact_on_material_cost_percent"] if materials else 0.0
 
+    cost_basis = ProductCostImpactUnitService.build_cost_basis(
+        parent_unit=product_unit,
+        pa_standard_cost=pa_standard_cost,
+        total_material_cost=total_material_cost,
+    )
+
     summary = {
         "total_raw_materials": len(enriched),
         "returned_materials": len(materials),
@@ -151,10 +166,9 @@ def build_cost_impact_simulation(
         "projected_cost_delta": projected_delta,
         "top_material_impact_percent": top_share,
         "pa_standard_cost": pa_standard_cost,
-        "material_cost_vs_pa_standard_percent": (
-            (total_material_cost / pa_standard_cost) * 100
-            if pa_cost_comparable
-            else None
+        "material_to_pa_cost_ratio": material_to_pa_ratio,
+        "material_cost_vs_pa_standard_percent": comparability.get(
+            "material_cost_vs_pa_standard_percent"
         ),
         "simulated_material_cost_vs_pa_standard_percent": (
             (simulated_total / pa_standard_cost) * 100
@@ -162,6 +176,7 @@ def build_cost_impact_simulation(
             else None
         ),
         "pa_cost_comparable": pa_cost_comparable,
+        "cost_basis": cost_basis,
     }
 
     reference = ProductPaBomReferenceService.resolve_from_product(product)
@@ -171,6 +186,7 @@ def build_cost_impact_simulation(
     return {
         "product": enriched_product,
         "pa_reference": reference.as_dict(),
+        "cost_basis": cost_basis,
         "price_source": price_source,
         "adjustment_percent": adjustment_percent,
         "materials": {
@@ -188,5 +204,6 @@ def build_cost_impact_simulation(
                 if pa_cost_comparable
                 else None
             ),
+            "material_to_pa_cost_ratio": material_to_pa_ratio,
         },
     }

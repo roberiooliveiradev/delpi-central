@@ -9,6 +9,7 @@ def test_resolve_mi_keeps_one_pa_reference() -> None:
     assert reference.reference_quantity == 1
     assert reference.reference_unit == "PA"
     assert reference.catalog_unit == "MI"
+    assert reference.catalog_pieces_per_unit == 1000
     assert reference.bom_quantity_factor == 1
 
 

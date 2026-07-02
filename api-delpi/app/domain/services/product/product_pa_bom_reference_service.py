@@ -21,6 +21,7 @@ class ProductPaBomReference:
     reference_unit: str
     catalog_unit: str | None
     catalog_quantity_per_reference: float
+    catalog_pieces_per_unit: float
     bom_quantity_factor: float
 
     def as_dict(self) -> dict[str, Any]:
@@ -33,6 +34,9 @@ class ProductPaBomReference:
         if self.catalog_unit:
             payload["catalog_unit"] = self.catalog_unit
             payload["catalog_quantity_per_reference"] = self.catalog_quantity_per_reference
+
+        if self.catalog_pieces_per_unit not in (0, 1):
+            payload["catalog_pieces_per_unit"] = self.catalog_pieces_per_unit
 
         return payload
 
@@ -61,6 +65,11 @@ class ProductPaBomReferenceService:
                 profile.get("catalogQuantityPerReference")
                 or profile.get("referenceQuantity")
                 or default.get("referenceQuantity")
+                or 1
+            ),
+            catalog_pieces_per_unit=float(
+                profile.get("catalogPiecesPerUnit")
+                or default.get("catalogPiecesPerUnit")
                 or 1
             ),
             bom_quantity_factor=float(

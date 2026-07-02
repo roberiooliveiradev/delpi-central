@@ -10,6 +10,7 @@
       "referenceUnit": "PA",
       "catalogUnit": "MI",
       "catalogQuantityPerReference": 1,
+      "catalogPiecesPerUnit": 1000,
       "bomQuantityFactor": 1
     }
   }
