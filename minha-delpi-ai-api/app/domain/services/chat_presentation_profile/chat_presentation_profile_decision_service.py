@@ -139,7 +139,20 @@ class ChatPresentationProfileDecisionService:
             isinstance(metadata, dict)
             and ChatPresentationTextModeService.is_user_explicit_text_mode(metadata)
         ):
-            decision["layoutMode"] = "single"
+            # Composite (visão integrada) em modo Texto mantém stack: narrativa +
+            # tabelas/árvore embutidas e visuais na toolbar (Playbook 23).
+            from app.domain.services.chat_presentation_rich_stack_policy_service import (
+                ChatPresentationRichStackPolicyService,
+            )
+
+            if (
+                len(ordered) >= 2
+                and ChatPresentationRichStackPolicyService._is_composite_metadata(metadata)
+            ):
+                decision["layoutMode"] = "stack"
+            else:
+                decision["layoutMode"] = "single"
+
             decision["visualOrder"] = ordered
             decision["presentationProfileKey"] = profile.get("profileKey")
             return

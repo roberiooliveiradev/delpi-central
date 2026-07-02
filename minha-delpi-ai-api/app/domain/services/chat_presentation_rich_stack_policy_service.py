@@ -139,12 +139,18 @@ class ChatPresentationRichStackPolicyService:
                 entity_for_strategy = raw_entity.strip()
 
         if ChatPresentationProfileService.uses_schema_first_presentation(path, entity_for_strategy):
-            if not ChatPresentationProfileService.allows_automatic_rich_stack(
-                path=path,
-                entity=entity_for_strategy,
-                metadata=metadata,
-            ) and not ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
-                user_message,
+            # Shape composite_analysis (factory-status, analyser, …) é intrinsecamente uma
+            # visão integrada — Playbook 23. Libera auto-stack por shape, genérico por rota.
+            if (
+                not cls._is_composite_metadata(metadata)
+                and not ChatPresentationProfileService.allows_automatic_rich_stack(
+                    path=path,
+                    entity=entity_for_strategy,
+                    metadata=metadata,
+                )
+                and not ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+                    user_message,
+                )
             ):
                 return False
 
@@ -303,6 +309,15 @@ class ChatPresentationRichStackPolicyService:
                 return True
 
         return False
+
+    @classmethod
+    def _is_composite_metadata(cls, metadata: dict[str, Any]) -> bool:
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict) and str(api_meta.get("shape") or "").strip().lower() == "composite_analysis":
+            return True
+
+        return cls._metadata_has_dashboard(metadata)
 
     @classmethod
     def _metadata_has_dashboard(cls, metadata: dict[str, Any]) -> bool:

@@ -401,7 +401,7 @@
     ]
   },
   "proseDeliveryByEntity": {
-    "product_factory_status": "llm",
+    "product_factory_status": "template",
     "product_production_status": "llm",
     "product_shipping_status": "llm",
     "product_stock": "llm",
@@ -412,7 +412,7 @@
     "productListPresent": "llm"
   },
   "proseDeliveryByProfile": {
-    "factory_status": "llm",
+    "factory_status": "template",
     "production_status": "llm",
     "shipping_status": "llm",
     "stock": "llm",

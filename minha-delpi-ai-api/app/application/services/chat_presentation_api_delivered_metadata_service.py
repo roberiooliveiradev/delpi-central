@@ -41,48 +41,78 @@ class ChatPresentationApiDeliveredMetadataService:
         profile = ChatOperationalResponseProfileService.resolve(sanitized_data, path=resolved_path)
         entity = str(profile.entity or "").strip() or None
         response_schema = action.get("responseSchema")
+        response_meta = extract_response_meta(sanitized_data)
+        response_shape = str((response_meta or {}).get("shape") or "").strip().lower() if isinstance(response_meta, dict) else ""
+        response_sections = (response_meta or {}).get("sections") if isinstance(response_meta, dict) else None
+        operational_root = presenter._unwrap_data(sanitized_data)
 
-        primary = ChatSchemaDrivenPresentationService.finish_schema_first_primary(
-            presenter,
-            sanitized_data,
-            path=resolved_path,
-            entity=entity,
-            response_schema=response_schema,
+        composite_tables: list[Any] = []
+        dashboard_presentation: dict[str, Any] | None = None
+        primary = None
+
+        is_composite = ChatSchemaDrivenPresentationService.is_composite_shape(
+            shape=response_shape,
+            root=operational_root,
+            sections=response_sections if isinstance(response_sections, list) else None,
         )
 
-        bundle = ChatSchemaDrivenPresentationService.build_bundle(
-            presenter,
-            sanitized_data,
-            path=resolved_path,
-            entity=entity,
-        )
+        if is_composite:
+            composite = ChatSchemaDrivenPresentationService.build_composite_bundle(
+                presenter,
+                sanitized_data,
+                path=resolved_path,
+                entity=entity,
+                sections=response_sections if isinstance(response_sections, list) else None,
+            )
+            text_presentation = composite.text
+            table_presentation = composite.table
+            kpi_presentation = composite.kpi
+            chart_presentation = None
+            tree_presentation = composite.tree
+            composite_tables = list(composite.tables)
+            dashboard_presentation = composite.dashboard
+        else:
+            primary = ChatSchemaDrivenPresentationService.finish_schema_first_primary(
+                presenter,
+                sanitized_data,
+                path=resolved_path,
+                entity=entity,
+                response_schema=response_schema,
+            )
 
-        text_presentation = bundle.text
-        table_presentation = bundle.table
-        kpi_presentation = bundle.kpi
-        chart_presentation = bundle.chart
-        tree_presentation = bundle.tree
+            bundle = ChatSchemaDrivenPresentationService.build_bundle(
+                presenter,
+                sanitized_data,
+                path=resolved_path,
+                entity=entity,
+            )
 
-        if isinstance(primary, dict):
-            primary_type = str(primary.get("type") or "").strip().lower()
+            text_presentation = bundle.text
+            table_presentation = bundle.table
+            kpi_presentation = bundle.kpi
+            chart_presentation = bundle.chart
+            tree_presentation = bundle.tree
 
-            if primary_type == "markdown" and text_presentation is None:
-                text_presentation = primary
-            elif primary_type == "table":
-                table_presentation = primary
-            elif primary_type == "kpi":
-                kpi_presentation = primary
-            elif primary_type in {"chart", "line_chart", "bar_chart"}:
-                chart_presentation = primary
-            elif primary_type == "tree":
-                tree_presentation = primary
+            if isinstance(primary, dict):
+                primary_type = str(primary.get("type") or "").strip().lower()
+
+                if primary_type == "markdown" and text_presentation is None:
+                    text_presentation = primary
+                elif primary_type == "table":
+                    table_presentation = primary
+                elif primary_type == "kpi":
+                    kpi_presentation = primary
+                elif primary_type in {"chart", "line_chart", "bar_chart"}:
+                    chart_presentation = primary
+                elif primary_type == "tree":
+                    tree_presentation = primary
 
         available_formats: list[str] = []
 
         if text_presentation:
             available_formats.extend(["text", "canvas"])
 
-        if table_presentation:
+        if table_presentation or composite_tables:
             available_formats.append("table")
 
         if tree_presentation:
@@ -94,7 +124,23 @@ class ChatPresentationApiDeliveredMetadataService:
         if kpi_presentation:
             available_formats.append("kpi")
 
-        primary_presentation = primary or table_presentation or text_presentation or kpi_presentation
+        if dashboard_presentation:
+            available_formats.append("dashboard")
+
+        if is_composite:
+            primary_presentation = (
+                text_presentation
+                or dashboard_presentation
+                or table_presentation
+                or kpi_presentation
+            )
+        else:
+            primary_presentation = (
+                primary
+                or table_presentation
+                or text_presentation
+                or kpi_presentation
+            )
 
         preferred_format = cls._resolve_preferred_format(
             session_format=session_format,
@@ -103,7 +149,6 @@ class ChatPresentationApiDeliveredMetadataService:
             has_kpi=bool(kpi_presentation),
         )
 
-        response_meta = extract_response_meta(sanitized_data)
         delpi_metadata = action.get("delpiMetadata")
 
         data_coverage_notice = ChatDataCoverageNoticeService.build(
@@ -144,6 +189,12 @@ class ChatPresentationApiDeliveredMetadataService:
             "path": resolved_path,
             "apiDelpiResponseMeta": response_meta,
         }
+
+        if composite_tables:
+            metadata["tablePresentations"] = composite_tables
+
+        if dashboard_presentation:
+            metadata["dashboardPresentation"] = dashboard_presentation
 
         if delpi_metadata:
             metadata["delpiMetadata"] = delpi_metadata
@@ -209,8 +260,6 @@ class ChatPresentationApiDeliveredMetadataService:
             presenter=presenter,
         )
 
-        operational_root = presenter._unwrap_data(sanitized_data)
-
         if isinstance(operational_root, dict):
             from app.domain.services.chat_operational_commentary_enrichment_service import (
                 ChatDataInsightEnrichmentService,
@@ -225,6 +274,35 @@ class ChatPresentationApiDeliveredMetadataService:
                 ),
                 user_message=user_message,
             )
+
+        explicit_text_mode = str(
+            metadata.get("explicitSessionFormat") or ""
+        ).strip().lower() in {"text", "topics"}
+
+        if is_composite and explicit_text_mode:
+            from app.domain.services.chat_presentation_text_mode_service import (
+                ChatPresentationTextModeService,
+            )
+
+            ChatPresentationTextModeService.align_explicit_session_decision(metadata)
+
+        decision_layout = str(
+            (metadata.get("presentationDecision") or {}).get("layoutMode") or ""
+        ).strip().lower()
+
+        if decision_layout == "stack":
+            from app.domain.services.chat_presentation_stack_order_service import (
+                ChatPresentationStackOrderService,
+            )
+
+            ChatPresentationStackOrderService.enrich_metadata(metadata)
+
+        if is_composite and explicit_text_mode:
+            from app.domain.services.chat_presentation_text_mode_service import (
+                ChatPresentationTextModeService,
+            )
+
+            ChatPresentationTextModeService.embed_and_finalize_explicit_text(metadata)
 
         ChatPresentationRenderPipelineService.finalize(metadata)
 

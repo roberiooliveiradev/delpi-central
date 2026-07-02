@@ -203,16 +203,31 @@ class ChatPresentationPayloadPruningService:
 
             if selected in _VISUAL_TOKEN_TO_KEY:
                 allowed.add(selected)
+
+        # Composite (visão integrada): o dashboard agrega KPI/árvore/tabelas no stack;
+        # os slots auxiliares permanecem no payload para a toolbar (Playbook 23). Só
+        # registramos suppressedKinds — não removemos o bundle.
+        from app.domain.services.chat_presentation_rich_stack_policy_service import (
+            ChatPresentationRichStackPolicyService,
+        )
+
+        keep_bundle = ChatPresentationRichStackPolicyService._is_composite_metadata(metadata)
         suppressed: list[str] = []
 
         for token, key in _VISUAL_TOKEN_TO_KEY.items():
             if token in allowed:
                 continue
 
+            if keep_bundle:
+                if isinstance(metadata.get(key), dict):
+                    suppressed.append(token)
+                continue
+
             if metadata.pop(key, None) is not None:
                 suppressed.append(token)
 
-        cls._prune_primary_presentation(metadata, allowed, suppressed)
+        if not keep_bundle:
+            cls._prune_primary_presentation(metadata, allowed, suppressed)
 
         hints = plan.get("renderHints")
 

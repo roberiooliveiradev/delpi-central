@@ -63,6 +63,24 @@ class ChatPresentationTextModeService:
         token = str(decision.get("selected") or "").strip().lower()
 
         if token in _EXPLICIT_NATIVE_SINGLE or token == "text":
+            # Composite (visão integrada) em modo Texto: mantém stack para narrativa +
+            # tabelas/árvore embutidas e visuais na toolbar (Playbook 23).
+            from app.domain.services.chat_presentation_rich_stack_policy_service import (
+                ChatPresentationRichStackPolicyService,
+            )
+
+            if (
+                token == "text"
+                and len(merged_views) >= 2
+                and ChatPresentationRichStackPolicyService._is_composite_metadata(metadata)
+            ):
+                decision["layoutMode"] = "stack"
+                decision["visualOrder"] = (
+                    ChatPresentationDecisionBuilderService.visual_order_for_stack(merged_views)
+                )
+                decision["availableViews"] = merged_views
+                return
+
             decision["layoutMode"] = "single"
             decision["visualOrder"] = [token] if token in merged_views else ["text"]
             if merged_views:

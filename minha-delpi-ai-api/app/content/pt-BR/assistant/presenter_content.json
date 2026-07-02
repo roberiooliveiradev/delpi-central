@@ -263,6 +263,35 @@
       "last_purchase"
     ]
   },
+  "compositeAnalysis": {
+    "kpiTitle": "Indicadores consolidados",
+    "dashboardTitle": "Painel consolidado",
+    "textTitle": "Status consolidado",
+    "treeTitle": "Estrutura do produto {code}",
+    "treeTitleGeneric": "Estrutura do produto",
+    "sectionRoles": {
+      "structure": "structure",
+      "raw_material_stock": "stock",
+      "production": "list",
+      "shipping": "other"
+    },
+    "sectionLabels": {
+      "structure": "Estrutura (BOM)",
+      "raw_material_stock": "Estoque de matérias-primas",
+      "production": "Ordens de produção",
+      "shipping": "Expedição"
+    },
+    "indicatorCards": [
+      { "key": "total_components", "label": "Componentes", "unit": "" },
+      { "key": "total_raw_materials", "label": "Matérias-primas", "unit": "" },
+      { "key": "total_exclusive_raw_materials", "label": "MPs exclusivas", "unit": "" },
+      { "key": "total_raw_materials_without_stock_for_one_pa", "label": "MPs sem estoque p/ 1 PA", "unit": "" },
+      { "key": "max_pa_producible_from_stock", "label": "PA possíveis com estoque", "unit": "" },
+      { "key": "total_pa_orders", "label": "OPs de PA", "unit": "" },
+      { "key": "total_pa_reported_quantity", "label": "PA apontado", "unit": "" },
+      { "key": "total_pa_shipped_quantity", "label": "PA expedido", "unit": "" }
+    ]
+  },
   "stackSectionFraming": {
     "default": {
       "scope": "Contexto interpretativo desta resposta antes dos detalhes.",
@@ -1360,14 +1389,14 @@
       "highlightsHeader": "**Destaques**",
       "attentionHeader": "**Pontos de atenção**",
       "headlineStatus": "Situação fabril: **{status}**",
-      "exclusiveWithoutStock": "**{count}** MP(s) exclusiva(s) sem estoque para montar 1 PA.",
+      "exclusiveWithoutStock": "**{count}** MP(s) sem estoque para montar 1 PA.",
       "productionNotStarted": "Há OP(s) aberta(s), mas a produção ainda **não foi iniciada** (sem apontamento SH6010).",
       "productionStarted": "Produção **em andamento** — PA **{pa}** · PI **{pi}**.",
       "noProductionOrders": "Estrutura cadastrada, mas **nenhuma OP** localizada na referência.",
       "noStructure": "Produto **sem estrutura vigente** na data consultada.",
       "shippingWithMovement": "Expedição/inspeção: **{shipped}** expedido(s) no período.",
       "shippingNoMovement": "Sem movimento de expedição/inspeção no intervalo consultado.",
-      "attentionExclusiveStock": "Validar compra ou substituição — MP exclusiva sem saldo para 1 PA.",
+      "attentionExclusiveStock": "Validar compra ou substituição — MP sem saldo para 1 PA.",
       "attentionOpNotStarted": "OP aberta sem apontamento: conferir liberação no chão de fábrica.",
       "attentionNoStructure": "Cadastro sem BOM vigente — engenharia precisa revisar estrutura.",
       "mpSummaryHeader": "**Componentes principais (MP)**",

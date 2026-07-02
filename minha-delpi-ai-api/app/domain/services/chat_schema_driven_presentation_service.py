@@ -43,9 +43,14 @@ class SchemaDrivenPresenterHost(Protocol):
         *,
         title: str | None = None,
         path: str = "",
+        role: str = "generic",
     ) -> dict: ...
 
     def _kpi_chart(self) -> Any: ...
+
+    def _route_presentation(self, route: str, key: str, **values: str) -> str: ...
+
+    def _extract_product_code_from_path(self, path: str) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -55,6 +60,8 @@ class SchemaPresentationBundle:
     chart: dict[str, Any] | None = None
     kpi: dict[str, Any] | None = None
     tree: dict[str, Any] | None = None
+    tables: tuple[dict[str, Any], ...] = ()
+    dashboard: dict[str, Any] | None = None
 
 
 class ChatSchemaDrivenPresentationService:
@@ -115,6 +122,417 @@ class ChatSchemaDrivenPresentationService:
             kpi=kpi,
             tree=tree,
         )
+
+    # ------------------------------------------------------------------
+    # Shape composite_analysis (multi-seção) — inteligência do chat base
+    # (Playbook 23). Dirigido por meta.shape/meta.sections, genérico por
+    # rota: factory-status, analyser e futuros herdam sem código novo.
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def is_composite_shape(
+        cls,
+        *,
+        shape: str | None,
+        root: Any,
+        sections: list | None = None,
+    ) -> bool:
+        if str(shape or "").strip().lower() == "composite_analysis":
+            return True
+
+        return len(cls._composite_sections(root, sections)) >= 2
+
+    @classmethod
+    def build_composite_bundle(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        data: Any,
+        *,
+        path: str = "",
+        entity: str | None = None,
+        sections: list | None = None,
+    ) -> SchemaPresentationBundle:
+        root = host._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return SchemaPresentationBundle()
+
+        section_tuples = cls._composite_sections(root, sections)
+        role_map = cls._composite_node("sectionRoles")
+        tables: list[dict[str, Any]] = []
+
+        for key, label, items in section_tuples:
+            role = str(role_map.get(key) or "generic") if isinstance(role_map, dict) else "generic"
+            table = host._build_items_table(items, title=label, path=path, role=role)
+
+            if isinstance(table, dict):
+                tables.append(table)
+
+        tree = cls._build_composite_tree(root, path=path)
+        kpi = cls._build_composite_kpi(root)
+        text = cls._build_composite_text(host, root, path=path, entity=entity) or cls.build_text(
+            host, root, rows=None, path=path, entity=entity
+        )
+        dashboard = cls._build_composite_dashboard(kpi=kpi, tree=tree, tables=tables)
+
+        return SchemaPresentationBundle(
+            table=tables[0] if tables else None,
+            text=text,
+            kpi=kpi,
+            tree=tree,
+            tables=tuple(tables),
+            dashboard=dashboard,
+        )
+
+    @classmethod
+    def _composite_sections(
+        cls,
+        root: Any,
+        sections_meta: list | None,
+    ) -> list[tuple[str, str, list[dict[str, Any]]]]:
+        if not isinstance(root, dict):
+            return []
+
+        ordered_keys: list[tuple[str, str]] = []
+
+        if isinstance(sections_meta, list) and sections_meta:
+            for section in sections_meta:
+                if isinstance(section, dict) and str(section.get("key") or "").strip():
+                    ordered_keys.append(
+                        (str(section["key"]).strip(), str(section.get("label") or "").strip())
+                    )
+        else:
+            for key, value in root.items():
+                if isinstance(value, dict) and isinstance(value.get("items"), list):
+                    ordered_keys.append((str(key), ""))
+
+        label_map = cls._composite_node("sectionLabels")
+        resolved: list[tuple[str, str, list[dict[str, Any]]]] = []
+
+        for key, label in ordered_keys:
+            block = root.get(key)
+            items = block.get("items") if isinstance(block, dict) else None
+
+            if isinstance(items, list) and items:
+                dict_items = [item for item in items if isinstance(item, dict)]
+
+                if dict_items:
+                    fallback_label = (
+                        str(label_map.get(key)) if isinstance(label_map, dict) and label_map.get(key) else key
+                    )
+                    resolved.append((key, label or fallback_label, dict_items))
+
+        return resolved
+
+    @classmethod
+    def _build_composite_text(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        root: dict[str, Any],
+        *,
+        path: str,
+        entity: str | None,
+    ) -> dict[str, Any] | None:
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        namespace = str(profile.get("routeNamespace") or "").strip()
+
+        if not namespace:
+            return None
+
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(
+            product.get("product_code")
+            or product.get("code")
+            or host._extract_product_code_from_path(path)
+            or ""
+        ).strip()
+        description = str(product.get("description") or "").strip()
+        lines: list[str] = []
+
+        if description:
+            lines.append(
+                host._route_presentation(
+                    namespace, "introWithDescription", code=code, description=description
+                )
+            )
+        elif code:
+            lines.append(host._route_presentation(namespace, "introCodeOnly", code=code))
+
+        status = str(root.get("factory_status") or "").strip()
+
+        if status:
+            lines.append(host._route_presentation(namespace, "statusLine", status=status))
+
+        reference_date = str(root.get("reference_date") or "").strip()
+
+        if reference_date:
+            lines.append(host._route_presentation(namespace, "referenceDateLine", date=reference_date))
+
+        structure = cls._section_summary(root, "structure")
+
+        if structure is not None:
+            lines.append(
+                host._route_presentation(
+                    namespace,
+                    "structureSummary",
+                    components=str(structure.get("total_components") or 0),
+                    intermediates=str(structure.get("total_intermediates") or 0),
+                    rawMaterials=str(structure.get("total_raw_materials") or 0),
+                    exclusive=str(structure.get("total_exclusive_raw_materials") or 0),
+                )
+            )
+
+        stock = cls._section_summary(root, "raw_material_stock")
+
+        if stock is not None:
+            lines.append(
+                host._route_presentation(
+                    namespace,
+                    "stockSummary",
+                    withoutStock=str(stock.get("total_without_stock_for_one_pa") or 0),
+                )
+            )
+
+        production = cls._section_summary(root, "production")
+
+        if production is not None:
+            lines.append(
+                host._route_presentation(
+                    namespace,
+                    "productionSummary",
+                    paStarted=cls._flag(production.get("pa_production_started")),
+                    piStarted=cls._flag(production.get("pi_production_started")),
+                    paOrders=str(production.get("total_pa_orders") or 0),
+                    piOrders=str(production.get("total_pi_orders") or 0),
+                )
+            )
+
+        shipping = cls._section_summary(root, "shipping")
+
+        if shipping is not None:
+            lines.append(
+                host._route_presentation(
+                    namespace,
+                    "shippingSummary",
+                    shipped=str(shipping.get("total_shipped_quantity") or 0),
+                    loss=str(shipping.get("total_inspection_loss_quantity") or 0),
+                )
+            )
+
+        clean_lines = [line for line in lines if str(line or "").strip()]
+
+        if not clean_lines:
+            return None
+
+        title = cls._composite_text("textTitle") or "Status consolidado"
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": "\n\n".join(clean_lines),
+        }
+
+    @staticmethod
+    def _section_summary(root: dict[str, Any], key: str) -> dict[str, Any] | None:
+        block = root.get(key)
+
+        if not isinstance(block, dict):
+            return None
+
+        summary = block.get("summary")
+
+        return summary if isinstance(summary, dict) else None
+
+    @staticmethod
+    def _flag(value: Any) -> str:
+        if isinstance(value, bool):
+            return "Sim" if value else "Não"
+
+        token = str(value or "").strip()
+
+        return token or "Não"
+
+    @classmethod
+    def _build_composite_tree(cls, root: dict[str, Any], *, path: str) -> dict[str, Any] | None:
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        items = structure.get("items") if isinstance(structure, dict) else None
+
+        if not isinstance(items, list) or not items:
+            return None
+
+        from app.domain.services.chat_product_structure_presentation_service import (
+            ChatProductStructurePresentationService as _Structure,
+        )
+
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        code = str(product.get("product_code") or product.get("code") or "").strip()
+        description = str(product.get("description") or "").strip()
+
+        children = [
+            _Structure._serialize_tree_node(
+                str(item.get("component_code") or "").strip(),
+                str(item.get("component_description") or "").strip(),
+                str(item.get("component_type") or "").strip(),
+                str(item.get("component_unit") or "").strip(),
+                cls._safe_float(item.get("quantity_per")),
+                children=None,
+            )
+            for item in items
+            if isinstance(item, dict)
+        ]
+
+        if not children:
+            return None
+
+        root_node = _Structure._serialize_tree_node(
+            code,
+            description,
+            str(product.get("product_type") or "PA").strip(),
+            str(product.get("unit") or "").strip(),
+            None,
+            children=children,
+        )
+
+        title = (
+            cls._composite_text("treeTitle", code=code)
+            if code
+            else cls._composite_text("treeTitleGeneric")
+        )
+
+        return {
+            "type": "tree",
+            "title": title or f"Estrutura {code}".strip(),
+            "root": root_node,
+        }
+
+    @classmethod
+    def _build_composite_kpi(cls, root: dict[str, Any]) -> dict[str, Any] | None:
+        merged: dict[str, Any] = {}
+
+        for value in root.values():
+            if isinstance(value, dict) and isinstance(value.get("summary"), dict):
+                merged.update(value["summary"])
+
+        indicators = root.get("indicators") if isinstance(root.get("indicators"), dict) else {}
+
+        if isinstance(indicators, dict):
+            merged.update(indicators)
+
+        if not merged:
+            return None
+
+        from app.domain.services.chat_presentation_kpi_assembly_service import (
+            ChatPresentationKpiAssemblyService,
+        )
+
+        specs = cls._composite_cards()
+        cards: list[dict[str, Any]] = []
+
+        for spec in specs:
+            key = str(spec.get("key") or "").strip()
+
+            if not key or key not in merged:
+                continue
+
+            value = merged.get(key)
+
+            if value in (None, ""):
+                continue
+
+            cards.append(
+                ChatPresentationKpiAssemblyService.metric_card(
+                    label=str(spec.get("label") or key),
+                    value=value,
+                    unit=str(spec.get("unit") or ""),
+                    key=key,
+                )
+            )
+
+        return ChatPresentationKpiAssemblyService.build(
+            title=cls._composite_text("kpiTitle") or "Indicadores",
+            cards=cards,
+            min_cards=2,
+        )
+
+    @classmethod
+    def _build_composite_dashboard(
+        cls,
+        *,
+        kpi: dict[str, Any] | None,
+        tree: dict[str, Any] | None,
+        tables: list[dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        panels: list[dict[str, Any]] = []
+
+        if isinstance(kpi, dict):
+            panels.append(
+                {"id": "summary", "title": str(kpi.get("title") or ""), "presentation": kpi}
+            )
+
+        if isinstance(tree, dict):
+            panels.append(
+                {"id": "structure", "title": str(tree.get("title") or ""), "presentation": tree}
+            )
+
+        for index, table in enumerate(tables):
+            if isinstance(table, dict):
+                panels.append(
+                    {
+                        "id": f"table-{index}",
+                        "title": str(table.get("title") or ""),
+                        "presentation": table,
+                    }
+                )
+
+        if len(panels) < 2:
+            return None
+
+        return {
+            "type": "dashboard",
+            "title": cls._composite_text("dashboardTitle") or "Painel consolidado",
+            "panels": panels[:6],
+        }
+
+    @staticmethod
+    def _safe_float(value: Any) -> float | None:
+        try:
+            return float(str(value).replace(",", "."))
+        except (TypeError, ValueError):
+            return None
+
+    @classmethod
+    def _composite_text(cls, key: str, **values: str) -> str:
+        template = ChatAssistantContentService.get(
+            "presenter_content",
+            "compositeAnalysis",
+            key,
+            default="",
+        )
+
+        if not template:
+            return ""
+
+        try:
+            return template.format(**values)
+        except (KeyError, IndexError):
+            return template
+
+    @classmethod
+    def _composite_node(cls, key: str) -> Any:
+        return ChatAssistantContentService.get_node(
+            "presenter_content",
+            "compositeAnalysis",
+            key,
+        )
+
+    @classmethod
+    def _composite_cards(cls) -> list[dict[str, Any]]:
+        node = cls._composite_node("indicatorCards")
+
+        if not isinstance(node, list):
+            return []
+
+        return [card for card in node if isinstance(card, dict)]
 
     @classmethod
     def build_primary(
