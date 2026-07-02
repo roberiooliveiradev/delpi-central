@@ -54,17 +54,16 @@ export function PublicShell() {
 
   if (state.status === "loading") {
     return (
-      <main className="pub-stage">
+      <Stage>
         <div className="pub-loader" aria-label="Carregando" />
-      </main>
+      </Stage>
     );
   }
 
   if (state.status === "not-found" || state.status === "error") {
     return (
-      <main className="pub-stage">
+      <Stage>
         <div className="pub-fallback">
-          <div className="pub-brand">DELPI</div>
           <h1>{state.status === "not-found" ? "Página não encontrada" : "Ops!"}</h1>
           <p>
             {state.status === "not-found"
@@ -72,9 +71,21 @@ export function PublicShell() {
               : state.message}
           </p>
         </div>
-      </main>
+      </Stage>
     );
   }
 
-  return <main className="pub-stage">{state.content}</main>;
+  return <Stage>{state.content}</Stage>;
+}
+
+/** Palco transversal da marca: logo Minha DELPI no topo + conteúdo centralizado. */
+function Stage({ children }: { children: ReactNode }) {
+  return (
+    <main className="pub-stage">
+      <div className="pub-logo">
+        <img src="/p/logoMinhaDelpi.svg" alt="Minha DELPI" draggable={false} />
+      </div>
+      <div className="pub-content">{children}</div>
+    </main>
+  );
 }
