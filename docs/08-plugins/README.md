@@ -59,6 +59,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/dashboard-commercial` | `dashboard-commercial` | microfrontend | plugin | `/apps/dashboard-commercial` | `delpi-dashboard-commercial` |
 | `plugins/dashboard-production` | `dashboard-production` | microfrontend | plugin | `/apps/dashboard-production` | `delpi-dashboard-production` |
 | `plugins/dashboard-financial` | `dashboard-financial` | microfrontend | plugin | `/apps/dashboard-financial` | `delpi-dashboard-financial` |
+| `plugins/financeiro-centro-custo` | `financeiro-centro-custo` | microfrontend | plugin | `/apps/financeiro-centro-custo` | `delpi-financeiro-centro-custo` |
 | `plugins/dashboard-hr` | `dashboard-hr` | microfrontend | plugin | `/apps/dashboard-hr` | `delpi-dashboard-hr` |
 | `plugins/dashboard-supplies` | `dashboard-supplies` | microfrontend | plugin | `/apps/dashboard-supplies` | `delpi-dashboard-supplies` |
 | `plugins/dashboard-engineering` | `dashboard-engineering` | microfrontend | plugin | `/apps/dashboard-engineering` | `delpi-dashboard-engineering` |
@@ -95,6 +96,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
+| Despesas por Centro de Custo | `/apps/api-delpi/financeiro/despesas-centro-custo/*` |
 
 ---
 

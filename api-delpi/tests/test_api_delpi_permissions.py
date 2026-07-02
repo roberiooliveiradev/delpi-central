@@ -21,3 +21,21 @@ def test_kpi_access_lists_include_api_delpi_access() -> None:
 def test_scheduling_branch_maps_use_central_constants() -> None:
     assert perms.SCHEDULING_BRANCH_VIEW_PERMS["ES"] == perms.CENTRAL_AGENDAMENTO_VIEW_FILIAL_ES
     assert perms.SCHEDULING_BRANCH_MANAGE_PERMS["SC"] == perms.CENTRAL_AGENDAMENTO_MANAGE_FILIAL_SC
+
+
+def test_financeiro_centro_custo_permissions_are_stable_strings() -> None:
+    assert perms.FINANCEIRO_CENTRO_CUSTO_ACCESS == "financeiro-centro-custo.access"
+    assert perms.FINANCEIRO_CENTRO_CUSTO_VIEW == "financeiro-centro-custo.view"
+    assert perms.FINANCEIRO_CENTRO_CUSTO_EXPORT == "financeiro-centro-custo.export"
+
+
+def test_financeiro_centro_custo_read_permissions_include_access_and_view() -> None:
+    assert perms.FINANCEIRO_CENTRO_CUSTO_ACCESS in perms.FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS
+    assert perms.FINANCEIRO_CENTRO_CUSTO_VIEW in perms.FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS
+    assert perms.API_DELPI_ACCESS in perms.FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS
+
+
+def test_financeiro_centro_custo_export_permissions_include_export() -> None:
+    assert perms.FINANCEIRO_CENTRO_CUSTO_EXPORT in (
+        perms.FINANCEIRO_CENTRO_CUSTO_EXPORT_PERMISSIONS
+    )

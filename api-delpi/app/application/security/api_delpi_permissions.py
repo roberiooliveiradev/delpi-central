@@ -59,6 +59,11 @@ PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 # --- pedidos de venda em aberto ---
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 
+# --- financeiro — despesas por centro de custo ---
+FINANCEIRO_CENTRO_CUSTO_ACCESS = "financeiro-centro-custo.access"
+FINANCEIRO_CENTRO_CUSTO_VIEW = "financeiro-centro-custo.view"
+FINANCEIRO_CENTRO_CUSTO_EXPORT = "financeiro-centro-custo.export"
+
 # --- inspeções de entrada ---
 INSPECOES_ENTRADA_VIEW = "inspecoes-entrada.view"
 INSPECOES_ENTRADA_VIEW_FILIAL_01 = "inspecoes-entrada.view.filial-01"
@@ -189,6 +194,19 @@ EFICIENCIA_FABRIL_ACCESS = [
 PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
     API_DELPI_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ACCESS,
+]
+
+FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS = [
+    API_DELPI_ACCESS,
+    FINANCEIRO_CENTRO_CUSTO_ACCESS,
+    FINANCEIRO_CENTRO_CUSTO_VIEW,
+]
+
+FINANCEIRO_CENTRO_CUSTO_EXPORT_PERMISSIONS = [
+    API_DELPI_ACCESS,
+    FINANCEIRO_CENTRO_CUSTO_ACCESS,
+    FINANCEIRO_CENTRO_CUSTO_VIEW,
+    FINANCEIRO_CENTRO_CUSTO_EXPORT,
 ]
 
 INSPECOES_ENTRADA_READ_PERMISSIONS = [
