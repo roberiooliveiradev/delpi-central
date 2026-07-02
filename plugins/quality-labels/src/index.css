@@ -320,6 +320,26 @@
 .ql-form__actions {
   display: flex;
   justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Card com padding próprio (aba Inspetor) */
+.ql-card--pad {
+  padding: 24px 26px 26px;
+}
+
+.ql-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 640px) {
+  .ql-field-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ql-lookup {

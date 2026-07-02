@@ -198,8 +198,7 @@ export function QualityLabelsAdminPage() {
     void runLookup(item.productionOrder, item.branch ?? branch);
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function doRegister(openCertificate: boolean) {
     if (!op.trim()) return;
 
     if (lookup?.hasActiveInspection && !confirmExisting) {
@@ -231,6 +230,7 @@ export function QualityLabelsAdminPage() {
       setConfirmExisting(false);
       setSuggestions([]);
       await refreshList(search, filterBranches);
+      if (openCertificate) setCertificateLabel(label);
     } catch (err) {
       if (err instanceof HttpRequestError && err.status === 404) {
         setError(err.message);
@@ -240,6 +240,11 @@ export function QualityLabelsAdminPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    void doRegister(false);
   }
 
   async function handlePrint(label: QualityLabel) {
@@ -456,6 +461,16 @@ export function QualityLabelsAdminPage() {
                 >
                   {saving ? <Loader2 className="ql-icon ql-spin" /> : <QrCode className="ql-icon" />}
                   {confirmExisting ? "Registrar mesmo assim" : "Registrar inspeção"}
+                </button>
+                <button
+                  type="button"
+                  className="ql-btn ql-btn--ghost"
+                  onClick={() => void doRegister(true)}
+                  disabled={saving || !op.trim()}
+                  title="Registra a inspeção e abre o certificado de qualidade em seguida"
+                >
+                  <FileText className="ql-icon" />
+                  Registrar e gerar certificado
                 </button>
               </div>
             </form>

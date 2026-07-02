@@ -212,7 +212,7 @@ export function QualityLabelsInspectorPage() {
         </span>
       </div>
 
-      <section className="ql-card">
+      <section className="ql-card ql-card--pad">
         <div className="ql-card__accent" />
         <div className="ql-card__head">
           <UserCheck className="ql-icon" />
@@ -227,26 +227,28 @@ export function QualityLabelsInspectorPage() {
         {loading ? (
           <div className="ql-state"><p><Loader2 className="ql-icon ql-spin" /> Carregando...</p></div>
         ) : (
-          <div className="ql-form__grid">
-            <label className="ql-field">
-              <span className="ql-label-text">Nome do inspetor</span>
-              <input
-                className="ql-input"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Nome completo"
-              />
-            </label>
-            <label className="ql-field">
-              <span className="ql-label-text">Cargo (opcional)</span>
-              <input
-                className="ql-input"
-                value={roleTitle}
-                onChange={(e) => setRoleTitle(e.target.value)}
-                placeholder="Ex.: Inspetor da Qualidade"
-              />
-            </label>
-            <div className="ql-field ql-field--action">
+          <>
+            <div className="ql-field-row">
+              <label className="ql-field">
+                <span className="ql-label-text">Nome do inspetor</span>
+                <input
+                  className="ql-input"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Nome completo"
+                />
+              </label>
+              <label className="ql-field">
+                <span className="ql-label-text">Cargo (opcional)</span>
+                <input
+                  className="ql-input"
+                  value={roleTitle}
+                  onChange={(e) => setRoleTitle(e.target.value)}
+                  placeholder="Ex.: Inspetor da Qualidade"
+                />
+              </label>
+            </div>
+            <div className="ql-form__actions">
               <button
                 type="button"
                 className="ql-btn ql-btn--primary"
@@ -257,11 +259,11 @@ export function QualityLabelsInspectorPage() {
                 Salvar perfil
               </button>
             </div>
-          </div>
+          </>
         )}
       </section>
 
-      <section className="ql-card">
+      <section className="ql-card ql-card--pad">
         <div className="ql-card__accent" />
         <div className="ql-card__head">
           <PenLine className="ql-icon" />
