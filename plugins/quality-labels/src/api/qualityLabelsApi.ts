@@ -12,6 +12,7 @@ import type {
   AuditEventsPage,
   Certificate,
   CertificateSavePayload,
+  ChecklistTemplateItem,
   CreateLabelPayload,
   CustomerHit,
   Inspector,
@@ -172,6 +173,17 @@ export async function fetchLabelQrBlob(labelId: string, signal?: AbortSignal): P
 }
 
 // ------------------------------------------------------------ Certificado
+
+export async function getChecklistTemplate(
+  signal?: AbortSignal,
+): Promise<ChecklistTemplateItem[]> {
+  const response = await httpGet<ApiSuccessResponse<{ items: ChecklistTemplateItem[] }>>(
+    `${QUALITY_LABELS_API_BASE}/checklist-template`,
+    { signal },
+  );
+  const data = unwrapApiDelpiEnvelope(response, "Erro ao carregar o checklist.");
+  return data.items ?? [];
+}
 
 export async function getCertificate(
   labelId: string,

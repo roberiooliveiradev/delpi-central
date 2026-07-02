@@ -16,6 +16,9 @@ from app.application.services.quality_labels.quality_labels_qr_service import (
 from app.application.use_cases.production.get_production_order_by_op_use_case import (
     GetProductionOrderByOpUseCase,
 )
+from app.application.use_cases.production.get_order_customer_by_op_use_case import (
+    GetOrderCustomerByOpUseCase,
+)
 from app.application.use_cases.production.search_production_orders_by_op_use_case import (
     SearchProductionOrdersByOpUseCase,
 )
@@ -53,6 +56,7 @@ class QualityLabelsService:
         qr_service: QualityLabelsQrService,
         production_order_use_case: GetProductionOrderByOpUseCase,
         search_orders_use_case: SearchProductionOrdersByOpUseCase,
+        order_customer_use_case: GetOrderCustomerByOpUseCase,
         audit_metadata_service: QualityLabelsAuditMetadataService,
         audit_repository: PostgresQualityLabelsAuditRepository,
     ) -> None:
@@ -60,6 +64,7 @@ class QualityLabelsService:
         self._qr_service = qr_service
         self._production_order_use_case = production_order_use_case
         self._search_orders_use_case = search_orders_use_case
+        self._order_customer_use_case = order_customer_use_case
         self._audit_metadata_service = audit_metadata_service
         self._audit_repository = audit_repository
 
@@ -95,6 +100,10 @@ class QualityLabelsService:
         )
         existing_payloads = [self._repository.to_admin_payload(row) for row in existing]
         active_existing = [item for item in existing_payloads if item.get("isActive")]
+        customer = self._lookup_customer(
+            production_order=resolved_op,
+            branch=resolved_branch,
+        )
         return {
             "productionOrder": resolved_op,
             "orderNumber": order.get("order_number"),
@@ -105,6 +114,7 @@ class QualityLabelsService:
             "productUnit": self._order_unit(order),
             "existingLabels": existing_payloads,
             "hasActiveInspection": len(active_existing) > 0,
+            "customer": customer,
         }
 
     def create_label(
@@ -273,6 +283,29 @@ class QualityLabelsService:
             actor_name="Cliente (acesso público)",
         )
         return self._repository.to_public_payload(row)
+
+    def _lookup_customer(
+        self,
+        *,
+        production_order: str,
+        branch: str | None,
+    ) -> dict[str, Any] | None:
+        try:
+            row = self._order_customer_use_case.execute(
+                production_order=production_order,
+                branch=branch,
+            )
+        except Exception as exc:  # noqa: BLE001 - best-effort
+            log_error(f"Falha ao buscar cliente da OP {production_order}: {exc}")
+            return None
+        if not row or not row.get("customer_name"):
+            return None
+        return {
+            "code": row.get("customer_code"),
+            "store": row.get("customer_store"),
+            "name": row.get("customer_name"),
+            "source": "totvs",
+        }
 
     def _record_event(
         self,

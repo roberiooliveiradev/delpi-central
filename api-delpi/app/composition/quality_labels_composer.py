@@ -71,6 +71,7 @@ def build_quality_labels_service() -> QualityLabelsService:
         qr_service=QualityLabelsQrService(),
         production_order_use_case=build_get_production_order_by_op_use_case(),
         search_orders_use_case=build_search_production_orders_by_op_use_case(),
+        order_customer_use_case=build_get_order_customer_by_op_use_case(),
         audit_metadata_service=build_quality_labels_audit_metadata_service(),
         audit_repository=PostgresQualityLabelsAuditRepository(),
     )

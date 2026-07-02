@@ -38,6 +38,13 @@ export type ExistingLabelBrief = {
   isActive: boolean;
 };
 
+export type OpCustomerHint = {
+  code: string | null;
+  store: string | null;
+  name: string | null;
+  source: "totvs" | "manual";
+};
+
 export type OpLookup = {
   productionOrder: string;
   orderNumber: string | null;
@@ -48,6 +55,12 @@ export type OpLookup = {
   productUnit: string | null;
   existingLabels: ExistingLabelBrief[];
   hasActiveInspection: boolean;
+  customer: OpCustomerHint | null;
+};
+
+export type ChecklistTemplateItem = {
+  position: number;
+  description: string;
 };
 
 export type OpSuggestion = {
@@ -175,6 +188,21 @@ export type Certificate = {
   productUnit: string | null;
   branch: string | null;
   branchName: string | null;
+};
+
+export type CertificateFormState = {
+  sampleType: CertificateSampleType;
+  quantity: string;
+  sampleQuantity: string;
+  customerName: string;
+  customerCode: string;
+  customerStore: string;
+  customerItem: string;
+  customerItemRev: string;
+  customerSource: "totvs" | "manual";
+  delpiNotes: string;
+  customerNotes: string;
+  items: CertificateItem[];
 };
 
 export type CertificateSavePayload = {

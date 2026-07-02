@@ -1239,3 +1239,86 @@
   margin-top: 1px;
   color: var(--ql-accent);
 }
+
+.ql-info-note--compact {
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+/* Certificado inline (collapse + painel na lista) */
+.ql-cert-collapse {
+  margin-top: 4px;
+}
+
+.ql-cert-collapse__toggle {
+  width: 100%;
+  justify-content: flex-start;
+  border: 1px dashed color-mix(in srgb, var(--ql-accent) 35%, var(--ql-border));
+  border-radius: var(--ql-radius-sm);
+  padding: 10px 14px;
+}
+
+.ql-cert-collapse__toggle--open {
+  border-style: solid;
+  background: color-mix(in srgb, var(--ql-accent) 6%, var(--ql-surface));
+}
+
+.ql-cert-collapse__body {
+  margin-top: 14px;
+  padding: 16px 18px 4px;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: color-mix(in srgb, var(--ql-accent) 4%, var(--ql-surface));
+}
+
+.ql-cert-fields__ref {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--ql-muted);
+}
+
+.ql-cert-panel {
+  padding: 18px 20px;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius-sm);
+  background: var(--ql-surface);
+}
+
+.ql-cert-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ql-cert-panel__title {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ql-title);
+}
+
+.ql-cert-panel__meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ql-muted);
+}
+
+.ql-cert-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ql-border);
+}
+
+.ql-table__expand-row td {
+  padding: 0 0 12px;
+  background: color-mix(in srgb, var(--ql-accent) 4%, var(--ql-surface));
+}
+
+.ql-icon-btn--active {
+  color: var(--ql-accent);
+  background: color-mix(in srgb, var(--ql-accent) 12%, var(--ql-surface));
+}

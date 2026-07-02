@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useCallback,
   useEffect,
   useRef,
@@ -7,6 +8,8 @@ import {
 } from "react";
 import {
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   FileSearch,
   FileText,
@@ -25,8 +28,10 @@ import {
   createLabel,
   deleteLabel,
   fetchLabelQrBlob,
+  getChecklistTemplate,
   listLabels,
   lookupOp,
+  saveCertificate,
   searchOps,
   setLabelActive,
 } from "../api/qualityLabelsApi";
@@ -37,8 +42,15 @@ import {
 } from "../utils/operationalUnits";
 import { UnitMultiSelect } from "../components/UnitMultiSelect";
 import { AuditMetadataModal } from "../components/AuditMetadataModal";
-import { CertificateModal } from "../components/CertificateModal";
+import { CertificateEditor } from "../components/CertificateEditor";
+import { CertificateFormFields } from "../components/CertificateFormFields";
+import {
+  buildEmptyDraft,
+  formToSavePayload,
+  syncDraftFromInspection,
+} from "../utils/certificateFormUtils";
 import type {
+  CertificateFormState,
   OpLookup,
   OpSuggestion,
   QualityLabel,
@@ -90,7 +102,11 @@ export function QualityLabelsAdminPage() {
   const [filterBranches, setFilterBranches] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [auditLabel, setAuditLabel] = useState<QualityLabel | null>(null);
-  const [certificateLabel, setCertificateLabel] = useState<QualityLabel | null>(null);
+  const [expandedCertificateId, setExpandedCertificateId] = useState<string | null>(null);
+
+  const [certificateExpanded, setCertificateExpanded] = useState(false);
+  const [certificateDraft, setCertificateDraft] = useState<CertificateFormState | null>(null);
+  const [certificateTemplateLoading, setCertificateTemplateLoading] = useState(false);
 
   const refreshList = useCallback(
     async (searchTerm: string, branches: string[], signal?: AbortSignal) => {
@@ -172,6 +188,37 @@ export function QualityLabelsAdminPage() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [showSuggestions]);
 
+  useEffect(() => {
+    if (!certificateExpanded || certificateDraft) return;
+    const controller = new AbortController();
+    setCertificateTemplateLoading(true);
+    getChecklistTemplate(controller.signal)
+      .then((items) => {
+        setCertificateDraft(
+          buildEmptyDraft({
+            templateItems: items,
+            inspectedQuantity,
+            lookup,
+          }),
+        );
+      })
+      .catch((err) => {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          setError(err instanceof Error ? err.message : "Erro ao carregar o checklist.");
+        }
+      })
+      .finally(() => setCertificateTemplateLoading(false));
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [certificateExpanded]);
+
+  useEffect(() => {
+    if (!certificateDraft) return;
+    setCertificateDraft((prev) =>
+      prev ? syncDraftFromInspection(prev, { inspectedQuantity, lookup }) : prev,
+    );
+  }, [inspectedQuantity, lookup]);
+
   const runLookup = useCallback(async (opValue: string, branchValue: string) => {
     if (!opValue.trim()) return;
     setLooking(true);
@@ -198,7 +245,7 @@ export function QualityLabelsAdminPage() {
     void runLookup(item.productionOrder, item.branch ?? branch);
   }
 
-  async function doRegister(openCertificate: boolean) {
+  async function doRegister() {
     if (!op.trim()) return;
 
     if (lookup?.hasActiveInspection && !confirmExisting) {
@@ -220,7 +267,15 @@ export function QualityLabelsAdminPage() {
           ? Math.max(0, Math.trunc(Number(inspectedQuantity)))
           : null,
       });
-      setSuccess(`Etiqueta registrada para ${label.productCode}.`);
+
+      let successMessage = `Etiqueta registrada para ${label.productCode}.`;
+      if (certificateExpanded && certificateDraft) {
+        await saveCertificate(label.id, formToSavePayload(certificateDraft, false));
+        successMessage += " Certificado salvo como rascunho (auditoria registrada).";
+        setExpandedCertificateId(label.id);
+      }
+
+      setSuccess(successMessage);
       setOp("");
       setBranch("");
       setNotes("");
@@ -229,8 +284,9 @@ export function QualityLabelsAdminPage() {
       setLookup(null);
       setConfirmExisting(false);
       setSuggestions([]);
+      setCertificateExpanded(false);
+      setCertificateDraft(null);
       await refreshList(search, filterBranches);
-      if (openCertificate) setCertificateLabel(label);
     } catch (err) {
       if (err instanceof HttpRequestError && err.status === 404) {
         setError(err.message);
@@ -244,7 +300,15 @@ export function QualityLabelsAdminPage() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    void doRegister(false);
+    void doRegister();
+  }
+
+  function toggleCertificateSection() {
+    setCertificateExpanded((prev) => !prev);
+  }
+
+  function toggleRowCertificate(label: QualityLabel) {
+    setExpandedCertificateId((prev) => (prev === label.id ? null : label.id));
   }
 
   async function handlePrint(label: QualityLabel) {
@@ -453,6 +517,54 @@ export function QualityLabelsAdminPage() {
                 </div>
               )}
 
+              <div className="ql-cert-collapse">
+                <button
+                  type="button"
+                  className={`ql-btn ql-btn--ghost ql-cert-collapse__toggle ${
+                    certificateExpanded ? "ql-cert-collapse__toggle--open" : ""
+                  }`}
+                  onClick={toggleCertificateSection}
+                  aria-expanded={certificateExpanded}
+                >
+                  {certificateExpanded ? (
+                    <ChevronUp className="ql-icon" />
+                  ) : (
+                    <ChevronDown className="ql-icon" />
+                  )}
+                  Certificado de qualidade
+                </button>
+
+                {certificateExpanded && (
+                  <div className="ql-cert-collapse__body">
+                    <p className="ql-info-note ql-info-note--compact">
+                      Preencha o certificado antes ou junto com o registro. Ao registrar,
+                      um rascunho é salvo automaticamente; edições posteriores ficam na
+                      auditoria.
+                    </p>
+                    {certificateTemplateLoading || !certificateDraft ? (
+                      <div className="ql-state">
+                        <p>
+                          <Loader2 className="ql-icon ql-spin" /> Carregando checklist...
+                        </p>
+                      </div>
+                    ) : (
+                      <CertificateFormFields
+                        form={certificateDraft}
+                        onChange={(partial) =>
+                          setCertificateDraft((prev) =>
+                            prev ? { ...prev, ...partial } : prev,
+                          )
+                        }
+                        productionOrder={(lookup?.productionOrder ?? op.trim()) || undefined}
+                        productCode={lookup?.productCode}
+                        docRef="RQ-032 – Rev.00 – 21/01/2021"
+                        disabled={saving}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="ql-form__actions">
                 <button
                   type="submit"
@@ -461,16 +573,6 @@ export function QualityLabelsAdminPage() {
                 >
                   {saving ? <Loader2 className="ql-icon ql-spin" /> : <QrCode className="ql-icon" />}
                   {confirmExisting ? "Registrar mesmo assim" : "Registrar inspeção"}
-                </button>
-                <button
-                  type="button"
-                  className="ql-btn ql-btn--ghost"
-                  onClick={() => void doRegister(true)}
-                  disabled={saving || !op.trim()}
-                  title="Registra a inspeção e abre o certificado de qualidade em seguida"
-                >
-                  <FileText className="ql-icon" />
-                  Registrar e gerar certificado
                 </button>
               </div>
             </form>
@@ -527,78 +629,93 @@ export function QualityLabelsAdminPage() {
                   </thead>
                   <tbody>
                     {labels.map((label) => (
-                      <tr key={label.id} className={label.isActive ? "" : "ql-row--inactive"}>
-                        <td>
-                          <span className="ql-cell-strong">{label.productCode}</span>
-                          <span className="ql-cell-muted">{label.productDescription}</span>
-                        </td>
-                        <td>{label.productionOrder}</td>
-                        <td>{label.branchName ?? formatOperationalUnit(label.branch)}</td>
-                        <td>{formatDate(label.inspectedAt)}</td>
-                        <td>{label.inspectorName}</td>
-                        <td>{label.viewCount}</td>
-                        <td>
-                          <span className={`ql-badge ${label.isActive ? "ql-badge--on" : "ql-badge--off"}`}>
-                            {label.isActive ? "Ativa" : "Inativa"}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="ql-actions">
-                            <button
-                              type="button"
-                              className="ql-icon-btn"
-                              title="Ver auditoria (dados da OP/produto)"
-                              onClick={() => setAuditLabel(label)}
-                            >
-                              <FileSearch className="ql-icon" />
-                            </button>
-                            <button
-                              type="button"
-                              className="ql-icon-btn"
-                              title="Certificado de qualidade"
-                              onClick={() => setCertificateLabel(label)}
-                            >
-                              <FileText className="ql-icon" />
-                            </button>
-                            <button
-                              type="button"
-                              className="ql-icon-btn"
-                              title="Imprimir etiqueta"
-                              onClick={() => void handlePrint(label)}
-                              disabled={busyId === label.id}
-                            >
-                              <Printer className="ql-icon" />
-                            </button>
-                            <a
-                              className="ql-icon-btn"
-                              title="Abrir página pública"
-                              href={label.publicUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <ExternalLink className="ql-icon" />
-                            </a>
-                            <button
-                              type="button"
-                              className="ql-icon-btn"
-                              title={label.isActive ? "Desativar" : "Reativar"}
-                              onClick={() => void handleToggleActive(label)}
-                              disabled={busyId === label.id}
-                            >
-                              <Power className="ql-icon" />
-                            </button>
-                            <button
-                              type="button"
-                              className="ql-icon-btn ql-icon-btn--danger"
-                              title="Excluir etiqueta"
-                              onClick={() => void handleDelete(label)}
-                              disabled={busyId === label.id}
-                            >
-                              <Trash2 className="ql-icon" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                      <Fragment key={label.id}>
+                        <tr key={label.id} className={label.isActive ? "" : "ql-row--inactive"}>
+                          <td>
+                            <span className="ql-cell-strong">{label.productCode}</span>
+                            <span className="ql-cell-muted">{label.productDescription}</span>
+                          </td>
+                          <td>{label.productionOrder}</td>
+                          <td>{label.branchName ?? formatOperationalUnit(label.branch)}</td>
+                          <td>{formatDate(label.inspectedAt)}</td>
+                          <td>{label.inspectorName}</td>
+                          <td>{label.viewCount}</td>
+                          <td>
+                            <span className={`ql-badge ${label.isActive ? "ql-badge--on" : "ql-badge--off"}`}>
+                              {label.isActive ? "Ativa" : "Inativa"}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="ql-actions">
+                              <button
+                                type="button"
+                                className="ql-icon-btn"
+                                title="Ver auditoria (dados da OP/produto)"
+                                onClick={() => setAuditLabel(label)}
+                              >
+                                <FileSearch className="ql-icon" />
+                              </button>
+                              <button
+                                type="button"
+                                className={`ql-icon-btn ${
+                                  expandedCertificateId === label.id ? "ql-icon-btn--active" : ""
+                                }`}
+                                title="Certificado de qualidade"
+                                onClick={() => toggleRowCertificate(label)}
+                              >
+                                <FileText className="ql-icon" />
+                              </button>
+                              <button
+                                type="button"
+                                className="ql-icon-btn"
+                                title="Imprimir etiqueta"
+                                onClick={() => void handlePrint(label)}
+                                disabled={busyId === label.id}
+                              >
+                                <Printer className="ql-icon" />
+                              </button>
+                              <a
+                                className="ql-icon-btn"
+                                title="Abrir página pública"
+                                href={label.publicUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink className="ql-icon" />
+                              </a>
+                              <button
+                                type="button"
+                                className="ql-icon-btn"
+                                title={label.isActive ? "Desativar" : "Reativar"}
+                                onClick={() => void handleToggleActive(label)}
+                                disabled={busyId === label.id}
+                              >
+                                <Power className="ql-icon" />
+                              </button>
+                              <button
+                                type="button"
+                                className="ql-icon-btn ql-icon-btn--danger"
+                                title="Excluir etiqueta"
+                                onClick={() => void handleDelete(label)}
+                                disabled={busyId === label.id}
+                              >
+                                <Trash2 className="ql-icon" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {expandedCertificateId === label.id && (
+                          <tr key={`${label.id}-certificate`} className="ql-table__expand-row">
+                            <td colSpan={8}>
+                              <CertificateEditor
+                                label={label}
+                                onSaved={(message) => setSuccess(message)}
+                                onError={(message) => setError(message)}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -608,14 +725,6 @@ export function QualityLabelsAdminPage() {
 
       {auditLabel && (
         <AuditMetadataModal label={auditLabel} onClose={() => setAuditLabel(null)} />
-      )}
-
-      {certificateLabel && (
-        <CertificateModal
-          label={certificateLabel}
-          onClose={() => setCertificateLabel(null)}
-          onSaved={(message) => setSuccess(message)}
-        />
       )}
     </>
   );

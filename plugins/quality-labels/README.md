@@ -10,15 +10,12 @@ servida pelo `public-hub`.
 
 - **Etiquetas + QR code:** registra a inspeção por OP (busca automática do
   produto/unidade no TOTVS), gera a etiqueta e o QR público.
-- **Certificado de qualidade (RQ-032):** modal com checklist conforme/não
-  conforme (A/R/NA), linhas customizáveis, dados do cliente e observações.
-  Ao emitir, gera um **PDF imutável** no servidor (1 certificado por etiqueta).
-  - Pode ser aberto pela lista **ou** direto do formulário de registro
-    (botão "Registrar e gerar certificado").
-  - **Busca de cliente TOTVS (SA1)** por proximidade no campo de cliente
-    (autocomplete via `GET /customers/search`); dados continuam editáveis.
-  - "Quantidade amostral" é pré-preenchida com a quantidade de peças
-    inspecionadas informada no registro.
+- **Certificado de qualidade (RQ-032):** seção expansível no formulário de registro
+  (collapse) e painel inline na lista de etiquetas — **sem modal**. Checklist A/R/NA,
+  linhas customizáveis, busca de cliente TOTVS (SA1) e observações. Ao registrar com
+  a seção aberta, o rascunho é salvo automaticamente; edições posteriores (rascunho
+  ou emissão de PDF) geram eventos na aba **Auditoria** (`certificate_saved` /
+  `certificate_issued`).
 - **Aba Inspetor:** perfil (nome/cargo) e **assinatura** (desenho em canvas com
   mouse/caneta-tablet ou upload de imagem). Perfil e assinatura são
   **vinculados ao login** — cada inspetor só edita a própria.
