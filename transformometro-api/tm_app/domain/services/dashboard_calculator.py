@@ -199,12 +199,18 @@ class DashboardCalculatorService:
             "status_vigencia": status,
         }
 
-    def build_dashboard_rows(self, raw: TransformometroRawData) -> List[dict]:
+    def build_dashboard_rows(
+        self,
+        raw: TransformometroRawData,
+        *,
+        escopo_unidades: int = 1,
+    ) -> List[dict]:
         context = self._build_context(raw)
         _, calculation_rows = self._calculate_monthly_series(
             context=context,
             start_date=None,
             end_date=None,
+            escopo_unidades=escopo_unidades,
         )
         return calculation_rows
 
@@ -214,6 +220,8 @@ class DashboardCalculatorService:
         filial_id: Optional[str],
         start_date: Optional[str],
         end_date: Optional[str],
+        *,
+        escopo_unidades: int = 1,
     ) -> dict:
         filtered_raw = self.filter_raw(raw=raw, filial_id=filial_id)
         context = self._build_context(filtered_raw)
@@ -222,6 +230,7 @@ class DashboardCalculatorService:
             context=context,
             start_date=start_date,
             end_date=end_date,
+            escopo_unidades=escopo_unidades,
         )
 
         monthly_for_totals = self._monthly_breakdown_for_period(
@@ -608,6 +617,8 @@ class DashboardCalculatorService:
         context: CalculationContext,
         start_date: Optional[str],
         end_date: Optional[str],
+        *,
+        escopo_unidades: int = 1,
     ) -> tuple[List[dict], List[dict]]:
         timeline_start = self._determine_timeline_start(
             processos_by_id=context.processos_by_id,
@@ -681,6 +692,7 @@ class DashboardCalculatorService:
                     )
 
                     rows_da_instancia: List[dict] = []
+                    unit_mult = self._instance_unit_multiplier(instancia_row, escopo_unidades)
                     for review in selected_reviews:
                         row = self._calculate_review_month_result(
                             process_row=process_row,
@@ -692,6 +704,7 @@ class DashboardCalculatorService:
                         )
                         if row is None:
                             continue
+                        self._scale_instance_economy_row(row, unit_mult)
                         rows_da_instancia.append(row)
 
                     if not rows_da_instancia:
@@ -788,6 +801,20 @@ class DashboardCalculatorService:
             for key in totals:
                 totals[key] += float(row.get(key) or 0)
         return totals
+
+    def _instance_unit_multiplier(self, instancia_row: dict, escopo_unidades: int) -> int:
+        """Instância multi-unidade: economia escala pelo nº de unidades do recorte."""
+        if not self._is_true(instancia_row.get("todas_filiais_ativas")):
+            return 1
+        return max(1, escopo_unidades)
+
+    @staticmethod
+    def _scale_instance_economy_row(row: dict, multiplier: int) -> None:
+        """Multiplica métricas de economia da instância; recursos compartilhados não entram aqui."""
+        if multiplier <= 1:
+            return
+        for key in ("economia_bruta", "economia_liquida_mes", "horas_economizadas_mes"):
+            row[key] = float(row.get(key) or 0) * multiplier
 
     def _calculate_review_month_result(
         self,

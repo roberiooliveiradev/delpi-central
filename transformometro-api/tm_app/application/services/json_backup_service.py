@@ -231,6 +231,27 @@ class JsonBackupService:
                         seen_pairs.add(pair)
                 continue
 
+            if key == PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY:
+                seen_links: set[tuple[str, str]] = set()
+                for index, row in enumerate(rows):
+                    if not isinstance(row, dict):
+                        errors.append(f"{key}[{index}]: registro deve ser objeto.")
+                        continue
+                    instancia_id = row.get("instancia_id")
+                    setor_id = row.get("setor_id")
+                    if not instancia_id:
+                        errors.append(f"{key}[{index}]: instancia_id obrigatório.")
+                    if not setor_id:
+                        errors.append(f"{key}[{index}]: setor_id obrigatório.")
+                    if instancia_id and setor_id:
+                        pair = (_norm_id(instancia_id), _norm_id(setor_id))
+                        if pair in seen_links:
+                            errors.append(
+                                f"{key}: vínculo duplicado ({instancia_id}, {setor_id})."
+                            )
+                        seen_links.add(pair)
+                continue
+
             spec = _entity_spec_for_key(key)
             seen: set[str] = set()
             for index, row in enumerate(rows):
@@ -265,6 +286,12 @@ class JsonBackupService:
                 for fk_col, parent_key, _parent_pk in spec.fk_checks:
                     fk_val = row.get(fk_col)
                     if fk_val is None:
+                        if (
+                            spec.bundle_key == "processo_instancias"
+                            and fk_col == "filial_id"
+                            and bool(row.get("todas_filiais_ativas"))
+                        ):
+                            continue
                         errors.append(
                             f"{spec.bundle_key}: {fk_col} ausente em {row.get(spec.pk)}."
                         )
