@@ -381,7 +381,9 @@ class DashboardLiveService:
             comp = str(row.get("competencia") or "")
             if not pid or not comp:
                 continue
-            aggregated[(pid, comp)] += float(row.get("economia_liquida_mes") or 0)
+            # Processo/competência = média das instâncias ativas (mesmo N por grupo).
+            divisor = float(row.get("instancias_ativas_mes") or 1) or 1.0
+            aggregated[(pid, comp)] += float(row.get("economia_liquida_mes") or 0) / divisor
 
         result: list[dict[str, Any]] = []
         for (pid, comp), liquida in sorted(aggregated.items()):

@@ -186,7 +186,12 @@ def prorate_dashboard_row_for_period(
     start_date: Optional[str],
     end_date: Optional[str],
 ) -> Optional[dict[str, float]]:
-    """Prorrata métricas mensais pelo recorte; investimento único permanece integral."""
+    """Prorrata métricas mensais pelo recorte; investimento único permanece integral.
+
+    ``instancias_ativas_mes`` (>=1) divide as métricas para materializar a **média por
+    instância** do processo: ``Σ (linha / N)`` reproduz ``Σ economia_instância / N``.
+    No recorte por unidade só sobra 1 instância (``N = 1``) e devolve o valor real.
+    """
     day_fraction = competencia_day_fraction_in_range(
         str(row.get("competencia") or ""),
         start_date,
@@ -195,17 +200,24 @@ def prorate_dashboard_row_for_period(
     if day_fraction <= 0:
         return None
 
-    economia_bruta = float(row.get("economia_bruta") or 0) * day_fraction
-    custo_recorrente_mes = float(row.get("custo_recorrente_mes") or 0) * day_fraction
+    instance_divisor = to_float(row.get("instancias_ativas_mes")) or 1.0
+    if instance_divisor < 1.0:
+        instance_divisor = 1.0
+    scale = day_fraction / instance_divisor
+
+    economia_bruta = float(row.get("economia_bruta") or 0) * scale
+    custo_recorrente_mes = float(row.get("custo_recorrente_mes") or 0) * scale
     custo_recursos_compartilhados_mes = (
-        float(row.get("custo_recursos_compartilhados_mes") or 0) * day_fraction
+        float(row.get("custo_recursos_compartilhados_mes") or 0) * scale
     )
-    investimento_unico_mes = float(row.get("investimento_unico_mes") or 0)
+    investimento_unico_mes = (
+        float(row.get("investimento_unico_mes") or 0) / instance_divisor
+    )
     investimento_total_mes = (
         investimento_unico_mes + custo_recorrente_mes + custo_recursos_compartilhados_mes
     )
     economia_liquida_mes = economia_bruta - investimento_total_mes
-    horas_economizadas_mes = float(row.get("horas_economizadas_mes") or 0) * day_fraction
+    horas_economizadas_mes = float(row.get("horas_economizadas_mes") or 0) * scale
 
     return {
         "economia_bruta": economia_bruta,

@@ -190,3 +190,113 @@ def test_query_ranking_processos_uses_first_implementation_date_but_keeps_later_
     assert rows[0]["investimento_total_mes"] == 0.0
     assert rows[1]["data_implantacao"] == "2025-06-05"
     assert rows[1]["revisao_implantacao_id"] == "p2-melhoria"
+
+
+def _medicao_live(revisao_id: str, tempo: float) -> dict:
+    return {
+        "revisao_id": revisao_id,
+        "volume_mensal": 100,
+        "tempo_medio_execucao_min": tempo,
+        "percentual_retrabalho": 0,
+        "custo_hora_mao_obra": 50,
+        "quantidade_erros_mes": 0,
+        "custo_unitario_erro": 0,
+        "custo_outros_desperdicios": 0,
+        "deletado": False,
+    }
+
+
+def _multi_instancia_raw_live() -> TransformometroRawData:
+    return TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-MULTI",
+                "nome_processo": "Multi-instância",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        processo_instancias=[
+            {
+                "instancia_id": "i-sc",
+                "processo_id": "p1",
+                "filial_id": "01",
+                "codigo_filial": "01",
+                "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+                "deletado": False,
+            },
+            {
+                "instancia_id": "i-es",
+                "processo_id": "p1",
+                "filial_id": "02",
+                "codigo_filial": "02",
+                "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+                "deletado": False,
+            },
+        ],
+        revisoes=[
+            {
+                "revisao_id": "r-sc-base",
+                "processo_id": "p1",
+                "instancia_id": "i-sc",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-01-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-sc-mel",
+                "processo_id": "p1",
+                "instancia_id": "i-sc",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-04-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-es-base",
+                "processo_id": "p1",
+                "instancia_id": "i-es",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-03-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-es-mel",
+                "processo_id": "p1",
+                "instancia_id": "i-es",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-04-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+        ],
+        medicoes=[
+            _medicao_live("r-sc-base", 60),
+            _medicao_live("r-sc-mel", 30),  # 2500/mês
+            _medicao_live("r-es-base", 60),
+            _medicao_live("r-es-mel", 48),  # 1000/mês
+        ],
+        investimentos=[],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+
+
+@patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
+def test_process_monthly_liquida_uses_instance_average(mock_repo):
+    """Alertas: economia líquida por processo/mês é a média das instâncias ativas."""
+    mock_repo.return_value.load_raw.return_value = _multi_instancia_raw_live()
+
+    rows = DashboardLiveService().query_process_monthly_liquida(
+        competencia_inicio="2025-04-01",
+        competencia_fim="2025-04-30",
+    )
+
+    abril = [r for r in rows if r["competencia"] == "2025-04" and r["processo_id"] == "p1"]
+    assert len(abril) == 1
+    # média (2500 + 1000) / 2 = 1750, não a soma 3500.
+    assert abril[0]["economia_liquida_mes"] == 1750.0

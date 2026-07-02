@@ -18,6 +18,65 @@ _INVESTIMENTO_TOTAL_SQL = """
   + COALESCE(custo_recorrente_mes, 0)
   + COALESCE(custo_recursos_compartilhados_mes, 0)
 """
+
+# Cenários comparáveis materializados no cache (baseline não é materializado).
+_COMPARABLE_CENARIOS_SQL = "d.cenario_tipo IN ('melhoria', 'automacao', 'correcao')"
+
+# Instância como ambiente: NULL (legado) cai para o processo (1 instância).
+_INSTANCE_KEY_SQL = "COALESCE(d.instancia_id::text, d.processo_id::text)"
+
+
+def _instance_average_cte(row_where_sql: str) -> str:
+    """CTE de agregação em 2 níveis para a **média por instância** (regra jul/2026).
+
+    - ``inst_lvl``: soma as revisões dentro de cada instância (grão instância × competência).
+    - ``proc_lvl``: média entre as instâncias ativas (grão processo × competência).
+
+    O filtro de escopo (filial/setor) entra em ``row_where_sql`` no grão de linha, logo o
+    consolidado vira a média das instâncias e o recorte por unidade sobra 1 instância
+    (``AVG`` de 1 = valor real). Espelha ``DashboardCalculatorService`` /
+    ``calc_rules.prorate_dashboard_row_for_period``.
+    """
+    return f"""
+    WITH inst_lvl AS (
+        SELECT
+            d.processo_id AS processo_id,
+            d.competencia AS competencia,
+            {_INSTANCE_KEY_SQL} AS instancia_key,
+            MAX(d.codigo_filial) AS codigo_filial,
+            MAX(d.codigo_setor) AS codigo_setor,
+            SUM(COALESCE(d.economia_bruta, 0)) AS economia_bruta,
+            SUM(COALESCE(d.economia_liquida_mes, 0)) AS economia_liquida_mes,
+            SUM(COALESCE(d.investimento_unico_mes, 0)) AS investimento_unico_mes,
+            SUM(COALESCE(d.custo_recorrente_mes, 0)) AS custo_recorrente_mes,
+            SUM(COALESCE(d.custo_recursos_compartilhados_mes, 0))
+                AS custo_recursos_compartilhados_mes,
+            SUM(COALESCE(d.horas_economizadas_mes, 0)) AS horas_economizadas_mes,
+            COUNT(DISTINCT d.revisao_id) AS revisoes,
+            MAX(d.calculated_at) AS calculated_at
+        FROM transformometro.dashboard_calculos d
+        WHERE {row_where_sql}
+        GROUP BY d.processo_id, d.competencia, {_INSTANCE_KEY_SQL}
+    ),
+    proc_lvl AS (
+        SELECT
+            processo_id,
+            competencia,
+            AVG(economia_bruta) AS economia_bruta,
+            AVG(economia_liquida_mes) AS economia_liquida_mes,
+            AVG(investimento_unico_mes) AS investimento_unico_mes,
+            AVG(custo_recorrente_mes) AS custo_recorrente_mes,
+            AVG(custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
+            AVG(horas_economizadas_mes) AS horas_economizadas_mes,
+            SUM(revisoes) AS revisoes,
+            MAX(codigo_filial) AS codigo_filial,
+            MAX(codigo_setor) AS codigo_setor,
+            MAX(calculated_at) AS calculated_at,
+            COUNT(*) AS instancias_ativas
+        FROM inst_lvl
+        GROUP BY processo_id, competencia
+    )
+    """
 class DashboardDataRepository(PluginBaseRepository):
     def load_raw(self) -> TransformometroRawData:
         processos = self.fetch_all(
@@ -170,6 +229,34 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 horas_economizadas_mes = EXCLUDED.horas_economizadas_mes,
                 calculated_at = NOW()
             """
+
+    def _row_where(
+        self,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+        extra_clauses: list[str] | None = None,
+        extra_params: list[Any] | None = None,
+    ) -> tuple[str, list[Any]]:
+        """WHERE no grão de linha (alias ``d``) para alimentar ``_instance_average_cte``."""
+        clauses: list[str] = [_COMPARABLE_CENARIOS_SQL]
+        params: list[Any] = []
+        self._append_scope_filters(
+            clauses, params, table_alias="d", filial_id=filial_id, setor_id=setor_id
+        )
+        if competencia_inicio:
+            clauses.append("d.competencia >= %s")
+            params.append(competencia_inicio)
+        if competencia_fim:
+            clauses.append("d.competencia <= %s")
+            params.append(competencia_fim)
+        if extra_clauses:
+            clauses.extend(extra_clauses)
+        if extra_params:
+            params.extend(extra_params)
+        return " AND ".join(clauses), params
 
     @staticmethod
     def _append_scope_filters(
@@ -438,30 +525,25 @@ class DashboardCalculoRepository(PluginBaseRepository):
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
-        clauses: list[str] = []
-        params: list[Any] = []
-
-        self._append_scope_filters(
-            clauses,
-            params,
-            table_alias=None,
+        where_sql, params = self._row_where(
             filial_id=filial_id,
             setor_id=setor_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
         )
-        if competencia_inicio:
-            clauses.append("competencia >= %s")
-            params.append(competencia_inicio)
-        if competencia_fim:
-            clauses.append("competencia <= %s")
-            params.append(competencia_fim)
-
-        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        cte = _instance_average_cte(where_sql)
+        # ``solucoes_implementadas`` = nº de soluções (distintas) no recorte — não é média.
+        # A subquery reaproveita o mesmo WHERE, então os parâmetros entram duas vezes.
+        full_params = list(params) + list(params)
 
         return self.fetch_one(
             f"""
+            {cte}
             SELECT
-                COUNT(DISTINCT revisao_id) FILTER (
-                    WHERE cenario_tipo IN ('melhoria', 'automacao', 'correcao')
+                (
+                    SELECT COUNT(DISTINCT d.revisao_id)
+                    FROM transformometro.dashboard_calculos d
+                    WHERE {where_sql}
                 ) AS solucoes_implementadas,
                 COALESCE(SUM(economia_bruta), 0) AS economia_bruta_total,
                 COALESCE(SUM(economia_liquida_mes), 0) AS economia_liquida_total,
@@ -469,12 +551,15 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 COALESCE(SUM(custo_recorrente_mes), 0) AS custo_recorrente_total,
                 COALESCE(SUM(custo_recursos_compartilhados_mes), 0)
                     AS custo_recursos_compartilhados_total,
-                COALESCE(SUM({_INVESTIMENTO_TOTAL_SQL}), 0) AS investimento_total,
+                COALESCE(SUM(
+                    COALESCE(investimento_unico_mes, 0)
+                  + COALESCE(custo_recorrente_mes, 0)
+                  + COALESCE(custo_recursos_compartilhados_mes, 0)
+                ), 0) AS investimento_total,
                 COALESCE(SUM(horas_economizadas_mes), 0) AS horas_economizadas_total
-            FROM transformometro.dashboard_calculos
-            {where_sql}
+            FROM proc_lvl
             """,
-            tuple(params),
+            tuple(full_params),
         ) or {}
 
     def query_evolucao(
@@ -485,39 +570,35 @@ class DashboardCalculoRepository(PluginBaseRepository):
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
-        clauses: list[str] = []
-        params: list[Any] = []
-
-        self._append_scope_filters(
-            clauses,
-            params,
-            table_alias="v",
+        # Média por instância: filtro de escopo no grão de linha, soma dos processos por
+        # competência (cada processo já contribui com a média das suas instâncias ativas).
+        where_sql, params = self._row_where(
             filial_id=filial_id,
             setor_id=setor_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
         )
-        if competencia_inicio:
-            clauses.append("v.competencia >= %s")
-            params.append(competencia_inicio)
-        if competencia_fim:
-            clauses.append("v.competencia <= %s")
-            params.append(competencia_fim)
-
-        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        cte = _instance_average_cte(where_sql)
 
         return self.fetch_all(
             f"""
+            {cte}
             SELECT
-                v.competencia,
-                SUM(v.economia_bruta) AS economia_bruta,
-                SUM(v.investimento_unico_mes) AS investimento_unico_mes,
-                SUM(v.custo_recorrente_mes) AS custo_recorrente_mes,
-                SUM(v.custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
-                SUM(v.investimento_total_mes) AS investimento_total_mes,
-                SUM(v.economia_liquida_mes) AS economia_liquida_mes
-            FROM transformometro.dashboard_competencia_evolucao v
-            {where_sql}
-            GROUP BY v.competencia
-            ORDER BY v.competencia ASC
+                competencia,
+                COALESCE(SUM(economia_bruta), 0) AS economia_bruta,
+                COALESCE(SUM(investimento_unico_mes), 0) AS investimento_unico_mes,
+                COALESCE(SUM(custo_recorrente_mes), 0) AS custo_recorrente_mes,
+                COALESCE(SUM(custo_recursos_compartilhados_mes), 0)
+                    AS custo_recursos_compartilhados_mes,
+                COALESCE(SUM(
+                    COALESCE(investimento_unico_mes, 0)
+                  + COALESCE(custo_recorrente_mes, 0)
+                  + COALESCE(custo_recursos_compartilhados_mes, 0)
+                ), 0) AS investimento_total_mes,
+                COALESCE(SUM(economia_liquida_mes), 0) AS economia_liquida_mes
+            FROM proc_lvl
+            GROUP BY competencia
+            ORDER BY competencia ASC
             """,
             tuple(params),
         )
@@ -575,68 +656,69 @@ class DashboardCalculoRepository(PluginBaseRepository):
         limit: int = 50,
     ) -> list[dict[str, Any]]:
         """Ranking legado sobre cache SQL. Preferir ``DashboardLiveService`` (calc_rules)."""
-        clauses: list[str] = []
-        params: list[Any] = []
-
-        self._append_scope_filters(
-            clauses, params, filial_id=filial_id, setor_id=setor_id
-        )
         if competencia:
-            clauses.append("d.competencia = %s")
-            params.append(competencia)
+            extra_clauses = ["d.competencia = %s"]
+            extra_params: list[Any] = [competencia]
         else:
-            clauses.append(
+            extra_clauses = [
                 "d.competencia = (SELECT MAX(competencia) FROM transformometro.dashboard_calculos)"
-            )
+            ]
+            extra_params = []
 
-        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
-        params.append(limit)
+        where_sql, params = self._row_where(
+            filial_id=filial_id,
+            setor_id=setor_id,
+            extra_clauses=extra_clauses,
+            extra_params=extra_params,
+        )
+        cte = _instance_average_cte(where_sql)
+        params = list(params) + [limit]
 
+        # ``pl`` já traz a média por instância (grão processo × competência);
+        # o ranking soma as competências do recorte por processo.
         return self.fetch_all(
             f"""
+            {cte}
             SELECT
                 p.processo_id,
                 p.codigo_processo,
                 p.nome_processo,
-                d.codigo_filial AS filial_id,
-                d.codigo_setor AS setor_id,
-                SUM(d.economia_liquida_mes) AS economia_liquida_mes,
-                SUM(d.economia_bruta) AS economia_bruta,
-                SUM(d.investimento_unico_mes) AS investimento_unico_mes,
-                SUM(d.custo_recorrente_mes) AS custo_recorrente_mes,
-                SUM(d.custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
+                MAX(pl.codigo_filial) AS filial_id,
+                MAX(pl.codigo_setor) AS setor_id,
+                SUM(pl.economia_liquida_mes) AS economia_liquida_mes,
+                SUM(pl.economia_bruta) AS economia_bruta,
+                SUM(pl.investimento_unico_mes) AS investimento_unico_mes,
+                SUM(pl.custo_recorrente_mes) AS custo_recorrente_mes,
+                SUM(pl.custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
                 SUM(
-                    COALESCE(d.investimento_unico_mes, 0)
-                  + COALESCE(d.custo_recorrente_mes, 0)
-                  + COALESCE(d.custo_recursos_compartilhados_mes, 0)
+                    COALESCE(pl.investimento_unico_mes, 0)
+                  + COALESCE(pl.custo_recorrente_mes, 0)
+                  + COALESCE(pl.custo_recursos_compartilhados_mes, 0)
                 ) AS investimento_total_mes,
-                SUM(d.economia_bruta) / NULLIF(
+                SUM(pl.economia_bruta) / NULLIF(
                     EXTRACT(
                         DAY FROM (
-                            (MAX(d.competencia) || '-01')::date
+                            (MAX(pl.competencia) || '-01')::date
                             + INTERVAL '1 month' - INTERVAL '1 day'
                         )
                     ),
                     0
                 ) AS economia_diaria,
-                SUM(d.horas_economizadas_mes) / NULLIF(
+                SUM(pl.horas_economizadas_mes) / NULLIF(
                     EXTRACT(
                         DAY FROM (
-                            (MAX(d.competencia) || '-01')::date
+                            (MAX(pl.competencia) || '-01')::date
                             + INTERVAL '1 month' - INTERVAL '1 day'
                         )
                     ),
                     0
                 ) AS horas_diaria
-            FROM transformometro.dashboard_calculos d
-            JOIN transformometro.processos p ON p.processo_id = d.processo_id
-            {where_sql}
+            FROM proc_lvl pl
+            JOIN transformometro.processos p ON p.processo_id = pl.processo_id
             GROUP BY
                 p.processo_id,
                 p.codigo_processo,
-                p.nome_processo,
-                d.codigo_filial,
-                d.codigo_setor
+                p.nome_processo
             ORDER BY economia_diaria DESC
             LIMIT %s
             """,
@@ -652,46 +734,40 @@ class DashboardCalculoRepository(PluginBaseRepository):
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
-        clauses = ["d.cenario_tipo IN ('melhoria', 'automacao', 'correcao')"]
-        params: list[Any] = []
-
-        self._append_scope_filters(
-            clauses, params, filial_id=filial_id, setor_id=setor_id
+        where_sql, params = self._row_where(
+            filial_id=filial_id,
+            setor_id=setor_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
         )
+        cte = _instance_average_cte(where_sql)
+
+        familia_clause = ""
+        full_params = list(params)
         if familia_processo:
-            clauses.append("p.familia_processo = %s")
-            params.append(familia_processo)
-        if competencia_inicio:
-            clauses.append("d.competencia >= %s")
-            params.append(competencia_inicio)
-        if competencia_fim:
-            clauses.append("d.competencia <= %s")
-            params.append(competencia_fim)
+            familia_clause = "WHERE p.familia_processo = %s"
+            full_params.append(familia_processo)
 
-        where_sql = " AND ".join(clauses)
-
+        # ``pl.economia_liquida_mes`` já é a média das instâncias ativas no mês.
         return self.fetch_all(
             f"""
+            {cte}
             SELECT
-                d.processo_id,
+                pl.processo_id,
                 p.codigo_processo,
                 p.nome_processo,
-                d.codigo_filial AS filial_id,
-                d.codigo_setor AS setor_id,
+                pl.codigo_filial AS filial_id,
+                pl.codigo_setor AS setor_id,
                 p.familia_processo,
                 p.agrupador_ferramenta,
-                d.competencia,
-                SUM(d.economia_liquida_mes) AS economia_liquida_mes
-            FROM transformometro.dashboard_calculos d
-            JOIN transformometro.processos p ON p.processo_id = d.processo_id
-            WHERE {where_sql}
-            GROUP BY
-                d.processo_id, p.codigo_processo, p.nome_processo,
-                d.codigo_filial, d.codigo_setor, p.familia_processo, p.agrupador_ferramenta,
-                d.competencia
-            ORDER BY d.processo_id, d.competencia
+                pl.competencia,
+                pl.economia_liquida_mes AS economia_liquida_mes
+            FROM proc_lvl pl
+            JOIN transformometro.processos p ON p.processo_id = pl.processo_id
+            {familia_clause}
+            ORDER BY pl.processo_id, pl.competencia
             """,
-            tuple(params),
+            tuple(full_params),
         )
 
     def query_export_rows(
@@ -758,31 +834,26 @@ class DashboardCalculoRepository(PluginBaseRepository):
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
-        clauses = ["p.familia_processo IS NOT NULL", "p.familia_processo <> ''"]
-        params: list[Any] = []
-
-        self._append_scope_filters(
-            clauses, params, filial_id=filial_id, setor_id=None
+        where_sql, params = self._row_where(
+            filial_id=filial_id,
+            setor_id=None,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
         )
-        if competencia_inicio:
-            clauses.append("d.competencia >= %s")
-            params.append(competencia_inicio)
-        if competencia_fim:
-            clauses.append("d.competencia <= %s")
-            params.append(competencia_fim)
+        cte = _instance_average_cte(where_sql)
 
-        where_sql = " AND ".join(clauses)
-
+        # Cada processo contribui com a soma (no recorte) das suas médias por competência.
         return self.fetch_all(
             f"""
+            {cte}
             SELECT
                 p.familia_processo,
-                COUNT(DISTINCT d.processo_id) AS processos,
-                SUM(d.economia_bruta) AS economia_bruta,
-                SUM(d.economia_liquida_mes) AS economia_liquida_mes
-            FROM transformometro.dashboard_calculos d
-            JOIN transformometro.processos p ON p.processo_id = d.processo_id
-            WHERE {where_sql}
+                COUNT(DISTINCT pl.processo_id) AS processos,
+                COALESCE(SUM(pl.economia_bruta), 0) AS economia_bruta,
+                COALESCE(SUM(pl.economia_liquida_mes), 0) AS economia_liquida_mes
+            FROM proc_lvl pl
+            JOIN transformometro.processos p ON p.processo_id = pl.processo_id
+            WHERE p.familia_processo IS NOT NULL AND p.familia_processo <> ''
             GROUP BY p.familia_processo
             ORDER BY economia_liquida_mes DESC
             """,

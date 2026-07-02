@@ -615,3 +615,169 @@ def test_build_summary_accepts_wide_yyyy_mm_dd_range():
 
     assert summary["evolucao_mensal"]
     assert summary["economia_liquida_total"] is not None
+
+
+def _medicao(revisao_id: str, tempo: float) -> dict:
+    return {
+        "revisao_id": revisao_id,
+        "volume_mensal": 100,
+        "tempo_medio_execucao_min": tempo,
+        "percentual_retrabalho": 0,
+        "custo_hora_mao_obra": 50,
+        "custo_unitario_retrabalho": 0,
+        "tempo_retrabalho_min": 0,
+        "quantidade_erros_mes": 0,
+        "custo_unitario_erro": 0,
+        "custo_outros_desperdicios": 0,
+        "deletado": False,
+    }
+
+
+def _multi_instancia_raw() -> TransformometroRawData:
+    """Processo p1 com 2 instâncias (ambientes) que começam em datas diferentes.
+
+    - Instância SC (filial 01): melhoria em 02/2025 → economia bruta 2500/mês.
+    - Instância ES (filial 02): melhoria em 04/2025 → economia bruta 1000/mês.
+    """
+    return TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-MULTI",
+                "nome_processo": "Processo multi-instância",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        processo_instancias=[
+            {
+                "instancia_id": "i-sc",
+                "processo_id": "p1",
+                "filial_id": "01",
+                "codigo_filial": "01",
+                "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+                "deletado": False,
+            },
+            {
+                "instancia_id": "i-es",
+                "processo_id": "p1",
+                "filial_id": "02",
+                "codigo_filial": "02",
+                "setores": [{"codigo_setor": "eng", "setor_id": "eng"}],
+                "deletado": False,
+            },
+        ],
+        revisoes=[
+            {
+                "revisao_id": "r-sc-base",
+                "processo_id": "p1",
+                "instancia_id": "i-sc",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-01-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-sc-mel",
+                "processo_id": "p1",
+                "instancia_id": "i-sc",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-02-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-es-base",
+                "processo_id": "p1",
+                "instancia_id": "i-es",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-03-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-es-mel",
+                "processo_id": "p1",
+                "instancia_id": "i-es",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-04-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+        ],
+        medicoes=[
+            _medicao("r-sc-base", 60),
+            _medicao("r-sc-mel", 30),  # Δ30min → 2500/mês
+            _medicao("r-es-base", 60),
+            _medicao("r-es-mel", 48),  # Δ12min → 1000/mês
+        ],
+        investimentos=[],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+
+
+def _month_bruta(summary: dict, competencia: str) -> float:
+    for item in summary["evolucao_mensal"]:
+        if item["competencia"] == competencia:
+            return float(item["economia_bruta"])
+    return 0.0
+
+
+def test_multi_instancia_baseline_por_instancia_e_media_por_processo():
+    """Cada instância tem baseline próprio; processo consolidado = média das ativas."""
+    calc = DashboardCalculatorService()
+    raw = _multi_instancia_raw()
+
+    rows = calc.build_dashboard_rows(raw)
+
+    sc_fev = next(
+        r for r in rows if r["revisao_id"] == "r-sc-mel" and r["competencia"] == "2025-02"
+    )
+    assert sc_fev["economia_bruta"] == 2500.0
+    # Fevereiro: só a instância SC está ativa → divisor 1.
+    assert sc_fev["instancias_ativas_mes"] == 1
+
+    sc_abr = next(
+        r for r in rows if r["revisao_id"] == "r-sc-mel" and r["competencia"] == "2025-04"
+    )
+    es_abr = next(
+        r for r in rows if r["revisao_id"] == "r-es-mel" and r["competencia"] == "2025-04"
+    )
+    # Abril: SC e ES ativas → divisor 2 (média das duas instâncias).
+    assert sc_abr["instancias_ativas_mes"] == 2
+    assert es_abr["instancias_ativas_mes"] == 2
+    assert sc_abr["economia_bruta"] == 2500.0
+    assert es_abr["economia_bruta"] == 1000.0
+
+
+def test_multi_instancia_consolidado_usa_media_por_competencia():
+    calc = DashboardCalculatorService()
+    raw = _multi_instancia_raw()
+    summary = calc.build_summary(raw, filial_id=None, start_date=None, end_date=None)
+
+    # Fev: só SC ativa → 2500. Abr: média (2500 + 1000) / 2 = 1750.
+    assert _month_bruta(summary, "2025-02") == 2500.0
+    assert _month_bruta(summary, "2025-04") == 1750.0
+
+
+def test_multi_instancia_filtro_por_unidade_mostra_valor_real():
+    calc = DashboardCalculatorService()
+    raw = _multi_instancia_raw()
+
+    consolidado = calc.build_summary(
+        raw, filial_id=None, start_date="2025-04-01", end_date="2025-04-30"
+    )
+    sc = calc.build_summary(
+        raw, filial_id="01", start_date="2025-04-01", end_date="2025-04-30"
+    )
+    es = calc.build_summary(
+        raw, filial_id="02", start_date="2025-04-01", end_date="2025-04-30"
+    )
+
+    # Recorte por unidade = N=1 → valor real da instância (não média).
+    assert sc["economia_bruta_total"] == 2500.0
+    assert es["economia_bruta_total"] == 1000.0
+    # Consolidado do mesmo mês = média das instâncias ativas.
+    assert consolidado["economia_bruta_total"] == 1750.0

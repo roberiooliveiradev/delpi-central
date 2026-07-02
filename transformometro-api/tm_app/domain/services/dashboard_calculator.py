@@ -25,6 +25,7 @@ class CalculationContext:
     processos_by_id: Dict[str, dict]
     revisoes_by_id: Dict[str, dict]
     instancias_by_id: Dict[str, dict]
+    instancias_by_processo: Dict[str, List[dict]]
     revisoes_by_processo: Dict[str, List[dict]]
     medicoes_by_revisao: Dict[str, dict]
     investimentos_by_revisao: Dict[str, List[dict]]
@@ -531,6 +532,7 @@ class DashboardCalculatorService:
             processos_by_id=self._index_by(raw.processos, "processo_id"),
             revisoes_by_id=self._index_by(raw.revisoes, "revisao_id"),
             instancias_by_id=self._index_by(raw.processo_instancias, "instancia_id"),
+            instancias_by_processo=self._group_by(raw.processo_instancias, "processo_id"),
             revisoes_by_processo=self._group_by(raw.revisoes, "processo_id"),
             medicoes_by_revisao=self._group_first_by(raw.medicoes, "revisao_id"),
             investimentos_by_revisao=self._group_by(raw.investimentos, "revisao_id"),
@@ -579,44 +581,100 @@ class DashboardCalculatorService:
             horas_economizadas_mes = 0.0
 
             for process_id, process_row in context.processos_by_id.items():
-                revisoes = context.revisoes_by_processo.get(process_id, [])
-
-                baseline_review = self._pick_baseline_review(revisoes)
-                baseline_id = (
-                    self._empty_to_none(baseline_review.get("revisao_id"))
-                    if baseline_review
-                    else None
-                )
-                baseline_measurement = (
-                    context.medicoes_by_revisao.get(baseline_id)
-                    if baseline_id
-                    else None
-                )
-
-                if not baseline_review or not baseline_measurement:
+                revisoes_processo = context.revisoes_by_processo.get(process_id, [])
+                if not revisoes_processo:
                     continue
 
-                selected_reviews = self._select_reviews_for_month(revisoes, cursor)
+                # Cada instância é um ambiente isolado (baseline/parâmetros próprios).
+                instance_rows_buffer: List[List[dict]] = []
+                instance_totals: List[dict] = []
 
-                for review in selected_reviews:
-                    row = self._calculate_review_month_result(
-                        process_row=process_row,
-                        review=review,
-                        baseline_review=baseline_review,
-                        baseline_measurement=baseline_measurement,
-                        context=context,
-                        competencia_date=cursor,
+                for instancia_row in self._instancia_rows_for_process(
+                    process_id=str(process_id),
+                    context=context,
+                ):
+                    instancia_id = self._empty_to_none(instancia_row.get("instancia_id"))
+                    revisoes_instancia = self._revisoes_for_instancia(
+                        context,
+                        instancia_id=str(instancia_id or ""),
+                        process_id=str(process_id),
                     )
-                    if row is None:
+
+                    baseline_review = self._pick_baseline_review(revisoes_instancia)
+                    baseline_id = (
+                        self._empty_to_none(baseline_review.get("revisao_id"))
+                        if baseline_review
+                        else None
+                    )
+                    baseline_measurement = (
+                        context.medicoes_by_revisao.get(baseline_id)
+                        if baseline_id
+                        else None
+                    )
+                    if not baseline_review or not baseline_measurement:
                         continue
 
-                    economia_bruta_mes += row["economia_bruta"]
-                    investimento_unico_mes += row["investimento_unico_mes"]
-                    custo_recorrente_mes += row["custo_recorrente_mes"]
-                    custo_recursos_compartilhados_mes += row["custo_recursos_compartilhados_mes"]
-                    economia_liquida_mes += row["economia_liquida_mes"]
-                    horas_economizadas_mes += float(row.get("horas_economizadas_mes") or 0)
-                    calculation_rows.append(row)
+                    selected_reviews = self._select_reviews_for_month(
+                        revisoes_instancia, cursor
+                    )
+
+                    rows_da_instancia: List[dict] = []
+                    for review in selected_reviews:
+                        row = self._calculate_review_month_result(
+                            process_row=process_row,
+                            review=review,
+                            baseline_review=baseline_review,
+                            baseline_measurement=baseline_measurement,
+                            context=context,
+                            competencia_date=cursor,
+                        )
+                        if row is None:
+                            continue
+                        rows_da_instancia.append(row)
+
+                    if not rows_da_instancia:
+                        continue  # instância inativa neste mês: fora da média
+
+                    instance_rows_buffer.append(rows_da_instancia)
+                    instance_totals.append(
+                        self._sum_instance_month_rows(rows_da_instancia)
+                    )
+
+                active_instances = len(instance_totals)
+                if active_instances == 0:
+                    continue
+
+                # Divisor da média por instância: cada linha carrega o nº de
+                # instâncias ativas no mês para a agregação por recorte dividir.
+                for rows_da_instancia in instance_rows_buffer:
+                    for row in rows_da_instancia:
+                        row["instancias_ativas_mes"] = active_instances
+                        calculation_rows.append(row)
+
+                # Processo (consolidado) = média das instâncias ativas no mês.
+                economia_bruta_mes += (
+                    sum(t["economia_bruta"] for t in instance_totals) / active_instances
+                )
+                investimento_unico_mes += (
+                    sum(t["investimento_unico_mes"] for t in instance_totals)
+                    / active_instances
+                )
+                custo_recorrente_mes += (
+                    sum(t["custo_recorrente_mes"] for t in instance_totals)
+                    / active_instances
+                )
+                custo_recursos_compartilhados_mes += (
+                    sum(t["custo_recursos_compartilhados_mes"] for t in instance_totals)
+                    / active_instances
+                )
+                economia_liquida_mes += (
+                    sum(t["economia_liquida_mes"] for t in instance_totals)
+                    / active_instances
+                )
+                horas_economizadas_mes += (
+                    sum(t["horas_economizadas_mes"] for t in instance_totals)
+                    / active_instances
+                )
 
             monthly_items.append(
                 {
@@ -635,6 +693,39 @@ class DashboardCalculatorService:
             cursor = self._next_month(cursor)
 
         return monthly_items, calculation_rows
+
+    def _instancia_rows_for_process(
+        self,
+        *,
+        process_id: str,
+        context: CalculationContext,
+    ) -> List[dict]:
+        """Instâncias reais do processo; fallback legado = processo como ambiente único."""
+        instancia_rows = [
+            inst
+            for inst in context.instancias_by_processo.get(process_id, [])
+            if self._empty_to_none(inst.get("instancia_id"))
+        ]
+        if instancia_rows:
+            return instancia_rows
+
+        # Legado (revisões sem instância cadastrada): trata o processo como 1 instância.
+        return [{"instancia_id": process_id, "processo_id": process_id}]
+
+    def _sum_instance_month_rows(self, rows: List[dict]) -> dict:
+        """Soma as revisões de UMA instância no mês (revisões somam; instâncias fazem média)."""
+        totals = {
+            "economia_bruta": 0.0,
+            "investimento_unico_mes": 0.0,
+            "custo_recorrente_mes": 0.0,
+            "custo_recursos_compartilhados_mes": 0.0,
+            "economia_liquida_mes": 0.0,
+            "horas_economizadas_mes": 0.0,
+        }
+        for row in rows:
+            for key in totals:
+                totals[key] += float(row.get(key) or 0)
+        return totals
 
     def _calculate_review_month_result(
         self,
