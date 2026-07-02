@@ -457,6 +457,11 @@ class ChatDataInsightService:
         if isinstance(nested, dict) and isinstance(nested.get("items"), list):
             return [row for row in nested["items"] if isinstance(row, dict)]
 
+        nested_rows = cls._resolve_nested_section_rows(data, metadata)
+
+        if nested_rows is not None:
+            return nested_rows
+
         if ChatPresentationScalarFieldCommentaryService.matches(metadata, data):
             return None
 
@@ -469,7 +474,59 @@ class ChatDataInsightService:
             ):
                 return None
 
+            nested_payload_rows = cls._resolve_nested_section_rows(nested_payload, metadata)
+
+            if nested_payload_rows is not None:
+                return nested_payload_rows
+
             return []
+
+        return None
+
+    @classmethod
+    def _resolve_nested_section_rows(
+        cls,
+        data: dict[str, Any] | None,
+        metadata: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]] | None:
+        """Linhas em seções aninhadas (ex.: materials.items no cost-impact)."""
+        if not isinstance(data, dict):
+            return None
+
+        section_keys: list[str] = []
+
+        api_meta = (metadata or {}).get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            for section in api_meta.get("sections") or []:
+                if isinstance(section, dict):
+                    key = str(section.get("key") or "").strip()
+
+                    if key:
+                        section_keys.append(key)
+
+        if not section_keys:
+            section_keys = [
+                str(key)
+                for key, value in data.items()
+                if isinstance(value, dict) and isinstance(value.get("items"), list)
+            ]
+
+        for key in section_keys:
+            block = data.get(key)
+
+            if not isinstance(block, dict):
+                continue
+
+            items = block.get("items")
+
+            if not isinstance(items, list) or not items:
+                continue
+
+            rows = [row for row in items if isinstance(row, dict)]
+
+            if rows:
+                return rows
 
         return None
 

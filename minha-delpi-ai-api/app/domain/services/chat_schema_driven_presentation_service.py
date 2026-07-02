@@ -258,6 +258,8 @@ class ChatSchemaDrivenPresentationService:
         elif code:
             lines.append(host._route_presentation(namespace, "introCodeOnly", code=code))
 
+        cls._append_composite_summary_lines(host, lines, namespace, root)
+
         status = str(root.get("factory_status") or "").strip()
 
         if status:
@@ -333,6 +335,87 @@ class ChatSchemaDrivenPresentationService:
             "title": title,
             "markdown": "\n\n".join(clean_lines),
         }
+
+    @classmethod
+    def _append_composite_summary_lines(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        lines: list[str],
+        namespace: str,
+        root: dict[str, Any],
+    ) -> None:
+        """Templates opcionais do namespace (ex.: costImpactSimulation.totalMaterialCostLine)."""
+        root_summary = root.get("summary") if isinstance(root.get("summary"), dict) else None
+
+        if root_summary is not None:
+            total_cost = root_summary.get("total_material_cost")
+
+            if total_cost is not None:
+                line = host._route_presentation(
+                    namespace,
+                    "totalMaterialCostLine",
+                    value=str(total_cost),
+                )
+
+                if str(line or "").strip():
+                    lines.append(line)
+
+        materials_block = root.get("materials")
+
+        if isinstance(materials_block, dict):
+            materials_items = materials_block.get("items")
+
+            if isinstance(materials_items, list) and materials_items:
+                top = materials_items[0]
+
+                if isinstance(top, dict):
+                    mp_code = str(
+                        top.get("raw_material_code")
+                        or top.get("component_code")
+                        or ""
+                    ).strip()
+                    impact = top.get("impact_on_material_cost_percent")
+
+                    if mp_code and impact is not None:
+                        line = host._route_presentation(
+                            namespace,
+                            "topMaterialLine",
+                            code=mp_code,
+                            impact=f"{float(impact):.1f}",
+                        )
+
+                        if str(line or "").strip():
+                            lines.append(line)
+
+        adjustment = root.get("adjustment_percent")
+        simulation = root.get("simulation") if isinstance(root.get("simulation"), dict) else None
+
+        if adjustment is None and simulation is not None:
+            adjustment = simulation.get("adjustment_percent")
+
+        try:
+            adjustment_value = float(adjustment or 0)
+        except (TypeError, ValueError):
+            adjustment_value = 0.0
+
+        if adjustment_value != 0:
+            delta = None
+
+            if root_summary is not None:
+                delta = root_summary.get("projected_cost_delta")
+
+            if delta is None and simulation is not None:
+                delta = simulation.get("projected_cost_delta")
+
+            line = host._route_presentation(
+                namespace,
+                "simulationLine",
+                percent=str(adjustment_value),
+                delta=str(delta if delta is not None else 0),
+            )
+
+            if str(line or "").strip():
+                lines.append(line)
 
     @classmethod
     def _build_generic_composite_text(

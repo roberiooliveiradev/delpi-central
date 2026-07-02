@@ -270,3 +270,54 @@ def test_build_product_analyser_uses_analyser_commentary_not_generic_list():
     assert "10080024" in str((data_answer.get("summary") or {}).get("answer") or "")
     assert data_answer.get("profileKey") != "generic_list"
     assert "14 registros" not in str((data_answer.get("summary") or {}).get("answer") or "").lower()
+
+
+def test_resolve_rows_reads_materials_items_for_cost_impact_without_table_metadata():
+    metadata = {
+        "path": "/products/90261255/cost-impact-simulation",
+        "apiDelpiResponseMeta": {
+            "shape": "composite_analysis",
+            "sections": [{"key": "materials", "label": "Impacto de MPs", "itemCount": 2}],
+        },
+    }
+    data = {
+        "product": {"product_code": "90261255", "description": "CHICOTE"},
+        "materials": {
+            "items": [
+                {"rank": 1, "raw_material_code": "10210011", "extended_cost": 29133.0},
+                {"rank": 2, "raw_material_code": "10080227", "extended_cost": 12864.0},
+            ],
+            "total": 2,
+        },
+        "summary": {"total_material_cost": 41997.0},
+    }
+
+    rows = ChatDataInsightService._resolve_rows(metadata, data)
+
+    assert rows is not None
+    assert len(rows) == 2
+    assert rows[0]["raw_material_code"] == "10210011"
+
+
+def test_build_generic_commentary_does_not_mark_cost_impact_as_empty_without_table():
+    metadata = {
+        "path": "/products/90261255/cost-impact-simulation",
+        "apiDelpiResponseMeta": {
+            "shape": "composite_analysis",
+            "sections": [{"key": "materials", "itemCount": 1}],
+        },
+    }
+    data = {
+        "materials": {
+            "items": [{"rank": 1, "raw_material_code": "10210011", "extended_cost": 100.0}],
+        }
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    summary = (data_answer or {}).get("summary") or {}
+    answer = str(summary.get("answer") or "").lower()
+
+    assert "não retornou registros" not in answer
+    assert "nao retornou registros" not in answer
+    assert "1" in answer
