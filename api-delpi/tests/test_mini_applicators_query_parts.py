@@ -2,6 +2,7 @@ from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicat
     append_descricao_terms,
     bom_validity_where_clauses,
     peca_codigo_filter_sql,
+    peca_reposicao_scope_sql,
 )
 
 
@@ -21,6 +22,10 @@ def test_append_descricao_terms_adiciona_or_entre_palavras():
     assert len(where) == 1
     assert "OR" in where[0]
     assert len(params) == 2
+
+
+def test_peca_reposicao_scope_sql_usa_prefixo_3019():
+    assert peca_reposicao_scope_sql(alias="C") == "RTRIM(LTRIM(C.B1_COD)) LIKE '3019%'"
 
 
 def test_bom_validity_where_clauses_usa_alias():

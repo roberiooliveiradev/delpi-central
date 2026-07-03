@@ -11,19 +11,16 @@ from app.domain.entities.mini_applicators.mini_applicator_tool import MiniApplic
 from app.domain.ports.mini_applicators.mini_applicators_repository_port import (
     MiniApplicatorsRepositoryPort,
 )
-from app.domain.services.product.product_bom_validity_filter_service import (
-    ProductBomValidityFilterService,
-)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicators_query_parts import (
     append_descricao_terms,
     bloqueado_filter_sql,
-    bom_validity_where_clauses,
     codigo_filter_sql,
     codigo_prefix_pattern,
     is_protheus_product_blocked,
     peca_codigo_filter_sql,
+    peca_reposicao_scope_sql,
 )
 from app.infrastructure.persistence.totvs.protheus_datetime import (
     parse_protheus_period_end,
@@ -34,21 +31,30 @@ from app.infrastructure.persistence.totvs.protheus_datetime import (
 class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
     _GROUP_CODES = ("23", "24")
     _PECA_GROUP = "3019"
-    _BOM_VALIDITY = ProductBomValidityFilterService.validity_filter_sql_for_today(alias="G")
 
     def _peca_amarracao_exists_sql(self, peca_filters: list[str]) -> str:
-        peca_where = " AND ".join(peca_filters)
+        peca_where = " AND ".join(peca_filters) if peca_filters else "1 = 1"
         return f"""
             EXISTS (
+                WITH EstruturaCTE AS (
+                    SELECT CAST(RTRIM(LTRIM(SB1.B1_COD)) AS VARCHAR(50)) AS cod_componente
+                    UNION ALL
+                    SELECT CAST(RTRIM(LTRIM(G1.G1_COMP)) AS VARCHAR(50))
+                    FROM SG1010 AS G1 WITH (NOLOCK)
+                    INNER JOIN EstruturaCTE AS E
+                        ON RTRIM(LTRIM(G1.G1_COD)) = RTRIM(LTRIM(E.cod_componente))
+                    WHERE G1.D_E_L_E_T_ = ''
+                      AND (
+                            RTRIM(LTRIM(G1.G1_FIM)) = ''
+                            OR RTRIM(LTRIM(G1.G1_FIM)) > CONVERT(CHAR(8), GETDATE(), 112)
+                          )
+                )
                 SELECT 1
-                FROM SG1010 G WITH (NOLOCK)
-                INNER JOIN SB1010 C WITH (NOLOCK)
-                    ON RTRIM(LTRIM(G.G1_COMP)) = RTRIM(LTRIM(C.B1_COD))
-                WHERE G.D_E_L_E_T_ = ''
-                  AND C.D_E_L_E_T_ = ''
-                  AND RTRIM(LTRIM(G.G1_COD)) = RTRIM(LTRIM(SB1.B1_COD))
-                  AND RTRIM(LTRIM(C.B1_GRUPO)) = ?
-                  {self._BOM_VALIDITY}
+                FROM EstruturaCTE AS E
+                INNER JOIN SB1010 AS C WITH (NOLOCK)
+                    ON RTRIM(LTRIM(E.cod_componente)) = RTRIM(LTRIM(C.B1_COD))
+                WHERE C.D_E_L_E_T_ = ''
+                  AND {peca_reposicao_scope_sql(alias="C")}
                   AND {peca_where}
             )
         """
@@ -61,7 +67,7 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
         alias: str = "C",
     ) -> tuple[list[str], list]:
         filters: list[str] = []
-        params: list = [self._PECA_GROUP]
+        params: list = []
         if codigo_peca:
             filters.append(peca_codigo_filter_sql(alias=alias))
             params.append(codigo_prefix_pattern(codigo_peca))
@@ -169,68 +175,96 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
     ) -> Page[dict]:
         paging = paginate(request.page, request.page_size)
 
-        where_clauses = [
-            "G.D_E_L_E_T_ = ''",
-            "B.D_E_L_E_T_ = ''",
+        peca_filters: list[str] = [
             "C.D_E_L_E_T_ = ''",
-            "B.B1_GRUPO IN (?, ?)",
-            "RTRIM(LTRIM(C.B1_GRUPO)) = ?",
+            peca_reposicao_scope_sql(alias="C"),
         ]
-        params: list = [*self._GROUP_CODES, self._PECA_GROUP]
-        where_clauses.extend(bom_validity_where_clauses(alias="G"))
+        params: list = []
 
         if request.codigo:
-            where_clauses.append(peca_codigo_filter_sql(alias="C"))
+            peca_filters.append(peca_codigo_filter_sql(alias="C"))
             params.append(codigo_prefix_pattern(request.codigo))
 
         if request.descricao:
             append_descricao_terms(
                 column_sql="RTRIM(LTRIM(C.B1_DESC))",
                 descricao=request.descricao,
-                where_clauses=where_clauses,
+                where_clauses=peca_filters,
                 params=params,
             )
 
-        where_sql = " AND ".join(where_clauses)
+        peca_where_sql = " AND ".join(peca_filters)
         sort_columns = {
-            "codigo": "RTRIM(LTRIM(C.B1_COD))",
-            "descricao": "RTRIM(LTRIM(C.B1_DESC))",
+            "codigo": "codigo",
+            "descricao": "descricao",
         }
         sort_key = (request.sort_by or "codigo").strip().lower()
         sort_column = sort_columns.get(sort_key, sort_columns["codigo"])
         sort_direction = "DESC" if str(request.sort_dir or "asc").lower() == "desc" else "ASC"
+        group_codes_sql = ", ".join("?" for _ in self._GROUP_CODES)
+
+        cte_query = f"""
+            WITH Ferramentas AS (
+                SELECT RTRIM(LTRIM(B1_COD)) AS codigo_ferramenta
+                FROM SB1010 WITH (NOLOCK)
+                WHERE D_E_L_E_T_ = ''
+                  AND B1_GRUPO IN ({group_codes_sql})
+            ),
+            EstruturaCTE AS (
+                SELECT
+                    F.codigo_ferramenta AS raiz,
+                    0 AS nivel,
+                    F.codigo_ferramenta AS cod_componente
+                FROM Ferramentas AS F
+                UNION ALL
+                SELECT
+                    E.raiz,
+                    E.nivel + 1,
+                    CAST(RTRIM(LTRIM(G1.G1_COMP)) AS VARCHAR(50))
+                FROM SG1010 AS G1 WITH (NOLOCK)
+                INNER JOIN EstruturaCTE AS E
+                    ON RTRIM(LTRIM(G1.G1_COD)) = RTRIM(LTRIM(E.cod_componente))
+                WHERE G1.D_E_L_E_T_ = ''
+                  AND (
+                        RTRIM(LTRIM(G1.G1_FIM)) = ''
+                        OR RTRIM(LTRIM(G1.G1_FIM)) > CONVERT(CHAR(8), GETDATE(), 112)
+                      )
+            ),
+            PecasAmarradas AS (
+                SELECT DISTINCT
+                    C.R_E_C_N_O_ AS id,
+                    RTRIM(LTRIM(C.B1_COD)) AS codigo,
+                    RTRIM(LTRIM(C.B1_DESC)) AS descricao
+                FROM EstruturaCTE AS E
+                INNER JOIN SB1010 AS C WITH (NOLOCK)
+                    ON RTRIM(LTRIM(E.cod_componente)) = RTRIM(LTRIM(C.B1_COD))
+                WHERE E.nivel > 0
+                  AND {peca_where_sql}
+            )
+        """
+        cte_params = list(self._GROUP_CODES) + params
 
         count_query = f"""
-            SELECT COUNT(DISTINCT RTRIM(LTRIM(C.B1_COD))) AS total
-            FROM SG1010 G WITH (NOLOCK)
-            INNER JOIN SB1010 B WITH (NOLOCK)
-                ON RTRIM(LTRIM(G.G1_COD)) = RTRIM(LTRIM(B.B1_COD))
-            INNER JOIN SB1010 C WITH (NOLOCK)
-                ON RTRIM(LTRIM(G.G1_COMP)) = RTRIM(LTRIM(C.B1_COD))
-            WHERE {where_sql}
+            {cte_query}
+            SELECT COUNT(1) AS total
+            FROM PecasAmarradas
+            OPTION (MAXRECURSION 100)
         """
 
         list_query = f"""
-            SELECT DISTINCT
-                C.R_E_C_N_O_ AS id,
-                RTRIM(LTRIM(C.B1_COD)) AS codigo,
-                RTRIM(LTRIM(C.B1_DESC)) AS descricao,
-                RTRIM(LTRIM(C.B1_GRUPO)) AS grupo
-            FROM SG1010 G WITH (NOLOCK)
-            INNER JOIN SB1010 B WITH (NOLOCK)
-                ON RTRIM(LTRIM(G.G1_COD)) = RTRIM(LTRIM(B.B1_COD))
-            INNER JOIN SB1010 C WITH (NOLOCK)
-                ON RTRIM(LTRIM(G.G1_COMP)) = RTRIM(LTRIM(C.B1_COD))
-            WHERE {where_sql}
+            {cte_query}
+            SELECT id, codigo, descricao
+            FROM PecasAmarradas
             ORDER BY {sort_column} {sort_direction}
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+            OPTION (MAXRECURSION 100)
         """
 
         with self:
-            total = int(self.execute_scalar(count_query, tuple(params)) or 0)
+            total = int(self.execute_scalar(count_query, tuple(cte_params)) or 0)
             rows = self.execute_query(
                 list_query,
-                tuple(params + [paging["offset"], paging["page_size"]]),
+                tuple(cte_params + [paging["offset"], paging["page_size"]]),
             )
 
         items = [
@@ -238,7 +272,7 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
                 "id": int(row["id"]),
                 "codigo": str(row["codigo"]),
                 "descricao": str(row["descricao"]),
-                "grupo": str(row.get("grupo") or self._PECA_GROUP),
+                "grupo": self._PECA_GROUP,
             }
             for row in rows
         ]
