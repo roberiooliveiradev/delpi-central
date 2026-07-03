@@ -2094,6 +2094,16 @@
 
 /* --- KPIs --- */
 
+.dashboard-cadastro-kaizen .kz-dash-period-note {
+  margin: 0 0 var(--kz-section-gap);
+  padding: 10px 14px;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid color-mix(in srgb, var(--kz-accent) 28%, var(--kz-card-border));
+  background: color-mix(in srgb, var(--kz-accent) 6%, var(--kz-card-bg));
+  color: var(--kz-text);
+  font-size: var(--kz-font-sm);
+}
+
 .dashboard-cadastro-kaizen .kz-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

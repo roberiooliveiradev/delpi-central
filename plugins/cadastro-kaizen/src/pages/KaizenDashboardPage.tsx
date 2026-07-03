@@ -212,6 +212,15 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
   const implantedHint = hasPeriod ? "no período selecionado" : "total implantados";
 
   const total = summary?.total ?? 0;
+  const showEmptyCatalog =
+    summary != null && !error && !hasFilters && total === 0 && (summary.implantados ?? 0) === 0;
+  const showPeriodWithoutNewImplants =
+    summary != null &&
+    hasPeriod &&
+    total === 0 &&
+    summary.period_implanted_count === 0 &&
+    (summary.period_savings > 0 || summary.active_count > 0);
+  const showDashboard = summary != null && !error && !showEmptyCatalog;
 
   return (
     <>
@@ -300,15 +309,18 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
       {loading && !summary ? <StateAlert>Carregando indicadores…</StateAlert> : null}
 
-      {summary && total === 0 && !error ? (
-        <StateAlert>
-          {hasFilters
-            ? "Nenhum kaizen para os filtros selecionados."
-            : "Nenhum kaizen cadastrado ainda."}
-        </StateAlert>
+      {showEmptyCatalog ? (
+        <StateAlert>Nenhum kaizen cadastrado ainda.</StateAlert>
       ) : null}
 
-      {summary && total > 0 && buckets ? (
+      {showPeriodWithoutNewImplants ? (
+        <p className="kz-dash-period-note" role="status">
+          Nenhum kaizen implantado no período. Ganhos e ativos abaixo incluem kaizens já em
+          operação.
+        </p>
+      ) : null}
+
+      {showDashboard && buckets ? (
         <>
           <section className="kz-kpi-grid">
             <KpiCard

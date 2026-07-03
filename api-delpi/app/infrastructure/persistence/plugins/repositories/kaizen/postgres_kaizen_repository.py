@@ -264,10 +264,10 @@ class PostgresKaizenRepository(PluginBaseRepository):
             {"key": key, "value": value} for key, value in sorted(month_counts.items())
         ]
 
-        # Run-rate vigente (implantados ainda dentro da validade hoje).
+        # Run-rate vigente — implantados ainda dentro da validade hoje (escopo filial, não período).
         active_rows = [
             row
-            for row in period_rows
+            for row in rows
             if is_implanted(row)
             and kaizen_savings_validity.is_savings_active(
                 implemented_date(row), status=row.get("status")
@@ -304,7 +304,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         expired_but_implanted = sum(
             1
-            for row in period_rows
+            for row in rows
             if is_implanted(row)
             and implemented_date(row) is not None
             and not kaizen_savings_validity.is_savings_active(
