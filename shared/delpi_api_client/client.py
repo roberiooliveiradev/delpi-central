@@ -312,6 +312,19 @@ class DelpiApiClient:
             authorization=authorization,
         )
 
+    def get_product_parents(
+        self,
+        code: str,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            f"/products/{code}/parents",
+            params=params,
+            authorization=authorization,
+        )
+
     # -- HR --
     def get_hr_snapshot(
         self,

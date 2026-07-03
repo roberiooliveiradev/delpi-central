@@ -76,3 +76,24 @@ def test_listar_componentes_propaga_client(monkeypatch):
         params={"filial": "01"},
         authorization="Bearer token",
     )
+
+
+def test_listar_onde_usado_propaga_client(monkeypatch):
+    client = MagicMock()
+    client.get_product_parents.return_value = {
+        "items": [{"code": "90260142", "description": "PA teste", "quantity": 1, "parents": []}],
+        "total": 1,
+    }
+    monkeypatch.setattr(
+        "maint_app.infrastructure.gateways.delpi_mini_applicators_gateway.bearer_authorization_from_context",
+        lambda: "Bearer token",
+    )
+
+    gateway = DelpiMiniAplicatorsGateway(client)
+    result = gateway.listar_onde_usado(codigo_ferramenta="23-026")
+
+    assert result["total"] == 1
+    client.get_product_parents.assert_called_once_with(
+        "23-026",
+        authorization="Bearer token",
+    )

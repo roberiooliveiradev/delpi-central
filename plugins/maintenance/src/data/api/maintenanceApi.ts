@@ -139,6 +139,29 @@ export function fetchComponentes(
   );
 }
 
+export type OndeUsadoItem = {
+  nivel: number;
+  codigo: string;
+  descricao: string;
+  tipo: string;
+  unidade: string;
+  quantidade: number;
+};
+
+export function fetchOndeUsado(
+  codigoFerramenta: string,
+  filial: string,
+  query: ListQueryParams = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query);
+  return maintenanceFetch<PagedItems<OndeUsadoItem>>(
+    `/mini-aplicadores/ferramentas/${encodeURIComponent(codigoFerramenta)}/onde-usado?${search.toString()}`,
+    { getAccessToken },
+  );
+}
+
 export function fetchUltimasReposicoes(
   filial: string,
   query: ListQueryParams = {},

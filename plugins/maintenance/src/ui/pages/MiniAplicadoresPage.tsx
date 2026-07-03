@@ -10,6 +10,7 @@ import {
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
 import { FerramentaAuditoriaSection } from "../../components/FerramentaAuditoriaSection";
+import { FerramentaOndeUsadoSection } from "../../components/FerramentaOndeUsadoSection";
 import { FerramentaRevisaoProgramadaSection } from "../../components/FerramentaRevisaoProgramadaSection";
 import { ReposicoesGolpesChart } from "../../components/ReposicoesGolpesChart";
 import { FerramentaReposicaoIndicadores } from "../../components/FerramentaReposicaoIndicadores";
@@ -1272,6 +1273,12 @@ export function MiniAplicadoresPage({
               sortDirection: componentesTable.query.sortDirection,
               onSortChange: componentesTable.handleSortChange,
             }}
+          />
+
+          <FerramentaOndeUsadoSection
+            filial={filial}
+            codigoFerramenta={codigoFerramenta}
+            getAccessToken={getAccessToken}
           />
 
           <FerramentaAuditoriaSection

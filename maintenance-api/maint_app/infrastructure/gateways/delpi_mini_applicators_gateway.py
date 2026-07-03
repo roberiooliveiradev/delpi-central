@@ -71,3 +71,9 @@ class DelpiMiniAplicatorsGateway:
             params={"filial": filial},
             authorization=bearer_authorization_from_context(),
         )
+
+    def listar_onde_usado(self, *, codigo_ferramenta: str) -> dict:
+        return self._client.get_product_parents(
+            codigo_ferramenta.strip(),
+            authorization=bearer_authorization_from_context(),
+        )

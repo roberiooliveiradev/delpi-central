@@ -31,6 +31,45 @@ def _filter_pecas_reposicao(items: list) -> list[dict]:
     ]
 
 
+def _flatten_parents(nodes: list, nivel: int = 1) -> list[dict]:
+    rows: list[dict] = []
+    for node in nodes or []:
+        if not isinstance(node, dict):
+            continue
+        rows.append(
+            {
+                "nivel": nivel,
+                "codigo": str(node.get("code") or "").strip(),
+                "descricao": str(node.get("description") or "").strip(),
+                "tipo": str(node.get("type") or "").strip(),
+                "unidade": str(node.get("unit") or "").strip(),
+                "quantidade": float(node.get("quantity") or 0),
+            }
+        )
+        rows.extend(_flatten_parents(node.get("parents") or [], nivel + 1))
+    return rows
+
+
+def _sort_onde_usado(items: list, sort_by: str | None, sort_dir: str) -> list:
+    reverse = sort_dir == "desc"
+    key_name = (sort_by or "nivel").strip().lower()
+
+    def sort_key(item: dict) -> str | float | int:
+        if key_name == "codigo":
+            return str(item.get("codigo") or "")
+        if key_name == "descricao":
+            return str(item.get("descricao") or "")
+        if key_name == "tipo":
+            return str(item.get("tipo") or "")
+        if key_name == "unidade":
+            return str(item.get("unidade") or "")
+        if key_name == "quantidade":
+            return float(item.get("quantidade") or 0)
+        return int(item.get("nivel") or 0)
+
+    return sorted(items, key=sort_key, reverse=reverse)
+
+
 def _sort_componentes(items: list, sort_by: str | None, sort_dir: str) -> list:
     reverse = sort_dir == "desc"
     key_name = (sort_by or "nivel").strip().lower()
@@ -168,6 +207,33 @@ def list_componentes(
         items = _sort_componentes(data.get("items") or [], query.sort_by, query.sort_dir)
         page_items, total = paginate_slice(items, query)
         return ok({"items": page_items, "total": total}, message="Componentes amarrados listados.")
+    except DelpiApiError as exc:
+        return fail(exc.detail, status_code=exc.status_code)
+    except Exception as exc:
+        return fail(format_api_error(exc), status_code=500)
+
+
+@router.get("/ferramentas/{codigo}/onde-usado")
+def list_onde_usado(
+    request: Request,
+    codigo: str,
+    filial: str = Query(..., min_length=2, max_length=2),
+    query: ListQuery = Depends(list_query_params),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    try:
+        gateway = build_mini_applicators_totvs_gateway()
+        data = gateway.listar_onde_usado(codigo_ferramenta=codigo)
+        items = _flatten_parents(data.get("items") or [])
+        items = _sort_onde_usado(items, query.sort_by, query.sort_dir)
+        page_items, total = paginate_slice(items, query)
+        return ok({"items": page_items, "total": total}, message="Produtos pai listados.")
     except DelpiApiError as exc:
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:
