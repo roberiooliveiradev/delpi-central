@@ -25,3 +25,23 @@ class InMemoryRateLimitService:
             raise RateLimitExceededError(message)
 
         bucket.append(now)
+
+    def snapshot(self, *, window_seconds: int) -> list[dict]:
+        now = time.time()
+        items: list[dict] = []
+
+        for key, bucket in self._buckets.items():
+            active = [stamp for stamp in bucket if stamp > now - window_seconds]
+
+            if not active:
+                continue
+
+            items.append(
+                {
+                    "key": key,
+                    "count": len(active),
+                    "windowSeconds": window_seconds,
+                }
+            )
+
+        return sorted(items, key=lambda item: item["key"])

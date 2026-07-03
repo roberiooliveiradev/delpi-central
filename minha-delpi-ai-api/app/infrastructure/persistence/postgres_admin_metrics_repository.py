@@ -1,8 +1,14 @@
 from datetime import datetime, timedelta, timezone
 
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
+from app.composition.rate_limit_composer import get_rate_limit_service
 from app.domain.ports.admin_metrics_repository_port import AdminMetricsRepositoryPort
 from app.extensions.db import db
+from app.infrastructure.config.llm_text_config import (
+    is_openai_compatible_provider,
+    normalize_llm_provider,
+    resolve_llm_text_config,
+)
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.db.models.audit_log_model import AiAuditLogModel
 from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
@@ -105,6 +111,8 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
                 "userProfileMetrics": user_profile_metrics,
                 "costTable": cost_estimator.list_cost_table(),
                 "costBreakdown24h": message_metrics["costBreakdown24h"],
+                "llmProviderUsage24h": message_metrics["llmProviderUsage24h"],
+                "llmRateLimitSnapshot": self._llm_rate_limit_snapshot(),
                 "notes": [
                     "Latência e tokens são estimativas registradas no fluxo de mensagens.",
                     "Assertividade RAG considera score mínimo "
@@ -344,6 +352,7 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
         total_tokens = 0
         estimated_cost = 0.0
         cost_breakdown: dict[str, dict] = {}
+        provider_usage: dict[str, dict] = {}
 
         from app.domain.services.chat_intent_router_metrics_service import (
             ChatIntentRouterMetricsService,
@@ -370,15 +379,7 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             )
             estimated_cost += self._metric_number_from_metadata(metadata, "estimated_cost")
 
-            provider = str(metadata.get("provider") or Settings.LLM_PROVIDER)
-            model = str(
-                metadata.get("model")
-                or (
-                    Settings.VLLM_MODEL
-                    if provider == "vllm"
-                    else Settings.OLLAMA_MODEL
-                )
-            )
+            provider, model = self._resolve_provider_model(metadata)
             breakdown_key = f"{provider}::{model}"
             bucket = cost_breakdown.setdefault(
                 breakdown_key,
@@ -395,6 +396,24 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
                 self._metric_number_from_metadata(metadata, "total_tokens_estimated")
             )
             bucket["estimatedCost"] += self._metric_number_from_metadata(
+                metadata,
+                "estimated_cost",
+            )
+
+            provider_bucket = provider_usage.setdefault(
+                provider,
+                {
+                    "provider": provider,
+                    "messages": 0,
+                    "tokensUsed": 0,
+                    "estimatedCost": 0.0,
+                },
+            )
+            provider_bucket["messages"] += 1
+            provider_bucket["tokensUsed"] += int(
+                self._metric_number_from_metadata(metadata, "total_tokens_estimated")
+            )
+            provider_bucket["estimatedCost"] += self._metric_number_from_metadata(
                 metadata,
                 "estimated_cost",
             )
@@ -423,6 +442,22 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             )
         ]
 
+        provider_usage_items = [
+            {
+                "provider": item["provider"],
+                "messages": item["messages"],
+                "tokensUsed": int(item["tokensUsed"]),
+                "estimatedCost": round(item["estimatedCost"], 6)
+                if item["estimatedCost"]
+                else None,
+            }
+            for item in sorted(
+                provider_usage.values(),
+                key=lambda entry: entry["messages"],
+                reverse=True,
+            )
+        ]
+
         return {
             "latencyAvgMs": latency_avg,
             "simpleTurnLatencyAvgMs": simple_turn_latency_avg,
@@ -431,4 +466,30 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             "estimatedCost": round(estimated_cost, 6) if estimated_cost else None,
             "instrumentedMessages": len(rows),
             "costBreakdown24h": breakdown_items,
+            "llmProviderUsage24h": provider_usage_items,
         }
+
+    @staticmethod
+    def _resolve_provider_model(metadata: dict) -> tuple[str, str]:
+        provider = normalize_llm_provider(
+            str(metadata.get("provider") or Settings.LLM_PROVIDER)
+        )
+        model = metadata.get("model")
+
+        if model:
+            return provider, str(model)
+
+        if is_openai_compatible_provider(provider):
+            return provider, resolve_llm_text_config().model
+
+        return provider, Settings.OLLAMA_MODEL
+
+    @staticmethod
+    def _llm_rate_limit_snapshot() -> list[dict]:
+        return [
+            item
+            for item in get_rate_limit_service().snapshot(
+                window_seconds=Settings.RATE_LIMIT_WINDOW_SECONDS,
+            )
+            if str(item.get("key", "")).startswith("llm_text:")
+        ]

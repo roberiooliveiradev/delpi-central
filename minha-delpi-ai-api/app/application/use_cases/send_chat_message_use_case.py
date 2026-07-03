@@ -47,7 +47,13 @@ from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryP
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
-from app.infrastructure.llm.llm_request_context import llm_generation_scope
+from app.infrastructure.llm.llm_request_context import llm_generation_scope, llm_provider_scope
+from app.application.services.chat_llm_gateway_resolver_service import (
+    ChatLlmGatewayResolverService,
+)
+from app.application.services.chat_turn.chat_turn_llm_provider_guard_service import (
+    ChatTurnLlmProviderGuardService,
+)
 
 
 class SendChatMessageUseCase:
@@ -158,6 +164,38 @@ class SendChatMessageUseCase:
             supplemental_agent_ids=supplemental_agent_ids,
             supplemental_project_ids=supplemental_project_ids,
         )
+        effective_provider = ChatLlmGatewayResolverService.resolve_effective_provider(
+            workspace_context.get("agent"),
+        )
+
+        with llm_provider_scope(effective_provider):
+            ChatTurnLlmProviderGuardService.enforce_turn_rate_limit(
+                user_id=user_id,
+                provider=effective_provider,
+            )
+            return self._execute_turn_with_context(
+                request=request,
+                user_id=user_id,
+                session_id=session_id,
+                session=session,
+                message=message,
+                workspace_context=workspace_context,
+                supplemental_agent_ids=supplemental_agent_ids,
+                supplemental_project_ids=supplemental_project_ids,
+            )
+
+    def _execute_turn_with_context(
+        self,
+        *,
+        request: SendChatMessageRequest,
+        user_id: UUID,
+        session_id: UUID,
+        session,
+        message: str,
+        workspace_context: dict,
+        supplemental_agent_ids,
+        supplemental_project_ids,
+    ) -> SendChatMessageResponse:
         attachments = self.turn_support.get_message_attachments(request, user_id, session_id)
         attachment_snapshots = self.turn_support.enrich_attachments_for_message_metadata(
             attachments,

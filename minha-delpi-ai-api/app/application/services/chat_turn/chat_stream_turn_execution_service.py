@@ -34,8 +34,11 @@ from app.application.services.chat_turn.chat_turn_side_effects_service import (
 from app.application.services.chat_turn.chat_turn_use_case_support_service import (
     ChatTurnUseCaseSupportService,
 )
-from app.application.services.chat_web_search_synthesis_service import (
-    ChatWebSearchSynthesisService,
+from app.application.services.chat_llm_gateway_resolver_service import (
+    ChatLlmGatewayResolverService,
+)
+from app.application.services.chat_turn.chat_turn_llm_provider_guard_service import (
+    ChatTurnLlmProviderGuardService,
 )
 from app.application.services.chat_workspace_agent_activation_service import (
     ChatWorkspaceAgentActivationService,
@@ -52,6 +55,7 @@ from app.domain.services.chat_external_action_direct_response_service import (
 )
 from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.llm.llm_request_context import llm_provider_scope
 
 
 @dataclass(frozen=True)
@@ -122,6 +126,41 @@ class ChatStreamTurnExecutionService:
             supplemental_agent_ids=supplemental_agent_ids,
             supplemental_project_ids=supplemental_project_ids,
         )
+        effective_provider = ChatLlmGatewayResolverService.resolve_effective_provider(
+            workspace_context.get("agent"),
+        )
+
+        with llm_provider_scope(effective_provider):
+            ChatTurnLlmProviderGuardService.enforce_turn_rate_limit(
+                user_id=user_id,
+                provider=effective_provider,
+            )
+            yield from cls._iter_turn_body(
+                request=request,
+                deps=deps,
+                message=message,
+                user_id=user_id,
+                session_id=session_id,
+                session=session,
+                turn_generation_config=turn_generation_config,
+                workspace_context=workspace_context,
+                resend_from_message_id=resend_from_message_id,
+            )
+
+    @classmethod
+    def _iter_turn_body(
+        cls,
+        *,
+        request: SendChatMessageRequest,
+        deps: ChatStreamTurnExecutionDeps,
+        message: str,
+        user_id: UUID,
+        session_id: UUID,
+        session,
+        turn_generation_config,
+        workspace_context: dict,
+        resend_from_message_id,
+    ) -> Iterator[dict]:
         attachments = deps.turn_support.get_message_attachments(request, user_id, session_id)
         previous_messages = deps.chat_repository.list_all_messages_by_session(session_id)
 

@@ -10,8 +10,7 @@ from app.application.services.chat_intelligence_metadata_service import (
 from app.application.services.chat_turn.chat_turn_completion_models import (
     ChatTurnCompletionInput,
 )
-from app.infrastructure.config.settings import Settings
-from app.infrastructure.llm.llm_request_context import get_active_config
+from app.infrastructure.llm.llm_request_context import get_active_config, get_active_llm_provider
 
 
 class ChatTurnCompletionIntelligenceService:
@@ -80,7 +79,7 @@ class ChatTurnCompletionIntelligenceService:
             active = get_active_config()
 
             return LlmCostEstimatorService().estimate_cost(
-                provider=Settings.LLM_PROVIDER,
+                provider=get_active_llm_provider(),
                 model=active.model,
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,

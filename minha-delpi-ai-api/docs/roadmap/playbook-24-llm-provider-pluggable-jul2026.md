@@ -1,7 +1,7 @@
 # Playbook 24 — Provedores LLM plugáveis (Ollama padrão, API externa opcional)
 
 **Projeto:** Minha DELPI Chat IA · Pacote: `minha-delpi-ai-api`  
-**Status:** P0–P4 implementados (jul/2026) · P5 backlog  
+**Status:** P0–P5 implementados (jul/2026)  
 **Pré-requisitos:** [Playbook 11 — clean architecture](./playbook-11-clean-architecture-chat-api.md), [Playbook 19 — inferência LLM](./playbook-19-inferencia-llm-universal.md)
 
 ---
@@ -17,7 +17,7 @@ Deixar o código **pronto para trocar o motor de inferência** sem reescrever o 
 | **Um ponto por capacidade** | Chat texto, embeddings, visão VLM e fine-tuning local têm **porta + composer** — não `if ollama` espalhado. |
 | **Config declarativa** | URLs, modelos, timeouts e custos por **env + perfil de latência**; sem constantes mágicas em serviço de domínio. |
 
-**Fora de escopo inicial:** trocar modelo de embedding sem migração pgvector; multi-tenant com provedor diferente por agente (backlog P5).
+**Fora de escopo inicial:** trocar modelo de embedding sem migração pgvector.
 
 ---
 
@@ -178,10 +178,14 @@ composition/
 | P4.2 | Resolver genérico | `ChatFineTuningDeployResolverService` | Provider-aware; sem `get_active_deployed_ollama_model` no domain |
 | P4.3 | UI admin | mensagem clara | «Fine-tuning local só com Ollama; com API externa use export» |
 
-### P5 — Multi-tenant / por agente (backlog) ⬜
+### P5 — Multi-tenant / por agente ✅
 
-- Metadata do agente: `llmProviderOverride` (só se produto exigir).
-- Rate limit e custo por provider no admin metrics.
+| # | Entrega | Onde | DoD |
+|---|---------|------|-----|
+| P5.1 | `llmProviderOverride` no metadata do agente | `ChatAgentLlmProviderPolicyService` | `metadata.intelligence.llmProviderOverride` ou legado em `metadata` |
+| P5.2 | Gateway por turno | `ContextAwareLlmGateway` + `llm_provider_scope` | Send/stream aplicam provider efetivo antes do LLM |
+| P5.3 | Rate limit API externa | `ChatTurnLlmProviderGuardService` | Bucket `llm_text:{provider}:{user}`; env `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW` |
+| P5.4 | Métricas admin | `PostgresAdminMetricsRepository` | `llmProviderUsage24h`, `llmRateLimitSnapshot`, custo normalizado por provider |
 
 ---
 

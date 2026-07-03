@@ -391,6 +391,9 @@
       "Reduzir período": "widen_period"
     }
   },
+  "rateLimit": {
+    "externalLlmExceeded": "Limite de mensagens com API externa atingido. Aguarde e tente novamente."
+  },
   "chipQueries": {
     "Buscar por descrição": "busque o produto pela descrição em vez do código",
     "Mostrar SQL": "mostre o SQL da consulta anterior",

@@ -1,7 +1,6 @@
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.domain.services.chat_response_mode_service import ChatResponseModeService
-from app.infrastructure.config.settings import Settings
-from app.infrastructure.llm.llm_request_context import get_active_config
+from app.infrastructure.llm.llm_request_context import get_active_config, get_active_llm_provider
 
 
 class ChatLlmMetadataService:
@@ -14,7 +13,7 @@ class ChatLlmMetadataService:
         active = get_active_config()
 
         return {
-            "provider": Settings.LLM_PROVIDER,
+            "provider": get_active_llm_provider(),
             "model": active.model,
             "responseMode": active.response_mode,
             "llm": {

@@ -99,6 +99,24 @@ Resposta esperada de `/admin/llm/status`:
 
 ---
 
+## Override por agente (P5)
+
+No metadata do agente (admin), defina:
+
+```json
+{
+  "intelligence": {
+    "llmProviderOverride": "openai_compatible"
+  }
+}
+```
+
+Valores aceitos: `ollama`, `openai_compatible` (aliases `vllm`, `openai` normalizam para `openai_compatible`).
+
+O env global (`LLM_PROVIDER`) continua como default; o override só afeta turnos daquele agente. API externa tem rate limit adicional (`RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW`, default 10/min).
+
+---
+
 ## Rollback
 
 ```env
