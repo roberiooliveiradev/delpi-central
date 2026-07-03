@@ -365,6 +365,8 @@ class ChatExternalActionOrchestrationService:
             if planned:
                 return _return_planned(planned)
 
+            return _return_planned([])
+
         limit = cls._resolve_max_calls(max_calls)
         planning_message = selection_message
         normalized = ChatMessageNormalizationService.normalize_for_matching(planning_message)

@@ -470,3 +470,67 @@ def test_plan_actions_proxima_pagina_uses_pagination_refinement_without_branch(m
     assert params["page"] == 2
     assert params["page_size"] == 25
     assert "branch" not in params
+
+
+def test_plan_actions_pagination_follow_up_does_not_fall_back_to_generic_select(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
+        lambda: type("Runtime", (), {"multi_action_enabled": True})(),
+    )
+
+    class PaginationSelectionService(FakeSelectionService):
+        def __init__(self):
+            super().__init__()
+            self.pagination_calls = 0
+            self.generic_select_calls = 0
+
+        def select_pagination_refinement(
+            self,
+            refinement,
+            *,
+            allowed_action_ids,
+            message="",
+        ):
+            self.pagination_calls += 1
+            return None
+
+        def select_action(self, *args, **kwargs):
+            self.generic_select_calls += 1
+            return super().select_action(*args, **kwargs)
+
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "parents-action",
+                            "parameters": {"code": "10080022", "page": 1, "page_size": 25},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/parents",
+                            "actionId": "parents-action",
+                            "dataCoverageNotice": {"kind": "pagination"},
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selection_service = PaginationSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        selection_service,
+        message="próxima página",
+        allowed_action_ids=["parents-action"],
+        previous_messages=history,
+    )
+
+    assert selection_service.pagination_calls == 1
+    assert selection_service.generic_select_calls == 0
+    assert planned == []

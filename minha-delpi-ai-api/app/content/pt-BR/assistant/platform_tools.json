@@ -1,0 +1,25 @@
+{
+  "directAnswer": {
+    "routes": {
+      "title": "**Rotas autorizadas no seu perfil ({count}):**",
+      "lineWithLabel": "- `{path}` — {label} ({appName})",
+      "linePathOnly": "- `{path}` ({appName})",
+      "truncatedNotice": "_Mostrando as primeiras {shown} de {total} rotas autorizadas._",
+      "empty": "Não encontrei rotas autorizadas no seu perfil."
+    },
+    "apps": {
+      "title": "**Aplicativos autorizados no seu perfil ({count}):**",
+      "line": "- **{name}** — `{basePath}` ({routeCount} rota(s))",
+      "lineWithoutBasePath": "- **{name}** ({routeCount} rota(s))",
+      "truncatedNotice": "_Mostrando os primeiros {shown} de {total} aplicativos autorizados._",
+      "empty": "Não encontrei aplicativos autorizados no seu perfil."
+    },
+    "currentUser": {
+      "title": "**Seu perfil na Minha DELPI:**",
+      "nameLine": "- **Nome:** {name}",
+      "emailLine": "- **Email:** {email}",
+      "superadminLine": "- **Perfil:** Superadministrador",
+      "empty": "Não consegui carregar os dados do seu perfil."
+    }
+  }
+}

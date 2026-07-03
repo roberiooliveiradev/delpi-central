@@ -16,6 +16,7 @@ def _prepare_with_empty_rag(
     message: str,
     *,
     run_post_rag_web_fallback=None,
+    build_tool_context=None,
 ):
     session = MagicMock()
     session.id = uuid4()
@@ -30,6 +31,14 @@ def _prepare_with_empty_rag(
 
     service = ChatTurnPreparationService(rag_context_service=rag_context_service)
 
+    tool_context_builder = build_tool_context or (
+        lambda *args, **kwargs: {
+            "context": "",
+            "toolCalls": [],
+            "nativeToolCalling": {},
+        }
+    )
+
     prepared = service.prepare(
         message=message,
         request=request,
@@ -43,11 +52,7 @@ def _prepare_with_empty_rag(
         attachments=[],
         previous_messages=[],
         history_source=[],
-        build_tool_context=lambda *args, **kwargs: {
-            "context": "",
-            "toolCalls": [],
-            "nativeToolCalling": {},
-        },
+        build_tool_context=tool_context_builder,
         maybe_extend_tool_context=lambda **kwargs: kwargs["tool_context"],
         prepare_history=lambda history: ("", list(history)),
         history_keep=12,
@@ -59,6 +64,23 @@ def _prepare_with_empty_rag(
     )
 
     return prepared, rag_context_service
+
+
+def test_should_apply_skips_when_platform_tool_already_ran():
+    assert not ChatTurnPreparationRagWebFallbackService.should_apply(
+        message="quais rotas vc acessa?",
+        skip_rag=False,
+        direct_answer=None,
+        rag={"sources": []},
+        tool_calls=[
+            {
+                "name": "get_allowed_routes",
+                "metadata": {"count": 61, "source": "core-api:/me/apps"},
+            }
+        ],
+        tool_context={"skipRag": True},
+        text_task_pure=False,
+    )
 
 
 def test_should_apply_skips_when_operational_llm_synthesis_pending():

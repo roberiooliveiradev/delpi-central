@@ -476,6 +476,20 @@ class ChatTurnPreparationPostToolResolutionService:
             if "direct_answer" not in pipeline_stages:
                 pipeline_stages.append("direct_answer")
 
+            from app.domain.services.chat_platform_internal_tools_service import (
+                ChatPlatformInternalToolsService,
+            )
+
+            if (
+                isinstance(tool_context, dict)
+                and tool_context.get("platformDirectAnswer")
+                and ChatPlatformInternalToolsService.is_platform_direct_answer_turn(
+                    tool_calls
+                )
+                and "platform_direct_answer" not in pipeline_stages
+            ):
+                pipeline_stages.append("platform_direct_answer")
+
         if text_task_pure and not direct_answer:
             skip_rag = True
 

@@ -13,6 +13,10 @@ from app.application.services.chat_tool_context_format_service import (
     ChatToolContextFormatService,
 )
 from app.domain.entities.tool_result import ToolResult
+from app.domain.services.chat_platform_internal_tools_service import (
+    PLATFORM_INTERNAL_TOOL_NAMES,
+    ChatPlatformInternalToolsService,
+)
 from app.infrastructure.config.settings import Settings
 
 if TYPE_CHECKING:
@@ -30,6 +34,7 @@ class ToolExecutionState:
     skip_rag: bool = False
     last_external_action_data: Any = None
     last_web_search_data: dict | None = None
+    last_platform_tool_result: tuple[str, Any, dict] | None = None
     web_sources: list[dict] = field(default_factory=list)
     web_search_payload: dict | None = None
     external_action_results: list = field(default_factory=list)
@@ -57,6 +62,7 @@ class ChatToolContextExecutionService:
         skip_rag = False
         last_external_action_data = None
         last_web_search_data: dict | None = None
+        last_platform_tool_result: tuple[str, Any, dict] | None = None
         web_sources: list[dict] = []
         web_search_payload: dict | None = None
         external_action_results: list = []
@@ -364,6 +370,29 @@ class ChatToolContextExecutionService:
                 }
             )
 
+            if result.name in PLATFORM_INTERNAL_TOOL_NAMES:
+                skip_rag = True
+
+            if ChatPlatformInternalToolsService.is_direct_answer_tool(result.name):
+                last_platform_tool_result = (
+                    result.name,
+                    result.data,
+                    dict(safe_metadata),
+                )
+                from app.domain.services.chat_platform_tool_direct_answer_service import (
+                    ChatPlatformToolDirectAnswerService,
+                )
+
+                platform_direct = ChatPlatformToolDirectAnswerService.format(
+                    result.name,
+                    data=result.data,
+                    metadata=safe_metadata,
+                    message=raw_message,
+                )
+
+                if platform_direct:
+                    direct_answer = platform_direct
+
             if result.name == "execute_external_action":
                 skip_rag = True
 
@@ -433,6 +462,7 @@ class ChatToolContextExecutionService:
             skip_rag=skip_rag,
             last_external_action_data=last_external_action_data,
             last_web_search_data=last_web_search_data,
+            last_platform_tool_result=last_platform_tool_result,
             web_sources=web_sources,
             web_search_payload=web_search_payload,
             external_action_results=external_action_results,

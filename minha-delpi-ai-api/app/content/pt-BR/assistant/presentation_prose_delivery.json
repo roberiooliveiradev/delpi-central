@@ -21,7 +21,8 @@
       "utility_direct",
       "common_chat_operational_guidance",
       "meta_direct_answer",
-      "capabilities"
+      "capabilities",
+      "platform_direct_answer"
     ],
     "deprecateHumanizedLinhasAsProse": true,
     "allowTemplateProseFallback": false,

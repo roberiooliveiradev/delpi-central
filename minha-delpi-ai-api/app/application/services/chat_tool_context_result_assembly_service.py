@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from app.application.services.chat_tool_context_execution_service import ToolExecutionState
+from app.domain.services.chat_platform_internal_tools_service import (
+    ChatPlatformInternalToolsService,
+)
 from app.domain.services.chat_tool_context_presentation_service import (
     ChatToolContextPresentationService,
 )
@@ -41,6 +44,7 @@ class ChatToolContextResultAssemblyService:
         skip_rag = execution.skip_rag
         last_external_action_data = execution.last_external_action_data
         last_web_search_data = execution.last_web_search_data
+        last_platform_tool_result = execution.last_platform_tool_result
         web_sources = execution.web_sources
         web_search_payload = execution.web_search_payload
         safe_tool_calls = execution.safe_tool_calls
@@ -144,6 +148,26 @@ class ChatToolContextResultAssemblyService:
                 )
                 web_search_payload = last_web_search_data
 
+        if (
+            not direct_answer
+            and len(safe_tool_calls) == 1
+            and last_platform_tool_result
+        ):
+            from app.domain.services.chat_platform_tool_direct_answer_service import (
+                ChatPlatformToolDirectAnswerService,
+            )
+
+            tool_name, tool_data, tool_metadata = last_platform_tool_result
+            direct_answer = ChatPlatformToolDirectAnswerService.format(
+                tool_name,
+                data=tool_data,
+                metadata=tool_metadata,
+                message=raw_message,
+            )
+
+            if direct_answer:
+                skip_rag = True
+
         requested_format = host._format_service.resolve_consolidation_format(
             raw_message,
             previous_messages,
@@ -227,6 +251,13 @@ class ChatToolContextResultAssemblyService:
             "webSearchPayload": web_search_payload,
             "selectedExternalAction": selected_external_action_meta,
             "currentMessage": raw_message,
+            "platformDirectAnswer": bool(
+                direct_answer
+                and last_platform_tool_result
+                and ChatPlatformInternalToolsService.is_platform_direct_answer_turn(
+                    safe_tool_calls
+                )
+            ),
         }
 
         if drawing_analysis_payload:

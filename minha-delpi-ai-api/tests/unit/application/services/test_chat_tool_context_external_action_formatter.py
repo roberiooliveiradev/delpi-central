@@ -119,6 +119,18 @@ def test_format_external_action_context_skips_template_linhas_when_everywhere():
     assert not humanized.get("linhas")
 
 
+def test_safe_metadata_supports_non_external_action_tools():
+    formatter = ChatToolContextExternalActionFormatter(ExternalActionResultPresenter())
+    safe_metadata = formatter._build_safe_tool_metadata(
+        "get_allowed_routes",
+        {"ok": True, "routes": ["/apps/minha-delpi-chat"]},
+        [{"path": "/apps/minha-delpi-chat", "label": "Chat"}],
+    )
+
+    assert safe_metadata["ok"] is True
+    assert safe_metadata["routes"] == ["/apps/minha-delpi-chat"]
+
+
 def test_response_preview_respects_explicit_override():
     formatter = ChatToolContextExternalActionFormatter(ExternalActionResultPresenter())
     preview = formatter._build_response_preview({"padding": "x" * 200}, max_chars=80)

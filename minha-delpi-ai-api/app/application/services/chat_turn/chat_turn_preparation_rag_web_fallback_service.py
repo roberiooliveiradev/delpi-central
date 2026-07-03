@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from app.domain.services.chat_platform_internal_tools_service import (
+    PLATFORM_INTERNAL_TOOL_NAMES,
+)
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 
 
@@ -90,6 +93,38 @@ class ChatTurnPreparationRagWebFallbackService:
 
         return False
 
+    @staticmethod
+    def _platform_tool_already_ran(
+        *,
+        tool_calls: list | None,
+        tool_context: dict | None,
+    ) -> bool:
+        items: list = list(tool_calls or [])
+
+        if isinstance(tool_context, dict):
+            items.extend(tool_context.get("toolCalls") or [])
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            name = str(item.get("name") or "").strip()
+
+            if name not in PLATFORM_INTERNAL_TOOL_NAMES:
+                continue
+
+            metadata = item.get("metadata")
+
+            if not isinstance(metadata, dict):
+                return True
+
+            if metadata.get("ok") is False:
+                continue
+
+            return True
+
+        return False
+
     @classmethod
     def should_apply(
         cls,
@@ -109,6 +144,12 @@ class ChatTurnPreparationRagWebFallbackService:
             return False
 
         if cls._operational_llm_narration_pending(
+            tool_calls=tool_calls,
+            tool_context=tool_context,
+        ):
+            return False
+
+        if cls._platform_tool_already_ran(
             tool_calls=tool_calls,
             tool_context=tool_context,
         ):
