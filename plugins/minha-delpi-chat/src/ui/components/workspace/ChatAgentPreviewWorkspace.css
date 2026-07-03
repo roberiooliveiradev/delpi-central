@@ -23,9 +23,14 @@
 
 .mdc-chat-agent-preview-workspace .mdc-chat-empty-composer__column {
   flex: 1 1 auto;
-  justify-content: center;
+  justify-content: flex-start;
   max-height: 100%;
   min-height: 0;
+}
+
+.mdc-chat-agent-preview-workspace .mdc-chat-empty-composer__scroll {
+  flex: 1 1 auto;
+  justify-content: flex-start;
 }
 
 .mdc-chat-agent-preview-workspace .mdc-chat-empty-composer__column > .mdc-chat-input {

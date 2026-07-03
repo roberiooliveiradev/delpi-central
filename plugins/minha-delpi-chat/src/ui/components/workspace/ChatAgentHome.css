@@ -1,5 +1,9 @@
 /* Estilos específicos mínimos — base em ui/layout/chat-landing.css */
 
 .mdc-chat-agent-home {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
 }

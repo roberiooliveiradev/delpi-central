@@ -1,22 +1,40 @@
 /* Landing do agente — paridade entre home do chat e pré-visualização do builder. */
 
-.mdc-chat-agent-landing {
+.mdc-chat-landing.mdc-chat-agent-landing {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  align-items: stretch;
   width: 100%;
+  min-height: 0;
+  padding: clamp(0.35rem, 1.5vw, 0.85rem) clamp(0.5rem, 2vw, 1rem);
+  text-align: initial;
+}
+
+.mdc-chat-agent-landing__hero {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.65rem;
+  justify-items: center;
+  width: 100%;
+  text-align: center;
 }
 
 .mdc-chat-agent-landing__prompts-region {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.15rem;
   width: 100%;
   min-height: 0;
-  margin-top: 0.35rem;
+  margin-top: 0.5rem;
   text-align: left;
 }
 
 .mdc-chat-agent-landing__prompts-scroll {
+  flex: 1 1 auto;
   width: 100%;
-  max-height: min(16.5rem, 38vh);
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -54,6 +72,31 @@
 }
 
 .mdc-chat-empty-composer__scroll .mdc-chat-agent-landing__prompts-region {
-  flex-shrink: 1;
+  flex: 1 1 auto;
   min-height: 0;
+}
+
+.mdc-chat-empty-composer:has(.mdc-chat-agent-home) {
+  justify-content: flex-start;
+}
+
+.mdc-chat-empty-composer:has(.mdc-chat-agent-home) .mdc-chat-empty-composer__column {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 100%;
+  margin-block: 0;
+  justify-content: flex-start;
+}
+
+.mdc-chat-empty-composer:has(.mdc-chat-agent-home) .mdc-chat-empty-composer__scroll {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  padding-top: clamp(0.35rem, 1.25vh, 0.85rem);
+}
+
+.mdc-chat-empty-composer:has(.mdc-chat-agent-home) .mdc-chat-agent-home,
+.mdc-chat-empty-composer:has(.mdc-chat-agent-home) .mdc-chat-agent-landing {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }

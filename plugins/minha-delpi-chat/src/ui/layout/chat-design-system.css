@@ -114,6 +114,13 @@
   margin-inline: auto;
 }
 
+.mdc-chat-empty-composer:has(.mdc-chat-agent-home) .mdc-chat-agent-home,
+.mdc-chat-empty-composer:has(.mdc-chat-agent-home) .mdc-chat-agent-landing {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .mdc-chat-empty-state__hero {
   display: grid;
   gap: 0.65rem;

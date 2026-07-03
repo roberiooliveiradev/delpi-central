@@ -50,20 +50,22 @@ export function ChatAgentLanding({
       className={["mdc-chat-landing", "mdc-chat-agent-landing", className].filter(Boolean).join(" ")}
       aria-label={`Agente ${name}`}
     >
-      <div className="mdc-chat-landing__avatar" aria-hidden="true">
-        <ChatAgentIcon icon={icon} size={26} />
+      <div className="mdc-chat-agent-landing__hero">
+        <div className="mdc-chat-landing__avatar" aria-hidden="true">
+          <ChatAgentIcon icon={icon} size={26} />
+        </div>
+
+        <h2 className="mdc-chat-landing__title">{name}</h2>
+
+        {description ? <p className="mdc-chat-landing__description">{description}</p> : null}
+
+        {canManageAgent && onManageAgent ? (
+          <button type="button" className="mdc-chat-landing__manage" onClick={onManageAgent}>
+            <Settings size={15} aria-hidden="true" />
+            <span>Gerenciar agente</span>
+          </button>
+        ) : null}
       </div>
-
-      <h2 className="mdc-chat-landing__title">{name}</h2>
-
-      {description ? <p className="mdc-chat-landing__description">{description}</p> : null}
-
-      {canManageAgent && onManageAgent ? (
-        <button type="button" className="mdc-chat-landing__manage" onClick={onManageAgent}>
-          <Settings size={15} aria-hidden="true" />
-          <span>Gerenciar agente</span>
-        </button>
-      ) : null}
 
       {entries.length > 0 ? (
         <div
