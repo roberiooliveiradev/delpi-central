@@ -11,7 +11,11 @@ from maint_app.application.services.maintenance_submodule_catalog import (
     assert_submodule_manage,
     assert_submodule_view,
 )
-from maint_app.composition.maintenance_composer import build_reposicao_service, build_revisao_programada_service
+from maint_app.composition.maintenance_composer import (
+    build_mini_applicators_totvs_gateway,
+    build_reposicao_service,
+    build_revisao_programada_service,
+)
 from maint_app.core.errors import format_api_error
 from maint_app.core.responses import fail, ok
 from maint_app.infrastructure.persistence.repositories.operational_repositories import (
@@ -602,6 +606,38 @@ def delete_reposicao(reposicao_id: str, request: Request):
         return ok(None, message="Reposição excluída.")
     except PermissionError as exc:
         return fail(str(exc), 403)
+
+
+@router.get("/mini-aplicadores/catalogo-pecas-3019")
+def list_catalogo_pecas_3019(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    codigo: Optional[str] = Query(None),
+    descricao: Optional[str] = Query(None),
+    query: ListQuery = Depends(list_query_params),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    try:
+        gateway = build_mini_applicators_totvs_gateway()
+        data = gateway.listar_pecas_reposicao(
+            codigo=codigo,
+            descricao=descricao,
+            page=query.page,
+            page_size=query.page_size,
+            sort_by=query.sort_by,
+            sort_dir=query.sort_dir,
+        )
+        return ok(data, message="Peças de reposição listadas.")
+    except DelpiApiError as exc:
+        return fail(exc.detail, status_code=exc.status_code)
+    except Exception as exc:
+        return fail(format_api_error(exc), status_code=500)
 
 
 @router.get("/mini-aplicadores/sugerir-golpes")

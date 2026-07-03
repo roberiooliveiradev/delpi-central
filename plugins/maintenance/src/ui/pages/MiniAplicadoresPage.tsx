@@ -934,6 +934,13 @@ export function MiniAplicadoresPage({
 
       {!codigoFerramenta ? (
         <>
+          <FerramentasPorPecaSearchCard
+            filial={filial}
+            selectedPecaCodigo={selectedPecaCodigo}
+            onSelectPeca={handleSelectPeca}
+            getAccessToken={getAccessToken}
+          />
+
           <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
             <label className="dm-field">
               <span>Buscar por código</span>
@@ -974,13 +981,6 @@ export function MiniAplicadoresPage({
               {error}
             </StateBox>
           ) : null}
-
-          <FerramentasPorPecaSearchCard
-            filial={filial}
-            selectedPecaCodigo={selectedPecaCodigo}
-            onSelectPeca={handleSelectPeca}
-            getAccessToken={getAccessToken}
-          />
 
           <DataTableSection
             title={

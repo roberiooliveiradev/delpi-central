@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -30,6 +31,7 @@ export function FerramentasPorPecaSearchCard({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(true);
 
   const columns = useMemo<DataTableColumn<PecaReposicaoItem>[]>(
     () => [
@@ -134,15 +136,27 @@ export function FerramentasPorPecaSearchCard({
     : null;
 
   return (
-    <section className="dm-card">
-      <div className="dm-section-header">
-        <div className="dm-section-header__title-group">
-          <h2 className="dm-section-header__title">Buscar ferramentas por peça</h2>
-          <p className="dm-section-header__hint">
-            Peças cadastradas no grupo 3019 (catálogo Protheus). Selecione uma linha para filtrar
-            as ferramentas abaixo.
-          </p>
-        </div>
+    <section className={`dm-card dm-collapsible-card${expanded ? "" : " is-collapsed"}`}>
+      <div className="dm-section-header dm-collapsible-card__header">
+        <button
+          type="button"
+          className="dm-collapsible-card__trigger"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          <ChevronDown
+            size={18}
+            aria-hidden="true"
+            className={expanded ? "dm-collapsible-card__chevron is-open" : "dm-collapsible-card__chevron"}
+          />
+          <div className="dm-section-header__title-group">
+            <h2 className="dm-section-header__title">Buscar ferramentas por peça</h2>
+            <p className="dm-section-header__hint">
+              Peças cadastradas no grupo 3019 (catálogo Protheus). Selecione uma linha para filtrar
+              as ferramentas abaixo.
+            </p>
+          </div>
+        </button>
         {selectedPecaCodigo ? (
           <button
             type="button"
@@ -160,60 +174,64 @@ export function FerramentasPorPecaSearchCard({
         </p>
       ) : null}
 
-      {error ? <p className="dm-inline-error">{error}</p> : null}
+      {expanded ? (
+        <>
+          {error ? <p className="dm-inline-error">{error}</p> : null}
 
-      <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
-        <label className="dm-field">
-          <span>Código da peça</span>
-          <input
-            value={codigoDraft}
-            onChange={(event) => setCodigoDraft(event.target.value)}
-            placeholder="Ex.: 3019 ou 30190036"
-          />
-        </label>
-        <label className="dm-field">
-          <span>Descrição da peça</span>
-          <input
-            value={descricaoDraft}
-            onChange={(event) => setDescricaoDraft(event.target.value)}
-            placeholder="Ex.: GRAMPEADOR"
-          />
-        </label>
-        <div className="dm-filter-bar__actions">
-          {(codigoFiltro || descricaoFiltro) ? (
-            <button type="button" className="dm-ghost-btn" onClick={handleClearFilters}>
-              Limpar filtros
-            </button>
-          ) : null}
-          <button type="submit" className="dm-primary-btn">
-            Buscar peças
-          </button>
-        </div>
-      </FilterBar>
+          <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
+            <label className="dm-field">
+              <span>Código da peça</span>
+              <input
+                value={codigoDraft}
+                onChange={(event) => setCodigoDraft(event.target.value)}
+                placeholder="Ex.: 3019 ou 30190036"
+              />
+            </label>
+            <label className="dm-field">
+              <span>Descrição da peça</span>
+              <input
+                value={descricaoDraft}
+                onChange={(event) => setDescricaoDraft(event.target.value)}
+                placeholder="Ex.: GRAMPEADOR"
+              />
+            </label>
+            <div className="dm-filter-bar__actions">
+              {(codigoFiltro || descricaoFiltro) ? (
+                <button type="button" className="dm-ghost-btn" onClick={handleClearFilters}>
+                  Limpar filtros
+                </button>
+              ) : null}
+              <button type="submit" className="dm-primary-btn">
+                Buscar peças
+              </button>
+            </div>
+          </FilterBar>
 
-      <DataTableSection
-        title="Peças amarradas"
-        countBadgeLabel="peça(s)"
-        columns={columns}
-        rows={items}
-        loading={loading}
-        emptyMessage="Nenhuma peça 3019 encontrada com os filtros informados."
-        getRowKey={(item) => item.codigo}
-        getRowClassName={(item) =>
-          selectedPecaCodigo === item.codigo ? "is-selected" : undefined
-        }
-        embedded
-        onRowClick={handleSelectPeca}
-        serverTable={{
-          page: pecasTable.query.page,
-          pageSize: pecasTable.query.pageSize,
-          total,
-          onPageChange: pecasTable.setPage,
-          sortKey: pecasTable.query.sortKey,
-          sortDirection: pecasTable.query.sortDirection,
-          onSortChange: pecasTable.handleSortChange,
-        }}
-      />
+          <DataTableSection
+            title="Peças amarradas"
+            countBadgeLabel="peça(s)"
+            columns={columns}
+            rows={items}
+            loading={loading}
+            emptyMessage="Nenhuma peça 3019 encontrada com os filtros informados."
+            getRowKey={(item) => item.codigo}
+            getRowClassName={(item) =>
+              selectedPecaCodigo === item.codigo ? "is-selected" : undefined
+            }
+            embedded
+            onRowClick={handleSelectPeca}
+            serverTable={{
+              page: pecasTable.query.page,
+              pageSize: pecasTable.query.pageSize,
+              total,
+              onPageChange: pecasTable.setPage,
+              sortKey: pecasTable.query.sortKey,
+              sortDirection: pecasTable.query.sortDirection,
+              onSortChange: pecasTable.handleSortChange,
+            }}
+          />
+        </>
+      ) : null}
     </section>
   );
 }

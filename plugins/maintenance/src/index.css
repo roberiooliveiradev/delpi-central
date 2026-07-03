@@ -581,6 +581,50 @@
   color: var(--dm-text-muted);
 }
 
+.dashboard-maintenance .dm-collapsible-card.is-collapsed {
+  padding-bottom: var(--dm-card-padding);
+}
+
+.dashboard-maintenance .dm-collapsible-card__header {
+  align-items: center;
+}
+
+.dashboard-maintenance .dm-collapsible-card__trigger {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-maintenance .dm-collapsible-card__trigger:hover .dm-section-header__title,
+.dashboard-maintenance .dm-collapsible-card__trigger:focus-visible .dm-section-header__title {
+  color: var(--dm-accent);
+}
+
+.dashboard-maintenance .dm-collapsible-card__trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--dm-accent) 45%, transparent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.dashboard-maintenance .dm-collapsible-card__chevron {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: var(--dm-text-muted);
+  transition: transform 0.15s ease;
+}
+
+.dashboard-maintenance .dm-collapsible-card__chevron.is-open {
+  transform: rotate(180deg);
+}
+
 .dashboard-maintenance .dm-section-header__meta {
   display: flex;
   flex-wrap: wrap;

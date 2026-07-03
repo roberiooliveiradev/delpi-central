@@ -116,7 +116,7 @@ export function fetchPecasReposicao(
     descricao: filters.descricao,
   });
   return maintenanceFetch<PagedItems<PecaReposicaoItem>>(
-    `/mini-applicadores/pecas-reposicao?${search.toString()}`,
+    `/mini-aplicadores/catalogo-pecas-3019?${search.toString()}`,
     { getAccessToken },
   );
 }
