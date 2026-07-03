@@ -316,6 +316,15 @@ class ChatProductStructurePresentationService:
             if normalized is not None:
                 root_dict = normalized
 
+        if entity == "product_structure_exclusivity" and isinstance(root_dict, dict):
+            exclusivity_tree = cls._build_structure_exclusivity_tree(
+                root_dict,
+                source_path=effective_path,
+            )
+
+            if isinstance(exclusivity_tree, dict) and exclusivity_tree.get("type") == "tree":
+                return exclusivity_tree
+
         if not isinstance(root_dict, dict) or not isinstance(root_dict.get("root"), dict):
             return None
 
@@ -341,6 +350,219 @@ class ChatProductStructurePresentationService:
                 children=children or None,
             ),
         }
+
+    @classmethod
+    def _build_structure_exclusivity_tree(
+        cls,
+        root_dict: dict,
+        *,
+        source_path: str | None,
+    ) -> dict | None:
+        """Monta árvore BOM a partir de items planos (path/parent_code) da rota exclusivity."""
+        product = root_dict.get("product")
+        items_raw = root_dict.get("items")
+
+        if not isinstance(product, dict) or not isinstance(items_raw, list) or not items_raw:
+            return None
+
+        product_code = str(product.get("product_code") or product.get("code") or "").strip()
+
+        if not product_code:
+            return None
+
+        normalized: list[dict] = []
+
+        for raw in items_raw:
+            if not isinstance(raw, dict):
+                continue
+
+            item = cls._normalize_exclusivity_item(raw)
+
+            if item:
+                normalized.append(item)
+
+        if not normalized:
+            return None
+
+        items_by_level: dict[int, list[dict]] = {}
+
+        for item in normalized:
+            level = item.get("level")
+
+            if isinstance(level, int):
+                items_by_level.setdefault(level, []).append(item)
+
+        for item in normalized:
+            item["parent"] = cls._resolve_exclusivity_parent(
+                item,
+                product_code=product_code,
+                items_by_level=items_by_level,
+            )
+
+        children_by_parent: dict[str, list[dict]] = {}
+
+        for item in normalized:
+            parent = str(item.get("parent") or product_code).strip() or product_code
+            children_by_parent.setdefault(parent, []).append(item)
+
+        for children in children_by_parent.values():
+            children.sort(key=lambda row: (row.get("level") or 0, row.get("code") or ""))
+
+        def item_to_tree_node(item: dict) -> dict:
+            child_nodes = [
+                item_to_tree_node(child)
+                for child in children_by_parent.get(item["code"], [])
+            ]
+            node = cls._serialize_tree_node(
+                item["code"],
+                item["description"],
+                item["item_type"],
+                item["unit"],
+                item["quantity"],
+                children=child_nodes or None,
+            )
+            exclusive_label = str(item.get("exclusive_label") or "").strip()
+
+            if exclusive_label:
+                node.setdefault("meta", {})
+                node["meta"]["exclusive_raw_material"] = exclusive_label
+
+            return node
+
+        root_children = [
+            item_to_tree_node(item)
+            for item in children_by_parent.get(product_code, [])
+        ]
+
+        del source_path  # título alinhado à rota /structure
+
+        return {
+            "type": "tree",
+            "title": f"Estrutura do produto {product_code}",
+            "root": cls._serialize_tree_node(
+                product_code,
+                str(product.get("description") or "").strip(),
+                str(product.get("product_type") or product.get("type") or "PA").strip(),
+                str(product.get("unit") or "").strip(),
+                None,
+                children=root_children or None,
+            ),
+        }
+
+    @classmethod
+    def _normalize_exclusivity_item(cls, raw: dict) -> dict | None:
+        code = str(raw.get("component_code") or raw.get("product_code") or "").strip()
+
+        if not code:
+            return None
+
+        description = str(
+            raw.get("component_description") or raw.get("description") or ""
+        ).strip()
+        item_type = str(raw.get("component_type") or raw.get("type") or "").strip()
+        unit = str(raw.get("component_unit") or raw.get("unit") or "").strip()
+        quantity = cls._parse_qty(
+            raw.get("accumulated_quantity")
+            or raw.get("quantity_per")
+            or raw.get("quantity")
+        )
+        exclusive_label = str(raw.get("exclusive_raw_material_label") or "").strip()
+
+        if not exclusive_label and raw.get("exclusive_raw_material") not in (None, ""):
+            flag = raw.get("exclusive_raw_material")
+
+            if isinstance(flag, bool):
+                exclusive_label = "Sim" if flag else "Não"
+            else:
+                token = str(flag).strip().upper()
+
+                if token in {"SIM", "S", "TRUE", "1", "YES"}:
+                    exclusive_label = "Sim"
+                elif token in {"NAO", "NÃO", "N", "FALSE", "0", "NO"}:
+                    exclusive_label = "Não"
+
+        parent = str(raw.get("parent_code") or "").strip()
+
+        if not parent:
+            parent = cls._parent_code_from_structure_path(raw.get("path"), code)
+
+        level = raw.get("level")
+
+        try:
+            level_int = int(level) if level is not None and level != "" else None
+        except (TypeError, ValueError):
+            level_int = None
+
+        return {
+            "code": code,
+            "description": description,
+            "item_type": item_type,
+            "unit": unit,
+            "quantity": quantity,
+            "exclusive_label": exclusive_label,
+            "parent": parent,
+            "level": level_int,
+            "path": str(raw.get("path") or "").strip(),
+        }
+
+    @classmethod
+    def _parent_code_from_structure_path(cls, path, code: str) -> str:
+        segments = [
+            segment.strip()
+            for segment in str(path or "").split(">")
+            if str(segment).strip()
+        ]
+
+        if not segments:
+            return ""
+
+        normalized_code = str(code).strip()
+
+        if segments[-1] != normalized_code:
+            for index, segment in enumerate(segments):
+                if segment == normalized_code and index > 0:
+                    return segments[index - 1]
+
+            return ""
+
+        if len(segments) < 2:
+            return ""
+
+        return segments[-2]
+
+    @classmethod
+    def _resolve_exclusivity_parent(
+        cls,
+        item: dict,
+        *,
+        product_code: str,
+        items_by_level: dict[int, list[dict]],
+    ) -> str:
+        parent = str(item.get("parent") or "").strip()
+
+        if parent:
+            return parent
+
+        level = item.get("level")
+
+        if level == 1:
+            return product_code
+
+        if isinstance(level, int) and level > 1:
+            candidates = items_by_level.get(level - 1) or []
+
+            if len(candidates) == 1:
+                return str(candidates[0].get("code") or "").strip() or product_code
+
+            path = str(item.get("path") or "").strip()
+
+            for candidate in candidates:
+                candidate_path = str(candidate.get("path") or "").strip()
+
+                if path and candidate_path and path.startswith(candidate_path):
+                    return str(candidate.get("code") or "").strip() or product_code
+
+        return product_code
 
     @classmethod
     def _normalize_parents_payload(cls, root_dict: dict) -> dict | None:
