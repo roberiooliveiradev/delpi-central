@@ -4,6 +4,10 @@ import os
 from app.domain.ports.admin_runtime_settings_repository_port import (
     AdminRuntimeSettingsRepositoryPort,
 )
+from app.infrastructure.config.llm_text_config import (
+    is_openai_compatible_provider,
+    resolve_llm_text_config,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -123,7 +127,7 @@ class LlmCostEstimatorService:
         }
 
     def _default_model_for(self, provider: str) -> str:
-        if provider == "vllm":
-            return Settings.VLLM_MODEL
+        if is_openai_compatible_provider(provider):
+            return resolve_llm_text_config().model
 
         return Settings.OLLAMA_MODEL

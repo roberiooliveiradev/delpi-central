@@ -267,8 +267,8 @@ class ChatResponseModeService:
 
     @classmethod
     def _provider_default_model(cls) -> str:
-        if ChatDomainConfigService.llm_provider() == "vllm":
-            return ChatDomainConfigService.vllm_model()
+        if ChatDomainConfigService.llm_provider() == "openai_compatible":
+            return ChatDomainConfigService.llm_text_model()
 
         from app.domain.services.chat_fine_tuning_deploy_resolver_service import (
             ChatFineTuningDeployResolverService,

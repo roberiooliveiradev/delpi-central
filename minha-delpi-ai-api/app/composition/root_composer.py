@@ -3,7 +3,7 @@ from flask import Flask
 from app.extensions.db import db
 from app.extensions.migrate import migrate
 from app.infrastructure.config.settings import Settings
-from app.infrastructure.llm.ollama_warmup_service import warmup_ollama
+from app.infrastructure.llm.llm_warmup_service import warmup_llm_on_startup
 from app.infrastructure.logging.json_logging import configure_logging
 from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
@@ -72,6 +72,6 @@ def create_application() -> Flask:
     app.cli.add_command(seed_chat_intelligence_defaults_command)
     app.cli.add_command(seed_chat_platform_settings_command)
 
-    warmup_ollama()
+    warmup_llm_on_startup()
 
     return app

@@ -22,6 +22,12 @@ class Settings:
     CORE_API_TIMEOUT_SECONDS = float(os.getenv("CORE_API_TIMEOUT_SECONDS", "5"))
 
     LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
+    LLM_TEXT_BASE_URL = os.getenv("LLM_TEXT_BASE_URL", "").strip()
+    LLM_TEXT_MODEL = os.getenv("LLM_TEXT_MODEL", "").strip()
+    LLM_TEXT_API_KEY = os.getenv("LLM_TEXT_API_KEY", "").strip()
+    LLM_TEXT_TIMEOUT_SECONDS = float(os.getenv("LLM_TEXT_TIMEOUT_SECONDS", "0") or "0")
+    EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "ollama").lower().strip()
+    VISION_LLM_PROVIDER = os.getenv("VISION_LLM_PROVIDER", "ollama").lower().strip()
     LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.4"))
     LLM_MAX_TOKENS = resolve_llm_max_tokens()
     LLM_PROMPT_TOKEN_COST_PER_1K = float(
@@ -536,6 +542,11 @@ class Settings:
 
     OLLAMA_WARMUP_ON_STARTUP = (
         os.getenv("OLLAMA_WARMUP_ON_STARTUP", "true").lower() == "true"
+    )
+    LLM_WARMUP_ON_STARTUP = (
+        os.getenv("LLM_WARMUP_ON_STARTUP", os.getenv("OLLAMA_WARMUP_ON_STARTUP", "true"))
+        .lower()
+        == "true"
     )
     CHAT_FAST_PATH_SLIM_PROMPT = (
         os.getenv("CHAT_FAST_PATH_SLIM_PROMPT", "true").lower() == "true"

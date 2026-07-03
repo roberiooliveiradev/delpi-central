@@ -10,6 +10,7 @@ Registro curto de decisões estruturais do chat. Formato: **contexto → decisã
 | [004](004-repository-ports-composition-root.md) | Ports e composition root | Aceito |
 | [005](005-http-routes-modular-facade.md) | HTTP modular com facade | Aceito |
 | [006](006-hardcoded-pt-strings-baseline-gate.md) | Gate de strings PT (baseline) | Aceito |
+| [007](007-llm-provider-ports.md) | Provedores LLM plugáveis por porta | Aceito |
 
 **Quando criar um ADR:** mudança que afeta pipeline do chat, contrato de camadas, bundles de conteúdo ou política de testes/CI — não para cada feature de produto.
 

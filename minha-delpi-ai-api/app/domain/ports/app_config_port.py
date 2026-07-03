@@ -95,6 +95,42 @@ class AppConfigPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def llm_text_base_url(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def llm_text_model(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def llm_text_api_key(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def llm_text_timeout_seconds(self) -> float:
+        raise NotImplementedError
+
+    @abstractmethod
+    def embedding_provider(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def embedding_model(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def embedding_base_url(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def vision_llm_provider(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def vision_llm_model(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
     def vllm_model(self) -> str:
         raise NotImplementedError
 

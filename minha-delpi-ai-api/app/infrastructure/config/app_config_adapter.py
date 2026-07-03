@@ -7,7 +7,9 @@ from app.domain.ports.app_config_port import AppConfigPort
 from app.infrastructure.config.chat_intelligence_runtime_reader import (
     read_resolved_chat_intelligence,
 )
-from app.infrastructure.config.settings import Settings
+import os
+
+from app.infrastructure.config.llm_text_config import resolve_llm_text_config
 
 
 class InfrastructureAppConfigAdapter(AppConfigPort):
@@ -114,10 +116,49 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
         return str(Settings.CHAT_DEFAULT_SQL_DIALECT or "sqlserver").strip().lower()
 
     def llm_provider(self) -> str:
-        return str(Settings.LLM_PROVIDER)
+        return resolve_llm_text_config().provider
+
+    def llm_text_base_url(self) -> str:
+        return resolve_llm_text_config().base_url
+
+    def llm_text_model(self) -> str:
+        config = resolve_llm_text_config()
+
+        if config.provider == "ollama":
+            from app.domain.services.chat_fine_tuning_deploy_resolver_service import (
+                ChatFineTuningDeployResolverService,
+            )
+
+            return ChatFineTuningDeployResolverService.resolve(config.model)
+
+        return config.model
+
+    def llm_text_api_key(self) -> str:
+        return resolve_llm_text_config().api_key
+
+    def llm_text_timeout_seconds(self) -> float:
+        return resolve_llm_text_config().timeout_seconds
+
+    def embedding_provider(self) -> str:
+        return os.getenv("EMBEDDING_PROVIDER", "ollama").lower().strip()
+
+    def embedding_model(self) -> str:
+        return os.getenv("EMBEDDING_MODEL", "bge-m3").strip()
+
+    def embedding_base_url(self) -> str:
+        return os.getenv("OLLAMA_BASE_URL", "http://ollama:11434").strip()
+
+    def vision_llm_provider(self) -> str:
+        return os.getenv("VISION_LLM_PROVIDER", "ollama").lower().strip()
+
+    def vision_llm_model(self) -> str:
+        return os.getenv(
+            "CHAT_DOCUMENT_VISION_OLLAMA_MODEL",
+            "qwen2.5vl:7b",
+        ).strip()
 
     def vllm_model(self) -> str:
-        return str(Settings.VLLM_MODEL)
+        return os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct").strip()
 
     def ollama_model(self) -> str:
         from app.domain.services.chat_fine_tuning_deploy_resolver_service import (

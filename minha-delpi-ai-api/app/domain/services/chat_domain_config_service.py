@@ -100,6 +100,42 @@ class ChatDomainConfigService:
         return cls._require_config().llm_provider()
 
     @classmethod
+    def llm_text_base_url(cls) -> str:
+        return cls._require_config().llm_text_base_url()
+
+    @classmethod
+    def llm_text_model(cls) -> str:
+        return cls._require_config().llm_text_model()
+
+    @classmethod
+    def llm_text_api_key(cls) -> str:
+        return cls._require_config().llm_text_api_key()
+
+    @classmethod
+    def llm_text_timeout_seconds(cls) -> float:
+        return cls._require_config().llm_text_timeout_seconds()
+
+    @classmethod
+    def embedding_provider(cls) -> str:
+        return cls._require_config().embedding_provider()
+
+    @classmethod
+    def embedding_model(cls) -> str:
+        return cls._require_config().embedding_model()
+
+    @classmethod
+    def embedding_base_url(cls) -> str:
+        return cls._require_config().embedding_base_url()
+
+    @classmethod
+    def vision_llm_provider(cls) -> str:
+        return cls._require_config().vision_llm_provider()
+
+    @classmethod
+    def vision_llm_model(cls) -> str:
+        return cls._require_config().vision_llm_model()
+
+    @classmethod
     def vllm_model(cls) -> str:
         return cls._require_config().vllm_model()
 
