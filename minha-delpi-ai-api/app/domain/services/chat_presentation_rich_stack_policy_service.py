@@ -338,12 +338,37 @@ class ChatPresentationRichStackPolicyService:
         metadata: dict[str, Any],
         profile: dict[str, Any],
     ) -> bool:
-        tail_policy = str(profile.get("stackTailPolicy") or "").strip().lower()
-
-        if tail_policy != "dashboard_only":
+        if not cls._metadata_has_dashboard(metadata):
             return False
 
-        return cls._metadata_has_dashboard(metadata)
+        tail_policy = str(profile.get("stackTailPolicy") or "").strip().lower()
+
+        if tail_policy == "table_primary":
+            return False
+
+        if tail_policy == "dashboard_only":
+            return True
+
+        if tail_policy:
+            return False
+
+        from app.domain.services.chat_presentation_structure_dedup_service import (
+            ChatPresentationStructureDedupService,
+        )
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if not isinstance(api_meta, dict):
+            return False
+
+        shape = str(api_meta.get("shape") or "").strip().lower()
+
+        if shape != "composite_analysis":
+            return False
+
+        return ChatPresentationStructureDedupService._metadata_has_aggregate_dashboard(
+            metadata,
+        )
 
     @classmethod
     def stack_reason_for_route(cls, path: str | None, *, entity: str | None = None) -> str:

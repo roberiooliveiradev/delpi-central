@@ -217,3 +217,30 @@ def test_dedupe_removes_list_table_when_dashboard_embeds_same_table():
     assert metadata.get("tablePresentations") is None
     assert metadata.get("tablePresentation") is None
     assert metadata.get("presentation") is None
+
+
+def test_dedupe_removes_list_table_for_aggregate_dashboard_without_dashboard_only_profile():
+    list_table = {
+        "type": "table",
+        "title": "Matérias-primas por impacto de custo",
+        "role": "list",
+        "columns": [{"key": "rank", "label": "Posição"}],
+        "rows": [{"rank": 1}],
+    }
+    metadata = {
+        "path": "/products/90260882/cost-impact-simulation",
+        "apiDelpiResponseMeta": {
+            "entity": "product_cost_impact_simulation",
+            "shape": "composite_analysis",
+        },
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "title": "Painel consolidado",
+            "panels": [{"id": "table-0", "presentation": list_table}],
+        },
+        "tablePresentation": list_table,
+    }
+
+    ChatPresentationStructureDedupService._suppress_redundant_summary_profile_tables(metadata)
+
+    assert metadata.get("tablePresentation") is None

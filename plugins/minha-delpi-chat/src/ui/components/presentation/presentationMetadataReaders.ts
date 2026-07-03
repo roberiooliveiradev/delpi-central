@@ -362,13 +362,24 @@ export function isRenderPlanVisualKindAllowed(
   kind: string,
   toolCalls?: ChatToolCall[],
 ): boolean {
+  const normalized = String(kind || "").trim().toLowerCase();
+  const suppressed = getPresentationRenderHintsFromToolCalls(toolCalls)?.suppressedKinds;
+
+  if (Array.isArray(suppressed)) {
+    for (const entry of suppressed) {
+      if (String(entry || "").trim().toLowerCase() === normalized) {
+        return false;
+      }
+    }
+  }
+
   const allowed = getRenderPlanAllowedVisualKinds(toolCalls);
 
   if (!allowed) {
     return true;
   }
 
-  return allowed.has(String(kind || "").trim().toLowerCase());
+  return allowed.has(normalized);
 }
 
 /** Playbook 13 P6 — contrato mínimo para executor render-only (sem fallback blueprint). */

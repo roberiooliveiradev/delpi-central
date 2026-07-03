@@ -99,4 +99,49 @@ describe("collectVisualSegments", () => {
 
     expect(kinds).toEqual(["tree"]);
   });
+
+  it("ignora KPI suprimido quando renderPlan só entrega dashboard", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "textPresentation" },
+              { kind: "dashboard", slot: "tailVisuals", source: "dashboardPresentation" },
+            ],
+          },
+          stackPresentationPlan: {
+            tailVisualOrder: ["dashboard"],
+            renderHints: {
+              suppressedKinds: ["kpi", "table"],
+            },
+          },
+          kpiPresentation: {
+            type: "kpi",
+            title: "Indicadores consolidados",
+            cards: [],
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Impacto de MPs",
+            columns: [],
+            rows: [],
+          },
+          dashboardPresentation: {
+            type: "dashboard",
+            title: "Painel consolidado",
+            panels: [],
+          },
+        },
+      },
+    ]);
+
+    const kinds = collectVisualSegments(toolCalls).map((segment) => segment.kind);
+
+    expect(kinds).toEqual(["dashboard"]);
+  });
 });

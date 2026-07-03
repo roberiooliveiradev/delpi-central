@@ -126,20 +126,45 @@ class ChatPresentationRenderPlanService:
                 )
                 continue
 
-            if token == "operationalTables" and cls._has_table_bundle(metadata):
-                segments.append(
-                    {
-                        "kind": "table",
-                        "slot": "operationalTables",
-                        "source": "tablePresentations",
-                    },
-                )
+            if token == "operationalTables":
+                if cls._should_skip_operational_tables_for_dashboard_stack(metadata, plan):
+                    continue
+
+                if cls._has_table_bundle(metadata):
+                    segments.append(
+                        {
+                            "kind": "table",
+                            "slot": "operationalTables",
+                            "source": "tablePresentations",
+                        },
+                    )
                 continue
 
             if token == "tailVisuals":
                 segments.extend(cls._tail_visual_segments(metadata, plan))
 
         return segments
+
+    @classmethod
+    def _should_skip_operational_tables_for_dashboard_stack(
+        cls,
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+    ) -> bool:
+        from app.domain.services.chat_presentation_structure_dedup_service import (
+            ChatPresentationStructureDedupService,
+        )
+
+        tail_order = [
+            str(token).strip().lower()
+            for token in (plan.get("tailVisualOrder") or [])
+            if str(token).strip()
+        ]
+
+        if tail_order != ["dashboard"]:
+            return False
+
+        return ChatPresentationStructureDedupService._metadata_has_dashboard(metadata)
 
     @classmethod
     def _resolve_visual_source(cls, metadata: dict[str, Any], token: str) -> str | None:

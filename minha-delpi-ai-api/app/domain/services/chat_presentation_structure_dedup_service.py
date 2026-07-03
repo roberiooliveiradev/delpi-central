@@ -349,28 +349,19 @@ class ChatPresentationStructureDedupService:
         return signatures
 
     @classmethod
+    def _metadata_has_aggregate_dashboard(cls, metadata: dict[str, Any]) -> bool:
+        return cls._dashboard_embeds_kpi(metadata) or cls._dashboard_embeds_table(metadata)
+
+    @classmethod
     def _should_suppress_standalone_tables_for_dashboard(cls, metadata: dict[str, Any]) -> bool:
-        from app.domain.services.chat_presentation_profile_service import (
-            ChatPresentationProfileService,
-        )
-
-        path = str(metadata.get("path") or "").strip() or None
-        entity = None
-        api_meta = metadata.get("apiDelpiResponseMeta")
-
-        if isinstance(api_meta, dict):
-            raw_entity = api_meta.get("entity")
-
-            if isinstance(raw_entity, str) and raw_entity.strip():
-                entity = raw_entity.strip()
-
-        profile = ChatPresentationProfileService.resolve_profile(path, entity)
-        tail_policy = str(profile.get("stackTailPolicy") or "").strip().lower()
-
-        if tail_policy != "dashboard_only":
+        """Painel agrega KPI/tabela — slots standalone não devem ir ao renderPlan."""
+        if cls._explicit_text_embed_session(metadata):
             return False
 
-        return cls._metadata_has_dashboard(metadata)
+        if not cls._metadata_has_dashboard(metadata):
+            return False
+
+        return cls._metadata_has_aggregate_dashboard(metadata)
 
     @classmethod
     def _should_suppress_summary_profile_table(cls, metadata: dict[str, Any]) -> bool:
@@ -405,7 +396,7 @@ class ChatPresentationStructureDedupService:
 
         embedded_signatures = cls._dashboard_embedded_table_signatures(metadata)
 
-        if not embedded_signatures and not cls._should_suppress_summary_profile_table(metadata):
+        if not embedded_signatures and not cls._dashboard_embeds_kpi(metadata):
             return
 
         bundled = metadata.get("tablePresentations")
