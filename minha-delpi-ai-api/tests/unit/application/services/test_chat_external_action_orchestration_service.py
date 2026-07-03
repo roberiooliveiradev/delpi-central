@@ -266,11 +266,11 @@ def test_plan_actions_multi_scope_structure_and_guide(monkeypatch):
     assert action_ids == {"structure", "guide"}
 
 
-def test_plan_actions_pagination_follow_up_uses_select_action():
-    from app.application.services.external_actions.external_action_selection_service import (
-        ExternalActionSelectionService,
+def test_plan_actions_pagination_follow_up_uses_pagination_refinement(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
+        lambda: type("Runtime", (), {"multi_action_enabled": True})(),
     )
-
     class Repo:
         actions = [
             {
@@ -289,6 +289,48 @@ def test_plan_actions_pagination_follow_up_uses_select_action():
 
         def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
             return self.actions
+
+    class PaginationSelectionService(FakeSelectionService):
+        def __init__(self):
+            super().__init__()
+            self.pagination_calls = 0
+            self.generic_select_calls = 0
+            self._repo = Repo()
+
+        def select_pagination_refinement(
+            self,
+            refinement,
+            *,
+            allowed_action_ids,
+            message="",
+        ):
+            self.pagination_calls += 1
+            from app.application.services.external_actions.external_action_refinement_route_selection_service import (
+                ExternalActionRefinementRouteSelectionService,
+            )
+
+            return ExternalActionRefinementRouteSelectionService(self._repo).build_pagination_action(
+                refinement,
+                action_id=str(refinement.action_id or "parents-action"),
+                allowed_action_ids=allowed_action_ids,
+            )
+
+        def select_action(
+            self,
+            message,
+            allowed_action_ids=None,
+            conversation_context=None,
+            previous_messages=None,
+            **kwargs,
+        ):
+            self.generic_select_calls += 1
+            return super().select_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                **kwargs,
+            )
 
     history = [
         {"role": "user", "content": "onde é usado o 10080022"},
@@ -318,7 +360,7 @@ def test_plan_actions_pagination_follow_up_uses_select_action():
         },
     ]
 
-    selection_service = ExternalActionSelectionService(Repo())
+    selection_service = PaginationSelectionService()
 
     planned = ChatExternalActionOrchestrationService.plan_actions(
         selection_service,
@@ -327,7 +369,104 @@ def test_plan_actions_pagination_follow_up_uses_select_action():
         previous_messages=history,
     )
 
+    assert selection_service.pagination_calls == 1
+    assert selection_service.generic_select_calls == 0
     assert len(planned) == 1
     params = planned[0]["arguments"]["parameters"]
     assert params["code"] == "10080022"
     assert params["page_size"] == 50
+    assert "branch" not in params
+
+
+def test_plan_actions_proxima_pagina_uses_pagination_refinement_without_branch(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
+        lambda: type("Runtime", (), {"multi_action_enabled": True})(),
+    )
+    class Repo:
+        actions = [
+            {
+                "actionId": "parents-action",
+                "method": "GET",
+                "path": "/products/{code}/parents",
+                "operationId": "get_product_parents",
+                "summary": "Produtos pai",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            }
+        ]
+
+        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+            return self.actions
+
+    class PaginationSelectionService(FakeSelectionService):
+        def __init__(self):
+            super().__init__()
+            self.pagination_calls = 0
+            self._repo = Repo()
+
+        def select_pagination_refinement(
+            self,
+            refinement,
+            *,
+            allowed_action_ids,
+            message="",
+        ):
+            self.pagination_calls += 1
+            from app.application.services.external_actions.external_action_refinement_route_selection_service import (
+                ExternalActionRefinementRouteSelectionService,
+            )
+
+            return ExternalActionRefinementRouteSelectionService(self._repo).build_pagination_action(
+                refinement,
+                action_id=str(refinement.action_id or "parents-action"),
+                allowed_action_ids=allowed_action_ids,
+            )
+
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "parents-action",
+                            "parameters": {
+                                "code": "10080022",
+                                "page": 1,
+                                "page_size": 25,
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/parents",
+                            "actionId": "parents-action",
+                            "dataCoverageNotice": {"kind": "pagination"},
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selection_service = PaginationSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        selection_service,
+        message="proxima pagina",
+        allowed_action_ids=["parents-action"],
+        previous_messages=history,
+    )
+
+    assert selection_service.pagination_calls == 1
+    assert len(planned) == 1
+    params = planned[0]["arguments"]["parameters"]
+    assert params["code"] == "10080022"
+    assert params["page"] == 2
+    assert params["page_size"] == 25
+    assert "branch" not in params

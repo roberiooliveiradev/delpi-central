@@ -269,41 +269,93 @@ class ChatExternalActionOrchestrationService:
                         previous_messages=previous_messages,
                     )
                 elif refinement.kind in {"metric_refinement", "metric_reset"}:
-                    selected = selection_service.select_action(
-                        selection_message,
-                        allowed_action_ids=allowed_action_ids,
-                        conversation_context=conversation_context,
-                        previous_messages=previous_messages,
-                        raw_message=raw_message,
-                        memory_snapshot=memory_snapshot,
+                    select_metric = getattr(
+                        selection_service,
+                        "select_metric_refinement",
+                        None,
                     )
+
+                    if callable(select_metric):
+                        selected = select_metric(
+                            selection_message,
+                            refinement,
+                            allowed_action_ids=allowed_action_ids,
+                            previous_messages=previous_messages,
+                        )
+                    else:
+                        selected = selection_service.select_action(
+                            selection_message,
+                            allowed_action_ids=allowed_action_ids,
+                            conversation_context=conversation_context,
+                            previous_messages=previous_messages,
+                            raw_message=raw_message,
+                            memory_snapshot=memory_snapshot,
+                        )
                 elif refinement.kind == "pagination_refinement":
-                    selected = selection_service.select_action(
-                        selection_message,
-                        allowed_action_ids=allowed_action_ids,
-                        conversation_context=conversation_context,
-                        previous_messages=previous_messages,
-                        raw_message=raw_message,
-                        memory_snapshot=memory_snapshot,
+                    select_pagination = getattr(
+                        selection_service,
+                        "select_pagination_refinement",
+                        None,
                     )
+
+                    if callable(select_pagination):
+                        selected = select_pagination(
+                            refinement,
+                            allowed_action_ids=allowed_action_ids,
+                            message=selection_message,
+                        )
+                    else:
+                        selected = selection_service.select_action(
+                            selection_message,
+                            allowed_action_ids=allowed_action_ids,
+                            conversation_context=conversation_context,
+                            previous_messages=previous_messages,
+                            raw_message=raw_message,
+                            memory_snapshot=memory_snapshot,
+                        )
                 elif refinement.kind == "operational_group_by_refinement":
-                    selected = selection_service.select_action(
-                        selection_message,
-                        allowed_action_ids=allowed_action_ids,
-                        conversation_context=conversation_context,
-                        previous_messages=previous_messages,
-                        raw_message=raw_message,
-                        memory_snapshot=memory_snapshot,
+                    select_group_by = getattr(
+                        selection_service,
+                        "select_operational_group_by_refinement",
+                        None,
                     )
+
+                    if callable(select_group_by):
+                        selected = select_group_by(
+                            refinement,
+                            allowed_action_ids=allowed_action_ids,
+                        )
+                    else:
+                        selected = selection_service.select_action(
+                            selection_message,
+                            allowed_action_ids=allowed_action_ids,
+                            conversation_context=conversation_context,
+                            previous_messages=previous_messages,
+                            raw_message=raw_message,
+                            memory_snapshot=memory_snapshot,
+                        )
                 elif refinement.kind == "depth_refinement":
-                    selected = selection_service.select_action(
-                        selection_message,
-                        allowed_action_ids=allowed_action_ids,
-                        conversation_context=conversation_context,
-                        previous_messages=previous_messages,
-                        raw_message=raw_message,
-                        memory_snapshot=memory_snapshot,
+                    select_depth = getattr(
+                        selection_service,
+                        "select_depth_refinement",
+                        None,
                     )
+
+                    if callable(select_depth):
+                        selected = select_depth(
+                            refinement,
+                            allowed_action_ids=allowed_action_ids,
+                            message=selection_message,
+                        )
+                    else:
+                        selected = selection_service.select_action(
+                            selection_message,
+                            allowed_action_ids=allowed_action_ids,
+                            conversation_context=conversation_context,
+                            previous_messages=previous_messages,
+                            raw_message=raw_message,
+                            memory_snapshot=memory_snapshot,
+                        )
                 else:
                     selected = None
 

@@ -168,6 +168,44 @@ def test_resolve_humanized_summary_sql_preserves_rows_without_linhas():
     assert metadata.get("templateProseArchive", {}).get("humanizedSummary", {}).get("linhas")
 
 
+def test_apply_pipeline_parents_tree_keeps_tree_in_render_plan():
+    tree = {
+        "type": "tree",
+        "title": "Onde é usado o produto 10080022",
+        "root": {
+            "id": "10080022",
+            "label": "10080022",
+            "children": [{"id": "90260148", "label": "90260148"}],
+        },
+    }
+    metadata = {
+        "path": "/products/10080022/parents",
+        "apiDelpiResponseMeta": {"entity": "product_parents", "shape": "hierarchy"},
+        "presentationDecision": {
+            "layoutMode": "single",
+            "selected": "tree",
+        },
+        "treePresentation": tree,
+        "textPresentation": {"markdown": "### Onde é usado\n\nResumo."},
+        "availableFormats": ["text", "tree", "table"],
+    }
+
+    applied = ChatPresentationDataOnlyProseService.apply_pipeline(
+        metadata,
+        user_message="onde é usado o produto 10080022",
+        path=metadata["path"],
+    )
+
+    assert applied is True
+    render_plan = metadata.get("renderPlan") or {}
+    segments = render_plan.get("segments") or []
+
+    assert any(
+        segment.get("kind") == "tree" and segment.get("source") == "treePresentation"
+        for segment in segments
+    )
+
+
 def test_finalize_metadata_clears_text_and_rebuilds_render_plan():
     metadata = {
         "dataOnlyPresentation": True,

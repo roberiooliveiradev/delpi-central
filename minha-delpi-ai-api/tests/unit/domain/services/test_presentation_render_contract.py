@@ -352,6 +352,40 @@ def test_render_plan_appends_profile_table_when_llm_decoupled_and_narrative_lead
     assert segments[0]["source"] == "assistantMessage"
 
 
+def test_render_plan_llm_decoupled_parents_keeps_tree_primary_segment():
+    tree = {
+        "type": "tree",
+        "title": "Onde é usado o produto 10080022",
+        "root": {
+            "id": "10080022",
+            "label": "10080022",
+            "children": [{"id": "90260148", "label": "90260148"}],
+        },
+    }
+    metadata = {
+        "path": "/products/10080022/parents",
+        "llmProseDecoupled": True,
+        "dataOnlyPresentation": True,
+        "presentationDecision": {
+            "layoutMode": "single",
+            "selected": "tree",
+            "proseSource": "llm",
+        },
+        "treePresentation": tree,
+        "textPresentation": {"markdown": "Resumo template"},
+        "availableFormats": ["text", "tree", "table"],
+    }
+
+    ChatPresentationRenderPlanService.build(metadata)
+
+    segments = metadata["renderPlan"]["segments"]
+
+    assert any(
+        segment.get("kind") == "tree" and segment.get("source") == "treePresentation"
+        for segment in segments
+    )
+
+
 def test_render_plan_falls_back_to_lead_markdown_when_stack_segments_empty():
     metadata = {
         "presentationDecision": {"layoutMode": "stack", "selected": "text"},

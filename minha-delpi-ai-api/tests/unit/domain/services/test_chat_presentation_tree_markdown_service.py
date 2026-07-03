@@ -99,6 +99,43 @@ def test_embed_outline_runs_with_humanized_sections_when_profile_allows():
     assert "└── C1 PI 1 UN — COMPONENTE 1" in metadata["textPresentation"]["markdown"]
 
 
+def test_embed_outline_in_text_presentation_for_parents_route():
+    metadata = {
+        "path": "/products/10080022/parents",
+        "explicitSessionFormat": "text",
+        "textPresentation": {
+            "type": "markdown",
+            "markdown": "### Onde é usado\n\nProduto **10080022**.",
+        },
+        "treePresentation": {
+            "type": "tree",
+            "title": "Onde é usado",
+            "root": {
+                "id": "10080022",
+                "label": "10080022",
+                "children": [
+                    {
+                        "id": "90260148",
+                        "label": "90260148",
+                        "children": [{"id": "90260149", "label": "90260149"}],
+                    }
+                ],
+            },
+        },
+        "presentationDecision": {
+            "selected": "text",
+            "layoutMode": "single",
+        },
+    }
+
+    ChatPresentationTreeMarkdownService.embed_outline_in_text_presentation(metadata)
+
+    markdown = metadata["textPresentation"]["markdown"]
+
+    assert "└── 90260148" in markdown
+    assert "    └── 90260149" in markdown
+
+
 def test_embed_outline_skips_when_tree_is_primary():
     metadata = {
         "path": "/products/90269001/structure",

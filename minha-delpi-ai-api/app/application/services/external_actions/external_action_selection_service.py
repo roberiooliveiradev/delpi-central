@@ -102,6 +102,62 @@ class ExternalActionSelectionService:
             memory_snapshot=memory_snapshot,
         )
 
+    def select_pagination_refinement(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+        message: str = "",
+    ) -> dict | None:
+        return self._route_selection.select_pagination_refinement(
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+            message=message,
+            select_product=self.select_action_for_product,
+        )
+
+    def select_operational_group_by_refinement(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        return self._route_selection.select_operational_group_by_refinement(
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+        )
+
+    def select_depth_refinement(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+        message: str = "",
+    ) -> dict | None:
+        return self._route_selection.select_depth_refinement(
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+            message=message,
+            select_product=self.select_action_for_product,
+            clamp_max_depth=self._route_selection.clamp_max_depth_for_path,
+        )
+
+    def select_metric_refinement(
+        self,
+        message: str,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        return self._route_selection.select_metric_refinement(
+            message,
+            refinement,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            candidates_loader=self._list_allowed_candidates,
+        )
+
     @staticmethod
     def _looks_like_product_search(value: str) -> bool:
         return ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
