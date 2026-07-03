@@ -50,6 +50,8 @@ def test_create_uses_normalized_codigo_and_syncs_filiais():
     )
 
     assert row["codigo_setor"] == "comercial"
+    insert_sql = repo.execute_returning_one.call_args[0][0]
+    assert "gen_random_uuid()" in insert_sql
     repo._sync_filiais.assert_called_once_with(setor_uuid, ["01"], auto_commit=True)
 
 

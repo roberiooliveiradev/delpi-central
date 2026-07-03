@@ -224,8 +224,8 @@ class SetorRepository(PluginBaseRepository):
 
         row = self.execute_returning_one(
             """
-            INSERT INTO transformometro.setores (codigo_setor, nome_setor, status_setor)
-            VALUES (%s, %s, %s)
+            INSERT INTO transformometro.setores (setor_id, codigo_setor, nome_setor, status_setor)
+            VALUES (gen_random_uuid(), %s, %s, %s)
             RETURNING setor_id, codigo_setor, nome_setor, status_setor, created_at, updated_at
             """,
             (
