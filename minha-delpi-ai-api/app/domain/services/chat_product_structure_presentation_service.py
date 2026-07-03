@@ -408,6 +408,18 @@ class ChatProductStructurePresentationService:
         for children in children_by_parent.values():
             children.sort(key=lambda row: (row.get("level") or 0, row.get("code") or ""))
 
+        from app.domain.services.chat_presentation_vocabulary_service import (
+            ChatPresentationVocabularyService,
+        )
+        from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+            ROW_EMPHASIS_EXCLUSIVE_MP,
+        )
+
+        exclusive_badge_label = ChatPresentationVocabularyService.hierarchy_tree_text(
+            "exclusiveMpBadgeLabel",
+            default="Exclusiva",
+        )
+
         def item_to_tree_node(item: dict) -> dict:
             child_nodes = [
                 item_to_tree_node(child)
@@ -421,11 +433,10 @@ class ChatProductStructurePresentationService:
                 item["quantity"],
                 children=child_nodes or None,
             )
-            exclusive_label = str(item.get("exclusive_label") or "").strip()
 
-            if exclusive_label:
-                node.setdefault("meta", {})
-                node["meta"]["exclusive_raw_material"] = exclusive_label
+            if item.get("is_exclusive"):
+                node["emphasis"] = ROW_EMPHASIS_EXCLUSIVE_MP
+                node["emphasisLabel"] = exclusive_badge_label
 
             return node
 
@@ -451,6 +462,13 @@ class ChatProductStructurePresentationService:
 
     @classmethod
     def _normalize_exclusivity_item(cls, raw: dict) -> dict | None:
+        from app.domain.services.chat_presentation_vocabulary_service import (
+            ChatPresentationVocabularyService,
+        )
+        from app.domain.services.external_actions.presenters.product_operational_table_row_enrichment import (
+            is_exclusive_raw_material_item,
+        )
+
         code = str(raw.get("component_code") or raw.get("product_code") or "").strip()
 
         if not code:
@@ -466,20 +484,18 @@ class ChatProductStructurePresentationService:
             or raw.get("quantity_per")
             or raw.get("quantity")
         )
+        exclusive = is_exclusive_raw_material_item(raw)
         exclusive_label = str(raw.get("exclusive_raw_material_label") or "").strip()
 
         if not exclusive_label and raw.get("exclusive_raw_material") not in (None, ""):
-            flag = raw.get("exclusive_raw_material")
+            raw_flag = raw.get("exclusive_raw_material")
 
-            if isinstance(flag, bool):
-                exclusive_label = "Sim" if flag else "Não"
+            if isinstance(raw_flag, bool):
+                exclusive_label = ChatPresentationVocabularyService.boolean_label(yes=raw_flag)
             else:
-                token = str(flag).strip().upper()
-
-                if token in {"SIM", "S", "TRUE", "1", "YES"}:
-                    exclusive_label = "Sim"
-                elif token in {"NAO", "NÃO", "N", "FALSE", "0", "NO"}:
-                    exclusive_label = "Não"
+                exclusive_label = ChatPresentationVocabularyService.boolean_label(yes=exclusive)
+        elif exclusive and not exclusive_label:
+            exclusive_label = ChatPresentationVocabularyService.boolean_label(yes=True)
 
         parent = str(raw.get("parent_code") or "").strip()
 
@@ -500,6 +516,7 @@ class ChatProductStructurePresentationService:
             "unit": unit,
             "quantity": quantity,
             "exclusive_label": exclusive_label,
+            "is_exclusive": exclusive,
             "parent": parent,
             "level": level_int,
             "path": str(raw.get("path") or "").strip(),

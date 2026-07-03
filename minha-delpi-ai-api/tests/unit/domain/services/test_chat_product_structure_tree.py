@@ -155,6 +155,65 @@ def test_build_tree_presentation_for_structure_exclusivity_fixture():
     assert {node["label"] for node in mp_nodes} == {"10020053", "10080185"}
 
 
+def test_build_tree_presentation_marks_exclusive_mp_emphasis():
+    tree = ChatProductStructurePresentationService.build_tree_presentation(
+        {
+            "product": {
+                "product_code": "90260582",
+                "description": "CHICOTE DE LIGAÇÃO",
+                "product_type": "PA",
+                "unit": "MI",
+            },
+            "items": [
+                {
+                    "level": 1,
+                    "parent_code": "90260582",
+                    "component_code": "50230745",
+                    "component_description": "PI intermediário",
+                    "component_type": "PI",
+                    "component_unit": "MI",
+                    "accumulated_quantity": "1",
+                    "path": "90260582        > 50230745",
+                },
+                {
+                    "level": 2,
+                    "parent_code": "50230745",
+                    "component_code": "10020236",
+                    "component_description": "CABO PVC exclusivo",
+                    "component_type": "MP",
+                    "component_unit": "MT",
+                    "accumulated_quantity": "82",
+                    "exclusive_raw_material": True,
+                    "exclusive_raw_material_label": "Sim",
+                    "path": "90260582        > 50230745        > 10020236",
+                },
+                {
+                    "level": 2,
+                    "parent_code": "50230745",
+                    "component_code": "10080010",
+                    "component_description": "TERM. compartilhado",
+                    "component_type": "MP",
+                    "component_unit": "PC",
+                    "accumulated_quantity": "1000",
+                    "exclusive_raw_material": False,
+                    "exclusive_raw_material_label": "Não",
+                    "path": "90260582        > 50230745        > 10080010",
+                },
+            ],
+        },
+        path="/products/90260582/structure/exclusivity",
+    )
+
+    assert tree is not None
+    mp_nodes = tree["root"]["children"][0]["children"]
+    exclusive = next(node for node in mp_nodes if node["label"] == "10020236")
+    shared = next(node for node in mp_nodes if node["label"] == "10080010")
+
+    assert exclusive.get("emphasis") == "exclusive_mp"
+    assert exclusive.get("emphasisLabel") == "Exclusiva"
+    assert "emphasis" not in shared
+
+
 def test_build_tree_presentation_for_structure_exclusivity_legacy_fixture():
     from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
 
@@ -170,4 +229,6 @@ def test_build_tree_presentation_for_structure_exclusivity_legacy_fixture():
     assert tree["root"]["label"] == "90269002"
     assert tree["root"]["children"][0]["label"] == "50219001"
     assert tree["root"]["children"][0]["children"][0]["label"] == "10019001"
-    assert tree["root"]["children"][0]["children"][0]["meta"]["exclusive_raw_material"] == "Sim"
+    exclusive_mp = tree["root"]["children"][0]["children"][0]
+    assert exclusive_mp.get("emphasis") == "exclusive_mp"
+    assert exclusive_mp.get("emphasisLabel") == "Exclusiva"
