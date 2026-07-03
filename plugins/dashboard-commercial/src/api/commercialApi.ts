@@ -90,6 +90,50 @@ export function getBranchRolTarget(
   );
 }
 
+export function getHeadOfficeWegRolTarget(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<RolTargetData>(
+    "/head_office_weg_rol_target_pct",
+    params,
+    signal
+  );
+}
+
+export function getBranchWegRolTarget(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<RolTargetData>(
+    "/branch_weg_rol_target_pct",
+    params,
+    signal
+  );
+}
+
+export function getHeadOfficeNewBusinessRolTarget(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<RolTargetData>(
+    "/head_office_new_business_rol_target_pct",
+    params,
+    signal
+  );
+}
+
+export function getBranchNewBusinessRolTarget(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<RolTargetData>(
+    "/branch_new_business_rol_target_pct",
+    params,
+    signal
+  );
+}
+
 export function getClosingRate(
   params: CommercialFilterParams,
   signal?: AbortSignal

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Banknote,
+  Building2,
   PackageCheck,
   Percent,
+  Sparkles,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -112,6 +114,10 @@ export function DashboardCommercialPage({
   const {
     headOfficeRol,
     branchRol,
+    headOfficeWegRol,
+    branchWegRol,
+    headOfficeNewBusinessRol,
+    branchNewBusinessRol,
     closingRate,
     salesOrderOtd,
     newBusinessRol,
@@ -200,8 +206,62 @@ export function DashboardCommercialPage({
     [activeApiBranch, branchRol, headOfficeRol, rolContextLabel],
   );
 
+  const wegRolContextLabel = appendCustomerSegmentToLabel(
+    activeApiBranch
+      ? `${formatOperationalUnitCode(activeApiBranch, activeApiBranch)} · ${periodLabel}`
+      : `${COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.sum} · ${periodLabel}`,
+    "weg",
+  );
+
+  const newBusinessRolContextLabel = appendCustomerSegmentToLabel(
+    activeApiBranch
+      ? `${formatOperationalUnitCode(activeApiBranch, activeApiBranch)} · ${periodLabel}`
+      : `${COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.sum} · ${periodLabel}`,
+    "new_business",
+  );
+
+  const wegRolKpi = useMemo(
+    () =>
+      buildRolPerUnitKpiView(
+        headOfficeWegRol,
+        branchWegRol,
+        wegRolContextLabel,
+        formatCurrency,
+        activeApiBranch,
+      ),
+    [
+      activeApiBranch,
+      branchWegRol,
+      headOfficeWegRol,
+      wegRolContextLabel,
+    ],
+  );
+
+  const segmentNewBusinessRolKpi = useMemo(
+    () =>
+      buildRolPerUnitKpiView(
+        headOfficeNewBusinessRol,
+        branchNewBusinessRol,
+        newBusinessRolContextLabel,
+        formatCurrency,
+        activeApiBranch,
+      ),
+    [
+      activeApiBranch,
+      branchNewBusinessRol,
+      headOfficeNewBusinessRol,
+      newBusinessRolContextLabel,
+    ],
+  );
+
   const isBusy = loading || refreshing;
-  const hasData = headOfficeRol !== null || branchRol !== null;
+  const hasData =
+    headOfficeRol !== null ||
+    branchRol !== null ||
+    headOfficeWegRol !== null ||
+    branchWegRol !== null ||
+    headOfficeNewBusinessRol !== null ||
+    branchNewBusinessRol !== null;
   const isChartBusy = rolSeries.loading;
   const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
@@ -225,6 +285,23 @@ export function DashboardCommercialPage({
         indicador: COMMERCIAL_KPI_TITLES.rol,
         valor: rolKpi.value,
         contexto: [rolKpi.contextLabel, rolKpi.goalLabel].filter(Boolean).join(" · "),
+      },
+      {
+        indicador: COMMERCIAL_KPI_TITLES.rolWeg,
+        valor: wegRolKpi.value,
+        contexto: [wegRolKpi.contextLabel, wegRolKpi.goalLabel]
+          .filter(Boolean)
+          .join(" · "),
+      },
+      {
+        indicador: COMMERCIAL_KPI_TITLES.rolNewBusiness,
+        valor: segmentNewBusinessRolKpi.value,
+        contexto: [
+          segmentNewBusinessRolKpi.contextLabel,
+          segmentNewBusinessRolKpi.goalLabel,
+        ]
+          .filter(Boolean)
+          .join(" · "),
       },
       {
         indicador: COMMERCIAL_KPI_TITLES.salesOrderOtd,
@@ -252,7 +329,13 @@ export function DashboardCommercialPage({
       rolKpi.contextLabel,
       rolKpi.goalLabel,
       rolKpi.value,
+      segmentNewBusinessRolKpi.contextLabel,
+      segmentNewBusinessRolKpi.goalLabel,
+      segmentNewBusinessRolKpi.value,
       salesOrderOtd,
+      wegRolKpi.contextLabel,
+      wegRolKpi.goalLabel,
+      wegRolKpi.value,
     ],
   );
 
@@ -555,6 +638,40 @@ export function DashboardCommercialPage({
           iddScoreLabel={rolKpi.iddScoreLabel}
           icon={<Banknote size={22} />}
           loading={isBusy && !headOfficeRol && !branchRol}
+        />
+        <KpiCard
+          title={COMMERCIAL_KPI_TITLES.rolWeg}
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.rolWeg}
+          value={wegRolKpi.value}
+          valueVariant={wegRolKpi.valueVariant}
+          goalVariant={wegRolKpi.valueVariant}
+          contextLabel={wegRolKpi.contextLabel}
+          goalLabel={wegRolKpi.goalLabel}
+          goalScopeBadge={wegRolKpi.goalScopeBadge}
+          goalScopeHint={wegRolKpi.goalScopeHint}
+          goalPerformanceBadge={wegRolKpi.goalPerformanceBadge}
+          goalPerformanceBadges={wegRolKpi.goalPerformanceBadges}
+          iddScoreLabel={wegRolKpi.iddScoreLabel}
+          icon={<Building2 size={22} />}
+          loading={isBusy && !headOfficeWegRol && !branchWegRol}
+        />
+        <KpiCard
+          title={COMMERCIAL_KPI_TITLES.rolNewBusiness}
+          titleHint={COMMERCIAL_HELP_TOOLTIPS.kpis.rolNewBusiness}
+          value={segmentNewBusinessRolKpi.value}
+          valueVariant={segmentNewBusinessRolKpi.valueVariant}
+          goalVariant={segmentNewBusinessRolKpi.valueVariant}
+          contextLabel={segmentNewBusinessRolKpi.contextLabel}
+          goalLabel={segmentNewBusinessRolKpi.goalLabel}
+          goalScopeBadge={segmentNewBusinessRolKpi.goalScopeBadge}
+          goalScopeHint={segmentNewBusinessRolKpi.goalScopeHint}
+          goalPerformanceBadge={segmentNewBusinessRolKpi.goalPerformanceBadge}
+          goalPerformanceBadges={segmentNewBusinessRolKpi.goalPerformanceBadges}
+          iddScoreLabel={segmentNewBusinessRolKpi.iddScoreLabel}
+          icon={<Sparkles size={22} />}
+          loading={
+            isBusy && !headOfficeNewBusinessRol && !branchNewBusinessRol
+          }
         />
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.salesOrderOtd}

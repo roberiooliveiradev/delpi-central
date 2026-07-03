@@ -5,6 +5,8 @@
 export const COMMERCIAL_KPI_TITLES = {
   /** Indicador único `commercial-rol` (scope per_unit) no SI. */
   rol: "ROL",
+  rolWeg: "ROL WEG",
+  rolNewBusiness: "ROL Novos Negócios",
   salesOrderOtd: "OTD — pedidos de venda",
   closingRate: "Taxa de conversão",
   newBusinessRol: "% ROL — novos negócios",
@@ -12,9 +14,11 @@ export const COMMERCIAL_KPI_TITLES = {
 
 export const COMMERCIAL_SI_INDICATOR_IDS = {
   rol: "commercial-rol",
+  rolWeg: "commercial-rol-weg",
+  rolNewBusiness: "commercial-rol-new-business",
   closingRate: "commercial-closing-rate",
   salesOrderOtd: "commercial-sales-order-otd",
-  newBusinessRol: "commercial-new-business-rol",
+  newBusinessRol: "commercial-new-business-rol-pct",
 } as const;
 
 export const COMMERCIAL_ROL_SERIES_LABELS = {

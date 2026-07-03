@@ -100,8 +100,11 @@ class CommercialIndicatorsSnapshotProvider(
         )
 
         self._collect_measurement(
-            builder=lambda: self._build_rol_measurement(
-                snapshot=base_snapshot,
+            builder=lambda: self._build_currency_per_unit_measurement(
+                indicator_id="commercial-rol",
+                source="commercial_rol",
+                matrix_value=base_snapshot.matrix_rol_value,
+                branch_value=base_snapshot.branch_rol_value,
                 view_branch=view_branch,
             ),
             department_id="commercial",
@@ -109,6 +112,35 @@ class CommercialIndicatorsSnapshotProvider(
             items=items,
             errors=errors,
         )
+
+        segment_rol_specs = (
+            (
+                "commercial-rol-weg",
+                "commercial_rol_weg",
+                base_snapshot.matrix_weg_rol_value,
+                base_snapshot.branch_weg_rol_value,
+            ),
+            (
+                "commercial-rol-new-business",
+                "commercial_rol_new_business",
+                base_snapshot.matrix_new_business_rol_value,
+                base_snapshot.branch_new_business_rol_value,
+            ),
+        )
+        for indicator_id, source, matrix_value, branch_value in segment_rol_specs:
+            self._collect_measurement(
+                builder=lambda indicator_id=indicator_id, source=source, matrix_value=matrix_value, branch_value=branch_value: self._build_currency_per_unit_measurement(
+                    indicator_id=indicator_id,
+                    source=source,
+                    matrix_value=matrix_value,
+                    branch_value=branch_value,
+                    view_branch=view_branch,
+                ),
+                department_id="commercial",
+                source=source,
+                items=items,
+                errors=errors,
+            )
 
         per_unit_specs = (
             (
@@ -122,7 +154,7 @@ class CommercialIndicatorsSnapshotProvider(
                 lambda snap: snap.sales_order_otd_pct,
             ),
             (
-                "commercial-new-business-rol",
+                "commercial-new-business-rol-pct",
                 "commercial_new_business_rol_pct",
                 lambda snap: snap.new_business_rol_pct,
             ),
@@ -173,15 +205,18 @@ class CommercialIndicatorsSnapshotProvider(
 
         return builder
 
-    def _build_rol_measurement(
+    def _build_currency_per_unit_measurement(
         self,
         *,
-        snapshot,
+        indicator_id: str,
+        source: str,
+        matrix_value: float | None,
+        branch_value: float | None,
         view_branch: str | None,
     ) -> dict:
         unit_values = {
-            MATRIX_BRANCH_CODE: snapshot.matrix_rol_value,
-            BRANCH_BRANCH_CODE: snapshot.branch_rol_value,
+            MATRIX_BRANCH_CODE: matrix_value,
+            BRANCH_BRANCH_CODE: branch_value,
         }
         active_branch = effective_query_branch(view_branch)
         if active_branch:
@@ -198,8 +233,8 @@ class CommercialIndicatorsSnapshotProvider(
             )
 
         return self._build_measurement(
-            indicator_id="commercial-rol",
-            source="commercial_rol",
+            indicator_id=indicator_id,
+            source=source,
             value=consolidated_value,
             unit_values=unit_values,
         )

@@ -21,6 +21,10 @@ class CommercialMetricsSnapshot:
     end_date: str | None
     matrix_rol_value: float | None
     branch_rol_value: float | None
+    matrix_weg_rol_value: float | None
+    branch_weg_rol_value: float | None
+    matrix_new_business_rol_value: float | None
+    branch_new_business_rol_value: float | None
     sales_conversion_rate_pct: float | None
     sales_order_otd_pct: float | None
     new_business_rol_pct: float | None
@@ -107,6 +111,20 @@ class CommercialMetricsSnapshotService:
             start_date=start_date,
             end_date=end_date,
         )
+        matrix_weg_rol_value, matrix_new_business_rol_value = (
+            self._load_segment_rol_values(
+                branch=MATRIX_BRANCH_CODE,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
+        branch_weg_rol_value, branch_new_business_rol_value = (
+            self._load_segment_rol_values(
+                branch=BRANCH_BRANCH_CODE,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
 
         sales_conversion_result = self._commercial_gateway.get_sales_conversion_rate(
             branch=branch,
@@ -146,6 +164,26 @@ class CommercialMetricsSnapshotService:
             branch_rol_value=(
                 round(branch_rol_value, 2) if branch_rol_value is not None else None
             ),
+            matrix_weg_rol_value=(
+                round(matrix_weg_rol_value, 2)
+                if matrix_weg_rol_value is not None
+                else None
+            ),
+            branch_weg_rol_value=(
+                round(branch_weg_rol_value, 2)
+                if branch_weg_rol_value is not None
+                else None
+            ),
+            matrix_new_business_rol_value=(
+                round(matrix_new_business_rol_value, 2)
+                if matrix_new_business_rol_value is not None
+                else None
+            ),
+            branch_new_business_rol_value=(
+                round(branch_new_business_rol_value, 2)
+                if branch_new_business_rol_value is not None
+                else None
+            ),
             sales_conversion_rate_pct=(
                 round(sales_conversion_rate_pct, 2)
                 if sales_conversion_rate_pct is not None
@@ -177,6 +215,22 @@ class CommercialMetricsSnapshotService:
             end_date=end_date,
         )
         return self._extract_number(rol_result, ["rol"])
+
+    def _load_segment_rol_values(
+        self,
+        *,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> tuple[float | None, float | None]:
+        segment_result = self._commercial_gateway.get_new_business_rol_pct(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        weg_rol = self._extract_number(segment_result, ["weg_rol"])
+        new_business_rol = self._extract_number(segment_result, ["new_business_rol"])
+        return weg_rol, new_business_rol
 
     def _extract_number(self, payload, candidate_keys: list[str]) -> float | None:
         if payload is None:

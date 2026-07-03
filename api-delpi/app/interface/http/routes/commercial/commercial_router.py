@@ -32,6 +32,10 @@ from app.composition.commercial_composer import (
     build_get_commercial_rol_series_use_case,
     build_get_sales_order_otd_use_case,
     build_get_new_business_rol_pct_use_case,
+    build_get_head_office_weg_rol_target_use_case,
+    build_get_branch_weg_rol_target_use_case,
+    build_get_head_office_new_business_rol_target_use_case,
+    build_get_branch_new_business_rol_target_use_case,
 )
 from app.composition.engineering_composer import (
     build_engineering_get_lmp_history_events_use_case,
@@ -167,7 +171,205 @@ def get_branch_rol_target_pct(
             "Internal error while fetching branch ROL target percentage.",
             status_code=500,
         )
-    
+
+
+@router.get(
+    "/head_office_weg_rol_target_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_head_office_weg_rol_target_pct",
+        path="/commercial/head_office_weg_rol_target_pct",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_head_office_weg_rol_target_pct(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    try:
+        use_case = build_get_head_office_weg_rol_target_use_case()
+
+        request = CommercialTargetRequest(
+            branch="01",
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_ROL_WEG,
+            start_date=start_date,
+            end_date=end_date,
+            branch="01",
+            recompute_target_pct_from="rol",
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_head_office_weg_rol_target_pct",
+            message="Head office WEG ROL target percentage fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching head office WEG ROL target: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching head office WEG ROL target: {exc}")
+        return error_response(
+            "Internal error while fetching head office WEG ROL target.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/branch_weg_rol_target_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_branch_weg_rol_target_pct",
+        path="/commercial/branch_weg_rol_target_pct",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_branch_weg_rol_target_pct(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    try:
+        use_case = build_get_branch_weg_rol_target_use_case()
+
+        request = CommercialTargetRequest(
+            branch="02",
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_ROL_WEG,
+            start_date=start_date,
+            end_date=end_date,
+            branch="02",
+            recompute_target_pct_from="rol",
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_branch_weg_rol_target_pct",
+            message="Branch WEG ROL target percentage fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching branch WEG ROL target: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching branch WEG ROL target: {exc}")
+        return error_response(
+            "Internal error while fetching branch WEG ROL target.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/head_office_new_business_rol_target_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_head_office_new_business_rol_target_pct",
+        path="/commercial/head_office_new_business_rol_target_pct",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_head_office_new_business_rol_target_pct(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    try:
+        use_case = build_get_head_office_new_business_rol_target_use_case()
+
+        request = CommercialTargetRequest(
+            branch="01",
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_ROL_NEW_BUSINESS,
+            start_date=start_date,
+            end_date=end_date,
+            branch="01",
+            recompute_target_pct_from="rol",
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_head_office_new_business_rol_target_pct",
+            message="Head office new business ROL target percentage fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(
+            f"Validation error while fetching head office new business ROL target: {exc}"
+        )
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching head office new business ROL target: {exc}")
+        return error_response(
+            "Internal error while fetching head office new business ROL target.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/branch_new_business_rol_target_pct",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_branch_new_business_rol_target_pct",
+        path="/commercial/branch_new_business_rol_target_pct",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_branch_new_business_rol_target_pct(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    try:
+        use_case = build_get_branch_new_business_rol_target_use_case()
+
+        request = CommercialTargetRequest(
+            branch="02",
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request),
+            source_key=goal_keys.COMMERCIAL_ROL_NEW_BUSINESS,
+            start_date=start_date,
+            end_date=end_date,
+            branch="02",
+            recompute_target_pct_from="rol",
+        )
+
+        return api_delpi_success(
+            result,
+            operation_id="get_branch_new_business_rol_target_pct",
+            message="Branch new business ROL target percentage fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while fetching branch new business ROL target: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while fetching branch new business ROL target: {exc}")
+        return error_response(
+            "Internal error while fetching branch new business ROL target.",
+            status_code=500,
+        )
+
 
 @router.get(
     "/rol/series",

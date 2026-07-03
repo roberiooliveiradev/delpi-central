@@ -1,6 +1,8 @@
 """Mapeamento entre rotas dos dashboards departamentais e source_key do catálogo SI."""
 
 COMMERCIAL_ROL = "commercial_rol"
+COMMERCIAL_ROL_WEG = "commercial_rol_weg"
+COMMERCIAL_ROL_NEW_BUSINESS = "commercial_rol_new_business"
 # Legado (SI resolve via commercial_rol + filial 01/02)
 COMMERCIAL_HEAD_OFFICE_ROL = "commercial_head_office_rol_target"
 COMMERCIAL_BRANCH_ROL = "commercial_branch_rol_target"

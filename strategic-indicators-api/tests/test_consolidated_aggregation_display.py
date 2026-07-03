@@ -100,6 +100,10 @@ def test_commercial_provider_exposes_branch_unit_values_on_branch_view() -> None
         end_date="30-04-2026",
         matrix_rol_value=100.0,
         branch_rol_value=80.0,
+        matrix_weg_rol_value=60.0,
+        branch_weg_rol_value=40.0,
+        matrix_new_business_rol_value=40.0,
+        branch_new_business_rol_value=40.0,
         sales_conversion_rate_pct=55.0,
         sales_order_otd_pct=90.0,
         new_business_rol_pct=12.0,
@@ -110,6 +114,10 @@ def test_commercial_provider_exposes_branch_unit_values_on_branch_view() -> None
         end_date="30-04-2026",
         matrix_rol_value=100.0,
         branch_rol_value=80.0,
+        matrix_weg_rol_value=60.0,
+        branch_weg_rol_value=40.0,
+        matrix_new_business_rol_value=40.0,
+        branch_new_business_rol_value=40.0,
         sales_conversion_rate_pct=62.0,
         sales_order_otd_pct=91.0,
         new_business_rol_pct=15.0,
@@ -150,6 +158,10 @@ def test_commercial_provider_consolidated_rol_value_is_sum() -> None:
         end_date="30-04-2026",
         matrix_rol_value=665_029.86,
         branch_rol_value=3_290_935.50,
+        matrix_weg_rol_value=500_000.0,
+        branch_weg_rol_value=2_000_000.0,
+        matrix_new_business_rol_value=165_029.86,
+        branch_new_business_rol_value=1_290_935.50,
         sales_conversion_rate_pct=55.0,
         sales_order_otd_pct=90.0,
         new_business_rol_pct=12.0,
@@ -176,6 +188,10 @@ def test_commercial_provider_consolidated_view_lists_both_units() -> None:
         end_date="30-04-2026",
         matrix_rol_value=100.0,
         branch_rol_value=80.0,
+        matrix_weg_rol_value=60.0,
+        branch_weg_rol_value=40.0,
+        matrix_new_business_rol_value=40.0,
+        branch_new_business_rol_value=40.0,
         sales_conversion_rate_pct=55.0,
         sales_order_otd_pct=90.0,
         new_business_rol_pct=12.0,
@@ -186,6 +202,10 @@ def test_commercial_provider_consolidated_view_lists_both_units() -> None:
         end_date="30-04-2026",
         matrix_rol_value=100.0,
         branch_rol_value=80.0,
+        matrix_weg_rol_value=60.0,
+        branch_weg_rol_value=40.0,
+        matrix_new_business_rol_value=40.0,
+        branch_new_business_rol_value=40.0,
         sales_conversion_rate_pct=62.0,
         sales_order_otd_pct=91.0,
         new_business_rol_pct=15.0,
@@ -197,6 +217,10 @@ def test_commercial_provider_consolidated_view_lists_both_units() -> None:
         end_date="30-04-2026",
         matrix_rol_value=100.0,
         branch_rol_value=80.0,
+        matrix_weg_rol_value=60.0,
+        branch_weg_rol_value=40.0,
+        matrix_new_business_rol_value=40.0,
+        branch_new_business_rol_value=40.0,
         sales_conversion_rate_pct=50.0,
         sales_order_otd_pct=88.0,
         new_business_rol_pct=10.0,
@@ -226,3 +250,44 @@ def test_commercial_provider_consolidated_view_lists_both_units() -> None:
     )
     assert closing["unit_values"] == {"01": 50.0, "02": 62.0}
     assert closing["value"] is None
+
+
+def test_commercial_provider_exposes_weg_and_new_business_rol_measurements() -> None:
+    service = MagicMock()
+    service.get_snapshot.return_value = CommercialMetricsSnapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        matrix_rol_value=100.0,
+        branch_rol_value=80.0,
+        matrix_weg_rol_value=60.0,
+        branch_weg_rol_value=50.0,
+        matrix_new_business_rol_value=40.0,
+        branch_new_business_rol_value=30.0,
+        sales_conversion_rate_pct=55.0,
+        sales_order_otd_pct=90.0,
+        new_business_rol_pct=12.0,
+        requested_branch=None,
+    )
+
+    provider = CommercialIndicatorsSnapshotProvider(
+        commercial_metrics_snapshot_service=service,
+    )
+    result = provider.get_commercial_indicators_snapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        branch=None,
+    )
+
+    weg = next(
+        item for item in result["items"] if item["indicator_id"] == "commercial-rol-weg"
+    )
+    new_business = next(
+        item
+        for item in result["items"]
+        if item["indicator_id"] == "commercial-rol-new-business"
+    )
+
+    assert weg["value"] == 110.0
+    assert weg["unit_values"] == {"01": 60.0, "02": 50.0}
+    assert new_business["value"] == 70.0
+    assert new_business["unit_values"] == {"01": 40.0, "02": 30.0}

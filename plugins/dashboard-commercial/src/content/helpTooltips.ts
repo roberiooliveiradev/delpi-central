@@ -7,7 +7,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     dateEnd:
       "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Unidade TOTVS para conversão, OTD, ROL e % novos negócios. Vazio = consolidado de todas as unidades.",
+      "Unidade TOTVS para conversão, OTD, ROL, ROL WEG, ROL novos negócios e % novos negócios. Vazio = consolidado de todas as unidades.",
     customerSegment:
       "WEG = cliente código 000001 (todas as lojas). Novos negócios = demais clientes. Afeta ROL, conversão, OTD, % novos negócios, gráfico de ROL e tabela de propostas.",
     proposalStatus:
@@ -37,6 +37,10 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   },
   kpis: {
     rol: "ROL (R$) no período. Com unidade Todas, exibe soma ou comparativo de Santa Catarina e Espírito Santo conforme o card.",
+    rolWeg:
+      "ROL (R$) de clientes WEG (código 000001) no período, por unidade. Metas via indicador commercial-rol-weg no SI.",
+    rolNewBusiness:
+      "ROL (R$) de clientes não-WEG (novos negócios) no período, por unidade. Metas via commercial-rol-new-business no SI.",
     salesOrderOtd:
       "Percentual de linhas de pedido de venda entregues no prazo (data de faturamento ≤ data de entrega prometida).",
     closingRate:

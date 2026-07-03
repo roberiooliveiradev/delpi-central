@@ -10,9 +10,11 @@ ConsolidatedValueAggregation = Literal["sum", "average"]
 INDICATOR_CONSOLIDATED_VALUE_AGGREGATION: dict[str, ConsolidatedValueAggregation] = {
     "supplies-negotiation-savings": "sum",
     "commercial-rol": "sum",
+    "commercial-rol-weg": "sum",
+    "commercial-rol-new-business": "sum",
     "commercial-closing-rate": "average",
     "commercial-sales-order-otd": "average",
-    "commercial-new-business-rol": "average",
+    "commercial-new-business-rol-pct": "average",
 }
 
 _VALUE_UNIT_DEFAULT: dict[str, ConsolidatedValueAggregation] = {

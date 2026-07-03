@@ -18,6 +18,16 @@ def test_commercial_rol_uses_sum_aggregation() -> None:
         resolve_consolidated_value_aggregation(indicator_id="commercial-rol")
         == "sum"
     )
+    assert (
+        resolve_consolidated_value_aggregation(indicator_id="commercial-rol-weg")
+        == "sum"
+    )
+    assert (
+        resolve_consolidated_value_aggregation(
+            indicator_id="commercial-rol-new-business"
+        )
+        == "sum"
+    )
 
 
 def test_aggregate_unit_branch_values_sum() -> None:

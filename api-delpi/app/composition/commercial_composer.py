@@ -1,4 +1,7 @@
 from app.application.use_cases.commercial.get_rol_target_pct_use_case import GetRolTargetPctUseCase
+from app.application.use_cases.commercial.get_segment_rol_target_use_case import (
+    GetSegmentRolTargetUseCase,
+)
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import FinancialRepository
 from app.application.use_cases.commercial.get_sales_conversion_rate_use_case import GetSalesConversionRateUseCase
 from app.application.use_cases.commercial.get_commercial_proposal_use_case import (
@@ -98,3 +101,31 @@ def build_get_new_business_rol_pct_use_case() -> GetNewBusinessRolPctUseCase:
     return GetNewBusinessRolPctUseCase(
         new_business_rol_pct_repository=NewBusinessRolPctRepository()
     )
+
+
+def _build_segment_rol_target_use_case(
+    *,
+    segment_kind: str,
+) -> GetSegmentRolTargetUseCase:
+    return GetSegmentRolTargetUseCase(
+        new_business_rol_pct_repository=NewBusinessRolPctRepository(),
+        segment_kind=segment_kind,  # type: ignore[arg-type]
+    )
+
+
+def build_get_head_office_weg_rol_target_use_case() -> GetSegmentRolTargetUseCase:
+    return _build_segment_rol_target_use_case(segment_kind="weg")
+
+
+def build_get_branch_weg_rol_target_use_case() -> GetSegmentRolTargetUseCase:
+    return _build_segment_rol_target_use_case(segment_kind="weg")
+
+
+def build_get_head_office_new_business_rol_target_use_case() -> (
+    GetSegmentRolTargetUseCase
+):
+    return _build_segment_rol_target_use_case(segment_kind="new_business")
+
+
+def build_get_branch_new_business_rol_target_use_case() -> GetSegmentRolTargetUseCase:
+    return _build_segment_rol_target_use_case(segment_kind="new_business")

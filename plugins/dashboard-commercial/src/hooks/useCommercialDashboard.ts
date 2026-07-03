@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  getBranchNewBusinessRolTarget,
   getBranchRolTarget,
+  getBranchWegRolTarget,
   getClosingRate,
+  getHeadOfficeNewBusinessRolTarget,
   getHeadOfficeRolTarget,
+  getHeadOfficeWegRolTarget,
   getNewBusinessRolPct,
   getSalesOrderOtd,
 } from "../api/commercialApi";
@@ -27,6 +31,10 @@ import type {
 type SectionErrors = {
   headOfficeRol?: string;
   branchRol?: string;
+  headOfficeWegRol?: string;
+  branchWegRol?: string;
+  headOfficeNewBusinessRol?: string;
+  branchNewBusinessRol?: string;
   closingRate?: string;
   salesOrderOtd?: string;
   newBusinessRol?: string;
@@ -35,6 +43,10 @@ type SectionErrors = {
 type UseCommercialDashboardResult = {
   headOfficeRol: RolTargetData | null;
   branchRol: RolTargetData | null;
+  headOfficeWegRol: RolTargetData | null;
+  branchWegRol: RolTargetData | null;
+  headOfficeNewBusinessRol: RolTargetData | null;
+  branchNewBusinessRol: RolTargetData | null;
   closingRate: ClosingRateData | null;
   salesOrderOtd: SalesOrderOtdData | null;
   newBusinessRol: NewBusinessRolPctData | null;
@@ -54,6 +66,14 @@ export function useCommercialDashboard(
 ): UseCommercialDashboardResult {
   const [headOfficeRol, setHeadOfficeRol] = useState<RolTargetData | null>(null);
   const [branchRol, setBranchRol] = useState<RolTargetData | null>(null);
+  const [headOfficeWegRol, setHeadOfficeWegRol] = useState<RolTargetData | null>(
+    null
+  );
+  const [branchWegRol, setBranchWegRol] = useState<RolTargetData | null>(null);
+  const [headOfficeNewBusinessRol, setHeadOfficeNewBusinessRol] =
+    useState<RolTargetData | null>(null);
+  const [branchNewBusinessRol, setBranchNewBusinessRol] =
+    useState<RolTargetData | null>(null);
   const [closingRate, setClosingRate] = useState<ClosingRateData | null>(null);
   const [salesOrderOtd, setSalesOrderOtd] = useState<SalesOrderOtdData | null>(null);
   const [newBusinessRol, setNewBusinessRol] = useState<NewBusinessRolPctData | null>(
@@ -83,6 +103,10 @@ export function useCommercialDashboard(
       const hasPreviousData =
         headOfficeRol !== null ||
         branchRol !== null ||
+        headOfficeWegRol !== null ||
+        branchWegRol !== null ||
+        headOfficeNewBusinessRol !== null ||
+        branchNewBusinessRol !== null ||
         closingRate !== null ||
         salesOrderOtd !== null ||
         newBusinessRol !== null;
@@ -96,10 +120,21 @@ export function useCommercialDashboard(
 
         const needsBranchIdd = !indicatorParams.branch;
 
+        const segmentRolParams = {
+          start_date: indicatorParams.start_date,
+          end_date: indicatorParams.end_date,
+          branch: indicatorParams.branch,
+        };
+
         const results = await runParallelWithProgress(
           [
             (signal) => getHeadOfficeRolTarget(indicatorParams, signal),
             (signal) => getBranchRolTarget(indicatorParams, signal),
+            (signal) => getHeadOfficeWegRolTarget(segmentRolParams, signal),
+            (signal) => getBranchWegRolTarget(segmentRolParams, signal),
+            (signal) =>
+              getHeadOfficeNewBusinessRolTarget(segmentRolParams, signal),
+            (signal) => getBranchNewBusinessRolTarget(segmentRolParams, signal),
             (signal) => getClosingRate(indicatorParams, signal),
             (signal) => getSalesOrderOtd(indicatorParams, signal),
             (signal) => getNewBusinessRolPct(indicatorParams, signal),
@@ -151,6 +186,19 @@ export function useCommercialDashboard(
         }> = [
           { key: "headOfficeRol", set: setHeadOfficeRol as (v: unknown) => void },
           { key: "branchRol", set: setBranchRol as (v: unknown) => void },
+          {
+            key: "headOfficeWegRol",
+            set: setHeadOfficeWegRol as (v: unknown) => void,
+          },
+          { key: "branchWegRol", set: setBranchWegRol as (v: unknown) => void },
+          {
+            key: "headOfficeNewBusinessRol",
+            set: setHeadOfficeNewBusinessRol as (v: unknown) => void,
+          },
+          {
+            key: "branchNewBusinessRol",
+            set: setBranchNewBusinessRol as (v: unknown) => void,
+          },
           { key: "closingRate", set: setClosingRate as (v: unknown) => void },
           { key: "salesOrderOtd", set: setSalesOrderOtd as (v: unknown) => void },
           { key: "newBusinessRol", set: setNewBusinessRol as (v: unknown) => void },
@@ -233,6 +281,10 @@ export function useCommercialDashboard(
   return {
     headOfficeRol,
     branchRol,
+    headOfficeWegRol,
+    branchWegRol,
+    headOfficeNewBusinessRol,
+    branchNewBusinessRol,
     closingRate,
     salesOrderOtd,
     newBusinessRol,
