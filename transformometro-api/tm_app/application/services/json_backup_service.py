@@ -656,6 +656,8 @@ class JsonBackupService:
             out[col] = value
         if "deletado" not in out:
             out["deletado"] = False
+        if spec.bundle_key == "processo_instancias" and not out.get("status_instancia"):
+            out["status_instancia"] = "ativo"
         if spec.bundle_key == "recursos_compartilhados" and "escopo_recurso" not in out:
             out["escopo_recurso"] = "empresa"
         if spec.bundle_key == "revisoes" and out.get("chave_unica_processo_revisao") is None:
@@ -730,6 +732,7 @@ class JsonBackupService:
                         "todas_filiais_ativas": todas_filiais,
                         "setor_ids": setor_ids,
                         "rotulo_instancia": row.get("rotulo_instancia"),
+                        "status_instancia": row.get("status_instancia") or "ativo",
                     },
                     auto_commit=False,
                 )

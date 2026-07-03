@@ -181,6 +181,24 @@ def test_prepare_legacy_skips_processo_without_setor_id():
     assert len(bundle["processo_instancias"]) == 1
 
 
+def test_insert_row_values_default_status_instancia_for_processo_instancias():
+    from tm_app.infrastructure.persistence.json_backup_repository import ENTITY_SPECS
+
+    spec = next(s for s in ENTITY_SPECS if s.bundle_key == "processo_instancias")
+    row = {
+        "instancia_id": "018e0c55-9b5e-48d5-9cfb-367741f527f9",
+        "processo_id": "fc21dd6a-2a86-4e3e-b3cd-7279e662bc6f",
+        "filial_id": "b30883bc-bc18-4598-81c9-3bc65a530897",
+        "todas_filiais_ativas": False,
+        "deletado": False,
+    }
+    normalized = JsonBackupService._normalize_row(spec, row)
+    values = {col: normalized.get(col) for col in spec.columns}
+    if values.get("deletado") is None:
+        values["deletado"] = False
+    assert values["status_instancia"] == "ativo"
+
+
 def test_prepare_legacy_backfills_instancia_and_filiais():
     bundle = _complete_legacy_bundle(_sample_bundle())
     assert len(bundle["filiais"]) >= 1
