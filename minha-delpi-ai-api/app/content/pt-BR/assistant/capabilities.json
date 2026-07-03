@@ -57,6 +57,14 @@
     "actionLineWithPath": "- {summary} — `{method} {path}`",
     "actionLine": "- {summary}"
   },
+  "actionRoutesAnswer": {
+    "titleWithAgent": "**Rotas das actions habilitadas — agente {agent_name} ({count}):**",
+    "titleWithoutAgent": "**Rotas das actions OpenAPI habilitadas nesta sessão ({count}):**",
+    "routeLine": "- `{method} {path}` — {summary}",
+    "empty": "Nenhuma action OpenAPI habilitada nesta sessão. Selecione um agente com actions configuradas para consultas operacionais.",
+    "truncatedNotice": "_Mostrando as primeiras {shown} de {total} rotas._",
+    "portalHint": "_Para menus do portal DELPI (páginas `/apps/...`), pergunte «quais menus do portal estão autorizados?»_"
+  },
   "detection": {
     "questionTerms": [
       "o que voce pode fazer",
@@ -289,7 +297,27 @@
       "ajuda sobre ",
       "help sobre "
     ],
-    "helpAboutMaxLength": 120,
+    "apiActionRoutesTerms": [
+      "quais rotas vc acessa",
+      "quais rotas voce acessa",
+      "quais rotas você acessa",
+      "rotas vc acessa",
+      "rotas voce acessa",
+      "rotas você acessa",
+      "quais rotas",
+      "rotas das actions",
+      "rotas das acoes",
+      "rotas da api",
+      "rotas do agente",
+      "rotas do assistente",
+      "quais endpoints",
+      "endpoints disponiveis",
+      "endpoints disponíveis",
+      "rotas disponiveis",
+      "rotas disponíveis",
+      "rotas autorizadas"
+    ],
+    "apiActionRoutesMaxLength": 120,
     "operationalQueryPatterns": [
       "\\bqual\\s+o\\s+estoque\\b",
       "\\bqual\\s+o\\s+preco\\b",

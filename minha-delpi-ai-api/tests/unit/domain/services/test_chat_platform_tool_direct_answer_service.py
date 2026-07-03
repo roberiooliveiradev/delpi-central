@@ -30,7 +30,7 @@ def test_format_allowed_routes_lists_real_paths_only():
     assert "/apps/minha-delpi/chat" in answer
     assert "/apps/maintenance/ferramentas" in answer
     assert "/api/v1/chat" not in answer
-    assert "Minha DELPI" in answer
+    assert "portal DELPI" in answer
 
 
 def test_format_allowed_routes_empty():

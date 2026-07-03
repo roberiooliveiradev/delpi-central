@@ -212,6 +212,13 @@ class ChatCapabilitiesService:
         if training:
             return training
 
+        if cls.is_api_action_routes_inquiry(message):
+            return cls.build_api_action_routes_answer(
+                workspace_context=workspace_context,
+                allowed_action_ids=allowed_action_ids,
+                action_catalog=action_catalog,
+            )
+
         if cls.is_help_about_topic_inquiry(message):
             help_about = cls.build_help_about_answer(
                 message=message,
@@ -349,6 +356,28 @@ class ChatCapabilitiesService:
         )
 
         return ChatCapabilitiesDetectionService.is_capabilities_question(message)
+
+    @classmethod
+    def is_api_action_routes_inquiry(cls, message: str) -> bool:
+        from app.domain.services.chat_capabilities_detection_service import (
+            ChatCapabilitiesDetectionService,
+        )
+
+        return ChatCapabilitiesDetectionService.is_api_action_routes_inquiry(message)
+
+    @classmethod
+    def build_api_action_routes_answer(
+        cls,
+        *,
+        workspace_context: dict,
+        allowed_action_ids: list[str] | None = None,
+        action_catalog: list[dict] | None = None,
+    ) -> str | None:
+        return ChatCapabilitiesCatalogAnswerService.build_action_routes_answer(
+            workspace_context=workspace_context,
+            allowed_action_ids=allowed_action_ids,
+            action_catalog=action_catalog,
+        )
 
     @classmethod
     def _is_feature_capability_inquiry(cls, message: str) -> bool:

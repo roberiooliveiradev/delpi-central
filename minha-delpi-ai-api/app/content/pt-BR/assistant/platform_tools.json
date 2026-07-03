@@ -1,7 +1,23 @@
 {
+  "toolSelection": {
+    "portalRoutesTerms": [
+      "menus disponiveis",
+      "menus disponíveis",
+      "menus autorizados",
+      "itens de menu",
+      "rotas do portal",
+      "menus do portal",
+      "caminhos do portal",
+      "paginas do portal",
+      "páginas do portal",
+      "paginas autorizadas",
+      "páginas autorizadas"
+    ],
+    "portalRoutesReason": "A pergunta solicita menus ou páginas autorizadas no portal DELPI."
+  },
   "directAnswer": {
     "routes": {
-      "title": "**Rotas autorizadas no seu perfil ({count}):**",
+      "title": "**Menus e rotas do portal DELPI ({count}):**",
       "lineWithLabel": "- `{path}` — {label} ({appName})",
       "linePathOnly": "- `{path}` ({appName})",
       "truncatedNotice": "_Mostrando as primeiras {shown} de {total} rotas autorizadas._",

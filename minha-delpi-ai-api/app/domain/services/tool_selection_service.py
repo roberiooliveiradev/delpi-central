@@ -1,6 +1,12 @@
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_capabilities_detection_service import (
+    ChatCapabilitiesDetectionService,
+)
+from app.domain.services.chat_platform_tool_selection_service import (
+    ChatPlatformToolSelectionService,
+)
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 
 
@@ -34,12 +40,12 @@ class ToolSelectionService:
                 }
             )
 
-        if self._matches_allowed_routes(normalized):
+        if self._matches_portal_routes(message, normalized):
             selected.append(
                 {
                     "name": "get_allowed_routes",
                     "arguments": {},
-                    "reason": "A pergunta solicita menus, rotas ou caminhos autorizados.",
+                    "reason": ChatPlatformToolSelectionService.portal_routes_reason(),
                 }
             )
 
@@ -86,19 +92,8 @@ class ToolSelectionService:
 
         return any(term in value for term in terms)
 
-    def _matches_allowed_routes(self, value: str) -> bool:
-        terms = [
-            "quais rotas",
-            "rotas disponiveis",
-            "rotas disponíveis",
-            "rotas autorizadas",
-            "menus disponiveis",
-            "menus disponíveis",
-            "menus autorizados",
-            "caminhos disponiveis",
-            "caminhos disponíveis",
-            "caminhos autorizados",
-            "itens de menu",
-        ]
+    def _matches_portal_routes(self, message: str, normalized: str) -> bool:
+        if ChatCapabilitiesDetectionService.is_api_action_routes_inquiry(message):
+            return False
 
-        return any(term in value for term in terms)
+        return ChatPlatformToolSelectionService.matches_portal_routes_inquiry(message)

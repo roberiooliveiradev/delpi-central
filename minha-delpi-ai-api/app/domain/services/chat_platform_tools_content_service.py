@@ -20,3 +20,11 @@ class ChatPlatformToolsContentService:
             default=default,
             **values,
         )
+
+    @classmethod
+    def list(cls, *path: str) -> tuple[str, ...]:
+        return tuple(
+            str(item)
+            for item in ChatAssistantContentService.list(_BUNDLE, *path)
+            if str(item).strip()
+        )

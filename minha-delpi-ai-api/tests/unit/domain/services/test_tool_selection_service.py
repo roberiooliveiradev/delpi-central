@@ -20,9 +20,17 @@ def test_selects_allowed_apps_tool():
 def test_selects_allowed_routes_tool():
     service = ToolSelectionService()
 
-    result = service.select_tools("Quais menus disponíveis eu posso acessar?")
+    result = service.select_tools("Quais menus do portal estão autorizados?")
 
     assert result[0]["name"] == "get_allowed_routes"
+
+
+def test_does_not_select_portal_routes_for_api_action_routes_inquiry():
+    service = ToolSelectionService()
+
+    result = service.select_tools("quais rotas vc acessa?")
+
+    assert result == []
 
 
 def test_selects_no_tool_for_generic_question():

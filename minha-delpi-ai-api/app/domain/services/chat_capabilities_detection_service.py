@@ -66,3 +66,23 @@ class ChatCapabilitiesDetectionService:
         prefixes = tuple(str(item) for item in (detection.get("helpAboutPrefixes") or ()))
 
         return any(normalized.startswith(prefix) for prefix in prefixes)
+
+    @classmethod
+    def is_api_action_routes_inquiry(cls, message: str) -> bool:
+        detection = _detection()
+        max_length = int(detection.get("apiActionRoutesMaxLength") or 120)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized or len(normalized) > max_length:
+            return False
+
+        from app.domain.services.chat_platform_tool_selection_service import (
+            ChatPlatformToolSelectionService,
+        )
+
+        if ChatPlatformToolSelectionService.matches_portal_routes_inquiry(message):
+            return False
+
+        terms = tuple(str(item) for item in (detection.get("apiActionRoutesTerms") or ()))
+
+        return ChatMessageNormalizationService.contains_any(message, terms)

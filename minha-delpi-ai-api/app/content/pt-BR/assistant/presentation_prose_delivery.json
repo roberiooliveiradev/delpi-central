@@ -22,7 +22,8 @@
       "common_chat_operational_guidance",
       "meta_direct_answer",
       "capabilities",
-      "platform_direct_answer"
+      "platform_direct_answer",
+      "api_action_routes"
     ],
     "deprecateHumanizedLinhasAsProse": true,
     "allowTemplateProseFallback": false,

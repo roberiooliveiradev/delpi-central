@@ -344,7 +344,112 @@ class ChatCapabilitiesCatalogAnswerService:
 
             output.append("")
 
-        return output
+        return "\n".join(lines)
+
+    @classmethod
+    def build_action_routes_answer(
+        cls,
+        *,
+        workspace_context: dict,
+        allowed_action_ids: list[str] | None = None,
+        action_catalog: list[dict] | None = None,
+        max_items: int = 80,
+    ) -> str | None:
+        from app.domain.services.chat_action_label_service import ChatActionLabelService
+
+        content = _content().get("actionRoutesAnswer") or {}
+        allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
+        catalog = action_catalog if isinstance(action_catalog, list) else []
+
+        if not allowed or not catalog:
+            empty = str(content.get("empty") or "").strip()
+            return empty or None
+
+        allowed_set = set(allowed)
+        routes: list[dict[str, str]] = []
+
+        for action in catalog:
+            if not isinstance(action, dict):
+                continue
+
+            action_id = str(action.get("actionId") or "").strip()
+
+            if action_id not in allowed_set:
+                continue
+
+            path = str(action.get("path") or "").strip()
+            method = str(action.get("method") or "GET").upper()
+            summary = ChatActionLabelService.humanize(
+                path=path,
+                method=method,
+                summary=str(
+                    action.get("summary") or action.get("description") or action_id
+                ).strip(),
+                action_id=action_id,
+            )
+
+            if not path:
+                continue
+
+            routes.append(
+                {
+                    "method": method,
+                    "path": path,
+                    "summary": summary,
+                }
+            )
+
+        if not routes:
+            empty = str(content.get("empty") or "").strip()
+            return empty or None
+
+        routes.sort(key=lambda item: (item["path"], item["method"]))
+
+        agent = workspace_context.get("agent") or {}
+        agent_name = str(agent.get("name") or "").strip()
+        total = len(routes)
+        shown = routes[:max_items]
+
+        if agent_name:
+            title = str(
+                content.get("titleWithAgent")
+                or "**Rotas das actions habilitadas — agente {agent_name} ({count}):**"
+            ).format(agent_name=agent_name, count=str(total))
+        else:
+            title = str(
+                content.get("titleWithoutAgent")
+                or "**Rotas das actions OpenAPI habilitadas nesta sessão ({count}):**"
+            ).format(count=str(total))
+
+        route_line = str(
+            content.get("routeLine") or "- `{method} {path}` — {summary}"
+        )
+        lines = [title, ""]
+
+        for item in shown:
+            lines.append(
+                route_line.format(
+                    method=item["method"],
+                    path=item["path"],
+                    summary=item["summary"],
+                )
+            )
+
+        if total > len(shown):
+            lines.append("")
+            lines.append(
+                str(
+                    content.get("truncatedNotice")
+                    or "_Mostrando as primeiras {shown} de {total} rotas._"
+                ).format(shown=str(len(shown)), total=str(total))
+            )
+
+        portal_hint = str(content.get("portalHint") or "").strip()
+
+        if portal_hint:
+            lines.extend(["", portal_hint])
+
+        return "\n".join(lines).strip()
 
     @classmethod
     def resolve_path_rule(cls, path: str) -> tuple[str, tuple[str, ...]]:

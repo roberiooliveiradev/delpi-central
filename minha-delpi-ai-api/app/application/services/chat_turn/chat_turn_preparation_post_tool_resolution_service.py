@@ -490,6 +490,17 @@ class ChatTurnPreparationPostToolResolutionService:
             ):
                 pipeline_stages.append("platform_direct_answer")
 
+            from app.application.services.chat_capabilities_service import (
+                ChatCapabilitiesService,
+            )
+
+            if (
+                direct_answer
+                and ChatCapabilitiesService.is_api_action_routes_inquiry(message)
+                and "api_action_routes" not in pipeline_stages
+            ):
+                pipeline_stages.append("api_action_routes")
+
         if text_task_pure and not direct_answer:
             skip_rag = True
 

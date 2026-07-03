@@ -330,8 +330,13 @@ class ChatTurnPreparationToolRoutingService:
             from app.application.services.chat_onboarding_service import (
                 ChatOnboardingService,
             )
+            from app.application.services.chat_capabilities_service import (
+                ChatCapabilitiesService,
+            )
 
-            if ChatOnboardingService.is_training_request(message):
+            if ChatCapabilitiesService.is_api_action_routes_inquiry(message):
+                pipeline_stages.append("api_action_routes")
+            elif ChatOnboardingService.is_training_request(message):
                 pipeline_stages.append("onboarding_training")
             else:
                 pipeline_stages.append("capabilities")
