@@ -17,6 +17,41 @@ class ExternalActionRefinementRouteSelectionService:
     def __init__(self, repository) -> None:
         self.repository = repository
 
+    def _resolve_allowed_action_schema(
+        self,
+        action_id: str,
+        *,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        normalized_id = str(action_id or "").strip()
+        allowed = set(allowed_action_ids or [])
+
+        if not normalized_id or normalized_id not in allowed:
+            return None
+
+        loader = getattr(self.repository, "get_action_for_execution", None)
+
+        if callable(loader):
+            bundle = loader(normalized_id)
+
+            if isinstance(bundle, dict) and isinstance(bundle.get("action"), dict):
+                return bundle["action"]
+
+        candidates = self.repository.find_candidate_actions(
+            "",
+            limit=max(len(allowed), 80),
+            allowed_action_ids=allowed_action_ids,
+        )
+
+        return next(
+            (
+                item
+                for item in candidates
+                if str(item.get("actionId") or "") == normalized_id
+            ),
+            None,
+        )
+
     def select_pagination(
         self,
         refinement,
@@ -114,19 +149,9 @@ class ExternalActionRefinementRouteSelectionService:
             ChatOperationalGroupByRefinementService,
         )
 
-        candidates = self.repository.find_candidate_actions(
-            "",
-            limit=80,
+        action = self._resolve_allowed_action_schema(
+            action_id,
             allowed_action_ids=allowed_action_ids,
-        )
-
-        action = next(
-            (
-                item
-                for item in candidates
-                if str(item.get("actionId") or "") == action_id
-            ),
-            None,
         )
 
         if not action:
@@ -285,19 +310,9 @@ class ExternalActionRefinementRouteSelectionService:
         if not selected or refinement.max_depth is None:
             return selected
 
-        candidates = self.repository.find_candidate_actions(
-            "",
-            limit=80,
+        action = self._resolve_allowed_action_schema(
+            action_id,
             allowed_action_ids=allowed_action_ids,
-        )
-
-        action = next(
-            (
-                item
-                for item in candidates
-                if str(item.get("actionId") or "") == action_id
-            ),
-            None,
         )
 
         if not action:
@@ -343,19 +358,9 @@ class ExternalActionRefinementRouteSelectionService:
         base_parameters: dict | None = None,
         fallback_reason: str | None = None,
     ) -> dict | None:
-        candidates = self.repository.find_candidate_actions(
-            "",
-            limit=80,
+        action = self._resolve_allowed_action_schema(
+            action_id,
             allowed_action_ids=allowed_action_ids,
-        )
-
-        action = next(
-            (
-                item
-                for item in candidates
-                if str(item.get("actionId") or "") == action_id
-            ),
-            None,
         )
 
         if not action:
