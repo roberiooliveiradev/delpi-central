@@ -708,19 +708,6 @@
   font-size: 19px;
 }
 
-.si-org-chart--single-scope
-  .si-tree-indicator-card__goals
-  .si-indicator-card__goal-value:has(.si-scope-badges) {
-  font-size: 12px;
-  line-height: 1.25;
-}
-
-.si-org-chart--single-scope
-  .si-tree-indicator-card__goals
-  .si-indicator-card__goal-value:not(:has(.si-scope-badges)) {
-  font-size: 19px;
-}
-
 .si-org-chart--single-scope .si-tree-indicator-card__meta {
   font-size: 13px;
 }
@@ -751,23 +738,23 @@
   width: 100%;
 }
 
-.si-tree-indicator-card__goals {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.si-tree-indicator-card__goals .si-indicator-card__goal {
+.si-tree-indicator-card__goals.si-indicator-metric-goals .si-indicator-card__goal {
   min-width: 0;
   overflow: visible;
   align-items: flex-start;
 }
 
-.si-tree-indicator-card__goals .si-indicator-card__goal-value {
-  width: auto;
-  max-width: 100%;
-  overflow: visible;
-  font-size: inherit;
+.si-org-chart--single-scope
+  .si-tree-indicator-card__goals.si-indicator-metric-goals
+  .si-indicator-card__goal-value:has(.si-scope-badges) {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.si-org-chart--single-scope
+  .si-tree-indicator-card__goals.si-indicator-metric-goals
+  .si-indicator-card__goal-value:not(:has(.si-scope-badges)) {
+  font-size: 19px;
 }
 
 .si-tree-indicator-card__footer {
@@ -1036,8 +1023,8 @@
     font-size: 17px;
   }
 
-  .si-tree-indicator-card__goals {
-    grid-template-columns: 1fr;
+  .si-indicator-metric-goals--branch-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .si-indicator-card__header {

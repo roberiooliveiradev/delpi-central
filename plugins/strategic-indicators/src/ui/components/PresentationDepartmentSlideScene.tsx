@@ -4,13 +4,7 @@ import type {
 } from "../../data/types/presentation";
 import { resolveIndicatorSparklineDirection } from "../../data/utils/resolveScoreTrendDirection";
 import { PresentationDepartmentSparkline } from "./PresentationDepartmentSparkline";
-import {
-  formatIndicatorGapDisplay,
-  formatIndicatorGoalValue,
-  formatIndicatorRealizedDisplay,
-  formatIndicatorScore,
-} from "../shared/indicatorValueFormatter";
-import { ScopeMetricBadges } from "./ScopeMetricBadges";
+import { IndicatorMetricGoalsGrid } from "./IndicatorMetricGoalsGrid";
 import "./PresentationDepartmentSlideScene.css";
 
 type PresentationDepartmentSlideSceneProps = {
@@ -126,17 +120,6 @@ function buildIndicatorChartSeries(
   return [{ period: "Atual", value: indicator.score }];
 }
 
-function getIndicatorValueFormat(
-  indicator: PresentationDepartmentFocus["indicators"][number],
-) {
-  return {
-    valueUnit: indicator.valueUnit,
-    valuePrefix: indicator.valuePrefix,
-    valueSuffix: indicator.valueSuffix,
-    valueDecimals: indicator.valueDecimals,
-  };
-}
-
 export function PresentationDepartmentSlideScene({
   department,
   series,
@@ -247,7 +230,6 @@ export function PresentationDepartmentSlideScene({
 
       <div className="si-presentation-department-slide__priority-grid si-presentation-department-slide__priority-grid--indicators">
         {department.indicators.map((indicator) => {
-          const valueFormat = getIndicatorValueFormat(indicator);
           const chartSeries = buildIndicatorChartSeries(indicator);
           const sparklineDirection = resolveIndicatorSparklineDirection(
             chartSeries,
@@ -279,55 +261,15 @@ export function PresentationDepartmentSlideScene({
                 />
               </div>
 
-              <div className="si-presentation-department-slide__priority-metrics si-presentation-department-slide__priority-metrics--grid">
-                <div>
-                  <span>Score</span>
-                  <strong>{formatIndicatorScore(indicator.score)}</strong>
-                </div>
+              <IndicatorMetricGoalsGrid
+                indicator={indicator}
+                competence={competence}
+                scoreLabel="Score"
+              />
 
-                <div>
-                  <span>Valor atual</span>
-                  <strong>
-                    <ScopeMetricBadges
-                      values={indicator.realized}
-                      format={valueFormat}
-                      layout="compact"
-                      maxVisible={2}
-                      emptyLabel={formatIndicatorRealizedDisplay(indicator, valueFormat)}
-                    />
-                  </strong>
-                </div>
-
-                <div>
-                  <span>Meta</span>
-                  <strong>
-                    <ScopeMetricBadges
-                      values={indicator.goals}
-                      format={valueFormat}
-                      layout="compact"
-                      maxVisible={2}
-                      emptyLabel={formatIndicatorGoalValue(indicator, competence)}
-                    />
-                  </strong>
-                </div>
-
-                <div>
-                  <span>Gap</span>
-                  <strong>
-                    <ScopeMetricBadges
-                      values={indicator.gaps}
-                      format={valueFormat}
-                      layout="compact"
-                      maxVisible={2}
-                      emptyLabel={formatIndicatorGapDisplay(indicator, valueFormat)}
-                    />
-                  </strong>
-                </div>
-
-                <div>
-                  <span>Peso</span>
-                  <strong>{formatPercent(indicator.weightPct)}</strong>
-                </div>
+              <div className="si-presentation-department-slide__priority-weight">
+                <span>Peso</span>
+                <strong>{formatPercent(indicator.weightPct)}</strong>
               </div>
             </article>
           );

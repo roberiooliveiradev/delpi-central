@@ -8,11 +8,6 @@ import {
   type ReactNode,
 } from "react";
 import { ChevronDown } from "lucide-react";
-import type { IndicatorViewItem } from "../../data/types/indicators";
-import {
-  pickActiveTreeColumn,
-  resolveActiveTreeScopeKey,
-} from "../../data/departmentTreeScopes";
 import type {
   DepartmentTreeDepartmentNode,
   DepartmentTreeIndicatorNode,
@@ -20,33 +15,31 @@ import type {
   DepartmentTreeScopeConfig,
   DepartmentTreeScopeKey,
 } from "../../data/types/departmentTree";
+import {
+  pickActiveTreeColumn,
+  resolveActiveTreeScopeKey,
+} from "../../data/departmentTreeScopes";
 import type { StrategicIndicatorsFilterState } from "../shared/strategicIndicatorsFilterUrl";
 import { appendStrategicIndicatorsFiltersToPath } from "../shared/strategicIndicatorsFilterUrl";
 import { navigateStrategicIndicators } from "../shared/strategicIndicatorsNavigation";
 import {
-  formatIndicatorGapDisplay,
-  formatIndicatorGoalValue,
-  formatIndicatorRealizedDisplay,
-  formatIndicatorScore,
   isMissingValueClassification,
   type IndicatorDisplayContext,
 } from "../shared/indicatorValueFormatter";
+import { IndicatorMetricGoalsGrid } from "./IndicatorMetricGoalsGrid";
 import {
   getFilterViewScopeLabel,
   resolveStrategicIndicatorsBranch,
+  formatComparisonMonthsLabel,
+  sliceTrendPoints,
+  type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
-import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import { getScopeTypeLabel } from "../presentation/labels";
 import { StatusBadge } from "./StatusBadge";
 import { PanZoomCanvas } from "./PanZoomCanvas";
 import { TreeMapFloatingControls } from "./TreeMapFloatingControls";
 import { resolveIndicatorSparklineDirection } from "../../data/utils/resolveScoreTrendDirection";
 import { TreeSparkline } from "./TreeSparkline";
-import {
-  formatComparisonMonthsLabel,
-  sliceTrendPoints,
-  type StrategicIndicatorsViewMode,
-} from "../shared/strategicIndicatorsFilters";
 import "./DepartmentSummaryCard.css";
 import "./IndicatorDetailCard.css";
 import { IGD_HERO_DESCRIPTION } from "./IgdHeroCard";
@@ -124,15 +117,6 @@ function buildDepartmentDetailHref(
     `/apps/strategic-indicators/departments/${departmentId}`,
     nextFilters,
   );
-}
-
-function getIndicatorValueFormat(indicator: IndicatorViewItem) {
-  return {
-    valueUnit: indicator.valueUnit,
-    valuePrefix: indicator.valuePrefix,
-    valueSuffix: indicator.valueSuffix,
-    valueDecimals: indicator.valueDecimals,
-  };
 }
 
 function OrgChartArrow() {
@@ -322,7 +306,6 @@ function IndicatorTreeCard({
     filterViewScopeLabel: getFilterViewScopeLabel(viewMode, branch),
     activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
   };
-  const valueFormat = getIndicatorValueFormat(indicator);
   const badgeVariant = indicator.hasValue
     ? mapScoreToBadgeVariant(indicator.score ?? 0)
     : "neutral";
@@ -358,83 +341,12 @@ function IndicatorTreeCard({
           />
         ) : null}
 
-        <div className="si-tree-indicator-card__goals">
-          <div className="si-indicator-card__goal">
-            <span className="si-indicator-card__goal-label">Meta</span>
-            <strong className="si-indicator-card__goal-value">
-              <ScopeMetricBadges
-                values={indicator.goals}
-                format={valueFormat}
-                displayContext={displayContext}
-                layout="compact"
-                maxVisible={2}
-                emptyLabel={formatIndicatorGoalValue(
-                  indicator,
-                  competence,
-                  displayContext,
-                )}
-              />
-            </strong>
-          </div>
-          <div className="si-indicator-card__goal">
-            <span className="si-indicator-card__goal-label">Realizado</span>
-            <strong
-              className={`si-indicator-card__goal-value${
-                !indicator.hasValue
-                  ? " si-indicator-card__goal-value--missing"
-                  : ""
-              }`}
-            >
-              <ScopeMetricBadges
-                values={indicator.realized}
-                format={valueFormat}
-                displayContext={displayContext}
-                layout="compact"
-                maxVisible={2}
-                emptyLabel={formatIndicatorRealizedDisplay(
-                  indicator,
-                  valueFormat,
-                  displayContext,
-                )}
-              />
-            </strong>
-          </div>
-          <div className="si-indicator-card__goal">
-            <span className="si-indicator-card__goal-label">Nota</span>
-            <strong
-              className={`si-indicator-card__goal-value${
-                !indicator.hasValue
-                  ? " si-indicator-card__goal-value--missing"
-                  : ""
-              }`}
-            >
-              {formatIndicatorScore(indicator.score)}
-            </strong>
-          </div>
-          <div className="si-indicator-card__goal">
-            <span className="si-indicator-card__goal-label">Gap</span>
-            <strong
-              className={`si-indicator-card__goal-value${
-                !indicator.hasValue
-                  ? " si-indicator-card__goal-value--missing"
-                  : ""
-              }`}
-            >
-              <ScopeMetricBadges
-                values={indicator.gaps}
-                format={valueFormat}
-                displayContext={displayContext}
-                layout="compact"
-                maxVisible={2}
-                emptyLabel={formatIndicatorGapDisplay(
-                  indicator,
-                  valueFormat,
-                  displayContext,
-                )}
-              />
-            </strong>
-          </div>
-        </div>
+        <IndicatorMetricGoalsGrid
+          className="si-tree-indicator-card__goals"
+          indicator={indicator}
+          competence={competence}
+          displayContext={displayContext}
+        />
 
         <div className="si-tree-indicator-card__footer">
           {!isMissingValueClassification(indicator.classification) ? (

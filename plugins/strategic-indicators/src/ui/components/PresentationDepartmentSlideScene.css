@@ -254,6 +254,25 @@
   overflow: visible;
 }
 
+.si-presentation-department-slide__priority-weight {
+  display: grid;
+  gap: 4px;
+}
+
+.si-presentation-department-slide__priority-weight span {
+  color: var(--si-text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.si-presentation-department-slide__priority-weight strong {
+  color: var(--si-title);
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+
 .si-presentation-department-slide__signal-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

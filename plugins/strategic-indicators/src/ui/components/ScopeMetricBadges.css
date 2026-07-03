@@ -103,7 +103,8 @@
 .si-indicator-table__metrics .si-scope-badges,
 .si-critical-item__metrics .si-scope-badges,
 .si-indicator-priority-item__meta .si-scope-badges,
-.si-tree-indicator-card__goals .si-scope-badges {
+.si-tree-indicator-card__goals .si-scope-badges,
+.si-indicator-metric-goals .si-scope-badges {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -117,10 +118,20 @@
 .si-indicator-table__metrics .si-scope-badge,
 .si-critical-item__metrics .si-scope-badge,
 .si-indicator-priority-item__meta .si-scope-badge,
-.si-tree-indicator-card__goals .si-scope-badge {
-  width: max-content;
+.si-tree-indicator-card__goals .si-scope-badge,
+.si-indicator-metric-goals .si-scope-badge {
+  width: 100%;
   max-width: 100%;
+  min-width: 0;
   justify-content: flex-start;
   gap: 8px;
   padding: 5px 10px;
+  flex-wrap: wrap;
+}
+
+.si-scope-badges--compact .si-scope-badge__value,
+.si-indicator-metric-goals .si-scope-badge__value {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }

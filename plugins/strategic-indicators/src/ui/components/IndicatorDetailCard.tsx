@@ -6,10 +6,6 @@ import {
   getScopeTypeLabel,
 } from "../presentation/labels";
 import {
-  formatIndicatorGapDisplay,
-  formatIndicatorGoalValue,
-  formatIndicatorRealizedDisplay,
-  formatIndicatorScore,
   isMissingValueClassification,
   type IndicatorDisplayContext,
 } from "../shared/indicatorValueFormatter";
@@ -18,7 +14,7 @@ import {
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
-import { ScopeMetricBadges } from "./ScopeMetricBadges";
+import { IndicatorMetricGoalsGrid } from "./IndicatorMetricGoalsGrid";
 import "./IndicatorDetailCard.css";
 
 type IndicatorDetailCardProps = {
@@ -27,15 +23,6 @@ type IndicatorDetailCardProps = {
   viewMode?: StrategicIndicatorsViewMode;
   branch?: string;
 };
-
-function getValueFormat(indicator: DepartmentIndicator) {
-  return {
-    valueUnit: indicator.valueUnit,
-    valuePrefix: indicator.valuePrefix,
-    valueSuffix: indicator.valueSuffix,
-    valueDecimals: indicator.valueDecimals,
-  };
-}
 
 export function IndicatorDetailCard({
   indicator,
@@ -57,110 +44,56 @@ export function IndicatorDetailCard({
         </span>
       </div>
 
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Meta</span>
-        <strong className="si-indicator-card__goal-value">
-          <ScopeMetricBadges
-            values={indicator.goals}
-            format={getValueFormat(indicator)}
-            displayContext={displayContext}
-            layout="compact"
-            maxVisible={3}
-            emptyLabel={formatIndicatorGoalValue(
-              indicator,
-              competence,
-              displayContext,
-            )}
-          />
-        </strong>
-      </div>
+      <IndicatorMetricGoalsGrid
+        indicator={{
+          ...indicator,
+          goalLabel: indicator.goalLabel,
+          goalValue: indicator.goalValue,
+          goalMode: indicator.goalMode,
+          monthlyTargets: indicator.monthlyTargets,
+        }}
+        competence={competence}
+        displayContext={displayContext}
+        scoreLabel="Score"
+      />
 
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Escopo</span>
-        <strong className="si-indicator-card__goal-value">
-          {getScopeTypeLabel(indicator.scopeType)}
-        </strong>
-      </div>
-
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Periodicidade</span>
-        <strong className="si-indicator-card__goal-value">
-          {getGoalPeriodicityLabel(indicator.goalPeriodicity)}
-        </strong>
-      </div>
-
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Modo da meta</span>
-        <strong className="si-indicator-card__goal-value">
-          {getGoalModeLabel(indicator.goalMode)}
-        </strong>
-      </div>
-
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Direção</span>
-        <strong className="si-indicator-card__goal-value">
-          {getPerformanceDirectionLabel(indicator.performanceDirection)}
-        </strong>
-      </div>
-
-      {indicator.goalMode === "monthly_curve" ? (
+      <div className="si-indicator-card__metadata">
         <div className="si-indicator-card__goal">
-          <span className="si-indicator-card__goal-label">Curva mensal</span>
+          <span className="si-indicator-card__goal-label">Escopo</span>
           <strong className="si-indicator-card__goal-value">
-            {indicator.monthlyTargets.length} meses configurados
+            {getScopeTypeLabel(indicator.scopeType)}
           </strong>
         </div>
-      ) : null}
 
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Realizado</span>
-        <strong className="si-indicator-card__goal-value">
-          <ScopeMetricBadges
-            values={indicator.realized}
-            format={getValueFormat(indicator)}
-            displayContext={displayContext}
-            layout="compact"
-            maxVisible={3}
-            emptyLabel={formatIndicatorRealizedDisplay(
-              indicator,
-              getValueFormat(indicator),
-              displayContext,
-            )}
-          />
-        </strong>
-      </div>
+        <div className="si-indicator-card__goal">
+          <span className="si-indicator-card__goal-label">Periodicidade</span>
+          <strong className="si-indicator-card__goal-value">
+            {getGoalPeriodicityLabel(indicator.goalPeriodicity)}
+          </strong>
+        </div>
 
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Score</span>
-        <strong
-          className={`si-indicator-card__goal-value${
-            !indicator.hasValue ? " si-indicator-card__goal-value--missing" : ""
-          }`}
-        >
-          {formatIndicatorScore(indicator.score)}
-        </strong>
-      </div>
+        <div className="si-indicator-card__goal">
+          <span className="si-indicator-card__goal-label">Modo da meta</span>
+          <strong className="si-indicator-card__goal-value">
+            {getGoalModeLabel(indicator.goalMode)}
+          </strong>
+        </div>
 
-      <div className="si-indicator-card__goal">
-        <span className="si-indicator-card__goal-label">Gap</span>
-        <strong
-          className={`si-indicator-card__goal-value${
-            !indicator.hasValue ? " si-indicator-card__goal-value--missing" : ""
-          }`}
-        >
-          <ScopeMetricBadges
-            values={indicator.gaps}
-            format={getValueFormat(indicator)}
-            displayContext={displayContext}
-            layout="compact"
-            maxVisible={3}
-            emptyLabel={formatIndicatorGapDisplay(
-              indicator,
-              getValueFormat(indicator),
-              displayContext,
-            )}
-          />
-        </strong>
+        <div className="si-indicator-card__goal">
+          <span className="si-indicator-card__goal-label">Direção</span>
+          <strong className="si-indicator-card__goal-value">
+            {getPerformanceDirectionLabel(indicator.performanceDirection)}
+          </strong>
+        </div>
+
+        {indicator.goalMode === "monthly_curve" ? (
+          <div className="si-indicator-card__goal">
+            <span className="si-indicator-card__goal-label">Curva mensal</span>
+            <strong className="si-indicator-card__goal-value">
+              {indicator.monthlyTargets.length} meses configurados
+            </strong>
+          </div>
+        ) : null}
       </div>
 
       {!indicator.hasValue ||
