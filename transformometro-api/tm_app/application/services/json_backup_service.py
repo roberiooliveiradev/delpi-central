@@ -69,12 +69,9 @@ def _legacy_instancia_id(processo_id: str, codigo_filial: str) -> str:
 
 def detect_import_format(payload: dict[str, Any]) -> ResolvedImportFormat:
     instancias = payload.get("processo_instancias") or []
-    revisoes = [row for row in (payload.get("revisoes") or []) if isinstance(row, dict)]
     if instancias:
-        if revisoes and all(row.get("instancia_id") for row in revisoes):
-            return "modern"
-        if revisoes and any(not row.get("instancia_id") for row in revisoes):
-            return "legacy"
+        # Playbook 18: instâncias no JSON indicam backup moderno mesmo que existam
+        # revisões órfãs (ex.: processo deletado sem instância).
         return "modern"
     processos = payload.get("processos") or []
     if any(
@@ -472,12 +469,37 @@ class JsonBackupService:
                 "processo_instancias: obrigatório quando há revisões (use import_format=legacy)."
             )
         for row in revisoes:
-            if not row.get("instancia_id"):
-                errors.append(
-                    f"revisoes: instancia_id ausente em {row.get('revisao_id')} "
-                    f"(use import_format=legacy ou reexporte o backup)."
-                )
+            if row.get("instancia_id"):
+                continue
+            if not self._revisao_requires_instancia_id(row, payload):
+                continue
+            errors.append(
+                f"revisoes: instancia_id ausente em {row.get('revisao_id')} "
+                f"(use import_format=legacy ou reexporte o backup)."
+            )
         return errors
+
+    @staticmethod
+    def _revisao_requires_instancia_id(revisao: dict[str, Any], payload: dict[str, Any]) -> bool:
+        processo_id = str(revisao.get("processo_id") or "")
+        if not processo_id:
+            return True
+        processos = {
+            str(row.get("processo_id")): row
+            for row in (payload.get("processos") or [])
+            if isinstance(row, dict) and row.get("processo_id")
+        }
+        processo = processos.get(processo_id)
+        if processo and processo.get("deletado"):
+            return False
+        instancias = [
+            row
+            for row in (payload.get("processo_instancias") or [])
+            if isinstance(row, dict)
+            and str(row.get("processo_id") or "") == processo_id
+            and not row.get("deletado")
+        ]
+        return bool(instancias)
 
     def _prepare_legacy_payload(self, payload: dict[str, Any]) -> None:
         labels: dict[str, str] = dict(FILIAIS)
@@ -557,9 +579,10 @@ class JsonBackupService:
                 continue
             processo_id = str(processo.get("processo_id") or "")
             filial_codigo = str(processo.get("filial_id") or "").strip()
-            setor_codigo = normalize_codigo_setor(str(processo.get("setor_id") or ""))
-            if not processo_id or not filial_codigo or not setor_codigo:
+            setor_raw = str(processo.get("setor_id") or "").strip()
+            if not processo_id or not filial_codigo or not setor_raw:
                 continue
+            setor_codigo = normalize_codigo_setor(setor_raw)
             filial_uuid = filial_codigo_to_uuid.get(filial_codigo)
             setor_uuid = setor_codigo_to_uuid.get(setor_codigo) or setor_codigo_to_uuid.get(
                 _norm_id(setor_codigo)

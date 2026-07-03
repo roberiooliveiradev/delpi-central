@@ -96,6 +96,91 @@ def test_detect_import_format_legacy():
     assert detect_import_format(_sample_bundle()) == "legacy"
 
 
+def test_detect_import_format_modern_when_instancias_present():
+    bundle = _sample_bundle()
+    bundle["processo_instancias"] = [
+        {
+            "instancia_id": "66666666-6666-6666-6666-666666666666",
+            "processo_id": "11111111-1111-1111-1111-111111111111",
+            "filial_id": "01",
+            "todas_filiais_ativas": False,
+            "deletado": False,
+        }
+    ]
+    assert detect_import_format(bundle) == "modern"
+
+
+def test_validate_modern_ignores_orphan_revisoes_on_deleted_process():
+    pid = "fa809c58-5ca8-4765-870c-6b9610172a46"
+    active_pid = "88888888-8888-8888-8888-888888888888"
+    iid = "77777777-7777-7777-7777-777777777777"
+    bundle = {
+        "schema_version": SCHEMA_VERSION,
+        "filiais": [{"filial_id": "f1", "codigo_filial": "01", "nome_filial": "Matriz", "deletado": False}],
+        "setores": [{"setor_id": "s1", "codigo_setor": "qualidade", "nome_setor": "Qualidade", "deletado": False}],
+        "setor_filiais": [],
+        "processos": [
+            {
+                "processo_id": pid,
+                "codigo_processo": "PROC-0049",
+                "nome_processo": "Deletado",
+                "status_processo": "ativo",
+                "deletado": True,
+            },
+            {
+                "processo_id": active_pid,
+                "codigo_processo": "PROC-0001",
+                "nome_processo": "Ativo",
+                "status_processo": "ativo",
+                "deletado": False,
+            },
+        ],
+        "processo_instancias": [
+            {
+                "instancia_id": iid,
+                "processo_id": active_pid,
+                "filial_id": "f1",
+                "todas_filiais_ativas": False,
+                "deletado": False,
+            }
+        ],
+        "processo_instancia_setores": [],
+        "recursos_compartilhados": [],
+        "revisoes": [
+            {
+                "revisao_id": "750ae4b7-67b5-4bca-89fe-1a50b790d19a",
+                "processo_id": pid,
+                "versao_revisao": "v1",
+                "instancia_id": None,
+                "deletado": False,
+            }
+        ],
+        "medicoes": [],
+        "investimentos": [],
+        "recurso_custos": [],
+        "revisao_recursos_compartilhados": [],
+    }
+    assert detect_import_format(bundle) == "modern"
+    errors = JsonBackupService(MagicMock()).validate_bundle(bundle)
+    assert not any("instancia_id ausente" in err for err in errors)
+
+
+def test_prepare_legacy_skips_processo_without_setor_id():
+    bundle = _sample_bundle()
+    bundle["processos"].append(
+        {
+            "processo_id": "99999999-9999-9999-9999-999999999999",
+            "codigo_processo": "PROC-DEL",
+            "nome_processo": "Sem setor",
+            "filial_id": "01",
+            "status_processo": "ativo",
+            "deletado": True,
+        }
+    )
+    JsonBackupService(MagicMock())._prepare_legacy_payload(bundle)
+    assert len(bundle["processo_instancias"]) == 1
+
+
 def test_prepare_legacy_backfills_instancia_and_filiais():
     bundle = _complete_legacy_bundle(_sample_bundle())
     assert len(bundle["filiais"]) >= 1
