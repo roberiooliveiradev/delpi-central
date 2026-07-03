@@ -31,6 +31,29 @@
   background: transparent;
 }
 
+.mdc-chat-context-bar--collapsed {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.3rem;
+}
+
+.mdc-chat-context-bar--collapsed .mdc-chat-context-bar__heading {
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  max-width: none;
+}
+
+.mdc-chat-context-bar--collapsed .mdc-chat-context-bar__summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
 .mdc-chat-context-bar__label {
   flex-shrink: 0;
   font-size: 0.6875rem;
@@ -192,7 +215,8 @@
 
 .mdc-chat-context-bar__clear,
 .mdc-chat-context-bar__add,
-.mdc-chat-context-bar__view-memory {
+.mdc-chat-context-bar__view-memory,
+.mdc-chat-context-bar__toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -211,9 +235,15 @@
     border-color 0.15s ease;
 }
 
+.mdc-chat-context-bar__toggle {
+  color: color-mix(in srgb, var(--mdc-primary) 72%, var(--mdc-text-muted));
+  border-color: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
+}
+
 .mdc-chat-context-bar__clear:hover,
 .mdc-chat-context-bar__add:hover,
-.mdc-chat-context-bar__view-memory:hover {
+.mdc-chat-context-bar__view-memory:hover,
+.mdc-chat-context-bar__toggle:hover {
   color: var(--mdc-text);
   border-color: color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
   background: color-mix(in srgb, var(--mdc-control-bg) 92%, transparent);
@@ -221,7 +251,8 @@
 
 .mdc-chat-context-bar__clear:focus-visible,
 .mdc-chat-context-bar__add:focus-visible,
-.mdc-chat-context-bar__view-memory:focus-visible {
+.mdc-chat-context-bar__view-memory:focus-visible,
+.mdc-chat-context-bar__toggle:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--mdc-primary) 30%, transparent);
   outline-offset: 1px;
 }
@@ -270,6 +301,21 @@
       0.45rem max(var(--mdc-space-3), env(safe-area-inset-right, 0px));
   }
 
+  .mdc-chat-context-bar--collapsed {
+    display: flex;
+    flex-wrap: nowrap;
+    grid-template-columns: unset;
+    grid-template-areas: unset;
+  }
+
+  .mdc-chat-context-bar--collapsed .mdc-chat-context-bar__heading {
+    grid-area: unset;
+  }
+
+  .mdc-chat-context-bar--collapsed .mdc-chat-context-bar__actions {
+    grid-area: unset;
+  }
+
   .mdc-chat-context-bar__heading {
     grid-area: heading;
     max-width: none;
@@ -306,7 +352,8 @@
 
   .mdc-chat-context-bar__clear,
   .mdc-chat-context-bar__add,
-  .mdc-chat-context-bar__view-memory {
+  .mdc-chat-context-bar__view-memory,
+  .mdc-chat-context-bar__toggle {
     width: 2.25rem;
     height: 2.25rem;
   }

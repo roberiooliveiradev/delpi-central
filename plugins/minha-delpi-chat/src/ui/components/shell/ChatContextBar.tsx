@@ -1,6 +1,8 @@
 import { useState } from "react";
 import {
   CalendarRange,
+  ChevronDown,
+  ChevronUp,
   ClipboardList,
   Eye,
   FileText,
@@ -93,6 +95,7 @@ export function ChatContextBar({
   onViewMemory,
   onPinChip,
 }: ChatContextBarProps) {
+  const [expanded, setExpanded] = useState(false);
   const [chipMenu, setChipMenu] = useState<{
     chip: ChatContextChip;
     anchor: { rect: ReturnType<typeof menuAnchorRectFromElement> };
@@ -112,6 +115,13 @@ export function ChatContextBar({
   const showClear = Boolean(onClearContext) && chips.length > 0;
   const showAdd = Boolean(onAddContext);
   const actionsOnly = !hasContextContent;
+  const canCollapse = hasContextContent;
+  const isCollapsed = canCollapse && !expanded;
+  const collapsedSummary =
+    summary?.trim() ||
+    (chips.length > 0
+      ? `${chips.length} ${chips.length === 1 ? "item" : "itens"} no contexto`
+      : null);
 
   function openChipMenu(chip: ChatContextChip, element: HTMLElement) {
     if (!onChipAction) {
@@ -142,6 +152,7 @@ export function ChatContextBar({
       className={[
         "mdc-chat-context-bar",
         actionsOnly ? "mdc-chat-context-bar--actions-only" : "",
+        isCollapsed ? "mdc-chat-context-bar--collapsed" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -150,21 +161,31 @@ export function ChatContextBar({
       {hasContextContent ? (
         <div className="mdc-chat-context-bar__heading">
           <span className="mdc-chat-context-bar__label">Contexto</span>
-          {summary ? (
+          {isCollapsed && collapsedSummary ? (
+            <span className="mdc-chat-context-bar__summary" title={collapsedSummary}>
+              {collapsedSummary}
+            </span>
+          ) : null}
+          {!isCollapsed && summary ? (
             <span className="mdc-chat-context-bar__summary" title={summary}>
               {summary}
             </span>
           ) : null}
         </div>
       ) : null}
-      {preferenceHint ? (
+
+      {!isCollapsed && preferenceHint ? (
         <span className="mdc-chat-context-bar__preference" title={preferenceHint}>
           {preferenceHint}
         </span>
       ) : null}
 
-      {hasContextContent ? (
-      <div className="mdc-chat-context-bar__chips" role="list">
+      {!isCollapsed && hasContextContent ? (
+      <div
+        id="mdc-chat-context-bar-details"
+        className="mdc-chat-context-bar__chips"
+        role="list"
+      >
         {chips.map((chip) => {
           const key = contextChipKey(chip);
           const query = interactive ? buildContextChipQuery(chip) : null;
@@ -238,7 +259,25 @@ export function ChatContextBar({
       ) : null}
 
       <div className="mdc-chat-context-bar__actions">
-        {showClear ? (
+        {canCollapse ? (
+          <button
+            type="button"
+            className="mdc-chat-context-bar__toggle"
+            onClick={() => setExpanded((current) => !current)}
+            aria-expanded={expanded}
+            aria-controls="mdc-chat-context-bar-details"
+            title={expanded ? "Ocultar contexto" : "Mostrar contexto"}
+            aria-label={expanded ? "Ocultar contexto" : "Mostrar contexto"}
+          >
+            {expanded ? (
+              <ChevronUp size={14} aria-hidden="true" />
+            ) : (
+              <ChevronDown size={14} aria-hidden="true" />
+            )}
+          </button>
+        ) : null}
+
+        {showClear && !isCollapsed ? (
           <button
             type="button"
             className="mdc-chat-context-bar__clear"
