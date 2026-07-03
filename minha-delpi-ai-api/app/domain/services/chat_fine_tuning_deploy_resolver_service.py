@@ -14,12 +14,15 @@ class ChatFineTuningDeployResolverService:
         try:
             from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 
+            if ChatDomainConfigService.llm_provider() != "ollama":
+                return fallback
+
             if not ChatDomainConfigService.learning_pipeline_flag("learningFineTuningEnabled"):
                 return fallback
 
             from app.composition.repository_composer import make_fine_tuning_repository
 
-            deployed = make_fine_tuning_repository().get_active_deployed_ollama_model()
+            deployed = make_fine_tuning_repository().get_active_deployed_chat_model()
 
             if deployed:
                 return deployed

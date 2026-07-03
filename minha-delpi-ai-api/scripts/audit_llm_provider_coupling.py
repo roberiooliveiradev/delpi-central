@@ -26,9 +26,7 @@ BLOCKED_IMPORT_PATTERNS = (
     re.compile(r"import\s+app\.infrastructure\.llm\.vllm_llm_gateway"),
 )
 
-ALLOWLIST: dict[str, set[int]] = {
-    "app/application/services/chat_fine_tuning_service.py": {310},
-}
+ALLOWLIST: dict[str, set[int]] = {}
 
 
 def scan_violations() -> list[dict[str, str | int]]:

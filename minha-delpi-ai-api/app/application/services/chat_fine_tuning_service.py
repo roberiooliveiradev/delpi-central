@@ -297,44 +297,60 @@ class ChatFineTuningService:
             run_id=run_id,
         )
 
-        if (
-            Settings.LLM_PROVIDER == "ollama"
-            and Settings.CHAT_LEARNING_FINE_TUNING_OLLAMA_CREATE_ENABLED
-        ):
-            try:
-                modelfile = ChatFineTuningModelfileBuilderService.build_modelfile(
-                    base_model=Settings.CHAT_LEARNING_FINE_TUNING_BASE_MODEL,
-                    samples=samples,
-                    target_model=str(dataset.get("targetModel") or run.get("targetModel") or "chat"),
-                )
-                from app.infrastructure.llm.ollama_model_create_gateway import (
-                    OllamaModelCreateGateway,
-                )
+        from app.composition.fine_tuning_model_composer import make_fine_tuning_model_gateway
+        from app.domain.services.chat_learning_content_service import ChatLearningContentService
 
-                create_result = OllamaModelCreateGateway().create_from_modelfile(
-                    name=ollama_model_name,
-                    modelfile=modelfile,
-                )
+        if Settings.CHAT_LEARNING_FINE_TUNING_OLLAMA_CREATE_ENABLED:
+            gateway = make_fine_tuning_model_gateway()
+
+            if gateway.supports_local_deploy():
+                try:
+                    modelfile = ChatFineTuningModelfileBuilderService.build_modelfile(
+                        base_model=Settings.CHAT_LEARNING_FINE_TUNING_BASE_MODEL,
+                        samples=samples,
+                        target_model=str(dataset.get("targetModel") or run.get("targetModel") or "chat"),
+                    )
+                    create_result = gateway.create_from_modelfile(
+                        name=ollama_model_name,
+                        modelfile=modelfile,
+                    )
+                    metrics.update(
+                        {
+                            "mode": "ollama_modelfile",
+                            "ollamaModelName": ollama_model_name,
+                            "ollamaCreateStatus": create_result.get("status"),
+                            "fineTuningProvider": gateway.provider_name(),
+                        }
+                    )
+                except Exception as exc:
+                    self._repo().update_run(
+                        run_id,
+                        status="failed",
+                        error_message=str(exc)[:500],
+                        completed_at=now,
+                    )
+                    raise ValueError(f"fine-tuning model create failed: {exc}") from exc
+            else:
                 metrics.update(
                     {
-                        "mode": "ollama_modelfile",
-                        "ollamaModelName": ollama_model_name,
-                        "ollamaCreateStatus": create_result.get("status"),
+                        "mode": "export_only",
+                        "note": ChatLearningContentService.get(
+                            "fineTuning",
+                            "exportOnlyNote",
+                            default="Treino local indisponível; use export JSONL e webhook externo.",
+                        ),
+                        "fineTuningProvider": gateway.provider_name(),
                     }
                 )
-            except Exception as exc:
-                self._repo().update_run(
-                    run_id,
-                    status="failed",
-                    error_message=str(exc)[:500],
-                    completed_at=now,
-                )
-                raise ValueError(f"ollama model create failed: {exc}") from exc
         else:
             metrics.update(
                 {
                     "mode": "export_only",
-                    "note": "Treino Ollama desligado; use webhook externo se necessário.",
+                    "note": ChatLearningContentService.get(
+                        "fineTuning",
+                        "exportOnlyDisabled",
+                        default="Criação Ollama desligada; use export JSONL e webhook externo se necessário.",
+                    ),
                 }
             )
 

@@ -281,7 +281,7 @@ class PostgresFineTuningRepository(FineTuningRepositoryPort):
         )
         return [self._run_to_dict(row) for row in rows]
 
-    def get_active_deployed_ollama_model(self) -> str | None:
+    def get_active_deployed_chat_model(self) -> str | None:
         row = (
             AiFineTuningRunModel.query.filter(
                 AiFineTuningRunModel.active_deploy.is_(True),
@@ -296,6 +296,9 @@ class PostgresFineTuningRepository(FineTuningRepositoryPort):
 
         model_name = str(row.metrics.get("ollamaModelName") or "").strip()
         return model_name or None
+
+    def get_active_deployed_ollama_model(self) -> str | None:
+        return self.get_active_deployed_chat_model()
 
     def summary(self) -> dict:
         sample_model = AiFineTuningSampleModel

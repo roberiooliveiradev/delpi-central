@@ -1,7 +1,7 @@
 # Playbook 24 — Provedores LLM plugáveis (Ollama padrão, API externa opcional)
 
 **Projeto:** Minha DELPI Chat IA · Pacote: `minha-delpi-ai-api`  
-**Status:** P0–P3 implementados (jul/2026) · P4–P5 backlog  
+**Status:** P0–P4 implementados (jul/2026) · P5 backlog  
 **Pré-requisitos:** [Playbook 11 — clean architecture](./playbook-11-clean-architecture-chat-api.md), [Playbook 19 — inferência LLM](./playbook-19-inferencia-llm-universal.md)
 
 ---
@@ -170,7 +170,7 @@ composition/
 | P3.4 | `VISION_LLM_PROVIDER` + composer | settings + composition | Fallback Tesseract-only se provider off |
 | P3.5 | Regressão | `test_chat_document_vision_*` | Pipeline não referencia `OLLAMA_BASE_URL` direto |
 
-### P4 — Fine-tuning e deploy (opcional, 1 sprint) ⬜
+### P4 — Fine-tuning e deploy (opcional, 1 sprint) ✅
 
 | # | Entrega | Onde | DoD |
 |---|---------|------|-----|

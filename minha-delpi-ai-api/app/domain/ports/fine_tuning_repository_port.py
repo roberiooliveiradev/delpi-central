@@ -133,5 +133,8 @@ class FineTuningRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_active_deployed_ollama_model(self) -> str | None:
+    def get_active_deployed_chat_model(self) -> str | None:
         raise NotImplementedError
+
+    def get_active_deployed_ollama_model(self) -> str | None:
+        return self.get_active_deployed_chat_model()

@@ -89,5 +89,10 @@
     "high": "high",
     "medium": "medium",
     "low": "low"
+  },
+  "fineTuning": {
+    "exportOnlyNote": "Treino local indisponível com o provedor LLM atual; exporte o JSONL e use webhook externo.",
+    "exportOnlyDisabled": "Criação local desligada; exporte o JSONL e use webhook externo se necessário.",
+    "localDeployUnavailable": "Deploy local de fine-tuning só está disponível com LLM_PROVIDER=ollama."
   }
 }
