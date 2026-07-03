@@ -113,7 +113,7 @@ class ExternalActionSelectionService:
             refinement,
             allowed_action_ids=allowed_action_ids,
             message=message,
-            select_product=self.select_action_for_product,
+            select_product=self._select_product_for_refinement,
         )
 
     def select_operational_group_by_refinement(
@@ -138,7 +138,7 @@ class ExternalActionSelectionService:
             refinement,
             allowed_action_ids=allowed_action_ids,
             message=message,
-            select_product=self.select_action_for_product,
+            select_product=self._select_product_for_refinement,
             clamp_max_depth=self._route_selection.clamp_max_depth_for_path,
         )
 
@@ -156,6 +156,25 @@ class ExternalActionSelectionService:
             allowed_action_ids=allowed_action_ids,
             previous_messages=previous_messages,
             candidates_loader=self._list_allowed_candidates,
+        )
+
+    def _select_product_for_refinement(
+        self,
+        message: str,
+        product_code: str,
+        *,
+        allowed_action_ids: list[str],
+        intent: str | None = None,
+        route_segment: str | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        return self.select_action_for_product(
+            message,
+            product_code=product_code,
+            allowed_action_ids=allowed_action_ids,
+            intent=intent,
+            route_segment=route_segment,
+            previous_messages=previous_messages,
         )
 
     @staticmethod
