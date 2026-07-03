@@ -90,6 +90,7 @@ Referência baseada nas rotas reais do Flask e nos tipos do plugin `minha-delpi-
 | [../app/content/README.md](../app/content/README.md) | Bundles JSON de textos PT-BR |
 | [roadmap/playbook-11-clean-architecture-chat-api.md](./roadmap/playbook-11-clean-architecture-chat-api.md) | Clean architecture, checklist de PR |
 | [roadmap/playbook-24-llm-provider-pluggable-jul2026.md](./roadmap/playbook-24-llm-provider-pluggable-jul2026.md) | **LLM plugável (concluído)** — Ollama padrão; troca por env ou agente (P0–P5) · [changelog](./changelog/2026-07-playbook-24-llm-provider-pluggable.md) |
+| [operations/tutorial-conectar-llm-externo.md](./operations/tutorial-conectar-llm-externo.md) | **Tutorial** — conectar OpenAI, Azure, Groq, vLLM (passo a passo) |
 | [roadmap/playbook-15-rotas-operacionais-sem-sql.md](./roadmap/playbook-15-rotas-operacionais-sem-sql.md) | Rotas produção/compras/perdas sem SQL (roadmap) |
 
 ---
@@ -117,6 +118,7 @@ Documentos para **ingestão na base de conhecimento** — não confundir com có
 
 Changelogs recentes:
 
+- [2026-07-playbook-24-llm-provider-pluggable.md](./changelog/2026-07-playbook-24-llm-provider-pluggable.md)
 - [2026-06-presentation-delivered-pure.md](./changelog/2026-06-presentation-delivered-pure.md)
 - [2026-06-viewintent-apresentacao-automatica.md](./changelog/2026-06-viewintent-apresentacao-automatica.md)
 - [2026-06-playbook-inteligencia.md](./changelog/2026-06-playbook-inteligencia.md)

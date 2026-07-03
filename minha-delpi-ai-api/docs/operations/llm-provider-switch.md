@@ -2,6 +2,7 @@
 
 Guia para alternar o motor de inferência do chat mantendo **Ollama como padrão** em dev/homolog.
 
+**Tutorial passo a passo:** [tutorial-conectar-llm-externo.md](./tutorial-conectar-llm-externo.md)  
 **Playbook:** [playbook-24-llm-provider-pluggable-jul2026.md](../roadmap/playbook-24-llm-provider-pluggable-jul2026.md)
 
 ---

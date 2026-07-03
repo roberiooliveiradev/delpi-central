@@ -335,6 +335,7 @@ Atualizar: `infra/README-ambiente.md`, `docs/02-infraestrutura/variaveis-de-ambi
 | Documento | Conteúdo |
 |-----------|----------|
 | [llm-provider-switch.md](../operations/llm-provider-switch.md) | Troca operacional (env, restart, rollback, override agente) |
+| [tutorial-conectar-llm-externo.md](../operations/tutorial-conectar-llm-externo.md) | **Tutorial** — conectar OpenAI, Azure, Groq, vLLM e cenários híbridos |
 | [007-llm-provider-ports.md](../architecture/adr/007-llm-provider-ports.md) | ADR — decisão de portas por eixo |
 | [2026-07-playbook-24-llm-provider-pluggable.md](../changelog/2026-07-playbook-24-llm-provider-pluggable.md) | Changelog com commits e artefatos |
 

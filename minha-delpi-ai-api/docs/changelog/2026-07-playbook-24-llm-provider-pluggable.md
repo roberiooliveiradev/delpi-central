@@ -2,7 +2,7 @@
 
 **Playbook:** [playbook-24-llm-provider-pluggable-jul2026.md](../roadmap/playbook-24-llm-provider-pluggable-jul2026.md)  
 **ADR:** [007-llm-provider-ports.md](../architecture/adr/007-llm-provider-ports.md)  
-**Operação:** [llm-provider-switch.md](../operations/llm-provider-switch.md)
+**Operação:** [llm-provider-switch.md](../operations/llm-provider-switch.md) · [tutorial-conectar-llm-externo.md](../operations/tutorial-conectar-llm-externo.md)
 
 ---
 
