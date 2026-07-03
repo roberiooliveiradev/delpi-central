@@ -24,8 +24,8 @@ def test_append_descricao_terms_adiciona_or_entre_palavras():
     assert len(params) == 2
 
 
-def test_peca_reposicao_scope_sql_usa_prefixo_3019():
-    assert peca_reposicao_scope_sql(alias="C") == "RTRIM(LTRIM(C.B1_COD)) LIKE '3019%'"
+def test_peca_reposicao_scope_sql_usa_grupo_3019():
+    assert peca_reposicao_scope_sql(alias="SB1") == "RTRIM(LTRIM(SB1.B1_GRUPO)) = '3019'"
 
 
 def test_bom_validity_where_clauses_usa_alias():

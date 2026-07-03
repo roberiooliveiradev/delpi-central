@@ -45,8 +45,8 @@ def peca_codigo_filter_sql(*, alias: str = "C") -> str:
 
 
 def peca_reposicao_scope_sql(*, alias: str = "C") -> str:
-    """Peças substituíveis: código Protheus 3019* (mesma regra de list_pecas)."""
-    return f"RTRIM(LTRIM({alias}.B1_COD)) LIKE '3019%'"
+    """Peças substituíveis: grupo TOTVS 3019 (legado PecaQueries.sql)."""
+    return f"RTRIM(LTRIM({alias}.B1_GRUPO)) = '3019'"
 
 
 def append_descricao_terms(

@@ -51,40 +51,45 @@ export function FerramentasPorPecaSearchCard({
     [],
   );
 
-  const loadPecas = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchPecasReposicao(
-        filial,
-        {
-          page: pecasTable.query.page,
-          pageSize: pecasTable.query.pageSize,
-          sortKey: pecasTable.query.sortKey,
-          sortDirection: pecasTable.query.sortDirection,
-        },
-        {
-          codigo: codigoFiltro.trim() || undefined,
-          descricao: descricaoFiltro.trim() || undefined,
-        },
-        getAccessToken,
-      );
-      setItems(data.items ?? []);
-      setTotal(data.total ?? 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar peças.");
-      setItems([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    codigoFiltro,
-    descricaoFiltro,
-    filial,
-    getAccessToken,
-    pecasTable.query,
-  ]);
+  const loadPecas = useCallback(
+    async (filters?: { codigo?: string; descricao?: string }) => {
+      const codigo = filters?.codigo ?? codigoFiltro;
+      const descricao = filters?.descricao ?? descricaoFiltro;
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchPecasReposicao(
+          filial,
+          {
+            page: pecasTable.query.page,
+            pageSize: pecasTable.query.pageSize,
+            sortKey: pecasTable.query.sortKey,
+            sortDirection: pecasTable.query.sortDirection,
+          },
+          {
+            codigo: codigo.trim() || undefined,
+            descricao: descricao.trim() || undefined,
+          },
+          getAccessToken,
+        );
+        setItems(data.items ?? []);
+        setTotal(data.total ?? 0);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Falha ao carregar peças.");
+        setItems([]);
+        setTotal(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      codigoFiltro,
+      descricaoFiltro,
+      filial,
+      getAccessToken,
+      pecasTable.query,
+    ],
+  );
 
   useEffect(() => {
     pecasTable.resetPage();
@@ -96,9 +101,21 @@ export function FerramentasPorPecaSearchCard({
 
   async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
-    setCodigoFiltro(codigoDraft);
-    setDescricaoFiltro(descricaoDraft);
+    const nextCodigo = codigoDraft.trim();
+    const nextDescricao = descricaoDraft.trim();
+    setCodigoFiltro(nextCodigo);
+    setDescricaoFiltro(nextDescricao);
     pecasTable.resetPage();
+    await loadPecas({ codigo: nextCodigo, descricao: nextDescricao });
+  }
+
+  function handleClearFilters() {
+    setCodigoDraft("");
+    setDescricaoDraft("");
+    setCodigoFiltro("");
+    setDescricaoFiltro("");
+    pecasTable.resetPage();
+    void loadPecas({ codigo: "", descricao: "" });
   }
 
   function handleSelectPeca(item: PecaReposicaoItem) {
@@ -122,7 +139,8 @@ export function FerramentasPorPecaSearchCard({
         <div className="dm-section-header__title-group">
           <h2 className="dm-section-header__title">Buscar ferramentas por peça</h2>
           <p className="dm-section-header__hint">
-            Peças do grupo 3019 amarradas à estrutura vigente das ferramentas.
+            Peças cadastradas no grupo 3019 (catálogo Protheus). Selecione uma linha para filtrar
+            as ferramentas abaixo.
           </p>
         </div>
         {selectedPecaCodigo ? (
@@ -162,6 +180,11 @@ export function FerramentasPorPecaSearchCard({
           />
         </label>
         <div className="dm-filter-bar__actions">
+          {(codigoFiltro || descricaoFiltro) ? (
+            <button type="button" className="dm-ghost-btn" onClick={handleClearFilters}>
+              Limpar filtros
+            </button>
+          ) : null}
           <button type="submit" className="dm-primary-btn">
             Buscar peças
           </button>
