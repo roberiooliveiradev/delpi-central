@@ -39,11 +39,9 @@ class ChatGlossaryKnowledgeIndexService:
 
     def _embedder(self):
         if self._embedding_gateway is None:
-            from app.infrastructure.embeddings.local_embedding_gateway import (
-                LocalEmbeddingGateway,
-            )
+            from app.composition.embedding_composer import make_embedding_gateway
 
-            self._embedding_gateway = LocalEmbeddingGateway()
+            self._embedding_gateway = make_embedding_gateway()
 
         return self._embedding_gateway
 

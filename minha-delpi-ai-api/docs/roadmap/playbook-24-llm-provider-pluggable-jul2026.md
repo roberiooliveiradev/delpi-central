@@ -1,7 +1,7 @@
 # Playbook 24 — Provedores LLM plugáveis (Ollama padrão, API externa opcional)
 
 **Projeto:** Minha DELPI Chat IA · Pacote: `minha-delpi-ai-api`  
-**Status:** P0–P1 implementados (jul/2026) · P2–P5 backlog  
+**Status:** P0–P3 implementados (jul/2026) · P4–P5 backlog  
 **Pré-requisitos:** [Playbook 11 — clean architecture](./playbook-11-clean-architecture-chat-api.md), [Playbook 19 — inferência LLM](./playbook-19-inferencia-llm-universal.md)
 
 ---
@@ -128,7 +128,7 @@ composition/
 
 ## 4. Roadmap de implementação
 
-### P0 — Inventário e guardrails (1 sprint, baixo risco) ⬜
+### P0 — Inventário e guardrails (1 sprint, baixo risco) ✅
 
 | # | Entrega | Onde | DoD |
 |---|---------|------|-----|
@@ -137,7 +137,7 @@ composition/
 | P0.3 | Doc operacional «trocar para API externa» | `docs/operations/llm-provider-switch.md` | Matriz env + smoke + rollback |
 | P0.4 | Smoke `scripts/smoke_llm_provider_switch.py` | `scripts/` | Com `LLM_PROVIDER=vllm`, send+stream+tools passam |
 
-### P1 — Texto 100% configurável (1 sprint) ⬜
+### P1 — Texto 100% configurável (1 sprint) ✅
 
 | # | Entrega | Onde | DoD |
 |---|---------|------|-----|
@@ -148,7 +148,7 @@ composition/
 | P1.5 | `GetLlmProviderStatusUseCase` | application | Retorna `text`, `embedding`, `vision` separados |
 | P1.6 | Testes paridade | `tests/unit/infrastructure/llm/` | Mock HTTP: ollama vs openai_compatible mesmos cenários tools/stream |
 
-### P2 — Embeddings plugáveis (1–2 sprints) ⬜
+### P2 — Embeddings plugáveis (1–2 sprints) ✅
 
 | # | Entrega | Onde | DoD |
 |---|---------|------|-----|
@@ -160,7 +160,7 @@ composition/
 
 **⚠ Migração de dimensão:** trocar modelo de embedding exige reindex — documentar em `docs/knowledge/`; **não** automatizar no P2.
 
-### P3 — Visão (VLM) plugável (1 sprint) ⬜
+### P3 — Visão (VLM) plugável (1 sprint) ✅
 
 | # | Entrega | Onde | DoD |
 |---|---------|------|-----|

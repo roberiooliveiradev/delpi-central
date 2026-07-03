@@ -1,6 +1,7 @@
 from app.domain.ports.admin_system_check_repository_port import AdminSystemCheckRepositoryPort
 from app.domain.ports.external_action_repository_port import ExternalActionRepositoryPort
-from app.infrastructure.config.settings import Settings
+from app.infrastructure.config.embedding_config import resolve_embedding_config
+from app.infrastructure.config.llm_text_config import resolve_llm_provider_name
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 
 
@@ -54,13 +55,27 @@ class GetAdminToolsHealthUseCase:
         items.append(
             {
                 "id": "llm-provider",
-                "label": f"LLM ({llm.get('provider', Settings.LLM_PROVIDER)})",
+                "label": f"LLM ({llm.get('provider', resolve_llm_provider_name())})",
                 "status": self._map_status(llm.get("status")),
                 "description": llm.get("message")
                 or (
                     f"Modelo de chat: {((llm.get('chatModel') or {}).get('name'))}"
                 )
                 or "Provedor configurado.",
+            }
+        )
+
+        embedding = system.get("embedding") or {}
+        items.append(
+            {
+                "id": "embedding-provider",
+                "label": f"Embeddings ({embedding.get('provider', 'ollama')})",
+                "status": self._map_status(embedding.get("status")),
+                "description": embedding.get("message")
+                or (
+                    f"Modelo de embedding: {((embedding.get('model') or {}).get('name'))}"
+                )
+                or "Provedor de embeddings configurado.",
             }
         )
 

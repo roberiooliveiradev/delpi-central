@@ -9,7 +9,10 @@ from app.infrastructure.config.chat_intelligence_runtime_reader import (
 )
 import os
 
+from app.infrastructure.config.embedding_config import resolve_embedding_config
 from app.infrastructure.config.llm_text_config import resolve_llm_text_config
+from app.infrastructure.config.settings import Settings
+from app.infrastructure.config.vision_llm_config import resolve_vision_llm_config
 
 
 class InfrastructureAppConfigAdapter(AppConfigPort):
@@ -140,22 +143,19 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
         return resolve_llm_text_config().timeout_seconds
 
     def embedding_provider(self) -> str:
-        return os.getenv("EMBEDDING_PROVIDER", "ollama").lower().strip()
+        return resolve_embedding_config().provider
 
     def embedding_model(self) -> str:
-        return os.getenv("EMBEDDING_MODEL", "bge-m3").strip()
+        return resolve_embedding_config().model
 
     def embedding_base_url(self) -> str:
-        return os.getenv("OLLAMA_BASE_URL", "http://ollama:11434").strip()
+        return resolve_embedding_config().base_url
 
     def vision_llm_provider(self) -> str:
-        return os.getenv("VISION_LLM_PROVIDER", "ollama").lower().strip()
+        return resolve_vision_llm_config().provider
 
     def vision_llm_model(self) -> str:
-        return os.getenv(
-            "CHAT_DOCUMENT_VISION_OLLAMA_MODEL",
-            "qwen2.5vl:7b",
-        ).strip()
+        return resolve_vision_llm_config().model
 
     def vllm_model(self) -> str:
         return os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct").strip()

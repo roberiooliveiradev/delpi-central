@@ -137,7 +137,7 @@ from app.composition.knowledge_pipeline_composer import (
     make_knowledge_ingestion_pipeline_service,
 )
 from app.infrastructure.config.settings import Settings
-from app.infrastructure.embeddings.local_embedding_gateway import LocalEmbeddingGateway
+from app.composition.embedding_composer import make_embedding_gateway
 from app.infrastructure.persistence.postgres_admin_system_check_repository import PostgresAdminSystemCheckRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_response_evaluation_repository import (
@@ -179,7 +179,7 @@ def make_reactivate_knowledge_document_use_case() -> ReactivateKnowledgeDocument
 def make_reindex_knowledge_document_use_case() -> ReindexKnowledgeDocumentUseCase:
     return ReindexKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
-        embedding_gateway=LocalEmbeddingGateway(),
+        embedding_gateway=make_embedding_gateway(),
         pipeline=make_knowledge_ingestion_pipeline_service(),
         audit_repository=PostgresAuditRepository(),
     )
@@ -188,7 +188,7 @@ def make_reindex_knowledge_document_use_case() -> ReindexKnowledgeDocumentUseCas
 def make_ingest_admin_knowledge_document_use_case() -> IngestKnowledgeDocumentUseCase:
     return IngestKnowledgeDocumentUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
-        embedding_gateway=LocalEmbeddingGateway(),
+        embedding_gateway=make_embedding_gateway(),
         pipeline=make_knowledge_ingestion_pipeline_service(),
         audit_repository=PostgresAuditRepository(),
     )
@@ -198,7 +198,7 @@ def make_preview_knowledge_ingestion_use_case() -> PreviewKnowledgeIngestionUseC
     return PreviewKnowledgeIngestionUseCase(
         pipeline=make_knowledge_ingestion_pipeline_service(),
         semantic_deduplicator=KnowledgeSemanticDeduplicatorService(
-            embedding_gateway=LocalEmbeddingGateway(),
+            embedding_gateway=make_embedding_gateway(),
             knowledge_repository=PostgresKnowledgeRepository(),
         ),
     )
@@ -743,7 +743,7 @@ def make_list_external_actions_use_case() -> ListExternalActionsUseCase:
 def make_test_admin_rag_use_case() -> AdminRagTestUseCase:
     return AdminRagTestUseCase(
         knowledge_repository=PostgresKnowledgeRepository(),
-        embedding_gateway=LocalEmbeddingGateway(),
+        embedding_gateway=make_embedding_gateway(),
         guideline_repository=PostgresAdminGuidelineRepository(),
     )
 

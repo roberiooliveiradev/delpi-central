@@ -1,5 +1,10 @@
-from app.composition.embedding_composer import make_embedding_cache
-from app.domain.services.embedding_cache import EmbeddingCache
+import pytest
+
+from app.composition.embedding_composer import make_embedding_cache, make_embedding_gateway
+from app.infrastructure.embeddings.ollama_embedding_gateway import OllamaEmbeddingGateway
+from app.infrastructure.embeddings.openai_compatible_embedding_gateway import (
+    OpenAiCompatibleEmbeddingGateway,
+)
 
 
 def test_make_embedding_cache_falls_back_to_memory_without_redis(monkeypatch):
@@ -9,9 +14,26 @@ def test_make_embedding_cache_falls_back_to_memory_without_redis(monkeypatch):
     )
     monkeypatch.setattr(
         "app.composition.embedding_composer.Settings.REDIS_URL",
-        "redis://127.0.0.1:6399/0",
+        "",
     )
 
     cache = make_embedding_cache()
+    assert cache.__class__.__name__ == "EmbeddingCache"
 
-    assert isinstance(cache, EmbeddingCache)
+
+@pytest.mark.parametrize(
+    ("provider", "expected"),
+    [
+        ("ollama", OllamaEmbeddingGateway),
+        ("openai_compatible", OpenAiCompatibleEmbeddingGateway),
+        ("vllm", OpenAiCompatibleEmbeddingGateway),
+    ],
+)
+def test_make_embedding_gateway_resolves_provider(monkeypatch, provider, expected):
+    import app.composition.embedding_composer as composer
+
+    monkeypatch.setenv("EMBEDDING_PROVIDER", provider)
+    composer._embedding_gateway = None
+
+    gateway = composer.make_embedding_gateway()
+    assert isinstance(gateway.inner, expected)

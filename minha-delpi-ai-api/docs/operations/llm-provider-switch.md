@@ -47,9 +47,18 @@ LLM_TEXT_TIMEOUT_SECONDS=120
 # VLLM_MODEL=...
 # VLLM_API_KEY=...
 
-# Embeddings: manter Ollama local até P2 do playbook
+# Embeddings: Ollama local ou API externa
 EMBEDDING_PROVIDER=ollama
-OLLAMA_BASE_URL=http://ollama:11434
+EMBEDDING_MODEL=bge-m3
+# EMBEDDING_PROVIDER=openai_compatible
+# EMBEDDING_BASE_URL=https://api.openai.com/v1
+# EMBEDDING_API_KEY=sk-...
+
+# Visão (VLM documentos)
+VISION_LLM_PROVIDER=ollama
+# VISION_LLM_PROVIDER=openai_compatible
+# VISION_LLM_BASE_URL=https://api.openai.com/v1
+# VISION_LLM_MODEL=gpt-4o-mini
 ```
 
 **Warmup:** com provider externo o startup **não** aquece modelo local (`LLM_WARMUP_ON_STARTUP` só afeta Ollama).

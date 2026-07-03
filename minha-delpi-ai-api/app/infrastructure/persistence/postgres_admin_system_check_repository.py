@@ -1,11 +1,19 @@
 import requests
+
 from sqlalchemy import text
 
 from app.domain.ports.admin_system_check_repository_port import (
     AdminSystemCheckRepositoryPort,
 )
 from app.extensions.db import db
-from app.infrastructure.config.settings import Settings
+from app.infrastructure.config.embedding_config import (
+    resolve_embedding_config,
+    resolve_embedding_provider_name,
+)
+from app.infrastructure.config.llm_text_config import (
+    resolve_llm_provider_name,
+    resolve_llm_text_config,
+)
 
 
 REQUIRED_TABLES = [
@@ -25,8 +33,9 @@ class PostgresAdminSystemCheckRepository(AdminSystemCheckRepositoryPort):
         database = self._check_database()
         pgvector = self._check_pgvector()
         tables = self._check_tables()
-        llm = self._check_llm()
-        overall_status = self._overall_status(database, pgvector, tables, llm)
+        llm = self._check_text_llm()
+        embedding = self._check_embedding()
+        overall_status = self._overall_status(database, pgvector, tables, llm, embedding)
 
         return {
             "status": overall_status,
@@ -34,6 +43,7 @@ class PostgresAdminSystemCheckRepository(AdminSystemCheckRepositoryPort):
             "pgvector": pgvector,
             "tables": tables,
             "llm": llm,
+            "embedding": embedding,
         }
 
     def _check_database(self) -> dict:
@@ -116,17 +126,23 @@ class PostgresAdminSystemCheckRepository(AdminSystemCheckRepositoryPort):
                 "message": self._safe_error(exc),
             }
 
-    def _check_llm(self) -> dict:
-        provider = Settings.LLM_PROVIDER
+    def _check_text_llm(self) -> dict:
+        provider = resolve_llm_provider_name()
 
         if provider == "ollama":
-            return self._check_ollama()
+            return self._check_ollama_text_models()
 
-        if provider == "vllm":
+        if provider == "openai_compatible":
+            config = resolve_llm_text_config()
             return {
-                "status": "warning",
-                "provider": "vllm",
-                "message": "vLLM provider configured; runtime check is pending.",
+                "status": "ok",
+                "provider": provider,
+                "baseUrl": config.base_url,
+                "chatModel": {
+                    "name": config.model,
+                    "available": True,
+                },
+                "message": "OpenAI-compatible text provider configured.",
             }
 
         return {
@@ -135,32 +151,83 @@ class PostgresAdminSystemCheckRepository(AdminSystemCheckRepositoryPort):
             "message": "Unsupported LLM provider.",
         }
 
-    def _check_ollama(self) -> dict:
+    def _check_embedding(self) -> dict:
+        provider = resolve_embedding_provider_name()
+        config = resolve_embedding_config()
+
+        if provider == "ollama":
+            return self._check_ollama_embedding_model(config)
+
+        if provider == "openai_compatible":
+            return {
+                "status": "ok",
+                "provider": provider,
+                "baseUrl": config.base_url,
+                "model": {
+                    "name": config.model,
+                    "available": True,
+                },
+                "message": "OpenAI-compatible embedding provider configured.",
+            }
+
+        return {
+            "status": "error",
+            "provider": provider,
+            "message": "Unsupported embedding provider.",
+        }
+
+    def _check_ollama_text_models(self) -> dict:
+        config = resolve_llm_text_config()
+
         try:
             response = requests.get(
-                f"{Settings.OLLAMA_BASE_URL}/api/tags",
-                timeout=min(float(Settings.OLLAMA_TIMEOUT_SECONDS), 10),
+                f"{config.base_url}/api/tags",
+                timeout=min(float(config.timeout_seconds), 10),
             )
             response.raise_for_status()
 
             body = response.json()
             models = [item.get("name") for item in body.get("models", [])]
-
-            chat_model_ok = self._model_available(Settings.OLLAMA_MODEL, models)
-            embedding_model_ok = self._model_available(Settings.EMBEDDING_MODEL, models)
-
-            status = "ok" if chat_model_ok and embedding_model_ok else "warning"
+            chat_model_ok = self._model_available(config.model, models)
+            status = "ok" if chat_model_ok else "warning"
 
             return {
                 "status": status,
                 "provider": "ollama",
-                "baseUrl": Settings.OLLAMA_BASE_URL,
+                "baseUrl": config.base_url,
                 "chatModel": {
-                    "name": Settings.OLLAMA_MODEL,
+                    "name": config.model,
                     "available": chat_model_ok,
                 },
-                "embeddingModel": {
-                    "name": Settings.EMBEDDING_MODEL,
+                "models": models,
+            }
+        except Exception as exc:
+            return {
+                "status": "error",
+                "provider": "ollama",
+                "baseUrl": config.base_url,
+                "message": self._safe_error(exc),
+            }
+
+    def _check_ollama_embedding_model(self, config) -> dict:
+        try:
+            response = requests.get(
+                f"{config.base_url}/api/tags",
+                timeout=min(float(config.timeout_seconds), 10),
+            )
+            response.raise_for_status()
+
+            body = response.json()
+            models = [item.get("name") for item in body.get("models", [])]
+            embedding_model_ok = self._model_available(config.model, models)
+            status = "ok" if embedding_model_ok else "warning"
+
+            return {
+                "status": status,
+                "provider": "ollama",
+                "baseUrl": config.base_url,
+                "model": {
+                    "name": config.model,
                     "available": embedding_model_ok,
                 },
                 "models": models,
@@ -169,7 +236,7 @@ class PostgresAdminSystemCheckRepository(AdminSystemCheckRepositoryPort):
             return {
                 "status": "error",
                 "provider": "ollama",
-                "baseUrl": Settings.OLLAMA_BASE_URL,
+                "baseUrl": config.base_url,
                 "message": self._safe_error(exc),
             }
 
@@ -182,12 +249,13 @@ class PostgresAdminSystemCheckRepository(AdminSystemCheckRepositoryPort):
 
         return False
 
-    def _overall_status(self, database: dict, pgvector: dict, tables: dict, llm: dict) -> str:
+    def _overall_status(self, database: dict, pgvector: dict, tables: dict, llm: dict, embedding: dict) -> str:
         statuses = {
             database.get("status"),
             pgvector.get("status"),
             tables.get("status"),
             llm.get("status"),
+            embedding.get("status"),
         }
 
         if "error" in statuses:

@@ -7,7 +7,7 @@ from app.application.services.permission_context_service import PermissionContex
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
 from app.domain.services.tool_policy_service import ToolPolicyService
-from app.composition.external_action_composer import make_embedding_gateway
+from app.composition.embedding_composer import make_embedding_gateway
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
 from app.infrastructure.persistence.postgres_knowledge_repository import (

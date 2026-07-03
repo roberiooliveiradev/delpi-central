@@ -621,21 +621,10 @@ class ChatDocumentVisionStageService:
         )
 
         warnings: list[str] = []
-        model = Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
-        base_url = (
-            Settings.CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL
-            or Settings.OLLAMA_BASE_URL
-        ).strip().rstrip("/")
         max_vlm_pages = max(
             1,
             min(3, int(vision_runtime().get("documentVisionMaxPages", 10))),
         )
-
-        try:
-            import requests
-        except ImportError:
-            warnings.append("requests_unavailable")
-            return {"fullText": "", "warnings": warnings}
 
         images_b64: list[str] = []
 
@@ -669,38 +658,27 @@ class ChatDocumentVisionStageService:
             warnings.append("vlm_prompt_missing")
             return {"fullText": "", "imageDescription": "", "warnings": warnings}
 
-        url = f"{base_url}/api/chat"
-        payload = {
-            "model": model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt,
-                    "images": images_b64,
-                }
-            ],
-            "stream": False,
-            "options": {
-                "num_predict": min(
-                    4096,
-                    int(vision_runtime().get("documentVisionMaxChars", 12000)),
-                )
-            },
-        }
+        max_predict = min(
+            4096,
+            int(vision_runtime().get("documentVisionMaxChars", 12000)),
+        )
 
         try:
-            response = requests.post(url, json=payload, timeout=cls.vision_timeout_seconds())
-            response.raise_for_status()
-            data = response.json()
+            from app.composition.vision_llm_composer import make_vision_llm_gateway
+
+            gateway = make_vision_llm_gateway()
+            content = gateway.describe(
+                prompt=prompt,
+                images_b64=images_b64,
+                max_tokens=max_predict,
+            )
+            engine = f"{gateway.provider_name()}_vlm"
         except Exception as exc:
-            warnings.append(f"ollama_vlm_request_failed:{exc.__class__.__name__}")
+            warnings.append(f"vlm_request_failed:{exc.__class__.__name__}")
             return {"fullText": "", "warnings": warnings}
 
-        message = data.get("message") if isinstance(data, dict) else {}
-        content = str((message or {}).get("content") or "").strip()
-
         if not content:
-            warnings.append("ollama_vlm_empty_response")
+            warnings.append("vlm_empty_response")
             return {"fullText": "", "imageDescription": "", "warnings": warnings}
 
         describe_purpose = ChatDocumentVisionContentService.vision_purpose("describe")
@@ -711,7 +689,7 @@ class ChatDocumentVisionStageService:
             return {
                 "fullText": "",
                 "imageDescription": description,
-                "engine": "ollama_vlm",
+                "engine": engine,
                 "warnings": warnings,
             }
 
@@ -719,8 +697,8 @@ class ChatDocumentVisionStageService:
             image_description, full_text = cls.parse_hybrid_vlm_response(content)
             built = vision_service()._build_from_text(
                 cls.truncate_vision_text(full_text),
-                engine="ollama_vlm",
-                stages=["ollama_vlm"],
+                engine=engine,
+                stages=[engine],
                 warnings=warnings,
             )
             built["imageDescription"] = cls.truncate_vision_text(image_description)
@@ -729,8 +707,8 @@ class ChatDocumentVisionStageService:
         text = cls.truncate_vision_text(content)
         return vision_service()._build_from_text(
             text,
-            engine="ollama_vlm",
-            stages=["ollama_vlm"],
+            engine=engine,
+            stages=[engine],
             warnings=warnings,
         )
 

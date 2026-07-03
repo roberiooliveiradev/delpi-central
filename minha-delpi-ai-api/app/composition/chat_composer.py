@@ -100,7 +100,7 @@ from app.application.services.chat_agentic_tool_loop_service import ChatAgenticT
 from app.application.services.chat_web_search_synthesis_service import (
     ChatWebSearchSynthesisService,
 )
-from app.composition.external_action_composer import make_embedding_gateway
+from app.composition.embedding_composer import make_embedding_gateway
 from app.composition.llm_composer import make_llm_gateway
 from app.infrastructure.persistence.postgres_admin_guideline_repository import PostgresAdminGuidelineRepository
 from app.infrastructure.persistence.postgres_audit_repository import PostgresAuditRepository
