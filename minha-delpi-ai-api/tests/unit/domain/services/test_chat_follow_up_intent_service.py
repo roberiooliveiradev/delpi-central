@@ -25,3 +25,15 @@ def test_follow_up_structure_exclusivity():
     message = "quais matérias-primas exclusivas existem na estrutura desse produto?"
     assert ChatFollowUpIntentService.is_operational_follow_up(message) is True
     assert ChatFollowUpIntentService.follow_up_type(message) == "structure_exclusivity"
+
+
+def test_follow_up_structure_exclusivity_short_after_product_context():
+    message = "quais são exclusivas?"
+    assert ChatFollowUpIntentService.is_operational_follow_up(message) is True
+    assert ChatFollowUpIntentService.follow_up_type(message) == "structure_exclusivity"
+
+
+def test_follow_up_global_exclusive_catalog_is_not_structure_exclusivity_type():
+    message = "Quais matérias-primas são exclusivas?"
+    assert ChatFollowUpIntentService.is_operational_follow_up(message) is True
+    assert ChatFollowUpIntentService.follow_up_type(message) is None

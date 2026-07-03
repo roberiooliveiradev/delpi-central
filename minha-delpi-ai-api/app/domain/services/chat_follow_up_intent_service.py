@@ -62,9 +62,10 @@ class ChatFollowUpIntentService:
         if re.search(r"\bestoque\b", normalized):
             return "stock"
 
-        if re.search(r"\bestrutura\b", normalized) and re.search(
-            r"\bexclusiv", normalized
-        ):
+        if re.search(r"\bexclusiv", normalized):
+            if cls._looks_like_global_exclusive_catalog_listing(normalized):
+                return None
+
             return "structure_exclusivity"
 
         if re.search(r"\bestrutura\b", normalized):
@@ -80,3 +81,33 @@ class ChatFollowUpIntentService:
             return "format_change"
 
         return "entity_reuse"
+
+    @classmethod
+    def _looks_like_global_exclusive_catalog_listing(cls, normalized: str) -> bool:
+        """Listagem global (catálogo) — não follow-up de exclusividade do PA em foco."""
+        text = str(normalized or "").strip().lower()
+
+        if not text:
+            return False
+
+        if re.search(r"\bestrutura\b", text) and re.search(
+            r"\b(desse|dessa|dele|dela|esse produto|esse item|desse produto|dessa estrutura)\b",
+            text,
+        ):
+            return False
+
+        global_markers = (
+            "materia prima",
+            "materia-prima",
+            "matéria-prima",
+            "matérias-primas",
+            "materias-primas",
+            "produtos com",
+            "produtos tem",
+            "pas com",
+            "pa com",
+            "catalogo de",
+            "catálogo de",
+        )
+
+        return any(marker in text for marker in global_markers)

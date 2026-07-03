@@ -20,6 +20,12 @@ def test_operational_sub_intent_structure_exclusivity_with_product_code():
     assert ChatOperationalSubIntentService.resolve(message) == "structure_exclusivity_lookup"
 
 
+def test_operational_sub_intent_structure_exclusivity_short_follow_up():
+    message = "quais são exclusivas?"
+
+    assert ChatOperationalSubIntentService.resolve(message) == "structure_exclusivity_lookup"
+
+
 def test_operational_ambiguity_skips_structure_exclusivity_question():
     message = "quais MPs exclusivas tem o produto 90260882?"
 

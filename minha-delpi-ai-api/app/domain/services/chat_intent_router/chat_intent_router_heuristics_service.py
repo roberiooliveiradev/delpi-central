@@ -89,6 +89,7 @@ class ChatIntentRouterHeuristicsService:
             "supplier": "supplier_lookup",
             "stock": "stock_lookup",
             "structure": "structure_lookup",
+            "structure_exclusivity": "structure_exclusivity_lookup",
             "routing": "guide_lookup",
             "outbound_invoice": "sales_lookup",
         }

@@ -225,6 +225,32 @@ _PLAYBOOK_PRODUCT_HISTORY = [
     },
 ]
 
+_PLAYBOOK_STRUCTURE_HISTORY = [
+    {
+        "role": "user",
+        "content": "estrutura do 90260582",
+    },
+    {
+        "role": "assistant",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": "structure",
+                        "parameters": {"code": "90260582"},
+                    },
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90260582/structure",
+                        "actionId": "structure",
+                    },
+                }
+            ]
+        },
+    },
+]
+
 OPERATIONAL_FOLLOW_UP_SELECTION_CASES: list[dict[str, Any]] = [
     {
         "id": "FU01",
@@ -292,6 +318,42 @@ OPERATIONAL_FOLLOW_UP_SELECTION_CASES: list[dict[str, Any]] = [
         ],
         "expected_action_id": "structure-exclusivity",
         "expected_parameters": {"code": "90269002"},
+    },
+    {
+        "id": "FU03",
+        "message": "quais são exclusivas?",
+        "previous_messages": _PLAYBOOK_STRUCTURE_HISTORY,
+        "actions": [
+            {
+                "actionId": "structure-exclusivity",
+                "method": "GET",
+                "path": "/products/{code}/structure/exclusivity",
+                "operationId": "get_product_structure_exclusivity",
+                "summary": "Estrutura com exclusividade",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "exclusive-raw-materials-catalog",
+                "method": "GET",
+                "path": "/products/exclusive-raw-materials/catalog",
+                "operationId": "list_exclusive_raw_materials_catalog",
+                "summary": "Catálogo global de MPs exclusivas",
+                "parametersSchema": [
+                    {"name": "view"},
+                    {"name": "limit"},
+                ],
+            },
+        ],
+        "expected_action_id": "structure-exclusivity",
+        "expected_parameters": {"code": "90260582"},
     },
 ]
 
