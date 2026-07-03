@@ -1,0 +1,63 @@
+---
+description: Causa raiz primeiro; solução generalista no módulo canônico — nunca patch por rota/sintoma
+alwaysApply: true
+---
+
+# Causa raiz e correção generalista
+
+## Princípio
+
+**Sempre** diagnosticar a **causa raiz** antes de codar. **Sempre** entregar solução **generalista** no módulo canônico — nunca patch local que só fecha o sintoma de uma rota, tela ou conversa.
+
+Complementa: `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.mdc`.
+
+## Fluxo obrigatório
+
+```
+1. Reproduzir / inspecionar metadata ou contrato (renderPlan, toolCalls, pipeline)
+2. Formular causa raiz (descompasso de contrato, duplicação de camada, regra não ligada ao pipeline)
+3. Localizar módulo canônico (tabela em centralized-rules-first.mdc)
+4. Generalizar (perfil JSON, shape OpenAPI, serviço transversal) — não if por path/entidade no chamador
+5. Alinhar API + MFE no mesmo contrato (metadata/renderPlan/suppressedKinds)
+6. Teste de regressão que falha sem a regra (fixture canônico quando couber)
+```
+
+## O que é causa raiz vs. sintoma
+
+| Sintoma | Causa raiz típica |
+|---------|-------------------|
+| Dado repetido na UI | `renderPlan` emite segmento que o painel já agrega; ou MFE ignora `suppressedKinds` |
+| Rota X falha, Y ok | Regra transversal incompleta — não criar `ChatOperational{Rota}*` |
+| Fix só no MFE | Comportamento nasce na API — corrigir pipeline/metadata primeiro |
+| Flag só num perfil | Shape/contrato OpenAPI deveria disparar a regra para toda a família |
+
+## O que NÃO fazer
+
+- Corrigir **só** a rota reportada (`if "/cost-impact"`, `stackTailPolicy` isolado sem regra transversal).
+- Patch no componente React quando o `renderPlan` ou o prune da API está errado.
+- Duplicar dedup/prune entre `Send*` e `Stream*` ou entre API e MFE.
+- Entregar sem teste que cobre **pelo menos** um caso além do bug reportado (generalização).
+
+## O que fazer
+
+| Necessidade | Onde generalizar |
+|-------------|------------------|
+| Painel consolidado duplica KPI/tabela | `ChatPresentationStructureDedupService` + `ChatPresentationRenderPlanService` + tail policy por shape `composite_analysis` |
+| MFE renderiza visual suprimido | `presentationMetadataReaders.ts` — consumir `suppressedKinds` e `renderPlan` |
+| Regra nova por família de rotas | `presentation_profiles.json` / `api_route_domains.json` + serviço transversal |
+| Texto/limite/regex | `assistant/*.json` + loader (`assistant-content-json.mdc`) |
+
+## Caso de referência (painel consolidado, jul/2026)
+
+**Sintoma:** KPI + tabela + «Painel consolidado» com o mesmo conteúdo.
+
+**Causa raiz:** Playbook 23 `keep_bundle` mantém slots no payload para toolbar, mas `renderPlan` ainda emitia `operationalTables`/`kpi` além de `dashboard`; MFE não honrava `suppressedKinds`.
+
+**Correção generalista:** dedup quando dashboard agrega painéis; tail `dashboard_only` para `composite_analysis`; `renderPlan` sem `operationalTables` redundante; MFE respeita hints — **sem** presenter por rota.
+
+## Checklist antes de merge
+
+- [ ] A causa raiz está documentada em 1 frase (PR ou comentário de commit)?
+- [ ] A correção vale para a **família** de casos, não só o exemplo do usuário?
+- [ ] API e MFE concordam no contrato (`metadata` / `renderPlan`)?
+- [ ] Teste de regressão no pacote do módulo canônico?

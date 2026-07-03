@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Princípio
 
-**Nunca** corrigir sintoma com ajuste pontual em componente, use case ou prompt de agente. **Sempre** localizar o módulo canônico da regra, estendê-lo e cobrir com teste de regressão.
+**Nunca** corrigir sintoma com ajuste pontual em componente, use case ou prompt de agente. **Sempre** localizar o módulo canônico da regra, estendê-lo e cobrir com teste de regressão. Fluxo completo: **`root-cause-generalized-fix.mdc`**.
 
 ## Mapa canônico (referência rápida)
 

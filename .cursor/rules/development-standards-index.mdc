@@ -9,6 +9,7 @@ alwaysApply: true
 
 | Regra | Quando consultar |
 |-------|------------------|
+| `root-cause-generalized-fix.mdc` | **Qualquer bug/fix** — causa raiz, solução generalista, alinhar contrato API+MFE |
 | `schema-first-presentation-delivered.mdc` | **Apresentação** — proibir presenter por rota, visual bundle, table assembly |
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
 | `presentation-operational-decoupling.mdc` | Apresentação operacional — cobertura, consolidado, dataAnswer vs markdown; **definição de desacoplamento** |
@@ -59,7 +60,7 @@ alwaysApply: true
 ```
 Nova rota REST          → schema-first-presentation-delivered → playbook-22 → new-api-route-checklist
 Query SQL nova/alterada → sql-query-development → teste *_sql.py + Saúde SQL / Cache
-Bug apresentação chat   → schema-first-presentation-delivered → presentation-delivered-pure doc → ChatPresentationApiDeliveredMetadataService
+Bug apresentação chat   → root-cause-generalized-fix → schema-first-presentation-delivered → presentation-delivered-pure doc → ChatPresentationApiDeliveredMetadataService
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery
 Bug UI chat             → chat-prose-rendering → chatPresentation.ts (MFE)
 Nova intenção operacional → operational-api-routing → api_route_domains.json
