@@ -25,4 +25,16 @@ describe("tableCellFormatting", () => {
       }),
     ).toBe("15");
   });
+
+  it("formats nested parent objects without [object Object]", () => {
+    expect(
+      formatCellValue(
+        [
+          { code: "90260148", description: "CHICOTE" },
+          { code: "90260200", description: "OUTRO PA" },
+        ],
+        "parents",
+      ),
+    ).toBe("90260148 — CHICOTE, 90260200 — OUTRO PA");
+  });
 });

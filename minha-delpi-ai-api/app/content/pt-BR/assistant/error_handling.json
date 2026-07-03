@@ -16,6 +16,24 @@
     "cadastro inexistente"
   ],
   "types": {
+    "empty_product_parents": {
+      "severity": "info",
+      "recoverable": true,
+      "title": "Nenhum produto pai encontrado",
+      "userMessage": "Este item não aparece como componente em estruturas de produto vigentes.",
+      "reasons": [
+        "o item não é usado em nenhum PA ou PI cadastrado",
+        "estruturas podem estar inativas ou fora da vigência",
+        "código pode referir-se a outro item similar"
+      ],
+      "alternativesIntro": "Posso ajudar com:",
+      "chips": [
+        "Consultar cadastro",
+        "Ver estrutura de outro código",
+        "Buscar por descrição",
+        "Tentar novamente"
+      ]
+    },
     "empty_result": {
       "severity": "warning",
       "recoverable": true,
@@ -355,6 +373,7 @@
     ],
     "strategiesByType": {
       "empty_result": "retry_last",
+      "empty_product_parents": "retry_last",
       "empty_inventory_minimum": "remove_filters",
       "invalid_parameter": "retry_last",
       "api_unavailable": "retry_last",

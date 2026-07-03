@@ -26,6 +26,7 @@ _HIERARCHY_KEYS = frozenset(
     {
         "children",
         "child",
+        "parents",
         "parent_id",
         "parentId",
         "parent_code",
@@ -34,6 +35,7 @@ _HIERARCHY_KEYS = frozenset(
         "nivel",
         "depth",
         "bom",
+        "components",
     }
 )
 

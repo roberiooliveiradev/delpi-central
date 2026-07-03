@@ -246,6 +246,16 @@ class ChatErrorHandlingClassifier:
             metadata = call.get("metadata")
 
             if isinstance(metadata, dict):
+                path = str(metadata.get("path") or "").strip().lower()
+                response_meta = metadata.get("apiDelpiResponseMeta")
+                operation_id = ""
+
+                if isinstance(response_meta, dict):
+                    operation_id = str(response_meta.get("operationId") or "").strip().lower()
+
+                if "/parents" in path or operation_id == "get_product_parents":
+                    return "empty_product_parents"
+
                 executed_sql = metadata.get("executedSql")
 
                 if ExternalActionSqlCapabilityService.looks_like_inventory_below_minimum_sql(

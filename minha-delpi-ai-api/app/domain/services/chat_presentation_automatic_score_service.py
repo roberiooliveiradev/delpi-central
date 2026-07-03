@@ -63,6 +63,8 @@ class ChatPresentationAutomaticScoreService:
         data_shape: dict[str, Any] | None,
         available_views: list[str] | None = None,
         user_message: str | None = None,
+        path: str | None = None,
+        entity: str | None = None,
     ) -> dict[str, int]:
         shape = data_shape if isinstance(data_shape, dict) else {}
         message = re.sub(r"\s+", " ", str(user_message or "").strip().lower())
@@ -90,6 +92,20 @@ class ChatPresentationAutomaticScoreService:
         if shape.get("hasHierarchy") or recommended == "tree":
             scores["tree"] += 50
             scores["text"] += 10
+
+        lowered_path = str(path or "").strip().lower()
+        resolved_entity = str(entity or "").strip().lower()
+
+        if (
+            "tree" in (available_views or [])
+            and (
+                "/parents" in lowered_path
+                or "/structure" in lowered_path
+                or resolved_entity in {"product_parents", "product_structure"}
+            )
+        ):
+            scores["tree"] += 45
+            scores["table"] = max(0, int(scores.get("table") or 0) - 15)
 
         if recommended == "kpi" or (row_count <= 1 and shape.get("hasNumeric")):
             scores["kpi"] += 40
@@ -150,6 +166,11 @@ class ChatPresentationAutomaticScoreService:
         shape_meta = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
         analyzed = ChatPresentationDataShapeAnalyzer.analyze(rows=table_rows)
         merged_shape = {**analyzed, **shape_meta}
+        path = str(metadata.get("path") or "").strip()
+        entity = ChatPresentationDecisionMetadataService.resolve_entity(
+            metadata,
+            path=path or None,
+        )
 
         decision["scores"] = cls.compute_scores(
             data_shape=merged_shape,
@@ -157,6 +178,8 @@ class ChatPresentationAutomaticScoreService:
             if isinstance(decision.get("availableViews"), list)
             else None,
             user_message=user_message,
+            path=path or None,
+            entity=entity,
         )
 
         reading_layers = ChatHumanizedDataResponseContentService.get_node("readingLayers")
@@ -280,6 +303,17 @@ class ChatPresentationAutomaticScoreService:
             user_message,
         ):
             return True
+
+        tree_primary_reason = ChatPresentationVocabularyService.decision_reason(
+            "treePrimaryView",
+        )
+
+        if isinstance(decision, dict):
+            selected = str(decision.get("selected") or "").strip().lower()
+            reason = str(decision.get("reason") or "").strip()
+
+            if selected == "tree" and reason == tree_primary_reason:
+                return True
 
         resolved_entity = entity or ChatPresentationDecisionMetadataService.resolve_entity(
             metadata,

@@ -51,6 +51,34 @@ def test_error_cases_classify_and_attach(case):
         assert metadata.get("errorHandlingEnrichedAnswer")
 
 
+def test_empty_parents_route_uses_dedicated_error_type():
+    classification = ChatErrorHandlingClassifier.classify(
+        message="onde é usado 10080056",
+        answer="A consulta não retornou registros.",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "statusCode": 200,
+                    "path": "/products/10080056/parents",
+                    "apiDelpiResponseMeta": {
+                        "operationId": "get_product_parents",
+                        "entity": "product_parents",
+                    },
+                    "humanizedSummary": {
+                        "titulo": "Produtos pai (onde é usado)",
+                        "linhas": [],
+                    },
+                },
+            }
+        ],
+    )
+
+    assert classification is not None
+    assert classification.error_type == "empty_product_parents"
+
+
 def test_e13_api_failure_must_not_mark_non_existence():
     case = _case("E13")
     metadata: dict = {}

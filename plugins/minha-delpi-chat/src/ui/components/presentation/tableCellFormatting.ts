@@ -121,23 +121,13 @@ export function formatCellValue(
 
   if (Array.isArray(value)) {
     return value
-      .map((item) =>
-        typeof item === "object" && item !== null
-          ? (item as Record<string, unknown>).code ||
-            (item as Record<string, unknown>).description ||
-            JSON.stringify(item)
-          : String(item),
-      )
-      .join(" → ");
+      .map((item) => formatNestedCellObject(item))
+      .filter((item) => item.length > 0)
+      .join(", ");
   }
 
   if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    return obj.code
-      ? String(obj.code)
-      : obj.description
-        ? String(obj.description)
-        : JSON.stringify(value);
+    return formatNestedCellObject(value);
   }
 
   const key = columnKey || "";
@@ -206,4 +196,41 @@ export function formatCellValue(
   }
 
   return str;
+}
+
+function formatNestedCellObject(value: unknown): string {
+  if (value == null) {
+    return "";
+  }
+
+  if (typeof value !== "object") {
+    return String(value);
+  }
+
+  const obj = value as Record<string, unknown>;
+  const code = String(obj.code || "").trim();
+  const description = String(obj.description || "").trim();
+  const label = String(obj.label || "").trim();
+
+  if (code && description) {
+    return `${code} — ${description}`;
+  }
+
+  if (code) {
+    return code;
+  }
+
+  if (description) {
+    return description;
+  }
+
+  if (label) {
+    return label;
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "—";
+  }
 }

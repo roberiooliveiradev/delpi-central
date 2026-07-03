@@ -99,7 +99,7 @@
     }
   },
   "operationalDecision": {
-    "structureIntent": ["structure", "structure_lookup", "parent"],
+    "structureIntent": ["structure", "structure_lookup", "parent", "parents_lookup"],
     "structureMessage": ["estrutura", "bom", "componente", "parents", "onde é usado"],
     "pricingIntent": ["price", "pricing"],
     "pricingMessage": ["preco", "preço"],

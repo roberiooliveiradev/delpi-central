@@ -3,6 +3,64 @@ from app.domain.services.chat_presentation_decision_service import (
 )
 
 
+def test_parents_lookup_prefers_tree_when_tree_presentation_exists():
+    tree = {
+        "type": "tree",
+        "title": "Onde é usado o produto 10080022",
+        "root": {"id": "10080022", "label": "10080022", "children": []},
+    }
+
+    decision = ChatPresentationDecisionService.decide(
+        intent="parents_lookup",
+        user_message="onde é usado 10080022",
+        path="/products/10080022/parents",
+        tree_presentation=tree,
+        table_presentation={
+            "type": "table",
+            "title": "Produtos pai",
+            "columns": [{"key": "code", "label": "Código"}],
+            "rows": [{"code": "90260148"}],
+        },
+        rows=[{"code": "90260148", "parents": []}],
+        available_formats=["text", "tree", "table"],
+    )
+
+    assert decision["selected"] == "tree"
+
+
+def test_enrich_metadata_parents_route_keeps_tree_in_automatic_mode():
+    tree = {
+        "type": "tree",
+        "title": "Onde é usado o produto 10080022",
+        "root": {
+            "id": "10080022",
+            "label": "10080022",
+            "children": [{"id": "90260148", "label": "90260148"}],
+        },
+    }
+    metadata = {
+        "path": "/products/10080022/parents",
+        "treePresentation": tree,
+        "tablePresentation": {
+            "type": "table",
+            "title": "Produtos pai",
+            "columns": [{"key": "code", "label": "Código"}],
+            "rows": [{"code": "90260148"} for _ in range(25)],
+        },
+        "textPresentation": {"type": "markdown", "markdown": "Resumo"},
+        "availableFormats": ["text", "tree", "table"],
+        "apiDelpiResponseMeta": {"entity": "product_parents", "shape": "hierarchy"},
+    }
+
+    ChatPresentationDecisionService.enrich_metadata(
+        metadata,
+        intent="parents_lookup",
+        user_message="onde é usado 10080022",
+    )
+
+    assert metadata["presentationDecision"]["selected"] == "tree"
+
+
 def test_structure_intent_prefers_tree_when_available():
     tree = {
         "type": "tree",

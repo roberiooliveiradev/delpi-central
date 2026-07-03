@@ -24,6 +24,10 @@ def _column_labels_content() -> dict[str, Any]:
 class ExternalActionColumnLabelService:
     """Resolve labels de campos para tabelas do presenter operacional."""
 
+    _NESTED_HIERARCHY_SKIP_KEYS = frozenset(
+        {"parents", "children", "components", "child", "childs"}
+    )
+
     _FIELD_FORMAT_TOKENS: dict[str, tuple[str, ...]] = {
         "currency": (
             "revenue",
@@ -710,7 +714,7 @@ class ExternalActionColumnLabelService:
         if not dict_items:
             return []
 
-        skipped = skip_keys or frozenset({"_detailMeta"})
+        skipped = skip_keys or (frozenset({"_detailMeta"}) | self._NESTED_HIERARCHY_SKIP_KEYS)
         discovered: list[str] = []
         present: set[str] = set()
 

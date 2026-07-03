@@ -201,7 +201,10 @@
     },
     "parents": {
       "titleWithCode": "Onde é usado o produto {code}",
-      "titleGeneric": "Produtos pai (onde é usado)"
+      "titleGeneric": "Produtos pai (onde é usado)",
+      "emptyWithCode": "O produto **{code}** não aparece como componente em nenhuma estrutura de produto pai vigente.",
+      "emptyGeneric": "Este item não aparece como componente em estruturas de produto pai vigentes.",
+      "rowCountWithCode": "Foram encontrados **{count}** produto(s) pai onde o item **{code}** é usado — a árvore detalha a hierarquia."
     }
   },
   "presentation": {

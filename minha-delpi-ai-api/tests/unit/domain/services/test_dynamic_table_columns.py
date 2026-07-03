@@ -43,6 +43,39 @@ def test_resolve_columns_includes_all_api_fields_with_hint_order():
     assert keys.index("rank") < keys.index("unit") < keys.index("simulated_unit_cost")
 
 
+def test_resolve_columns_skips_nested_hierarchy_keys_for_parents_rows():
+    invalidate_column_label_cache()
+    service = ExternalActionColumnLabelService()
+    items = [
+        {
+            "code": "50220013",
+            "description": "CB18BRAN",
+            "type": "PI",
+            "unit": "MI",
+            "quantity": 1000,
+            "parents": [
+                {
+                    "code": "90260148",
+                    "description": "CHICOTE",
+                    "type": "PA",
+                    "unit": "MI",
+                    "quantity": 2,
+                    "parents": [],
+                }
+            ],
+        }
+    ]
+
+    columns = service.resolve_columns_for_items(
+        items,
+        path="/products/10080022/parents",
+    )
+    keys = [column["key"] for column in columns]
+
+    assert "code" in keys
+    assert "parents" not in keys
+
+
 def test_build_items_table_surfaces_new_fields_without_fixed_whitelist():
     invalidate_column_label_cache()
     presenter = ExternalActionResultPresenter()

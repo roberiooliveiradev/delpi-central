@@ -452,6 +452,40 @@
       "contentSection": "genericKpiSeries",
       "builderStrategy": "none",
       "templateProseCommentary": "full"
+    },
+    "parents": {
+      "contentSection": "parents",
+      "builderStrategy": "highlight_rules",
+      "templateProseCommentary": "skip",
+      "visualHints": ["tree"],
+      "highlightRules": [
+        {
+          "whenAll": [
+            { "path": "total", "op": "eq", "value": 0 }
+          ],
+          "presenter": {
+            "section": "parents",
+            "key": "emptyWithCode"
+          },
+          "values": {
+            "code": "{root.code}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "total", "op": "gt", "value": 0 },
+            { "path": "root.code", "op": "present" }
+          ],
+          "presenter": {
+            "section": "parents",
+            "key": "rowCountWithCode"
+          },
+          "values": {
+            "code": "{root.code}",
+            "count": "{total}"
+          }
+        }
+      ]
     }
   }
 }

@@ -851,7 +851,7 @@
       "presentationDecision": {
         "preferTreeOnStructureIntent": true
       },
-      "commentaryProfileKey": "generic_list",
+      "commentaryProfileKey": "parents",
       "narrativePolicy": "generic_data_summary"
     },
     "table_list": {
