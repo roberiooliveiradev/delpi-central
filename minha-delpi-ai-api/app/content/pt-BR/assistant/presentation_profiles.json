@@ -1041,6 +1041,7 @@
         "kpi",
         "dashboard"
       ],
+      "stackTailPolicy": "dashboard_only",
       "stackPlan": "cost_impact_simulation",
       "flags": [
         "cost_impact_simulation"

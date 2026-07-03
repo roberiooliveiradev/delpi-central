@@ -354,3 +354,25 @@ def test_structure_exclusivity_auto_quality_without_duplicate_panels():
         assert markdown.lower().count("resposta") <= 1, (
             "veredito canônico não deve repetir no markdown"
         )
+
+
+_COST_IMPACT_FIXTURE = "product_cost_impact_simulation_90261255.json"
+_COST_IMPACT_PATH = "/products/90260882/cost-impact-simulation"
+_COST_IMPACT_MESSAGE = "quais materiais mais impactam o custo do PA 90260882?"
+
+
+def test_cost_impact_auto_stack_avoids_duplicate_dashboard_panels():
+    meta = _build(_COST_IMPACT_FIXTURE, _COST_IMPACT_PATH, user_message=_COST_IMPACT_MESSAGE)
+    plan = meta.get("stackPresentationPlan") or {}
+    render_plan = meta.get("renderPlan") or {}
+    segment_kinds = [
+        str(item.get("kind") or "").strip().lower()
+        for item in render_plan.get("segments") or []
+        if isinstance(item, dict)
+    ]
+
+    assert (plan.get("tailVisualOrder") or []) == ["dashboard"]
+    assert "kpi" not in segment_kinds
+    assert "table" not in segment_kinds
+    assert segment_kinds.count("dashboard") == 1
+    assert meta.get("dashboardPresentation", {}).get("type") == "dashboard"

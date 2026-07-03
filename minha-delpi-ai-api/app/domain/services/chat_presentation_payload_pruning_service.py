@@ -36,6 +36,14 @@ class ChatPresentationPayloadPruningService:
         if not isinstance(metadata, dict):
             return
 
+        from app.domain.services.chat_presentation_structure_dedup_service import (
+            ChatPresentationStructureDedupService,
+        )
+
+        ChatPresentationStructureDedupService._suppress_redundant_summary_profile_tables(
+            metadata,
+        )
+
         plan = cls._ensure_stack_plan(metadata)
 
         cls._ensure_tail_visual_policy(metadata, plan)

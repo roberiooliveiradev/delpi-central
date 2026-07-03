@@ -317,7 +317,39 @@ class ChatPresentationStructureDedupService:
         )
 
     @classmethod
-    def _should_suppress_summary_profile_table(cls, metadata: dict[str, Any]) -> bool:
+    def _dashboard_embeds_table(cls, metadata: dict[str, Any]) -> bool:
+        return bool(cls._dashboard_embedded_table_signatures(metadata))
+
+    @classmethod
+    def _dashboard_embedded_table_signatures(cls, metadata: dict[str, Any]) -> set[str]:
+        dashboard = cls._resolve_dashboard_presentation(metadata)
+
+        if not isinstance(dashboard, dict):
+            return set()
+
+        panels = dashboard.get("panels")
+
+        if not isinstance(panels, list):
+            return set()
+
+        signatures: set[str] = set()
+
+        for panel in panels:
+            if not isinstance(panel, dict):
+                continue
+
+            presentation = panel.get("presentation")
+
+            if (
+                isinstance(presentation, dict)
+                and str(presentation.get("type") or "").strip().lower() == "table"
+            ):
+                signatures.add(cls._table_signature(presentation))
+
+        return signatures
+
+    @classmethod
+    def _should_suppress_standalone_tables_for_dashboard(cls, metadata: dict[str, Any]) -> bool:
         from app.domain.services.chat_presentation_profile_service import (
             ChatPresentationProfileService,
         )
@@ -338,14 +370,42 @@ class ChatPresentationStructureDedupService:
         if tail_policy != "dashboard_only":
             return False
 
+        return cls._metadata_has_dashboard(metadata)
+
+    @classmethod
+    def _should_suppress_summary_profile_table(cls, metadata: dict[str, Any]) -> bool:
+        if not cls._should_suppress_standalone_tables_for_dashboard(metadata):
+            return False
+
         return cls._dashboard_embeds_kpi(metadata)
+
+    @classmethod
+    def _should_drop_dashboard_duplicate_table(
+        cls,
+        metadata: dict[str, Any],
+        presentation: dict[str, Any] | None,
+        *,
+        embedded_signatures: set[str],
+    ) -> bool:
+        if not isinstance(presentation, dict) or presentation.get("type") != "table":
+            return False
+
+        if cls._table_signature(presentation) in embedded_signatures:
+            return True
+
+        return cls._dashboard_embeds_kpi(metadata) and cls._is_summary_profile_table(presentation)
 
     @classmethod
     def _suppress_redundant_summary_profile_tables(cls, metadata: dict[str, Any]) -> None:
         if cls._explicit_text_embed_session(metadata):
             return
 
-        if not cls._should_suppress_summary_profile_table(metadata):
+        if not cls._should_suppress_standalone_tables_for_dashboard(metadata):
+            return
+
+        embedded_signatures = cls._dashboard_embedded_table_signatures(metadata)
+
+        if not embedded_signatures and not cls._should_suppress_summary_profile_table(metadata):
             return
 
         bundled = metadata.get("tablePresentations")
@@ -354,22 +414,41 @@ class ChatPresentationStructureDedupService:
             filtered = [
                 item
                 for item in bundled
-                if not (
-                    isinstance(item, dict)
-                    and cls._is_summary_profile_table(item)
+                if not cls._should_drop_dashboard_duplicate_table(
+                    metadata,
+                    item if isinstance(item, dict) else None,
+                    embedded_signatures=embedded_signatures,
                 )
             ]
             metadata["tablePresentations"] = filtered or None
 
         profile_table = metadata.get("profileTablePresentation")
 
-        if cls._is_summary_profile_table(profile_table):
+        if cls._should_drop_dashboard_duplicate_table(
+            metadata,
+            profile_table if isinstance(profile_table, dict) else None,
+            embedded_signatures=embedded_signatures,
+        ):
             metadata["profileTablePresentation"] = None
 
         presentation = metadata.get("presentation")
 
-        if cls._is_summary_profile_table(presentation):
+        if cls._should_drop_dashboard_duplicate_table(
+            metadata,
+            presentation if isinstance(presentation, dict) else None,
+            embedded_signatures=embedded_signatures,
+        ):
             metadata["presentation"] = None
+
+        for key in ("tablePresentation", "inspectionTablePresentation"):
+            slot_table = metadata.get(key)
+
+            if cls._should_drop_dashboard_duplicate_table(
+                metadata,
+                slot_table if isinstance(slot_table, dict) else None,
+                embedded_signatures=embedded_signatures,
+            ):
+                metadata[key] = None
 
     @classmethod
     def dedupe_metadata(cls, metadata: dict[str, Any]) -> None:

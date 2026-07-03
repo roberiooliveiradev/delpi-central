@@ -184,3 +184,42 @@ def test_factory_status_tail_uses_dashboard_only_when_panel_present():
     )
 
     assert order == ["dashboard"]
+
+
+def test_cost_impact_tail_uses_dashboard_only_when_panel_present():
+    metadata = {
+        "path": "/products/90260882/cost-impact-simulation",
+        "apiDelpiResponseMeta": {"entity": "product_cost_impact_simulation"},
+        "textPresentation": {"type": "markdown", "markdown": "Resumo"},
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores consolidados", "cards": []},
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "title": "Painel consolidado",
+            "panels": [
+                {"id": "summary", "presentation": {"type": "kpi", "cards": []}},
+                {
+                    "id": "table-0",
+                    "presentation": {
+                        "type": "table",
+                        "title": "Matérias-primas por impacto de custo",
+                        "rows": [],
+                    },
+                },
+            ],
+        },
+        "tablePresentations": [
+            {
+                "type": "table",
+                "title": "Matérias-primas por impacto de custo",
+                "rows": [],
+            },
+        ],
+    }
+
+    order = ChatPresentationRichStackPolicyService.resolve_tail_visual_order(
+        metadata,
+        path=metadata["path"],
+        entity="product_cost_impact_simulation",
+    )
+
+    assert order == ["dashboard"]

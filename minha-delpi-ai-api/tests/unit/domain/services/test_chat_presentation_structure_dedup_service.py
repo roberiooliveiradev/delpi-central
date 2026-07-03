@@ -182,3 +182,38 @@ def test_dedupe_removes_overview_profile_table_when_dashboard_embeds_kpi():
 
     assert metadata["profileTablePresentation"] is None
     assert OVERVIEW_PROFILE_TABLE not in (metadata.get("tablePresentations") or [])
+
+
+def test_dedupe_removes_list_table_when_dashboard_embeds_same_table():
+    list_table = {
+        "type": "table",
+        "title": "Matérias-primas por impacto de custo",
+        "role": "list",
+        "columns": [
+            {"key": "position", "label": "Posição"},
+            {"key": "raw_material_code", "label": "Cód. MP"},
+        ],
+        "rows": [{"position": 1, "raw_material_code": "10080626"}],
+    }
+    metadata = {
+        "path": "/products/90260882/cost-impact-simulation",
+        "apiDelpiResponseMeta": {"entity": "product_cost_impact_simulation"},
+        "kpiPresentation": {"type": "kpi", "title": "Indicadores consolidados", "cards": []},
+        "dashboardPresentation": {
+            "type": "dashboard",
+            "title": "Painel consolidado",
+            "panels": [
+                {"id": "summary", "presentation": {"type": "kpi", "cards": []}},
+                {"id": "table-0", "presentation": list_table},
+            ],
+        },
+        "tablePresentations": [list_table],
+        "tablePresentation": list_table,
+        "presentation": list_table,
+    }
+
+    ChatPresentationStructureDedupService.dedupe_metadata(metadata)
+
+    assert metadata.get("tablePresentations") is None
+    assert metadata.get("tablePresentation") is None
+    assert metadata.get("presentation") is None
