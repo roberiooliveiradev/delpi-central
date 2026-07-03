@@ -89,7 +89,7 @@ Referência baseada nas rotas reais do Flask e nos tipos do plugin `minha-delpi-
 | [guia-desenvolvimento.md](./development/guia-desenvolvimento.md) | Estrutura `app/`, camadas, como estender o chat |
 | [../app/content/README.md](../app/content/README.md) | Bundles JSON de textos PT-BR |
 | [roadmap/playbook-11-clean-architecture-chat-api.md](./roadmap/playbook-11-clean-architecture-chat-api.md) | Clean architecture, checklist de PR |
-| [roadmap/playbook-24-llm-provider-pluggable-jul2026.md](./roadmap/playbook-24-llm-provider-pluggable-jul2026.md) | **LLM plugável** — Ollama padrão; troca por API externa (P0–P5) |
+| [roadmap/playbook-24-llm-provider-pluggable-jul2026.md](./roadmap/playbook-24-llm-provider-pluggable-jul2026.md) | **LLM plugável (concluído)** — Ollama padrão; troca por env ou agente (P0–P5) · [changelog](./changelog/2026-07-playbook-24-llm-provider-pluggable.md) |
 | [roadmap/playbook-15-rotas-operacionais-sem-sql.md](./roadmap/playbook-15-rotas-operacionais-sem-sql.md) | Rotas produção/compras/perdas sem SQL (roadmap) |
 
 ---

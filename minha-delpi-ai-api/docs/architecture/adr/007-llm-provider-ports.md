@@ -15,14 +15,17 @@ Produção pode exigir API OpenAI-compatible sem reescrever o pipeline send/stre
 2. **Config unificada:** `LLM_TEXT_*` com fallback para `OLLAMA_*` / `VLLM_*`; resolução em `infrastructure/config/llm_text_config.py`.
 3. **Domain:** `LlmProviderConfigService` expõe texto/embedding/visão via `AppConfigPort` — sem import de gateways.
 4. **Warmup:** `llm_warmup_service` só aquece quando provider normalizado é `ollama`.
-5. **Embeddings e VLM:** variáveis `EMBEDDING_PROVIDER` e `VISION_LLM_PROVIDER` declaradas; implementação plugável nas fases P2/P3.
+5. **Embeddings e VLM:** variáveis `EMBEDDING_PROVIDER` e `VISION_LLM_PROVIDER`; composers `make_embedding_gateway()` e `make_vision_llm_gateway()` (P2/P3).
+6. **Override por agente (P5):** `metadata.intelligence.llmProviderOverride` → `llm_provider_scope` + `ContextAwareLlmGateway`; metadata de audit grava provider efetivo.
+7. **Rate limit API externa:** bucket `llm_text:{provider}:{userId}` com `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW`.
 
 ## Consequências
 
 - Troca de LLM de chat = env + restart + smoke.
 - `VllmLlmGateway` permanece como alias de `OpenAiCompatibleLlmGateway`.
 - Gate CI `audit_llm_provider_coupling.py --check` impede import direto de gateways em `domain/` e `application/`.
-- Fine-tuning local (`ollama_model_create_gateway`) permanece allowlisted até P4.
+- Fine-tuning local via `FineTuningModelGatewayPort` — deploy só com Ollama; API externa → `export_only` (P4).
+- Override por agente não altera embeddings/VLM — só eixo texto do chat (P5).
 
 ## Alternativas rejeitadas
 

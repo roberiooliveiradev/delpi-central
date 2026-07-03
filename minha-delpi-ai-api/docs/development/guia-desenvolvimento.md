@@ -322,7 +322,10 @@ Skills: registro em `domain/skills/`, doc [api/11-skills.md](../api/11-skills.md
 
 | Variável | Default dev | Notas |
 |----------|-------------|-------|
-| `LLM_PROVIDER` | `ollama` | `vllm` em prod |
+| `LLM_PROVIDER` | `ollama` | `openai_compatible` para API externa; ver [llm-provider-switch.md](../operations/llm-provider-switch.md) |
+| `EMBEDDING_PROVIDER` | `ollama` | Independente do texto |
+| `VISION_LLM_PROVIDER` | `ollama` | VLM documentos |
+| `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW` | `10` | Rate limit extra para API externa |
 | `OLLAMA_MODEL` | `qwen2.5:1.5b` | Modelo rápido CPU |
 | `CHAT_AGENTIC_LOOP_ENABLED` | `false` | Evita loops caros |
 | `CHAT_WEB_SEARCH_ENABLED` | `false` | Requer provider |

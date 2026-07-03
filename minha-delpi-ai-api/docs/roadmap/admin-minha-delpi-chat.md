@@ -111,6 +111,8 @@ Detalhes: `plugins/minha-delpi-chat/src/ui/components/admin/README.md`.
 - Eventos por usuário (`advanced.userProfileMetrics`)
 - Tabela de custo por provider/modelo (`LLM_COST_TABLE_JSON` + `advanced.costTable`)
 - Breakdown de custo 24h por provider/modelo (`advanced.costBreakdown24h`)
+- Uso agregado por provider (`advanced.llmProviderUsage24h`) — Playbook 24 P5
+- Snapshot rate limit API externa (`advanced.llmRateLimitSnapshot`) — Playbook 24 P5
 - Assertividade RAG via auditoria de `/admin/rag/test` (`admin.rag.tested`)
 - Limiar configurável: `RAG_ASSERTIVENESS_MIN_SCORE` (default `0.35`)
 

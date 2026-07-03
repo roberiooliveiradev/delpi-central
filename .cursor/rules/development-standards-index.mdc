@@ -35,7 +35,7 @@ alwaysApply: true
 | [playbook-22-schema-first-api-actions-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-22-schema-first-api-actions-jun2026.md) | **North star** — actions OpenAPI-only, apresentação as-delivered |
 | [presentation-delivered-pure-jun2026.md](../minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md) | Pipeline ativo + anti-acoplamento |
 | [playbook-21-desacoplamento-refatoracao-completa-jun2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-21-desacoplamento-refatoracao-completa-jun2026.md) | **Histórico** — inventário pré–delivered puro |
-| [playbook-24-llm-provider-pluggable-jul2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-24-llm-provider-pluggable-jul2026.md) | **LLM plugável** — Ollama padrão; troca por API externa (texto/embeddings/VLM) |
+| [playbook-24-llm-provider-pluggable-jul2026.md](../minha-delpi-ai-api/docs/roadmap/playbook-24-llm-provider-pluggable-jul2026.md) | **LLM plugável (concluído)** — Ollama padrão; troca por env ou agente (texto/embeddings/VLM) |
 | [chat-refactor-status-jun2026.md](../minha-delpi-ai-api/docs/architecture/chat-refactor-status-jun2026.md) | **Status W1–W3** + backlog arquitetural + foco bugs/UX |
 
 ## api-delpi

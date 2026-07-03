@@ -155,6 +155,8 @@ Resposta inclui `windowHours`. O bloco `advanced` inclui:
 | `userProfileMetrics` | Distribuição por `userId`. |
 | `costTable` | Tabela configurada de custo por provider/modelo. |
 | `costBreakdown24h` | Uso e custo agregados por provider/modelo. |
+| `llmProviderUsage24h` | Mensagens, tokens e custo agregados **por provider** (24h). |
+| `llmRateLimitSnapshot` | Uso atual dos buckets de rate limit `llm_text:{provider}:{userId}`. |
 
 Custo: prioridade para tabela persistida em `ai_admin_runtime_settings` (`llm_cost_table`); fallback `LLM_COST_TABLE_JSON`.
 

@@ -21,57 +21,63 @@ Deixar o código **pronto para trocar o motor de inferência** sem reescrever o 
 
 ---
 
-## 2. Diagnóstico — estado atual (jul/2026)
+## 2. Estado atual (pós-implementação P0–P5, jul/2026)
 
-### 2.1 O que já está desacoplado ✅
+### 2.1 Capacidades plugáveis ✅
+
+| Eixo | Porta | Composer | Providers |
+|------|-------|----------|-----------|
+| **Texto** | `LlmGatewayPort` | `make_llm_gateway()` → `ContextAwareLlmGateway` | `ollama`, `openai_compatible` |
+| **Embeddings** | `EmbeddingGatewayPort` | `make_embedding_gateway()` | `ollama`, `openai_compatible` |
+| **Visão (VLM)** | `VisionLlmGatewayPort` | `make_vision_llm_gateway()` | `ollama`, `openai_compatible` |
+| **Fine-tuning** | `FineTuningModelGatewayPort` | `make_fine_tuning_model_gateway()` | deploy local só `ollama`; senão `export_only` |
 
 | Camada | Módulo canônico | Comportamento |
 |--------|-----------------|---------------|
-| Contrato inferência texto | `LlmGatewayPort` | `generate`, `stream`, `generate_with_tools`, `supports_native_tools` |
-| Wiring | `composition/llm_composer.py` → `make_llm_gateway()` | `LLM_PROVIDER=ollama \| vllm` |
-| Implementações | `OllamaLlmGateway`, `VllmLlmGateway` | vLLM usa `/v1/chat/completions` (OpenAI-compatible) |
-| Consumo no chat | Use cases send/stream, `ChatTurnLlmAssemblyService`, síntese operacional | Dependem só da **porta** |
-| Modos Rápida/Normal/Pensador | `ChatResponseModeService` + `llm_request_context` | Modelo/tokens por turno via `LlmGenerationConfig` |
-| Custo admin | `LlmCostEstimatorService` | Tabela por provider |
+| Config texto | `llm_text_config.resolve_llm_text_config()` | `LLM_TEXT_*` com fallback `OLLAMA_*` / `VLLM_*` |
+| Registry | `composition/provider_registry.py` | Mapa extensível por kind |
+| Modos resposta | `ChatResponseModeService` + `llm_generation_scope` | Modelo/tokens por turno |
+| Override agente | `ChatAgentLlmProviderPolicyService` + `llm_provider_scope` | `llmProviderOverride` no metadata |
+| Custo / audit | `LlmCostEstimatorService` + metadata `provider` | Provider efetivo por turno |
+| Warmup | `llm_warmup_service` | Só quando provider normalizado = `ollama` |
+| Status admin | `GetLlmProviderStatusUseCase` | `text`, `embedding`, `vision` separados |
+| Gate CI | `scripts/audit_llm_provider_coupling.py --check` | Proíbe import direto de gateways em domain/application |
 
-**Conclusão:** o **caminho crítico do chat (prosa LLM)** já suporta troca via `LLM_PROVIDER=vllm` + `VLLM_*` apontando para API externa OpenAI-compatible.
+**Changelog detalhado:** [2026-07-playbook-24-llm-provider-pluggable.md](../changelog/2026-07-playbook-24-llm-provider-pluggable.md)
 
-### 2.2 Acoplamentos remanescentes ao Ollama ⚠️
-
-| # | Capacidade | Onde hoje | Impacto ao trocar só `LLM_PROVIDER` |
-|---|------------|-----------|--------------------------------------|
-| A1 | **Embeddings RAG** | `LocalEmbeddingGateway` → `OLLAMA_BASE_URL/api/embeddings` | RAG quebra se Ollama sumir |
-| A2 | **Warmup startup** | `ollama_warmup_service.warmup_ollama()` em `root_composer` | Sempre dispara, mesmo com provider externo |
-| A3 | **Visão documentos (VLM)** | `ChatDocumentVisionStageService` → `ollama_vlm` + `CHAT_DOCUMENT_VISION_OLLAMA_*` | OCR/VLM ainda no Ollama |
-| A4 | **Fine-tuning deploy** | `OllamaModelCreateGateway`, `get_active_deployed_ollama_model` | Só cria modelo local Ollama |
-| A5 | **Resolver de modelo** | `ChatFineTuningDeployResolverService` → repositório Ollama | Ignorado quando `vllm`; sem equivalente externo |
-| A6 | **Health / system check** | `PostgresAdminSystemCheckRepository` — ramos `ollama` / `vllm` | Sem status unificado multi-capacidade |
-| A7 | **Nomenclatura env** | `OLLAMA_*` usado em latência (`OLLAMA_NUM_CTX`) mesmo com `vllm` | Confusão operacional |
-| A8 | **Composer único** | Só dois providers; erro `Unsupported LLM provider` | Não há `openai` explícito nem registry extensível |
-| A9 | **Testes** | Vários monkeypatch `Settings.LLM_PROVIDER=ollama` | OK; falta matriz ollama × vllm × openai |
+### 2.2 Diagrama (estado atual)
 
 ```mermaid
 flowchart LR
-  subgraph desacoplado [Desacoplado hoje]
-    UC[Send/Stream Use Cases]
-    PORT[LlmGatewayPort]
-    OC[ollama_llm_gateway]
-    VC[vllm_llm_gateway]
-    UC --> PORT
-    PORT --> OC
-    PORT --> VC
+  subgraph turno [Turno send/stream]
+    AG[Agent metadata]
+    POL[ChatAgentLlmProviderPolicyService]
+    SCOPE[llm_provider_scope]
+    CTX[ContextAwareLlmGateway]
+    AG --> POL --> SCOPE --> CTX
   end
 
-  subgraph acoplado [Ainda acoplado Ollama]
-    RAG[SearchKnowledge / RAG]
-    EMB[LocalEmbeddingGateway]
-    VIS[Document Vision VLM]
-    FT[Fine-tuning create]
-    RAG --> EMB
-    VIS --> OC2[Ollama /api/chat + images]
-    FT --> OC3[Ollama /api/create]
+  subgraph providers [Providers texto]
+    OC[OllamaLlmGateway]
+    OAI[OpenAiCompatibleLlmGateway]
+    CTX --> OC
+    CTX --> OAI
+  end
+
+  subgraph outros [Outros eixos]
+    EMB[EmbeddingGatewayPort]
+    VIS[VisionLlmGatewayPort]
+    FT[FineTuningModelGatewayPort]
   end
 ```
+
+### 2.3 Backlog residual (fora do playbook)
+
+| Item | Notas |
+|------|-------|
+| Migração dimensão embedding | Trocar modelo exige reindex pgvector — documentar antes de trocar em produção |
+| `AnthropicLlmGateway` / `GeminiLlmGateway` | Só se API nativa (sem OpenAI-compatible) for requisito |
+| Aliases `OLLAMA_*` / `VLLM_*` | Manter compatibilidade; preferir `LLM_TEXT_*` em novos deploys |
 
 ---
 
@@ -291,28 +297,47 @@ Atualizar: `infra/README-ambiente.md`, `docs/02-infraestrutura/variaveis-de-ambi
 
 ## 10. Critérios de «pronto» (Definition of Done global)
 
-- [ ] Zero import de `infrastructure.llm.ollama_*` fora de `infrastructure/` e `composition/` (gate P0.1).
-- [ ] Troca texto Ollama → API externa **só com env** + restart + smoke verde.
-- [ ] Embeddings e visão têm porta + composer documentados (mesmo que default ainda seja Ollama).
-- [ ] Admin exibe status por eixo (texto / embedding / visão).
-- [ ] README e guia de desenvolvimento referenciam este playbook.
+- [x] Zero import de `infrastructure.llm.ollama_*` fora de `infrastructure/` e `composition/` (gate P0.1).
+- [x] Troca texto Ollama → API externa **só com env** + restart + smoke verde.
+- [x] Embeddings e visão têm porta + composer documentados (default Ollama; troca por env).
+- [x] Admin exibe status por eixo (texto / embedding / visão).
+- [x] README, guia operacional e changelog referenciam este playbook.
 
 ---
 
-## 11. Referências no código (baseline jul/2026)
+## 11. Referências no código (jul/2026 — implementado)
 
 | Artefato | Caminho |
 |----------|---------|
-| Porta LLM | `app/domain/ports/llm_gateway_port.py` |
-| Composer | `app/composition/llm_composer.py` |
+| Porta LLM texto | `app/domain/ports/llm_gateway_port.py` |
+| Porta embedding | `app/domain/ports/embedding_gateway_port.py` |
+| Porta VLM | `app/domain/ports/vision_llm_gateway_port.py` |
+| Porta fine-tuning | `app/domain/ports/fine_tuning_model_gateway_port.py` |
+| Composer texto | `app/composition/llm_composer.py` |
+| Gateway context-aware | `app/infrastructure/llm/context_aware_llm_gateway.py` |
+| Cache por provider | `app/infrastructure/llm/llm_gateway_registry.py` |
+| Registry | `app/composition/provider_registry.py` |
+| Config texto | `app/infrastructure/config/llm_text_config.py` |
 | Ollama gateway | `app/infrastructure/llm/ollama_llm_gateway.py` |
-| OpenAI-compatible | `app/infrastructure/llm/vllm_llm_gateway.py` |
-| Embeddings | `app/infrastructure/embeddings/local_embedding_gateway.py` |
-| Settings | `app/infrastructure/config/settings.py` |
-| Modos resposta | `app/domain/services/chat_response_mode_service.py` |
-| Warmup | `app/infrastructure/llm/ollama_warmup_service.py` |
-| Visão VLM | `app/application/services/chat_document_vision/chat_document_vision_stage_service.py` |
+| OpenAI-compatible | `app/infrastructure/llm/openai_compatible_llm_gateway.py` |
+| Policy override agente | `app/domain/services/chat_agent_llm_provider_policy_service.py` |
+| Contexto turno | `app/domain/services/chat_llm_generation_context_service.py` |
+| Rate limit externo | `app/application/services/chat_turn/chat_turn_llm_provider_guard_service.py` |
+| Warmup | `app/infrastructure/llm/llm_warmup_service.py` |
+| Status admin | `app/application/use_cases/get_llm_provider_status_use_case.py` |
+| Smoke | `scripts/smoke_llm_provider_switch.py` |
+| Gate acoplamento | `scripts/audit_llm_provider_coupling.py` |
 
 ---
 
-*Última atualização: jul/2026 — playbook proposto; implementação nas fases P0–P5.*
+## 12. Documentação relacionada
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [llm-provider-switch.md](../operations/llm-provider-switch.md) | Troca operacional (env, restart, rollback, override agente) |
+| [007-llm-provider-ports.md](../architecture/adr/007-llm-provider-ports.md) | ADR — decisão de portas por eixo |
+| [2026-07-playbook-24-llm-provider-pluggable.md](../changelog/2026-07-playbook-24-llm-provider-pluggable.md) | Changelog com commits e artefatos |
+
+---
+
+*Última atualização: jul/2026 — P0–P5 implementados.*

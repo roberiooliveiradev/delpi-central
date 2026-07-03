@@ -113,7 +113,17 @@ No metadata do agente (admin), defina:
 
 Valores aceitos: `ollama`, `openai_compatible` (aliases `vllm`, `openai` normalizam para `openai_compatible`).
 
-O env global (`LLM_PROVIDER`) continua como default; o override só afeta turnos daquele agente. API externa tem rate limit adicional (`RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW`, default 10/min).
+O env global (`LLM_PROVIDER`) continua como default; o override só afeta turnos daquele agente.
+
+**Rate limit API externa:** `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW` (default `10` por janela de `RATE_LIMIT_WINDOW_SECONDS`).
+
+**Métricas admin** (`GET /admin/metrics/summary` → `advanced`):
+
+- `llmProviderUsage24h` — uso agregado por provider
+- `llmRateLimitSnapshot` — buckets `llm_text:*` ativos
+- `costBreakdown24h` — custo por provider/modelo
+
+Ver [changelog jul/2026](../changelog/2026-07-playbook-24-llm-provider-pluggable.md).
 
 ---
 
