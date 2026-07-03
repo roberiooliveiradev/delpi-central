@@ -434,9 +434,7 @@ class DashboardLiveService:
             comp = str(row.get("competencia") or "")
             if not pid or not comp:
                 continue
-            # Processo/competência = média das instâncias ativas (mesmo N por grupo).
-            divisor = float(row.get("instancias_ativas_mes") or 1) or 1.0
-            aggregated[(pid, comp)] += float(row.get("economia_liquida_mes") or 0) / divisor
+            aggregated[(pid, comp)] += float(row.get("economia_liquida_mes") or 0)
 
         result: list[dict[str, Any]] = []
         for (pid, comp), liquida in sorted(aggregated.items()):
@@ -468,12 +466,8 @@ class DashboardLiveService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Linhas processo × competência com a **média por instância** (equivalente à view
-        ``processo_competencia_snapshot``), computadas em tempo real.
-
-        Cada métrica é ``Σ (valor_linha / instancias_ativas_mes)`` — a mesma semântica de
-        ``AVG`` entre instâncias usada no cache SQL e em ``query_process_monthly_liquida``.
-        """
+        """Linhas processo × competência com **soma por instância** (view
+        ``processo_competencia_snapshot``), computadas em tempo real."""
         rows = self.calculation_rows(
             view=view,
             filial_id=filial_id,
@@ -510,13 +504,12 @@ class DashboardLiveService:
                 continue
             if processo_id and pid != str(processo_id):
                 continue
-            divisor = float(row.get("instancias_ativas_mes") or 1) or 1.0
             bucket = aggregated.setdefault(
                 (pid, comp),
                 {metric: 0.0 for metric in _METRICS} | {"_revisoes": set()},
             )
             for metric in _METRICS:
-                bucket[metric] += float(row.get(metric) or 0) / divisor
+                bucket[metric] += float(row.get(metric) or 0)
             rid = row.get("revisao_id")
             if rid is not None:
                 bucket["_revisoes"].add(str(rid))

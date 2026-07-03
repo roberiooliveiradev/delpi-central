@@ -27,15 +27,13 @@ _INSTANCE_KEY_SQL = "COALESCE(d.instancia_id::text, d.processo_id::text)"
 
 
 def _instance_average_cte(row_where_sql: str) -> str:
-    """CTE de agregação em 2 níveis para a **média por instância** (regra jul/2026).
+    """CTE de agregação em 2 níveis: revisões por instância, instâncias somam (jul/2026).
 
     - ``inst_lvl``: soma as revisões dentro de cada instância (grão instância × competência).
-    - ``proc_lvl``: média entre as instâncias ativas (grão processo × competência).
+    - ``proc_lvl``: **soma** entre as instâncias ativas (grão processo × competência).
 
-    O filtro de escopo (filial/setor) entra em ``row_where_sql`` no grão de linha, logo o
-    consolidado vira a média das instâncias e o recorte por unidade sobra 1 instância
-    (``AVG`` de 1 = valor real). Espelha ``DashboardCalculatorService`` /
-    ``calc_rules.prorate_dashboard_row_for_period``.
+    O filtro de escopo (filial/setor) entra em ``row_where_sql`` no grão de linha.
+    Espelha ``DashboardCalculatorService`` / ``calc_rules.prorate_dashboard_row_for_period``.
     """
     return f"""
     WITH inst_lvl AS (
@@ -62,12 +60,12 @@ def _instance_average_cte(row_where_sql: str) -> str:
         SELECT
             processo_id,
             competencia,
-            AVG(economia_bruta) AS economia_bruta,
-            AVG(economia_liquida_mes) AS economia_liquida_mes,
-            AVG(investimento_unico_mes) AS investimento_unico_mes,
-            AVG(custo_recorrente_mes) AS custo_recorrente_mes,
-            AVG(custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
-            AVG(horas_economizadas_mes) AS horas_economizadas_mes,
+            SUM(economia_bruta) AS economia_bruta,
+            SUM(economia_liquida_mes) AS economia_liquida_mes,
+            SUM(investimento_unico_mes) AS investimento_unico_mes,
+            SUM(custo_recorrente_mes) AS custo_recorrente_mes,
+            SUM(custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
+            SUM(horas_economizadas_mes) AS horas_economizadas_mes,
             SUM(revisoes) AS revisoes,
             MAX(codigo_filial) AS codigo_filial,
             MAX(codigo_setor) AS codigo_setor,

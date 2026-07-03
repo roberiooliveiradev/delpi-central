@@ -2,7 +2,7 @@
 
 Documento oficial alinhado ao [playbook de correções](playbook_correcoes.md). A implementação canônica está em **`tm_app/domain/calc_rules.py`**; `DashboardCalculatorService` e `DashboardLiveService` apenas delegam. O cache `transformometro.dashboard_calculos` deve refletir as mesmas regras do cálculo em tempo real.
 
-## Instância = ambiente isolado; processo = média das instâncias
+## Instância = ambiente isolado; processo = soma das instâncias
 
 **Conceito (jul/2026).** Cada **instância** de um processo é um ambiente independente: tem **baseline próprio**, **parâmetros de medição próprios** (medições/investimentos/recursos da própria timeline) e **setores próprios**. Isso cobre casos reais em que o mesmo processo:
 
@@ -14,18 +14,17 @@ O cálculo mensal itera **por instância** (baseline escolhido dentro da instân
 
 ```text
 economia(instância, mês) = Σ (revisões comparáveis da instância no mês)  vs baseline da própria instância
-economia(processo, mês)  = média das instâncias ATIVAS no mês
-                         = Σ economia(instância, mês) / nº_instâncias_ativas_no_mês
-economia(empresa, mês)   = Σ economia(processo, mês)      # consolidado soma os processos
+economia(processo, mês)  = Σ economia(instância, mês)   # instâncias ativas SOMAM
+economia(empresa, mês)   = Σ economia(processo, mês)    # consolidado soma os processos
 ```
 
-- **Instância ativa no mês**: tem pelo menos uma revisão comparável válida naquela competência. O divisor da média é o nº de instâncias **ativas** no mês — se a unidade B começou depois, os meses iniciais têm média só de A; quando B entra, vira `(A + B) / 2`.
-- **Investimento** e **horas** seguem a mesma média por instância.
-- **ROI** consolidado = `Σ economia_líquida (já média) / Σ investimento (já média)`.
-- **Processo com 1 instância**: média de 1 = ele mesmo (retrocompatível).
-- **Filtro por unidade/departamento**: mostra o valor **real da instância** (média de 1 instância no recorte = a própria); a média só aparece quando há mais de uma instância no recorte (consolidado).
+- **Instância ativa no mês**: tem pelo menos uma revisão comparável válida naquela competência. Se a unidade B começou depois, só entra nos meses em que está ativa.
+- **Investimento** e **horas** seguem a mesma soma por instância.
+- **ROI** consolidado = `Σ economia_líquida / Σ investimento` do recorte.
+- **Processo com 1 instância**: soma de 1 = ele mesmo (retrocompatível).
+- **Filtro por unidade/departamento**: mostra o valor **real da(s) instância(s)** no recorte (sem multiplicador multi-unidade).
 
-**Implementação (row-level).** Cada linha `(revisão, competência)` carrega `instancias_ativas_mes` = nº de instâncias ativas do processo naquele mês no conjunto atual. A agregação (`calc_rules.prorate_dashboard_row_for_period` / `aggregate_period_from_rows`) divide as métricas por esse fator antes de somar — assim `Σ (linha / N)` reproduz a média-soma, e no recorte por unidade `N = 1` devolve o valor real.
+**Implementação (row-level).** Cada linha `(revisão, competência)` carrega `instancias_ativas_mes` como **metadado** (nº de instâncias ativas no mês). A agregação (`calc_rules.prorate_dashboard_row_for_period` / `aggregate_period_from_rows`) **soma** as linhas sem dividir por esse fator.
 
 ## Instância multi-unidade (`todas_filiais_ativas`)
 
@@ -42,13 +41,13 @@ economia_instância_escalada(mês) =
 
 | Métrica | Escala com multiplicador? |
 |---------|---------------------------|
-| `economia_bruta`, `economia_liquida_mes`, `horas_economizadas_mes` | Sim, **por instância** antes da média entre instâncias do processo |
+| `economia_bruta`, `economia_liquida_mes`, `horas_economizadas_mes` | Sim, **por instância** antes da soma entre instâncias do processo |
 | Investimento único / recorrente da revisão | Não (permanece o valor cadastrado na timeline) |
 | Recursos compartilhados | Não — rateio continua via `escopo_recurso` / pool global |
 
 - **Visão consolidada:** `escopo_unidades` = nº de filiais ativas no recorte analítico (ex.: 2 unidades → economia da instância multi-unidade conta **2×**).
 - **Visão filial ou departamento:** multiplicador **1** (uma unidade no recorte).
-- **Processo com várias instâncias:** após escalar cada instância, aplica-se a **média** entre instâncias ativas no mês (regra anterior).
+- **Processo com várias instâncias:** após escalar cada instância, aplica-se a **soma** entre instâncias ativas no mês.
 
 **Implementação:** `DashboardCalculatorService._instance_unit_multiplier`, `_scale_instance_economy_row`; parâmetro `escopo_unidades` em `build_dashboard_rows` / `build_summary`. `DashboardViewScopeService.resolve_escopo_unidades` + `count_active_filiais` propagam o valor em `DashboardLiveService`, `DashboardRecalcService` e Transforma+ (consolidado).
 
@@ -231,14 +230,14 @@ Toda mutação **apenas invalida** o query cache (O(1)). O recálculo pesado da 
 
 A tabela e as views V017–V021 permanecem para quem liga `TM_DASHBOARD_PERSIST_CACHE`. Quando populada, o snapshot lê dela como **fast-path**; caso contrário, o snapshot computa do motor live (mesmo contrato de campos). Leituras SQL no `DashboardCalculoRepository` expõem `investimento_total` e `custo_recursos_compartilhados_total` com as mesmas fórmulas. Após mudança de regra, executar recálculo completo do cache.
 
-### Média por instância no cache (agregação em 2 níveis)
+### Soma por instância no cache (agregação em 2 níveis)
 
-O cache materializa **uma linha por revisão × competência** (com `instancia_id`). Para reproduzir a média por instância sem coluna extra, as leituras usam `DashboardCalculoRepository._instance_average_cte` e as views V021 fazem **duas agregações**:
+O cache materializa **uma linha por revisão × competência** (com `instancia_id`). As leituras usam `DashboardCalculoRepository._instance_average_cte` e as views V022 fazem **duas agregações**:
 
 1. `inst_lvl` — **soma** as revisões dentro de cada instância (grão instância × competência).
-2. `proc_lvl` — **média** entre as instâncias ativas (`AVG`, grão processo × competência).
+2. `proc_lvl` — **soma** entre as instâncias ativas (`SUM`, grão processo × competência).
 
-O consolidado então **soma** os processos por competência. O nº de instâncias ativas é derivado de `COUNT(DISTINCT instancia_id)` (NULL legado cai para `processo_id`), sem persistir `instancias_ativas_mes`. O filtro de escopo (filial/setor) entra **no grão de linha** antes da média, então o recorte por unidade sobra 1 instância (`AVG` de 1 = valor real) e o consolidado vira a média.
+O consolidado então **soma** os processos por competência. O filtro de escopo (filial/setor) entra **no grão de linha** antes da agregação.
 
 Cobre: `query_resumo`, `query_evolucao`, `query_ranking_processos`, `query_process_monthly_liquida`, `query_resumo_por_familia` e as views `processo_competencia_snapshot` / `dashboard_competencia_evolucao` (V021). Linhas de detalhe (`query_linhas`, `query_export_rows`) permanecem no grão de revisão (valor real por revisão); os TOTAIS do recorte vêm de `query_resumo` (já mediado).
 

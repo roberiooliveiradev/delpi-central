@@ -372,8 +372,8 @@ def _multi_instancia_raw_live() -> TransformometroRawData:
 
 
 @patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
-def test_process_monthly_liquida_uses_instance_average(mock_repo):
-    """Alertas: economia líquida por processo/mês é a média das instâncias ativas."""
+def test_process_monthly_liquida_soma_instancias_ativas(mock_repo):
+    """Alertas: economia líquida por processo/mês soma instâncias ativas."""
     mock_repo.return_value.load_raw.return_value = _multi_instancia_raw_live()
 
     rows = DashboardLiveService().query_process_monthly_liquida(
@@ -383,8 +383,8 @@ def test_process_monthly_liquida_uses_instance_average(mock_repo):
 
     abril = [r for r in rows if r["competencia"] == "2025-04" and r["processo_id"] == "p1"]
     assert len(abril) == 1
-    # média (2500 + 1000) / 2 = 1750, não a soma 3500.
-    assert abril[0]["economia_liquida_mes"] == 1750.0
+    # soma 2500 + 1000 = 3500.
+    assert abril[0]["economia_liquida_mes"] == 3500.0
 
 
 def _venc_processo(pid: str, mel_start: date) -> dict:

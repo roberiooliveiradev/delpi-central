@@ -708,7 +708,7 @@ class DashboardCalculatorService:
                         rows_da_instancia.append(row)
 
                     if not rows_da_instancia:
-                        continue  # instância inativa neste mês: fora da média
+                        continue  # instância inativa neste mês
 
                     instance_rows_buffer.append(rows_da_instancia)
                     instance_totals.append(
@@ -719,36 +719,24 @@ class DashboardCalculatorService:
                 if active_instances == 0:
                     continue
 
-                # Divisor da média por instância: cada linha carrega o nº de
-                # instâncias ativas no mês para a agregação por recorte dividir.
+                # Metadado informativo: nº de instâncias ativas no mês (não divide métricas).
                 for rows_da_instancia in instance_rows_buffer:
                     for row in rows_da_instancia:
                         row["instancias_ativas_mes"] = active_instances
                         calculation_rows.append(row)
 
-                # Processo (consolidado) = média das instâncias ativas no mês.
-                economia_bruta_mes += (
-                    sum(t["economia_bruta"] for t in instance_totals) / active_instances
+                # Processo (consolidado) = soma das instâncias ativas no mês.
+                economia_bruta_mes += sum(t["economia_bruta"] for t in instance_totals)
+                investimento_unico_mes += sum(
+                    t["investimento_unico_mes"] for t in instance_totals
                 )
-                investimento_unico_mes += (
-                    sum(t["investimento_unico_mes"] for t in instance_totals)
-                    / active_instances
+                custo_recorrente_mes += sum(t["custo_recorrente_mes"] for t in instance_totals)
+                custo_recursos_compartilhados_mes += sum(
+                    t["custo_recursos_compartilhados_mes"] for t in instance_totals
                 )
-                custo_recorrente_mes += (
-                    sum(t["custo_recorrente_mes"] for t in instance_totals)
-                    / active_instances
-                )
-                custo_recursos_compartilhados_mes += (
-                    sum(t["custo_recursos_compartilhados_mes"] for t in instance_totals)
-                    / active_instances
-                )
-                economia_liquida_mes += (
-                    sum(t["economia_liquida_mes"] for t in instance_totals)
-                    / active_instances
-                )
-                horas_economizadas_mes += (
-                    sum(t["horas_economizadas_mes"] for t in instance_totals)
-                    / active_instances
+                economia_liquida_mes += sum(t["economia_liquida_mes"] for t in instance_totals)
+                horas_economizadas_mes += sum(
+                    t["horas_economizadas_mes"] for t in instance_totals
                 )
 
             monthly_items.append(
@@ -788,7 +776,7 @@ class DashboardCalculatorService:
         return [{"instancia_id": process_id, "processo_id": process_id}]
 
     def _sum_instance_month_rows(self, rows: List[dict]) -> dict:
-        """Soma as revisões de UMA instância no mês (revisões somam; instâncias fazem média)."""
+        """Soma as revisões de UMA instância no mês (revisões e instâncias somam)."""
         totals = {
             "economia_bruta": 0.0,
             "investimento_unico_mes": 0.0,

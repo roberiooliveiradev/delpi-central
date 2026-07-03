@@ -725,8 +725,8 @@ def _month_bruta(summary: dict, competencia: str) -> float:
     return 0.0
 
 
-def test_multi_instancia_baseline_por_instancia_e_media_por_processo():
-    """Cada instância tem baseline próprio; processo consolidado = média das ativas."""
+def test_multi_instancia_baseline_por_instancia_e_soma_por_processo():
+    """Cada instância tem baseline próprio; processo consolidado = soma das ativas."""
     calc = DashboardCalculatorService()
     raw = _multi_instancia_raw()
 
@@ -745,21 +745,21 @@ def test_multi_instancia_baseline_por_instancia_e_media_por_processo():
     es_abr = next(
         r for r in rows if r["revisao_id"] == "r-es-mel" and r["competencia"] == "2025-04"
     )
-    # Abril: SC e ES ativas → divisor 2 (média das duas instâncias).
+    # Abril: SC e ES ativas → 2 instâncias (metadado).
     assert sc_abr["instancias_ativas_mes"] == 2
     assert es_abr["instancias_ativas_mes"] == 2
     assert sc_abr["economia_bruta"] == 2500.0
     assert es_abr["economia_bruta"] == 1000.0
 
 
-def test_multi_instancia_consolidado_usa_media_por_competencia():
+def test_multi_instancia_consolidado_soma_instancias_por_competencia():
     calc = DashboardCalculatorService()
     raw = _multi_instancia_raw()
     summary = calc.build_summary(raw, filial_id=None, start_date=None, end_date=None)
 
-    # Fev: só SC ativa → 2500. Abr: média (2500 + 1000) / 2 = 1750.
+    # Fev: só SC ativa → 2500. Abr: soma 2500 + 1000 = 3500.
     assert _month_bruta(summary, "2025-02") == 2500.0
-    assert _month_bruta(summary, "2025-04") == 1750.0
+    assert _month_bruta(summary, "2025-04") == 3500.0
 
 
 def _single_instancia_raw(revisoes: list[dict], medicoes: list[dict]) -> TransformometroRawData:
@@ -884,11 +884,11 @@ def test_multi_instancia_filtro_por_unidade_mostra_valor_real():
         raw, filial_id="02", start_date="2025-04-01", end_date="2025-04-30"
     )
 
-    # Recorte por unidade = N=1 → valor real da instância (não média).
+    # Recorte por unidade = valor real da instância.
     assert sc["economia_bruta_total"] == 2500.0
     assert es["economia_bruta_total"] == 1000.0
-    # Consolidado do mesmo mês = média das instâncias ativas.
-    assert consolidado["economia_bruta_total"] == 1750.0
+    # Consolidado do mesmo mês = soma das instâncias ativas.
+    assert consolidado["economia_bruta_total"] == 3500.0
 
 
 def _multi_unidade_instancia_raw() -> TransformometroRawData:
@@ -964,4 +964,4 @@ def test_instancia_por_filial_nao_escala_com_escopo_unidades():
     )
 
     # Instâncias por filial: multiplicador consolidado não altera (só todas_filiais_ativas).
-    assert _month_bruta(summary, "2025-04") == 1750.0
+    assert _month_bruta(summary, "2025-04") == 3500.0
