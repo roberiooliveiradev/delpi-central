@@ -17,6 +17,9 @@ from app.application.dto.transforma_mais.process_summary_request import (
 from app.application.dto.mini_applicators.list_ferramentas_request import (
     ListMiniApplicatorsFerramentasRequest,
 )
+from app.application.dto.mini_applicators.list_pecas_reposicao_request import (
+    ListMiniApplicatorsPecasReposicaoRequest,
+)
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.application.services.response_meta_builder import ResponseMetaBuilder
 from app.composition.engineering_composer import (
@@ -31,6 +34,7 @@ from app.composition.engineering_composer import (
     build_get_mini_applicators_golpes_use_case,
     build_list_mini_applicators_componentes_use_case,
     build_list_mini_applicators_ferramentas_use_case,
+    build_list_mini_applicators_pecas_reposicao_use_case,
     build_list_mini_applicators_pecas_use_case,
 )
 from app.core.responses import error_response
@@ -60,6 +64,7 @@ from app.interface.http.openapi_agent_metadata import (
     MINI_APPLICATORS_FERRAMENTAS_LIST,
     MINI_APPLICATORS_FERRAMENTA_GET,
     MINI_APPLICATORS_PECAS_LIST,
+    MINI_APPLICATORS_PECAS_REPOSICAO_LIST,
     MINI_APPLICATORS_GOLPES_GET,
     MINI_APPLICATORS_COMPONENTES_LIST,
 )
@@ -562,6 +567,8 @@ def list_mini_applicators_ferramentas_route(
     sort_by: Optional[str] = Query(None),
     sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
     incluir_bloqueados: bool = Query(False),
+    codigo_peca: Optional[str] = Query(None),
+    descricao_peca: Optional[str] = Query(None),
 ):
     try:
         request = ListMiniApplicatorsFerramentasRequest(
@@ -573,6 +580,8 @@ def list_mini_applicators_ferramentas_route(
             sort_by=sort_by,
             sort_dir=sort_dir or "asc",
             incluir_bloqueados=incluir_bloqueados,
+            codigo_peca=codigo_peca,
+            descricao_peca=descricao_peca,
         )
         use_case = build_list_mini_applicators_ferramentas_use_case()
         result = use_case.execute(request)
@@ -612,6 +621,42 @@ def get_mini_applicators_ferramenta_route(codigo: str):
         log_error(f"Erro ao buscar ferramenta mini-aplicador {codigo}: {exc}")
         return error_response(
             "Erro interno ao buscar ferramenta mini-aplicador.",
+            status_code=500,
+        )
+
+
+@router.get("/mini-applicators/pecas-reposicao", **MINI_APPLICATORS_PECAS_REPOSICAO_LIST)
+@require_any_permission(MINI_APPLICATORS_ACCESS)
+def list_mini_applicators_pecas_reposicao_route(
+    codigo: Optional[str] = Query(None),
+    descricao: Optional[str] = Query(None),
+    page: Optional[int] = Query(1, ge=1),
+    page_size: Optional[int] = Query(50, ge=1, le=200),
+    sort_by: Optional[str] = Query(None),
+    sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
+):
+    try:
+        request = ListMiniApplicatorsPecasReposicaoRequest(
+            codigo=codigo,
+            descricao=descricao,
+            page=page or 1,
+            page_size=page_size or 50,
+            sort_by=sort_by,
+            sort_dir=sort_dir or "asc",
+        )
+        use_case = build_list_mini_applicators_pecas_reposicao_use_case()
+        result = use_case.execute(request)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="list_mini_applicators_pecas_reposicao",
+            message="Peças de reposição listadas.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao listar peças de reposição mini-aplicadores: {exc}")
+        return error_response(
+            "Erro interno ao listar peças de reposição mini-aplicadores.",
             status_code=500,
         )
 

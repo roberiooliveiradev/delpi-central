@@ -380,6 +380,15 @@ MINI_APPLICATORS_PECAS_LIST = agent_route(
     operation_id="list_mini_applicators_pecas",
 )
 
+MINI_APPLICATORS_PECAS_REPOSICAO_LIST = agent_route(
+    summary="Listar peças de reposição amarradas",
+    description=(
+        "Lista peças do grupo 3019 amarradas a ferramentas dos grupos 23/24 "
+        "(estrutura vigente em SG1010)."
+    ),
+    operation_id="list_mini_applicators_pecas_reposicao",
+)
+
 MINI_APPLICATORS_GOLPES_GET = agent_route(
     summary="Golpes do mini-aplicador no período",
     description=(

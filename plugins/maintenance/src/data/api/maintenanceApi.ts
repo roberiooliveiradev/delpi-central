@@ -67,6 +67,8 @@ export function fetchFerramentas(
     filial: string;
     codigo?: string;
     descricao?: string;
+    codigoPeca?: string;
+    descricaoPeca?: string;
     incluirBloqueados?: boolean;
   } & ListQueryParams,
   getAccessToken?: () => string | undefined,
@@ -84,6 +86,8 @@ export function fetchFerramentas(
     {
       codigo: params.codigo,
       descricao: params.descricao,
+      codigo_peca: params.codigoPeca,
+      descricao_peca: params.descricaoPeca,
       incluir_bloqueados: params.incluirBloqueados ? true : undefined,
     },
   );
@@ -91,6 +95,30 @@ export function fetchFerramentas(
   return maintenanceFetch<FerramentasPage>(`/mini-aplicadores/ferramentas?${search.toString()}`, {
     getAccessToken,
   });
+}
+
+export type PecaReposicaoItem = {
+  id: number;
+  codigo: string;
+  descricao: string;
+  grupo?: string;
+};
+
+export function fetchPecasReposicao(
+  filial: string,
+  query: ListQueryParams = {},
+  filters: { codigo?: string; descricao?: string } = {},
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  appendListQuery(search, query, {
+    codigo: filters.codigo,
+    descricao: filters.descricao,
+  });
+  return maintenanceFetch<PagedItems<PecaReposicaoItem>>(
+    `/mini-applicadores/pecas-reposicao?${search.toString()}`,
+    { getAccessToken },
+  );
 }
 
 export function fetchFerramenta(

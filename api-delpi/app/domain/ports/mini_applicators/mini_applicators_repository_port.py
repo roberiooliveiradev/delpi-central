@@ -5,6 +5,9 @@ from typing import Protocol
 from app.application.dto.mini_applicators.list_ferramentas_request import (
     ListMiniApplicatorsFerramentasRequest,
 )
+from app.application.dto.mini_applicators.list_pecas_reposicao_request import (
+    ListMiniApplicatorsPecasReposicaoRequest,
+)
 from app.application.models.page import Page
 from app.domain.entities.mini_applicators.mini_applicator_tool import MiniApplicatorTool
 
@@ -29,3 +32,8 @@ class MiniApplicatorsRepositoryPort(Protocol):
     ) -> dict: ...
 
     def list_componentes(self, *, codigo_ferramenta: str, filial: str) -> list[dict]: ...
+
+    def list_pecas_reposicao(
+        self,
+        request: ListMiniApplicatorsPecasReposicaoRequest,
+    ) -> Page[dict]: ...

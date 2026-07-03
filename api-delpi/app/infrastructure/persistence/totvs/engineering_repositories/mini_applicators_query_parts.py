@@ -38,3 +38,34 @@ def codigo_filter_sql() -> str:
         "(RTRIM(LTRIM(SB1.B1_COD)) LIKE ? "
         "OR RTRIM(LTRIM(SB1.B1_GRUPO)) + '-' + RTRIM(LTRIM(SB1.B1_COD)) LIKE ?)"
     )
+
+
+def peca_codigo_filter_sql(*, alias: str = "C") -> str:
+    return f"RTRIM(LTRIM({alias}.B1_COD)) LIKE ?"
+
+
+def append_descricao_terms(
+    *,
+    column_sql: str,
+    descricao: str,
+    where_clauses: list[str],
+    params: list,
+) -> None:
+    desc_clean = descricao.strip()
+    terms = [term for term in desc_clean.split() if term]
+    if not terms:
+        return
+    desc_where = []
+    for term in terms:
+        desc_where.append(f"{column_sql} COLLATE Latin1_General_CI_AI LIKE ?")
+        params.append(f"%{term}%")
+    where_clauses.append("(" + " OR ".join(desc_where) + ")")
+
+
+def bom_validity_where_clauses(*, alias: str = "G") -> list[str]:
+    today = "CONVERT(CHAR(8), GETDATE(), 112)"
+    prefix = f"{alias}." if alias else ""
+    return [
+        f"({prefix}G1_INI = '' OR {prefix}G1_INI <= {today})",
+        f"({prefix}G1_FIM = '' OR {prefix}G1_FIM >= {today})",
+    ]

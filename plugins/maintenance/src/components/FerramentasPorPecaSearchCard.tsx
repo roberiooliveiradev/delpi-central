@@ -1,0 +1,196 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import {
+  fetchPecasReposicao,
+  type PecaReposicaoItem,
+} from "../data/api/maintenanceApi";
+import { useServerTable } from "../hooks/useServerTable";
+import { formatCodigoDescricao } from "../utils/pecaOptions";
+import { DataTableSection, FilterBar, type DataTableColumn } from "./data";
+
+type FerramentasPorPecaSearchCardProps = {
+  filial: string;
+  selectedPecaCodigo: string | null;
+  onSelectPeca: (peca: { codigo: string; descricao: string } | null) => void;
+  getAccessToken?: () => string | undefined;
+};
+
+export function FerramentasPorPecaSearchCard({
+  filial,
+  selectedPecaCodigo,
+  onSelectPeca,
+  getAccessToken,
+}: FerramentasPorPecaSearchCardProps) {
+  const pecasTable = useServerTable({ defaultSortKey: "codigo" });
+  const [codigoDraft, setCodigoDraft] = useState("");
+  const [descricaoDraft, setDescricaoDraft] = useState("");
+  const [codigoFiltro, setCodigoFiltro] = useState("");
+  const [descricaoFiltro, setDescricaoFiltro] = useState("");
+  const [items, setItems] = useState<PecaReposicaoItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const columns = useMemo<DataTableColumn<PecaReposicaoItem>[]>(
+    () => [
+      {
+        key: "codigo",
+        header: "Código",
+        sortable: true,
+        sortValue: (item) => item.codigo,
+        render: (item) => item.codigo,
+      },
+      {
+        key: "descricao",
+        header: "Descrição",
+        sortable: true,
+        sortValue: (item) => item.descricao,
+        render: (item) => item.descricao,
+      },
+    ],
+    [],
+  );
+
+  const loadPecas = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchPecasReposicao(
+        filial,
+        {
+          page: pecasTable.query.page,
+          pageSize: pecasTable.query.pageSize,
+          sortKey: pecasTable.query.sortKey,
+          sortDirection: pecasTable.query.sortDirection,
+        },
+        {
+          codigo: codigoFiltro.trim() || undefined,
+          descricao: descricaoFiltro.trim() || undefined,
+        },
+        getAccessToken,
+      );
+      setItems(data.items ?? []);
+      setTotal(data.total ?? 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar peças.");
+      setItems([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    codigoFiltro,
+    descricaoFiltro,
+    filial,
+    getAccessToken,
+    pecasTable.query,
+  ]);
+
+  useEffect(() => {
+    pecasTable.resetPage();
+  }, [filial, pecasTable.resetPage]);
+
+  useEffect(() => {
+    void loadPecas();
+  }, [loadPecas]);
+
+  async function handleSearch(event: React.FormEvent) {
+    event.preventDefault();
+    setCodigoFiltro(codigoDraft);
+    setDescricaoFiltro(descricaoDraft);
+    pecasTable.resetPage();
+  }
+
+  function handleSelectPeca(item: PecaReposicaoItem) {
+    if (selectedPecaCodigo === item.codigo) {
+      onSelectPeca(null);
+      return;
+    }
+    onSelectPeca({ codigo: item.codigo, descricao: item.descricao });
+  }
+
+  const selectedLabel = selectedPecaCodigo
+    ? formatCodigoDescricao(
+        selectedPecaCodigo,
+        items.find((item) => item.codigo === selectedPecaCodigo)?.descricao,
+      )
+    : null;
+
+  return (
+    <section className="dm-card">
+      <div className="dm-section-header">
+        <div className="dm-section-header__title-group">
+          <h2 className="dm-section-header__title">Buscar ferramentas por peça</h2>
+          <p className="dm-section-header__hint">
+            Peças do grupo 3019 amarradas à estrutura vigente das ferramentas.
+          </p>
+        </div>
+        {selectedPecaCodigo ? (
+          <button
+            type="button"
+            className="dm-ghost-btn dm-ghost-btn--sm"
+            onClick={() => onSelectPeca(null)}
+          >
+            Limpar peça selecionada
+          </button>
+        ) : null}
+      </div>
+
+      {selectedLabel ? (
+        <p className="dm-inline-hint">
+          Ferramentas filtradas pela peça <strong>{selectedLabel}</strong>.
+        </p>
+      ) : null}
+
+      {error ? <p className="dm-inline-error">{error}</p> : null}
+
+      <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
+        <label className="dm-field">
+          <span>Código da peça</span>
+          <input
+            value={codigoDraft}
+            onChange={(event) => setCodigoDraft(event.target.value)}
+            placeholder="Ex.: 3019 ou 30190036"
+          />
+        </label>
+        <label className="dm-field">
+          <span>Descrição da peça</span>
+          <input
+            value={descricaoDraft}
+            onChange={(event) => setDescricaoDraft(event.target.value)}
+            placeholder="Ex.: GRAMPEADOR"
+          />
+        </label>
+        <div className="dm-filter-bar__actions">
+          <button type="submit" className="dm-primary-btn">
+            Buscar peças
+          </button>
+        </div>
+      </FilterBar>
+
+      <DataTableSection
+        title="Peças amarradas"
+        countBadgeLabel="peça(s)"
+        columns={columns}
+        rows={items}
+        loading={loading}
+        emptyMessage="Nenhuma peça 3019 encontrada com os filtros informados."
+        getRowKey={(item) => item.codigo}
+        getRowClassName={(item) =>
+          selectedPecaCodigo === item.codigo ? "is-selected" : undefined
+        }
+        embedded
+        onRowClick={handleSelectPeca}
+        serverTable={{
+          page: pecasTable.query.page,
+          pageSize: pecasTable.query.pageSize,
+          total,
+          onPageChange: pecasTable.setPage,
+          sortKey: pecasTable.query.sortKey,
+          sortDirection: pecasTable.query.sortDirection,
+          onSortChange: pecasTable.handleSortChange,
+        }}
+      />
+    </section>
+  );
+}

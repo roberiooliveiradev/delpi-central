@@ -96,6 +96,8 @@ def list_ferramentas(
     filial: str = Query(..., min_length=2, max_length=2),
     codigo: Optional[str] = Query(None),
     descricao: Optional[str] = Query(None),
+    codigo_peca: Optional[str] = Query(None),
+    descricao_peca: Optional[str] = Query(None),
     incluir_bloqueados: bool = Query(False),
     query: ListQuery = Depends(list_query_params),
 ):
@@ -117,8 +119,42 @@ def list_ferramentas(
             sort_by=query.sort_by,
             sort_dir=query.sort_dir,
             incluir_bloqueados=incluir_bloqueados,
+            codigo_peca=codigo_peca,
+            descricao_peca=descricao_peca,
         )
         return ok(data, message="Ferramentas listadas.")
+    except DelpiApiError as exc:
+        return fail(exc.detail, status_code=exc.status_code)
+    except Exception as exc:
+        return fail(format_api_error(exc), status_code=500)
+
+
+@router.get("/pecas-reposicao")
+def list_pecas_reposicao(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    codigo: Optional[str] = Query(None),
+    descricao: Optional[str] = Query(None),
+    query: ListQuery = Depends(list_query_params),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    try:
+        gateway = build_mini_applicators_totvs_gateway()
+        data = gateway.listar_pecas_reposicao(
+            codigo=codigo,
+            descricao=descricao,
+            page=query.page,
+            page_size=query.page_size,
+            sort_by=query.sort_by,
+            sort_dir=query.sort_dir,
+        )
+        return ok(data, message="Peças de reposição listadas.")
     except DelpiApiError as exc:
         return fail(exc.detail, status_code=exc.status_code)
     except Exception as exc:

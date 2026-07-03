@@ -10,6 +10,7 @@ import {
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
 import { FerramentaAuditoriaSection } from "../../components/FerramentaAuditoriaSection";
+import { FerramentasPorPecaSearchCard } from "../../components/FerramentasPorPecaSearchCard";
 import { FerramentaOndeUsadoSection } from "../../components/FerramentaOndeUsadoSection";
 import { FerramentaRevisaoProgramadaSection } from "../../components/FerramentaRevisaoProgramadaSection";
 import { ReposicoesGolpesChart } from "../../components/ReposicoesGolpesChart";
@@ -79,6 +80,8 @@ export function MiniAplicadoresPage({
   const [descricao, setDescricao] = useState("");
   const [codigo, setCodigo] = useState("");
   const [incluirBloqueados, setIncluirBloqueados] = useState(false);
+  const [selectedPecaCodigo, setSelectedPecaCodigo] = useState<string | null>(null);
+  const [selectedPecaDescricao, setSelectedPecaDescricao] = useState("");
   const [items, setItems] = useState<FerramentaItem[]>([]);
   const [total, setTotal] = useState(0);
   const ferramentasTable = useServerTable({ defaultSortKey: "codigo" });
@@ -314,8 +317,9 @@ export function MiniAplicadoresPage({
     try {
       const data = await fetchFerramentas(
         {
-          codigo: codigo.trim() || undefined,
-          descricao: descricao.trim() || undefined,
+          codigo: selectedPecaCodigo ? undefined : codigo.trim() || undefined,
+          descricao: selectedPecaCodigo ? undefined : descricao.trim() || undefined,
+          codigoPeca: selectedPecaCodigo ?? undefined,
           incluirBloqueados,
           filial,
           page: ferramentasTable.query.page,
@@ -334,7 +338,15 @@ export function MiniAplicadoresPage({
     } finally {
       setFerramentasLoading(false);
     }
-  }, [codigo, descricao, filial, incluirBloqueados, ferramentasTable.query, getAccessToken]);
+  }, [
+    codigo,
+    descricao,
+    filial,
+    incluirBloqueados,
+    selectedPecaCodigo,
+    ferramentasTable.query,
+    getAccessToken,
+  ]);
 
   const loadHistoricoChart = useCallback(
     async (total: number) => {
@@ -609,9 +621,20 @@ export function MiniAplicadoresPage({
 
   async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
+    setSelectedPecaCodigo(null);
+    setSelectedPecaDescricao("");
     ferramentasTable.resetPage();
     await loadFerramentas();
   }
+
+  const handleSelectPeca = useCallback(
+    (peca: { codigo: string; descricao: string } | null) => {
+      setSelectedPecaCodigo(peca?.codigo ?? null);
+      setSelectedPecaDescricao(peca?.descricao ?? "");
+      ferramentasTable.resetPage();
+    },
+    [ferramentasTable.resetPage],
+  );
 
   async function handleSuggestGolpes() {
     if (!codigoFerramenta || !codigoPeca) return;
@@ -952,8 +975,22 @@ export function MiniAplicadoresPage({
             </StateBox>
           ) : null}
 
+          <FerramentasPorPecaSearchCard
+            filial={filial}
+            selectedPecaCodigo={selectedPecaCodigo}
+            onSelectPeca={handleSelectPeca}
+            getAccessToken={getAccessToken}
+          />
+
           <DataTableSection
-            title="Ferramentas"
+            title={
+              selectedPecaCodigo
+                ? `Ferramentas com peça ${formatPecaLabel({
+                    codigo: selectedPecaCodigo,
+                    descricao: selectedPecaDescricao,
+                  })}`
+                : "Ferramentas"
+            }
             columns={ferramentasColumns}
             rows={items}
             loading={ferramentasLoading}

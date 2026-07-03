@@ -29,6 +29,9 @@ def test_listar_ferramentas_propaga_client(monkeypatch):
             "page_size": "20",
             "sort_by": None,
             "sort_dir": None,
+            "incluir_bloqueados": None,
+            "codigo_peca": None,
+            "descricao_peca": None,
         },
         authorization="Bearer token",
     )
@@ -74,6 +77,34 @@ def test_listar_componentes_propaga_client(monkeypatch):
     client.list_mini_applicators_componentes.assert_called_once_with(
         "23-026",
         params={"filial": "01"},
+        authorization="Bearer token",
+    )
+
+
+def test_listar_pecas_reposicao_propaga_client(monkeypatch):
+    client = MagicMock()
+    client.list_mini_applicators_pecas_reposicao.return_value = {
+        "items": [{"codigo": "30190036", "descricao": "FACA DE CORTE"}],
+        "total": 1,
+    }
+    monkeypatch.setattr(
+        "maint_app.infrastructure.gateways.delpi_mini_applicators_gateway.bearer_authorization_from_context",
+        lambda: "Bearer token",
+    )
+
+    gateway = DelpiMiniAplicatorsGateway(client)
+    result = gateway.listar_pecas_reposicao(codigo="3019", page=1, page_size=20)
+
+    assert result["total"] == 1
+    client.list_mini_applicators_pecas_reposicao.assert_called_once_with(
+        params={
+            "codigo": "3019",
+            "descricao": None,
+            "page": "1",
+            "page_size": "20",
+            "sort_by": None,
+            "sort_dir": None,
+        },
         authorization="Bearer token",
     )
 

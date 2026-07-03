@@ -20,6 +20,8 @@ class DelpiMiniAplicatorsGateway:
         sort_by: str | None = None,
         sort_dir: str | None = None,
         incluir_bloqueados: bool | None = None,
+        codigo_peca: str | None = None,
+        descricao_peca: str | None = None,
     ) -> dict:
         return self._client.list_mini_applicators_ferramentas(
             params={
@@ -31,6 +33,8 @@ class DelpiMiniAplicatorsGateway:
                 "sort_by": sort_by,
                 "sort_dir": sort_dir,
                 "incluir_bloqueados": "true" if incluir_bloqueados else None,
+                "codigo_peca": codigo_peca,
+                "descricao_peca": descricao_peca,
             },
             authorization=bearer_authorization_from_context(),
         )
@@ -75,5 +79,27 @@ class DelpiMiniAplicatorsGateway:
     def listar_onde_usado(self, *, codigo_ferramenta: str) -> dict:
         return self._client.get_product_parents(
             codigo_ferramenta.strip(),
+            authorization=bearer_authorization_from_context(),
+        )
+
+    def listar_pecas_reposicao(
+        self,
+        *,
+        codigo: str | None = None,
+        descricao: str | None = None,
+        page: int | None = None,
+        page_size: int | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+    ) -> dict:
+        return self._client.list_mini_applicators_pecas_reposicao(
+            params={
+                "codigo": codigo,
+                "descricao": descricao,
+                "page": str(page) if page is not None else None,
+                "page_size": str(page_size) if page_size is not None else None,
+                "sort_by": sort_by,
+                "sort_dir": sort_dir,
+            },
             authorization=bearer_authorization_from_context(),
         )

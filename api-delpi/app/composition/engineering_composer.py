@@ -34,6 +34,7 @@ from app.application.use_cases.mini_applicators.mini_applicators_use_cases impor
     GetMiniApplicatorsGolpesUseCase,
     ListMiniApplicatorsComponentesUseCase,
     ListMiniApplicatorsFerramentasUseCase,
+    ListMiniApplicatorsPecasReposicaoUseCase,
     ListMiniApplicatorsPecasUseCase,
 )
 
@@ -100,3 +101,7 @@ def build_get_mini_applicators_golpes_use_case() -> GetMiniApplicatorsGolpesUseC
 
 def build_list_mini_applicators_componentes_use_case() -> ListMiniApplicatorsComponentesUseCase:
     return ListMiniApplicatorsComponentesUseCase(_build_mini_applicators_repository())
+
+
+def build_list_mini_applicators_pecas_reposicao_use_case() -> ListMiniApplicatorsPecasReposicaoUseCase:
+    return ListMiniApplicatorsPecasReposicaoUseCase(_build_mini_applicators_repository())

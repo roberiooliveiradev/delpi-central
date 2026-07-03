@@ -15,6 +15,8 @@ class MiniApplicatorsTotvsPort(Protocol):
         sort_by: str | None = None,
         sort_dir: str | None = None,
         incluir_bloqueados: bool | None = None,
+        codigo_peca: str | None = None,
+        descricao_peca: str | None = None,
     ) -> dict: ...
 
     def obter_ferramenta(self, codigo: str) -> dict: ...
@@ -33,3 +35,14 @@ class MiniApplicatorsTotvsPort(Protocol):
     def listar_componentes(self, *, codigo_ferramenta: str, filial: str) -> dict: ...
 
     def listar_onde_usado(self, *, codigo_ferramenta: str) -> dict: ...
+
+    def listar_pecas_reposicao(
+        self,
+        *,
+        codigo: str | None = None,
+        descricao: str | None = None,
+        page: int | None = None,
+        page_size: int | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+    ) -> dict: ...

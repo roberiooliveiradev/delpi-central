@@ -312,6 +312,18 @@ class DelpiApiClient:
             authorization=authorization,
         )
 
+    def list_mini_applicators_pecas_reposicao(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/engineering/mini-applicators/pecas-reposicao",
+            params=params,
+            authorization=authorization,
+        )
+
     def get_product_parents(
         self,
         code: str,
