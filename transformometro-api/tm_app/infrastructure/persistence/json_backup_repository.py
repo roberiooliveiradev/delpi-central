@@ -482,8 +482,8 @@ class JsonBackupRepository(PluginBaseRepository):
         )
 
     def upsert_row(self, spec: EntitySpec, row: dict[str, Any], *, auto_commit: bool = False) -> None:
-        values = {col: row.get(col) for col in spec.columns}
-        if values.get("deletado") is None:
+        values = {col: row[col] for col in spec.columns if col in row}
+        if "deletado" not in values:
             values["deletado"] = False
 
         cols = list(values.keys())
@@ -503,8 +503,8 @@ class JsonBackupRepository(PluginBaseRepository):
         )
 
     def insert_row(self, spec: EntitySpec, row: dict[str, Any], *, auto_commit: bool = False) -> None:
-        values = {col: row.get(col) for col in spec.columns}
-        if values.get("deletado") is None:
+        values = {col: row[col] for col in spec.columns if col in row}
+        if "deletado" not in values:
             values["deletado"] = False
         cols = list(values.keys())
         placeholders = ", ".join(["%s"] * len(cols))

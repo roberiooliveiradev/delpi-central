@@ -193,10 +193,12 @@ def test_insert_row_values_default_status_instancia_for_processo_instancias():
         "deletado": False,
     }
     normalized = JsonBackupService._normalize_row(spec, row)
-    values = {col: normalized.get(col) for col in spec.columns}
-    if values.get("deletado") is None:
+    values = {col: normalized[col] for col in spec.columns if col in normalized}
+    if "deletado" not in values:
         values["deletado"] = False
     assert values["status_instancia"] == "ativo"
+    assert "created_at" not in values
+    assert "updated_at" not in values
 
 
 def test_prepare_legacy_backfills_instancia_and_filiais():
